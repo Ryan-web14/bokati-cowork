@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Code de connexion – BOKATI</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+
+        .email-wrapper {
+            width: 100%;
+            background-color: #f5f5f5;
+            padding: 40px 0;
+        }
+
+        .email-container {
+            max-width: 480px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            padding: 30px 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+        }
+
+        .header {
+            text-align: center;
+            color: #c2410c;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        .greeting {
+            font-size: 16px;
+            color: #333333;
+            margin-bottom: 15px;
+        }
+
+        .instructions {
+            font-size: 15px;
+            color: #555555;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .otp-box {
+            text-align: center;
+            background-color: #faf1ed;
+            padding: 18px 0;
+            border-radius: 10px;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            color: #c2410c;
+            border: 2px solid #c2410c;
+            margin: 25px 0;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #888888;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .brand {
+            font-weight: bold;
+            color: #c2410c;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="email-wrapper">
+    <div class="email-container">
+
+        <!-- HEADER -->
+        <div class="header">
+            BOKATI – Code de Connexion
+        </div>
+
+        <!-- GREETING -->
+        <div class="greeting">
+            Bonjour <strong th:text="${firstname}"></strong>,
+        </div>
+
+        <!-- INSTRUCTIONS -->
+        <div class="instructions">
+            Voici votre code de connexion sécurisé pour accéder à votre espace <span class="brand">BOKATI</span>.
+            Ce code est à usage unique et valable pendant <strong>15 minutes</strong>.
+        </div>
+
+        <!-- OTP CODE -->
+        <div class="otp-box" th:text="${token}">
+            123456
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            Si vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message.<br><br>
+
+            <span class="brand">BOKATI</span>  Cowork
+            <br>
+            Développé par <strong>SNI</strong>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

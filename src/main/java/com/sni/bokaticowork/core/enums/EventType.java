@@ -1,0 +1,7 @@
+package com.sni.bokaticowork.core.enums;
+
+public enum EventType {
+    BOOKING_CONFIRMED, BOOKING_CANCELLED, BOOKING_REMINDER, BOOKING_FAILED,
+    INVOICE_ISSUED, PAYMENT_RECEIVED, PAYMENT_FAILED,
+
+}

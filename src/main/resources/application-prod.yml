@@ -1,0 +1,4 @@
+app:
+  security:
+    jwt:
+      secret: ${APP_JWT_SECRET}

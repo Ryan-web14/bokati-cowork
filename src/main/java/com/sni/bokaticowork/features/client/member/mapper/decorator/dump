@@ -1,0 +1,107 @@
+    @Override
+    public member
+ updateEntity(member
+ member
+, UpdateMemberRequest
+ request) {
+        if (member
+ == null || request == null) {
+            return member
+;
+        }
+
+        boolean updated = false;
+
+        if (hasText(request.getType())) {
+            member
+Type requestedType = parsemember
+Type(request.getType());
+            if (member
+.getType() != requestedType) {
+                member
+.setType(requestedType);
+                updated = true;
+            }
+        }
+
+        if (hasText(request.getFirstname()) && !isSameValue(member
+.getFirstname(), request.getFirstname())) {
+            member
+.setFirstname(request.getFirstname().trim());
+            updated = true;
+        }
+
+        if (hasText(request.getLastname()) && !isSameValue(member
+.getLastname(), request.getLastname())) {
+            member
+.setLastname(request.getLastname().trim());
+            updated = true;
+        }
+
+        if (hasText(request.getCompanyName()) && !isSameValue(member
+.getCompanyName(), request.getCompanyName())) {
+            member
+.setCompanyName(request.getCompanyName().trim());
+            updated = true;
+        }
+
+        if (hasText(request.getEmail()) && !isSameEmail(member
+.getEmail(), request.getEmail())) {
+            member
+.setEmail(request.getEmail().trim().toLowerCase(Locale.ROOT));
+            updated = true;
+        }
+
+        if (hasText(request.getBillingEmail()) && !isSameEmail(member
+.getBillingEmail(), request.getBillingEmail())) {
+            member
+.setBillingEmail(request.getBillingEmail().trim().toLowerCase(Locale.ROOT));
+            updated = true;
+        }
+
+        if (hasText(request.getPhone()) && !isSameValue(member
+.getPhone(), request.getPhone())) {
+            member
+.setPhone(request.getPhone().trim());
+            updated = true;
+        }
+
+        if (hasText(request.getWhatsappPhone()) && !isSameValue(member
+.getWhatsappPhone(), request.getWhatsappPhone())) {
+            member
+.setWhatsappPhone(request.getWhatsappPhone().trim());
+            updated = true;
+        }
+
+        if (request.getAddress() != null) {
+            if (member
+.getAddress() == null) {
+                member
+.setAddress(addressMapper.toEntity(request.getAddress()));
+                updated = true;
+            } else if (hasAddressChanges(member
+, request.getAddress())) {
+                AddressRequest mergedAddress = mergeAddressRequest(member
+, request.getAddress());
+                member
+.setAddress(addressMapper.mapAddressUpdate(member
+.getAddress(), mergedAddress));
+                updated = true;
+            }
+        }
+
+        if (updated && member
+.getStatus() == null) {
+            member
+.setStatus(member
+Status.ACTIVE);
+        }
+
+        if (updated) {
+            member
+.setUpdatedAt(Instant.now());
+        }
+
+        return member
+;
+    }
