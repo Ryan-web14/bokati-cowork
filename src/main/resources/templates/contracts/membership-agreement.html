@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${request.title}">Membership Agreement</title>
+    <style>
+        body { font-family: "DejaVu Sans", sans-serif; color: #1f2937; margin: 36px; font-size: 12px; line-height: 1.55; }
+        h1, h2, h3 { color: #111827; margin-bottom: 8px; }
+        h1 { font-size: 22px; border-bottom: 2px solid #111827; padding-bottom: 10px; }
+        .muted { color: #6b7280; }
+        .grid { width: 100%; border-collapse: collapse; margin-top: 14px; }
+        .grid td { border: 1px solid #d1d5db; padding: 8px; vertical-align: top; }
+        .section { margin-top: 22px; }
+        ul { padding-left: 18px; }
+        .signature { margin-top: 48px; width: 100%; border-collapse: collapse; }
+        .signature td { width: 50%; padding-top: 24px; }
+        .line { margin-top: 48px; border-top: 1px solid #111827; width: 80%; }
+    </style>
+</head>
+<body>
+<h1 th:text="${request.title}">Contrat d'adhesion</h1>
+<p class="muted">
+    Genere le <span th:text="${generatedAt}">2026-04-09</span>
+</p>
+
+<div class="section">
+    <h2>Parties</h2>
+    <table class="grid">
+        <tr>
+            <td>
+                <strong>Beneficiaire</strong><br>
+                <span th:text="${ownerName}">Nom du beneficiaire</span><br>
+                <span th:if="${ownerEmail}" th:text="${ownerEmail}">email@test.com</span><br th:if="${ownerEmail}">
+                <span th:if="${ownerPhone}" th:text="${ownerPhone}">690000000</span>
+            </td>
+            <td>
+                <strong>Entite operatrice</strong><br>
+                <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span><br>
+                <span th:if="${business != null and business.email != null}" th:text="${business.email}">contact@test.com</span><br th:if="${business != null and business.email != null}">
+                <span th:if="${business != null and business.phone != null}" th:text="${business.phone}">677000000</span>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>Cadre contractuel</h2>
+    <p>
+        Le present contrat formalise l'acces du beneficiaire aux services, espaces et prestations proposes
+        par l'entite operatrice, selon les conditions commerciales et reglementaires en vigueur.
+    </p>
+    <table class="grid">
+        <tr><td><strong>Date d'effet</strong></td><td th:text="${request.effectiveDate} ?: '-'">-</td></tr>
+        <tr><td><strong>Date de debut</strong></td><td th:text="${request.startDate} ?: '-'">-</td></tr>
+        <tr><td><strong>Date de fin</strong></td><td th:text="${request.endDate} ?: '-'">-</td></tr>
+        <tr><td><strong>Signataire</strong></td><td th:text="${request.signatoryName} ?: ownerName">Nom</td></tr>
+        <tr><td><strong>Fonction</strong></td><td th:text="${request.signatoryRole} ?: 'Membre / Representant'}">Role</td></tr>
+    </table>
+</div>
+
+<div class="section" th:if="${request.description}">
+    <h2>Objet</h2>
+    <p th:text="${request.description}">Description du contrat</p>
+</div>
+
+<div class="section">
+    <h2>Clauses</h2>
+    <ul>
+        <li th:if="${#lists.isEmpty(clauses)}">Le beneficiaire s'engage a respecter le reglement interieur, les conditions d'utilisation des ressources et les obligations de paiement applicables.</li>
+        <li th:each="clause : ${clauses}" th:text="${clause}">Clause contractuelle</li>
+    </ul>
+</div>
+
+<div class="section" th:if="${!#maps.isEmpty(variables)}">
+    <h2>Variables metier</h2>
+    <table class="grid">
+        <tr th:each="entry : ${variables.entrySet()}">
+            <td th:text="${entry.key}">cle</td>
+            <td th:text="${entry.value}">valeur</td>
+        </tr>
+    </table>
+</div>
+
+<table class="signature">
+    <tr>
+        <td>
+            <strong>Le beneficiaire</strong>
+            <div class="line"></div>
+        </td>
+        <td>
+            <strong>L'entite operatrice</strong>
+            <div class="line"></div>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

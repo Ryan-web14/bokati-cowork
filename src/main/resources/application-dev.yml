@@ -1,0 +1,67 @@
+spring:
+
+  datasource:
+    url: jdbc:postgresql://localhost:5434/cowork_dev_db
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 20000
+      minimum-idle: 5
+      max-lifetime: 1000
+
+
+  mail:
+    host: smtp.hostinger.com
+    port: 465
+    username: contact@sni-cg.com
+    password: SNI@project.com24
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: true
+
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 3
+    default-schema: public
+    schemas: public
+    out-of-order: false
+
+
+logging:
+  level:
+    com.sni.ohadabokati: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.flywaydb: DEBUG
+debug: true
+
+app:
+  security:
+    jwt:
+      secret: ${APP_JWT_SECRET:change-this-development-jwt-secret-key-please-change-32-bytes}
+
+management:
+  datadog:
+    metrics:
+      export:
+        enabled: false
+
+  defaults:
+    metrics:
+      export:
+        enabled: false

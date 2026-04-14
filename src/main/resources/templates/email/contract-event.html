@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Notification contrat</title>
+    <style>
+        body { margin:0; padding:0; background:#f5f5f5; font-family: Arial, sans-serif; }
+        .wrap { width:100%; padding:40px 0; background:#f5f5f5; }
+        .card { max-width:520px; margin:auto; background:#fff; border-radius:12px; padding:28px 24px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+        .title { text-align:center; color:#c2410c; font-size:22px; font-weight:700; margin-bottom:18px; }
+        .text { color:#555; font-size:14px; line-height:1.6; }
+        .box { background:#faf1ed; border:1px solid #f1d2c5; border-radius:10px; padding:14px; margin:16px 0; color:#7c2d12; }
+        .footer { margin-top:18px; padding-top:16px; border-top:1px solid #eee; text-align:center; color:#888; font-size:12.5px; line-height:1.6; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <div class="title">Nouveau contrat genere</div>
+        <p class="text">Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p class="text">Un nouveau contrat a ete genere et depose dans votre espace documentaire.</p>
+        <div class="box">
+            <div><strong>Template:</strong> <span th:text="${templateCode}">membership-agreement</span></div>
+            <div><strong>Document:</strong> <span th:text="${documentCode}">DOC-001</span></div>
+        </div>
+        <p class="text">Vous pouvez maintenant le consulter depuis la plateforme.</p>
+        <div class="footer">BOKATI - Cowork</div>
+    </div>
+</div>
+</body>
+</html>

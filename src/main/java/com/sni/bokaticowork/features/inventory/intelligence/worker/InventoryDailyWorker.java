@@ -1,0 +1,186 @@
+package com.sni.bokaticowork.features.inventory.intelligence.worker;
+
+import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
+import com.sni.bokaticowork.features.inventory.asset.enums.AssetAssignmentStatus;
+import com.sni.bokaticowork.features.inventory.asset.enums.AssetMaintenanceStatus;
+import com.sni.bokaticowork.features.inventory.asset.model.Asset;
+import com.sni.bokaticowork.features.inventory.asset.model.AssetAssignment;
+import com.sni.bokaticowork.features.inventory.asset.model.AssetMaintenance;
+import com.sni.bokaticowork.features.inventory.asset.repository.AssetAssignmentRepository;
+import com.sni.bokaticowork.features.inventory.asset.repository.AssetMaintenanceRepository;
+import com.sni.bokaticowork.features.inventory.asset.repository.AssetRepository;
+import com.sni.bokaticowork.features.inventory.intelligence.enums.InventoryAlertStatus;
+import com.sni.bokaticowork.features.inventory.intelligence.enums.InventoryAlertType;
+import com.sni.bokaticowork.features.inventory.intelligence.model.InventoryAlert;
+import com.sni.bokaticowork.features.inventory.intelligence.repository.InventoryAlertRepository;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockReservationStatus;
+import com.sni.bokaticowork.features.inventory.stock.model.StockLevel;
+import com.sni.bokaticowork.features.inventory.stock.model.StockLot;
+import com.sni.bokaticowork.features.inventory.stock.model.StockReservation;
+import com.sni.bokaticowork.features.inventory.stock.repository.StockLevelRepository;
+import com.sni.bokaticowork.features.inventory.stock.repository.StockLotRepository;
+import com.sni.bokaticowork.features.inventory.stock.repository.StockReservationRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class InventoryDailyWorker {
+
+    private static final int EXPIRY_WINDOW_DAYS = 30;
+    private static final int WARRANTY_WINDOW_DAYS = 30;
+
+    private final StockLotRepository lotRepository;
+    private final StockReservationRepository reservationRepository;
+    private final StockLevelRepository stockLevelRepository;
+    private final AssetRepository assetRepository;
+    private final AssetAssignmentRepository assignmentRepository;
+    private final AssetMaintenanceRepository maintenanceRepository;
+    private final InventoryAlertRepository alertRepository;
+    private final SequenceGeneratorFacade sequenceGenerator;
+    private final OutboxService outboxService;
+
+    @Scheduled(cron = "${inventory.worker.daily-cron:0 0 2 * * *}")
+    @Transactional
+    public void runDailyInventoryChecks() {
+        int expiry = detectExpirySoon();
+        int expiredReservations = expireReservations();
+        int warranties = detectWarrantySoon();
+        int maintenance = detectMaintenanceDue();
+        int overdueReturns = detectOverdueReturns();
+        log.info("Inventory daily worker completed: expirySoon={}, expiredReservations={}, warrantySoon={}, maintenanceDue={}, overdueReturns={}",
+                expiry, expiredReservations, warranties, maintenance, overdueReturns);
+    }
+
+    private int detectExpirySoon() {
+        int created = 0;
+        for (StockLot lot : lotRepository.findExpiringLots(LocalDate.now().plusDays(EXPIRY_WINDOW_DAYS), BigDecimal.ZERO)) {
+            if (alertRepository.findFirstByAlertTypeAndItemAndLocationAndStatusOrderByCreatedAtDesc(
+                    InventoryAlertType.EXPIRY_SOON, lot.getItem(), lot.getLocation(), InventoryAlertStatus.OPEN).isPresent()) {
+                continue;
+            }
+            InventoryAlert alert = baseAlert(InventoryAlertType.EXPIRY_SOON,
+                    "Lot " + lot.getLotNumber() + " expire le " + lot.getExpiryDate());
+            alert.setItem(lot.getItem());
+            alert.setLocation(lot.getLocation());
+            alert.setCurrentQuantity(lot.getRemainingQuantity());
+            alert.setThresholdQuantity(BigDecimal.ZERO);
+            saveAndPublish(alert);
+            created++;
+        }
+        return created;
+    }
+
+    private int expireReservations() {
+        int expired = 0;
+        for (StockReservation reservation : reservationRepository.findAllByStatusAndExpiresAtBefore(StockReservationStatus.ACTIVE, Instant.now())) {
+            StockLevel level = stockLevelRepository.findByItemAndLocationForUpdate(reservation.getItem(), reservation.getLocation())
+                    .orElse(null);
+            if (level != null) {
+                level.setQuantityReserved(level.getQuantityReserved().subtract(reservation.getQuantity()).max(BigDecimal.ZERO));
+                level.recalculateAvailable();
+                stockLevelRepository.save(level);
+            }
+            reservation.setStatus(StockReservationStatus.EXPIRED);
+            reservation.setClosedAt(Instant.now());
+            reservationRepository.save(reservation);
+            expired++;
+        }
+        return expired;
+    }
+
+    private int detectWarrantySoon() {
+        int created = 0;
+        LocalDate maxDate = LocalDate.now().plusDays(WARRANTY_WINDOW_DAYS);
+        for (Asset asset : assetRepository.findAll()) {
+            if (asset.getWarrantyEndDate() == null || asset.getWarrantyEndDate().isAfter(maxDate)) {
+                continue;
+            }
+            if (alertRepository.findFirstByAlertTypeAndAssetCodeAndStatusOrderByCreatedAtDesc(
+                    InventoryAlertType.WARRANTY_SOON, asset.getAssetCode(), InventoryAlertStatus.OPEN).isPresent()) {
+                continue;
+            }
+            InventoryAlert alert = baseAlert(InventoryAlertType.WARRANTY_SOON,
+                    "Garantie bientot expiree pour asset " + asset.getAssetCode());
+            alert.setAssetCode(asset.getAssetCode());
+            alert.setItem(asset.getItem());
+            alert.setLocation(asset.getLocation());
+            saveAndPublish(alert);
+            created++;
+        }
+        return created;
+    }
+
+    private int detectMaintenanceDue() {
+        int created = 0;
+        for (AssetMaintenance maintenance : maintenanceRepository.findAllByStatusAndScheduledAtBefore(
+                AssetMaintenanceStatus.PLANNED, Instant.now().plus(1, ChronoUnit.DAYS))) {
+            Asset asset = maintenance.getAsset();
+            if (alertRepository.findFirstByAlertTypeAndAssetCodeAndStatusOrderByCreatedAtDesc(
+                    InventoryAlertType.MAINTENANCE_DUE, asset.getAssetCode(), InventoryAlertStatus.OPEN).isPresent()) {
+                continue;
+            }
+            InventoryAlert alert = baseAlert(InventoryAlertType.MAINTENANCE_DUE,
+                    "Maintenance due pour asset " + asset.getAssetCode());
+            alert.setAssetCode(asset.getAssetCode());
+            alert.setItem(asset.getItem());
+            alert.setLocation(asset.getLocation());
+            saveAndPublish(alert);
+            created++;
+        }
+        return created;
+    }
+
+    private int detectOverdueReturns() {
+        int created = 0;
+        for (AssetAssignment assignment : assignmentRepository.findAllByStatusAndExpectedReturnAtBefore(
+                AssetAssignmentStatus.ACTIVE, Instant.now())) {
+            Asset asset = assignment.getAsset();
+            if (alertRepository.findFirstByAlertTypeAndAssetCodeAndStatusOrderByCreatedAtDesc(
+                    InventoryAlertType.ASSET_RETURN_OVERDUE, asset.getAssetCode(), InventoryAlertStatus.OPEN).isPresent()) {
+                continue;
+            }
+            InventoryAlert alert = baseAlert(InventoryAlertType.ASSET_RETURN_OVERDUE,
+                    "Retour asset en retard pour " + asset.getAssetCode());
+            alert.setAssetCode(asset.getAssetCode());
+            alert.setItem(asset.getItem());
+            alert.setLocation(asset.getLocation());
+            saveAndPublish(alert);
+            created++;
+        }
+        return created;
+    }
+
+    private InventoryAlert baseAlert(InventoryAlertType type, String message) {
+        return InventoryAlert.builder()
+                .alertCode(sequenceGenerator.next("inventory_alert", LocalDate.now()) + "-" + System.currentTimeMillis())
+                .alertType(type)
+                .status(InventoryAlertStatus.OPEN)
+                .message(message)
+                .createdAt(Instant.now())
+                .build();
+    }
+
+    private void saveAndPublish(InventoryAlert alert) {
+        InventoryAlert saved = alertRepository.save(alert);
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("alertCode", saved.getAlertCode());
+        payload.put("alertType", saved.getAlertType());
+        payload.put("itemCode", saved.getItem() == null ? null : saved.getItem().getItemCode());
+        payload.put("locationCode", saved.getLocation() == null ? null : saved.getLocation().getLocationCode());
+        payload.put("assetCode", saved.getAssetCode());
+        outboxService.publish("inventory.alert.created", "INVENTORY_ALERT", saved.getAlertCode(), payload);
+    }
+}

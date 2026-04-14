@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${request.title}">Business Service Agreement</title>
+    <style>
+        body { font-family: "DejaVu Sans", sans-serif; color: #172033; margin: 34px; font-size: 12px; line-height: 1.6; }
+        h1 { font-size: 24px; margin-bottom: 6px; }
+        h2 { font-size: 15px; margin-top: 24px; }
+        .subtitle { color: #4b5563; margin-bottom: 22px; }
+        .card { border: 1px solid #d1d5db; padding: 12px; margin-top: 10px; }
+        .two-col { width: 100%; border-collapse: collapse; }
+        .two-col td { width: 50%; vertical-align: top; padding-right: 18px; }
+        ul { padding-left: 18px; }
+    </style>
+</head>
+<body>
+<h1 th:text="${request.title}">Contrat de prestation</h1>
+<div class="subtitle">
+    Template <span th:text="${request.templateCode}">business-service-agreement</span> |
+    Genere le <span th:text="${generatedAt}">2026-04-09</span>
+</div>
+
+<table class="two-col">
+    <tr>
+        <td>
+            <h2>Client / cocontractant</h2>
+            <div class="card">
+                <strong th:text="${ownerName}">Societe cliente</strong><br>
+                <span th:text="${ownerCode}">CODE</span><br>
+                <span th:if="${ownerEmail}" th:text="${ownerEmail}">email@test.com</span><br th:if="${ownerEmail}">
+                <span th:if="${ownerPhone}" th:text="${ownerPhone}">690000000</span>
+            </div>
+        </td>
+        <td>
+            <h2>Entite operatrice</h2>
+            <div class="card">
+                <strong th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</strong><br>
+                <span th:if="${business != null}" th:text="${business.code}">BUS-001</span><br th:if="${business != null}">
+                <span th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</span><br th:if="${business != null and business.legalForm != null}">
+                <span th:if="${business != null and business.email != null}" th:text="${business.email}">contact@test.com</span>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<h2>Periode</h2>
+<div class="card">
+    Date d'effet: <strong th:text="${request.effectiveDate} ?: '-'">-</strong><br>
+    Date de debut: <strong th:text="${request.startDate} ?: '-'">-</strong><br>
+    Date de fin: <strong th:text="${request.endDate} ?: '-'">-</strong>
+</div>
+
+<h2>Objet</h2>
+<div class="card">
+    <p th:text="${request.description} ?: 'Le present contrat encadre les prestations, services et obligations reciporques convenus entre les parties.'">
+        Objet du contrat.
+    </p>
+</div>
+
+<h2>Clauses principales</h2>
+<ul>
+    <li th:if="${#lists.isEmpty(clauses)}">Les services sont fournis conformement aux conditions commerciales et operationnelles validees entre les parties.</li>
+    <li th:each="clause : ${clauses}" th:text="${clause}">Clause</li>
+</ul>
+
+<h2>Variables contractuelles</h2>
+<div class="card">
+    <div th:if="${#maps.isEmpty(variables)}">Aucune variable supplementaire fournie.</div>
+    <div th:each="entry : ${variables.entrySet()}">
+        <strong th:text="${entry.key}">cle</strong>: <span th:text="${entry.value}">valeur</span>
+    </div>
+</div>
+
+<h2>Signature</h2>
+<div class="card">
+    Signataire: <strong th:text="${request.signatoryName} ?: ownerName">Nom</strong><br>
+    Qualite: <strong th:text="${request.signatoryRole} ?: 'Representant autorise'}">Role</strong>
+</div>
+</body>
+</html>
