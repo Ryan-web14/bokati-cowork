@@ -29,7 +29,8 @@ public class InventoryLocationServiceImpl implements InventoryLocationService {
 
     @Override
     public InventoryLocationResponse create(InventoryLocationRequest request) {
-        String code = normalizeCode(StringUtils.hasText(request.getLocationCode()) ? request.getLocationCode() : codeWithMillis());
+       // String code = normalizeCode(StringUtils.hasText(request.getLocationCode()) ? request.getLocationCode() : codeWithMillis());
+        String code = normalizeCode(codeWithMillis());
         if (repository.existsByLocationCode(code)) {
             throw new ResourceAlreadyExistException("Inventory location already exists");
         }

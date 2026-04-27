@@ -25,18 +25,33 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
 
     Page<PurchaseOrder> findAllByStatus(PurchaseOrderStatus status, Pageable pageable);
 
-    @Query("""
-            SELECT po FROM PurchaseOrder po
-            JOIN po.supplier supplier
-            LEFT JOIN po.location location
-            WHERE (:status IS NULL OR po.status = :status)
-              AND (:supplierCode IS NULL OR supplier.supplierCode = :supplierCode)
-              AND (:locationCode IS NULL OR location.locationCode = :locationCode)
-              AND (:query IS NULL OR UPPER(po.orderCode) LIKE CONCAT('%', :query, '%')
-                   OR UPPER(po.sourceRequestCode) LIKE CONCAT('%', :query, '%')
+    @Query(value = """
+            SELECT po.*
+            FROM inventory_purchase_order po
+            JOIN inventory_supplier supplier ON supplier.id = po.supplier_id
+            LEFT JOIN inventory_location location ON location.id = po.location_id
+            WHERE (CAST(:status AS varchar) IS NULL OR po.status = :status)
+              AND (CAST(:supplierCode AS varchar) IS NULL OR supplier.supplier_code = :supplierCode)
+              AND (CAST(:locationCode AS varchar) IS NULL OR location.location_code = :locationCode)
+              AND (CAST(:query AS varchar) IS NULL OR UPPER(po.order_code) LIKE CONCAT('%', :query, '%')
+                   OR UPPER(po.source_request_code) LIKE CONCAT('%', :query, '%')
                    OR UPPER(supplier.name) LIKE CONCAT('%', :query, '%'))
-            """)
-    Page<PurchaseOrder> search(@Param("status") PurchaseOrderStatus status,
+            ORDER BY po.created_at DESC
+            """,
+            countQuery = """
+            SELECT COUNT(*)
+            FROM inventory_purchase_order po
+            JOIN inventory_supplier supplier ON supplier.id = po.supplier_id
+            LEFT JOIN inventory_location location ON location.id = po.location_id
+            WHERE (CAST(:status AS varchar) IS NULL OR po.status = :status)
+              AND (CAST(:supplierCode AS varchar) IS NULL OR supplier.supplier_code = :supplierCode)
+              AND (CAST(:locationCode AS varchar) IS NULL OR location.location_code = :locationCode)
+              AND (CAST(:query AS varchar) IS NULL OR UPPER(po.order_code) LIKE CONCAT('%', :query, '%')
+                   OR UPPER(po.source_request_code) LIKE CONCAT('%', :query, '%')
+                   OR UPPER(supplier.name) LIKE CONCAT('%', :query, '%'))
+            """,
+            nativeQuery = true)
+    Page<PurchaseOrder> search(@Param("status") String status,
                                @Param("supplierCode") String supplierCode,
                                @Param("locationCode") String locationCode,
                                @Param("query") String query,

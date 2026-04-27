@@ -28,7 +28,6 @@ public class GenerateContractRequest {
 
     private String description;
 
-    @NotNull
     private Long uploadedBy;
 
     private LocalDate effectiveDate;

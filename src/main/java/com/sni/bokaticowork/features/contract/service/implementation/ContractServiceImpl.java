@@ -330,6 +330,7 @@ public class ContractServiceImpl implements ContractService {
                     || targetStatus == ContractStatus.GENERATED
                     || targetStatus == ContractStatus.CANCELLED;
             case AWAITING_SIGNATURE -> targetStatus == ContractStatus.SIGNED
+                    || targetStatus == ContractStatus.GENERATED
                     || targetStatus == ContractStatus.CANCELLED;
             case SIGNED -> targetStatus == ContractStatus.ACTIVE
                     || targetStatus == ContractStatus.CANCELLED;

@@ -536,7 +536,7 @@ Retour : `Page<StockMovementResponse>`
 
 ---
 
-## 7. Stock — Reservations
+  ## 7. Stock — Reservations
 
 ### Creer une reservation
 

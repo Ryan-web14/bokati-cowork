@@ -19,6 +19,10 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
 
     Page<ResourceAvailability> findAllByResource(Resource resource, Pageable pageable);
 
+    Page<ResourceAvailability> findAllByEndedAtAfter(LocalDateTime cutoff, Pageable pageable);
+
+    Page<ResourceAvailability> findAllByResourceAndEndedAtAfter(Resource resource, LocalDateTime cutoff, Pageable pageable);
+
     @Query("""
             select case when count(ra) > 0 then true else false end
             from ResourceAvailability ra
@@ -32,6 +36,23 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             @Param("startedAt") LocalDateTime startedAt,
             @Param("endedAt") LocalDateTime endedAt
     );
+
+    @Query("""
+            select ra
+            from ResourceAvailability ra
+            join fetch ra.resource resource
+            order by resource.code asc, ra.startedAt asc
+            """)
+    List<ResourceAvailability> findAllForGroupedView();
+
+    @Query("""
+            select ra
+            from ResourceAvailability ra
+            join fetch ra.resource resource
+            where ra.endedAt > :cutoff
+            order by resource.code asc, ra.startedAt asc
+            """)
+    List<ResourceAvailability> findFutureForGroupedView(@Param("cutoff") LocalDateTime cutoff);
 
     @Query("""
             select ra
@@ -62,6 +83,21 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             @Param("endedAt") LocalDateTime endedAt
     );
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select ra
+            from ResourceAvailability ra
+            where ra.resource = :resource
+              and ra.startedAt < :endedAt
+              and ra.endedAt > :startedAt
+            order by ra.startedAt asc
+            """)
+    List<ResourceAvailability> lockOverlappingSlots(
+            @Param("resource") Resource resource,
+            @Param("startedAt") LocalDateTime startedAt,
+            @Param("endedAt") LocalDateTime endedAt
+    );
+
     @Query("""
             select ra
             from ResourceAvailability ra
@@ -75,4 +111,28 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             @Param("startedAt") LocalDateTime startedAt,
             @Param("endedAt") LocalDateTime endedAt
     );
+
+    @Query("""
+            select ra
+            from ResourceAvailability ra
+            where ra.resource = :resource
+              and ra.active = true
+              and ra.available = true
+              and ra.remainingCapacity > 0
+              and ra.startedAt >= :startedAt
+            order by ra.startedAt asc
+            """)
+    List<ResourceAvailability> findFutureReservableSlots(
+            @Param("resource") Resource resource,
+            @Param("startedAt") LocalDateTime startedAt
+    );
+
+    @Query("""
+            select ra
+            from ResourceAvailability ra
+            where ra.endedAt <= :cutoff
+              and (ra.active = true or ra.available = true)
+            order by ra.endedAt asc
+            """)
+    List<ResourceAvailability> findExpiredSlots(@Param("cutoff") LocalDateTime cutoff);
 }

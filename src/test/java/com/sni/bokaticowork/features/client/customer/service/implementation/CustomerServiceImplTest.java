@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -103,5 +104,35 @@ class CustomerServiceImplTest {
 
         assertEquals(1, results.size());
         assertEquals("CUS-0010", results.getFirst().getCustomerId());
+    }
+
+    @Test
+    void shouldResolveCustomerForServiceByCustomerId() {
+        Customer customer = Customer.builder()
+                .id(10L)
+                .customerId("CUS-PER-2604-0001")
+                .build();
+
+        when(customerRepo.findByCustomerId("CUS-PER-2604-0001")).thenReturn(Optional.of(customer));
+
+        Customer result = customerService.getCustomerForService(" CUS-PER-2604-0001 ");
+
+        assertSame(customer, result);
+    }
+
+    @Test
+    void shouldResolveCustomerForServiceByNumericIdWhenCustomerIdIsMissing() {
+        long numericId = 7242491337790099000L;
+        Customer customer = Customer.builder()
+                .id(numericId)
+                .customerId("CUS-PER-2604-0001")
+                .build();
+
+        when(customerRepo.findByCustomerId(String.valueOf(numericId))).thenReturn(Optional.empty());
+        when(customerRepo.findById(numericId)).thenReturn(Optional.of(customer));
+
+        Customer result = customerService.getCustomerForService(String.valueOf(numericId));
+
+        assertSame(customer, result);
     }
 }

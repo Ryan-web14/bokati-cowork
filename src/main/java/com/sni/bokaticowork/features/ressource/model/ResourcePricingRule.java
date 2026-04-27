@@ -39,6 +39,10 @@ public class ResourcePricingRule {
     @Builder.Default
     private Boolean active = Boolean.TRUE;
 
+    @Column(name = "deleted", nullable = false)
+    @Builder.Default
+    private Boolean deleted = Boolean.FALSE;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

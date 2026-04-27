@@ -5,6 +5,7 @@ import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceAvailab
 import com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityResponse;
+import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityGroupResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -18,6 +19,8 @@ public interface ResourceAvailabilityService {
     PaginatedResponse<ResourceAvailabilityResponse> list(Pageable pageable);
 
     PaginatedResponse<ResourceAvailabilityResponse> listByResource(String resourceCode, Pageable pageable);
+
+    List<ResourceAvailabilityGroupResponse> listGroupedByResource();
 
     List<ResourceAvailabilityWindowResponse> findRemainingWindows(
             String resourceCode,

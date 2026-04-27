@@ -14,6 +14,7 @@ import com.sni.bokaticowork.core.baseClasses.model.Address;
 import com.sni.bokaticowork.core.baseClasses.service.interfaces.AddressService;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.validation.ValidationUtils;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
@@ -30,6 +31,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Transactional
@@ -59,7 +61,9 @@ public class CustomerServiceImpl implements CustomerService {
             Address persistedAddress = addressService.createAddress(request.getAddress());
             obj.setAddress(persistedAddress);
         }
-        obj.setCustomerId(sequenceGenerator.next("CUSTOMER".toLowerCase(), LocalDate.now()));
+        String customerTypeAbbrev = obj.getType() != null ? CodeComposer.abbrev(obj.getType().name()) : "CLT";
+        long customerSeq = CodeComposer.extractSeq(sequenceGenerator.next("customer", LocalDate.now()));
+        obj.setCustomerId(CodeComposer.withMonth("CUS", customerTypeAbbrev, LocalDate.now(), customerSeq));
         obj.setStatus(CustomerStatus.ACTIVE);
         customerRepo.save(obj);
         kycAutomationService.initializeCustomerKyc(obj.getCustomerId());
@@ -144,14 +148,15 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Customer getCustomerForService(String customerId){
-
-        if(!customerRepo.existsByCustomerId(customerId)){
+        String normalizedCustomerId = customerId == null ? null : customerId.trim();
+        if (!StringUtils.hasText(normalizedCustomerId)) {
             throw new ResourceNotFoundException("Customer with id " + customerId + " not found");
         }
 
-        log.debug("Getting customer by id {}", customerId);
-        return customerRepo.findByCustomerId(customerId)
-                .orElseThrow(()-> new IllegalArgumentException("Customer with id " + customerId + " not found"));
+        log.debug("Getting customer by id {}", normalizedCustomerId);
+        return customerRepo.findByCustomerId(normalizedCustomerId)
+                .or(() -> findCustomerByNumericId(normalizedCustomerId))
+                .orElseThrow(()-> new ResourceNotFoundException("Customer with id " + customerId + " not found"));
     }
 
     @Override
@@ -249,6 +254,17 @@ public class CustomerServiceImpl implements CustomerService {
             return CustomerType.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException ex) {
             return null;
+        }
+    }
+
+    private Optional<Customer> findCustomerByNumericId(String value) {
+        if (!StringUtils.hasText(value)) {
+            return Optional.empty();
+        }
+        try {
+            return customerRepo.findById(Long.valueOf(value));
+        } catch (NumberFormatException ex) {
+            return Optional.empty();
         }
     }
 

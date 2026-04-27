@@ -18,6 +18,7 @@ public class EmailTemplateConfig {
         resolver.setSuffix(".html");
         resolver.setTemplateMode(TemplateMode.HTML);
         resolver.setCharacterEncoding("UTF-8");
+        resolver.setCheckExistence(true);
         return resolver;
     }
 

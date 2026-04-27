@@ -7,6 +7,7 @@ import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest;
+import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityGroupResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceAvailabilityService;
@@ -54,12 +55,17 @@ public class ResourceAvailabilityController {
         return ResponseEntity.ok(resourceAvailabilityService.list(pageable));
     }
 
+    @GetMapping("/grouped")
+    public ResponseEntity<List<ResourceAvailabilityGroupResponse>> listGroupedByResource() {
+        return ResponseEntity.ok(resourceAvailabilityService.listGroupedByResource());
+    }
+
     @GetMapping("/remaining")
     public ResponseEntity<List<ResourceAvailabilityWindowResponse>> remaining(
             @RequestParam String resourceCode,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startedAt,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endedAt,
-            @RequestParam Integer durationMinutes,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startedAt,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endedAt,
+            @RequestParam(required = false) Integer durationMinutes,
             @RequestParam(defaultValue = "1") Integer quantity) {
         return ResponseEntity.ok(
                 resourceAvailabilityService.findRemainingWindows(resourceCode, startedAt, endedAt, durationMinutes, quantity)

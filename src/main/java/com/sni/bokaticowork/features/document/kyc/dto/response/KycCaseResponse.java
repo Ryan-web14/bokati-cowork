@@ -13,6 +13,7 @@ import java.util.List;
 public class KycCaseResponse {
     private String code;
     private String ownerName;
+    private String ownerCode;
     private DocumentOwnerType ownerType;
     private Long ownerId;
     private KycCaseStatus status;

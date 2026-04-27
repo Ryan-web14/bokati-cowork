@@ -7,6 +7,7 @@ import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest;
+import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityGroupResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse;
 import com.sni.bokaticowork.features.ressource.enums.ResourceStatus;
@@ -26,9 +27,12 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -36,6 +40,9 @@ import java.util.List;
 public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityService {
 
     private static final int SLOT_MINUTES = 30;
+    private static final int MAX_AVAILABILITY_CREATION_MONTHS = 1;
+    private static final LocalTime WORKING_DAY_START = LocalTime.of(8, 0);
+    private static final LocalTime WORKING_DAY_END = LocalTime.of(20, 0);
 
     private final ResourceAvailabilityRepository availabilityRepository;
     private final ResourceClosureRepository closureRepository;
@@ -50,7 +57,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
         assertResourceBookable(resource);
-        assertPolicyAllowsWindow(resource, request.getStartedAt(), request.getEndedAt());
+        assertAvailabilityCreationWindow(request.getStartedAt(), request.getEndedAt());
 
         if (closureRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
             throw new ConflictException("resource availability", "the requested range overlaps an active closure");
@@ -68,7 +75,9 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     @Override
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourceAvailabilityResponse> list(Pageable pageable) {
-        Page<ResourceAvailabilityResponse> page = availabilityRepository.findAll(pageable).map(this::toResponse);
+        expirePastAvailabilitySlots();
+        Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByEndedAtAfter(LocalDateTime.now(), pageable)
+                .map(this::toResponse);
         return new PaginatedResponse<>(page);
     }
 
@@ -76,8 +85,29 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     @Transactional(readOnly = true)
     public PaginatedResponse<ResourceAvailabilityResponse> listByResource(String resourceCode, Pageable pageable) {
         Resource resource = resourceService.getResourceForService(resourceCode);
-        Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByResource(resource, pageable).map(this::toResponse);
+        expirePastAvailabilitySlots();
+        Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByResourceAndEndedAtAfter(resource, LocalDateTime.now(), pageable)
+                .map(this::toResponse);
         return new PaginatedResponse<>(page);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResourceAvailabilityGroupResponse> listGroupedByResource() {
+        expirePastAvailabilitySlots();
+        Map<String, ResourceAvailabilityGroupResponse> grouped = new LinkedHashMap<>();
+
+        availabilityRepository.findFutureForGroupedView(LocalDateTime.now()).forEach(slot -> {
+            Resource resource = slot.getResource();
+            grouped.computeIfAbsent(resource.getCode(), code -> ResourceAvailabilityGroupResponse.builder()
+                    .resourceCode(code)
+                    .resourceName(resource.getName())
+                    .availabilities(new ArrayList<>())
+                    .build()
+            ).getAvailabilities().add(toResponse(slot));
+        });
+
+        return new ArrayList<>(grouped.values());
     }
 
     @Override
@@ -89,9 +119,14 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             Integer durationMinutes,
             Integer quantity
     ) {
+        expirePastAvailabilitySlots();
         Resource resource = resourceService.getResourceForService(resourceCode);
-        int normalizedDuration = normalizeDurationMinutes(durationMinutes);
         int normalizedQuantity = normalizeQuantity(quantity);
+        if (startedAt == null && endedAt == null && durationMinutes == null) {
+            return findFullRemainingWindows(resource, normalizedQuantity);
+        }
+
+        int normalizedDuration = normalizeDurationMinutes(durationMinutes);
         validateSearchWindow(startedAt, endedAt, normalizedDuration);
         assertPolicyAllowsWindow(resource, startedAt, startedAt.plusMinutes(normalizedDuration));
 
@@ -134,6 +169,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     @Override
     public void reserve(ReserveResourceAvailabilityRequest request) {
+        expirePastAvailabilitySlots();
         List<String> errors = validateReservationRequest(request);
         if (!errors.isEmpty()) {
             throw new ValidationException("Invalid resource reservation request", errors);
@@ -164,6 +200,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     @Override
     public void release(ReleaseResourceAvailabilityRequest request) {
+        expirePastAvailabilitySlots();
         List<String> errors = validateReleaseRequest(request);
         if (!errors.isEmpty()) {
             throw new ValidationException("Invalid resource availability release request", errors);
@@ -214,6 +251,23 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
     }
 
+    private void assertAvailabilityCreationWindow(LocalDateTime startedAt, LocalDateTime endedAt) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime latestAllowedEnd = now.toLocalDate()
+                .plusMonths(MAX_AVAILABILITY_CREATION_MONTHS)
+                .atTime(WORKING_DAY_END);
+
+        if (startedAt.isBefore(now)) {
+            throw new ConflictException("resource availability", "availability cannot be created in the past");
+        }
+        if (endedAt.isAfter(latestAllowedEnd)) {
+            throw new ConflictException("resource availability", "availability can only be created up to one month in advance");
+        }
+        if (!isValidAvailabilityStart(startedAt.toLocalTime()) || !isValidAvailabilityEnd(endedAt.toLocalTime())) {
+            throw new ConflictException("resource availability", "availability must be created within working hours from 08:00 to 20:00");
+        }
+    }
+
     private boolean respectsBookingNotice(Resource resource, LocalDateTime startedAt) {
         ResourcePolicy policy = resource.getResourcePolicy();
         if (policy == null) {
@@ -231,7 +285,24 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         LocalDateTime current = startedAt;
 
         while (current.isBefore(endedAt)) {
+            LocalDateTime workingDayStart = current.toLocalDate().atTime(WORKING_DAY_START);
+            LocalDateTime workingDayEnd = current.toLocalDate().atTime(WORKING_DAY_END);
+
+            if (current.isBefore(workingDayStart)) {
+                current = workingDayStart;
+            }
+            if (!current.isBefore(endedAt)) {
+                break;
+            }
+            if (!current.isBefore(workingDayEnd)) {
+                current = current.toLocalDate().plusDays(1).atTime(WORKING_DAY_START);
+                continue;
+            }
+
             LocalDateTime next = current.plusMinutes(SLOT_MINUTES);
+            if (next.isAfter(workingDayEnd) || next.isAfter(endedAt)) {
+                break;
+            }
             slots.add(ResourceAvailability.builder()
                     .resource(resource)
                     .startedAt(current)
@@ -246,6 +317,14 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
 
         return slots;
+    }
+
+    private boolean isValidAvailabilityStart(LocalTime value) {
+        return !value.isBefore(WORKING_DAY_START) && value.isBefore(WORKING_DAY_END);
+    }
+
+    private boolean isValidAvailabilityEnd(LocalTime value) {
+        return value.isAfter(WORKING_DAY_START) && !value.isAfter(WORKING_DAY_END);
     }
 
     private ResourceAvailabilityResponse toResponse(ResourceAvailability slot) {
@@ -314,6 +393,75 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             throw new BadRequestException("Quantity must be greater than zero");
         }
         return quantity;
+    }
+
+    private void expirePastAvailabilitySlots() {
+        LocalDateTime now = LocalDateTime.now();
+        List<ResourceAvailability> expiredSlots = availabilityRepository.findExpiredSlots(now);
+        if (expiredSlots.isEmpty()) {
+            return;
+        }
+
+        expiredSlots.forEach(slot -> {
+            slot.setAvailable(Boolean.FALSE);
+            slot.setActive(Boolean.FALSE);
+        });
+        availabilityRepository.saveAll(expiredSlots);
+    }
+
+    private List<ResourceAvailabilityWindowResponse> findFullRemainingWindows(Resource resource, int quantity) {
+        List<ResourceAvailability> slots = availabilityRepository.findFutureReservableSlots(resource, LocalDateTime.now()).stream()
+                .sorted(Comparator.comparing(ResourceAvailability::getStartedAt))
+                .toList();
+
+        List<ResourceAvailabilityWindowResponse> windows = new ArrayList<>();
+        List<ResourceAvailability> currentWindow = new ArrayList<>();
+
+        for (ResourceAvailability slot : slots) {
+            if (!allReservable(List.of(slot), quantity) || !respectsBookingNotice(resource, slot.getStartedAt())) {
+                flushWindow(resource, currentWindow, windows);
+                continue;
+            }
+
+            if (currentWindow.isEmpty()) {
+                currentWindow.add(slot);
+                continue;
+            }
+
+            ResourceAvailability previous = currentWindow.getLast();
+            if (!previous.getEndedAt().equals(slot.getStartedAt())) {
+                flushWindow(resource, currentWindow, windows);
+            }
+            currentWindow.add(slot);
+        }
+
+        flushWindow(resource, currentWindow, windows);
+        return windows;
+    }
+
+    private void flushWindow(Resource resource,
+                             List<ResourceAvailability> currentWindow,
+                             List<ResourceAvailabilityWindowResponse> windows) {
+        if (currentWindow.isEmpty()) {
+            return;
+        }
+
+        int remainingCapacity = currentWindow.stream()
+                .map(ResourceAvailability::getRemainingCapacity)
+                .min(Integer::compareTo)
+                .orElse(0);
+        LocalDateTime windowStart = currentWindow.getFirst().getStartedAt();
+        LocalDateTime windowEnd = currentWindow.getLast().getEndedAt();
+
+        windows.add(ResourceAvailabilityWindowResponse.builder()
+                .resourceCode(resource.getCode())
+                .startedAt(windowStart)
+                .endedAt(windowEnd)
+                .durationMinutes(Math.toIntExact(Duration.between(windowStart, windowEnd).toMinutes()))
+                .remainingCapacity(remainingCapacity)
+                .slotCount(currentWindow.size())
+                .build());
+        currentWindow.clear();
     }
 
     private void validateSearchWindow(LocalDateTime startedAt, LocalDateTime endedAt, int durationMinutes) {

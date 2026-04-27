@@ -19,4 +19,5 @@ public interface DocumentService {
     List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse> listVersions(String documentCode);
     DocumentResponse approve(String documentCode, DocumentReviewDecisionRequest request);
     DocumentResponse reject(String documentCode, DocumentReviewDecisionRequest request);
+    byte[] downloadFile(String documentCode);
 }

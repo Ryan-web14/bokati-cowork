@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
@@ -120,7 +121,7 @@ public class GlobalExceptionHandler {
                 "Validation error",
                 request,
                 ex,
-                null,
+                ex.getErrors(),
                 ex);
         return buildResponseEntity(error);
     }
@@ -177,6 +178,23 @@ public class GlobalExceptionHandler {
                 request,
                 ex,
                 List.of("Missing multipart request part: " + ex.getRequestPartName()),
+                ex);
+        return buildResponseEntity(error);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Object> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException ex, HttpServletRequest request
+    ) {
+        String message = "Missing request parameter: " + ex.getParameterName();
+        ApiError error = errorResponse.buildErrorResponse(
+                ErrorCode.BAD_REQUEST,
+                HttpStatus.BAD_REQUEST,
+                message,
+                "Bad request error",
+                request,
+                ex,
+                List.of(message),
                 ex);
         return buildResponseEntity(error);
     }

@@ -20,17 +20,23 @@ import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.Invent
 import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.InventoryUnitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class InventoryItemServiceImpl implements InventoryItemService, InventoryItemLookupService {
+
+    private static final String INVENTORY_ITEM_SEQUENCE = "inventory_item";
+    private static final DateTimeFormatter ITEM_CODE_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
     private final InventoryItemRepository repository;
     private final InventoryCategoryService categoryService;
@@ -41,11 +47,11 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
     @Override
     public InventoryItemResponse create(InventoryItemRequest request) {
         InventoryItem entity = mapper.toEntity(request);
-        entity.setItemCode(normalizeCode(StringUtils.hasText(request.getItemCode())
-                ? request.getItemCode()
-                : codeWithMillis("inventory_item")));
-        assertUniqueCreate(entity.getItemCode(), request);
         apply(entity, request);
+        assignGeneratedCodes(entity, true);
+        assertUniqueCreate(entity.getItemCode(), request);
+        validateUniqueBusinessCodes(entity);
+        refreshSearchText(entity);
         repository.save(entity);
         return mapper.toResponse(entity);
     }
@@ -54,6 +60,9 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
     public InventoryItemResponse update(String itemCode, InventoryItemRequest request) {
         InventoryItem entity = findByItemCodeOrThrow(itemCode);
         apply(entity, request);
+        assignGeneratedCodes(entity, false);
+        validateUniqueBusinessCodes(entity);
+        refreshSearchText(entity);
         repository.save(entity);
         return mapper.toResponse(entity);
     }
@@ -67,13 +76,10 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
     @Override
     @Transactional(readOnly = true)
     public Page<InventoryItemResponse> search(String query, String categoryCode, InventoryItemType itemType, Boolean active, Pageable pageable) {
-        if (!StringUtils.hasText(query)) {
-            return repository.findAll(InventoryItemSpecification.filters(categoryCode, itemType, active), pageable)
-                    .map(mapper::toResponse);
+        if (StringUtils.hasText(query)) {
+            return searchWithNativeTgram(query, categoryCode, itemType, active, pageable);
         }
-        return repository.nativeSearch(trimToNull(query), normalizeOptionalCode(categoryCode),
-                        itemType == null ? null : itemType.name(), active, pageable)
-                .map(mapper::toResponse);
+        return searchWithSpecification(categoryCode, itemType, active, pageable);
     }
 
     @Override
@@ -101,11 +107,9 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
         entity.setName(request.getName().trim());
         entity.setDescription(trimToNull(request.getDescription()));
         entity.setPsku(resolvePsku(entity, request.getPsku()));
-        entity.setShortCode(normalizeOptionalCode(StringUtils.hasText(request.getShortCode()) ? request.getShortCode() : request.getName()));
-        entity.setDisplayCode(normalizeDisplayCode(request.getDisplayCode(), entity));
-        entity.setIdentificationCode(normalizeOptionalCode(StringUtils.hasText(request.getIdentificationCode())
-                ? request.getIdentificationCode()
-                : entity.getDisplayCode()));
+        if (StringUtils.hasText(request.getIdentificationCode())) {
+            entity.setIdentificationCode(normalizeOptionalCode(request.getIdentificationCode()));
+        }
         entity.setSpecification(trimToNull(request.getSpecification()));
         entity.setCategory(StringUtils.hasText(request.getCategoryCode()) ? categoryService.findByCodeOrThrow(request.getCategoryCode()) : null);
         entity.setUnit(StringUtils.hasText(request.getUnitCode()) ? unitService.findByCodeOrThrow(request.getUnitCode()) : null);
@@ -119,8 +123,6 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
         entity.setRequiresLotNumber(defaultBoolean(request.getRequiresLotNumber(), false));
         entity.setRequiresSerialNumber(defaultBoolean(request.getRequiresSerialNumber(), request.getItemType() == InventoryItemType.ASSET));
         entity.setActive(defaultBoolean(request.getActive(), true));
-        validateUniqueBusinessCodes(entity);
-        entity.setSearchText(buildSearchText(entity));
     }
 
     private void assertUniqueCreate(String itemCode, InventoryItemRequest request) {
@@ -150,6 +152,18 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
     }
 
+    private Page<InventoryItemResponse> searchWithNativeTgram(String query, String categoryCode, InventoryItemType itemType, Boolean active, Pageable pageable) {
+        Pageable nativePageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return repository.nativeSearch(trimToNull(query), normalizeOptionalCode(categoryCode),
+                        itemType == null ? null : itemType.name(), active, nativePageable)
+                .map(mapper::toResponse);
+    }
+
+    private Page<InventoryItemResponse> searchWithSpecification(String categoryCode, InventoryItemType itemType, Boolean active, Pageable pageable) {
+        return repository.findAll(InventoryItemSpecification.filters(categoryCode, itemType, active), pageable)
+                .map(mapper::toResponse);
+    }
+
     private String buildSearchText(InventoryItem entity) {
         return String.join(" ",
                 nullToBlank(entity.getItemCode()),
@@ -167,19 +181,6 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
 
     private InventoryTrackingType defaultTrackingType(InventoryItemType itemType) {
         return itemType == InventoryItemType.ASSET ? InventoryTrackingType.SERIAL : InventoryTrackingType.QUANTITY;
-    }
-
-    private String normalizeDisplayCode(String requested, InventoryItem entity) {
-        if (StringUtils.hasText(requested)) {
-            return normalizeCode(requested);
-        }
-        if (StringUtils.hasText(entity.getShortCode())) {
-            return entity.getShortCode();
-        }
-        if (StringUtils.hasText(entity.getPsku())) {
-            return entity.getPsku();
-        }
-        return entity.getItemCode();
     }
 
     private String normalizeCode(String value) {
@@ -218,8 +219,126 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
         return psku;
     }
 
-    private String codeWithMillis(String sequenceCode) {
-        return sequenceGenerator.next(sequenceCode) + "-" + System.currentTimeMillis();
+    private void assignGeneratedCodes(InventoryItem entity, boolean create) {
+        if (create || !StringUtils.hasText(entity.getItemCode())) {
+            entity.setItemCode(nextUniqueItemCode(entity));
+        }
+        if (!StringUtils.hasText(entity.getShortCode()) || entity.getShortCode().equalsIgnoreCase(entity.getItemCode())) {
+            entity.setShortCode(nextUniqueShortCode(entity));
+        }
+        if (!StringUtils.hasText(entity.getDisplayCode()) || entity.getDisplayCode().equalsIgnoreCase(entity.getItemCode())) {
+            entity.setDisplayCode(nextUniqueDisplayCode(entity));
+        }
+        if (!StringUtils.hasText(entity.getIdentificationCode()) || entity.getIdentificationCode().equalsIgnoreCase(entity.getItemCode())) {
+            entity.setIdentificationCode(entity.getDisplayCode());
+        }
+    }
+
+    private String nextUniqueItemCode(InventoryItem entity) {
+        LocalDate today = LocalDate.now();
+        for (int attempt = 0; attempt < 10; attempt++) {
+            String sequence = rightDigits(sequenceGenerator.next(INVENTORY_ITEM_SEQUENCE, today), 8);
+            String itemCode = normalizeCode(String.join("-",
+                    "INV",
+                    itemTypeToken(entity.getItemType()),
+                    categoryToken(entity.getCategory(), 8),
+                    ITEM_CODE_DATE_FORMAT.format(today),
+                    sequence
+            ));
+            if (!repository.existsByItemCode(itemCode)) {
+                return itemCode;
+            }
+        }
+        throw new ResourceAlreadyExistException("Unable to generate unique inventory item code");
+    }
+
+    private String nextUniqueShortCode(InventoryItem entity) {
+        String suffix = rightDigits(entity.getItemCode(), 4);
+        String base = normalizeCode(String.join("-",
+                categoryToken(entity.getCategory(), 6),
+                practicalNameToken(entity.getName(), 8),
+                suffix
+        ));
+        return uniqueShortCode(base);
+    }
+
+    private String nextUniqueDisplayCode(InventoryItem entity) {
+        String suffix = rightDigits(entity.getItemCode(), 4);
+        String base = normalizeCode(String.join("-",
+                itemTypeToken(entity.getItemType()),
+                practicalNameToken(entity.getName(), 10),
+                suffix
+        ));
+        return uniqueDisplayCode(base);
+    }
+
+    private String uniqueShortCode(String base) {
+        String candidate = base;
+        for (int attempt = 1; attempt <= 99; attempt++) {
+            if (!repository.existsByShortCode(candidate)) {
+                return candidate;
+            }
+            candidate = normalizeCode(base + "-" + String.format(Locale.ROOT, "%02d", attempt));
+        }
+        throw new ResourceAlreadyExistException("Unable to generate unique inventory short code");
+    }
+
+    private String uniqueDisplayCode(String base) {
+        String candidate = base;
+        for (int attempt = 1; attempt <= 99; attempt++) {
+            if (!repository.existsByDisplayCode(candidate)) {
+                return candidate;
+            }
+            candidate = normalizeCode(base + "-" + String.format(Locale.ROOT, "%02d", attempt));
+        }
+        throw new ResourceAlreadyExistException("Unable to generate unique inventory display code");
+    }
+
+    private void refreshSearchText(InventoryItem entity) {
+        entity.setSearchText(buildSearchText(entity));
+    }
+
+    private String itemTypeToken(InventoryItemType itemType) {
+        if (itemType == null) {
+            return "ITM";
+        }
+        return switch (itemType) {
+            case ASSET -> "AST";
+            case CONSUMABLE -> "CON";
+            case SERVICE -> "SVC";
+            case SPARE_PART -> "SPR";
+        };
+    }
+
+    private String categoryToken(InventoryCategory category, int maxLength) {
+        if (category == null || !StringUtils.hasText(category.getCode())) {
+            return "GEN";
+        }
+        return compactToken(category.getCode(), maxLength, "GEN");
+    }
+
+    private String practicalNameToken(String value, int maxLength) {
+        return compactToken(value, maxLength, "ITEM");
+    }
+
+    private String compactToken(String value, int maxLength, String fallback) {
+        if (!StringUtils.hasText(value)) {
+            return fallback;
+        }
+        String normalized = normalizeCode(value).replace("-", "");
+        if (!StringUtils.hasText(normalized)) {
+            return fallback;
+        }
+        return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
+    }
+
+    private String rightDigits(String value, int maxLength) {
+        String digits = value == null ? "" : value.replaceAll("\\D", "");
+        if (!StringUtils.hasText(digits)) {
+            digits = String.valueOf(System.currentTimeMillis());
+        }
+        String right = digits.length() <= maxLength ? digits : digits.substring(digits.length() - maxLength);
+        return String.format(Locale.ROOT, "%0" + maxLength + "d", Long.parseLong(right));
     }
 
     private String trimToNull(String value) {

@@ -15,7 +15,7 @@ import com.sni.bokaticowork.features.inventory.importer.enums.InventoryImportTyp
 import com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.SupplierRequest;
 import com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.SupplierResponse;
 import com.sni.bokaticowork.features.inventory.procurement.enums.SupplierStatus;
-import com.sni.bokaticowork.features.inventory.procurement.service.ProcurementService;
+import com.sni.bokaticowork.features.inventory.procurement.service.interfaces.ProcurementService;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockService;
@@ -88,12 +88,9 @@ public class InventoryImportServiceImpl implements InventoryImportService {
 
     private String importItem(Map<String, String> row, boolean dryRun) {
         InventoryItemRequest request = new InventoryItemRequest();
-        request.setItemCode(value(row, "item_code"));
-        request.setName(required(row, "name"));
+            request.setName(required(row, "name"));
         request.setDescription(value(row, "description"));
         request.setPsku(value(row, "psku"));
-        request.setShortCode(value(row, "short_code"));
-        request.setDisplayCode(value(row, "display_code"));
         request.setIdentificationCode(value(row, "identification_code"));
         request.setSpecification(value(row, "specification"));
         request.setCategoryCode(value(row, "category_code"));
@@ -108,7 +105,7 @@ public class InventoryImportServiceImpl implements InventoryImportService {
         request.setRequiresLotNumber(booleanValue(row, "requires_lot_number"));
         request.setRequiresSerialNumber(booleanValue(row, "requires_serial_number"));
         request.setActive(booleanValue(row, "active"));
-        if (dryRun) return fallbackReference(request.getItemCode(), request.getName());
+        if (dryRun) return request.getName();
         InventoryItemResponse response = itemService.create(request);
         return response.getItemCode();
     }

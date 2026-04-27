@@ -9,18 +9,12 @@ import lombok.Data;
 @Data
 public class InventoryItemRequest {
 
-    private String itemCode;
-
     @NotBlank
     private String name;
 
     private String description;
 
     private String psku;
-
-    private String shortCode;
-
-    private String displayCode;
 
     private String identificationCode;
 

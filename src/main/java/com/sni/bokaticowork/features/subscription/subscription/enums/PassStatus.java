@@ -1,4 +1,4 @@
-package com.sni.bokaticowork.features.subscription.enums;
+package com.sni.bokaticowork.features.subscription.subscription.enums;
 
 public enum PassStatus {
     DRAFT,

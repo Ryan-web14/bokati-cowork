@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceClosureRequest;
+import com.sni.bokaticowork.features.ressource.dto.request.UpdateActiveRequest;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceClosureService;
 import jakarta.validation.Valid;
@@ -56,9 +57,9 @@ public class ResourceClosureController {
 
     @PatchMapping("/{id}/active")
     @Audited(module = "RESOURCE", action = "UPDATE_CLOSURE_ACTIVE", ressource = "resource_closure")
-    @Idempotent(operation = "RESOURCE_CLOSURE_UPDATE_ACTIVE", requestBodyArgIndex = -1)
-    public ResponseEntity<Void> updateActive(@PathVariable Long id, @RequestParam Boolean active) {
-        resourceClosureService.updateActive(id, active);
+    @Idempotent(operation = "RESOURCE_CLOSURE_UPDATE_ACTIVE", requestBodyArgIndex = 1)
+    public ResponseEntity<Void> updateActive(@PathVariable Long id, @Valid @RequestBody UpdateActiveRequest request) {
+        resourceClosureService.updateActive(id, request.getActive());
         return ResponseEntity.noContent().build();
     }
 

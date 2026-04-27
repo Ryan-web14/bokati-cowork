@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.exception.customs.ValidationException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.core.retry.policy.RetryPolicy;
 import com.sni.bokaticowork.core.retry.service.interfaces.RetryExecutor;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
@@ -76,7 +77,8 @@ public class ResourceServiceImpl implements ResourceService {
         ResourcePolicy policy = resolvePolicy(request.getPolicyId());
 
         Resource resource = resourceMapper.toEntity(request);
-        resource.setCode(sequenceGenerator.next("resource", LocalDate.now()));
+        long resourceSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource", LocalDate.now()));
+        resource.setCode(CodeComposer.withMonth("RES", CodeComposer.abbrev(type.getName()), LocalDate.now(), resourceSeq));
         resource.setResourceType(type);
         resource.setResourceGroup(group);
         resource.setResourcePolicy(policy);

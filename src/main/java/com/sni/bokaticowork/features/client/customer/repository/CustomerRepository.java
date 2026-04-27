@@ -59,6 +59,12 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
 
     @Query(
             nativeQuery = true,
+            value = "SELECT DISTINCT c.* FROM customer c WHERE c.deleted = false AND c.phone = :phone LIMIT 1"
+    )
+    Optional<Customer> findByPhoneAndDeletedFalse(@Param("phone") String phone);
+
+    @Query(
+            nativeQuery = true,
             value = "SELECT DISTINCT c.* FROM customer c WHERE c.deleted = false AND c.email = :email"
     )
     Optional<Customer> findByEmailAndDeletedTrue(@Param("email") String email);

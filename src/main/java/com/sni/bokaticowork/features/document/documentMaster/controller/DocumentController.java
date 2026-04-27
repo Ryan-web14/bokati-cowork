@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +67,19 @@ public class DocumentController {
     @GetMapping("/{code}/versions")
     public ResponseEntity<List<DocumentVersionResponse>> listVersions(@PathVariable String code) {
         return ResponseEntity.ok(service.listVersions(code));
+    }
+
+    @GetMapping("/{code}/download")
+    public ResponseEntity<byte[]> download(@PathVariable String code) {
+        DocumentResponse doc = service.getByCode(code);
+        byte[] bytes = service.downloadFile(code);
+        String mimeType = doc.getMimeType() != null ? doc.getMimeType() : "application/octet-stream";
+        String fileName = doc.getFileName() != null ? doc.getFileName() : code + ".bin";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(mimeType));
+        headers.setContentDisposition(ContentDisposition.attachment().filename(fileName).build());
+        headers.setContentLength(bytes.length);
+        return ResponseEntity.ok().headers(headers).body(bytes);
     }
 
     @PostMapping("/{code}/approve")

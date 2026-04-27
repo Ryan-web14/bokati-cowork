@@ -32,4 +32,5 @@ public interface BusinessService {
 
     //method to be use between services
     BusinessEntity serviceBusinessByCode(String code);
+    BusinessEntity serviceBusinessById(Long id);
 }

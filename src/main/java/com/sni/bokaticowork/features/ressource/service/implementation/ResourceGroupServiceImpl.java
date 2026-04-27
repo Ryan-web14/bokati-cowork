@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.exception.customs.ValidationException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.validation.ValidationUtils;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceGroupRequest;
@@ -46,7 +47,8 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
         }
 
         ResourceGroup group = groupMapper.toEntity(request);
-        group.setCode(sequenceGenerator.next("resource_group", LocalDate.now()));
+        long groupSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_group", LocalDate.now()));
+        group.setCode(CodeComposer.refWithYear("RGP", LocalDate.now(), groupSeq));
         groupRepo.save(group);
     }
 

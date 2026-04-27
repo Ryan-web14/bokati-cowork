@@ -1,4 +1,4 @@
-package com.sni.bokaticowork.features.inventory.procurement.service;
+package com.sni.bokaticowork.features.inventory.procurement.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -13,6 +13,7 @@ import com.sni.bokaticowork.features.inventory.procurement.enums.*;
 import com.sni.bokaticowork.features.inventory.procurement.mapper.ProcurementMapper;
 import com.sni.bokaticowork.features.inventory.procurement.model.*;
 import com.sni.bokaticowork.features.inventory.procurement.repository.*;
+import com.sni.bokaticowork.features.inventory.procurement.service.interfaces.ProcurementService;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.model.InventoryLocation;
@@ -20,6 +21,7 @@ import com.sni.bokaticowork.features.inventory.stock.service.interfaces.Inventor
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +32,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -57,7 +58,7 @@ public class ProcurementServiceImpl implements ProcurementService {
     @Override
     public SupplierResponse createSupplier(SupplierRequest request) {
         Supplier supplier = new Supplier();
-        supplier.setSupplierCode(normalizeCode(StringUtils.hasText(request.getSupplierCode()) ? request.getSupplierCode() : code("supplier")));
+        supplier.setSupplierCode(normalizeCode(code("supplier")));
         if (supplierRepository.existsBySupplierCode(supplier.getSupplierCode())) {
             throw new BadRequestException("Supplier code already exists");
         }
@@ -80,7 +81,7 @@ public class ProcurementServiceImpl implements ProcurementService {
     @Transactional(readOnly = true)
     public Page<SupplierResponse> suppliers(String query, Pageable pageable) {
         Page<Supplier> suppliers = StringUtils.hasText(query)
-                ? supplierRepository.search(query.trim().toUpperCase(Locale.ROOT), pageable)
+                ? supplierRepository.search(query.trim().toUpperCase(Locale.ROOT), unsortedPage(pageable))
                 : supplierRepository.findAll(pageable);
         return suppliers.map(mapper::toSupplierResponse);
     }
@@ -108,7 +109,7 @@ public class ProcurementServiceImpl implements ProcurementService {
     public PurchaseRequestResponse createPurchaseRequestFromReorderSuggestions(String locationCode, String supplierCode, String requestedBy) {
         String normalizedLocation = normalizeOptionalCode(locationCode);
         String normalizedSupplier = normalizeOptionalCode(supplierCode);
-        List<ReorderSuggestionResponse> suggestions = reorderRuleService.suggestions().stream()
+        List<ReorderSuggestionResponse> suggestions = reorderRuleService.suggestions(null, normalizedLocation, null).stream()
                 .filter(suggestion -> normalizedLocation == null || normalizedLocation.equalsIgnoreCase(suggestion.getLocationCode()))
                 .filter(suggestion -> normalizedSupplier == null || normalizedSupplier.equalsIgnoreCase(suggestion.getPreferredSupplierCode()))
                 .filter(suggestion -> suggestion.getReorderQuantity() != null && suggestion.getReorderQuantity().compareTo(BigDecimal.ZERO) > 0)
@@ -167,6 +168,7 @@ public class ProcurementServiceImpl implements ProcurementService {
         return mapper.toPurchaseRequestResponse(saved);
     }
 
+    //todo automatically create a purchase order when purchase request is approved
     @Override
     public PurchaseOrderResponse createPurchaseOrder(PurchaseOrderCreateRequest request) {
         Supplier supplier = findSupplier(request.getSupplierCode());
@@ -322,21 +324,21 @@ public class ProcurementServiceImpl implements ProcurementService {
     @Override
     @Transactional(readOnly = true)
     public Page<PurchaseRequestResponse> purchaseRequests(PurchaseRequestStatus status, String locationCode, String query, Pageable pageable) {
-        return purchaseRequestRepository.search(status, normalizeOptionalCode(locationCode), upperQuery(query), pageable)
+        return purchaseRequestRepository.search(status == null ? null : status.name(), normalizeOptionalCode(locationCode), upperQuery(query), unsortedPage(pageable))
                 .map(mapper::toPurchaseRequestResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PurchaseOrderResponse> purchaseOrders(PurchaseOrderStatus status, String supplierCode, String locationCode, String query, Pageable pageable) {
-        return purchaseOrderRepository.search(status, normalizeOptionalCode(supplierCode), normalizeOptionalCode(locationCode), upperQuery(query), pageable)
+        return purchaseOrderRepository.search(status == null ? null : status.name(), normalizeOptionalCode(supplierCode), normalizeOptionalCode(locationCode), upperQuery(query), unsortedPage(pageable))
                 .map(mapper::toPurchaseOrderResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<GoodsReceiptResponse> goodsReceipts(GoodsReceiptStatus status, String locationCode, String orderCode, String query, Pageable pageable) {
-        return goodsReceiptRepository.search(status, normalizeOptionalCode(locationCode), normalizeOptionalCode(orderCode), upperQuery(query), pageable)
+        return goodsReceiptRepository.search(status == null ? null : status.name(), normalizeOptionalCode(locationCode), normalizeOptionalCode(orderCode), upperQuery(query), unsortedPage(pageable))
                 .map(mapper::toGoodsReceiptResponse);
     }
 
@@ -531,5 +533,9 @@ public class ProcurementServiceImpl implements ProcurementService {
 
     private String upperQuery(String query) {
         return StringUtils.hasText(query) ? query.trim().toUpperCase(Locale.ROOT) : null;
+    }
+
+    private Pageable unsortedPage(Pageable pageable) {
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     }
 }

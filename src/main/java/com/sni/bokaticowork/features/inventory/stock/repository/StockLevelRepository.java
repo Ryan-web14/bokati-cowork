@@ -25,6 +25,14 @@ public interface StockLevelRepository extends JpaRepository<StockLevel, Long> {
 
     List<StockLevel> findAllByLocation(InventoryLocation location);
 
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM stock_level
+            WHERE item_id = :itemId
+            ORDER BY quantity_available ASC
+            """)
+    List<StockLevel> findAllByItemIdOrderByQuantityAvailableAsc(@Param("itemId") Long itemId);
+
     List<StockLevel> findAllByItemAndQuantityAvailableGreaterThanOrderByQuantityAvailableDesc(InventoryItem item, java.math.BigDecimal quantity);
 
     @Query("""

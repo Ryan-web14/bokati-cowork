@@ -16,18 +16,33 @@ public interface GoodsReceiptRepository extends JpaRepository<GoodsReceipt, Long
 
     java.util.List<GoodsReceipt> findAllByPurchaseOrder_Supplier(Supplier supplier);
 
-    @Query("""
-            SELECT receipt FROM GoodsReceipt receipt
-            LEFT JOIN receipt.purchaseOrder po
-            JOIN receipt.location location
-            WHERE (:status IS NULL OR receipt.status = :status)
-              AND (:locationCode IS NULL OR location.locationCode = :locationCode)
-              AND (:orderCode IS NULL OR po.orderCode = :orderCode)
-              AND (:query IS NULL OR UPPER(receipt.receiptCode) LIKE CONCAT('%', :query, '%')
-                   OR UPPER(po.orderCode) LIKE CONCAT('%', :query, '%')
-                   OR UPPER(receipt.receivedBy) LIKE CONCAT('%', :query, '%'))
-            """)
-    Page<GoodsReceipt> search(@Param("status") GoodsReceiptStatus status,
+    @Query(value = """
+            SELECT receipt.*
+            FROM goods_receipt receipt
+            LEFT JOIN inventory_purchase_order po ON po.id = receipt.purchase_order_id
+            JOIN inventory_location location ON location.id = receipt.location_id
+            WHERE (CAST(:status AS varchar) IS NULL OR receipt.status = :status)
+              AND (CAST(:locationCode AS varchar) IS NULL OR location.location_code = :locationCode)
+              AND (CAST(:orderCode AS varchar) IS NULL OR po.order_code = :orderCode)
+              AND (CAST(:query AS varchar) IS NULL OR UPPER(receipt.receipt_code) LIKE CONCAT('%', :query, '%')
+                   OR UPPER(po.order_code) LIKE CONCAT('%', :query, '%')
+                   OR UPPER(receipt.received_by) LIKE CONCAT('%', :query, '%'))
+            ORDER BY receipt.received_at DESC
+            """,
+            countQuery = """
+            SELECT COUNT(*)
+            FROM goods_receipt receipt
+            LEFT JOIN inventory_purchase_order po ON po.id = receipt.purchase_order_id
+            JOIN inventory_location location ON location.id = receipt.location_id
+            WHERE (CAST(:status AS varchar) IS NULL OR receipt.status = :status)
+              AND (CAST(:locationCode AS varchar) IS NULL OR location.location_code = :locationCode)
+              AND (CAST(:orderCode AS varchar) IS NULL OR po.order_code = :orderCode)
+              AND (CAST(:query AS varchar) IS NULL OR UPPER(receipt.receipt_code) LIKE CONCAT('%', :query, '%')
+                   OR UPPER(po.order_code) LIKE CONCAT('%', :query, '%')
+                   OR UPPER(receipt.received_by) LIKE CONCAT('%', :query, '%'))
+            """,
+            nativeQuery = true)
+    Page<GoodsReceipt> search(@Param("status") String status,
                               @Param("locationCode") String locationCode,
                               @Param("orderCode") String orderCode,
                               @Param("query") String query,

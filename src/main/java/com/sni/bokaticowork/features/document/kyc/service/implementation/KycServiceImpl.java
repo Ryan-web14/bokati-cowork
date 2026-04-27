@@ -207,7 +207,36 @@ public class KycServiceImpl implements KycService {
         response.setApproved(assessment.allVerified());
         response.setMissingDocumentTypeCodes(assessment.missingDocumentTypeCodes());
         response.setDocuments(documents);
+        resolveOwnerInfo(kycCase, response);
         return response;
+    }
+
+    private void resolveOwnerInfo(KycCase kycCase, KycCaseResponse response) {
+        try {
+            switch (kycCase.getOwnerType()) {
+                case MEMBER -> {
+                    Member member = memberRepository.findById(kycCase.getOwnerId()).orElse(null);
+                    if (member != null) {
+                        response.setOwnerName(member.getDisplayName());
+                        response.setOwnerCode(member.getMemberId());
+                    }
+                }
+                case CUSTOMER -> {
+                    Customer customer = customerService.getCustomerForService(kycCase.getOwnerId());
+                    String name = StringUtils.hasText(customer.getCompanyName())
+                            ? customer.getCompanyName()
+                            : ((customer.getFirstname() == null ? "" : customer.getFirstname()) + " " + (customer.getLastname() == null ? "" : customer.getLastname())).trim();
+                    response.setOwnerName(name);
+                    response.setOwnerCode(customer.getCustomerId());
+                }
+                case BUSINESS -> {
+                    BusinessEntity business = businessService.serviceBusinessById(kycCase.getOwnerId());
+                    response.setOwnerName(business.getName());
+                    response.setOwnerCode(business.getCode());
+                }
+                default -> { }
+            }
+        } catch (Exception ignored) { }
     }
 
     private CaseAssessment assess(KycCase kycCase) {

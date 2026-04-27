@@ -19,6 +19,10 @@ public interface BusinessRepository extends JpaRepository<BusinessEntity, Long>,
     Optional<BusinessEntity> findByNiuNumber(String niuNumber);
     Optional<BusinessEntity> findByRccmNumber(String rccmNumber);
     Optional<BusinessEntity> findByNameIgnoreCase(String name);
+    @Query(nativeQuery = true, value = "SELECT * FROM business_entity WHERE deleted = false AND lower(email) = lower(:email) LIMIT 1")
+    Optional<BusinessEntity> findByEmailAndDeletedFalse(@Param("email") String email);
+    @Query(nativeQuery = true, value = "SELECT * FROM business_entity WHERE deleted = false AND phone = :phone LIMIT 1")
+    Optional<BusinessEntity> findByPhoneAndDeletedFalse(@Param("phone") String phone);
     boolean existsByCode(String code);
     boolean existsByNameIgnoreCase(String name);
     boolean existsByNiuNumber(String niuNumber);

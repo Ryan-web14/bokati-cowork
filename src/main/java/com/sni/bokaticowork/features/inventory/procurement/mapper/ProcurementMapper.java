@@ -4,6 +4,8 @@ import com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.*
 import com.sni.bokaticowork.features.inventory.procurement.model.*;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 @Component
 public class ProcurementMapper {
 
@@ -86,11 +88,16 @@ public class ProcurementMapper {
     }
 
     private ProcurementLineResponse toPurchaseRequestLineResponse(PurchaseRequestLine line) {
+
+        var decimalValue = line.getQuantity().multiply(BigDecimal.valueOf(line.getEstimatedUnitCost()));
+        var totalValue = decimalValue.longValue();
+
         return ProcurementLineResponse.builder()
                 .itemCode(line.getItem().getItemCode())
                 .itemName(line.getItem().getName())
                 .quantity(line.getQuantity())
                 .unitCost(line.getEstimatedUnitCost())
+                .totalCost(totalValue)
                 .build();
     }
 

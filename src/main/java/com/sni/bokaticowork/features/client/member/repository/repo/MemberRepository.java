@@ -26,6 +26,9 @@ public interface MemberRepository extends JpaRepository<Member, Long>, JpaSpecif
 
     Optional<Member> findByEmailIgnoreCaseAndDeletedFalse(String email);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM member WHERE deleted = false AND phone = :phone LIMIT 1")
+    Optional<Member> findByPhoneAndDeletedFalse(@Param("phone") String phone);
+
     Optional<Member> findByUser_IdAndDeletedFalse(Long userId);
 
     @Query(
@@ -39,6 +42,15 @@ public interface MemberRepository extends JpaRepository<Member, Long>, JpaSpecif
                     """
     )
     List<Member> basicSearch(@Param("query") String query);
+
+    @Query(
+            nativeQuery = true,
+            value = """
+                    SELECT sm.member_id
+                    FROM search_member_advanced(:query) sm
+                    """
+    )
+    List<String> fuzzySearchMemberIds(@Param("query") String query);
 
     Page<Member> findAllByCustomerAndDeletedFalse(Customer customer, Pageable pageable);
 }

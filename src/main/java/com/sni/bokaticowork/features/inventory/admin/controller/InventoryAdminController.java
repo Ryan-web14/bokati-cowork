@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,35 +36,57 @@ public class InventoryAdminController {
     @GetMapping("/reports/movements")
     public ResponseEntity<InventoryMovementReportResponse> movementReport(@RequestParam(required = false) String itemCode,
                                                                           @RequestParam(required = false) String locationCode,
-                                                                          @RequestParam(required = false) Instant fromDate,
-                                                                          @RequestParam(required = false) Instant toDate) {
-        return ResponseEntity.ok(service.movementReport(itemCode, locationCode, fromDate, toDate));
+                                                                          @RequestParam(required = false) String fromDate,
+                                                                          @RequestParam(required = false) String toDate) {
+        return ResponseEntity.ok(service.movementReport(itemCode, locationCode, parseStart(fromDate), parseEnd(toDate)));
     }
 
-    @GetMapping(value = "/reports/movements.csv", produces = "text/csv")
+    @GetMapping("/reports/movements.csv")
     public ResponseEntity<String> movementReportCsv(@RequestParam(required = false) String itemCode,
                                                     @RequestParam(required = false) String locationCode,
-                                                    @RequestParam(required = false) Instant fromDate,
-                                                    @RequestParam(required = false) Instant toDate) {
+                                                    @RequestParam(required = false) String fromDate,
+                                                    @RequestParam(required = false) String toDate) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=inventory-movements.csv")
                 .contentType(MediaType.parseMediaType("text/csv"))
-                .body(service.movementReportCsv(itemCode, locationCode, fromDate, toDate));
+                .body(service.movementReportCsv(itemCode, locationCode, parseStart(fromDate), parseEnd(toDate)));
     }
 
-    @GetMapping(value = "/reports/movements.pdf", produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping("/reports/movements.pdf")
     public ResponseEntity<byte[]> movementReportPdf(@RequestParam(required = false) String itemCode,
                                                     @RequestParam(required = false) String locationCode,
-                                                    @RequestParam(required = false) Instant fromDate,
-                                                    @RequestParam(required = false) Instant toDate) {
+                                                    @RequestParam(required = false) String fromDate,
+                                                    @RequestParam(required = false) String toDate) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=inventory-movements.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
-                .body(service.movementReportPdf(itemCode, locationCode, fromDate, toDate));
+                .body(service.movementReportPdf(itemCode, locationCode, parseStart(fromDate), parseEnd(toDate)));
     }
 
     @GetMapping("/reports/anomalies")
     public ResponseEntity<InventoryAnomalyReportResponse> anomalyReport() {
         return ResponseEntity.ok(service.anomalyReport());
+    }
+
+    private Instant parseStart(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.length() == 10) {
+            return LocalDate.parse(trimmed).atStartOfDay().toInstant(ZoneOffset.UTC);
+        }
+        return Instant.parse(trimmed);
+    }
+
+    private Instant parseEnd(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.length() == 10) {
+            return LocalDate.parse(trimmed).plusDays(1).atStartOfDay().minusNanos(1).toInstant(ZoneOffset.UTC);
+        }
+        return Instant.parse(trimmed);
     }
 }

@@ -7,6 +7,10 @@ import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.ressource.dto.request.ChangeTypeRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.LinkAmenityToResourceRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ResourceRequest;
+import com.sni.bokaticowork.features.ressource.dto.request.UpdateActiveRequest;
+import com.sni.bokaticowork.features.ressource.dto.request.UpdateBookingEnabledRequest;
+import com.sni.bokaticowork.features.ressource.dto.request.UpdateDisplayOrderRequest;
+import com.sni.bokaticowork.features.ressource.dto.request.UpdatePortalVisibleRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.UpdateResourceRequest;
 import com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse;
@@ -121,41 +125,41 @@ public class ResourceController {
 
     @PatchMapping("/{code}/booking-enabled")
     @Audited(module = "RESOURCE", action = "UPDATE_BOOKING_ENABLED", ressource = "resource")
-    @Idempotent(operation = "RESOURCE_UPDATE_BOOKING_ENABLED", requestBodyArgIndex = -1)
+    @Idempotent(operation = "RESOURCE_UPDATE_BOOKING_ENABLED", requestBodyArgIndex = 1)
     public ResponseEntity<Void> updateBookingEnabled(
             @PathVariable String code,
-            @RequestParam Boolean enabled) {
-        resourceService.updateBookingEnabled(code, enabled);
+            @Valid @RequestBody UpdateBookingEnabledRequest request) {
+        resourceService.updateBookingEnabled(code, request.getBookingEnabled());
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{code}/portal-visible")
     @Audited(module = "RESOURCE", action = "UPDATE_PORTAL_VISIBLE", ressource = "resource")
-    @Idempotent(operation = "RESOURCE_UPDATE_PORTAL_VISIBLE", requestBodyArgIndex = -1)
+    @Idempotent(operation = "RESOURCE_UPDATE_PORTAL_VISIBLE", requestBodyArgIndex = 1)
     public ResponseEntity<Void> updatePortalVisible(
             @PathVariable String code,
-            @RequestParam Boolean visible) {
-        resourceService.updatePortalVisible(code, visible);
+            @Valid @RequestBody UpdatePortalVisibleRequest request) {
+        resourceService.updatePortalVisible(code, request.getVisible());
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{code}/active")
     @Audited(module = "RESOURCE", action = "UPDATE_ACTIVE", ressource = "resource")
-    @Idempotent(operation = "RESOURCE_UPDATE_ACTIVE", requestBodyArgIndex = -1)
+    @Idempotent(operation = "RESOURCE_UPDATE_ACTIVE", requestBodyArgIndex = 1)
     public ResponseEntity<Void> updateActive(
             @PathVariable String code,
-            @RequestParam Boolean active) {
-        resourceService.updateActive(code, active);
+            @Valid @RequestBody UpdateActiveRequest request) {
+        resourceService.updateActive(code, request.getActive());
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{code}/display-order")
     @Audited(module = "RESOURCE", action = "UPDATE_DISPLAY_ORDER", ressource = "resource")
-    @Idempotent(operation = "RESOURCE_UPDATE_DISPLAY_ORDER", requestBodyArgIndex = -1)
+    @Idempotent(operation = "RESOURCE_UPDATE_DISPLAY_ORDER", requestBodyArgIndex = 1)
     public ResponseEntity<Void> updateDisplayOrder(
             @PathVariable String code,
-            @RequestParam Integer value) {
-        resourceService.updateDisplayOrder(code, value);
+            @Valid @RequestBody UpdateDisplayOrderRequest request) {
+        resourceService.updateDisplayOrder(code, request.getDisplayOrder());
         return ResponseEntity.noContent().build();
     }
 

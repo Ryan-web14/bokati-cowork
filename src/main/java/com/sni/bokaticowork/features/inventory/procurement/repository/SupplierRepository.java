@@ -14,14 +14,27 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
 
     Optional<Supplier> findBySupplierCode(String supplierCode);
 
-    @Query("""
-            SELECT supplier FROM Supplier supplier
-            WHERE (:query IS NULL
+    @Query(value = """
+            SELECT supplier.*
+            FROM inventory_supplier supplier
+            WHERE (CAST(:query AS varchar) IS NULL
                 OR UPPER(supplier.name) LIKE CONCAT('%', :query, '%')
-                OR UPPER(supplier.supplierCode) LIKE CONCAT('%', :query, '%')
+                OR UPPER(supplier.supplier_code) LIKE CONCAT('%', :query, '%')
                 OR UPPER(supplier.email) LIKE CONCAT('%', :query, '%')
                 OR UPPER(supplier.phone) LIKE CONCAT('%', :query, '%')
-                OR UPPER(supplier.taxId) LIKE CONCAT('%', :query, '%'))
-            """)
+                OR UPPER(supplier.tax_id) LIKE CONCAT('%', :query, '%'))
+            ORDER BY supplier.name ASC
+            """,
+            countQuery = """
+            SELECT COUNT(*)
+            FROM inventory_supplier supplier
+            WHERE (CAST(:query AS varchar) IS NULL
+                OR UPPER(supplier.name) LIKE CONCAT('%', :query, '%')
+                OR UPPER(supplier.supplier_code) LIKE CONCAT('%', :query, '%')
+                OR UPPER(supplier.email) LIKE CONCAT('%', :query, '%')
+                OR UPPER(supplier.phone) LIKE CONCAT('%', :query, '%')
+                OR UPPER(supplier.tax_id) LIKE CONCAT('%', :query, '%'))
+            """,
+            nativeQuery = true)
     Page<Supplier> search(@Param("query") String query, Pageable pageable);
 }

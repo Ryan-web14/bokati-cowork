@@ -6,6 +6,7 @@ import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.exception.customs.ValidationException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.core.retry.policy.RetryPolicy;
 import com.sni.bokaticowork.core.retry.service.interfaces.RetryExecutor;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
@@ -62,7 +63,8 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         request.setDescription(normalizeText(request.getDescription()));
 
         ResourceType type = typeMapper.toEntity(request);
-        type.setCode(sequenceGenerator.next("resource_type", LocalDate.now()));
+        long typeSeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_type", LocalDate.now()));
+        type.setCode(CodeComposer.refWithYear("RTY", LocalDate.now(), typeSeq));
 
         retryExecutor.execute("create resource type", defaultRetryPolicy, () -> typeRepository.save(type));
     }

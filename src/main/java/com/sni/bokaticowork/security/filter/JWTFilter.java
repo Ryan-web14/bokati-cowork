@@ -1,9 +1,8 @@
 package com.sni.bokaticowork.security.filter;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
-
-
 import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
+import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.service.tokenService.implementation.JWTService;
 import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
@@ -55,6 +54,12 @@ public class JWTFilter extends OncePerRequestFilter {
                 filterChain.doFilter(request, response);
 
             } catch (JWTVerificationException e) {
+                if (isPublicApiRequest(request)) {
+                    SecurityContextHolder.clearContext();
+                    logger.debug("Ignoring invalid JWT for public endpoint " + request.getRequestURI());
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 logger.error("JWT Verification failed", e);
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT Token");
             } catch (Exception e) {
@@ -91,6 +96,13 @@ public class JWTFilter extends OncePerRequestFilter {
             return token;
         }
         return null;
+    }
+
+    private boolean isPublicApiRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri != null
+                && uri.startsWith(ApiPath.V1)
+                && !uri.startsWith(ApiPath.V1 + "/admin/");
     }
 }
 

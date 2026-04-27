@@ -31,8 +31,4 @@ public class DocumentUploadMetadataRequest {
     private LocalDate expiryDate;
 
     private String uploadedBy;
-
-    public void setUploadedBy(Long uploadedBy) {
-        this.uploadedBy = uploadedBy == null ? null : uploadedBy.toString();
-    }
 }

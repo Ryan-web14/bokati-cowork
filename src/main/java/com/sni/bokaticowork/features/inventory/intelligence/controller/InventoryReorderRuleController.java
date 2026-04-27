@@ -6,6 +6,7 @@ import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.inventory.intelligence.dto.request.InventoryReorderRuleRequest;
 import com.sni.bokaticowork.features.inventory.intelligence.dto.response.InventoryReorderRuleResponse;
 import com.sni.bokaticowork.features.inventory.intelligence.dto.response.ReorderSuggestionResponse;
+import com.sni.bokaticowork.features.inventory.intelligence.enums.ReorderSuggestionSeverity;
 import com.sni.bokaticowork.features.inventory.intelligence.service.interfaces.InventoryReorderRuleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,10 @@ public class InventoryReorderRuleController {
     }
 
     @GetMapping("/suggestions")
-    public ResponseEntity<List<ReorderSuggestionResponse>> suggestions() {
-        return ResponseEntity.ok(service.suggestions());
+    public ResponseEntity<List<ReorderSuggestionResponse>> suggestions(
+            @RequestParam(required = false) String itemCode,
+            @RequestParam(required = false) String locationCode,
+            @RequestParam(required = false) ReorderSuggestionSeverity severity) {
+        return ResponseEntity.ok(service.suggestions(itemCode, locationCode, severity));
     }
 }

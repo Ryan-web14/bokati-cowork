@@ -6,6 +6,7 @@ import com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse;
 import com.sni.bokaticowork.features.ressource.mapper.decorator.ResourceAmenitiesMapperDecorator;
 import com.sni.bokaticowork.features.ressource.model.ResourceAmenities;
 import org.mapstruct.BeanMapping;
+import org.mapstruct.Builder;
 import org.mapstruct.DecoratedWith;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,7 +14,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, builder = @Builder(disableBuilder = true))
 @DecoratedWith(ResourceAmenitiesMapperDecorator.class)
 public interface ResourceAmenitiesMapper {
 

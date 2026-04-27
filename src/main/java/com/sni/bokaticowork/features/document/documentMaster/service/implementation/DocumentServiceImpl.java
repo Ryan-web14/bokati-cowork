@@ -33,6 +33,7 @@ import com.sni.bokaticowork.features.document.kyc.repository.KycCaseRepository;
 import com.sni.bokaticowork.features.document.kyc.repository.KycDocumentRepository;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,7 @@ import java.util.Locale;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class DocumentServiceImpl implements DocumentService {
 
     private static final Long SYSTEM_UPLOADER_ID = 0L;
@@ -209,6 +211,20 @@ public class DocumentServiceImpl implements DocumentService {
         kycAutomationService.syncFromDocumentReview(document);
         publishDocumentEvent("DOCUMENT_REJECTED", document, request.getReviewedBy());
         return getByCode(documentCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] downloadFile(String documentCode) {
+        Document document = serviceDocument(documentCode);
+        if (!StringUtils.hasText(document.getFileUrl())) {
+            throw new BadRequestException("Document has no file stored");
+        }
+        try {
+            return java.nio.file.Files.readAllBytes(java.nio.file.Path.of(document.getFileUrl()));
+        } catch (java.io.IOException ex) {
+            throw new BadRequestException("Unable to read document file", ex);
+        }
     }
 
     private void createVersion(
@@ -388,6 +404,7 @@ public class DocumentServiceImpl implements DocumentService {
                 yield new OwnerResolution(DocumentOwnerType.MEMBER, member.getId());
             }
             case CUSTOMER -> {
+                log.debug(ownerCode);
                 Customer customer = customerService.getCustomerForService(ownerCode.trim());
                 yield new OwnerResolution(DocumentOwnerType.CUSTOMER, customer.getId());
             }

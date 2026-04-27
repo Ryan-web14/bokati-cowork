@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class InventoryLocationRequest {
 
-    private String locationCode;
+//    private String locationCode;
 
     @NotBlank
     private String name;

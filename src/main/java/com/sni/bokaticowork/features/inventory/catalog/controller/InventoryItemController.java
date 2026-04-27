@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -44,12 +45,15 @@ public class InventoryItemController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<InventoryItemResponse>> search(@RequestParam(required = false, name = "q") String query,
+    public ResponseEntity<Page<InventoryItemResponse>> search(@RequestParam(required = false, name = "q") String q,
+                                                              @RequestParam(required = false, name = "query") String query,
+                                                              @RequestParam(required = false, name = "searchText") String searchText,
+                                                              @RequestParam(required = false, name = "name") String name,
                                                               @RequestParam(required = false) String categoryCode,
                                                               @RequestParam(required = false) InventoryItemType itemType,
                                                               @RequestParam(required = false) Boolean active,
                                                               @PageableDefault(size = 20, sort = "name") Pageable pageable) {
-        return ResponseEntity.ok(service.search(query, categoryCode, itemType, active, pageable));
+        return ResponseEntity.ok(service.search(firstSearchText(q, query, searchText, name), categoryCode, itemType, active, pageable));
     }
 
     @PatchMapping("/{itemCode}/activate")
@@ -64,5 +68,14 @@ public class InventoryItemController {
     @Idempotent(operation = "INVENTORY_ITEM_DEACTIVATE", required = false)
     public ResponseEntity<InventoryItemResponse> deactivate(@PathVariable String itemCode) {
         return ResponseEntity.ok(service.deactivate(itemCode));
+    }
+
+    private String firstSearchText(String... values) {
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
+        }
+        return null;
     }
 }

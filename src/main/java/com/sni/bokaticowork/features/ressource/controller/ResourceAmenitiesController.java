@@ -62,7 +62,7 @@ public class ResourceAmenitiesController {
 
     @GetMapping
     public ResponseEntity<PaginatedResponse<AmenityResponse>> list(
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(resourceAmenitiesService.list(pageable));
     }
 

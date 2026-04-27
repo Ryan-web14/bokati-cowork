@@ -6,6 +6,7 @@ import com.sni.bokaticowork.features.inventory.admin.dto.InventoryDashboardRespo
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryAnomalyReportResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
+import com.sni.bokaticowork.features.inventory.admin.service.support.InventoryMovementReportPdfRenderer;
 import com.sni.bokaticowork.features.inventory.asset.model.Asset;
 import com.sni.bokaticowork.features.inventory.asset.repository.AssetRepository;
 import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItem;
@@ -23,14 +24,8 @@ import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementRep
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
 import com.sni.bokaticowork.features.inventory.control.repository.InventoryCountItemRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -50,6 +45,7 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
     private final AssetRepository assetRepository;
     private final StockMovementRepository movementRepository;
     private final InventoryCountItemRepository countItemRepository;
+    private final InventoryMovementReportPdfRenderer movementReportPdfRenderer;
 
     @Override
     public InventoryDashboardResponse dashboard() {
@@ -88,30 +84,43 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
                 .movementReport(normalizedItem, normalizedLocation, fromDate, toDate)
                 .stream()
                 .map(row -> InventoryMovementReportResponse.Line.builder()
-                        .movementType((StockMovementType) row[0])
+                        .movementType(StockMovementType.valueOf(row[0].toString()))
                         .movementCount(((Number) row[1]).longValue())
                         .totalQuantity((BigDecimal) row[2])
                         .totalValue(((Number) row[3]).longValue())
+                        .signedQuantity(signedQuantity(StockMovementType.valueOf(row[0].toString()), (BigDecimal) row[2]))
+                        .signedValue(signedValue(StockMovementType.valueOf(row[0].toString()), ((Number) row[3]).longValue()))
                         .build())
                 .toList();
+        Object[] summaryRow = movementRepository.movementReportSummary(normalizedItem, normalizedLocation, fromDate, toDate);
         return InventoryMovementReportResponse.builder()
                 .itemCode(normalizedItem)
                 .locationCode(normalizedLocation)
                 .fromDate(fromDate == null ? null : fromDate.toString())
                 .toDate(toDate == null ? null : toDate.toString())
+                .generatedAt(Instant.now().toString())
+                .summary(toSummary(summaryRow))
                 .lines(lines)
+                .items(movementRepository.movementReportByItem(normalizedItem, normalizedLocation, fromDate, toDate)
+                        .stream().map(this::toItemLine).toList())
+                .locations(movementRepository.movementReportByLocation(normalizedItem, normalizedLocation, fromDate, toDate)
+                        .stream().map(this::toLocationLine).toList())
+                .recentMovements(movementRepository.movementReportRecentMovements(normalizedItem, normalizedLocation, fromDate, toDate)
+                        .stream().map(this::toMovementDetail).toList())
                 .build();
     }
 
     @Override
     public String movementReportCsv(String itemCode, String locationCode, Instant fromDate, Instant toDate) {
         InventoryMovementReportResponse report = movementReport(itemCode, locationCode, fromDate, toDate);
-        StringBuilder csv = new StringBuilder("movementType,movementCount,totalQuantity,totalValue\n");
+        StringBuilder csv = new StringBuilder("movementType,movementCount,totalQuantity,totalValue,signedQuantity,signedValue\n");
         for (InventoryMovementReportResponse.Line line : report.getLines()) {
             csv.append(line.getMovementType()).append(',')
                     .append(line.getMovementCount()).append(',')
                     .append(line.getTotalQuantity()).append(',')
-                    .append(line.getTotalValue()).append('\n');
+                    .append(line.getTotalValue()).append(',')
+                    .append(line.getSignedQuantity()).append(',')
+                    .append(line.getSignedValue()).append('\n');
         }
         return csv.toString();
     }
@@ -119,31 +128,7 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
     @Override
     public byte[] movementReportPdf(String itemCode, String locationCode, Instant fromDate, Instant toDate) {
         InventoryMovementReportResponse report = movementReport(itemCode, locationCode, fromDate, toDate);
-        try (PDDocument document = new PDDocument(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            PDPage page = new PDPage();
-            document.addPage(page);
-            try (PDPageContentStream content = new PDPageContentStream(document, page)) {
-                content.beginText();
-                content.setFont(PDType1Font.HELVETICA_BOLD, 14);
-                content.newLineAtOffset(50, 750);
-                content.showText("Inventory movement report");
-                content.setFont(PDType1Font.HELVETICA, 10);
-                content.newLineAtOffset(0, -20);
-                content.showText("Item: " + nullSafe(report.getItemCode()) + " | Location: " + nullSafe(report.getLocationCode()));
-                content.newLineAtOffset(0, -20);
-                content.showText("Type | Count | Quantity | Value");
-                for (InventoryMovementReportResponse.Line line : report.getLines()) {
-                    content.newLineAtOffset(0, -16);
-                    content.showText(line.getMovementType() + " | " + line.getMovementCount()
-                            + " | " + line.getTotalQuantity() + " | " + line.getTotalValue());
-                }
-                content.endText();
-            }
-            document.save(output);
-            return output.toByteArray();
-        } catch (IOException ex) {
-            throw new BadRequestException("Unable to generate inventory movement PDF report");
-        }
+        return movementReportPdfRenderer.render(report);
     }
 
     @Override
@@ -157,6 +142,122 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
                 .largeInventoryCountVariances(countItemRepository.countByVarianceQuantityGreaterThanOrVarianceQuantityLessThan(
                         BigDecimal.valueOf(100), BigDecimal.valueOf(-100)))
                 .build();
+    }
+
+    private InventoryMovementReportResponse.Summary toSummary(Object[] row) {
+        Object[] values = unwrapRow(row);
+        return InventoryMovementReportResponse.Summary.builder()
+                .movementCount(longAt(values, 0))
+                .totalInQuantity(decimalAt(values, 1))
+                .totalOutQuantity(decimalAt(values, 2))
+                .netQuantity(decimalAt(values, 3))
+                .totalInValue(longAt(values, 4))
+                .totalOutValue(longAt(values, 5))
+                .netValue(longAt(values, 6))
+                .totalMovementValue(longAt(values, 7))
+                .firstMovementAt(stringAt(values, 8))
+                .lastMovementAt(stringAt(values, 9))
+                .build();
+    }
+
+    private InventoryMovementReportResponse.ItemLine toItemLine(Object[] row) {
+        return InventoryMovementReportResponse.ItemLine.builder()
+                .itemCode(stringAt(row, 0))
+                .itemName(stringAt(row, 1))
+                .movementCount(longAt(row, 2))
+                .totalInQuantity(decimalAt(row, 3))
+                .totalOutQuantity(decimalAt(row, 4))
+                .netQuantity(decimalAt(row, 5))
+                .totalValue(longAt(row, 6))
+                .build();
+    }
+
+    private InventoryMovementReportResponse.LocationLine toLocationLine(Object[] row) {
+        return InventoryMovementReportResponse.LocationLine.builder()
+                .locationCode(stringAt(row, 0))
+                .locationName(stringAt(row, 1))
+                .movementCount(longAt(row, 2))
+                .totalInQuantity(decimalAt(row, 3))
+                .totalOutQuantity(decimalAt(row, 4))
+                .netQuantity(decimalAt(row, 5))
+                .totalValue(longAt(row, 6))
+                .build();
+    }
+
+    private InventoryMovementReportResponse.MovementDetail toMovementDetail(Object[] row) {
+        return InventoryMovementReportResponse.MovementDetail.builder()
+                .movementCode(stringAt(row, 0))
+                .movementType(StockMovementType.valueOf(stringAt(row, 1)))
+                .itemCode(stringAt(row, 2))
+                .itemName(stringAt(row, 3))
+                .locationFromCode(stringAt(row, 4))
+                .locationToCode(stringAt(row, 5))
+                .quantity(decimalAt(row, 6))
+                .unitCost(nullableLongAt(row, 7))
+                .totalCost(nullableLongAt(row, 8))
+                .referenceType(stringAt(row, 9))
+                .referenceCode(stringAt(row, 10))
+                .performedBy(stringAt(row, 11))
+                .performedAt(stringAt(row, 12))
+                .build();
+    }
+
+    private BigDecimal signedQuantity(StockMovementType type, BigDecimal quantity) {
+        if (quantity == null) {
+            return BigDecimal.ZERO;
+        }
+        return switch (type) {
+            case OUT, ADJUSTMENT_OUT -> quantity.negate();
+            case IN, ADJUSTMENT_IN -> quantity;
+            case TRANSFER -> BigDecimal.ZERO;
+        };
+    }
+
+    private Long signedValue(StockMovementType type, Long value) {
+        if (value == null) {
+            return 0L;
+        }
+        return switch (type) {
+            case OUT, ADJUSTMENT_OUT -> -value;
+            case IN, ADJUSTMENT_IN -> value;
+            case TRANSFER -> 0L;
+        };
+    }
+
+    private BigDecimal decimalAt(Object[] row, int index) {
+        if (row == null || row[index] == null) {
+            return BigDecimal.ZERO;
+        }
+        if (row[index] instanceof BigDecimal decimal) {
+            return decimal;
+        }
+        return new BigDecimal(row[index].toString());
+    }
+
+    private long longAt(Object[] row, int index) {
+        Long value = nullableLongAt(row, index);
+        return value == null ? 0L : value;
+    }
+
+    private Long nullableLongAt(Object[] row, int index) {
+        if (row == null || row[index] == null) {
+            return null;
+        }
+        if (row[index] instanceof Number number) {
+            return number.longValue();
+        }
+        return Long.valueOf(row[index].toString());
+    }
+
+    private String stringAt(Object[] row, int index) {
+        return row == null || row[index] == null ? null : row[index].toString();
+    }
+
+    private Object[] unwrapRow(Object[] row) {
+        if (row != null && row.length == 1 && row[0] instanceof Object[] nested) {
+            return nested;
+        }
+        return row;
     }
 
     private InventoryLabelResponse itemLabel(String code) {

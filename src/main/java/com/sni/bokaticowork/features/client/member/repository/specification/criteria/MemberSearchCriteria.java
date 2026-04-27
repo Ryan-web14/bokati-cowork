@@ -8,6 +8,8 @@ import lombok.Setter;
 @Setter
 public class MemberSearchCriteria {
 
+    private String query;
+
     private String customerId;
 
     private String memberId;

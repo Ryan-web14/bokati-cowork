@@ -1,1408 +1,996 @@
-# Guide Frontend/API — Booking · Subscription · Pass
-
-## Vue d'ensemble
-
-Ce document explique comment le frontend doit utiliser les endpoints des modules :
-
-- `booking` — reservation de ressources, cycle de vie, participants
-- `subscriptions/plans` — plans tarifaires avec avantages configures
-- `subscriptions` — souscriptions actives d'un titulaire a un plan
-- `passes` — passes prépayés ou a duree limitee
-
-Base URL :
-
-- `/sni/api/v1`
-
----
-
-## Concepts principaux
-
-- `Booking`
-  - represente une reservation d'une ressource pour une plage horaire
-- `BookingLine`
-  - chaque service ou ressource inclus dans la reservation
-- `BookingParticipant`
-  - co-participants invites sur une reservation
-- `SubscriptionPlan`
-  - definit un offre commerciale avec ses avantages (ce qu'on vend)
-- `PlanBenefit`
-  - chaque avantage inclus dans un plan (heures, acces, remises)
-- `Subscription`
-  - souscription active d'un titulaire (member, customer, business) a un plan
-- `SubscriptionEntitlement`
-  - solde de droits disponibles pour la periode de facturation courante
-- `PassTemplate`
-  - modele de pass vendable (ex : carnet 10h, journée illimitée)
-- `Pass`
-  - instance d'un pass emis et attribue a un titulaire
-- `PassUsage`
-  - trace chaque consommation de credits sur un pass
-
-Types de titulaire :
-
-- `MEMBER`
-- `CUSTOMER`
-- `BUSINESS`
-
-Modes de paiement d'une reservation :
-
-- `DIRECT` — tarif horaire standard, facture generee
-- `SUBSCRIPTION` — credits deduits de la souscription active
-- `PASS` — credits deduits d'un pass actif
-
----
-
-## 1. Reservation — Verification de disponibilite
-
-### Verifier un creneau
-
-`POST /bookings/check-availability`
-
-Body :
-
-```json
-{
-  "resourceCode": "SALLE-A",
-  "startAt": "2026-04-15T09:00:00Z",
-  "endAt": "2026-04-15T11:00:00Z"
-}
-```
-
-Reponse :
-
-```json
-{
-  "resourceCode": "SALLE-A",
-  "resourceName": "Salle de reunion A",
-  "startAt": "2026-04-15T09:00:00Z",
-  "endAt": "2026-04-15T11:00:00Z",
-  "available": true,
-  "conflictingBookingCodes": [],
-  "applicablePricingRules": [
-    {
-      "bookingUnit": "HOUR",
-      "price": 5000,
-      "currency": "XAF"
-    }
-  ],
-  "estimatedAmount": 10000
-}
-```
-
-Si indisponible :
-
-```json
-{
-  "available": false,
-  "conflictingBookingCodes": ["BOK-202604-000012"],
-  "nextAvailableSlot": "2026-04-15T11:00:00Z"
-}
-```
-
-Usage frontend :
-
-- appeler avant d'afficher le formulaire de confirmation
-- afficher le prix estimatif en temps reel
-- proposer le prochain creneau disponible si conflit
-
----
-
-## 2. Reservation — Creation
-
-### Creer une reservation
-
-`POST /bookings`
-
-Body (reservation directe) :
-
-```json
-{
-  "resourceCode": "SALLE-A",
-  "customerCode": "MBR-000001",
-  "bookingType": "INSTANT",
-  "startAt": "2026-04-15T09:00:00Z",
-  "endAt": "2026-04-15T11:00:00Z",
-  "notes": "Reunion equipe produit"
-}
-```
-
-Body (reservation avec souscription) :
-
-```json
-{
-  "resourceCode": "SALLE-A",
-  "customerCode": "MBR-000001",
-  "bookingType": "INSTANT",
-  "startAt": "2026-04-15T09:00:00Z",
-  "endAt": "2026-04-15T11:00:00Z",
-  "paymentMode": "SUBSCRIPTION",
-  "subscriptionCode": "SUB-202604-000001",
-  "notes": "Reunion equipe produit"
-}
-```
-
-Body (reservation avec pass) :
-
-```json
-{
-  "resourceCode": "SALLE-A",
-  "customerCode": "MBR-000001",
-  "bookingType": "INSTANT",
-  "startAt": "2026-04-15T09:00:00Z",
-  "endAt": "2026-04-15T11:00:00Z",
-  "paymentMode": "PASS",
-  "passCode": "PASS-202604-000001",
-  "notes": "Reunion equipe produit"
-}
-```
-
-Reponse `201` :
-
-```json
-{
-  "bookingCode": "BOK-202604-000001",
-  "resourceCode": "SALLE-A",
-  "resourceName": "Salle de reunion A",
-  "customerCode": "MBR-000001",
-  "bookingType": "INSTANT",
-  "status": "CONFIRMED",
-  "startAt": "2026-04-15T09:00:00Z",
-  "endAt": "2026-04-15T11:00:00Z",
-  "totalAmount": 10000,
-  "currency": "XAF",
-  "paymentMode": "DIRECT",
-  "subscriptionCode": null,
-  "passCode": null,
-  "notes": "Reunion equipe produit",
-  "participants": [],
-  "lines": [
-    {
-      "resourceCode": "SALLE-A",
-      "resourceName": "Salle de reunion A",
-      "unitPrice": 5000,
-      "quantity": 2,
-      "unit": "HOUR",
-      "subtotal": 10000
-    }
-  ],
-  "createdAt": "2026-04-14T08:00:00Z"
-}
-```
-
-Types de reservation (`BookingType`) :
-
-- `INSTANT` — reservation immediate confirmee
-- `ON_DEMAND` — demande soumise, confirmation manuelle
-- `RECURRING` — reservation repetee (a implémenter ulterieurement)
-
-Statuts (`BookingStatus`) :
-
-- `DRAFT`
-- `CONFIRMED`
-- `IN_PROGRESS`
-- `COMPLETED`
-- `CANCELLED`
-- `NO_SHOW`
-
----
-
-## 3. Reservation — Consultation et recherche
-
-### Consulter une reservation
-
-`GET /bookings/{bookingCode}`
-
-Reponse : `BookingResponse` complet avec lignes et participants.
-
-### Lister et filtrer les reservations
-
-`GET /bookings?customerCode=MBR-000001&resourceCode=SALLE-A&status=CONFIRMED&from=2026-04-01&to=2026-04-30&page=0&size=20`
-
-Parametres :
-
-- `customerCode`
-- `resourceCode`
-- `status` — un ou plusieurs statuts
-- `from`, `to` — plage de dates
-- `bookingType`
-- `page`, `size`
-
-Retour : `Page<BookingResponse>`
-
----
-
-## 4. Reservation — Transitions de statut
-
-### Confirmer une reservation
-
-`PATCH /bookings/{bookingCode}/confirm`
-
-Usage : pour les reservations `ON_DEMAND` en attente de validation manuelle.
-
-### Marquer en cours
-
-`PATCH /bookings/{bookingCode}/start`
-
-Usage : quand le titulaire prend possession physique de l'espace.
-
-### Cloture
-
-`PATCH /bookings/{bookingCode}/complete`
-
-Comportement :
-
-- si `paymentMode = DIRECT`, une facture est generee automatiquement
-- si `paymentMode = SUBSCRIPTION`, les credits ont deja ete consommes a la confirmation
-- si `paymentMode = PASS`, les credits ont deja ete consommes a la confirmation
-
-### Annuler
-
-`PATCH /bookings/{bookingCode}/cancel`
-
-Body :
-
-```json
-{
-  "cancelledBy": "MBR-000001",
-  "cancellationReason": "CUSTOMER_REQUEST",
-  "notes": "Reunion reportee"
-}
-```
-
-Raisons d'annulation (`BookingCancellationReason`) :
-
-- `CUSTOMER_REQUEST`
-- `NO_SHOW`
-- `RESOURCE_UNAVAILABLE`
-- `POLICY_VIOLATION`
-- `ADMIN_DECISION`
-
-Comportement :
-
-- si `paymentMode = SUBSCRIPTION` ou `PASS`, les credits sont restitues si annulation dans le delai de la politique
-- la `ResourcePolicy` determine le delai minimum d'annulation autorise
-
-### Marquer absent
-
-`PATCH /bookings/{bookingCode}/no-show`
-
-Usage : le titulaire ne s'est pas presente. Aucun remboursement de credits.
-
----
-
-## 5. Reservation — Participants
-
-### Ajouter un participant
-
-`POST /bookings/{bookingCode}/participants`
-
-Body :
-
-```json
-{
-  "memberCode": "MBR-000002",
-  "email": "jean@example.com",
-  "role": "GUEST"
-}
-```
-
-Roles (`ParticipantRole`) :
-
-- `HOST` — organisateur principal
-- `GUEST` — invite
-- `ORGANIZER` — co-organisateur
-
-### Retirer un participant
-
-`DELETE /bookings/{bookingCode}/participants/{email}`
-
-### Lister les participants
-
-`GET /bookings/{bookingCode}/participants`
-
----
-
-## 6. Reservation — Historique des statuts
-
-### Consulter l'historique
-
-`GET /bookings/{bookingCode}/history`
-
-Reponse :
-
-```json
-[
-  {
-    "fromStatus": null,
-    "toStatus": "DRAFT",
-    "changedBy": "MBR-000001",
-    "reason": "Creation",
-    "changedAt": "2026-04-14T08:00:00Z"
-  },
-  {
-    "fromStatus": "DRAFT",
-    "toStatus": "CONFIRMED",
-    "changedBy": "MBR-000001",
-    "reason": null,
-    "changedAt": "2026-04-14T08:00:05Z"
-  }
-]
-```
-
----
-
-## 7. Plans tarifaires — Gestion
+# Guide Frontend/API - Subscription, Plans, Pass et Booking
+
+Base API: `/sni/api/v1`
+
+Ce document decrit l'integration frontend du module subscription actuel. Il couvre les plans, subscriptions, pass, entitlements, add-ons, promotions, seats, usage, overage, rollover, timeline, notifications, metrics et le futur branchement booking/payment/invoice.
+
+Le trial n'est pas expose dans cette version.
+
+## Regle importante sur les codes
+
+Les codes propres au module subscription sont generes par le backend et ne doivent pas etre saisis par l'utilisateur dans les formulaires de creation.
+
+Codes generes par l'API:
+
+- `plan.code`
+- `entitlementDefinition.code`
+- `subscriptionNumber`
+- `passNumber`
+- `grantNumber`
+- `usageNumber`
+- `changeNumber`
+- `promotion.code`
+- `notificationNumber`
+- `eventNumber`
+- `billableNumber`
+- `chargeNumber`
+- `rolloverNumber`
+- `bookingNumber`
+- `holdNumber`
+- `recurrenceGroupNumber`
+
+Exemples de formats actuels:
+
+- `plan.code`: `PLN-COW-IND-202604-00000001`
+- `entitlementDefinition.code`: `ENT-TIM-HOU-RES-PER-MEE-202604-00000001`
+- `subscriptionNumber`: `SUB-MEM-COW-MON-202604-00000001`
+
+Codes qui restent envoyes par le frontend car ils referencent une donnee existante:
+
+- `planCode`
+- `subscriptionNumber`
+- `entitlementCode`
+- `ownerCode`
+- `subscriberCode`
+- `memberCode`
+- `resourceTypeCode`
+- `resourceGroupCode`
+- `sourceId`
+- `referenceId`
+
+Pour un formulaire, ne jamais afficher un champ editable pour un code genere. Apres creation, utiliser le code retourne par la reponse pour les prochaines operations.
+
+Regle specifique booking: le frontend ne doit pas envoyer `ownerCode`, `subscriptionNumber`, `passNumber` ou `entitlementCode` dans les payloads de reservation. Il envoie seulement un selecteur d'identite (`memberId`, `customerId`, `businessCode`, `email`, `phone` ou `walkIn=true`) et `paymentMode`. Le backend resout ensuite le proprietaire, la subscription active, le pass utilisable et l'entitlement compatible avec la ressource.
+
+## Format des listes
+
+Les listes paginees retournent un `PaginatedResponse<T>`. Toujours envoyer les parametres standards Spring si besoin:
+
+- `page`
+- `size`
+- `sort`
+
+Exemple:
+
+`GET /sni/api/v1/subscriptions/plans?page=0&size=20&sort=createdAt,desc`
+
+## Ecrans frontend recommandes
+
+- Catalogue plans: `/subscriptions/plans`
+- Detail plan: `/subscriptions/plans/:planCode`
+- Creation/edition version plan: `/subscriptions/plans/:planCode/versions`
+- Liste subscriptions: `/subscriptions`
+- Detail subscription: `/subscriptions/:subscriptionNumber`
+- Pass: `/passes`
+- Detail pass: `/passes/:passNumber`
+- Promotions: `/promotions`
+- Usage records: `/usage-records`
+- Metrics: `/subscription-metrics`
+- Booking: `/bookings`
+
+Onglets recommandes sur le detail subscription:
+
+- Resume
+- Entitlements
+- Billing schedule
+- Billable items
+- Usage
+- Add-ons
+- Seats
+- Changes
+- Timeline
+- Notifications
+- Overage
+- Rollover
+
+## Plans et catalogue
 
 ### Creer un plan
 
-`POST /subscriptions/plans`
+`POST /sni/api/v1/subscriptions/plans`
 
-Body :
+Le champ `code` ne doit pas etre envoye.
 
 ```json
 {
   "name": "Coworking Essentiel",
-  "description": "Acces illimite aux espaces ouverts, 10h de salle de reunion",
-  "billingCycle": "MONTHLY",
-  "price": 50000,
-  "currency": "XAF",
-  "trialDays": 7,
-  "visibility": "PUBLIC",
+  "description": "Acces open space avec credits de reservation",
+  "planType": "COWORKING_ACCESS",
+  "targetAudience": "INDIVIDUAL",
+  "visible": false,
   "sortOrder": 1
 }
 ```
 
-Cycles de facturation (`PlanBillingCycle`) :
+Reponse principale: `PlanResponse`
 
-- `MONTHLY`
-- `QUARTERLY`
-- `YEARLY`
-- `ONE_TIME`
+- `code`: genere par l'API
+- `status`: `DRAFT` a la creation
+- `activeVersion`: null tant qu'aucune version n'est publiee
 
-Visibilite (`PlanVisibility`) :
+### Mettre a jour un plan
 
-- `PUBLIC` — visible dans le catalogue client
-- `PRIVATE` — sur invitation uniquement
-- `INTERNAL` — usage interne uniquement
+`PUT /sni/api/v1/subscriptions/plans/{planCode}`
 
-Statuts plan (`PlanStatus`) :
-
-- `DRAFT`
-- `ACTIVE`
-- `ARCHIVED`
-
-### Modifier un plan
-
-`PUT /subscriptions/plans/{planCode}`
-
-Note : la modification d'un plan actif ne modifie pas les souscriptions existantes.
-
-### Activer / archiver un plan
-
-`PATCH /subscriptions/plans/{planCode}/activate`
-
-`PATCH /subscriptions/plans/{planCode}/archive`
-
-### Lister les plans
-
-`GET /subscriptions/plans?status=ACTIVE&visibility=PUBLIC`
-
-Reponse :
-
-```json
-[
-  {
-    "planCode": "PLAN-001",
-    "name": "Coworking Essentiel",
-    "description": "Acces illimite aux espaces ouverts, 10h de salle de reunion",
-    "billingCycle": "MONTHLY",
-    "price": 50000,
-    "currency": "XAF",
-    "trialDays": 7,
-    "status": "ACTIVE",
-    "visibility": "PUBLIC",
-    "sortOrder": 1,
-    "benefits": [
-      {
-        "benefitCode": "BEN-001",
-        "benefitType": "RESOURCE_ACCESS",
-        "resourceTypeCode": "OPEN_SPACE",
-        "quantity": null,
-        "unit": null,
-        "description": "Acces illimite open space"
-      },
-      {
-        "benefitCode": "BEN-002",
-        "benefitType": "RESOURCE_HOURS",
-        "resourceTypeCode": "MEETING_ROOM",
-        "quantity": 10,
-        "unit": "HOUR",
-        "description": "10 heures de salle de reunion par mois"
-      }
-    ]
-  }
-]
-```
-
----
-
-## 8. Plans tarifaires — Avantages
-
-### Ajouter un avantage
-
-`POST /subscriptions/plans/{planCode}/benefits`
-
-Body :
+Le champ `code` reste genere par le backend et ne doit pas etre modifie.
+Le backend accepte aussi une mise a jour partielle: seuls les champs fournis sont modifies.
 
 ```json
 {
-  "benefitType": "RESOURCE_HOURS",
-  "resourceTypeCode": "MEETING_ROOM",
-  "quantity": 10,
+  "name": "Coworking Essentiel Plus",
+  "description": "Acces open space avec credits et priorite de reservation",
+  "planType": "COWORKING_ACCESS",
+  "targetAudience": "INDIVIDUAL",
+  "visible": true,
+  "sortOrder": 2
+}
+```
+
+Effet frontend:
+
+- met a jour les metadonnees du plan
+- conserve le `code`, le `status` et les versions existantes
+
+### Creer une version de plan
+
+`POST /sni/api/v1/subscriptions/plans/{planCode}/versions`
+
+```json
+{
+  "name": "Version mensuelle 2026",
+  "description": "Tarif public mensuel",
+  "effectiveFrom": "2026-04-15",
+  "effectiveTo": null,
+  "termsJson": "{\"commitment\":\"monthly\"}",
+  "prices": [
+    {
+      "billingCycle": "MONTHLY",
+      "currency": "XAF",
+      "amount": 50000,
+      "setupFee": 0,
+      "depositAmount": 0,
+      "taxIncluded": true,
+      "commitmentMonths": 1
+    }
+  ],
+  "benefits": [
+    {
+      "title": "Open space",
+      "description": "Acces open space en heures ouvrables",
+      "icon": "workspace",
+      "category": "ACCESS",
+      "displayOrder": 1,
+      "highlighted": true,
+      "included": true,
+      "metadataJson": null
+    }
+  ],
+  "entitlements": [
+    {
+      "entitlementCode": "ENT-TIM-HOU-RES-PER-MEE-202604-00000001",
+      "quantity": 10,
+      "unlimited": false,
+      "rolloverAllowed": true,
+      "rolloverLimit": 5,
+      "validForDays": 30,
+      "priority": 1,
+      "restrictionsJson": null
+    }
+  ]
+}
+```
+
+`entitlementCode` est un code retourne par `POST /subscriptions/entitlement-definitions`.
+
+### Publier une version
+
+`PATCH /sni/api/v1/subscriptions/plans/{planCode}/versions/{versionId}/publish`
+
+Important frontend:
+
+- traiter `PlanVersionResponse.id` comme une chaine opaque, pas comme un `number` JavaScript
+- les IDs backend peuvent depasser `Number.MAX_SAFE_INTEGER`
+- reutiliser la valeur exacte retournee par l'API dans l'URL `{versionId}`
+
+Effet frontend:
+
+- la version devient `ACTIVE`
+- l'ancienne version active est archivee
+- le plan devient visible et actif
+
+### Lister et consulter
+
+- `GET /sni/api/v1/subscriptions/plans`
+- `GET /sni/api/v1/subscriptions/plans/{planCode}`
+
+Filtres:
+
+- `code`
+- `name`
+- `planType`
+- `targetAudience`
+- `status`
+- `visible`
+
+Enums utiles:
+
+- `PlanType`: `MEMBERSHIP`, `COWORKING_ACCESS`, `DEDICATED_DESK`, `PRIVATE_OFFICE`, `MEETING_ROOM_PACK`, `VIRTUAL_OFFICE`, `COMPANY_PLAN`, `CUSTOM`
+- `TargetAudience`: `INDIVIDUAL`, `COMPANY`, `BOTH`
+- `PlanStatus`: `DRAFT`, `ACTIVE`, `ARCHIVED`
+- `BillingCycle`: `ONE_TIME`, `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`, `YEARLY`
+
+## Entitlement definitions
+
+### Creer une definition de droit
+
+`POST /sni/api/v1/subscriptions/entitlement-definitions`
+
+Le champ `code` ne doit pas etre envoye. Le backend genere le code.
+
+```json
+{
+  "name": "Heures salle de reunion",
+  "description": "Credit consommable pour reservations de salles",
+  "entitlementType": "TIME",
   "unit": "HOUR",
-  "description": "10 heures de salle de reunion par mois"
+  "consumptionMode": "RESERVE_THEN_CONSUME",
+  "resetPolicy": "PER_BILLING_CYCLE",
+  "stackable": true,
+  "transferable": false,
+  "resourceTypeCode": "MEETING_ROOM",
+  "resourceGroupCode": null,
+  "metadataJson": null,
+  "active": true
 }
 ```
 
-Types d'avantages (`PlanBenefitType`) :
+Reponse: `EntitlementDefinitionResponse`, avec `code` genere.
 
-- `RESOURCE_HOURS` — credits d'heures sur un type de ressource
-- `RESOURCE_DAYS` — credits de journees
-- `RESOURCE_ACCESS` — acces illimite a un type de ressource
-- `DISCOUNT_PERCENT` — remise en pourcentage sur les reservations
-- `WALLET_CREDIT` — credits credites sur le wallet a chaque cycle
-- `GUEST_PASSES` — passes invites inclus
-- `PRIORITY_BOOKING` — priorite sur les reservations
-- `CUSTOM` — avantage libre
+### Lister les definitions
 
-### Modifier un avantage
+`GET /sni/api/v1/subscriptions/entitlement-definitions`
 
-`PUT /subscriptions/plans/{planCode}/benefits/{benefitCode}`
+Recherche basique trigram:
 
-### Supprimer un avantage
+- `GET /sni/api/v1/subscriptions/entitlement-definitions/search/basic?query=meeting`
+- la recherche `pg_trgm` porte en priorite sur `code` et `name`
+- `description`, `resourceTypeCode` et `resourceGroupCode` participent aussi au score
 
-`DELETE /subscriptions/plans/{planCode}/benefits/{benefitCode}`
+Filtres avances disponibles sur `GET /sni/api/v1/subscriptions/entitlement-definitions`:
 
-### Lister les avantages d'un plan
+- `query`
+- `code`
+- `name`
+- `entitlementType`
+- `unit`
+- `consumptionMode`
+- `resetPolicy`
+- `resourceTypeCode`
+- `resourceGroupCode`
+- `stackable`
+- `transferable`
+- `active`
 
-`GET /subscriptions/plans/{planCode}/benefits`
+### Consulter une definition
 
----
+`GET /sni/api/v1/subscriptions/entitlement-definitions/{code}`
 
-## 9. Souscriptions — Creation
+Enums:
 
-### Souscrire a un plan
+- `EntitlementType`: `ACCESS`, `CREDIT`, `TIME`, `DISCOUNT`, `QUOTA`, `FEATURE_FLAG`, `SERVICE_ALLOWANCE`
+- `EntitlementUnit`: `DAY`, `HOUR`, `CREDIT`, `BOOKING`, `VISIT`, `MEMBER`, `PERCENT`, `AMOUNT`, `BOOLEAN`
+- `ConsumptionMode`: `CHECK_ONLY`, `RESERVABLE`, `CONSUMABLE`, `RESERVE_THEN_CONSUME`
+- `EntitlementResetPolicy`: `NEVER`, `DAILY`, `WEEKLY`, `MONTHLY`, `PER_BILLING_CYCLE`
 
-`POST /subscriptions`
+## Subscriptions
 
-Body :
+### Creer une subscription
+
+`POST /sni/api/v1/subscriptions`
+
+`subscriptionNumber` est genere par le backend.
 
 ```json
 {
-  "planCode": "PLAN-001",
-  "holderType": "MEMBER",
-  "holderCode": "MBR-000001",
-  "contractCode": "CONT-202604-000001",
+  "planCode": "PLN-COW-IND-202604-00000001",
+  "planVersionId": 123,
+  "billingCycle": "MONTHLY",
+  "subscriberType": "MEMBER",
+  "subscriberCode": "MBR-000001",
   "startDate": "2026-04-15",
   "autoRenew": true,
-  "notes": "Abonnement mensuel bureau fixe"
+  "metadataJson": "{\"source\":\"backoffice\"}"
 }
 ```
 
-Reponse `201` :
+Notes:
 
-```json
-{
-  "subscriptionCode": "SUB-202604-000001",
-  "planCode": "PLAN-001",
-  "planName": "Coworking Essentiel",
-  "holderType": "MEMBER",
-  "holderCode": "MBR-000001",
-  "holderName": "Jean Dupont",
-  "contractCode": "CONT-202604-000001",
-  "status": "DRAFT",
-  "startDate": "2026-04-15",
-  "endDate": null,
-  "nextBillingDate": "2026-05-15",
-  "lastBillingDate": null,
-  "totalPaid": 0,
-  "autoRenew": true,
-  "notes": "Abonnement mensuel bureau fixe",
-  "createdAt": "2026-04-14T09:00:00Z"
-}
-```
+- `planCode` reference un plan existant.
+- `planVersionId` est optionnel si le backend peut resoudre la version active.
+- `subscriberCode` reference un membre, client ou business entity existant.
 
----
+### Consultation
 
-## 10. Souscriptions — Transitions de statut
+- `GET /sni/api/v1/subscriptions/{subscriptionNumber}`
+- `GET /sni/api/v1/subscriptions/current?subscriberType=MEMBER&subscriberCode=MBR-000001`
+- `GET /sni/api/v1/subscriptions`
 
-### Activer une souscription
+Filtres liste:
 
-`PATCH /subscriptions/{subscriptionCode}/activate`
-
-Comportement :
-
-- genere une premiere facture si `billingCycle != ONE_TIME`
-- initialise les `SubscriptionEntitlement` pour la premiere periode
-- passe le statut a `ACTIVE`
-
-### Suspendre
-
-`PATCH /subscriptions/{subscriptionCode}/suspend`
-
-Body :
-
-```json
-{
-  "suspendedBy": "MANAGER-001",
-  "suspensionReason": "Impaye cycle precedent"
-}
-```
-
-Comportement :
-
-- les reservations futures sont bloquees
-- les entitlements restants sont conserves mais gelés
-
-### Reserver
-
-`PATCH /subscriptions/{subscriptionCode}/reactivate`
-
-Body :
-
-```json
-{
-  "reactivatedBy": "MANAGER-001"
-}
-```
-
-Comportement : remet les entitlements a disposition.
-
-### Annuler
-
-`PATCH /subscriptions/{subscriptionCode}/cancel`
-
-Body :
-
-```json
-{
-  "cancelledBy": "MBR-000001",
-  "cancellationReason": "Depart de l'espace"
-}
-```
-
-### Renouveler manuellement
-
-`PATCH /subscriptions/{subscriptionCode}/renew`
-
-Usage : declencher un renouvellement hors cycle automatique.
-
----
-
-## 11. Souscriptions — Droits et historique
-
-### Consulter les droits de la periode courante
-
-`GET /subscriptions/{subscriptionCode}/entitlements`
-
-Reponse :
-
-```json
-[
-  {
-    "benefitCode": "BEN-001",
-    "benefitType": "RESOURCE_ACCESS",
-    "resourceTypeCode": "OPEN_SPACE",
-    "description": "Acces illimite open space",
-    "periodStart": "2026-04-15",
-    "periodEnd": "2026-05-14",
-    "allocatedQuantity": null,
-    "usedQuantity": null,
-    "remainingQuantity": null,
-    "unit": null,
-    "unlimited": true
-  },
-  {
-    "benefitCode": "BEN-002",
-    "benefitType": "RESOURCE_HOURS",
-    "resourceTypeCode": "MEETING_ROOM",
-    "description": "10 heures de salle de reunion",
-    "periodStart": "2026-04-15",
-    "periodEnd": "2026-05-14",
-    "allocatedQuantity": 10,
-    "usedQuantity": 3.5,
-    "remainingQuantity": 6.5,
-    "unit": "HOUR",
-    "unlimited": false
-  }
-]
-```
-
-Usage frontend :
-
-- afficher les credits restants avant la reservation
-- alerter si credits insuffisants
-- proposer le passage en mode `DIRECT` ou par `PASS` si credits epuises
-
-### Historique des statuts
-
-`GET /subscriptions/{subscriptionCode}/history`
-
-Reponse :
-
-```json
-[
-  {
-    "fromStatus": null,
-    "toStatus": "DRAFT",
-    "changedBy": "ADMIN",
-    "reason": "Creation",
-    "changedAt": "2026-04-14T09:00:00Z"
-  },
-  {
-    "fromStatus": "DRAFT",
-    "toStatus": "ACTIVE",
-    "changedBy": "ADMIN",
-    "reason": "Premier paiement valide",
-    "changedAt": "2026-04-14T09:05:00Z"
-  }
-]
-```
-
-### Factures liees a la souscription
-
-`GET /subscriptions/{subscriptionCode}/invoices`
-
-Retour : `Page<InvoiceSummaryResponse>`
-
-### Lister les souscriptions
-
-`GET /subscriptions?holderCode=MBR-000001&holderType=MEMBER&status=ACTIVE&page=0&size=20`
-
-Parametres :
-
-- `holderCode`
-- `holderType`
+- `subscriberType`
+- `subscriberCode`
 - `planCode`
 - `status`
-- `page`, `size`
+- `nextBillingBefore`
 
----
+### Actions cycle de vie
 
-## 12. Passes — Modeles de pass
+- `PATCH /sni/api/v1/subscriptions/{subscriptionNumber}/activate`
+- `PATCH /sni/api/v1/subscriptions/{subscriptionNumber}/suspend`
+- `PATCH /sni/api/v1/subscriptions/{subscriptionNumber}/cancel`
+- `PATCH /sni/api/v1/subscriptions/{subscriptionNumber}/renew`
 
-### Creer un modele de pass
-
-`POST /passes/templates`
-
-Body :
-
-```json
-{
-  "name": "Carnet 10 heures",
-  "description": "10 heures de coworking ou salle de reunion",
-  "passType": "CREDIT_HOURS",
-  "price": 35000,
-  "currency": "XAF",
-  "totalQuantity": 10,
-  "unit": "HOUR",
-  "resourceTypeCode": null,
-  "validityDays": 90,
-  "transferable": false
-}
-```
-
-Types de pass (`PassType`) :
-
-- `CREDIT_HOURS` — credits d'heures
-- `CREDIT_DAYS` — credits de journees
-- `DAY_PASS` — acces illimite pour une journee
-- `UNLIMITED_DAY` — acces illimite sur la duree de validite
-- `MULTI_ENTRY` — nombre fixe d'entrees
-- `CUSTOM` — pass libre
-
-### Modifier un modele
-
-`PUT /passes/templates/{templateCode}`
-
-### Activer / desactiver un modele
-
-`PATCH /passes/templates/{templateCode}/activate`
-
-`PATCH /passes/templates/{templateCode}/deactivate`
-
-### Lister les modeles
-
-`GET /passes/templates?active=true`
-
-Reponse :
-
-```json
-[
-  {
-    "templateCode": "TPL-001",
-    "name": "Carnet 10 heures",
-    "description": "10 heures de coworking ou salle de reunion",
-    "passType": "CREDIT_HOURS",
-    "price": 35000,
-    "currency": "XAF",
-    "totalQuantity": 10,
-    "unit": "HOUR",
-    "resourceTypeCode": null,
-    "validityDays": 90,
-    "transferable": false,
-    "active": true
-  }
-]
-```
-
----
-
-## 13. Passes — Emission et gestion
-
-### Emettre un pass
-
-`POST /passes`
-
-Body :
+Body optionnel pour activate/suspend/cancel:
 
 ```json
 {
-  "templateCode": "TPL-001",
-  "holderType": "MEMBER",
-  "holderCode": "MBR-000001",
-  "paymentCode": "PAY-202604-000001",
-  "notes": "Achat via portail client"
+  "reason": "Premier paiement valide",
+  "changedBy": "ADMIN-001"
 }
 ```
 
-Reponse `201` :
+### Donnees liees
 
-```json
-{
-  "passCode": "PASS-202604-000001",
-  "templateCode": "TPL-001",
-  "templateName": "Carnet 10 heures",
-  "passType": "CREDIT_HOURS",
-  "holderType": "MEMBER",
-  "holderCode": "MBR-000001",
-  "holderName": "Jean Dupont",
-  "status": "ACTIVE",
-  "totalQuantity": 10,
-  "usedQuantity": 0,
-  "remainingQuantity": 10,
-  "unit": "HOUR",
-  "resourceTypeCode": null,
-  "issuedAt": "2026-04-14T10:00:00Z",
-  "expiresAt": "2026-07-13T10:00:00Z",
-  "consumedAt": null,
-  "notes": "Achat via portail client"
-}
-```
+- `GET /sni/api/v1/subscriptions/{subscriptionNumber}/entitlements`
+- `GET /sni/api/v1/subscriptions/{subscriptionNumber}/history`
+- `GET /sni/api/v1/subscriptions/{subscriptionNumber}/billing-schedule`
 
-Statuts pass (`PassStatus`) :
+Enums:
 
-- `ACTIVE`
-- `EXPIRED`
-- `CONSUMED`
-- `SUSPENDED`
-- `CANCELLED`
+- `SubscriberType`: `MEMBER`, `CUSTOMER`, `BUSINESS_ENTITY`
+- `SubscriptionStatus`: `DRAFT`, `PENDING_ACTIVATION`, `ACTIVE`, `PAST_DUE`, `SUSPENDED`, `CANCELLED`, `EXPIRED`
 
-### Consulter un pass
+`TRIALING` existe dans l'enum technique mais ne doit pas etre expose comme parcours UI dans cette version.
 
-`GET /passes/{passCode}`
+## Entitlements et booking
 
-### Lister les passes d'un titulaire
+Ces endpoints sont prevus pour les services internes et pour le futur module booking. Le frontend peut les utiliser uniquement si le backoffice expose une action manuelle de verification ou correction.
 
-`GET /passes?holderCode=MBR-000001&holderType=MEMBER&status=ACTIVE&page=0&size=20`
+### Lire les grants et soldes
 
-Parametres :
+- `GET /sni/api/v1/entitlements/grants`
+- `GET /sni/api/v1/entitlements/balances?ownerType=MEMBER&ownerCode=MBR-000001`
 
-- `holderCode`, `holderType`
+Filtres grants:
+
+- `ownerType`
+- `ownerCode`
+- `entitlementCode`
 - `status`
-- `templateCode`
-- `expiringBefore` — filtrer les passes qui expirent avant une date
+- `validAt`
 
----
+### Operations
 
-## 14. Passes — Consommation
+- `POST /sni/api/v1/internal/entitlements/check`
+- `POST /sni/api/v1/internal/entitlements/reserve`
+- `POST /sni/api/v1/internal/entitlements/consume`
+- `POST /sni/api/v1/internal/entitlements/release`
+- `POST /sni/api/v1/internal/entitlements/refund`
 
-### Consommer des credits
-
-`POST /passes/{passCode}/consume`
-
-Body :
-
-```json
-{
-  "bookingCode": "BOK-202604-000001",
-  "quantityUsed": 2,
-  "usedBy": "MBR-000001",
-  "notes": "2h salle de reunion"
-}
-```
-
-Reponse :
+Payload:
 
 ```json
 {
-  "usageId": "USAGE-202604-000001",
-  "passCode": "PASS-202604-000001",
-  "bookingCode": "BOK-202604-000001",
-  "quantityUsed": 2,
-  "remainingBefore": 10,
-  "remainingAfter": 8,
-  "usedAt": "2026-04-15T09:00:00Z",
-  "usedBy": "MBR-000001"
+  "ownerType": "MEMBER",
+  "ownerCode": "MBR-000001",
+  "entitlementCode": "ENT-TIM-HOU-RES-PER-MEE-202604-00000001",
+  "quantity": 2,
+  "referenceType": "BOOKING",
+  "referenceId": "BKG-202604-000001",
+  "idempotencyKey": "booking:BKG-202604-000001:reserve",
+  "reason": "Reservation salle de reunion"
 }
 ```
 
-Comportement :
+Workflow booking recommande:
 
-- verifie que `remainingQuantity >= quantityUsed`
-- verifie que le pass n'est pas expire
-- si `remainingAfter = 0`, passe le statut du pass a `CONSUMED`
+1. Verifier la disponibilite de la ressource dans booking.
+2. Appeler `check` avec `referenceType=BOOKING`.
+3. A la confirmation booking, appeler `reserve`.
+4. A la fin effective du booking, appeler `consume`.
+5. Si booking annule avant consommation, appeler `release`.
+6. Si correction apres consommation, appeler `refund`.
 
-### Inverser une consommation
-
-`POST /passes/{passCode}/reverse-usage/{usageId}`
-
-Body :
+Reponse:
 
 ```json
 {
-  "reversedBy": "MANAGER-001",
-  "reason": "Reservation annulee dans le delai"
+  "allowed": true,
+  "entitlementCode": "ENT-TIM-HOU-RES-PER-MEE-202604-00000001",
+  "requestedQuantity": 2,
+  "availableQuantity": 8,
+  "message": "Entitlement reserved"
 }
 ```
 
-Comportement :
+## Passes
 
-- restitue `quantityUsed` au solde du pass
-- si le pass etait `CONSUMED`, repasse en `ACTIVE`
+### Creer un pass
 
-### Transferer un pass
+`POST /sni/api/v1/passes`
 
-`PATCH /passes/{passCode}/transfer`
-
-Body :
+`passNumber` est genere par le backend.
 
 ```json
 {
-  "newHolderType": "MEMBER",
-  "newHolderCode": "MBR-000002",
-  "transferredBy": "MANAGER-001",
-  "reason": "Transfert suite a depart du membre initial"
+  "passType": "TIME_PACK",
+  "ownerType": "MEMBER",
+  "ownerCode": "MBR-000001",
+  "subscriptionNumber": null,
+  "planVersionId": 123,
+  "name": "Pack 10 heures",
+  "description": "Credits valables 90 jours",
+  "validFrom": "2026-04-15T08:00:00Z",
+  "validUntil": "2026-07-14T08:00:00Z",
+  "transferable": false,
+  "shareable": false,
+  "maxUses": 10,
+  "metadataJson": null,
+  "entitlements": [
+    {
+      "entitlementCode": "ENT-TIM-HOU-RES-PER-MEE-202604-00000001",
+      "quantity": 10,
+      "unlimited": false,
+      "validFrom": "2026-04-15T08:00:00Z",
+      "validUntil": "2026-07-14T08:00:00Z"
+    }
+  ]
 }
 ```
 
-Condition : le modele de pass doit avoir `transferable = true`.
+### Consultation et annulation
 
-### Suspendre / annuler un pass
+- `GET /sni/api/v1/passes/{passNumber}`
+- `GET /sni/api/v1/passes`
+- `PATCH /sni/api/v1/passes/{passNumber}/cancel`
 
-`PATCH /passes/{passCode}/suspend`
+Filtres:
 
-`PATCH /passes/{passCode}/cancel`
+- `ownerType`
+- `ownerCode`
+- `passType`
+- `status`
+- `expiringBefore`
 
-Body :
+Payload cancel:
 
 ```json
 {
-  "reason": "Fraude suspectee",
-  "actionBy": "MANAGER-001"
+  "reason": "Demande client"
 }
 ```
 
----
+Enums:
 
-## 15. Passes — Historique des consommations
+- `PassType`: `DAY_PASS`, `TIME_PACK`, `VISITOR_PASS`, `MEETING_ROOM_PACK`, `PROMOTIONAL_PASS`, `SUBSCRIPTION_PASS`, `COMPANY_SHARED_PASS`, `CUSTOM`
 
-### Consulter les usages
+## Booking
 
-`GET /passes/{passCode}/usages`
+### Resolution d'identite
 
-Reponse :
+Les formulaires booking doivent utiliser un seul selecteur principal:
+
+- `memberId` pour un membre connu
+- `customerId` pour un client connu
+- `businessCode` pour une entreprise connue
+- `email` ou `phone` pour laisser le backend retrouver le membre/client/entreprise
+- `walkIn=true` avec les infos de contact pour un passant sans compte
+
+Si `walkIn=true`, le backend genere un code temporaire de type invite booking. Ce code n'est pas saisi par l'utilisateur.
+
+### Verifier une disponibilite
+
+`POST /sni/api/v1/bookings/check-availability`
 
 ```json
-[
-  {
-    "usageId": "USAGE-202604-000001",
-    "bookingCode": "BOK-202604-000001",
-    "quantityUsed": 2,
-    "remainingBefore": 10,
-    "remainingAfter": 8,
-    "usedAt": "2026-04-15T09:00:00Z",
-    "usedBy": "MBR-000001",
-    "reversed": false,
-    "reversedAt": null
-  },
-  {
-    "usageId": "USAGE-202604-000002",
-    "bookingCode": "BOK-202604-000003",
-    "quantityUsed": 3,
-    "remainingBefore": 8,
-    "remainingAfter": 5,
-    "usedAt": "2026-04-16T14:00:00Z",
-    "usedBy": "MBR-000001",
-    "reversed": true,
-    "reversedAt": "2026-04-16T15:30:00Z"
-  }
-]
+{
+  "resourceCode": "ROOM-001",
+  "memberId": "MBR-000001",
+  "paymentMode": "SUBSCRIPTION",
+  "startedAt": "2026-04-16T10:00:00",
+  "endedAt": "2026-04-16T12:00:00",
+  "quantity": 1
+}
 ```
 
----
+Pour un passant:
+
+```json
+{
+  "resourceCode": "ROOM-001",
+  "walkIn": true,
+  "contactName": "Client passage",
+  "contactEmail": "client@example.com",
+  "contactPhone": "+237600000000",
+  "paymentMode": "DIRECT",
+  "startedAt": "2026-04-16T10:00:00",
+  "endedAt": "2026-04-16T12:00:00",
+  "quantity": 1
+}
+```
+
+### Creer un hold
+
+`POST /sni/api/v1/bookings/holds`
+
+```json
+{
+  "resourceCode": "ROOM-001",
+  "memberId": "MBR-000001",
+  "startedAt": "2026-04-16T10:00:00",
+  "endedAt": "2026-04-16T12:00:00",
+  "quantity": 1,
+  "ttlMinutes": 10,
+  "idempotencyKey": "front:hold:ROOM-001:202604161000"
+}
+```
+
+### Creer une reservation
+
+`POST /sni/api/v1/bookings`
+
+```json
+{
+  "resourceCode": "ROOM-001",
+  "memberId": "MBR-000001",
+  "holdNumber": "BKH-202604-000001",
+  "idempotencyKey": "front:booking:ROOM-001:202604161000",
+  "startedAt": "2026-04-16T10:00:00",
+  "endedAt": "2026-04-16T12:00:00",
+  "quantity": 1,
+  "paymentMode": "SUBSCRIPTION",
+  "confirmImmediately": true,
+  "sendEmail": true,
+  "notes": "Besoin video projecteur",
+  "metadataJson": null,
+  "participants": [
+    {
+      "memberCode": null,
+      "name": "Invite externe",
+      "email": "invite@example.com",
+      "role": "GUEST"
+    }
+  ]
+}
+```
+
+Pour `paymentMode=SUBSCRIPTION`, le backend selectionne la subscription active et l'entitlement compatible avec la ressource. Pour `paymentMode=PASS`, il selectionne un pass actif ayant un grant compatible. Pour `paymentMode=DIRECT`, il cree la ligne facturable.
+
+### Recurrence, approval et check-in
+
+- `POST /sni/api/v1/bookings/recurring`
+- `PATCH /sni/api/v1/bookings/{bookingNumber}/approve`
+- `PATCH /sni/api/v1/bookings/{bookingNumber}/reject`
+- `PATCH /sni/api/v1/bookings/{bookingNumber}/check-in`
+- `PATCH /sni/api/v1/bookings/{bookingNumber}/check-out`
+
+### Quota override
+
+`POST /sni/api/v1/bookings/quota-overrides`
+
+Le frontend ne fournit pas `ownerCode`; il selectionne le membre/client/entreprise.
+
+```json
+{
+  "memberId": "MBR-000001",
+  "resourceCode": "ROOM-001",
+  "extraActiveBookings": 1,
+  "extraBookingsPerDay": 2,
+  "reason": "Deblocage ponctuel",
+  "approvedBy": "ADMIN-001",
+  "validFrom": "2026-04-15T08:00:00Z",
+  "validUntil": "2026-04-30T18:00:00Z"
+}
+```
+
+## Add-ons
+
+### Ajouter un add-on
+
+`POST /sni/api/v1/subscriptions/{subscriptionNumber}/addons`
+
+```json
+{
+  "planVersionId": 456,
+  "quantity": 2,
+  "startsAt": "2026-04-15",
+  "endsAt": null,
+  "metadataJson": null
+}
+```
 
-## Workflows frontend recommandes
+### Lister et annuler
 
-### Workflow reservation directe (sans pass ni souscription)
+- `GET /sni/api/v1/subscriptions/addons`
+- `PATCH /sni/api/v1/subscriptions/addons/{addonId}/cancel`
 
-1. L'utilisateur selectionne une ressource sur le calendrier.
-2. Appeler `POST /bookings/check-availability` avec la plage horaire.
-3. Si disponible, afficher le recap prix et duree.
-4. L'utilisateur confirme.
-5. Appeler `POST /bookings` avec `paymentMode: DIRECT`.
-6. Afficher la confirmation avec le `bookingCode`.
-7. A la cloture (`complete`), une facture est generee automatiquement.
+Filtres:
 
-### Workflow reservation avec souscription
+- `subscriptionNumber`
+- `planCode`
+- `status`
 
-1. L'utilisateur selectionne une ressource.
-2. Verifier la disponibilite.
-3. Charger les souscriptions actives du membre : `GET /subscriptions?holderCode=MBR-000001&status=ACTIVE`.
-4. Pour chaque souscription, verifier les entitlements : `GET /subscriptions/{code}/entitlements`.
-5. Si credits suffisants, proposer de payer via la souscription.
-6. Appeler `POST /bookings` avec `paymentMode: SUBSCRIPTION` et `subscriptionCode`.
-7. Les credits sont debites automatiquement.
+## Promotions
 
-### Workflow reservation avec pass
+### Creer une promotion
 
-1. L'utilisateur selectionne une ressource.
-2. Verifier la disponibilite.
-3. Charger les passes actifs du membre : `GET /passes?holderCode=MBR-000001&status=ACTIVE`.
-4. Filtrer les passes compatibles avec le type de ressource et les credits restants.
-5. Afficher les passes disponibles avec leur solde.
-6. L'utilisateur choisit un pass.
-7. Appeler `POST /bookings` avec `paymentMode: PASS` et `passCode`.
-8. Les credits sont debites du pass.
+`POST /sni/api/v1/promotions`
 
-### Workflow souscription — creation et activation
+Le champ `code` ne doit pas etre envoye. Le backend genere le code.
 
-1. L'admin ou le client choisit un plan dans le catalogue.
-2. Appeler `POST /subscriptions`.
-3. Lier au contrat legal si present.
-4. Appeler `POST /payments` pour le premier paiement.
-5. Apres paiement valide, appeler `PATCH /subscriptions/{code}/activate`.
-6. Les entitlements sont crees pour la premiere periode.
-7. Afficher le recapitulatif des droits disponibles.
+```json
+{
+  "name": "Remise lancement",
+  "description": "Reduction de 10%",
+  "discountType": "PERCENTAGE",
+  "discountValue": 10,
+  "startsAt": "2026-04-15T00:00:00Z",
+  "endsAt": "2026-05-15T00:00:00Z",
+  "maxRedemptions": 100,
+  "metadataJson": null
+}
+```
 
-### Workflow achat d'un pass
+### Activer et appliquer
 
-1. L'utilisateur choisit un modele de pass dans la boutique.
-2. Afficher le prix, la duree de validite et les credits inclus.
-3. Declencher le paiement : `POST /payments`.
-4. Apres confirmation de paiement, emettre le pass : `POST /passes`.
-5. Afficher le pass avec son solde et sa date d'expiration.
+- `PATCH /sni/api/v1/promotions/{code}/activate`
+- `POST /sni/api/v1/promotions/{code}/redeem`
 
-### Workflow renouvellement de souscription (cote admin)
+Payload redeem:
 
-1. Ouvrir la liste des souscriptions avec `nextBillingDate <= aujourd'hui`.
-2. Pour chaque souscription en retard :
-   - Afficher le statut et le montant du.
-   - Declencher le paiement manuellement si le renouvellement auto a echoue.
-3. Apres paiement valide, les entitlements sont reinitialises automatiquement.
+```json
+{
+  "subscriberType": "MEMBER",
+  "subscriberCode": "MBR-000001",
+  "subscriptionNumber": "SUB-MEM-COW-MON-202604-00000001"
+}
+```
 
----
+### Lister
 
-## Ecrans recommandes pour le frontend
+`GET /sni/api/v1/promotions?code=PRO-00001&status=ACTIVE`
 
-### 1. Calendrier de reservation
+Enums:
 
-Usage :
+- `DiscountType`: `PERCENTAGE`, `FIXED_AMOUNT`, `FREE_ENTITLEMENT`, `WAIVE_SETUP_FEE`
 
-- vue principale de reservation pour les membres et clients
+Ne pas exposer `FREE_TRIAL_DAYS` dans l'UI; le backend le rejette dans cette version.
 
-Contenu recommande :
+## Seats
 
-- calendrier avec vue semaine ou mois
-- code couleur par statut de reservation
-- par ressource ou vue globale
-- clic sur un creneau libre → ouverture formulaire
-- clic sur une reservation existante → detail ou annulation
-- indicateur en haut :
-  - credits restants sur souscription active
-  - passes actifs disponibles
+### Ajouter un seat
 
-Presentation suggeree :
+`POST /sni/api/v1/subscriptions/{subscriptionNumber}/seats`
 
-- timeline horizontale par ressource
-- filtres : type de ressource, groupe, zone
-- barre laterale : souscription active + passes actifs avec soldes
+```json
+{
+  "memberCode": "MBR-000002",
+  "role": "MEMBER"
+}
+```
 
----
+### Lister et retirer
 
-### 2. Formulaire de reservation
+- `GET /sni/api/v1/subscriptions/seats`
+- `DELETE /sni/api/v1/subscriptions/{subscriptionNumber}/seats/{memberCode}`
 
-Usage :
+Filtres:
 
-- creer ou modifier une reservation
+- `subscriptionNumber`
+- `memberCode`
+- `status`
 
-Contenu recommande :
+Roles:
 
-- resource pre-remplie si selectionnee depuis le calendrier
-- plage horaire avec picker date + heure
-- bouton `Verifier la disponibilite` (auto-appele au changement de creneau)
-- section mode de paiement :
-  - `Tarif standard` (DIRECT) — afficher le montant estimé
-  - `Souscription` — si souscription active avec credits compatibles, afficher le solde restant
-  - `Pass` — si pass actif compatible, afficher les credits restants et la date d'expiration
-- section participants (optionnel)
-- notes
-- bouton `Confirmer la reservation`
+- `OWNER`
+- `ADMIN`
+- `MEMBER`
+- `GUEST`
 
-Etats a gerer :
+## Change requests
 
-- creneau disponible
-- creneau indisponible (afficher prochain creneau)
-- credits insuffisants (suggerer tarif standard ou autre pass)
-- pass expire
+### Demander un changement
 
----
+`POST /sni/api/v1/subscriptions/{subscriptionNumber}/changes`
 
-### 3. Detail d'une reservation
+```json
+{
+  "changeType": "UPGRADE",
+  "targetPlanVersionId": 456,
+  "effectivePolicy": "NEXT_BILLING_PERIOD",
+  "effectiveDate": null,
+  "prorationAmount": 0,
+  "reason": "Upgrade client",
+  "requestedBy": "ADMIN-001"
+}
+```
 
-Usage :
+### Approuver et appliquer
 
-- visualiser et gerer une reservation
+- `PATCH /sni/api/v1/subscriptions/changes/{changeNumber}/approve`
+- `PATCH /sni/api/v1/subscriptions/changes/{changeNumber}/apply`
+- `GET /sni/api/v1/subscriptions/changes`
 
-Contenu recommande :
+Payload approve:
 
-- en-tete avec badge de statut
-- ressource, creneau, duree
-- mode de paiement utilise
-- montant ou credits consommes
-- participants
-- timeline de statut
-- actions disponibles selon statut :
-  - `DRAFT` : `Confirmer`, `Annuler`
-  - `CONFIRMED` : `Marquer en cours`, `Annuler`, `Ajouter participant`
-  - `IN_PROGRESS` : `Cloturer`, `Marquer absent`
-  - `COMPLETED` : `Voir la facture`
-  - `CANCELLED` / `NO_SHOW` : lecture seule
+```json
+{
+  "approvedBy": "ADMIN-001"
+}
+```
 
----
+Enums:
 
-### 4. Mon espace membre — Reservations
+- `SubscriptionChangeType`: `UPGRADE`, `DOWNGRADE`, `ADD_ADDON`, `REMOVE_ADDON`, `QUANTITY_CHANGE`
+- `SubscriptionChangeEffectivePolicy`: `IMMEDIATE`, `NEXT_BILLING_PERIOD`, `CUSTOM_DATE`
 
-Usage :
+## Usage records et overage
 
-- vue personnelle des reservations du membre
+### Enregistrer un usage
 
-Contenu recommande :
+`POST /sni/api/v1/usage-records`
 
-- onglets : `A venir`, `En cours`, `Passees`, `Annulees`
-- pour chaque reservation :
-  - ressource + creneau
-  - statut (badge colore)
-  - mode de paiement
-  - montant ou credits utilises
-  - action rapide
+```json
+{
+  "ownerType": "MEMBER",
+  "ownerCode": "MBR-000001",
+  "entitlementCode": "ENT-TIM-HOU-RES-PER-MEE-202604-00000001",
+  "quantity": 3,
+  "unit": "HOUR",
+  "referenceType": "BOOKING",
+  "referenceId": "BKG-202604-000001",
+  "consumeEntitlement": true,
+  "billable": true,
+  "billableAmount": 15000,
+  "currency": "XAF",
+  "occurredAt": "2026-04-15T10:00:00Z",
+  "metadataJson": null
+}
+```
 
----
+Comportement:
 
-### 5. Catalogue des plans
+- si le solde suffit, l'usage consomme les entitlements
+- si le solde ne suffit pas, la policy overage decide: `BLOCK`, `BILLABLE`, `ALLOW_UNBILLED`
+- si `BILLABLE`, la reponse contient un `billableNumber`
 
-Usage :
+### Lister les usages
 
-- portail client pour decouvrir et souscrire a un plan
+`GET /sni/api/v1/usage-records`
 
-Contenu recommande :
+Filtres:
 
-- cartes par plan avec :
-  - nom et description
-  - prix et cycle
-  - liste des avantages (icones)
-  - badge `Essai X jours` si applicable
-  - bouton `Souscrire`
-- comparateur optionnel si plusieurs plans publics
-- filter : `MONTHLY`, `YEARLY`
+- `ownerType`
+- `ownerCode`
+- `entitlementCode`
+- `referenceType`
+- `referenceId`
+- `status`
 
-Presentation suggeree :
+### Creer une policy overage
 
-- grille 2 a 3 colonnes
-- plan recommande mis en avant (border + badge)
-- switch periode de facturation (mensuel / annuel)
+`POST /sni/api/v1/subscription-overage/policies`
 
----
+```json
+{
+  "planVersionId": 123,
+  "entitlementCode": "ENT-TIM-HOU-RES-PER-MEE-202604-00000001",
+  "mode": "BILLABLE",
+  "unitPrice": 5000,
+  "currency": "XAF",
+  "freeQuantity": 0,
+  "metadataJson": null,
+  "active": true
+}
+```
 
-### 6. Detail et gestion d'une souscription
+### Lister policies et charges
 
-Usage :
+- `GET /sni/api/v1/subscription-overage/policies`
+- `GET /sni/api/v1/subscription-overage/charges`
 
-- vue complete d'une souscription active
+Filtres charges:
 
-Contenu recommande :
+- `subscriptionNumber`
+- `ownerType`
+- `ownerCode`
+- `entitlementCode`
 
-- en-tete :
-  - nom du plan
-  - statut (badge)
-  - date debut, prochain renouvellement
-  - renouvellement auto on/off
-- section droits du mois :
-  - pour chaque benefit :
-    - libelle
-    - barre de progression (utilise / alloue)
-    - credits restants
-    - date de reinitialisation
-- section facturation :
-  - liste des factures liees
-  - montant total paye
-- section contrat lie (lien vers le contrat legal)
-- actions :
-  - `Suspendre`
-  - `Annuler la souscription`
-  - `Renouveler maintenant` (si suspendue ou en retard)
+## Rollover
 
----
+### Appliquer les rollovers dus
 
-### 7. Mes passes
+`POST /sni/api/v1/subscription-rollovers/apply-due`
 
-Usage :
+Le frontend backoffice peut proposer cette action manuelle. Un worker doit l'appeler automatiquement cote backend.
 
-- vue personnelle des passes du membre
+### Lister
 
-Contenu recommande :
+`GET /sni/api/v1/subscription-rollovers?subscriptionNumber=SUB-MEM-COW-MON-202604-00000001&entitlementCode=ENT-TIM-HOU-RES-PER-MEE-202604-00000001`
 
-- liste des passes avec :
-  - nom du pass
-  - statut (badge + couleur)
-  - barre de progression credits
-  - date d'expiration (en rouge si < 7 jours)
-  - actions : `Voir les usages`, `Utiliser`
-- bouton `Acheter un pass`
-- section expiration imminente visible en haut
+## Timeline
 
----
+### Creer un evenement manuel
 
-### 8. Detail d'un pass
+`POST /sni/api/v1/subscription-timeline`
 
-Usage :
+```json
+{
+  "subscriptionNumber": "SUB-MEM-COW-MON-202604-00000001",
+  "ownerType": "MEMBER",
+  "ownerCode": "MBR-000001",
+  "eventType": "CONTRACT_BOUND",
+  "sourceType": "CONTRACT",
+  "sourceId": "CTR-202604-000001",
+  "title": "Contrat lie",
+  "description": "Contrat signe et attache a la souscription",
+  "payloadJson": null,
+  "occurredAt": "2026-04-15T12:00:00Z"
+}
+```
 
-- consulter les credits et les usages d'un pass
+### Lister la timeline
 
-Contenu recommande :
+`GET /sni/api/v1/subscription-timeline`
 
-- en-tete avec nom, statut, type, credits restants
-- barre de progression visuelle (restant / total)
-- date d'expiration
-- historique des usages :
-  - date
-  - reservation liee
-  - credits debites
-  - inversions eventuelles
-- actions :
-  - `Utiliser sur une reservation`
-  - si transferable : `Transferer`
+Filtres:
 
----
+- `subscriptionNumber`
+- `ownerType`
+- `ownerCode`
+- `eventType`
+- `occurredFrom`
+- `occurredTo`
 
-### 9. Boutique des passes
+## Notifications
 
-Usage :
+### Mettre une notification en file
 
-- portail client pour acheter des passes
+`POST /sni/api/v1/subscription-notifications`
 
-Contenu recommande :
+```json
+{
+  "subscriptionNumber": "SUB-MEM-COW-MON-202604-00000001",
+  "ownerType": "MEMBER",
+  "ownerCode": "MBR-000001",
+  "notificationType": "RENEWAL_UPCOMING",
+  "channel": "EMAIL",
+  "recipient": "client@example.com",
+  "subject": "Renouvellement abonnement",
+  "body": "Votre abonnement arrive a renouvellement.",
+  "payloadJson": null,
+  "scheduledAt": "2026-04-20T08:00:00Z"
+}
+```
 
-- grille des modeles de pass actifs :
-  - nom et description
-  - credits inclus et unite
-  - duree de validite
-  - prix
-  - bouton `Acheter`
-- filtrer par type de pass ou type de ressource
+### Actions
 
----
+- `PATCH /sni/api/v1/subscription-notifications/{notificationNumber}/cancel`
+- `POST /sni/api/v1/subscription-notifications/dispatch-due?limit=100`
+- `GET /sni/api/v1/subscription-notifications`
 
-### 10. Administration — Gestion des plans
+Filtres:
 
-Usage :
+- `subscriptionNumber`
+- `ownerType`
+- `ownerCode`
+- `notificationType`
+- `status`
 
-- backoffice admin pour creer et maintenir les plans
+Canaux:
 
-Contenu recommande :
+- `EMAIL`
+- `SMS`
+- `WHATSAPP`
+- `IN_APP`
+- `WEBHOOK`
 
-- liste des plans avec filtres (statut, visibilite)
-- pour chaque plan : nom, cycle, prix, nb de souscriptions actives, statut
-- fiche plan :
-  - section informations generales
-  - section avantages (liste avec CRUD inline)
-  - onglet `Souscriptions actives`
-- actions :
-  - `Activer`, `Archiver`, `Dupliquer`
+## Billing bridge, payment et invoice
 
----
+### Billable items
 
-### 11. Administration — Gestion des passes
+`GET /sni/api/v1/billable-items`
 
-Usage :
+Filtres:
 
-- backoffice admin pour emettre et surveiller les passes
+- `status`
+- `subscriberType`
+- `subscriberCode`
+- `sourceType`
+- `sourceId`
 
-Contenu recommande :
+Usage frontend:
 
-- liste des modeles avec filtres (type, statut)
-- liste des passes emis avec filtres (titulaire, statut, expiration)
-- actions rapides : `Suspendre`, `Annuler`, `Voir les usages`
-- bouton `Emettre un pass` (emission manuelle)
+- afficher les lignes facturables non encore facturees
+- connecter ensuite ces lignes au module invoice
+- utiliser `billableNumber` comme reference publique
 
----
+### Integration payment/invoice a venir
 
-### 12. Administration — Souscriptions
+Le module subscription prepare les donnees de facturation avec `BillingSchedule` et `BillableItem`.
 
-Usage :
+Flux cible:
 
-- backoffice pour gerer toutes les souscriptions
+1. Subscription cree ou renouvelle les schedules et billable items.
+2. Payment confirme le paiement.
+3. Invoice transforme les billable items en facture.
+4. Subscription active, renouvelle ou suspend selon le resultat payment/invoice.
 
-Contenu recommande :
+Le frontend ne doit pas creer directement de facture depuis subscription. Il doit afficher les billable items et rediriger vers les futurs ecrans invoice/payment.
 
-- tableau avec filtres : plan, statut, titulaire, renouvellement a venir
-- alertes : souscriptions avec nextBillingDate dans < 3 jours
-- alertes : souscriptions en statut `SUSPENDED` (impaye)
-- fiche souscription avec droits, historique et facturation
+## Metrics
 
----
+`GET /sni/api/v1/subscription-metrics/overview`
 
-## Parcours UX recommandes
+Champs utiles:
 
-### Parcours membre — premiere visite
+- `activeSubscriptions`
+- `pendingSubscriptions`
+- `suspendedSubscriptions`
+- `cancelledSubscriptions`
+- `activePasses`
+- `activeAddons`
+- `activePromotions`
+- `pendingBillableItems`
+- `pendingBillableAmount`
+- `activeSubscriptionMrr`
+- `recordedUsageQuantity`
+- `billableUsageQuantity`
+- `overageCharges`
+- `overageAmount`
+- `rolloverRecords`
+- `rolloverQuantity`
 
-1. Decouvrir le catalogue des plans.
-2. Comparer les plans publics.
-3. Souscrire au plan choisi.
-4. Payer le premier mois.
-5. Voir ses droits du mois actives.
-6. Faire sa premiere reservation en utilisant ses credits.
+## Etats UX a gerer
 
-### Parcours membre — reservation rapide
+- `400`: payload invalide, champ manquant ou valeur enum incorrecte
+- `404`: code de reference inexistant (`planCode`, `entitlementCode`, `subscriptionNumber`, etc.)
+- `409`: conflit metier, par exemple solde insuffisant, promotion deja utilisee, maximum atteint
+- `500`: erreur inattendue
 
-1. Ouvrir le calendrier.
-2. Verifier les credits disponibles (affichage en haut).
-3. Cliquer sur un creneau libre.
-4. Confirmer la reservation (mode de paiement suggere automatiquement selon credits disponibles).
+Cas importants:
 
-### Parcours admin — gestion des renouvellements
-
-1. Ouvrir la liste des souscriptions avec renouvellement imminent.
-2. Identifier les impayés en statut `SUSPENDED`.
-3. Contacter le client ou relancer le paiement.
-4. Apres paiement, reactiver la souscription.
-5. Verifier que les entitlements sont bien reinitialises.
-
-### Parcours admin — emission d'un pass a un nouveau client
-
-1. Ouvrir la liste des modeles de pass.
-2. Choisir le modele adapte.
-3. Emettre le pass au nom du client (`POST /passes`).
-4. Lier au paiement correspondant.
-5. Confirmer au client via notification.
-
----
-
-## Recommandations de presentation
-
-### Codes couleur utiles
-
-- gris : draft / non commence
-- bleu : confirme / en cours
-- vert : complete / actif / credits suffisants
-- orange : credits bas (< 20%) / expiration proche / suspendu
-- rouge : rupture de credits / expire / annule / absent
-
-### Composants utiles
-
-- `BookingCalendar`
-- `BookingStatusBadge`
-- `AvailabilityIndicator`
-- `CreditBalanceBar` — barre de progression credits restants
-- `PassCard` — carte pass avec solde et expiration
-- `SubscriptionPlanCard` — carte plan catalogue
-- `EntitlementList` — liste des droits de la periode avec barres
-- `PassUsageTimeline`
-- `SubscriptionStatusTimeline`
-- `ExpiryAlert` — alerte expiration pass imminente
-- `PaymentModeSelector` — selection DIRECT / SUBSCRIPTION / PASS avec contexte
-
-### Bonnes pratiques UI
-
-- toujours afficher les credits restants **avant** le choix du creneau pour que le membre sache ce qu'il peut faire
-- ne jamais laisser le formulaire de reservation se soumettre sans verifier la disponibilite au prealable
-- distinguer clairement les credits alloues, utilises, et restants sur chaque entitlement
-- afficher une alerte visuelle si un pass expire dans moins de 7 jours
-- afficher le prochain renouvellement sur la souscription de facon permanente
-- sur le formulaire de reservation, selectionner automatiquement le mode de paiement optimal (souscription si credits suffisants, sinon pass, sinon tarif direct)
-- sur mobile, remplacer le calendrier hebdomadaire par une vue liste journaliere
-
----
-
-## Proposition de structure d'ecrans
-
-### Cote membre / client
-
-- `BookingCalendarPage`
-- `BookingFormPage`
-- `BookingDetailPage`
-- `MyBookingsPage`
-- `PlanCatalogPage`
-- `SubscriptionDetailPage`
-- `PassStorePage`
-- `MyPassesPage`
-- `PassDetailPage`
-
-### Cote admin / backoffice
-
-- `AdminBookingListPage`
-- `AdminBookingDetailPage`
-- `AdminPlanListPage`
-- `AdminPlanDetailPage`
-- `AdminPlanFormPage`
-- `AdminSubscriptionListPage`
-- `AdminSubscriptionDetailPage`
-- `AdminPassTemplateListPage`
-- `AdminPassListPage`
-- `AdminPassIssuePage`
-
----
+- plan sans version active: ne pas proposer la souscription client
+- subscription suspendue: bloquer le paiement par entitlement dans booking
+- entitlement insuffisant: proposer overage si la policy le permet, sinon paiement direct
+- pass expire ou annule: ne pas proposer dans booking
+- promotion inactive ou expiree: masquer ou afficher comme non utilisable
+- rollover applique: mettre a jour les soldes et timeline
 
 ## Priorite de construction frontend
 
-Ordre recommande :
-
-1. `BookingCalendarPage` + `AvailabilityIndicator`
-2. `BookingFormPage` (mode DIRECT uniquement en premier)
-3. `BookingDetailPage` + transitions de statut
-4. `MyBookingsPage`
-5. `AdminPlanListPage` + `AdminPlanFormPage` (CRUD plans + avantages)
-6. `PlanCatalogPage` (portail client)
-7. `AdminSubscriptionListPage` + `AdminSubscriptionDetailPage`
-8. `SubscriptionDetailPage` + `EntitlementList`
-9. Enrichissement `BookingFormPage` avec mode SUBSCRIPTION
-10. `AdminPassTemplateListPage` + CRUD modeles de pass
-11. `PassStorePage` (boutique)
-12. `AdminPassIssuePage` + emission manuelle
-13. `MyPassesPage` + `PassDetailPage`
-14. Enrichissement `BookingFormPage` avec mode PASS
-15. `CreditBalanceBar` + `ExpiryAlert` (transversaux)
-
----
-
-## Cas d'erreur a gerer
-
-- creneau indisponible au moment de la soumission (conflit entre verif et soumission)
-- credits insuffisants sur la souscription lors de la reservation
-- pass expire au moment de la consommation
-- souscription suspendue lors d'une tentative de reservation
-- annulation hors delai de politique (ResourcePolicy)
-- pass non transferable lors d'une tentative de transfert
-- tentative de souscription a un plan archive
-- consommation de credits sur un pass annule ou suspendu
-- renouvellement de souscription sans moyen de paiement disponible
+1. Plans + entitlement definitions
+2. Creation et detail subscription
+3. Entitlement balances
+4. Passes
+5. Usage records
+6. Add-ons
+7. Promotions
+8. Seats
+9. Change requests
+10. Timeline
+11. Notifications
+12. Overage
+13. Rollover
+14. Metrics
+15. Integration booking/payment/invoice

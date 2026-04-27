@@ -9,6 +9,7 @@ import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.Seq
 import com.sni.bokaticowork.core.retry.policy.RetryPolicy;
 import com.sni.bokaticowork.core.retry.service.interfaces.RetryExecutor;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.core.utils.validation.ValidationUtils;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateAmenityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.UpdateAmenityRequest;
@@ -60,7 +61,8 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         request.setDescription(normalizeText(request.getDescription()));
 
         ResourceAmenities amenity = amenitiesMapper.toEntity(request);
-        amenity.setCode(sequenceGenerator.next("resource_amenity", LocalDate.now()));
+        LocalDate businessDate = LocalDate.now();
+        amenity.setCode(buildAmenityCode(normalizedName, businessDate));
 
         retryExecutor.execute("create resource amenity", defaultRetryPolicy, () -> amenitiesRepository.save(amenity));
     }
@@ -218,5 +220,10 @@ public class ResourceAmenitiesServiceImpl implements ResourceAmenitiesService {
         }
 
         return value.trim();
+    }
+
+    private String buildAmenityCode(String amenityName, LocalDate businessDate) {
+        long amenitySeq = CodeComposer.extractSeq(sequenceGenerator.next("resource_amenity", businessDate));
+        return CodeComposer.withMonth("AMN", CodeComposer.abbrev(amenityName), businessDate, amenitySeq);
     }
 }

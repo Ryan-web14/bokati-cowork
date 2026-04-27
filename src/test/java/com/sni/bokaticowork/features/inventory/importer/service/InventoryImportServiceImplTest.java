@@ -4,7 +4,7 @@ import com.sni.bokaticowork.features.inventory.asset.service.interfaces.AssetSer
 import com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryItemResponse;
 import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.InventoryItemService;
 import com.sni.bokaticowork.features.inventory.importer.enums.InventoryImportType;
-import com.sni.bokaticowork.features.inventory.procurement.service.ProcurementService;
+import com.sni.bokaticowork.features.inventory.procurement.service.interfaces.ProcurementService;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,8 +47,8 @@ class InventoryImportServiceImplTest {
     void shouldValidateCsvItemsInDryRunWithoutCallingService() {
         service = new InventoryImportServiceImpl(fileReader, itemService, stockService, assetService, procurementService);
         MockMultipartFile file = csv("items.csv", """
-                item_code,name,item_type,tracking_type,default_cost,sale_price
-                ITM-001,Chaise,ASSET,SERIAL,10000,15000
+                name,item_type,tracking_type,default_cost,sale_price
+                Chaise,ASSET,SERIAL,10000,15000
                 """);
 
         var response = service.importFile(InventoryImportType.ITEMS, file, true);
@@ -63,9 +63,9 @@ class InventoryImportServiceImplTest {
     void shouldReportInvalidLineWithoutStoppingImport() {
         service = new InventoryImportServiceImpl(fileReader, itemService, stockService, assetService, procurementService);
         MockMultipartFile file = csv("items.csv", """
-                item_code,name,item_type
-                ITM-001,,ASSET
-                ITM-002,Table,ASSET
+                name,item_type
+                ,ASSET
+                Table,ASSET
                 """);
 
         var response = service.importFile(InventoryImportType.ITEMS, file, true);
@@ -80,31 +80,31 @@ class InventoryImportServiceImplTest {
     void shouldReturnDuplicateErrorFromBusinessService() {
         service = new InventoryImportServiceImpl(fileReader, itemService, stockService, assetService, procurementService);
         MockMultipartFile file = csv("items.csv", """
-                item_code,name,item_type
-                ITM-001,Chaise,ASSET
+                name,item_type,psku
+                Chaise,ASSET,123456789012
                 """);
-        when(itemService.create(any())).thenThrow(new IllegalArgumentException("Item code already exists"));
+        when(itemService.create(any())).thenThrow(new IllegalArgumentException("Inventory identification code already exists"));
 
         var response = service.importFile(InventoryImportType.ITEMS, file, false);
 
         assertEquals(0, response.getSuccessCount());
         assertEquals(1, response.getErrorCount());
-        assertEquals("Item code already exists", response.getRows().getFirst().getMessage());
+        assertEquals("Inventory identification code already exists", response.getRows().getFirst().getMessage());
     }
 
     @Test
     void shouldImportValidCsvItem() {
         service = new InventoryImportServiceImpl(fileReader, itemService, stockService, assetService, procurementService);
         MockMultipartFile file = csv("items.csv", """
-                item_code,name,item_type
-                ITM-001,Chaise,ASSET
+                name,item_type
+                Chaise,ASSET
                 """);
-        when(itemService.create(any())).thenReturn(InventoryItemResponse.builder().itemCode("ITM-001").build());
+        when(itemService.create(any())).thenReturn(InventoryItemResponse.builder().itemCode("ITM-00000001").build());
 
         var response = service.importFile(InventoryImportType.ITEMS, file, false);
 
         assertEquals(1, response.getSuccessCount());
-        assertEquals("ITM-001", response.getRows().getFirst().getReferenceCode());
+        assertEquals("ITM-00000001", response.getRows().getFirst().getReferenceCode());
         verify(itemService).create(any());
     }
 
@@ -117,7 +117,7 @@ class InventoryImportServiceImplTest {
         var response = service.importFile(InventoryImportType.ITEMS, file, true);
 
         assertEquals(1, response.getSuccessCount());
-        assertEquals("ITM-001", response.getRows().getFirst().getReferenceCode());
+        assertEquals("Chaise", response.getRows().getFirst().getReferenceCode());
     }
 
     private MockMultipartFile csv(String name, String content) {
@@ -130,8 +130,8 @@ class InventoryImportServiceImplTest {
             zip.putNextEntry(new ZipEntry("xl/sharedStrings.xml"));
             zip.write("""
                     <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-                      <si><t>item_code</t></si><si><t>name</t></si><si><t>item_type</t></si>
-                      <si><t>ITM-001</t></si><si><t>Chaise</t></si><si><t>ASSET</t></si>
+                      <si><t>name</t></si><si><t>item_type</t></si>
+                      <si><t>Chaise</t></si><si><t>ASSET</t></si>
                     </sst>
                     """.getBytes(StandardCharsets.UTF_8));
             zip.closeEntry();
@@ -139,8 +139,8 @@ class InventoryImportServiceImplTest {
             zip.write("""
                     <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
                       <sheetData>
-                        <row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c><c r="C1" t="s"><v>2</v></c></row>
-                        <row r="2"><c r="A2" t="s"><v>3</v></c><c r="B2" t="s"><v>4</v></c><c r="C2" t="s"><v>5</v></c></row>
+                        <row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row>
+                        <row r="2"><c r="A2" t="s"><v>2</v></c><c r="B2" t="s"><v>3</v></c></row>
                       </sheetData>
                     </worksheet>
                     """.getBytes(StandardCharsets.UTF_8));

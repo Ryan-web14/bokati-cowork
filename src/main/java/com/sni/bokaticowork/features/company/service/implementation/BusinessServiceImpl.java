@@ -215,6 +215,13 @@ public class BusinessServiceImpl implements BusinessService {
         return getBusinessForService(code);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public BusinessEntity serviceBusinessById(Long id) {
+        return businessRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Business with id " + id + " not found"));
+    }
+
     private BusinessEntity getBusinessForService(String code) {
         if (!StringUtils.hasText(code)) {
             throw new BadRequestException("Business code is required");

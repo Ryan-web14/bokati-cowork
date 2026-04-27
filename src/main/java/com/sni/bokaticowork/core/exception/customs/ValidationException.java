@@ -14,4 +14,8 @@ public class ValidationException extends BaseException {
     this.errors = errors;
   }
 
+  public List<String> getErrors() {
+    return errors;
+  }
+
 }

@@ -7,6 +7,7 @@ import com.sni.bokaticowork.features.ressource.dto.response.ResourceSummaryRespo
 import com.sni.bokaticowork.features.ressource.mapper.decorator.ResourceMapperDecorator;
 import com.sni.bokaticowork.features.ressource.model.Resource;
 import org.mapstruct.BeanMapping;
+import org.mapstruct.Builder;
 import org.mapstruct.DecoratedWith;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -14,7 +15,7 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE, builder = @Builder(disableBuilder = true))
 @DecoratedWith(ResourceMapperDecorator.class)
 public interface ResourceMapper {
 

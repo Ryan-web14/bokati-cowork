@@ -35,6 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -60,7 +62,7 @@ public class AssetServiceImpl implements AssetService {
             throw new BadRequestException("Inventory item must be ASSET to create an asset");
         }
         Asset asset = mapper.toEntity(request);
-        asset.setAssetCode(normalizeCode(StringUtils.hasText(request.getAssetCode()) ? request.getAssetCode() : codeWithMillis("asset")));
+        asset.setAssetCode(normalizeCode(generateAssetCode(item)));
         if (assetRepository.existsByAssetCode(asset.getAssetCode())) {
             throw new ResourceAlreadyExistException("Asset code already exists");
         }
@@ -270,7 +272,7 @@ public class AssetServiceImpl implements AssetService {
     private void apply(Asset asset, AssetRequest request, InventoryItem item) {
         asset.setItem(item);
         asset.setSerialNumber(normalizeOptionalCode(request.getSerialNumber()));
-        asset.setAssetTag(normalizeOptionalCode(StringUtils.hasText(request.getAssetTag()) ? request.getAssetTag() : asset.getAssetCode()));
+        asset.setAssetTag(normalizeOptionalCode(StringUtils.hasText(request.getAssetTag()) ? request.getAssetTag() : generateAssetTag(asset.getAssetCode(), item)));
         asset.setStatus(request.getStatus() == null ? defaultStatus(asset) : request.getStatus());
         asset.setCondition(request.getCondition() == null ? defaultCondition(asset) : request.getCondition());
         asset.setLocation(StringUtils.hasText(request.getLocationCode()) ? locationService.findByLocationCodeOrThrow(request.getLocationCode()) : null);
@@ -359,7 +361,29 @@ public class AssetServiceImpl implements AssetService {
         return StringUtils.hasText(value) ? value.trim() : null;
     }
 
-    private String codeWithMillis(String sequenceCode) {
-        return sequenceGenerator.next(sequenceCode) + "-" + System.currentTimeMillis();
+    private String generateAssetCode(InventoryItem item) {
+        String seq = sequenceGenerator.next("asset");
+        String yearMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
+        String itemPart = normalizeCode(item.getItemCode());
+        if (itemPart.length() > 12) {
+            itemPart = itemPart.substring(0, 12);
+        }
+        return "AST-" + itemPart + "-" + yearMonth + "-" + zeroPadSeq(seq, 5);
+    }
+
+    private String generateAssetTag(String assetCode, InventoryItem item) {
+        String hex = String.format("%04X", System.currentTimeMillis() & 0xFFFFL);
+        String core = assetCode.startsWith("AST-") ? assetCode.substring(4) : assetCode;
+        return "TAG-" + core + "-" + hex;
+    }
+
+    private String zeroPadSeq(String seq, int length) {
+        String digits = seq.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) return seq;
+        try {
+            return String.format("%0" + length + "d", Long.parseLong(digits));
+        } catch (NumberFormatException e) {
+            return seq;
+        }
     }
 }

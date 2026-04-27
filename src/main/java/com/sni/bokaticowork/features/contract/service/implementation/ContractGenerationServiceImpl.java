@@ -38,7 +38,8 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
 
     private static final List<ContractTemplateDescriptor> TEMPLATES = List.of(
             new ContractTemplateDescriptor("membership-agreement", "Membership Agreement", "Standard membership contract template"),
-            new ContractTemplateDescriptor("business-service-agreement", "Business Service Agreement", "Business service contract template")
+            new ContractTemplateDescriptor("business-service-agreement", "Business Service Agreement", "Business service contract template"),
+            new ContractTemplateDescriptor("subscription-pass-non-refundable", "Subscription / Pass Non Refundable Agreement", "Non refundable subscription, pass and addon contract template")
     );
 
     private final SpringTemplateEngine templateEngine;
@@ -82,7 +83,7 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         metadata.setDocumentTypeCode("CONTRACT_DRAFT");
         metadata.setTitle(request.getTitle());
         metadata.setDescription(request.getDescription());
-        metadata.setUploadedBy(request.getUploadedBy());
+        metadata.setUploadedBy(request.getUploadedBy() != null ? request.getUploadedBy().toString() : null);
         metadata.setIssueDate(request.getEffectiveDate() == null ? LocalDate.now() : request.getEffectiveDate());
 
         DocumentResponse response = documentService.createGeneratedDocument(
@@ -114,14 +115,24 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
 
     private byte[] renderPdf(String html) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            org.jsoup.nodes.Document jsoupDoc = org.jsoup.Jsoup.parse(html);
+            jsoupDoc.outputSettings()
+                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
+                    .charset(java.nio.charset.StandardCharsets.UTF_8);
+            org.jsoup.nodes.Element htmlEl = jsoupDoc.selectFirst("html");
+            if (htmlEl != null && !htmlEl.hasAttr("xmlns")) {
+                htmlEl.attr("xmlns", "http://www.w3.org/1999/xhtml");
+            }
+            String xhtml = jsoupDoc.outerHtml();
+
             PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withHtmlContent(html, null);
+            builder.withHtmlContent(xhtml, null);
             builder.toStream(out);
             builder.run();
             return out.toByteArray();
         } catch (Exception ex) {
-            throw new BadRequestException("Unable to generate contract PDF", ex);
+            Throwable root = ex.getCause() != null ? ex.getCause() : ex;
+            throw new BadRequestException("Unable to generate contract PDF: " + root.getMessage(), ex);
         }
     }
 

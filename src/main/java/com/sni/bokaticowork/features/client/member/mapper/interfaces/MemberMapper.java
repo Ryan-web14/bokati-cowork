@@ -70,19 +70,10 @@ public interface MemberMapper {
                 .build();
     }
 
-    default MemberResponse toResponse(Member member) {
-        return MemberResponse.builder()
-                .memberId(member.getMemberId())
-                .customerId(member.getCustomer().getCustomerId())
-                .firstname(member.getFirstname())
-                .lastname(member.getLastname())
-                .fullname(member.getDisplayName())
-                .email(member.getEmail())
-                .phone(member.getPhone())
-                .status(member.getStatus().name())
-                .portalAccess(member.getPortalAccess())
-                .createdAt(member.getCreatedAt())
-                .updatedAt(member.getUpdatedAt())
-                .build();
-    }
+    @Mapping(target = "customerId", ignore = true)
+    @Mapping(target = "userId", ignore = true)
+    @Mapping(target = "fullname", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "portalAccess", ignore = true)
+    MemberResponse toResponse(Member member);
 }

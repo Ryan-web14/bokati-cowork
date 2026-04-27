@@ -5,7 +5,7 @@ import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.*;
 import com.sni.bokaticowork.features.inventory.procurement.enums.*;
-import com.sni.bokaticowork.features.inventory.procurement.service.ProcurementService;
+import com.sni.bokaticowork.features.inventory.procurement.service.interfaces.ProcurementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

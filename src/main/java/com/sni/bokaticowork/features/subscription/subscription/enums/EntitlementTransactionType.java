@@ -1,4 +1,4 @@
-package com.sni.bokaticowork.features.subscription.enums;
+package com.sni.bokaticowork.features.subscription.subscription.enums;
 
 public enum EntitlementTransactionType {
     GRANT,
@@ -7,6 +7,7 @@ public enum EntitlementTransactionType {
     CONSUME,
     REFUND,
     ADJUST,
+    ROLLOVER,
     EXPIRE,
     CANCEL
 }

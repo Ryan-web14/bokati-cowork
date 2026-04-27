@@ -7,11 +7,13 @@ import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
 import com.sni.bokaticowork.features.client.customer.service.interfaces.CustomerService;
 import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest;
 import com.sni.bokaticowork.features.client.member.dto.response.MemberResponse;
+import com.sni.bokaticowork.features.client.member.dto.response.MemberSummaryResponse;
 import com.sni.bokaticowork.features.client.member.enums.MemberStatus;
 import com.sni.bokaticowork.features.client.member.mapper.interfaces.MemberMapper;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
 import com.sni.bokaticowork.features.client.member.repository.repo.MemberProfileRepository;
+import com.sni.bokaticowork.features.client.member.repository.specification.criteria.MemberSearchCriteria;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
 import com.sni.bokaticowork.security.admin.user.dto.request.UserRequest;
 import com.sni.bokaticowork.security.admin.user.model.Users;
@@ -19,17 +21,24 @@ import com.sni.bokaticowork.security.admin.user.repository.UserRepository;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -80,7 +89,7 @@ class MemberServiceImplTest {
         Customer customer = Customer.builder().customerId("CUS-0001").build();
         Member member = Member.builder().phone("060000000").build();
         Users user = Users.builder().id(99L).email("jane@example.com").build();
-        MemberResponse response = MemberResponse.builder().memberId("MEM-0001").email("jane@example.com").build();
+        MemberResponse response = MemberResponse.builder().memberId("MBR-202604-00000001").email("jane@example.com").build();
 
         when(memberRepo.existsByEmailIgnoreCaseAndDeletedFalse("jane@example.com")).thenReturn(false);
         when(memberRepo.existsByPhoneAndDeletedFalse("060000000")).thenReturn(false);
@@ -98,7 +107,7 @@ class MemberServiceImplTest {
         verify(customerService, never()).createCustomer(any());
         assertSame(customer, memberCaptor.getValue().getCustomer());
         assertEquals(MemberStatus.PENDING, memberCaptor.getValue().getStatus());
-        assertEquals("MEM-0001", memberCaptor.getValue().getMemberId());
+        assertEquals("MBR-202604-00000001", memberCaptor.getValue().getMemberId());
         assertEquals(created.getMemberId(), response.getMemberId());
     }
 
@@ -191,5 +200,44 @@ class MemberServiceImplTest {
         BadRequestException ex = assertThrows(BadRequestException.class, () -> memberService.create(request, true));
 
         assertEquals("Existing customer must be of type COMPANY when customer type is COMPANY", ex.getMessage());
+    }
+
+    @Test
+    void shouldCombineFuzzyQueryWithSpecificationSearch() {
+        MemberSearchCriteria criteria = new MemberSearchCriteria();
+        criteria.setQuery("jhn do");
+        criteria.setStatus(MemberStatus.ACTIVE);
+
+        Pageable pageable = PageRequest.of(0, 20);
+        Member member = Member.builder().memberId("MBR-0001").build();
+        MemberSummaryResponse summary = MemberSummaryResponse.builder().memberId("MBR-0001").build();
+
+        when(memberRepo.fuzzySearchMemberIds("jhn do")).thenReturn(List.of("MBR-0001"));
+        when(memberRepo.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(member), pageable, 1));
+        when(memberMapper.toSummary(member)).thenReturn(summary);
+
+        var results = memberService.search(criteria, pageable);
+
+        verify(memberRepo).fuzzySearchMemberIds("jhn do");
+        verify(memberRepo).findAll(any(Specification.class), eq(pageable));
+        assertEquals(1, results.getData().size());
+        assertEquals("MBR-0001", results.getData().get(0).getMemberId());
+    }
+
+    @Test
+    void shouldReturnEmptyPageWhenFuzzyQueryFindsNothing() {
+        MemberSearchCriteria criteria = new MemberSearchCriteria();
+        criteria.setQuery("zzzz unknown");
+
+        Pageable pageable = PageRequest.of(0, 20);
+
+        when(memberRepo.fuzzySearchMemberIds("zzzz unknown")).thenReturn(List.of());
+
+        var results = memberService.search(criteria, pageable);
+
+        verify(memberRepo).fuzzySearchMemberIds("zzzz unknown");
+        verify(memberRepo, never()).findAll(any(Specification.class), eq(pageable));
+        assertTrue(results.getData().isEmpty());
+        assertEquals(0L, results.getPageable().getTotalElements());
     }
 }

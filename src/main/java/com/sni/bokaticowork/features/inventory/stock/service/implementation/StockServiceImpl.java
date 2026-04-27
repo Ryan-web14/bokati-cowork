@@ -39,6 +39,7 @@ import com.sni.bokaticowork.features.inventory.stock.service.interfaces.Inventor
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,7 +55,7 @@ import java.util.Locale;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class StockServiceImpl implements StockService {
+public class  StockServiceImpl implements StockService {
 
     private final InventoryItemLookupService itemLookupService;
     private final InventoryLocationService locationService;
@@ -311,8 +312,9 @@ public class StockServiceImpl implements StockService {
     public Page<StockMovementResponse> searchMovements(String itemCode, String locationCode, StockMovementType movementType,
                                                        StockReferenceType referenceType, String referenceCode,
                                                        Instant fromDate, Instant toDate, Pageable pageable) {
-        return movementRepository.search(normalizeOptionalCode(itemCode), normalizeOptionalCode(locationCode), movementType,
-                referenceType, normalizeOptionalCode(referenceCode), fromDate, toDate, pageable).map(mapper::toMovementResponse);
+        return movementRepository.search(normalizeOptionalCode(itemCode), normalizeOptionalCode(locationCode),
+                movementType == null ? null : movementType.name(), referenceType == null ? null : referenceType.name(),
+                normalizeOptionalCode(referenceCode), fromDate, toDate, unsortedPage(pageable)).map(mapper::toMovementResponse);
     }
 
     private StockLevel getOrCreateLevelForUpdate(InventoryItem item, InventoryLocation location) {
@@ -664,6 +666,10 @@ public class StockServiceImpl implements StockService {
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private Pageable unsortedPage(Pageable pageable) {
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     }
 
     private record LotConsumption(StockLot stockLot, String lotNumber, LocalDate expiryDate, BigDecimal quantity) {

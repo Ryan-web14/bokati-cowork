@@ -8,6 +8,8 @@ import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceClosure
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse;
 import com.sni.bokaticowork.features.ressource.model.Resource;
 import com.sni.bokaticowork.features.ressource.model.ResourceClosure;
+import com.sni.bokaticowork.features.ressource.model.ResourceAvailability;
+import com.sni.bokaticowork.features.ressource.repository.repo.ResourceAvailabilityRepository;
 import com.sni.bokaticowork.features.ressource.repository.repo.ResourceClosureRepository;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceClosureService;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceService;
@@ -20,6 +22,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Service
 @Transactional
@@ -27,6 +30,7 @@ import java.util.List;
 public class ResourceClosureServiceImpl implements ResourceClosureService {
 
     private final ResourceClosureRepository closureRepository;
+    private final ResourceAvailabilityRepository availabilityRepository;
     private final ResourceService resourceService;
 
     @Override
@@ -45,7 +49,10 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
                 .active(request.getActive() == null ? Boolean.TRUE : request.getActive())
                 .build();
 
-        closureRepository.save(closure);
+        ResourceClosure savedClosure = closureRepository.save(closure);
+        if (Boolean.TRUE.equals(savedClosure.getActive())) {
+            applyClosureToAvailability(savedClosure);
+        }
     }
 
     @Override
@@ -75,13 +82,27 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
             throw new BadRequestException("Closure active flag is required");
         }
         ResourceClosure closure = getClosureForService(id);
+        boolean wasActive = Boolean.TRUE.equals(closure.getActive());
         closure.setActive(active);
-        closureRepository.save(closure);
+        ResourceClosure savedClosure = closureRepository.save(closure);
+
+        if (!wasActive && Boolean.TRUE.equals(active)) {
+            applyClosureToAvailability(savedClosure);
+            return;
+        }
+        if (wasActive && !Boolean.TRUE.equals(active)) {
+            restoreAvailability(savedClosure);
+        }
     }
 
     @Override
     public void deleteClosure(Long id) {
-        closureRepository.delete(getClosureForService(id));
+        ResourceClosure closure = getClosureForService(id);
+        boolean wasActive = Boolean.TRUE.equals(closure.getActive());
+        closureRepository.delete(closure);
+        if (wasActive) {
+            restoreAvailability(closure);
+        }
     }
 
     private ResourceClosure getClosureForService(Long id) {
@@ -90,6 +111,58 @@ public class ResourceClosureServiceImpl implements ResourceClosureService {
         }
         return closureRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Resource closure with id " + id + " not found"));
+    }
+
+    private void applyClosureToAvailability(ResourceClosure closure) {
+        List<ResourceAvailability> slots = availabilityRepository.lockOverlappingSlots(
+                closure.getResource(),
+                closure.getStartedAt(),
+                closure.getEndedAt()
+        );
+        if (slots.isEmpty()) {
+            return;
+        }
+
+        List<ResourceAvailability> changedSlots = new ArrayList<>();
+        for (ResourceAvailability slot : slots) {
+            if (!Boolean.FALSE.equals(slot.getAvailable())) {
+                slot.setAvailable(Boolean.FALSE);
+                changedSlots.add(slot);
+            }
+        }
+        if (!changedSlots.isEmpty()) {
+            availabilityRepository.saveAll(changedSlots);
+        }
+    }
+
+    private void restoreAvailability(ResourceClosure closure) {
+        List<ResourceAvailability> slots = availabilityRepository.lockOverlappingSlots(
+                closure.getResource(),
+                closure.getStartedAt(),
+                closure.getEndedAt()
+        );
+        if (slots.isEmpty()) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        List<ResourceAvailability> changedSlots = new ArrayList<>();
+        for (ResourceAvailability slot : slots) {
+            boolean shouldBeAvailable = Boolean.TRUE.equals(slot.getActive())
+                    && slot.getEndedAt() != null
+                    && slot.getEndedAt().isAfter(now)
+                    && slot.getRemainingCapacity() != null
+                    && slot.getRemainingCapacity() > 0
+                    && !closureRepository.existsActiveOverlap(closure.getResource(), slot.getStartedAt(), slot.getEndedAt());
+
+            if (!Boolean.valueOf(shouldBeAvailable).equals(slot.getAvailable())) {
+                slot.setAvailable(shouldBeAvailable);
+                changedSlots.add(slot);
+            }
+        }
+        if (!changedSlots.isEmpty()) {
+            availabilityRepository.saveAll(changedSlots);
+        }
     }
 
     private ResourceClosureResponse toResponse(ResourceClosure closure) {

@@ -133,6 +133,7 @@ public final class ProcurementDtos {
         private Boolean qualityAccepted;
         private String rejectionReason;
         private Long unitCost;
+        private Long totalCost;
         private String lotNumber;
         private LocalDate expiryDate;
     }

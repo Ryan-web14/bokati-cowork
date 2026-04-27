@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.client.member.mapper.decorator;
 import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest;
 import com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberProfileRequest;
 import com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberRequest;
+import com.sni.bokaticowork.features.client.member.dto.response.MemberResponse;
 import com.sni.bokaticowork.features.client.member.mapper.interfaces.MemberMapper;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.client.member.model.MemberProfile;
@@ -134,6 +135,19 @@ public abstract class MemberMapperDecorator implements MemberMapper {
         }
 
         return member;
+    }
+
+    @Override
+    public MemberResponse toResponse(Member member) {
+        if (member == null) {
+            return null;
+        }
+        MemberResponse response = delegate.toResponse(member);
+        response.setCustomerId(member.getCustomer() == null ? null : member.getCustomer().getCustomerId());
+        response.setFullname(member.getDisplayName());
+        response.setStatus(member.getStatus() == null ? null : member.getStatus().name());
+        response.setPortalAccess(Boolean.TRUE.equals(member.getPortalAccess()));
+        return response;
     }
 
     private static boolean hasText(String value) {

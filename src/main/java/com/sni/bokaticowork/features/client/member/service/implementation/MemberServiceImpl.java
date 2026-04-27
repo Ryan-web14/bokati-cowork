@@ -22,6 +22,7 @@ import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.validation.ValidationUtils;
 import com.sni.bokaticowork.security.admin.user.dto.request.UserRequest;
@@ -33,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -94,7 +97,8 @@ public class MemberServiceImpl  implements MemberService {
 
             member.setCustomer(customer);
             member.setUser(user);
-            member.setMemberId(sequenceGenerator.next("MEMBER", LocalDate.now()));
+            long memberSeq = CodeComposer.extractSeq(sequenceGenerator.next("MEMBER", LocalDate.now()));
+            member.setMemberId(CodeComposer.simpleWithMonth("MBR", LocalDate.now(), memberSeq));
             member.setStatus(MemberStatus.PENDING);
             member.setPortalAccess(true);
             member.setDeleted(false);
@@ -248,7 +252,12 @@ public class MemberServiceImpl  implements MemberService {
     @Override
     public PaginatedResponse<MemberSummaryResponse> search(MemberSearchCriteria criteria, Pageable pageable) {
 
-        Specification<Member> spec = MemberSpecification.search(criteria);
+        List<String> fuzzyMatchedMemberIds = resolveFuzzyMatchedMemberIds(criteria);
+        if (fuzzyMatchedMemberIds != null && fuzzyMatchedMemberIds.isEmpty()) {
+            return new PaginatedResponse<>(new PageImpl<>(Collections.<MemberSummaryResponse>emptyList(), pageable, 0));
+        }
+
+        Specification<Member> spec = MemberSpecification.search(criteria, fuzzyMatchedMemberIds);
 
         Page<MemberSummaryResponse> pages = memberRepo.findAll(spec, pageable).map(memberMapper::toSummary);
 
@@ -536,6 +545,14 @@ public class MemberServiceImpl  implements MemberService {
 
     private String normalizeCustomerType(String value) {
         return StringUtils.hasText(value) ? value.trim().toUpperCase(Locale.ROOT) : null;
+    }
+
+    private List<String> resolveFuzzyMatchedMemberIds(MemberSearchCriteria criteria) {
+        if (criteria == null || !StringUtils.hasText(criteria.getQuery())) {
+            return null;
+        }
+
+        return memberRepo.fuzzySearchMemberIds(criteria.getQuery().trim());
     }
 
 }

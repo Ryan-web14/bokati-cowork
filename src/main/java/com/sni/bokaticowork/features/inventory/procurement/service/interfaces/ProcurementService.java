@@ -1,4 +1,4 @@
-package com.sni.bokaticowork.features.inventory.procurement.service;
+package com.sni.bokaticowork.features.inventory.procurement.service.interfaces;
 
 import com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.*;
 import com.sni.bokaticowork.features.inventory.procurement.enums.*;
