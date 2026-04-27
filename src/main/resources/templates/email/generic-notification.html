@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title th:text="${subject ?: 'Notification'}">Notification</title>
+</head>
+<body style="margin:0;background:#f3f5f7;font-family:Arial,sans-serif;color:#1f2933;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f5f7;padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #d8dee6;border-radius:8px;overflow:hidden;">
+                <tr>
+                    <td style="padding:20px 24px;background:#0f766e;color:#ffffff;">
+                        <h1 style="margin:0;font-size:20px;" th:text="${subject ?: 'Notification Bokati'}">Notification Bokati</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:24px;">
+                        <p style="margin:0 0 16px;">Bonjour <span th:text="${recipientName ?: 'client'}">client</span>,</p>
+                        <p style="margin:0 0 16px;" th:text="${message ?: 'Une mise a jour est disponible sur votre espace Bokati.'}">
+                            Une mise a jour est disponible sur votre espace Bokati.
+                        </p>
+                        <p style="margin:0;color:#52616f;font-size:13px;">
+                            Reference: <span th:text="${reference ?: aggregateId ?: eventType ?: 'N/A'}">N/A</span>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

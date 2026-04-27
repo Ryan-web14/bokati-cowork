@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${request.title}">Contrat subscription pass non remboursable</title>
+    <style>
+        body { font-family: "DejaVu Sans", sans-serif; color: #1f2937; margin: 34px; font-size: 12px; line-height: 1.55; }
+        h1 { font-size: 22px; color: #111827; border-bottom: 2px solid #111827; padding-bottom: 10px; margin-bottom: 8px; }
+        h2 { font-size: 15px; color: #111827; margin-top: 22px; margin-bottom: 8px; }
+        .muted { color: #6b7280; }
+        .grid { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .grid td { border: 1px solid #d1d5db; padding: 8px; vertical-align: top; }
+        .notice { border: 1px solid #111827; padding: 10px; margin-top: 16px; font-weight: bold; }
+        ul { padding-left: 18px; }
+        .signature { margin-top: 42px; width: 100%; border-collapse: collapse; }
+        .signature td { width: 50%; padding-top: 18px; vertical-align: top; }
+        .line { margin-top: 42px; border-top: 1px solid #111827; width: 82%; }
+    </style>
+</head>
+<body>
+<h1 th:text="${request.title}">Contrat subscription / pass non remboursable</h1>
+<p class="muted">
+    Genere le <span th:text="${generatedAt}">2026-04-16</span> |
+    Reference template <span th:text="${request.templateCode}">subscription-pass-non-refundable</span>
+</p>
+
+<div class="notice">
+    Cette offre est non remboursable apres validation systeme, sauf obligation legale contraire ou decision explicite de l'operateur.
+</div>
+
+<h2>Parties</h2>
+<table class="grid">
+    <tr>
+        <td>
+            <strong>Beneficiaire</strong><br>
+            <span th:text="${ownerName}">Beneficiaire</span><br>
+            <span th:text="${ownerCode}">OWNER-CODE</span><br>
+            <span th:if="${ownerEmail}" th:text="${ownerEmail}">email@test.com</span><br th:if="${ownerEmail}">
+            <span th:if="${ownerPhone}" th:text="${ownerPhone}">690000000</span>
+        </td>
+        <td>
+            <strong>Operateur</strong><br>
+            <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span><br>
+            <span th:if="${business != null and business.code != null}" th:text="${business.code}">BUS-001</span><br th:if="${business != null and business.code != null}">
+            <span th:if="${business != null and business.email != null}" th:text="${business.email}">contact@test.com</span><br th:if="${business != null and business.email != null}">
+            <span th:if="${business != null and business.phone != null}" th:text="${business.phone}">677000000</span>
+        </td>
+    </tr>
+</table>
+
+<h2>Objet</h2>
+<p th:text="${request.description}">Objet du contrat.</p>
+
+<h2>Periode</h2>
+<table class="grid">
+    <tr><td><strong>Date d'effet</strong></td><td th:text="${request.effectiveDate} ?: '-'">-</td></tr>
+    <tr><td><strong>Date de debut</strong></td><td th:text="${request.startDate} ?: '-'">-</td></tr>
+    <tr><td><strong>Date de fin</strong></td><td th:text="${request.endDate} ?: '-'">-</td></tr>
+    <tr><td><strong>Signataire systeme</strong></td><td th:text="${request.signatoryName} ?: ownerName">Nom</td></tr>
+</table>
+
+<h2>Clauses contractuelles</h2>
+<ul>
+    <li th:if="${#lists.isEmpty(clauses)}">Les conditions applicables sont celles de l'offre validee au moment de la prise de subscription, pass ou add-on.</li>
+    <li th:each="clause : ${clauses}" th:text="${clause}">Clause</li>
+</ul>
+
+<h2>Informations metier</h2>
+<table class="grid">
+    <tr th:if="${#maps.isEmpty(variables)}">
+        <td>Aucune variable supplementaire.</td>
+    </tr>
+    <tr th:each="entry : ${variables.entrySet()}">
+        <td th:text="${entry.key}">cle</td>
+        <td th:text="${entry.value}">valeur</td>
+    </tr>
+</table>
+
+<table class="signature">
+    <tr>
+        <td>
+            <strong>Signature systeme pour le beneficiaire</strong>
+            <div class="line"></div>
+            <span th:text="${request.signatoryName} ?: ownerName">Nom</span>
+        </td>
+        <td>
+            <strong>Operateur</strong>
+            <div class="line"></div>
+            <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Confirmation email</title>
+</head>
+<body style="margin:0;background:#f3f5f7;font-family:Arial,sans-serif;color:#1f2933;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f5f7;padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #d8dee6;border-radius:8px;overflow:hidden;">
+                <tr>
+                    <td style="padding:20px 24px;background:#2563eb;color:#ffffff;">
+                        <h1 style="margin:0;font-size:20px;">Confirmation de votre adresse email</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:24px;">
+                        <p>Bonjour <span th:text="${recipientName ?: 'client'}">client</span>,</p>
+                        <p>Utilisez ce code pour confirmer votre adresse email.</p>
+                        <p style="font-size:28px;font-weight:700;letter-spacing:3px;margin:24px 0;" th:text="${token ?: code ?: '------'}">------</p>
+                        <p style="color:#52616f;font-size:13px;">Ce code expire apres <span th:text="${expiresInMinutes ?: 15}">15</span> minutes.</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

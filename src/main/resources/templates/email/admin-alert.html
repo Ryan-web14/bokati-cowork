@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Alerte administration</title>
+</head>
+<body style="margin:0;background:#f3f5f7;font-family:Arial,sans-serif;color:#1f2933;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f5f7;padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #d8dee6;border-radius:8px;overflow:hidden;">
+                <tr>
+                    <td style="padding:20px 24px;background:#b91c1c;color:#ffffff;">
+                        <h1 style="margin:0;font-size:20px;" th:text="${subject ?: 'Alerte administration'}">Alerte administration</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:24px;">
+                        <p style="margin:0 0 16px;" th:text="${message ?: 'Un evenement demande une verification administrative.'}">
+                            Un evenement demande une verification administrative.
+                        </p>
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-size:13px;">
+                            <tr>
+                                <td style="padding:8px;border:1px solid #d8dee6;">Module</td>
+                                <td style="padding:8px;border:1px solid #d8dee6;" th:text="${aggregateType ?: 'N/A'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:1px solid #d8dee6;">Evenement</td>
+                                <td style="padding:8px;border:1px solid #d8dee6;" th:text="${eventType ?: 'N/A'}">N/A</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:8px;border:1px solid #d8dee6;">Reference</td>
+                                <td style="padding:8px;border:1px solid #d8dee6;" th:text="${aggregateId ?: reference ?: 'N/A'}">N/A</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

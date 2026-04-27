@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Rapport mouvements inventaire</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 14mm;
+        }
+
+        body {
+            font-family: "DejaVu Sans", sans-serif;
+            color: #1f2937;
+            font-size: 10.5px;
+            line-height: 1.42;
+            margin: 0;
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 22px;
+            letter-spacing: 0;
+            color: #111827;
+        }
+
+        h2 {
+            font-size: 13px;
+            color: #111827;
+            margin: 18px 0 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #d1d5db;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            page-break-inside: auto;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid #d1d5db;
+            padding: 6px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #eef2f7;
+            color: #111827;
+            font-weight: 700;
+            text-align: left;
+        }
+
+        .header {
+            border-bottom: 3px solid #111827;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+        }
+
+        .muted {
+            color: #6b7280;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .filters {
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .filters td {
+            border: none;
+            padding: 2px 0;
+        }
+
+        .kpis {
+            width: 100%;
+            margin: 14px 0 8px;
+        }
+
+        .kpis td {
+            width: 25%;
+            border: 1px solid #cbd5e1;
+            padding: 9px;
+            background: #f8fafc;
+        }
+
+        .kpi-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 2px;
+        }
+
+        .kpi-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .positive {
+            color: #166534;
+        }
+
+        .negative {
+            color: #991b1b;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .badge-in {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .footer {
+            margin-top: 20px;
+            border-top: 1px solid #d1d5db;
+            padding-top: 8px;
+            font-size: 9px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>Rapport des mouvements inventaire</h1>
+    <p class="muted">
+        Généré le <span th:text="${generatedAt}">2026-04-17T00:00:00Z</span>
+    </p>
+    <table class="filters">
+        <tr>
+            <td><strong>Article</strong>: <span th:text="${report.itemCode ?: 'Tous'}">Tous</span></td>
+            <td><strong>Location</strong>: <span th:text="${report.locationCode ?: 'Toutes'}">Toutes</span></td>
+        </tr>
+        <tr>
+            <td><strong>Du</strong>: <span th:text="${report.fromDate ?: 'Début'}">Début</span></td>
+            <td><strong>Au</strong>: <span th:text="${report.toDate ?: 'Maintenant'}">Maintenant</span></td>
+        </tr>
+    </table>
+</div>
+
+<table class="kpis">
+    <tr>
+        <td>
+            <div class="kpi-label">Mouvements</div>
+            <div class="kpi-value" th:text="${report.summary.movementCount}">0</div>
+        </td>
+        <td>
+            <div class="kpi-label">Entrées</div>
+            <div class="kpi-value positive" th:text="${report.summary.totalInQuantity}">0</div>
+        </td>
+        <td>
+            <div class="kpi-label">Sorties</div>
+            <div class="kpi-value negative" th:text="${report.summary.totalOutQuantity}">0</div>
+        </td>
+        <td>
+            <div class="kpi-label">Quantité nette</div>
+            <div class="kpi-value" th:text="${report.summary.netQuantity}">0</div>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <div class="kpi-label">Valeur entrées</div>
+            <div class="kpi-value positive" th:text="${report.summary.totalInValue}">0</div>
+        </td>
+        <td>
+            <div class="kpi-label">Valeur sorties</div>
+            <div class="kpi-value negative" th:text="${report.summary.totalOutValue}">0</div>
+        </td>
+        <td>
+            <div class="kpi-label">Valeur nette</div>
+            <div class="kpi-value" th:text="${report.summary.netValue}">0</div>
+        </td>
+        <td>
+            <div class="kpi-label">Valeur totale</div>
+            <div class="kpi-value" th:text="${report.summary.totalMovementValue}">0</div>
+        </td>
+    </tr>
+</table>
+
+<h2>Synthèse par type de mouvement</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Type</th>
+        <th class="right">Nombre</th>
+        <th class="right">Quantité</th>
+        <th class="right">Valeur</th>
+        <th class="right">Quantité signée</th>
+        <th class="right">Valeur signée</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="line : ${report.lines}">
+        <td>
+            <span class="badge"
+                  th:classappend="${line.signedQuantity != null and line.signedQuantity.signum() > 0 ? ' badge-in' : (line.signedQuantity != null and line.signedQuantity.signum() < 0 ? ' badge-out' : '')}"
+                  th:text="${line.movementType}">IN</span>
+        </td>
+        <td class="right" th:text="${line.movementCount}">0</td>
+        <td class="right" th:text="${line.totalQuantity}">0</td>
+        <td class="right" th:text="${line.totalValue}">0</td>
+        <td class="right" th:text="${line.signedQuantity}">0</td>
+        <td class="right" th:text="${line.signedValue}">0</td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(report.lines)}">
+        <td colspan="6" class="center muted">Aucun mouvement sur la période.</td>
+    </tr>
+    </tbody>
+</table>
+
+<h2>Top articles</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Code</th>
+        <th>Article</th>
+        <th class="right">Mouvements</th>
+        <th class="right">Entrées</th>
+        <th class="right">Sorties</th>
+        <th class="right">Net</th>
+        <th class="right">Valeur</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="item : ${report.items}">
+        <td th:text="${item.itemCode}">ITEM</td>
+        <td th:text="${item.itemName}">Article</td>
+        <td class="right" th:text="${item.movementCount}">0</td>
+        <td class="right" th:text="${item.totalInQuantity}">0</td>
+        <td class="right" th:text="${item.totalOutQuantity}">0</td>
+        <td class="right" th:text="${item.netQuantity}">0</td>
+        <td class="right" th:text="${item.totalValue}">0</td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(report.items)}">
+        <td colspan="7" class="center muted">Aucun article à afficher.</td>
+    </tr>
+    </tbody>
+</table>
+
+<h2>Ventilation par location</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Code</th>
+        <th>Location</th>
+        <th class="right">Mouvements</th>
+        <th class="right">Entrées</th>
+        <th class="right">Sorties</th>
+        <th class="right">Net</th>
+        <th class="right">Valeur</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="location : ${report.locations}">
+        <td th:text="${location.locationCode}">LOC</td>
+        <td th:text="${location.locationName}">Location</td>
+        <td class="right" th:text="${location.movementCount}">0</td>
+        <td class="right" th:text="${location.totalInQuantity}">0</td>
+        <td class="right" th:text="${location.totalOutQuantity}">0</td>
+        <td class="right" th:text="${location.netQuantity}">0</td>
+        <td class="right" th:text="${location.totalValue}">0</td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(report.locations)}">
+        <td colspan="7" class="center muted">Aucune location à afficher.</td>
+    </tr>
+    </tbody>
+</table>
+
+<h2>Derniers mouvements</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Code</th>
+        <th>Type</th>
+        <th>Article</th>
+        <th>De</th>
+        <th>Vers</th>
+        <th class="right">Qté</th>
+        <th class="right">Coût</th>
+        <th>Référence</th>
+        <th>Date</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="movement : ${report.recentMovements}">
+        <td th:text="${movement.movementCode}">STM</td>
+        <td th:text="${movement.movementType}">IN</td>
+        <td>
+            <strong th:text="${movement.itemCode}">ITEM</strong><br/>
+            <span class="muted" th:text="${movement.itemName}">Article</span>
+        </td>
+        <td th:text="${movement.locationFromCode ?: '-'}">-</td>
+        <td th:text="${movement.locationToCode ?: '-'}">-</td>
+        <td class="right" th:text="${movement.quantity}">0</td>
+        <td class="right" th:text="${movement.totalCost ?: 0}">0</td>
+        <td>
+            <span th:text="${movement.referenceType ?: '-'}">-</span><br/>
+            <span class="muted" th:text="${movement.referenceCode ?: '-'}">-</span>
+        </td>
+        <td th:text="${movement.performedAt}">date</td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(report.recentMovements)}">
+        <td colspan="9" class="center muted">Aucun mouvement récent.</td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="footer">
+    Rapport généré automatiquement par le module inventaire. Les valeurs sont calculées à partir des mouvements enregistrés sur la période sélectionnée.
+</div>
+</body>
+</html>
