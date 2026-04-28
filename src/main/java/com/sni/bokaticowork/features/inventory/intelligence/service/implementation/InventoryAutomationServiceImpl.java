@@ -43,6 +43,7 @@ public class InventoryAutomationServiceImpl implements InventoryAutomationServic
             detectNegativeStock(level);
             detectOutOfStock(level);
             detectLowStock(level);
+            detectOverstock(level);
             resolveRecoveredAlerts(level);
         }
     }
@@ -74,8 +75,37 @@ public class InventoryAutomationServiceImpl implements InventoryAutomationServic
             return;
         }
         if (level.getQuantityAvailable().compareTo(rule.getMinQuantity()) <= 0) {
-            openAlert(InventoryAlertType.LOW_STOCK, level, rule.getMinQuantity(),
-                    "Stock bas pour " + level.getItem().getItemCode());
+            long previousOccurrences = alertRepository.countByAlertTypeAndItemAndLocationAndStatus(
+                    InventoryAlertType.LOW_STOCK, level.getItem(), level.getLocation(), InventoryAlertStatus.RESOLVED)
+                    + alertRepository.countByAlertTypeAndItemAndLocationAndStatus(
+                    InventoryAlertType.RECURRING_LOW_STOCK, level.getItem(), level.getLocation(), InventoryAlertStatus.RESOLVED);
+
+            if (previousOccurrences >= 2) {
+                openAlert(InventoryAlertType.RECURRING_LOW_STOCK, level, rule.getMinQuantity(),
+                        "Stock bas recurrent (" + (previousOccurrences + 1) + "e occurrence) pour "
+                                + level.getItem().getItemCode() + " : " + level.getQuantityAvailable()
+                                + " <= seuil " + rule.getMinQuantity());
+            } else {
+                openAlert(InventoryAlertType.LOW_STOCK, level, rule.getMinQuantity(),
+                        "Stock bas pour " + level.getItem().getItemCode()
+                                + " : " + level.getQuantityAvailable() + " <= seuil " + rule.getMinQuantity());
+            }
+        }
+    }
+
+    private void detectOverstock(StockLevel level) {
+        InventoryReorderRule rule = reorderRuleRepository.findFirstByItemAndLocationAndActiveTrue(level.getItem(), level.getLocation())
+                .or(() -> reorderRuleRepository.findFirstByItemAndLocationIsNullAndActiveTrue(level.getItem()))
+                .orElse(null);
+        if (rule == null || rule.getMaxQuantity() == null) {
+            return;
+        }
+        if (level.getQuantityAvailable().compareTo(rule.getMaxQuantity()) > 0) {
+            openAlert(InventoryAlertType.OVERSTOCK, level, rule.getMaxQuantity(),
+                    "Surstockage detecte pour " + level.getItem().getItemCode()
+                            + " : " + level.getQuantityAvailable() + " > max " + rule.getMaxQuantity());
+        } else {
+            resolveOpen(level, InventoryAlertType.OVERSTOCK);
         }
     }
 
@@ -89,6 +119,7 @@ public class InventoryAutomationServiceImpl implements InventoryAutomationServic
                 .orElse(null);
         if (rule != null && level.getQuantityAvailable().compareTo(rule.getMinQuantity()) > 0) {
             resolveOpen(level, InventoryAlertType.LOW_STOCK);
+            resolveOpen(level, InventoryAlertType.RECURRING_LOW_STOCK);
         }
     }
 

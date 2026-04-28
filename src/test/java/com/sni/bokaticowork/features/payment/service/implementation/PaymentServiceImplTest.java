@@ -9,20 +9,27 @@ import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.billing.service.interfaces.BillingEmailService;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentRecoveryIntentRequest;
+import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
+import com.sni.bokaticowork.features.payment.dto.request.PayInvoiceRequest;
+import com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
 import com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus;
 import com.sni.bokaticowork.features.payment.enums.PaymentMethod;
 import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
+import com.sni.bokaticowork.features.payment.enums.WalletEntryType;
 import com.sni.bokaticowork.features.payment.mapper.interfaces.PaymentMapper;
 import com.sni.bokaticowork.features.payment.model.PaymentIntent;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
+import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService;
 import com.sni.bokaticowork.features.payment.service.interfaces.WalletService;
 import com.sni.bokaticowork.features.payment.service.support.PaymentAllocationService;
+import com.sni.bokaticowork.features.payment.service.support.PaymentTransactionWorkflowEvent;
 import com.sni.bokaticowork.features.subscription.repository.BillableItemRepository;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.BillableItemResponse;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillableItemStatus;
@@ -36,6 +43,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -47,8 +55,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -93,6 +103,12 @@ class PaymentServiceImplTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private BillingEmailService billingEmailService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PaymentServiceImpl paymentService;
@@ -212,6 +228,175 @@ class PaymentServiceImplTest {
     }
 
     @Test
+    void shouldCreateBillingIntentFromRequestedAmountIncludingAdvance() {
+        BillingDocument invoice = billingDocument("INV-ADV-001", "MEMBER", "MBR-0001", "XAF", "100.00", BillingDocumentStatus.ISSUED);
+
+        when(billingDocumentService.serviceByNumber("INV-ADV-001")).thenReturn(invoice);
+        when(intentRepository.findLatestReusable("MEMBER", "MBR-0001", "BILLING_DOCUMENT", "INV-ADV-001")).thenReturn(Optional.empty());
+        when(sequenceGenerator.next("payment_intent")).thenReturn("PIN-00000002");
+        when(intentRepository.save(any(PaymentIntent.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        PaymentIntentResponse response = paymentService.createIntentFromBillingDocument(new CreatePaymentIntentFromBillingDocumentRequest(
+                "INV-ADV-001",
+                new BigDecimal("150.00"),
+                null,
+                Instant.parse("2026-04-27T15:00:00Z"),
+                null
+        ));
+
+        assertEquals(new BigDecimal("150.0000"), response.amount());
+        assertEquals("BILLING_DOCUMENT", response.sourceType());
+        assertEquals("INV-ADV-001", response.sourceCode());
+    }
+
+    @Test
+    void shouldCreditWalletWhenInvoicePaymentExceedsInvoiceBalance() {
+        BillingDocument invoice = billingDocument("INV-ADV-002", "MEMBER", "MBR-0001", "XAF", "100.00", BillingDocumentStatus.ISSUED);
+        PaymentIntent pendingIntent = PaymentIntent.builder()
+                .intentNumber("INT-MEM-20260427-00000005")
+                .customerType("MEMBER")
+                .customerCode("MBR-0001")
+                .amount(new BigDecimal("150.0000"))
+                .currency("XAF")
+                .status(PaymentIntentStatus.PENDING)
+                .sourceType("BILLING_DOCUMENT")
+                .sourceCode("INV-ADV-002")
+                .build();
+        PaymentTransaction savedTransaction = PaymentTransaction.builder()
+                .transactionNumber("TXN-CAS-20260427-00000009")
+                .paymentIntent(pendingIntent)
+                .paymentMethod(PaymentMethod.CASH)
+                .provider("CASH")
+                .providerReference("MANUAL-001")
+                .receiptNumber("REC-2026-000001")
+                .amount(new BigDecimal("150.0000"))
+                .currency("XAF")
+                .status(PaymentTransactionStatus.SUCCEEDED)
+                .paidAt(Instant.parse("2026-04-27T10:30:00Z"))
+                .receivedBy("admin-001")
+                .build();
+
+        when(billingDocumentService.serviceByNumber("INV-ADV-002")).thenReturn(invoice);
+        when(intentRepository.findLatestReusable("MEMBER", "MBR-0001", "BILLING_DOCUMENT", "INV-ADV-002")).thenReturn(Optional.empty());
+        when(sequenceGenerator.next("payment_intent")).thenReturn("PIN-00000005");
+        when(sequenceGenerator.next("payment_transaction")).thenReturn("PTX-00000009");
+        when(sequenceGenerator.next("receipt")).thenReturn("REC-2026-000001");
+        when(intentRepository.save(any(PaymentIntent.class))).thenAnswer(invocation -> {
+            PaymentIntent intent = invocation.getArgument(0);
+            if (intent.getIntentNumber() == null) {
+                intent.setIntentNumber("INT-MEM-20260427-00000005");
+            }
+            return intent;
+        });
+        when(transactionRepository.save(any(PaymentTransaction.class))).thenReturn(savedTransaction);
+        when(allocationService.allocateIfBillingDocument(savedTransaction)).thenReturn(new BigDecimal("50.0000"));
+        when(walletService.getOrCreate("MEMBER", "MBR-0001", "XAF")).thenReturn(new com.sni.bokaticowork.features.payment.dto.response.WalletResponse(
+                "WAL-001",
+                "MEMBER",
+                "MBR-0001",
+                "XAF",
+                com.sni.bokaticowork.features.payment.enums.WalletStatus.ACTIVE,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                null,
+                null
+        ));
+        WalletAccount walletAccount = WalletAccount.builder()
+                .walletNumber("WAL-001")
+                .ownerType("MEMBER")
+                .ownerCode("MBR-0001")
+                .currency("XAF")
+                .build();
+        when(walletService.serviceWallet("WAL-001")).thenReturn(walletAccount);
+        when(billingDocumentService.get("INV-ADV-002")).thenReturn(documentResponse("INV-ADV-002", "MEMBER", "MBR-0001", "XAF", "0.00"));
+
+        paymentService.payInvoice("INV-ADV-002", new PayInvoiceRequest(
+                PaymentMethod.CASH,
+                new BigDecimal("150.00"),
+                null,
+                null,
+                "MANUAL-001",
+                "admin-001",
+                null,
+                null
+        ));
+
+        verify(walletService).credit(eq(walletAccount), eq(new BigDecimal("50.0000")), eq(WalletEntryType.OVERPAYMENT_CREDIT), eq("PAYMENT_INTENT"), eq("INT-MEM-20260427-00000005"), eq("OVERPAYMENT"), eq("admin-001"));
+    }
+
+    @Test
+    void shouldGenerateProviderReferenceWhenCashPaymentDoesNotProvideOne() {
+        PaymentIntent intent = PaymentIntent.builder()
+                .intentNumber("INT-MEM-20260427-00000010")
+                .customerType("MEMBER")
+                .customerCode("MBR-0001")
+                .amount(new BigDecimal("100.0000"))
+                .currency("XAF")
+                .status(PaymentIntentStatus.PENDING)
+                .sourceType("BILLING_DOCUMENT")
+                .sourceCode("INV-001")
+                .build();
+        ReflectionTestUtils.setField(intent, "id", 88L);
+
+        when(intentRepository.findByIntentNumber("INT-MEM-20260427-00000010")).thenReturn(Optional.of(intent));
+        when(sequenceGenerator.next("payment_transaction")).thenReturn("PTX-00000010");
+        when(sequenceGenerator.next("receipt")).thenReturn("REC-2026-000010");
+        when(transactionRepository.save(any(PaymentTransaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(allocationService.allocateIfBillingDocument(any(PaymentTransaction.class))).thenReturn(BigDecimal.ZERO);
+
+        PaymentTransactionResponse response = paymentService.registerCashPayment(
+                "INT-MEM-20260427-00000010",
+                new RegisterCashPaymentRequest("cashier-001", null, null, null)
+        );
+
+        assertNotNull(response.providerReference());
+        assertTrue(response.providerReference().startsWith("PREF-"));
+        assertTrue(response.providerReference().contains(response.transactionNumber()));
+        verify(eventPublisher).publishEvent((Object) argThat(event -> event instanceof PaymentTransactionWorkflowEvent workflow
+                && workflow.status() == PaymentTransactionStatus.SUCCEEDED
+                && workflow.transactionNumber().equals(response.transactionNumber())));
+    }
+
+    @Test
+    void shouldPublishRefundWorkflowEvent() {
+        PaymentIntent intent = PaymentIntent.builder()
+                .intentNumber("INT-MEM-20260427-00000011")
+                .customerType("MEMBER")
+                .customerCode("MBR-0001")
+                .amount(new BigDecimal("100.0000"))
+                .currency("XAF")
+                .status(PaymentIntentStatus.SUCCEEDED)
+                .sourceType("BILLING_DOCUMENT")
+                .sourceCode("INV-001")
+                .build();
+        PaymentTransaction original = PaymentTransaction.builder()
+                .transactionNumber("TXN-CAS-20260427-00000011")
+                .paymentIntent(intent)
+                .paymentMethod(PaymentMethod.CASH)
+                .provider("CASH")
+                .providerReference("PREF-001")
+                .amount(new BigDecimal("100.0000"))
+                .currency("XAF")
+                .status(PaymentTransactionStatus.SUCCEEDED)
+                .paidAt(Instant.parse("2026-04-27T10:00:00Z"))
+                .build();
+
+        when(transactionRepository.findByTransactionNumber("TXN-CAS-20260427-00000011")).thenReturn(Optional.of(original));
+        when(sequenceGenerator.next("payment_transaction")).thenReturn("PTX-00000011");
+        when(transactionRepository.save(any(PaymentTransaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        PaymentTransactionResponse response = paymentService.refund(
+                "TXN-CAS-20260427-00000011",
+                new com.sni.bokaticowork.features.payment.dto.request.RefundPaymentRequest(null, "Client request", "admin-001")
+        );
+
+        verify(eventPublisher).publishEvent((Object) argThat(event -> event instanceof PaymentTransactionWorkflowEvent workflow
+                && workflow.status() == PaymentTransactionStatus.REFUNDED
+                && workflow.transactionNumber().equals(response.transactionNumber())));
+    }
+
+    @Test
     void shouldListTransactionsForIntent() {
         PaymentIntent intent = PaymentIntent.builder()
                 .intentNumber("INT-MEM-20260426-00000001")
@@ -253,12 +438,21 @@ class PaymentServiceImplTest {
                 intent.getIntentNumber(),
                 intent.getCustomerType(),
                 intent.getCustomerCode(),
+                null,
+                null,
+                null,
+                null,
+                false,
                 intent.getAmount(),
                 intent.getCurrency(),
                 intent.getStatus(),
                 intent.getPurpose(),
                 intent.getSourceType(),
                 intent.getSourceCode(),
+                intent.getSourceType(),
+                intent.getSourceCode(),
+                intent.getSourceCode(),
+                false,
                 intent.getIdempotencyKey(),
                 intent.getExpiresAt(),
                 intent.getMetadataJson()
@@ -272,6 +466,7 @@ class PaymentServiceImplTest {
                 transaction.getPaymentMethod(),
                 transaction.getProvider(),
                 transaction.getProviderReference(),
+                transaction.getReceiptNumber(),
                 transaction.getAmount(),
                 transaction.getCurrency(),
                 transaction.getStatus(),
@@ -320,8 +515,13 @@ class PaymentServiceImplTest {
                 null,
                 null,
                 null,
+                false,
                 "BILLABLE_ITEM",
                 documentNumber,
+                "BILLABLE_ITEM",
+                documentNumber,
+                documentNumber,
+                false,
                 "Invoice " + documentNumber,
                 null,
                 null,

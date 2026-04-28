@@ -7,6 +7,7 @@ import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwner
 import com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -59,5 +60,10 @@ public class KycController {
     @Idempotent(operation = "KYC_CASE_REJECT")
     public ResponseEntity<KycCaseResponse> reject(@PathVariable String code, @Valid @RequestBody KycDecisionRequest request) {
         return ResponseEntity.ok(service.reject(code, request));
+    }
+
+    @GetMapping("/{code}/missing-requirements")
+    public ResponseEntity<List<KycRequirementStatus>> missingRequirements(@PathVariable String code) {
+        return ResponseEntity.ok(service.getMissingRequirements(code));
     }
 }

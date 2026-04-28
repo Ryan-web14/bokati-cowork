@@ -273,28 +273,16 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse cancel(String bookingNumber, BookingStatusChangeRequest request) {
-        Booking booking = getForService(bookingNumber);
-        if (booking.getStatus() == BookingStatus.COMPLETED || booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new ConflictException("booking", "booking cannot be cancelled from status " + booking.getStatus());
-        }
-        assertCancellationAllowed(booking);
-        if (booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.IN_PROGRESS) {
-            releaseResource(booking);
-            eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
-            if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
-                entitlementBridge.release(booking, entitlementQuantity(booking));
-                eventWriter.write(booking, BookingEventType.ENTITLEMENT_RELEASED, "Entitlement released", "Booking entitlement reservation was released", null);
-            }
-        }
-        BookingStatus from = booking.getStatus();
-        booking.setStatus(BookingStatus.CANCELLED);
-        booking.setCancellationReason(reason(request, "Booking cancelled"));
-        booking.setCancelledAt(Instant.now());
-        booking = bookingRepository.save(booking);
-        writeHistory(booking, from, BookingStatus.CANCELLED, changedBy(request), reason(request, "Booking cancelled"));
-        eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Booking cancelled", booking.getCancellationReason(), null);
-        notifyIfRequested(booking, BookingEventType.BOOKING_CANCELLED, request);
-        return bookingMapper.toResponse(booking);
+        return bookingMapper.toResponse(cancelInternal(getForService(bookingNumber), request, false));
+    }
+
+    @Override
+    public BookingResponse systemCancel(String bookingNumber, String reason) {
+        return bookingMapper.toResponse(cancelInternal(
+                getForService(bookingNumber),
+                new BookingStatusChangeRequest("SYSTEM", reason, Boolean.FALSE),
+                true
+        ));
     }
 
     @Override
@@ -402,6 +390,35 @@ public class BookingServiceImpl implements BookingService {
         writeHistory(booking, from, BookingStatus.CONFIRMED, changedBy(request), reason(request, "Booking confirmed"));
         eventWriter.write(booking, BookingEventType.BOOKING_CONFIRMED, "Booking confirmed", "Booking was confirmed", null);
         notifyIfRequested(booking, BookingEventType.BOOKING_CONFIRMED, request);
+        return booking;
+    }
+
+    private Booking cancelInternal(Booking booking, BookingStatusChangeRequest request, boolean systemOverride) {
+        if (booking.getStatus() == BookingStatus.CANCELLED) {
+            return booking;
+        }
+        if (!systemOverride && booking.getStatus() == BookingStatus.COMPLETED) {
+            throw new ConflictException("booking", "booking cannot be cancelled from status " + booking.getStatus());
+        }
+        if (!systemOverride) {
+            assertCancellationAllowed(booking);
+        }
+        if (booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.IN_PROGRESS) {
+            releaseResource(booking);
+            eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
+            if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
+                entitlementBridge.release(booking, entitlementQuantity(booking));
+                eventWriter.write(booking, BookingEventType.ENTITLEMENT_RELEASED, "Entitlement released", "Booking entitlement reservation was released", null);
+            }
+        }
+        BookingStatus from = booking.getStatus();
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setCancellationReason(reason(request, "Booking cancelled"));
+        booking.setCancelledAt(Instant.now());
+        booking = bookingRepository.save(booking);
+        writeHistory(booking, from, BookingStatus.CANCELLED, changedBy(request), reason(request, "Booking cancelled"));
+        eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Booking cancelled", booking.getCancellationReason(), null);
+        notifyIfRequested(booking, BookingEventType.BOOKING_CANCELLED, request);
         return booking;
     }
 

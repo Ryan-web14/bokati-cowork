@@ -13,13 +13,17 @@ import com.sni.bokaticowork.features.inventory.asset.repository.AssetRepository;
 import com.sni.bokaticowork.features.inventory.intelligence.enums.InventoryAlertStatus;
 import com.sni.bokaticowork.features.inventory.intelligence.enums.InventoryAlertType;
 import com.sni.bokaticowork.features.inventory.intelligence.model.InventoryAlert;
+import com.sni.bokaticowork.features.inventory.intelligence.model.InventoryReorderRule;
 import com.sni.bokaticowork.features.inventory.intelligence.repository.InventoryAlertRepository;
+import com.sni.bokaticowork.features.inventory.intelligence.repository.InventoryReorderRuleRepository;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReservationStatus;
 import com.sni.bokaticowork.features.inventory.stock.model.StockLevel;
 import com.sni.bokaticowork.features.inventory.stock.model.StockLot;
 import com.sni.bokaticowork.features.inventory.stock.model.StockReservation;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockLevelRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockLotRepository;
+import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockReservationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +36,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -40,45 +45,142 @@ import java.util.Map;
 public class InventoryDailyWorker {
 
     private static final int EXPIRY_WINDOW_DAYS = 30;
+    private static final int EXPIRY_IMMINENT_DAYS = 7;
     private static final int WARRANTY_WINDOW_DAYS = 30;
+    private static final int SLOW_MOVING_DAYS = 30;
 
     private final StockLotRepository lotRepository;
     private final StockReservationRepository reservationRepository;
     private final StockLevelRepository stockLevelRepository;
+    private final StockMovementRepository movementRepository;
     private final AssetRepository assetRepository;
     private final AssetAssignmentRepository assignmentRepository;
     private final AssetMaintenanceRepository maintenanceRepository;
     private final InventoryAlertRepository alertRepository;
+    private final InventoryReorderRuleRepository reorderRuleRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final OutboxService outboxService;
 
-    @Scheduled(cron = "${inventory.worker.daily-cron:0 0 2 * * *}")
+    /**
+     * Expire les réservations périmées toutes les 30 minutes.
+     */
+    @Scheduled(cron = "${inventory.worker.reservation-cron:0 */30 * * * *}")
     @Transactional
-    public void runDailyInventoryChecks() {
-        int expiry = detectExpirySoon();
-        int expiredReservations = expireReservations();
+    public void runReservationExpiryChecks() {
+        int expired = expireReservations();
+        log.info("Inventory reservation worker: expiredReservations={}", expired);
+    }
+
+    /**
+     * Détecte les lots qui expirent bientôt et les lots en expiration imminente toutes les 2h.
+     */
+    @Scheduled(cron = "${inventory.worker.expiry-cron:0 0 */2 * * *}")
+    @Transactional
+    public void runExpirySoonChecks() {
+        int soon = detectExpirySoon();
+        int imminent = detectExpiryImminent();
+        log.info("Inventory expiry worker: expirySoon={}, expiryImminent={}", soon, imminent);
+    }
+
+    /**
+     * Vérifie les articles à rotation lente toutes les 6h.
+     */
+    @Scheduled(cron = "${inventory.worker.slow-moving-cron:0 0 */6 * * *}")
+    @Transactional
+    public void runSlowMovingChecks() {
+        int slowMoving = detectSlowMoving();
+        log.info("Inventory slow-moving worker: slowMoving={}", slowMoving);
+    }
+
+    /**
+     * Vérifie les assets (garanties, maintenances, retards) toutes les 3h.
+     */
+    @Scheduled(cron = "${inventory.worker.asset-cron:0 0 */3 * * *}")
+    @Transactional
+    public void runAssetAlertChecks() {
         int warranties = detectWarrantySoon();
         int maintenance = detectMaintenanceDue();
         int overdueReturns = detectOverdueReturns();
-        log.info("Inventory daily worker completed: expirySoon={}, expiredReservations={}, warrantySoon={}, maintenanceDue={}, overdueReturns={}",
-                expiry, expiredReservations, warranties, maintenance, overdueReturns);
+        log.info("Inventory asset worker: warrantySoon={}, maintenanceDue={}, overdueReturns={}",
+                warranties, maintenance, overdueReturns);
     }
 
     private int detectExpirySoon() {
         int created = 0;
         for (StockLot lot : lotRepository.findExpiringLots(LocalDate.now().plusDays(EXPIRY_WINDOW_DAYS), BigDecimal.ZERO)) {
+            if (lot.getExpiryDate() != null && lot.getExpiryDate().isBefore(LocalDate.now().plusDays(EXPIRY_IMMINENT_DAYS))) {
+                continue; // handled by detectExpiryImminent
+            }
             if (alertRepository.findFirstByAlertTypeAndItemAndLocationAndStatusOrderByCreatedAtDesc(
                     InventoryAlertType.EXPIRY_SOON, lot.getItem(), lot.getLocation(), InventoryAlertStatus.OPEN).isPresent()) {
                 continue;
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.EXPIRY_SOON,
-                    "Lot " + lot.getLotNumber() + " expire le " + lot.getExpiryDate());
+                    "Lot " + lot.getLotNumber() + " expire le " + lot.getExpiryDate()
+                            + " (" + EXPIRY_WINDOW_DAYS + " jours) — qte: " + lot.getRemainingQuantity());
             alert.setItem(lot.getItem());
             alert.setLocation(lot.getLocation());
             alert.setCurrentQuantity(lot.getRemainingQuantity());
             alert.setThresholdQuantity(BigDecimal.ZERO);
             saveAndPublish(alert);
             created++;
+        }
+        return created;
+    }
+
+    private int detectExpiryImminent() {
+        int created = 0;
+        for (StockLot lot : lotRepository.findExpiringLots(LocalDate.now().plusDays(EXPIRY_IMMINENT_DAYS), BigDecimal.ZERO)) {
+            if (alertRepository.findFirstByAlertTypeAndItemAndLocationAndStatusOrderByCreatedAtDesc(
+                    InventoryAlertType.EXPIRY_IMMINENT, lot.getItem(), lot.getLocation(), InventoryAlertStatus.OPEN).isPresent()) {
+                continue;
+            }
+            InventoryAlert alert = baseAlert(InventoryAlertType.EXPIRY_IMMINENT,
+                    "URGENT — Lot " + lot.getLotNumber() + " expire le " + lot.getExpiryDate()
+                            + " (sous " + EXPIRY_IMMINENT_DAYS + " jours) — qte: " + lot.getRemainingQuantity());
+            alert.setItem(lot.getItem());
+            alert.setLocation(lot.getLocation());
+            alert.setCurrentQuantity(lot.getRemainingQuantity());
+            alert.setThresholdQuantity(BigDecimal.ZERO);
+            saveAndPublish(alert);
+            created++;
+        }
+        return created;
+    }
+
+    private int detectSlowMoving() {
+        int created = 0;
+        Instant since = Instant.now().minus(SLOW_MOVING_DAYS, ChronoUnit.DAYS);
+        List<InventoryReorderRule> activeRules = reorderRuleRepository.findAllActiveRules();
+        for (InventoryReorderRule rule : activeRules) {
+            List<StockLevel> levels = rule.getLocation() != null
+                    ? stockLevelRepository.findByItemAndLocation(rule.getItem(), rule.getLocation())
+                            .map(List::of).orElse(List.of())
+                    : stockLevelRepository.findAllByItemIdOrderByQuantityAvailableAsc(rule.getItem().getId());
+            for (StockLevel level : levels) {
+                if (level.getQuantityAvailable().compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+                boolean hasRecentMovement = movementRepository.existsByItemIdAndMovementTypeInAndPerformedAtAfter(
+                        rule.getItem().getId(),
+                        List.of(StockMovementType.OUT, StockMovementType.ADJUSTMENT_OUT),
+                        since);
+                if (!hasRecentMovement) {
+                    if (alertRepository.findFirstByAlertTypeAndItemAndLocationAndStatusOrderByCreatedAtDesc(
+                            InventoryAlertType.SLOW_MOVING, level.getItem(), level.getLocation(), InventoryAlertStatus.OPEN).isPresent()) {
+                        continue;
+                    }
+                    InventoryAlert alert = baseAlert(InventoryAlertType.SLOW_MOVING,
+                            "Article a rotation lente : " + level.getItem().getItemCode()
+                                    + " — aucune sortie depuis " + SLOW_MOVING_DAYS + " jours, stock: " + level.getQuantityAvailable());
+                    alert.setItem(level.getItem());
+                    alert.setLocation(level.getLocation());
+                    alert.setCurrentQuantity(level.getQuantityAvailable());
+                    alert.setThresholdQuantity(BigDecimal.ZERO);
+                    saveAndPublish(alert);
+                    created++;
+                }
+            }
         }
         return created;
     }
@@ -113,7 +215,7 @@ public class InventoryDailyWorker {
                 continue;
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.WARRANTY_SOON,
-                    "Garantie bientot expiree pour asset " + asset.getAssetCode());
+                    "Garantie expire le " + asset.getWarrantyEndDate() + " pour asset " + asset.getAssetCode());
             alert.setAssetCode(asset.getAssetCode());
             alert.setItem(asset.getItem());
             alert.setLocation(asset.getLocation());
@@ -133,7 +235,7 @@ public class InventoryDailyWorker {
                 continue;
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.MAINTENANCE_DUE,
-                    "Maintenance due pour asset " + asset.getAssetCode());
+                    "Maintenance planifiee pour asset " + asset.getAssetCode() + " avant 24h");
             alert.setAssetCode(asset.getAssetCode());
             alert.setItem(asset.getItem());
             alert.setLocation(asset.getLocation());
@@ -153,7 +255,7 @@ public class InventoryDailyWorker {
                 continue;
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.ASSET_RETURN_OVERDUE,
-                    "Retour asset en retard pour " + asset.getAssetCode());
+                    "Retour asset en retard — " + asset.getAssetCode() + " attendu le " + assignment.getExpectedReturnAt());
             alert.setAssetCode(asset.getAssetCode());
             alert.setItem(asset.getItem());
             alert.setLocation(asset.getLocation());

@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record MobileMoneyRefundRequest(
         String providerReference,
         BigDecimal amount,
-        String reason
+        String reason,
+        String currency
 ) {
 }

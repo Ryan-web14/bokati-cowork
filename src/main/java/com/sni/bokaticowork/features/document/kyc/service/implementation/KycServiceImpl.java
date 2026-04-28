@@ -20,8 +20,10 @@ import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
 import com.sni.bokaticowork.features.document.kyc.KycDocumentVerificationStatus;
 import com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus;
 import com.sni.bokaticowork.features.document.kyc.mapper.interfaces.KycMapper;
 import com.sni.bokaticowork.features.document.kyc.model.KycCase;
 import com.sni.bokaticowork.features.document.kyc.model.KycDocument;
@@ -107,7 +109,9 @@ public class KycServiceImpl implements KycService {
         KycCase kycCase = serviceCase(code);
         CaseAssessment assessment = assess(kycCase);
         if (!assessment.missingDocumentTypeCodes().isEmpty()) {
-            throw new BadRequestException("KYC case is incomplete");
+            throw new BadRequestException(
+                    "KYC case is incomplete. Missing required documents: "
+                            + String.join(", ", assessment.missingDocumentTypeCodes()));
         }
 
         kycCase.setStatus(KycCaseStatus.SUBMITTED);
@@ -196,9 +200,51 @@ public class KycServiceImpl implements KycService {
                 .orElseThrow(() -> new ResourceNotFoundException("KYC case not found"));
     }
 
-    private KycCaseResponse toResponse(KycCase kycCase) {
+    @Override
+    @Transactional(readOnly = true)
+    public List<KycRequirementStatus> getMissingRequirements(String code) {
+        KycCase kycCase = serviceCase(code);
+        List<DocumentRequirement> allRequirements = requirementRepository
+                .findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(kycCase.getOwnerType());
         CaseAssessment assessment = assess(kycCase);
-        List<KycDocumentResponse> documents = documentRepository.findAllByKycCaseOrderByIdAsc(kycCase).stream()
+        return allRequirements.stream()
+                .filter(req -> Boolean.TRUE.equals(req.getRequired()))
+                .filter(req -> assessment.missingDocumentTypeCodes().stream()
+                        .anyMatch(missing -> missing.equalsIgnoreCase(req.getDocumentTypeCode())))
+                .map(req -> KycRequirementStatus.builder()
+                        .documentTypeCode(req.getDocumentTypeCode())
+                        .documentTypeName(req.getDocumentTypeName())
+                        .required(true)
+                        .status(null)
+                        .documentCode(null)
+                        .build())
+                .toList();
+    }
+
+    private KycCaseResponse toResponse(KycCase kycCase) {
+        List<DocumentRequirement> allRequirements = requirementRepository
+                .findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(kycCase.getOwnerType());
+        List<KycDocument> uploadedDocuments = documentRepository.findAllByKycCaseOrderByIdAsc(kycCase);
+
+        CaseAssessment assessment = buildAssessment(allRequirements, uploadedDocuments);
+
+        List<KycRequirementStatus> requirementStatuses = allRequirements.stream()
+                .map(req -> {
+                    KycDocument match = uploadedDocuments.stream()
+                            .filter(doc -> doc.getDocumentType().equalsIgnoreCase(req.getDocumentTypeCode()))
+                            .findFirst()
+                            .orElse(null);
+                    return KycRequirementStatus.builder()
+                            .documentTypeCode(req.getDocumentTypeCode())
+                            .documentTypeName(req.getDocumentTypeName())
+                            .required(Boolean.TRUE.equals(req.getRequired()))
+                            .status(match != null ? match.getStatus() : null)
+                            .documentCode(match != null && match.getDocument() != null ? match.getDocument().getCode() : null)
+                            .build();
+                })
+                .toList();
+
+        List<KycDocumentResponse> documents = uploadedDocuments.stream()
                 .map(mapper::toDocumentResponse)
                 .toList();
 
@@ -206,6 +252,7 @@ public class KycServiceImpl implements KycService {
         response.setComplete(assessment.complete());
         response.setApproved(assessment.allVerified());
         response.setMissingDocumentTypeCodes(assessment.missingDocumentTypeCodes());
+        response.setRequirements(requirementStatuses);
         response.setDocuments(documents);
         resolveOwnerInfo(kycCase, response);
         return response;
@@ -240,9 +287,13 @@ public class KycServiceImpl implements KycService {
     }
 
     private CaseAssessment assess(KycCase kycCase) {
-        List<DocumentRequirement> requirements = requirementRepository.findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(kycCase.getOwnerType());
-        List<KycDocument> documents = documentRepository.findAllByKycCaseOrderByIdAsc(kycCase);
+        return buildAssessment(
+                requirementRepository.findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(kycCase.getOwnerType()),
+                documentRepository.findAllByKycCaseOrderByIdAsc(kycCase)
+        );
+    }
 
+    private CaseAssessment buildAssessment(List<DocumentRequirement> requirements, List<KycDocument> documents) {
         List<String> missing = requirements.stream()
                 .filter(DocumentRequirement::getRequired)
                 .map(DocumentRequirement::getDocumentTypeCode)

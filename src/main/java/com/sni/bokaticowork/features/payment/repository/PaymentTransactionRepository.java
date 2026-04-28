@@ -15,6 +15,30 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
     @Query(nativeQuery = true, value = "SELECT * FROM payment_transaction WHERE transaction_number = :transactionNumber")
     Optional<PaymentTransaction> findByTransactionNumber(@Param("transactionNumber") String transactionNumber);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM payment_transaction WHERE receipt_number = :receiptNumber")
+    Optional<PaymentTransaction> findByReceiptNumber(@Param("receiptNumber") String receiptNumber);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM payment_transaction
+            WHERE provider_reference = :providerReference
+            ORDER BY created_at DESC
+            LIMIT 1
+            """)
+    Optional<PaymentTransaction> findByProviderReference(@Param("providerReference") String providerReference);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM payment_transaction
+            WHERE status = 'PROCESSING'
+              AND payment_method = 'MOBILE_MONEY'
+              AND provider = 'PAWAYPAY'
+              AND provider_reference IS NOT NULL
+              AND created_at <= :cutoff
+            ORDER BY created_at ASC
+            """)
+    List<PaymentTransaction> findProcessingMobileMoneyTransactions(@Param("cutoff") java.time.Instant cutoff);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM payment_transaction

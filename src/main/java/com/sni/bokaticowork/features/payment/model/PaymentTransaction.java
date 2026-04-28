@@ -53,6 +53,12 @@ public class PaymentTransaction {
     @Column(name = "provider_reference", length = 180)
     private String providerReference;
 
+    @Column(name = "receipt_number", unique = true, length = 100)
+    private String receiptNumber;
+
+    @Column(name = "receipt_issued_at")
+    private Instant receiptIssuedAt;
+
     @Column(name = "amount", nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
 

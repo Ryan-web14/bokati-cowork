@@ -51,6 +51,12 @@ public final class ProcurementDtos {
     }
 
     @Data
+    public static class PurchaseRequestApprovalRequest {
+        private String approvedBy;
+        private String supplierCode;
+    }
+
+    @Data
     public static class PurchaseOrderCreateRequest {
         @NotBlank
         private String supplierCode;
@@ -143,12 +149,14 @@ public final class ProcurementDtos {
     public static class PurchaseRequestResponse {
         private String requestCode;
         private String locationCode;
+        private String locationName;
         private PurchaseRequestStatus status;
         private String requestedBy;
         private String approvedBy;
         private String rejectionReason;
         private Instant createdAt;
         private List<ProcurementLineResponse> lines;
+        private String autoCreatedOrderCode;
     }
 
     @Data

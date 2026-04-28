@@ -7,8 +7,11 @@ import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
+import com.sni.bokaticowork.features.payment.service.interfaces.PaymentService;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -23,6 +26,8 @@ public class BillableItemInvoiceSupport {
 
     private final BillingDocumentRepository billingDocumentRepository;
     private final BillingDocumentService billingDocumentService;
+    @Lazy
+    private final PaymentService paymentService;
 
     public BillingDocumentResponse ensureInvoiced(BillableItem item) {
         return ensureInvoiced(item, defaultTitle(item), defaultDescription(item));
@@ -33,7 +38,9 @@ public class BillableItemInvoiceSupport {
             return null;
         }
         if (item.getInvoiceId() != null) {
-            return issueIfDraft(existingInvoice(item));
+            BillingDocumentResponse issued = issueIfDraft(existingInvoice(item));
+            ensurePaymentIntent(issued);
+            return issued;
         }
 
         BillingDocumentResponse created = billingDocumentRepository
@@ -49,7 +56,9 @@ public class BillableItemInvoiceSupport {
                         )
                 ));
 
-        return issueIfDraft(created);
+        BillingDocumentResponse issued = issueIfDraft(created);
+        ensurePaymentIntent(issued);
+        return issued;
     }
 
     private BillingDocumentResponse existingInvoice(BillableItem item) {
@@ -71,6 +80,19 @@ public class BillableItemInvoiceSupport {
             return billingDocumentService.issue(response.documentNumber());
         }
         return response;
+    }
+
+    private void ensurePaymentIntent(BillingDocumentResponse response) {
+        if (response == null || response.balanceDue() == null || response.balanceDue().signum() <= 0) {
+            return;
+        }
+        paymentService.createIntentFromBillingDocument(new CreatePaymentIntentFromBillingDocumentRequest(
+                response.documentNumber(),
+                null,
+                null,
+                null,
+                null
+        ));
     }
 
     private String safeTitle(String title, BillableItem item) {

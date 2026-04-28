@@ -73,7 +73,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
 
 
-    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscriber_code = :subscriberCode AND plan_version_id = :planVersion")
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscriber_code = :subscriberCode AND plan_version_id = :planVersion AND status = 'ACTIVE'")
     List<Subscription> findBySuscriberCodeAndPlanVersion(@Param("subscriberCode") String subscriberCode, @Param("planVersion") Long planVersion);
 
 

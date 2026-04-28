@@ -7,7 +7,7 @@ public class NoopMobileMoneyPaymentProvider implements MobileMoneyPaymentProvide
 
     @Override
     public MobileMoneyInitiationResponse initiate(MobileMoneyInitiationRequest request) {
-        return new MobileMoneyInitiationResponse(null, "NOT_IMPLEMENTED", "Mobile money provider is not implemented yet");
+        return new MobileMoneyInitiationResponse(null, "NOT_IMPLEMENTED", "No mobile money provider is configured");
     }
 
     @Override

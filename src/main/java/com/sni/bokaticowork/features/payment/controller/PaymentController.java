@@ -2,10 +2,13 @@ package com.sni.bokaticowork.features.payment.controller;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentForDocumentsRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentRecoveryIntentRequest;
+import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
 import com.sni.bokaticowork.features.payment.dto.request.RefundPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
@@ -65,6 +68,26 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.createRecoveryIntent(request));
     }
 
+    @GetMapping("/payable-documents")
+    public ResponseEntity<PaginatedResponse<BillingDocumentResponse>> listPayableDocuments(
+            @RequestParam(required = false) BillingDocumentType documentType,
+            @RequestParam(required = false) String customerType,
+            @RequestParam(required = false) String customerCode,
+            @RequestParam(required = false) String lineSourceType,
+            @RequestParam(required = false) String lineSourceCode,
+            @RequestParam(required = false) String searchText,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(paymentService.listPayableDocuments(
+                documentType,
+                customerType,
+                customerCode,
+                lineSourceType,
+                lineSourceCode,
+                searchText,
+                pageable
+        ));
+    }
+
     @PatchMapping("/intents/{intentNumber}/cash")
     public ResponseEntity<PaymentTransactionResponse> registerCashPayment(@PathVariable String intentNumber,
                                                                           @Valid @RequestBody RegisterCashPaymentRequest request) {
@@ -75,6 +98,13 @@ public class PaymentController {
     public ResponseEntity<PaymentTransactionResponse> payWithWallet(@PathVariable String intentNumber,
                                                                     @Valid @RequestBody WalletPaymentRequest request) {
         return ResponseEntity.ok(paymentService.payWithWallet(intentNumber, request));
+    }
+
+    @PatchMapping("/intents/{intentNumber}/mobile-money")
+    public ResponseEntity<PaymentTransactionResponse> initiateMobileMoneyDeposit(
+            @PathVariable String intentNumber,
+            @Valid @RequestBody InitiateMobileMoneyDepositRequest request) {
+        return ResponseEntity.ok(paymentService.initiateMobileMoneyDeposit(intentNumber, request));
     }
 
     @PostMapping("/transactions/{transactionNumber}/refund")

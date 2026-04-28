@@ -8,7 +8,9 @@ import com.sni.bokaticowork.features.payment.dto.request.CreateCashRegisterReque
 import com.sni.bokaticowork.features.payment.dto.request.CreateCashVoucherRequest;
 import com.sni.bokaticowork.features.payment.dto.request.OpenCashSessionRequest;
 import com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse;
+import com.sni.bokaticowork.features.payment.dto.response.CashMetricsOverviewResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse;
+import com.sni.bokaticowork.features.payment.dto.response.CashRegisterMetricsResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResponse;
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
@@ -37,5 +39,7 @@ public interface CashRegisterService {
                                                           CashDocumentType documentType, String documentNumber, String flowCategory,
                                                           String referenceType, String referenceCode, String counterpartyCode, String counterpartyName, String createdBy,
                                                           Instant fromDate, Instant toDate, String searchText, Pageable pageable);
+    CashMetricsOverviewResponse overviewMetrics(String registerCode, String businessEntityCode, Instant fromDate, Instant toDate);
+    java.util.List<CashRegisterMetricsResponse> registerMetrics(String businessEntityCode, Instant fromDate, Instant toDate);
     void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
 }

@@ -180,6 +180,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             throw new BadRequestException("Converted quote cannot be rejected");
         }
         quote.setStatus(BillingDocumentStatus.REJECTED);
+        quote.setBalanceDue(BigDecimal.ZERO);
         BillingDocument saved = documentRepository.save(quote);
         eventWriter.write(saved, "QUOTE_REJECTED", null);
         return mapper.toResponse(saved);
@@ -394,6 +395,29 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         return documentRepository.save(document);
     }
 
+    @Override
+    public BillingDocument cancelAndArchive(String documentNumber, String reason) {
+        BillingDocument document = serviceByNumber(documentNumber);
+        if (document.getStatus() != BillingDocumentStatus.CANCELLED) {
+            document.setStatus(BillingDocumentStatus.CANCELLED);
+            if (document.getCancelledAt() == null) {
+                document.setCancelledAt(Instant.now());
+            }
+            document.setBalanceDue(BigDecimal.ZERO);
+            if (document.getPaidAmount() == null || document.getPaidAmount().signum() == 0) {
+                document.setPaidAt(null);
+            }
+            document = documentRepository.save(document);
+            eventWriter.write(document, "BILLING_DOCUMENT_CANCELLED", billingActionDetails(reason, true));
+        }
+        if (document.getArchivedAt() == null) {
+            document.setArchivedAt(Instant.now());
+            document = documentRepository.save(document);
+            eventWriter.write(document, "BILLING_DOCUMENT_ARCHIVED", billingActionDetails(reason, null));
+        }
+        return document;
+    }
+
     private BillingDocument buildDocument(CreateBillingDocumentRequest request,
                                           BillingCustomerSnapshotResolver.CustomerSnapshot customer,
                                           BillingCalculationService.CalculatedDocument calculation) {
@@ -550,5 +574,16 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     private String trim(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private java.util.Map<String, Object> billingActionDetails(String reason, Boolean archived) {
+        java.util.Map<String, Object> details = new java.util.LinkedHashMap<>();
+        if (StringUtils.hasText(reason)) {
+            details.put("reason", reason.trim());
+        }
+        if (archived != null) {
+            details.put("archived", archived);
+        }
+        return details;
     }
 }

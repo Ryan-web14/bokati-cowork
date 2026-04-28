@@ -100,4 +100,24 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
                              @Param("closedBy") String closedBy,
                              @Param("searchText") String searchText,
                              Pageable pageable);
+
+    @Query(nativeQuery = true, value = """
+            SELECT
+                COUNT(*) AS register_count,
+                COUNT(*) FILTER (WHERE cr.active = true) AS active_register_count,
+                COUNT(cs.id) FILTER (WHERE cs.status = 'OPEN') AS open_session_count,
+                COUNT(cs.id) FILTER (WHERE cs.status = 'CLOSING_REVIEW') AS review_session_count,
+                COUNT(cs.id) FILTER (WHERE cs.status = 'CLOSED') AS closed_session_count,
+                COALESCE(SUM(CASE WHEN cs.status = 'CLOSING_REVIEW' THEN cs.variance_amount ELSE 0 END), 0) AS pending_variance_amount
+            FROM cash_register cr
+            LEFT JOIN cash_session cs ON cs.cash_register_id = cr.id
+                AND (CAST(:fromDate AS TIMESTAMPTZ) IS NULL OR cs.opened_at >= CAST(:fromDate AS TIMESTAMPTZ))
+                AND (CAST(:toDate AS TIMESTAMPTZ) IS NULL OR cs.opened_at <= CAST(:toDate AS TIMESTAMPTZ))
+            WHERE (CAST(:registerCode AS VARCHAR) IS NULL OR cr.register_code = CAST(:registerCode AS VARCHAR))
+              AND (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))
+            """)
+    Object[] overviewCounts(@Param("registerCode") String registerCode,
+                            @Param("businessEntityCode") String businessEntityCode,
+                            @Param("fromDate") java.time.Instant fromDate,
+                            @Param("toDate") java.time.Instant toDate);
 }

@@ -36,4 +36,6 @@ public class ReorderSuggestionResponse {
     private ReorderSuggestionReason reasonCode;
     private String reason;
     private Integer priorityScore;
+    private BigDecimal consumptionRateLast30Days;
+    private Integer daysOfStockRemaining;
 }

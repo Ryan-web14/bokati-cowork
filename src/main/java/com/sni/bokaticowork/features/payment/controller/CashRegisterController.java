@@ -9,7 +9,9 @@ import com.sni.bokaticowork.features.payment.dto.request.CreateCashRegisterReque
 import com.sni.bokaticowork.features.payment.dto.request.CreateCashVoucherRequest;
 import com.sni.bokaticowork.features.payment.dto.request.OpenCashSessionRequest;
 import com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse;
+import com.sni.bokaticowork.features.payment.dto.response.CashMetricsOverviewResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse;
+import com.sni.bokaticowork.features.payment.dto.response.CashRegisterMetricsResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResponse;
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
@@ -142,5 +144,22 @@ public class CashRegisterController {
         return ResponseEntity.ok(cashRegisterService.listMovements(registerCode, sessionNumber, movementType,
                 documentType, documentNumber, flowCategory, referenceType, referenceCode,
                 counterpartyCode, counterpartyName, createdBy, fromDate, toDate, searchText, pageable));
+    }
+
+    @GetMapping("/metrics/overview")
+    public ResponseEntity<CashMetricsOverviewResponse> overviewMetrics(
+            @RequestParam(required = false) String registerCode,
+            @RequestParam(required = false) String businessEntityCode,
+            @RequestParam(required = false) Instant fromDate,
+            @RequestParam(required = false) Instant toDate) {
+        return ResponseEntity.ok(cashRegisterService.overviewMetrics(registerCode, businessEntityCode, fromDate, toDate));
+    }
+
+    @GetMapping("/metrics/registers")
+    public ResponseEntity<java.util.List<CashRegisterMetricsResponse>> registerMetrics(
+            @RequestParam(required = false) String businessEntityCode,
+            @RequestParam(required = false) Instant fromDate,
+            @RequestParam(required = false) Instant toDate) {
+        return ResponseEntity.ok(cashRegisterService.registerMetrics(businessEntityCode, fromDate, toDate));
     }
 }

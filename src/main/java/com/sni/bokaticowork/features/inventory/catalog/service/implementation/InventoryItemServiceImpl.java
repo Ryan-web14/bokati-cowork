@@ -96,6 +96,12 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
         return mapper.toResponse(repository.save(entity));
     }
 
+    @Override
+    public void delete(String itemCode) {
+        InventoryItem entity = findByItemCodeOrThrow(itemCode);
+        repository.delete(entity);
+    }
+
     private void apply(InventoryItem entity, InventoryItemRequest request) {
         if (!StringUtils.hasText(request.getName())) {
             throw new BadRequestException("Inventory item name is required");

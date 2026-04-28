@@ -9,6 +9,7 @@ import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
@@ -17,10 +18,16 @@ import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFrom
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentForDocumentsRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentRecoveryIntentRequest;
+import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
 import com.sni.bokaticowork.features.payment.dto.request.PayInvoiceRequest;
 import com.sni.bokaticowork.features.payment.dto.request.RefundPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
+import com.sni.bokaticowork.features.payment.provider.MobileMoneyInitiationRequest;
+import com.sni.bokaticowork.features.payment.provider.MobileMoneyInitiationResponse;
+import com.sni.bokaticowork.features.payment.provider.MobileMoneyPaymentProvider;
+import com.sni.bokaticowork.features.payment.provider.MobileMoneyRefundRequest;
+import com.sni.bokaticowork.features.payment.provider.MobileMoneyRefundResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PayInvoiceResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentRecoveryResponse;
@@ -40,11 +47,13 @@ import com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterServ
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentService;
 import com.sni.bokaticowork.features.payment.service.interfaces.WalletService;
 import com.sni.bokaticowork.features.payment.service.support.PaymentAllocationService;
+import com.sni.bokaticowork.features.payment.service.support.PaymentTransactionWorkflowEvent;
 import com.sni.bokaticowork.features.subscription.repository.BillableItemRepository;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.BillableItemResponse;
 import com.sni.bokaticowork.features.subscription.subscription.mapper.interfaces.SubscriptionBillingMapper;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -85,8 +94,10 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentMapper mapper;
     private final SubscriptionBillingMapper billingMapper;
     private final ObjectMapper objectMapper;
+    private final MobileMoneyPaymentProvider mobileMoneyProvider;
     @org.springframework.context.annotation.Lazy
     private final BillingEmailService billingEmailService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public PaymentIntentResponse createIntent(CreatePaymentIntentRequest request) {
@@ -124,10 +135,21 @@ public class PaymentServiceImpl implements PaymentService {
         if (document.getBalanceDue().signum() <= 0) {
             throw new BadRequestException("Billing document has no balance due");
         }
+        BigDecimal amount = requestedBillingAmount(request.amount(), document.getBalanceDue());
+        PaymentIntent reusable = findReusableBillingIntent(
+                document.getCustomerType(),
+                document.getCustomerCode(),
+                BILLING_DOCUMENT_SOURCE,
+                document.getDocumentNumber(),
+                amount
+        );
+        if (reusable != null) {
+            return mapper.toIntentResponse(reusable);
+        }
         return createIntent(new CreatePaymentIntentRequest(
                 document.getCustomerType(),
                 document.getCustomerCode(),
-                document.getBalanceDue(),
+                amount,
                 document.getCurrency(),
                 "BILLING_DOCUMENT_PAYMENT",
                 BILLING_DOCUMENT_SOURCE,
@@ -142,6 +164,7 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentIntentResponse createIntentForBillingDocuments(CreatePaymentIntentForDocumentsRequest request) {
         BillingDocument first = null;
         BigDecimal total = BigDecimal.ZERO;
+        List<String> payableDocumentNumbers = new ArrayList<>();
         for (String documentNumber : request.documentNumbers()) {
             BillingDocument document = billingDocumentService.serviceByNumber(documentNumber);
             if (document.getBalanceDue().signum() <= 0) {
@@ -157,18 +180,31 @@ public class PaymentServiceImpl implements PaymentService {
                 }
             }
             total = total.add(document.getBalanceDue());
+            payableDocumentNumbers.add(document.getDocumentNumber());
         }
         if (first == null || total.signum() <= 0) {
             throw new BadRequestException("No payable billing document found");
         }
+        BigDecimal amount = requestedBillingAmount(request.amount(), total);
+        String sourceCode = String.join(",", payableDocumentNumbers);
+        PaymentIntent reusable = findReusableBillingIntent(
+                first.getCustomerType(),
+                first.getCustomerCode(),
+                MULTI_BILLING_DOCUMENT_SOURCE,
+                sourceCode,
+                amount
+        );
+        if (reusable != null) {
+            return mapper.toIntentResponse(reusable);
+        }
         return createIntent(new CreatePaymentIntentRequest(
                 first.getCustomerType(),
                 first.getCustomerCode(),
-                total,
+                amount,
                 first.getCurrency(),
                 "MULTI_BILLING_DOCUMENT_PAYMENT",
                 MULTI_BILLING_DOCUMENT_SOURCE,
-                String.join(",", request.documentNumbers()),
+                sourceCode,
                 request.idempotencyKey(),
                 request.expiresAt(),
                 request.metadataJson()
@@ -205,6 +241,27 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponse<BillingDocumentResponse> listPayableDocuments(BillingDocumentType documentType,
+                                                                           String customerType,
+                                                                           String customerCode,
+                                                                           String lineSourceType,
+                                                                           String lineSourceCode,
+                                                                           String searchText,
+                                                                           Pageable pageable) {
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return new PaginatedResponse<>(billingDocumentRepository.searchPayable(
+                documentType == null ? null : documentType.name(),
+                trim(customerType),
+                trim(customerCode),
+                trim(lineSourceType),
+                trim(lineSourceCode),
+                trim(searchText),
+                unsortedPageable
+        ).map(document -> billingDocumentService.get(document.getDocumentNumber())));
+    }
+
+    @Override
     public PaymentTransactionResponse registerCashPayment(String intentNumber, RegisterCashPaymentRequest request) {
         PaymentIntent intent = pendingIntent(intentNumber);
         if (!"XAF".equalsIgnoreCase(intent.getCurrency())) {
@@ -216,6 +273,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
         completeIntent(intent);
         creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), request.receivedBy());
+        publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
         return mapper.toTransactionResponse(transaction);
     }
 
@@ -233,7 +291,76 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentTransaction transaction = saveSucceededTransaction(intent, PaymentMethod.WALLET, "INTERNAL_WALLET", wallet.getWalletNumber(), request.createdBy(), request.metadataJson());
         completeIntent(intent);
         creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), request.createdBy());
+        publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
         return mapper.toTransactionResponse(transaction);
+    }
+
+    @Override
+    public PaymentTransactionResponse initiateMobileMoneyDeposit(String intentNumber, InitiateMobileMoneyDepositRequest request) {
+        PaymentIntent intent = pendingIntent(intentNumber);
+
+        String methodCtx = CodeComposer.abbrev("MOBILE_MONEY");
+        long txnSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
+        String txnNumber = CodeComposer.withDay("TXN", methodCtx, LocalDate.now(), txnSeq);
+
+        PaymentTransaction transaction = transactionRepository.save(PaymentTransaction.builder()
+                .transactionNumber(txnNumber)
+                .paymentIntent(intent)
+                .paymentMethod(PaymentMethod.MOBILE_MONEY)
+                .provider("PAWAYPAY")
+                .amount(intent.getAmount())
+                .currency(intent.getCurrency())
+                .status(PaymentTransactionStatus.PROCESSING)
+                .metadataJson(buildMobileMoneyMetadata(request))
+                .build());
+
+        intent.setStatus(PaymentIntentStatus.PROCESSING);
+        intentRepository.save(intent);
+
+        MobileMoneyInitiationRequest providerRequest = new MobileMoneyInitiationRequest(
+                intent.getIntentNumber(),
+                intent.getCustomerCode(),
+                request.phoneNumber(),
+                intent.getAmount(),
+                intent.getCurrency(),
+                null,
+                request.correspondent().name()
+        );
+
+        MobileMoneyInitiationResponse response = mobileMoneyProvider.initiate(providerRequest);
+
+        if ("PROCESSING".equals(response.status())) {
+            transaction.setProviderReference(response.providerReference());
+            transactionRepository.save(transaction);
+            return mapper.toTransactionResponse(transaction);
+        }
+
+        transaction.setStatus(PaymentTransactionStatus.FAILED);
+        transaction.setFailureReason(response.message());
+        transactionRepository.save(transaction);
+        intent.setStatus(PaymentIntentStatus.PENDING);
+        intentRepository.save(intent);
+
+        return mapper.toTransactionResponse(transaction);
+    }
+
+    private String buildMobileMoneyMetadata(InitiateMobileMoneyDepositRequest request) {
+        Map<String, Object> meta = new LinkedHashMap<>();
+        meta.put("operator", request.correspondent().name());
+        meta.put("operatorDisplayName", request.correspondent().getDisplayName());
+        meta.put("countryCode", request.correspondent().getCountryCode());
+        meta.put("phoneNumber", request.phoneNumber());
+        if (request.createdBy() != null) {
+            meta.put("createdBy", request.createdBy());
+        }
+        if (StringUtils.hasText(request.metadataJson())) {
+            meta.put("clientMetadata", request.metadataJson().trim());
+        }
+        try {
+            return objectMapper.writeValueAsString(meta);
+        } catch (JsonProcessingException ex) {
+            return "{\"operator\":\"" + request.correspondent().name() + "\"}";
+        }
     }
 
     @Override
@@ -242,10 +369,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (document.getBalanceDue().signum() <= 0) {
             throw new BadRequestException("La facture n'a pas de solde restant à payer");
         }
-        BigDecimal balanceDue = document.getBalanceDue();
-        BigDecimal amount = (request.amount() != null && request.amount().signum() > 0)
-                ? money(request.amount()).min(balanceDue)
-                : balanceDue;
+        BigDecimal amount = requestedBillingAmount(request.amount(), document.getBalanceDue());
 
         PaymentIntent intent = buildAndSaveInvoiceIntent(document, amount, request.idempotencyKey());
 
@@ -264,6 +388,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         BillingDocumentResponse updatedDocument = billingDocumentService.get(documentNumber);
         billingEmailService.sendPaymentConfirmation(updatedDocument, mapper.toTransactionResponse(transaction));
+        publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
 
         return new PayInvoiceResponse(updatedDocument, mapper.toTransactionResponse(transaction));
     }
@@ -274,6 +399,16 @@ public class PaymentServiceImpl implements PaymentService {
             if (existing.isPresent()) {
                 return existing.get();
             }
+        }
+        PaymentIntent reusable = findReusableBillingIntent(
+                document.getCustomerType(),
+                document.getCustomerCode(),
+                BILLING_DOCUMENT_SOURCE,
+                document.getDocumentNumber(),
+                amount
+        );
+        if (reusable != null) {
+            return reusable;
         }
         String customerCtx = CodeComposer.abbrev(document.getCustomerType());
         long seq = CodeComposer.extractSeq(sequenceGenerator.next("payment_intent"));
@@ -624,6 +759,12 @@ public class PaymentServiceImpl implements PaymentService {
         long refundSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
         String refundTxnNumber = CodeComposer.withDay("TXN", refundMethodCtx, LocalDate.now(), refundSeq);
 
+        // Mobile money refunds are async — initiate via provider and wait for callback
+        if (original.getPaymentMethod() == PaymentMethod.MOBILE_MONEY
+                && StringUtils.hasText(original.getProviderReference())) {
+            return initiateMobileMoneyRefund(original, amount, request, status, refundTxnNumber);
+        }
+
         PaymentTransaction refund = transactionRepository.save(PaymentTransaction.builder()
                 .transactionNumber(refundTxnNumber)
                 .paymentIntent(original.getPaymentIntent())
@@ -637,32 +778,94 @@ public class PaymentServiceImpl implements PaymentService {
                 .receivedBy(trim(request.processedBy()))
                 .failureReason(trim(request.reason()))
                 .build());
+        publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus());
         return mapper.toTransactionResponse(refund);
+    }
+
+    private PaymentTransactionResponse initiateMobileMoneyRefund(
+            PaymentTransaction original,
+            BigDecimal amount,
+            RefundPaymentRequest request,
+            PaymentTransactionStatus targetStatus,
+            String refundTxnNumber) {
+
+        PaymentTransaction refund = transactionRepository.save(PaymentTransaction.builder()
+                .transactionNumber(refundTxnNumber)
+                .paymentIntent(original.getPaymentIntent())
+                .paymentMethod(original.getPaymentMethod())
+                .provider(original.getProvider())
+                .amount(money(amount))
+                .currency(original.getCurrency())
+                .status(PaymentTransactionStatus.PROCESSING)
+                .receivedBy(trim(request.processedBy()))
+                .failureReason(trim(request.reason()))
+                .build());
+
+        MobileMoneyRefundResponse response = mobileMoneyProvider.refund(new MobileMoneyRefundRequest(
+                original.getProviderReference(), amount, request.reason(), original.getCurrency()
+        ));
+
+        if ("PROCESSING".equals(response.status())) {
+            refund.setProviderReference(response.refundReference());
+            transactionRepository.save(refund);
+            return mapper.toTransactionResponse(refund);
+        }
+
+        if ("NOT_IMPLEMENTED".equals(response.status())) {
+            // Noop provider in use — finalise synchronously
+            refund.setStatus(targetStatus);
+            refund.setPaidAt(Instant.now());
+            transactionRepository.save(refund);
+            publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus());
+            return mapper.toTransactionResponse(refund);
+        }
+
+        refund.setStatus(PaymentTransactionStatus.FAILED);
+        refund.setFailureReason(response.message());
+        transactionRepository.save(refund);
+        throw new BadRequestException("Mobile money refund rejected: " + response.message());
     }
 
     private PaymentTransaction saveSucceededTransaction(PaymentIntent intent, PaymentMethod method, String provider, String providerReference, String receivedBy, String metadataJson) {
         String methodCtx = CodeComposer.abbrev(method.name());
         long txnSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
         String txnNumber = CodeComposer.withDay("TXN", methodCtx, LocalDate.now(), txnSeq);
+        Instant paidAt = Instant.now();
+        String resolvedProviderReference = resolveProviderReference(provider, method, providerReference, txnNumber, paidAt);
 
         return transactionRepository.save(PaymentTransaction.builder()
                 .transactionNumber(txnNumber)
                 .paymentIntent(intent)
                 .paymentMethod(method)
                 .provider(provider)
-                .providerReference(trim(providerReference))
+                .providerReference(resolvedProviderReference)
+                .receiptNumber(sequenceGenerator.next("receipt"))
+                .receiptIssuedAt(paidAt)
                 .amount(intent.getAmount())
                 .currency(intent.getCurrency())
                 .status(PaymentTransactionStatus.SUCCEEDED)
-                .paidAt(Instant.now())
+                .paidAt(paidAt)
                 .receivedBy(trim(receivedBy))
                 .metadataJson(trim(metadataJson))
                 .build());
     }
 
+    private String resolveProviderReference(String provider, PaymentMethod method, String providerReference, String txnNumber, Instant paidAt) {
+        String manualReference = trim(providerReference);
+        if (StringUtils.hasText(manualReference)) {
+            return manualReference;
+        }
+        String providerCtx = CodeComposer.abbrev(StringUtils.hasText(provider) ? provider : method.name());
+        return "PREF-" + providerCtx + "-" + txnNumber + "-" + paidAt.toEpochMilli();
+    }
+
     private void completeIntent(PaymentIntent intent) {
         intent.setStatus(PaymentIntentStatus.SUCCEEDED);
         intentRepository.save(intent);
+    }
+
+    private void publishTransactionWorkflow(String transactionNumber, PaymentTransactionStatus status) {
+        eventPublisher.publishEvent(new PaymentTransactionWorkflowEvent(transactionNumber, status));
     }
 
     private void creditOverpayment(PaymentIntent intent, BigDecimal overpayment, String createdBy) {
@@ -678,6 +881,24 @@ public class PaymentServiceImpl implements PaymentService {
         if (amount == null || amount.signum() <= 0) {
             throw new BadRequestException("Payment amount must be positive");
         }
+    }
+
+    private BigDecimal requestedBillingAmount(BigDecimal requestedAmount, BigDecimal fallbackAmount) {
+        if (requestedAmount == null || requestedAmount.signum() <= 0) {
+            return money(fallbackAmount);
+        }
+        return money(requestedAmount);
+    }
+
+    private PaymentIntent findReusableBillingIntent(String customerType,
+                                                    String customerCode,
+                                                    String sourceType,
+                                                    String sourceCode,
+                                                    BigDecimal amount) {
+        return intentRepository.findLatestReusable(customerType, customerCode, sourceType, sourceCode)
+                .filter(intent -> intent.getExpiresAt() == null || intent.getExpiresAt().isAfter(Instant.now()))
+                .filter(intent -> money(intent.getAmount()).compareTo(money(amount)) == 0)
+                .orElse(null);
     }
 
     private BigDecimal money(BigDecimal amount) {

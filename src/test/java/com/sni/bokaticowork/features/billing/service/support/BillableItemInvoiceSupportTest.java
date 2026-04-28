@@ -7,6 +7,7 @@ import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.payment.service.interfaces.PaymentService;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class BillableItemInvoiceSupportTest {
     @Mock
     private BillingDocumentService billingDocumentService;
 
+    @Mock
+    private PaymentService paymentService;
+
     @InjectMocks
     private BillableItemInvoiceSupport support;
 
@@ -54,6 +58,7 @@ class BillableItemInvoiceSupportTest {
 
         ArgumentCaptor<CreateInvoiceFromBillableItemsRequest> captor = ArgumentCaptor.forClass(CreateInvoiceFromBillableItemsRequest.class);
         verify(billingDocumentService).createInvoiceFromBillableItems(captor.capture());
+        verify(paymentService).createIntentFromBillingDocument(org.mockito.ArgumentMatchers.any());
         assertEquals(List.of("BIL-0001"), captor.getValue().billableNumbers());
         assertEquals("Facture reservation", captor.getValue().title());
         assertEquals(BillingDocumentStatus.ISSUED, response.status());
@@ -83,6 +88,7 @@ class BillableItemInvoiceSupportTest {
         BillingDocumentResponse response = support.ensureInvoiced(item);
 
         verify(billingDocumentService, never()).createInvoiceFromBillableItems(org.mockito.ArgumentMatchers.any(CreateInvoiceFromBillableItemsRequest.class));
+        verify(paymentService).createIntentFromBillingDocument(org.mockito.ArgumentMatchers.any());
         assertEquals("INV-EXISTING", response.documentNumber());
         assertEquals(BillingDocumentStatus.ISSUED, response.status());
     }
@@ -113,6 +119,7 @@ class BillableItemInvoiceSupportTest {
         BillingDocumentResponse response = support.ensureInvoiced(item);
 
         verify(billingDocumentService, never()).createInvoiceFromBillableItems(org.mockito.ArgumentMatchers.any(CreateInvoiceFromBillableItemsRequest.class));
+        verify(paymentService).createIntentFromBillingDocument(org.mockito.ArgumentMatchers.any());
         assertEquals("INV-DRAFT", response.documentNumber());
         assertEquals(BillingDocumentStatus.ISSUED, response.status());
     }
@@ -138,6 +145,34 @@ class BillableItemInvoiceSupportTest {
         assertEquals("Prestation relative a booking", captor.getValue().description());
     }
 
+    @Test
+    void shouldNotCreatePaymentIntentForCoveredInvoiceWithNoBalanceDue() {
+        BillableItem item = billableItem("BIL-0005", 88L);
+        BillingDocument existing = BillingDocument.builder()
+                .id(88L)
+                .documentNumber("INV-COVERED")
+                .documentType(BillingDocumentType.INVOICE)
+                .status(BillingDocumentStatus.ISSUED)
+                .customerType("MEMBER")
+                .customerCode("MBR-0001")
+                .customerName("MBR-0001")
+                .currency("XAF")
+                .issueDate(LocalDate.now())
+                .totalAmount(BigDecimal.ZERO)
+                .balanceDue(BigDecimal.ZERO)
+                .build();
+        BillingDocumentResponse issuedResponse = response("INV-COVERED", BillingDocumentStatus.ISSUED, BigDecimal.ZERO);
+
+        when(billingDocumentRepository.findById(88L)).thenReturn(Optional.of(existing));
+        when(billingDocumentService.get("INV-COVERED")).thenReturn(issuedResponse);
+
+        BillingDocumentResponse response = support.ensureInvoiced(item, "Reservation couverte", "Prise en charge par abonnement");
+
+        verify(paymentService, never()).createIntentFromBillingDocument(org.mockito.ArgumentMatchers.any());
+        assertEquals("INV-COVERED", response.documentNumber());
+        assertEquals(BigDecimal.ZERO, response.balanceDue());
+    }
+
     private BillableItem billableItem(String billableNumber, Long invoiceId) {
         return BillableItem.builder()
                 .billableNumber(billableNumber)
@@ -153,6 +188,10 @@ class BillableItemInvoiceSupportTest {
     }
 
     private BillingDocumentResponse response(String documentNumber, BillingDocumentStatus status) {
+        return response(documentNumber, status, BigDecimal.TEN);
+    }
+
+    private BillingDocumentResponse response(String documentNumber, BillingDocumentStatus status, BigDecimal balanceDue) {
         return new BillingDocumentResponse(
                 documentNumber,
                 BillingDocumentType.INVOICE,
@@ -163,21 +202,26 @@ class BillableItemInvoiceSupportTest {
                 null,
                 null,
                 null,
+                false,
                 "BILLABLE_ITEM",
                 "BIL-0001",
+                "BOOKING",
+                "BKG-001",
+                "Reservation BKG-001",
+                false,
                 "Facture",
                 null,
                 null,
                 "XAF",
-                BigDecimal.TEN,
+                balanceDue,
                 BigDecimal.ZERO,
-                BigDecimal.TEN,
+                balanceDue,
                 BigDecimal.ZERO,
                 BigDecimal.ZERO,
                 BigDecimal.ZERO,
-                BigDecimal.TEN,
+                balanceDue,
                 BigDecimal.ZERO,
-                BigDecimal.TEN,
+                balanceDue,
                 LocalDate.now(),
                 LocalDate.now(),
                 null,

@@ -37,4 +37,11 @@ public interface InventoryAlertRepository extends JpaRepository<InventoryAlert, 
     long countByStatus(InventoryAlertStatus status);
 
     long countByStatusAndAlertType(InventoryAlertStatus status, InventoryAlertType alertType);
+
+    long countByAlertTypeAndItemAndLocationAndStatus(
+            InventoryAlertType alertType,
+            InventoryItem item,
+            InventoryLocation location,
+            InventoryAlertStatus status
+    );
 }

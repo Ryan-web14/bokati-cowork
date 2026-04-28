@@ -46,7 +46,7 @@ public class SubscriptionCreationOperator {
 
         var existingSuscritpion = subscriptionRepository.findBySuscriberCodeAndPlanVersion(request.subscriberCode(), planVersion.getId());
 
-        if(existingSuscritpion != null){
+        if(!existingSuscritpion.isEmpty()){
             throw new ResourceAlreadyExistException("Subscription already exists for subscriber code: " + request.subscriberCode() + " and plan version: " + planVersion.getId());
         }
 
@@ -94,8 +94,8 @@ public class SubscriptionCreationOperator {
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
         billingSupport.createBillableItem(saved, "SUBSCRIPTION_SETUP", "Initial subscription charge");
 
-        if (saved.getTotalAmount().signum() == 0) {
-            lifecycleOperator.activate(saved, "Auto activation for zero amount", "SYSTEM");
+        if (saved.getTotalAmount().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
+            lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");
         }
         return saved;
     }

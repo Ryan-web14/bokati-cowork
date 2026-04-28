@@ -12,9 +12,11 @@ import com.sni.bokaticowork.features.inventory.intelligence.mapper.interfaces.In
 import com.sni.bokaticowork.features.inventory.intelligence.model.InventoryReorderRule;
 import com.sni.bokaticowork.features.inventory.intelligence.repository.InventoryReorderRuleRepository;
 import com.sni.bokaticowork.features.inventory.intelligence.service.interfaces.InventoryReorderRuleService;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
 import com.sni.bokaticowork.features.inventory.stock.model.InventoryLocation;
 import com.sni.bokaticowork.features.inventory.stock.model.StockLevel;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockLevelRepository;
+import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementRepository;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.InventoryLocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -32,8 +36,11 @@ import java.util.Locale;
 @Transactional
 public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleService {
 
+    private static final int CONSUMPTION_WINDOW_DAYS = 30;
+
     private final InventoryReorderRuleRepository repository;
     private final StockLevelRepository stockLevelRepository;
+    private final StockMovementRepository movementRepository;
     private final InventoryItemLookupService itemLookupService;
     private final InventoryLocationService locationService;
     private final InventoryIntelligenceMapper mapper;
@@ -118,14 +125,25 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
         BigDecimal targetQuantity = targetQuantity(rule, currentQuantity);
         BigDecimal quantity = targetQuantity.subtract(currentQuantity).max(rule.getReorderQuantity());
         BigDecimal shortageQuantity = rule.getMinQuantity().subtract(currentQuantity).max(BigDecimal.ZERO);
+
+        Long locationId = location != null ? location.getId() : (rule.getLocation() != null ? rule.getLocation().getId() : null);
+        BigDecimal consumption30 = movementRepository.consumptionSince(
+                rule.getItem().getId(), locationId,
+                Instant.now().minus(CONSUMPTION_WINDOW_DAYS, ChronoUnit.DAYS));
+        BigDecimal dailyRate = consumption30 != null && consumption30.signum() > 0
+                ? consumption30.divide(BigDecimal.valueOf(CONSUMPTION_WINDOW_DAYS), 4, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        Integer daysRemaining = dailyRate.signum() > 0
+                ? currentQuantity.divide(dailyRate, 0, RoundingMode.CEILING).intValue()
+                : null;
+
         ReorderSuggestionSeverity severity = severityFor(reasonCode, currentQuantity, rule.getMinQuantity());
+        severity = adjustSeverityByVelocity(severity, daysRemaining);
         int priorityScore = priorityScore(severity, shortageQuantity, rule.getMinQuantity(), reasonCode);
         Long estimatedOrderCost = estimatedOrderCost(rule, quantity);
         String reason = reasonText(reasonCode, currentQuantity, rule.getMinQuantity(), targetQuantity);
-        InventoryLocation responseLocation = location;
-        if (responseLocation == null) {
-            responseLocation = rule.getLocation();
-        }
+
+        InventoryLocation responseLocation = location != null ? location : rule.getLocation();
         var item = rule.getItem();
         var category = item.getCategory();
         var unit = item.getUnit();
@@ -155,7 +173,18 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
                 .reasonCode(reasonCode)
                 .reason(reason)
                 .priorityScore(priorityScore)
+                .consumptionRateLast30Days(dailyRate.signum() > 0 ? dailyRate : null)
+                .daysOfStockRemaining(daysRemaining)
                 .build();
+    }
+
+    private ReorderSuggestionSeverity adjustSeverityByVelocity(ReorderSuggestionSeverity current, Integer daysRemaining) {
+        if (daysRemaining == null) return current;
+        if (daysRemaining <= 2) return ReorderSuggestionSeverity.CRITICAL;
+        if (daysRemaining <= 7 && current.ordinal() < ReorderSuggestionSeverity.HIGH.ordinal()) {
+            return ReorderSuggestionSeverity.HIGH;
+        }
+        return current;
     }
 
     private BigDecimal targetQuantity(InventoryReorderRule rule, BigDecimal currentQuantity) {

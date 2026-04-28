@@ -64,9 +64,11 @@ public class ProcurementController {
     }
 
     @PatchMapping("/purchase-requests/{requestCode}/approve")
-    public ResponseEntity<PurchaseRequestResponse> approvePurchaseRequest(@PathVariable String requestCode,
-                                                                          @RequestParam(required = false) String approvedBy) {
-        return ResponseEntity.ok(service.approvePurchaseRequest(requestCode, approvedBy));
+    public ResponseEntity<PurchaseRequestResponse> approvePurchaseRequest(
+            @PathVariable String requestCode,
+            @RequestParam(required = false) String approvedBy,
+            @RequestParam(required = false) String supplierCode) {
+        return ResponseEntity.ok(service.approvePurchaseRequest(requestCode, approvedBy, supplierCode));
     }
 
     @PatchMapping("/purchase-requests/{requestCode}/reject")

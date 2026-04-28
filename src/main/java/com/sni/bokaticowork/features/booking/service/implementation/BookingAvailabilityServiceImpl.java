@@ -38,29 +38,54 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
     public BookingAvailabilityResponse check(BookingAvailabilityRequest request) {
         Resource resource = resourceService.getResourceForService(request.resourceCode().trim());
         int quantity = request.quantity() == null ? 1 : request.quantity();
+
+        // Step 1: check physical slot availability — if this fails the slot is truly occupied
         try {
             resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity);
             resourceGuard.validateNoSingleCapacityConflict(resource, request.startedAt(), request.endedAt(), null);
-            if (request.paymentMode() != null && request.paymentMode() != BookingPaymentMode.DIRECT) {
+        } catch (BadRequestException | ConflictException | ResourceNotFoundException ex) {
+            return unavailableResponse(resource, request, quantity, ex.getMessage());
+        }
+
+        // Step 2: fetch available windows and verify the requested slot fits within one of them
+        int duration = Math.toIntExact(Duration.between(request.startedAt(), request.endedAt()).toMinutes());
+        List<ResourceAvailabilityWindowResponse> windows;
+        try {
+            windows = resourceAvailabilityService.findRemainingWindows(
+                    resource.getCode(), request.startedAt(), request.endedAt(), duration, quantity);
+        } catch (Exception ex) {
+            return unavailableResponse(resource, request, quantity, ex.getMessage());
+        }
+
+        // "fits within" instead of exact equality — handles cases where the window spans the full day
+        boolean slotFits = windows.stream().anyMatch(w ->
+                !w.getStartedAt().isAfter(request.startedAt()) && !w.getEndedAt().isBefore(request.endedAt()));
+
+        if (!slotFits) {
+            return unavailableResponse(resource, request, quantity,
+                    "Creneau non disponible pour les horaires demandes");
+        }
+
+        // Step 3: validate payment context only AFTER confirming the slot is available
+        // so that a missing subscription does not produce the same response as a slot conflict
+        if (request.paymentMode() != null && request.paymentMode() != BookingPaymentMode.DIRECT) {
+            try {
                 var identity = identityResolver.resolve(request.identityLookup());
                 paymentContextResolver.resolve(request.paymentMode(), identity, resource);
+            } catch (ResourceNotFoundException | BadRequestException ex) {
+                // Slot is available but payment context is missing — return clear payment error
+                return unavailableResponse(resource, request, quantity, ex.getMessage());
             }
-            int duration = Math.toIntExact(Duration.between(request.startedAt(), request.endedAt()).toMinutes());
-            List<ResourceAvailabilityWindowResponse> windows = resourceAvailabilityService.findRemainingWindows(
-                    resource.getCode(),
-                    request.startedAt(),
-                    request.endedAt(),
-                    duration,
-                    quantity
-            );
-            boolean exact = windows.stream().anyMatch(window ->
-                    window.getStartedAt().equals(request.startedAt()) && window.getEndedAt().equals(request.endedAt()));
+        }
+
+        // Step 4: pricing and success response
+        try {
             BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity);
-            String message = exact ? "Available" : "No exact availability window found";
-            if (exact && request.paymentMode() == BookingPaymentMode.SUBSCRIPTION) {
-                message = "Available - covered by subscription";
-            } else if (exact && request.paymentMode() == BookingPaymentMode.PASS) {
-                message = "Available - covered by pass";
+            String message = "Disponible";
+            if (request.paymentMode() == BookingPaymentMode.SUBSCRIPTION) {
+                message = "Disponible — couvert par abonnement";
+            } else if (request.paymentMode() == BookingPaymentMode.PASS) {
+                message = "Disponible — couvert par pass";
             }
             return new BookingAvailabilityResponse(
                     resource.getCode(),
@@ -69,7 +94,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
                     request.endedAt(),
                     duration,
                     quantity,
-                    exact,
+                    true,
                     windows.stream().map(ResourceAvailabilityWindowResponse::getRemainingCapacity).findFirst().orElse(null),
                     price.unit(),
                     price.unitPrice(),
@@ -77,22 +102,26 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
                     price.currency(),
                     message
             );
-        } catch (BadRequestException | ConflictException | ResourceNotFoundException ex) {
-            return new BookingAvailabilityResponse(
-                    resource.getCode(),
-                    resource.getName(),
-                    request.startedAt(),
-                    request.endedAt(),
-                    null,
-                    quantity,
-                    false,
-                    null,
-                    null,
-                    null,
-                    null,
-                    "XAF",
-                    ex.getMessage()
-            );
+        } catch (Exception ex) {
+            return unavailableResponse(resource, request, quantity, ex.getMessage());
         }
+    }
+
+    private BookingAvailabilityResponse unavailableResponse(Resource resource, BookingAvailabilityRequest request, int quantity, String message) {
+        return new BookingAvailabilityResponse(
+                resource.getCode(),
+                resource.getName(),
+                request.startedAt(),
+                request.endedAt(),
+                null,
+                quantity,
+                false,
+                null,
+                null,
+                null,
+                null,
+                "XAF",
+                message
+        );
     }
 }
