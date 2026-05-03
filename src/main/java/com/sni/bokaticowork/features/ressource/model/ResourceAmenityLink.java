@@ -38,4 +38,14 @@ public class ResourceAmenityLink {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "amenity_id", nullable = false, foreignKey = @ForeignKey(name = "fk_resource_amenity_link_amenity"))
     private ResourceAmenities amenity;
+
+    @Column(name = "quantity")
+    private Integer quantity;
+
+    @Column(name = "optional", nullable = false)
+    @Builder.Default
+    private Boolean optional = Boolean.FALSE;
+
+    @Column(name = "extra_price")
+    private Integer extraPrice;
 }

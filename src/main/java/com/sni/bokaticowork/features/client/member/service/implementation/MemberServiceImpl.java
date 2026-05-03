@@ -1,8 +1,11 @@
 package com.sni.bokaticowork.features.client.member.service.implementation;
 
+import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.features.client.customer.dto.request.CustomerRequest;
+import com.sni.bokaticowork.features.client.customer.enums.CustomerStatus;
 import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
+import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
 import com.sni.bokaticowork.features.client.customer.service.interfaces.CustomerService;
 import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest;
 import com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberRequest;
@@ -21,6 +24,7 @@ import com.sni.bokaticowork.features.client.member.repository.specification.crit
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.core.generator.password.GeneratorOfPassword;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
@@ -30,16 +34,22 @@ import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.user.repository.UserRepository;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -53,14 +63,22 @@ import java.util.Locale;
 @Service
 public class MemberServiceImpl  implements MemberService {
 
+    private static final int GENERATED_PASSWORD_LENGTH = 8;
+
     private final MemberRepository memberRepo;
     private final MemberMapper memberMapper;
     private final CustomerService  customerService;
+    private final CustomerRepository customerRepo;
     private final UserService userService;
     private final UserRepository userRepo;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final KycAutomationService kycAutomationService;
     private final MemberProfileRepository memberProfileRepository;
+    private final DefaultEmailSender emailSender;
+    private final SpringTemplateEngine emailTemplateEngine;
+
+    @Value("${app.verify-base-url:}")
+    private String publicBaseUrl;
 
     //Todo send password by email or let it be shown for printing
     @Transactional
@@ -78,11 +96,14 @@ public class MemberServiceImpl  implements MemberService {
                     .build();
 
             Member member = memberMapper.toEntity(request);
+            String generatedPassword = null;
 
             if(Boolean.TRUE.equals(createByadmin)){
                 member.setCreateByAdmin(true);
                 if (request.isGeneratePassword()) {
-                    userRequest.setGeneratePassword(true);
+                    generatedPassword = GeneratorOfPassword.generatePassword(GENERATED_PASSWORD_LENGTH);
+                    userRequest.setGeneratePassword(false);
+                    userRequest.setPassword(generatedPassword);
                 } else {
                     userRequest.setPassword(request.getPassword());
                     userRequest.setGeneratePassword(false);
@@ -108,6 +129,7 @@ public class MemberServiceImpl  implements MemberService {
             memberRepo.save(member);
             createEmptyProfileIfMissing(member);
             kycAutomationService.initializeMemberKyc(member.getMemberId());
+            sendMemberCreatedEmailAfterCommit(member, generatedPassword);
 
             return memberMapper.toResponse(member);
         } catch (ResourceAlreadyExistException e){
@@ -120,7 +142,7 @@ public class MemberServiceImpl  implements MemberService {
             throw e;
         } catch (DataIntegrityViolationException e) {
             log.error("Database constraint violation while creating member for email {}", request.getEmail(), e);
-            throw new BadRequestException(resolveIntegrityViolationMessage(request));
+            throw new BadRequestException(resolveIntegrityViolationMessage(request, e), e);
         } catch (Exception e){
             log.error("Error creating member", e);
             throw new RuntimeException("Error creating member", e);
@@ -197,8 +219,12 @@ public class MemberServiceImpl  implements MemberService {
         
         if(member.getStatus() == MemberStatus.ACTIVE){
             member.setPortalAccess(true);
+            Customer cus = member.getCustomer();
+            cus.setStatus(CustomerStatus.ACTIVE);
         } else if (member.getStatus() == MemberStatus.INACTIVE || member.getStatus() == MemberStatus.SUSPENDED) {
             member.setPortalAccess(false);
+            Customer cus = member.getCustomer();
+            cus.setStatus(CustomerStatus.INACTIVE);
         }
 
         memberRepo.save(member);
@@ -224,7 +250,7 @@ public class MemberServiceImpl  implements MemberService {
 
         Page<MemberResponse> pages = memberRepo.findAll(pageable).map(memberMapper::toResponse);
 
-        return new PaginatedResponse<MemberResponse>(pages);
+        return new PaginatedResponse<>(pages);
     }
 
     @Override
@@ -328,6 +354,48 @@ public class MemberServiceImpl  implements MemberService {
         memberProfileRepository.save(MemberProfile.builder().member(member).build());
     }
 
+    private void sendMemberCreatedEmailAfterCommit(Member member, String generatedPassword) {
+        if (member == null || !StringUtils.hasText(member.getEmail())) {
+            return;
+        }
+        Runnable task = () -> {
+            try {
+                Context context = new Context();
+                context.setVariable("name", member.getDisplayName().trim());
+                context.setVariable("memberId", member.getMemberId());
+                context.setVariable("email", member.getEmail());
+                context.setVariable("generatedPassword", generatedPassword);
+                context.setVariable("portalAccess", Boolean.TRUE.equals(member.getPortalAccess()));
+                context.setVariable("logoUrl", logoUrl());
+                String html = emailTemplateEngine.process("member-created", context);
+                emailSender.sendHtmlEmail(member.getEmail(), "Bienvenue dans votre espace membre Bokati", html);
+            } catch (MessagingException ex) {
+                log.warn("Unable to send member creation email to {}", member.getEmail(), ex);
+            }
+        };
+        runAfterCommit(task);
+    }
+
+    private String logoUrl() {
+        if (!StringUtils.hasText(publicBaseUrl)) {
+            return "/images/logo.png";
+        }
+        return publicBaseUrl.replaceAll("/+$", "") + "/images/logo.png";
+    }
+
+    private void runAfterCommit(Runnable task) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    task.run();
+                }
+            });
+            return;
+        }
+        task.run();
+    }
+
 
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
@@ -357,22 +425,56 @@ public class MemberServiceImpl  implements MemberService {
             throw new ResourceAlreadyExistException("A member with this phone number already exists");
         }
 
+        if (!StringUtils.hasText(request.getExistingCustomerId())
+                && Boolean.TRUE.equals(customerRepo.existsByEmailIgnoreCase(request.getEmail()))) {
+            throw new ResourceAlreadyExistException("A customer with this email already exists. Use existingCustomerId to attach this member to the existing customer");
+        }
+
         if (userRepo.existsByEmailIgnoreCase(request.getEmail())) {
             throw new ResourceAlreadyExistException("A user with this email already exists");
         }
     }
 
-    private String resolveIntegrityViolationMessage(CreateMemberRequest request) {
+    private String resolveIntegrityViolationMessage(CreateMemberRequest request, DataIntegrityViolationException exception) {
+        String knownConflict = resolveKnownIntegrityConflictMessage(request);
+        String databaseMessage = resolveDatabaseErrorMessage(exception);
+
+        if (StringUtils.hasText(databaseMessage)) {
+            return "Database constraint violation: " + databaseMessage;
+        }
+
+        if (StringUtils.hasText(knownConflict)) {
+            return knownConflict;
+        }
+        return "Member creation failed because one or more values must be unique";
+    }
+
+    private String resolveKnownIntegrityConflictMessage(CreateMemberRequest request) {
         if (Boolean.TRUE.equals(memberRepo.existsByEmailIgnoreCaseAndDeletedFalse(request.getEmail()))) {
             return "A member with this email already exists";
         }
         if (Boolean.TRUE.equals(memberRepo.existsByPhoneAndDeletedFalse(request.getPhone()))) {
             return "A member with this phone number already exists";
         }
+        if (!StringUtils.hasText(request.getExistingCustomerId())
+                && Boolean.TRUE.equals(customerRepo.existsByEmailIgnoreCase(request.getEmail()))) {
+            return "A customer with this email already exists. Use existingCustomerId to attach this member to the existing customer";
+        }
         if (userRepo.existsByEmailIgnoreCase(request.getEmail())) {
             return "A user with this email already exists";
         }
-        return "Member creation failed because one or more values must be unique";
+        return null;
+    }
+
+    private String resolveDatabaseErrorMessage(DataIntegrityViolationException exception) {
+        Throwable cause = exception.getMostSpecificCause();
+        if (cause == null || !StringUtils.hasText(cause.getMessage())) {
+            cause = exception.getCause();
+        }
+        if (cause == null || !StringUtils.hasText(cause.getMessage())) {
+            return exception.getMessage();
+        }
+        return cause.getMessage().replaceAll("\\s+", " ").trim();
     }
 
     private String normalizeWhitespace(String value) {
@@ -532,7 +634,7 @@ public class MemberServiceImpl  implements MemberService {
                 .whatsappPhone(request.getWhatsappPhone())
                 .build();
 
-        return customerService.createCustomer(customerRequest);
+        return customerService.createCustomerForMember(customerRequest);
     }
 
     private CustomerType resolveRequestedCustomerType(CreateMemberRequest request) {

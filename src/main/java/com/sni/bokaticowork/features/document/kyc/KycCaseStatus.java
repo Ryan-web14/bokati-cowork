@@ -8,5 +8,6 @@ public enum KycCaseStatus {
     APPROVED,
     REJECTED,
     PENDING_CORRECTION,
+    RENEWAL_REQUIRED,
     EXPIRED
 }

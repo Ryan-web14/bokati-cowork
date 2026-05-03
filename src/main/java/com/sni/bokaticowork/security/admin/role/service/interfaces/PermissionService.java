@@ -20,6 +20,7 @@ public interface PermissionService {
     List<PermissionResponse> getAllPermission();
     List<PermissionResponse> getAllActivePermissions();
     List<PermissionResponse> getSystemPermissions();
+    List<PermissionResponse> searchByName(String query);
 
     /**
      * Return a standard response paginated list of permissions

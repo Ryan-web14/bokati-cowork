@@ -71,7 +71,7 @@ public class AddressServiceImpl implements AddressService {
             throw new IllegalArgumentException("Address request cannot be null");
         }
 
-        if(request.getStreetName().isEmpty() || request.getDistrict().isEmpty() || request.getCity().isEmpty()){
+        if( request.getDistrict().isEmpty() || request.getCity().isEmpty()){
             log.debug("Invalid address request, one or more fields are empty");
             throw new IllegalArgumentException("Invalid address request, one or more fields are empty");
         }
@@ -79,11 +79,15 @@ public class AddressServiceImpl implements AddressService {
         if(!ValidationUtils.isDigit(request.getStreetNumber())){
             log.debug("Invalid address request, street number is not a number");
             throw new IllegalArgumentException("Invalid address request, street number is not a number");
+        }else if (request.getStreetNumber().isEmpty()){
+            return;
         }
 
         if(!ValidationUtils.validateString(request.getStreetName())){
             log.debug("Invalid address request, street name is not a string");
             throw new IllegalArgumentException("Invalid address request, street name is not a string");
+        }else if (request.getStreetName().isEmpty()){
+            return;
         }
 
         if(!ValidationUtils.validateString(request.getDistrict())){

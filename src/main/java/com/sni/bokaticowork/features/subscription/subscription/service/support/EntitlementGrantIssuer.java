@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Component
@@ -34,8 +34,18 @@ public class EntitlementGrantIssuer {
         List<PlanEntitlement> entitlements = planEntitlementRepository.findAllByPlanVersionOrderByPriorityAsc(subscription.getPlanVersion().getId());
         Instant validFrom = startOfDay(subscription.getCurrentPeriodStart() == null ? subscription.getStartDate() : subscription.getCurrentPeriodStart());
         Instant validUntil = subscription.getCurrentPeriodEnd() == null ? null : startOfDay(subscription.getCurrentPeriodEnd().plusDays(1));
+        Instant now = Instant.now();
 
         for (PlanEntitlement entitlement : entitlements) {
+            if (grantRepository.findActiveSubscriptionGrantForPeriod(
+                    subscription.getId(),
+                    entitlement.getEntitlementDefinition().getId(),
+                    validFrom,
+                    now
+            ).isPresent()) {
+                continue;
+            }
+
             EntitlementGrant grant = grantRepository.save(EntitlementGrant.builder()
                     .grantNumber(sequenceGenerator.next("entitlement_grant"))
                     .subscription(subscription)
@@ -46,7 +56,7 @@ public class EntitlementGrantIssuer {
                     .quantityRemaining(entitlement.getQuantity())
                     .unlimited(entitlement.getUnlimited())
                     .validFrom(validFrom)
-                    .validUntil(entitlement.getValidForDays() == null ? validUntil : validFrom.plusSeconds(entitlement.getValidForDays().longValue() * 86_400))
+                    .validUntil(resolveValidUntil(entitlement, validFrom, validUntil))
                     .status(EntitlementGrantStatus.ACTIVE)
                     .sourceType("SUBSCRIPTION")
                     .sourceId(subscription.getSubscriptionNumber())
@@ -81,6 +91,14 @@ public class EntitlementGrantIssuer {
     }
 
     private Instant startOfDay(LocalDate date) {
-        return date.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        return date.atStartOfDay(ZoneOffset.UTC).toInstant();
+    }
+
+    private Instant resolveValidUntil(PlanEntitlement entitlement, Instant validFrom, Instant subscriptionValidUntil) {
+        Integer validForDays = entitlement.getValidForDays();
+        if (validForDays == null || validForDays <= 0) {
+            return subscriptionValidUntil;
+        }
+        return validFrom.plusSeconds(validForDays.longValue() * 86_400);
     }
 }

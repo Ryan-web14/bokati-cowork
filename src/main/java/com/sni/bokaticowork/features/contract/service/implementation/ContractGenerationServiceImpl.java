@@ -118,15 +118,12 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
             org.jsoup.nodes.Document jsoupDoc = org.jsoup.Jsoup.parse(html);
             jsoupDoc.outputSettings()
                     .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .charset(java.nio.charset.StandardCharsets.UTF_8);
-            org.jsoup.nodes.Element htmlEl = jsoupDoc.selectFirst("html");
-            if (htmlEl != null && !htmlEl.hasAttr("xmlns")) {
-                htmlEl.attr("xmlns", "http://www.w3.org/1999/xhtml");
-            }
-            String xhtml = jsoupDoc.outerHtml();
-
+                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
+                    .charset(java.nio.charset.StandardCharsets.UTF_8)
+                    .prettyPrint(false);
             PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.withHtmlContent(xhtml, null);
+            builder.useFastMode();
+            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoupDoc), null);
             builder.toStream(out);
             builder.run();
             return out.toByteArray();

@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr">
+<body style="font-family:Arial,sans-serif;color:#1f2937;margin:0;padding:24px;background:#f8fafc">
+<table style="max-width:640px;margin:auto;background:#fff;border-collapse:collapse;width:100%">
+    <tr><td style="padding:24px;border-bottom:1px solid #e5e7eb">
+        <h1 style="font-size:20px;margin:0">Rappel de reservation</h1>
+    </td></tr>
+    <tr><td style="padding:24px">
+        <p>Bonjour <strong th:text="${name}">client</strong>,</p>
+        <p>Votre reservation <strong th:text="${bookingNumber}">BKG</strong> commence bientot.</p>
+        <p><strong>Espace :</strong> <span th:text="${resourceName}">Ressource</span></p>
+        <p><strong>Horaire :</strong> <span th:text="${startedAt}">date</span></p>
+        <p th:if="${checkInQrValue != null}">Votre QR code de check-in est disponible dans votre espace client.</p>
+    </td></tr>
+    <tr><td style="padding:16px 24px;color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb">
+        Bokati Cowork
+    </td></tr>
+</table>
+</body>
+</html>

@@ -168,6 +168,10 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
             sessionService.invalidateOldestSessionByUser(principal.getUser());
             return createSessionAndResponse(request, principal);
         }catch (AuthenticationException e){
+            Object principal = token.getPrincipal();
+            if (principal instanceof String email) {
+                userService.recordLoginFailure(email);
+            }
             log.warn("Error authenticating user", e);
             throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
         }
@@ -196,7 +200,7 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
 
     private LoginResponse createSessionAndResponse(HttpServletRequest request, UserPrincipal principal) {
         UserSessionToken tokens = sessionService.createSession(request, principal);
-        userService.updateLastLogin(principal.getUser().getEmail());
+        userService.recordLoginSuccess(principal.getUser().getEmail());
 
         return LoginResponse.builder()
                 .accessToken(tokens.getAccessToken())

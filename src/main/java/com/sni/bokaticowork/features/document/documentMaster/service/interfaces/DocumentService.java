@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.document.documentMaster.service.interfaces
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentUploadMetadataRequest;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFileResult;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import org.springframework.data.domain.Pageable;
@@ -23,5 +24,5 @@ public interface DocumentService {
 
     DocumentFileResult getFileWithMeta(String documentCode);
 
-    record DocumentFileResult(byte[] content, String mimeType, String fileName) {}
+
 }

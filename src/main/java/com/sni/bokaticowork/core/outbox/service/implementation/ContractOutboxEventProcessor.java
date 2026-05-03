@@ -11,10 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ContractOutboxEventProcessor implements OutboxEventProcessor {
+public class  ContractOutboxEventProcessor implements OutboxEventProcessor {
 
     private final ObjectMapper objectMapper;
     private final OutboxNotificationMailService mailService;
@@ -39,11 +42,12 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
             return;
         }
 
-        mailService.sendContractNotification(recipient.email(), java.util.Map.of(
-                "recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client",
-                "templateCode", templateCode,
-                "documentCode", documentCode
-        ));
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
+        variables.put("templateCode", templateCode);
+        variables.put("documentCode", documentCode);
+        variables.put("eventType", event.getEventType());
+        mailService.sendContractNotification(recipient.email(), variables);
     }
 
     private JsonNode readPayload(OutboxEvent event) {

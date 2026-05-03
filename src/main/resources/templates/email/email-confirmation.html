@@ -1,30 +1,89 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
-    <title>Confirmation email</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation email - Elle A Ose</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
+        .card { max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
+        .email-header { background: #1a0a2e; padding: 24px 32px 20px; position: relative; overflow: hidden; }
+        .email-header::after { content: ''; position: absolute; top: 0; right: -20px; width: 160px; height: 100%; background: rgba(255,255,255,0.03); transform: skewX(-12deg); }
+        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
+        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+        .notification-tag { background: rgba(139, 92, 246, 0.18); border: 1px solid rgba(139, 92, 246, 0.4); color: #a78bfa; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+        .email-body { padding: 32px 32px 28px; }
+        .icon-wrap { width: 54px; height: 54px; border-radius: 50%; background: #f0eef5; border: 2px solid #c9a84c; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .event-title { font-size: 19px; font-weight: 700; color: #1a0a2e; text-align: center; margin-bottom: 6px; letter-spacing: -0.3px; }
+        .event-subtitle { font-size: 11.5px; color: #7c6d8f; text-align: center; margin-bottom: 24px; }
+        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 10px; }
+        .message { font-size: 13px; color: #5c4f6e; line-height: 1.65; margin-bottom: 24px; }
+        .code-wrap { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 22px; }
+        .code-head { background: #1a0a2e; border-left: 3px solid #8b5cf6; padding: 8px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
+        .code-body { padding: 24px 16px; text-align: center; background: #faf8fd; }
+        .code-value { font-family: "Courier New", Courier, monospace; font-size: 36px; font-weight: 700; letter-spacing: 10px; color: #1a0a2e; text-indent: 10px; }
+        .code-expiry { margin-top: 10px; font-size: 11px; color: #7c6d8f; }
+        .code-expiry strong { color: #c9a84c; }
+        .security-note { font-size: 11px; color: #7c6d8f; line-height: 1.65; padding: 13px 16px; background: #faf8fd; border: 1px solid #e8e0f0; border-radius: 3px; border-left: 3px solid #8b5cf6; }
+        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+        .footer-made { font-size: 8.5px; color: #c8bdd8; margin-top: 8px; letter-spacing: 0.4px; }
+    </style>
 </head>
-<body style="margin:0;background:#f3f5f7;font-family:Arial,sans-serif;color:#1f2933;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f5f7;padding:24px 0;">
-    <tr>
-        <td align="center">
-            <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #d8dee6;border-radius:8px;overflow:hidden;">
-                <tr>
-                    <td style="padding:20px 24px;background:#2563eb;color:#ffffff;">
-                        <h1 style="margin:0;font-size:20px;">Confirmation de votre adresse email</h1>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:24px;">
-                        <p>Bonjour <span th:text="${recipientName ?: 'client'}">client</span>,</p>
-                        <p>Utilisez ce code pour confirmer votre adresse email.</p>
-                        <p style="font-size:28px;font-weight:700;letter-spacing:3px;margin:24px 0;" th:text="${token ?: code ?: '------'}">------</p>
-                        <p style="color:#52616f;font-size:13px;">Ce code expire apres <span th:text="${expiresInMinutes ?: 15}">15</span> minutes.</p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<body>
+<div class="wrap">
+    <div class="card">
+        <div class="email-header">
+            <div class="logo-area">
+                <div>
+                    <div class="brand-name">Elle A Ose</div>
+                    <div class="brand-sub">Cowork &amp; Studio</div>
+                </div>
+                <div class="notification-tag">Verification</div>
+            </div>
+        </div>
+        <div class="header-stripe"></div>
+
+        <div class="email-body">
+            <div class="icon-wrap">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" stroke="#c9a84c" stroke-width="1.5"/>
+                    <path d="M2 6l10 7 10-7" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="17" cy="17" r="4" fill="#1a0a2e" stroke="#c9a84c" stroke-width="1.5"/>
+                    <path d="M15.5 17l1 1 2-2" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <div class="event-title">Confirmation d'adresse email</div>
+            <div class="event-subtitle">Verifiez votre identite en saisissant le code ci-dessous</div>
+
+            <p class="greeting">Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,</p>
+            <p class="message">Utilisez ce code pour confirmer votre adresse email sur votre espace <strong>Bokati</strong>.</p>
+
+            <div class="code-wrap">
+                <div class="code-head">Code de confirmation</div>
+                <div class="code-body">
+                    <div class="code-value" th:text="${token ?: code ?: '------'}">------</div>
+                    <div class="code-expiry">Expire dans <strong th:text="${expiresInMinutes ?: 15}">15</strong> minutes</div>
+                </div>
+            </div>
+
+            <div class="security-note">
+                Si vous n'etes pas a l'origine de cette demande, ignorez ce message. Votre adresse email ne sera pas modifiee.
+            </div>
+        </div>
+
+        <div class="email-footer">
+            <div class="footer-brand">Elle A Ose - Bokati Cowork</div>
+            <div class="footer-text">Cet email a ete envoye automatiquement, merci de ne pas y repondre directement.</div>
+            <div class="footer-made">Made by SNI</div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

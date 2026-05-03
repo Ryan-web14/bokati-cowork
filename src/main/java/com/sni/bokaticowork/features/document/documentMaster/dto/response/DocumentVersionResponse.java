@@ -13,6 +13,8 @@ public class DocumentVersionResponse {
     private Integer versionNumber;
     private String storageProvider;
     private String storagePath;
+    private String previewUrl;
+    private String downloadUrl;
     private String originalFileName;
     private String storedFileName;
     private String mimeTypeDeclared;

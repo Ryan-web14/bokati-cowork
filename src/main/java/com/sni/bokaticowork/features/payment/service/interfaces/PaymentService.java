@@ -13,6 +13,7 @@ import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepo
 import com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.response.PayInvoiceResponse;
+import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentRecoveryResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
@@ -30,7 +31,7 @@ public interface PaymentService {
     PaginatedResponse<BillingDocumentResponse> listPayableDocuments(BillingDocumentType documentType, String customerType, String customerCode, String lineSourceType, String lineSourceCode, String searchText, Pageable pageable);
     PaymentTransactionResponse registerCashPayment(String intentNumber, RegisterCashPaymentRequest request);
     PaymentTransactionResponse payWithWallet(String intentNumber, WalletPaymentRequest request);
-    PaymentTransactionResponse initiateMobileMoneyDeposit(String intentNumber, InitiateMobileMoneyDepositRequest request);
+    MobileMoneyDepositResponse initiateMobileMoneyDeposit(String intentNumber, InitiateMobileMoneyDepositRequest request);
     PayInvoiceResponse payInvoice(String documentNumber, PayInvoiceRequest request);
     PaymentTransactionResponse refund(String transactionNumber, RefundPaymentRequest request);
     PaymentTransactionResponse reverse(String transactionNumber, RefundPaymentRequest request);

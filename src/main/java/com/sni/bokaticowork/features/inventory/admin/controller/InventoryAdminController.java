@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.inventory.admin.controller;
 
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryDashboardResponse;
+import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelBatchRequest;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryAnomalyReportResponse;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,6 +33,11 @@ public class InventoryAdminController {
     @GetMapping("/labels/{type}/{code}")
     public ResponseEntity<InventoryLabelResponse> label(@PathVariable String type, @PathVariable String code) {
         return ResponseEntity.ok(service.label(type, code));
+    }
+
+    @PostMapping("/labels")
+    public ResponseEntity<List<InventoryLabelResponse>> labels(@RequestBody InventoryLabelBatchRequest request) {
+        return ResponseEntity.ok(service.labels(request));
     }
 
     @GetMapping("/reports/movements")

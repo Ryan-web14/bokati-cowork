@@ -13,6 +13,7 @@ import com.sni.bokaticowork.features.company.model.BusinessEntity;
 import com.sni.bokaticowork.features.company.service.interfaces.BusinessService;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentUploadMetadataRequest;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFileResult;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.*;
@@ -34,6 +35,7 @@ import com.sni.bokaticowork.features.document.kyc.repository.KycDocumentReposito
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -70,7 +72,11 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentSecurityService securityService;
     private final OutboxService outboxService;
     private final KycAutomationService kycAutomationService;
+    private final DocumentRejectionCascadeService rejectionCascadeService;
     private final DocumentMapper mapper;
+
+    @Value("${app.document.default-expiry-years:5}")
+    private Integer defaultExpiryYears;
 
     @Override
     public DocumentResponse upload(DocumentUploadMetadataRequest metadata, MultipartFile file) {
@@ -78,6 +84,7 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentType documentType = documentType(metadata.getDocumentTypeCode());
         OwnerResolution owner = resolveOwner(metadata.getOwnerType(), metadata.getOwnerCode());
 
+        applyDefaultExpiryDate(metadata, documentType);
         validateDocumentMetadata(metadata, documentType, file.getSize());
         List<String> allowedMimeTypes = parseAllowedMimeTypes(documentType.getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
@@ -90,7 +97,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .documentType(documentType)
                 .title(metadata.getTitle().trim())
                 .description(trimToNull(metadata.getDescription()))
-                .status(documentType.getRequiresReview() ? DocumentStatus.PENDING_REVIEW : DocumentStatus.APPROVED)
+                .status(initialDocumentStatus(documentType))
                 .issueDate(metadata.getIssueDate())
                 .expiryDate(metadata.getExpiryDate())
                 .uploadedBy(uploadedBy)
@@ -110,6 +117,7 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentType documentType = documentType(metadata.getDocumentTypeCode());
         OwnerResolution owner = resolveOwner(metadata.getOwnerType(), metadata.getOwnerCode());
 
+        applyDefaultExpiryDate(metadata, documentType);
         validateDocumentMetadata(metadata, documentType, content.length);
         List<String> allowedMimeTypes = parseAllowedMimeTypes(documentType.getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspectBytes(
@@ -127,7 +135,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .documentType(documentType)
                 .title(metadata.getTitle().trim())
                 .description(trimToNull(metadata.getDescription()))
-                .status(documentType.getRequiresReview() ? DocumentStatus.PENDING_REVIEW : DocumentStatus.APPROVED)
+                .status(initialDocumentStatus(documentType))
                 .issueDate(metadata.getIssueDate())
                 .expiryDate(metadata.getExpiryDate())
                 .uploadedBy(uploadedBy)
@@ -150,7 +158,7 @@ public class DocumentServiceImpl implements DocumentService {
         document.setStatus(document.getDocumentType().getRequiresReview() ? DocumentStatus.PENDING_REVIEW : DocumentStatus.APPROVED);
         createVersion(document, uploadedBy, document.getTitle(), null, file, inspection);
 
-        kycDocumentRepository.findByDocument(document).ifPresent(item -> {
+        kycDocumentRepository.findAllByDocument(document).forEach(item -> {
             item.setStatus(KycDocumentVerificationStatus.PENDING);
             kycDocumentRepository.save(item);
         });
@@ -209,6 +217,7 @@ public class DocumentServiceImpl implements DocumentService {
         saveReview(document, request, DocumentReviewStatus.REJECTED);
         syncKycDocumentStatus(document, KycDocumentVerificationStatus.REJECTED);
         kycAutomationService.syncFromDocumentReview(document);
+        rejectionCascadeService.cascade(document, request.getReviewedBy(), rejectionReason(request));
         publishDocumentEvent("DOCUMENT_REJECTED", document, request.getReviewedBy());
         return getByCode(documentCode);
     }
@@ -226,14 +235,13 @@ public class DocumentServiceImpl implements DocumentService {
         if (!StringUtils.hasText(document.getFileUrl())) {
             throw new BadRequestException("Document has no file stored");
         }
-        try {
-            byte[] content = java.nio.file.Files.readAllBytes(java.nio.file.Path.of(document.getFileUrl()));
-            String mimeType = StringUtils.hasText(document.getMimeType()) ? document.getMimeType() : "application/octet-stream";
-            String fileName = StringUtils.hasText(document.getFileName()) ? document.getFileName() : documentCode + ".bin";
-            return new DocumentFileResult(content, mimeType, fileName);
-        } catch (java.io.IOException ex) {
-            throw new BadRequestException("Unable to read document file", ex);
-        }
+        DocumentVersion currentVersion = documentVersionRepository.findByDocumentAndCurrentTrue(document).orElse(null);
+        String storageProvider = currentVersion == null ? "FILESYSTEM" : currentVersion.getStorageProvider();
+        String storagePath = currentVersion == null ? document.getFileUrl() : currentVersion.getStoragePath();
+        byte[] content = storageService.read(storageProvider, storagePath);
+        String mimeType = StringUtils.hasText(document.getMimeType()) ? document.getMimeType() : "application/octet-stream";
+        String fileName = StringUtils.hasText(document.getFileName()) ? document.getFileName() : documentCode + ".bin";
+        return new DocumentFileResult(content, mimeType, fileName);
     }
 
     private void createVersion(
@@ -351,7 +359,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private void syncKycDocumentStatus(Document document, KycDocumentVerificationStatus status) {
-        kycDocumentRepository.findByDocument(document).ifPresent(item -> {
+        kycDocumentRepository.findAllByDocument(document).forEach(item -> {
             item.setStatus(status);
             kycDocumentRepository.save(item);
         });
@@ -381,6 +389,25 @@ public class DocumentServiceImpl implements DocumentService {
                     "File size (" + (fileSizeBytes / 1024) + " KB) exceeds the maximum allowed size of "
                             + (documentType.getMaxFileSizeBytes() / 1024) + " KB for this document type");
         }
+    }
+
+    private void applyDefaultExpiryDate(DocumentUploadMetadataRequest metadata, DocumentType documentType) {
+        if (!Boolean.TRUE.equals(documentType.getRequiresExpiryDate()) || metadata.getExpiryDate() != null) {
+            return;
+        }
+        LocalDate baseDate = metadata.getIssueDate() == null ? LocalDate.now() : metadata.getIssueDate();
+        metadata.setExpiryDate(baseDate.plusYears(resolvedDefaultExpiryYears()));
+    }
+
+    private int resolvedDefaultExpiryYears() {
+        return defaultExpiryYears == null || defaultExpiryYears <= 0 ? 5 : defaultExpiryYears;
+    }
+
+    private DocumentStatus initialDocumentStatus(DocumentType documentType) {
+        if (Boolean.TRUE.equals(documentType.getAutoApprove())) {
+            return DocumentStatus.APPROVED;
+        }
+        return Boolean.TRUE.equals(documentType.getRequiresReview()) ? DocumentStatus.PENDING_REVIEW : DocumentStatus.APPROVED;
     }
 
     private DocumentType documentType(String code) {
@@ -446,6 +473,16 @@ public class DocumentServiceImpl implements DocumentService {
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String rejectionReason(DocumentReviewDecisionRequest request) {
+        if (StringUtils.hasText(request.getRejectionReasonDetail())) {
+            return request.getRejectionReasonDetail();
+        }
+        if (StringUtils.hasText(request.getRejectionReasonCode())) {
+            return request.getRejectionReasonCode();
+        }
+        return request.getComment();
     }
 
     private String extractExtension(String filename) {

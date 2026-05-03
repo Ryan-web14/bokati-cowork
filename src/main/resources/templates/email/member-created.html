@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenue membre - Elle A Osé</title>
+    <style>
+        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #2b2030; }
+        table { border-collapse: collapse; }
+        .page { width: 100%; background: #f0eef5; padding: 44px 14px; }
+        .card { width: 100%; max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e8e0f0; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
+        .header { background: #281332; padding: 28px 34px 25px; }
+        .brand-logo { display: block; width: 120px; max-width: 120px; height: auto; margin: 0 0 18px; }
+        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
+        .brand-sub { font-size: 7px; color: #a397ad; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
+        .headline { font-size: 24px; font-weight: 700; color: #ffffff; line-height: 1.2; margin: 0 0 6px; }
+        .headline span { color: #d9a21b; }
+        .subhead { font-size: 12px; color: #a397ad; letter-spacing: 0.3px; margin: 0; }
+        .stripe { height: 4px; background: #d9a21b; }
+        .body { padding: 32px 34px 28px; }
+        .text { font-size: 13px; color: #5c4f6e; line-height: 1.7; margin: 0 0 16px; }
+        .text strong { color: #281332; }
+        .info-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin: 24px 0 20px; }
+        .info-head { background: #281332; border-left: 3px solid #d9a21b; padding: 10px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
+        .info-table { width: 100%; }
+        .info-table td { padding: 13px 16px; border-bottom: 1px solid #f0eaf8; font-size: 12.5px; vertical-align: middle; }
+        .info-table tr:nth-child(even) td { background: #faf8fd; }
+        .info-table tr:last-child td { border-bottom: none; }
+        .info-key { width: 155px; color: #7c6d8f; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-val { color: #281332; font-weight: 700; text-align: right; }
+        .password-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin: 20px 0 24px; }
+        .password-head { background: #281332; border-left: 3px solid #8b5cf6; padding: 10px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
+        .password-body { padding: 20px 24px; text-align: center; background: #faf8fd; }
+        .password-value { font-family: "Courier New", Courier, monospace; font-size: 25px; font-weight: 700; letter-spacing: 5px; color: #281332; margin-bottom: 10px; }
+        .password-hint { font-size: 11px; color: #7c6d8f; line-height: 1.6; }
+        .security-note { font-size: 11px; color: #7c6d8f; line-height: 1.6; text-align: center; padding: 14px 16px; background: #faf8fd; border: 1px solid #e8e0f0; border-left: 3px solid #8b5cf6; border-radius: 3px; }
+        .footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 17px 34px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: #281332; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
+        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+        .footer-made { font-size: 8.5px; color: #c8bdd8; margin-top: 8px; letter-spacing: 0.4px; }
+        @media only screen and (max-width: 600px) {
+            .page { padding: 24px 10px; }
+            .header, .body, .footer { padding-left: 20px; padding-right: 20px; }
+            .headline { font-size: 22px; }
+            .info-key { width: 120px; }
+        }
+    </style>
+</head>
+<body>
+<table class="page" role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center">
+            <table class="card" role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="header">
+                        <img th:if="${logoUrl}" th:src="${logoUrl}" src="/images/logo.png" alt="Elle A Osé" class="brand-logo"/>
+                        <div th:if="${logoUrl == null}" class="brand-name">Elle A Osé</div>
+                        <div class="brand-sub">Cowork &amp; Studio</div>
+                        <h1 class="headline">Votre espace <span>membre</span> est prêt</h1>
+                        <p class="subhead">Accédez à tous vos services depuis un seul endroit.</p>
+                    </td>
+                </tr>
+                <tr><td class="stripe"></td></tr>
+                <tr>
+                    <td class="body">
+                        <p class="text">Bonjour <strong th:text="${name ?: 'membre'}">membre</strong>,</p>
+                        <p class="text">
+                            Votre compte membre Bokati a été créé avec succès. Utilisez votre adresse email pour accéder
+                            à votre espace, suivre vos abonnements, documents et paiements.
+                        </p>
+
+                        <div class="info-box">
+                            <div class="info-head">Informations du membre</div>
+                            <table class="info-table" role="presentation" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td class="info-key">Code membre</td>
+                                    <td class="info-val" th:text="${memberId}">MBR-000</td>
+                                </tr>
+                                <tr>
+                                    <td class="info-key">Email de connexion</td>
+                                    <td class="info-val" th:text="${email}">member@example.com</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div th:if="${generatedPassword != null}" class="password-box">
+                            <div class="password-head">Mot de passe temporaire</div>
+                            <div class="password-body">
+                                <div class="password-value" th:text="${generatedPassword}">PASSWORD</div>
+                                <div class="password-hint">Changez ce mot de passe après votre première connexion.</div>
+                            </div>
+                        </div>
+
+                        <div class="security-note">
+                            Si vous n'êtes pas à l'origine de cette création, contactez immédiatement l'administration Bokati.
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="footer">
+                        <div class="footer-brand">Elle A Osé - Bokati Cowork</div>
+                        <div class="footer-text">
+                            Message automatique envoyé par Bokati Cowork.<br>
+                            Pour toute question : coworkspace@elleaose.com · 05 204 25 52
+                        </div>
+                        <div class="footer-made">Made by SNI</div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

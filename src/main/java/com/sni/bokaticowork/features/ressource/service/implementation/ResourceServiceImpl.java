@@ -292,6 +292,9 @@ public class ResourceServiceImpl implements ResourceService {
         ResourceAmenityLink link = ResourceAmenityLink.builder()
                 .resource(resource)
                 .amenity(amenity)
+                .quantity(request.getQuantity())
+                .optional(Boolean.TRUE.equals(request.getOptional()))
+                .extraPrice(request.getExtraPrice())
                 .build();
         resourceAmenityLinkRepository.save(link);
     }
@@ -313,14 +316,29 @@ public class ResourceServiceImpl implements ResourceService {
     public List<AmenityResponse> listAmenities(String resourceCode) {
         Resource resource = getResourceForService(resourceCode);
         return resourceAmenityLinkRepository.findAllByResource(resource).stream()
-                .map(ResourceAmenityLink::getAmenity)
-                .map(amenity -> AmenityResponse.builder()
-                        .code(amenity.getCode())
-                        .name(amenity.getName())
-                        .description(amenity.getDescription())
-                        .active(amenity.getActive())
+                .map(link -> AmenityResponse.builder()
+                        .code(link.getAmenity().getCode())
+                        .name(link.getAmenity().getName())
+                        .description(link.getAmenity().getDescription())
+                        .active(link.getAmenity().getActive())
+                        .quantity(link.getQuantity())
+                        .optional(link.getOptional())
+                        .extraPrice(link.getExtraPrice())
                         .build())
                 .toList();
+    }
+
+    private AmenityResponse toAmenityResponse(ResourceAmenityLink link) {
+        var amenity = link.getAmenity();
+        return AmenityResponse.builder()
+                .code(amenity.getCode())
+                .name(amenity.getName())
+                .description(amenity.getDescription())
+                .active(amenity.getActive())
+                .quantity(link.getQuantity())
+                .optional(link.getOptional())
+                .extraPrice(link.getExtraPrice())
+                .build();
     }
 
     private void validateForCreate(ResourceRequest request) {

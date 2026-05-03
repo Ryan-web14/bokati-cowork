@@ -1,21 +1,25 @@
 package com.sni.bokaticowork.features.payment.controller;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentForDocumentsRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentRequest;
+import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentLinkRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentRecoveryIntentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
 import com.sni.bokaticowork.features.payment.dto.request.RefundPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
+import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentRecoveryResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
 import com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus;
+import com.sni.bokaticowork.features.payment.service.interfaces.PaymentLinkService;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -40,6 +45,7 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentLinkService paymentLinkService;
 
     @PostMapping("/intents")
     public ResponseEntity<PaymentIntentResponse> createIntent(@Valid @RequestBody CreatePaymentIntentRequest request) {
@@ -101,10 +107,22 @@ public class PaymentController {
     }
 
     @PatchMapping("/intents/{intentNumber}/mobile-money")
-    public ResponseEntity<PaymentTransactionResponse> initiateMobileMoneyDeposit(
+    public ResponseEntity<MobileMoneyDepositResponse> initiateMobileMoneyDeposit(
             @PathVariable String intentNumber,
             @Valid @RequestBody InitiateMobileMoneyDepositRequest request) {
+        if (StringUtils.hasText(request.intentNumber()) && !intentNumber.equalsIgnoreCase(request.intentNumber().trim())) {
+            throw new BadRequestException("Body intentNumber must match path intentNumber");
+        }
         return ResponseEntity.ok(paymentService.initiateMobileMoneyDeposit(intentNumber, request));
+    }
+
+    @PostMapping("/mobile-money/deposits")
+    public ResponseEntity<MobileMoneyDepositResponse> initiateMobileMoneyDeposit(
+            @Valid @RequestBody InitiateMobileMoneyDepositRequest request) {
+        if (!StringUtils.hasText(request.intentNumber())) {
+            throw new BadRequestException("intentNumber is required");
+        }
+        return ResponseEntity.ok(paymentService.initiateMobileMoneyDeposit(request.intentNumber().trim(), request));
     }
 
     @PostMapping("/transactions/{transactionNumber}/refund")
@@ -122,6 +140,12 @@ public class PaymentController {
     @GetMapping("/intents/{intentNumber}")
     public ResponseEntity<PaymentIntentResponse> getIntent(@PathVariable String intentNumber) {
         return ResponseEntity.ok(paymentService.getIntent(intentNumber));
+    }
+
+    @PostMapping("/intents/{intentNumber}/link")
+    public ResponseEntity<PaymentIntentResponse> createPaymentLink(@PathVariable String intentNumber,
+                                                                   @RequestBody(required = false) CreatePaymentLinkRequest request) {
+        return ResponseEntity.ok(paymentLinkService.createLink(intentNumber, request));
     }
 
     @GetMapping("/intents/{intentNumber}/transactions")

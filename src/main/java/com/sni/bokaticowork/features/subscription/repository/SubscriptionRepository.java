@@ -66,6 +66,11 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
                   SELECT 1
                   FROM entitlement_grant eg
                   WHERE eg.subscription_id = s.id
+                    AND eg.pass_id IS NULL
+                    AND eg.status = 'ACTIVE'
+                    AND eg.valid_from <= NOW()
+                    AND (eg.valid_until IS NULL OR eg.valid_until >= NOW())
+                    AND (eg.unlimited = true OR eg.quantity_remaining > 0)
               )
             ORDER BY s.created_at ASC
             """)
@@ -76,8 +81,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscriber_code = :subscriberCode AND plan_version_id = :planVersion AND status = 'ACTIVE'")
     List<Subscription> findBySuscriberCodeAndPlanVersion(@Param("subscriberCode") String subscriberCode, @Param("planVersion") Long planVersion);
 
+    List<Subscription> findAllByContractCode(String contractCode);
+
 
 }
-
 
 

@@ -15,22 +15,21 @@ import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.service.tokenService.implementation.JWTService;
 import com.sni.bokaticowork.security.service.tokenService.interfaces.RefreshTokenService;
+import com.sni.bokaticowork.security.service.tokenService.interfaces.TokenHashService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import ua_parser.Parser;
 import ua_parser.Client;
+import ua_parser.Parser;
 
 import java.io.File;
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -41,7 +40,7 @@ public class UserSessionServiceImpl implements UserSessionService {
     private final UserSessionMapper sessionMapper;
     private final JWTService jwtService;
     private final RefreshTokenService tokenService;
-    private final PasswordEncoder passwordEncoder;
+    private final TokenHashService tokenHashService;
 
     @Transactional
     @Override
@@ -49,21 +48,23 @@ public class UserSessionServiceImpl implements UserSessionService {
 
         String clientIp = getClientIp(request);
         String userAgent = request.getHeader("User-Agent");
-        Parser parser = new Parser();
-        Client c = parser.parse(userAgent);
-        String deviceType = c.device.family;
+        String deviceType = resolveDeviceType(userAgent);
         String location = getLocationByIp(clientIp);
+
         UUID sessionId = UUID.randomUUID();
         Instant now = Instant.now();
 
-        String accessToken = jwtService.generateAccesToken(user.getUser(),sessionId.toString());
-        String refreshToken = jwtService.generateRefreshToken(user.getUser(),sessionId.toString());
+        String accessToken = jwtService.generateAccessToken(user.getUser(), sessionId.toString());
+        String refreshToken = jwtService.generateRefreshToken(user.getUser(), sessionId.toString());
+
+        String refreshTokenHash = tokenHashService.hash(refreshToken);
+
         tokenService.storeRefreshToken(refreshToken, user.getUser());
 
         UserSession session = UserSession.builder()
                 .sessionId(sessionId)
                 .users(user.getUser())
-                .refreshTokenHash(passwordEncoder.encode(refreshToken))
+                .refreshTokenHash(refreshTokenHash)
                 .createdAt(now)
                 .expiredAt(now.plusMillis(jwtService.getRefreshTokenExpiration()))
                 .lastAccessAt(now)
@@ -73,7 +74,7 @@ public class UserSessionServiceImpl implements UserSessionService {
                 .deviceType(deviceType)
                 .isActive(true)
                 .revoked(false)
-                .roleSnapshot(user.getAuthorities().stream().map(Object::toString).sorted().reduce((left, right) -> left + "," + right).orElse(""))
+                .roleSnapshot(buildRoleSnapshot(user))
                 .locationGuess(location)
                 .build();
 
@@ -83,22 +84,24 @@ public class UserSessionServiceImpl implements UserSessionService {
     }
 
     @Override
-    public void deleteSessionByToken(String token){
+    public void deleteSessionByToken(String token) {
         UUID sessionId = extractSessionId(token);
         log.debug("Deleting session by token: {}", sessionId);
         sessionRepo.deleteBySessionId(sessionId);
     }
 
     @Override
-    public void deleteAllSessions(Users users){
+    public void deleteAllSessions(Users users) {
         log.debug("Deleting all sessions for user {}", users.getEmail());
         sessionRepo.deleteByUsers(users);
     }
 
     @Override
-    public void deleteOldestSession(Users user){
-        List<UserSession> sessions = sessionRepo.findAllByUsers_IdAndRevokedFalseOrderByCreatedAtDesc(user.getId());
-        if(sessions.size() > 1){
+    public void deleteOldestSession(Users user) {
+        List<UserSession> sessions =
+                sessionRepo.findAllByUsers_IdAndRevokedFalseOrderByCreatedAtDesc(user.getId());
+
+        if (sessions.size() > 1) {
             log.debug("Deleting oldest session for user {}", user.getEmail());
             UserSession oldest = sessions.get(sessions.size() - 1);
             sessionRepo.delete(oldest);
@@ -106,32 +109,38 @@ public class UserSessionServiceImpl implements UserSessionService {
     }
 
     @Override
-    public  void invalidateAllSessions(){
+    public void invalidateAllSessions() {
         List<UserSession> sessions = sessionRepo.findAll();
         sessions.forEach(this::markRevoked);
         sessionRepo.saveAll(sessions);
     }
 
     @Override
-    public void invalidateSessionByToken(String token){
+    public void invalidateSessionByToken(String token) {
         UUID sessionId = extractSessionId(token);
+
         UserSession session = sessionRepo.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("No such session exist"));
+
         markRevoked(session);
         sessionRepo.save(session);
     }
 
     @Override
-    public void invalidateSessionByUser(Users user){
-        List<UserSession> sessions = sessionRepo.findAllByUsers_IdOrderByCreatedAtAsc(user.getId());
+    public void invalidateSessionByUser(Users user) {
+        List<UserSession> sessions =
+                sessionRepo.findAllByUsers_IdOrderByCreatedAtAsc(user.getId());
+
         sessions.forEach(this::markRevoked);
         sessionRepo.saveAll(sessions);
     }
 
     @Override
     public void invalidateOldestSessionByUser(Users user) {
-        List<UserSession> sessions = sessionRepo.findAllByUsers_IdAndRevokedFalseOrderByCreatedAtDesc(user.getId());
-        if(sessions.size() > 1){
+        List<UserSession> sessions =
+                sessionRepo.findAllByUsers_IdAndRevokedFalseOrderByCreatedAtDesc(user.getId());
+
+        if (sessions.size() > 1) {
             log.debug("Invalidating oldest session for user {}", user.getEmail());
             UserSession oldest = sessions.get(sessions.size() - 1);
             markRevoked(oldest);
@@ -140,50 +149,59 @@ public class UserSessionServiceImpl implements UserSessionService {
     }
 
     @Override
-    public List<UserSessionResponse> getAllSessions(){
-        return sessionRepo.findAll().stream()
+    public List<UserSessionResponse> getAllSessions() {
+        return sessionRepo.findAll()
+                .stream()
                 .map(sessionMapper::toDTO)
                 .toList();
     }
 
     @Override
-    public List<UserSessionResponse> getAllActiveSessionsForUser(Users user){
-        return sessionRepo.findAllByUsers_IdAndRevokedFalseAndIsActiveTrueOrderByCreatedAtDesc(user.getId()).stream()
+    public List<UserSessionResponse> getAllActiveSessionsForUser(Users user) {
+        return sessionRepo.findAllByUsers_IdAndRevokedFalseAndIsActiveTrueOrderByCreatedAtDesc(user.getId())
+                .stream()
                 .map(sessionMapper::toDTO)
                 .toList();
     }
 
     @Override
-    public UserSessionResponse getCurrentSession(String token){
-        return sessionMapper.toDTO(sessionRepo.findBySessionId(extractSessionId(token))
-                .orElseThrow(()->new ResourceNotFoundException("No such session exist")));
+    public UserSessionResponse getCurrentSession(String token) {
+        return sessionMapper.toDTO(
+                sessionRepo.findBySessionId(extractSessionId(token))
+                        .orElseThrow(() -> new ResourceNotFoundException("No such session exist"))
+        );
     }
 
-
     @Override
-    public void refreshSession(String sessionId, String token){
-
-        try{
+    public void refreshSession(String sessionId, String token) {
+        try {
             log.debug("Refreshing session {}", sessionId);
+
             UUID sessionUUID = UUID.fromString(sessionId);
+
             UserSession session = sessionRepo.findBySessionId(sessionUUID)
-                    .orElseThrow(()->new ResourceNotFoundException("No such session exist"));
-            log.debug("Refreshing session");
-            session.setRefreshTokenHash(passwordEncoder.encode(token));
-            session.setExpiredAt(Instant.now().plusMillis(jwtService.getRefreshTokenExpiration()));
-            session.setLastAccessAt(Instant.now());
+                    .orElseThrow(() -> new ResourceNotFoundException("No such session exist"));
+
+            String refreshTokenHash = tokenHashService.hash(token);
+            Instant now = Instant.now();
+
+            session.setRefreshTokenHash(refreshTokenHash);
+            session.setExpiredAt(now.plusMillis(jwtService.getRefreshTokenExpiration()));
+            session.setLastAccessAt(now);
             session.setActive(true);
             session.setRevoked(false);
+
             sessionRepo.save(session);
-        }catch (IllegalArgumentException e){
-            log.error("Error refreshing session: {}", e.getMessage());
-        }catch (ResourceNotFoundException e){
+
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid session id {}: {}", sessionId, e.getMessage());
+        } catch (ResourceNotFoundException e) {
             log.error("Session {} was not found", sessionId);
         }
     }
 
     @Override
-    public UserSession getSessionByTokenService(String token){
+    public UserSession getSessionByTokenService(String token) {
         return sessionRepo.findBySessionId(extractSessionId(token))
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
     }
@@ -191,64 +209,105 @@ public class UserSessionServiceImpl implements UserSessionService {
     @Override
     public boolean isSessionValid(String token) {
         UserSession session = getSessionByTokenService(token);
-        return !session.isRevoked() && session.isActive() && session.getExpiredAt().isAfter(Instant.now());
+
+        return !session.isRevoked()
+                && session.isActive()
+                && session.getExpiredAt() != null
+                && session.getExpiredAt().isAfter(Instant.now());
     }
 
     @Override
     public boolean isSessionRevoked(String sessionId) {
         try {
             UUID sessionUUID = UUID.fromString(sessionId);
+
             return sessionRepo.findBySessionId(sessionUUID)
-                    .map(session -> session.isRevoked() || !session.isActive() || session.getExpiredAt().isBefore(Instant.now()))
+                    .map(session -> session.isRevoked()
+                            || !session.isActive()
+                            || session.getExpiredAt() == null
+                            || session.getExpiredAt().isBefore(Instant.now()))
                     .orElse(true);
+
         } catch (IllegalArgumentException ex) {
             return true;
         }
     }
 
+    private String resolveDeviceType(String userAgent) {
+        if (userAgent == null || userAgent.isBlank()) {
+            return "Unknown";
+        }
+
+        try {
+            Parser parser = new Parser();
+            Client client = parser.parse(userAgent);
+
+            if (client.device == null || client.device.family == null || client.device.family.isBlank()) {
+                return "Other";
+            }
+
+            return client.device.family;
+
+        } catch (Exception e) {
+            log.debug("Unable to parse user agent: {}", e.getMessage());
+            return "Other";
+        }
+    }
+
+
+    private String buildRoleSnapshot(UserPrincipal user) {
+        return user.getAuthorities()
+                .stream()
+                .map(Object::toString)
+                .sorted()
+                .limit(3)
+                .collect(Collectors.joining(","));
+    }
 
     private String getClientIp(HttpServletRequest request) {
         String ipAddress = request.getHeader("X-Forwarded-For");
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("Forwarded");
+
+        if (ipAddress != null && !ipAddress.isBlank() && !"unknown".equalsIgnoreCase(ipAddress)) {
+            return ipAddress.split(",")[0].trim();
         }
-        if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
+
+        ipAddress = request.getHeader("Forwarded");
+
+        if (ipAddress != null && !ipAddress.isBlank() && !"unknown".equalsIgnoreCase(ipAddress)) {
+            return ipAddress;
         }
-        return ipAddress;
+
+        return request.getRemoteAddr();
     }
 
-    private String getLocationByIp(String clientIp){
+    private String getLocationByIp(String clientIp) {
         DatabaseReader reader = null;
 
-        try{
+        try {
             File db = new File("C:/java-project/ohada-bokati/addon-resources/GeoLite2-City_20251125");
+
             reader = new DatabaseReader.Builder(db)
-                    .withCache(new CHMCache()).build();
+                    .withCache(new CHMCache())
+                    .build();
 
             InetAddress ipAddress = InetAddress.getByName(clientIp);
-
-            //Get the country
             CityResponse cityResponse = reader.city(ipAddress);
 
             Country country = cityResponse.country();
-            String IsoCode = country.isoCode();
-            String countryName = country.name();
 
-            //Get the city
+            String isoCode = country.isoCode();
+            String countryName = country.name();
             String city = cityResponse.city().name();
 
-            //location value
-            var latitude = cityResponse.location().latitude();
-            var longitude = cityResponse.location().longitude();
+            Double latitude = cityResponse.location().latitude();
+            Double longitude = cityResponse.location().longitude();
 
-            return city + ", " + countryName + ", " + IsoCode + ", " +
-                    latitude + ", " + longitude;
+            return city + ", " + countryName + ", " + isoCode + ", " + latitude + ", " + longitude;
 
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error("Error getting location by ip: {}", e.getMessage());
-        }finally{
-            if (reader != null){
+        } finally {
+            if (reader != null) {
                 try {
                     reader.close();
                 } catch (Exception e) {
@@ -256,6 +315,7 @@ public class UserSessionServiceImpl implements UserSessionService {
                 }
             }
         }
+
         return "no location";
     }
 
@@ -268,12 +328,10 @@ public class UserSessionServiceImpl implements UserSessionService {
     }
 
     private void markRevoked(UserSession session) {
+        Instant now = Instant.now();
+
         session.setRevoked(true);
         session.setActive(false);
-        session.setLastAccessAt(Instant.now());
+        session.setLastAccessAt(now);
     }
 }
-
-
-
-

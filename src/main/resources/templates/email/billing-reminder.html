@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rappel de reglement</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
+        .card { max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
+        .email-header { background: #1a0a2e; padding: 24px 32px 20px; position: relative; overflow: hidden; }
+        .email-header::after { content: ''; position: absolute; top: 0; right: -20px; width: 160px; height: 100%; background: rgba(255,255,255,0.03); transform: skewX(-12deg); }
+        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
+        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+        .notification-tag { background: rgba(201, 168, 76, 0.15); border: 1px solid rgba(201, 168, 76, 0.4); color: #c9a84c; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+        .email-body { padding: 32px 32px 28px; }
+        .event-title { font-size: 20px; font-weight: 700; color: #1a0a2e; text-align: center; margin-bottom: 6px; }
+        .event-subtitle { font-size: 12px; color: #7c6d8f; text-align: center; margin-bottom: 24px; }
+        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 10px; }
+        .message { font-size: 13px; color: #5c4f6e; line-height: 1.65; margin-bottom: 22px; }
+        .info-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 22px; }
+        .info-box-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
+        .info-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid #f0eaf8; font-size: 13px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-key { color: #7c6d8f; font-size: 11px; font-weight: 600; width: 145px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-val { color: #1a0a2e; font-weight: 700; font-size: 12.5px; flex: 1; text-align: right; }
+        .cta-wrap { text-align: center; margin-bottom: 22px; }
+        .cta-btn { display: inline-block; background: #1a0a2e; color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 13px 32px; border-radius: 3px; border: 1.5px solid #c9a84c; }
+        .note { font-size: 11.5px; color: #7c6d8f; line-height: 1.65; text-align: center; }
+        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <div class="email-header">
+            <div class="logo-area">
+                <div>
+                    <div class="brand-name">Elle A Ose</div>
+                    <div class="brand-sub">Cowork &amp; Studio</div>
+                </div>
+                <div class="notification-tag">Rappel</div>
+            </div>
+        </div>
+        <div class="header-stripe"></div>
+        <div class="email-body">
+            <div class="event-title">Rappel de reglement</div>
+            <div class="event-subtitle">Un solde reste a regler</div>
+            <p class="greeting">Bonjour <strong th:text="${customerName}">client</strong>,</p>
+            <p class="message">Sauf erreur de notre part, la facture <strong th:text="${documentNumber}">FAC-000</strong> presente encore un montant en attente. Vous pouvez retrouver le recapitulatif ci-dessous.</p>
+            <div class="info-box">
+                <div class="info-box-head">Montant a regler</div>
+                <div class="info-row">
+                    <span class="info-key">Reference</span>
+                    <span class="info-val" th:text="${documentNumber}">FAC-000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Solde</span>
+                    <span class="info-val"><span th:text="${balanceDue}">0</span> <span th:text="${currency}">XAF</span></span>
+                </div>
+            </div>
+            <div class="cta-wrap" th:if="${paymentLink != null}">
+                <a th:href="${paymentLink}" class="cta-btn">Regler ma facture</a>
+            </div>
+            <p class="note">Si votre paiement a deja ete effectue, vous pouvez ignorer ce rappel. Notre equipe reste disponible pour toute precision.</p>
+        </div>
+        <div class="email-footer">
+            <div class="footer-brand">Elle A Ose - Bokati Cowork</div>
+            <div class="footer-text">Merci pour votre confiance.</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.client.customer.service.implementation;
 
+import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.features.client.customer.dto.request.CustomerRequest;
 import com.sni.bokaticowork.features.client.customer.dto.request.ChangeCustomerStatusRequest;
 import com.sni.bokaticowork.features.client.customer.dto.response.CustomerResponse;
@@ -21,11 +22,17 @@ import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomati
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.mail.MessagingException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -44,10 +51,25 @@ public class CustomerServiceImpl implements CustomerService {
     private final AddressService addressService;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final KycAutomationService kycAutomationService;
+    private final DefaultEmailSender emailSender;
+    private final SpringTemplateEngine emailTemplateEngine;
+
+    @Value("${app.verify-base-url:}")
+    private String publicBaseUrl;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Customer createCustomer(CustomerRequest request) {
+        return createCustomer(request, true, true);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Customer createCustomerForMember(CustomerRequest request) {
+        return createCustomer(request, false, false);
+    }
+
+    private Customer createCustomer(CustomerRequest request, boolean initializeKyc, boolean sendWelcomeEmail) {
 
         var validationErrors = validateCustomer(request);
 
@@ -66,7 +88,12 @@ public class CustomerServiceImpl implements CustomerService {
         obj.setCustomerId(CodeComposer.withMonth("CUS", customerTypeAbbrev, LocalDate.now(), customerSeq));
         obj.setStatus(CustomerStatus.ACTIVE);
         customerRepo.save(obj);
-        kycAutomationService.initializeCustomerKyc(obj.getCustomerId());
+        if (initializeKyc) {
+            kycAutomationService.initializeCustomerKyc(obj.getCustomerId());
+        }
+        if (sendWelcomeEmail) {
+            sendCustomerCreatedEmailAfterCommit(obj);
+        }
         return obj;
     }
 
@@ -244,6 +271,56 @@ public class CustomerServiceImpl implements CustomerService {
 //        }
 
         return errors;
+    }
+
+    private void sendCustomerCreatedEmailAfterCommit(Customer customer) {
+        if (customer == null || !StringUtils.hasText(customer.getEmail())) {
+            return;
+        }
+        Runnable task = () -> {
+            try {
+                Context context = new Context();
+                context.setVariable("name", customerDisplayName(customer));
+                context.setVariable("customerId", customer.getCustomerId());
+                context.setVariable("customerType", customer.getType() == null ? null : customer.getType().name());
+                context.setVariable("email", customer.getEmail());
+                context.setVariable("logoUrl", logoUrl());
+                String html = emailTemplateEngine.process("customer-created", context);
+                emailSender.sendHtmlEmail(customer.getEmail(), "Bienvenue chez Bokati", html);
+            } catch (MessagingException ex) {
+                log.warn("Unable to send customer creation email to {}", customer.getEmail(), ex);
+            }
+        };
+        runAfterCommit(task);
+    }
+
+    private String customerDisplayName(Customer customer) {
+        if (customer.getType() == CustomerType.COMPANY && StringUtils.hasText(customer.getCompanyName())) {
+            return customer.getCompanyName();
+        }
+        String name = ((customer.getFirstname() == null ? "" : customer.getFirstname()) + " "
+                + (customer.getLastname() == null ? "" : customer.getLastname())).trim();
+        return StringUtils.hasText(name) ? name : customer.getEmail();
+    }
+
+    private String logoUrl() {
+        if (!StringUtils.hasText(publicBaseUrl)) {
+            return "/images/logo.png";
+        }
+        return publicBaseUrl.replaceAll("/+$", "") + "/images/logo.png";
+    }
+
+    private void runAfterCommit(Runnable task) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    task.run();
+                }
+            });
+            return;
+        }
+        task.run();
     }
 
     private CustomerType parseCustomerType(String value) {

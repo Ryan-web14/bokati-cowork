@@ -19,9 +19,10 @@ import com.sni.bokaticowork.features.subscription.repository.PassTransactionRepo
 import com.sni.bokaticowork.features.subscription.repository.PlanVersionRepository;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.EntitlementService;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.SubscriptionService;
-import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionContractSupport;
+import com.sni.bokaticowork.features.subscription.subscription.service.support.ContractGenerationEvent;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionOwnerResolver;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -37,7 +38,7 @@ public class PassCreationOperator {
     private final PlanVersionRepository planVersionRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final SubscriptionOwnerResolver ownerResolver;
-    private final SubscriptionContractSupport contractSupport;
+    private final ApplicationEventPublisher eventPublisher;
     private final @Lazy EntitlementService entitlementService;
     private final @Lazy SubscriptionService subscriptionService;
 
@@ -83,8 +84,8 @@ public class PassCreationOperator {
                 .referenceId(pass.getPassNumber())
                 .build());
         entitlementService.grantForPass(pass);
-        pass.setContractCode(contractSupport.createAndSignForPass(pass));
         passRepository.save(pass);
+        eventPublisher.publishEvent(ContractGenerationEvent.forPass(pass.getId()));
         return pass;
     }
 

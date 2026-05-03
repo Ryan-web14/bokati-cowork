@@ -38,8 +38,8 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                     FROM billing_document
                     WHERE (:documentType IS NULL OR document_type = CAST(:documentType AS VARCHAR))
                       AND (:status IS NULL OR status = CAST(:status AS VARCHAR))
-                      AND (:customerType IS NULL OR customer_type = CAST(:customerType AS VARCHAR))
-                      AND (:customerCode IS NULL OR customer_code = CAST(:customerCode AS VARCHAR))
+                      AND (:customerType IS NULL OR UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
+                      AND (:customerCode IS NULL OR UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
                       AND (:sourceType IS NULL OR source_type = CAST(:sourceType AS VARCHAR))
                       AND (:sourceCode IS NULL OR source_code = CAST(:sourceCode AS VARCHAR))
                       AND (:fromDate IS NULL OR issue_date >= CAST(:fromDate AS DATE))
@@ -60,8 +60,8 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                     FROM billing_document
                     WHERE (:documentType IS NULL OR document_type = CAST(:documentType AS VARCHAR))
                       AND (:status IS NULL OR status = CAST(:status AS VARCHAR))
-                      AND (:customerType IS NULL OR customer_type = CAST(:customerType AS VARCHAR))
-                      AND (:customerCode IS NULL OR customer_code = CAST(:customerCode AS VARCHAR))
+                      AND (:customerType IS NULL OR UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
+                      AND (:customerCode IS NULL OR UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
                       AND (:sourceType IS NULL OR source_type = CAST(:sourceType AS VARCHAR))
                       AND (:sourceCode IS NULL OR source_code = CAST(:sourceCode AS VARCHAR))
                       AND (:fromDate IS NULL OR issue_date >= CAST(:fromDate AS DATE))
@@ -91,8 +91,8 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billing_document
-            WHERE customer_type = :customerType
-              AND customer_code = :customerCode
+            WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
+              AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
             ORDER BY created_at DESC
             """)
     Page<BillingDocument> statementDocuments(@Param("customerType") String customerType,
@@ -102,8 +102,8 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billing_document
-            WHERE customer_type = :customerType
-              AND customer_code = :customerCode
+            WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
+              AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
               AND document_type IN ('INVOICE', 'PROFORMA_INVOICE')
               AND status IN ('ISSUED', 'SENT', 'PARTIALLY_PAID', 'OVERDUE')
               AND balance_due > 0
@@ -122,8 +122,8 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                       AND bd.status IN ('ISSUED', 'SENT', 'PARTIALLY_PAID', 'OVERDUE')
                       AND bd.balance_due > 0
                       AND (:documentType IS NULL OR bd.document_type = CAST(:documentType AS VARCHAR))
-                      AND (:customerType IS NULL OR bd.customer_type = CAST(:customerType AS VARCHAR))
-                      AND (:customerCode IS NULL OR bd.customer_code = CAST(:customerCode AS VARCHAR))
+                      AND (:customerType IS NULL OR UPPER(TRIM(bd.customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
+                      AND (:customerCode IS NULL OR UPPER(TRIM(bd.customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
                       AND (:lineSourceType IS NULL OR UPPER(COALESCE(bdl.source_type, '')) = UPPER(CAST(:lineSourceType AS VARCHAR)))
                       AND (:lineSourceCode IS NULL OR UPPER(COALESCE(bdl.source_code, '')) = UPPER(CAST(:lineSourceCode AS VARCHAR)))
                       AND (:searchText IS NULL OR (
@@ -147,8 +147,8 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                       AND bd.status IN ('ISSUED', 'SENT', 'PARTIALLY_PAID', 'OVERDUE')
                       AND bd.balance_due > 0
                       AND (:documentType IS NULL OR bd.document_type = CAST(:documentType AS VARCHAR))
-                      AND (:customerType IS NULL OR bd.customer_type = CAST(:customerType AS VARCHAR))
-                      AND (:customerCode IS NULL OR bd.customer_code = CAST(:customerCode AS VARCHAR))
+                      AND (:customerType IS NULL OR UPPER(TRIM(bd.customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
+                      AND (:customerCode IS NULL OR UPPER(TRIM(bd.customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
                       AND (:lineSourceType IS NULL OR UPPER(COALESCE(bdl.source_type, '')) = UPPER(CAST(:lineSourceType AS VARCHAR)))
                       AND (:lineSourceCode IS NULL OR UPPER(COALESCE(bdl.source_code, '')) = UPPER(CAST(:lineSourceCode AS VARCHAR)))
                       AND (:searchText IS NULL OR (
@@ -183,4 +183,16 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
             """)
     @org.springframework.data.jpa.repository.Modifying
     int markOverdueDocuments();
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM billing_document
+            WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+              AND status = 'OVERDUE'
+              AND balance_due > 0
+              AND due_date IS NOT NULL
+            ORDER BY due_date ASC
+            LIMIT :limit
+            """)
+    List<BillingDocument> findOverdueReminderCandidates(@Param("limit") int limit);
 }

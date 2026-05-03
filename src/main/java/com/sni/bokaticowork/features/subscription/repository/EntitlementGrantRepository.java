@@ -43,6 +43,38 @@ public interface EntitlementGrantRepository extends JpaRepository<EntitlementGra
     @Query(nativeQuery = true, value = "SELECT * FROM entitlement_grant WHERE subscription_id = :subscriptionId ORDER BY created_at ASC")
     List<EntitlementGrant> findAllBySubscription(@Param("subscriptionId") Long subscriptionId);
 
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM entitlement_grant
+            WHERE subscription_id = :subscriptionId
+              AND pass_id IS NULL
+              AND entitlement_definition_id = :entitlementDefinitionId
+              AND source_type = 'SUBSCRIPTION'
+              AND valid_from = :validFrom
+              AND status = 'ACTIVE'
+              AND (valid_until IS NULL OR valid_until >= :now)
+            ORDER BY created_at ASC
+            LIMIT 1
+            """)
+    Optional<EntitlementGrant> findActiveSubscriptionGrantForPeriod(@Param("subscriptionId") Long subscriptionId,
+                                                                    @Param("entitlementDefinitionId") Long entitlementDefinitionId,
+                                                                    @Param("validFrom") Instant validFrom,
+                                                                    @Param("now") Instant now);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM entitlement_grant
+            WHERE subscription_id = :subscriptionId
+              AND pass_id IS NULL
+              AND status = 'ACTIVE'
+              AND valid_from <= :now
+              AND (valid_until IS NULL OR valid_until >= :now)
+              AND (unlimited = true OR quantity_remaining > 0)
+            ORDER BY created_at ASC
+            """)
+    List<EntitlementGrant> findCurrentlyActiveBySubscription(@Param("subscriptionId") Long subscriptionId,
+                                                             @Param("now") Instant now);
+
     @Query(nativeQuery = true, value = "SELECT * FROM entitlement_grant WHERE status = :status AND valid_until < :validUntil ORDER BY valid_until ASC")
     List<EntitlementGrant> findAllByStatusAndValidUntilBefore(@Param("status") String status, @Param("validUntil") Instant validUntil);
 
@@ -84,6 +116,7 @@ public interface EntitlementGrantRepository extends JpaRepository<EntitlementGra
               AND eg.status = 'ACTIVE'
               AND eg.valid_from <= :now
               AND (eg.valid_until IS NULL OR eg.valid_until >= :now)
+              AND (eg.unlimited = true OR eg.quantity_remaining > 0)
               AND ed.active = true
               AND ed.deleted = false
               AND (ed.resource_type_id IS NULL OR rt.code = :resourceTypeCode)
@@ -116,6 +149,7 @@ public interface EntitlementGrantRepository extends JpaRepository<EntitlementGra
               AND eg.status = 'ACTIVE'
               AND eg.valid_from <= :now
               AND (eg.valid_until IS NULL OR eg.valid_until >= :now)
+              AND (eg.unlimited = true OR eg.quantity_remaining > 0)
               AND sp.status = 'ACTIVE'
               AND sp.valid_from <= :now
               AND (sp.valid_until IS NULL OR sp.valid_until >= :now)

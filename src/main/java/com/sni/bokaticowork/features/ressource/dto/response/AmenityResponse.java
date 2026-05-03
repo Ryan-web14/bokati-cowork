@@ -15,4 +15,7 @@ public class AmenityResponse {
     private String name;
     private String description;
     private Boolean active;
+    private Integer quantity;
+    private Boolean optional;
+    private Integer extraPrice;
 }

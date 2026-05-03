@@ -32,9 +32,9 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 
     @Override
     public Users initializeGlobalAdmin(UserRequest request) {
-        if (roleUserService.hasAnyUserAssignedToRole(ADMIN_ROLE)) {
-            throw new BadRequestException("Global admin has already been initialized");
-        }
+//        if (roleUserService.hasAnyUserAssignedToRole(ADMIN_ROLE)) {
+//            throw new BadRequestException("Global admin has already been initialized");
+//        }
 
         Users admin = userService.createUser(request);
         roleUserService.addRoleToUser(admin.getId(), ADMIN_ROLE, SYSTEM_ASSIGNER);

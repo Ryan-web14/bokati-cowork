@@ -16,6 +16,7 @@ import com.sni.bokaticowork.security.admin.user.repository.UserRepository;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -39,6 +40,9 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final int  DEFAULT_GENERATOR_LENGTH = 8;
+
+    @Value("${app.security.failed-login.max-attempts:5}")
+    private int maxFailedLoginAttempts;
 
     @Transactional
     public Users createUser(UserRequest request){
@@ -245,6 +249,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void updateLastLogin(String email) {
         if (!userRepo.existsByEmail(email)) {
             throw new ResourceNotFoundException("User with email " + email + " not found");
@@ -253,7 +258,32 @@ public class UserServiceImpl implements UserService {
         Users user = userRepo.findByEmail(email).orElseThrow(
                 () -> new ResourceNotFoundException("User with email " + email + " not found"));
         user.setLastLogin(LocalDateTime.now());
-        userRepo.save(user);
+        //userRepo.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void recordLoginSuccess(String email) {
+        userRepo.findByEmailIgnoreCase(email).ifPresent(user -> {
+            user.setFailedLoginAttempts(0);
+            user.setLastLogin(LocalDateTime.now());
+            //userRepo.save(user);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void recordLoginFailure(String email) {
+        userRepo.findByEmailIgnoreCase(email).ifPresent(user -> {
+            int failures = user.getFailedLoginAttempts() == null ? 0 : user.getFailedLoginAttempts();
+            int nextFailures = failures + 1;
+            user.setFailedLoginAttempts(nextFailures);
+            if (nextFailures >= maxFailedLoginAttempts) {
+                user.setIsAccountLocked(true);
+                log.warn("User {} locked after {} failed login attempts", email, nextFailures);
+            }
+           // userRepo.save(user);
+        });
     }
 
     private List<String> validateUser(UserRequest request){

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body { font-family: Arial, sans-serif; color: #1f2933; font-size: 12px; }
+        h1 { font-size: 22px; margin-bottom: 4px; }
+        h2 { font-size: 15px; margin-top: 22px; border-bottom: 1px solid #d7dde4; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { border: 1px solid #d7dde4; padding: 6px; text-align: left; vertical-align: top; }
+        th { background: #f3f6f8; }
+        .muted { color: #627083; }
+        .badge { display: inline-block; padding: 3px 6px; border: 1px solid #9aa8b5; border-radius: 3px; }
+    </style>
+</head>
+<body>
+<h1>Rapport KYC</h1>
+<div class="muted">Genere le <span th:text="${generatedAt}"></span></div>
+
+<h2>Dossier</h2>
+<table>
+    <tr><th>Code</th><td th:text="${case.code}"></td><th>Statut</th><td><span class="badge" th:text="${case.status}"></span></td></tr>
+    <tr><th>Proprietaire</th><td th:text="${case.ownerName}"></td><th>Type</th><td th:text="${case.ownerType}"></td></tr>
+    <tr><th>Risque</th><td th:text="${case.riskLevel}"></td><th>Niveau KYC</th><td th:text="${case.kycLevel}"></td></tr>
+    <tr><th>Soumis le</th><td th:text="${case.submittedAt}"></td><th>Revise le</th><td th:text="${case.reviewedAt}"></td></tr>
+</table>
+
+<h2>Documents</h2>
+<table>
+    <thead>
+    <tr><th>Code</th><th>Type</th><th>Numero</th><th>Expiration</th><th>Statut</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="document : ${case.documents}">
+        <td th:text="${document.documentCode}"></td>
+        <td th:text="${document.documentType}"></td>
+        <td th:text="${document.documentNumber}"></td>
+        <td th:text="${document.expiryDate}"></td>
+        <td th:text="${document.status}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<h2>Expiration</h2>
+<table>
+    <thead>
+    <tr><th>Document</th><th>Date</th><th>Jours restants</th><th>Statut</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="item : ${expiry}">
+        <td th:text="${item.documentType}"></td>
+        <td th:text="${item.expiryDate}"></td>
+        <td th:text="${item.daysUntilExpiry}"></td>
+        <td th:text="${item.status}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<h2>Timeline</h2>
+<table>
+    <thead>
+    <tr><th>Date</th><th>Action</th><th>Acteur</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="entry : ${timeline}">
+        <td th:text="${entry.timestamp}"></td>
+        <td th:text="${entry.action}"></td>
+        <td th:text="${entry.actor}"></td>
+        <td th:text="${entry.description}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<h2 th:if="${!notes.isEmpty()}">Notes internes</h2>
+<table th:if="${!notes.isEmpty()}">
+    <thead>
+    <tr><th>Date</th><th>Auteur</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="note : ${notes}">
+        <td th:text="${note.createdAt}"></td>
+        <td th:text="${note.authorId}"></td>
+        <td th:text="${note.content}"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

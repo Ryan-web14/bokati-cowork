@@ -22,8 +22,8 @@ public interface BillableItemRepository extends JpaRepository<BillableItem, Long
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billable_item
-            WHERE subscriber_type = CAST(:subscriberType AS VARCHAR)
-              AND subscriber_code = :subscriberCode
+            WHERE UPPER(TRIM(subscriber_type)) = UPPER(TRIM(CAST(:subscriberType AS VARCHAR)))
+              AND UPPER(TRIM(subscriber_code)) = UPPER(TRIM(CAST(:subscriberCode AS VARCHAR)))
               AND status IN ('PENDING', 'SENT_TO_INVOICE')
             ORDER BY created_at ASC
             """)

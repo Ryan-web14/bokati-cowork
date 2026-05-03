@@ -22,6 +22,9 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntent, Lo
     @Query(nativeQuery = true, value = "SELECT * FROM payment_intent WHERE idempotency_key = :idempotencyKey")
     Optional<PaymentIntent> findByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM payment_intent WHERE payment_link_token = :token")
+    Optional<PaymentIntent> findByPaymentLinkToken(@Param("token") String token);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM payment_intent
@@ -44,8 +47,8 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntent, Lo
                     SELECT *
                     FROM payment_intent
                     WHERE (:status IS NULL OR status = CAST(:status AS VARCHAR))
-                      AND (:customerType IS NULL OR customer_type = CAST(:customerType AS VARCHAR))
-                      AND (:customerCode IS NULL OR customer_code = CAST(:customerCode AS VARCHAR))
+                      AND (:customerType IS NULL OR UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
+                      AND (:customerCode IS NULL OR UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
                       AND (:sourceType IS NULL OR source_type = CAST(:sourceType AS VARCHAR))
                       AND (:sourceCode IS NULL OR source_code = CAST(:sourceCode AS VARCHAR))
                       AND (:searchText IS NULL OR (
@@ -61,8 +64,8 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntent, Lo
                     SELECT COUNT(*)
                     FROM payment_intent
                     WHERE (:status IS NULL OR status = CAST(:status AS VARCHAR))
-                      AND (:customerType IS NULL OR customer_type = CAST(:customerType AS VARCHAR))
-                      AND (:customerCode IS NULL OR customer_code = CAST(:customerCode AS VARCHAR))
+                      AND (:customerType IS NULL OR UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
+                      AND (:customerCode IS NULL OR UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
                       AND (:sourceType IS NULL OR source_type = CAST(:sourceType AS VARCHAR))
                       AND (:sourceCode IS NULL OR source_code = CAST(:sourceCode AS VARCHAR))
                       AND (:searchText IS NULL OR (

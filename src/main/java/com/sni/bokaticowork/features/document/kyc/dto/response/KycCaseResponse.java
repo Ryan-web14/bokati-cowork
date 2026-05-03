@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.document.kyc.dto.response;
 
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
+import com.sni.bokaticowork.features.document.kyc.KycRiskLevel;
 import lombok.Builder;
 import lombok.Data;
 
@@ -23,6 +24,13 @@ public class KycCaseResponse {
     private Long reviewedBy;
     private Instant reviewedAt;
     private String decisionComment;
+    private Long assignedTo;
+    private Instant assignedAt;
+    private Instant slaDeadline;
+    private Instant lastReminderSentAt;
+    private Integer reminderCount;
+    private KycRiskLevel riskLevel;
+    private Integer kycLevel;
     private boolean complete;
     private boolean approved;
     private List<String> missingDocumentTypeCodes;

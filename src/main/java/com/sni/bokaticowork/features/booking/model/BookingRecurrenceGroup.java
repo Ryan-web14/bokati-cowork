@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
@@ -44,6 +45,13 @@ public class BookingRecurrenceGroup {
 
     @Column(name = "occurrences", nullable = false)
     private Integer occurrences;
+
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
+    @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
+    @Column(name = "excluded_dates_json", columnDefinition = "jsonb")
+    private String excludedDatesJson;
 
     @Column(name = "first_start_at", nullable = false)
     private LocalDateTime firstStartAt;

@@ -1,7 +1,11 @@
 package com.sni.bokaticowork.core.configuration;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.cfg.CoercionAction;
 import com.fasterxml.jackson.databind.cfg.CoercionInputShape;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -13,6 +17,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 @Configuration
 public class ApplicationConfig {
 
@@ -21,6 +29,9 @@ public class ApplicationConfig {
     //TODO: define this value
     @Value("${app.error.verbose:false}")
     private boolean verboseErrors;
+
+    @Value("${app.time-zone:Africa/Lagos}")
+    private String appTimeZone;
 
     public ApplicationConfig(Environment environment) {
         this.environment = environment;
@@ -47,6 +58,19 @@ public class ApplicationConfig {
         longAsStringModule.addSerializer(Long.class, ToStringSerializer.instance);
         longAsStringModule.addSerializer(long.class, ToStringSerializer.instance);
         objectMapper.registerModule(longAsStringModule);
+        SimpleModule frontendDateModule = new SimpleModule();
+        frontendDateModule.addSerializer(Instant.class, new JsonSerializer<>() {
+            @Override
+            public void serialize(Instant value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                if (value == null) {
+                    gen.writeNull();
+                    return;
+                }
+                gen.writeString(value.truncatedTo(ChronoUnit.MILLIS).toString());
+            }
+        });
+        frontendDateModule.addDeserializer(Instant.class, new FrontendInstantDeserializer(appTimeZone));
+        objectMapper.registerModule(frontendDateModule);
         return objectMapper;
     }
 

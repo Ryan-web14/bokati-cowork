@@ -17,6 +17,7 @@ import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.model.WalletHold;
 import com.sni.bokaticowork.features.payment.model.WalletLedgerEntry;
+import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -32,10 +33,17 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
     @Autowired
     private TransactionContextResolver contextResolver;
 
+    @Autowired
+    private PaymentTransactionRepository transactionRepository;
+
     @Override
     public PaymentIntentResponse toIntentResponse(PaymentIntent intent) {
         TransactionContextResolver.PartyView party = contextResolver.resolveParty(intent.getCustomerType(), intent.getCustomerCode());
         TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
+        java.math.BigDecimal paidAmount = money(transactionRepository.sumSucceededAmountByPaymentIntentId(intent.getId()));
+        java.math.BigDecimal processingAmount = money(transactionRepository.sumProcessingAmountByPaymentIntentId(intent.getId()));
+        java.math.BigDecimal remainingAmount = money(intent.getAmount()).subtract(paidAmount).max(java.math.BigDecimal.ZERO.setScale(4));
+        java.math.BigDecimal payableAmount = remainingAmount.subtract(processingAmount).max(java.math.BigDecimal.ZERO.setScale(4));
         return new PaymentIntentResponse(
                 intent.getIntentNumber(),
                 intent.getCustomerType(),
@@ -46,6 +54,10 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 party.billingAddressJson(),
                 party.registered(),
                 intent.getAmount(),
+                paidAmount,
+                processingAmount,
+                remainingAmount,
+                payableAmount,
                 intent.getCurrency(),
                 intent.getStatus(),
                 intent.getPurpose(),
@@ -55,10 +67,16 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 source.code(),
                 source.label(),
                 source.registered(),
+                intent.getPaymentLinkToken(),
+                intent.getPaymentLinkExpiresAt(),
                 intent.getIdempotencyKey(),
                 intent.getExpiresAt(),
                 intent.getMetadataJson()
         );
+    }
+
+    private java.math.BigDecimal money(java.math.BigDecimal amount) {
+        return (amount == null ? java.math.BigDecimal.ZERO : amount).setScale(4, java.math.RoundingMode.HALF_UP);
     }
 
     @Override

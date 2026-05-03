@@ -13,6 +13,11 @@ public class KycDocumentResponse {
     private String documentCode;
     private String documentType;
     private String documentNumber;
+    private String fileName;
+    private Long fileSize;
+    private String mimeType;
+    private String previewUrl;
+    private String downloadUrl;
     private LocalDate issueDate;
     private LocalDate expiryDate;
     private KycDocumentVerificationStatus status;

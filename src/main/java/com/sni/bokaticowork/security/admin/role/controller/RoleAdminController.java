@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -32,6 +34,7 @@ public class RoleAdminController {
     @PostMapping
     @Audited(module = "ROLE", action = "CREATE", ressource = "role")
     @Idempotent(operation = "ROLE_CREATE")
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<RoleResponse> create(@Valid @RequestBody RoleRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(roleService.addRole(request));
     }
@@ -39,23 +42,33 @@ public class RoleAdminController {
     @PutMapping("/{name}")
     @Audited(module = "ROLE", action = "UPDATE", ressource = "role")
     @Idempotent(operation = "ROLE_UPDATE")
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<RoleResponse> update(@PathVariable String name, @Valid @RequestBody RoleRequest request) {
         return ResponseEntity.ok(roleService.updateRole(name, request));
     }
 
     @GetMapping("/{name}")
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<RoleResponse> get(@PathVariable String name) {
         return ResponseEntity.ok(roleService.getRole(name));
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<List<RoleResponse>> list() {
         return ResponseEntity.ok(roleService.getAllRolesAdmin());
+    }
+
+    @GetMapping("/search/by-name")
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
+    public ResponseEntity<List<RoleResponse>> searchByName(@RequestParam("query") String query) {
+        return ResponseEntity.ok(roleService.searchByName(query));
     }
 
     @PatchMapping("/{name}/activate")
     @Audited(module = "ROLE", action = "ACTIVATE", ressource = "role")
     @Idempotent(operation = "ROLE_ACTIVATE", requestBodyArgIndex = -1)
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> activate(@PathVariable String name) {
         roleService.activateRole(name);
         return ResponseEntity.noContent().build();
@@ -64,6 +77,7 @@ public class RoleAdminController {
     @PatchMapping("/{name}/deactivate")
     @Audited(module = "ROLE", action = "DEACTIVATE", ressource = "role")
     @Idempotent(operation = "ROLE_DEACTIVATE", requestBodyArgIndex = -1)
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> deactivate(@PathVariable String name) {
         roleService.deactivateRole(name);
         return ResponseEntity.noContent().build();
@@ -71,6 +85,7 @@ public class RoleAdminController {
 
     @DeleteMapping("/{name}")
     @Audited(module = "ROLE", action = "DELETE", ressource = "role")
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> delete(@PathVariable String name) {
         roleService.deleteRole(name);
         return ResponseEntity.noContent().build();

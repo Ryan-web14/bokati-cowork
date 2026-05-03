@@ -58,6 +58,13 @@ public class DocumentType {
     private Boolean requiresReview = Boolean.FALSE;
 
     @Builder.Default
+    @Column(name = "auto_approve")
+    private Boolean autoApprove = Boolean.FALSE;
+
+    @Column(name = "auto_approve_after_days")
+    private Integer autoApproveAfterDays;
+
+    @Builder.Default
     @Column(name = "requires_signature")
     private Boolean requiresSignature = Boolean.FALSE;
 

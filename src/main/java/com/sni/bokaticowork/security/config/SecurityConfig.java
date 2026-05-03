@@ -1,7 +1,9 @@
 package com.sni.bokaticowork.security.config;
 
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.security.authorization.AdminApiAuthorizationManager;
 import com.sni.bokaticowork.security.filter.JWTFilter;
+import com.sni.bokaticowork.security.ratelimit.RateLimitingFilter;
 import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -34,6 +36,8 @@ public class SecurityConfig {
     private final CustomUserDetailService userDetailService;
     private final PasswordEncoder passwordEncoder;
     private final JWTFilter jwtFilter;
+    private final RateLimitingFilter rateLimitingFilter;
+    private final AdminApiAuthorizationManager adminApiAuthorizationManager;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -43,17 +47,24 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                                ApiPath.V1 + "/**"
-//                                ApiPath.V1 + "/auth/**",
-//                                ApiPath.V1 + "/admin/provisioning/bootstrap-admin",
-//                                ApiPath.V1 + "/customers/**",
-//                                "/actuator/health",
-//                                "/actuator/info"
+                                ApiPath.V1 + "/auth/login",
+                                ApiPath.V1 + "/auth/refresh",
+                                ApiPath.V1 + "/auth/ott/**",
+                                ApiPath.V1 + "/auth/password-reset/**",
+                                ApiPath.V1 + "/payments/mobile-money/pawapay/callback",
+                                ApiPath.V1 + "/payments/mobile-money/pawaypay/callback",
+                                ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback",
+                                ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback",
+                                "/verify/**",
+                                ApiPath.V1 + "/admin/provisioning/bootstrap-admin"
+
                         ).permitAll()
-                        .requestMatchers(ApiPath.V1 + "/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers(ApiPath.V1 + "/**").access(adminApiAuthorizationManager)
                         .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

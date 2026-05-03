@@ -19,4 +19,5 @@ public interface ContractRepository extends JpaRepository<Contract, Long>, JpaSp
     List<Contract> findAllByStatus(ContractStatus status);
     List<Contract> findAllByStatusAndDeletedFalse(ContractStatus status);
     List<Contract> findAllByStatusInAndEndDateBeforeAndDeletedFalse(List<ContractStatus> statuses, LocalDate date);
+    List<Contract> findAllByDraftDocumentCodeOrSignedDocumentCode(String draftDocumentCode, String signedDocumentCode);
 }

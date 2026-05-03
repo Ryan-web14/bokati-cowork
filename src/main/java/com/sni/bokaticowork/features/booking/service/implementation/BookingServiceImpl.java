@@ -39,7 +39,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -66,6 +69,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingEmailNotifier emailNotifier;
     private final BookingPolicyEnforcer policyEnforcer;
     private final BookingBillableBridge billableBridge;
+    private final BookingVirtualMeetingSupport virtualMeetingSupport;
 
     @Override
     public BookingResponse create(CreateBookingRequest request) {
@@ -105,6 +109,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setContactName(identity.contactName());
         booking.setContactEmail(identity.contactEmail());
         booking.setContactPhone(identity.contactPhone());
+        booking.setCheckInToken(UUID.randomUUID().toString().replace("-", ""));
 
         BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity);
         booking.setBookingUnit(price.unit());
@@ -113,6 +118,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setTotalAmount(price.amount());
         booking.setCurrency(price.currency());
         booking.setApprovalRequired(effectivePolicy.approvalRequired());
+        booking.setVirtualMeetingUrl(virtualMeetingSupport.meetingUrl(resource, booking.getBookingNumber()));
         if (effectivePolicy.approvalRequired()) {
             booking.setStatus(BookingStatus.PENDING_APPROVAL);
         }
@@ -140,6 +146,9 @@ public class BookingServiceImpl implements BookingService {
         String groupNumber = sequenceGenerator.next("booking_recurrence_group");
         CreateBookingRequest base = request.booking();
         BookingIdentityResolver.ResolvedBookingIdentity identity = identityResolver.resolve(base.identityLookup());
+        Set<LocalDate> excludedDates = request.excludedDates() == null
+                ? Set.of()
+                : new HashSet<>(request.excludedDates());
         recurrenceGroupRepository.save(BookingRecurrenceGroup.builder()
                 .groupNumber(groupNumber)
                 .resourceCode(base.resourceCode())
@@ -148,18 +157,28 @@ public class BookingServiceImpl implements BookingService {
                 .frequency(request.frequency())
                 .intervalValue(interval)
                 .occurrences(occurrences)
+                .endDate(request.endDate())
+                .excludedDatesJson(excludedDatesJson(excludedDates))
                 .firstStartAt(base.startedAt())
                 .firstEndAt(base.endedAt())
                 .build());
-        return java.util.stream.IntStream.range(0, occurrences)
-                .mapToObj(index -> {
-                    CreateBookingRequest occurrence = shift(base, request.frequency(), interval * index);
-                    Booking booking = createInternal(occurrence, identity);
-                    booking.setRecurrenceGroupNumber(groupNumber);
-                    bookingRepository.save(booking);
-                    return bookingMapper.toResponse(booking);
-                })
-                .toList();
+        List<BookingResponse> created = new java.util.ArrayList<>();
+        int index = 0;
+        while (created.size() < occurrences && index < 370) {
+            CreateBookingRequest occurrence = shift(base, request.frequency(), interval * index);
+            index++;
+            if (request.endDate() != null && occurrence.startedAt().toLocalDate().isAfter(request.endDate())) {
+                break;
+            }
+            if (excludedDates.contains(occurrence.startedAt().toLocalDate())) {
+                continue;
+            }
+            Booking booking = createInternal(occurrence, identity);
+            booking.setRecurrenceGroupNumber(groupNumber);
+            bookingRepository.save(booking);
+            created.add(bookingMapper.toResponse(booking));
+        }
+        return created;
     }
 
     @Override
@@ -246,6 +265,7 @@ public class BookingServiceImpl implements BookingService {
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.IN_PROGRESS, changedBy(request), reason(request, "Booking started"));
         eventWriter.write(booking, BookingEventType.BOOKING_STARTED, "Booking started", "Booking is in progress", null);
+        notifyIfRequested(booking, BookingEventType.BOOKING_STARTED, request);
         return bookingMapper.toResponse(booking);
     }
 
@@ -308,6 +328,20 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponse checkIn(String bookingNumber, BookingCheckRequest request) {
         Booking booking = getForService(bookingNumber);
+        return checkInInternal(booking, request);
+    }
+
+    @Override
+    public BookingResponse checkInByToken(String checkInToken, BookingCheckRequest request) {
+        if (!StringUtils.hasText(checkInToken)) {
+            throw new BadRequestException("Check-in token is required");
+        }
+        Booking booking = bookingRepository.findByCheckInToken(checkInToken.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Booking check-in token not found"));
+        return checkInInternal(booking, request);
+    }
+
+    private BookingResponse checkInInternal(Booking booking, BookingCheckRequest request) {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be checked in");
         }
@@ -559,6 +593,16 @@ public class BookingServiceImpl implements BookingService {
 
     private String reason(String reason, String fallback) {
         return StringUtils.hasText(reason) ? reason.trim() : fallback;
+    }
+
+    private String excludedDatesJson(Set<LocalDate> excludedDates) {
+        if (excludedDates == null || excludedDates.isEmpty()) {
+            return null;
+        }
+        return excludedDates.stream()
+                .sorted()
+                .map(date -> "\"" + date + "\"")
+                .collect(java.util.stream.Collectors.joining(",", "[", "]"));
     }
 
     private CreateBookingRequest shift(CreateBookingRequest base, BookingRecurrenceFrequency frequency, int amount) {

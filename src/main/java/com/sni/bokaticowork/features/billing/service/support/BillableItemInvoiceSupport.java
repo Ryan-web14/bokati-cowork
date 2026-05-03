@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -90,7 +91,7 @@ public class BillableItemInvoiceSupport {
                 response.documentNumber(),
                 null,
                 null,
-                null,
+                Instant.now().plusSeconds(900),
                 null
         ));
     }

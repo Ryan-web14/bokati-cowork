@@ -13,17 +13,14 @@ spring:
 
 
   mail:
-    host: smtp.hostinger.com
-    port: 465
-    username: contact@sni-cg.com
-    password: SNI@project.com24
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-            required: true
+    microsoft:
+      graph:
+        client-id: ${MICROSOFT_GRAPH_CLIENT_ID:80eab8f6-815f-4e41-bcc5-1a08e6191949}
+        client-secret: ${MICROSOFT_GRAPH_CLIENT_SECRET:jpj8Q~j4pgjkI4DBLCIBN_r3GbCoI7IVEoemfaiE}
+        tenant-id: ${MICROSOFT_GRAPH_TENANT_ID:e1006690-4205-4c71-9f74-1b9fdcbdcaf2}
+        sender-email: ${MICROSOFT_SENDER_EMAIL:no-reply@elleaose.com}
+
+
 
   jpa:
     hibernate:
@@ -54,14 +51,18 @@ bokati:
   payment:
     pawaypay:
       enabled: true
-      api-key: ${PAWAYPAY_API_KEY:eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjE2ODU0IiwibWF2IjoiMSIsImV4cCI6MjA5Mjk1MDU3OSwiaWF0IjoxNzc3MzMxMzc5LCJwbSI6IkRBRixQQUYiLCJqdGkiOiI1ZTM1Mzg2OC1lZDA3LTRhMzUtOGU2YS05OWNjMjcwZmNiNGQifQ.4FWianuEXDLdUlq__x54NNqfM0cqxHSSZwxhX7nHFatAaWJtUzO2GRA3SWMv6fEtpFbXNR1aTnVL9y_KWN0kQw}
-      base-url: https://api.sandbox.pawapay.io
-      callback-base-url: https://7d66-102-129-81-212.ngrok-free.app
+      api-key: ${PAWAYPAY_API_KEY:eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI0ODAiLCJtYXYiOiIxIiwiZXhwIjoyMDkzMTc4MTA1LCJpYXQiOjE3Nzc1NTg5MDUsInBtIjoiREFGLFBBRiIsImp0aSI6IjJhMWY1M2U4LTg5MmMtNGE0ZC1iMWM4LWFhN2U4NWUwYjVlOSJ9.WOY0BG_Xn-AurEZckuIIAJQwimuLBhsKt9NMS6qgdwR3LEbMZgjdWm3PlY2YmBuGnBYnldpRs638uSDSflY3eg}
+      base-url: https://api.pawapay.io/
+      callback-base-url: https://21a1-102-129-81-86.ngrok-free.app
       callback-secret: ${PAWAYPAY_CALLBACK_SECRET:}
       polling-delay-ms: 300000
       polling-max-age-minutes: 10
 
 app:
+  api-base-url: ${APP_BASE_URL:http://localhost:8080}
+  document:
+    storage:
+      provider: ${DOCUMENT_STORAGE_PROVIDER:minio}
   security:
     jwt:
       secret: ${APP_JWT_SECRET:change-this-development-jwt-secret-key-please-change-32-bytes}

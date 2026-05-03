@@ -4,17 +4,30 @@ import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
+import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
+import com.sni.bokaticowork.features.document.kyc.KycRiskLevel;
 import com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycAssignRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseNoteRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycRiskLevelRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycExpiryDocumentStatus;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycTimelineEntryResponse;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -37,8 +50,33 @@ public class KycController {
     }
 
     @GetMapping
-    public ResponseEntity<List<KycCaseResponse>> list(@RequestParam(required = false) DocumentOwnerType ownerType) {
-        return ResponseEntity.ok(service.list(ownerType));
+    public ResponseEntity<List<KycCaseResponse>> list(
+            @RequestParam(required = false) KycCaseStatus status,
+            @RequestParam(required = false) DocumentOwnerType ownerType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant submittedAfter,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant submittedBefore,
+            @RequestParam(required = false) Long reviewedBy,
+            @RequestParam(required = false) Boolean pendingReviewOnly,
+            @RequestParam(required = false) Integer expiringWithinDays,
+            @RequestParam(required = false) KycRiskLevel riskLevel
+    ) {
+        return ResponseEntity.ok(service.search(status, ownerType, submittedAfter, submittedBefore, reviewedBy,
+                pendingReviewOnly, expiringWithinDays, riskLevel));
+    }
+
+    @GetMapping("/dashboard")
+    public ResponseEntity<KycDashboardResponse> dashboard() {
+        return ResponseEntity.ok(service.dashboard());
+    }
+
+    @GetMapping("/expiring-soon")
+    public ResponseEntity<List<KycCaseResponse>> expiringSoon(@RequestParam(defaultValue = "30") Integer days) {
+        return ResponseEntity.ok(service.expiringSoon(days));
+    }
+
+    @GetMapping("/my-queue")
+    public ResponseEntity<List<KycCaseResponse>> myQueue(@RequestParam(required = false) Long userId) {
+        return ResponseEntity.ok(service.myQueue(userId));
     }
 
     @PostMapping("/{code}/submit")
@@ -65,5 +103,50 @@ public class KycController {
     @GetMapping("/{code}/missing-requirements")
     public ResponseEntity<List<KycRequirementStatus>> missingRequirements(@PathVariable String code) {
         return ResponseEntity.ok(service.getMissingRequirements(code));
+    }
+
+    @PatchMapping("/{code}/assign")
+    @Audited(module = "KYC", action = "ASSIGN_CASE", ressource = "kyc_case")
+    public ResponseEntity<KycCaseResponse> assign(@PathVariable String code, @Valid @RequestBody KycAssignRequest request) {
+        return ResponseEntity.ok(service.assign(code, request));
+    }
+
+    @PostMapping("/{code}/notes")
+    @Audited(module = "KYC", action = "ADD_CASE_NOTE", ressource = "kyc_case")
+    public ResponseEntity<KycCaseNoteResponse> addNote(@PathVariable String code, @Valid @RequestBody KycCaseNoteRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addNote(code, request));
+    }
+
+    @GetMapping("/{code}/notes")
+    public ResponseEntity<List<KycCaseNoteResponse>> notes(@PathVariable String code) {
+        return ResponseEntity.ok(service.listNotes(code));
+    }
+
+    @GetMapping("/{code}/timeline")
+    public ResponseEntity<List<KycTimelineEntryResponse>> timeline(@PathVariable String code) {
+        return ResponseEntity.ok(service.timeline(code));
+    }
+
+    @GetMapping("/{code}/expiry-status")
+    public ResponseEntity<List<KycExpiryDocumentStatus>> expiryStatus(@PathVariable String code) {
+        return ResponseEntity.ok(service.expiryStatus(code));
+    }
+
+    @PatchMapping("/{code}/risk-level")
+    @Audited(module = "KYC", action = "UPDATE_RISK_LEVEL", ressource = "kyc_case")
+    public ResponseEntity<KycCaseResponse> riskLevel(@PathVariable String code, @Valid @RequestBody KycRiskLevelRequest request) {
+        return ResponseEntity.ok(service.updateRiskLevel(code, request));
+    }
+
+    @GetMapping("/{code}/export/pdf")
+    public ResponseEntity<byte[]> exportPdf(
+            @PathVariable String code,
+            @RequestParam(defaultValue = "true") boolean includeInternalNotes
+    ) {
+        byte[] pdf = service.exportPdf(code, includeInternalNotes);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"kyc-" + code + ".pdf\"")
+                .body(pdf);
     }
 }

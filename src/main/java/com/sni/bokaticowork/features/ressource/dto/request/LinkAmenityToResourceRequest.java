@@ -17,4 +17,8 @@ public class LinkAmenityToResourceRequest {
 
     @NotBlank
     private String amenityCode;
+
+    private Integer quantity;
+    private Boolean optional;
+    private Integer extraPrice;
 }

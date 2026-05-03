@@ -22,4 +22,12 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
     List<Role> findAllActiveRole();
 
     List<Role> findAllByOrderByNameAsc();
+
+    @Query(nativeQuery = true, value = """
+            SELECT r.*
+            FROM role r
+            JOIN search_admin_role(:query) s ON s.id = r.id
+            ORDER BY s.score DESC, r.name ASC
+            """)
+    List<Role> searchByName(@Param("query") String query);
 }

@@ -52,7 +52,7 @@ public class BookingBillableBridge {
                 .billingPeriodStart(booking.getStartedAt().toLocalDate())
                 .billingPeriodEnd(booking.getEndedAt().toLocalDate())
                 .status(BillableItemStatus.PENDING)
-                .metadataJson(metadataJson)
+                //.metadataJson(metadataJson)
                 .build());
 
         billableItemInvoiceSupport.ensureInvoiced(item, buildInvoiceTitle(booking), description);

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche client — Elle A Osé</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        :root {
+            --plum:        #1a0a2e;
+            --plum-mid:    #2a1548;
+            --violet:      oklch(62% 0.18 295);
+            --violet-pale: oklch(95% 0.04 295);
+            --gold:        #c9a84c;
+            --gold-pale:   oklch(97% 0.04 76);
+            --gold-mid:    oklch(90% 0.09 76);
+            --gold-dark:   oklch(52% 0.14 76);
+            --cream:       oklch(98.5% 0.008 75);
+            --ink:         #1a0a2e;
+            --slate:       #5c4f6e;
+            --slate-light: #9b8caa;
+            --border:      #d8d0e8;
+            --white:       #ffffff;
+            --field-bg:    #faf8fd;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: var(--ink);
+            font-size: 10px;
+            line-height: 1.5;
+            background: var(--white);
+            width: 210mm;
+            min-height: 297mm;
+        }
+
+        /* ── HEADER ── */
+        .doc-header {
+            background: var(--plum);
+            padding: 18px 24px 14px;
+            position: relative; overflow: hidden;
+        }
+        .doc-header::after {
+            content: ''; position: absolute; top: 0; right: -20px;
+            width: 220px; height: 100%;
+            background: rgba(255,255,255,0.03); transform: skewX(-12deg);
+        }
+        .header-inner {
+            position: relative; z-index: 1;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .brand-name { font-size: 17px; font-weight: 700; color: var(--white); letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub  { font-size: 7px; color: var(--slate-light); letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+        .doc-title-block { text-align: right; }
+        .doc-title    { font-size: 20px; font-weight: 700; color: var(--white); letter-spacing: 2px; text-transform: uppercase; line-height: 1; }
+        .doc-subtitle { font-size: 8.5px; color: var(--gold); margin-top: 5px; letter-spacing: 0.8px; }
+
+        .header-stripe {
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold) 0%, var(--violet) 55%, var(--plum-mid) 100%);
+        }
+
+        /* ── CONTENT ── */
+        .content { padding: 16px 24px 20px; }
+
+        /* ── SECTION LABEL ── */
+        .section-label {
+            font-size: 7.5px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.6px; color: var(--violet);
+            display: flex; align-items: center; gap: 8px;
+            margin: 16px 0 10px;
+        }
+        .section-label:first-child { margin-top: 0; }
+        .section-label::before { content: ''; display: inline-block; width: 14px; height: 2px; background: var(--gold); flex-shrink: 0; }
+        .section-label::after  { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* ── FIELD GRID ── */
+        .field-grid { display: grid; gap: 10px 14px; }
+        .col-2 { grid-template-columns: 1fr 1fr; }
+        .col-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .col-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        .span-2 { grid-column: span 2; }
+        .span-3 { grid-column: span 3; }
+        .span-4 { grid-column: span 4; }
+
+        /* ── FIELD ── */
+        .field { display: flex; flex-direction: column; gap: 3px; }
+        .field-label {
+            font-size: 7.5px; font-weight: 700; color: var(--slate);
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .field-label .required { color: var(--gold); margin-left: 2px; }
+        .field-label .optional { color: var(--slate-light); font-weight: 400; margin-left: 3px; font-style: italic; text-transform: none; letter-spacing: 0; }
+
+        .field-input {
+            border: none;
+            border-bottom: 1.5px solid var(--border);
+            background: transparent;
+            padding: 5px 4px 4px;
+            font-size: 10px; color: var(--ink);
+            min-height: 22px;
+        }
+        .field-input.tall {
+            min-height: 32px; border: 1.5px solid var(--border);
+            border-radius: 2px; background: var(--field-bg); padding: 5px 8px;
+        }
+
+        /* check group */
+        .check-group { display: flex; gap: 16px; align-items: center; padding: 5px 0; }
+        .check-item  { display: flex; align-items: center; gap: 5px; font-size: 9.5px; color: var(--ink); }
+        .check-box   {
+            width: 14px; height: 14px;
+            border: 1.5px solid var(--border); border-radius: 2px;
+            flex-shrink: 0; display: inline-block;
+        }
+
+        /* ── CONDITIONAL HINT ── */
+        .conditional-hint {
+            font-size: 8px; color: var(--slate-light);
+            font-style: italic; margin-top: -4px; margin-bottom: 6px;
+            padding-left: 2px;
+        }
+
+        /* ── TYPE SELECTOR CARDS ── */
+        .type-cards {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin-bottom: 4px;
+        }
+        .type-card {
+            border: 1.5px solid var(--border);
+            border-radius: 3px; padding: 10px 14px;
+            display: flex; align-items: center; gap: 10px;
+            background: var(--field-bg); cursor: pointer;
+        }
+        .type-card-check {
+            width: 16px; height: 16px;
+            border: 1.5px solid var(--border); border-radius: 2px;
+            flex-shrink: 0;
+        }
+        .type-card-label { font-size: 10.5px; font-weight: 700; color: var(--ink); }
+        .type-card-sub   { font-size: 8.5px; color: var(--slate-light); margin-top: 1px; }
+
+        /* ── INFO NOTICE ── */
+        .info-notice {
+            background: var(--gold-pale); border: 1px solid var(--gold-mid);
+            border-left: 3px solid var(--gold); border-radius: 2px;
+            padding: 8px 12px; font-size: 9px; color: var(--gold-dark);
+            line-height: 1.6; margin-top: 14px;
+        }
+
+        /* ── SIGNATURE ── */
+        .signature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 14px; }
+        .signature-block { display: flex; flex-direction: column; gap: 4px; }
+        .signature-label { font-size: 7.5px; font-weight: 700; color: var(--slate); text-transform: uppercase; letter-spacing: 0.8px; }
+        .signature-line  { border-bottom: 1.5px solid var(--border); min-height: 40px; }
+        .signature-caption { font-size: 7.5px; color: var(--slate-light); margin-top: 3px; }
+
+        /* ── OFFICE BOX ── */
+        .office-box { border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin-top: 16px; }
+        .office-box-head {
+            background: var(--plum); border-left: 3px solid var(--gold);
+            padding: 5px 12px; font-size: 7.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.2px; color: var(--white);
+        }
+        .office-box-body { background: var(--field-bg); padding: 10px 12px; }
+
+        /* ── FOOTER ── */
+        .doc-footer {
+            margin-top: 18px; padding: 10px 24px;
+            border-top: 1px solid var(--border);
+            font-size: 7.5px; color: var(--slate-light); text-align: center;
+        }
+        .doc-footer .made-by { font-size: 6.5px; color: #ddd; margin-top: 2px; }
+
+        @media print {
+            body { width: 210mm; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="doc-header">
+    <div class="header-inner">
+        <div>
+            <div class="brand-name">Elle A Osé</div>
+            <div class="brand-sub">Cowork &amp; Studio</div>
+        </div>
+        <div class="doc-title-block">
+            <div class="doc-title">Fiche client</div>
+            <div class="doc-subtitle">Bokati Cowork — Création de compte</div>
+        </div>
+    </div>
+</div>
+<div class="header-stripe"></div>
+
+<div class="content">
+
+    <!-- ── TYPE DE CLIENT ── -->
+    <div class="section-label">Type de client <span style="color:var(--gold);margin-left:4px;">*</span></div>
+    <div class="type-cards">
+        <div class="type-card">
+            <div class="type-card-check"></div>
+            <div>
+                <div class="type-card-label">Particulier</div>
+                <div class="type-card-sub">Personne physique — Prénom &amp; Nom requis</div>
+            </div>
+        </div>
+        <div class="type-card">
+            <div class="type-card-check"></div>
+            <div>
+                <div class="type-card-label">Entreprise</div>
+                <div class="type-card-sub">Personne morale — Raison sociale requise</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── IDENTITÉ ── -->
+    <div class="section-label">Identité</div>
+    <div class="conditional-hint">Particulier : remplir Prénom et Nom — Entreprise : remplir Raison sociale (Prénom/Nom du contact facultatifs)</div>
+    <div class="field-grid col-2" style="margin-bottom:10px;">
+        <div class="field">
+            <div class="field-label">Prénom <span class="optional">(particulier)</span></div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Nom <span class="optional">(particulier)</span></div>
+            <div class="field-input"></div>
+        </div>
+    </div>
+    <div class="field-grid col-1">
+        <div class="field">
+            <div class="field-label">Raison sociale <span class="optional">(entreprise)</span></div>
+            <div class="field-input"></div>
+        </div>
+    </div>
+
+    <!-- ── CONTACT ── -->
+    <div class="section-label">Contact</div>
+    <div class="field-grid col-3">
+        <div class="field">
+            <div class="field-label">Téléphone <span class="required">*</span></div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">WhatsApp <span class="optional">(si différent)</span></div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Même que téléphone</div>
+            <div class="check-group" style="padding-top:7px;">
+                <label class="check-item"><span class="check-box"></span> Oui</label>
+                <label class="check-item"><span class="check-box"></span> Non</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── EMAILS ── -->
+    <div class="section-label">Adresses email</div>
+    <div class="field-grid col-2">
+        <div class="field">
+            <div class="field-label">Email principal <span class="required">*</span></div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Email de facturation <span class="optional">(si différent)</span></div>
+            <div class="field-input"></div>
+        </div>
+    </div>
+
+    <!-- ── ADRESSE ── -->
+    <div class="section-label">Adresse</div>
+    <div class="field-grid col-3">
+        <div class="field span-3">
+            <div class="field-label">Ligne 1 — Rue, numéro, bâtiment</div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field span-3">
+            <div class="field-label">Ligne 2 — Quartier, complément</div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Ville</div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Code postal</div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Pays</div>
+            <div class="field-input"></div>
+        </div>
+    </div>
+
+    <!-- ── NOTICE LÉGALE ── -->
+    <div class="info-notice">
+        En signant ce formulaire, vous consentez à la collecte et au traitement de vos données personnelles par Bokati Cowork dans le cadre de la gestion de votre compte client, conformément à la politique de confidentialité en vigueur. Ces informations ne seront pas transmises à des tiers sans votre accord préalable.
+    </div>
+
+    <!-- ── SIGNATURES ── -->
+    <div class="section-label" style="margin-top:16px;">Validation</div>
+    <div class="signature-row">
+        <div class="signature-block">
+            <div class="signature-label">Signature du client</div>
+            <div class="signature-line"></div>
+            <div class="signature-caption">Date : _____ / _____ / _________</div>
+        </div>
+        <div class="signature-block">
+            <div class="signature-label">Visa Elle A Osé</div>
+            <div class="signature-line"></div>
+            <div class="signature-caption">Agent : ________________________________</div>
+        </div>
+    </div>
+
+    <!-- ── RÉSERVÉ ADMINISTRATION ── -->
+    <div class="office-box">
+        <div class="office-box-head">Réservé à l'administration</div>
+        <div class="office-box-body">
+            <div class="field-grid col-3">
+                <div class="field">
+                    <div class="field-label">Code client attribué</div>
+                    <div class="field-input"></div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Date de création</div>
+                    <div class="field-input"></div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Traité par</div>
+                    <div class="field-input"></div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Segment / catégorie</div>
+                    <div class="field-input"></div>
+                </div>
+                <div class="field span-2">
+                    <div class="field-label">Observations</div>
+                    <div class="field-input tall"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Fiche client &nbsp;·&nbsp; Document à conserver
+    <div class="made-by">Made by SNI</div>
+</div>
+
+</body>
+</html>

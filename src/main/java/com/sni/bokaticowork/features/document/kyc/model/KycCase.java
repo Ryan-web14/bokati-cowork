@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.document.kyc.model;
 import com.sni.bokaticowork.core.annotation.IdGeneration;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
+import com.sni.bokaticowork.features.document.kyc.KycRiskLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -58,9 +59,37 @@ public class KycCase {
     @Column(name = "decision_comment")
     private String decisionComment;
 
+    @Column(name = "assigned_to")
+    private Long assignedTo;
+
+    @Column(name = "assigned_at")
+    private Instant assignedAt;
+
+    @Column(name = "sla_deadline")
+    private Instant slaDeadline;
+
+    @Column(name = "last_reminder_sent_at")
+    private Instant lastReminderSentAt;
+
+    @Builder.Default
+    @Column(name = "reminder_count")
+    private Integer reminderCount = 0;
+
+    @Builder.Default
+    @Column(name = "risk_level", nullable = false, length = 30)
+    @Enumerated(EnumType.STRING)
+    private KycRiskLevel riskLevel = KycRiskLevel.LOW;
+
+    @Builder.Default
+    @Column(name = "kyc_level", nullable = false)
+    private Integer kycLevel = 1;
+
     @PrePersist
     public void prePersist() {
         startedAt = startedAt == null ? Instant.now() : startedAt;
         status = status == null ? KycCaseStatus.NOT_STARTED : status;
+        reminderCount = reminderCount == null ? 0 : reminderCount;
+        riskLevel = riskLevel == null ? KycRiskLevel.LOW : riskLevel;
+        kycLevel = kycLevel == null ? 1 : kycLevel;
     }
 }

@@ -2,118 +2,100 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Code de connexion – BOKATI</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code de connexion - Elle A Osé</title>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #f5f5f5;
-            font-family: Arial, sans-serif;
-        }
-
-        .email-wrapper {
-            width: 100%;
-            background-color: #f5f5f5;
-            padding: 40px 0;
-        }
-
-        .email-container {
-            max-width: 480px;
-            margin: auto;
-            background-color: #ffffff;
-            border-radius: 12px;
-            padding: 30px 25px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-        }
-
-        .header {
-            text-align: center;
-            color: #c2410c;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 25px;
-            letter-spacing: 1px;
-        }
-
-        .greeting {
-            font-size: 16px;
-            color: #333333;
-            margin-bottom: 15px;
-        }
-
-        .instructions {
-            font-size: 15px;
-            color: #555555;
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-        .otp-box {
-            text-align: center;
-            background-color: #faf1ed;
-            padding: 18px 0;
-            border-radius: 10px;
-            font-size: 32px;
-            font-weight: bold;
-            letter-spacing: 8px;
-            color: #c2410c;
-            border: 2px solid #c2410c;
-            margin: 25px 0;
-        }
-
-        .footer {
-            margin-top: 30px;
-            font-size: 13px;
-            color: #888888;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        .brand {
-            font-weight: bold;
-            color: #c2410c;
+        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #2b2030; }
+        table { border-collapse: collapse; }
+        .page { width: 100%; background: #f0eef5; padding: 44px 14px; }
+        .card { width: 100%; max-width: 480px; margin: 0 auto; background: #ffffff; border: 1px solid #e8e0f0; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
+        .header { background: #281332; padding: 24px 30px 20px; }
+        .brand-name { font-size: 16px; line-height: 1; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub { font-size: 7px; color: #a397ad; letter-spacing: 2px; text-transform: uppercase; padding-top: 5px; }
+        .tag { display: inline-block; background: #3a1e45; border: 1px solid #d9a21b; color: #d9a21b; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 5px 10px; border-radius: 2px; white-space: nowrap; }
+        .stripe { height: 4px; background: #d9a21b; }
+        .body { padding: 32px 30px 28px; }
+        .icon-cell { width: 56px; height: 56px; border: 2px solid #d9a21b; border-radius: 50%; background: #f0eef5; text-align: center; color: #d9a21b; font-size: 24px; font-weight: 700; line-height: 52px; }
+        .title { font-size: 20px; font-weight: 700; color: #281332; text-align: center; margin: 18px 0 7px; line-height: 1.25; }
+        .subtitle { font-size: 11.5px; color: #7c6d8f; text-align: center; margin: 0 0 24px; }
+        .text { font-size: 13px; color: #5c4f6e; line-height: 1.65; margin: 0 0 16px; }
+        .text strong { color: #281332; }
+        .otp-wrap { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin: 24px 0; }
+        .otp-head { background: #281332; border-left: 3px solid #d9a21b; padding: 9px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
+        .otp-body { padding: 24px 16px; text-align: center; background: #faf8fd; }
+        .otp-code { font-family: "Courier New", Courier, monospace; font-size: 38px; font-weight: 700; letter-spacing: 12px; color: #281332; text-indent: 12px; }
+        .otp-validity { margin-top: 10px; font-size: 11px; color: #7c6d8f; }
+        .otp-validity strong { color: #d9a21b; }
+        .security-note { font-size: 11px; color: #7c6d8f; line-height: 1.65; text-align: center; padding: 13px 16px; background: #faf8fd; border: 1px solid #e8e0f0; border-left: 3px solid #8b5cf6; border-radius: 3px; }
+        .footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 17px 30px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: #281332; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
+        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+        .footer-made { font-size: 8.5px; color: #c8bdd8; margin-top: 8px; letter-spacing: 0.4px; }
+        @media only screen and (max-width: 600px) {
+            .page { padding: 24px 10px; }
+            .header, .body, .footer { padding-left: 20px; padding-right: 20px; }
+            .otp-code { font-size: 32px; letter-spacing: 9px; text-indent: 9px; }
         }
     </style>
 </head>
-
 <body>
-
-<div class="email-wrapper">
-    <div class="email-container">
-
-        <!-- HEADER -->
-        <div class="header">
-            BOKATI – Code de Connexion
-        </div>
-
-        <!-- GREETING -->
-        <div class="greeting">
-            Bonjour <strong th:text="${firstname}"></strong>,
-        </div>
-
-        <!-- INSTRUCTIONS -->
-        <div class="instructions">
-            Voici votre code de connexion sécurisé pour accéder à votre espace <span class="brand">BOKATI</span>.
-            Ce code est à usage unique et valable pendant <strong>15 minutes</strong>.
-        </div>
-
-        <!-- OTP CODE -->
-        <div class="otp-box" th:text="${token}">
-            123456
-        </div>
-
-        <!-- FOOTER -->
-        <div class="footer">
-            Si vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message.<br><br>
-
-            <span class="brand">BOKATI</span>  Cowork
-            <br>
-            Développé par <strong>SNI</strong>
-        </div>
-
-    </div>
-</div>
-
+<table class="page" role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center">
+            <table class="card" role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="header">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="left" valign="middle">
+                                    <div class="brand-name">Elle A Osé</div>
+                                    <div class="brand-sub">Cowork &amp; Studio</div>
+                                </td>
+                                <td align="right" valign="middle"><span class="tag">Sécurité</span></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr><td class="stripe"></td></tr>
+                <tr>
+                    <td class="body" align="center">
+                        <table role="presentation" cellpadding="0" cellspacing="0"><tr><td class="icon-cell">✓</td></tr></table>
+                        <h1 class="title">Code de connexion</h1>
+                        <p class="subtitle">Authentification à usage unique.</p>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="body" style="padding-top:0;">
+                        <p class="text">Bonjour <strong th:text="${firstname}">membre</strong>,</p>
+                        <p class="text">
+                            Voici votre code de connexion sécurisé pour accéder à votre espace <strong>Bokati</strong>.
+                            Ce code est à usage unique.
+                        </p>
+                        <div class="otp-wrap">
+                            <div class="otp-head">Votre code de connexion</div>
+                            <div class="otp-body">
+                                <div class="otp-code" th:text="${token}">123456</div>
+                                <div class="otp-validity">Valable pendant <strong>15 minutes</strong></div>
+                            </div>
+                        </div>
+                        <div class="security-note">
+                            Si vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message. Votre compte reste sécurisé.
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="footer">
+                        <div class="footer-brand">Elle A Osé - Bokati Cowork</div>
+                        <div class="footer-text">
+                            Cet email a été envoyé automatiquement, merci de ne pas y répondre directement.<br>
+                            Pour toute question : coworkspace@elleaose.com · 05 204 25 52
+                        </div>
+                        <div class="footer-made">Made by SNI</div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 </body>
 </html>

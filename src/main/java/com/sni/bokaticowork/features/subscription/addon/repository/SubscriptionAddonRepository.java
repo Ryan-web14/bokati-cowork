@@ -17,6 +17,8 @@ public interface SubscriptionAddonRepository extends JpaRepository<SubscriptionA
     @Query(nativeQuery = true, value = "SELECT * FROM subscription_addon WHERE subscription_id = :subscriptionId ORDER BY created_at DESC")
     List<SubscriptionAddon> findAllBySubscriptionId(@Param("subscriptionId") Long subscriptionId);
 
+    List<SubscriptionAddon> findAllByContractCode(String contractCode);
+
     @Modifying
     @Query(nativeQuery = true, value = """
             UPDATE subscription_addon

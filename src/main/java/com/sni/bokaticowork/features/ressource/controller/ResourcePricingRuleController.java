@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePricingRuleRequest;
+import com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourcePricingRuleService;
 import jakarta.validation.Valid;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping(ApiPath.V1 + "/resource-pricing-rules")
@@ -52,6 +55,15 @@ public class ResourcePricingRuleController {
             return ResponseEntity.ok(resourcePricingRuleService.listByResource(resourceCode, pageable));
         }
         return ResponseEntity.ok(resourcePricingRuleService.list(pageable));
+    }
+
+    @GetMapping("/quote")
+    public ResponseEntity<ResourcePriceQuoteResponse> quote(
+            @RequestParam String resourceCode,
+            @RequestParam String bookingUnit,
+            @RequestParam LocalDateTime startedAt,
+            @RequestParam LocalDateTime endedAt) {
+        return ResponseEntity.ok(resourcePricingRuleService.quote(resourceCode, bookingUnit, startedAt, endedAt));
     }
 
     @PatchMapping("/{id}/active")
