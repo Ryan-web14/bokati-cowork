@@ -40,9 +40,6 @@ public class JWTService {
     @Value("${app.security.jwt.verification-token-expiration-ms:900000}")
     private long verificationTokenExpiration;
 
-    /**
-     * Garde cette méthode si ton code l'appelle déjà avec cette faute de frappe.
-     */
     public String generateAccesToken(Users user, String sessionId) {
         return generateAccessToken(user, sessionId);
     }
