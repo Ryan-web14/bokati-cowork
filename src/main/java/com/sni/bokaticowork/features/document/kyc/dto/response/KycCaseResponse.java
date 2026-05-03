@@ -26,5 +26,6 @@ public class KycCaseResponse {
     private boolean complete;
     private boolean approved;
     private List<String> missingDocumentTypeCodes;
+    private List<KycRequirementStatus> requirements;
     private List<KycDocumentResponse> documents;
 }

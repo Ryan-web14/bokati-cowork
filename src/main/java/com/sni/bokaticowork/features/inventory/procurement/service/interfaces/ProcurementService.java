@@ -18,7 +18,7 @@ public interface ProcurementService {
 
     PurchaseRequestResponse submitPurchaseRequest(String requestCode);
 
-    PurchaseRequestResponse approvePurchaseRequest(String requestCode, String approvedBy);
+    PurchaseRequestResponse approvePurchaseRequest(String requestCode, String approvedBy, String supplierCode);
 
     PurchaseRequestResponse rejectPurchaseRequest(String requestCode, String reason);
 

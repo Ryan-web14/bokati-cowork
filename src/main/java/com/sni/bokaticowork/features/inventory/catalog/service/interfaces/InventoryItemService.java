@@ -19,4 +19,6 @@ public interface InventoryItemService {
     InventoryItemResponse activate(String itemCode);
 
     InventoryItemResponse deactivate(String itemCode);
+
+    void delete(String itemCode);
 }

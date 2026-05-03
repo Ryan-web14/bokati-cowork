@@ -47,4 +47,5 @@ public interface BillingDocumentService {
     BillingDocument serviceByNumber(String documentNumber);
     BillingDocument applyPayment(String documentNumber, BigDecimal amount);
     BillingDocument reversePayment(String documentNumber, BigDecimal amount);
+    BillingDocument cancelAndArchive(String documentNumber, String reason);
 }

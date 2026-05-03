@@ -51,6 +51,17 @@ management:
     health:
       show-details: when-authorized
 
+bokati:
+  payment:
+    pawaypay:
+      enabled: false
+      api-key: ${PAWAYPAY_API_KEY:}
+      base-url: ${PAWAYPAY_BASE_URL:https://api.sandbox.pawapay.io}
+      callback-base-url: ${APP_BASE_URL:http://localhost:8080}
+      callback-secret: ${PAWAYPAY_CALLBACK_SECRET:}
+      polling-delay-ms: 300000
+      polling-max-age-minutes: 10
+
 app:
   document:
     storage:

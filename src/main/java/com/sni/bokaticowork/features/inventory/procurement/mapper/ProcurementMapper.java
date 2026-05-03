@@ -25,6 +25,7 @@ public class ProcurementMapper {
         return PurchaseRequestResponse.builder()
                 .requestCode(pr.getRequestCode())
                 .locationCode(pr.getLocation() == null ? null : pr.getLocation().getLocationCode())
+                .locationName(pr.getLocation() == null ? null : pr.getLocation().getName())
                 .status(pr.getStatus())
                 .requestedBy(pr.getRequestedBy())
                 .approvedBy(pr.getApprovedBy())

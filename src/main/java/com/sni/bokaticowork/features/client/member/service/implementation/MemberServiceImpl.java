@@ -194,6 +194,13 @@ public class MemberServiceImpl  implements MemberService {
                 .orElseThrow(()-> new ResourceNotFoundException("Member not found"));
 
         member.setStatus(MemberStatus.valueOf(status.status()));
+        
+        if(member.getStatus() == MemberStatus.ACTIVE){
+            member.setPortalAccess(true);
+        } else if (member.getStatus() == MemberStatus.INACTIVE || member.getStatus() == MemberStatus.SUSPENDED) {
+            member.setPortalAccess(false);
+        }
+
         memberRepo.save(member);
         kycAutomationService.syncMemberKyc(member.getMemberId());
     }
@@ -298,7 +305,7 @@ public class MemberServiceImpl  implements MemberService {
 
         if(member.getStatus() == MemberStatus.INACTIVE || member.getStatus() == MemberStatus.SUSPENDED){
             member.setStatus(MemberStatus.ACTIVE);
-        }
+        }  
 
         memberRepo.save(member);
         kycAutomationService.syncMemberKyc(member.getMemberId());

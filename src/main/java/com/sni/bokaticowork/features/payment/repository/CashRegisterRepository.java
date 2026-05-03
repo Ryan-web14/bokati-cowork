@@ -20,7 +20,7 @@ public interface CashRegisterRepository extends JpaRepository<CashRegister, Long
                     FROM cash_register cr
                     WHERE (:active IS NULL OR cr.active = :active)
                       AND (CAST(:locationCode AS VARCHAR) IS NULL OR cr.location_code = CAST(:locationCode AS VARCHAR))
-                      AND (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code = CAST(:businessEntityCode AS VARCHAR))
+                      AND (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))
                       AND (
                           CAST(:searchText AS VARCHAR) IS NULL
                           OR cr.register_code ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
@@ -36,7 +36,7 @@ public interface CashRegisterRepository extends JpaRepository<CashRegister, Long
                     FROM cash_register cr
                     WHERE (:active IS NULL OR cr.active = :active)
                       AND (CAST(:locationCode AS VARCHAR) IS NULL OR cr.location_code = CAST(:locationCode AS VARCHAR))
-                      AND (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code = CAST(:businessEntityCode AS VARCHAR))
+                      AND (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))
                       AND (
                           CAST(:searchText AS VARCHAR) IS NULL
                           OR cr.register_code ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')

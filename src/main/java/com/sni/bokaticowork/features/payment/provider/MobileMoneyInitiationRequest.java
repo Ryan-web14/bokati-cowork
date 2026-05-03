@@ -8,6 +8,7 @@ public record MobileMoneyInitiationRequest(
         String phoneNumber,
         BigDecimal amount,
         String currency,
-        String callbackUrl
+        String callbackUrl,
+        String correspondent
 ) {
 }

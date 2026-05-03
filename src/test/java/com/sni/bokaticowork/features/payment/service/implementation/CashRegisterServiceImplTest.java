@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.payment.service.implementation;
 
+import com.sni.bokaticowork.features.payment.dto.request.CreateCashRegisterRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreateCashVoucherRequest;
 import com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse;
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
@@ -60,6 +61,41 @@ class CashRegisterServiceImplTest {
 
     @InjectMocks
     private CashRegisterServiceImpl service;
+
+    @Test
+    void shouldGenerateLongAutomaticCashRegisterCodes() {
+        when(sequenceGenerator.next("cash_register"))
+                .thenReturn("CSR-SEQ-000001", "CSR-SEQ-000002", "CSR-SEQ-000003");
+        when(registerRepository.save(any(CashRegister.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(mapper.toCashRegisterResponse(any(CashRegister.class))).thenAnswer(invocation -> {
+            CashRegister value = invocation.getArgument(0);
+            return new com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse(
+                    value.getRegisterCode(),
+                    value.getName(),
+                    value.getLocationCode(),
+                    value.getBusinessEntityCode(),
+                    value.getDeviceCode(),
+                    value.getActive(),
+                    value.getCashControlEnabled(),
+                    value.getMaxCashAmount(),
+                    value.getCreatedAt(),
+                    value.getUpdatedAt()
+            );
+        });
+
+        var response = service.createRegister(new CreateCashRegisterRequest(
+                "Caisse reception",
+                "LOC-001",
+                "BUS-0001",
+                "POS-001",
+                true,
+                new BigDecimal("500000")
+        ));
+
+        assertEquals(true, response.registerCode().startsWith("CSR-"));
+        assertEquals(true, response.businessEntityCode().startsWith("BIZ-"));
+        assertEquals(true, response.deviceCode().startsWith("DEV-"));
+    }
 
     @Test
     void shouldCreateEntryVoucherWithDedicatedDocumentData() {
@@ -127,6 +163,22 @@ class CashRegisterServiceImplTest {
     }
 
     @Test
+    void shouldReturnOverviewMetrics() {
+        when(sessionRepository.overviewCounts("CSR-0001", "BUS-001", null, null))
+                .thenReturn(new Object[]{2L, 1L, 1L, 1L, 3L, new BigDecimal("2500.00")});
+        when(movementRepository.overviewAmounts("CSR-0001", "BUS-001", null, null))
+                .thenReturn(new Object[]{8L, new BigDecimal("10000.00"), new BigDecimal("50000.00"), new BigDecimal("5000.00"),
+                        new BigDecimal("7000.00"), new BigDecimal("3000.00"), new BigDecimal("1500.00")});
+
+        var response = service.overviewMetrics("CSR-0001", "BUS-001", null, null);
+
+        assertEquals(2L, response.registerCount());
+        assertEquals(1L, response.openSessionCount());
+        assertEquals(new BigDecimal("60500.00"), response.netCashPosition());
+        assertEquals(new BigDecimal("2500.00"), response.pendingVarianceAmount());
+    }
+
+    @Test
     void shouldRejectExitVoucherWithoutReason() {
         CashSession session = openSession();
         when(sessionRepository.findBySessionNumber("CSS-0001")).thenReturn(Optional.of(session));
@@ -172,6 +224,12 @@ class CashRegisterServiceImplTest {
                 movement.getMovementNumber(),
                 movement.getCashSession().getSessionNumber(),
                 movement.getCashSession().getCashRegister().getRegisterCode(),
+                movement.getCashSession().getCashRegister().getName(),
+                movement.getCashSession().getCashRegister().getBusinessEntityCode(),
+                movement.getCashSession().getCashRegister().getDeviceCode(),
+                movement.getCashSession().getStatus(),
+                movement.getCashSession().getOpenedBy(),
+                movement.getCashSession().getOpenedAt(),
                 movement.getMovementType(),
                 movement.getMovementType() == CashMovementType.CASH_OUT ? CashFlowDirection.OUT : CashFlowDirection.IN,
                 movement.getAmount(),
@@ -186,6 +244,15 @@ class CashRegisterServiceImplTest {
                 movement.getCounterpartyName(),
                 movement.getReason(),
                 movement.getCreatedBy(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 movement.getMetadataJson(),
                 Instant.now()
         );

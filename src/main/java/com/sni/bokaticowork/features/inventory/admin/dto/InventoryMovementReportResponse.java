@@ -10,6 +10,7 @@ import java.util.List;
 @Data
 @Builder
 public class InventoryMovementReportResponse {
+    private String reportTitle;
     private String itemCode;
     private String locationCode;
     private String fromDate;

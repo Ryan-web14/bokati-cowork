@@ -1,94 +1,375 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title th:text="${request.title}">Contrat subscription pass non remboursable</title>
-    <style>
-        body { font-family: "DejaVu Sans", sans-serif; color: #1f2937; margin: 34px; font-size: 12px; line-height: 1.55; }
-        h1 { font-size: 22px; color: #111827; border-bottom: 2px solid #111827; padding-bottom: 10px; margin-bottom: 8px; }
-        h2 { font-size: 15px; color: #111827; margin-top: 22px; margin-bottom: 8px; }
-        .muted { color: #6b7280; }
-        .grid { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .grid td { border: 1px solid #d1d5db; padding: 8px; vertical-align: top; }
-        .notice { border: 1px solid #111827; padding: 10px; margin-top: 16px; font-weight: bold; }
-        ul { padding-left: 18px; }
-        .signature { margin-top: 42px; width: 100%; border-collapse: collapse; }
-        .signature td { width: 50%; padding-top: 18px; vertical-align: top; }
-        .line { margin-top: 42px; border-top: 1px solid #111827; width: 82%; }
-    </style>
+<meta charset="UTF-8"/>
+<title th:text="${request.title}">Contrat souscription / pass non remboursable</title>
+<style>
+/* ── Page setup ─────────────────────────────────────────────────── */
+@page {
+    size: A4;
+    margin: 18mm 16mm 24mm 16mm;
+    @bottom-right {
+        content: "Page " counter(page) " / " counter(pages);
+        font-family: "DejaVu Sans", sans-serif;
+        font-size: 8px;
+        color: #9ca3af;
+    }
+    @bottom-left {
+        content: "Document confidentiel — usage strictement personnel";
+        font-family: "DejaVu Sans", sans-serif;
+        font-size: 8px;
+        color: #9ca3af;
+    }
+}
+
+/* ── Base ───────────────────────────────────────────────────────── */
+body {
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 10.5px;
+    line-height: 1.65;
+    color: #1e293b;
+    margin: 0;
+    padding: 0;
+}
+p { margin: 0 0 8px 0; }
+
+/* ── Document header ────────────────────────────────────────────── */
+.doc-header {
+    background-color: #0a2240;
+    padding: 16px 20px 14px 20px;
+}
+.doc-header table { width: 100%; border-collapse: collapse; }
+.doc-header td { vertical-align: middle; padding: 0; }
+.company-name { font-size: 15px; font-weight: bold; color: #ffffff; }
+.company-sub { font-size: 8.5px; color: #7fb3d3; margin-top: 2px; }
+.doc-type-label {
+    font-size: 8px;
+    color: #e8560a;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    font-weight: bold;
+    text-align: right;
+}
+.doc-title-right {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: right;
+    margin-top: 3px;
+}
+.accent-bar { height: 3px; background-color: #e8560a; }
+
+/* ── Metadata ribbon ────────────────────────────────────────────── */
+.meta-ribbon {
+    background-color: #f0f6ff;
+    border: 1px solid #c7d9f0;
+    border-top: none;
+    padding: 7px 16px;
+    margin-bottom: 16px;
+}
+.meta-ribbon table { width: 100%; border-collapse: collapse; }
+.meta-ribbon td { font-size: 9.5px; color: #475569; padding: 2px 0; }
+.meta-key { color: #94a3b8; width: 130px; font-weight: bold; }
+
+/* ── Non-refundable notice ────────────────────────────────────────── */
+.nr-notice {
+    border: 2px solid #e8560a;
+    background-color: #fff8f0;
+    padding: 11px 14px;
+    margin-bottom: 18px;
+}
+.nr-notice-title {
+    font-size: 10px;
+    font-weight: bold;
+    color: #c2410c;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 5px;
+}
+.nr-notice-text { font-size: 10px; color: #7c2d00; line-height: 1.6; }
+
+/* ── Section ────────────────────────────────────────────────────── */
+.section { margin-bottom: 18px; page-break-inside: avoid; }
+.section-heading {
+    border-left: 4px solid #e8560a;
+    background-color: #f8fafc;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+}
+.section-heading h2 {
+    font-size: 11px;
+    font-weight: bold;
+    color: #0a2240;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+/* ── Party cards ────────────────────────────────────────────────── */
+.parties-outer { width: 100%; border-collapse: separate; border-spacing: 12px 0; }
+.party-card {
+    width: 47%;
+    border: 1px solid #d1dce9;
+    padding: 12px 14px;
+    vertical-align: top;
+    background-color: #ffffff;
+}
+.party-badge {
+    font-size: 7.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #e8560a;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.party-name { font-size: 12px; font-weight: bold; color: #0a2240; margin-bottom: 6px; }
+.party-line { font-size: 10px; color: #64748b; margin-top: 3px; }
+
+/* ── Object ─────────────────────────────────────────────────────── */
+.object-block {
+    border-left: 3px solid #cbd5e1;
+    background-color: #f8fafc;
+    padding: 10px 14px;
+    font-size: 10.5px;
+    color: #374151;
+    line-height: 1.7;
+}
+
+/* ── Info table ─────────────────────────────────────────────────── */
+.info-tbl { width: 100%; border-collapse: collapse; }
+.info-tbl tr:nth-child(even) td { background-color: #f8fafc; }
+.info-tbl td {
+    border: 1px solid #e2e8f0;
+    padding: 7px 10px;
+    font-size: 10.5px;
+    vertical-align: top;
+}
+.info-tbl .lbl {
+    width: 36%;
+    background-color: #f1f5fb;
+    color: #475569;
+    font-weight: bold;
+}
+.info-tbl tr:nth-child(even) .lbl { background-color: #eaf0f9; }
+
+/* ── Clauses ─────────────────────────────────────────────────────── */
+.clauses-list { list-style: none; margin: 0; padding: 0; }
+.clauses-list li {
+    padding: 7px 8px 7px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 10.5px;
+    color: #334155;
+    position: relative;
+}
+.clauses-list li:last-child { border-bottom: none; }
+.clauses-list li:before {
+    content: "›";
+    color: #e8560a;
+    font-size: 13px;
+    font-weight: bold;
+    position: absolute;
+    left: 6px;
+    top: 5px;
+}
+
+/* ── Variables ───────────────────────────────────────────────────── */
+.vars-tbl { width: 100%; border-collapse: collapse; }
+.vars-tbl tr:nth-child(even) td { background-color: #f8fafc; }
+.vars-tbl td {
+    border: 1px solid #e2e8f0;
+    padding: 6px 10px;
+    font-size: 10.5px;
+}
+.vars-tbl .var-key {
+    width: 38%;
+    background-color: #f1f5fb;
+    color: #475569;
+    font-weight: bold;
+}
+.vars-tbl tr:nth-child(even) .var-key { background-color: #eaf0f9; }
+
+/* ── Signature ────────────────────────────────────────────────────── */
+.sig-intro { font-size: 10px; color: #64748b; margin-bottom: 22px; font-style: italic; }
+.sig-outer { width: 100%; border-collapse: separate; border-spacing: 28px 0; margin-top: 8px; }
+.sig-col { width: 44%; vertical-align: top; }
+.sig-role-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #e8560a;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+.sig-party-name { font-size: 11px; font-weight: bold; color: #0a2240; margin-bottom: 2px; }
+.sig-party-role { font-size: 9.5px; color: #64748b; margin-bottom: 36px; }
+.sig-line { border-top: 1.5px solid #0a2240; width: 88%; margin-top: 2px; }
+.sig-caption { font-size: 8.5px; color: #94a3b8; margin-top: 6px; }
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.doc-footer {
+    margin-top: 22px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 7px;
+    text-align: center;
+    font-size: 8px;
+    color: #94a3b8;
+}
+</style>
 </head>
 <body>
-<h1 th:text="${request.title}">Contrat subscription / pass non remboursable</h1>
-<p class="muted">
-    Genere le <span th:text="${generatedAt}">2026-04-16</span> |
-    Reference template <span th:text="${request.templateCode}">subscription-pass-non-refundable</span>
-</p>
 
-<div class="notice">
-    Cette offre est non remboursable apres validation systeme, sauf obligation legale contraire ou decision explicite de l'operateur.
+<!-- ═══════════════════════════════════════ HEADER ═══ -->
+<div class="doc-header">
+  <table>
+    <tr>
+      <td style="width:55%">
+        <div class="company-name" th:text="${business != null ? business.name : 'BOKATI COWORK'}">BOKATI COWORK</div>
+        <div class="company-sub">Espace de coworking &amp; services aux entreprises</div>
+      </td>
+      <td style="width:45%">
+        <div class="doc-type-label">Souscription / Pass — Non remboursable</div>
+        <div class="doc-title-right" th:text="${request.title}">Contrat de souscription</div>
+      </td>
+    </tr>
+  </table>
+</div>
+<div class="accent-bar"></div>
+
+<!-- ═══════════════════════════════════════ META ══════ -->
+<div class="meta-ribbon">
+  <table>
+    <tr>
+      <td class="meta-key">Date de génération</td>
+      <td th:text="${generatedAt}">2026-01-01</td>
+      <td style="width:30px"></td>
+      <td class="meta-key">Référence modèle</td>
+      <td th:text="${request.templateCode}">subscription-pass-non-refundable</td>
+    </tr>
+  </table>
 </div>
 
-<h2>Parties</h2>
-<table class="grid">
+<!-- ═══════════════════════════════════════ AVIS NON REMBOURSABLE ══ -->
+<div class="nr-notice">
+  <div class="nr-notice-title">⚠ Offre non remboursable</div>
+  <div class="nr-notice-text">
+    La présente souscription ou pass est <strong>non remboursable</strong> après validation par le système,
+    sauf obligation légale contraire ou décision explicite et formelle de l'opérateur.
+    Le bénéficiaire reconnaît avoir pris connaissance de cette condition préalablement à la signature.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SECTION 1 — PARTIES ═══ -->
+<div class="section">
+  <div class="section-heading"><h2>1 — Parties au contrat</h2></div>
+  <table class="parties-outer">
     <tr>
-        <td>
-            <strong>Beneficiaire</strong><br>
-            <span th:text="${ownerName}">Beneficiaire</span><br>
-            <span th:text="${ownerCode}">OWNER-CODE</span><br>
-            <span th:if="${ownerEmail}" th:text="${ownerEmail}">email@test.com</span><br th:if="${ownerEmail}">
-            <span th:if="${ownerPhone}" th:text="${ownerPhone}">690000000</span>
-        </td>
-        <td>
-            <strong>Operateur</strong><br>
-            <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span><br>
-            <span th:if="${business != null and business.code != null}" th:text="${business.code}">BUS-001</span><br th:if="${business != null and business.code != null}">
-            <span th:if="${business != null and business.email != null}" th:text="${business.email}">contact@test.com</span><br th:if="${business != null and business.email != null}">
-            <span th:if="${business != null and business.phone != null}" th:text="${business.phone}">677000000</span>
-        </td>
+      <td class="party-card">
+        <div class="party-badge">Bénéficiaire</div>
+        <div class="party-name" th:text="${ownerName}">Nom du bénéficiaire</div>
+        <div class="party-line" th:text="${ownerCode}">CODE-001</div>
+        <div class="party-line" th:if="${ownerEmail}" th:text="${ownerEmail}">email@exemple.com</div>
+        <div class="party-line" th:if="${ownerPhone}" th:text="${ownerPhone}">+000 000 000 000</div>
+      </td>
+      <td class="party-card">
+        <div class="party-badge">Opérateur</div>
+        <div class="party-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+        <div class="party-line" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
+        <div class="party-line" th:if="${business != null and business.code != null}" th:text="${business.code}">BUS-001</div>
+        <div class="party-line" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@bokati.com</div>
+        <div class="party-line" th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
+      </td>
     </tr>
-</table>
+  </table>
+</div>
 
-<h2>Objet</h2>
-<p th:text="${request.description}">Objet du contrat.</p>
+<!-- ═══════════════════════════════════════ SECTION 2 — OBJET ═════ -->
+<div class="section" th:if="${request.description != null and !#strings.isEmpty(request.description)}">
+  <div class="section-heading"><h2>2 — Objet de la souscription</h2></div>
+  <div class="object-block" th:text="${request.description}">Objet de la souscription.</div>
+</div>
 
-<h2>Periode</h2>
-<table class="grid">
-    <tr><td><strong>Date d'effet</strong></td><td th:text="${request.effectiveDate} ?: '-'">-</td></tr>
-    <tr><td><strong>Date de debut</strong></td><td th:text="${request.startDate} ?: '-'">-</td></tr>
-    <tr><td><strong>Date de fin</strong></td><td th:text="${request.endDate} ?: '-'">-</td></tr>
-    <tr><td><strong>Signataire systeme</strong></td><td th:text="${request.signatoryName} ?: ownerName">Nom</td></tr>
-</table>
-
-<h2>Clauses contractuelles</h2>
-<ul>
-    <li th:if="${#lists.isEmpty(clauses)}">Les conditions applicables sont celles de l'offre validee au moment de la prise de subscription, pass ou add-on.</li>
-    <li th:each="clause : ${clauses}" th:text="${clause}">Clause</li>
-</ul>
-
-<h2>Informations metier</h2>
-<table class="grid">
-    <tr th:if="${#maps.isEmpty(variables)}">
-        <td>Aucune variable supplementaire.</td>
+<!-- ═══════════════════════════════════════ SECTION 3 — PÉRIODE ════ -->
+<div class="section">
+  <div class="section-heading"><h2>3 — Période et conditions d'accès</h2></div>
+  <table class="info-tbl">
+    <tr>
+      <td class="lbl">Date d'effet</td>
+      <td th:text="${request.effectiveDate != null ? request.effectiveDate : '—'}">—</td>
     </tr>
+    <tr>
+      <td class="lbl">Date de début</td>
+      <td th:text="${request.startDate != null ? request.startDate : '—'}">—</td>
+    </tr>
+    <tr>
+      <td class="lbl">Date de fin</td>
+      <td th:text="${request.endDate != null ? request.endDate : '—'}">—</td>
+    </tr>
+    <tr>
+      <td class="lbl">Signataire système</td>
+      <td th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</td>
+    </tr>
+    <tr>
+      <td class="lbl">Qualité</td>
+      <td th:text="${request.signatoryRole != null ? request.signatoryRole : 'Bénéficiaire / Représentant'}">Qualité</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════ SECTION 4 — CLAUSES ═══ -->
+<div class="section">
+  <div class="section-heading"><h2>4 — Clauses contractuelles</h2></div>
+  <ul class="clauses-list">
+    <li th:if="${#lists.isEmpty(clauses)}">
+      Les conditions applicables sont celles de l'offre validée au moment de la prise de souscription,
+      pass ou add-on. Aucun remboursement ne sera accordé après la validation du système.
+    </li>
+    <li th:each="clause : ${clauses}" th:text="${clause}">Clause contractuelle.</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════ SECTION 5 — INFOS MÉTIER -->
+<div class="section" th:if="${variables != null and !#maps.isEmpty(variables)}">
+  <div class="section-heading"><h2>5 — Informations et paramètres de l'offre</h2></div>
+  <table class="vars-tbl">
     <tr th:each="entry : ${variables.entrySet()}">
-        <td th:text="${entry.key}">cle</td>
-        <td th:text="${entry.value}">valeur</td>
+      <td class="var-key" th:text="${entry.key}">Paramètre</td>
+      <td th:text="${entry.value}">Valeur</td>
     </tr>
-</table>
+  </table>
+</div>
 
-<table class="signature">
+<!-- ═══════════════════════════════════════ SIGNATURES ════════════ -->
+<div class="section" style="margin-top:32px;">
+  <div class="section-heading"><h2>Signatures des parties</h2></div>
+  <p class="sig-intro">
+    Par leur signature, les parties attestent avoir pris connaissance des présentes conditions,
+    notamment du caractère <strong>non remboursable</strong> de la souscription, et s'engagent à les respecter.
+  </p>
+  <table class="sig-outer">
     <tr>
-        <td>
-            <strong>Signature systeme pour le beneficiaire</strong>
-            <div class="line"></div>
-            <span th:text="${request.signatoryName} ?: ownerName">Nom</span>
-        </td>
-        <td>
-            <strong>Operateur</strong>
-            <div class="line"></div>
-            <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span>
-        </td>
+      <td class="sig-col">
+        <div class="sig-role-label">Signature pour le bénéficiaire</div>
+        <div class="sig-party-name" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</div>
+        <div class="sig-party-role" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Bénéficiaire / Représentant'}">Qualité</div>
+        <div class="sig-line"></div>
+        <div class="sig-caption">Signature &amp; date</div>
+      </td>
+      <td class="sig-col">
+        <div class="sig-role-label">Signature opérateur</div>
+        <div class="sig-party-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+        <div class="sig-party-role">Représentant habilité</div>
+        <div class="sig-line"></div>
+        <div class="sig-caption">Signature &amp; date</div>
+      </td>
     </tr>
-</table>
+  </table>
+</div>
+
+<div class="doc-footer">
+  <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span>
+  · Document généré automatiquement le <span th:text="${generatedAt}">2026-01-01</span>
+  · Confidentiel — Non remboursable
+</div>
+
 </body>
 </html>

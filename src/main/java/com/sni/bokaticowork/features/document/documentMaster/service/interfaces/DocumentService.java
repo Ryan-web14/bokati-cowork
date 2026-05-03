@@ -20,4 +20,8 @@ public interface DocumentService {
     DocumentResponse approve(String documentCode, DocumentReviewDecisionRequest request);
     DocumentResponse reject(String documentCode, DocumentReviewDecisionRequest request);
     byte[] downloadFile(String documentCode);
+
+    DocumentFileResult getFileWithMeta(String documentCode);
+
+    record DocumentFileResult(byte[] content, String mimeType, String fileName) {}
 }

@@ -78,7 +78,7 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentType documentType = documentType(metadata.getDocumentTypeCode());
         OwnerResolution owner = resolveOwner(metadata.getOwnerType(), metadata.getOwnerCode());
 
-        validateDocumentMetadata(metadata, documentType);
+        validateDocumentMetadata(metadata, documentType, file.getSize());
         List<String> allowedMimeTypes = parseAllowedMimeTypes(documentType.getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
 
@@ -110,7 +110,7 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentType documentType = documentType(metadata.getDocumentTypeCode());
         OwnerResolution owner = resolveOwner(metadata.getOwnerType(), metadata.getOwnerCode());
 
-        validateDocumentMetadata(metadata, documentType);
+        validateDocumentMetadata(metadata, documentType, content.length);
         List<String> allowedMimeTypes = parseAllowedMimeTypes(documentType.getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspectBytes(
                 originalFileName,
@@ -216,12 +216,21 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     @Transactional(readOnly = true)
     public byte[] downloadFile(String documentCode) {
+        return getFileWithMeta(documentCode).content();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentFileResult getFileWithMeta(String documentCode) {
         Document document = serviceDocument(documentCode);
         if (!StringUtils.hasText(document.getFileUrl())) {
             throw new BadRequestException("Document has no file stored");
         }
         try {
-            return java.nio.file.Files.readAllBytes(java.nio.file.Path.of(document.getFileUrl()));
+            byte[] content = java.nio.file.Files.readAllBytes(java.nio.file.Path.of(document.getFileUrl()));
+            String mimeType = StringUtils.hasText(document.getMimeType()) ? document.getMimeType() : "application/octet-stream";
+            String fileName = StringUtils.hasText(document.getFileName()) ? document.getFileName() : documentCode + ".bin";
+            return new DocumentFileResult(content, mimeType, fileName);
         } catch (java.io.IOException ex) {
             throw new BadRequestException("Unable to read document file", ex);
         }
@@ -362,12 +371,15 @@ public class DocumentServiceImpl implements DocumentService {
         documentReviewRepository.save(review);
     }
 
-    private void validateDocumentMetadata(DocumentUploadMetadataRequest metadata, DocumentType documentType) {
+    private void validateDocumentMetadata(DocumentUploadMetadataRequest metadata, DocumentType documentType, long fileSizeBytes) {
         if (documentType.getRequiresExpiryDate() && metadata.getExpiryDate() == null) {
             throw new BadRequestException("Expiry date is required for this document type");
         }
-        if (documentType.getMaxFileSizeBytes() != null && documentType.getMaxFileSizeBytes() > 0) {
-            // The multipart size is rechecked during inspection using actual bytes.
+        if (documentType.getMaxFileSizeBytes() != null && documentType.getMaxFileSizeBytes() > 0
+                && fileSizeBytes > documentType.getMaxFileSizeBytes()) {
+            throw new BadRequestException(
+                    "File size (" + (fileSizeBytes / 1024) + " KB) exceeds the maximum allowed size of "
+                            + (documentType.getMaxFileSizeBytes() / 1024) + " KB for this document type");
         }
     }
 

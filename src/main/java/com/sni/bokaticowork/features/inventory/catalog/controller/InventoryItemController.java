@@ -70,6 +70,15 @@ public class InventoryItemController {
         return ResponseEntity.ok(service.deactivate(itemCode));
     }
 
+    @DeleteMapping("/{itemCode}")
+    @Audited(module = "INVENTORY", action = "DELETE_ITEM", ressource = "inventory_item")
+    @Idempotent(operation = "INVENTORY_ITEM_DELETE", required = false)
+    public ResponseEntity<Void> delete(@PathVariable String itemCode) {
+        service.delete(itemCode);
+        return ResponseEntity.noContent().build();
+    }
+
+
     private String firstSearchText(String... values) {
         for (String value : values) {
             if (StringUtils.hasText(value)) {

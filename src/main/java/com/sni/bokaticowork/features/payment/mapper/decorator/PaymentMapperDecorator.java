@@ -17,6 +17,7 @@ import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.model.WalletHold;
 import com.sni.bokaticowork.features.payment.model.WalletLedgerEntry;
+import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -28,18 +29,32 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
     @Qualifier("delegate")
     private PaymentMapper delegate;
 
+    @Autowired
+    private TransactionContextResolver contextResolver;
+
     @Override
     public PaymentIntentResponse toIntentResponse(PaymentIntent intent) {
+        TransactionContextResolver.PartyView party = contextResolver.resolveParty(intent.getCustomerType(), intent.getCustomerCode());
+        TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
         return new PaymentIntentResponse(
                 intent.getIntentNumber(),
                 intent.getCustomerType(),
                 intent.getCustomerCode(),
+                party.name(),
+                party.email(),
+                party.phone(),
+                party.billingAddressJson(),
+                party.registered(),
                 intent.getAmount(),
                 intent.getCurrency(),
                 intent.getStatus(),
                 intent.getPurpose(),
                 intent.getSourceType(),
                 intent.getSourceCode(),
+                source.type(),
+                source.code(),
+                source.label(),
+                source.registered(),
                 intent.getIdempotencyKey(),
                 intent.getExpiresAt(),
                 intent.getMetadataJson()
@@ -54,6 +69,7 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 transaction.getPaymentMethod(),
                 transaction.getProvider(),
                 transaction.getProviderReference(),
+                transaction.getReceiptNumber(),
                 transaction.getAmount(),
                 transaction.getCurrency(),
                 transaction.getStatus(),

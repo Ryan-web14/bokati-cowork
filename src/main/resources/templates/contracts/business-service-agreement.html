@@ -1,81 +1,384 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title th:text="${request.title}">Business Service Agreement</title>
-    <style>
-        body { font-family: "DejaVu Sans", sans-serif; color: #172033; margin: 34px; font-size: 12px; line-height: 1.6; }
-        h1 { font-size: 24px; margin-bottom: 6px; }
-        h2 { font-size: 15px; margin-top: 24px; }
-        .subtitle { color: #4b5563; margin-bottom: 22px; }
-        .card { border: 1px solid #d1d5db; padding: 12px; margin-top: 10px; }
-        .two-col { width: 100%; border-collapse: collapse; }
-        .two-col td { width: 50%; vertical-align: top; padding-right: 18px; }
-        ul { padding-left: 18px; }
-    </style>
+<meta charset="UTF-8"/>
+<title th:text="${request.title}">Contrat de prestation de services</title>
+<style>
+/* ── Page setup ─────────────────────────────────────────────────── */
+@page {
+    size: A4;
+    margin: 18mm 16mm 24mm 16mm;
+    @bottom-right {
+        content: "Page " counter(page) " / " counter(pages);
+        font-family: "DejaVu Sans", sans-serif;
+        font-size: 8px;
+        color: #9ca3af;
+    }
+    @bottom-left {
+        content: "Document confidentiel — usage strictement professionnel";
+        font-family: "DejaVu Sans", sans-serif;
+        font-size: 8px;
+        color: #9ca3af;
+    }
+}
+
+/* ── Base ───────────────────────────────────────────────────────── */
+body {
+    font-family: "DejaVu Sans", sans-serif;
+    font-size: 10.5px;
+    line-height: 1.65;
+    color: #1e293b;
+    margin: 0;
+    padding: 0;
+}
+p { margin: 0 0 8px 0; }
+
+/* ── Document header ────────────────────────────────────────────── */
+.doc-header {
+    background-color: #0a2240;
+    padding: 16px 20px 14px 20px;
+}
+.doc-header table { width: 100%; border-collapse: collapse; }
+.doc-header td { vertical-align: middle; padding: 0; }
+.company-name {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffffff;
+}
+.company-sub {
+    font-size: 8.5px;
+    color: #7fb3d3;
+    margin-top: 2px;
+}
+.doc-type-label {
+    font-size: 8px;
+    color: #e8560a;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    font-weight: bold;
+    text-align: right;
+}
+.doc-title-right {
+    font-size: 15px;
+    font-weight: bold;
+    color: #ffffff;
+    text-align: right;
+    margin-top: 3px;
+}
+.accent-bar { height: 3px; background-color: #e8560a; }
+
+/* ── Metadata ribbon ────────────────────────────────────────────── */
+.meta-ribbon {
+    background-color: #f0f6ff;
+    border: 1px solid #c7d9f0;
+    border-top: none;
+    padding: 7px 16px;
+    margin-bottom: 20px;
+}
+.meta-ribbon table { width: 100%; border-collapse: collapse; }
+.meta-ribbon td { font-size: 9.5px; color: #475569; padding: 2px 0; }
+.meta-key { color: #94a3b8; width: 130px; font-weight: bold; }
+
+/* ── Section ────────────────────────────────────────────────────── */
+.section { margin-bottom: 18px; page-break-inside: avoid; }
+.section-heading {
+    border-left: 4px solid #e8560a;
+    background-color: #f8fafc;
+    padding: 6px 10px;
+    margin-bottom: 10px;
+}
+.section-heading h2 {
+    font-size: 11px;
+    font-weight: bold;
+    color: #0a2240;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+/* ── Party cards ────────────────────────────────────────────────── */
+.parties-outer { width: 100%; border-collapse: separate; border-spacing: 12px 0; }
+.party-card {
+    width: 47%;
+    border: 1px solid #d1dce9;
+    padding: 12px 14px;
+    vertical-align: top;
+    background-color: #ffffff;
+}
+.party-badge {
+    font-size: 7.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #e8560a;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.party-name {
+    font-size: 12px;
+    font-weight: bold;
+    color: #0a2240;
+    margin-bottom: 6px;
+}
+.party-line { font-size: 10px; color: #64748b; margin-top: 3px; }
+
+/* ── Period block ───────────────────────────────────────────────── */
+.period-tbl { width: 100%; border-collapse: collapse; }
+.period-tbl td {
+    border: 1px solid #e2e8f0;
+    padding: 7px 10px;
+    font-size: 10.5px;
+    vertical-align: top;
+}
+.period-tbl tr:nth-child(even) td { background-color: #f8fafc; }
+.period-tbl .lbl {
+    width: 36%;
+    background-color: #f1f5fb;
+    color: #475569;
+    font-weight: bold;
+}
+.period-tbl tr:nth-child(even) .lbl { background-color: #eaf0f9; }
+
+/* ── Object ─────────────────────────────────────────────────────── */
+.object-block {
+    border-left: 3px solid #cbd5e1;
+    background-color: #f8fafc;
+    padding: 10px 14px;
+    font-size: 10.5px;
+    color: #374151;
+    line-height: 1.7;
+}
+
+/* ── Clauses ─────────────────────────────────────────────────────── */
+.clauses-list { list-style: none; margin: 0; padding: 0; }
+.clauses-list li {
+    padding: 7px 8px 7px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 10.5px;
+    color: #334155;
+    position: relative;
+}
+.clauses-list li:last-child { border-bottom: none; }
+.clauses-list li:before {
+    content: "›";
+    color: #e8560a;
+    font-size: 13px;
+    font-weight: bold;
+    position: absolute;
+    left: 6px;
+    top: 5px;
+}
+
+/* ── Variables ───────────────────────────────────────────────────── */
+.vars-tbl { width: 100%; border-collapse: collapse; }
+.vars-tbl tr:nth-child(even) td { background-color: #f8fafc; }
+.vars-tbl td {
+    border: 1px solid #e2e8f0;
+    padding: 6px 10px;
+    font-size: 10.5px;
+}
+.vars-tbl .var-key {
+    width: 38%;
+    background-color: #f1f5fb;
+    color: #475569;
+    font-weight: bold;
+}
+.vars-tbl tr:nth-child(even) .var-key { background-color: #eaf0f9; }
+
+/* ── Signature ────────────────────────────────────────────────────── */
+.sig-intro { font-size: 10px; color: #64748b; margin-bottom: 22px; font-style: italic; }
+.sig-outer { width: 100%; border-collapse: separate; border-spacing: 28px 0; margin-top: 8px; }
+.sig-col { width: 44%; vertical-align: top; }
+.sig-role-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #e8560a;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+.sig-party-name { font-size: 11px; font-weight: bold; color: #0a2240; margin-bottom: 2px; }
+.sig-party-role { font-size: 9.5px; color: #64748b; margin-bottom: 36px; }
+.sig-line { border-top: 1.5px solid #0a2240; width: 88%; margin-top: 2px; }
+.sig-caption { font-size: 8.5px; color: #94a3b8; margin-top: 6px; }
+
+/* ── Legal notice box ─────────────────────────────────────────────── */
+.legal-box {
+    border: 1px solid #d1dce9;
+    background-color: #f8fafc;
+    padding: 10px 14px;
+    font-size: 9.5px;
+    color: #475569;
+    margin-top: 16px;
+    line-height: 1.6;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.doc-footer {
+    margin-top: 22px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 7px;
+    text-align: center;
+    font-size: 8px;
+    color: #94a3b8;
+}
+</style>
 </head>
 <body>
-<h1 th:text="${request.title}">Contrat de prestation</h1>
-<div class="subtitle">
-    Template <span th:text="${request.templateCode}">business-service-agreement</span> |
-    Genere le <span th:text="${generatedAt}">2026-04-09</span>
-</div>
 
-<table class="two-col">
+<!-- ═══════════════════════════════════════ HEADER ═══ -->
+<div class="doc-header">
+  <table>
     <tr>
-        <td>
-            <h2>Client / cocontractant</h2>
-            <div class="card">
-                <strong th:text="${ownerName}">Societe cliente</strong><br>
-                <span th:text="${ownerCode}">CODE</span><br>
-                <span th:if="${ownerEmail}" th:text="${ownerEmail}">email@test.com</span><br th:if="${ownerEmail}">
-                <span th:if="${ownerPhone}" th:text="${ownerPhone}">690000000</span>
-            </div>
-        </td>
-        <td>
-            <h2>Entite operatrice</h2>
-            <div class="card">
-                <strong th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</strong><br>
-                <span th:if="${business != null}" th:text="${business.code}">BUS-001</span><br th:if="${business != null}">
-                <span th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</span><br th:if="${business != null and business.legalForm != null}">
-                <span th:if="${business != null and business.email != null}" th:text="${business.email}">contact@test.com</span>
-            </div>
-        </td>
+      <td style="width:55%">
+        <div class="company-name" th:text="${business != null ? business.name : 'BOKATI COWORK'}">BOKATI COWORK</div>
+        <div class="company-sub">Espace de coworking &amp; services aux entreprises</div>
+      </td>
+      <td style="width:45%">
+        <div class="doc-type-label">Contrat de prestation de services</div>
+        <div class="doc-title-right" th:text="${request.title}">Contrat de prestation</div>
+      </td>
     </tr>
-</table>
+  </table>
+</div>
+<div class="accent-bar"></div>
 
-<h2>Periode</h2>
-<div class="card">
-    Date d'effet: <strong th:text="${request.effectiveDate} ?: '-'">-</strong><br>
-    Date de debut: <strong th:text="${request.startDate} ?: '-'">-</strong><br>
-    Date de fin: <strong th:text="${request.endDate} ?: '-'">-</strong>
+<!-- ═══════════════════════════════════════ META ══════ -->
+<div class="meta-ribbon">
+  <table>
+    <tr>
+      <td class="meta-key">Date de génération</td>
+      <td th:text="${generatedAt}">2026-01-01</td>
+      <td style="width:30px"></td>
+      <td class="meta-key">Référence modèle</td>
+      <td th:text="${request.templateCode}">business-service-agreement</td>
+    </tr>
+  </table>
 </div>
 
-<h2>Objet</h2>
-<div class="card">
-    <p th:text="${request.description} ?: 'Le present contrat encadre les prestations, services et obligations reciporques convenus entre les parties.'">
-        Objet du contrat.
-    </p>
+<!-- ═══════════════════════════════════════ SECTION 1 — PARTIES ═══ -->
+<div class="section">
+  <div class="section-heading"><h2>1 — Identification des parties</h2></div>
+  <table class="parties-outer">
+    <tr>
+      <td class="party-card">
+        <div class="party-badge">Client / Cocontractant</div>
+        <div class="party-name" th:text="${ownerName}">Raison sociale</div>
+        <div class="party-line" th:text="${ownerCode}">CODE-001</div>
+        <div class="party-line" th:if="${ownerEmail}" th:text="${ownerEmail}">email@entreprise.com</div>
+        <div class="party-line" th:if="${ownerPhone}" th:text="${ownerPhone}">+000 000 000 000</div>
+      </td>
+      <td class="party-card">
+        <div class="party-badge">Prestataire / Entité opératrice</div>
+        <div class="party-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+        <div class="party-line" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
+        <div class="party-line" th:if="${business != null and business.code != null}" th:text="${business.code}">BUS-001</div>
+        <div class="party-line" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@bokati.com</div>
+        <div class="party-line" th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
+      </td>
+    </tr>
+  </table>
 </div>
 
-<h2>Clauses principales</h2>
-<ul>
-    <li th:if="${#lists.isEmpty(clauses)}">Les services sont fournis conformement aux conditions commerciales et operationnelles validees entre les parties.</li>
-    <li th:each="clause : ${clauses}" th:text="${clause}">Clause</li>
-</ul>
-
-<h2>Variables contractuelles</h2>
-<div class="card">
-    <div th:if="${#maps.isEmpty(variables)}">Aucune variable supplementaire fournie.</div>
-    <div th:each="entry : ${variables.entrySet()}">
-        <strong th:text="${entry.key}">cle</strong>: <span th:text="${entry.value}">valeur</span>
-    </div>
+<!-- ═══════════════════════════════════════ SECTION 2 — PÉRIODE ════ -->
+<div class="section">
+  <div class="section-heading"><h2>2 — Période et exécution</h2></div>
+  <table class="period-tbl">
+    <tr>
+      <td class="lbl">Date d'effet</td>
+      <td th:text="${request.effectiveDate != null ? request.effectiveDate : '—'}">—</td>
+    </tr>
+    <tr>
+      <td class="lbl">Date de début</td>
+      <td th:text="${request.startDate != null ? request.startDate : '—'}">—</td>
+    </tr>
+    <tr>
+      <td class="lbl">Date de fin</td>
+      <td th:text="${request.endDate != null ? request.endDate : '—'}">—</td>
+    </tr>
+    <tr>
+      <td class="lbl">Signataire</td>
+      <td th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom du signataire</td>
+    </tr>
+    <tr>
+      <td class="lbl">Qualité</td>
+      <td th:text="${request.signatoryRole != null ? request.signatoryRole : 'Représentant autorisé'}">Représentant</td>
+    </tr>
+  </table>
 </div>
 
-<h2>Signature</h2>
-<div class="card">
-    Signataire: <strong th:text="${request.signatoryName} ?: ownerName">Nom</strong><br>
-    Qualite: <strong th:text="${request.signatoryRole} ?: 'Representant autorise'">Role</strong>
+<!-- ═══════════════════════════════════════ SECTION 3 — OBJET ═════ -->
+<div class="section">
+  <div class="section-heading"><h2>3 — Objet du contrat</h2></div>
+  <div class="object-block"
+       th:text="${request.description != null and !#strings.isEmpty(request.description) ?
+                  request.description :
+                  'Le présent contrat encadre les prestations, services et obligations réciproques convenus entre les parties, conformément aux conditions générales applicables.'}">
+    Objet du contrat.
+  </div>
 </div>
+
+<!-- ═══════════════════════════════════════ SECTION 4 — CLAUSES ═══ -->
+<div class="section">
+  <div class="section-heading"><h2>4 — Clauses contractuelles</h2></div>
+  <ul class="clauses-list">
+    <li th:if="${#lists.isEmpty(clauses)}">
+      Les services sont fournis conformément aux conditions commerciales et opérationnelles validées
+      entre les parties. Toute modification devra faire l'objet d'un avenant écrit signé des deux parties.
+    </li>
+    <li th:each="clause : ${clauses}" th:text="${clause}">Clause contractuelle.</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════ SECTION 5 — CONDITIONS ═ -->
+<div class="section" th:if="${variables != null and !#maps.isEmpty(variables)}">
+  <div class="section-heading"><h2>5 — Conditions et paramètres spécifiques</h2></div>
+  <table class="vars-tbl">
+    <tr th:each="entry : ${variables.entrySet()}">
+      <td class="var-key" th:text="${entry.key}">Paramètre</td>
+      <td th:text="${entry.value}">Valeur</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════ MENTIONS LÉGALES ═══════ -->
+<div class="legal-box">
+  Le présent contrat est soumis au droit applicable dans le pays d'exercice du prestataire.
+  Tout litige sera soumis aux juridictions compétentes désignées par le droit commun.
+  Les présentes dispositions s'appliquent à compter de la date d'effet mentionnée ci-dessus.
+</div>
+
+<!-- ═══════════════════════════════════════ SIGNATURES ════════════ -->
+<div class="section" style="margin-top:32px;">
+  <div class="section-heading"><h2>Signatures des parties</h2></div>
+  <p class="sig-intro">
+    Les parties déclarent avoir lu et approuvé l'ensemble des dispositions du présent contrat
+    et s'engagent à en respecter scrupuleusement les termes.
+  </p>
+  <table class="sig-outer">
+    <tr>
+      <td class="sig-col">
+        <div class="sig-role-label">Le client / Cocontractant</div>
+        <div class="sig-party-name" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</div>
+        <div class="sig-party-role" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Représentant autorisé'}">Qualité</div>
+        <div class="sig-line"></div>
+        <div class="sig-caption">Nom, signature &amp; cachet</div>
+      </td>
+      <td class="sig-col">
+        <div class="sig-role-label">Le prestataire</div>
+        <div class="sig-party-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+        <div class="sig-party-role">Représentant habilité</div>
+        <div class="sig-line"></div>
+        <div class="sig-caption">Nom, signature &amp; cachet</div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<div class="doc-footer">
+  <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span>
+  · Document généré automatiquement le <span th:text="${generatedAt}">2026-01-01</span>
+  · Confidentiel
+</div>
+
 </body>
 </html>

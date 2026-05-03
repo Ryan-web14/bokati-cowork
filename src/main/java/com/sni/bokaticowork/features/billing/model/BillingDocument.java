@@ -142,6 +142,9 @@ public class BillingDocument {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
+    @Column(name = "archived_at")
+    private Instant archivedAt;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

@@ -4,6 +4,7 @@ import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwner
 import com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus;
 
 import java.util.List;
 
@@ -14,4 +15,5 @@ public interface KycService {
     KycCaseResponse submit(String code);
     KycCaseResponse approve(String code, KycDecisionRequest request);
     KycCaseResponse reject(String code, KycDecisionRequest request);
+    List<KycRequirementStatus> getMissingRequirements(String code);
 }

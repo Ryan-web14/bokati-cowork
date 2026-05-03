@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.document.documentMaster.dto.response.Docume
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService;
+import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService.DocumentFileResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -71,15 +72,22 @@ public class DocumentController {
 
     @GetMapping("/{code}/download")
     public ResponseEntity<byte[]> download(@PathVariable String code) {
-        DocumentResponse doc = service.getByCode(code);
-        byte[] bytes = service.downloadFile(code);
-        String mimeType = doc.getMimeType() != null ? doc.getMimeType() : "application/octet-stream";
-        String fileName = doc.getFileName() != null ? doc.getFileName() : code + ".bin";
+        DocumentFileResult result = service.getFileWithMeta(code);
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(mimeType));
-        headers.setContentDisposition(ContentDisposition.attachment().filename(fileName).build());
-        headers.setContentLength(bytes.length);
-        return ResponseEntity.ok().headers(headers).body(bytes);
+        headers.setContentType(MediaType.parseMediaType(result.mimeType()));
+        headers.setContentDisposition(ContentDisposition.attachment().filename(result.fileName()).build());
+        headers.setContentLength(result.content().length);
+        return ResponseEntity.ok().headers(headers).body(result.content());
+    }
+
+    @GetMapping("/{code}/preview")
+    public ResponseEntity<byte[]> preview(@PathVariable String code) {
+        DocumentFileResult result = service.getFileWithMeta(code);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(result.mimeType()));
+        headers.setContentDisposition(ContentDisposition.inline().filename(result.fileName()).build());
+        headers.setContentLength(result.content().length);
+        return ResponseEntity.ok().headers(headers).body(result.content());
     }
 
     @PostMapping("/{code}/approve")

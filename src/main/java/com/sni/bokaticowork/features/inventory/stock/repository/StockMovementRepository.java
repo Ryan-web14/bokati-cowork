@@ -224,4 +224,20 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
     long countByAllowNegativeOverrideTrue();
 
     long countByMovementTypeInAndQuantityGreaterThan(java.util.Collection<StockMovementType> movementTypes, BigDecimal quantity);
+
+    @Query(value = """
+            SELECT COALESCE(SUM(sm.quantity), 0)
+            FROM stock_movement sm
+            WHERE sm.item_id = :itemId
+              AND sm.movement_type IN ('OUT', 'ADJUSTMENT_OUT')
+              AND (:locationId IS NULL OR sm.location_from_id = :locationId)
+              AND sm.performed_at >= :since
+            """, nativeQuery = true)
+    BigDecimal consumptionSince(@Param("itemId") Long itemId,
+                                @Param("locationId") Long locationId,
+                                @Param("since") Instant since);
+
+    boolean existsByItemIdAndMovementTypeInAndPerformedAtAfter(Long itemId,
+                                                               java.util.Collection<StockMovementType> movementTypes,
+                                                               Instant performedAt);
 }

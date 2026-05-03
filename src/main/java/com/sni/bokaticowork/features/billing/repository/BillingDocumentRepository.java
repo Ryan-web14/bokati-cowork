@@ -112,6 +112,66 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     List<BillingDocument> findRecoverableDocuments(@Param("customerType") String customerType,
                                                    @Param("customerCode") String customerCode);
 
+    @Query(
+            nativeQuery = true,
+            value = """
+                    SELECT DISTINCT bd.*
+                    FROM billing_document bd
+                    LEFT JOIN billing_document_line bdl ON bdl.document_id = bd.id
+                    WHERE bd.document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+                      AND bd.status IN ('ISSUED', 'SENT', 'PARTIALLY_PAID', 'OVERDUE')
+                      AND bd.balance_due > 0
+                      AND (:documentType IS NULL OR bd.document_type = CAST(:documentType AS VARCHAR))
+                      AND (:customerType IS NULL OR bd.customer_type = CAST(:customerType AS VARCHAR))
+                      AND (:customerCode IS NULL OR bd.customer_code = CAST(:customerCode AS VARCHAR))
+                      AND (:lineSourceType IS NULL OR UPPER(COALESCE(bdl.source_type, '')) = UPPER(CAST(:lineSourceType AS VARCHAR)))
+                      AND (:lineSourceCode IS NULL OR UPPER(COALESCE(bdl.source_code, '')) = UPPER(CAST(:lineSourceCode AS VARCHAR)))
+                      AND (:searchText IS NULL OR (
+                          bd.document_number ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR bd.customer_name ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR bd.customer_code ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bd.customer_email, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bd.title, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bd.description, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bd.source_code, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bdl.description, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bdl.source_code, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                      ))
+                    ORDER BY bd.created_at DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(DISTINCT bd.id)
+                    FROM billing_document bd
+                    LEFT JOIN billing_document_line bdl ON bdl.document_id = bd.id
+                    WHERE bd.document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+                      AND bd.status IN ('ISSUED', 'SENT', 'PARTIALLY_PAID', 'OVERDUE')
+                      AND bd.balance_due > 0
+                      AND (:documentType IS NULL OR bd.document_type = CAST(:documentType AS VARCHAR))
+                      AND (:customerType IS NULL OR bd.customer_type = CAST(:customerType AS VARCHAR))
+                      AND (:customerCode IS NULL OR bd.customer_code = CAST(:customerCode AS VARCHAR))
+                      AND (:lineSourceType IS NULL OR UPPER(COALESCE(bdl.source_type, '')) = UPPER(CAST(:lineSourceType AS VARCHAR)))
+                      AND (:lineSourceCode IS NULL OR UPPER(COALESCE(bdl.source_code, '')) = UPPER(CAST(:lineSourceCode AS VARCHAR)))
+                      AND (:searchText IS NULL OR (
+                          bd.document_number ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR bd.customer_name ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR bd.customer_code ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bd.customer_email, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bd.title, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bd.description, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bd.source_code, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bdl.description, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                          OR COALESCE(bdl.source_code, '') ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
+                      ))
+                    """
+    )
+    Page<BillingDocument> searchPayable(@Param("documentType") String documentType,
+                                        @Param("customerType") String customerType,
+                                        @Param("customerCode") String customerCode,
+                                        @Param("lineSourceType") String lineSourceType,
+                                        @Param("lineSourceCode") String lineSourceCode,
+                                        @Param("searchText") String searchText,
+                                        Pageable pageable);
+
     @Query(nativeQuery = true, value = """
             UPDATE billing_document
             SET status = 'OVERDUE', updated_at = NOW()

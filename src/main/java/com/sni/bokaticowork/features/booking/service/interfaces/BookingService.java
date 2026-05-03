@@ -49,6 +49,8 @@ public interface BookingService {
 
     BookingResponse cancel(String bookingNumber, BookingStatusChangeRequest request);
 
+    BookingResponse systemCancel(String bookingNumber, String reason);
+
     BookingResponse noShow(String bookingNumber, BookingStatusChangeRequest request);
 
     BookingResponse checkIn(String bookingNumber, BookingCheckRequest request);

@@ -50,6 +50,17 @@ logging:
     org.flywaydb: DEBUG
 debug: true
 
+bokati:
+  payment:
+    pawaypay:
+      enabled: true
+      api-key: ${PAWAYPAY_API_KEY:eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjE2ODU0IiwibWF2IjoiMSIsImV4cCI6MjA5Mjk1MDU3OSwiaWF0IjoxNzc3MzMxMzc5LCJwbSI6IkRBRixQQUYiLCJqdGkiOiI1ZTM1Mzg2OC1lZDA3LTRhMzUtOGU2YS05OWNjMjcwZmNiNGQifQ.4FWianuEXDLdUlq__x54NNqfM0cqxHSSZwxhX7nHFatAaWJtUzO2GRA3SWMv6fEtpFbXNR1aTnVL9y_KWN0kQw}
+      base-url: https://api.sandbox.pawapay.io
+      callback-base-url: https://7d66-102-129-81-212.ngrok-free.app
+      callback-secret: ${PAWAYPAY_CALLBACK_SECRET:}
+      polling-delay-ms: 300000
+      polling-max-age-minutes: 10
+
 app:
   security:
     jwt:

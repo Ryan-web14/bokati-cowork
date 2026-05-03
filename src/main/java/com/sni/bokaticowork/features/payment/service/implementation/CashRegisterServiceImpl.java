@@ -11,7 +11,9 @@ import com.sni.bokaticowork.features.payment.dto.request.CreateCashRegisterReque
 import com.sni.bokaticowork.features.payment.dto.request.CreateCashVoucherRequest;
 import com.sni.bokaticowork.features.payment.dto.request.OpenCashSessionRequest;
 import com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse;
+import com.sni.bokaticowork.features.payment.dto.response.CashMetricsOverviewResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse;
+import com.sni.bokaticowork.features.payment.dto.response.CashRegisterMetricsResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResponse;
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
@@ -36,6 +38,10 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Locale;
 
 @Service
 @Transactional
@@ -43,6 +49,7 @@ import java.time.Instant;
 public class CashRegisterServiceImpl implements CashRegisterService {
 
     private static final String CASH_CURRENCY = "XAF";
+    private static final DateTimeFormatter CASH_CODE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneOffset.UTC);
 
     private final CashRegisterRepository registerRepository;
     private final CashSessionRepository sessionRepository;
@@ -53,12 +60,15 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Override
     public CashRegisterResponse createRegister(CreateCashRegisterRequest request) {
+        String businessEntityCode = generateBusinessCode(request.businessEntityCode(), request.name());
+        String deviceCode = generateDeviceCode(request.deviceCode(), request.name(), businessEntityCode);
+        String registerCode = generateRegisterCode(request.name(), businessEntityCode, deviceCode);
         CashRegister register = registerRepository.save(CashRegister.builder()
-                .registerCode(sequenceGenerator.next("cash_register"))
+                .registerCode(registerCode)
                 .name(request.name().trim())
                 .locationCode(trim(request.locationCode()))
-                .businessEntityCode(trim(request.businessEntityCode()))
-                .deviceCode(trim(request.deviceCode()))
+                .businessEntityCode(businessEntityCode)
+                .deviceCode(deviceCode)
                 .active(true)
                 .cashControlEnabled(request.cashControlEnabled() == null || request.cashControlEnabled())
                 .maxCashAmount(request.maxCashAmount() == null ? null : money(request.maxCashAmount()))
@@ -255,6 +265,46 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CashMetricsOverviewResponse overviewMetrics(String registerCode, String businessEntityCode, Instant fromDate, Instant toDate) {
+        Object[] countRow = unwrap(sessionRepository.overviewCounts(trim(registerCode), trim(businessEntityCode), fromDate, toDate));
+        Object[] amountRow = unwrap(movementRepository.overviewAmounts(trim(registerCode), trim(businessEntityCode), fromDate, toDate));
+
+        BigDecimal openingFloat = decimalAt(amountRow, 1);
+        BigDecimal totalPayments = decimalAt(amountRow, 2);
+        BigDecimal totalRefunds = decimalAt(amountRow, 3);
+        BigDecimal totalCashIn = decimalAt(amountRow, 4);
+        BigDecimal totalCashOut = decimalAt(amountRow, 5);
+        BigDecimal totalAdjustments = decimalAt(amountRow, 6);
+
+        return new CashMetricsOverviewResponse(
+                CASH_CURRENCY,
+                longAt(countRow, 0),
+                longAt(countRow, 1),
+                longAt(countRow, 2),
+                longAt(countRow, 3),
+                longAt(countRow, 4),
+                longAt(amountRow, 0),
+                openingFloat,
+                totalPayments,
+                totalRefunds,
+                totalCashIn,
+                totalCashOut,
+                totalAdjustments,
+                openingFloat.add(totalPayments).add(totalCashIn).add(totalAdjustments).subtract(totalRefunds).subtract(totalCashOut),
+                decimalAt(countRow, 5)
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CashRegisterMetricsResponse> registerMetrics(String businessEntityCode, Instant fromDate, Instant toDate) {
+        return movementRepository.registerMetrics(trim(businessEntityCode), fromDate, toDate).stream()
+                .map(this::toRegisterMetrics)
+                .toList();
+    }
+
+    @Override
     public void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy) {
         CashSession session = requireOpenSession(sessionNumber);
         validatePositive(amount);
@@ -378,6 +428,98 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     private Pageable unsorted(Pageable pageable) {
         return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+    }
+
+    private CashRegisterMetricsResponse toRegisterMetrics(Object[] row) {
+        Object[] values = unwrap(row);
+        BigDecimal totalPayments = decimalAt(values, 7);
+        BigDecimal totalRefunds = decimalAt(values, 8);
+        BigDecimal totalCashIn = decimalAt(values, 9);
+        BigDecimal totalCashOut = decimalAt(values, 10);
+        BigDecimal totalAdjustments = decimalAt(values, 11);
+        return new CashRegisterMetricsResponse(
+                textAt(values, 0),
+                textAt(values, 1),
+                textAt(values, 2),
+                textAt(values, 3),
+                longAt(values, 4),
+                longAt(values, 5),
+                longAt(values, 6),
+                totalPayments,
+                totalRefunds,
+                totalCashIn,
+                totalCashOut,
+                totalAdjustments,
+                totalPayments.add(totalCashIn).add(totalAdjustments).subtract(totalRefunds).subtract(totalCashOut)
+        );
+    }
+
+    private String generateBusinessCode(String requestedCode, String name) {
+        String base = compact(StringUtils.hasText(requestedCode) ? requestedCode : name, 16, "BIZ");
+        String timestamp = CASH_CODE_FORMATTER.format(Instant.now());
+        String token = compact(sequenceGenerator.next("cash_register"), 12, "000000");
+        return "BIZ-" + base + "-" + timestamp + "-" + token;
+    }
+
+    private String generateDeviceCode(String requestedCode, String name, String businessCode) {
+        String hint = StringUtils.hasText(requestedCode) ? requestedCode : businessCode + "-" + name;
+        String base = compact(hint, 18, "DEVICE");
+        String timestamp = CASH_CODE_FORMATTER.format(Instant.now());
+        String token = compact(sequenceGenerator.next("cash_register"), 10, "000000");
+        return "DEV-" + base + "-" + timestamp + "-" + token;
+    }
+
+    private String generateRegisterCode(String name, String businessCode, String deviceCode) {
+        String base = compact(name, 12, "REGISTER");
+        String businessPart = compact(businessCode, 8, "BIZ");
+        String devicePart = compact(deviceCode, 8, "DEV");
+        String timestamp = CASH_CODE_FORMATTER.format(Instant.now());
+        String token = compact(sequenceGenerator.next("cash_register"), 10, "000000");
+        return "CSR-" + businessPart + "-" + devicePart + "-" + base + "-" + timestamp + "-" + token;
+    }
+
+    private String compact(String raw, int maxLength, String fallback) {
+        String normalized = StringUtils.hasText(raw)
+                ? raw.trim().replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT)
+                : fallback;
+        if (!StringUtils.hasText(normalized)) {
+            normalized = fallback;
+        }
+        return normalized.length() <= maxLength ? normalized : normalized.substring(0, maxLength);
+    }
+
+    private Object[] unwrap(Object[] row) {
+        if (row != null && row.length == 1 && row[0] instanceof Object[] nested) {
+            return nested;
+        }
+        return row;
+    }
+
+    private BigDecimal decimalAt(Object[] row, int index) {
+        if (row == null || index >= row.length || row[index] == null) {
+            return BigDecimal.ZERO;
+        }
+        if (row[index] instanceof BigDecimal decimal) {
+            return decimal;
+        }
+        return new BigDecimal(row[index].toString());
+    }
+
+    private long longAt(Object[] row, int index) {
+        if (row == null || index >= row.length || row[index] == null) {
+            return 0L;
+        }
+        if (row[index] instanceof Number number) {
+            return number.longValue();
+        }
+        return Long.parseLong(row[index].toString());
+    }
+
+    private String textAt(Object[] row, int index) {
+        if (row == null || index >= row.length || row[index] == null) {
+            return null;
+        }
+        return row[index].toString();
     }
 
     private String trim(String value) {

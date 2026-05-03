@@ -15,6 +15,7 @@ public record CreateSubscriptionRequest(
         @NotBlank String subscriberCode,
         @NotNull LocalDate startDate,
         Boolean autoRenew,
-        String metadataJson
+        String metadataJson,
+        Boolean autoActivate
 ) {
 }

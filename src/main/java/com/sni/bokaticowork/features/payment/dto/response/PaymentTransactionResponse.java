@@ -12,6 +12,7 @@ public record PaymentTransactionResponse(
         PaymentMethod paymentMethod,
         String provider,
         String providerReference,
+        String receiptNumber,
         BigDecimal amount,
         String currency,
         PaymentTransactionStatus status,

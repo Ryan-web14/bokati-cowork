@@ -9,9 +9,13 @@ import com.sni.bokaticowork.features.payment.mapper.interfaces.CashRegisterMappe
 import com.sni.bokaticowork.features.payment.model.CashMovement;
 import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashSession;
+import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
+import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
+import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public abstract class CashRegisterMapperDecorator implements CashRegisterMapper {
@@ -19,6 +23,12 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
     @Autowired
     @Qualifier("delegate")
     private CashRegisterMapper delegate;
+
+    @Autowired
+    private PaymentTransactionRepository paymentTransactionRepository;
+
+    @Autowired
+    private TransactionContextResolver contextResolver;
 
     @Override
     public CashRegisterResponse toCashRegisterResponse(CashRegister cashRegister) {
@@ -61,10 +71,23 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
     public CashMovementResponse toCashMovementResponse(CashMovement cashMovement) {
         CashSession session = cashMovement.getCashSession();
         CashRegister register = session == null ? null : session.getCashRegister();
+        PaymentTransaction paymentTransaction = relatedTransaction(cashMovement);
+        TransactionContextResolver.PartyView party = paymentTransaction == null
+                ? TransactionContextResolver.PartyView.unregistered(cashMovement.getCounterpartyType(), cashMovement.getCounterpartyCode())
+                : contextResolver.resolveParty(paymentTransaction.getPaymentIntent().getCustomerType(), paymentTransaction.getPaymentIntent().getCustomerCode());
+        TransactionContextResolver.SourceView source = paymentTransaction == null
+                ? contextResolver.resolveSource(cashMovement.getReferenceType(), cashMovement.getReferenceCode())
+                : contextResolver.resolveSource(paymentTransaction.getPaymentIntent().getSourceType(), paymentTransaction.getPaymentIntent().getSourceCode());
         return new CashMovementResponse(
                 cashMovement.getMovementNumber(),
                 session == null ? null : session.getSessionNumber(),
                 register == null ? null : register.getRegisterCode(),
+                register == null ? null : register.getName(),
+                register == null ? null : register.getBusinessEntityCode(),
+                register == null ? null : register.getDeviceCode(),
+                session == null ? null : session.getStatus(),
+                session == null ? null : session.getOpenedBy(),
+                session == null ? null : session.getOpenedAt(),
                 cashMovement.getMovementType(),
                 flowDirection(cashMovement.getMovementType()),
                 cashMovement.getAmount(),
@@ -79,9 +102,28 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 cashMovement.getCounterpartyName(),
                 cashMovement.getReason(),
                 cashMovement.getCreatedBy(),
+                paymentTransaction == null ? null : paymentTransaction.getTransactionNumber(),
+                paymentTransaction == null ? null : paymentTransaction.getPaymentIntent().getIntentNumber(),
+                paymentTransaction == null ? null : paymentTransaction.getReceiptNumber(),
+                paymentTransaction == null ? party.type() : paymentTransaction.getPaymentIntent().getCustomerType(),
+                paymentTransaction == null ? party.code() : paymentTransaction.getPaymentIntent().getCustomerCode(),
+                paymentTransaction == null ? party.name() : party.name(),
+                source.type(),
+                source.code(),
+                source.label(),
                 cashMovement.getMetadataJson(),
                 cashMovement.getCreatedAt()
         );
+    }
+
+    private PaymentTransaction relatedTransaction(CashMovement cashMovement) {
+        if (cashMovement == null || !StringUtils.hasText(cashMovement.getReferenceType()) || !StringUtils.hasText(cashMovement.getReferenceCode())) {
+            return null;
+        }
+        if (!"PAYMENT_TRANSACTION".equalsIgnoreCase(cashMovement.getReferenceType().trim())) {
+            return null;
+        }
+        return paymentTransactionRepository.findByTransactionNumber(cashMovement.getReferenceCode().trim()).orElse(null);
     }
 
     private CashFlowDirection flowDirection(CashMovementType movementType) {

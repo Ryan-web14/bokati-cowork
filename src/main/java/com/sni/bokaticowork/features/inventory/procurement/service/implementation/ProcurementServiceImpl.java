@@ -147,14 +147,23 @@ public class ProcurementServiceImpl implements ProcurementService {
     }
 
     @Override
-    public PurchaseRequestResponse approvePurchaseRequest(String requestCode, String approvedBy) {
+    public PurchaseRequestResponse approvePurchaseRequest(String requestCode, String approvedBy, String supplierCode) {
         PurchaseRequest pr = findPurchaseRequestForUpdate(requestCode);
         require(pr.getStatus() == PurchaseRequestStatus.SUBMITTED, "Purchase request must be SUBMITTED");
         pr.setStatus(PurchaseRequestStatus.APPROVED);
         pr.setApprovedBy(trimToNull(approvedBy));
         PurchaseRequest saved = purchaseRequestRepository.save(pr);
         publish("inventory.purchase_request.approved", "PURCHASE_REQUEST", saved.getRequestCode(), saved.getRequestCode());
-        return mapper.toPurchaseRequestResponse(saved);
+
+        String autoCreatedOrderCode = null;
+        if (StringUtils.hasText(supplierCode)) {
+            PurchaseOrderResponse po = createPurchaseOrderFromRequest(saved.getRequestCode(), supplierCode);
+            autoCreatedOrderCode = po.getOrderCode();
+        }
+
+        PurchaseRequestResponse response = mapper.toPurchaseRequestResponse(saved);
+        response.setAutoCreatedOrderCode(autoCreatedOrderCode);
+        return response;
     }
 
     @Override
@@ -168,7 +177,6 @@ public class ProcurementServiceImpl implements ProcurementService {
         return mapper.toPurchaseRequestResponse(saved);
     }
 
-    //todo automatically create a purchase order when purchase request is approved
     @Override
     public PurchaseOrderResponse createPurchaseOrder(PurchaseOrderCreateRequest request) {
         Supplier supplier = findSupplier(request.getSupplierCode());

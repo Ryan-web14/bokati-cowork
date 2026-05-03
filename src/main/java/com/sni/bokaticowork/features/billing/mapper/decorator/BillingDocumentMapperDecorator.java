@@ -15,6 +15,7 @@ import com.sni.bokaticowork.features.billing.repository.BillingDocumentClauseRep
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentDiscountRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentLineRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentTaxRepository;
+import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -38,8 +39,13 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
     @Autowired
     private BillingDocumentClauseRepository clauseRepository;
 
+    @Autowired
+    private TransactionContextResolver contextResolver;
+
     @Override
     public BillingDocumentResponse toResponse(BillingDocument document) {
+        TransactionContextResolver.PartyView party = contextResolver.resolveParty(document.getCustomerType(), document.getCustomerCode());
+        TransactionContextResolver.SourceView source = contextResolver.resolveBillingDocumentSource(document);
         return new BillingDocumentResponse(
                 document.getDocumentNumber(),
                 document.getDocumentType(),
@@ -50,8 +56,13 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 document.getCustomerEmail(),
                 document.getCustomerPhone(),
                 document.getBillingAddressJson(),
+                party.registered(),
                 document.getSourceType(),
                 document.getSourceCode(),
+                source.type(),
+                source.code(),
+                source.label(),
+                source.registered(),
                 document.getTitle(),
                 document.getDescription(),
                 document.getTerms(),

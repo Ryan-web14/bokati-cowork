@@ -29,6 +29,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
@@ -51,7 +53,8 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
     public InventoryDashboardResponse dashboard() {
         return InventoryDashboardResponse.builder()
                 .openAlerts(alertRepository.countByStatus(InventoryAlertStatus.OPEN))
-                .lowStockAlerts(alertRepository.countByStatusAndAlertType(InventoryAlertStatus.OPEN, InventoryAlertType.LOW_STOCK))
+                .lowStockAlerts(alertRepository.countByStatusAndAlertType(InventoryAlertStatus.OPEN, InventoryAlertType.LOW_STOCK)
+                        + alertRepository.countByStatusAndAlertType(InventoryAlertStatus.OPEN, InventoryAlertType.RECURRING_LOW_STOCK))
                 .outOfStockAlerts(alertRepository.countByStatusAndAlertType(InventoryAlertStatus.OPEN, InventoryAlertType.OUT_OF_STOCK))
                 .negativeStockAlerts(alertRepository.countByStatusAndAlertType(InventoryAlertStatus.OPEN, InventoryAlertType.NEGATIVE_STOCK))
                 .expirySoonAlerts(alertRepository.countByStatusAndAlertType(InventoryAlertStatus.OPEN, InventoryAlertType.EXPIRY_SOON))
@@ -76,10 +79,20 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
         };
     }
 
+    private static final DateTimeFormatter DISPLAY_FMT =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.of("UTC"));
+
     @Override
     public InventoryMovementReportResponse movementReport(String itemCode, String locationCode, Instant fromDate, Instant toDate) {
         String normalizedItem = normalizeOptional(itemCode);
         String normalizedLocation = normalizeOptional(locationCode);
+
+        StringBuilder title = new StringBuilder("Rapport de mouvements de stock");
+        if (normalizedItem != null) title.append(" — Article ").append(normalizedItem);
+        if (normalizedLocation != null) title.append(" — Emplacement ").append(normalizedLocation);
+        if (fromDate != null) title.append(" | Du ").append(DISPLAY_FMT.format(fromDate));
+        if (toDate != null) title.append(" au ").append(DISPLAY_FMT.format(toDate));
+
         List<InventoryMovementReportResponse.Line> lines = movementRepository
                 .movementReport(normalizedItem, normalizedLocation, fromDate, toDate)
                 .stream()
@@ -94,11 +107,12 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
                 .toList();
         Object[] summaryRow = movementRepository.movementReportSummary(normalizedItem, normalizedLocation, fromDate, toDate);
         return InventoryMovementReportResponse.builder()
+                .reportTitle(title.toString())
                 .itemCode(normalizedItem)
                 .locationCode(normalizedLocation)
-                .fromDate(fromDate == null ? null : fromDate.toString())
-                .toDate(toDate == null ? null : toDate.toString())
-                .generatedAt(Instant.now().toString())
+                .fromDate(fromDate == null ? null : DISPLAY_FMT.format(fromDate))
+                .toDate(toDate == null ? null : DISPLAY_FMT.format(toDate))
+                .generatedAt(DISPLAY_FMT.format(Instant.now()))
                 .summary(toSummary(summaryRow))
                 .lines(lines)
                 .items(movementRepository.movementReportByItem(normalizedItem, normalizedLocation, fromDate, toDate)
@@ -113,7 +127,28 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
     @Override
     public String movementReportCsv(String itemCode, String locationCode, Instant fromDate, Instant toDate) {
         InventoryMovementReportResponse report = movementReport(itemCode, locationCode, fromDate, toDate);
-        StringBuilder csv = new StringBuilder("movementType,movementCount,totalQuantity,totalValue,signedQuantity,signedValue\n");
+        StringBuilder csv = new StringBuilder();
+
+        csv.append(escapeCsv(report.getReportTitle())).append('\n');
+        csv.append("Genere le:,").append(report.getGeneratedAt()).append('\n');
+        csv.append('\n');
+
+        csv.append("RESUME\n");
+        csv.append("Total mouvements,Entrees (qte),Sorties (qte),Net (qte),Entrees (valeur),Sorties (valeur),Net (valeur)\n");
+        InventoryMovementReportResponse.Summary s = report.getSummary();
+        if (s != null) {
+            csv.append(s.getMovementCount()).append(',')
+                    .append(s.getTotalInQuantity()).append(',')
+                    .append(s.getTotalOutQuantity()).append(',')
+                    .append(s.getNetQuantity()).append(',')
+                    .append(s.getTotalInValue()).append(',')
+                    .append(s.getTotalOutValue()).append(',')
+                    .append(s.getNetValue()).append('\n');
+        }
+        csv.append('\n');
+
+        csv.append("PAR TYPE DE MOUVEMENT\n");
+        csv.append("Type,Nb mouvements,Quantite totale,Valeur totale,Quantite signee,Valeur signee\n");
         for (InventoryMovementReportResponse.Line line : report.getLines()) {
             csv.append(line.getMovementType()).append(',')
                     .append(line.getMovementCount()).append(',')
@@ -122,7 +157,61 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
                     .append(line.getSignedQuantity()).append(',')
                     .append(line.getSignedValue()).append('\n');
         }
+        csv.append('\n');
+
+        csv.append("PAR ARTICLE (TOP 20)\n");
+        csv.append("Code article,Nom,Nb mouvements,Entrees,Sorties,Net,Valeur totale\n");
+        for (InventoryMovementReportResponse.ItemLine item : report.getItems()) {
+            csv.append(escapeCsv(item.getItemCode())).append(',')
+                    .append(escapeCsv(item.getItemName())).append(',')
+                    .append(item.getMovementCount()).append(',')
+                    .append(item.getTotalInQuantity()).append(',')
+                    .append(item.getTotalOutQuantity()).append(',')
+                    .append(item.getNetQuantity()).append(',')
+                    .append(item.getTotalValue()).append('\n');
+        }
+        csv.append('\n');
+
+        csv.append("PAR EMPLACEMENT (TOP 20)\n");
+        csv.append("Code emplacement,Nom,Nb mouvements,Entrees,Sorties,Net,Valeur totale\n");
+        for (InventoryMovementReportResponse.LocationLine loc : report.getLocations()) {
+            csv.append(escapeCsv(loc.getLocationCode())).append(',')
+                    .append(escapeCsv(loc.getLocationName())).append(',')
+                    .append(loc.getMovementCount()).append(',')
+                    .append(loc.getTotalInQuantity()).append(',')
+                    .append(loc.getTotalOutQuantity()).append(',')
+                    .append(loc.getNetQuantity()).append(',')
+                    .append(loc.getTotalValue()).append('\n');
+        }
+        csv.append('\n');
+
+        csv.append("DETAIL DES MOUVEMENTS RECENTS\n");
+        csv.append("Code,Type,Article,Nom article,De,Vers,Quantite,Cout unitaire,Cout total,Ref type,Ref code,Effectue par,Date\n");
+        for (InventoryMovementReportResponse.MovementDetail mv : report.getRecentMovements()) {
+            csv.append(escapeCsv(mv.getMovementCode())).append(',')
+                    .append(mv.getMovementType()).append(',')
+                    .append(escapeCsv(mv.getItemCode())).append(',')
+                    .append(escapeCsv(mv.getItemName())).append(',')
+                    .append(escapeCsv(mv.getLocationFromCode())).append(',')
+                    .append(escapeCsv(mv.getLocationToCode())).append(',')
+                    .append(mv.getQuantity()).append(',')
+                    .append(mv.getUnitCost()).append(',')
+                    .append(mv.getTotalCost()).append(',')
+                    .append(escapeCsv(mv.getReferenceType())).append(',')
+                    .append(escapeCsv(mv.getReferenceCode())).append(',')
+                    .append(escapeCsv(mv.getPerformedBy())).append(',')
+                    .append(escapeCsv(mv.getPerformedAt())).append('\n');
+        }
+
         return csv.toString();
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     @Override

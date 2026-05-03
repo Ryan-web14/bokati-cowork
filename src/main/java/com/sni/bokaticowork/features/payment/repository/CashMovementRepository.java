@@ -102,4 +102,53 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
                               @Param("toDate") java.time.Instant toDate,
                               @Param("searchText") String searchText,
                               Pageable pageable);
+
+    @Query(nativeQuery = true, value = """
+            SELECT
+                COUNT(*) AS movement_count,
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'OPENING_FLOAT' THEN cm.amount ELSE 0 END), 0) AS opening_float_amount,
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'PAYMENT' THEN cm.amount ELSE 0 END), 0) AS total_payments,
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'REFUND' THEN cm.amount ELSE 0 END), 0) AS total_refunds,
+                COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_IN', 'TRANSFER_IN') THEN cm.amount ELSE 0 END), 0) AS total_cash_in,
+                COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_OUT', 'SAFE_DEPOSIT', 'TRANSFER_OUT') THEN cm.amount ELSE 0 END), 0) AS total_cash_out,
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN cm.amount ELSE 0 END), 0) AS total_adjustments
+            FROM cash_movement cm
+            JOIN cash_session cs ON cs.id = cm.cash_session_id
+            JOIN cash_register cr ON cr.id = cs.cash_register_id
+            WHERE (CAST(:registerCode AS VARCHAR) IS NULL OR cr.register_code = CAST(:registerCode AS VARCHAR))
+              AND (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))
+              AND (CAST(:fromDate AS TIMESTAMPTZ) IS NULL OR cm.created_at >= CAST(:fromDate AS TIMESTAMPTZ))
+              AND (CAST(:toDate AS TIMESTAMPTZ) IS NULL OR cm.created_at <= CAST(:toDate AS TIMESTAMPTZ))
+            """)
+    Object[] overviewAmounts(@Param("registerCode") String registerCode,
+                             @Param("businessEntityCode") String businessEntityCode,
+                             @Param("fromDate") java.time.Instant fromDate,
+                             @Param("toDate") java.time.Instant toDate);
+
+    @Query(nativeQuery = true, value = """
+            SELECT
+                cr.register_code,
+                cr.name,
+                cr.business_entity_code,
+                cr.device_code,
+                COUNT(DISTINCT cs.id) FILTER (WHERE cs.status = 'OPEN') AS open_session_count,
+                COUNT(DISTINCT cs.id) FILTER (WHERE cs.status = 'CLOSING_REVIEW') AS review_session_count,
+                COUNT(cm.id) AS movement_count,
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'PAYMENT' THEN cm.amount ELSE 0 END), 0) AS total_payments,
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'REFUND' THEN cm.amount ELSE 0 END), 0) AS total_refunds,
+                COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_IN', 'TRANSFER_IN') THEN cm.amount ELSE 0 END), 0) AS total_cash_in,
+                COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_OUT', 'SAFE_DEPOSIT', 'TRANSFER_OUT') THEN cm.amount ELSE 0 END), 0) AS total_cash_out,
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN cm.amount ELSE 0 END), 0) AS total_adjustments
+            FROM cash_register cr
+            LEFT JOIN cash_session cs ON cs.cash_register_id = cr.id
+            LEFT JOIN cash_movement cm ON cm.cash_session_id = cs.id
+                AND (CAST(:fromDate AS TIMESTAMPTZ) IS NULL OR cm.created_at >= CAST(:fromDate AS TIMESTAMPTZ))
+                AND (CAST(:toDate AS TIMESTAMPTZ) IS NULL OR cm.created_at <= CAST(:toDate AS TIMESTAMPTZ))
+            WHERE (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))
+            GROUP BY cr.register_code, cr.name, cr.business_entity_code, cr.device_code
+            ORDER BY cr.name ASC, cr.register_code ASC
+            """)
+    java.util.List<Object[]> registerMetrics(@Param("businessEntityCode") String businessEntityCode,
+                                             @Param("fromDate") java.time.Instant fromDate,
+                                             @Param("toDate") java.time.Instant toDate);
 }
