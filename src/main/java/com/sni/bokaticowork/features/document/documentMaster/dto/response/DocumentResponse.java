@@ -23,6 +23,8 @@ public class DocumentResponse {
     private String description;
     private String fileName;
     private String fileUrl;
+    private String previewUrl;
+    private String downloadUrl;
     private Long fileSize;
     private String mimeType;
     private String checksumSha256;

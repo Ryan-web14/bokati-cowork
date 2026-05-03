@@ -69,6 +69,10 @@ public class SubscriptionPlan {
     @Column(name = "sort_order")
     private Integer sortOrder;
 
+    @Builder.Default
+    @Column(name = "required_kyc_level", nullable = false)
+    private Integer requiredKycLevel = 1;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

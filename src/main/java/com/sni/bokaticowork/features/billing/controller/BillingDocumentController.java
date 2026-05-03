@@ -155,6 +155,18 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.customerStatement(customerType, customerCode, pageable));
     }
 
+    @GetMapping("/customers/{customerType}/{customerCode}/statement.csv")
+    public ResponseEntity<String> statementCsv(
+            @PathVariable String customerType,
+            @PathVariable String customerCode,
+            @PageableDefault(size = 500, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        CustomerStatementResponse statement = billingDocumentService.customerStatement(customerType, customerCode, pageable);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"statement-" + customerType + "-" + customerCode + ".csv\"")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(toStatementCsv(statement));
+    }
+
     @GetMapping("/documents")
     public ResponseEntity<PaginatedResponse<BillingDocumentResponse>> list(
             @RequestParam(required = false) BillingDocumentType type,
@@ -168,5 +180,30 @@ public class BillingDocumentController {
             @RequestParam(required = false) String searchText,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(billingDocumentService.list(type, status, customerType, customerCode, sourceType, sourceCode, fromDate, toDate, searchText, pageable));
+    }
+
+    private String toStatementCsv(CustomerStatementResponse statement) {
+        StringBuilder csv = new StringBuilder("documentNumber,type,status,issueDate,dueDate,totalAmount,paidAmount,balanceDue,currency\n");
+        for (BillingDocumentResponse document : statement.documents()) {
+            csv.append(csv(document.documentNumber())).append(',')
+                    .append(document.documentType()).append(',')
+                    .append(document.status()).append(',')
+                    .append(document.issueDate()).append(',')
+                    .append(document.dueDate()).append(',')
+                    .append(document.totalAmount()).append(',')
+                    .append(document.paidAmount()).append(',')
+                    .append(document.balanceDue()).append(',')
+                    .append(csv(document.currency())).append('\n');
+        }
+        return csv.toString();
+    }
+
+    private String csv(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.contains(",") || value.contains("\"") || value.contains("\n")
+                ? "\"" + value.replace("\"", "\"\"") + "\""
+                : value;
     }
 }

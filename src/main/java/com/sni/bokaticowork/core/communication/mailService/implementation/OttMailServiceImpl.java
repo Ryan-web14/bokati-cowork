@@ -7,6 +7,7 @@ import com.sni.bokaticowork.security.admin.user.model.Users;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -22,6 +23,7 @@ public class OttMailServiceImpl implements OttMailService {
     private final SpringTemplateEngine emailTemplteEngine;
 
     @Override
+    @Async
     public CompletableFuture<Boolean> sendOneTimeTokenMail(Users user, String token) {
 
         String firstname = user.getEmail();

@@ -71,6 +71,12 @@ public class PaymentIntent {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
+    @Column(name = "payment_link_token", unique = true, length = 120)
+    private String paymentLinkToken;
+
+    @Column(name = "payment_link_expires_at")
+    private Instant paymentLinkExpiresAt;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

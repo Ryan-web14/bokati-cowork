@@ -44,6 +44,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @Transactional
@@ -274,11 +275,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Transactional(readOnly = true)
     public CustomerStatementResponse customerStatement(String customerType, String customerCode, Pageable pageable) {
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        var documents = documentRepository.statementDocuments(customerType, customerCode, unsortedPageable).map(mapper::toResponse);
+        String normalizedCustomerCode = requiredCustomerCode(customerCode);
+        String normalizedCustomerType = normalizeCustomerType(customerType, normalizedCustomerCode);
+        var documents = documentRepository.statementDocuments(normalizedCustomerType, normalizedCustomerCode, unsortedPageable).map(mapper::toResponse);
         BigDecimal totalInvoiced = documents.getContent().stream().map(BillingDocumentResponse::totalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalPaid = documents.getContent().stream().map(BillingDocumentResponse::paidAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal balance = documents.getContent().stream().map(BillingDocumentResponse::balanceDue).reduce(BigDecimal.ZERO, BigDecimal::add);
-        return new CustomerStatementResponse(customerType, customerCode, totalInvoiced, totalPaid, balance, documents.getContent());
+        return new CustomerStatementResponse(normalizedCustomerType, normalizedCustomerCode, totalInvoiced, totalPaid, balance, documents.getContent());
     }
 
     @Override
@@ -574,6 +577,51 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     private String trim(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private String normalizeCustomerType(String customerType, String customerCode) {
+        String normalized = trim(customerType);
+        if (normalized == null) {
+            throw new BadRequestException("Customer type is required");
+        }
+        normalized = normalized.toUpperCase(Locale.ROOT);
+        if (normalized.equals("CLIENT") || normalized.equals("CUSTOMER")) {
+            String inferred = inferCustomerTypeFromCode(customerCode);
+            if (inferred != null) {
+                return inferred;
+            }
+        }
+        return switch (normalized) {
+            case "MEMBRE" -> "MEMBER";
+            case "CLIENT" -> "CUSTOMER";
+            case "BUSINESS", "COMPANY", "ENTREPRISE" -> "BUSINESS_ENTITY";
+            default -> normalized;
+        };
+    }
+
+    private String requiredCustomerCode(String customerCode) {
+        String normalized = trim(customerCode);
+        if (normalized == null) {
+            throw new BadRequestException("Customer code is required");
+        }
+        return normalized;
+    }
+
+    private String inferCustomerTypeFromCode(String customerCode) {
+        if (!StringUtils.hasText(customerCode)) {
+            return null;
+        }
+        String normalizedCode = customerCode.trim().toUpperCase(Locale.ROOT);
+        if (normalizedCode.startsWith("MBR-")) {
+            return "MEMBER";
+        }
+        if (normalizedCode.startsWith("CUS-")) {
+            return "CUSTOMER";
+        }
+        if (normalizedCode.startsWith("BUS-") || normalizedCode.startsWith("BIZ-")) {
+            return "BUSINESS_ENTITY";
+        }
+        return null;
     }
 
     private java.util.Map<String, Object> billingActionDetails(String reason, Boolean archived) {

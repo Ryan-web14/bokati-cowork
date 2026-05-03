@@ -8,6 +8,7 @@ import java.util.List;
 public interface RolePermissionService {
 
     void addPermissionToRole(List<Long> permissionIds, Long roleId);
+    void replacePermissionsByName(Long roleId, List<String> permissionNames);
     void deletePermissionFromRole(List<Long> permissionIds, Long roleId);
     void deleteAllPermissionFromRole(Long roleId);
     List<PermissionResponse> getRolePermissions(Long id);

@@ -19,16 +19,21 @@ import com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResp
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
 import com.sni.bokaticowork.features.payment.enums.CashMovementType;
 import com.sni.bokaticowork.features.payment.enums.CashSessionStatus;
+import com.sni.bokaticowork.features.payment.enums.PaymentMethod;
+import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
 import com.sni.bokaticowork.features.payment.mapper.interfaces.CashRegisterMapper;
 import com.sni.bokaticowork.features.payment.model.CashMovement;
 import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashSession;
+import com.sni.bokaticowork.features.payment.model.PaymentIntent;
+import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.repository.CashMovementRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterRepository;
 import com.sni.bokaticowork.features.payment.repository.CashSessionRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService;
 import com.sni.bokaticowork.features.payment.service.support.CashSessionSummarySupport;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -49,6 +54,11 @@ import java.util.Locale;
 public class CashRegisterServiceImpl implements CashRegisterService {
 
     private static final String CASH_CURRENCY = "XAF";
+    private static final String SYSTEM_ACTOR = "SYSTEM";
+    private static final String PAYMENT_TRANSACTION_REFERENCE = "PAYMENT_TRANSACTION";
+    private static final String AUTO_BUSINESS_CODE = "BIZ-AUTO-PAYMENT";
+    private static final String AUTO_LOCATION_CODE = "AUTO";
+    private static final BigDecimal DEFAULT_AUTO_SESSION_LIMIT = new BigDecimal("10000000");
     private static final DateTimeFormatter CASH_CODE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneOffset.UTC);
 
     private final CashRegisterRepository registerRepository;
@@ -57,6 +67,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final CashSessionSummarySupport summarySupport;
     private final CashRegisterMapper mapper;
+
+    @Value("${bokati.payment.cash-session.auto-limit:10000000}")
+    private BigDecimal autoSessionLimit;
 
     @Override
     public CashRegisterResponse createRegister(CreateCashRegisterRequest request) {
@@ -312,6 +325,147 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, trim(createdBy), null);
     }
 
+    @Override
+    public void recordAutomaticPayment(PaymentTransaction transaction) {
+        if (transaction == null || transaction.getStatus() != PaymentTransactionStatus.SUCCEEDED) {
+            return;
+        }
+        if (transaction.getPaymentMethod() != PaymentMethod.WALLET
+                && transaction.getPaymentMethod() != PaymentMethod.MOBILE_MONEY) {
+            return;
+        }
+        String transactionNumber = trim(transaction.getTransactionNumber());
+        if (!StringUtils.hasText(transactionNumber)
+                || movementRepository.existsByReferenceTypeAndReferenceCode(PAYMENT_TRANSACTION_REFERENCE, transactionNumber)) {
+            return;
+        }
+
+        BigDecimal amount = money(transaction.getAmount());
+        CashRegister register = automaticRegister(transaction.getPaymentMethod());
+        CashSession session = automaticSession(register, transaction.getPaymentMethod(), amount);
+        PaymentIntent intent = transaction.getPaymentIntent();
+        String methodLabel = paymentMethodLabel(transaction.getPaymentMethod());
+        String currency = StringUtils.hasText(transaction.getCurrency()) ? transaction.getCurrency().trim().toUpperCase(Locale.ROOT) : CASH_CURRENCY;
+        String actor = StringUtils.hasText(transaction.getReceivedBy()) ? transaction.getReceivedBy().trim() : automaticActor(transaction.getPaymentMethod());
+
+        saveMovement(session, CashMovementType.PAYMENT, amount, currency, CashDocumentType.RECEIPT,
+                transaction.getReceiptNumber(), methodLabel, PAYMENT_TRANSACTION_REFERENCE, transactionNumber,
+                intent == null ? "CUSTOMER" : intent.getCustomerType(), intent == null ? null : intent.getCustomerCode(),
+                null, "Enregistrement automatique du paiement " + methodLabel, actor, automaticMetadata(transaction));
+
+        BigDecimal expectedAfter = money(summarySupport.expectedClosingAmount(session));
+        if (expectedAfter.compareTo(autoLimit()) >= 0) {
+            closeAutomaticSession(session, expectedAfter);
+            openAutomaticSession(register, transaction.getPaymentMethod());
+        }
+    }
+
+    private CashRegister automaticRegister(PaymentMethod method) {
+        String registerCode = automaticRegisterCode(method);
+        return registerRepository.findByRegisterCode(registerCode)
+                .map(register -> {
+                    if (!Boolean.TRUE.equals(register.getActive())) {
+                        register.setActive(true);
+                        return registerRepository.save(register);
+                    }
+                    return register;
+                })
+                .orElseGet(() -> registerRepository.save(CashRegister.builder()
+                        .registerCode(registerCode)
+                        .name("Caisse automatique - " + paymentMethodLabel(method))
+                        .locationCode(AUTO_LOCATION_CODE)
+                        .businessEntityCode(AUTO_BUSINESS_CODE)
+                        .deviceCode(automaticDeviceCode(method))
+                        .active(true)
+                        .cashControlEnabled(true)
+                        .maxCashAmount(autoLimit())
+                        .build()));
+    }
+
+    private CashSession automaticSession(CashRegister register, PaymentMethod method, BigDecimal nextAmount) {
+        CashSession session = sessionRepository.findFirstByCashRegisterIdAndStatusForUpdate(register.getId(), CashSessionStatus.OPEN.name())
+                .orElseGet(() -> openAutomaticSession(register, method));
+        BigDecimal currentTotal = money(summarySupport.expectedClosingAmount(session));
+        if (currentTotal.signum() > 0 && currentTotal.add(nextAmount).compareTo(autoLimit()) > 0) {
+            closeAutomaticSession(session, currentTotal);
+            return openAutomaticSession(register, method);
+        }
+        return session;
+    }
+
+    private CashSession openAutomaticSession(CashRegister register, PaymentMethod method) {
+        return sessionRepository.save(CashSession.builder()
+                .sessionNumber(sequenceGenerator.next("cash_session"))
+                .cashRegister(register)
+                .status(CashSessionStatus.OPEN)
+                .openedBy(automaticActor(method))
+                .openingAmount(BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP))
+                .build());
+    }
+
+    private void closeAutomaticSession(CashSession session, BigDecimal expectedAmount) {
+        Instant now = Instant.now();
+        BigDecimal counted = money(expectedAmount);
+        session.setClosedBy(SYSTEM_ACTOR);
+        session.setClosingAmount(counted);
+        session.setExpectedClosingAmount(counted);
+        session.setCountedClosingAmount(counted);
+        session.setVarianceAmount(BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP));
+        session.setVarianceReason("Cloture automatique: seuil de session atteint");
+        session.setClosingRequestedAt(now);
+        session.setClosedAt(now);
+        session.setStatus(CashSessionStatus.CLOSED);
+        sessionRepository.save(session);
+    }
+
+    private BigDecimal autoLimit() {
+        return autoSessionLimit == null || autoSessionLimit.signum() <= 0
+                ? DEFAULT_AUTO_SESSION_LIMIT.setScale(4, RoundingMode.HALF_UP)
+                : money(autoSessionLimit);
+    }
+
+    private String automaticRegisterCode(PaymentMethod method) {
+        return switch (method) {
+            case MOBILE_MONEY -> "CSR-AUTO-MOBILE-MONEY";
+            case WALLET -> "CSR-AUTO-WALLET";
+            default -> "CSR-AUTO-PAYMENT";
+        };
+    }
+
+    private String automaticDeviceCode(PaymentMethod method) {
+        return switch (method) {
+            case MOBILE_MONEY -> "DEV-AUTO-MOBILE-MONEY";
+            case WALLET -> "DEV-AUTO-WALLET";
+            default -> "DEV-AUTO-PAYMENT";
+        };
+    }
+
+    private String automaticActor(PaymentMethod method) {
+        return switch (method) {
+            case MOBILE_MONEY -> "SYSTEM_MOBILE_MONEY";
+            case WALLET -> "SYSTEM_WALLET";
+            default -> SYSTEM_ACTOR;
+        };
+    }
+
+    private String paymentMethodLabel(PaymentMethod method) {
+        return switch (method) {
+            case MOBILE_MONEY -> "Mobile money";
+            case WALLET -> "Portefeuille client";
+            default -> method.name();
+        };
+    }
+
+    private String automaticMetadata(PaymentTransaction transaction) {
+        String provider = trim(transaction.getProvider());
+        String providerReference = trim(transaction.getProviderReference());
+        return "{\"automaticCashSession\":true"
+                + ",\"paymentMethod\":\"" + transaction.getPaymentMethod().name() + "\""
+                + (provider == null ? "" : ",\"provider\":\"" + provider + "\"")
+                + (providerReference == null ? "" : ",\"providerReference\":\"" + providerReference + "\"")
+                + "}";
+    }
+
     private CashSession requireOpenSession(String sessionNumber) {
         CashSession session = session(sessionNumber);
         if (session.getStatus() != CashSessionStatus.OPEN) {
@@ -371,12 +525,20 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                                       CashDocumentType documentType, String documentNumber, String flowCategory,
                                       String referenceType, String referenceCode, String counterpartyType, String counterpartyCode,
                                       String counterpartyName, String reason, String createdBy, String metadataJson) {
+        return saveMovement(session, movementType, amount, CASH_CURRENCY, documentType, documentNumber, flowCategory,
+                referenceType, referenceCode, counterpartyType, counterpartyCode, counterpartyName, reason, createdBy, metadataJson);
+    }
+
+    private CashMovement saveMovement(CashSession session, CashMovementType movementType, BigDecimal amount, String currency,
+                                      CashDocumentType documentType, String documentNumber, String flowCategory,
+                                      String referenceType, String referenceCode, String counterpartyType, String counterpartyCode,
+                                      String counterpartyName, String reason, String createdBy, String metadataJson) {
         return movementRepository.save(CashMovement.builder()
                 .movementNumber(sequenceGenerator.next("cash_movement"))
                 .cashSession(session)
                 .movementType(movementType)
                 .amount(money(amount))
-                .currency(CASH_CURRENCY)
+                .currency(StringUtils.hasText(currency) ? currency.trim().toUpperCase(Locale.ROOT) : CASH_CURRENCY)
                 .documentType(documentType)
                 .documentNumber(trim(documentNumber))
                 .flowCategory(trim(flowCategory))

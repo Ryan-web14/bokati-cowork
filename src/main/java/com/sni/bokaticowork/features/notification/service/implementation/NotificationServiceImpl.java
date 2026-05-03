@@ -18,12 +18,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -37,8 +39,13 @@ public class NotificationServiceImpl implements NotificationService {
     private final ObjectProvider<OutboxService> outboxService;
 
     @Override
-    public NotificationDispatchResponse send(SendNotificationRequest request) {
-        return dispatchSupport.create(request);
+    @Async
+    public CompletableFuture<NotificationDispatchResponse> send(SendNotificationRequest request) {
+        NotificationDispatchResponse response = dispatchSupport.create(request);
+        if (StringUtils.hasText(response.notificationNumber())) {
+            dispatchSupport.dispatchIfDue(response.notificationNumber());
+        }
+        return CompletableFuture.completedFuture(response);
     }
 
     @Override

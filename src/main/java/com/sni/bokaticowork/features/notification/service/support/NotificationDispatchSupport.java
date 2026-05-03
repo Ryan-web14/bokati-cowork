@@ -128,6 +128,17 @@ public class NotificationDispatchSupport {
         return messageRepository.save(message);
     }
 
+    @Transactional
+    public NotificationMessage dispatchIfDue(String notificationNumber) {
+        NotificationMessage message = messageRepository.findByNotificationNumber(notificationNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification " + notificationNumber + " not found"));
+        if (message.getAvailableAt() != null && message.getAvailableAt().isAfter(Instant.now())) {
+            return message;
+        }
+        process(message);
+        return message;
+    }
+
     private void process(NotificationMessage message) {
         message.setStatus(NotificationDeliveryStatus.PROCESSING);
         messageRepository.saveAndFlush(message);
@@ -150,7 +161,7 @@ public class NotificationDispatchSupport {
         variables.putIfAbsent("eventType", message.getEventType());
         variables.putIfAbsent("subject", message.getSubject());
 
-        String html = templateRenderer.render(message.getTemplateName(), variables);
+        String html = renderBody(message, variables);
         try {
             Boolean sent = emailSender.sendHtmlEmail(message.getRecipientEmail(), message.getSubject(), html).join();
             if (Boolean.TRUE.equals(sent)) {
@@ -184,6 +195,13 @@ public class NotificationDispatchSupport {
         if (StringUtils.hasText(template.getTemplateName())) {
             message.setTemplateName(template.getTemplateName());
         }
+    }
+
+    private String renderBody(NotificationMessage message, Map<String, Object> variables) {
+        return templateRepository.findByTemplateCodeIgnoreCaseAndChannelAndActiveTrue(message.getTemplateCode(), message.getChannel())
+                .filter(template -> StringUtils.hasText(template.getBodyTemplate()))
+                .map(template -> templateRenderer.renderInline(template.getBodyTemplate(), variables))
+                .orElseGet(() -> templateRenderer.render(message.getTemplateName(), variables));
     }
 
     private void markSent(NotificationMessage message) {

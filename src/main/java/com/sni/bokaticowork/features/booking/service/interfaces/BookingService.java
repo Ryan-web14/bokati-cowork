@@ -55,6 +55,8 @@ public interface BookingService {
 
     BookingResponse checkIn(String bookingNumber, BookingCheckRequest request);
 
+    BookingResponse checkInByToken(String checkInToken, BookingCheckRequest request);
+
     BookingResponse checkOut(String bookingNumber, BookingCheckRequest request);
 
     BookingParticipantResponse addParticipant(String bookingNumber, BookingParticipantRequest request);

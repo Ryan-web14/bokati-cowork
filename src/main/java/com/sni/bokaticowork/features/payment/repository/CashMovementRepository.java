@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface CashMovementRepository extends JpaRepository<CashMovement, Long> {
 
+    boolean existsByReferenceTypeAndReferenceCode(String referenceType, String referenceCode);
+
     @Query(nativeQuery = true, value = """
             SELECT
                 COALESCE(SUM(CASE WHEN cm.movement_type = 'PAYMENT' THEN cm.amount ELSE 0 END), 0) AS total_payments,

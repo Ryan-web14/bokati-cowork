@@ -9,4 +9,6 @@ import java.util.List;
 public interface KycVerificationRepository extends JpaRepository<KycVerification, Long> {
 
     List<KycVerification> findAllByKycDocumentOrderByVerifiedAtDesc(KycDocument kycDocument);
+
+    List<KycVerification> findAllByKycDocumentInOrderByVerifiedAtDesc(List<KycDocument> kycDocuments);
 }

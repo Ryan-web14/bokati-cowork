@@ -130,6 +130,12 @@ public class Booking {
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
 
+    @Column(name = "check_in_token", unique = true, length = 120)
+    private String checkInToken;
+
+    @Column(name = "virtual_meeting_url")
+    private String virtualMeetingUrl;
+
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
 

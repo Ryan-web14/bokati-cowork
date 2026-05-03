@@ -23,8 +23,9 @@ import com.sni.bokaticowork.features.subscription.repository.BillableItemReposit
 import com.sni.bokaticowork.features.subscription.repository.PlanPriceRepository;
 import com.sni.bokaticowork.features.subscription.repository.PlanVersionRepository;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.SubscriptionService;
-import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionContractSupport;
+import com.sni.bokaticowork.features.subscription.subscription.service.support.ContractGenerationEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,7 @@ public class SubscriptionAddonServiceImpl implements SubscriptionAddonService {
     private final BillableItemRepository billableItemRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final SubscriptionAddonMapper addonMapper;
-    private final SubscriptionContractSupport contractSupport;
+    private final ApplicationEventPublisher eventPublisher;
     private final BillableItemInvoiceSupport billableItemInvoiceSupport;
 
     @Override
@@ -66,8 +67,7 @@ public class SubscriptionAddonServiceImpl implements SubscriptionAddonService {
         addon.setUnitPrice(price.getAmount());
         addon.setCurrency(price.getCurrency());
         addon = addonRepository.save(addon);
-        addon.setContractCode(contractSupport.createAndSignForAddon(addon));
-        addon = addonRepository.save(addon);
+        eventPublisher.publishEvent(ContractGenerationEvent.forAddon(addon.getId()));
 
         createBillableItem(subscription, addon, price.getAmount().multiply(BigDecimal.valueOf(addon.getQuantity())));
         return addonMapper.toResponse(addon);

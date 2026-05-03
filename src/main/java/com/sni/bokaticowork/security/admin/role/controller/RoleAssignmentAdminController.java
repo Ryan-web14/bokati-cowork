@@ -4,6 +4,7 @@ import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.security.admin.role.dto.request.AssignRoleToUserRequest;
+import com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionNamesRequest;
 import com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionsRequest;
 import com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse;
 import com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,6 +38,7 @@ public class RoleAssignmentAdminController {
     private final RoleService roleService;
 
     @GetMapping("/users/{userId}/roles")
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<List<RoleResponse>> getUserRoles(@PathVariable Long userId) {
         return ResponseEntity.ok(roleUserService.getRoleUsers(userId));
     }
@@ -43,6 +46,7 @@ public class RoleAssignmentAdminController {
     @PostMapping("/users/{userId}/roles")
     @Audited(module = "ROLE_USER", action = "ASSIGN_ROLE", ressource = "role_user")
     @Idempotent(operation = "ROLE_USER_ASSIGN")
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> assignRole(@PathVariable Long userId,
                                            @Valid @RequestBody AssignRoleToUserRequest request,
                                            Authentication authentication) {
@@ -52,12 +56,14 @@ public class RoleAssignmentAdminController {
 
     @DeleteMapping("/users/{userId}/roles/{roleId}")
     @Audited(module = "ROLE_USER", action = "REMOVE_ROLE", ressource = "role_user")
+    @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> removeRole(@PathVariable Long userId, @PathVariable Long roleId) {
         roleUserService.deleteRoleFromUser(userId, roleId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/roles/{roleId}/permissions")
+    @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<List<PermissionResponse>> getRolePermissions(@PathVariable Long roleId) {
         return ResponseEntity.ok(rolePermissionService.getRolePermissions(roleId));
     }
@@ -65,6 +71,7 @@ public class RoleAssignmentAdminController {
     @PatchMapping("/roles/{roleId}/permissions")
     @Audited(module = "ROLE_PERMISSION", action = "REPLACE_PERMISSIONS", ressource = "role_permission")
     @Idempotent(operation = "ROLE_PERMISSION_REPLACE")
+    @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<Void> replaceRolePermissions(@PathVariable Long roleId,
                                                        @Valid @RequestBody UpdateRolePermissionsRequest request) {
         rolePermissionService.deleteAllPermissionFromRole(roleId);
@@ -72,8 +79,19 @@ public class RoleAssignmentAdminController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/roles/{roleId}/permission-names")
+    @Audited(module = "ROLE_PERMISSION", action = "REPLACE_PERMISSIONS_BY_NAME", ressource = "role_permission")
+    @Idempotent(operation = "ROLE_PERMISSION_REPLACE_BY_NAME")
+    @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
+    public ResponseEntity<Void> replaceRolePermissionNames(@PathVariable Long roleId,
+                                                           @Valid @RequestBody UpdateRolePermissionNamesRequest request) {
+        rolePermissionService.replacePermissionsByName(roleId, request.permissionNames());
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/roles/{roleId}/permissions")
     @Audited(module = "ROLE_PERMISSION", action = "CLEAR_PERMISSIONS", ressource = "role_permission")
+    @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<Void> clearRolePermissions(@PathVariable Long roleId) {
         rolePermissionService.deleteAllPermissionFromRole(roleId);
         return ResponseEntity.noContent().build();

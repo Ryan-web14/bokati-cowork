@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.subscription.subscription.controller;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreateSubscriptionRequest;
+import com.sni.bokaticowork.features.subscription.subscription.dto.request.PauseSubscriptionRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.SubscriptionStatusChangeRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.BillingScheduleResponse;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.EntitlementGrantResponse;
@@ -84,6 +85,18 @@ public class SubscriptionController {
     public ResponseEntity<SubscriptionResponse> suspend(@PathVariable String subscriptionNumber,
                                                         @RequestBody(required = false) SubscriptionStatusChangeRequest request) {
         return ResponseEntity.ok(subscriptionService.suspend(subscriptionNumber, request));
+    }
+
+    @PatchMapping("/{subscriptionNumber}/pause")
+    public ResponseEntity<SubscriptionResponse> pause(@PathVariable String subscriptionNumber,
+                                                      @Valid @RequestBody PauseSubscriptionRequest request) {
+        return ResponseEntity.ok(subscriptionService.pause(subscriptionNumber, request));
+    }
+
+    @PatchMapping("/{subscriptionNumber}/resume")
+    public ResponseEntity<SubscriptionResponse> resume(@PathVariable String subscriptionNumber,
+                                                       @RequestBody(required = false) SubscriptionStatusChangeRequest request) {
+        return ResponseEntity.ok(subscriptionService.resume(subscriptionNumber, request));
     }
 
     @PatchMapping("/{subscriptionNumber}/cancel")

@@ -1,33 +1,81 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${subject ?: 'Notification'}">Notification</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
+        .card { max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
+        .email-header { background: #1a0a2e; padding: 24px 32px 20px; position: relative; overflow: hidden; }
+        .email-header::after { content: ''; position: absolute; top: 0; right: -20px; width: 160px; height: 100%; background: rgba(255,255,255,0.03); transform: skewX(-12deg); }
+        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
+        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+        .notification-tag { background: rgba(201, 168, 76, 0.15); border: 1px solid rgba(201, 168, 76, 0.4); color: #c9a84c; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+        .email-body { padding: 32px 32px 28px; }
+        .subject-line { font-size: 19px; font-weight: 700; color: #1a0a2e; margin-bottom: 6px; letter-spacing: -0.3px; line-height: 1.25; }
+        .subject-sub { font-size: 11.5px; color: #7c6d8f; margin-bottom: 24px; }
+        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 12px; }
+        .message-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 22px; }
+        .message-box-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
+        .message-body { padding: 16px; font-size: 13px; color: #3d2f52; line-height: 1.7; background: #faf8fd; }
+        .ref-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #ffffff; border-top: 1px solid #e8e0f0; font-size: 11px; }
+        .ref-key { color: #7c6d8f; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+        .ref-val { color: #1a0a2e; font-weight: 700; font-family: "Courier New", monospace; }
+        .cta-wrap { text-align: center; margin-bottom: 22px; }
+        .cta-btn { display: inline-block; background: #1a0a2e; color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 13px 32px; border-radius: 3px; border: 1.5px solid #c9a84c; }
+        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+        .footer-made { font-size: 8.5px; color: #c8bdd8; margin-top: 8px; letter-spacing: 0.4px; }
+    </style>
 </head>
-<body style="margin:0;background:#f3f5f7;font-family:Arial,sans-serif;color:#1f2933;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f5f7;padding:24px 0;">
-    <tr>
-        <td align="center">
-            <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #d8dee6;border-radius:8px;overflow:hidden;">
-                <tr>
-                    <td style="padding:20px 24px;background:#0f766e;color:#ffffff;">
-                        <h1 style="margin:0;font-size:20px;" th:text="${subject ?: 'Notification Bokati'}">Notification Bokati</h1>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:24px;">
-                        <p style="margin:0 0 16px;">Bonjour <span th:text="${recipientName ?: 'client'}">client</span>,</p>
-                        <p style="margin:0 0 16px;" th:text="${message ?: 'Une mise a jour est disponible sur votre espace Bokati.'}">
-                            Une mise a jour est disponible sur votre espace Bokati.
-                        </p>
-                        <p style="margin:0;color:#52616f;font-size:13px;">
-                            Reference: <span th:text="${reference ?: aggregateId ?: eventType ?: 'N/A'}">N/A</span>
-                        </p>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<body>
+<div class="wrap">
+    <div class="card">
+        <div class="email-header">
+            <div class="logo-area">
+                <div>
+                    <div class="brand-name">Elle A Ose</div>
+                    <div class="brand-sub">Cowork &amp; Studio</div>
+                </div>
+                <div class="notification-tag">Notification</div>
+            </div>
+        </div>
+        <div class="header-stripe"></div>
+
+        <div class="email-body">
+            <div class="subject-line" th:text="${subject ?: 'Notification Bokati'}">Notification Bokati</div>
+            <div class="subject-sub">Une mise a jour est disponible sur votre espace</div>
+
+            <p class="greeting">Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,</p>
+
+            <div class="message-box">
+                <div class="message-box-head">Message</div>
+                <div class="message-body" th:text="${message ?: 'Une mise a jour est disponible sur votre espace Bokati.'}">
+                    Une mise a jour est disponible sur votre espace Bokati.
+                </div>
+                <div class="ref-row">
+                    <span class="ref-key">Reference</span>
+                    <span class="ref-val" th:text="${reference ?: aggregateId ?: eventType ?: 'N/A'}">N/A</span>
+                </div>
+            </div>
+
+            <div class="cta-wrap">
+                <a th:href="${actionUrl ?: '#'}" class="cta-btn">Consulter mon espace</a>
+            </div>
+        </div>
+
+        <div class="email-footer">
+            <div class="footer-brand">Elle A Ose - Bokati Cowork</div>
+            <div class="footer-text">Cet email a ete envoye automatiquement, merci de ne pas y repondre directement.</div>
+            <div class="footer-made">Made by SNI</div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

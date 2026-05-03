@@ -10,11 +10,13 @@ import org.springframework.data.domain.Pageable;
 public interface UserAdminService {
     AdminUserResponse createUser(AdminCreateUserRequest request, String assignedBy);
     PaginatedResponse<AdminUserResponse> list(String email, Boolean enabled, Boolean locked, Boolean deleted, Pageable pageable);
+    java.util.List<AdminUserResponse> searchByName(String query);
     AdminUserResponse getById(Long id);
     AdminUserResponse getByEmail(String email);
     AdminUserResponse update(Long id, AdminUpdateUserRequest request, String assignedBy);
     AdminUserResponse activate(Long id);
     AdminUserResponse deactivate(Long id);
+    AdminUserResponse unlock(Long id);
     AdminUserResponse resetPassword(Long id, AdminResetUserPasswordRequest request);
     void archive(Long id);
 }

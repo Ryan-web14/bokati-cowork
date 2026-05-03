@@ -8,11 +8,14 @@ import com.sni.bokaticowork.features.subscription.repository.EntitlementGrantRep
 import com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository;
 import com.sni.bokaticowork.features.subscription.subscription.model.EntitlementGrant;
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
+import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.EntitlementService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ public class BookingPaymentContextResolver {
 
     private final SubscriptionRepository subscriptionRepository;
     private final EntitlementGrantRepository grantRepository;
+    private final @Lazy EntitlementService entitlementService;
 
     public BookingPaymentContext resolve(BookingPaymentMode paymentMode,
                                          BookingIdentityResolver.ResolvedBookingIdentity identity,
@@ -40,9 +44,8 @@ public class BookingPaymentContextResolver {
         if (paymentMode == BookingPaymentMode.SUBSCRIPTION) {
             Subscription subscription = subscriptionRepository.findCurrentActive(ownerType, ownerCode, LocalDate.now())
                     .orElseThrow(() -> new ResourceNotFoundException("No active subscription found for booking owner"));
-            EntitlementGrant grant = grantRepository.findUsableSubscriptionGrantForResource(
-                            ownerType, ownerCode, subscription.getId(), resourceTypeCode, resourceGroupCode, now)
-                    .orElseThrow(() -> new ResourceNotFoundException("No usable subscription entitlement found for this resource"));
+            EntitlementGrant grant = usableSubscriptionGrant(ownerType, ownerCode, subscription, resourceTypeCode, resourceGroupCode, now)
+                    .orElseThrow(() -> new ResourceNotFoundException(noSubscriptionGrantMessage(subscription, resourceTypeCode, resourceGroupCode)));
             return new BookingPaymentContext(
                     subscription.getSubscriptionNumber(),
                     null,
@@ -62,6 +65,30 @@ public class BookingPaymentContextResolver {
         }
 
         throw new BadRequestException("Unsupported booking payment mode");
+    }
+
+    private Optional<EntitlementGrant> usableSubscriptionGrant(String ownerType,
+                                                              String ownerCode,
+                                                              Subscription subscription,
+                                                              String resourceTypeCode,
+                                                              String resourceGroupCode,
+                                                              Instant now) {
+        Optional<EntitlementGrant> grant = grantRepository.findUsableSubscriptionGrantForResource(
+                ownerType, ownerCode, subscription.getId(), resourceTypeCode, resourceGroupCode, now);
+        if (grant.isPresent()) {
+            return grant;
+        }
+
+        entitlementService.grantForSubscription(subscription);
+        return grantRepository.findUsableSubscriptionGrantForResource(
+                ownerType, ownerCode, subscription.getId(), resourceTypeCode, resourceGroupCode, Instant.now());
+    }
+
+    private String noSubscriptionGrantMessage(Subscription subscription, String resourceTypeCode, String resourceGroupCode) {
+        return "No usable subscription entitlement found for subscription "
+                + subscription.getSubscriptionNumber()
+                + " and resource type=" + (resourceTypeCode == null ? "none" : resourceTypeCode)
+                + ", group=" + (resourceGroupCode == null ? "none" : resourceGroupCode);
     }
 
     public record BookingPaymentContext(

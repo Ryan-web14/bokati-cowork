@@ -7,6 +7,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.Map;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -21,5 +22,13 @@ public class NotificationTemplateRenderer {
         }
         String resolvedTemplate = StringUtils.hasText(templateName) ? templateName : "generic-notification";
         return templateEngine.process(resolvedTemplate, context);
+    }
+
+    public String renderInline(String template, Map<String, Object> variables) {
+        Context context = new Context();
+        if (variables != null) {
+            variables.forEach(context::setVariable);
+        }
+        return templateEngine.process(template, Set.of(), context);
     }
 }

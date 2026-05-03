@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.core.communication.mailService.config;
 
 
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -9,6 +10,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
 @Configuration
+@EnableConfigurationProperties(MicrosoftGraphMailProperties.class)
 public class EmailTemplateConfig {
 
     @Bean(name = "emailTemplateResolver")

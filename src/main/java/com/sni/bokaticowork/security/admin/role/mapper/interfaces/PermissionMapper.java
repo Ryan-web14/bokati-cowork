@@ -17,6 +17,8 @@ public interface PermissionMapper {
     @Mapping(target = "name", source = "obj.name")
     @Mapping(target = "displayName", source = "obj.displayName")
     @Mapping(target = "module", source = "obj.module")
+    @Mapping(target = "action", source = "obj.action")
+    @Mapping(target = "fullPermissionName", expression = "java(obj.getFullPermissionName())")
     @Mapping(target = "isActive", source = "obj.isActive")
     PermissionResponse toDto(Permission obj);
 

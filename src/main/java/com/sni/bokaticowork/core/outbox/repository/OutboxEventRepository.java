@@ -18,4 +18,6 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, Long>,
     List<OutboxEvent> findByStatusInAndAvailableAtLessThanEqualOrderByCreatedAtAsc(Collection<OutboxEventStatus> statuses,
                                                                                    Instant availableAt,
                                                                                    Pageable pageable);
+
+    List<OutboxEvent> findAllByAggregateTypeAndAggregateIdOrderByCreatedAtAsc(String aggregateType, String aggregateId);
 }

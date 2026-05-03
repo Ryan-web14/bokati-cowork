@@ -28,6 +28,8 @@ public record SubscriptionResponse(
         BigDecimal taxAmount,
         BigDecimal totalAmount,
         Boolean cancelAtPeriodEnd,
+        Instant pausedAt,
+        LocalDate pauseUntil,
         String contractCode,
         Instant createdAt,
         Instant updatedAt

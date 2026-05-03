@@ -10,6 +10,7 @@ public record PayInvoiceRequest(
         @NotNull PaymentMethod paymentMethod,
         BigDecimal amount,
         String walletNumber,
+        @NotNull
         String cashSessionNumber,
         String providerReference,
         String processedBy,

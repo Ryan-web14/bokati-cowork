@@ -22,6 +22,8 @@ public interface UserService {
     void updateUserPassword(String email, String oldPassword, String newPassword);
     String updateUserPasswordByAdmin(String email, String newPassword, boolean isGenerated);
     void updateLastLogin(String email);
+    void recordLoginSuccess(String email);
+    void recordLoginFailure(String email);
      void resetUserPassword(Users user, String newPassword);
 
     void softDeleteUser(String email);

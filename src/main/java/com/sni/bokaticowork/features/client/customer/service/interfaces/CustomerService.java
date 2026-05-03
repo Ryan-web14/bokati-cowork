@@ -13,7 +13,8 @@ import java.util.List;
 
 public interface CustomerService {
 
-    Customer createCustomer(CustomerRequest reques);
+    Customer createCustomer(CustomerRequest request);
+    Customer createCustomerForMember(CustomerRequest request);
     void updateCustomer(String customerId, CustomerRequest request);
     void changeStatus(String customerId, ChangeCustomerStatusRequest request);
     CustomerResponse getCustomerByCustomerId(String code);

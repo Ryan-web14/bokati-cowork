@@ -12,9 +12,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -28,6 +30,12 @@ public class JWTFilter extends OncePerRequestFilter {
     private final UserSessionService sessionService;
     private static final String BEARER_PREFIX = "Bearer ";
 
+    @Value("${app.security.auto-admin.enabled:true}")
+    private boolean autoAdminEnabled;
+
+    @Value("${app.security.auto-admin.email:admin@bokati.com}")
+    private String autoAdminEmail;
+
     @SuppressWarnings("null")
     @Override
     protected void doFilterInternal(
@@ -38,6 +46,7 @@ public class JWTFilter extends OncePerRequestFilter {
             try {
                 String token = extractToken(request);
                 if (token == null) {
+                    authenticateAutoAdmin();
                     filterChain.doFilter(request, response);
                     return;
                 }
@@ -73,14 +82,33 @@ public class JWTFilter extends OncePerRequestFilter {
         String email = jwtService.extractEmail(token);
 
         if(email != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            UserPrincipal userPrincipal = (UserPrincipal) userDetailService.loadUserByUsername(email);
-            UsernamePasswordAuthenticationToken authentification = new UsernamePasswordAuthenticationToken(
-                    userPrincipal,
-                    null,
-                    userPrincipal.getAuthorities());
-            SecurityContextHolder.getContext().setAuthentication(authentification);
-            logger.debug("Authenticated user: " + userPrincipal.getUser().getEmail());
+            setAuthenticatedPrincipal((UserPrincipal) userDetailService.loadUserByUsername(email));
         }
+    }
+
+    private void authenticateAutoAdmin() {
+        if (!autoAdminEnabled || SecurityContextHolder.getContext().getAuthentication() != null) {
+            return;
+        }
+        if (!StringUtils.hasText(autoAdminEmail)) {
+            logger.warn("Auto admin authentication is enabled but app.security.auto-admin.email is empty");
+            return;
+        }
+        try {
+            UserPrincipal userPrincipal = (UserPrincipal) userDetailService.loadUserByUsername(autoAdminEmail.trim());
+            setAuthenticatedPrincipal(userPrincipal);
+            logger.debug("Authenticated user: " + userPrincipal.getUser().getEmail());
+        } catch (Exception ex) {
+            logger.warn("Unable to load auto admin user " + autoAdminEmail, ex);
+        }
+    }
+
+    private void setAuthenticatedPrincipal(UserPrincipal userPrincipal) {
+        UsernamePasswordAuthenticationToken authentification = new UsernamePasswordAuthenticationToken(
+                userPrincipal,
+                null,
+                userPrincipal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentification);
     }
 
     public String extractToken(HttpServletRequest request) {
@@ -100,9 +128,17 @@ public class JWTFilter extends OncePerRequestFilter {
 
     private boolean isPublicApiRequest(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return uri != null
-                && uri.startsWith(ApiPath.V1)
-                && !uri.startsWith(ApiPath.V1 + "/admin/");
+        return uri != null && (
+                uri.equals(ApiPath.V1 + "/auth/login")
+                        || uri.equals(ApiPath.V1 + "/auth/refresh")
+                        || uri.startsWith(ApiPath.V1 + "/auth/ott/")
+                        || uri.startsWith(ApiPath.V1 + "/auth/password-reset/")
+                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/callback")
+                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/callback")
+                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback")
+                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback")
+                        || uri.startsWith("/verify/")
+        );
     }
 }
 

@@ -43,4 +43,12 @@ public interface UserRepository extends JpaRepository<Users, Long>, JpaSpecifica
     Optional<Users> findDeletedUserByEmail(@Param("email") String email);
 
     Page<Users> findAllByDeletedFalse(Pageable pageable);
+
+    @Query(nativeQuery = true, value = """
+            SELECT u.*
+            FROM users u
+            JOIN search_admin_user(:query) s ON s.id = u.id
+            ORDER BY s.score DESC, u.email ASC
+            """)
+    List<Users> searchAdminUsers(@Param("query") String query);
 }

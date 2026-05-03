@@ -59,11 +59,26 @@ services:
     volumes:
       - redis-data:/data
 
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: bokati-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
 volumes:
   esdata:
   dev_db_data:
   pgadmin_data:
   redis-data:
+  minio-data:
 
 networks:
   elastic-net:

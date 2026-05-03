@@ -4,6 +4,7 @@ import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreateSubscriptionRequest;
+import com.sni.bokaticowork.features.subscription.subscription.dto.request.PauseSubscriptionRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.SubscriptionStatusChangeRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.BillingScheduleResponse;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.EntitlementGrantResponse;
@@ -64,6 +65,16 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     public SubscriptionResponse suspend(String subscriptionNumber, SubscriptionStatusChangeRequest request) {
         return responseMapper.toResponse(lifecycleOperator.suspend(getForService(subscriptionNumber), request));
+    }
+
+    @Override
+    public SubscriptionResponse pause(String subscriptionNumber, PauseSubscriptionRequest request) {
+        return responseMapper.toResponse(lifecycleOperator.pause(getForService(subscriptionNumber), request));
+    }
+
+    @Override
+    public SubscriptionResponse resume(String subscriptionNumber, SubscriptionStatusChangeRequest request) {
+        return responseMapper.toResponse(lifecycleOperator.resume(getForService(subscriptionNumber), request));
     }
 
     @Override

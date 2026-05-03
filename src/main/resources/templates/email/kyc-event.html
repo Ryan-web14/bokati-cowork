@@ -2,31 +2,301 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Notification KYC</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification KYC - Elle A Osé</title>
     <style>
-        body { margin:0; padding:0; background:#f5f5f5; font-family: Arial, sans-serif; }
-        .wrap { width:100%; padding:40px 0; background:#f5f5f5; }
-        .card { max-width:520px; margin:auto; background:#fff; border-radius:12px; padding:28px 24px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
-        .title { text-align:center; color:#c2410c; font-size:22px; font-weight:700; margin-bottom:18px; }
-        .text { color:#555; font-size:14px; line-height:1.6; }
-        .box { background:#faf1ed; border:1px solid #f1d2c5; border-radius:10px; padding:14px; margin:16px 0; color:#7c2d12; }
-        .footer { margin-top:18px; padding-top:16px; border-top:1px solid #eee; text-align:center; color:#888; font-size:12.5px; line-height:1.6; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: #f0eef5;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: #2b2030;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        .page {
+            width: 100%;
+            background: #f0eef5;
+            padding: 44px 14px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 560px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e8e0f0;
+            box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10);
+        }
+
+        .header {
+            background: #281332;
+            padding: 26px 30px 22px;
+        }
+
+        .brand-name {
+            font-size: 16px;
+            line-height: 1;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .brand-sub {
+            font-size: 7px;
+            color: #a397ad;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding-top: 5px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #3a1e45;
+            border: 1px solid #d9a21b;
+            color: #d9a21b;
+            font-size: 7.5px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 5px 10px;
+            border-radius: 2px;
+            white-space: nowrap;
+        }
+
+        .stripe {
+            height: 4px;
+            background: #d9a21b;
+        }
+
+        .body {
+            padding: 31px 30px 24px;
+        }
+
+        .title {
+            font-size: 21px;
+            font-weight: 700;
+            color: #281332;
+            margin: 0 0 7px;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: #7c6d8f;
+            margin: 0 0 24px;
+            line-height: 1.45;
+        }
+
+        .text {
+            font-size: 13px;
+            color: #5c4f6e;
+            line-height: 1.65;
+            margin: 0 0 14px;
+        }
+
+        .text strong {
+            color: #281332;
+        }
+
+        .info-box {
+            border: 1px solid #e8e0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 22px 0 24px;
+        }
+
+        .info-head {
+            background: #281332;
+            border-left: 3px solid #d9a21b;
+            padding: 9px 16px;
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            color: #ffffff;
+        }
+
+        .info-table {
+            width: 100%;
+        }
+
+        .info-table td {
+            padding: 11px 16px;
+            border-bottom: 1px solid #f0eaf8;
+            font-size: 12.5px;
+            vertical-align: middle;
+        }
+
+        .info-table tr:nth-child(even) td {
+            background: #faf8fd;
+        }
+
+        .info-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .info-key {
+            width: 130px;
+            color: #7c6d8f;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-val {
+            color: #281332;
+            font-weight: 700;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 2px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+        }
+
+        .status-approved { background: #dcfce7; color: #166534; }
+        .status-pending { background: #fef9c3; color: #92400e; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-default { background: #ede9fe; color: #4c1d95; }
+
+        .notice {
+            background: #fff8e6;
+            border-left: 3px solid #d9a21b;
+            border-radius: 0 3px 3px 0;
+            color: #8a5a00;
+            font-size: 12px;
+            line-height: 1.55;
+            padding: 12px 14px;
+            margin: 0;
+        }
+
+        .footer {
+            background: #f7f5fb;
+            border-top: 1px solid #e8e0f0;
+            padding: 17px 30px;
+            text-align: center;
+        }
+
+        .footer-brand {
+            font-size: 10px;
+            font-weight: 700;
+            color: #281332;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .footer-text {
+            font-size: 10px;
+            color: #9b8caa;
+            line-height: 1.55;
+        }
+
+        .footer-made {
+            font-size: 8.5px;
+            color: #c8bdd8;
+            margin-top: 8px;
+            letter-spacing: 0.4px;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .page { padding: 24px 10px; }
+            .header, .body, .footer { padding-left: 20px; padding-right: 20px; }
+            .title { font-size: 19px; }
+            .info-key { width: 105px; }
+        }
     </style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
-        <div class="title">Mise a jour dossier KYC</div>
-        <p class="text">Bonjour <strong th:text="${recipientName}">client</strong>,</p>
-        <p class="text">Votre dossier KYC a ete mis a jour.</p>
-        <div class="box">
-            <div><strong>Dossier:</strong> <span th:text="${kycCaseCode}">KCS-001</span></div>
-            <div><strong>Evenement:</strong> <span th:text="${eventType}">KYC_CASE_APPROVED</span></div>
-            <div><strong>Statut:</strong> <span th:text="${status}">APPROVED</span></div>
-        </div>
-        <p class="text">Consultez votre espace pour verifier si des pieces supplementaires ou corrections sont attendues.</p>
-        <div class="footer">BOKATI - Cowork</div>
-    </div>
-</div>
+<table class="page" role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center">
+            <table class="card" role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="header">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td align="left" valign="middle">
+                                    <div class="brand-name">Elle A Osé</div>
+                                    <div class="brand-sub">Cowork &amp; Studio</div>
+                                </td>
+                                <td align="right" valign="middle">
+                                    <span class="tag">Notification</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="stripe"></td>
+                </tr>
+                <tr>
+                    <td class="body">
+                        <h1 class="title">Mise à jour dossier KYC</h1>
+                        <p class="subtitle">Une modification a été apportée à votre dossier.</p>
+
+                        <p class="text">
+                            Bonjour <strong th:text="${recipientName}">client</strong>,
+                        </p>
+                        <p class="text">
+                            Votre dossier KYC a été mis à jour. Retrouvez ci-dessous le récapitulatif des informations liées à cet événement.
+                        </p>
+
+                        <div class="info-box">
+                            <div class="info-head">Détails de l'événement</div>
+                            <table class="info-table" role="presentation" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td class="info-key">Dossier</td>
+                                    <td class="info-val" th:text="${kycCaseCode}">KCS-001</td>
+                                </tr>
+                                <tr>
+                                    <td class="info-key">Événement</td>
+                                    <td class="info-val" th:text="${eventType}">KYC_CASE_APPROVED</td>
+                                </tr>
+                                <tr>
+                                    <td class="info-key">Statut</td>
+                                    <td class="info-val">
+                                        <span th:switch="${status}">
+                                            <span th:case="'APPROVED'" class="status-badge status-approved" th:text="${status}">APPROVED</span>
+                                            <span th:case="'PENDING'" class="status-badge status-pending" th:text="${status}">PENDING</span>
+                                            <span th:case="'REJECTED'" class="status-badge status-rejected" th:text="${status}">REJECTED</span>
+                                            <span th:case="*" class="status-badge status-default" th:text="${status}">N/A</span>
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p class="notice">
+                            Consultez votre espace pour vérifier si des pièces supplémentaires ou des corrections sont attendues.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="footer">
+                        <div class="footer-brand">Elle A Osé - Bokati Cowork</div>
+                        <div class="footer-text">
+                            Cet email a été envoyé automatiquement, merci de ne pas y répondre directement.<br>
+                            Pour toute question : coworkspace@elleaose.com · 05 204 25 52
+                        </div>
+                        <div class="footer-made">Made by SNI</div>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 </body>
 </html>

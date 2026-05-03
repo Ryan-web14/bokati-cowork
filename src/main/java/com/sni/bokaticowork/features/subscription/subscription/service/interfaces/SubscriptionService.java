@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.subscription.subscription.service.interfac
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreateSubscriptionRequest;
+import com.sni.bokaticowork.features.subscription.subscription.dto.request.PauseSubscriptionRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.SubscriptionStatusChangeRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.BillingScheduleResponse;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.EntitlementGrantResponse;
@@ -21,6 +22,10 @@ public interface SubscriptionService {
     SubscriptionResponse activate(String subscriptionNumber, SubscriptionStatusChangeRequest request);
 
     SubscriptionResponse suspend(String subscriptionNumber, SubscriptionStatusChangeRequest request);
+
+    SubscriptionResponse pause(String subscriptionNumber, PauseSubscriptionRequest request);
+
+    SubscriptionResponse resume(String subscriptionNumber, SubscriptionStatusChangeRequest request);
 
     SubscriptionResponse cancel(String subscriptionNumber, SubscriptionStatusChangeRequest request);
 

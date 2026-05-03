@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.inventory.admin.service;
 
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryDashboardResponse;
+import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelBatchRequest;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryAnomalyReportResponse;
@@ -11,6 +12,8 @@ public interface InventoryAdminService {
     InventoryDashboardResponse dashboard();
 
     InventoryLabelResponse label(String type, String code);
+
+    java.util.List<InventoryLabelResponse> labels(InventoryLabelBatchRequest request);
 
     InventoryMovementReportResponse movementReport(String itemCode, String locationCode, Instant fromDate, Instant toDate);
 

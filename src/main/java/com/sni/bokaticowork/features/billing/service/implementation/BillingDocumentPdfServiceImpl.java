@@ -2,42 +2,54 @@ package com.sni.bokaticowork.features.billing.service.implementation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentPdfService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.payment.enums.PaymentMethod;
+import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
+import com.sni.bokaticowork.features.payment.model.PaymentAllocation;
+import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
+import com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository;
+import com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.springframework.beans.factory.annotation.Value;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.util.Matrix;
-import org.jsoup.Jsoup;
-import org.jsoup.helper.W3CDom;
-import org.jsoup.nodes.Entities;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.time.Instant;
 
 @Service
 @Transactional(readOnly = true)
@@ -47,16 +59,26 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final BillingDocumentService billingDocumentService;
     private final SpringTemplateEngine templateEngine;
     private final ObjectMapper objectMapper;
+    private final PaymentAllocationRepository paymentAllocationRepository;
+    private final PawapayDepositRepository pawapayDepositRepository;
+
+    @Value("${app.verify-base-url:http://localhost:8080}")
+    private String verifyBaseUrl;
 
     @Override
     public byte[] generatePdf(String documentNumber) {
         BillingDocumentResponse document = billingDocumentService.get(documentNumber);
         String html = renderHtml(document);
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document xhtml = toXhtmlDocument(html);
+            org.jsoup.nodes.Document jsoupDoc = org.jsoup.Jsoup.parse(html);
+            jsoupDoc.outputSettings()
+                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
+                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
+                    .charset(java.nio.charset.StandardCharsets.UTF_8)
+                    .prettyPrint(false);
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
-            builder.withW3cDocument(new W3CDom().fromJsoup(xhtml), null);
+            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoupDoc), null);
             builder.toStream(out);
             builder.run();
             byte[] pdfBytes = out.toByteArray();
@@ -119,17 +141,80 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         context.setVariable("document", document);
         context.setVariable("generatedAt", LocalDate.now());
         context.setVariable("fmt", new BillingDocumentTemplateFormatter(document.currency(), objectMapper));
+        context.setVariable("qrCode", generateQrCode(document));
+        context.setVariable("payments", fetchPaymentInfos(document.documentNumber()));
+        context.setVariable("logo", loadLogoBase64());
         return templateEngine.process("billing/document", context);
     }
 
-    private org.jsoup.nodes.Document toXhtmlDocument(String html) {
-        org.jsoup.nodes.Document document = Jsoup.parse(html);
-        document.outputSettings()
-                .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                .escapeMode(Entities.EscapeMode.xhtml)
-                .charset(StandardCharsets.UTF_8)
-                .prettyPrint(false);
-        return document;
+    private String loadLogoBase64() {
+        try (java.io.InputStream is = getClass().getResourceAsStream("/static/images/logo.png")) {
+            if (is == null) return null;
+            return Base64.getEncoder().encodeToString(is.readAllBytes());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private List<PaymentInfo> fetchPaymentInfos(String documentNumber) {
+        return paymentAllocationRepository.findAllByBillingDocumentNumber(documentNumber)
+                .stream()
+                .map(allocation -> {
+                    PaymentTransaction tx = allocation.getPaymentTransaction();
+                    String depositId = null;
+                    String payerPhone = null;
+                    if (tx.getPaymentMethod() == PaymentMethod.MOBILE_MONEY) {
+                        PawapayDeposit deposit = pawapayDepositRepository
+                                .findByTransactionNumber(tx.getTransactionNumber())
+                                .orElse(null);
+                        if (deposit != null) {
+                            depositId = deposit.getDepositId();
+                            payerPhone = deposit.getPhoneNumber();
+                        }
+                    }
+                    return new PaymentInfo(
+                            tx.getPaymentMethod() != null ? tx.getPaymentMethod().name() : null,
+                            tx.getProvider(),
+                            tx.getProviderReference(),
+                            depositId,
+                            payerPhone,
+                            allocation.getAllocatedAmount(),
+                            tx.getCurrency(),
+                            tx.getPaidAt()
+                    );
+                })
+                .toList();
+    }
+
+    public record PaymentInfo(
+            String method,
+            String provider,
+            String providerReference,
+            String depositId,
+            String payerPhone,
+            BigDecimal allocatedAmount,
+            String currency,
+            Instant paidAt
+    ) {}
+
+    private String generateQrCode(BillingDocumentResponse document) {
+        try {
+            String content = buildQrContent(document);
+            QRCodeWriter writer = new QRCodeWriter();
+            BitMatrix matrix = writer.encode(content, BarcodeFormat.QR_CODE, 350, 350);
+            BufferedImage image = MatrixToImageWriter.toBufferedImage(matrix);
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            ImageIO.write(image, "PNG", stream);
+            return Base64.getEncoder().encodeToString(stream.toByteArray());
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private static final DateTimeFormatter QR_DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private String buildQrContent(BillingDocumentResponse document) {
+        return verifyBaseUrl.stripTrailing() + "/verify/doc/" + document.documentNumber();
     }
 
     public static final class BillingDocumentTemplateFormatter {
@@ -158,7 +243,10 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             if (amount == null) {
                 return EMPTY_VALUE;
             }
-            return amount.setScale(0, RoundingMode.HALF_UP).toPlainString();
+            NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+            nf.setMaximumFractionDigits(0);
+            nf.setMinimumFractionDigits(0);
+            return nf.format(amount.setScale(0, RoundingMode.HALF_UP));
         }
 
         public String quantity(BigDecimal quantity) {

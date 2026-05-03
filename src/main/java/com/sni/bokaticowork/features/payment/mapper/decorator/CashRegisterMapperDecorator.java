@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.payment.mapper.decorator;
 import com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionResponse;
+import com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResponse;
 import com.sni.bokaticowork.features.payment.enums.CashFlowDirection;
 import com.sni.bokaticowork.features.payment.enums.CashMovementType;
 import com.sni.bokaticowork.features.payment.mapper.interfaces.CashRegisterMapper;
@@ -11,11 +12,14 @@ import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashSession;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
+import com.sni.bokaticowork.features.payment.service.support.CashSessionSummarySupport;
 import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
+import java.math.BigDecimal;
 
 @Component
 public abstract class CashRegisterMapperDecorator implements CashRegisterMapper {
@@ -29,6 +33,9 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
 
     @Autowired
     private TransactionContextResolver contextResolver;
+
+    @Autowired
+    private CashSessionSummarySupport summarySupport;
 
     @Override
     public CashRegisterResponse toCashRegisterResponse(CashRegister cashRegister) {
@@ -48,19 +55,24 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
 
     @Override
     public CashSessionResponse toCashSessionResponse(CashSession cashSession) {
+        CashSessionSummaryResponse summary = summarySupport.summarize(cashSession);
+        BigDecimal expectedClosingAmount = firstNonNull(cashSession.getExpectedClosingAmount(), summary.expectedClosingAmount(), BigDecimal.ZERO);
+        BigDecimal countedClosingAmount = firstNonNull(cashSession.getCountedClosingAmount(), cashSession.getClosingAmount(), expectedClosingAmount);
+        BigDecimal closingAmount = firstNonNull(cashSession.getClosingAmount(), countedClosingAmount, expectedClosingAmount);
+        BigDecimal varianceAmount = firstNonNull(cashSession.getVarianceAmount(), countedClosingAmount.subtract(expectedClosingAmount));
         return new CashSessionResponse(
                 cashSession.getSessionNumber(),
                 cashSession.getCashRegister().getRegisterCode(),
                 cashSession.getStatus(),
-                cashSession.getOpenedBy(),
-                cashSession.getClosedBy(),
-                cashSession.getReviewedBy(),
-                cashSession.getOpeningAmount(),
-                cashSession.getClosingAmount(),
-                cashSession.getExpectedClosingAmount(),
-                cashSession.getCountedClosingAmount(),
-                cashSession.getVarianceAmount(),
-                cashSession.getVarianceReason(),
+                textOrEmpty(cashSession.getOpenedBy()),
+                textOrEmpty(cashSession.getClosedBy()),
+                textOrEmpty(cashSession.getReviewedBy()),
+                firstNonNull(cashSession.getOpeningAmount(), BigDecimal.ZERO),
+                closingAmount,
+                expectedClosingAmount,
+                countedClosingAmount,
+                varianceAmount,
+                textOrEmpty(cashSession.getVarianceReason()),
                 cashSession.getOpenedAt(),
                 cashSession.getClosingRequestedAt(),
                 cashSession.getClosedAt()
@@ -135,5 +147,19 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
             case REFUND, CASH_OUT, SAFE_DEPOSIT, TRANSFER_OUT -> CashFlowDirection.OUT;
             case ADJUSTMENT, CLOSING_COUNT -> CashFlowDirection.ADJUSTMENT;
         };
+    }
+
+    @SafeVarargs
+    private final <T> T firstNonNull(T... values) {
+        for (T value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
+    }
+
+    private String textOrEmpty(String value) {
+        return StringUtils.hasText(value) ? value.trim() : "";
     }
 }

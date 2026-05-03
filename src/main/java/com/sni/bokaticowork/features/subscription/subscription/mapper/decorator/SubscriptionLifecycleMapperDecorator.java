@@ -38,6 +38,8 @@ public abstract class SubscriptionLifecycleMapperDecorator implements Subscripti
                 subscription.getTaxAmount(),
                 subscription.getTotalAmount(),
                 subscription.getCancelAtPeriodEnd(),
+                subscription.getPausedAt(),
+                subscription.getPauseUntil(),
                 subscription.getContractCode(),
                 subscription.getCreatedAt(),
                 subscription.getUpdatedAt()

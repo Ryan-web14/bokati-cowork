@@ -136,6 +136,12 @@ public class Subscription {
     @Column(name = "suspension_reason", columnDefinition = "text")
     private String suspensionReason;
 
+    @Column(name = "paused_at")
+    private Instant pausedAt;
+
+    @Column(name = "pause_until")
+    private LocalDate pauseUntil;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

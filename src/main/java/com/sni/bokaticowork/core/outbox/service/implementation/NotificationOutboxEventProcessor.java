@@ -35,8 +35,8 @@ public class NotificationOutboxEventProcessor implements OutboxEventProcessor {
 
     @Override
     public boolean supports(OutboxEvent event) {
-        return event.getEventType() != null && event.getEventType().startsWith("NOTIFICATION_")
-                || event.getAggregateType() != null && SUPPORTED_AGGREGATES.contains(event.getAggregateType().toUpperCase());
+        return (event.getEventType() != null && event.getEventType().startsWith("NOTIFICATION_"))
+                || (event.getAggregateType() != null && SUPPORTED_AGGREGATES.contains(event.getAggregateType().toUpperCase()));
     }
 
     @Override

@@ -6,8 +6,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -18,10 +22,13 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
 
     public UserPrincipal(Users user) {
         this.user = user;
+        this.authorities = resolveAuthorities(user);
     }
 
     @Getter
     private Users user;
+
+    private Collection<? extends GrantedAuthority> authorities = List.of();
 
 
 
@@ -58,12 +65,34 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
 
-        if(user.getRoleUsers() == null){
+    private Collection<? extends GrantedAuthority> resolveAuthorities(Users user) {
+        if(user == null || user.getRoleUsers() == null){
             return List.of();
         }
-        return user.getRoleUsers().stream()
-                .map(roleUser -> new SimpleGrantedAuthority("ROLE_" + roleUser.getRole().getName()))
+        Set<String> authorities = new LinkedHashSet<>();
+        user.getRoleUsers().stream()
+                .filter(Objects::nonNull)
+                .filter(roleUser -> roleUser.getRole() != null)
+                .filter(roleUser -> Boolean.TRUE.equals(roleUser.getRole().getIsActive()))
+                .forEach(roleUser -> {
+                    authorities.add("ROLE_" + roleUser.getRole().getName());
+                    if (roleUser.getRole().getRolePermissions() != null) {
+                        roleUser.getRole().getRolePermissions().stream()
+                                .filter(Objects::nonNull)
+                                .filter(rolePermission -> Boolean.TRUE.equals(rolePermission.getIsActive()))
+                                .filter(rolePermission -> rolePermission.getPermission() != null)
+                                .filter(rolePermission -> Boolean.TRUE.equals(rolePermission.getPermission().getIsActive()))
+                                .forEach(rolePermission -> {
+                                    authorities.add(rolePermission.getPermission().getName());
+                                    authorities.add(rolePermission.getPermission().getFullPermissionName());
+                                });
+                    }
+                });
+        return new ArrayList<>(authorities).stream()
+                .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }
 

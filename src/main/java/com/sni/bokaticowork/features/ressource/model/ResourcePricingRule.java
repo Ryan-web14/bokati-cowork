@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.ressource.model;
 
 import com.sni.bokaticowork.core.annotation.IdGeneration;
 import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
+import com.sni.bokaticowork.features.ressource.enums.ResourcePriceAdjustmentType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +10,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 
 @AllArgsConstructor
@@ -34,6 +37,38 @@ public class ResourcePricingRule {
 
     @Column(name = "price")
     private Integer price;
+
+    @Column(name = "label")
+    private String label;
+
+    @Column(name = "day_of_week")
+    private Integer dayOfWeek;
+
+    @Column(name = "starts_at")
+    private LocalTime startsAt;
+
+    @Column(name = "ends_at")
+    private LocalTime endsAt;
+
+    @Column(name = "adjustment_type")
+    @Enumerated(EnumType.STRING)
+    private ResourcePriceAdjustmentType adjustmentType;
+
+    @Column(name = "adjustment_value")
+    private Integer adjustmentValue;
+
+    @Column(name = "valid_from")
+    private LocalDate validFrom;
+
+    @Column(name = "valid_until")
+    private LocalDate validUntil;
+
+    @Column(name = "last_minute_minutes")
+    private Integer lastMinuteMinutes;
+
+    @Column(name = "priority", nullable = false)
+    @Builder.Default
+    private Integer priority = 0;
 
     @Column(name = "active")
     @Builder.Default

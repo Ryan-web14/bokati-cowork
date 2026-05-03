@@ -16,6 +16,7 @@ public interface RoleService {
     RoleResponse getRole(String name);
     List<RoleResponse> getAllRoles();
     List<RoleResponse> getAllRolesAdmin();
+    List<RoleResponse> searchByName(String query);
     void activateRole(  String name);
     void deactivateRole(String name);
     boolean roleExists(String name);

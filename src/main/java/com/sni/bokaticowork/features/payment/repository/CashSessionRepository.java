@@ -24,6 +24,18 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
               AND status = CAST(:status AS VARCHAR)
             ORDER BY opened_at DESC
             LIMIT 1
+            FOR UPDATE
+            """)
+    Optional<CashSession> findFirstByCashRegisterIdAndStatusForUpdate(@Param("cashRegisterId") Long cashRegisterId,
+                                                                      @Param("status") String status);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM cash_session
+            WHERE cash_register_id = :cashRegisterId
+              AND status = CAST(:status AS VARCHAR)
+            ORDER BY opened_at DESC
+            LIMIT 1
             """)
     Optional<CashSession> findFirstByCashRegisterIdAndStatus(@Param("cashRegisterId") Long cashRegisterId,
                                                              @Param("status") String status);

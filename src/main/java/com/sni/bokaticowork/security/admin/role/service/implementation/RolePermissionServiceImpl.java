@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 
 @RequiredArgsConstructor
@@ -61,6 +62,22 @@ public class RolePermissionServiceImpl implements RolePermissionService {
             rolePermissionRepo.save(obj);
         }
 
+    }
+
+    @Override
+    public void replacePermissionsByName(Long roleId, List<String> permissionNames) {
+        Role role = roleService.getRoleByIdService(roleId).orElseThrow(
+                () -> new ResourceNotFoundException("Role with id " + roleId + " not found")
+        );
+
+        deleteAllPermissionFromRole(role.getId());
+        List<Long> permissionIds = permissionNames.stream()
+                .map(this::normalizePermissionName)
+                .distinct()
+                .map(permissionService::getPermissionByNameService)
+                .map(Permission::getId)
+                .toList();
+        addPermissionToRole(permissionIds, role.getId());
     }
 
     @Override
@@ -107,6 +124,13 @@ public class RolePermissionServiceImpl implements RolePermissionService {
         }
 
         return permissions;
+    }
+
+    private String normalizePermissionName(String permissionName) {
+        if (permissionName == null) {
+            return "";
+        }
+        return permissionName.trim().replace(':', '_').toUpperCase(Locale.ROOT);
     }
 }
 

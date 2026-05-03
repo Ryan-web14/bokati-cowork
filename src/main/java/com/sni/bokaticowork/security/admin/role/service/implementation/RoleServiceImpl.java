@@ -115,6 +115,16 @@ public class RoleServiceImpl implements RoleService {
                 .toList();
     }
 
+    @Override
+    public List<RoleResponse> searchByName(String query) {
+        if (query == null || query.isBlank()) {
+            return getAllRolesAdmin();
+        }
+        return roleRepo.searchByName(query.trim()).stream()
+                .map(roleMapper::toDto)
+                .toList();
+    }
+
 
     public void activateRole(String name){
         Role obj = roleRepo.findByName(name)

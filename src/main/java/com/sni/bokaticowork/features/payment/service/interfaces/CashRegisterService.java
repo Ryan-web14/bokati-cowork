@@ -16,6 +16,7 @@ import com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResp
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
 import com.sni.bokaticowork.features.payment.enums.CashMovementType;
 import com.sni.bokaticowork.features.payment.enums.CashSessionStatus;
+import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
@@ -42,4 +43,5 @@ public interface CashRegisterService {
     CashMetricsOverviewResponse overviewMetrics(String registerCode, String businessEntityCode, Instant fromDate, Instant toDate);
     java.util.List<CashRegisterMetricsResponse> registerMetrics(String businessEntityCode, Instant fromDate, Instant toDate);
     void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
+    void recordAutomaticPayment(PaymentTransaction transaction);
 }

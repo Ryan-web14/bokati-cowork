@@ -5,8 +5,10 @@ import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.exception.customs.ValidationException;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePricingRuleRequest;
+import com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse;
 import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
+import com.sni.bokaticowork.features.ressource.enums.ResourcePriceAdjustmentType;
 import com.sni.bokaticowork.features.ressource.model.Resource;
 import com.sni.bokaticowork.features.ressource.model.ResourcePricingRule;
 import com.sni.bokaticowork.features.ressource.repository.repo.ResourcePricingRuleRepository;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +46,16 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .resource(resource)
                 .resourceBookingUnit(parseUnit(request.getBookingUnit()))
                 .price(request.getPrice())
+                .label(request.getLabel())
+                .dayOfWeek(request.getDayOfWeek())
+                .startsAt(request.getStartsAt())
+                .endsAt(request.getEndsAt())
+                .adjustmentType(parseAdjustmentType(request.getAdjustmentType()))
+                .adjustmentValue(request.getAdjustmentValue())
+                .validFrom(request.getValidFrom())
+                .validUntil(request.getValidUntil())
+                .lastMinuteMinutes(request.getLastMinuteMinutes())
+                .priority(request.getPriority() == null ? 0 : request.getPriority())
                 .active(request.getActive() == null ? Boolean.TRUE : request.getActive())
                 .build();
 
@@ -68,6 +81,48 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         Resource resource = resourceService.getResourceForService(resourceCode);
         Page<ResourcePricingRuleResponse> page = pricingRuleRepository.findAllByResource(resource, pageable).map(this::toResponse);
         return new PaginatedResponse<>(page);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ResourcePriceQuoteResponse quote(String resourceCode, String bookingUnit, LocalDateTime startedAt, LocalDateTime endedAt) {
+        if (!StringUtils.hasText(resourceCode) || !StringUtils.hasText(bookingUnit) || startedAt == null || endedAt == null) {
+            throw new BadRequestException("Resource code, booking unit, start and end dates are required");
+        }
+        if (!endedAt.isAfter(startedAt)) {
+            throw new BadRequestException("End date must be after start date");
+        }
+        Resource resource = resourceService.getResourceForService(resourceCode);
+        ResourceBookingUnit unit = parseUnit(bookingUnit);
+        ResourcePricingRule baseRule = pricingRuleRepository.findAllActiveByResourceId(resource.getId()).stream()
+                .filter(rule -> unit.equals(rule.getResourceBookingUnit()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("No active pricing rule found for resource " + resourceCode));
+
+        List<ResourcePricingRule> candidates = pricingRuleRepository.findApplicableRules(
+                resource,
+                unit,
+                startedAt.toLocalDate(),
+                startedAt.getDayOfWeek().getValue(),
+                startedAt.toLocalTime()
+        );
+        ResourcePricingRule applied = candidates.stream()
+                .filter(rule -> appliesLastMinute(rule, startedAt))
+                .findFirst()
+                .orElse(baseRule);
+        Integer finalPrice = applyAdjustment(baseRule.getPrice(), applied);
+        return ResourcePriceQuoteResponse.builder()
+                .resourceCode(resource.getCode())
+                .bookingUnit(unit.name())
+                .startedAt(startedAt)
+                .endedAt(endedAt)
+                .basePrice(baseRule.getPrice())
+                .finalPrice(finalPrice)
+                .appliedRuleId(applied.getId())
+                .appliedRuleLabel(applied.getLabel())
+                .adjustmentType(applied.getAdjustmentType() == null ? null : applied.getAdjustmentType().name())
+                .adjustmentValue(applied.getAdjustmentValue())
+                .build();
     }
 
     @Override
@@ -99,6 +154,16 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .resourceCode(rule.getResource().getCode())
                 .bookingUnit(rule.getResourceBookingUnit() == null ? null : rule.getResourceBookingUnit().name())
                 .price(rule.getPrice())
+                .label(rule.getLabel())
+                .dayOfWeek(rule.getDayOfWeek())
+                .startsAt(rule.getStartsAt())
+                .endsAt(rule.getEndsAt())
+                .adjustmentType(rule.getAdjustmentType() == null ? null : rule.getAdjustmentType().name())
+                .adjustmentValue(rule.getAdjustmentValue())
+                .validFrom(rule.getValidFrom())
+                .validUntil(rule.getValidUntil())
+                .lastMinuteMinutes(rule.getLastMinuteMinutes())
+                .priority(rule.getPriority())
                 .active(rule.getActive())
                 .build();
     }
@@ -109,6 +174,33 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         } catch (IllegalArgumentException ex) {
             throw new BadRequestException("Invalid booking unit: " + value, ex);
         }
+    }
+
+    private ResourcePriceAdjustmentType parseAdjustmentType(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return ResourcePriceAdjustmentType.valueOf(value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Invalid adjustment type: " + value, ex);
+        }
+    }
+
+    private boolean appliesLastMinute(ResourcePricingRule rule, LocalDateTime startedAt) {
+        return rule.getLastMinuteMinutes() == null || !LocalDateTime.now().plusMinutes(rule.getLastMinuteMinutes()).isBefore(startedAt);
+    }
+
+    private Integer applyAdjustment(Integer basePrice, ResourcePricingRule applied) {
+        if (applied.getAdjustmentType() == null) {
+            return applied.getPrice();
+        }
+        Integer adjustment = applied.getAdjustmentValue() == null ? 0 : applied.getAdjustmentValue();
+        return switch (applied.getAdjustmentType()) {
+            case FIXED_PRICE -> adjustment;
+            case AMOUNT_DELTA -> Math.max(0, basePrice + adjustment);
+            case PERCENT_DELTA -> Math.max(0, basePrice + (basePrice * adjustment / 100));
+        };
     }
 
     private List<String> validateRequest(CreateResourcePricingRuleRequest request) {
@@ -125,6 +217,15 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         }
         if (request.getPrice() == null || request.getPrice() < 0) {
             errors.add("Invalid resource pricing rule request, the price must be zero or greater");
+        }
+        if (request.getDayOfWeek() != null && (request.getDayOfWeek() < 1 || request.getDayOfWeek() > 7)) {
+            errors.add("Invalid resource pricing rule request, dayOfWeek must be between 1 and 7");
+        }
+        if (request.getStartsAt() != null && request.getEndsAt() != null && !request.getEndsAt().isAfter(request.getStartsAt())) {
+            errors.add("Invalid resource pricing rule request, endsAt must be after startsAt");
+        }
+        if (request.getValidFrom() != null && request.getValidUntil() != null && request.getValidUntil().isBefore(request.getValidFrom())) {
+            errors.add("Invalid resource pricing rule request, validUntil must be after validFrom");
         }
         return errors;
     }

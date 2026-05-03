@@ -1,339 +1,386 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
+    <meta charset="UTF-8">
     <title>Rapport mouvements inventaire</title>
     <style>
         @page {
             size: A4;
-            margin: 18mm 14mm;
+            margin: 0 0 16mm 0;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                font-size: 8px;
+                color: #9b8caa;
+            }
         }
-
+        * { box-sizing: border-box; }
         body {
-            font-family: "DejaVu Sans", sans-serif;
-            color: #1f2937;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: #1a0a2e;
             font-size: 10.5px;
-            line-height: 1.42;
+            line-height: 1.55;
             margin: 0;
+            background: #ffffff;
         }
-
-        h1, h2, h3, p {
-            margin: 0;
+        h1, h2, h3, p { margin: 0; }
+        .doc-header {
+            background: #1a0a2e;
+            padding: 18px 26px 14px;
         }
-
-        h1 {
-            font-size: 22px;
-            letter-spacing: 0;
-            color: #111827;
-        }
-
-        h2 {
-            font-size: 13px;
-            color: #111827;
-            margin: 18px 0 8px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #d1d5db;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            page-break-inside: auto;
-        }
-
-        tr {
-            page-break-inside: avoid;
-        }
-
-        th, td {
-            border: 1px solid #d1d5db;
-            padding: 6px;
-            vertical-align: top;
-        }
-
-        th {
-            background: #eef2f7;
-            color: #111827;
-            font-weight: 700;
-            text-align: left;
-        }
-
-        .header {
-            border-bottom: 3px solid #111827;
-            padding-bottom: 12px;
-            margin-bottom: 14px;
-        }
-
-        .muted {
-            color: #6b7280;
-        }
-
-        .right {
-            text-align: right;
-        }
-
-        .center {
-            text-align: center;
-        }
-
-        .filters {
-            margin-top: 10px;
-            width: 100%;
-        }
-
-        .filters td {
-            border: none;
-            padding: 2px 0;
-        }
-
-        .kpis {
-            width: 100%;
-            margin: 14px 0 8px;
-        }
-
-        .kpis td {
-            width: 25%;
-            border: 1px solid #cbd5e1;
-            padding: 9px;
-            background: #f8fafc;
-        }
-
-        .kpi-label {
-            font-size: 9px;
-            text-transform: uppercase;
-            color: #64748b;
-            margin-bottom: 2px;
-        }
-
-        .kpi-value {
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { vertical-align: middle; }
+        .brand-name {
             font-size: 15px;
             font-weight: 700;
-            color: #111827;
+            color: #ffffff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
         }
-
-        .positive {
-            color: #166534;
+        .brand-sub {
+            font-size: 7px;
+            color: #9b8caa;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
         }
-
-        .negative {
-            color: #991b1b;
+        .doc-title-block { text-align: right; }
+        .doc-title-block h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            line-height: 1;
         }
-
+        .doc-title-block .doc-gen {
+            font-size: 9px;
+            color: #c9a84c;
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+        }
+        .header-stripe { height: 3px; background: #c9a84c; border-right: 220px solid #8b5cf6; }
+        .content { padding: 16px 26px 0; }
+        .filters-box { border: 1px solid #e8e0f0; border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
+        .filters-head {
+            background: #1a0a2e;
+            border-left: 3px solid #c9a84c;
+            padding: 5px 12px;
+            font-size: 7.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #ffffff;
+        }
+        .filters-table { width: 100%; border-collapse: collapse; background: #fffdf7; }
+        .filters-table td {
+            width: 25%;
+            padding: 8px 12px;
+            border-right: 1px solid #e8e0f0;
+            font-size: 9.5px;
+            vertical-align: top;
+        }
+        .filters-table td:last-child { border-right: none; }
+        .filter-label { color: #9b8caa; font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+        .filter-value { font-weight: 700; color: #1a0a2e; }
+        .section-label {
+            font-size: 7.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.6px;
+            color: #8b5cf6;
+            margin: 16px 0 10px;
+            border-bottom: 1px solid #e8e0f0;
+            padding-bottom: 5px;
+        }
+        .section-label span {
+            display: inline-block;
+            border-left: 16px solid #c9a84c;
+            padding-left: 8px;
+        }
+        .kpi-grid { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+        .kpi-grid td {
+            width: 25%;
+            border: 1px solid #e8e0f0;
+            padding: 10px 12px;
+            background: #fffdf7;
+            vertical-align: top;
+        }
+        .kpi-grid td:first-child { border-left: 3px solid #c9a84c; }
+        .kpi-label { font-size: 7.5px; text-transform: uppercase; color: #9b8caa; letter-spacing: 0.8px; margin-bottom: 3px; }
+        .kpi-value { font-size: 16px; font-weight: 700; color: #1a0a2e; }
+        .positive { color: #166534; }
+        .negative { color: #991b1b; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 9.5px; margin-bottom: 0; }
+        .data-table thead th {
+            background: #2a1548;
+            color: #ffffff;
+            padding: 7px 9px;
+            font-size: 7.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+        .data-table thead th.col-accent { background: #c9a84c; color: #1a0a2e; }
+        .data-table tbody td {
+            padding: 7px 9px;
+            border-bottom: 1px solid #e8e0f0;
+            vertical-align: top;
+        }
+        .data-table tbody tr:nth-child(even) td { background: #fffdf7; }
+        .data-table tbody tr:last-child td { border-bottom: 2px solid #1a0a2e; }
+        .data-table tbody td.col-accent { font-weight: 700; color: #7c5600; background: #fff8e6; }
+        .data-table tbody tr:nth-child(even) td.col-accent { background: #f7e6b0; }
+        .data-table .empty-row td { text-align: center; color: #9b8caa; font-style: italic; padding: 14px; }
+        .right { text-align: right; }
+        .center { text-align: center; }
+        .muted { color: #9b8caa; }
+        .bold { font-weight: 700; }
         .badge {
             display: inline-block;
-            padding: 2px 5px;
-            border-radius: 4px;
-            background: #e5e7eb;
-            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 2px;
+            font-size: 8px;
             font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
         }
-
-        .badge-in {
-            background: #dcfce7;
-            color: #166534;
+        .badge-in { background: #dcfce7; color: #166534; }
+        .badge-out { background: #fee2e2; color: #991b1b; }
+        .badge-neutral { background: #e8e0f0; color: #5c4f6e; }
+        .doc-footer {
+            margin-top: 22px;
+            padding: 10px 26px;
+            border-top: 1px solid #e8e0f0;
+            font-size: 8px;
+            color: #9b8caa;
+            text-align: center;
         }
-
-        .badge-out {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .footer {
-            margin-top: 20px;
-            border-top: 1px solid #d1d5db;
-            padding-top: 8px;
-            font-size: 9px;
-            color: #6b7280;
-        }
+        .doc-footer .made-by { font-size: 6.5px; color: #d6d0df; margin-top: 2px; letter-spacing: 0.4px; }
     </style>
 </head>
 <body>
-<div class="header">
-    <h1>Rapport des mouvements inventaire</h1>
-    <p class="muted">
-        Généré le <span th:text="${generatedAt}">2026-04-17T00:00:00Z</span>
-    </p>
-    <table class="filters">
+
+<div class="doc-header">
+    <table class="header-table">
         <tr>
-            <td><strong>Article</strong>: <span th:text="${report.itemCode ?: 'Tous'}">Tous</span></td>
-            <td><strong>Location</strong>: <span th:text="${report.locationCode ?: 'Toutes'}">Toutes</span></td>
-        </tr>
-        <tr>
-            <td><strong>Du</strong>: <span th:text="${report.fromDate ?: 'Début'}">Début</span></td>
-            <td><strong>Au</strong>: <span th:text="${report.toDate ?: 'Maintenant'}">Maintenant</span></td>
+            <td>
+                <div class="brand-name">Elle A Ose</div>
+                <div class="brand-sub">Cowork &amp; Studio</div>
+            </td>
+            <td class="doc-title-block">
+                <h1>Rapport inventaire</h1>
+                <div class="doc-gen">Genere le <span th:text="${generatedAt}">2026-05-01</span></div>
+            </td>
         </tr>
     </table>
 </div>
+<div class="header-stripe"></div>
 
-<table class="kpis">
-    <tr>
-        <td>
-            <div class="kpi-label">Mouvements</div>
-            <div class="kpi-value" th:text="${report.summary.movementCount}">0</div>
-        </td>
-        <td>
-            <div class="kpi-label">Entrées</div>
-            <div class="kpi-value positive" th:text="${report.summary.totalInQuantity}">0</div>
-        </td>
-        <td>
-            <div class="kpi-label">Sorties</div>
-            <div class="kpi-value negative" th:text="${report.summary.totalOutQuantity}">0</div>
-        </td>
-        <td>
-            <div class="kpi-label">Quantité nette</div>
-            <div class="kpi-value" th:text="${report.summary.netQuantity}">0</div>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <div class="kpi-label">Valeur entrées</div>
-            <div class="kpi-value positive" th:text="${report.summary.totalInValue}">0</div>
-        </td>
-        <td>
-            <div class="kpi-label">Valeur sorties</div>
-            <div class="kpi-value negative" th:text="${report.summary.totalOutValue}">0</div>
-        </td>
-        <td>
-            <div class="kpi-label">Valeur nette</div>
-            <div class="kpi-value" th:text="${report.summary.netValue}">0</div>
-        </td>
-        <td>
-            <div class="kpi-label">Valeur totale</div>
-            <div class="kpi-value" th:text="${report.summary.totalMovementValue}">0</div>
-        </td>
-    </tr>
-</table>
+<div class="content">
+    <div class="filters-box">
+        <div class="filters-head">Filtres appliques</div>
+        <table class="filters-table">
+            <tr>
+                <td>
+                    <div class="filter-label">Article</div>
+                    <div class="filter-value" th:text="${report.itemCode ?: 'Tous'}">Tous</div>
+                </td>
+                <td>
+                    <div class="filter-label">Location</div>
+                    <div class="filter-value" th:text="${report.locationCode ?: 'Toutes'}">Toutes</div>
+                </td>
+                <td>
+                    <div class="filter-label">Du</div>
+                    <div class="filter-value" th:text="${report.fromDate ?: 'Debut'}">Debut</div>
+                </td>
+                <td>
+                    <div class="filter-label">Au</div>
+                    <div class="filter-value" th:text="${report.toDate ?: 'Maintenant'}">Maintenant</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 
-<h2>Synthèse par type de mouvement</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Type</th>
-        <th class="right">Nombre</th>
-        <th class="right">Quantité</th>
-        <th class="right">Valeur</th>
-        <th class="right">Quantité signée</th>
-        <th class="right">Valeur signée</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="line : ${report.lines}">
-        <td>
-            <span class="badge"
-                  th:classappend="${line.signedQuantity != null and line.signedQuantity.signum() > 0 ? ' badge-in' : (line.signedQuantity != null and line.signedQuantity.signum() < 0 ? ' badge-out' : '')}"
-                  th:text="${line.movementType}">IN</span>
-        </td>
-        <td class="right" th:text="${line.movementCount}">0</td>
-        <td class="right" th:text="${line.totalQuantity}">0</td>
-        <td class="right" th:text="${line.totalValue}">0</td>
-        <td class="right" th:text="${line.signedQuantity}">0</td>
-        <td class="right" th:text="${line.signedValue}">0</td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(report.lines)}">
-        <td colspan="6" class="center muted">Aucun mouvement sur la période.</td>
-    </tr>
-    </tbody>
-</table>
+    <div class="section-label"><span>Vue d'ensemble</span></div>
+    <table class="kpi-grid">
+        <tr>
+            <td>
+                <div class="kpi-label">Mouvements</div>
+                <div class="kpi-value" th:text="${report.summary.movementCount}">0</div>
+            </td>
+            <td>
+                <div class="kpi-label">Entrees</div>
+                <div class="kpi-value positive" th:text="${report.summary.totalInQuantity}">0</div>
+            </td>
+            <td>
+                <div class="kpi-label">Sorties</div>
+                <div class="kpi-value negative" th:text="${report.summary.totalOutQuantity}">0</div>
+            </td>
+            <td>
+                <div class="kpi-label">Quantite nette</div>
+                <div class="kpi-value" th:text="${report.summary.netQuantity}">0</div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="kpi-label">Valeur entrees</div>
+                <div class="kpi-value positive" th:text="${report.summary.totalInValue}">0</div>
+            </td>
+            <td>
+                <div class="kpi-label">Valeur sorties</div>
+                <div class="kpi-value negative" th:text="${report.summary.totalOutValue}">0</div>
+            </td>
+            <td>
+                <div class="kpi-label">Valeur nette</div>
+                <div class="kpi-value" th:text="${report.summary.netValue}">0</div>
+            </td>
+            <td>
+                <div class="kpi-label">Valeur totale</div>
+                <div class="kpi-value" th:text="${report.summary.totalMovementValue}">0</div>
+            </td>
+        </tr>
+    </table>
 
-<h2>Top articles</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Code</th>
-        <th>Article</th>
-        <th class="right">Mouvements</th>
-        <th class="right">Entrées</th>
-        <th class="right">Sorties</th>
-        <th class="right">Net</th>
-        <th class="right">Valeur</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="item : ${report.items}">
-        <td th:text="${item.itemCode}">ITEM</td>
-        <td th:text="${item.itemName}">Article</td>
-        <td class="right" th:text="${item.movementCount}">0</td>
-        <td class="right" th:text="${item.totalInQuantity}">0</td>
-        <td class="right" th:text="${item.totalOutQuantity}">0</td>
-        <td class="right" th:text="${item.netQuantity}">0</td>
-        <td class="right" th:text="${item.totalValue}">0</td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(report.items)}">
-        <td colspan="7" class="center muted">Aucun article à afficher.</td>
-    </tr>
-    </tbody>
-</table>
+    <div class="section-label"><span>Synthese par type de mouvement</span></div>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Type</th>
+            <th class="right">Nombre</th>
+            <th class="right">Quantite</th>
+            <th class="right">Valeur</th>
+            <th class="right">Qte signee</th>
+            <th class="right col-accent">Valeur signee</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="line : ${report.lines}">
+            <td>
+                <span class="badge"
+                      th:classappend="${line.signedQuantity != null and line.signedQuantity.signum() > 0 ? ' badge-in' : (line.signedQuantity != null and line.signedQuantity.signum() < 0 ? ' badge-out' : ' badge-neutral')}"
+                      th:text="${line.movementType}">IN</span>
+            </td>
+            <td class="right" th:text="${line.movementCount}">0</td>
+            <td class="right" th:text="${line.totalQuantity}">0</td>
+            <td class="right" th:text="${line.totalValue}">0</td>
+            <td class="right" th:text="${line.signedQuantity}">0</td>
+            <td class="right col-accent" th:text="${line.signedValue}">0</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(report.lines)}" class="empty-row">
+            <td colspan="6">Aucun mouvement sur la periode.</td>
+        </tr>
+        </tbody>
+    </table>
 
-<h2>Ventilation par location</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Code</th>
-        <th>Location</th>
-        <th class="right">Mouvements</th>
-        <th class="right">Entrées</th>
-        <th class="right">Sorties</th>
-        <th class="right">Net</th>
-        <th class="right">Valeur</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="location : ${report.locations}">
-        <td th:text="${location.locationCode}">LOC</td>
-        <td th:text="${location.locationName}">Location</td>
-        <td class="right" th:text="${location.movementCount}">0</td>
-        <td class="right" th:text="${location.totalInQuantity}">0</td>
-        <td class="right" th:text="${location.totalOutQuantity}">0</td>
-        <td class="right" th:text="${location.netQuantity}">0</td>
-        <td class="right" th:text="${location.totalValue}">0</td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(report.locations)}">
-        <td colspan="7" class="center muted">Aucune location à afficher.</td>
-    </tr>
-    </tbody>
-</table>
+    <div class="section-label"><span>Top articles</span></div>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Code</th>
+            <th>Article</th>
+            <th class="right">Mouvements</th>
+            <th class="right">Entrees</th>
+            <th class="right">Sorties</th>
+            <th class="right">Net</th>
+            <th class="right col-accent">Valeur</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${report.items}">
+            <td class="muted" th:text="${item.itemCode}">ITEM</td>
+            <td class="bold" th:text="${item.itemName}">Article</td>
+            <td class="right" th:text="${item.movementCount}">0</td>
+            <td class="right positive" th:text="${item.totalInQuantity}">0</td>
+            <td class="right negative" th:text="${item.totalOutQuantity}">0</td>
+            <td class="right" th:text="${item.netQuantity}">0</td>
+            <td class="right col-accent" th:text="${item.totalValue}">0</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(report.items)}" class="empty-row">
+            <td colspan="7">Aucun article a afficher.</td>
+        </tr>
+        </tbody>
+    </table>
 
-<h2>Derniers mouvements</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Code</th>
-        <th>Type</th>
-        <th>Article</th>
-        <th>De</th>
-        <th>Vers</th>
-        <th class="right">Qté</th>
-        <th class="right">Coût</th>
-        <th>Référence</th>
-        <th>Date</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="movement : ${report.recentMovements}">
-        <td th:text="${movement.movementCode}">STM</td>
-        <td th:text="${movement.movementType}">IN</td>
-        <td>
-            <strong th:text="${movement.itemCode}">ITEM</strong><br/>
-            <span class="muted" th:text="${movement.itemName}">Article</span>
-        </td>
-        <td th:text="${movement.locationFromCode ?: '-'}">-</td>
-        <td th:text="${movement.locationToCode ?: '-'}">-</td>
-        <td class="right" th:text="${movement.quantity}">0</td>
-        <td class="right" th:text="${movement.totalCost ?: 0}">0</td>
-        <td>
-            <span th:text="${movement.referenceType ?: '-'}">-</span><br/>
-            <span class="muted" th:text="${movement.referenceCode ?: '-'}">-</span>
-        </td>
-        <td th:text="${movement.performedAt}">date</td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(report.recentMovements)}">
-        <td colspan="9" class="center muted">Aucun mouvement récent.</td>
-    </tr>
-    </tbody>
-</table>
+    <div class="section-label"><span>Ventilation par location</span></div>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Code</th>
+            <th>Location</th>
+            <th class="right">Mouvements</th>
+            <th class="right">Entrees</th>
+            <th class="right">Sorties</th>
+            <th class="right">Net</th>
+            <th class="right col-accent">Valeur</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="location : ${report.locations}">
+            <td class="muted" th:text="${location.locationCode}">LOC</td>
+            <td class="bold" th:text="${location.locationName}">Location</td>
+            <td class="right" th:text="${location.movementCount}">0</td>
+            <td class="right positive" th:text="${location.totalInQuantity}">0</td>
+            <td class="right negative" th:text="${location.totalOutQuantity}">0</td>
+            <td class="right" th:text="${location.netQuantity}">0</td>
+            <td class="right col-accent" th:text="${location.totalValue}">0</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(report.locations)}" class="empty-row">
+            <td colspan="7">Aucune location a afficher.</td>
+        </tr>
+        </tbody>
+    </table>
 
-<div class="footer">
-    Rapport généré automatiquement par le module inventaire. Les valeurs sont calculées à partir des mouvements enregistrés sur la période sélectionnée.
+    <div class="section-label"><span>Derniers mouvements</span></div>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Code</th>
+            <th>Type</th>
+            <th>Article</th>
+            <th>De</th>
+            <th>Vers</th>
+            <th class="right">Qte</th>
+            <th class="right col-accent">Cout</th>
+            <th>Reference</th>
+            <th>Date</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="movement : ${report.recentMovements}">
+            <td class="muted" style="font-size:8.5px;" th:text="${movement.movementCode}">STM</td>
+            <td>
+                <span class="badge badge-neutral"
+                      th:classappend="${movement.movementType != null and movement.movementType.contains('IN') ? ' badge-in' : (movement.movementType != null and movement.movementType.contains('OUT') ? ' badge-out' : '')}"
+                      th:text="${movement.movementType}">IN</span>
+            </td>
+            <td>
+                <div class="bold" th:text="${movement.itemCode}">ITEM</div>
+                <div class="muted" style="font-size:8.5px;" th:text="${movement.itemName}">Article</div>
+            </td>
+            <td class="muted" th:text="${movement.locationFromCode ?: '-'}">-</td>
+            <td class="muted" th:text="${movement.locationToCode ?: '-'}">-</td>
+            <td class="right bold" th:text="${movement.quantity}">0</td>
+            <td class="right col-accent" th:text="${movement.totalCost ?: 0}">0</td>
+            <td>
+                <div style="font-size:8.5px;" th:text="${movement.referenceType ?: '-'}">-</div>
+                <div class="muted" style="font-size:8px;" th:text="${movement.referenceCode ?: '-'}">-</div>
+            </td>
+            <td style="font-size:8.5px;" th:text="${movement.performedAt}">date</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(report.recentMovements)}" class="empty-row">
+            <td colspan="9">Aucun mouvement recent.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="doc-footer">
+        Elle A Ose - Rapport inventaire &nbsp;|&nbsp;
+        Genere le <span th:text="${generatedAt}">2026-05-01</span> &nbsp;|&nbsp;
+        Valeurs calculees a partir des mouvements enregistres sur la periode selectionnee.
+        <div class="made-by">Made by SNI</div>
+    </div>
 </div>
 </body>
 </html>

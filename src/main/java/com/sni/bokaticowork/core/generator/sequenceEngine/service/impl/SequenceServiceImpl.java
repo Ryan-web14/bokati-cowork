@@ -9,10 +9,10 @@ import com.sni.bokaticowork.core.generator.sequenceEngine.repository.SequenceDef
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceCounterService;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceResetPolicyResolver;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 

@@ -7,10 +7,13 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,7 +30,7 @@ public class Role {
 
     @NotBlank(message = "Role name is required")
     @Size(max = 250, message = "Role name must not exceed 100 characters")
-    @Pattern(regexp = "^[A-Z_]  +$", message = "Role name must contain only uppercase letters and underscores")
+    @Pattern(regexp = "^[A-Z_]+$", message = "Role name must contain only uppercase letters and underscores")
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
@@ -56,6 +59,11 @@ public class Role {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<RolePermission> rolePermissions;
 
     public void activate() {
         this.isActive = true;

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.math.BigDecimal;
 
 @Repository
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
@@ -46,4 +47,20 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             ORDER BY created_at DESC
             """)
     List<PaymentTransaction> findAllByPaymentIntentIdOrderByCreatedAtDesc(@Param("paymentIntentId") Long paymentIntentId);
+
+    @Query(nativeQuery = true, value = """
+            SELECT COALESCE(SUM(amount), 0)
+            FROM payment_transaction
+            WHERE payment_intent_id = :paymentIntentId
+              AND status = 'SUCCEEDED'
+            """)
+    BigDecimal sumSucceededAmountByPaymentIntentId(@Param("paymentIntentId") Long paymentIntentId);
+
+    @Query(nativeQuery = true, value = """
+            SELECT COALESCE(SUM(amount), 0)
+            FROM payment_transaction
+            WHERE payment_intent_id = :paymentIntentId
+              AND status = 'PROCESSING'
+            """)
+    BigDecimal sumProcessingAmountByPaymentIntentId(@Param("paymentIntentId") Long paymentIntentId);
 }

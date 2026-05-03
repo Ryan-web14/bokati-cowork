@@ -15,5 +15,7 @@ public class PermissionResponse  {
     private String name;
     private String displayName;
     private String module;
+    private String action;
+    private String fullPermissionName;
     private Boolean isActive;
 }

@@ -18,4 +18,6 @@ public interface PaymentAllocationRepository extends JpaRepository<PaymentAlloca
             ORDER BY allocated_at ASC
             """)
     List<PaymentAllocation> findAllByPaymentTransactionId(@Param("paymentTransactionId") Long paymentTransactionId);
+
+    List<PaymentAllocation> findAllByBillingDocumentNumber(String billingDocumentNumber);
 }

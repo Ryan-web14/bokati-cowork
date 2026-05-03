@@ -1,10 +1,14 @@
 package com.sni.bokaticowork.features.document.kyc.mapper.interfaces;
 
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentOcrResultResponse;
 import com.sni.bokaticowork.features.document.kyc.mapper.decorator.KycMapperDecorator;
 import com.sni.bokaticowork.features.document.kyc.model.KycCase;
+import com.sni.bokaticowork.features.document.kyc.model.KycCaseNote;
 import com.sni.bokaticowork.features.document.kyc.model.KycDocument;
+import com.sni.bokaticowork.features.document.kyc.model.KycDocumentOcrResult;
 import org.mapstruct.DecoratedWith;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -20,4 +24,8 @@ public interface KycMapper {
     KycCaseResponse toResponse(KycCase kycCase);
 
     KycDocumentResponse toDocumentResponse(KycDocument document);
+
+    KycCaseNoteResponse toNoteResponse(KycCaseNote note);
+
+    KycDocumentOcrResultResponse toOcrResultResponse(KycDocumentOcrResult result);
 }

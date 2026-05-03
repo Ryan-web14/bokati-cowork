@@ -23,6 +23,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     @Query(nativeQuery = true, value = "SELECT * FROM booking WHERE idempotency_key = :idempotencyKey AND deleted = false")
     Optional<Booking> findByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM booking WHERE check_in_token = :checkInToken AND deleted = false")
+    Optional<Booking> findByCheckInToken(@Param("checkInToken") String checkInToken);
+
     @Query(nativeQuery = true, value = """
             SELECT EXISTS(
                 SELECT 1
@@ -173,4 +176,33 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             LIMIT :limit
             """)
     List<Booking> findRepairCandidates(@Param("limit") int limit);
+
+    @Query(nativeQuery = true, value = """
+            SELECT COUNT(*)
+            FROM booking
+            WHERE deleted = false
+              AND status IN ('CONFIRMED', 'IN_PROGRESS')
+              AND started_at <= :now
+              AND ended_at >= :now
+            """)
+    long countActiveAt(@Param("now") LocalDateTime now);
+
+    @Query(nativeQuery = true, value = """
+            SELECT COUNT(*)
+            FROM booking
+            WHERE deleted = false
+              AND status = 'IN_PROGRESS'
+              AND checked_in_at IS NOT NULL
+            """)
+    long countCheckedInNow();
+
+    @Query(nativeQuery = true, value = """
+            SELECT COUNT(DISTINCT resource_id)
+            FROM booking
+            WHERE deleted = false
+              AND status IN ('CONFIRMED', 'IN_PROGRESS')
+              AND started_at <= :now
+              AND ended_at >= :now
+            """)
+    long countOccupiedResourcesAt(@Param("now") LocalDateTime now);
 }

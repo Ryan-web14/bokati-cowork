@@ -143,6 +143,16 @@ public class  PermissionServiceImpl implements PermissionService {
     }
 
     @Override
+    public List<PermissionResponse> searchByName(String query) {
+        if (query == null || query.isBlank()) {
+            return getAllActivePermissions();
+        }
+        return permissionRepo.searchByName(query.trim()).stream()
+                .map(permissionMapper::toDto)
+                .toList();
+    }
+
+    @Override
     public PaginatedResponse<PermissionResponse> getPaginatedPermissions(Pageable pageable){
 
         Page<PermissionResponse> permissions  =  permissionRepo.findAll(pageable).map(permissionMapper::toDto);

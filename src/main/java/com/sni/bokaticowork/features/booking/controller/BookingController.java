@@ -148,6 +148,12 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.checkIn(bookingNumber, request));
     }
 
+    @PatchMapping("/check-in/qr/{checkInToken}")
+    public ResponseEntity<BookingResponse> checkInByToken(@PathVariable String checkInToken,
+                                                          @RequestBody(required = false) BookingCheckRequest request) {
+        return ResponseEntity.ok(bookingService.checkInByToken(checkInToken, request));
+    }
+
     @PatchMapping("/{bookingNumber}/check-out")
     public ResponseEntity<BookingResponse> checkOut(@PathVariable String bookingNumber,
                                                     @RequestBody(required = false) BookingCheckRequest request) {

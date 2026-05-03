@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.inventory.admin.service;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryDashboardResponse;
+import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelBatchRequest;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryAnomalyReportResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
@@ -77,6 +78,16 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
             case "DISPLAY" -> displayLabel(code);
             default -> throw new BadRequestException("Unsupported label type. Use ITEM, LOCATION, ASSET or DISPLAY");
         };
+    }
+
+    @Override
+    public List<InventoryLabelResponse> labels(InventoryLabelBatchRequest request) {
+        if (request == null || request.items() == null || request.items().isEmpty()) {
+            throw new BadRequestException("At least one label item is required");
+        }
+        return request.items().stream()
+                .map(item -> label(item.type(), item.code()))
+                .toList();
     }
 
     private static final DateTimeFormatter DISPLAY_FMT =

@@ -17,11 +17,15 @@ import com.sni.bokaticowork.features.document.documentMaster.model.DocumentRequi
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRequirementRepository;
 import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
 import com.sni.bokaticowork.features.document.kyc.KycDocumentVerificationStatus;
+import com.sni.bokaticowork.features.document.kyc.KycRiskLevel;
 import com.sni.bokaticowork.features.document.kyc.model.KycCase;
 import com.sni.bokaticowork.features.document.kyc.model.KycDocument;
 import com.sni.bokaticowork.features.document.kyc.repository.KycCaseRepository;
 import com.sni.bokaticowork.features.document.kyc.repository.KycDocumentRepository;
+import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
+import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycOcrService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +37,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService {
+public class KycAutomationServiceImpl implements KycAutomationService {
 
     private final KycCaseRepository kycCaseRepository;
     private final DocumentRequirementRepository requirementRepository;
@@ -42,6 +46,7 @@ public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.d
     private final SequenceGeneratorFacade sequenceGenerator;
     private final OutboxService outboxService;
     private final KycDocumentRepository kycDocumentRepository;
+    private final KycOcrService kycOcrService;
 
     @Override
     public void initializeMemberKyc(String memberId) {
@@ -109,7 +114,9 @@ public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.d
         applyCaseStatus(kycCase, targetStatus, "Synced from customer status");
     }
 
+    @Async
     @Override
+    @Transactional
     public void syncFromDocumentUpload(Document document) {
         if (document == null || document.getCategory() != DocumentCategory.KYC) {
             return;
@@ -119,7 +126,9 @@ public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.d
         recomputeCaseState(kycCase);
     }
 
+    @Async
     @Override
+    @Transactional
     public void syncFromDocumentReview(Document document) {
         if (document == null || document.getCategory() != DocumentCategory.KYC) {
             return;
@@ -150,6 +159,8 @@ public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.d
                 .ownerType(ownerType)
                 .ownerId(ownerId)
                 .status(KycCaseStatus.IN_PROGRESS)
+                .riskLevel(ownerType == DocumentOwnerType.BUSINESS ? KycRiskLevel.MEDIUM : KycRiskLevel.LOW)
+                .kycLevel(1)
                 .build();
         kycCaseRepository.save(entity);
         publishAutomationEvent("KYC_CASE_AUTO_CREATED", entity);
@@ -189,7 +200,12 @@ public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.d
     }
 
     private void attachOrRefreshKycDocument(KycCase kycCase, Document document) {
-        KycDocument kycDocument = kycDocumentRepository.findByDocument(document)
+        KycDocument kycDocument = kycDocumentRepository.findAllByDocument(document).stream()
+                .filter(item -> item.getKycCase() != null
+                        && kycCase.getId() != null
+                        && kycCase.getId().equals(item.getKycCase().getId()))
+                .findFirst()
+                .or(() -> kycDocumentRepository.findAllByDocument(document).stream().findFirst())
                 .orElseGet(() -> KycDocument.builder()
                         .kycCase(kycCase)
                         .ownerType(document.getOwnerType())
@@ -203,6 +219,7 @@ public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.d
         kycDocument.setExpiryDate(document.getExpiryDate());
         kycDocument.setStatus(mapDocumentStatus(document.getStatus()));
         kycDocumentRepository.save(kycDocument);
+        kycOcrService.process(kycDocument);
     }
 
     private void recomputeCaseState(KycCase kycCase) {
@@ -247,7 +264,7 @@ public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.d
                 case SUBMITTED, UNDER_REVIEW -> MemberStatus.UNDER_REVIEW;
                 case PENDING_CORRECTION, REJECTED -> MemberStatus.PENDING_CORRECTION;
                 case APPROVED -> MemberStatus.ACTIVE;
-                case EXPIRED -> MemberStatus.ARCHIVED;
+                case RENEWAL_REQUIRED, EXPIRED -> MemberStatus.PENDING_CORRECTION;
             };
             if (member.getStatus() != target) {
                 member.setStatus(target);
@@ -262,7 +279,7 @@ public class KycAutomationServiceImpl implements com.sni.bokaticowork.features.d
             CustomerStatus target = switch (kycCase.getStatus()) {
                 case IN_PROGRESS, NOT_STARTED, SUBMITTED, UNDER_REVIEW, PENDING_CORRECTION, REJECTED -> CustomerStatus.PENDING;
                 case APPROVED -> CustomerStatus.ACTIVE;
-                case EXPIRED -> CustomerStatus.ARCHIVED;
+                case RENEWAL_REQUIRED, EXPIRED -> CustomerStatus.PENDING;
             };
             if (customer.getStatus() != target) {
                 customer.setStatus(target);

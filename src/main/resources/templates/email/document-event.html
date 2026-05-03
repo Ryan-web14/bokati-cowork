@@ -2,30 +2,121 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Notification document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification document - Elle A Ose</title>
     <style>
-        body { margin:0; padding:0; background:#f5f5f5; font-family: Arial, sans-serif; }
-        .wrap { width:100%; padding:40px 0; background:#f5f5f5; }
-        .card { max-width:520px; margin:auto; background:#fff; border-radius:12px; padding:28px 24px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
-        .title { text-align:center; color:#c2410c; font-size:22px; font-weight:700; margin-bottom:18px; }
-        .text { color:#555; font-size:14px; line-height:1.6; }
-        .box { background:#faf1ed; border:1px solid #f1d2c5; border-radius:10px; padding:14px; margin:16px 0; color:#7c2d12; }
-        .footer { margin-top:18px; padding-top:16px; border-top:1px solid #eee; text-align:center; color:#888; font-size:12.5px; line-height:1.6; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
+        .card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
+        .email-header { background: #1a0a2e; padding: 24px 32px 20px; position: relative; overflow: hidden; }
+        .email-header::after { content: ''; position: absolute; top: 0; right: -20px; width: 160px; height: 100%; background: rgba(255,255,255,0.03); transform: skewX(-12deg); }
+        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
+        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+        .notification-tag { background: rgba(201, 168, 76, 0.15); border: 1px solid rgba(201, 168, 76, 0.4); color: #c9a84c; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+        .email-body { padding: 32px 32px 24px; }
+        .icon-wrap { width: 54px; height: 54px; border-radius: 50%; background: #f0eef5; border: 2px solid #c9a84c; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .event-title { font-size: 20px; font-weight: 700; color: #1a0a2e; text-align: center; margin-bottom: 6px; letter-spacing: -0.3px; line-height: 1.2; }
+        .event-subtitle { font-size: 12px; color: #7c6d8f; text-align: center; margin-bottom: 24px; }
+        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 10px; }
+        .message { font-size: 13px; color: #5c4f6e; line-height: 1.65; margin-bottom: 22px; }
+        .info-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 22px; }
+        .info-box-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
+        .info-row { display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid #f0eaf8; font-size: 13px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-row:nth-child(even) { background: #faf8fd; }
+        .info-key { color: #7c6d8f; font-size: 11px; font-weight: 600; width: 120px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-val { color: #1a0a2e; font-weight: 700; font-size: 12.5px; flex: 1; }
+        .status-badge { display: inline-block; padding: 2px 10px; border-radius: 2px; font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; }
+        .status-approved { background: #dcfce7; color: #166534; }
+        .status-pending { background: #fef9c3; color: #92400e; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .status-draft { background: #f1f5f9; color: #475569; }
+        .status-sent { background: #ede9fe; color: #4c1d95; }
+        .status-default { background: #ede9fe; color: #4c1d95; }
+        .cta-wrap { text-align: center; margin-bottom: 26px; }
+        .cta-btn { display: inline-block; background: #1a0a2e; color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 13px 32px; border-radius: 3px; border: 1.5px solid #c9a84c; }
+        .note { font-size: 11.5px; color: #7c6d8f; line-height: 1.65; text-align: center; }
+        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+        .footer-made { font-size: 8.5px; color: #c8bdd8; margin-top: 8px; letter-spacing: 0.4px; }
     </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
-        <div class="title">Mise a jour document</div>
-        <p class="text">Bonjour <strong th:text="${recipientName}">client</strong>,</p>
-        <p class="text">Une mise a jour a ete enregistree sur votre document.</p>
-        <div class="box">
-            <div><strong>Document:</strong> <span th:text="${documentCode}">DOC-001</span></div>
-            <div><strong>Evenement:</strong> <span th:text="${eventType}">DOCUMENT_APPROVED</span></div>
-            <div><strong>Statut:</strong> <span th:text="${status}">APPROVED</span></div>
+        <div class="email-header">
+            <div class="logo-area">
+                <div>
+                    <div class="brand-name">Elle A Ose</div>
+                    <div class="brand-sub">Cowork &amp; Studio</div>
+                </div>
+                <div class="notification-tag">Document</div>
+            </div>
         </div>
-        <p class="text">Connectez-vous a votre espace pour consulter le detail et les actions eventuellement attendues.</p>
-        <div class="footer">BOKATI - Cowork</div>
+        <div class="header-stripe"></div>
+
+        <div class="email-body">
+            <div class="icon-wrap">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="2" width="12" height="16" rx="1.5" stroke="#c9a84c" stroke-width="1.5"/>
+                    <path d="M8 7h6M8 10h6M8 13h4" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M14 2v4h4" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="17" cy="17" r="4" fill="#1a0a2e" stroke="#c9a84c" stroke-width="1.5"/>
+                    <path d="M15.5 17l1 1 2-2" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <div class="event-title">Mise a jour document</div>
+            <div class="event-subtitle">Une modification a ete enregistree sur votre document</div>
+
+            <p class="greeting">Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,</p>
+            <p class="message">Une mise a jour a ete enregistree sur votre document. Retrouvez ci-dessous le recapitulatif de cet evenement.</p>
+
+            <div class="info-box">
+                <div class="info-box-head">Details de l'evenement</div>
+                <div class="info-row">
+                    <span class="info-key">Document</span>
+                    <span class="info-val" th:text="${documentCode}">DOC-001</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Evenement</span>
+                    <span class="info-val" th:text="${eventType}">DOCUMENT_APPROVED</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Statut</span>
+                    <span class="info-val">
+                        <span th:switch="${status}">
+                            <span th:case="'APPROVED'" class="status-badge status-approved" th:text="${status}">APPROVED</span>
+                            <span th:case="'PENDING'" class="status-badge status-pending" th:text="${status}">PENDING</span>
+                            <span th:case="'PENDING_REVIEW'" class="status-badge status-pending" th:text="${status}">PENDING_REVIEW</span>
+                            <span th:case="'REJECTED'" class="status-badge status-rejected" th:text="${status}">REJECTED</span>
+                            <span th:case="'DRAFT'" class="status-badge status-draft" th:text="${status}">DRAFT</span>
+                            <span th:case="'SENT'" class="status-badge status-sent" th:text="${status}">SENT</span>
+                            <span th:case="*" class="status-badge status-default" th:text="${status ?: '-'}">-</span>
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="cta-wrap">
+                <a th:href="${actionUrl ?: '#'}" class="cta-btn">Consulter mon espace</a>
+            </div>
+
+            <p class="note">Connectez-vous a votre espace pour consulter le detail et les actions eventuellement attendues.</p>
+        </div>
+
+        <div class="email-footer">
+            <div class="footer-brand">Elle A Ose - Bokati Cowork</div>
+            <div class="footer-text">
+                Cet email a ete envoye automatiquement, merci de ne pas y repondre directement.<br>
+                Pour toute question, contactez notre equipe via votre espace client.
+            </div>
+            <div class="footer-made">Made by SNI</div>
+        </div>
     </div>
 </div>
 </body>
