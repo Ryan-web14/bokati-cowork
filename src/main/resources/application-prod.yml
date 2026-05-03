@@ -1,4 +1,174 @@
+
+spring:
+  application:
+    name: bokati-cowork
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT:20000}
+      idle-timeout: ${DB_IDLE_TIMEOUT:300000}
+      max-lifetime: ${DB_MAX_LIFETIME:1800000}
+
+  mail:
+    microsoft:
+      graph:
+        client-id: ${MICROSOFT_GRAPH_CLIENT_ID}
+        client-secret: ${MICROSOFT_GRAPH_CLIENT_SECRET}
+        tenant-id: ${MICROSOFT_GRAPH_TENANT_ID}
+        sender-email: ${MICROSOFT_SENDER_EMAIL:no-reply@elleaose.com}
+
+  jpa:
+    database: postgresql
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: false
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    default-schema: public
+    schemas: public
+    encoding: UTF-8
+    validate-on-migrate: true
+    clean-disabled: true
+    baseline-on-migrate: true
+    baseline-version: 3
+    out-of-order: false
+
+gg:
+  jte:
+    development-mode: false
+
+logging:
+  level:
+    com.sni.bokaticowork: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.flywaydb: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+
+  datadog:
+    metrics:
+      export:
+        enabled: ${DATADOG_METRICS_ENABLED:false}
+
+  defaults:
+    metrics:
+      export:
+        enabled: false
+
+bokati:
+  payment:
+    cash-session:
+      auto-limit: ${CASH_SESSION_AUTO_LIMIT:10000000}
+
+    pawaypay:
+      enabled: ${PAWAYPAY_ENABLED:false}
+      api-key: ${PAWAYPAY_API_KEY}
+      base-url: ${PAWAYPAY_BASE_URL:https://api.pawapay.io}
+      callback-base-url: ${APP_BASE_URL}
+      callback-secret: ${PAWAYPAY_CALLBACK_SECRET}
+      polling-delay-ms: ${PAWAYPAY_POLLING_DELAY_MS:300000}
+      polling-max-age-minutes: ${PAWAYPAY_POLLING_MAX_AGE_MINUTES:10}
+
 app:
+  api-base-url: ${APP_BASE_URL}
+  admin-access-url: ${ADMIN_ACCESS_URL:https://admin.elleaose.com}
+  verify-base-url: ${APP_BASE_URL}
+
+  document:
+    storage:
+      provider: ${DOCUMENT_STORAGE_PROVIDER:filesystem}
+      root-path: ${DOCUMENT_STORAGE_ROOT_PATH:storage/documents}
+      minio:
+        endpoint: ${MINIO_ENDPOINT}
+        bucket: ${MINIO_BUCKET:bokati-documents}
+        access-key: ${MINIO_ACCESS_KEY}
+        secret-key: ${MINIO_SECRET_KEY}
+
+    worker:
+      enabled: ${DOCUMENT_WORKER_ENABLED:true}
+      fixed-delay-ms: ${DOCUMENT_WORKER_FIXED_DELAY_MS:3600000}
+
+  contract:
+    worker:
+      enabled: ${CONTRACT_WORKER_ENABLED:true}
+      fixed-delay-ms: ${CONTRACT_WORKER_FIXED_DELAY_MS:3600000}
+
+  outbox:
+    worker:
+      enabled: ${OUTBOX_WORKER_ENABLED:true}
+      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:10000}
+      batch-size: ${OUTBOX_WORKER_BATCH_SIZE:25}
+
+  kyc:
+    ocr:
+      enabled: ${KYC_OCR_ENABLED:false}
+      provider: ${KYC_OCR_PROVIDER:TESSERACT}
+      language: ${KYC_OCR_LANGUAGE:fra+eng}
+      data-path: ${KYC_OCR_DATA_PATH:storage/tessdata}
+
   security:
+    auto-admin:
+      enabled: ${AUTO_ADMIN_SECURITY_CONTEXT_ENABLED:false}
+      email: ${AUTO_ADMIN_EMAIL:admin@bokati.com}
+
+    failed-login:
+      max-attempts: ${FAILED_LOGIN_MAX_ATTEMPTS:5}
+
+    rate-limit:
+      enabled: ${RATE_LIMIT_ENABLED:true}
+
+      login:
+        max-requests: ${RATE_LIMIT_LOGIN_MAX_REQUESTS:5}
+        window-seconds: ${RATE_LIMIT_LOGIN_WINDOW_SECONDS:60}
+
+      otp:
+        max-requests: ${RATE_LIMIT_OTP_MAX_REQUESTS:3}
+        window-seconds: ${RATE_LIMIT_OTP_WINDOW_SECONDS:600}
+
+      callback:
+        max-requests: ${RATE_LIMIT_CALLBACK_MAX_REQUESTS:120}
+        window-seconds: ${RATE_LIMIT_CALLBACK_WINDOW_SECONDS:60}
+
+      admin:
+        max-requests: ${RATE_LIMIT_ADMIN_MAX_REQUESTS:600}
+        window-seconds: ${RATE_LIMIT_ADMIN_WINDOW_SECONDS:60}
+
     jwt:
       secret: ${APP_JWT_SECRET}
+      access-token-expiration-ms: ${APP_JWT_ACCESS_EXPIRATION_MS:900000}
+      refresh-token-expiration-ms: ${APP_JWT_REFRESH_EXPIRATION_MS:604800000}
+      verification-token-expiration-ms: ${APP_JWT_VERIFICATION_EXPIRATION_MS:900000}
+
+    one-time-token:
+      expiration-ms: ${APP_OTT_EXPIRATION_MS:900000}
+
+    password-reset:
+      expiration-ms: ${APP_PASSWORD_RESET_EXPIRATION_MS:900000}
+
+    token-hash:
+      secret: ${TOKEN_HASH_SECRET}
