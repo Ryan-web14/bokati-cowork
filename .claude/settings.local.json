@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf \"C:/java-project/bokati-cowork/target\")",
+      "Bash(./mvnw compile *)",
+      "Bash(./mvnw clean *)",
+      "Bash(./mvnw test-compile *)"
+    ]
+  }
+}

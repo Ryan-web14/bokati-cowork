@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de paiement</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
+        .card { max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
+        .email-header { background: #1a0a2e; padding: 24px 32px 20px; position: relative; overflow: hidden; }
+        .email-header::after { content: ''; position: absolute; top: 0; right: -20px; width: 160px; height: 100%; background: rgba(255,255,255,0.03); transform: skewX(-12deg); }
+        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
+        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
+        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+        .notification-tag { background: rgba(22, 101, 52, 0.18); border: 1px solid rgba(22, 101, 52, 0.35); color: #86efac; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
+        .email-body { padding: 32px 32px 28px; }
+        .icon-wrap { width: 54px; height: 54px; border-radius: 50%; background: #f0fdf4; border: 2px solid #c9a84c; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+        .event-title { font-size: 20px; font-weight: 700; color: #1a0a2e; text-align: center; margin-bottom: 6px; letter-spacing: -0.3px; }
+        .event-subtitle { font-size: 12px; color: #7c6d8f; text-align: center; margin-bottom: 24px; }
+        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 10px; }
+        .message { font-size: 13px; color: #5c4f6e; line-height: 1.65; margin-bottom: 22px; }
+        .info-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 22px; }
+        .info-box-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
+        .info-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid #f0eaf8; font-size: 13px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-row:nth-child(even) { background: #faf8fd; }
+        .info-key { color: #7c6d8f; font-size: 11px; font-weight: 600; width: 145px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-val { color: #1a0a2e; font-weight: 700; font-size: 12.5px; flex: 1; text-align: right; }
+        .paid { color: #166534; }
+        .balance { color: #c9560c; }
+        .note { font-size: 11.5px; color: #7c6d8f; line-height: 1.65; text-align: center; padding: 13px 16px; background: #faf8fd; border: 1px solid #e8e0f0; border-left: 3px solid #c9a84c; border-radius: 3px; }
+        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <div class="email-header">
+            <div class="logo-area">
+                <div>
+                    <div class="brand-name">Elle A Ose</div>
+                    <div class="brand-sub">Cowork &amp; Studio</div>
+                </div>
+                <div class="notification-tag">Reglement</div>
+            </div>
+        </div>
+        <div class="header-stripe"></div>
+        <div class="email-body">
+            <div class="icon-wrap">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="5" width="18" height="14" rx="2" stroke="#c9a84c" stroke-width="1.5"/>
+                    <path d="M3 9h18" stroke="#c9a84c" stroke-width="1.5"/>
+                    <path d="M7 15h4" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
+                    <circle cx="17" cy="15" r="3" fill="#1a0a2e" stroke="#c9a84c" stroke-width="1.5"/>
+                    <path d="M15.8 15l0.8 0.8 1.6-1.8" stroke="#c9a84c" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="event-title">Reglement confirme</div>
+            <div class="event-subtitle">Merci, votre paiement a bien ete pris en compte</div>
+            <p class="greeting">Bonjour <strong th:text="${customerName}">client</strong>,</p>
+            <p class="message">Nous vous confirmons la reception de votre paiement pour la facture <strong th:text="${documentNumber}">FAC-000</strong>.</p>
+            <div class="info-box">
+                <div class="info-box-head">Recapitulatif du reglement</div>
+                <div class="info-row">
+                    <span class="info-key">Montant regle</span>
+                    <span class="info-val paid" th:text="${paidAmount}">0 XAF</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Mode</span>
+                    <span class="info-val" th:text="${paymentMethod}">paiement</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Facture</span>
+                    <span class="info-val" th:text="${documentNumber}">FAC-000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Solde restant</span>
+                    <span class="info-val balance" th:text="${balanceDue}">0 XAF</span>
+                </div>
+            </div>
+            <div class="note">Merci pour votre reglement. Conservez ce message comme confirmation de bonne reception du paiement.</div>
+        </div>
+        <div class="email-footer">
+            <div class="footer-brand">Elle A Ose - Bokati Cowork</div>
+            <div class="footer-text">Notre equipe reste disponible pour toute question concernant votre facture.<br>Cet email a été envoyé automatiquement, merci de ne pas y répondre directement.<br>
+                Pour toute question : coworkspace@elleaose.com · 05 204 25 52</div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

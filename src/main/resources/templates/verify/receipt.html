@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="|Vérification ${receipt.receiptNumber()}|">Vérification reçu</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f1f5f9; color: #1e293b; font-size: 14px; }
+
+        .topbar { background: #0f172a; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .topbar-brand { color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 2px; }
+        .topbar-sub { color: #94a3b8; font-size: 11px; margin-top: 2px; }
+        .verified-badge { background: #22c55e; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; }
+
+        .container { max-width: 720px; margin: 24px auto; padding: 0 16px 40px; }
+
+        .card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 16px; overflow: hidden; }
+        .card-header { background: #0f172a; color: #fff; padding: 14px 18px; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+        .card-body { padding: 16px 18px; }
+
+        .receipt-number { font-size: 22px; font-weight: 800; color: #0f172a; }
+        .receipt-sub { font-size: 13px; color: #1d4ed8; margin-top: 4px; font-weight: 600; }
+
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-success  { background: #dcfce7; color: #166534; }
+        .badge-pending  { background: #fef9c3; color: #92400e; }
+        .badge-failed   { background: #fee2e2; color: #991b1b; }
+        .badge-default  { background: #dbeafe; color: #1e40af; }
+
+        .pill { display: inline-block; padding: 4px 12px; background: #eff6ff; color: #1d4ed8; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 540px) { .grid2 { grid-template-columns: 1fr; } }
+
+        .info-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #1d4ed8; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+        .info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; gap: 8px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .lbl { color: #64748b; white-space: nowrap; }
+        .info-row .val { font-weight: 600; color: #1e293b; text-align: right; word-break: break-all; }
+
+        table.alloc { width: 100%; border-collapse: collapse; font-size: 12px; }
+        table.alloc thead th { background: #0f172a; color: #fff; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 600; }
+        table.alloc thead th.r { text-align: right; }
+        table.alloc tbody td { padding: 9px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+        table.alloc tbody tr:last-child td { border-bottom: none; }
+        table.alloc tbody td.r { text-align: right; }
+
+        .totals-block { margin-top: 16px; }
+        .total-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        .total-row:last-child { border-bottom: none; }
+        .total-row .lbl { color: #64748b; }
+        .total-row .val { font-weight: 600; }
+        .summary-total { background: #0f172a; color: #fff; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 16px; font-weight: 800; }
+        .summary-balance { background: #eff6ff; color: #1d4ed8; border-radius: 8px; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; font-weight: 700; }
+
+        .no-alloc { background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 8px; padding: 16px; text-align: center; color: #64748b; font-size: 13px; }
+
+        .footer { text-align: center; font-size: 11px; color: #94a3b8; margin-top: 24px; line-height: 1.6; }
+        .footer strong { color: #64748b; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div>
+        <div class="topbar-brand">BOKATI COWORK</div>
+        <div class="topbar-sub">Vérification de reçu de paiement</div>
+    </div>
+    <div class="verified-badge">✓ AUTHENTIQUE</div>
+</div>
+
+<div class="container">
+
+    <!-- En-tête reçu -->
+    <div class="card">
+        <div class="card-body" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+            <div>
+                <div style="font-size:12px; color:#64748b; margin-bottom:4px;">Reçu de paiement</div>
+                <div class="receipt-number" th:text="${receipt.receiptNumber()}">REC-2026-000001</div>
+                <div class="receipt-sub" th:text="${receipt.transactionNumber()}">TXN-...</div>
+                <div style="margin-top:8px;"><span class="pill" th:text="${receipt.paymentMethod()}">CASH</span></div>
+            </div>
+            <div style="text-align:right;">
+                <span th:switch="${receipt.transactionStatus()?.toString()}">
+                    <span th:case="'SUCCEEDED'"><span class="badge badge-success">Succès</span></span>
+                    <span th:case="'PENDING'"><span class="badge badge-pending">En attente</span></span>
+                    <span th:case="'FAILED'"><span class="badge badge-failed">Échoué</span></span>
+                    <span th:case="*"><span class="badge badge-default" th:text="${receipt.transactionStatus()}">—</span></span>
+                </span>
+                <div style="font-size:11px; color:#94a3b8; margin-top:6px;">Vérifié le <span th:text="${generatedAt}"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode de paiement -->
+    <div class="card">
+        <div class="card-header">Mode de paiement</div>
+        <div class="card-body">
+            <div style="display:flex; gap:32px; flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#1d4ed8; margin-bottom:4px;">Méthode</div>
+                    <div style="font-weight:700; font-size:16px;" th:text="${receipt.paymentMethod()}">CASH</div>
+                </div>
+                <div th:if="${receipt.paymentMethod()?.name() == 'MOBILE_MONEY'}">
+                    <div th:if="${receipt.depositId() != null}">
+                        <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#1d4ed8; margin-bottom:4px;">Deposit ID</div>
+                        <div style="font-weight:600; font-size:13px; font-family:monospace;" th:text="${receipt.depositId()}"></div>
+                    </div>
+                    <div th:if="${receipt.payerPhone() != null}" style="margin-top:12px;">
+                        <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#1d4ed8; margin-bottom:4px;">Numéro payeur</div>
+                        <div style="font-weight:700; font-size:15px;" th:text="${receipt.payerPhone()}"></div>
+                    </div>
+                </div>
+                <div th:if="${receipt.providerReference() != null and receipt.paymentMethod()?.name() != 'MOBILE_MONEY'}">
+                    <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:#1d4ed8; margin-bottom:4px;">Référence</div>
+                    <div style="font-weight:600; font-size:13px; word-break:break-all;" th:text="${receipt.providerReference()}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client + Paiement -->
+    <div class="grid2">
+        <div class="card">
+            <div class="card-body">
+                <div class="info-label" th:text="${fmt.partyLabel(receipt.customerType())}">Client</div>
+                <div style="font-weight:700; font-size:14px; margin-bottom:8px;" th:text="${receipt.customerName() != null ? receipt.customerName() : '—'}">Nom</div>
+                <div class="info-row" th:if="${receipt.customerCode() != null}">
+                    <span class="lbl">Référence</span><span class="val" th:text="${receipt.customerCode()}">—</span>
+                </div>
+                <div class="info-row" th:if="${receipt.customerEmail() != null}">
+                    <span class="lbl">Email</span><span class="val" th:text="${receipt.customerEmail()}">—</span>
+                </div>
+                <div class="info-row" th:if="${receipt.customerPhone() != null}">
+                    <span class="lbl">Téléphone</span><span class="val" th:text="${receipt.customerPhone()}">—</span>
+                </div>
+                <div th:if="${not #lists.isEmpty(fmt.addressLines(receipt.billingAddressJson()))}" style="margin-top:8px; font-size:12px; color:#64748b;">
+                    <div th:each="line : ${fmt.addressLines(receipt.billingAddressJson())}" th:text="${line}"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="info-label">Détails du paiement</div>
+                <div class="info-row" th:if="${receipt.paidAt() != null}">
+                    <span class="lbl">Payé le</span><span class="val" th:text="${fmt.timestamp(receipt.paidAt())}">—</span>
+                </div>
+                <div class="info-row" th:if="${receipt.receiptIssuedAt() != null}">
+                    <span class="lbl">Reçu émis le</span><span class="val" th:text="${fmt.timestamp(receipt.receiptIssuedAt())}">—</span>
+                </div>
+                <div class="info-row" th:if="${receipt.receivedBy() != null}">
+                    <span class="lbl">Encaissé par</span><span class="val" th:text="${receipt.receivedBy()}">—</span>
+                </div>
+                <div class="info-row" th:if="${receipt.providerReference() != null}">
+                    <span class="lbl">Réf. externe</span><span class="val" th:text="${receipt.providerReference()}">—</span>
+                </div>
+                <div class="info-row" th:if="${receipt.purpose() != null}">
+                    <span class="lbl">Objet</span><span class="val" th:text="${receipt.purpose()}">—</span>
+                </div>
+                <div class="info-row" th:if="${receipt.sourceType() != null}">
+                    <span class="lbl">Source</span>
+                    <span class="val">
+                        <span th:text="${receipt.sourceType()}"></span>
+                        <span th:if="${receipt.sourceCode() != null}" th:text="| / ${receipt.sourceCode()}|"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Affectation -->
+    <div class="card">
+        <div class="card-header">
+            <span>Affectation du paiement</span>
+            <span th:if="${!#lists.isEmpty(receipt.allocations())}" th:text="|${#lists.size(receipt.allocations())} facture(s)|" style="font-weight:400; font-size:12px;"></span>
+        </div>
+        <div class="card-body" th:if="${#lists.isEmpty(receipt.allocations())}">
+            <div class="no-alloc">
+                Ce paiement n'était rattaché à aucune facture au moment de l'encaissement.
+                <span th:if="${receipt.advanceAmount() != null and receipt.advanceAmount().signum() > 0}">
+                    <br/>Disponible comme avance / crédit wallet : <strong th:text="${fmt.money(receipt.advanceAmount())}"></strong>
+                </span>
+            </div>
+        </div>
+        <div style="overflow-x:auto;" th:if="${!#lists.isEmpty(receipt.allocations())}">
+            <table class="alloc">
+                <thead>
+                <tr>
+                    <th>Document</th>
+                    <th>Objet</th>
+                    <th class="r">Montant doc.</th>
+                    <th class="r">Affecté</th>
+                    <th class="r">Reste dû</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="allocation : ${receipt.allocations()}">
+                    <td>
+                        <div style="font-weight:600;" th:text="${allocation.documentNumber()}">INV-001</div>
+                        <div style="font-size:11px; color:#94a3b8;" th:text="${allocation.documentType()}">INVOICE</div>
+                    </td>
+                    <td style="color:#64748b;" th:text="${allocation.title() != null ? allocation.title() : '—'}">Objet</td>
+                    <td class="r" th:text="${fmt.money(allocation.documentTotalAmount())}">0</td>
+                    <td class="r" style="font-weight:600; color:#166534;" th:text="${fmt.money(allocation.allocatedAmount())}">0</td>
+                    <td class="r" th:text="${fmt.money(allocation.remainingBalanceDue())}">0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Totaux -->
+    <div class="card">
+        <div class="card-header">Récapitulatif</div>
+        <div class="card-body">
+            <div class="totals-block">
+                <div class="total-row">
+                    <span class="lbl">Montant affecté</span>
+                    <span class="val" th:text="${fmt.money(receipt.allocatedAmount())}">0</span>
+                </div>
+                <div class="total-row" th:if="${receipt.advanceAmount() != null and receipt.advanceAmount().signum() > 0}">
+                    <span class="lbl">Avance / crédit wallet</span>
+                    <span class="val" th:text="${fmt.money(receipt.advanceAmount())}">0</span>
+                </div>
+            </div>
+            <div class="summary-total">
+                <span>MONTANT PAYÉ</span>
+                <span th:text="${fmt.money(receipt.paidAmount())}">0</span>
+            </div>
+            <div class="summary-balance" style="background:#dcfce7; color:#166534;">
+                <span>Statut transaction</span>
+                <span th:text="${receipt.transactionStatus()}">SUCCEEDED</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <strong>Bokati Cowork</strong> — Reçu de paiement officiel vérifié en ligne<br>
+        Réf. : <span th:text="${receipt.receiptNumber()}"></span> · Consulté le <span th:text="${generatedAt}"></span><br>
+        Ce reçu est édité électroniquement et fait foi sans signature manuscrite.
+    </div>
+
+</div>
+</body>
+</html>

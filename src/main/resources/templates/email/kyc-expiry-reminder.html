@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr">
+<body style="font-family:Arial,sans-serif;color:#1f2937;margin:0;padding:24px;background:#f8fafc">
+<table style="max-width:640px;margin:auto;background:#fff;border-collapse:collapse;width:100%">
+    <tr><td style="padding:24px;border-bottom:1px solid #e5e7eb">
+        <h1 style="font-size:20px;margin:0">Document KYC a renouveler</h1>
+    </td></tr>
+    <tr><td style="padding:24px">
+        <p>Bonjour <strong th:text="${ownerName}">client</strong>,</p>
+        <p>Le document <strong th:text="${documentType}">document</strong> expire le
+            <strong th:text="${expiryDate}">date</strong>.</p>
+        <p>Veuillez envoyer une version a jour depuis votre espace client.</p>
+    </td></tr>
+    <tr><td style="padding:16px 24px;color:#6b7280;font-size:12px;border-top:1px solid #e5e7eb">
+        Bokati Cowork
+    </td></tr>
+</table>
+</body>
+</html>
