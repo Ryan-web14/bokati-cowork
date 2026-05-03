@@ -39,3 +39,7 @@ build/
 compose.yaml
 
 CLAUDE.md.md
+
+.env
+.env.*
+!.env.example
