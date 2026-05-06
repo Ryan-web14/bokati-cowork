@@ -22,10 +22,6 @@ spring:
     clean-disabled: true
     baseline-version: 3
 
-gg:
-  jte:
-    use-precompiled-templates: true
-
 management:
   endpoints:
     web:
