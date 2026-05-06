@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitation visiteur — Elle A Osé</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+        .wrap { width: 100%; padding: 40px 16px; background: #f0eef5; }
+        .card { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30,10,60,0.10); }
+
+        .hero { background: #1a0a2e; padding: 28px 32px 22px; }
+        .brand { font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; margin-bottom: 18px; }
+        .headline { font-size: 22px; font-weight: 700; color: #ffffff; line-height: 1.25; margin-bottom: 6px; }
+        .headline span { color: #c9a84c; }
+        .subline { font-size: 12px; color: #c8bdd8; line-height: 1.55; }
+        .stripe { height: 3px; background: #c9a84c; }
+
+        .body { padding: 28px 32px 20px; }
+        .greeting { font-size: 13px; color: #1a0a2e; margin-bottom: 10px; }
+        .message { font-size: 12px; color: #5c4f6e; line-height: 1.65; margin-bottom: 22px; }
+
+        .pass-card { background: #1a0a2e; border-radius: 5px; padding: 16px 18px; margin-bottom: 22px; }
+        .pass-label { font-size: 7.5px; font-weight: 700; color: #c9a84c; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+        .pass-number { font-size: 16px; font-weight: 700; color: #c9a84c; margin-bottom: 14px; letter-spacing: 1px; }
+        .pass-grid { display: table; width: 100%; border-collapse: collapse; }
+        .pass-row { display: table-row; }
+        .pass-cell { display: table-cell; padding: 5px 0; border-top: 1px solid rgba(255,255,255,0.08); vertical-align: top; }
+        .pass-key { font-size: 7.5px; font-weight: 700; color: #9b8caa; letter-spacing: 1px; text-transform: uppercase; width: 100px; }
+        .pass-val { font-size: 12px; color: #ffffff; font-weight: 600; }
+
+        .qr-section { text-align: center; margin-bottom: 22px; }
+        .qr-label { font-size: 8px; font-weight: 700; color: #7c3aed; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+        .qr-note { font-size: 10px; color: #9b8caa; margin-top: 8px; }
+
+        .info-box { background: #fdf8ed; border-left: 3px solid #c9a84c; padding: 10px 14px; border-radius: 2px; margin-bottom: 18px; font-size: 11px; color: #8a6a00; line-height: 1.6; }
+
+        .footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
+        .footer-brand { font-size: 9px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+        .footer-text { font-size: 9px; color: #9b8caa; line-height: 1.5; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="card">
+        <div class="hero">
+            <div class="brand">Elle A Osé</div>
+            <div class="brand-sub">Cowork &amp; Studio</div>
+            <div class="headline">Votre invitation<br><span>visiteur</span> est prête.</div>
+            <div class="subline">Présentez ce QR code à l'accueil le jour de votre visite.</div>
+        </div>
+        <div class="stripe"></div>
+
+        <div class="body">
+            <p class="greeting">Bonjour <strong th:text="${visitorName}">Visiteur</strong>,</p>
+            <p class="message">
+                Vous avez été invité(e) par <strong th:text="${hostName}">votre hôte</strong> à visiter nos espaces.
+                Votre pass est confirmé pour la période indiquée ci-dessous. Présentez le QR code à l'accueil pour vous enregistrer.
+            </p>
+
+            <div class="pass-card">
+                <div class="pass-label">Pass visiteur</div>
+                <div class="pass-number" th:text="${passNumber}">VIS-000000</div>
+                <div class="pass-grid">
+                    <div class="pass-row">
+                        <div class="pass-cell pass-key">Hôte</div>
+                        <div class="pass-cell pass-val" th:text="${hostName}">—</div>
+                    </div>
+                    <div class="pass-row">
+                        <div class="pass-cell pass-key">Objet</div>
+                        <div class="pass-cell pass-val" th:text="${purpose ?: '—'}">—</div>
+                    </div>
+                    <div class="pass-row">
+                        <div class="pass-cell pass-key">Valide du</div>
+                        <div class="pass-cell pass-val" th:text="${validFrom}">—</div>
+                    </div>
+                    <div class="pass-row">
+                        <div class="pass-cell pass-key">Au</div>
+                        <div class="pass-cell pass-val" th:text="${validUntil}">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="qr-section">
+                <div class="qr-label">QR code d'accès</div>
+                <img src="cid:qr-visitor" width="160" height="160" alt="QR Code visiteur"/>
+                <div class="qr-note">Présentez ce code à l'accueil pour vous enregistrer</div>
+            </div>
+
+            <div class="info-box">
+                <strong>Infos pratiques :</strong> L'accueil se trouve au rez-de-chaussée.
+                Horaires d'ouverture : Lun–Ven 08h–20h, Sam 09h–17h.
+                En cas de question, appelez le <strong>05 204 25 52</strong>.
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-brand">Elle A Osé — Bokati Cowork</div>
+            <div class="footer-text">
+                Ce message est une invitation automatique. Ne pas répondre à cet email.<br>
+                Contact : coworkspace@elleaose.com
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

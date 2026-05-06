@@ -1,0 +1,2 @@
+ALTER TABLE crm_lead
+    ADD COLUMN IF NOT EXISTS note TEXT;
