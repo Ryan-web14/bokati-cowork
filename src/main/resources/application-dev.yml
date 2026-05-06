@@ -48,11 +48,6 @@ spring:
         tenant-id: ${MICROSOFT_GRAPH_TENANT_ID:e1006690-4205-4c71-9f74-1b9fdcbdcaf2}
         sender-email: ${MICROSOFT_SENDER_EMAIL:no-reply@elleaose.com}
 
-gg:
-  jte:
-    development-mode: true
-    use-precompiled-templates: false
-
 logging:
   level:
     com.sni.bokaticowork: DEBUG
