@@ -118,6 +118,8 @@ class PaymentServiceImplTest {
         lenient().when(objectMapper.writeValueAsString(any())).thenReturn("{\"recovery\":true}");
         lenient().when(mapper.toIntentResponse(any(PaymentIntent.class))).thenAnswer(invocation -> toIntentResponse(invocation.getArgument(0)));
         lenient().when(mapper.toTransactionResponse(any(PaymentTransaction.class))).thenAnswer(invocation -> toTransactionResponse(invocation.getArgument(0)));
+        lenient().when(transactionRepository.sumSucceededAmountByPaymentIntentId(any())).thenReturn(BigDecimal.ZERO);
+        lenient().when(transactionRepository.sumProcessingAmountByPaymentIntentId(any())).thenReturn(BigDecimal.ZERO);
     }
 
     @Test
@@ -289,7 +291,7 @@ class PaymentServiceImplTest {
             return intent;
         });
         when(transactionRepository.save(any(PaymentTransaction.class))).thenReturn(savedTransaction);
-        when(allocationService.allocateIfBillingDocument(savedTransaction)).thenReturn(new BigDecimal("50.0000"));
+        when(allocationService.allocateIfBillingDocument(any(PaymentTransaction.class))).thenReturn(new BigDecimal("50.0000"));
         when(walletService.getOrCreate("MEMBER", "MBR-0001", "XAF")).thenReturn(new com.sni.bokaticowork.features.payment.dto.response.WalletResponse(
                 "WAL-001",
                 "MEMBER",
@@ -347,7 +349,7 @@ class PaymentServiceImplTest {
 
         PaymentTransactionResponse response = paymentService.registerCashPayment(
                 "INT-MEM-20260427-00000010",
-                new RegisterCashPaymentRequest("cashier-001", null, null, null)
+                new RegisterCashPaymentRequest("cashier-001", "SESS-TEST-001", null, null, null)
         );
 
         assertNotNull(response.providerReference());
@@ -444,6 +446,10 @@ class PaymentServiceImplTest {
                 null,
                 false,
                 intent.getAmount(),
+                null,
+                null,
+                null,
+                null,
                 intent.getCurrency(),
                 intent.getStatus(),
                 intent.getPurpose(),
@@ -453,6 +459,8 @@ class PaymentServiceImplTest {
                 intent.getSourceCode(),
                 intent.getSourceCode(),
                 false,
+                null,
+                null,
                 intent.getIdempotencyKey(),
                 intent.getExpiresAt(),
                 intent.getMetadataJson()

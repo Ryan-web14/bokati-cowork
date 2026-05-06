@@ -27,7 +27,7 @@ public class JWTService {
     private static final String TOKEN_TYPE_REFRESH = "refresh";
     private static final String TOKEN_TYPE_VERIFICATION = "verification";
 
-    @Value("${app.security.jwt.secret}")
+    @Value("${app.security.jwt.secret:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}")
     private String secret;
 
     //Remettre 900000 millisecond
