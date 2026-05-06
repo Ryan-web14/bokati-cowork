@@ -30,6 +30,7 @@ public class VisitorPass {
     private VisitorPassStatus status;
     private String qrValue;
     private String createdBy;
+    private Instant invitationSentAt;
     private Instant createdAt;
     private Instant updatedAt;
 

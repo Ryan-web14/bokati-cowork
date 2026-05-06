@@ -38,4 +38,5 @@ public interface PaymentService {
     PaymentIntentResponse getIntent(String intentNumber);
     List<PaymentTransactionResponse> listIntentTransactions(String intentNumber);
     PaginatedResponse<PaymentIntentResponse> listIntents(PaymentIntentStatus status, String customerType, String customerCode, String sourceType, String sourceCode, String searchText, Pageable pageable);
+    String retryMobileMoneyDeposit(String intentNumber, String phoneNumber, String providerCode);
 }

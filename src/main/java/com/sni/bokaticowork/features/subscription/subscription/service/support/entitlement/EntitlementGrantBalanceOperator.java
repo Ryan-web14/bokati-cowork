@@ -27,6 +27,7 @@ public class EntitlementGrantBalanceOperator {
     private final EntitlementLedgerWriter ledgerWriter;
     private final EntitlementBalanceReader balanceReader;
     private final EntitlementRequestValidator validator;
+    private final EntitlementQuotaAlertService quotaAlertService;
 
     public EntitlementOperationResponse debit(EntitlementOperationRequest request, EntitlementTransactionType type) {
         validator.operation(request);
@@ -62,6 +63,7 @@ public class EntitlementGrantBalanceOperator {
             }
             grantRepository.save(grant);
             ledgerWriter.write(grant, type, debit, before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+            quotaAlertService.checkAndAlert(grant, after);
             remainingToDebit = remainingToDebit.subtract(debit);
         }
 

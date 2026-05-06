@@ -9,7 +9,9 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
+import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentPdfService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.payment.enums.PaymentMethod;
@@ -137,6 +139,9 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     }
 
     private String renderHtml(BillingDocumentResponse document) {
+        if (BillingDocumentType.CREDIT_NOTE.equals(document.documentType())) {
+            return renderCreditNoteHtml(document);
+        }
         Context context = new Context(Locale.FRANCE);
         context.setVariable("document", document);
         context.setVariable("generatedAt", LocalDate.now());
@@ -146,6 +151,53 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         context.setVariable("logo", loadLogoBase64());
         return templateEngine.process("billing/document", context);
     }
+
+    private String renderCreditNoteHtml(BillingDocumentResponse document) {
+        BillingDocumentTemplateFormatter fmt = new BillingDocumentTemplateFormatter(document.currency(), objectMapper);
+        Context context = new Context(Locale.FRANCE);
+        context.setVariable("creditNote", toCreditNoteView(document, fmt));
+        context.setVariable("customer", toCustomerView(document));
+        context.setVariable("fmt", fmt);
+        context.setVariable("generatedAt", LocalDate.now());
+        context.setVariable("logo", loadLogoBase64());
+        return templateEngine.process("billing/avoir-note-credit", context);
+    }
+
+    private CreditNoteView toCreditNoteView(BillingDocumentResponse doc, BillingDocumentTemplateFormatter fmt) {
+        List<CreditNoteLineView> lines = doc.lines() == null ? List.of() :
+                doc.lines().stream()
+                        .map(l -> new CreditNoteLineView(
+                                l.description(),
+                                l.detailedDescription(),
+                                fmt.quantity(l.quantity()),
+                                fmt.money(l.unitPrice()),
+                                fmt.money(l.totalAmount())))
+                        .toList();
+        return new CreditNoteView(
+                doc.documentNumber(),
+                fmt.date(doc.issueDate()),
+                doc.sourceCode() != null ? doc.sourceCode() : "—",
+                doc.description() != null ? doc.description() : doc.title(),
+                lines,
+                fmt.money(doc.subtotalAmount()),
+                fmt.money(doc.vatAmount()),
+                fmt.money(doc.totalAmount())
+        );
+    }
+
+    private CustomerView toCustomerView(BillingDocumentResponse doc) {
+        return new CustomerView(doc.customerName(), doc.customerCode(), doc.customerEmail());
+    }
+
+    public record CreditNoteView(
+            String number, String issueDate, String invoiceNumber, String reason,
+            List<CreditNoteLineView> lines,
+            String totalHT, String tax, String totalTTC) {}
+
+    public record CreditNoteLineView(
+            String label, String description, String quantity, String unitPrice, String total) {}
+
+    public record CustomerView(String name, String id, String email) {}
 
     private String loadLogoBase64() {
         try (java.io.InputStream is = getClass().getResourceAsStream("/static/images/logo.png")) {

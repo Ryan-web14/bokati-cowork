@@ -96,6 +96,12 @@ public class EntitlementGrant {
     @Builder.Default
     private Integer priority = 100;
 
+    @Column(name = "alert_80_sent_at")
+    private Instant alert80SentAt;
+
+    @Column(name = "alert_100_sent_at")
+    private Instant alert100SentAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

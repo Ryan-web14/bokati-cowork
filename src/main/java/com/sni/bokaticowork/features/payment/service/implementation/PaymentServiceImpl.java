@@ -28,6 +28,7 @@ import com.sni.bokaticowork.features.payment.provider.MobileMoneyInitiationRespo
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyPaymentProvider;
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyRefundRequest;
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyRefundResponse;
+import com.sni.bokaticowork.features.payment.provider.pawaypay.CongoCorrespondent;
 import com.sni.bokaticowork.features.payment.dto.response.PayInvoiceResponse;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
@@ -71,6 +72,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -494,6 +496,22 @@ public class PaymentServiceImpl implements PaymentService {
         return transactionRepository.findAllByPaymentIntentIdOrderByCreatedAtDesc(intent.getId()).stream()
                 .map(mapper::toTransactionResponse)
                 .toList();
+    }
+
+    @Override
+    public String retryMobileMoneyDeposit(String intentNumber, String phoneNumber, String providerCode) {
+        CongoCorrespondent correspondent;
+        try {
+            correspondent = CongoCorrespondent.valueOf(providerCode);
+        } catch (IllegalArgumentException ex) {
+            correspondent = Arrays.stream(CongoCorrespondent.values())
+                    .filter(c -> providerCode.equals(c.providerCode()))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Unknown mobile money provider: " + providerCode));
+        }
+        MobileMoneyDepositResponse response = initiateMobileMoneyDeposit(intentNumber,
+                new InitiateMobileMoneyDepositRequest(null, phoneNumber, correspondent, null, "SYSTEM", null));
+        return response.transactionNumber();
     }
 
     @Override

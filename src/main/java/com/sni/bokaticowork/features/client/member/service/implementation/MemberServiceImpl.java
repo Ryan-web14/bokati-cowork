@@ -360,15 +360,29 @@ public class MemberServiceImpl  implements MemberService {
         }
         Runnable task = () -> {
             try {
-                Context context = new Context();
-                context.setVariable("name", member.getDisplayName().trim());
-                context.setVariable("memberId", member.getMemberId());
-                context.setVariable("email", member.getEmail());
-                context.setVariable("generatedPassword", generatedPassword);
-                context.setVariable("portalAccess", Boolean.TRUE.equals(member.getPortalAccess()));
-                context.setVariable("logoUrl", logoUrl());
-                String html = emailTemplateEngine.process("member-created", context);
-                emailSender.sendHtmlEmail(member.getEmail(), "Bienvenue dans votre espace membre Bokati", html);
+                // Email 1 — bienvenue (onboarding, étapes, infos pratiques)
+                Context welcomeCtx = new Context();
+                welcomeCtx.setVariable("name", member.getDisplayName().trim());
+                welcomeCtx.setVariable("memberId", member.getMemberId());
+                welcomeCtx.setVariable("email", member.getEmail());
+                welcomeCtx.setVariable("portalAccess", Boolean.TRUE.equals(member.getPortalAccess()));
+                welcomeCtx.setVariable("plan", null);
+                welcomeCtx.setVariable("startDate", null);
+                String welcomeHtml = emailTemplateEngine.process("form/welcome-member-email", welcomeCtx);
+                emailSender.sendHtmlEmail(member.getEmail(),
+                        "Bienvenue dans votre espace membre — Elle A Osé", welcomeHtml);
+
+                // Email 2 — credentials (uniquement si mot de passe temporaire généré)
+                if (StringUtils.hasText(generatedPassword)) {
+                    Context credCtx = new Context();
+                    credCtx.setVariable("name", member.getDisplayName().trim());
+                    credCtx.setVariable("memberId", member.getMemberId());
+                    credCtx.setVariable("email", member.getEmail());
+                    credCtx.setVariable("generatedPassword", generatedPassword);
+                    String credHtml = emailTemplateEngine.process("email/member-created", credCtx);
+                    emailSender.sendHtmlEmail(member.getEmail(),
+                            "Vos identifiants de connexion — Elle A Osé", credHtml);
+                }
             } catch (MessagingException ex) {
                 log.warn("Unable to send member creation email to {}", member.getEmail(), ex);
             }

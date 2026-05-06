@@ -29,6 +29,4 @@ public class DocumentUploadMetadataRequest {
     private LocalDate issueDate;
 
     private LocalDate expiryDate;
-
-    private String uploadedBy;
 }

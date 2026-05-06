@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Badge ' + ${member.name}">Badge membre — Elle A Osé</title>
+    <style>
+        @page { size: A4; margin: 10mm; }
+
+        :root {
+            --plum:        #1a0a2e;
+            --plum-mid:    #2a1548;
+            --plum-soft:   #3d2655;
+            --violet:      oklch(62% 0.18 295);
+            --violet-pale: oklch(95% 0.04 295);
+            --gold:        #c9a84c;
+            --gold-pale:   oklch(97% 0.04 76);
+            --gold-light:  #f5d77a;
+            --ink:         #1a0a2e;
+            --slate:       #5c4f6e;
+            --slate-light: #9b8caa;
+            --border:      #d8d0e8;
+            --white:       #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: var(--ink);
+            background: #f0eef5;
+            padding: 24px 16px;
+        }
+
+        /* ── DATA HINT (visible only in editing/dev) ── */
+        .tpl-hint {
+            max-width: 800px;
+            margin: 0 auto 18px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--violet);
+            border-radius: 4px;
+            padding: 12px 16px;
+            font-size: 11px;
+            color: var(--slate);
+            line-height: 1.55;
+        }
+        .tpl-hint strong { color: var(--plum); }
+        .tpl-hint code {
+            font-family: "SFMono-Regular", Menlo, monospace;
+            font-size: 10.5px;
+            background: var(--violet-pale);
+            color: var(--plum);
+            padding: 1px 5px;
+            border-radius: 2px;
+        }
+        @media print { .tpl-hint { display: none; } }
+
+        /* ── PRINT SHEET ── */
+        .sheet {
+            max-width: 800px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6mm;
+        }
+
+        /* ── BADGE — CR-80 ratio ── */
+        .badge {
+            width: 86mm;
+            height: 54mm;
+            position: relative;
+            border-radius: 4mm;
+            overflow: hidden;
+            color: var(--white);
+            box-shadow: 0 6px 24px rgba(30,10,60,0.18);
+            page-break-inside: avoid;
+            justify-self: start;
+        }
+
+        /* ─── RECTO ─── */
+        .badge.recto {
+            padding: 5mm;
+            display: flex; flex-direction: column; justify-content: space-between;
+            background:
+                radial-gradient(circle at 92% 12%, rgba(201,168,76,0.22) 0%, transparent 45%),
+                linear-gradient(135deg, var(--plum) 0%, var(--plum-mid) 100%);
+        }
+        .badge.recto::after {
+            content: '';
+            position: absolute;
+            top: 0; right: -8mm;
+            width: 30mm; height: 100%;
+            background: rgba(255,255,255,0.04);
+            transform: skewX(-12deg);
+        }
+
+        .badge-stripe {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1.4mm;
+            background: linear-gradient(90deg, var(--gold) 0%, var(--violet) 60%, var(--plum-soft) 100%);
+        }
+
+        .badge-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            position: relative; z-index: 1;
+        }
+        .brand-name { font-size: 9px; font-weight: 700; color: var(--white); letter-spacing: 2.5px; text-transform: uppercase; }
+        .brand-sub  { font-size: 5px; color: var(--slate-light); letter-spacing: 2px; text-transform: uppercase; margin-top: 1px; }
+
+        .member-tag {
+            display: inline-block;
+            background: var(--gold); color: var(--plum);
+            font-size: 6px; font-weight: 700;
+            letter-spacing: 1.2px; text-transform: uppercase;
+            padding: 2px 7px; border-radius: 1mm;
+        }
+
+        .badge-body {
+            position: relative; z-index: 1;
+            display: grid; grid-template-columns: 1fr 22mm;
+            gap: 4mm; align-items: end;
+        }
+        .name-block { min-width: 0; }
+        .role-label { font-size: 5.5px; font-weight: 700; color: var(--gold); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 1.5mm; }
+        .member-name { font-size: 14px; font-weight: 700; color: var(--white); letter-spacing: 0.2px; line-height: 1.05; text-wrap: balance; }
+        .member-id { font-size: 7px; font-weight: 700; color: var(--gold); letter-spacing: 1.5px; margin-top: 2.5mm; font-feature-settings: "tnum"; }
+
+        .qr {
+            width: 22mm; height: 22mm;
+            background: var(--white);
+            border-radius: 1.5mm;
+            padding: 1mm;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 0 1.5px var(--gold);
+        }
+        .qr img, .qr svg { width: 100%; height: 100%; display: block; }
+
+        .badge-bottom {
+            position: relative; z-index: 1;
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 0.4mm solid rgba(255,255,255,0.15);
+            padding-top: 2mm;
+        }
+        .plan-pill {
+            font-size: 5.5px; font-weight: 700;
+            color: var(--white);
+            letter-spacing: 1.2px; text-transform: uppercase;
+            background: rgba(201,168,76,0.20);
+            border: 0.3mm solid rgba(201,168,76,0.5);
+            padding: 1mm 2.5mm; border-radius: 5mm;
+        }
+        .valid { font-size: 5.5px; color: var(--slate-light); letter-spacing: 0.8px; text-transform: uppercase; }
+        .valid strong { color: var(--gold); font-weight: 700; }
+
+        /* ─── PLAN VARIANTS ─── */
+        .badge.plan-essentiel {
+            background:
+                radial-gradient(circle at 92% 12%, rgba(155,140,170,0.25) 0%, transparent 45%),
+                linear-gradient(135deg, #3d2655 0%, var(--plum-mid) 100%);
+        }
+        .badge.plan-essentiel .member-tag { background: #c8bdd8; color: var(--plum); }
+        .badge.plan-essentiel .role-label,
+        .badge.plan-essentiel .member-id  { color: #e9dfeb; }
+        .badge.plan-essentiel .plan-pill  { background: rgba(200,189,216,0.20); border-color: rgba(200,189,216,0.5); }
+        .badge.plan-essentiel .valid strong { color: #e9dfeb; }
+
+        .badge.plan-fondateur {
+            background:
+                radial-gradient(circle at 92% 12%, rgba(201,168,76,0.40) 0%, transparent 45%),
+                linear-gradient(135deg, #1a0a2e 0%, #3a1d0a 100%);
+        }
+        .badge.plan-fondateur .member-tag { background: var(--gold-light); color: var(--plum); }
+        .badge.plan-fondateur .role-label,
+        .badge.plan-fondateur .member-id { color: var(--gold-light); }
+        .badge.plan-fondateur .plan-pill { background: rgba(245,215,122,0.25); border-color: rgba(245,215,122,0.6); }
+        .badge.plan-fondateur .valid strong { color: var(--gold-light); }
+
+        /* photo variant — when member.photoUrl provided */
+        .badge.with-photo .badge-body { grid-template-columns: 1fr 17mm 22mm; }
+        .photo {
+            width: 17mm; height: 22mm;
+            border-radius: 1.5mm;
+            background: rgba(255,255,255,0.08) center/cover no-repeat;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
+            overflow: hidden;
+        }
+        .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        /* ─── VERSO ─── */
+        .badge.verso {
+            background: var(--white);
+            color: var(--ink);
+            display: flex; flex-direction: column;
+            border: 0.4mm solid var(--border);
+        }
+        .verso-head {
+            background: var(--plum);
+            color: var(--white);
+            padding: 2.5mm 4mm;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .verso-head .brand-name { font-size: 8px; }
+        .verso-head .brand-sub { font-size: 5px; margin-top: 0.5mm; }
+        .verso-tag { font-size: 5.5px; font-weight: 700; color: var(--gold); letter-spacing: 1.4px; text-transform: uppercase; }
+        .verso-stripe { height: 0.8mm; background: linear-gradient(90deg, var(--gold) 0%, var(--violet) 60%, var(--plum-soft) 100%); }
+        .verso-mag { width: 100%; height: 7mm; background: var(--ink); margin: 1.5mm 0; border-radius: 0.5mm; }
+        .verso-body { padding: 1.5mm 4mm 3mm; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .verso-title { font-size: 6.5px; font-weight: 700; color: var(--violet); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 1.5mm; }
+        .verso-list { font-size: 6.2px; color: var(--slate); line-height: 1.55; list-style: none; }
+        .verso-list li { padding-left: 3mm; position: relative; margin-bottom: 0.7mm; }
+        .verso-list li::before { content: ''; position: absolute; left: 0; top: 1.4mm; width: 2mm; height: 0.4mm; background: var(--gold); }
+        .verso-foot {
+            border-top: 0.3mm solid var(--border);
+            padding-top: 2mm;
+            display: flex; justify-content: space-between; align-items: end;
+            font-size: 5.5px; color: var(--slate-light); letter-spacing: 0.5px;
+        }
+        .verso-foot .contact strong { color: var(--plum); display: block; font-size: 6.5px; }
+
+        /* ── FALLBACK PLACEHOLDER QR ── */
+        .qr-placeholder { background: repeating-linear-gradient(45deg, #1a0a2e 0 1px, transparent 1px 3px), repeating-linear-gradient(-45deg, #1a0a2e 0 1px, transparent 1px 3px); width: 100%; height: 100%; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .badge { box-shadow: none; }
+            .sheet { gap: 4mm; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ──────────────────────────────────────────────────────────────
+     TEMPLATE D'INSERTION
+     Variables Thymeleaf attendues :
+
+     Mode badge unique :
+       member.name        : "Aïssatou Mbappé"
+       member.id          : "MBR-2026-0042"
+       member.plan        : "premium" | "essentiel" | "fondateur"
+       member.planLabel   : "Premium"            (libellé affiché)
+       member.tagLabel    : "Membre"             (badge en haut à droite)
+       member.role        : "Carte d'accès"      (libellé au-dessus du nom)
+       member.validUntil  : "03 / 05 / 27"
+       member.qrUrl       : URL d'image QR (PNG/SVG) — sinon placeholder
+       member.photoUrl    : URL photo identité (optionnel)
+
+     Mode planche d'impression :
+       members            : List<Member>
+                            → boucle automatique (recto + verso pour chacun)
+     ────────────────────────────────────────────────────────────── -->
+
+<div class="tpl-hint">
+    <strong>Template badge membre.</strong> Variables Thymeleaf attendues :
+    <code>member.name</code>, <code>member.id</code>, <code>member.plan</code>
+    (<em>essentiel</em> · <em>premium</em> · <em>fondateur</em>),
+    <code>member.planLabel</code>, <code>member.tagLabel</code>,
+    <code>member.role</code>, <code>member.validUntil</code>,
+    <code>member.qrUrl</code>, <code>member.photoUrl</code>.
+    Pour imprimer plusieurs badges, fournir <code>members</code> (List) — la boucle
+    génère automatiquement recto + verso de chaque carte. Cette zone d'aide est
+    masquée à l'impression.
+</div>
+
+<div class="sheet">
+
+    <!-- ╔══════════════════════════════════════════════════════════
+         MODE 1 — Badge unique (par défaut, si `member` est défini)
+         ╚══════════════════════════════════════════════════════════ -->
+    <th:block th:if="${member != null}">
+
+        <!-- RECTO -->
+        <div class="badge recto"
+             th:classappend="' plan-' + ${member.plan ?: 'premium'} + (${member.photoUrl != null} ? ' with-photo' : '')">
+            <div class="badge-stripe"></div>
+
+            <div class="badge-top">
+                <div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Cowork &amp; Studio</div>
+                </div>
+                <span class="member-tag" th:text="${member.tagLabel ?: 'Membre'}">Membre</span>
+            </div>
+
+            <div class="badge-body">
+                <div class="name-block">
+                    <div class="role-label" th:text="${member.role ?: 'Carte d\'accès'}">Carte d'accès</div>
+                    <div class="member-name" th:text="${member.name}">Aïssatou Mbappé</div>
+                    <div class="member-id" th:text="'N° ' + ${member.id}">N° MBR-2026-0042</div>
+                </div>
+
+                <div class="photo" th:if="${member.photoUrl != null}">
+                    <img th:src="${member.photoUrl}" alt="Photo" />
+                </div>
+
+                <div class="qr" aria-label="QR code">
+                    <img th:if="${member.qrUrl != null}" th:src="${member.qrUrl}" alt="QR code" />
+                    <div th:unless="${member.qrUrl != null}" class="qr-placeholder"></div>
+                </div>
+            </div>
+
+            <div class="badge-bottom">
+                <span class="plan-pill" th:text="${member.planLabel ?: 'Premium'}">Premium</span>
+                <span class="valid">Valide jusqu'au <strong th:text="${member.validUntil ?: '— / — / —'}">03 / 05 / 27</strong></span>
+            </div>
+        </div>
+
+        <!-- VERSO -->
+        <div class="badge verso">
+            <div class="verso-head">
+                <div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Bokati Cowork</div>
+                </div>
+                <span class="verso-tag">Carte membre</span>
+            </div>
+            <div class="verso-stripe"></div>
+            <div class="verso-mag"></div>
+            <div class="verso-body">
+                <div>
+                    <div class="verso-title">Conditions d'utilisation</div>
+                    <ul class="verso-list">
+                        <li>Carte personnelle, non cessible — à présenter à chaque accès.</li>
+                        <li>En cas de perte, prévenir l'accueil dans les 24 h.</li>
+                        <li>Restitution obligatoire à la fin de l'adhésion.</li>
+                        <li>QR code = identifiant unique de réservation &amp; check-in.</li>
+                    </ul>
+                </div>
+                <div class="verso-foot">
+                    <div class="contact">
+                        <strong>Bokati Cowork</strong>
+                        Douala &nbsp;·&nbsp; +237 ___ ___ ___<br>
+                        <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="422a272e2e2d02272e2e27232d31276c212f">[email&#160;protected]</a>
+                    </div>
+                    <div style="text-align:right;">Si trouvée,<br>merci de la rapporter</div>
+                </div>
+            </div>
+        </div>
+
+    </th:block>
+
+    <!-- ╔══════════════════════════════════════════════════════════
+         MODE 2 — Planche multi-membres (si `members` est fourni)
+         ╚══════════════════════════════════════════════════════════ -->
+    <th:block th:if="${members != null}" th:each="m : ${members}">
+
+        <div class="badge recto"
+             th:classappend="' plan-' + ${m.plan ?: 'premium'} + (${m.photoUrl != null} ? ' with-photo' : '')">
+            <div class="badge-stripe"></div>
+            <div class="badge-top">
+                <div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Cowork &amp; Studio</div>
+                </div>
+                <span class="member-tag" th:text="${m.tagLabel ?: 'Membre'}">Membre</span>
+            </div>
+            <div class="badge-body">
+                <div class="name-block">
+                    <div class="role-label" th:text="${m.role ?: 'Carte d\'accès'}">Carte d'accès</div>
+                    <div class="member-name" th:text="${m.name}">Nom</div>
+                    <div class="member-id" th:text="'N° ' + ${m.id}">N° MBR-…</div>
+                </div>
+                <div class="photo" th:if="${m.photoUrl != null}">
+                    <img th:src="${m.photoUrl}" alt="Photo" />
+                </div>
+                <div class="qr">
+                    <img th:if="${m.qrUrl != null}" th:src="${m.qrUrl}" alt="QR" />
+                    <div th:unless="${m.qrUrl != null}" class="qr-placeholder"></div>
+                </div>
+            </div>
+            <div class="badge-bottom">
+                <span class="plan-pill" th:text="${m.planLabel ?: 'Premium'}">Premium</span>
+                <span class="valid">Valide jusqu'au <strong th:text="${m.validUntil}">— / — / —</strong></span>
+            </div>
+        </div>
+
+        <div class="badge verso">
+            <div class="verso-head">
+                <div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Bokati Cowork</div>
+                </div>
+                <span class="verso-tag">Carte membre</span>
+            </div>
+            <div class="verso-stripe"></div>
+            <div class="verso-mag"></div>
+            <div class="verso-body">
+                <div>
+                    <div class="verso-title">Conditions d'utilisation</div>
+                    <ul class="verso-list">
+                        <li>Carte personnelle, non cessible — à présenter à chaque accès.</li>
+                        <li>En cas de perte, prévenir l'accueil dans les 24 h.</li>
+                        <li>Restitution obligatoire à la fin de l'adhésion.</li>
+                        <li>QR code = identifiant unique de réservation &amp; check-in.</li>
+                    </ul>
+                </div>
+                <div class="verso-foot">
+                    <div class="contact">
+                        <strong>Bokati Cowork</strong>
+                        Douala &nbsp;·&nbsp; +237 ___ ___ ___<br>
+                        <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6c04090000032c090000090d031f09420f01">[email&#160;protected]</a>
+                    </div>
+                    <div style="text-align:right;">Si trouvée,<br>merci de la rapporter</div>
+                </div>
+            </div>
+        </div>
+
+    </th:block>
+
+    <!-- ╔══════════════════════════════════════════════════════════
+         APERÇU — affichage par défaut quand aucune donnée n'est fournie
+         (pour visualisation hors-Thymeleaf)
+         ╚══════════════════════════════════════════════════════════ -->
+    <th:block th:if="${member == null and members == null}">
+
+        <!-- RECTO -->
+        <div class="badge recto plan-premium">
+            <div class="badge-stripe"></div>
+            <div class="badge-top">
+                <div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Cowork &amp; Studio</div>
+                </div>
+                <span class="member-tag">Membre</span>
+            </div>
+            <div class="badge-body">
+                <div class="name-block">
+                    <div class="role-label">Carte d'accès</div>
+                    <div class="member-name">{{ member.name }}</div>
+                    <div class="member-id">N° {{ member.id }}</div>
+                </div>
+                <div class="qr"><div class="qr-placeholder"></div></div>
+            </div>
+            <div class="badge-bottom">
+                <span class="plan-pill">{{ member.planLabel }}</span>
+                <span class="valid">Valide jusqu'au <strong>{{ member.validUntil }}</strong></span>
+            </div>
+        </div>
+
+        <!-- VERSO -->
+        <div class="badge verso">
+            <div class="verso-head">
+                <div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Bokati Cowork</div>
+                </div>
+                <span class="verso-tag">Carte membre</span>
+            </div>
+            <div class="verso-stripe"></div>
+            <div class="verso-mag"></div>
+            <div class="verso-body">
+                <div>
+                    <div class="verso-title">Conditions d'utilisation</div>
+                    <ul class="verso-list">
+                        <li>Carte personnelle, non cessible — à présenter à chaque accès.</li>
+                        <li>En cas de perte, prévenir l'accueil dans les 24 h.</li>
+                        <li>Restitution obligatoire à la fin de l'adhésion.</li>
+                        <li>QR code = identifiant unique de réservation &amp; check-in.</li>
+                    </ul>
+                </div>
+                <div class="verso-foot">
+                    <div class="contact">
+                        <strong>Bokati Cowork</strong>
+                        Douala &nbsp;·&nbsp; +237 ___ ___ ___<br>
+                        <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3e565b5252517e5b52525b5f514d5b105d53">[email&#160;protected]</a>
+                    </div>
+                    <div style="text-align:right;">Si trouvée,<br>merci de la rapporter</div>
+                </div>
+            </div>
+        </div>
+
+    </th:block>
+
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>

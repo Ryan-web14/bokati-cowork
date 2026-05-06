@@ -4,7 +4,12 @@
       "Bash(rm -rf \"C:/java-project/bokati-cowork/target\")",
       "Bash(./mvnw compile *)",
       "Bash(./mvnw clean *)",
-      "Bash(./mvnw test-compile *)"
+      "Bash(./mvnw test-compile *)",
+      "Bash(xargs grep -l \"uploadDocument\\\\|addDocument\\\\|@PostMapping.*document\")",
+      "Bash(xargs -I {} bash -c \"echo '=== {} ===' && head -25 {}\")",
+      "Bash(Select-String -Pattern \"\\(ContractOutboxEventProcessor|ContractGenerationServiceImpl\\)\")",
+      "Bash(grep -o 'th:text=\"\\\\${[^}]*}\"' src/main/resources/templates/email/contract-event.html)",
+      "Bash(xargs grep -l \"ContractOutboxEventProcessor\\\\|sendContractNotification\")"
     ]
   }
 }

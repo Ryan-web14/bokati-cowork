@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrat de domiciliation — Elle A Osé</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0 0 14mm 0;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                font-size: 7.5px;
+                color: #9b8caa;
+            }
+        }
+
+        :root {
+            --plum:        #1a0a2e;
+            --plum-mid:    #2a1548;
+            --violet:      oklch(62% 0.18 295);
+            --violet-pale: oklch(95% 0.04 295);
+            --gold:        #c9a84c;
+            --gold-pale:   oklch(97% 0.04 76);
+            --gold-mid:    oklch(90% 0.09 76);
+            --gold-dark:   oklch(52% 0.14 76);
+            --cream:       oklch(98.5% 0.008 75);
+            --ink:         #1a0a2e;
+            --slate:       #5c4f6e;
+            --slate-light: #9b8caa;
+            --border:      #d8d0e8;
+            --white:       #ffffff;
+            --field-bg:    #faf8fd;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: var(--ink);
+            font-size: 9.5px;
+            line-height: 1.6;
+            background: var(--white);
+            width: 210mm;
+            min-height: 297mm;
+        }
+
+        /* ── HEADER ── */
+        .doc-header {
+            background: var(--plum);
+            padding: 18px 24px 14px;
+            position: relative; overflow: hidden;
+        }
+        .doc-header::after {
+            content: ''; position: absolute; top: 0; right: -20px;
+            width: 220px; height: 100%;
+            background: rgba(255,255,255,0.03); transform: skewX(-12deg);
+        }
+        .header-inner {
+            position: relative; z-index: 1;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .brand-name { font-size: 17px; font-weight: 700; color: var(--white); letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub  { font-size: 7px; color: var(--slate-light); letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+        .doc-title-block { text-align: right; }
+        .doc-title    { font-size: 20px; font-weight: 700; color: var(--white); letter-spacing: 2px; text-transform: uppercase; line-height: 1; }
+        .doc-subtitle { font-size: 8.5px; color: var(--gold); margin-top: 5px; letter-spacing: 0.8px; }
+
+        .header-stripe {
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold) 0%, var(--violet) 55%, var(--plum-mid) 100%);
+        }
+
+        /* ── CONTENT ── */
+        .content { padding: 16px 24px 20px; }
+
+        /* ── SECTION LABEL ── */
+        .section-label {
+            font-size: 7.5px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.6px; color: var(--violet);
+            display: flex; align-items: center; gap: 8px;
+            margin: 18px 0 10px;
+        }
+        .section-label:first-child { margin-top: 0; }
+        .section-label::before { content: ''; display: inline-block; width: 14px; height: 2px; background: var(--gold); flex-shrink: 0; }
+        .section-label::after  { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* ── ARTICLE ── */
+        .article {
+            margin: 0 0 14px;
+        }
+        .article-title {
+            font-size: 8px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.2px; color: var(--plum);
+            margin-bottom: 5px;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .article-num {
+            background: var(--gold);
+            color: var(--plum);
+            font-size: 7px; font-weight: 700;
+            width: 16px; height: 16px;
+            border-radius: 2px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .article-body {
+            font-size: 9px; color: var(--slate);
+            line-height: 1.65;
+            padding-left: 23px;
+            text-wrap: pretty;
+        }
+        .article-body p { margin-bottom: 5px; }
+        .article-body p:last-child { margin-bottom: 0; }
+
+        /* ── FIELD GRID ── */
+        .field-grid { display: grid; gap: 10px 14px; }
+        .col-2 { grid-template-columns: 1fr 1fr; }
+        .col-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .col-4 { grid-template-columns: repeat(4, 1fr); }
+        .span-2 { grid-column: span 2; }
+        .span-3 { grid-column: span 3; }
+        .span-4 { grid-column: span 4; }
+
+        /* ── FIELD ── */
+        .field { display: flex; flex-direction: column; gap: 3px; }
+        .field-label {
+            font-size: 7.5px; font-weight: 700; color: var(--slate);
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .field-label .required { color: var(--gold); margin-left: 2px; }
+        .field-label .optional { color: var(--slate-light); font-weight: 400; margin-left: 3px; font-style: italic; text-transform: none; letter-spacing: 0; }
+        .field-input {
+            border: none;
+            border-bottom: 1.5px solid var(--border);
+            background: transparent;
+            padding: 5px 4px 4px;
+            font-size: 10px; color: var(--ink);
+            min-height: 22px;
+        }
+        .field-input.tall {
+            min-height: 36px; border: 1.5px solid var(--border);
+            border-radius: 2px; background: var(--field-bg); padding: 5px 8px;
+        }
+
+        /* check group */
+        .check-group { display: flex; gap: 16px; align-items: center; padding: 5px 0; flex-wrap: wrap; }
+        .check-item  { display: flex; align-items: center; gap: 5px; font-size: 9.5px; color: var(--ink); }
+        .check-box   {
+            width: 14px; height: 14px;
+            border: 1.5px solid var(--border); border-radius: 2px;
+            flex-shrink: 0; display: inline-block;
+        }
+
+        /* ── PARTIES BLOCK ── */
+        .parties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
+        .partie-card {
+            border: 1.5px solid var(--border);
+            border-radius: 3px; overflow: hidden;
+        }
+        .partie-head {
+            background: var(--plum-mid);
+            padding: 5px 12px;
+            font-size: 7.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.2px;
+            color: var(--white); display: flex; align-items: center; gap: 8px;
+        }
+        .partie-head .tag {
+            background: var(--gold); color: var(--plum);
+            font-size: 6.5px; font-weight: 700; letter-spacing: 0.5px;
+            padding: 1px 6px; border-radius: 2px; text-transform: uppercase;
+        }
+        .partie-body { background: var(--field-bg); padding: 10px 12px; }
+        .partie-body .field-grid { gap: 8px 12px; }
+
+        /* ── TARIF TABLE ── */
+        .tarif-table { width: 100%; border-collapse: collapse; margin-top: 2px; }
+        .tarif-table th {
+            background: var(--plum);
+            color: var(--white);
+            font-size: 7.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            padding: 6px 10px; text-align: left;
+        }
+        .tarif-table th:last-child { text-align: right; }
+        .tarif-table td {
+            font-size: 9px; color: var(--ink);
+            padding: 7px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .tarif-table td:last-child { text-align: right; font-weight: 700; }
+        .tarif-table tr:last-child td { border-bottom: none; }
+        .tarif-table tr:nth-child(even) td { background: var(--violet-pale); }
+        .tarif-table .selected td {
+            background: var(--gold-pale);
+            color: var(--gold-dark);
+        }
+        .tarif-table .selected td:last-child { color: var(--gold-dark); }
+        .tarif-table .check-col {
+            width: 28px; text-align: center !important;
+        }
+        .tarif-select-box {
+            width: 14px; height: 14px;
+            border: 1.5px solid var(--border); border-radius: 2px;
+            display: inline-block; vertical-align: middle;
+        }
+
+        /* ── INFO / WARNING NOTICE ── */
+        .info-notice {
+            background: var(--gold-pale); border: 1px solid var(--gold-mid);
+            border-left: 3px solid var(--gold); border-radius: 2px;
+            padding: 8px 12px; font-size: 8.5px; color: var(--gold-dark);
+            line-height: 1.6; margin: 12px 0;
+            text-wrap: pretty;
+        }
+        .law-notice {
+            background: var(--violet-pale); border: 1px solid var(--border);
+            border-left: 3px solid var(--violet); border-radius: 2px;
+            padding: 8px 12px; font-size: 8px; color: var(--slate);
+            line-height: 1.65; margin: 10px 0;
+            text-wrap: pretty;
+        }
+
+        /* ── DURÉE ROW ── */
+        .duree-row {
+            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px;
+            margin-bottom: 4px;
+        }
+
+        /* ── PRESTATIONS LIST ── */
+        .prestations-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin-top: 2px; }
+        .presta-item { display: flex; align-items: center; gap: 7px; font-size: 9px; color: var(--ink); }
+        .presta-box {
+            width: 13px; height: 13px; flex-shrink: 0;
+            border: 1.5px solid var(--border); border-radius: 2px;
+        }
+
+        /* ── SIGNATURE ── */
+        .signature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px; }
+        .signature-block { display: flex; flex-direction: column; gap: 4px; }
+        .signature-label { font-size: 7.5px; font-weight: 700; color: var(--slate); text-transform: uppercase; letter-spacing: 0.8px; }
+        .signature-sub   { font-size: 8px; color: var(--slate-light); margin-bottom: 4px; font-style: italic; }
+        .signature-line  { border-bottom: 1.5px solid var(--border); min-height: 50px; }
+        .signature-caption { font-size: 7.5px; color: var(--slate-light); margin-top: 3px; }
+
+        /* ── OFFICE BOX ── */
+        .office-box { border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin-top: 16px; }
+        .office-box-head {
+            background: var(--plum); border-left: 3px solid var(--gold);
+            padding: 5px 12px; font-size: 7.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.2px; color: var(--white);
+        }
+        .office-box-body { background: var(--field-bg); padding: 10px 12px; }
+
+        /* ── FOOTER ── */
+        .doc-footer {
+            margin-top: 18px; padding: 10px 24px;
+            border-top: 1px solid var(--border);
+            font-size: 7.5px; color: var(--slate-light); text-align: center;
+        }
+
+        /* ── REF STRIP ── */
+        .ref-strip {
+            background: var(--gold-pale);
+            border-top: 1px solid var(--gold-mid);
+            border-bottom: 1px solid var(--gold-mid);
+            padding: 6px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 8px; color: var(--gold-dark);
+        }
+        .ref-strip strong { font-weight: 700; }
+
+        @media print {
+            body { width: 210mm; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="doc-header">
+    <div class="header-inner">
+        <div>
+            <div class="brand-name">Elle A Osé</div>
+            <div class="brand-sub">Cowork &amp; Studio</div>
+        </div>
+        <div class="doc-title-block">
+            <div class="doc-title">Contrat de domiciliation</div>
+            <div class="doc-subtitle">Bokati Cowork — Adresse commerciale &amp; postale</div>
+        </div>
+    </div>
+</div>
+<div class="header-stripe"></div>
+
+<!-- REF STRIP -->
+<div class="ref-strip">
+    <span><strong>N° contrat :</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    <span><strong>Date de signature :</strong> _____ / _____ / _________</span>
+    <span><strong>Référence client :</strong> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+</div>
+
+<div class="content">
+
+    <!-- ── PARTIES ── -->
+    <div class="section-label">Les parties</div>
+    <div class="parties-grid">
+
+        <div class="partie-card">
+            <div class="partie-head">
+                Le prestataire
+                <span class="tag">Domiciliataire</span>
+            </div>
+            <div class="partie-body">
+                <div class="field-grid" style="grid-template-columns:1fr;">
+                    <div class="field">
+                        <div class="field-label">Dénomination sociale</div>
+                        <div class="field-input" style="font-weight:700;">Elle A Osé — Bokati Cowork</div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Adresse</div>
+                        <div class="field-input"></div>
+                    </div>
+                    <div class="field-grid col-2">
+                        <div class="field">
+                            <div class="field-label">RCCM / Registre</div>
+                            <div class="field-input"></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Représentant légal</div>
+                            <div class="field-input"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="partie-card">
+            <div class="partie-head">
+                Le client
+                <span class="tag">Domicilié</span>
+            </div>
+            <div class="partie-body">
+                <div class="field-grid" style="grid-template-columns:1fr;">
+                    <div class="field">
+                        <div class="field-label">Nom / Raison sociale <span class="required">*</span></div>
+                        <div class="field-input"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Adresse personnelle / siège actuel</div>
+                        <div class="field-input"></div>
+                    </div>
+                    <div class="field-grid col-2">
+                        <div class="field">
+                            <div class="field-label">Forme juridique</div>
+                            <div class="field-input"></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">N° RCCM / NIF</div>
+                            <div class="field-input"></div>
+                        </div>
+                    </div>
+                    <div class="field-grid col-2">
+                        <div class="field">
+                            <div class="field-label">Téléphone</div>
+                            <div class="field-input"></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">Email</div>
+                            <div class="field-input"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── OBJET ── -->
+    <div class="section-label">Objet du contrat</div>
+    <div class="article">
+        <div class="article-title"><span class="article-num">1</span>Objet</div>
+        <div class="article-body">
+            <p>Le présent contrat a pour objet de définir les conditions dans lesquelles <strong>Elle A Osé — Bokati Cowork</strong> (ci-après « le Domiciliataire ») met à la disposition du client (ci-après « le Domicilié ») son adresse aux fins d'utilisation comme adresse commerciale, administrative et/ou postale de l'entreprise domiciliée.</p>
+            <p>Cette domiciliation permet au Domicilié d'élire son siège social ou son adresse commerciale à l'adresse du Domiciliataire, sans occupation permanente des locaux, sauf mention contraire dans les prestations souscrites.</p>
+        </div>
+    </div>
+
+    <!-- ── ADRESSE DE DOMICILIATION ── -->
+    <div class="section-label">Adresse de domiciliation</div>
+    <div class="info-notice">
+        L'adresse commerciale et postale mise à disposition est celle de <strong>Bokati Cowork — Elle A Osé</strong>, telle qu'indiquée dans les informations du prestataire ci-dessus. Le Domicilié est autorisé à faire figurer cette adresse sur l'ensemble de ses documents officiels, commerciaux et juridiques.
+    </div>
+
+    <!-- ── PRESTATIONS ── -->
+    <div class="section-label">Prestations incluses</div>
+    <div class="article">
+        <div class="article-title"><span class="article-num">2</span>Services fournis</div>
+        <div class="article-body" style="padding-left:0;">
+            <div class="prestations-list">
+                <label class="presta-item"><span class="presta-box"></span> Mise à disposition de l'adresse postale</label>
+                <label class="presta-item"><span class="presta-box"></span> Réception et notification du courrier</label>
+                <label class="presta-item"><span class="presta-box"></span> Mise à disposition d'une boîte aux lettres nominative</label>
+                <label class="presta-item"><span class="presta-box"></span> Scan et transfert numérique du courrier</label>
+                <label class="presta-item"><span class="presta-box"></span> Transfert du courrier à l'adresse du client</label>
+                <label class="presta-item"><span class="presta-box"></span> Accès aux espaces de travail partagés</label>
+                <label class="presta-item"><span class="presta-box"></span> Accès à une salle de réunion (selon formule)</label>
+                <label class="presta-item"><span class="presta-box"></span> Attestation de domiciliation sur demande</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DURÉE ── -->
+    <div class="section-label">Durée du contrat</div>
+    <div class="article">
+        <div class="article-title"><span class="article-num">3</span>Prise d'effet et durée</div>
+        <div class="article-body">
+            <p>Le contrat prend effet à la date de signature et est conclu pour la durée choisie ci-dessous. Il est renouvelable par tacite reconduction sauf dénonciation par l'une des parties avec un préavis de <strong>30 jours</strong> avant l'échéance.</p>
+        </div>
+    </div>
+    <div class="duree-row" style="margin-left:23px;">
+        <div class="field">
+            <div class="field-label">Date de début <span class="required">*</span></div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Date de fin <span class="required">*</span></div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Durée</div>
+            <div class="check-group" style="padding-top:6px;">
+                <label class="check-item"><span class="check-box"></span> 1 mois</label>
+                <label class="check-item"><span class="check-box"></span> 3 mois</label>
+                <label class="check-item"><span class="check-box"></span> 6 mois</label>
+                <label class="check-item"><span class="check-box"></span> 1 an</label>
+            </div>
+        </div>
+        <div class="field">
+            <div class="field-label">Renouvellement auto</div>
+            <div class="check-group" style="padding-top:6px;">
+                <label class="check-item"><span class="check-box"></span> Oui</label>
+                <label class="check-item"><span class="check-box"></span> Non</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TARIFS ── -->
+    <div class="section-label">Tarifs et modalités de paiement</div>
+    <div class="article">
+        <div class="article-title"><span class="article-num">4</span>Redevance de domiciliation</div>
+        <div class="article-body">
+            <p>Le Domicilié s'engage à régler au Domiciliataire la redevance mensuelle correspondant à la formule souscrite, payable d'avance selon la périodicité choisie. Les tarifs indiqués sont hors taxes.</p>
+        </div>
+    </div>
+
+    <table class="tarif-table">
+        <thead>
+            <tr>
+                <th class="check-col">Choix</th>
+                <th>Formule</th>
+                <th>Prestations incluses</th>
+                <th>Tarif / mois</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="check-col"><span class="tarif-select-box"></span></td>
+                <td><strong>Essentiel</strong></td>
+                <td>Adresse postale · boîte aux lettres · notification courrier</td>
+                <td>— — — — XAF</td>
+            </tr>
+            <tr>
+                <td class="check-col"><span class="tarif-select-box"></span></td>
+                <td><strong>Confort</strong></td>
+                <td>Essentiel + scan &amp; transfert numérique · attestation sur demande</td>
+                <td>— — — — XAF</td>
+            </tr>
+            <tr>
+                <td class="check-col"><span class="tarif-select-box"></span></td>
+                <td><strong>Premium</strong></td>
+                <td>Confort + accès coworking 8h/mois · 1 salle de réunion/mois (2h)</td>
+                <td>— — — — XAF</td>
+            </tr>
+            <tr>
+                <td class="check-col"><span class="tarif-select-box"></span></td>
+                <td><strong>Sur mesure</strong></td>
+                <td>Prestations à définir selon besoins spécifiques</td>
+                <td>Sur devis</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="field-grid col-3" style="margin-top:12px; margin-left:0;">
+        <div class="field">
+            <div class="field-label">Formule retenue <span class="required">*</span></div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Montant mensuel HT</div>
+            <div class="field-input"></div>
+        </div>
+        <div class="field">
+            <div class="field-label">Mode de paiement</div>
+            <div class="check-group" style="padding-top:4px; flex-wrap:wrap; gap:8px 14px;">
+                <label class="check-item"><span class="check-box"></span> Mobile money</label>
+                <label class="check-item"><span class="check-box"></span> Virement</label>
+                <label class="check-item"><span class="check-box"></span> Espèces</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── OBLIGATIONS ── -->
+    <div class="section-label">Obligations des parties</div>
+
+    <div class="article">
+        <div class="article-title"><span class="article-num">5</span>Obligations du Domiciliataire</div>
+        <div class="article-body">
+            <p>Le Domiciliataire s'engage à : mettre à disposition l'adresse convenue pour la durée du contrat ; assurer la réception et la conservation du courrier dans des conditions sécurisées ; informer le Domicilié de la réception de tout courrier ou pli dans un délai raisonnable ; délivrer toute attestation de domiciliation nécessaire aux démarches administratives ou juridiques du Domicilié.</p>
+        </div>
+    </div>
+
+    <div class="article">
+        <div class="article-title"><span class="article-num">6</span>Obligations du Domicilié</div>
+        <div class="article-body">
+            <p>Le Domicilié s'engage à : régler la redevance aux échéances convenues ; informer le Domiciliataire de toute modification de sa situation juridique (changement de forme, cessation d'activité, transfert de siège) dans un délai de <strong>15 jours</strong> ; ne pas sous-louer ou céder le bénéfice de la présente domiciliation sans accord écrit préalable ; ne pas utiliser l'adresse à des fins illicites ou contraires aux lois en vigueur ; retirer son courrier dans un délai maximum de <strong>30 jours</strong> après notification.</p>
+        </div>
+    </div>
+
+    <!-- ── RÉSILIATION ── -->
+    <div class="section-label">Résiliation et renouvellement</div>
+
+    <div class="article">
+        <div class="article-title"><span class="article-num">7</span>Conditions de résiliation</div>
+        <div class="article-body">
+            <p>Chacune des parties peut mettre fin au présent contrat par envoi d'un courrier ou message écrit avec un préavis de <strong>30 jours calendaires</strong> avant l'échéance. En cas de manquement grave aux obligations contractuelles (notamment défaut de paiement après mise en demeure restée sans effet pendant 15 jours, ou usage frauduleux de l'adresse), le Domiciliataire se réserve le droit de résilier le contrat avec effet immédiat, sans indemnité due au Domicilié.</p>
+            <p>À la fin du contrat, le Domicilié dispose de <strong>15 jours</strong> pour retirer ses courriers en instance. Passé ce délai, les courriers pourront être retournés à l'expéditeur ou détruits.</p>
+        </div>
+    </div>
+
+    <!-- ── CLAUSES DIVERSES ── -->
+    <div class="section-label">Clauses diverses</div>
+
+    <div class="article">
+        <div class="article-title"><span class="article-num">8</span>Confidentialité &amp; données personnelles</div>
+        <div class="article-body">
+            <p>Les parties s'engagent à traiter confidentiellement toutes les informations échangées dans le cadre du présent contrat. Les données personnelles collectées sont traitées conformément à la réglementation en vigueur sur la protection des données personnelles et sont utilisées exclusivement aux fins de gestion du présent contrat.</p>
+        </div>
+    </div>
+
+    <div class="article">
+        <div class="article-title"><span class="article-num">9</span>Droit applicable &amp; litiges</div>
+        <div class="article-body">
+            <p>Le présent contrat est soumis au droit en vigueur dans le pays d'établissement du Domiciliataire. En cas de litige, les parties s'engagent à rechercher une solution amiable avant tout recours judiciaire. À défaut d'accord, le tribunal compétent sera celui du ressort du siège du Domiciliataire.</p>
+        </div>
+    </div>
+
+    <div class="law-notice">
+        <strong>Base légale :</strong> La domiciliation commerciale est régie par les dispositions pertinentes de l'Acte Uniforme OHADA relatif au droit commercial général ainsi que par les législations nationales applicables. Le Domicilié demeure seul responsable de l'exactitude des informations déclarées aux autorités administratives et fiscales.
+    </div>
+
+    <!-- ── SIGNATURES ── -->
+    <div class="section-label">Signatures</div>
+
+    <div style="font-size:8.5px; color:var(--slate); margin-bottom:10px; text-wrap:pretty;">
+        Les deux parties déclarent avoir pris connaissance de l'ensemble des clauses du présent contrat, les approuver sans réserve et s'engager à les respecter. Fait en deux (2) exemplaires originaux, un pour chaque partie.
+    </div>
+
+    <div class="signature-row">
+        <div class="signature-block">
+            <div class="signature-label">Pour Elle A Osé — Bokati Cowork</div>
+            <div class="signature-sub">Le Domiciliataire — Signature &amp; cachet</div>
+            <div class="signature-line"></div>
+            <div class="signature-caption">Nom : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+            <div class="signature-caption" style="margin-top:4px;">Date : _____ / _____ / _________</div>
+        </div>
+        <div class="signature-block">
+            <div class="signature-label">Le client — Domicilié</div>
+            <div class="signature-sub">Précédé de la mention « Lu et approuvé »</div>
+            <div class="signature-line"></div>
+            <div class="signature-caption">Nom : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+            <div class="signature-caption" style="margin-top:4px;">Date : _____ / _____ / _________</div>
+        </div>
+    </div>
+
+    <!-- ── RÉSERVÉ ADMINISTRATION ── -->
+    <div class="office-box">
+        <div class="office-box-head">Réservé à l'administration</div>
+        <div class="office-box-body">
+            <div class="field-grid col-4">
+                <div class="field">
+                    <div class="field-label">N° contrat attribué</div>
+                    <div class="field-input"></div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Boîte attribuée</div>
+                    <div class="field-input"></div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Date d'activation</div>
+                    <div class="field-input"></div>
+                </div>
+                <div class="field">
+                    <div class="field-label">Traité par</div>
+                    <div class="field-input"></div>
+                </div>
+                <div class="field span-2">
+                    <div class="field-label">Pièces justificatives reçues</div>
+                    <div class="check-group">
+                        <label class="check-item"><span class="check-box"></span> Pièce d'identité</label>
+                        <label class="check-item"><span class="check-box"></span> RCCM / statuts</label>
+                        <label class="check-item"><span class="check-box"></span> Justificatif de domicile</label>
+                        <label class="check-item"><span class="check-box"></span> NIF</label>
+                    </div>
+                </div>
+                <div class="field span-2">
+                    <div class="field-label">Observations</div>
+                    <div class="field-input tall"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Contrat de domiciliation &nbsp;·&nbsp; Document contractuel — conserver précieusement
+</div>
+
+</body>
+</html>

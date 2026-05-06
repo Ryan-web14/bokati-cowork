@@ -28,4 +28,6 @@ public interface OutboxService {
     int processPending(int batchSize);
 
     void requeue(Long eventId);
+
+    int requeueFailed(String aggregateType);
 }

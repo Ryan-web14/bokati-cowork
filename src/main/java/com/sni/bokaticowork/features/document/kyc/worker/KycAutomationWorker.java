@@ -80,6 +80,7 @@ public class KycAutomationWorker {
                     item.setReminderCount(item.getReminderCount() == null ? 1 : item.getReminderCount() + 1);
                     kycCaseRepository.save(item);
                     publishCaseEvent("KYC_INCOMPLETE_REMINDER", item);
+
                 });
     }
 
@@ -120,6 +121,7 @@ public class KycAutomationWorker {
             kycCaseRepository.save(kycCase);
             syncOwnerStatus(kycCase);
             publishCaseEvent("KYC_RENEWAL_REQUIRED", kycCase);
+
         }
         publishDocumentEvent("KYC_DOCUMENT_EXPIRED", item, Map.of());
     }
@@ -169,6 +171,8 @@ public class KycAutomationWorker {
         payload.put("documentType", document.getDocumentType());
         payload.put("kycCaseCode", document.getKycCase() == null ? null : document.getKycCase().getCode());
         payload.put("expiryDate", document.getExpiryDate());
+        payload.put("ownerType", document.getOwnerType());
+        payload.put("ownerId", document.getOwnerId());
         outboxService.publish(eventType, "KYC_DOCUMENT", String.valueOf(document.getId()), payload);
     }
 }

@@ -12,6 +12,8 @@ import com.sni.bokaticowork.features.visitor.repository.VisitorCheckInRepository
 import com.sni.bokaticowork.features.visitor.repository.VisitorPassRepository;
 import com.sni.bokaticowork.features.visitor.repository.VisitorRepository;
 import com.sni.bokaticowork.features.visitor.service.interfaces.VisitorManagementService;
+import com.sni.bokaticowork.features.visitor.service.support.VisitorBadgeService;
+import com.sni.bokaticowork.features.visitor.service.support.VisitorEmailNotifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,8 @@ public class VisitorManagementServiceImpl implements VisitorManagementService {
     private final VisitorPassRepository passRepository;
     private final VisitorCheckInRepository checkInRepository;
     private final VisitorMapper mapper;
+    private final VisitorEmailNotifier emailNotifier;
+    private final VisitorBadgeService badgeService;
 
     @Value("${app.time-zone:Africa/Lagos}")
     private String appTimeZone;
@@ -67,7 +71,14 @@ public class VisitorManagementServiceImpl implements VisitorManagementService {
                 .status(VisitorPassStatus.SCHEDULED)
                 .qrValue("bokati:visitor:" + passNumber)
                 .build());
+        emailNotifier.sendInvitation(pass);
         return mapper.toPassResponse(pass);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] generateBadge(String passNumber) {
+        return badgeService.generateBadge(passNumber);
     }
 
     @Override

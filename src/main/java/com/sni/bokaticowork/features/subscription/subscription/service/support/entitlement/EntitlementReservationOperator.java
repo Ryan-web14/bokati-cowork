@@ -31,6 +31,7 @@ public class EntitlementReservationOperator {
     private final EntitlementBalanceReader balanceReader;
     private final EntitlementGrantBalanceOperator grantBalanceOperator;
     private final EntitlementRequestValidator validator;
+    private final EntitlementQuotaAlertService quotaAlertService;
 
     public EntitlementOperationResponse reserve(EntitlementOperationRequest request) {
         validator.reference(request);
@@ -68,6 +69,7 @@ public class EntitlementReservationOperator {
             grantRepository.save(grant);
             reservationRepository.save(toReservation(request, grant, reserved));
             ledgerWriter.write(grant, EntitlementTransactionType.RESERVE, reserved, before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+            quotaAlertService.checkAndAlert(grant, after);
             remainingToReserve = remainingToReserve.subtract(reserved);
         }
 

@@ -57,6 +57,10 @@ public class SupportTicket {
     private Instant closedAt;
     private Instant createdAt;
     private Instant updatedAt;
+    private Integer csatScore;
+    private String csatComment;
+    private Instant csatSubmittedAt;
+    private Instant csatEmailSentAt;
 
     @Builder.Default
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)

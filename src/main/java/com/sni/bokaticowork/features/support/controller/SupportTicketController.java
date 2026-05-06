@@ -9,15 +9,19 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(ApiPath.V1 + "/support/tickets")
 public class SupportTicketController {
+
     private final SupportTicketService service;
 
     @PostMapping
@@ -28,12 +32,14 @@ public class SupportTicketController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')")
-    public ResponseEntity<PaginatedResponse<SupportTicketResponse>> search(@RequestParam(required = false) TicketStatus status,
-                                                                           @RequestParam(required = false) Long assignedTo,
-                                                                           @RequestParam(required = false) String ownerType,
-                                                                           @RequestParam(required = false) String ownerCode,
-                                                                           @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(service.search(status, assignedTo, ownerType, ownerCode, pageable));
+    public ResponseEntity<PaginatedResponse<SupportTicketResponse>> search(
+            @RequestParam(required = false) TicketStatus status,
+            @RequestParam(required = false) Long assignedTo,
+            @RequestParam(required = false) String ownerType,
+            @RequestParam(required = false) String ownerCode,
+            @RequestParam(required = false) String searchText,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(service.search(status, assignedTo, ownerType, ownerCode, searchText, pageable));
     }
 
     @GetMapping("/{ticketNumber}")
@@ -67,5 +73,13 @@ public class SupportTicketController {
     @PreAuthorize("hasAnyAuthority('SUPPORT:METRICS','SUPPORT_METRICS')")
     public ResponseEntity<SupportMetricsResponse> metrics() {
         return ResponseEntity.ok(service.metrics());
+    }
+
+    @GetMapping("/analytics")
+    @PreAuthorize("hasAnyAuthority('SUPPORT:METRICS','SUPPORT_METRICS')")
+    public ResponseEntity<SupportAnalyticsResponse> analytics(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+        return ResponseEntity.ok(service.analytics(from, to));
     }
 }

@@ -152,6 +152,27 @@ public class OutboxServiceImpl implements OutboxService {
         repository.save(event);
     }
 
+    @Override
+    public int requeueFailed(String aggregateType) {
+        List<OutboxEvent> failed = repository.findByStatusInAndAvailableAtLessThanEqualOrderByCreatedAtAsc(
+                Set.of(OutboxEventStatus.FAILED),
+                Instant.now().plusSeconds(3600 * 24 * 365),
+                PageRequest.of(0, 500)
+        );
+        List<OutboxEvent> toRequeue = failed.stream()
+                .filter(e -> aggregateType == null
+                        || aggregateType.isBlank()
+                        || aggregateType.equalsIgnoreCase(e.getAggregateType()))
+                .toList();
+        toRequeue.forEach(e -> {
+            e.setStatus(OutboxEventStatus.PENDING);
+            e.setAvailableAt(Instant.now());
+            e.setLastError(null);
+        });
+        repository.saveAll(toRequeue);
+        return toRequeue.size();
+    }
+
     private OutboxEvent find(Long eventId) {
         if (eventId == null) {
             throw new BadRequestException("Outbox event id is required");

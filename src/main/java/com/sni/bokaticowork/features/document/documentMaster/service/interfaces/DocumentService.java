@@ -14,7 +14,7 @@ import java.util.List;
 public interface DocumentService {
     DocumentResponse upload(DocumentUploadMetadataRequest metadata, MultipartFile file);
     DocumentResponse createGeneratedDocument(DocumentUploadMetadataRequest metadata, String originalFileName, String declaredMimeType, byte[] content);
-    DocumentResponse replace(String documentCode, Long uploadedBy, MultipartFile file);
+    DocumentResponse replace(String documentCode, MultipartFile file);
     DocumentResponse getByCode(String documentCode);
     PaginatedResponse<DocumentResponse> list(DocumentOwnerType ownerType, String ownerCode, Pageable pageable);
     List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse> listVersions(String documentCode);

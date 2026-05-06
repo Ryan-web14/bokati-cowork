@@ -30,7 +30,8 @@ public class JWTService {
     @Value("${app.security.jwt.secret}")
     private String secret;
 
-    @Value("${app.security.jwt.access-token-expiration-ms:900000}")
+    //Remettre 900000 millisecond
+    @Value("${app.security.jwt.access-token-expiration-ms:90000000}")
     private long accessTokenExpiration;
 
     @Value("${app.security.jwt.refresh-token-expiration-ms:604800000}")
