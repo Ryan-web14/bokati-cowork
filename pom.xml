@@ -27,7 +27,7 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>25</java.version>
+		<java.version>24</java.version>
 		<netflix-dgs.version>11.0.0</netflix-dgs.version>
 	</properties>
 	<dependencies>
