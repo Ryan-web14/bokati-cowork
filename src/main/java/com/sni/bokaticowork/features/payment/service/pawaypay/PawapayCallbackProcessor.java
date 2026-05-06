@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayCallba
 import com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
+import com.sni.bokaticowork.features.payment.service.interfaces.DunningService;
 import com.sni.bokaticowork.features.payment.service.support.PaymentAllocationService;
 import com.sni.bokaticowork.features.payment.service.support.PaymentTransactionWorkflowEvent;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class PawapayCallbackProcessor {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final PawapayDepositService depositService;
     private final PawapayDepositRepository depositRepository;
+    private final DunningService dunningService;
 
     public void process(PawapayCallbackPayload payload) {
         String depositId = payload.depositId();
@@ -192,6 +194,13 @@ public class PawapayCallbackProcessor {
         depositService.markFailed(transaction.getProviderReference(), payload, reason);
 
         reconcileIntent(transaction);
+
+        try {
+            dunningService.scheduleForFailedIntent(transaction.getPaymentIntent(), null);
+        } catch (Exception ex) {
+            log.error("Failed to schedule dunning for intent {} after payment failure: {}",
+                    transaction.getPaymentIntent().getIntentNumber(), ex.getMessage());
+        }
 
         log.info("PawaPay deposit failed — transaction={}, depositId={}, reason={}",
                 transaction.getTransactionNumber(), transaction.getProviderReference(), reason);

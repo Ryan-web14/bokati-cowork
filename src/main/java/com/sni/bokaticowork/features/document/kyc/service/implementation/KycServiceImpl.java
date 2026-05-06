@@ -142,6 +142,7 @@ public class KycServiceImpl implements KycService {
         }
 
         publishCaseEvent("KYC_CASE_CREATED", entity, null);
+
         return toResponse(entity);
     }
 
@@ -228,6 +229,7 @@ public class KycServiceImpl implements KycService {
         }
 
         publishCaseEvent("KYC_CASE_SUBMITTED", kycCase, null);
+
         return toResponse(kycCase);
     }
 
@@ -261,6 +263,7 @@ public class KycServiceImpl implements KycService {
         }
 
         publishCaseEvent("KYC_CASE_APPROVED", kycCase, request.getReviewedBy());
+
         return toResponse(kycCase);
     }
 
@@ -296,6 +299,7 @@ public class KycServiceImpl implements KycService {
         }
 
         publishCaseEvent("KYC_CASE_REJECTED", kycCase, request.getReviewedBy());
+
         return toResponse(kycCase);
     }
 

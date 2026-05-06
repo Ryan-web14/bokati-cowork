@@ -17,7 +17,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class  ContractOutboxEventProcessor implements OutboxEventProcessor {
+public class ContractOutboxEventProcessor implements OutboxEventProcessor {
 
     private final ObjectMapper objectMapper;
     private final OutboxNotificationMailService mailService;
@@ -30,32 +30,40 @@ public class  ContractOutboxEventProcessor implements OutboxEventProcessor {
 
     @Override
     public void process(OutboxEvent event) {
-        JsonNode payload = readPayload(event);
+        JsonNode payload     = readPayload(event);
         DocumentOwnerType ownerType = enumValue(payload, "ownerType", DocumentOwnerType.class);
-        String ownerCode = textValue(payload, "ownerCode");
-        String documentCode = textValue(payload, "documentCode");
-        String templateCode = textValue(payload, "templateCode");
+        String ownerCode     = textValue(payload, "ownerCode");
+        String documentCode  = textValue(payload, "documentCode");
+        String templateCode  = textValue(payload, "templateCode");
 
-        OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerCode(ownerType, ownerCode);
-        if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            log.info("No contract recipient resolved for event {} and owner {}", event.getEventType(), ownerCode);
+        log.info("Processing CONTRACT outbox event={} ownerType={} ownerCode={} documentCode={}",
+                event.getEventType(), ownerType, ownerCode, documentCode);
+
+        if (ownerType == null || !StringUtils.hasText(ownerCode)) {
+            log.warn("CONTRACT event {} missing ownerType/ownerCode — skipping", event.getEventType());
             return;
         }
 
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
-        variables.put("templateCode", templateCode);
-        variables.put("documentCode", documentCode);
-        variables.put("eventType", event.getEventType());
-        mailService.sendContractNotification(recipient.email(), variables);
+        OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerCode(ownerType, ownerCode);
+        if (recipient == null || !StringUtils.hasText(recipient.email())) {
+            log.warn("No contract recipient for event={} ownerType={} ownerCode={}",
+                    event.getEventType(), ownerType, ownerCode);
+            return;
+        }
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
+        vars.put("templateCode",  templateCode != null ? templateCode : "—");
+        vars.put("documentCode",  documentCode);
+        vars.put("eventType",     event.getEventType());
+
+        mailService.sendContractNotification(recipient.email(), vars);
+        log.info("Contract notification sent to {} for event={}", recipient.email(), event.getEventType());
     }
 
     private JsonNode readPayload(OutboxEvent event) {
-        try {
-            return objectMapper.readTree(event.getPayload());
-        } catch (Exception ex) {
-            throw new IllegalStateException("Unable to read contract outbox payload", ex);
-        }
+        try { return objectMapper.readTree(event.getPayload()); }
+        catch (Exception ex) { throw new IllegalStateException("Unable to read contract outbox payload", ex); }
     }
 
     private String textValue(JsonNode payload, String field) {
@@ -65,6 +73,11 @@ public class  ContractOutboxEventProcessor implements OutboxEventProcessor {
 
     private <T extends Enum<T>> T enumValue(JsonNode payload, String field, Class<T> type) {
         String value = textValue(payload, field);
-        return value == null ? null : Enum.valueOf(type, value);
+        if (value == null) return null;
+        try { return Enum.valueOf(type, value); }
+        catch (IllegalArgumentException ex) {
+            log.warn("Unknown enum value '{}' for {}", value, type.getSimpleName());
+            return null;
+        }
     }
 }

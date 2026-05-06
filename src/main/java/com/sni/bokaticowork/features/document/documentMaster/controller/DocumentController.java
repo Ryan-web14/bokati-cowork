@@ -47,9 +47,8 @@ public class DocumentController {
     @Idempotent(operation = "DOCUMENT_REPLACE", requestBodyArgIndex = -1)
     public ResponseEntity<DocumentResponse> replace(
             @PathVariable String code,
-            @RequestParam Long uploadedBy,
             @RequestPart("file") MultipartFile file) {
-        return ResponseEntity.ok(service.replace(code, uploadedBy, file));
+        return ResponseEntity.ok(service.replace(code, file));
     }
 
     @GetMapping("/{code}")

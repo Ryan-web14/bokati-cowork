@@ -7,7 +7,11 @@ import com.sni.bokaticowork.features.reporting.dto.response.CashRegisterReportRe
 import com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse;
 import com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse;
 import com.sni.bokaticowork.features.reporting.service.interfaces.FinancialReportService;
+import com.sni.bokaticowork.features.reporting.service.interfaces.ReportPdfService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +26,7 @@ import java.time.LocalDate;
 public class FinancialReportController {
 
     private final FinancialReportService service;
+    private final ReportPdfService reportPdfService;
 
     /**
      * GET /reports/finance/dashboard?from=2026-04-01&to=2026-04-30
@@ -74,6 +79,21 @@ public class FinancialReportController {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to) {
         return ResponseEntity.ok(service.cashFlow(parseDate(from), parseDate(to)));
+    }
+
+    @GetMapping("/dashboard/pdf")
+    public ResponseEntity<byte[]> dashboardPdf(
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to) {
+        byte[] pdf = reportPdfService.financialDashboardPdf(parseDate(from), parseDate(to));
+        return pdfResponse(pdf, "rapport-financier.pdf");
+    }
+
+    private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filename) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.attachment().filename(filename).build());
+        return ResponseEntity.ok().headers(headers).body(pdf);
     }
 
     private LocalDate parseDate(String value) {

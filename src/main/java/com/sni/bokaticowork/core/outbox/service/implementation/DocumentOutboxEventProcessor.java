@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,32 +30,40 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
 
     @Override
     public void process(OutboxEvent event) {
-        JsonNode payload = readPayload(event);
+        JsonNode payload    = readPayload(event);
         DocumentOwnerType ownerType = enumValue(payload, "ownerType", DocumentOwnerType.class);
-        Long ownerId = longValue(payload, "ownerId");
+        Long ownerId        = longValue(payload, "ownerId");
         String documentCode = textValue(payload, "documentCode");
-        String status = textValue(payload, "status");
+        String status       = textValue(payload, "status");
 
-        OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerId(ownerType, ownerId);
-        if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            log.info("No document recipient resolved for event {} and document {}", event.getEventType(), documentCode);
+        log.info("Processing DOCUMENT outbox event={} ownerType={} ownerId={} documentCode={}",
+                event.getEventType(), ownerType, ownerId, documentCode);
+
+        if (ownerType == null || ownerId == null) {
+            log.warn("DOCUMENT event {} missing ownerType/ownerId — skipping", event.getEventType());
             return;
         }
 
-        mailService.sendDocumentNotification(recipient.email(), java.util.Map.of(
-                "recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client",
-                "documentCode", documentCode,
-                "eventType", event.getEventType(),
-                "status", status == null ? "N/A" : status
-        ));
+        OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerId(ownerType, ownerId);
+        if (recipient == null || !StringUtils.hasText(recipient.email())) {
+            log.warn("No document recipient for event={} ownerType={} ownerId={}",
+                    event.getEventType(), ownerType, ownerId);
+            return;
+        }
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
+        vars.put("documentCode",  documentCode != null ? documentCode : "—");
+        vars.put("eventType",     event.getEventType());
+        vars.put("status",        status != null ? status : "N/A");
+
+        mailService.sendDocumentNotification(recipient.email(), vars);
+        log.info("Document notification sent to {} for event={}", recipient.email(), event.getEventType());
     }
 
     private JsonNode readPayload(OutboxEvent event) {
-        try {
-            return objectMapper.readTree(event.getPayload());
-        } catch (Exception ex) {
-            throw new IllegalStateException("Unable to read document outbox payload", ex);
-        }
+        try { return objectMapper.readTree(event.getPayload()); }
+        catch (Exception ex) { throw new IllegalStateException("Unable to read document outbox payload", ex); }
     }
 
     private String textValue(JsonNode payload, String field) {
@@ -67,6 +78,11 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
 
     private <T extends Enum<T>> T enumValue(JsonNode payload, String field, Class<T> type) {
         String value = textValue(payload, field);
-        return value == null ? null : Enum.valueOf(type, value);
+        if (value == null) return null;
+        try { return Enum.valueOf(type, value); }
+        catch (IllegalArgumentException ex) {
+            log.warn("Unknown enum value '{}' for {}", value, type.getSimpleName());
+            return null;
+        }
     }
 }

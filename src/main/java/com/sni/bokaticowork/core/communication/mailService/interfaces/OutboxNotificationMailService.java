@@ -10,4 +10,6 @@ public interface OutboxNotificationMailService {
     CompletableFuture<Boolean> sendKycNotification(String to, Map<String, Object> variables);
 
     CompletableFuture<Boolean> sendContractNotification(String to, Map<String, Object> variables);
+
+    CompletableFuture<Boolean> sendKycDocumentNotification(String to, Map<String, Object> variables);
 }

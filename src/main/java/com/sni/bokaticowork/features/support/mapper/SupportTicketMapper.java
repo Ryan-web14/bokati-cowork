@@ -1,7 +1,7 @@
 package com.sni.bokaticowork.features.support.mapper;
 
-import com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse;
-import com.sni.bokaticowork.features.support.dto.SupportDtos.TicketMessageResponse;
+import com.sni.bokaticowork.features.support.dto.SupportDtos.*;
+import com.sni.bokaticowork.features.support.model.QuickReply;
 import com.sni.bokaticowork.features.support.model.SupportTicket;
 import com.sni.bokaticowork.features.support.model.TicketMessage;
 import org.springframework.stereotype.Component;
@@ -10,6 +10,7 @@ import java.util.List;
 
 @Component
 public class SupportTicketMapper {
+
     public SupportTicketResponse toResponse(SupportTicket ticket, List<TicketMessage> messages) {
         return new SupportTicketResponse(
                 ticket.getTicketNumber(),
@@ -31,6 +32,9 @@ public class SupportTicketMapper {
                 ticket.getFirstRespondedAt(),
                 ticket.getResolvedAt(),
                 ticket.getClosedAt(),
+                ticket.getCsatScore(),
+                ticket.getCsatComment(),
+                ticket.getCsatSubmittedAt(),
                 ticket.getCreatedAt(),
                 ticket.getUpdatedAt(),
                 messages == null ? List.of() : messages.stream().map(this::toMessageResponse).toList()
@@ -46,6 +50,16 @@ public class SupportTicketMapper {
                 message.getMessage(),
                 message.getInternal(),
                 message.getCreatedAt()
+        );
+    }
+
+    public QuickReplyResponse toQuickReplyResponse(QuickReply reply) {
+        return new QuickReplyResponse(
+                reply.getId(),
+                reply.getCategory(),
+                reply.getTitle(),
+                reply.getBody(),
+                reply.getActive()
         );
     }
 }

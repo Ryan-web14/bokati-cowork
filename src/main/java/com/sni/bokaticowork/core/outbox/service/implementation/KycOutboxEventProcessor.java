@@ -11,6 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -31,28 +34,36 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         DocumentOwnerType ownerType = enumValue(payload, "ownerType", DocumentOwnerType.class);
         Long ownerId = longValue(payload, "ownerId");
         String caseCode = textValue(payload, "kycCaseCode");
-        String status = textValue(payload, "status");
+        String status   = textValue(payload, "status");
 
-        OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerId(ownerType, ownerId);
-        if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            log.info("No KYC recipient resolved for event {} and case {}", event.getEventType(), caseCode);
+        log.info("Processing KYC outbox event={} case={} ownerType={} ownerId={}",
+                event.getEventType(), caseCode, ownerType, ownerId);
+
+        if (ownerType == null || ownerId == null) {
+            log.warn("KYC event {} missing ownerType or ownerId — skipping", event.getEventType());
             return;
         }
 
-        mailService.sendKycNotification(recipient.email(), java.util.Map.of(
-                "recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client",
-                "kycCaseCode", caseCode,
-                "eventType", event.getEventType(),
-                "status", status == null ? "N/A" : status
-        ));
+        OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerId(ownerType, ownerId);
+        if (recipient == null || !StringUtils.hasText(recipient.email())) {
+            log.warn("No KYC recipient for event={} ownerType={} ownerId={}", event.getEventType(), ownerType, ownerId);
+            return;
+        }
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
+        vars.put("kycCaseCode",   caseCode != null ? caseCode : "—");
+        vars.put("eventType",     event.getEventType());
+        vars.put("status",        status != null ? status : "N/A");
+
+        // Lance une exception si l'envoi échoue → outbox marque FAILED → retry automatique
+        mailService.sendKycNotification(recipient.email(), vars);
+        log.info("KYC notification sent to {} for event={}", recipient.email(), event.getEventType());
     }
 
     private JsonNode readPayload(OutboxEvent event) {
-        try {
-            return objectMapper.readTree(event.getPayload());
-        } catch (Exception ex) {
-            throw new IllegalStateException("Unable to read KYC outbox payload", ex);
-        }
+        try { return objectMapper.readTree(event.getPayload()); }
+        catch (Exception ex) { throw new IllegalStateException("Unable to read KYC outbox payload", ex); }
     }
 
     private String textValue(JsonNode payload, String field) {
@@ -67,6 +78,11 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
 
     private <T extends Enum<T>> T enumValue(JsonNode payload, String field, Class<T> type) {
         String value = textValue(payload, field);
-        return value == null ? null : Enum.valueOf(type, value);
+        if (value == null) return null;
+        try { return Enum.valueOf(type, value); }
+        catch (IllegalArgumentException ex) {
+            log.warn("Unknown enum value '{}' for {}", value, type.getSimpleName());
+            return null;
+        }
     }
 }

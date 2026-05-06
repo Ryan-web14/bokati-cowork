@@ -33,11 +33,14 @@ import com.sni.bokaticowork.features.document.kyc.model.KycDocument;
 import com.sni.bokaticowork.features.document.kyc.repository.KycCaseRepository;
 import com.sni.bokaticowork.features.document.kyc.repository.KycDocumentRepository;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
+import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -80,7 +83,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public DocumentResponse upload(DocumentUploadMetadataRequest metadata, MultipartFile file) {
-        Long uploadedBy = resolveUploadedBy(metadata.getUploadedBy());
+        Long uploadedBy = currentUserId();
         DocumentType documentType = documentType(metadata.getDocumentTypeCode());
         OwnerResolution owner = resolveOwner(metadata.getOwnerType(), metadata.getOwnerCode());
 
@@ -113,7 +116,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public DocumentResponse createGeneratedDocument(DocumentUploadMetadataRequest metadata, String originalFileName, String declaredMimeType, byte[] content) {
-        Long uploadedBy = resolveUploadedBy(metadata.getUploadedBy());
+        Long uploadedBy = currentUserId();
         DocumentType documentType = documentType(metadata.getDocumentTypeCode());
         OwnerResolution owner = resolveOwner(metadata.getOwnerType(), metadata.getOwnerCode());
 
@@ -150,7 +153,8 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public DocumentResponse replace(String documentCode, Long uploadedBy, MultipartFile file) {
+    public DocumentResponse replace(String documentCode, MultipartFile file) {
+        Long uploadedBy = currentUserId();
         Document document = serviceDocument(documentCode);
         List<String> allowedMimeTypes = parseAllowedMimeTypes(document.getDocumentType().getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
@@ -507,15 +511,11 @@ public class DocumentServiceImpl implements DocumentService {
         outboxService.publish(eventType, "DOCUMENT", document.getCode(), payload);
     }
 
-    private Long resolveUploadedBy(String uploadedBy) {
-        if (!StringUtils.hasText(uploadedBy) || uploadedBy.trim().equalsIgnoreCase("undefined")) {
-            return SYSTEM_UPLOADER_ID;
+    private Long currentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.getUser().getId();
         }
-
-        try {
-            return Long.valueOf(uploadedBy.trim());
-        } catch (NumberFormatException ex) {
-            throw new BadRequestException("uploadedBy must be a valid numeric user id", ex);
-        }
+        return SYSTEM_UPLOADER_ID;
     }
 }

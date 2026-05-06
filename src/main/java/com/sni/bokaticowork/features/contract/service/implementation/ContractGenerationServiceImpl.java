@@ -83,7 +83,6 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         metadata.setDocumentTypeCode("CONTRACT_DRAFT");
         metadata.setTitle(request.getTitle());
         metadata.setDescription(request.getDescription());
-        metadata.setUploadedBy(request.getUploadedBy() != null ? request.getUploadedBy().toString() : null);
         metadata.setIssueDate(request.getEffectiveDate() == null ? LocalDate.now() : request.getEffectiveDate());
 
         DocumentResponse response = documentService.createGeneratedDocument(
@@ -100,6 +99,9 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         Context context = new Context(Locale.FRANCE);
         OwnerView ownerView = resolveOwnerView(request.getOwnerType(), request.getOwnerCode());
         BusinessEntity business = resolveBusiness(request.getBusinessCode());
+        Map<String, String> enrichedVars = buildEnrichedVariables(request, ownerView, business);
+        List<String> resolvedClauses = request.getClauses() == null ? List.of() :
+                request.getClauses().stream().map(c -> substituteTokens(c, enrichedVars)).toList();
         context.setVariable("request", request);
         context.setVariable("generatedAt", LocalDate.now());
         context.setVariable("ownerType", request.getOwnerType());
@@ -108,9 +110,52 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         context.setVariable("ownerEmail", ownerView.email());
         context.setVariable("ownerPhone", ownerView.phone());
         context.setVariable("business", business);
-        context.setVariable("clauses", request.getClauses() == null ? List.of() : request.getClauses());
-        context.setVariable("variables", request.getVariables() == null ? Map.of() : request.getVariables());
+        context.setVariable("clauses", resolvedClauses);
+        context.setVariable("variables", enrichedVars);
         return templateEngine.process("contracts/" + normalizeTemplateCode(request.getTemplateCode()), context);
+    }
+
+    private Map<String, String> buildEnrichedVariables(GenerateContractRequest request, OwnerView owner, BusinessEntity business) {
+        Map<String, String> vars = new java.util.LinkedHashMap<>();
+        putIfNotBlank(vars, "clientName",      owner.name());
+        putIfNotBlank(vars, "clientEmail",     owner.email());
+        putIfNotBlank(vars, "clientPhone",     owner.phone());
+        putIfNotBlank(vars, "clientCode",      owner.code());
+        putIfNotBlank(vars, "startDate",       request.getStartDate()     != null ? request.getStartDate().toString()     : null);
+        putIfNotBlank(vars, "endDate",         request.getEndDate()       != null ? request.getEndDate().toString()       : null);
+        putIfNotBlank(vars, "effectiveDate",   request.getEffectiveDate() != null ? request.getEffectiveDate().toString() : null);
+        putIfNotBlank(vars, "signatoryName",   request.getSignatoryName());
+        putIfNotBlank(vars, "signatoryRole",   request.getSignatoryRole());
+        putIfNotBlank(vars, "contractTitle",   request.getTitle());
+        if (business != null) {
+            putIfNotBlank(vars, "businessName",  business.getName());
+            putIfNotBlank(vars, "businessEmail", business.getEmail());
+            putIfNotBlank(vars, "businessPhone", business.getPhone());
+        }
+        if (request.getVariables() != null) {
+            vars.putAll(request.getVariables());
+        }
+        return vars;
+    }
+
+    private static void putIfNotBlank(Map<String, String> map, String key, String value) {
+        if (StringUtils.hasText(value)) {
+            map.put(key, value.trim());
+        }
+    }
+
+    private static String substituteTokens(String text, Map<String, String> vars) {
+        if (!StringUtils.hasText(text) || vars.isEmpty()) {
+            return text;
+        }
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\{\\{(\\w+)}}").matcher(text);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            String replacement = vars.getOrDefault(matcher.group(1), matcher.group(0));
+            matcher.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
     private byte[] renderPdf(String html) {

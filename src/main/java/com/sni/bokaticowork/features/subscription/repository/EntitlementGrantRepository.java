@@ -1,10 +1,8 @@
 package com.sni.bokaticowork.features.subscription.repository;
 
 import com.sni.bokaticowork.features.subscription.subscription.model.EntitlementGrant;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,7 +17,6 @@ public interface EntitlementGrantRepository extends JpaRepository<EntitlementGra
     @Query(nativeQuery = true, value = "SELECT * FROM entitlement_grant WHERE grant_number = :grantNumber")
     Optional<EntitlementGrant> findByGrantNumber(@Param("grantNumber") String grantNumber);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query(nativeQuery = true, value = "SELECT * FROM entitlement_grant WHERE id = :id FOR UPDATE")
     Optional<EntitlementGrant> findLockedById(@Param("id") Long id);
 

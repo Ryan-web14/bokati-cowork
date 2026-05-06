@@ -60,4 +60,10 @@ public class AdminOutboxController {
         outboxService.requeue(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/requeue-failed")
+    public ResponseEntity<Map<String, Integer>> requeueFailed(
+            @RequestParam(required = false) String aggregateType) {
+        return ResponseEntity.ok(Map.of("requeued", outboxService.requeueFailed(aggregateType)));
+    }
 }

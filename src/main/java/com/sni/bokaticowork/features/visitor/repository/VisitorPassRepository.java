@@ -12,4 +12,5 @@ public interface VisitorPassRepository extends JpaRepository<VisitorPass, Long> 
     Optional<VisitorPass> findByPassNumber(String passNumber);
     List<VisitorPass> findAllByStatus(VisitorPassStatus status);
     List<VisitorPass> findAllByValidFromBeforeAndValidUntilAfter(Instant end, Instant start);
+    List<VisitorPass> findAllByStatusAndValidUntilBefore(VisitorPassStatus status, Instant threshold);
 }

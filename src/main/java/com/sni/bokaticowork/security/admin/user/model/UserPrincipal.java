@@ -22,11 +22,14 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
 
     public UserPrincipal(Users user) {
         this.user = user;
+        this.password = user.getPasswordHash();
         this.authorities = resolveAuthorities(user);
     }
 
     @Getter
     private Users user;
+
+    private String password;
 
     private Collection<? extends GrantedAuthority> authorities = List.of();
 
@@ -35,7 +38,7 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
 
     @Override
     public String getPassword() {
-        return user.getPasswordHash();
+        return password;
     }
 
     @Override
@@ -98,7 +101,7 @@ public class UserPrincipal implements UserDetails, CredentialsContainer {
 
     @Override
     public void eraseCredentials() {
-        user.setPasswordHash("");
+        this.password = null;
     }
 }
 

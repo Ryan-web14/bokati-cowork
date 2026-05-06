@@ -36,4 +36,7 @@ public interface PawapayDepositRepository extends JpaRepository<PawapayDeposit, 
     );
 
     List<PawapayDeposit> findAllByIntentNumberOrderByCreatedAtDesc(String intentNumber);
+
+    @Query("SELECT d FROM PawapayDeposit d WHERE d.paymentIntent.id = :intentId ORDER BY d.createdAt DESC LIMIT 1")
+    Optional<PawapayDeposit> findLatestByPaymentIntentId(@Param("intentId") Long intentId);
 }

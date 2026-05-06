@@ -12,4 +12,5 @@ public interface VisitorManagementService {
     VisitorPassResponse checkIn(String passNumber, CheckInRequest request);
     VisitorPassResponse checkOut(String passNumber, CheckInRequest request);
     List<VisitorLogResponse> log();
+    byte[] generateBadge(String passNumber);
 }

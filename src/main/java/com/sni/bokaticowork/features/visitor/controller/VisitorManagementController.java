@@ -6,7 +6,10 @@ import com.sni.bokaticowork.features.visitor.enums.VisitorPassStatus;
 import com.sni.bokaticowork.features.visitor.service.interfaces.VisitorManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -55,5 +58,16 @@ public class VisitorManagementController {
     @PreAuthorize("hasAnyAuthority('VISITOR:READ','VISITOR_READ')")
     public ResponseEntity<List<VisitorLogResponse>> log() {
         return ResponseEntity.ok(service.log());
+    }
+
+    @GetMapping("/passes/{passNumber}/badge")
+    @PreAuthorize("hasAnyAuthority('VISITOR:READ','VISITOR_READ')")
+    public ResponseEntity<byte[]> badge(@PathVariable String passNumber) {
+        byte[] pdf = service.generateBadge(passNumber);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("badge-" + passNumber + ".pdf").build());
+        return ResponseEntity.ok().headers(headers).body(pdf);
     }
 }

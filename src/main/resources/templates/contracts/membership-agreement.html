@@ -4,296 +4,234 @@
 <meta charset="UTF-8"/>
 <title th:text="${request.title}">Contrat d'adhésion</title>
 <style>
-/* ── Page setup ─────────────────────────────────────────────────── */
 @page {
     size: A4;
-    margin: 18mm 16mm 24mm 16mm;
-    @bottom-right {
-        content: "Page " counter(page) " / " counter(pages);
-        font-family: "DejaVu Sans", sans-serif;
-        font-size: 8px;
-        color: #9ca3af;
-    }
-    @bottom-left {
-        content: "Document confidentiel — usage strictement personnel";
-        font-family: "DejaVu Sans", sans-serif;
-        font-size: 8px;
-        color: #9ca3af;
+    margin: 0 0 14mm 0;
+    @bottom-center {
+        content: "Page " counter(page) " sur " counter(pages);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 7.5px;
+        color: #9b8caa;
     }
 }
 
-/* ── Base ───────────────────────────────────────────────────────── */
+:root {
+    --plum:        #1a0a2e;
+    --plum-mid:    #2a1548;
+    --violet:      oklch(62% 0.18 295);
+    --violet-pale: oklch(95% 0.04 295);
+    --gold:        #c9a84c;
+    --gold-pale:   oklch(97% 0.04 76);
+    --gold-mid:    oklch(90% 0.09 76);
+    --gold-dark:   oklch(52% 0.14 76);
+    --ink:         #1a0a2e;
+    --slate:       #5c4f6e;
+    --slate-light: #9b8caa;
+    --border:      #d8d0e8;
+    --white:       #ffffff;
+    --field-bg:    #faf8fd;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    font-family: "DejaVu Sans", sans-serif;
-    font-size: 10.5px;
-    line-height: 1.65;
-    color: #1e293b;
-    margin: 0;
-    padding: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 9.5px;
+    line-height: 1.6;
+    background: var(--white);
+    width: 210mm;
+    min-height: 297mm;
 }
-p { margin: 0 0 8px 0; }
 
-/* ── Document header ────────────────────────────────────────────── */
 .doc-header {
-    background-color: #0a2240;
-    padding: 16px 20px 14px 20px;
-    margin-bottom: 0;
+    background: var(--plum);
+    padding: 18px 24px 14px;
+    position: relative; overflow: hidden;
 }
-.doc-header table { width: 100%; border-collapse: collapse; }
-.doc-header td { vertical-align: middle; padding: 0; }
-.company-name {
-    font-size: 15px;
-    font-weight: bold;
-    color: #ffffff;
-    letter-spacing: 0.3px;
+.doc-header::after {
+    content: ''; position: absolute; top: 0; right: -20px;
+    width: 220px; height: 100%;
+    background: rgba(255,255,255,0.03); transform: skewX(-12deg);
 }
-.company-sub {
-    font-size: 8.5px;
-    color: #7fb3d3;
-    margin-top: 2px;
+.header-inner {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between;
 }
-.doc-type-label {
-    font-size: 8px;
-    color: #e8560a;
-    text-transform: uppercase;
-    letter-spacing: 1.8px;
-    font-weight: bold;
-    text-align: right;
-}
-.doc-title-right {
-    font-size: 15px;
-    font-weight: bold;
-    color: #ffffff;
-    text-align: right;
-    margin-top: 3px;
-    line-height: 1.3;
-}
-.accent-bar {
+.brand-name { font-size: 17px; font-weight: 700; color: var(--white); letter-spacing: 3px; text-transform: uppercase; }
+.brand-sub  { font-size: 7px; color: var(--slate-light); letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+.doc-title-block { text-align: right; }
+.doc-title    { font-size: 20px; font-weight: 700; color: var(--white); letter-spacing: 2px; text-transform: uppercase; line-height: 1; }
+.doc-subtitle { font-size: 8.5px; color: var(--gold); margin-top: 5px; letter-spacing: 0.8px; }
+
+.header-stripe {
     height: 3px;
-    background-color: #e8560a;
-    margin: 0;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--violet) 55%, var(--plum-mid) 100%);
 }
 
-/* ── Metadata ribbon ────────────────────────────────────────────── */
-.meta-ribbon {
-    background-color: #f0f6ff;
-    border: 1px solid #c7d9f0;
-    border-top: none;
-    padding: 7px 16px;
-    margin-bottom: 20px;
+.ref-strip {
+    background: var(--gold-pale);
+    border-top: 1px solid var(--gold-mid);
+    border-bottom: 1px solid var(--gold-mid);
+    padding: 6px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 8px; color: var(--gold-dark);
 }
-.meta-ribbon table { width: 100%; border-collapse: collapse; }
-.meta-ribbon td { font-size: 9.5px; color: #475569; padding: 2px 0; }
-.meta-key { color: #94a3b8; width: 130px; font-weight: bold; }
+.ref-strip strong { font-weight: 700; }
 
-/* ── Section wrapper ────────────────────────────────────────────── */
-.section { margin-bottom: 18px; page-break-inside: avoid; }
+.content { padding: 16px 24px 20px; }
 
-.section-heading {
-    border-left: 4px solid #e8560a;
-    background-color: #f8fafc;
-    padding: 6px 10px 6px 10px;
-    margin-bottom: 10px;
+.section-label {
+    font-size: 7.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1.6px; color: var(--violet);
+    display: flex; align-items: center; gap: 8px;
+    margin: 18px 0 10px;
 }
-.section-heading h2 {
-    font-size: 11px;
-    font-weight: bold;
-    color: #0a2240;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-}
+.section-label:first-child { margin-top: 0; }
+.section-label::before { content: ''; display: inline-block; width: 14px; height: 2px; background: var(--gold); flex-shrink: 0; }
+.section-label::after  { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-/* ── Party cards ────────────────────────────────────────────────── */
-.parties-outer { width: 100%; border-collapse: separate; border-spacing: 12px 0; }
-.party-card {
-    width: 47%;
-    border: 1px solid #d1dce9;
-    padding: 12px 14px;
-    vertical-align: top;
-    background-color: #ffffff;
+.parties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
+.partie-card { border: 1.5px solid var(--border); border-radius: 3px; overflow: hidden; }
+.partie-head {
+    background: var(--plum-mid);
+    padding: 5px 12px;
+    font-size: 7.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--white); display: flex; align-items: center; gap: 8px;
 }
-.party-badge {
-    font-size: 7.5px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #e8560a;
-    font-weight: bold;
-    margin-bottom: 5px;
+.partie-head .tag {
+    background: var(--gold); color: var(--plum);
+    font-size: 6.5px; font-weight: 700; letter-spacing: 0.5px;
+    padding: 1px 6px; border-radius: 2px; text-transform: uppercase;
 }
-.party-name {
-    font-size: 12px;
-    font-weight: bold;
-    color: #0a2240;
-    margin-bottom: 6px;
-    line-height: 1.3;
-}
-.party-line { font-size: 10px; color: #64748b; margin-top: 3px; }
+.partie-body { background: var(--field-bg); padding: 10px 12px; }
+.p-name { font-size: 11px; font-weight: 700; color: var(--plum); margin-bottom: 4px; }
+.p-line { font-size: 9px; color: var(--slate); margin-top: 2px; }
 
-/* ── Info table ─────────────────────────────────────────────────── */
-.info-tbl { width: 100%; border-collapse: collapse; }
-.info-tbl tr:nth-child(even) td { background-color: #f8fafc; }
-.info-tbl td {
-    border: 1px solid #e2e8f0;
-    padding: 7px 10px;
-    font-size: 10.5px;
+.data-table { width: 100%; border-collapse: collapse; margin-top: 2px; }
+.data-table td {
+    font-size: 9px; color: var(--ink);
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
     vertical-align: top;
 }
-.info-tbl .lbl {
-    width: 36%;
-    background-color: #f1f5fb;
-    color: #475569;
-    font-weight: bold;
+.data-table .lbl {
+    width: 36%; background: var(--field-bg);
+    color: var(--slate); font-weight: 700;
+    font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px;
 }
-.info-tbl tr:nth-child(even) .lbl { background-color: #eaf0f9; }
+.data-table tr:last-child td { border-bottom: none; }
 
-/* ── Object block ───────────────────────────────────────────────── */
-.object-block {
-    border-left: 3px solid #cbd5e1;
-    background-color: #f8fafc;
-    padding: 10px 14px;
-    font-size: 10.5px;
-    color: #374151;
-    line-height: 1.7;
+.article-body {
+    font-size: 9px; color: var(--slate);
+    line-height: 1.65;
+    background: var(--field-bg);
+    border-left: 3px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 0 3px 3px 0;
 }
 
-/* ── Clauses list ───────────────────────────────────────────────── */
 .clauses-list { list-style: none; margin: 0; padding: 0; }
 .clauses-list li {
     padding: 7px 8px 7px 22px;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: 10.5px;
-    color: #334155;
+    border-bottom: 1px solid var(--border);
+    font-size: 9px; color: var(--slate);
     position: relative;
 }
 .clauses-list li:last-child { border-bottom: none; }
 .clauses-list li:before {
-    content: "›";
-    color: #e8560a;
-    font-size: 13px;
-    font-weight: bold;
-    position: absolute;
-    left: 6px;
-    top: 5px;
+    content: "›"; color: var(--gold);
+    font-size: 13px; font-weight: bold;
+    position: absolute; left: 6px; top: 5px;
 }
 
-/* ── Variables table ────────────────────────────────────────────── */
-.vars-tbl { width: 100%; border-collapse: collapse; }
-.vars-tbl tr:nth-child(even) td { background-color: #f8fafc; }
-.vars-tbl td {
-    border: 1px solid #e2e8f0;
-    padding: 6px 10px;
-    font-size: 10.5px;
+.vars-table { width: 100%; border-collapse: collapse; }
+.vars-table td {
+    border: 1px solid var(--border);
+    padding: 6px 10px; font-size: 9px;
 }
-.vars-tbl .var-key {
-    width: 38%;
-    background-color: #f1f5fb;
-    color: #475569;
-    font-weight: bold;
+.vars-table .var-key {
+    width: 38%; background: var(--field-bg);
+    color: var(--slate); font-weight: 700;
 }
-.vars-tbl tr:nth-child(even) .var-key { background-color: #eaf0f9; }
+.vars-table tr:nth-child(even) td { background: var(--violet-pale); }
+.vars-table tr:nth-child(even) .var-key { background: var(--violet-pale); }
 
-/* ── Signature block ────────────────────────────────────────────── */
-.sig-intro {
-    font-size: 10px;
-    color: #64748b;
-    margin-bottom: 22px;
-    font-style: italic;
+.law-notice {
+    background: var(--violet-pale); border: 1px solid var(--border);
+    border-left: 3px solid var(--violet); border-radius: 2px;
+    padding: 8px 12px; font-size: 8px; color: var(--slate);
+    line-height: 1.65; margin: 10px 0;
 }
-.sig-outer { width: 100%; border-collapse: separate; border-spacing: 28px 0; margin-top: 8px; }
-.sig-col { width: 44%; vertical-align: top; }
-.sig-role-label {
-    font-size: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #e8560a;
-    font-weight: bold;
-    margin-bottom: 4px;
-}
-.sig-party-name {
-    font-size: 11px;
-    font-weight: bold;
-    color: #0a2240;
-    margin-bottom: 2px;
-}
-.sig-party-role { font-size: 9.5px; color: #64748b; margin-bottom: 36px; }
-.sig-line { border-top: 1.5px solid #0a2240; width: 88%; margin-top: 2px; }
-.sig-caption { font-size: 8.5px; color: #94a3b8; margin-top: 6px; }
 
-/* ── Doc footer ─────────────────────────────────────────────────── */
+.signature-intro {
+    font-size: 8.5px; color: var(--slate);
+    margin-bottom: 10px; font-style: italic;
+}
+.signature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px; }
+.signature-block { display: flex; flex-direction: column; gap: 4px; }
+.signature-label { font-size: 7.5px; font-weight: 700; color: var(--slate); text-transform: uppercase; letter-spacing: 0.8px; }
+.signature-sub   { font-size: 8px; color: var(--slate-light); margin-bottom: 4px; font-style: italic; }
+.signature-line  { border-bottom: 1.5px solid var(--border); min-height: 46px; }
+.signature-caption { font-size: 7.5px; color: var(--slate-light); margin-top: 3px; }
+
 .doc-footer {
-    margin-top: 22px;
-    border-top: 1px solid #e2e8f0;
-    padding-top: 7px;
-    text-align: center;
-    font-size: 8px;
-    color: #94a3b8;
+    margin-top: 18px; padding: 10px 24px;
+    border-top: 1px solid var(--border);
+    font-size: 7.5px; color: var(--slate-light); text-align: center;
 }
+
+@media print { body { width: 210mm; } }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════ HEADER ═══ -->
 <div class="doc-header">
-  <table>
-    <tr>
-      <td style="width:55%">
-        <div class="company-name" th:text="${business != null ? business.name : 'BOKATI COWORK'}">BOKATI COWORK</div>
-        <div class="company-sub">Espace de coworking &amp; services aux entreprises</div>
-      </td>
-      <td style="width:45%">
-        <div class="doc-type-label">Contrat d'adhésion</div>
-        <div class="doc-title-right" th:text="${request.title}">Contrat d'adhésion membre</div>
-      </td>
-    </tr>
-  </table>
+  <div class="header-inner">
+    <div>
+      <div class="brand-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+      <div class="brand-sub">Espace de coworking &amp; services aux entreprises</div>
+    </div>
+    <div class="doc-title-block">
+      <div class="doc-title">Contrat d'adhésion</div>
+      <div class="doc-subtitle" th:text="${request.title}">Contrat d'adhésion membre</div>
+    </div>
+  </div>
 </div>
-<div class="accent-bar"></div>
+<div class="header-stripe"></div>
 
-<!-- ═══════════════════════════════════════ META ══════ -->
-<div class="meta-ribbon">
-  <table>
-    <tr>
-      <td class="meta-key">Date de génération</td>
-      <td th:text="${generatedAt}">2026-01-01</td>
-      <td style="width:30px"></td>
-      <td class="meta-key">Référence modèle</td>
-      <td th:text="${request.templateCode}">membership-agreement</td>
-    </tr>
-  </table>
+<div class="ref-strip">
+  <span><strong>Date de génération :</strong> <span th:text="${generatedAt}">2026-01-01</span></span>
+  <span><strong>Réf. modèle :</strong> <span th:text="${request.templateCode}">membership-agreement</span></span>
 </div>
 
-<!-- ═══════════════════════════════════════ SECTION 1 — PARTIES ═══ -->
-<div class="section">
-  <div class="section-heading"><h2>1 — Parties au contrat</h2></div>
-  <table class="parties-outer">
-    <tr>
-      <td class="party-card">
-        <div class="party-badge">Bénéficiaire</div>
-        <div class="party-name" th:text="${ownerName}">Nom du bénéficiaire</div>
-        <div class="party-line" th:text="${ownerCode}">CODE-001</div>
-        <div class="party-line" th:if="${ownerEmail}" th:text="${ownerEmail}">email@exemple.com</div>
-        <div class="party-line" th:if="${ownerPhone}" th:text="${ownerPhone}">+000 000 000 000</div>
-      </td>
-      <td class="party-card">
-        <div class="party-badge">Entité opératrice</div>
-        <div class="party-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
-        <div class="party-line" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
-        <div class="party-line" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@bokati.com</div>
-        <div class="party-line" th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
-      </td>
-    </tr>
-  </table>
-</div>
+<div class="content">
 
-<!-- ═══════════════════════════════════════ SECTION 2 — CADRE ═════ -->
-<div class="section">
-  <div class="section-heading"><h2>2 — Cadre contractuel</h2></div>
-  <p style="font-size:10.5px;color:#475569;margin-bottom:10px;">
-    Le présent contrat formalise l'accès du bénéficiaire aux services, espaces et prestations proposés
-    par l'entité opératrice, conformément aux conditions générales et réglementaires en vigueur.
-  </p>
-  <table class="info-tbl">
+  <div class="section-label">Les parties</div>
+  <div class="parties-grid">
+    <div class="partie-card">
+      <div class="partie-head">Bénéficiaire <span class="tag">Membre</span></div>
+      <div class="partie-body">
+        <div class="p-name" th:text="${ownerName}">Nom du bénéficiaire</div>
+        <div class="p-line" th:text="${ownerCode}">CODE-001</div>
+        <div class="p-line" th:if="${ownerEmail}" th:text="${ownerEmail}">email@exemple.com</div>
+        <div class="p-line" th:if="${ownerPhone}" th:text="${ownerPhone}">+000 000 000 000</div>
+      </div>
+    </div>
+    <div class="partie-card">
+      <div class="partie-head">Entité opératrice <span class="tag">Prestataire</span></div>
+      <div class="partie-body">
+        <div class="p-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+        <div class="p-line" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
+        <div class="p-line" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@bokati.com</div>
+        <div class="p-line" th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Cadre contractuel</div>
+  <table class="data-table">
     <tr>
       <td class="lbl">Date d'effet</td>
       <td th:text="${request.effectiveDate != null ? request.effectiveDate : '—'}">—</td>
@@ -315,17 +253,13 @@ p { margin: 0 0 8px 0; }
       <td th:text="${request.signatoryRole != null ? request.signatoryRole : 'Membre / Représentant'}">Membre</td>
     </tr>
   </table>
-</div>
 
-<!-- ═══════════════════════════════════════ SECTION 3 — OBJET ═════ -->
-<div class="section" th:if="${request.description != null and !#strings.isEmpty(request.description)}">
-  <div class="section-heading"><h2>3 — Objet du contrat</h2></div>
-  <div class="object-block" th:text="${request.description}">Description de l'objet du contrat.</div>
-</div>
+  <div class="section-label" th:if="${request.description != null and !#strings.isEmpty(request.description)}">Objet du contrat</div>
+  <div class="article-body" th:if="${request.description != null and !#strings.isEmpty(request.description)}" th:text="${request.description}">
+    Description de l'objet du contrat.
+  </div>
 
-<!-- ═══════════════════════════════════════ SECTION 4 — CLAUSES ═══ -->
-<div class="section">
-  <div class="section-heading"><h2>4 — Clauses et engagements</h2></div>
+  <div class="section-label">Clauses et engagements</div>
   <ul class="clauses-list">
     <li th:if="${#lists.isEmpty(clauses)}">
       Le bénéficiaire s'engage à respecter le règlement intérieur, les conditions d'utilisation des ressources
@@ -333,51 +267,50 @@ p { margin: 0 0 8px 0; }
     </li>
     <li th:each="clause : ${clauses}" th:text="${clause}">Clause contractuelle.</li>
   </ul>
-</div>
 
-<!-- ═══════════════════════════════════════ SECTION 5 — VARIABLES ═ -->
-<div class="section" th:if="${variables != null and !#maps.isEmpty(variables)}">
-  <div class="section-heading"><h2>5 — Conditions spécifiques</h2></div>
-  <table class="vars-tbl">
+  <div class="section-label" th:if="${variables != null and !#maps.isEmpty(variables)}">Conditions spécifiques</div>
+  <table class="vars-table" th:if="${variables != null and !#maps.isEmpty(variables)}">
     <tr th:each="entry : ${variables.entrySet()}">
       <td class="var-key" th:text="${entry.key}">Paramètre</td>
       <td th:text="${entry.value}">Valeur</td>
     </tr>
   </table>
-</div>
 
-<!-- ═══════════════════════════════════════ SIGNATURES ════════════ -->
-<div class="section" style="margin-top:32px;">
-  <div class="section-heading"><h2>Signatures des parties</h2></div>
-  <p class="sig-intro">
+  <div class="law-notice">
+    Le présent contrat est soumis au droit applicable dans le pays d'établissement de l'entité opératrice.
+    En cas de litige, les parties s'engagent à rechercher une solution amiable avant tout recours judiciaire.
+    À défaut d'accord, le tribunal compétent sera celui du ressort du siège de l'entité opératrice.
+  </div>
+
+  <div class="section-label">Signatures des parties</div>
+  <div class="signature-intro">
     En apposant leurs signatures, les parties reconnaissent avoir pris connaissance de l'intégralité
     du présent contrat et s'engagent à en respecter l'ensemble des termes et conditions.
-  </p>
-  <table class="sig-outer">
-    <tr>
-      <td class="sig-col">
-        <div class="sig-role-label">Le bénéficiaire</div>
-        <div class="sig-party-name" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</div>
-        <div class="sig-party-role" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Membre / Représentant'}">Qualité</div>
-        <div class="sig-line"></div>
-        <div class="sig-caption">Signature &amp; date</div>
-      </td>
-      <td class="sig-col">
-        <div class="sig-role-label">L'entité opératrice</div>
-        <div class="sig-party-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
-        <div class="sig-party-role">Représentant habilité</div>
-        <div class="sig-line"></div>
-        <div class="sig-caption">Signature &amp; date</div>
-      </td>
-    </tr>
-  </table>
-</div>
+  </div>
+  <div class="signature-row">
+    <div class="signature-block">
+      <div class="signature-label">Le bénéficiaire</div>
+      <div class="signature-sub" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Membre / Représentant'}">Qualité</div>
+      <div class="signature-line"></div>
+      <div class="signature-caption" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</div>
+      <div class="signature-caption">Date : _____ / _____ / _________</div>
+    </div>
+    <div class="signature-block">
+      <div class="signature-label">L'entité opératrice</div>
+      <div class="signature-sub">Représentant habilité</div>
+      <div class="signature-line"></div>
+      <div class="signature-caption" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+      <div class="signature-caption">Date : _____ / _____ / _________</div>
+    </div>
+  </div>
 
-<div class="doc-footer">
-  <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span>
-  · Document généré automatiquement le <span th:text="${generatedAt}">2026-01-01</span>
-  · Confidentiel
-</div>
+  <div class="doc-footer">
+    <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span>
+    &nbsp;·&nbsp; Contrat d'adhésion &nbsp;·&nbsp;
+    Généré le <span th:text="${generatedAt}">2026-01-01</span>
+    &nbsp;·&nbsp; Document confidentiel — conserver précieusement
+  </div>
 
+</div>
 </body>
 </html>

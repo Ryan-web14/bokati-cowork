@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Planning d'occupation — Elle A Osé</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        :root {
+            --plum:        #1a0a2e;
+            --plum-mid:    #2a1548;
+            --violet:      oklch(62% 0.18 295);
+            --violet-pale: oklch(95% 0.04 295);
+            --violet-mid:  oklch(88% 0.08 295);
+            --gold:        #c9a84c;
+            --gold-pale:   oklch(97% 0.04 76);
+            --gold-mid:    oklch(90% 0.09 76);
+            --gold-dark:   oklch(52% 0.14 76);
+            --ink:         #1a0a2e;
+            --slate:       #5c4f6e;
+            --slate-light: #9b8caa;
+            --border:      #d8d0e8;
+            --white:       #ffffff;
+            --field-bg:    #faf8fd;
+
+            --book-violet: oklch(82% 0.10 295);
+            --book-gold:   oklch(85% 0.10 76);
+            --book-rose:   oklch(85% 0.08 20);
+            --book-mint:   oklch(85% 0.08 165);
+            --book-sky:    oklch(85% 0.07 230);
+            --book-block:  oklch(70% 0.04 295);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: var(--ink);
+            font-size: 9px;
+            line-height: 1.4;
+            background: var(--white);
+            width: 297mm;
+            min-height: 210mm;
+        }
+
+        /* ── HEADER ── */
+        .doc-header {
+            background: var(--plum);
+            padding: 14px 22px 10px;
+            position: relative; overflow: hidden;
+        }
+        .doc-header::after {
+            content: ''; position: absolute; top: 0; right: -20px;
+            width: 220px; height: 100%;
+            background: rgba(255,255,255,0.03); transform: skewX(-12deg);
+        }
+        .header-inner {
+            position: relative; z-index: 1;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .brand-name { font-size: 15px; font-weight: 700; color: var(--white); letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub  { font-size: 6.5px; color: var(--slate-light); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+        .doc-title-block { text-align: right; }
+        .doc-title    { font-size: 18px; font-weight: 700; color: var(--white); letter-spacing: 2px; text-transform: uppercase; line-height: 1; }
+        .doc-subtitle { font-size: 8px; color: var(--gold); margin-top: 4px; letter-spacing: 0.8px; }
+
+        .header-stripe {
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold) 0%, var(--violet) 55%, var(--plum-mid) 100%);
+        }
+
+        /* ── REF BAR ── */
+        .ref-bar {
+            background: var(--gold-pale);
+            border-bottom: 1px solid var(--gold-mid);
+            padding: 7px 22px;
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 8.5px; color: var(--gold-dark);
+        }
+        .ref-bar .week {
+            font-size: 11px; font-weight: 700; color: var(--plum);
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        .ref-bar .ref-meta { display: flex; gap: 18px; }
+        .ref-bar .ref-meta span strong { color: var(--plum); }
+
+        /* ── CONTENT ── */
+        .content { padding: 12px 22px 14px; }
+
+        /* ── LEGEND ── */
+        .legend {
+            display: flex; gap: 14px; align-items: center;
+            margin-bottom: 10px;
+            font-size: 7.5px; color: var(--slate);
+            text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .legend-label { font-weight: 700; color: var(--violet); margin-right: 4px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-swatch {
+            width: 14px; height: 10px;
+            border-radius: 2px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* ── PLANNING TABLE ── */
+        .planning-wrap {
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        table.planning {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        table.planning th, table.planning td {
+            border-right: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            vertical-align: top;
+            padding: 0;
+        }
+        table.planning th:last-child, table.planning td:last-child { border-right: none; }
+        table.planning tr:last-child td { border-bottom: none; }
+
+        /* day header row */
+        .day-head {
+            background: var(--plum);
+            color: var(--white);
+            padding: 8px 8px 7px;
+            text-align: center;
+        }
+        .day-head .day-name {
+            font-size: 9px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.2px;
+        }
+        .day-head .day-date {
+            font-size: 12px; font-weight: 700;
+            color: var(--gold); margin-top: 2px;
+            font-feature-settings: "tnum";
+        }
+
+        /* room header (left col) */
+        .room-head {
+            background: var(--plum-mid); color: var(--white);
+            padding: 7px 10px;
+            font-size: 7.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            width: 130px;
+        }
+        .room-cell {
+            background: var(--field-bg);
+            padding: 8px 10px;
+            border-right: 2px solid var(--gold) !important;
+        }
+        .room-name {
+            font-size: 10px; font-weight: 700; color: var(--plum);
+        }
+        .room-meta {
+            font-size: 7.5px; color: var(--slate); margin-top: 2px;
+        }
+        .room-meta .cap {
+            display: inline-block; background: var(--violet-pale);
+            color: var(--violet); padding: 1px 5px; border-radius: 2px;
+            font-weight: 700; font-size: 7px; letter-spacing: 0.4px;
+        }
+
+        /* day cell */
+        .day-cell {
+            padding: 4px;
+            min-height: 80px;
+            position: relative;
+        }
+
+        /* booking pill */
+        .booking {
+            border-radius: 2px;
+            padding: 4px 6px;
+            margin-bottom: 3px;
+            border-left: 3px solid var(--book-block);
+            background: var(--violet-pale);
+            font-size: 7.5px;
+            color: var(--ink);
+            line-height: 1.3;
+            overflow: hidden;
+        }
+        .booking.violet { background: var(--violet-pale); border-left-color: var(--violet); }
+        .booking.gold   { background: var(--gold-pale);   border-left-color: var(--gold); }
+        .booking.rose   { background: oklch(95% 0.03 20);  border-left-color: oklch(60% 0.16 20); }
+        .booking.mint   { background: oklch(95% 0.04 165); border-left-color: oklch(55% 0.12 165); }
+        .booking.sky    { background: oklch(95% 0.03 230); border-left-color: oklch(60% 0.12 230); }
+        .booking.block  {
+            background: repeating-linear-gradient(
+                -45deg,
+                var(--violet-mid),
+                var(--violet-mid) 4px,
+                var(--violet-pale) 4px,
+                var(--violet-pale) 8px
+            );
+            border-left-color: var(--slate);
+            color: var(--slate);
+        }
+
+        .booking-time {
+            font-size: 7px; font-weight: 700;
+            color: var(--slate); letter-spacing: 0.4px;
+            font-feature-settings: "tnum";
+        }
+        .booking-title {
+            font-size: 8.5px; font-weight: 700;
+            color: var(--plum); margin-top: 1px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .booking-client {
+            font-size: 7.5px; color: var(--slate);
+            margin-top: 1px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* closed marker */
+        .closed-cell {
+            background: repeating-linear-gradient(
+                -45deg,
+                #f0eaf8,
+                #f0eaf8 4px,
+                #faf8fd 4px,
+                #faf8fd 8px
+            );
+            text-align: center;
+            font-size: 7.5px; color: var(--slate-light);
+            font-style: italic;
+            padding: 12px 4px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        /* ── STATS BAR ── */
+        .stats-bar {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 8px; margin-top: 10px;
+        }
+        .stat-cell {
+            background: var(--field-bg);
+            border: 1px solid var(--border);
+            border-top: 2px solid var(--gold);
+            border-radius: 2px;
+            padding: 7px 10px;
+        }
+        .stat-label {
+            font-size: 6.5px; font-weight: 700;
+            color: var(--slate); letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .stat-value {
+            font-size: 13px; font-weight: 700; color: var(--plum);
+            margin-top: 2px; font-feature-settings: "tnum";
+        }
+        .stat-value small { font-size: 9px; color: var(--slate); font-weight: 400; margin-left: 3px; }
+
+        /* ── FOOTER ── */
+        .doc-footer {
+            margin-top: 8px; padding: 7px 22px;
+            border-top: 1px solid var(--border);
+            font-size: 7px; color: var(--slate-light); text-align: center;
+            letter-spacing: 0.5px;
+        }
+
+        @media print {
+            body { width: 297mm; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="doc-header">
+    <div class="header-inner">
+        <div>
+            <div class="brand-name">Elle A Osé</div>
+            <div class="brand-sub">Cowork &amp; Studio</div>
+        </div>
+        <div class="doc-title-block">
+            <div class="doc-title">Planning d'occupation</div>
+            <div class="doc-subtitle">Bokati Cowork — Salles &amp; espaces</div>
+        </div>
+    </div>
+</div>
+<div class="header-stripe"></div>
+
+<!-- REF BAR -->
+<div class="ref-bar">
+    <div class="week">Semaine 19 &nbsp;·&nbsp; du 04 au 10 mai 2026</div>
+    <div class="ref-meta">
+        <span><strong>Édité le</strong> 04/05/2026 — 08:32</span>
+        <span><strong>Réf.</strong> PLAN-S19-2026</span>
+        <span><strong>Par</strong> Concierge Bokati</span>
+    </div>
+</div>
+
+<div class="content">
+
+    <!-- LEGEND -->
+    <div class="legend">
+        <span class="legend-label">Légende</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:oklch(95% 0.04 295); border-left:3px solid var(--violet);"></span>Réunion</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:var(--gold-pale); border-left:3px solid var(--gold);"></span>Atelier / formation</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:oklch(95% 0.03 20); border-left:3px solid oklch(60% 0.16 20);"></span>Événement privé</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:oklch(95% 0.04 165); border-left:3px solid oklch(55% 0.12 165);"></span>Studio / shooting</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:oklch(95% 0.03 230); border-left:3px solid oklch(60% 0.12 230);"></span>Coworking de groupe</span>
+        <span class="legend-item"><span class="legend-swatch" style="background:repeating-linear-gradient(-45deg,#d6cce8,#d6cce8 3px,#faf8fd 3px,#faf8fd 6px);"></span>Maintenance / bloqué</span>
+    </div>
+
+    <!-- PLANNING -->
+    <div class="planning-wrap">
+        <table class="planning">
+            <thead>
+                <tr>
+                    <th class="room-head">Salle / espace</th>
+                    <th class="day-head"><div class="day-name">Lundi</div><div class="day-date">04 mai</div></th>
+                    <th class="day-head"><div class="day-name">Mardi</div><div class="day-date">05 mai</div></th>
+                    <th class="day-head"><div class="day-name">Mercredi</div><div class="day-date">06 mai</div></th>
+                    <th class="day-head"><div class="day-name">Jeudi</div><div class="day-date">07 mai</div></th>
+                    <th class="day-head"><div class="day-name">Vendredi</div><div class="day-date">08 mai</div></th>
+                    <th class="day-head"><div class="day-name">Samedi</div><div class="day-date">09 mai</div></th>
+                    <th class="day-head"><div class="day-name">Dimanche</div><div class="day-date">10 mai</div></th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <!-- ROW 1 — Salle Audace -->
+                <tr>
+                    <td class="room-cell">
+                        <div class="room-name">Salle Audace</div>
+                        <div class="room-meta"><span class="cap">12 pers.</span></div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking violet">
+                            <div class="booking-time">09:00 — 11:00</div>
+                            <div class="booking-title">Comité direction</div>
+                            <div class="booking-client">Mbappé Conseil</div>
+                        </div>
+                        <div class="booking gold">
+                            <div class="booking-time">14:30 — 17:00</div>
+                            <div class="booking-title">Atelier Notion</div>
+                            <div class="booking-client">10 participants</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking violet">
+                            <div class="booking-time">10:00 — 12:00</div>
+                            <div class="booking-title">Pitch investisseurs</div>
+                            <div class="booking-client">SaraTech SARL</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking sky">
+                            <div class="booking-time">09:00 — 18:00</div>
+                            <div class="booking-title">Coworking équipe Akwa</div>
+                            <div class="booking-client">8 membres</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking violet">
+                            <div class="booking-time">14:00 — 16:00</div>
+                            <div class="booking-title">Entretien RH</div>
+                            <div class="booking-client">Confidentiel</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking gold">
+                            <div class="booking-time">10:00 — 13:00</div>
+                            <div class="booking-title">Petit-déj membres</div>
+                            <div class="booking-client">Ouvert · ~25 inscrits</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="closed-cell">Fermé</div>
+                    </td>
+                </tr>
+
+                <!-- ROW 2 — Salle Élan -->
+                <tr>
+                    <td class="room-cell">
+                        <div class="room-name">Salle Élan</div>
+                        <div class="room-meta"><span class="cap">6 pers.</span></div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking violet">
+                            <div class="booking-time">11:00 — 12:30</div>
+                            <div class="booking-title">Réunion brief client</div>
+                            <div class="booking-client">Studio Aïdara</div>
+                        </div>
+                        <div class="booking violet">
+                            <div class="booking-time">15:00 — 16:30</div>
+                            <div class="booking-title">Onboarding membre</div>
+                            <div class="booking-client">3 nouveaux</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking rose">
+                            <div class="booking-time">18:00 — 21:00</div>
+                            <div class="booking-title">Cercle entrepreneures</div>
+                            <div class="booking-client">Privé · sur invitation</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking violet">
+                            <div class="booking-time">09:30 — 11:00</div>
+                            <div class="booking-title">Réunion équipe</div>
+                            <div class="booking-client">Bokati Concierge</div>
+                        </div>
+                        <div class="booking violet">
+                            <div class="booking-time">14:00 — 15:30</div>
+                            <div class="booking-title">Coaching</div>
+                            <div class="booking-client">A. Mballa</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking violet">
+                            <div class="booking-time">10:00 — 12:00</div>
+                            <div class="booking-title">Negotiation contrat</div>
+                            <div class="booking-client">FemmesPro</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking violet">
+                            <div class="booking-time">14:00 — 16:00</div>
+                            <div class="booking-title">Mentorat</div>
+                            <div class="booking-client">Membre Premium</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="closed-cell">Fermé</div>
+                    </td>
+                </tr>
+
+                <!-- ROW 3 — Studio Lumière -->
+                <tr>
+                    <td class="room-cell">
+                        <div class="room-name">Studio Lumière</div>
+                        <div class="room-meta"><span class="cap">Photo / vidéo</span></div>
+                    </td>
+                    <td class="day-cell"></td>
+                    <td class="day-cell">
+                        <div class="booking mint">
+                            <div class="booking-time">09:00 — 13:00</div>
+                            <div class="booking-title">Shooting lookbook</div>
+                            <div class="booking-client">Zola Apparel</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking mint">
+                            <div class="booking-time">14:00 — 18:00</div>
+                            <div class="booking-title">Captation podcast</div>
+                            <div class="booking-client">« Osé »</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking block">
+                            <div class="booking-time">Toute la journée</div>
+                            <div class="booking-title">Maintenance éclairage</div>
+                            <div class="booking-client">Bloqué — technique</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking mint">
+                            <div class="booking-time">10:00 — 16:00</div>
+                            <div class="booking-title">Tournage corporate</div>
+                            <div class="booking-client">MTN Cameroon</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking mint">
+                            <div class="booking-time">09:00 — 13:00</div>
+                            <div class="booking-title">Shooting portraits</div>
+                            <div class="booking-client">Photographe partenaire</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="closed-cell">Fermé</div>
+                    </td>
+                </tr>
+
+                <!-- ROW 4 — Open space -->
+                <tr>
+                    <td class="room-cell">
+                        <div class="room-name">Open space</div>
+                        <div class="room-meta"><span class="cap">24 postes</span></div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking sky">
+                            <div class="booking-time">08:00 — 20:00</div>
+                            <div class="booking-title">Accès libre membres</div>
+                            <div class="booking-client">~16 postes occupés</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking sky">
+                            <div class="booking-time">08:00 — 20:00</div>
+                            <div class="booking-title">Accès libre membres</div>
+                            <div class="booking-client">~14 postes</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking sky">
+                            <div class="booking-time">08:00 — 20:00</div>
+                            <div class="booking-title">Accès libre membres</div>
+                            <div class="booking-client">~18 postes</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking sky">
+                            <div class="booking-time">08:00 — 20:00</div>
+                            <div class="booking-title">Accès libre membres</div>
+                            <div class="booking-client">~20 postes</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking sky">
+                            <div class="booking-time">08:00 — 20:00</div>
+                            <div class="booking-title">Accès libre membres</div>
+                            <div class="booking-client">~22 postes</div>
+                        </div>
+                        <div class="booking gold">
+                            <div class="booking-time">18:30 — 22:00</div>
+                            <div class="booking-title">Afterwork mensuel</div>
+                            <div class="booking-client">Tous membres</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking sky">
+                            <div class="booking-time">09:00 — 17:00</div>
+                            <div class="booking-title">Coworking weekend</div>
+                            <div class="booking-client">Premium uniquement</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="closed-cell">Fermé</div>
+                    </td>
+                </tr>
+
+                <!-- ROW 5 — Salle Atelier -->
+                <tr>
+                    <td class="room-cell">
+                        <div class="room-name">Salle Atelier</div>
+                        <div class="room-meta"><span class="cap">20 pers.</span></div>
+                    </td>
+                    <td class="day-cell"></td>
+                    <td class="day-cell">
+                        <div class="booking gold">
+                            <div class="booking-time">14:00 — 17:00</div>
+                            <div class="booking-title">Formation prise de parole</div>
+                            <div class="booking-client">12 inscrits</div>
+                        </div>
+                    </td>
+                    <td class="day-cell"></td>
+                    <td class="day-cell">
+                        <div class="booking rose">
+                            <div class="booking-time">19:00 — 23:00</div>
+                            <div class="booking-title">Privatisation — anniversaire</div>
+                            <div class="booking-client">Mme Eyenga</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking gold">
+                            <div class="booking-time">09:00 — 17:00</div>
+                            <div class="booking-title">Workshop branding</div>
+                            <div class="booking-client">Cohorte 02 · 14 pers.</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="booking rose">
+                            <div class="booking-time">15:00 — 22:00</div>
+                            <div class="booking-title">Lancement produit</div>
+                            <div class="booking-client">Maison Nyota</div>
+                        </div>
+                    </td>
+                    <td class="day-cell">
+                        <div class="closed-cell">Fermé</div>
+                    </td>
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-bar">
+        <div class="stat-cell">
+            <div class="stat-label">Réservations</div>
+            <div class="stat-value">28 <small>créneaux</small></div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-label">Heures occupées</div>
+            <div class="stat-value">142 <small>h</small></div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-label">Taux d'occupation</div>
+            <div class="stat-value">68 <small>%</small></div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-label">Privatisations</div>
+            <div class="stat-value">3</div>
+        </div>
+        <div class="stat-cell">
+            <div class="stat-label">Ateliers / events</div>
+            <div class="stat-value">5</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="doc-footer">
+    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Planning d'occupation &nbsp;·&nbsp; Document interne — usage administratif
+</div>
+
+</body>
+</html>

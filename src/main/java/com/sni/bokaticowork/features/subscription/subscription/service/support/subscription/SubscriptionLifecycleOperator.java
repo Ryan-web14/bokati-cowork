@@ -1,11 +1,16 @@
 package com.sni.bokaticowork.features.subscription.subscription.service.support.subscription;
 
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
+import com.sni.bokaticowork.features.contract.enums.ContractStatus;
+import com.sni.bokaticowork.features.contract.model.Contract;
+import com.sni.bokaticowork.features.contract.service.interfaces.ContractService;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.PauseSubscriptionRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.SubscriptionStatusChangeRequest;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillingScheduleStatus;
+import com.sni.bokaticowork.features.subscription.subscription.enums.EntitlementGrantStatus;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriptionEventType;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriptionStatus;
+import com.sni.bokaticowork.features.subscription.subscription.model.EntitlementGrant;
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
 import com.sni.bokaticowork.features.subscription.repository.EntitlementGrantRepository;
 import com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository;
@@ -15,6 +20,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.S
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPeriodCalculator;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionStatusManager;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -25,6 +31,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SubscriptionLifecycleOperator {
 
     private final SubscriptionRepository subscriptionRepository;
@@ -34,6 +41,7 @@ public class SubscriptionLifecycleOperator {
     private final SubscriptionStatusManager statusManager;
     private final SubscriptionEventWriter eventWriter;
     private final @Lazy EntitlementService entitlementService;
+    private final @Lazy ContractService contractService;
     private final SubscriptionEmailNotifier emailNotifier;
 
     public void activate(Subscription subscription, String reason, String actor) {
@@ -100,10 +108,13 @@ public class SubscriptionLifecycleOperator {
             subscription.setCancelAtPeriodEnd(Boolean.TRUE);
             return subscriptionRepository.save(subscription);
         }
-        statusManager.changeStatus(subscription, SubscriptionStatus.CANCELLED, reason(request, "Cancellation"), actor(request));
+        String cancelReason = reason(request, "Subscription cancelled");
+        statusManager.changeStatus(subscription, SubscriptionStatus.CANCELLED, cancelReason, actor(request));
         subscription.setCancelledAt(Instant.now());
-        subscription.setCancellationReason(reason(request, null));
+        subscription.setCancellationReason(cancelReason);
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.CANCELLED);
+        revokeActiveGrants(subscription);
+        cancelAssociatedContract(subscription, cancelReason);
         Subscription saved = subscriptionRepository.save(subscription);
         emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
         return saved;
@@ -131,8 +142,12 @@ public class SubscriptionLifecycleOperator {
                 SubscriptionStatus.ACTIVE.name()
         );
         subscriptions.forEach(subscription -> {
-            statusManager.changeStatus(subscription, SubscriptionStatus.CANCELLED, "Cancellation at period end", "SYSTEM");
+            String reason = "Cancellation at period end";
+            statusManager.changeStatus(subscription, SubscriptionStatus.CANCELLED, reason, "SYSTEM");
             subscription.setCancelledAt(Instant.now());
+            subscription.setCancellationReason(reason);
+            revokeActiveGrants(subscription);
+            cancelAssociatedContract(subscription, reason);
             Subscription saved = subscriptionRepository.save(subscription);
             emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
         });
@@ -184,5 +199,58 @@ public class SubscriptionLifecycleOperator {
 
     private String pauseActor(PauseSubscriptionRequest request) {
         return request != null && StringUtils.hasText(request.changedBy()) ? request.changedBy().trim() : "SYSTEM";
+    }
+
+    private void cancelAssociatedContract(Subscription subscription, String reason) {
+        if (!StringUtils.hasText(subscription.getContractCode())) {
+            return;
+        }
+        try {
+            Contract contract = contractService.serviceByCode(subscription.getContractCode());
+            ContractStatus status = contract.getStatus();
+            if (status == ContractStatus.CANCELLED || status == ContractStatus.TERMINATED || status == ContractStatus.EXPIRED) {
+                return;
+            }
+            String contractReason = StringUtils.hasText(reason) ? reason : "Subscription cancelled";
+            if (status == ContractStatus.ACTIVE || status == ContractStatus.SUSPENDED) {
+                contractService.terminate(subscription.getContractCode(), contractReason);
+                log.info("Contract {} terminated following subscription {} cancellation",
+                        subscription.getContractCode(), subscription.getSubscriptionNumber());
+            } else {
+                contractService.cancel(subscription.getContractCode(), contractReason);
+                log.info("Contract {} cancelled following subscription {} cancellation",
+                        subscription.getContractCode(), subscription.getSubscriptionNumber());
+            }
+        } catch (Exception ex) {
+            log.warn("Could not cancel contract {} for subscription {}: {}",
+                    subscription.getContractCode(), subscription.getSubscriptionNumber(), ex.getMessage());
+        }
+    }
+
+    private void revokeActiveGrants(Subscription subscription) {
+        if (subscription.getId() == null) {
+            return;
+        }
+        try {
+            List<EntitlementGrant> toRevoke = entitlementGrantRepository
+                    .findAllBySubscription(subscription.getId())
+                    .stream()
+                    .filter(g -> g.getStatus() == EntitlementGrantStatus.ACTIVE)
+                    .toList();
+            if (toRevoke.isEmpty()) {
+                return;
+            }
+            Instant now = Instant.now();
+            toRevoke.forEach(g -> {
+                g.setStatus(EntitlementGrantStatus.CANCELLED);
+                g.setValidUntil(now);
+            });
+            entitlementGrantRepository.saveAll(toRevoke);
+            log.info("Revoked {} entitlement grant(s) for subscription {}",
+                    toRevoke.size(), subscription.getSubscriptionNumber());
+        } catch (Exception ex) {
+            log.warn("Could not revoke entitlement grants for subscription {}: {}",
+                    subscription.getSubscriptionNumber(), ex.getMessage());
+        }
     }
 }

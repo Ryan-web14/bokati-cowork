@@ -70,6 +70,18 @@ public class DefaultEmailSender {
         return CompletableFuture.supplyAsync(() -> processQueued(delivery.emailNumber()), taskExecutor);
     }
 
+    public CompletableFuture<Boolean> sendHtmlEmailWithInlineImage(String to,
+                                                                    String subject,
+                                                                    String content,
+                                                                    String contentId,
+                                                                    byte[] imageBytes) {
+        EmailDeliveryResponse delivery = createDelivery(to, subject, content, true, null, null);
+        return CompletableFuture.supplyAsync(
+                () -> processQueuedWithInlineImage(delivery.emailNumber(), contentId, imageBytes),
+                taskExecutor
+        );
+    }
+
     public CompletableFuture<Boolean> sendHtmlEmailWithPdfAttachment(String to,
                                                                      String subject,
                                                                      String content,
@@ -138,6 +150,29 @@ public class DefaultEmailSender {
         }
     }
 
+    private boolean processQueuedWithInlineImage(String emailNumber, String contentId, byte[] imageBytes) {
+        EmailDeliveryLog delivery = deliveryTracker.markSending(emailNumber);
+        try {
+            boolean sent = sendWithGraphInlineImage(
+                    delivery.getRecipientEmail(),
+                    delivery.getSubject(),
+                    delivery.getBodyContent(),
+                    contentId,
+                    imageBytes
+            );
+            if (sent) {
+                deliveryTracker.markSent(emailNumber);
+            } else {
+                deliveryTracker.markFailed(emailNumber, "Email provider returned failure");
+            }
+            return sent;
+        } catch (Exception ex) {
+            deliveryTracker.markFailed(emailNumber, ex.getMessage());
+            log.error("Failed to process email delivery {} with inline image", emailNumber, ex);
+            throw new CompletionException(ex);
+        }
+    }
+
     private boolean processQueuedWithPdfAttachment(String emailNumber, String attachmentName, byte[] attachmentBytes) {
         EmailDeliveryLog delivery = deliveryTracker.markSending(emailNumber);
         try {
@@ -169,6 +204,23 @@ public class DefaultEmailSender {
 //            return sendHtmlWithSmtp(delivery.getRecipientEmail(), delivery.getSubject(), delivery.getBodyContent());
 //        }
         //return sendTextWithSmtp(delivery.getRecipientEmail(), delivery.getSubject(), delivery.getBodyContent());
+    }
+
+    /**
+     * Envoi synchrone direct via Graph — utilisé par les processors outbox.
+     * Bloque le thread appelant jusqu'à la réponse de l'API.
+     * Lance une exception si l'envoi échoue → l'outbox peut retenter.
+     */
+    public boolean sendHtmlEmailBlocking(String to, String subject, String content) {
+        return sendWithGraph(to, subject, content, true);
+    }
+
+    public boolean sendHtmlEmailWithPdfAttachmentBlocking(String to,
+                                                          String subject,
+                                                          String content,
+                                                          String attachmentName,
+                                                          byte[] attachmentBytes) {
+        return sendWithGraphPdfAttachment(to, subject, content, attachmentName, attachmentBytes);
     }
 
     private boolean sendTextWithSmtp(String to, String subject, String content) {
@@ -228,6 +280,38 @@ public class DefaultEmailSender {
         } catch (Exception ex) {
             log.error("Failed to send email via Microsoft Graph to {}", to, ex);
             throw new IllegalStateException("Microsoft Graph send failed: " + ex.getMessage(), ex);
+        }
+    }
+
+    private boolean sendWithGraphInlineImage(String to,
+                                             String subject,
+                                             String content,
+                                             String contentId,
+                                             byte[] imageBytes) {
+        try {
+            String sender = resolveOutboundMailboxEmail();
+            Message msg = message(to, subject, content, true);
+
+            FileAttachment inline = new FileAttachment();
+            inline.setOdataType("#microsoft.graph.fileAttachment");
+            inline.setName(contentId + ".png");
+            inline.setContentType("image/png");
+            inline.setContentId(contentId);
+            inline.setIsInline(true);
+            inline.setContentBytes(imageBytes);
+
+            msg.setAttachments(List.of((Attachment) inline));
+
+            SendMailPostRequestBody requestBody = new SendMailPostRequestBody();
+            requestBody.setMessage(msg);
+            requestBody.setSaveToSentItems(true);
+
+            graphClient().users().byUserId(sender).sendMail().post(requestBody);
+            log.info("HTML email with inline image sent via Microsoft Graph from {} to {}", sender, to);
+            return true;
+        } catch (Exception ex) {
+            log.error("Failed to send email with inline image via Microsoft Graph to {}", to, ex);
+            throw new IllegalStateException("Microsoft Graph inline image send failed: " + ex.getMessage(), ex);
         }
     }
 

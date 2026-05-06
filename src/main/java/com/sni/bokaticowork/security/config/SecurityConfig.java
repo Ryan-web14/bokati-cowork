@@ -56,7 +56,8 @@ public class SecurityConfig {
                                 ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback",
                                 ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback",
                                 "/verify/**",
-                                ApiPath.V1 + "/admin/provisioning/bootstrap-admin"
+                                ApiPath.V1 + "/admin/provisioning/bootstrap-admin",
+                                ApiPath.V1 + "/public/**"
 
                         ).permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()

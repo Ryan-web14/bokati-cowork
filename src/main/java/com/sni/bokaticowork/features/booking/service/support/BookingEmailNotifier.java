@@ -5,11 +5,13 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.booking.enums.BookingEventType;
 import com.sni.bokaticowork.features.booking.model.Booking;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.thymeleaf.TemplateEngine;
@@ -17,17 +19,22 @@ import org.thymeleaf.context.Context;
 
 import javax.imageio.ImageIO;
 import java.io.ByteArrayOutputStream;
-import java.util.Base64;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class BookingEmailNotifier {
 
+    private static final String QR_CONTENT_ID = "qr-booking";
+
     private final DefaultEmailSender emailSender;
     private final BookingEventWriter eventWriter;
     private final TemplateEngine templateEngine;
+
+    @Value("${app.api-base-url:https://1612-102-129-68-124.ngrok-free.app}")
+    private String apiBaseUrl;
 
     public void notify(Booking booking, BookingEventType eventType) {
         if (!StringUtils.hasText(booking.getContactEmail())) {
@@ -35,19 +42,33 @@ public class BookingEmailNotifier {
         }
         String subject = subject(eventType, booking);
         boolean templated = isTemplatedEvent(eventType);
-        String body = templated ? body(eventType, booking) : plainTextBody(eventType, booking);
+        boolean isConfirmation = eventType == BookingEventType.BOOKING_CREATED
+                || eventType == BookingEventType.BOOKING_CONFIRMED;
+
+        String body = templated ? body(eventType, booking, isConfirmation) : plainTextBody(eventType, booking);
         eventWriter.write(booking, BookingEventType.EMAIL_QUEUED, "Email queued", subject, null);
         try {
-            (templated
-                    ? emailSender.sendHtmlEmail(booking.getContactEmail(), subject, body)
-                    : emailSender.sendEmail(booking.getContactEmail(), subject, body))
-                    .thenAccept(sent -> eventWriter.write(
-                            booking,
-                            sent ? BookingEventType.EMAIL_SENT : BookingEventType.EMAIL_FAILED,
-                            sent ? "Email sent" : "Email failed",
-                            subject,
-                            null
-                    ));
+            CompletableFuture<Boolean> future;
+            if (isConfirmation && StringUtils.hasText(booking.getCheckInToken())) {
+                byte[] qrBytes = generateQrBytes(booking);
+                if (qrBytes != null) {
+                    future = emailSender.sendHtmlEmailWithInlineImage(
+                            booking.getContactEmail(), subject, body, QR_CONTENT_ID, qrBytes);
+                } else {
+                    future = emailSender.sendHtmlEmail(booking.getContactEmail(), subject, body);
+                }
+            } else if (templated) {
+                future = emailSender.sendHtmlEmail(booking.getContactEmail(), subject, body);
+            } else {
+                future = emailSender.sendEmail(booking.getContactEmail(), subject, body);
+            }
+            future.thenAccept(sent -> eventWriter.write(
+                    booking,
+                    sent ? BookingEventType.EMAIL_SENT : BookingEventType.EMAIL_FAILED,
+                    sent ? "Email sent" : "Email failed",
+                    subject,
+                    null
+            ));
         } catch (MessagingException ex) {
             eventWriter.write(booking, BookingEventType.EMAIL_FAILED, "Email failed", subject, null);
             log.warn("Failed to queue booking email {} for {}", eventType, booking.getBookingNumber(), ex);
@@ -80,7 +101,7 @@ public class BookingEmailNotifier {
                 || eventType == BookingEventType.BOOKING_NO_SHOW;
     }
 
-    private String body(BookingEventType eventType, Booking booking) {
+    private String body(BookingEventType eventType, Booking booking, boolean includeQr) {
         Context context = new Context(Locale.FRENCH);
         context.setVariable("recipientName", valueOrDefault(booking.getContactName(), "client"));
         context.setVariable("bookingNumber", booking.getBookingNumber());
@@ -91,7 +112,7 @@ public class BookingEmailNotifier {
         context.setVariable("quantity", booking.getQuantity());
         context.setVariable("paymentMode", booking.getPaymentMode() == null ? "-" : booking.getPaymentMode().name());
         context.setVariable("checkInToken", booking.getCheckInToken());
-        context.setVariable("qrCode", generateQrCode(booking));
+        context.setVariable("showQr", includeQr && StringUtils.hasText(booking.getCheckInToken()));
         context.setVariable("reason", eventReason(eventType, booking));
         context.setVariable("eventTag", eventTag(eventType));
         context.setVariable("eventTitle", eventTitle(eventType));
@@ -103,9 +124,9 @@ public class BookingEmailNotifier {
 
     private String template(BookingEventType eventType) {
         return switch (eventType) {
-            case BOOKING_CREATED, BOOKING_CONFIRMED -> "booking-confirmation";
-            case BOOKING_CANCELLED -> "booking-cancelled";
-            default -> "booking-event";
+            case BOOKING_CREATED, BOOKING_CONFIRMED -> "email/booking-confirmation";
+            case BOOKING_CANCELLED -> "email/booking-cancelled";
+            default -> "email/booking-event";
         };
     }
 
@@ -184,17 +205,19 @@ public class BookingEmailNotifier {
         );
     }
 
-    private String generateQrCode(Booking booking) {
+    private byte[] generateQrBytes(Booking booking) {
         if (!StringUtils.hasText(booking.getCheckInToken())) {
             return null;
         }
-        String content = "BOOKING:" + booking.getBookingNumber() + "|CHECKIN:" + booking.getCheckInToken();
+        String scanUrl = apiBaseUrl.stripTrailing()
+                + ApiPath.V1 + "/public/bookings/check-in/scan/"
+                + booking.getCheckInToken();
         try {
             QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix matrix = writer.encode(content, BarcodeFormat.QR_CODE, 280, 280);
+            BitMatrix matrix = writer.encode(scanUrl, BarcodeFormat.QR_CODE, 280, 280);
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             ImageIO.write(MatrixToImageWriter.toBufferedImage(matrix), "png", output);
-            return Base64.getEncoder().encodeToString(output.toByteArray());
+            return output.toByteArray();
         } catch (Exception ex) {
             log.warn("Failed to generate booking QR code for {}", booking.getBookingNumber(), ex);
             return null;
