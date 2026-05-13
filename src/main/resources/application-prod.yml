@@ -107,9 +107,10 @@ app:
       root-path: ${DOCUMENT_STORAGE_ROOT_PATH:storage/documents}
       minio:
         endpoint: ${MINIO_ENDPOINT:https://s3.amazonaws.com}
-        bucket: ${MINIO_BUCKET:bokati-documents}
-        access-key: ${MINIO_ACCESS_KEY:none}
-        secret-key: ${MINIO_SECRET_KEY:none}
+        bucket: ${BUCKETEER_BUCKET_NAME:${MINIO_BUCKET:bokati-documents}}
+        access-key: ${BUCKETEER_AWS_ACCESS_KEY_ID:${MINIO_ACCESS_KEY:none}}
+        secret-key: ${BUCKETEER_AWS_SECRET_ACCESS_KEY:${MINIO_SECRET_KEY:none}}
+        region: ${BUCKETEER_AWS_REGION:us-east-1}
 
     worker:
       enabled: ${DOCUMENT_WORKER_ENABLED:true}
