@@ -5,6 +5,7 @@
 ALTER TABLE document ALTER COLUMN document_type_id DROP DEFAULT;
 DROP SEQUENCE IF EXISTS document_document_type_id_seq;
 
+ALTER TABLE document_review ALTER COLUMN document_id DROP DEFAULT;
 DROP SEQUENCE IF EXISTS document_review_document_id_seq;
 
 ALTER TABLE document_review ALTER COLUMN reviewed_by DROP DEFAULT;
