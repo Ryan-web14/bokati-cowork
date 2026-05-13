@@ -215,6 +215,7 @@ CREATE TABLE IF NOT EXISTS member (
     whatsapp_phone VARCHAR(12),
     status VARCHAR(20) NOT NULL,
     portal_access BOOLEAN DEFAULT FALSE,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
 
