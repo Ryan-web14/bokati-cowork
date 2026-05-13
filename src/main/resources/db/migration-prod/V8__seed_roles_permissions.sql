@@ -74,56 +74,55 @@ insert into permission (id, name, display_name, module, action, is_system_permis
 select 14, 'DOCUMENT_WRITE', 'Manage documents', 'DOCUMENT', 'WRITE', true, true
 where not exists (select 1 from permission where name = 'DOCUMENT_WRITE');
 
-insert into role_permission (role_id, permission_id, created_by, is_active, role, permission)
-values (1, 1, 'SYSTEM', true, 1, 1),
-       (1, 2, 'SYSTEM', true, 1, 2),
-       (1, 3, 'SYSTEM', true, 1, 3),
-       (1, 4, 'SYSTEM', true, 1, 4),
-       (1, 5, 'SYSTEM', true, 1, 5),
-       (1, 6, 'SYSTEM', true, 1, 6),
-       (1, 7, 'SYSTEM', true, 1, 7),
-       (1, 8, 'SYSTEM', true, 1, 8),
-       (1, 9, 'SYSTEM', true, 1, 9),
-       (1, 10, 'SYSTEM', true, 1, 10),
-       (1, 11, 'SYSTEM', true, 1, 11),
-       (1, 12, 'SYSTEM', true, 1, 12),
-       (1, 13, 'SYSTEM', true, 1, 13),
-       (1, 14, 'SYSTEM', true, 1, 14)
+insert into role_permission (role_id, permission_id, created_by, is_active)
+values (1, 1, 'SYSTEM', true),
+       (1, 2, 'SYSTEM', true),
+       (1, 3, 'SYSTEM', true),
+       (1, 4, 'SYSTEM', true),
+       (1, 5, 'SYSTEM', true),
+       (1, 6, 'SYSTEM', true),
+       (1, 7, 'SYSTEM', true),
+       (1, 8, 'SYSTEM', true),
+       (1, 9, 'SYSTEM', true),
+       (1, 10, 'SYSTEM', true),
+       (1, 11, 'SYSTEM', true),
+       (1, 12, 'SYSTEM', true),
+       (1, 13, 'SYSTEM', true),
+       (1, 14, 'SYSTEM', true)
 on conflict do nothing;
 
-
-insert into role_permission (role_id, permission_id, created_by, is_active, role, permission)
+insert into role_permission (role_id, permission_id, created_by, is_active)
 values
-    (2, 5, 'SYSTEM', true, 2, 5),
-    (2, 7, 'SYSTEM', true, 2, 7),
-    (2, 8, 'SYSTEM', true, 2, 8),
-    (2, 9, 'SYSTEM', true, 2, 9),
-    (2, 10, 'SYSTEM', true, 2, 10),
-    (2, 11, 'SYSTEM', true, 2, 11),
-    (2, 12, 'SYSTEM', true, 2, 12),
-    (2, 13, 'SYSTEM', true, 2, 13),
-    (2, 14, 'SYSTEM', true, 2, 14)
+    (2, 5, 'SYSTEM', true),
+    (2, 7, 'SYSTEM', true),
+    (2, 8, 'SYSTEM', true),
+    (2, 9, 'SYSTEM', true),
+    (2, 10, 'SYSTEM', true),
+    (2, 11, 'SYSTEM', true),
+    (2, 12, 'SYSTEM', true),
+    (2, 13, 'SYSTEM', true),
+    (2, 14, 'SYSTEM', true)
 on conflict do nothing;
 
-insert into role_permission (role_id, permission_id, created_by, is_active, role, permission)
+insert into role_permission (role_id, permission_id, created_by, is_active)
 values
-    (3, 7, 'SYSTEM', true, 3, 7),
-    (3, 9, 'SYSTEM', true, 3, 9),
-    (3, 11, 'SYSTEM', true, 3, 11),
-    (3, 13, 'SYSTEM', true, 3, 13)
+    (3, 7, 'SYSTEM', true),
+    (3, 9, 'SYSTEM', true),
+    (3, 11, 'SYSTEM', true),
+    (3, 13, 'SYSTEM', true)
 on conflict do nothing;
 
-insert into role_permission (role_id, permission_id, created_by, is_active, role, permission)
+insert into role_permission (role_id, permission_id, created_by, is_active)
 values
-    (4, 7, 'SYSTEM', true, 4, 7),
-    (4, 8, 'SYSTEM', true, 4, 8),
-    (4, 13, 'SYSTEM', true, 4, 13)
+    (4, 7, 'SYSTEM', true),
+    (4, 8, 'SYSTEM', true),
+    (4, 13, 'SYSTEM', true)
 on conflict do nothing;
 
-insert into role_permission (role_id, permission_id, created_by, is_active, role, permission)
+insert into role_permission (role_id, permission_id, created_by, is_active)
 values
-    (5, 9, 'SYSTEM', true, 5, 9),
-    (5, 10, 'SYSTEM', true, 5, 10),
-    (5, 11, 'SYSTEM', true, 5, 11),
-    (5, 13, 'SYSTEM', true, 5, 13)
+    (5, 9, 'SYSTEM', true),
+    (5, 10, 'SYSTEM', true),
+    (5, 11, 'SYSTEM', true),
+    (5, 13, 'SYSTEM', true)
 on conflict do nothing;
