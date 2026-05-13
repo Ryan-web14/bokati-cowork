@@ -103,13 +103,13 @@ app:
 
   document:
     storage:
-      provider: ${DOCUMENT_STORAGE_PROVIDER:filesystem}
+      provider: minio
       root-path: ${DOCUMENT_STORAGE_ROOT_PATH:storage/documents}
       minio:
-        endpoint: ${MINIO_ENDPOINT:https://s3.amazonaws.com}
-        bucket: ${BUCKETEER_BUCKET_NAME:${MINIO_BUCKET:bokati-documents}}
-        access-key: ${BUCKETEER_AWS_ACCESS_KEY_ID:${MINIO_ACCESS_KEY:none}}
-        secret-key: ${BUCKETEER_AWS_SECRET_ACCESS_KEY:${MINIO_SECRET_KEY:none}}
+        endpoint: https://s3.amazonaws.com
+        bucket: ${BUCKETEER_BUCKET_NAME}
+        access-key: ${BUCKETEER_AWS_ACCESS_KEY_ID}
+        secret-key: ${BUCKETEER_AWS_SECRET_ACCESS_KEY}
         region: ${BUCKETEER_AWS_REGION:us-east-1}
 
     worker:
