@@ -49,7 +49,6 @@ spring:
     baseline-on-migrate: true
     baseline-version: 1
     out-of-order: false
-
 gg:
   jte:
     development-mode: false
