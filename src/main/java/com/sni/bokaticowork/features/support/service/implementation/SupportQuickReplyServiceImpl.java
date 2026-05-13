@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.support.service.implementation;
 
+import com.sni.bokaticowork.core.richtext.RichTextSupport;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.support.dto.SupportDtos.QuickReplyRequest;
 import com.sni.bokaticowork.features.support.dto.SupportDtos.QuickReplyResponse;
@@ -20,12 +21,13 @@ public class SupportQuickReplyServiceImpl {
 
     private final QuickReplyRepository repository;
     private final SupportTicketMapper mapper;
+    private final RichTextSupport richTextSupport;
 
     public QuickReplyResponse create(QuickReplyRequest request) {
         QuickReply reply = QuickReply.builder()
                 .category(request.category())
                 .title(request.title().trim())
-                .body(request.body().trim())
+                .body(richTextSupport.normalize(request.body()))
                 .build();
         return mapper.toQuickReplyResponse(repository.save(reply));
     }

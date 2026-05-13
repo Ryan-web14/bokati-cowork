@@ -53,6 +53,8 @@ public interface BookingService {
 
     BookingResponse noShow(String bookingNumber, BookingStatusChangeRequest request);
 
+    int markOverdueNoShows(int limit);
+
     BookingResponse checkIn(String bookingNumber, BookingCheckRequest request);
 
     BookingResponse checkInByToken(String checkInToken, BookingCheckRequest request);

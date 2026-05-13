@@ -28,7 +28,7 @@ public class OutboxRecipientResolver {
                     .map(member -> new Recipient(member.getDisplayName(), member.getEmail()))
                     .orElse(null);
             case CUSTOMER -> customerRepository.findById(ownerId)
-                    .map(customer -> new Recipient(customerDisplayName(customer), customer.getEmail()))
+                    .map(customer -> new Recipient(customerDisplayName(customer), customerEmail(customer)))
                     .orElse(null);
             case BUSINESS -> businessRepository.findById(ownerId)
                     .map(business -> new Recipient(business.getName(), business.getEmail()))
@@ -48,7 +48,7 @@ public class OutboxRecipientResolver {
                     .map(member -> new Recipient(member.getDisplayName(), member.getEmail()))
                     .orElse(null);
             case CUSTOMER -> customerRepository.findByCustomerId(normalizedCode)
-                    .map(customer -> new Recipient(customerDisplayName(customer), customer.getEmail()))
+                    .map(customer -> new Recipient(customerDisplayName(customer), customerEmail(customer)))
                     .orElse(null);
             case BUSINESS -> businessRepository.findByCode(normalizedCode)
                     .map(business -> new Recipient(business.getName(), business.getEmail()))
@@ -64,6 +64,13 @@ public class OutboxRecipientResolver {
         String firstName = customer.getFirstname() == null ? "" : customer.getFirstname();
         String lastName = customer.getLastname() == null ? "" : customer.getLastname();
         return (firstName + " " + lastName).trim();
+    }
+
+    private String customerEmail(Customer customer) {
+        if (customer.getBillingEmail() != null && !customer.getBillingEmail().isBlank()) {
+            return customer.getBillingEmail();
+        }
+        return customer.getEmail();
     }
 
     public record Recipient(String displayName, String email) {

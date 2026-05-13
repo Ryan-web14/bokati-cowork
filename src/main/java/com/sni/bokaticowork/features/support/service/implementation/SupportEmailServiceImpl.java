@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.support.service.implementation;
 
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.core.richtext.RichTextSupport;
 import com.sni.bokaticowork.features.support.model.SupportTicket;
 import com.sni.bokaticowork.features.support.model.TicketMessage;
 import com.sni.bokaticowork.features.support.service.interfaces.SupportEmailService;
@@ -27,8 +28,9 @@ public class SupportEmailServiceImpl implements SupportEmailService {
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.of("Africa/Brazzaville"));
 
     private final DefaultEmailSender emailSender;
-    private final SpringTemplateEngine templateEngine;
     private final UserService userService;
+    private final RichTextSupport richTextSupport;
+    private final SpringTemplateEngine templateEngine;
 
     @Value("${bokati.support.manager-email:support@bokaticowork.com}")
     private String managerEmail;
@@ -37,10 +39,8 @@ public class SupportEmailServiceImpl implements SupportEmailService {
     @Async
     public void sendTicketCreated(SupportTicket ticket) {
         if (!StringUtils.hasText(ticket.getContactEmail())) return;
-        Context ctx = base(ticket);
-        ctx.setVariable("eventType", "TICKET_CREATED");
-        ctx.setVariable("slaDeadline",
-                ticket.getFirstResponseDueAt() != null ? FMT.format(ticket.getFirstResponseDueAt()) : null);
+        Context ctx = base(ticket, "TICKET_CREATED");
+        ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(ticket.getDescription()));
         send(ticket.getContactEmail(),
                 "Ticket ouvert — " + ticket.getTicketNumber(),
                 render(ctx));
@@ -50,11 +50,12 @@ public class SupportEmailServiceImpl implements SupportEmailService {
     @Async
     public void sendAgentMessage(SupportTicket ticket, TicketMessage message) {
         if (!StringUtils.hasText(ticket.getContactEmail())) return;
-        Context ctx = base(ticket);
-        ctx.setVariable("eventType", "AGENT_MESSAGE");
-        ctx.setVariable("messageContent", message.getMessage());
-        ctx.setVariable("agentName",
-                StringUtils.hasText(message.getSenderName()) ? message.getSenderName() : "Notre équipe");
+        String agentName = message != null && StringUtils.hasText(message.getSenderName())
+                ? message.getSenderName()
+                : "Notre équipe";
+        Context ctx = base(ticket, "AGENT_MESSAGE");
+        ctx.setVariable("agentName", agentName);
+        ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(ticket.getContactEmail(),
                 "Réponse sur votre ticket " + ticket.getTicketNumber(),
                 render(ctx));
@@ -65,11 +66,12 @@ public class SupportEmailServiceImpl implements SupportEmailService {
     public void sendClientMessage(SupportTicket ticket, TicketMessage message) {
         String agentEmail = resolveAgentEmail(ticket.getAssignedTo());
         if (!StringUtils.hasText(agentEmail)) agentEmail = managerEmail;
-        Context ctx = base(ticket);
-        ctx.setVariable("eventType", "CLIENT_MESSAGE");
-        ctx.setVariable("messageContent", message.getMessage());
-        ctx.setVariable("clientName",
-                StringUtils.hasText(message.getSenderName()) ? message.getSenderName() : ticket.getContactName());
+        String clientName = message != null && StringUtils.hasText(message.getSenderName())
+                ? message.getSenderName()
+                : ticket.getContactName();
+        Context ctx = base(ticket, "CLIENT_MESSAGE");
+        ctx.setVariable("clientName", clientName);
+        ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(agentEmail,
                 "[Support] Nouveau message client — " + ticket.getTicketNumber(),
                 render(ctx));
@@ -79,8 +81,7 @@ public class SupportEmailServiceImpl implements SupportEmailService {
     @Async
     public void sendTicketResolved(SupportTicket ticket) {
         if (!StringUtils.hasText(ticket.getContactEmail())) return;
-        Context ctx = base(ticket);
-        ctx.setVariable("eventType", "TICKET_RESOLVED");
+        Context ctx = base(ticket, "TICKET_RESOLVED");
         send(ticket.getContactEmail(),
                 "Ticket résolu — " + ticket.getTicketNumber(),
                 render(ctx));
@@ -89,8 +90,7 @@ public class SupportEmailServiceImpl implements SupportEmailService {
     @Override
     @Async
     public void sendSlaBreachAlert(SupportTicket ticket, String breachType) {
-        Context ctx = base(ticket);
-        ctx.setVariable("eventType", "SLA_BREACH");
+        Context ctx = base(ticket, "SLA_BREACH");
         ctx.setVariable("breachType", breachType);
         send(managerEmail,
                 "[ALERTE SLA] " + breachType + " — " + ticket.getTicketNumber(),
@@ -101,24 +101,23 @@ public class SupportEmailServiceImpl implements SupportEmailService {
     @Async
     public void sendCsatRequest(SupportTicket ticket) {
         if (!StringUtils.hasText(ticket.getContactEmail())) return;
-        Context ctx = base(ticket);
-        ctx.setVariable("eventType", "CSAT_REQUEST");
+        Context ctx = base(ticket, "CSAT_REQUEST");
         send(ticket.getContactEmail(),
                 "Donnez votre avis — " + ticket.getTicketNumber(),
                 render(ctx));
     }
 
-    private Context base(SupportTicket ticket) {
+    private Context base(SupportTicket ticket, String eventType) {
         Context ctx = new Context(Locale.FRENCH);
+        ctx.setVariable("eventType", eventType);
+        ctx.setVariable("contactName", ticket.getContactName());
         ctx.setVariable("ticketNumber", ticket.getTicketNumber());
         ctx.setVariable("ticketTitle", ticket.getTitle());
         ctx.setVariable("ticketPriority", ticket.getPriority() != null ? ticket.getPriority().name() : null);
         ctx.setVariable("ticketCategory", ticket.getCategory() != null ? ticket.getCategory().name() : null);
         ctx.setVariable("ticketStatus", ticket.getStatus() != null ? ticket.getStatus().name() : null);
-        ctx.setVariable("contactName",
-                StringUtils.hasText(ticket.getContactName()) ? ticket.getContactName() : "Client");
-        ctx.setVariable("createdAt",
-                ticket.getCreatedAt() != null ? FMT.format(ticket.getCreatedAt()) : null);
+        ctx.setVariable("createdAt", ticket.getCreatedAt() != null ? FMT.format(ticket.getCreatedAt()) : null);
+        ctx.setVariable("slaDeadline", ticket.getFirstResponseDueAt() != null ? FMT.format(ticket.getFirstResponseDueAt()) : null);
         return ctx;
     }
 

@@ -47,7 +47,7 @@ spring:
     validate-on-migrate: true
     clean-disabled: true
     baseline-on-migrate: true
-    baseline-version: 3
+    baseline-version: 1
     out-of-order: false
 
 gg:

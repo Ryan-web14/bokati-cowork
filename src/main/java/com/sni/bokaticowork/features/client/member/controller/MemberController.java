@@ -180,6 +180,13 @@ public class MemberController {
         return ResponseEntity.ok(memberService.search(criteria, pageable));
     }
 
+    @GetMapping("/search/by-name")
+    public ResponseEntity<PaginatedResponse<MemberSummaryResponse>> searchByName(
+            @RequestBody(required = false) MemberSearchCriteria criteria,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(memberService.search(criteria, pageable));
+    }
+
     @PostMapping("/portal/complete")
     @Audited(module = "MEMBER", action = "COMPLETE_PORTAL_REGISTRATION", ressource = "member")
     @Idempotent(operation = "MEMBER_COMPLETE_PORTAL_REGISTRATION")

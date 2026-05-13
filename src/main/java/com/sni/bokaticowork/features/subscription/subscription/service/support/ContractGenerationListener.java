@@ -14,7 +14,7 @@ public class ContractGenerationListener {
 
     private final ContractGenerationProcessor processor;
 
-    @Async
+    @Async("contractGenerationExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onContractGenerationRequested(ContractGenerationEvent event) {
         try {

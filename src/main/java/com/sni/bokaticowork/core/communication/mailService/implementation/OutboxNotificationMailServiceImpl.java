@@ -55,7 +55,7 @@ public class OutboxNotificationMailServiceImpl implements OutboxNotificationMail
                 emailSender.sendHtmlEmailWithPdfAttachmentBlocking(to, "Notification contrat", html, fileName, document.content());
                 return CompletableFuture.completedFuture(true);
             } catch (Exception ex) {
-                log.warn("Could not attach contract PDF {} — sending without attachment: {}", documentCode, ex.getMessage());
+                throw new IllegalStateException("Could not attach contract PDF " + documentCode, ex);
             }
         }
 

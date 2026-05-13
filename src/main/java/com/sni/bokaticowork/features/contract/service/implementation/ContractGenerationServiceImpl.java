@@ -39,6 +39,7 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
     private static final List<ContractTemplateDescriptor> TEMPLATES = List.of(
             new ContractTemplateDescriptor("membership-agreement", "Membership Agreement", "Standard membership contract template"),
             new ContractTemplateDescriptor("business-service-agreement", "Business Service Agreement", "Business service contract template"),
+            new ContractTemplateDescriptor("contrat-domiciliation", "Contrat de domiciliation", "Domiciliation contract template"),
             new ContractTemplateDescriptor("subscription-pass-non-refundable", "Subscription / Pass Non Refundable Agreement", "Non refundable subscription, pass and addon contract template")
     );
 
@@ -127,6 +128,7 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         putIfNotBlank(vars, "signatoryName",   request.getSignatoryName());
         putIfNotBlank(vars, "signatoryRole",   request.getSignatoryRole());
         putIfNotBlank(vars, "contractTitle",   request.getTitle());
+        vars.put("operatorName", business != null && StringUtils.hasText(business.getName()) ? business.getName().trim() : "ELLE A OSE");
         if (business != null) {
             putIfNotBlank(vars, "businessName",  business.getName());
             putIfNotBlank(vars, "businessEmail", business.getEmail());

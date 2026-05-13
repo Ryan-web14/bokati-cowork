@@ -33,4 +33,16 @@ public interface PassRepository extends JpaRepository<Pass, Long>, JpaSpecificat
     List<Pass> findAllByStatusAndValidUntilBefore(@Param("status") String status, @Param("validUntil") Instant validUntil);
 
     List<Pass> findAllByContractCode(String contractCode);
+
+    @Query(nativeQuery = true, value = """
+            SELECT id
+            FROM subscription_pass
+            WHERE contract_code IS NULL
+              AND created_at <= :createdBefore
+              AND status NOT IN ('DRAFT', 'CANCELLED', 'EXPIRED')
+            ORDER BY created_at ASC
+            LIMIT :limit
+            """)
+    List<Long> findIdsMissingContract(@Param("createdBefore") Instant createdBefore,
+                                      @Param("limit") int limit);
 }

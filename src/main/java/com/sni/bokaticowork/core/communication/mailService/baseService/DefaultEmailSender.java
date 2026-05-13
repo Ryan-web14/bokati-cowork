@@ -379,13 +379,22 @@ public class DefaultEmailSender {
     }
 
     private GraphServiceClient graphClient() {
-    ClientSecretCredential credential = new ClientSecretCredentialBuilder()
-            .tenantId(graphProperties.getTenantId())
-            .clientId(graphProperties.getClientId())
-            .clientSecret(graphProperties.getClientSecret())
-            .build();
-
-        return new GraphServiceClient(credential, GRAPH_DEFAULT_SCOPE);
+        GraphServiceClient client = graphClient;
+        if (client == null) {
+            synchronized (this) {
+                client = graphClient;
+                if (client == null) {
+                    ClientSecretCredential credential = new ClientSecretCredentialBuilder()
+                            .tenantId(graphProperties.getTenantId())
+                            .clientId(graphProperties.getClientId())
+                            .clientSecret(graphProperties.getClientSecret())
+                            .build();
+                    client = new GraphServiceClient(credential, GRAPH_DEFAULT_SCOPE);
+                    graphClient = client;
+                }
+            }
+        }
+        return client;
     }
 
 

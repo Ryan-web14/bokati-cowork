@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
@@ -25,14 +26,18 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class OutboxServiceImpl implements OutboxService {
+
+    private static final long PROCESSING_LEASE_SECONDS = 300;
+    private static final long RETRY_DELAY_SECONDS = 30;
 
     private final OutboxEventRepository repository;
     private final ObjectMapper objectMapper;
     private final List<OutboxEventProcessor> processors;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
+    @Transactional
     public OutboxEvent publish(String eventType, String aggregateType, String aggregateId, Object payload) {
         validate(eventType, "Outbox event type is required");
         validate(aggregateType, "Outbox aggregate type is required");
@@ -56,33 +61,43 @@ public class OutboxServiceImpl implements OutboxService {
             throw new BadRequestException("Outbox batch size must be greater than zero");
         }
 
-        List<OutboxEvent> events = repository.findByStatusInAndAvailableAtLessThanEqualOrderByCreatedAtAsc(
-                Set.of(OutboxEventStatus.PENDING, OutboxEventStatus.FAILED),
-                Instant.now(),
-                PageRequest.of(0, batchSize)
-        );
+        return transactionTemplate.execute(status -> {
+            Instant now = Instant.now();
+            List<OutboxEvent> events = repository.findByStatusInAndAvailableAtLessThanEqualOrderByCreatedAtAsc(
+                    Set.of(OutboxEventStatus.PENDING, OutboxEventStatus.FAILED, OutboxEventStatus.PROCESSING),
+                    now,
+                    PageRequest.of(0, batchSize)
+            );
 
-        events.forEach(event -> event.setStatus(OutboxEventStatus.PROCESSING));
-        return repository.saveAll(events);
+            events.forEach(event -> {
+                event.setStatus(OutboxEventStatus.PROCESSING);
+                event.setAvailableAt(now.plusSeconds(PROCESSING_LEASE_SECONDS));
+            });
+            return repository.saveAll(events);
+        });
     }
 
     @Override
     public void markPublished(Long eventId) {
-        OutboxEvent event = find(eventId);
-        event.setStatus(OutboxEventStatus.PUBLISHED);
-        event.setPublishedAt(Instant.now());
-        event.setLastError(null);
-        repository.save(event);
+        transactionTemplate.executeWithoutResult(status -> {
+            OutboxEvent event = find(eventId);
+            event.setStatus(OutboxEventStatus.PUBLISHED);
+            event.setPublishedAt(Instant.now());
+            event.setLastError(null);
+            repository.save(event);
+        });
     }
 
     @Override
     public void markFailed(Long eventId, String errorMessage, Instant nextAttemptAt) {
-        OutboxEvent event = find(eventId);
-        event.setStatus(OutboxEventStatus.FAILED);
-        event.setAttemptCount(event.getAttemptCount() + 1);
-        event.setLastError(errorMessage);
-        event.setAvailableAt(nextAttemptAt == null ? Instant.now() : nextAttemptAt);
-        repository.save(event);
+        transactionTemplate.executeWithoutResult(status -> {
+            OutboxEvent event = find(eventId);
+            event.setStatus(OutboxEventStatus.FAILED);
+            event.setAttemptCount(event.getAttemptCount() + 1);
+            event.setLastError(errorMessage);
+            event.setAvailableAt(nextAttemptAt == null ? Instant.now() : nextAttemptAt);
+            repository.save(event);
+        });
     }
 
     @Override
@@ -137,13 +152,14 @@ public class OutboxServiceImpl implements OutboxService {
                 resolveProcessor(event).process(event);
                 markPublished(event.getId());
             } catch (RuntimeException ex) {
-                markFailed(event.getId(), ex.getMessage(), Instant.now().plusSeconds(60));
+                markFailed(event.getId(), ex.getMessage(), Instant.now().plusSeconds(RETRY_DELAY_SECONDS));
             }
         }
         return events.size();
     }
 
     @Override
+    @Transactional
     public void requeue(Long eventId) {
         OutboxEvent event = find(eventId);
         event.setStatus(OutboxEventStatus.PENDING);
@@ -153,6 +169,7 @@ public class OutboxServiceImpl implements OutboxService {
     }
 
     @Override
+    @Transactional
     public int requeueFailed(String aggregateType) {
         List<OutboxEvent> failed = repository.findByStatusInAndAvailableAtLessThanEqualOrderByCreatedAtAsc(
                 Set.of(OutboxEventStatus.FAILED),

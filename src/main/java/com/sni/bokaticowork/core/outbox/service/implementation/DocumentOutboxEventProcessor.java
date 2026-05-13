@@ -40,15 +40,13 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
                 event.getEventType(), ownerType, ownerId, documentCode);
 
         if (ownerType == null || ownerId == null) {
-            log.warn("DOCUMENT event {} missing ownerType/ownerId — skipping", event.getEventType());
-            return;
+            throw new IllegalStateException("DOCUMENT event " + event.getEventType() + " missing ownerType/ownerId");
         }
 
         OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerId(ownerType, ownerId);
         if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            log.warn("No document recipient for event={} ownerType={} ownerId={}",
-                    event.getEventType(), ownerType, ownerId);
-            return;
+            throw new IllegalStateException("No document recipient for event=" + event.getEventType()
+                    + " ownerType=" + ownerType + " ownerId=" + ownerId);
         }
 
         Map<String, Object> vars = new HashMap<>();

@@ -12,16 +12,6 @@ spring:
       hibernate:
         default_schema: public
 
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    default-schema: public
-    schemas: public
-    encoding: UTF-8
-    validate-on-migrate: true
-    clean-disabled: true
-    baseline-version: 3
-
 management:
   endpoints:
     web:

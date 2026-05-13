@@ -205,4 +205,17 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
               AND ended_at >= :now
             """)
     long countOccupiedResourcesAt(@Param("now") LocalDateTime now);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM booking
+            WHERE deleted = false
+              AND status IN ('CONFIRMED', 'IN_PROGRESS')
+              AND ended_at < :now
+              AND checked_in_at IS NULL
+              AND started_event_at IS NULL
+            ORDER BY ended_at ASC
+            LIMIT :limit
+            """)
+    List<Booking> findOverdueNoShowCandidates(@Param("now") LocalDateTime now, @Param("limit") int limit);
 }

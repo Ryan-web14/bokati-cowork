@@ -37,7 +37,7 @@ spring:
     validate-on-migrate: true
     clean-disabled: true
     baseline-on-migrate: true
-    baseline-version: 1
+    baseline-version: 94
     out-of-order: false
 
   mail:
@@ -119,7 +119,7 @@ app:
   outbox:
     worker:
       enabled: ${OUTBOX_WORKER_ENABLED:true}
-      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:10000}
+      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:2000}
       batch-size: ${OUTBOX_WORKER_BATCH_SIZE:25}
 
   kyc:

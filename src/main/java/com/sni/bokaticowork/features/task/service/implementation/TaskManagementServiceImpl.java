@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.task.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.core.richtext.RichTextSupport;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.task.dto.TaskDtos.*;
 import com.sni.bokaticowork.features.task.enums.*;
@@ -26,6 +27,7 @@ public class TaskManagementServiceImpl implements TaskManagementService {
     private final TaskChecklistRepository checklistRepository;
     private final TaskCommentRepository commentRepository;
     private final TaskMapper mapper;
+    private final RichTextSupport richTextSupport;
 
     @Override
     public TaskResponse create(CreateTaskRequest request) {
@@ -39,7 +41,7 @@ public class TaskManagementServiceImpl implements TaskManagementService {
         }
         TaskItem task = taskRepository.save(TaskItem.builder()
                 .title(request.title())
-                .description(request.description())
+                .description(richTextSupport.normalize(request.description()))
                 .assignedTo(request.assignedTo())
                 .status(TaskStatus.OPEN)
                 .priority(request.priority() == null ? TaskPriority.MEDIUM : request.priority())
@@ -100,7 +102,7 @@ public class TaskManagementServiceImpl implements TaskManagementService {
                 .task(task)
                 .authorId(request.authorId())
                 .authorName(request.authorName())
-                .comment(request.comment())
+                .comment(richTextSupport.normalize(request.comment()))
                 .build());
         return response(task);
     }
