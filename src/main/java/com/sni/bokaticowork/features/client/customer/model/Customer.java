@@ -66,6 +66,7 @@ public class Customer {
     private boolean isMember;
 
     @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
     private CustomerStatus status;
 
     @Column(name = "created_at", nullable = false)
