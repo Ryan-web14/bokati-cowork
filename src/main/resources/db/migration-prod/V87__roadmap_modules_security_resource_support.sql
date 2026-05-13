@@ -187,10 +187,6 @@ CREATE TABLE IF NOT EXISTS task_comment (
 CREATE INDEX IF NOT EXISTS idx_task_item_status_due ON task_item(status, due_at);
 CREATE INDEX IF NOT EXISTS idx_task_item_assigned_due ON task_item(assigned_to, due_at);
 
-SELECT setval(seq_name::regclass, COALESCE((SELECT MAX(id) FROM permission), 0) + 1, false)
-FROM (SELECT pg_get_serial_sequence('permission', 'id') AS seq_name) sequence_info
-WHERE seq_name IS NOT NULL;
-
 WITH perms(name, display_name, module, action) AS (
     VALUES
         ('RESOURCE_PRICE', 'Manage resource dynamic pricing', 'RESOURCE', 'PRICE'),
@@ -208,11 +204,15 @@ WITH perms(name, display_name, module, action) AS (
         ('TASK_READ', 'Read tasks', 'TASK', 'READ'),
         ('TASK_WRITE', 'Manage tasks', 'TASK', 'WRITE'),
         ('TASK_ASSIGN', 'Assign tasks', 'TASK', 'ASSIGN')
+),
+missing_perms AS (
+    SELECT *, ROW_NUMBER() OVER (ORDER BY name) AS rn
+    FROM perms
+    WHERE NOT EXISTS (SELECT 1 FROM permission p WHERE p.name = perms.name)
 )
-INSERT INTO permission(name, display_name, module, action, is_system_permission, is_active)
-SELECT name, display_name, module, action, true, true
-FROM perms
-WHERE NOT EXISTS (SELECT 1 FROM permission p WHERE p.name = perms.name);
+INSERT INTO permission(id, name, display_name, module, action, is_system_permission, is_active)
+SELECT COALESCE((SELECT MAX(id) FROM permission), 0) + rn, name, display_name, module, action, true, true
+FROM missing_perms;
 
 INSERT INTO role_permission(role_id, permission_id, created_by, is_active)
 SELECT r.id, p.id, 'SYSTEM', true
