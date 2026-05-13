@@ -33,15 +33,19 @@ public class DocumentStorageService {
             @Value("${app.document.storage.minio.endpoint:http://localhost:9000}") String minioEndpoint,
             @Value("${app.document.storage.minio.bucket:bokati-documents}") String minioBucket,
             @Value("${app.document.storage.minio.access-key:minioadmin}") String minioAccessKey,
-            @Value("${app.document.storage.minio.secret-key:minioadmin}") String minioSecretKey
+            @Value("${app.document.storage.minio.secret-key:minioadmin}") String minioSecretKey,
+            @Value("${app.document.storage.minio.region:}") String minioRegion
     ) {
         this.provider = normalizeProvider(provider);
         this.rootPath = Path.of(rootPath).toAbsolutePath().normalize();
         this.minioBucket = minioBucket;
-        this.minioClient = MinioClient.builder()
+        MinioClient.Builder builder = MinioClient.builder()
                 .endpoint(minioEndpoint)
-                .credentials(minioAccessKey, minioSecretKey)
-                .build();
+                .credentials(minioAccessKey, minioSecretKey);
+        if (StringUtils.hasText(minioRegion)) {
+            builder.region(minioRegion);
+        }
+        this.minioClient = builder.build();
     }
 
     public StoredDocument store(String ownerFolder, String documentCode, int versionNumber, MultipartFile file) {
@@ -123,7 +127,12 @@ public class DocumentStorageService {
     private void ensureBucket() throws Exception {
         boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(minioBucket).build());
         if (!exists) {
-            minioClient.makeBucket(MakeBucketArgs.builder().bucket(minioBucket).build());
+            // Skip auto-create on managed S3 providers (e.g. Bucketeer) where the bucket
+            // is pre-created and IAM credentials don't have s3:CreateBucket permission.
+            // Only attempt creation when running against a self-hosted MinIO instance.
+            if (!provider.equals("S3")) {
+                minioClient.makeBucket(MakeBucketArgs.builder().bucket(minioBucket).build());
+            }
         }
     }
 
