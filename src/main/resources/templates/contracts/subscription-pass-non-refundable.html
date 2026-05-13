@@ -179,6 +179,9 @@ body {
 .signature-label { font-size: 7.5px; font-weight: 700; color: var(--slate); text-transform: uppercase; letter-spacing: 0.8px; }
 .signature-sub   { font-size: 8px; color: var(--slate-light); margin-bottom: 4px; font-style: italic; }
 .signature-line  { border-bottom: 1.5px solid var(--border); min-height: 46px; }
+.signature-line.signed { border: 1.5px solid var(--gold); background: var(--gold-pale); border-radius: 2px; padding: 8px 10px; }
+.system-signature { font-size: 12px; font-weight: 700; color: var(--plum); letter-spacing: 0.8px; text-transform: uppercase; }
+.system-signature-meta { font-size: 7.5px; color: var(--slate); margin-top: 2px; }
 .signature-caption { font-size: 7.5px; color: var(--slate-light); margin-top: 3px; }
 
 .doc-footer {
@@ -195,7 +198,7 @@ body {
 <div class="doc-header">
   <div class="header-inner">
     <div>
-      <div class="brand-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+      <div class="brand-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
       <div class="brand-sub">Espace de coworking &amp; services aux entreprises</div>
     </div>
     <div class="doc-title-block">
@@ -239,10 +242,10 @@ body {
     <div class="partie-card">
       <div class="partie-head">Opérateur <span class="tag">Prestataire</span></div>
       <div class="partie-body">
-        <div class="p-name" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
+        <div class="p-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
         <div class="p-line" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
         <div class="p-line" th:if="${business != null and business.code != null}" th:text="${business.code}">BUS-001</div>
-        <div class="p-line" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@bokati.com</div>
+        <div class="p-line" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@elleaose.com</div>
         <div class="p-line" th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
       </div>
     </div>
@@ -316,15 +319,22 @@ body {
     </div>
     <div class="signature-block">
       <div class="signature-label">Signature opérateur</div>
-      <div class="signature-sub">Représentant habilité</div>
-      <div class="signature-line"></div>
-      <div class="signature-caption" th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</div>
-      <div class="signature-caption">Date : _____ / _____ / _________</div>
+      <div class="signature-sub" th:text="${variables != null and variables['operatorSignatureRole'] != null ? variables['operatorSignatureRole'] : 'Représentant habilité'}">Représentant habilité</div>
+      <div class="signature-line" th:classappend="${variables != null and variables['operatorSignatureName'] != null} ? ' signed' : ''">
+        <div class="system-signature" th:if="${variables != null and variables['operatorSignatureName'] != null}" th:text="${variables['operatorSignatureName']}">ELLE A OSE</div>
+        <div class="system-signature-meta" th:if="${variables != null and variables['operatorSignatureName'] != null}">Signé automatiquement par le système</div>
+      </div>
+      <div class="signature-caption" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
+      <div class="signature-caption"
+           th:if="${variables != null and variables['operatorSignedAt'] != null}"
+           th:text="${'Date : ' + variables['operatorSignedAt']}">Date : 2026-01-01</div>
+      <div class="signature-caption"
+           th:unless="${variables != null and variables['operatorSignedAt'] != null}">Date : _____ / _____ / _________</div>
     </div>
   </div>
 
   <div class="doc-footer">
-    <span th:text="${business != null ? business.name : 'Bokati Cowork'}">Bokati Cowork</span>
+    <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</span>
     &nbsp;·&nbsp; Souscription / Pass — Non remboursable &nbsp;·&nbsp;
     Généré le <span th:text="${generatedAt}">2026-01-01</span>
     &nbsp;·&nbsp; Document confidentiel — conserver précieusement

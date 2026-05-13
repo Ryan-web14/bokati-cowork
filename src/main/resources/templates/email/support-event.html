@@ -70,6 +70,15 @@
         .message-bubble { background: #f0eef5; border-radius: 0 8px 8px 8px; padding: 12px 14px; font-size: 13px; color: #3d2f52; line-height: 1.7; position: relative; }
         .message-bubble.agent { background: #fffdf7; border: 1px solid #e8e0f0; border-left: 3px solid #c9a84c; border-radius: 0 8px 8px 8px; }
         .message-bubble.client { background: #f0eef5; border-left: 3px solid #8b5cf6; border-radius: 0 8px 8px 8px; }
+        .message-bubble p { margin: 0 0 9px; }
+        .message-bubble p:last-child { margin-bottom: 0; }
+        .message-bubble ul,
+        .message-bubble ol { margin: 8px 0 8px 18px; padding: 0; }
+        .message-bubble li { margin: 3px 0; }
+        .message-bubble blockquote { margin: 8px 0; padding: 6px 10px; border-left: 3px solid #c9a84c; background: rgba(255,255,255,.55); color: #5c4f6e; }
+        .message-bubble pre { white-space: pre-wrap; margin: 8px 0; padding: 8px; border-radius: 3px; background: #1a0a2e; color: #fff; font-size: 12px; }
+        .message-bubble code { font-family: monospace; background: rgba(26,10,46,.08); padding: 1px 4px; border-radius: 2px; }
+        .message-bubble a { color: #4c1d95; font-weight: 700; }
 
         /* ── Alerte SLA ── */
         .sla-alert { background: #fff5f5; border: 1px solid #fecaca; border-radius: 4px; overflow: hidden; margin-bottom: 18px; }
@@ -225,16 +234,17 @@
             </div>
 
             <!-- ═══════════════════════════════════════════════════ -->
-            <!-- Message — AGENT_MESSAGE ou CLIENT_MESSAGE           -->
+            <!-- Description / message rich text                     -->
             <!-- ═══════════════════════════════════════════════════ -->
             <div class="message-section"
-                 th:if="${eventType == 'AGENT_MESSAGE' or eventType == 'CLIENT_MESSAGE'}">
-                <div class="message-from"
-                     th:text="${eventType == 'AGENT_MESSAGE'} ? |Réponse de ${agentName ?: 'notre équipe'}| : |Message de ${clientName ?: 'votre client'}|">
-                    De
+                 th:if="${messageContentHtml != null and !#strings.isEmpty(messageContentHtml) and (eventType == 'TICKET_CREATED' or eventType == 'AGENT_MESSAGE' or eventType == 'CLIENT_MESSAGE')}">
+                <div class="message-from" th:switch="${eventType}">
+                    <span th:case="'TICKET_CREATED'">Description du ticket</span>
+                    <span th:case="'AGENT_MESSAGE'" th:text="|Réponse de ${agentName ?: 'notre équipe'}|">Réponse de notre équipe</span>
+                    <span th:case="'CLIENT_MESSAGE'" th:text="|Message de ${clientName ?: 'votre client'}|">Message client</span>
                 </div>
-                <div th:class="${eventType == 'AGENT_MESSAGE'} ? 'message-bubble agent' : 'message-bubble client'"
-                     th:text="${messageContent}">
+                <div th:class="${eventType == 'CLIENT_MESSAGE'} ? 'message-bubble client' : 'message-bubble agent'"
+                     th:utext="${messageContentHtml}">
                     Contenu du message
                 </div>
             </div>

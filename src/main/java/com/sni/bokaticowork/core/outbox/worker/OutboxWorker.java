@@ -20,7 +20,7 @@ public class OutboxWorker {
     @Value("${app.outbox.worker.batch-size:25}")
     private int batchSize;
 
-    @Scheduled(fixedDelayString = "${app.outbox.worker.fixed-delay-ms:10000}")
+    @Scheduled(fixedDelayString = "${app.outbox.worker.fixed-delay-ms:2000}")
     public void process() {
         if (!enabled) {
             return;

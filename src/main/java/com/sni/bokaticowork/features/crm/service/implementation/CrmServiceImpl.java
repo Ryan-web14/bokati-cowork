@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.crm.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.core.richtext.RichTextSupport;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentLineRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
@@ -45,6 +46,7 @@ public class CrmServiceImpl implements CrmService {
     private final LeadActivityRepository activityRepository;
     private final OpportunityRepository opportunityRepository;
     private final CrmMapper mapper;
+    private final RichTextSupport richTextSupport;
     @Lazy private final CrmEmailService emailService;
     @Lazy private final BillingDocumentService billingDocumentService;
 
@@ -192,7 +194,7 @@ public class CrmServiceImpl implements CrmService {
                 .lead(lead)
                 .activityType(request.activityType())
                 .subject(trim(request.subject()))
-                .notes(trim(request.notes()))
+                .notes(richTextSupport.normalize(request.notes()))
                 .performedBy(trim(request.performedBy()))
                 .performedAt(request.performedAt())
                 .build());
@@ -258,7 +260,7 @@ public class CrmServiceImpl implements CrmService {
                 .lead(lead)
                 .activityType(LeadActivityType.NOTE)
                 .subject("Devis généré")
-                .notes("Devis " + quote.documentNumber() + " généré automatiquement")
+                .notes(richTextSupport.normalize("Devis " + quote.documentNumber() + " généré automatiquement"))
                 .performedBy(trim(request.performedBy()))
                 .build());
         lead.setLastActivityAt(Instant.now());

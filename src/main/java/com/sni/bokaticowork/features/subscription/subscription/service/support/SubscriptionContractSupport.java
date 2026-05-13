@@ -74,7 +74,7 @@ public class SubscriptionContractSupport {
                 subscription.getCurrentPeriodEnd(),
                 owner,
                 policy.clauses(),
-                Map.of(
+                withSystemOperatorSignature(Map.of(
                         "contractPolicyCode", policy.code(),
                         "sourceType", "SUBSCRIPTION",
                         "subscriptionNumber", subscription.getSubscriptionNumber(),
@@ -83,7 +83,7 @@ public class SubscriptionContractSupport {
                         "billingCycle", subscription.getBillingCycle() == null ? "" : subscription.getBillingCycle().name(),
                         "currency", nullSafe(subscription.getCurrency()),
                         "totalAmount", amount(subscription.getTotalAmount())
-                )
+                ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
         return contractService.markSigned(contract.getContractCode(), document.getCode()).getContractCode();
@@ -124,7 +124,7 @@ public class SubscriptionContractSupport {
                 addon.getEndsAt(),
                 owner,
                 policy.clauses(),
-                Map.of(
+                withSystemOperatorSignature(Map.of(
                         "contractPolicyCode", policy.code(),
                         "sourceType", "SUBSCRIPTION_ADDON",
                         "subscriptionNumber", subscription.getSubscriptionNumber(),
@@ -134,7 +134,7 @@ public class SubscriptionContractSupport {
                         "quantity", addon.getQuantity() == null ? "" : String.valueOf(addon.getQuantity()),
                         "currency", nullSafe(addon.getCurrency()),
                         "unitPrice", amount(addon.getUnitPrice())
-                )
+                ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
         return contractService.markSigned(contract.getContractCode(), document.getCode()).getContractCode();
@@ -176,7 +176,7 @@ public class SubscriptionContractSupport {
                 endDate,
                 owner,
                 policy.clauses(),
-                Map.of(
+                withSystemOperatorSignature(Map.of(
                         "contractPolicyCode", policy.code(),
                         "sourceType", "PASS",
                         "passNumber", pass.getPassNumber(),
@@ -184,7 +184,7 @@ public class SubscriptionContractSupport {
                         "subscriptionNumber", pass.getSubscription() == null ? "" : pass.getSubscription().getSubscriptionNumber(),
                         "planCode", planCode(pass.getPlanVersion()),
                         "planVersion", planVersion(pass.getPlanVersion())
-                )
+                ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
         return contractService.markSigned(contract.getContractCode(), document.getCode()).getContractCode();
@@ -403,6 +403,15 @@ public class SubscriptionContractSupport {
 
     private String nullSafe(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private Map<String, String> withSystemOperatorSignature(Map<String, String> variables) {
+        Map<String, String> enriched = new java.util.LinkedHashMap<>(variables);
+        enriched.put("operatorName", "ELLE A OSE");
+        enriched.put("operatorSignatureName", "ELLE A OSE");
+        enriched.put("operatorSignatureRole", "Signature automatique du système");
+        enriched.put("operatorSignedAt", LocalDate.now().toString());
+        return enriched;
     }
 
     private record OwnerContractView(String displayName, String email, String phone) {

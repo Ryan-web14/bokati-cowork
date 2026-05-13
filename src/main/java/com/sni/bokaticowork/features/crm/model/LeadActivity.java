@@ -22,6 +22,7 @@ public class LeadActivity {
     @Enumerated(EnumType.STRING)
     private LeadActivityType activityType;
     private String subject;
+    @Column(columnDefinition = "TEXT")
     private String notes;
     private String performedBy;
     private Instant performedAt;

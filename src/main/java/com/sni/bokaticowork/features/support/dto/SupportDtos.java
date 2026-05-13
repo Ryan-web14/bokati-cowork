@@ -39,7 +39,7 @@ public class SupportDtos {
             Boolean internal
     ) {}
 
-    public record AssignTicketRequest(Long assignedTo) {}
+    public record AssignTicketRequest(String assignedTo) {}
 
     public record UpdateTicketStatusRequest(TicketStatus status) {}
 

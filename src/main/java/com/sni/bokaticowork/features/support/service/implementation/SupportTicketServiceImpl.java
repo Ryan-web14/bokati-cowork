@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.support.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.core.richtext.RichTextSupport;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.support.dto.SupportDtos.*;
 import com.sni.bokaticowork.features.support.enums.*;
@@ -12,6 +13,8 @@ import com.sni.bokaticowork.features.support.repository.SupportTicketRepository;
 import com.sni.bokaticowork.features.support.repository.TicketMessageRepository;
 import com.sni.bokaticowork.features.support.service.interfaces.SupportEmailService;
 import com.sni.bokaticowork.features.support.service.interfaces.SupportTicketService;
+import com.sni.bokaticowork.security.admin.user.model.Users;
+import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +36,8 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     private final SupportTicketRepository ticketRepository;
     private final TicketMessageRepository messageRepository;
     private final SupportTicketMapper mapper;
+    private final RichTextSupport richTextSupport;
+    private final UserService userService;
     @Lazy private final SupportEmailService emailService;
 
     // ── Création ─────────────────────────────────────────────────
@@ -46,7 +51,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         SupportTicket ticket = SupportTicket.builder()
                 .ticketNumber("TCK-" + Instant.now().toEpochMilli())
                 .title(request.title().trim())
-                .description(request.description())
+                .description(richTextSupport.normalize(request.description()))
                 .status(TicketStatus.OPEN)
                 .priority(priority)
                 .category(request.category() == null ? TicketCategory.OTHER : request.category())
@@ -99,7 +104,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     public SupportTicketResponse assign(String ticketNumber, AssignTicketRequest request) {
         SupportTicket ticket = getTicket(ticketNumber);
         Long previousAgent = ticket.getAssignedTo();
-        ticket.setAssignedTo(request == null ? null : request.assignedTo());
+        ticket.setAssignedTo(resolveAssignedTo(request));
         if (ticket.getStatus() == TicketStatus.OPEN && ticket.getAssignedTo() != null) {
             ticket.setStatus(TicketStatus.IN_PROGRESS);
         }
@@ -269,9 +274,28 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                 .senderType(senderType)
                 .senderId(senderId)
                 .senderName(senderName)
-                .message(message)
+                .message(richTextSupport.normalize(message))
                 .internal(internal)
                 .build());
+    }
+
+    private Long resolveAssignedTo(AssignTicketRequest request) {
+        if (request == null || !StringUtils.hasText(request.assignedTo())) {
+            return null;
+        }
+        String value = request.assignedTo().trim();
+        if (value.matches("\\d+")) {
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException ex) {
+                throw new BadRequestException("Assigned agent id is invalid");
+            }
+        }
+        if (!value.contains("@")) {
+            throw new BadRequestException("Assigned agent must be a user id or email");
+        }
+        Users user = userService.getUserByEmailForService(value);
+        return user.getId();
     }
 
     private Map<String, Long> toMap(List<Object[]> rows) {

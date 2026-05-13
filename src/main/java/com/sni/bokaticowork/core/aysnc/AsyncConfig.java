@@ -27,6 +27,19 @@ public class AsyncConfig implements AsyncConfigurer {
         return executor;
     }
 
+    @Bean(name = "contractGenerationExecutor")
+    public Executor contractGenerationExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("contract-generation-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(60);
+        executor.initialize();
+        return executor;
+    }
+
     // Logs toutes les exceptions non catchées des méthodes @Async void
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {

@@ -28,7 +28,7 @@ public class TicketMessage {
     private String senderId;
     private String senderName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
     @Column(name = "internal", nullable = false)

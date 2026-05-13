@@ -40,15 +40,13 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
                 event.getEventType(), ownerType, ownerCode, documentCode);
 
         if (ownerType == null || !StringUtils.hasText(ownerCode)) {
-            log.warn("CONTRACT event {} missing ownerType/ownerCode — skipping", event.getEventType());
-            return;
+            throw new IllegalStateException("CONTRACT event " + event.getEventType() + " missing ownerType/ownerCode");
         }
 
         OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerCode(ownerType, ownerCode);
         if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            log.warn("No contract recipient for event={} ownerType={} ownerCode={}",
-                    event.getEventType(), ownerType, ownerCode);
-            return;
+            throw new IllegalStateException("No contract recipient for event=" + event.getEventType()
+                    + " ownerType=" + ownerType + " ownerCode=" + ownerCode);
         }
 
         Map<String, Object> vars = new HashMap<>();

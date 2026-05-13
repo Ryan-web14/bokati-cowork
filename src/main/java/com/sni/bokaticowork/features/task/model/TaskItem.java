@@ -19,6 +19,7 @@ public class TaskItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String title;
+    @Column(columnDefinition = "TEXT")
     private String description;
     private Long assignedTo;
     @Enumerated(EnumType.STRING)

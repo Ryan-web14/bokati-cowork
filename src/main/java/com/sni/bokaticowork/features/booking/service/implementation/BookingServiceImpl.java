@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.booking.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
+import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.utils.code.CodeComposer;
@@ -30,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -259,6 +262,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse start(String bookingNumber, BookingStatusChangeRequest request) {
         Booking booking = getForService(bookingNumber);
         requireStatus(booking, BookingStatus.CONFIRMED);
+        assertActivationAllowed(booking, "start");
         BookingStatus from = booking.getStatus();
         booking.setStatus(BookingStatus.IN_PROGRESS);
         booking.setStartedEventAt(Instant.now());
@@ -307,22 +311,22 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse noShow(String bookingNumber, BookingStatusChangeRequest request) {
-        Booking booking = getForService(bookingNumber);
-        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
-            throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
+        return bookingMapper.toResponse(markNoShowInternal(getForService(bookingNumber), request));
+    }
+
+    @Override
+    public int markOverdueNoShows(int limit) {
+        int resolvedLimit = Math.max(1, limit);
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> candidates = bookingRepository.findOverdueNoShowCandidates(now, resolvedLimit);
+        int marked = 0;
+        for (Booking booking : candidates) {
+            if (isOverdueNoShowCandidate(booking, now)) {
+                markNoShowInternal(booking, new BookingStatusChangeRequest("SYSTEM", "Automatic no-show: booking ended without check-in or admin start", Boolean.FALSE));
+                marked++;
+            }
         }
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
-            entitlementBridge.consume(booking, entitlementQuantity(booking));
-            eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "No-show entitlement was consumed", null);
-        }
-        BookingStatus from = booking.getStatus();
-        booking.setStatus(BookingStatus.NO_SHOW);
-        booking.setCompletedAt(Instant.now());
-        booking = bookingRepository.save(booking);
-        writeHistory(booking, from, BookingStatus.NO_SHOW, changedBy(request), reason(request, "No-show"));
-        eventWriter.write(booking, BookingEventType.BOOKING_NO_SHOW, "Booking no-show", "Booking was marked as no-show", null);
-        notifyIfRequested(booking, BookingEventType.BOOKING_NO_SHOW, request);
-        return bookingMapper.toResponse(booking);
+        return marked;
     }
 
     @Override
@@ -345,6 +349,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be checked in");
         }
+        assertActivationAllowed(booking, "check in");
         booking.setCheckedInAt(Instant.now());
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
             booking.setStatus(BookingStatus.IN_PROGRESS);
@@ -456,6 +461,24 @@ public class BookingServiceImpl implements BookingService {
         return booking;
     }
 
+    private Booking markNoShowInternal(Booking booking, BookingStatusChangeRequest request) {
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
+            throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
+        }
+        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
+            entitlementBridge.consume(booking, entitlementQuantity(booking));
+            eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "No-show entitlement was consumed", null);
+        }
+        BookingStatus from = booking.getStatus();
+        booking.setStatus(BookingStatus.NO_SHOW);
+        booking.setCompletedAt(Instant.now());
+        booking = bookingRepository.save(booking);
+        writeHistory(booking, from, BookingStatus.NO_SHOW, changedBy(request), reason(request, "No-show"));
+        eventWriter.write(booking, BookingEventType.BOOKING_NO_SHOW, "Booking no-show", "Booking was marked as no-show", null);
+        notifyIfRequested(booking, BookingEventType.BOOKING_NO_SHOW, request);
+        return booking;
+    }
+
     private void reserveResource(Booking booking) {
         resourceAvailabilityService.reserve(ReserveResourceAvailabilityRequest.builder()
                 .resourceCode(booking.getResource().getCode())
@@ -546,6 +569,33 @@ public class BookingServiceImpl implements BookingService {
         if (LocalDateTime.now().plusMinutes(policy.getCancellationNoticeMinutes()).isAfter(booking.getStartedAt())) {
             throw new ConflictException("booking", "cancellation notice is not respected");
         }
+    }
+
+    private void assertActivationAllowed(Booking booking, String action) {
+        if (isCurrentUserAdmin()) {
+            return;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(booking.getStartedAt()) || !now.isBefore(booking.getEndedAt())) {
+            throw new ForbiddenException("Only admins can " + action + " a booking outside its scheduled time window");
+        }
+    }
+
+    private boolean isCurrentUserAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority())
+                        || "ROLE_SUPER_ADMIN".equals(authority.getAuthority()));
+    }
+
+    private boolean isOverdueNoShowCandidate(Booking booking, LocalDateTime now) {
+        return (booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.IN_PROGRESS)
+                && booking.getEndedAt().isBefore(now)
+                && booking.getCheckedInAt() == null
+                && booking.getStartedEventAt() == null;
     }
 
     private Booking getForService(String bookingNumber) {

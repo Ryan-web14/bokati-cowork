@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -18,6 +19,18 @@ public interface SubscriptionAddonRepository extends JpaRepository<SubscriptionA
     List<SubscriptionAddon> findAllBySubscriptionId(@Param("subscriptionId") Long subscriptionId);
 
     List<SubscriptionAddon> findAllByContractCode(String contractCode);
+
+    @Query(nativeQuery = true, value = """
+            SELECT id
+            FROM subscription_addon
+            WHERE contract_code IS NULL
+              AND created_at <= :createdBefore
+              AND status NOT IN ('CANCELLED', 'EXPIRED')
+            ORDER BY created_at ASC
+            LIMIT :limit
+            """)
+    List<Long> findIdsMissingContract(@Param("createdBefore") Instant createdBefore,
+                                      @Param("limit") int limit);
 
     @Modifying
     @Query(nativeQuery = true, value = """

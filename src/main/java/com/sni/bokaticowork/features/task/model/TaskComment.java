@@ -20,6 +20,7 @@ public class TaskComment {
     private TaskItem task;
     private String authorId;
     private String authorName;
+    @Column(columnDefinition = "TEXT")
     private String comment;
     private Instant createdAt;
 
