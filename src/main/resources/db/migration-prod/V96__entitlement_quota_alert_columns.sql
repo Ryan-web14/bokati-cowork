@@ -1,0 +1,3 @@
+ALTER TABLE entitlement_grant
+    ADD COLUMN IF NOT EXISTS alert_80_sent_at  TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS alert_100_sent_at TIMESTAMPTZ;

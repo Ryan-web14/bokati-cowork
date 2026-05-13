@@ -1,0 +1,2 @@
+ALTER TABLE booking_participant
+ADD COLUMN IF NOT EXISTS phone VARCHAR(30);

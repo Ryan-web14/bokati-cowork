@@ -1,0 +1,5 @@
+ALTER TABLE document DROP CONSTRAINT IF EXISTS document_status_check;
+
+ALTER TABLE document
+    ADD CONSTRAINT document_status_check
+        CHECK (status IN ('DRAFT','UPLOADED','PENDING_REVIEW','APPROVED','REJECTED','SIGNED','EXPIRED','ARCHIVED','SUPERSEDED'));

@@ -1,0 +1,2 @@
+ALTER TABLE business_entity
+    ADD COLUMN IF NOT EXISTS tax_id VARCHAR(120);
