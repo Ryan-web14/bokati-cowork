@@ -30,7 +30,7 @@ public class MemberProfileServiceImpl implements MemberProfileService {
 
         MemberProfile profile = MemberProfile.builder()
                 .member(member)
-                .profilePictureUrl(null)
+                //.profilePictureUrl(null)
                 .jobTitle(trimToNull(request.getJobTitle()))
                 .birthDate(request.getBirthDate())
                 .address(trimToNull(request.getAddress()))

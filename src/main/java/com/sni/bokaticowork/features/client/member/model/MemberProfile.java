@@ -26,8 +26,8 @@ public class MemberProfile {
     @JoinColumn(name = "member_id",foreignKey = @ForeignKey(name = "fk_member"),unique = true, nullable = false)
     private Member member;
 
-    @Column(name = "profile_picture_url")
-    private String profilePictureUrl;
+//    @Column(name = "profile_picture_url")
+//    private String profilePictureUrl;
 
     @Column(name = "job_title")
     private String jobTitle;
