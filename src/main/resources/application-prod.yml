@@ -40,7 +40,7 @@ spring:
 
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    locations: classpath:db/migration-prod
     default-schema: public
     schemas: public
     encoding: UTF-8
@@ -121,7 +121,7 @@ app:
   outbox:
     worker:
       enabled: ${OUTBOX_WORKER_ENABLED:true}
-      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:10000}
+      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:2000}
       batch-size: ${OUTBOX_WORKER_BATCH_SIZE:25}
 
   kyc:
