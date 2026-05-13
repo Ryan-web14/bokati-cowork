@@ -190,6 +190,7 @@ CREATE TABLE IF NOT EXISTS customer (
     address_id BIGINT NOT NULL,
     company_name VARCHAR(150),
     billing_email VARCHAR(150),
+    email VARCHAR(200),
     phone VARCHAR(30),
     whatsapp_phone VARCHAR(12),
     status VARCHAR(20) NOT NULL,
