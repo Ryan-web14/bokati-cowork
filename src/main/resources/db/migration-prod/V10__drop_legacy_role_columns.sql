@@ -1,0 +1,3 @@
+-- Suppressed for production.
+-- V3 already creates role_permission and role_user with role_id/permission_id/user_id.
+-- No legacy columns (role, permission, user) exist on a fresh database; nothing to drop.
