@@ -48,6 +48,9 @@ public class Document {
     @JoinColumn(name = "document_type_id", foreignKey = @ForeignKey(name = "fk_document_type"), nullable = false)
     private DocumentType documentType;
 
+    @Column(name = "type_code", length = 50)
+    private String typeCode;
+
     @Column(name = "title", nullable = false, length = 300)
     private String title;
 
@@ -102,10 +105,16 @@ public class Document {
         updatedAt = updatedAt == null ? now : updatedAt;
         currentVersionNumber = currentVersionNumber == null ? 0 : currentVersionNumber;
         deleted = deleted == null ? false : deleted;
+        if (typeCode == null && documentType != null) {
+            typeCode = documentType.getCode();
+        }
     }
 
     @PreUpdate
     public void preUpdate() {
         updatedAt = Instant.now();
+        if (typeCode == null && documentType != null) {
+            typeCode = documentType.getCode();
+        }
     }
 }
