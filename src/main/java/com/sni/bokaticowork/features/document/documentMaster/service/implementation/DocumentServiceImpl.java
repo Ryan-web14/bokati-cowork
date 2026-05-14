@@ -204,6 +204,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse approve(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
+        assertReviewable(document);
         document.setStatus(DocumentStatus.APPROVED);
         documentRepository.save(document);
         saveReview(document, request, DocumentReviewStatus.APPROVED);
@@ -216,6 +217,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse reject(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
+        assertReviewable(document);
         document.setStatus(DocumentStatus.REJECTED);
         documentRepository.save(document);
         saveReview(document, request, DocumentReviewStatus.REJECTED);
@@ -224,6 +226,15 @@ public class DocumentServiceImpl implements DocumentService {
         rejectionCascadeService.cascade(document, request.getReviewedBy(), rejectionReason(request));
         publishDocumentEvent("DOCUMENT_REJECTED", document, request.getReviewedBy());
         return getByCode(documentCode);
+    }
+
+    private void assertReviewable(Document document) {
+        DocumentStatus status = document.getStatus();
+        if (status == DocumentStatus.PENDING_REVIEW || status == DocumentStatus.UPLOADED) {
+            return;
+        }
+        throw new BadRequestException(
+                "Document " + document.getCode() + " cannot be reviewed in its current status: " + status);
     }
 
     @Override
