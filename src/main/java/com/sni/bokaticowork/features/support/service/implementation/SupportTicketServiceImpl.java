@@ -149,6 +149,9 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         TicketSenderType senderType = request.senderType() == null ? TicketSenderType.AGENT : request.senderType();
         boolean isInternal = Boolean.TRUE.equals(request.internal());
 
+        boolean wasClosedBeforeMessage = senderType == TicketSenderType.CLIENT
+                && ticket.getStatus() == TicketStatus.CLOSED;
+
         TicketMessage message = saveMessage(ticket, senderType, request.senderId(),
                 request.senderName(), request.content(), isInternal);
 
@@ -158,15 +161,27 @@ public class SupportTicketServiceImpl implements SupportTicketService {
             ticketRepository.save(ticket);
         }
         if (senderType == TicketSenderType.CLIENT) {
-            ticket.setStatus(TicketStatus.IN_PROGRESS);
-            ticketRepository.save(ticket);
+            if (wasClosedBeforeMessage) {
+                ticket.setStatus(ticket.getAssignedTo() != null ? TicketStatus.IN_PROGRESS : TicketStatus.OPEN);
+                ticket.setClosedAt(null);
+                ticket.setResolvedAt(null);
+                ticketRepository.save(ticket);
+                emailService.sendTicketReopened(ticket);
+            } else {
+                ticket.setStatus(TicketStatus.IN_PROGRESS);
+                ticketRepository.save(ticket);
+            }
         }
 
         if (!isInternal) {
             if (senderType == TicketSenderType.AGENT) {
                 emailService.sendAgentMessage(ticket, message);
             } else if (senderType == TicketSenderType.CLIENT) {
-                emailService.sendClientMessage(ticket, message);
+                if (wasClosedBeforeMessage) {
+                    emailService.sendTicketReopenedToAgent(ticket, message);
+                } else {
+                    emailService.sendClientMessage(ticket, message);
+                }
             }
         }
 

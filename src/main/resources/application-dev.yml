@@ -78,6 +78,13 @@ management:
         enabled: false
 
 bokati:
+  support:
+    sender-email: ${SUPPORT_SENDER_EMAIL:support@elleaose.com}
+    manager-email: ${SUPPORT_MANAGER_EMAIL:support@bokaticowork.com}
+    inbound-poll-delay-ms: ${SUPPORT_INBOUND_POLL_DELAY_MS:60000}
+    csat-check-delay-ms: ${SUPPORT_CSAT_CHECK_DELAY_MS:3600000}
+    sla-check-delay-ms: ${SUPPORT_SLA_CHECK_DELAY_MS:3600000}
+
   payment:
     cash-session:
       auto-limit: ${CASH_SESSION_AUTO_LIMIT:10000000}

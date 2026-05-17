@@ -8,6 +8,8 @@ public interface SupportEmailService {
     void sendAgentMessage(SupportTicket ticket, TicketMessage message);
     void sendClientMessage(SupportTicket ticket, TicketMessage message);
     void sendTicketResolved(SupportTicket ticket);
+    void sendTicketReopened(SupportTicket ticket);
+    void sendTicketReopenedToAgent(SupportTicket ticket, TicketMessage message);
     void sendSlaBreachAlert(SupportTicket ticket, String breachType);
     void sendCsatRequest(SupportTicket ticket);
 }

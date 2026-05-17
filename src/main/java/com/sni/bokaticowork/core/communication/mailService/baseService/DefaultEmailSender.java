@@ -109,6 +109,21 @@ public class DefaultEmailSender {
         return delivery;
     }
 
+    public EmailDeliveryResponse queueEmail(String from,
+                                            String to,
+                                            String subject,
+                                            String content,
+                                            boolean html,
+                                            String relatedType,
+                                            String relatedCode) {
+        EmailDeliveryResponse delivery = deliveryTracker.queue(
+                providerName(), from, to, subject,
+                html ? BODY_TYPE_HTML : BODY_TYPE_TEXT,
+                content, relatedType, relatedCode);
+        CompletableFuture.runAsync(() -> processQueued(delivery.emailNumber()), taskExecutor);
+        return delivery;
+    }
+
     public EmailDeliveryResponse retry(String emailNumber) {
         EmailDeliveryResponse delivery = deliveryTracker.resetForRetry(emailNumber);
         CompletableFuture.runAsync(() -> processQueued(emailNumber), taskExecutor);
@@ -154,6 +169,7 @@ public class DefaultEmailSender {
         EmailDeliveryLog delivery = deliveryTracker.markSending(emailNumber);
         try {
             boolean sent = sendWithGraphInlineImage(
+                    resolveDeliverySender(delivery),
                     delivery.getRecipientEmail(),
                     delivery.getSubject(),
                     delivery.getBodyContent(),
@@ -177,6 +193,7 @@ public class DefaultEmailSender {
         EmailDeliveryLog delivery = deliveryTracker.markSending(emailNumber);
         try {
             boolean sent = sendWithGraphPdfAttachment(
+                    resolveDeliverySender(delivery),
                     delivery.getRecipientEmail(),
                     delivery.getSubject(),
                     delivery.getBodyContent(),
@@ -196,14 +213,13 @@ public class DefaultEmailSender {
         }
     }
 
-    private boolean sendNow(EmailDeliveryLog delivery) throws MessagingException {
+    private boolean sendNow(EmailDeliveryLog delivery) {
         boolean html = BODY_TYPE_HTML.equalsIgnoreCase(delivery.getBodyType());
-            return sendWithGraph(delivery.getRecipientEmail(), delivery.getSubject(), delivery.getBodyContent(), html);
+        return sendWithGraph(resolveDeliverySender(delivery), delivery.getRecipientEmail(), delivery.getSubject(), delivery.getBodyContent(), html);
+    }
 
-//        if (html) {
-//            return sendHtmlWithSmtp(delivery.getRecipientEmail(), delivery.getSubject(), delivery.getBodyContent());
-//        }
-        //return sendTextWithSmtp(delivery.getRecipientEmail(), delivery.getSubject(), delivery.getBodyContent());
+    private String resolveDeliverySender(EmailDeliveryLog delivery) {
+        return StringUtils.hasText(delivery.getFromEmail()) ? delivery.getFromEmail() : resolveOutboundMailboxEmail();
     }
 
     /**
@@ -212,7 +228,7 @@ public class DefaultEmailSender {
      * Lance une exception si l'envoi échoue → l'outbox peut retenter.
      */
     public boolean sendHtmlEmailBlocking(String to, String subject, String content) {
-        return sendWithGraph(to, subject, content, true);
+        return sendWithGraph(resolveOutboundMailboxEmail(), to, subject, content, true);
     }
 
     public boolean sendHtmlEmailWithPdfAttachmentBlocking(String to,
@@ -220,7 +236,7 @@ public class DefaultEmailSender {
                                                           String content,
                                                           String attachmentName,
                                                           byte[] attachmentBytes) {
-        return sendWithGraphPdfAttachment(to, subject, content, attachmentName, attachmentBytes);
+        return sendWithGraphPdfAttachment(resolveOutboundMailboxEmail(), to, subject, content, attachmentName, attachmentBytes);
     }
 
     private boolean sendTextWithSmtp(String to, String subject, String content) {
@@ -267,9 +283,8 @@ public class DefaultEmailSender {
         }
     }
 
-    private boolean sendWithGraph(String to, String subject, String content, boolean html) {
+    private boolean sendWithGraph(String sender, String to, String subject, String content, boolean html) {
         try {
-            String sender = resolveOutboundMailboxEmail();
             SendMailPostRequestBody requestBody = new SendMailPostRequestBody();
             requestBody.setMessage(message(to, subject, content, html));
             requestBody.setSaveToSentItems(true);
@@ -283,13 +298,13 @@ public class DefaultEmailSender {
         }
     }
 
-    private boolean sendWithGraphInlineImage(String to,
+    private boolean sendWithGraphInlineImage(String sender,
+                                             String to,
                                              String subject,
                                              String content,
                                              String contentId,
                                              byte[] imageBytes) {
         try {
-            String sender = resolveOutboundMailboxEmail();
             Message msg = message(to, subject, content, true);
 
             FileAttachment inline = new FileAttachment();
@@ -315,7 +330,8 @@ public class DefaultEmailSender {
         }
     }
 
-    private boolean sendWithGraphPdfAttachment(String to,
+    private boolean sendWithGraphPdfAttachment(String sender,
+                                               String to,
                                                String subject,
                                                String content,
                                                String attachmentName,
@@ -325,7 +341,6 @@ public class DefaultEmailSender {
                 throw new IllegalArgumentException("PDF attachment is empty");
             }
 
-            String sender = resolveOutboundMailboxEmail();
             SendMailPostRequestBody requestBody = new SendMailPostRequestBody();
             requestBody.setMessage(messageWithPdfAttachment(to, subject, content, attachmentName, attachmentBytes));
             requestBody.setSaveToSentItems(true);
@@ -378,7 +393,7 @@ public class DefaultEmailSender {
         return recipient;
     }
 
-    private GraphServiceClient graphClient() {
+    public GraphServiceClient graphClient() {
         GraphServiceClient client = graphClient;
         if (client == null) {
             synchronized (this) {
