@@ -17,7 +17,9 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -31,12 +33,16 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
     private final UserService userService;
     private final RichTextSupport richTextSupport;
     private final SpringTemplateEngine templateEngine;
+    private final CsatTokenService csatTokenService;
 
     @Value("${bokati.support.sender-email:supportela@elleaose.com}")
     private String supportEmail;
 
     @Value("${bokati.support.manager-email:supportela@elleaose.com}")
     private String managerEmail;
+
+    @Value("${app.api-base-url:https://api.elleaose.com}")
+    private String apiBaseUrl;
 
     @Override
     @Async
@@ -147,7 +153,19 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("ticketStatus", ticket.getStatus() != null ? ticket.getStatus().name() : null);
         ctx.setVariable("createdAt", ticket.getCreatedAt() != null ? FMT.format(ticket.getCreatedAt()) : null);
         ctx.setVariable("slaDeadline", ticket.getFirstResponseDueAt() != null ? FMT.format(ticket.getFirstResponseDueAt()) : null);
+        if ("TICKET_RESOLVED".equals(eventType) || "CSAT_REQUEST".equals(eventType)) {
+            ctx.setVariable("csatLinks", buildCsatLinks(ticket.getTicketNumber()));
+        }
         return ctx;
+    }
+
+    private Map<Integer, String> buildCsatLinks(String ticketNumber) {
+        Map<Integer, String> links = new LinkedHashMap<>();
+        String base = apiBaseUrl + "/sni/api/v1/public/support/csat?ticket=" + ticketNumber;
+        for (int score = 1; score <= 5; score++) {
+            links.put(score, base + "&score=" + score + "&token=" + csatTokenService.generate(ticketNumber, score));
+        }
+        return links;
     }
 
     private String render(Context ctx) {
