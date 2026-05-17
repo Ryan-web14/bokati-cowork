@@ -18,6 +18,8 @@ public interface SupportTicketService {
     SupportTicketResponse addMessage(String ticketNumber, AddTicketMessageRequest request);
     SupportTicketResponse close(String ticketNumber);
     SupportTicketResponse submitCsat(String ticketNumber, SubmitCsatRequest request);
+    SupportTicketResponse addEmailReply(String ticketNumber, String graphMessageId,
+                                        String senderEmail, String senderName, String content);
     SupportMetricsResponse metrics();
     SupportAnalyticsResponse analytics(Instant from, Instant to);
 }

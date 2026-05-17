@@ -68,7 +68,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         SupportTicket saved = ticketRepository.save(ticket);
         if (StringUtils.hasText(request.description())) {
             saveMessage(saved, TicketSenderType.CLIENT, request.ownerCode(),
-                    request.contactName(), request.description(), false);
+                    request.contactName(), request.description(), false, null);
         }
         SupportTicketResponse response = get(saved.getTicketNumber());
         emailService.sendTicketCreated(saved);
@@ -153,13 +153,20 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                 && ticket.getStatus() == TicketStatus.CLOSED;
 
         TicketMessage message = saveMessage(ticket, senderType, request.senderId(),
-                request.senderName(), request.content(), isInternal);
+                request.senderName(), request.content(), isInternal, null);
 
-        if (senderType == TicketSenderType.AGENT && ticket.getFirstRespondedAt() == null) {
-            ticket.setFirstRespondedAt(Instant.now());
-            ticket.setStatus(TicketStatus.IN_PROGRESS);
+        // #2 WAITING_CLIENT: agent replied publicly → waiting for client response
+        if (senderType == TicketSenderType.AGENT) {
+            if (ticket.getFirstRespondedAt() == null) {
+                ticket.setFirstRespondedAt(Instant.now());
+            }
+            TicketStatus current = ticket.getStatus();
+            if (!isInternal && (current == TicketStatus.OPEN || current == TicketStatus.IN_PROGRESS)) {
+                ticket.setStatus(TicketStatus.WAITING_CLIENT);
+            }
             ticketRepository.save(ticket);
         }
+
         if (senderType == TicketSenderType.CLIENT) {
             if (wasClosedBeforeMessage) {
                 ticket.setStatus(ticket.getAssignedTo() != null ? TicketStatus.IN_PROGRESS : TicketStatus.OPEN);
@@ -168,6 +175,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                 ticketRepository.save(ticket);
                 emailService.sendTicketReopened(ticket);
             } else {
+                // Client replied (including WAITING_CLIENT → IN_PROGRESS)
                 ticket.setStatus(TicketStatus.IN_PROGRESS);
                 ticketRepository.save(ticket);
             }
@@ -284,6 +292,12 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     private TicketMessage saveMessage(SupportTicket ticket, TicketSenderType senderType,
                                       String senderId, String senderName,
                                       String message, boolean internal) {
+        return saveMessage(ticket, senderType, senderId, senderName, message, internal, null);
+    }
+
+    private TicketMessage saveMessage(SupportTicket ticket, TicketSenderType senderType,
+                                      String senderId, String senderName,
+                                      String message, boolean internal, String externalMessageId) {
         return messageRepository.save(TicketMessage.builder()
                 .ticket(ticket)
                 .senderType(senderType)
@@ -291,7 +305,39 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                 .senderName(senderName)
                 .message(richTextSupport.normalize(message))
                 .internal(internal)
+                .externalMessageId(externalMessageId)
                 .build());
+    }
+
+    // ── Email reply (inbound, with deduplication) ─────────────────
+
+    @Override
+    public SupportTicketResponse addEmailReply(String ticketNumber, String graphMessageId,
+                                               String senderEmail, String senderName, String content) {
+        if (!StringUtils.hasText(content)) throw new BadRequestException("Message content is required");
+        if (StringUtils.hasText(graphMessageId) && messageRepository.existsByExternalMessageId(graphMessageId)) {
+            return get(ticketNumber);
+        }
+        SupportTicket ticket = getTicket(ticketNumber);
+        boolean wasClosedBeforeMessage = ticket.getStatus() == TicketStatus.CLOSED;
+
+        TicketMessage message = saveMessage(ticket, TicketSenderType.CLIENT,
+                senderEmail, senderName, content, false, graphMessageId);
+
+        if (wasClosedBeforeMessage) {
+            ticket.setStatus(ticket.getAssignedTo() != null ? TicketStatus.IN_PROGRESS : TicketStatus.OPEN);
+            ticket.setClosedAt(null);
+            ticket.setResolvedAt(null);
+            ticketRepository.save(ticket);
+            emailService.sendTicketReopened(ticket);
+            emailService.sendTicketReopenedToAgent(ticket, message);
+        } else {
+            ticket.setStatus(TicketStatus.IN_PROGRESS);
+            ticketRepository.save(ticket);
+            emailService.sendClientMessage(ticket, message);
+        }
+
+        return get(ticketNumber);
     }
 
     private Long resolveAssignedTo(AssignTicketRequest request) {

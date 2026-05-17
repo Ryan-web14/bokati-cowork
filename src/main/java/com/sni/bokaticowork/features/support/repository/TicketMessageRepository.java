@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface TicketMessageRepository extends JpaRepository<TicketMessage, Long> {
     List<TicketMessage> findAllByTicketOrderByCreatedAtAsc(SupportTicket ticket);
+    boolean existsByExternalMessageId(String externalMessageId);
 }

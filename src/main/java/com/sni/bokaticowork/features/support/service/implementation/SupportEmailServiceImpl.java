@@ -46,7 +46,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(ticket.getDescription()));
         send(ticket.getContactEmail(),
                 "Ticket ouvert — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -61,7 +61,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(ticket.getContactEmail(),
                 "Réponse sur votre ticket " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -77,7 +77,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(agentEmail,
                 "[Support] Nouveau message client — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -87,7 +87,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         Context ctx = base(ticket, "TICKET_RESOLVED");
         send(ticket.getContactEmail(),
                 "Ticket résolu — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -97,7 +97,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         Context ctx = base(ticket, "TICKET_REOPENED");
         send(ticket.getContactEmail(),
                 "Ticket réouvert — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -113,7 +113,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(agentEmail,
                 "[Support] Ticket réouvert par le client — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -123,7 +123,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("breachType", breachType);
         send(managerEmail,
                 "[ALERTE SLA] " + breachType + " — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -133,7 +133,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         Context ctx = base(ticket, "CSAT_REQUEST");
         send(ticket.getContactEmail(),
                 "Donnez votre avis — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     private Context base(SupportTicket ticket, String eventType) {
@@ -154,9 +154,9 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         return templateEngine.process("email/support-event", ctx);
     }
 
-    private void send(String to, String subject, String html) {
+    private void send(String to, String subject, String html, String ticketNumber) {
         try {
-            emailSender.queueEmail(supportEmail, to, subject, html, true, "SUPPORT_TICKET", null);
+            emailSender.queueEmail(supportEmail, to, subject, html, true, "SUPPORT_TICKET", ticketNumber);
         } catch (Exception ex) {
             log.warn("Failed to queue support email to {}: {}", to, ex.getMessage());
         }
