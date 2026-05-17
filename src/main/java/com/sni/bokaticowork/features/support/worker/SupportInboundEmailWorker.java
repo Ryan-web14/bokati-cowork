@@ -1,10 +1,15 @@
 package com.sni.bokaticowork.features.support.worker;
 
+import com.microsoft.graph.models.Attachment;
+import com.microsoft.graph.models.FileAttachment;
 import com.microsoft.graph.models.Message;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
-import com.sni.bokaticowork.features.support.dto.SupportDtos.AddTicketMessageRequest;
-import com.sni.bokaticowork.features.support.enums.TicketSenderType;
+import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentStorageService;
+import com.sni.bokaticowork.features.support.model.SupportTicket;
+import com.sni.bokaticowork.features.support.model.TicketAttachment;
+import com.sni.bokaticowork.features.support.model.TicketMessage;
 import com.sni.bokaticowork.features.support.repository.SupportTicketRepository;
+import com.sni.bokaticowork.features.support.repository.TicketAttachmentRepository;
 import com.sni.bokaticowork.features.support.service.interfaces.SupportTicketService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +22,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,23 +36,19 @@ public class SupportInboundEmailWorker {
     private static final Pattern TICKET_NUMBER = Pattern.compile("(TCK-\\d+)");
     private static final int MAX_MESSAGES_PER_RUN = 25;
 
-    // Common mobile email app footers that appear before the quoted original
     private static final List<String> KNOWN_SIGNATURES = List.of(
-            "Get Outlook for iOS",
-            "Get Outlook for Android",
-            "Sent from Outlook for iOS",
-            "Sent from Outlook for Android",
-            "Sent from my iPhone",
-            "Sent from my iPad",
+            "Get Outlook for iOS", "Get Outlook for Android",
+            "Sent from Outlook for iOS", "Sent from Outlook for Android",
+            "Sent from my iPhone", "Sent from my iPad",
             "Sent from Samsung Mobile",
-            "Envoyé depuis mon iPhone",
-            "Envoyé depuis mon iPad",
-            "Envoyé de mon iPhone"
+            "Envoyé depuis mon iPhone", "Envoyé depuis mon iPad", "Envoyé de mon iPhone"
     );
 
     private final DefaultEmailSender emailSender;
     private final SupportTicketService ticketService;
     private final SupportTicketRepository ticketRepository;
+    private final TicketAttachmentRepository attachmentRepository;
+    private final DocumentStorageService documentStorageService;
 
     @Value("${bokati.support.sender-email:supportela@elleaose.com}")
     private String supportInbox;
@@ -59,17 +62,15 @@ public class SupportInboundEmailWorker {
                     .get(config -> {
                         config.queryParameters.filter = "isRead eq false";
                         config.queryParameters.top = MAX_MESSAGES_PER_RUN;
-                        config.queryParameters.select = new String[]{"id", "subject", "from", "body", "receivedDateTime"};
+                        config.queryParameters.select = new String[]{"id", "subject", "from", "body", "receivedDateTime", "hasAttachments"};
                     });
 
             if (response == null || response.getValue() == null || response.getValue().isEmpty()) return;
 
             List<Message> messages = response.getValue();
             log.info("Support inbound: {} unread message(s) in {}", messages.size(), supportInbox);
+            for (Message msg : messages) processMessage(msg);
 
-            for (Message msg : messages) {
-                processMessage(msg);
-            }
         } catch (Exception ex) {
             log.error("Support inbound poll failed for {}", supportInbox, ex);
         }
@@ -79,7 +80,6 @@ public class SupportInboundEmailWorker {
         String msgId = msg.getId();
         String subject = msg.getSubject() != null ? msg.getSubject() : "";
 
-        // Mark as read immediately to avoid reprocessing on next cycle
         markAsRead(msgId);
 
         Matcher m = TICKET_NUMBER.matcher(subject);
@@ -89,7 +89,8 @@ public class SupportInboundEmailWorker {
         }
         String ticketNumber = m.group(1);
 
-        if (ticketRepository.findByTicketNumber(ticketNumber).isEmpty()) {
+        Optional<SupportTicket> ticketOpt = ticketRepository.findByTicketNumber(ticketNumber);
+        if (ticketOpt.isEmpty()) {
             log.warn("Inbound email references unknown ticket {}, skipping", ticketNumber);
             return;
         }
@@ -109,18 +110,67 @@ public class SupportInboundEmailWorker {
         }
 
         try {
-            ticketService.addMessage(ticketNumber, new AddTicketMessageRequest(
-                    TicketSenderType.CLIENT,
-                    senderEmail,
-                    senderName,
-                    bodyText,
-                    false
-            ));
+            // #3 addEmailReply includes deduplication via graphMessageId
+            var response = ticketService.addEmailReply(ticketNumber, msgId, senderEmail, senderName, bodyText);
             log.info("Added email reply from {} to ticket {}", senderEmail, ticketNumber);
+
+            // #5 Store attachments if any
+            if (Boolean.TRUE.equals(msg.getHasAttachments())) {
+                SupportTicket ticket = ticketRepository.findByTicketNumber(ticketNumber).orElse(null);
+                if (ticket != null) {
+                    processAttachments(msg.getId(), ticket, null);
+                }
+            }
         } catch (Exception ex) {
-            log.error("Failed to add email reply to ticket {} from {}: {}", ticketNumber, senderEmail, ex.getMessage(), ex);
+            log.error("Failed to process email reply to ticket {} from {}: {}", ticketNumber, senderEmail, ex.getMessage(), ex);
         }
     }
+
+    // ── Attachments (#5) ─────────────────────────────────────────────
+
+    private void processAttachments(String messageId, SupportTicket ticket, TicketMessage ticketMessage) {
+        try {
+            var attResponse = emailSender.graphClient()
+                    .users().byUserId(supportInbox)
+                    .messages().byMessageId(messageId)
+                    .attachments()
+                    .get();
+
+            if (attResponse == null || attResponse.getValue() == null) return;
+
+            int idx = 0;
+            for (Attachment att : attResponse.getValue()) {
+                if (!(att instanceof FileAttachment fa)) continue;
+                if (Boolean.TRUE.equals(fa.getIsInline())) continue;
+
+                byte[] content = fa.getContentBytes();
+                String fileName = StringUtils.hasText(fa.getName()) ? fa.getName() : "attachment-" + idx;
+                if (content == null || content.length == 0) continue;
+
+                try {
+                    String documentCode = "ATT-" + ticket.getTicketNumber() + "-" + Instant.now().toEpochMilli() + "-" + idx;
+                    var stored = documentStorageService.storeBytes(
+                            "support/" + ticket.getTicketNumber(), documentCode, 1, fileName, content);
+
+                    attachmentRepository.save(TicketAttachment.builder()
+                            .ticket(ticket)
+                            .message(ticketMessage)
+                            .documentCode(stored.storagePath())
+                            .fileName(fileName)
+                            .build());
+
+                    log.info("Stored attachment '{}' for ticket {}", fileName, ticket.getTicketNumber());
+                    idx++;
+                } catch (Exception ex) {
+                    log.warn("Failed to store attachment '{}' for ticket {}: {}", fileName, ticket.getTicketNumber(), ex.getMessage());
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to fetch attachments for message {}: {}", messageId, ex.getMessage());
+        }
+    }
+
+    // ── Email body extraction ─────────────────────────────────────────
 
     private void markAsRead(String messageId) {
         try {
@@ -135,55 +185,32 @@ public class SupportInboundEmailWorker {
         }
     }
 
-    /**
-     * Extracts only the author's new text from an email reply, stripping the quoted
-     * original email and common mobile signatures.
-     *
-     * Strategy (HTML emails):
-     *  1. Remove Outlook reply containers (#divRplyFwdMsg, #OFRHeader).
-     *  2. Remove everything after the first <hr> — Outlook's reply separator.
-     *  3. Remove Gmail/Yahoo blockquotes.
-     *  4. Convert remaining HTML to plain text via Jsoup.
-     *  5. Strip known mobile-app signatures ("Get Outlook for iOS", etc.).
-     *
-     * Strategy (plain text emails):
-     *  Cut at the first line that starts with "From:", "De :", or "-----".
-     */
     private String extractReplyText(Message msg) {
         if (msg.getBody() == null || !StringUtils.hasText(msg.getBody().getContent())) return "";
         String raw = msg.getBody().getContent();
         boolean isHtml = msg.getBody().getContentType() != null
                 && "html".equalsIgnoreCase(msg.getBody().getContentType().toString());
-
         String text = isHtml ? extractFromHtml(raw) : stripQuotedPlainText(raw);
         return removeKnownSignatures(text).trim();
     }
 
     private String extractFromHtml(String html) {
         Document doc = Jsoup.parse(html);
-
-        // 1. Remove Outlook reply/forward containers
         doc.select("#divRplyFwdMsg, #OFRHeader, #OFRBody").remove();
 
-        // 2. Remove everything after the first <hr> (Outlook mobile reply separator)
         Element hr = doc.selectFirst("hr");
         if (hr != null) {
             Node next;
-            while ((next = hr.nextSibling()) != null) {
-                next.remove();
-            }
+            while ((next = hr.nextSibling()) != null) next.remove();
             hr.remove();
         }
 
-        // 3. Remove Gmail / Yahoo quoted blocks
         doc.select("blockquote, .gmail_quote, .yahoo_quoted").remove();
-
         return doc.text();
     }
 
     private String stripQuotedPlainText(String text) {
         if (!StringUtils.hasText(text)) return text;
-        // Each separator must appear at the start of a line
         String[] separators = {"\nFrom:", "\r\nFrom:", "\nDe :", "\r\nDe :", "\n-----", "\r\n-----"};
         int cutAt = text.length();
         for (String sep : separators) {
@@ -194,9 +221,7 @@ public class SupportInboundEmailWorker {
     }
 
     private String removeKnownSignatures(String text) {
-        for (String sig : KNOWN_SIGNATURES) {
-            text = text.replace(sig, "");
-        }
+        for (String sig : KNOWN_SIGNATURES) text = text.replace(sig, "");
         return text;
     }
 }

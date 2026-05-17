@@ -35,6 +35,9 @@ public class TicketMessage {
     @Builder.Default
     private Boolean internal = Boolean.FALSE;
 
+    @Column(name = "external_message_id", length = 512, unique = true)
+    private String externalMessageId;
+
     private Instant createdAt;
 
     @PrePersist

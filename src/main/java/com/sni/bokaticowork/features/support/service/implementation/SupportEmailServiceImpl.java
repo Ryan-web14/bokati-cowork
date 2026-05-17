@@ -17,7 +17,9 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -31,12 +33,16 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
     private final UserService userService;
     private final RichTextSupport richTextSupport;
     private final SpringTemplateEngine templateEngine;
+    private final CsatTokenService csatTokenService;
 
     @Value("${bokati.support.sender-email:supportela@elleaose.com}")
     private String supportEmail;
 
     @Value("${bokati.support.manager-email:supportela@elleaose.com}")
     private String managerEmail;
+
+    @Value("${app.api-base-url:https://api.elleaose.com}")
+    private String apiBaseUrl;
 
     @Override
     @Async
@@ -46,7 +52,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(ticket.getDescription()));
         send(ticket.getContactEmail(),
                 "Ticket ouvert — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -61,7 +67,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(ticket.getContactEmail(),
                 "Réponse sur votre ticket " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -77,7 +83,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(agentEmail,
                 "[Support] Nouveau message client — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -87,7 +93,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         Context ctx = base(ticket, "TICKET_RESOLVED");
         send(ticket.getContactEmail(),
                 "Ticket résolu — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -97,7 +103,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         Context ctx = base(ticket, "TICKET_REOPENED");
         send(ticket.getContactEmail(),
                 "Ticket réouvert — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -113,7 +119,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(agentEmail,
                 "[Support] Ticket réouvert par le client — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -123,7 +129,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("breachType", breachType);
         send(managerEmail,
                 "[ALERTE SLA] " + breachType + " — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     @Override
@@ -133,7 +139,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         Context ctx = base(ticket, "CSAT_REQUEST");
         send(ticket.getContactEmail(),
                 "Donnez votre avis — " + ticket.getTicketNumber(),
-                render(ctx));
+                render(ctx), ticket.getTicketNumber());
     }
 
     private Context base(SupportTicket ticket, String eventType) {
@@ -147,16 +153,28 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("ticketStatus", ticket.getStatus() != null ? ticket.getStatus().name() : null);
         ctx.setVariable("createdAt", ticket.getCreatedAt() != null ? FMT.format(ticket.getCreatedAt()) : null);
         ctx.setVariable("slaDeadline", ticket.getFirstResponseDueAt() != null ? FMT.format(ticket.getFirstResponseDueAt()) : null);
+        if ("TICKET_RESOLVED".equals(eventType) || "CSAT_REQUEST".equals(eventType)) {
+            ctx.setVariable("csatLinks", buildCsatLinks(ticket.getTicketNumber()));
+        }
         return ctx;
+    }
+
+    private Map<Integer, String> buildCsatLinks(String ticketNumber) {
+        Map<Integer, String> links = new LinkedHashMap<>();
+        String base = apiBaseUrl + "/sni/api/v1/public/support/csat?ticket=" + ticketNumber;
+        for (int score = 1; score <= 5; score++) {
+            links.put(score, base + "&score=" + score + "&token=" + csatTokenService.generate(ticketNumber, score));
+        }
+        return links;
     }
 
     private String render(Context ctx) {
         return templateEngine.process("email/support-event", ctx);
     }
 
-    private void send(String to, String subject, String html) {
+    private void send(String to, String subject, String html, String ticketNumber) {
         try {
-            emailSender.queueEmail(supportEmail, to, subject, html, true, "SUPPORT_TICKET", null);
+            emailSender.queueEmail(supportEmail, to, subject, html, true, "SUPPORT_TICKET", ticketNumber);
         } catch (Exception ex) {
             log.warn("Failed to queue support email to {}: {}", to, ex.getMessage());
         }

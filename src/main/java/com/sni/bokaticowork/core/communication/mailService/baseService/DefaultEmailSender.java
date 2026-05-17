@@ -28,6 +28,9 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.microsoft.graph.models.InternetMessageHeader;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -215,7 +218,24 @@ public class DefaultEmailSender {
 
     private boolean sendNow(EmailDeliveryLog delivery) {
         boolean html = BODY_TYPE_HTML.equalsIgnoreCase(delivery.getBodyType());
-        return sendWithGraph(resolveDeliverySender(delivery), delivery.getRecipientEmail(), delivery.getSubject(), delivery.getBodyContent(), html);
+        List<InternetMessageHeader> headers = buildThreadingHeaders(delivery.getRelatedType(), delivery.getRelatedCode());
+        return sendWithGraph(resolveDeliverySender(delivery), delivery.getRecipientEmail(),
+                delivery.getSubject(), delivery.getBodyContent(), html, headers);
+    }
+
+    private List<InternetMessageHeader> buildThreadingHeaders(String relatedType, String relatedCode) {
+        if (!"SUPPORT_TICKET".equals(relatedType) || !StringUtils.hasText(relatedCode)) {
+            return Collections.emptyList();
+        }
+        InternetMessageHeader threadTopic = new InternetMessageHeader();
+        threadTopic.setName("Thread-Topic");
+        threadTopic.setValue("[Support] Ticket " + relatedCode);
+
+        InternetMessageHeader ticketRef = new InternetMessageHeader();
+        ticketRef.setName("X-Support-Ticket");
+        ticketRef.setValue(relatedCode);
+
+        return List.of(threadTopic, ticketRef);
     }
 
     private String resolveDeliverySender(EmailDeliveryLog delivery) {
@@ -284,9 +304,18 @@ public class DefaultEmailSender {
     }
 
     private boolean sendWithGraph(String sender, String to, String subject, String content, boolean html) {
+        return sendWithGraph(sender, to, subject, content, html, Collections.emptyList());
+    }
+
+    private boolean sendWithGraph(String sender, String to, String subject, String content, boolean html,
+                                   List<InternetMessageHeader> headers) {
         try {
+            Message msg = message(to, subject, content, html);
+            if (headers != null && !headers.isEmpty()) {
+                msg.setInternetMessageHeaders(headers);
+            }
             SendMailPostRequestBody requestBody = new SendMailPostRequestBody();
-            requestBody.setMessage(message(to, subject, content, html));
+            requestBody.setMessage(msg);
             requestBody.setSaveToSentItems(true);
 
             graphClient().users().byUserId(sender).sendMail().post(requestBody);

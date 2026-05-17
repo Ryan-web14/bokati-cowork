@@ -64,6 +64,21 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
             """)
     List<SupportTicket> findSlaBreachCandidates(@Param("now") Instant now);
 
+    // ── Auto-close worker ─────────────────────────────────────────
+    @Query("""
+            SELECT t FROM SupportTicket t
+            WHERE t.status = 'RESOLVED'
+              AND t.resolvedAt IS NOT NULL
+              AND t.resolvedAt < :cutoff
+              AND NOT EXISTS (
+                SELECT m FROM TicketMessage m
+                WHERE m.ticket = t
+                  AND m.senderType = 'CLIENT'
+                  AND m.createdAt > t.resolvedAt
+              )
+            """)
+    List<SupportTicket> findAutoCloseCandidates(@Param("cutoff") Instant cutoff);
+
     // ── CSAT request worker ───────────────────────────────────────
     @Query("""
             SELECT t FROM SupportTicket t
