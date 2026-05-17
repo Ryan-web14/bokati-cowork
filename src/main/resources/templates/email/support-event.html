@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support — Bokati Cowork</title>
+    <title>Support — Elle A Osé</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -116,7 +116,7 @@
         <div class="email-header">
             <div class="logo-area">
                 <div>
-                    <div class="brand-name">Bokati Cowork</div>
+                    <div class="brand-name">Elle A Osé</div>
                     <div class="brand-sub">Service client &amp; support</div>
                 </div>
                 <span th:switch="${eventType}">
@@ -124,6 +124,8 @@
                     <span th:case="'AGENT_MESSAGE'"   class="tag tag-message">Réponse agent</span>
                     <span th:case="'CLIENT_MESSAGE'"  class="tag tag-message">Message client</span>
                     <span th:case="'TICKET_RESOLVED'" class="tag tag-resolved">Résolu ✓</span>
+                    <span th:case="'TICKET_REOPENED'"       class="tag tag-message">Réouvert</span>
+                    <span th:case="'TICKET_REOPENED_AGENT'" class="tag tag-sla">Ticket réouvert</span>
                     <span th:case="'SLA_BREACH'"      class="tag tag-sla">⚠ Alerte SLA</span>
                     <span th:case="'CSAT_REQUEST'"    class="tag tag-csat">Votre avis</span>
                     <span th:case="*"                 class="tag tag-message">Support</span>
@@ -151,6 +153,14 @@
                 <div th:case="'TICKET_RESOLVED'">
                     <div class="hero-title">Ticket résolu ✓</div>
                     <div class="hero-sub">Ce ticket a été marqué comme résolu. Dites-nous si vous êtes satisfait(e) de notre prise en charge.</div>
+                </div>
+                <div th:case="'TICKET_REOPENED'">
+                    <div class="hero-title">Ticket réouvert</div>
+                    <div class="hero-sub">Votre message a bien été reçu et votre ticket est réouvert. Notre équipe reprend en charge votre demande.</div>
+                </div>
+                <div th:case="'TICKET_REOPENED_AGENT'">
+                    <div class="hero-title">Ticket réouvert par le client</div>
+                    <div class="hero-sub"><strong th:text="${clientName ?: 'Le client'}">Client</strong> a répondu sur un ticket fermé — il est automatiquement réouvert et vous est assigné.</div>
                 </div>
                 <div th:case="'SLA_BREACH'">
                     <div class="hero-sla">⚠ Délai SLA dépassé</div>
@@ -237,13 +247,14 @@
             <!-- Description / message rich text                     -->
             <!-- ═══════════════════════════════════════════════════ -->
             <div class="message-section"
-                 th:if="${messageContentHtml != null and !#strings.isEmpty(messageContentHtml) and (eventType == 'TICKET_CREATED' or eventType == 'AGENT_MESSAGE' or eventType == 'CLIENT_MESSAGE')}">
+                 th:if="${messageContentHtml != null and !#strings.isEmpty(messageContentHtml) and (eventType == 'TICKET_CREATED' or eventType == 'AGENT_MESSAGE' or eventType == 'CLIENT_MESSAGE' or eventType == 'TICKET_REOPENED_AGENT')}">
                 <div class="message-from" th:switch="${eventType}">
                     <span th:case="'TICKET_CREATED'">Description du ticket</span>
                     <span th:case="'AGENT_MESSAGE'" th:text="|Réponse de ${agentName ?: 'notre équipe'}|">Réponse de notre équipe</span>
                     <span th:case="'CLIENT_MESSAGE'" th:text="|Message de ${clientName ?: 'votre client'}|">Message client</span>
+                    <span th:case="'TICKET_REOPENED_AGENT'" th:text="|Message de ${clientName ?: 'le client'}|">Message client</span>
                 </div>
-                <div th:class="${eventType == 'CLIENT_MESSAGE'} ? 'message-bubble client' : 'message-bubble agent'"
+                <div th:class="${eventType == 'CLIENT_MESSAGE' or eventType == 'TICKET_REOPENED_AGENT'} ? 'message-bubble client' : 'message-bubble agent'"
                      th:utext="${messageContentHtml}">
                     Contenu du message
                 </div>
@@ -279,10 +290,11 @@
         </div>
 
         <div class="email-footer">
-            <div class="footer-brand">Bokati Cowork — Support client</div>
+            <div class="footer-brand">Elle A Osé — Support client</div>
             <div class="footer-text">
                 Cet email est envoyé automatiquement suite à une activité sur votre ticket.<br>
-                Pour répondre, connectez-vous à votre espace client.
+                Pour répondre, répondez directement à cet email — votre message sera ajouté au ticket.<br>
+                Si le ticket est fermé, votre réponse le réouvrira automatiquement.
             </div>
         </div>
 

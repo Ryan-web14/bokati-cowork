@@ -22,7 +22,7 @@ import java.util.Locale;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SupportEmailServiceImpl implements SupportEmailService {
+public class  SupportEmailServiceImpl implements SupportEmailService {
 
     private static final DateTimeFormatter FMT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.of("Africa/Brazzaville"));
@@ -32,7 +32,10 @@ public class SupportEmailServiceImpl implements SupportEmailService {
     private final RichTextSupport richTextSupport;
     private final SpringTemplateEngine templateEngine;
 
-    @Value("${bokati.support.manager-email:support@bokaticowork.com}")
+    @Value("${bokati.support.sender-email:support@elleaose.com}")
+    private String supportEmail;
+
+    @Value("${bokati.support.manager-email:support@elleaose.com}")
     private String managerEmail;
 
     @Override
@@ -89,6 +92,32 @@ public class SupportEmailServiceImpl implements SupportEmailService {
 
     @Override
     @Async
+    public void sendTicketReopened(SupportTicket ticket) {
+        if (!StringUtils.hasText(ticket.getContactEmail())) return;
+        Context ctx = base(ticket, "TICKET_REOPENED");
+        send(ticket.getContactEmail(),
+                "Ticket réouvert — " + ticket.getTicketNumber(),
+                render(ctx));
+    }
+
+    @Override
+    @Async
+    public void sendTicketReopenedToAgent(SupportTicket ticket, TicketMessage message) {
+        String agentEmail = resolveAgentEmail(ticket.getAssignedTo());
+        if (!StringUtils.hasText(agentEmail)) agentEmail = managerEmail;
+        String clientName = message != null && StringUtils.hasText(message.getSenderName())
+                ? message.getSenderName()
+                : ticket.getContactName();
+        Context ctx = base(ticket, "TICKET_REOPENED_AGENT");
+        ctx.setVariable("clientName", clientName);
+        ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
+        send(agentEmail,
+                "[Support] Ticket réouvert par le client — " + ticket.getTicketNumber(),
+                render(ctx));
+    }
+
+    @Override
+    @Async
     public void sendSlaBreachAlert(SupportTicket ticket, String breachType) {
         Context ctx = base(ticket, "SLA_BREACH");
         ctx.setVariable("breachType", breachType);
@@ -127,8 +156,7 @@ public class SupportEmailServiceImpl implements SupportEmailService {
 
     private void send(String to, String subject, String html) {
         try {
-            emailSender.queueEmail(to, subject, html, true, "SUPPORT_TICKET",
-                    (String) null);
+            emailSender.queueEmail(supportEmail, to, subject, html, true, "SUPPORT_TICKET", null);
         } catch (Exception ex) {
             log.warn("Failed to queue support email to {}: {}", to, ex.getMessage());
         }
