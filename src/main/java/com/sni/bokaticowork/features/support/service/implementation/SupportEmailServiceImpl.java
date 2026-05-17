@@ -22,7 +22,7 @@ import java.util.Locale;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class SupportEmailServiceImpl implements SupportEmailService {
+public class  SupportEmailServiceImpl implements SupportEmailService {
 
     private static final DateTimeFormatter FMT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.of("Africa/Brazzaville"));
@@ -35,7 +35,7 @@ public class SupportEmailServiceImpl implements SupportEmailService {
     @Value("${bokati.support.sender-email:support@elleaose.com}")
     private String supportEmail;
 
-    @Value("${bokati.support.manager-email:support@bokaticowork.com}")
+    @Value("${bokati.support.manager-email:support@elleaose.com}")
     private String managerEmail;
 
     @Override
