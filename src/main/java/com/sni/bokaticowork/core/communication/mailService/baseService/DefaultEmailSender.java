@@ -228,7 +228,7 @@ public class DefaultEmailSender {
             return Collections.emptyList();
         }
         InternetMessageHeader threadTopic = new InternetMessageHeader();
-        threadTopic.setName("Thread-Topic");
+        threadTopic.setName("X-Thread-Topic");
         threadTopic.setValue("[Support] Ticket " + relatedCode);
 
         InternetMessageHeader ticketRef = new InternetMessageHeader();
