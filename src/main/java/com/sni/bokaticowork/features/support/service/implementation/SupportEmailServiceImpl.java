@@ -32,10 +32,10 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
     private final RichTextSupport richTextSupport;
     private final SpringTemplateEngine templateEngine;
 
-    @Value("${bokati.support.sender-email:support@elleaose.com}")
+    @Value("${bokati.support.sender-email:supportela@elleaose.com}")
     private String supportEmail;
 
-    @Value("${bokati.support.manager-email:support@elleaose.com}")
+    @Value("${bokati.support.manager-email:supportela@elleaose.com}")
     private String managerEmail;
 
     @Override
