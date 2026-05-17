@@ -30,7 +30,7 @@ public class SupportInboundEmailWorker {
     private final SupportTicketService ticketService;
     private final SupportTicketRepository ticketRepository;
 
-    @Value("${bokati.support.sender-email:support@elleaose.com}")
+    @Value("${bokati.support.sender-email:supportela@elleaose.com}")
     private String supportInbox;
 
     @Scheduled(fixedDelayString = "${bokati.support.inbound-poll-delay-ms:60000}")

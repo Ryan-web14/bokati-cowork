@@ -84,8 +84,8 @@ management:
 
 bokati:
   support:
-    sender-email: ${SUPPORT_SENDER_EMAIL:support@elleaose.com}
-    manager-email: ${SUPPORT_MANAGER_EMAIL:support@elleaose.com}
+    sender-email: ${SUPPORT_SENDER_EMAIL:supportela@elleaose.com}
+    manager-email: ${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}
     inbound-poll-delay-ms: ${SUPPORT_INBOUND_POLL_DELAY_MS:60000}
     csat-check-delay-ms: ${SUPPORT_CSAT_CHECK_DELAY_MS:3600000}
     sla-check-delay-ms: ${SUPPORT_SLA_CHECK_DELAY_MS:3600000}
