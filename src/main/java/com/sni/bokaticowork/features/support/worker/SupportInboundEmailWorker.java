@@ -9,6 +9,9 @@ import com.sni.bokaticowork.features.support.service.interfaces.SupportTicketSer
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,6 +28,20 @@ public class SupportInboundEmailWorker {
 
     private static final Pattern TICKET_NUMBER = Pattern.compile("(TCK-\\d+)");
     private static final int MAX_MESSAGES_PER_RUN = 25;
+
+    // Common mobile email app footers that appear before the quoted original
+    private static final List<String> KNOWN_SIGNATURES = List.of(
+            "Get Outlook for iOS",
+            "Get Outlook for Android",
+            "Sent from Outlook for iOS",
+            "Sent from Outlook for Android",
+            "Sent from my iPhone",
+            "Sent from my iPad",
+            "Sent from Samsung Mobile",
+            "Envoyé depuis mon iPhone",
+            "Envoyé depuis mon iPad",
+            "Envoyé de mon iPhone"
+    );
 
     private final DefaultEmailSender emailSender;
     private final SupportTicketService ticketService;
@@ -85,9 +102,9 @@ public class SupportInboundEmailWorker {
         }
         if (!StringUtils.hasText(senderName)) senderName = senderEmail;
 
-        String bodyText = extractText(msg);
+        String bodyText = extractReplyText(msg);
         if (!StringUtils.hasText(bodyText)) {
-            log.debug("Inbound email for ticket {} has empty body, skipping", ticketNumber);
+            log.debug("Inbound email for ticket {} has empty body after extraction, skipping", ticketNumber);
             return;
         }
 
@@ -118,24 +135,68 @@ public class SupportInboundEmailWorker {
         }
     }
 
-    private String extractText(Message msg) {
+    /**
+     * Extracts only the author's new text from an email reply, stripping the quoted
+     * original email and common mobile signatures.
+     *
+     * Strategy (HTML emails):
+     *  1. Remove Outlook reply containers (#divRplyFwdMsg, #OFRHeader).
+     *  2. Remove everything after the first <hr> — Outlook's reply separator.
+     *  3. Remove Gmail/Yahoo blockquotes.
+     *  4. Convert remaining HTML to plain text via Jsoup.
+     *  5. Strip known mobile-app signatures ("Get Outlook for iOS", etc.).
+     *
+     * Strategy (plain text emails):
+     *  Cut at the first line that starts with "From:", "De :", or "-----".
+     */
+    private String extractReplyText(Message msg) {
         if (msg.getBody() == null || !StringUtils.hasText(msg.getBody().getContent())) return "";
         String raw = msg.getBody().getContent();
         boolean isHtml = msg.getBody().getContentType() != null
                 && "html".equalsIgnoreCase(msg.getBody().getContentType().toString());
-        String text = isHtml ? Jsoup.parse(raw).text() : raw;
-        return stripQuotedReply(text);
+
+        String text = isHtml ? extractFromHtml(raw) : stripQuotedPlainText(raw);
+        return removeKnownSignatures(text).trim();
     }
 
-    // Trim content after common email reply separators to avoid quoting the original message
-    private String stripQuotedReply(String text) {
+    private String extractFromHtml(String html) {
+        Document doc = Jsoup.parse(html);
+
+        // 1. Remove Outlook reply/forward containers
+        doc.select("#divRplyFwdMsg, #OFRHeader, #OFRBody").remove();
+
+        // 2. Remove everything after the first <hr> (Outlook mobile reply separator)
+        Element hr = doc.selectFirst("hr");
+        if (hr != null) {
+            Node next;
+            while ((next = hr.nextSibling()) != null) {
+                next.remove();
+            }
+            hr.remove();
+        }
+
+        // 3. Remove Gmail / Yahoo quoted blocks
+        doc.select("blockquote, .gmail_quote, .yahoo_quoted").remove();
+
+        return doc.text();
+    }
+
+    private String stripQuotedPlainText(String text) {
         if (!StringUtils.hasText(text)) return text;
-        String[] separators = {"De :", "From:", "Le ", "On ", "-----", "________________________________"};
+        // Each separator must appear at the start of a line
+        String[] separators = {"\nFrom:", "\r\nFrom:", "\nDe :", "\r\nDe :", "\n-----", "\r\n-----"};
         int cutAt = text.length();
         for (String sep : separators) {
-            int idx = text.indexOf("\n" + sep);
+            int idx = text.indexOf(sep);
             if (idx > 0 && idx < cutAt) cutAt = idx;
         }
-        return text.substring(0, cutAt).trim();
+        return text.substring(0, cutAt);
+    }
+
+    private String removeKnownSignatures(String text) {
+        for (String sig : KNOWN_SIGNATURES) {
+            text = text.replace(sig, "");
+        }
+        return text;
     }
 }
