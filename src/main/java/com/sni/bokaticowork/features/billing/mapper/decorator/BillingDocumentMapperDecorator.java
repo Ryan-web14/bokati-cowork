@@ -1,24 +1,37 @@
 package com.sni.bokaticowork.features.billing.mapper.decorator;
 
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentAdvanceResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentClauseResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscountResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentSignatureResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentTaxResponse;
+import com.sni.bokaticowork.features.billing.dto.response.EarlyPaymentDiscountResponse;
 import com.sni.bokaticowork.features.billing.mapper.interfaces.BillingDocumentMapper;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
+import com.sni.bokaticowork.features.billing.model.BillingDocumentAdvance;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentClause;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentDiscount;
+import com.sni.bokaticowork.features.billing.model.BillingDocumentEarlyPaymentDiscount;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentLine;
+import com.sni.bokaticowork.features.billing.model.BillingDocumentSignature;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentTax;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentAdvanceRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentClauseRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentDiscountRepository;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentEarlyPaymentDiscountRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentLineRepository;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentSignatureRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentTaxRepository;
 import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public abstract class BillingDocumentMapperDecorator implements BillingDocumentMapper {
@@ -40,12 +53,26 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
     private BillingDocumentClauseRepository clauseRepository;
 
     @Autowired
+    private BillingDocumentAdvanceRepository advanceRepository;
+
+    @Autowired
+    private BillingDocumentEarlyPaymentDiscountRepository earlyPaymentDiscountRepository;
+
+    @Autowired
+    private BillingDocumentSignatureRepository signatureRepository;
+
+    @Autowired
     private TransactionContextResolver contextResolver;
 
     @Override
     public BillingDocumentResponse toResponse(BillingDocument document) {
         TransactionContextResolver.PartyView party = contextResolver.resolveParty(document.getCustomerType(), document.getCustomerCode());
         TransactionContextResolver.SourceView source = contextResolver.resolveBillingDocumentSource(document);
+        List<BillingDocumentLine> allLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
+        BigDecimal optionsTotal = allLines.stream()
+                .filter(l -> Boolean.TRUE.equals(l.getOptional()))
+                .map(BillingDocumentLine::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new BillingDocumentResponse(
                 document.getDocumentNumber(),
                 document.getDocumentType(),
@@ -76,16 +103,30 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 document.getTotalAmount(),
                 document.getPaidAmount(),
                 document.getBalanceDue(),
+                optionsTotal,
                 document.getIssueDate(),
                 document.getDueDate(),
                 document.getIssuedAt(),
                 document.getSentAt(),
                 document.getPaidAt(),
+                document.getCustomerReference(),
+                document.getPoNumber(),
+                document.getProjectCode(),
+                document.getSalespersonCode(),
+                document.getDeliveryAddressJson(),
+                document.getLanguage(),
+                document.getExchangeRate(),
+                document.getPaymentReference(),
+                document.getPaymentInstructions(),
+                document.getBankDetailsJson(),
                 document.getMetadataJson(),
-                lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document).stream().map(this::toLineResponse).toList(),
+                allLines.stream().map(this::toLineResponse).toList(),
                 discountRepository.findAllByDocumentOrderByIdAsc(document).stream().map(this::toDiscountResponse).toList(),
                 taxRepository.findAllByDocumentOrderByIdAsc(document).stream().map(this::toTaxResponse).toList(),
-                clauseRepository.findAllByDocumentOrderByDisplayOrderAscIdAsc(document).stream().map(this::toClauseResponse).toList()
+                clauseRepository.findAllByDocumentOrderByDisplayOrderAscIdAsc(document).stream().map(this::toClauseResponse).toList(),
+                advanceRepository.findByDocument(document).map(this::toAdvanceResponse).orElse(null),
+                earlyPaymentDiscountRepository.findByDocument(document).map(this::toEarlyPaymentDiscountResponse).orElse(null),
+                signatureRepository.findFirstByDocumentOrderByCreatedAtDesc(document).map(this::toSignatureResponse).orElse(null)
         );
     }
 
@@ -98,6 +139,7 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 line.getDescription(),
                 line.getDetailedDescription(),
                 line.getQuantity(),
+                line.getUnit(),
                 line.getUnitPrice(),
                 line.getDiscountRate(),
                 line.getDiscountAmount(),
@@ -111,8 +153,57 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 line.getTaxAmount(),
                 line.getTotalAmount(),
                 line.getSourceType(),
-                line.getSourceCode()
+                line.getSourceCode(),
+                line.getExternalReference(),
+                line.getNotes(),
+                line.getOptional()
         );
+    }
+
+    private EarlyPaymentDiscountResponse toEarlyPaymentDiscountResponse(BillingDocumentEarlyPaymentDiscount epd) {
+        return new EarlyPaymentDiscountResponse(
+                epd.getDiscountRate(),
+                epd.getIfPaidBefore(),
+                epd.getComputedAmount(),
+                epd.getLabel()
+        );
+    }
+
+    private BillingDocumentAdvanceResponse toAdvanceResponse(BillingDocumentAdvance advance) {
+        return new BillingDocumentAdvanceResponse(
+                advance.getAdvanceType(),
+                advance.getAdvanceValue(),
+                advance.getComputedAmount(),
+                deserializeOrders(advance.getIncludedLineOrders()),
+                deserializeOrders(advance.getExcludedLineOrders()),
+                advance.getPaymentReference(),
+                advance.getReferenceLabel(),
+                advance.getDueDate(),
+                advance.getStatus(),
+                advance.getPaidAt(),
+                advance.getNotes()
+        );
+    }
+
+    private BillingDocumentSignatureResponse toSignatureResponse(BillingDocumentSignature sig) {
+        return new BillingDocumentSignatureResponse(
+                sig.getSignerName(),
+                sig.getSignerEmail(),
+                sig.getStatus(),
+                sig.getSignedAt(),
+                sig.getExpiresAt()
+        );
+    }
+
+    private List<Integer> deserializeOrders(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .toList();
     }
 
     @Override

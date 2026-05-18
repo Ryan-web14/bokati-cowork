@@ -39,8 +39,9 @@ public class BillingLifecycleSupport {
         if (quote.getDocumentType() != BillingDocumentType.QUOTE) {
             throw new BadRequestException("Billing document is not a quote");
         }
-        if (quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
-            throw new BadRequestException("Quote must be accepted before conversion");
+        if (quote.getStatus() != BillingDocumentStatus.ACCEPTED
+                && quote.getStatus() != BillingDocumentStatus.DEPOSIT_PAID) {
+            throw new BadRequestException("Quote must be accepted or have its deposit paid before conversion");
         }
     }
 }

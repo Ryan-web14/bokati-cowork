@@ -38,15 +38,30 @@ public record BillingDocumentResponse(
         BigDecimal totalAmount,
         BigDecimal paidAmount,
         BigDecimal balanceDue,
+        /** Sous-total des lignes optionnelles non encore sélectionnées. */
+        BigDecimal optionsTotal,
         LocalDate issueDate,
         LocalDate dueDate,
         Instant issuedAt,
         Instant sentAt,
         Instant paidAt,
+        String customerReference,
+        String poNumber,
+        String projectCode,
+        String salespersonCode,
+        String deliveryAddressJson,
+        String language,
+        BigDecimal exchangeRate,
+        String paymentReference,
+        String paymentInstructions,
+        String bankDetailsJson,
         String metadataJson,
         List<BillingDocumentLineResponse> lines,
         List<BillingDocumentDiscountResponse> discounts,
         List<BillingDocumentTaxResponse> taxes,
-        List<BillingDocumentClauseResponse> clauses
+        List<BillingDocumentClauseResponse> clauses,
+        BillingDocumentAdvanceResponse advance,
+        EarlyPaymentDiscountResponse earlyPaymentDiscount,
+        BillingDocumentSignatureResponse signature
 ) {
 }

@@ -94,6 +94,19 @@ public class BillingDocumentLine {
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 4)
     private BigDecimal totalAmount;
 
+    @Column(name = "unit", length = 30)
+    private String unit;
+
+    @Column(name = "external_reference", length = 100)
+    private String externalReference;
+
+    @Column(name = "notes", columnDefinition = "text")
+    private String notes;
+
+    @Column(name = "optional", nullable = false)
+    @Builder.Default
+    private Boolean optional = Boolean.FALSE;
+
     @Column(name = "source_type", length = 80)
     private String sourceType;
 

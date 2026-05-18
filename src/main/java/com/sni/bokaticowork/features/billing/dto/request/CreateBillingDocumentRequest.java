@@ -28,6 +28,18 @@ public record CreateBillingDocumentRequest(
         String metadataJson,
         @Valid @NotEmpty List<CreateBillingDocumentLineRequest> lines,
         @Valid List<CreateBillingDocumentDiscountRequest> discounts,
-        @Valid List<CreateBillingDocumentClauseRequest> clauses
+        @Valid List<CreateBillingDocumentClauseRequest> clauses,
+        String paymentReference,
+        String paymentInstructions,
+        String bankDetailsJson,
+        @Valid CreateBillingDocumentAdvanceRequest advance,
+        String customerReference,
+        String poNumber,
+        String projectCode,
+        String salespersonCode,
+        String deliveryAddressJson,
+        String language,
+        java.math.BigDecimal exchangeRate,
+        @Valid CreateEarlyPaymentDiscountRequest earlyPaymentDiscount
 ) {
 }

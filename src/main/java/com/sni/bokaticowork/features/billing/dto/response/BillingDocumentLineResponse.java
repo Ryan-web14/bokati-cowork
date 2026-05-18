@@ -11,6 +11,7 @@ public record BillingDocumentLineResponse(
         String description,
         String detailedDescription,
         BigDecimal quantity,
+        String unit,
         BigDecimal unitPrice,
         BigDecimal discountRate,
         BigDecimal discountAmount,
@@ -24,6 +25,9 @@ public record BillingDocumentLineResponse(
         BigDecimal taxAmount,
         BigDecimal totalAmount,
         String sourceType,
-        String sourceCode
+        String sourceCode,
+        String externalReference,
+        String notes,
+        Boolean optional
 ) {
 }

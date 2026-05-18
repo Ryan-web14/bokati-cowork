@@ -20,6 +20,10 @@ public record CreateBillingDocumentLineRequest(
         BigDecimal vatRate,
         BigDecimal additionalCentRate,
         String sourceType,
-        String sourceCode
+        String sourceCode,
+        String unit,
+        String externalReference,
+        String notes,
+        Boolean optional
 ) {
 }
