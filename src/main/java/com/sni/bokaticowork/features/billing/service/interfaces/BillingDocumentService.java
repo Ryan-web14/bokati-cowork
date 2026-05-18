@@ -5,6 +5,7 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRe
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
@@ -23,6 +24,11 @@ public interface BillingDocumentService {
     BillingDocumentResponse createInvoiceFromBillableItems(CreateInvoiceFromBillableItemsRequest request);
     BillingDocumentResponse issue(String documentNumber);
     BillingDocumentResponse send(String documentNumber);
+    BillingDocumentResponse selectQuoteOptions(String quoteNumber, SelectQuoteOptionsRequest request);
+    BillingDocumentResponse markViewed(String quoteNumber);
+    BillingDocumentResponse startNegotiation(String quoteNumber);
+    BillingDocumentResponse requestDeposit(String quoteNumber);
+    BillingDocumentResponse markDepositPaid(String quoteNumber);
     BillingDocumentResponse acceptQuote(String quoteNumber);
     BillingDocumentResponse rejectQuote(String quoteNumber);
     BillingDocumentResponse convertQuoteToInvoice(String quoteNumber);

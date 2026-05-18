@@ -145,6 +145,39 @@ public class BillingDocument {
     @Column(name = "archived_at")
     private Instant archivedAt;
 
+    @Column(name = "customer_reference", length = 100)
+    private String customerReference;
+
+    @Column(name = "po_number", length = 100)
+    private String poNumber;
+
+    @Column(name = "project_code", length = 100)
+    private String projectCode;
+
+    @Column(name = "salesperson_code", length = 50)
+    private String salespersonCode;
+
+    @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
+    @Column(name = "delivery_address_json", columnDefinition = "jsonb")
+    private String deliveryAddressJson;
+
+    @Column(name = "language", length = 5)
+    @Builder.Default
+    private String language = "fr";
+
+    @Column(name = "exchange_rate", precision = 19, scale = 6)
+    private BigDecimal exchangeRate;
+
+    @Column(name = "payment_reference", length = 100)
+    private String paymentReference;
+
+    @Column(name = "payment_instructions", columnDefinition = "text")
+    private String paymentInstructions;
+
+    @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
+    @Column(name = "bank_details_json", columnDefinition = "jsonb")
+    private String bankDetailsJson;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

@@ -109,10 +109,13 @@ public class BillingAutoInvoiceService {
                                 java.math.BigDecimal.ZERO,
                                 java.math.BigDecimal.ZERO,
                                 request.sourceType().trim(),
-                                request.sourceCode().trim()
+                                request.sourceCode().trim(),
+                                null, null, null, null
                         )),
                         java.util.List.of(),
-                        defaultClauses()
+                        defaultClauses(),
+                        null, null, null, null,
+                        null, null, null, null, null, null, null, null
                 )
         );
         billingDocumentService.issue(created.documentNumber());

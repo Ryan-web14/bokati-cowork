@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRe
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentClauseResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscountResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
@@ -20,6 +21,8 @@ import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.enums.BillingLineType;
 import com.sni.bokaticowork.features.billing.mapper.interfaces.BillingDocumentMapper;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
+import com.sni.bokaticowork.features.billing.model.BillingDocumentLine;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentLineRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
 import com.sni.bokaticowork.features.billing.repository.specification.criteria.BillingDocumentSearchCriteria;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
@@ -40,11 +43,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -52,6 +57,7 @@ import java.util.Locale;
 public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     private final BillingDocumentRepository documentRepository;
+    private final BillingDocumentLineRepository lineRepository;
     private final BillableItemRepository billableItemRepository;
     private final BillingCalculationService calculationService;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
@@ -66,7 +72,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         BillingCustomerSnapshotResolver.CustomerSnapshot customer = customerSnapshotResolver.resolve(request);
         BillingCalculationService.CalculatedDocument calculation = calculationService.calculate(request.lines(), request.discounts());
         BillingDocument document = buildDocument(request, customer, calculation);
-        BillingDocument saved = documentWriter.save(document, calculation, request.discounts(), request.clauses());
+        BillingDocument saved = documentWriter.save(document, calculation, request.discounts(), request.clauses(), request.advance());
+        documentWriter.saveEarlyPaymentDiscount(saved, request.earlyPaymentDiscount());
         eventWriter.write(saved, "BILLING_DOCUMENT_CREATED", null);
         return mapper.toResponse(saved);
     }
@@ -106,7 +113,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                         null,
                         null,
                         item.getSourceType(),
-                        item.getSourceId()
+                        item.getSourceId(),
+                        null, null, null, null
                 ))
                 .toList();
         CreateBillingDocumentRequest createRequest = new CreateBillingDocumentRequest(
@@ -128,7 +136,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 null,
                 lines,
                 List.of(),
-                defaultInvoiceClauses()
+                defaultInvoiceClauses(),
+                null, null, null, null,
+                null, null, null, null, null, null, null, null
         );
         BillingDocumentResponse response = create(createRequest);
         BillingDocument invoice = serviceByNumber(response.documentNumber());
@@ -163,10 +173,115 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     }
 
     @Override
+    public BillingDocumentResponse selectQuoteOptions(String quoteNumber, SelectQuoteOptionsRequest request) {
+        BillingDocument quote = quote(quoteNumber);
+        if (quote.getStatus() == BillingDocumentStatus.CONVERTED || quote.getStatus() == BillingDocumentStatus.CANCELLED) {
+            throw new BadRequestException("Cannot modify options on a converted or cancelled quote");
+        }
+        Set<Integer> selected = request.selectedLineOrders() == null ? Set.of() : Set.copyOf(request.selectedLineOrders());
+        List<BillingDocumentLine> allLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote);
+
+        for (BillingDocumentLine line : allLines) {
+            if (!Boolean.TRUE.equals(line.getOptional())) {
+                continue;
+            }
+            if (selected.contains(line.getLineOrder())) {
+                line.setOptional(Boolean.FALSE);
+                lineRepository.save(line);
+            } else {
+                lineRepository.delete(line);
+            }
+        }
+
+        // Recalculate document totals from remaining non-optional lines
+        List<BillingDocumentLine> remaining = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(quote)
+                .stream().filter(l -> !Boolean.TRUE.equals(l.getOptional())).toList();
+        BigDecimal subtotal = sum(remaining, BillingDocumentLine::getSubtotalAmount);
+        BigDecimal discount = sum(remaining, BillingDocumentLine::getDiscountAmount);
+        BigDecimal taxable  = sum(remaining, BillingDocumentLine::getTaxableAmount);
+        BigDecimal vat      = sum(remaining, BillingDocumentLine::getVatAmount);
+        BigDecimal addCent  = sum(remaining, BillingDocumentLine::getAdditionalCentAmount);
+        BigDecimal tax      = sum(remaining, BillingDocumentLine::getTaxAmount);
+        BigDecimal total    = sum(remaining, BillingDocumentLine::getTotalAmount);
+
+        quote.setSubtotalAmount(scale(subtotal));
+        quote.setDiscountAmount(scale(discount));
+        quote.setTaxableAmount(scale(taxable));
+        quote.setVatAmount(scale(vat));
+        quote.setAdditionalCentAmount(scale(addCent));
+        quote.setTaxAmount(scale(tax));
+        quote.setTotalAmount(scale(total));
+        quote.setBalanceDue(scale(total.subtract(quote.getPaidAmount())));
+        BillingDocument saved = documentRepository.save(quote);
+        eventWriter.write(saved, "QUOTE_OPTIONS_SELECTED", java.util.Map.of("selectedLineOrders", selected.toString()));
+        return mapper.toResponse(saved);
+    }
+
+    private BigDecimal sum(List<BillingDocumentLine> lines, java.util.function.Function<BillingDocumentLine, BigDecimal> getter) {
+        return lines.stream().map(getter).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal scale(BigDecimal value) {
+        return value.setScale(4, RoundingMode.HALF_UP);
+    }
+
+    @Override
+    public BillingDocumentResponse markViewed(String quoteNumber) {
+        BillingDocument quote = quote(quoteNumber);
+        if (quote.getStatus() == BillingDocumentStatus.SENT) {
+            quote.setStatus(BillingDocumentStatus.VIEWED);
+            BillingDocument saved = documentRepository.save(quote);
+            eventWriter.write(saved, "QUOTE_VIEWED", null);
+            return mapper.toResponse(saved);
+        }
+        return mapper.toResponse(quote);
+    }
+
+    @Override
+    public BillingDocumentResponse startNegotiation(String quoteNumber) {
+        BillingDocument quote = quote(quoteNumber);
+        if (quote.getStatus() != BillingDocumentStatus.SENT
+                && quote.getStatus() != BillingDocumentStatus.VIEWED
+                && quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
+            throw new BadRequestException("Cannot start negotiation in status " + quote.getStatus());
+        }
+        quote.setStatus(BillingDocumentStatus.NEGOTIATION);
+        BillingDocument saved = documentRepository.save(quote);
+        eventWriter.write(saved, "QUOTE_NEGOTIATION_STARTED", null);
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    public BillingDocumentResponse requestDeposit(String quoteNumber) {
+        BillingDocument quote = quote(quoteNumber);
+        if (quote.getStatus() != BillingDocumentStatus.ACCEPTED) {
+            throw new BadRequestException("Deposit can only be requested on an accepted quote");
+        }
+        quote.setStatus(BillingDocumentStatus.DEPOSIT_REQUESTED);
+        BillingDocument saved = documentRepository.save(quote);
+        eventWriter.write(saved, "QUOTE_DEPOSIT_REQUESTED", null);
+        return mapper.toResponse(saved);
+    }
+
+    @Override
+    public BillingDocumentResponse markDepositPaid(String quoteNumber) {
+        BillingDocument quote = quote(quoteNumber);
+        if (quote.getStatus() != BillingDocumentStatus.DEPOSIT_REQUESTED) {
+            throw new BadRequestException("Quote must be in DEPOSIT_REQUESTED status to mark deposit as paid");
+        }
+        quote.setStatus(BillingDocumentStatus.DEPOSIT_PAID);
+        BillingDocument saved = documentRepository.save(quote);
+        eventWriter.write(saved, "QUOTE_DEPOSIT_PAID", null);
+        return mapper.toResponse(saved);
+    }
+
+    @Override
     public BillingDocumentResponse acceptQuote(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
-        if (quote.getStatus() != BillingDocumentStatus.DRAFT && quote.getStatus() != BillingDocumentStatus.SENT) {
-            throw new BadRequestException("Only draft or sent quotes can be accepted");
+        if (quote.getStatus() != BillingDocumentStatus.DRAFT && quote.getStatus() != BillingDocumentStatus.SENT
+                && quote.getStatus() != BillingDocumentStatus.VIEWED
+                && quote.getStatus() != BillingDocumentStatus.NEGOTIATION) {
+            throw new BadRequestException("Only draft, sent, viewed or negotiation quotes can be accepted");
         }
         quote.setStatus(BillingDocumentStatus.ACCEPTED);
         BillingDocument saved = documentRepository.save(quote);
@@ -211,7 +326,19 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 quoteResponse.metadataJson(),
                 quoteResponse.lines().stream().map(this::toCreateLineRequest).toList(),
                 quoteResponse.discounts().stream().map(this::toCreateDiscountRequest).toList(),
-                quoteResponse.clauses().stream().map(this::toCreateClauseRequest).toList()
+                quoteResponse.clauses().stream().map(this::toCreateClauseRequest).toList(),
+                quoteResponse.paymentReference(),
+                quoteResponse.paymentInstructions(),
+                quoteResponse.bankDetailsJson(),
+                null,
+                quoteResponse.customerReference(),
+                quoteResponse.poNumber(),
+                quoteResponse.projectCode(),
+                quoteResponse.salespersonCode(),
+                quoteResponse.deliveryAddressJson(),
+                quoteResponse.language(),
+                quoteResponse.exchangeRate(),
+                null
         );
         BillingDocumentResponse invoice = create(request);
         quote.setStatus(BillingDocumentStatus.CONVERTED);
@@ -229,7 +356,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             throw new BadRequestException("Invalid credit note amount");
         }
         List<CreateBillingDocumentLineRequest> lines = request.lines() == null || request.lines().isEmpty()
-                ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber()))
+                ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null))
                 : request.lines();
         BillingDocumentResponse creditNote = create(new CreateBillingDocumentRequest(
                 BillingDocumentType.CREDIT_NOTE,
@@ -250,7 +377,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 null,
                 lines,
                 List.of(),
-                List.of(new CreateBillingDocumentClauseRequest("CREDIT_NOTE_REASON", "Motif de l'avoir", request.reason(), 1))
+                List.of(new CreateBillingDocumentClauseRequest("CREDIT_NOTE_REASON", "Motif de l'avoir", request.reason(), 1)),
+                null, null, null, null,
+                null, null, null, null, null, null, null, null
         ));
         if (Boolean.TRUE.equals(request.applyImmediately())) {
             applyCreditNote(creditNote.documentNumber());
@@ -451,6 +580,16 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .balanceDue(calculation.totalAmount())
                 .issueDate(request.issueDate() == null ? LocalDate.now() : request.issueDate())
                 .dueDate(request.dueDate())
+                .customerReference(trim(request.customerReference()))
+                .poNumber(trim(request.poNumber()))
+                .projectCode(trim(request.projectCode()))
+                .salespersonCode(trim(request.salespersonCode()))
+                .deliveryAddressJson(trim(request.deliveryAddressJson()))
+                .language(trim(request.language()) == null ? "fr" : trim(request.language()))
+                .exchangeRate(request.exchangeRate())
+                .paymentReference(trim(request.paymentReference()))
+                .paymentInstructions(trim(request.paymentInstructions()))
+                .bankDetailsJson(trim(request.bankDetailsJson()))
                 .metadataJson(trim(request.metadataJson()))
                 .build();
     }
@@ -503,7 +642,19 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 request.metadataJson(),
                 request.lines(),
                 request.discounts(),
-                request.clauses()
+                request.clauses(),
+                request.paymentReference(),
+                request.paymentInstructions(),
+                request.bankDetailsJson(),
+                request.advance(),
+                request.customerReference(),
+                request.poNumber(),
+                request.projectCode(),
+                request.salespersonCode(),
+                request.deliveryAddressJson(),
+                request.language(),
+                request.exchangeRate(),
+                request.earlyPaymentDiscount()
         );
     }
 
@@ -553,7 +704,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.vatRate(),
                 line.additionalCentRate(),
                 line.sourceType(),
-                line.sourceCode()
+                line.sourceCode(),
+                line.unit(),
+                line.externalReference(),
+                line.notes(),
+                Boolean.TRUE.equals(line.optional()) ? Boolean.TRUE : null
         );
     }
 

@@ -234,7 +234,8 @@ public class CrmServiceImpl implements CrmService {
                 null,
                 null,
                 "CRM_LEAD",
-                lead.getLeadNumber()
+                lead.getLeadNumber(),
+                null, null, null, null
         );
 
         BillingDocumentResponse quote = billingDocumentService.createManualQuote(
@@ -253,7 +254,9 @@ public class CrmServiceImpl implements CrmService {
                         LocalDate.now().plusDays(30),
                         null,
                         List.of(line),
-                        null, null
+                        null, null,
+                        null, null, null, null,
+                        null, null, null, null, null, null, null, null
                 ));
 
         activityRepository.save(LeadActivity.builder()

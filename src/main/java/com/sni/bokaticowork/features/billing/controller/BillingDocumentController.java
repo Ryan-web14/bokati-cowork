@@ -6,6 +6,10 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRe
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.RequestSignatureRequest;
+import com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentSignatureResponse;
+import com.sni.bokaticowork.features.billing.service.interfaces.QuoteSignatureService;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
@@ -45,6 +49,7 @@ public class BillingDocumentController {
     private final BillingDocumentPdfService billingDocumentPdfService;
     private final BillingEmailService billingEmailService;
     private final PaymentService paymentService;
+    private final QuoteSignatureService quoteSignatureService;
 
     @PostMapping("/documents")
     public ResponseEntity<BillingDocumentResponse> create(@Valid @RequestBody CreateBillingDocumentRequest request) {
@@ -79,6 +84,39 @@ public class BillingDocumentController {
     @PatchMapping("/documents/{documentNumber}/send")
     public ResponseEntity<BillingDocumentResponse> send(@PathVariable String documentNumber) {
         return ResponseEntity.ok(billingDocumentService.send(documentNumber));
+    }
+
+    @PatchMapping("/quotes/{quoteNumber}/mark-viewed")
+    public ResponseEntity<BillingDocumentResponse> markViewed(@PathVariable String quoteNumber) {
+        return ResponseEntity.ok(billingDocumentService.markViewed(quoteNumber));
+    }
+
+    @PatchMapping("/quotes/{quoteNumber}/start-negotiation")
+    public ResponseEntity<BillingDocumentResponse> startNegotiation(@PathVariable String quoteNumber) {
+        return ResponseEntity.ok(billingDocumentService.startNegotiation(quoteNumber));
+    }
+
+    @PatchMapping("/quotes/{quoteNumber}/request-deposit")
+    public ResponseEntity<BillingDocumentResponse> requestDeposit(@PathVariable String quoteNumber) {
+        return ResponseEntity.ok(billingDocumentService.requestDeposit(quoteNumber));
+    }
+
+    @PatchMapping("/quotes/{quoteNumber}/mark-deposit-paid")
+    public ResponseEntity<BillingDocumentResponse> markDepositPaid(@PathVariable String quoteNumber) {
+        return ResponseEntity.ok(billingDocumentService.markDepositPaid(quoteNumber));
+    }
+
+    @PostMapping("/quotes/{quoteNumber}/request-signature")
+    public ResponseEntity<BillingDocumentSignatureResponse> requestSignature(
+            @PathVariable String quoteNumber,
+            @RequestBody(required = false) RequestSignatureRequest request) {
+        return ResponseEntity.ok(quoteSignatureService.requestSignature(quoteNumber, request));
+    }
+
+    @PatchMapping("/quotes/{quoteNumber}/select-options")
+    public ResponseEntity<BillingDocumentResponse> selectQuoteOptions(@PathVariable String quoteNumber,
+                                                                      @Valid @RequestBody SelectQuoteOptionsRequest request) {
+        return ResponseEntity.ok(billingDocumentService.selectQuoteOptions(quoteNumber, request));
     }
 
     @PatchMapping("/quotes/{quoteNumber}/accept")

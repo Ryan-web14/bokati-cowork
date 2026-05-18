@@ -42,6 +42,10 @@ public class BillingCalculationService {
         for (CreateBillingDocumentLineRequest request : lines) {
             BillingDocumentLine line = calculateLine(request, index++, taxProfile);
             calculatedLines.add(line);
+            if (Boolean.TRUE.equals(line.getOptional())) {
+                // lignes optionnelles : calculées individuellement mais exclues des totaux document
+                continue;
+            }
             subtotal = subtotal.add(line.getSubtotalAmount());
             lineDiscount = lineDiscount.add(line.getDiscountAmount());
             taxable = taxable.add(line.getTaxableAmount());
@@ -94,6 +98,7 @@ public class BillingCalculationService {
                 .description(request.description().trim())
                 .detailedDescription(trim(request.detailedDescription()))
                 .quantity(money(quantity))
+                .unit(trim(request.unit()))
                 .unitPrice(money(unitPrice))
                 .discountRate(request.discountRate() == null ? BigDecimal.ZERO : money(request.discountRate()))
                 .discountAmount(discount)
@@ -108,6 +113,9 @@ public class BillingCalculationService {
                 .totalAmount(total)
                 .sourceType(trim(request.sourceType()))
                 .sourceCode(trim(request.sourceCode()))
+                .externalReference(trim(request.externalReference()))
+                .notes(trim(request.notes()))
+                .optional(Boolean.TRUE.equals(request.optional()))
                 .build();
     }
 
