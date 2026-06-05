@@ -4,6 +4,8 @@ import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.richtext.RichTextSupport;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
+import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
 import com.sni.bokaticowork.features.support.dto.SupportDtos.*;
 import com.sni.bokaticowork.features.support.enums.*;
 import com.sni.bokaticowork.features.support.mapper.SupportTicketMapper;
@@ -38,6 +40,8 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     private final SupportTicketMapper mapper;
     private final RichTextSupport richTextSupport;
     private final UserService userService;
+    private final CustomerRepository customerRepository;
+    private final MemberRepository memberRepository;
     @Lazy private final SupportEmailService emailService;
 
     // ── Création ─────────────────────────────────────────────────
@@ -47,6 +51,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         if (request == null || !StringUtils.hasText(request.title())) {
             throw new BadRequestException("Ticket title is required");
         }
+        assertOwnerNotSuppressed(request.ownerType(), request.ownerCode());
         TicketPriority priority = request.priority() == null ? TicketPriority.MEDIUM : request.priority();
         SupportTicket ticket = SupportTicket.builder()
                 .ticketNumber("TCK-" + Instant.now().toEpochMilli())
@@ -365,6 +370,22 @@ public class SupportTicketServiceImpl implements SupportTicketService {
             result.put(row[0].toString(), ((Number) row[1]).longValue());
         }
         return result;
+    }
+
+    private void assertOwnerNotSuppressed(String ownerType, String ownerCode) {
+        if (!StringUtils.hasText(ownerType) || !StringUtils.hasText(ownerCode)) return;
+        switch (ownerType.trim().toUpperCase()) {
+            case "MEMBER" -> {
+                if (!memberRepository.existsByMemberIdAndDeletedFalse(ownerCode.trim())) {
+                    throw new BadRequestException("Le membre " + ownerCode + " est supprimé ou introuvable et ne peut pas ouvrir de ticket");
+                }
+            }
+            case "CUSTOMER" -> {
+                if (!customerRepository.existsByCustomerIdAndDeletedFalse(ownerCode.trim())) {
+                    throw new BadRequestException("Le client " + ownerCode + " est supprimé ou introuvable et ne peut pas ouvrir de ticket");
+                }
+            }
+        }
     }
 
     private long firstResponseHours(TicketPriority priority) {

@@ -1,7 +1,9 @@
 package com.sni.bokaticowork.security.admin.user.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.security.service.passwordResetService.interfaces.PasswordResetService;
 import com.sni.bokaticowork.core.generator.password.GeneratorOfPassword;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.security.admin.role.model.RoleUser;
@@ -47,6 +49,7 @@ public class UserAdminServiceImpl implements UserAdminService {
     private final RoleUserService roleUserService;
     private final RoleUserRepository roleUserRepository;
     private final DefaultEmailSender emailSender;
+    private final PasswordResetService passwordResetService;
 
     @Value("${app.admin-access-url:https://admin.elleaose.com}")
     private String adminAccessUrl;
@@ -190,6 +193,14 @@ public class UserAdminServiceImpl implements UserAdminService {
         user.setIsAccountLocked(false);
         userRepository.save(user);
         return toAdminResponse(userService.getUserByIdForService(id), generatedPassword);
+    }
+
+    @Override
+    public void initiatePasswordReset(String userId, String actor) {
+        Users user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userId));
+        passwordResetService.generatePasswordResetToken(user, actor);
+        log.info("Admin password reset initiated for {} by {}", userId, actor);
     }
 
     @Override

@@ -108,6 +108,15 @@ public class AdminUserController {
         return ResponseEntity.ok(userAdminService.resetPassword(id, request));
     }
 
+    @Audited(module = "USER", action = "ADMIN_INITIATE_PASSWORD_RESET", ressource = "user")
+    @PostMapping("/{userId}/reset-password")
+    @PreAuthorize("hasAuthority('SYSTEM:USERS')")
+    public ResponseEntity<Void> initiatePasswordReset(@PathVariable String userId,
+                                                      Authentication authentication) {
+        userAdminService.initiatePasswordReset(userId, actor(authentication));
+        return ResponseEntity.accepted().build();
+    }
+
     @Audited(module = "USER", action = "ADMIN_ARCHIVE", ressource = "user")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('SYSTEM:USERS')")

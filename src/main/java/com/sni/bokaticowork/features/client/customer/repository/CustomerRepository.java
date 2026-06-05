@@ -1,8 +1,10 @@
 package com.sni.bokaticowork.features.client.customer.repository;
 
+import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,10 +15,10 @@ import java.util.Optional;
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSpecificationExecutor<Customer> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM customer WHERE customer_id = :customerId")
+    @Query(nativeQuery = true, value = "SELECT * FROM customer WHERE customer_id = :customerId AND deleted = false")
     Optional<Customer> findByCustomerId(@Param("customerId") String customerId);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM customer WHERE email = :email")
+    @Query(nativeQuery = true, value = "SELECT * FROM customer WHERE email = :email AND deleted = false")
     Optional<Customer> findByEmail(String email);
 
     @Query(
@@ -40,7 +42,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     @Query(
             nativeQuery = true,
             value = "SELECT DISTINCT c.* FROM customer c " +
-                    "WHERE (:status IS NULL OR c.status = :status) " +
+                    "WHERE c.deleted = false " +
+                    "AND (:status IS NULL OR c.status = :status) " +
                     "AND (:type IS NULL OR c.type = :type)"
     )
     List<Customer> findDistinctByStatusAndTypeOptional(@Param("status") String status, @Param("type") String type);
@@ -65,7 +68,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
 
     @Query(
             nativeQuery = true,
-            value = "SELECT DISTINCT c.* FROM customer c WHERE c.deleted = false AND c.email = :email"
+            value = "SELECT DISTINCT c.* FROM customer c WHERE c.deleted = true AND c.email = :email"
     )
     Optional<Customer> findByEmailAndDeletedTrue(@Param("email") String email);
 
@@ -115,9 +118,10 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
               AND (:type IS NULL OR c.type = :type)
             ORDER BY c.companyName ASC, c.firstname ASC, c.lastname ASC
             """)
-    List<Customer> basicSearch(@Param("query") String query, @Param("type") com.sni.bokaticowork.features.client.customer.enums.CustomerType type);
+    List<Customer> basicSearch(@Param("query") String query, @Param("type") CustomerType type);
 
-    @Query(nativeQuery = true, value = "UPDATE customer SET deleted = true WHERE customerId = :custoemrId ")
+    @Modifying
+    @Query(nativeQuery = true, value = "UPDATE customer SET deleted = true WHERE customer_id = :customerId ")
     void deleteByCustomerId(@Param("customerId") String customerId);
 
 }

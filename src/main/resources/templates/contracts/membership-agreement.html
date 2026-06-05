@@ -6,183 +6,189 @@
 <style>
 @page {
     size: A4;
-    margin: 0 0 14mm 0;
+    margin: 18mm 20mm 20mm 20mm;
     @bottom-center {
-        content: "Page " counter(page) " sur " counter(pages);
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-        font-size: 7.5px;
-        color: #9b8caa;
+        content: "Page " counter(page) " / " counter(pages);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 8pt;
+        color: #666;
     }
-}
-
-:root {
-    --plum:        #1a0a2e;
-    --plum-mid:    #2a1548;
-    --violet:      oklch(62% 0.18 295);
-    --violet-pale: oklch(95% 0.04 295);
-    --gold:        #c9a84c;
-    --gold-pale:   oklch(97% 0.04 76);
-    --gold-mid:    oklch(90% 0.09 76);
-    --gold-dark:   oklch(52% 0.14 76);
-    --ink:         #1a0a2e;
-    --slate:       #5c4f6e;
-    --slate-light: #9b8caa;
-    --border:      #d8d0e8;
-    --white:       #ffffff;
-    --field-bg:    #faf8fd;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    color: var(--ink);
-    font-size: 9.5px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10pt;
     line-height: 1.6;
-    background: var(--white);
-    width: 210mm;
-    min-height: 297mm;
+    color: #111;
+    background: #fff;
 }
 
-.doc-header {
-    background: var(--plum);
-    padding: 18px 24px 14px;
-    position: relative; overflow: hidden;
+/* ── EN-TÊTE ── */
+.letterhead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 10pt;
+    border-bottom: 2pt solid #111;
+    margin-bottom: 14pt;
 }
-.doc-header::after {
-    content: ''; position: absolute; top: 0; right: -20px;
-    width: 220px; height: 100%;
-    background: rgba(255,255,255,0.03); transform: skewX(-12deg);
+.lh-brand-name {
+    font-size: 15pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
 }
-.header-inner {
-    position: relative; z-index: 1;
-    display: flex; align-items: center; justify-content: space-between;
-}
-.brand-name { font-size: 17px; font-weight: 700; color: var(--white); letter-spacing: 3px; text-transform: uppercase; }
-.brand-sub  { font-size: 7px; color: var(--slate-light); letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
-.doc-title-block { text-align: right; }
-.doc-title    { font-size: 20px; font-weight: 700; color: var(--white); letter-spacing: 2px; text-transform: uppercase; line-height: 1; }
-.doc-subtitle { font-size: 8.5px; color: var(--gold); margin-top: 5px; letter-spacing: 0.8px; }
+.lh-brand-tag { font-size: 8pt; color: #555; font-style: italic; margin-top: 2pt; }
+.lh-contact   { text-align: right; font-size: 8pt; color: #444; line-height: 1.55; }
 
-.header-stripe {
-    height: 3px;
-    background: linear-gradient(90deg, var(--gold) 0%, var(--violet) 55%, var(--plum-mid) 100%);
+/* ── TITRE DU DOCUMENT ── */
+.doc-title-block { text-align: center; margin: 0 0 12pt; }
+.doc-type   { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 2pt; color: #777; margin-bottom: 5pt; }
+.doc-title  { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1pt; }
+.doc-sub    { font-size: 9pt; font-style: italic; color: #444; margin-top: 4pt; }
+.title-rule { border: none; border-top: 1pt solid #888; width: 55%; margin: 8pt auto 0; }
+
+/* ── BARRE DE RÉFÉRENCE ── */
+.ref-bar {
+    border: 0.75pt solid #bbb;
+    padding: 5pt 10pt;
+    margin-bottom: 14pt;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: #444;
+    background: #f8f8f8;
 }
 
-.ref-strip {
-    background: var(--gold-pale);
-    border-top: 1px solid var(--gold-mid);
-    border-bottom: 1px solid var(--gold-mid);
-    padding: 6px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    font-size: 8px; color: var(--gold-dark);
+/* ── PARTIES ── */
+.parties-intro {
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    font-size: 9.5pt;
+    padding: 6pt 0;
+    margin: 14pt 0 10pt;
+    border-top: 1pt solid #bbb;
+    border-bottom: 1pt solid #bbb;
 }
-.ref-strip strong { font-weight: 700; }
 
-.content { padding: 16px 24px 20px; }
+.party { margin-bottom: 8pt; padding-left: 14pt; border-left: 2pt solid #bbb; }
+.party-role {
+    font-size: 8pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    color: #555;
+    margin-bottom: 2pt;
+}
+.party-name   { font-weight: bold; font-size: 10.5pt; }
+.party-detail { font-size: 9pt; color: #333; margin-top: 1pt; }
+.connector    { text-align: center; font-style: italic; color: #555; font-size: 9pt; margin: 4pt 0; }
 
-.section-label {
-    font-size: 7.5px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 1.6px; color: var(--violet);
-    display: flex; align-items: center; gap: 8px;
-    margin: 18px 0 10px;
+/* ── PREAMBLE ── */
+.preamble {
+    text-align: center;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    font-size: 9.5pt;
+    padding: 6pt 0;
+    margin: 14pt 0 12pt;
+    border-top: 1pt solid #bbb;
+    border-bottom: 1pt solid #bbb;
 }
-.section-label:first-child { margin-top: 0; }
-.section-label::before { content: ''; display: inline-block; width: 14px; height: 2px; background: var(--gold); flex-shrink: 0; }
-.section-label::after  { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-.parties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
-.partie-card { border: 1.5px solid var(--border); border-radius: 3px; overflow: hidden; }
-.partie-head {
-    background: var(--plum-mid);
-    padding: 5px 12px;
-    font-size: 7.5px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1.2px;
-    color: var(--white); display: flex; align-items: center; gap: 8px;
+/* ── ARTICLES ── */
+.article { margin-top: 12pt; }
+.article-heading {
+    font-size: 10pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    border-bottom: 1pt solid #bbb;
+    padding-bottom: 3pt;
+    margin-bottom: 7pt;
 }
-.partie-head .tag {
-    background: var(--gold); color: var(--plum);
-    font-size: 6.5px; font-weight: 700; letter-spacing: 0.5px;
-    padding: 1px 6px; border-radius: 2px; text-transform: uppercase;
-}
-.partie-body { background: var(--field-bg); padding: 10px 12px; }
-.p-name { font-size: 11px; font-weight: 700; color: var(--plum); margin-bottom: 4px; }
-.p-line { font-size: 9px; color: var(--slate); margin-top: 2px; }
-
-.data-table { width: 100%; border-collapse: collapse; margin-top: 2px; }
-.data-table td {
-    font-size: 9px; color: var(--ink);
-    padding: 6px 10px;
-    border-bottom: 1px solid var(--border);
-    vertical-align: top;
-}
-.data-table .lbl {
-    width: 36%; background: var(--field-bg);
-    color: var(--slate); font-weight: 700;
-    font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px;
-}
-.data-table tr:last-child td { border-bottom: none; }
-
-.article-body {
-    font-size: 9px; color: var(--slate);
+.article-text {
+    font-size: 9.5pt;
+    text-align: justify;
     line-height: 1.65;
-    background: var(--field-bg);
-    border-left: 3px solid var(--border);
-    padding: 8px 12px;
-    border-radius: 0 3px 3px 0;
+}
+.article-text p { margin-bottom: 5pt; }
+.article-text p:last-child { margin-bottom: 0; }
+
+/* ── TABLEAU DE DONNÉES ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.data-table td { border: 0.75pt solid #bbb; padding: 5pt 8pt; vertical-align: top; }
+.data-table .lbl { width: 34%; font-weight: bold; background: #f5f5f5; color: #333; }
+
+/* ── CLAUSES ── */
+.clause {
+    margin-bottom: 6pt;
+    font-size: 9.5pt;
+    line-height: 1.65;
+    text-align: justify;
+    padding-left: 14pt;
+    text-indent: -8pt;
+}
+.clause::before { content: "– "; font-weight: bold; }
+
+/* ── TABLEAU DE CONDITIONS ── */
+.vars-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.vars-table td { border: 0.75pt solid #bbb; padding: 5pt 8pt; }
+.vars-table .key { width: 38%; font-weight: bold; background: #f5f5f5; color: #333; }
+.vars-table tr:nth-child(even) td { background: #fafafa; }
+.vars-table tr:nth-child(even) .key { background: #f0f0f0; }
+
+/* ── NOTICE JURIDIQUE ── */
+.legal-notice {
+    margin-top: 10pt;
+    padding: 7pt 10pt;
+    border: 0.75pt solid #bbb;
+    border-left: 3pt solid #555;
+    font-size: 8.5pt;
+    color: #333;
+    line-height: 1.65;
+    text-align: justify;
 }
 
-.clauses-list { list-style: none; margin: 0; padding: 0; }
-.clauses-list li {
-    padding: 7px 8px 7px 22px;
-    border-bottom: 1px solid var(--border);
-    font-size: 9px; color: var(--slate);
-    position: relative;
-}
-.clauses-list li:last-child { border-bottom: none; }
-.clauses-list li:before {
-    content: "›"; color: var(--gold);
-    font-size: 13px; font-weight: bold;
-    position: absolute; left: 6px; top: 5px;
+/* ── CLOSING ── */
+.closing {
+    margin-top: 16pt;
+    padding-top: 8pt;
+    border-top: 1pt solid #bbb;
+    text-align: center;
+    font-size: 9pt;
+    font-style: italic;
+    color: #333;
 }
 
-.vars-table { width: 100%; border-collapse: collapse; }
-.vars-table td {
-    border: 1px solid var(--border);
-    padding: 6px 10px; font-size: 9px;
-}
-.vars-table .var-key {
-    width: 38%; background: var(--field-bg);
-    color: var(--slate); font-weight: 700;
-}
-.vars-table tr:nth-child(even) td { background: var(--violet-pale); }
-.vars-table tr:nth-child(even) .var-key { background: var(--violet-pale); }
+/* ── SIGNATURES ── */
+.sig-table { width: 100%; border-collapse: collapse; margin-top: 18pt; }
+.sig-cell  { width: 50%; vertical-align: top; padding: 0 0 0 22pt; }
+.sig-cell:first-child { padding: 0 22pt 0 0; border-right: 1pt solid #bbb; }
 
-.law-notice {
-    background: var(--violet-pale); border: 1px solid var(--border);
-    border-left: 3px solid var(--violet); border-radius: 2px;
-    padding: 8px 12px; font-size: 8px; color: var(--slate);
-    line-height: 1.65; margin: 10px 0;
-}
+.sig-role { font-size: 8.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 2pt; }
+.sig-name { font-size: 9pt; color: #333; margin-bottom: 1pt; }
+.sig-qual { font-size: 8.5pt; font-style: italic; color: #555; margin-bottom: 10pt; }
+.sig-box  { border: 1pt solid #888; height: 56pt; width: 100%; margin-bottom: 5pt; }
+.sig-box.signed { border: 2pt solid #111; padding: 8pt; }
+.sig-stamp { font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; }
+.sig-stamp-meta { font-size: 7.5pt; color: #555; margin-top: 2pt; }
+.sig-date    { font-size: 8pt; color: #444; margin-top: 3pt; }
+.sig-mention { font-size: 7.5pt; color: #888; font-style: italic; margin-top: 2pt; }
 
-.signature-intro {
-    font-size: 8.5px; color: var(--slate);
-    margin-bottom: 10px; font-style: italic;
-}
-.signature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px; }
-.signature-block { display: flex; flex-direction: column; gap: 4px; }
-.signature-label { font-size: 7.5px; font-weight: 700; color: var(--slate); text-transform: uppercase; letter-spacing: 0.8px; }
-.signature-sub   { font-size: 8px; color: var(--slate-light); margin-bottom: 4px; font-style: italic; }
-.signature-line  { border-bottom: 1.5px solid var(--border); min-height: 46px; }
-.signature-line.signed { border: 1.5px solid var(--gold); background: var(--gold-pale); border-radius: 2px; padding: 8px 10px; }
-.system-signature { font-size: 12px; font-weight: 700; color: var(--plum); letter-spacing: 0.8px; text-transform: uppercase; }
-.system-signature-meta { font-size: 7.5px; color: var(--slate); margin-top: 2px; }
-.signature-caption { font-size: 7.5px; color: var(--slate-light); margin-top: 3px; }
-
+/* ── PIED DE PAGE ── */
 .doc-footer {
-    margin-top: 18px; padding: 10px 24px;
-    border-top: 1px solid var(--border);
-    font-size: 7.5px; color: var(--slate-light); text-align: center;
+    margin-top: 20pt;
+    padding-top: 6pt;
+    border-top: 1pt solid #aaa;
+    font-size: 7.5pt;
+    color: #666;
+    text-align: center;
 }
 
 @media print { body { width: 210mm; } }
@@ -190,50 +196,72 @@ body {
 </head>
 <body>
 
-<div class="doc-header">
-  <div class="header-inner">
-    <div>
-      <div class="brand-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
-      <div class="brand-sub">Espace de coworking &amp; services aux entreprises</div>
-    </div>
-    <div class="doc-title-block">
-      <div class="doc-title">Contrat d'adhésion</div>
-      <div class="doc-subtitle" th:text="${request.title}">Contrat d'adhésion membre</div>
-    </div>
+<!-- EN-TÊTE / LETTERHEAD -->
+<div class="letterhead">
+  <div>
+    <div class="lh-brand-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
+    <div class="lh-brand-tag">Espace de coworking &amp; services aux entreprises</div>
+  </div>
+  <div class="lh-contact">
+    <div th:if="${business != null and business.email != null}" th:text="${business.email}">contact@example.com</div>
+    <div th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
+    <div th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
   </div>
 </div>
-<div class="header-stripe"></div>
 
-<div class="ref-strip">
-  <span><strong>Date de génération :</strong> <span th:text="${generatedAt}">2026-01-01</span></span>
-  <span><strong>Réf. modèle :</strong> <span th:text="${request.templateCode}">membership-agreement</span></span>
+<!-- TITRE -->
+<div class="doc-title-block">
+  <div class="doc-type">Document contractuel</div>
+  <div class="doc-title">Contrat d'adhésion</div>
+  <div class="doc-sub" th:text="${request.title}">Contrat d'adhésion membre</div>
+  <hr class="title-rule"/>
 </div>
 
-<div class="content">
+<!-- RÉFÉRENCE -->
+<div class="ref-bar">
+  <span>Date de génération&nbsp;: <strong th:text="${generatedAt}">2026-01-01</strong></span>
+  <span>Réf. modèle&nbsp;: <strong th:text="${request.templateCode}">membership-agreement</strong></span>
+</div>
 
-  <div class="section-label">Les parties</div>
-  <div class="parties-grid">
-    <div class="partie-card">
-      <div class="partie-head">Bénéficiaire <span class="tag">Membre</span></div>
-      <div class="partie-body">
-        <div class="p-name" th:text="${ownerName}">Nom du bénéficiaire</div>
-        <div class="p-line" th:text="${ownerCode}">CODE-001</div>
-        <div class="p-line" th:if="${ownerEmail}" th:text="${ownerEmail}">email@exemple.com</div>
-        <div class="p-line" th:if="${ownerPhone}" th:text="${ownerPhone}">+000 000 000 000</div>
-      </div>
-    </div>
-    <div class="partie-card">
-      <div class="partie-head">Entité opératrice <span class="tag">Prestataire</span></div>
-      <div class="partie-body">
-        <div class="p-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
-        <div class="p-line" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
-        <div class="p-line" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@elleaose.com</div>
-        <div class="p-line" th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
-      </div>
-    </div>
+<!-- ENTRE LES SOUSSIGNÉS -->
+<div class="parties-intro">Entre les soussignés :</div>
+
+<div class="party">
+  <div class="party-role">L'entité opératrice — Prestataire</div>
+  <div class="party-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
+  <div class="party-detail" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
+  <div class="party-detail" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@example.com</div>
+  <div class="party-detail">ci-après dénommée <strong>« le Prestataire »</strong></div>
+</div>
+
+<div class="connector">— et —</div>
+
+<div class="party">
+  <div class="party-role">Le bénéficiaire — Membre</div>
+  <div class="party-name" th:text="${ownerName}">Nom du bénéficiaire</div>
+  <div class="party-detail" th:text="${ownerCode}">CODE-001</div>
+  <div class="party-detail" th:if="${ownerEmail}" th:text="${ownerEmail}">email@exemple.com</div>
+  <div class="party-detail" th:if="${ownerPhone}" th:text="${ownerPhone}">+000 000 000 000</div>
+  <div class="party-detail">ci-après dénommé(e) <strong>« le Bénéficiaire »</strong></div>
+</div>
+
+<div class="preamble">Il a été convenu et arrêté ce qui suit :</div>
+
+<!-- ARTICLE 1 : OBJET -->
+<div class="article">
+  <div class="article-heading">Article 1 — Objet du contrat</div>
+  <div class="article-text">
+    <p th:if="${request.description != null and !#strings.isEmpty(request.description)}" th:text="${request.description}">Description.</p>
+    <p th:if="${request.description == null or #strings.isEmpty(request.description)}">
+      Le présent contrat a pour objet de définir les conditions d'adhésion du Bénéficiaire aux services proposés par le Prestataire,
+      ainsi que les droits et obligations réciproques des parties dans le cadre de cette relation contractuelle.
+    </p>
   </div>
+</div>
 
-  <div class="section-label">Cadre contractuel</div>
+<!-- ARTICLE 2 : CADRE CONTRACTUEL -->
+<div class="article">
+  <div class="article-heading">Article 2 — Cadre contractuel et durée</div>
   <table class="data-table">
     <tr>
       <td class="lbl">Date d'effet</td>
@@ -256,71 +284,86 @@ body {
       <td th:text="${request.signatoryRole != null ? request.signatoryRole : 'Membre / Représentant'}">Membre</td>
     </tr>
   </table>
+</div>
 
-  <div class="section-label" th:if="${request.description != null and !#strings.isEmpty(request.description)}">Objet du contrat</div>
-  <div class="article-body" th:if="${request.description != null and !#strings.isEmpty(request.description)}" th:text="${request.description}">
-    Description de l'objet du contrat.
+<!-- ARTICLE 3 : OBLIGATIONS ET ENGAGEMENTS -->
+<div class="article">
+  <div class="article-heading">Article 3 — Obligations et engagements des parties</div>
+  <div class="article-text">
+    <div th:if="${#lists.isEmpty(clauses)}">
+      <p>Le Bénéficiaire s'engage à respecter le règlement intérieur, les conditions d'utilisation
+      des ressources et les obligations de paiement applicables à l'ensemble des services souscrits.</p>
+      <p>Le Prestataire s'engage à mettre à la disposition du Bénéficiaire les services convenus,
+      dans les conditions définies au présent contrat et selon les standards de qualité en vigueur.</p>
+    </div>
+    <div th:each="clause : ${clauses}" class="clause" th:text="${clause}">Clause contractuelle.</div>
   </div>
+</div>
 
-  <div class="section-label">Clauses et engagements</div>
-  <ul class="clauses-list">
-    <li th:if="${#lists.isEmpty(clauses)}">
-      Le bénéficiaire s'engage à respecter le règlement intérieur, les conditions d'utilisation des ressources
-      et les obligations de paiement applicables à l'ensemble des services souscrits.
-    </li>
-    <li th:each="clause : ${clauses}" th:text="${clause}">Clause contractuelle.</li>
-  </ul>
-
-  <div class="section-label" th:if="${variables != null and !#maps.isEmpty(variables)}">Conditions spécifiques</div>
-  <table class="vars-table" th:if="${variables != null and !#maps.isEmpty(variables)}">
+<!-- ARTICLE 4 : CONDITIONS SPÉCIFIQUES -->
+<div class="article" th:if="${variables != null and !#maps.isEmpty(variables)}">
+  <div class="article-heading">Article 4 — Conditions spécifiques</div>
+  <table class="vars-table">
     <tr th:each="entry : ${variables.entrySet()}">
-      <td class="var-key" th:text="${entry.key}">Paramètre</td>
+      <td class="key" th:text="${entry.key}">Paramètre</td>
       <td th:text="${entry.value}">Valeur</td>
     </tr>
   </table>
-
-  <div class="law-notice">
-    Le présent contrat est soumis au droit applicable dans le pays d'établissement de l'entité opératrice.
-    En cas de litige, les parties s'engagent à rechercher une solution amiable avant tout recours judiciaire.
-    À défaut d'accord, le tribunal compétent sera celui du ressort du siège de l'entité opératrice.
-  </div>
-
-  <div class="section-label">Signatures des parties</div>
-  <div class="signature-intro">
-    En apposant leurs signatures, les parties reconnaissent avoir pris connaissance de l'intégralité
-    du présent contrat et s'engagent à en respecter l'ensemble des termes et conditions.
-  </div>
-  <div class="signature-row">
-    <div class="signature-block">
-      <div class="signature-label">Le bénéficiaire</div>
-      <div class="signature-sub" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Membre / Représentant'}">Qualité</div>
-      <div class="signature-line"></div>
-      <div class="signature-caption" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</div>
-      <div class="signature-caption">Date : _____ / _____ / _________</div>
-    </div>
-    <div class="signature-block">
-      <div class="signature-label">L'entité opératrice</div>
-      <div class="signature-sub" th:text="${variables != null and variables['operatorSignatureRole'] != null ? variables['operatorSignatureRole'] : 'Représentant habilité'}">Représentant habilité</div>
-      <div class="signature-line" th:classappend="${variables != null and variables['operatorSignatureName'] != null} ? ' signed' : ''">
-        <div class="system-signature" th:if="${variables != null and variables['operatorSignatureName'] != null}" th:text="${variables['operatorSignatureName']}">ELLE A OSE</div>
-        <div class="system-signature-meta" th:if="${variables != null and variables['operatorSignatureName'] != null}">Signé automatiquement par le système</div>
-      </div>
-      <div class="signature-caption" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
-      <div class="signature-caption"
-           th:if="${variables != null and variables['operatorSignedAt'] != null}"
-           th:text="${'Date : ' + variables['operatorSignedAt']}">Date : 2026-01-01</div>
-      <div class="signature-caption"
-           th:unless="${variables != null and variables['operatorSignedAt'] != null}">Date : _____ / _____ / _________</div>
-    </div>
-  </div>
-
-  <div class="doc-footer">
-    <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</span>
-    &nbsp;·&nbsp; Contrat d'adhésion &nbsp;·&nbsp;
-    Généré le <span th:text="${generatedAt}">2026-01-01</span>
-    &nbsp;·&nbsp; Document confidentiel — conserver précieusement
-  </div>
-
 </div>
+
+<!-- ARTICLE 5 : DISPOSITIONS LÉGALES -->
+<div class="article">
+  <div class="article-heading" th:text="${variables != null and !#maps.isEmpty(variables)} ? 'Article 5 — Dispositions légales et règlement des litiges' : 'Article 4 — Dispositions légales et règlement des litiges'">Article — Dispositions légales</div>
+  <div class="legal-notice">
+    Le présent contrat est régi par le droit applicable dans le pays d'établissement du Prestataire.
+    En cas de différend relatif à l'interprétation ou à l'exécution du présent contrat, les parties s'engagent à
+    rechercher une solution amiable avant tout recours judiciaire. À défaut d'accord amiable dans un délai de
+    trente (30) jours à compter de la notification du différend, le litige sera soumis à la juridiction compétente
+    du ressort du siège social du Prestataire. Le présent contrat est établi en deux (2) exemplaires originaux,
+    un pour chaque partie.
+  </div>
+</div>
+
+<!-- CLÔTURE -->
+<div class="closing">
+  Fait à __________________, le ____ / ____ / __________
+</div>
+
+<!-- SIGNATURES -->
+<table class="sig-table">
+  <tr>
+    <td class="sig-cell">
+      <div class="sig-role">Pour le Prestataire</div>
+      <div class="sig-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
+      <div class="sig-qual" th:text="${variables != null and variables['operatorSignatureRole'] != null ? variables['operatorSignatureRole'] : 'Représentant habilité'}">Représentant habilité</div>
+      <div class="sig-box" th:classappend="${variables != null and variables['operatorSignatureName'] != null} ? ' signed' : ''">
+        <div class="sig-stamp" th:if="${variables != null and variables['operatorSignatureName'] != null}" th:text="${variables['operatorSignatureName']}">NOM</div>
+        <div class="sig-stamp-meta" th:if="${variables != null and variables['operatorSignatureName'] != null}">Signé par le système</div>
+      </div>
+      <div class="sig-date"
+           th:if="${variables != null and variables['operatorSignedAt'] != null}"
+           th:text="${'Date : ' + variables['operatorSignedAt']}">Date</div>
+      <div class="sig-date" th:unless="${variables != null and variables['operatorSignedAt'] != null}">Date : _____ / _____ / _________</div>
+      <div class="sig-mention">Signature et cachet</div>
+    </td>
+    <td class="sig-cell">
+      <div class="sig-role">Pour le Bénéficiaire</div>
+      <div class="sig-name" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</div>
+      <div class="sig-qual" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Membre / Représentant'}">Qualité</div>
+      <div class="sig-box"></div>
+      <div class="sig-date">Date : _____ / _____ / _________</div>
+      <div class="sig-mention">Précédé de la mention manuscrite « Lu et approuvé »</div>
+    </td>
+  </tr>
+</table>
+
+<!-- PIED DE PAGE -->
+<div class="doc-footer">
+  <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</span>
+  &nbsp;·&nbsp; Contrat d'adhésion &nbsp;·&nbsp;
+  Généré le <span th:text="${generatedAt}">2026-01-01</span>
+  &nbsp;·&nbsp; Document confidentiel — conserver précieusement
+</div>
+
 </body>
 </html>

@@ -11,8 +11,10 @@ import com.sni.bokaticowork.features.client.customer.mapper.interfaces.CustomerM
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
 import com.sni.bokaticowork.features.client.customer.service.interfaces.CustomerService;
+import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
 import com.sni.bokaticowork.core.baseClasses.model.Address;
 import com.sni.bokaticowork.core.baseClasses.service.interfaces.AddressService;
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.utils.code.CodeComposer;
@@ -47,6 +49,7 @@ import java.util.Optional;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepo;
+    private final MemberRepository memberRepository;
     private final CustomerMapper customerMapper;
     private final AddressService addressService;
     private final SequenceGeneratorFacade sequenceGenerator;
@@ -146,11 +149,10 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public void deleteCustomer(String customerId) {
-
-        if(!customerRepo.existsByCustomerId(customerId)){
+        if (!customerRepo.existsByCustomerIdAndDeletedFalse(customerId)) {
             throw new ResourceNotFoundException("Customer with id " + customerId + " not found");
         }
-
+        memberRepository.suppressAllByCustomerId(customerId);
         customerRepo.deleteByCustomerId(customerId);
     }
     @Transactional(readOnly = true)
@@ -181,9 +183,13 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         log.debug("Getting customer by id {}", normalizedCustomerId);
-        return customerRepo.findByCustomerId(normalizedCustomerId)
+        Customer customer = customerRepo.findByCustomerId(normalizedCustomerId)
                 .or(() -> findCustomerByNumericId(normalizedCustomerId))
-                .orElseThrow(()-> new ResourceNotFoundException("Customer with id " + customerId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer with id " + customerId + " not found"));
+        if (customer.isDeleted()) {
+            throw new BadRequestException("Le client " + customerId + " est supprimé et ne peut plus être utilisé pour de nouvelles opérations");
+        }
+        return customer;
     }
 
     @Override
@@ -346,4 +352,3 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
 }
-

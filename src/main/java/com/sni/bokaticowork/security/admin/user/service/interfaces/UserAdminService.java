@@ -18,5 +18,6 @@ public interface UserAdminService {
     AdminUserResponse deactivate(Long id);
     AdminUserResponse unlock(Long id);
     AdminUserResponse resetPassword(Long id, AdminResetUserPasswordRequest request);
+    void initiatePasswordReset(String userId, String actor);
     void archive(Long id);
 }
