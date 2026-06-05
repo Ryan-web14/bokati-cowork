@@ -3,91 +3,451 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmation de réservation</title>
+    <title>Réservation confirmée — Elle A Osé</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        .wrap { width: 100%; padding: 56px 16px; background: #f0eef5; }
-        .card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 20px 60px rgba(26,10,46,.14); }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* ── Header ── */
-        .email-header { background: #1a0a2e; padding: 30px 40px 26px; position: relative; }
-        .logo-area { position: relative; z-index: 1; }
-        .header-row { width: 100%; }
-        .header-row td { vertical-align: middle; }
-        .brand-mark { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 9px; }
-        .brand-name { font-size: 21px; font-weight: 400; color: #fff; letter-spacing: 6px; text-transform: uppercase; white-space: nowrap; }
-        .brand-sub  { font-size: 8px; color: #9b8caa; letter-spacing: 3px; text-transform: uppercase; margin-top: 7px; }
-        .status-tag { display: inline-block; font-size: 8px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; padding: 6px 13px; border-radius: 2px; white-space: nowrap; }
-        .tag-confirmed { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.45); color: #5fd98a; }
-        .tag-cancelled { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.45); color: #f49ca0; }
-        .tag-default   { background: rgba(201,168,76,.12); border: 1px solid rgba(201,168,76,.5); color: #d4b85f; }
-        .header-rule { height: 1px; background: linear-gradient(90deg, transparent 0%, #c9a84c 18%, #c9a84c 82%, transparent 100%); }
+        body {
+            background: #e8e4f0;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            font-size: 15px;
+            line-height: 1.6;
+        }
 
-        /* ── Confirmation ── */
-        .confirm { padding: 42px 40px 30px; text-align: center; }
-        .check-ring { width: 60px; height: 60px; border-radius: 50%; border: 1px solid #c9a84c; margin: 0 auto 22px; }
-        .check-ring td { text-align: center; vertical-align: middle; }
-        .confirm-title { font-size: 23px; font-weight: 400; color: #1a0a2e; letter-spacing: -0.2px; margin-bottom: 9px; }
-        .confirm-sub { font-size: 13px; color: #7c6d8f; line-height: 1.6; max-width: 360px; margin: 0 auto; }
-        .confirm-number { display: inline-block; margin-top: 22px; color: #a8893a; font-size: 11px; font-weight: 700; letter-spacing: 3px; padding: 8px 0; font-family: "Courier New", monospace; border-top: 1px solid #ece4d2; border-bottom: 1px solid #ece4d2; min-width: 180px; }
+        /* ══ Wrapper ══ */
+        .wrap {
+            width: 100%;
+            min-height: 100vh;
+            padding: 48px 20px;
+            background: #e8e4f0;
+        }
 
-        /* ── Greeting ── */
-        .email-body { padding: 0 40px; }
-        .greeting { font-size: 14px; color: #3d2f52; line-height: 1.75; margin-bottom: 30px; text-align: center; }
-        .greeting strong { color: #1a0a2e; }
+        /* ══ Card — dark premium ══ */
+        .card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #0f0720;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow:
+                0 1px 3px rgba(0,0,0,.4),
+                0 12px 36px rgba(0,0,0,.45),
+                0 40px 80px rgba(0,0,0,.3);
+        }
 
-        /* ── Section label ── */
-        .sec-label { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 2.4px; text-transform: uppercase; text-align: center; margin-bottom: 16px; }
-        .sec-label-line { display: inline-block; }
+        /* ══ Header ══ */
+        .email-header {
+            background: #0a0418;
+            padding: 26px 36px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .email-header::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(201,168,76,.12) 0%, transparent 65%);
+            pointer-events: none;
+        }
+        .header-stripe {
+            height: 2px;
+            background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%);
+        }
+        .logo-area {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .brand-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 3.5px;
+            text-transform: uppercase;
+        }
+        .brand-sub {
+            font-size: 10px;
+            color: rgba(255,255,255,.3);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        .tag-confirmed {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 100px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            background: rgba(34,197,94,.14);
+            border: 1px solid rgba(34,197,94,.30);
+            color: #4ade80;
+        }
 
-        /* ── Details ── */
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 38px; }
-        .info-table td { padding: 14px 2px; font-size: 13.5px; vertical-align: middle; border-bottom: 1px solid #f0eaf8; }
-        .info-table tr:last-child td { border-bottom: none; }
-        .info-table .lbl { color: #9b8caa; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
-        .info-table .val { color: #1a0a2e; font-weight: 700; text-align: right; font-size: 13.5px; }
+        /* ══ Hero ══ */
+        .hero {
+            background: #110820;
+            padding: 36px 36px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 28px;
+            border-bottom: 1px solid rgba(255,255,255,.05);
+        }
+        .hero-text { flex: 1; min-width: 0; }
+        .hero-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #c9a84c;
+            margin-bottom: 10px;
+        }
+        .hero-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+        .hero-sub {
+            font-size: 15px;
+            color: rgba(255,255,255,.45);
+            line-height: 1.6;
+        }
+        .hero-sub strong { color: rgba(255,255,255,.75); font-weight: 600; }
+        .hero-illustration {
+            flex-shrink: 0;
+            width: 180px;
+            height: 145px;
+        }
 
-        /* ── QR access pass ── */
-        .pass-zone { padding: 0 40px; }
-        .pass { background: #1a0a2e; border-radius: 6px; padding: 34px 28px 30px; text-align: center; position: relative; }
-        .pass-kicker { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 5px; }
-        .pass-hint { font-size: 10.5px; color: #9b8caa; letter-spacing: 0.3px; margin-bottom: 24px; }
-        .qr-frame { display: inline-block; padding: 12px; background: #ffffff; border-radius: 4px; box-shadow: 0 0 0 1px rgba(201,168,76,.45), 0 14px 30px rgba(0,0,0,.3); }
-        .qr-frame img { display: block; width: 168px; height: 168px; }
-        .qr-placeholder { width: 192px; height: 192px; background: #ffffff; border-radius: 4px; box-shadow: 0 0 0 1px rgba(201,168,76,.45); margin: 0 auto; }
-        .qr-placeholder td { text-align: center; vertical-align: middle; }
-        .qr-placeholder-text { font-size: 10px; color: #7c6d8f; line-height: 1.55; letter-spacing: 0.4px; margin-top: 12px; }
+        /* ══ Booking ref bar ══ */
+        .ref-bar {
+            background: rgba(201,168,76,.07);
+            border-top: 1px solid rgba(201,168,76,.12);
+            border-bottom: 1px solid rgba(201,168,76,.12);
+            padding: 13px 36px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .ref-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,.35);
+            font-weight: 700;
+        }
+        .ref-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: #c9a84c;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            letter-spacing: 1.5px;
+        }
 
-        .pass-divider { height: 1px; background: repeating-linear-gradient(90deg, rgba(201,168,76,.5) 0 5px, transparent 5px 11px); margin: 26px 0 22px; }
-        .token-label { font-size: 9px; color: #9b8caa; text-transform: uppercase; letter-spacing: 2.4px; font-weight: 700; margin-bottom: 11px; }
-        .token-value { font-size: 26px; color: #ffffff; font-weight: 400; font-family: "Courier New", monospace; letter-spacing: 9px; text-indent: 9px; }
-        .pass-ref { font-size: 9.5px; color: #6f5f86; letter-spacing: 1.5px; margin-top: 16px; text-transform: uppercase; }
-        .pass-ref strong { color: #c9a84c; font-weight: 700; }
+        /* ══ Body ══ */
+        .email-body { padding: 28px 36px 36px; }
 
-        /* ── Steps ── */
-        .steps { padding: 26px 40px 6px; }
-        .step-row { width: 100%; border-collapse: collapse; }
-        .step-row td { padding: 9px 0; vertical-align: top; }
-        .step-num { width: 26px; font-size: 11px; font-weight: 700; color: #c9a84c; font-family: "Courier New", monospace; letter-spacing: 1px; }
-        .step-txt { font-size: 12px; color: #5c4f6e; line-height: 1.6; }
-        .step-txt strong { color: #1a0a2e; }
+        .section-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,.28);
+            margin-bottom: 12px;
+            margin-top: 4px;
+        }
 
-        /* ── Note ── */
-        .note-zone { padding: 18px 40px 0; }
-        .note-reason { font-size: 12px; color: #5c4f6e; line-height: 1.65; padding: 14px 18px; background: #faf8fd; border-radius: 4px; border-left: 2px solid #c9a84c; margin-bottom: 14px; }
-        .note-reason strong { color: #1a0a2e; }
-        .note-help { font-size: 12px; color: #7c6d8f; line-height: 1.7; text-align: center; }
-        .note-help strong { color: #1a0a2e; }
+        /* ══ Space card ══ */
+        .space-card {
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .space-card-head {
+            background: rgba(201,168,76,.09);
+            border-left: 3px solid #c9a84c;
+            padding: 16px 20px;
+        }
+        .space-name {
+            font-size: 17px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .space-type-tag {
+            font-size: 11px;
+            color: #c9a84c;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
 
-        /* ── Footer ── */
-        .email-footer { margin-top: 36px; background: #faf8fd; border-top: 1px solid #f0eaf8; padding: 26px 40px; text-align: center; }
-        .footer-brand { font-size: 13px; font-weight: 400; color: #1a0a2e; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 10px; }
-        .footer-text  { font-size: 10.5px; color: #9b8caa; line-height: 1.7; }
-        .footer-made  { font-size: 8.5px; color: #c8bdd8; margin-top: 12px; letter-spacing: 1px; text-transform: uppercase; }
+        /* Detail rows */
+        .detail-row {
+            padding: 13px 20px;
+            border-bottom: 1px solid rgba(255,255,255,.04);
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-icon-wrap {
+            width: 34px;
+            height: 34px;
+            flex-shrink: 0;
+            background: rgba(255,255,255,.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .detail-icon-wrap svg { display: block; }
+        .detail-label {
+            font-size: 10px;
+            color: rgba(255,255,255,.35);
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 3px;
+        }
+        .detail-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,.85);
+        }
+        .time-sep {
+            color: rgba(255,255,255,.25);
+            margin: 0 6px;
+            font-weight: 400;
+        }
 
-        @media only screen and (max-width: 480px) {
-            .email-header, .confirm, .email-body, .pass-zone, .steps, .note-zone, .email-footer { padding-left: 24px !important; padding-right: 24px !important; }
+        /* ══ Price section ══ */
+        .price-section {
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .price-total-row {
+            padding: 18px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+        .price-total-label {
+            font-size: 17px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        .price-total-amount {
+            font-size: 24px;
+            font-weight: 800;
+            color: #c9a84c;
+            letter-spacing: -0.5px;
+        }
+        .price-line-row {
+            padding: 11px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,.04);
+        }
+        .price-line-row:last-child { border-bottom: none; }
+        .price-line-label { font-size: 13px; color: rgba(255,255,255,.45); }
+        .price-line-amount { font-size: 13px; color: rgba(255,255,255,.65); font-weight: 600; }
+
+        /* ══ Payment section ══ */
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+        .payment-section {
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 28px;
+        }
+        .payment-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .payment-info { display: flex; align-items: center; gap: 14px; }
+        .payment-card-icon {
+            width: 40px;
+            height: 28px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .payment-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,.85);
+        }
+        .payment-date {
+            font-size: 12px;
+            color: rgba(255,255,255,.35);
+            margin-top: 2px;
+        }
+        .payment-amount {
+            font-size: 15px;
+            font-weight: 700;
+            color: rgba(255,255,255,.7);
+            white-space: nowrap;
+        }
+
+        .payment-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255,255,255,.05);
+        }
+        .payment-action-text {
+            font-size: 13px;
+            color: rgba(255,255,255,.35);
+        }
+        .payment-action-btn {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.5);
+            text-decoration: none;
+            padding: 7px 14px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,.12);
+            background: rgba(255,255,255,.04);
+        }
+
+        /* ══ CTAs ══ */
+        .cta-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 4px;
+        }
+        .cta-primary {
+            flex: 1;
+            display: block;
+            text-align: center;
+            background: #c9a84c;
+            color: #0f0720;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            padding: 15px 24px;
+            border-radius: 8px;
+        }
+        .cta-secondary {
+            flex: 1;
+            display: block;
+            text-align: center;
+            background: transparent;
+            color: rgba(255,255,255,.5);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            padding: 15px 24px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,.12);
+        }
+
+        /* ══ Legal note ══ */
+        .legal-note {
+            font-size: 12px;
+            color: rgba(255,255,255,.2);
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+        .legal-note a { color: rgba(255,255,255,.35); }
+
+        /* ══ Footer ══ */
+        .email-footer {
+            background: #0a0418;
+            border-top: 1px solid rgba(255,255,255,.05);
+            padding: 24px 36px;
+            text-align: center;
+        }
+        .footer-brand {
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255,255,255,.3);
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .footer-text {
+            font-size: 12px;
+            color: rgba(255,255,255,.2);
+            line-height: 1.65;
+        }
+
+        /* ══ Responsive — Tablet ══ */
+        @media (max-width: 640px) {
+            .wrap { padding: 24px 16px; }
+            .email-header { padding: 22px 24px 20px; }
+            .hero { padding: 28px 24px; gap: 20px; }
+            .hero-illustration { width: 150px; height: 120px; }
+            .ref-bar { padding: 12px 24px; }
+            .email-body { padding: 24px 24px 28px; }
+            .email-footer { padding: 20px 24px; }
+        }
+
+        /* ══ Responsive — Mobile ══ */
+        @media (max-width: 480px) {
+            .wrap { padding: 0; background: #0f0720; }
+            .card { border-radius: 0; box-shadow: none; }
+            .email-header { padding: 20px 20px 18px; }
+            .brand-name { font-size: 14px; letter-spacing: 2.5px; }
+            .hero {
+                flex-direction: column-reverse;
+                align-items: flex-start;
+                padding: 24px 20px 20px;
+                gap: 16px;
+            }
+            .hero-illustration { width: 160px; height: 128px; align-self: center; }
+            .hero-title { font-size: 22px; }
+            .ref-bar { padding: 12px 20px; flex-wrap: wrap; gap: 4px; }
+            .email-body { padding: 20px 20px 28px; }
+            .space-card-head { padding: 14px 16px; }
+            .detail-row { padding: 12px 16px; }
+            .price-total-row { padding: 16px; }
+            .price-total-amount { font-size: 22px; }
+            .price-line-row { padding: 10px 16px; }
+            .payment-section { padding: 14px 16px; }
+            .payment-row { flex-wrap: wrap; gap: 10px; }
+            .cta-group { flex-direction: column; }
+            .cta-primary, .cta-secondary { padding: 15px; }
+            .email-footer { padding: 20px; }
         }
     </style>
 </head>
@@ -95,150 +455,277 @@
 <div class="wrap">
     <div class="card">
 
-        <!-- Header -->
+        <!-- ══ Header ══ -->
         <div class="email-header">
-            <table class="header-row" role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td>
-                        <div class="brand-name">Elle A Osé</div>
-                        <div class="brand-sub">Espace de coworking</div>
-                    </td>
-                    <td style="text-align:right;">
-                        <span th:switch="${status}">
-                            <span th:case="'CONFIRMED'" class="status-tag tag-confirmed">Confirmée</span>
-                            <span th:case="'CREATED'"   class="status-tag tag-default">En attente</span>
-                            <span th:case="'CANCELLED'" class="status-tag tag-cancelled">Annulée</span>
-                            <span th:case="*"           class="status-tag tag-default" th:text="${status}">—</span>
-                        </span>
-                    </td>
-                </tr>
-            </table>
+            <div class="logo-area">
+                <div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Espaces de travail</div>
+                </div>
+                <span class="tag-confirmed">Réservation confirmée</span>
+            </div>
         </div>
-        <div class="header-rule"></div>
+        <div class="header-stripe"></div>
 
-        <!-- Confirmation -->
-        <div class="confirm">
-            <table class="check-ring" role="presentation" cellpadding="0" cellspacing="0">
-                <tr><td>
-                    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-                        <path d="M7 13.4l3.6 3.6L19 8.4" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </td></tr>
-            </table>
-            <div class="confirm-title" th:text="${eventTitle ?: 'Réservation confirmée'}">Réservation confirmée</div>
-            <div class="confirm-sub" th:text="${eventSubtitle ?: 'Votre accès est prêt pour le créneau réservé'}">Votre accès est prêt pour le créneau réservé</div>
-            <div class="confirm-number" th:text="${bookingNumber}">BKG-000</div>
+        <!-- ══ Hero ══ -->
+        <div class="hero">
+            <div class="hero-text">
+                <div class="hero-label">Tout est prêt</div>
+                <div class="hero-title">Votre réservation est confirmée</div>
+                <div class="hero-sub">
+                    Bonjour <strong th:text="${contactName}">Marie Dupont</strong>,
+                    nous avons bien enregistré votre réservation.
+                </div>
+            </div>
+
+            <!-- 3D Workspace illustration -->
+            <div class="hero-illustration">
+                <svg viewBox="0 0 200 155" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" fill="none">
+                    <defs>
+                        <linearGradient id="screenBkg" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#3b1d7c"/>
+                            <stop offset="100%" stop-color="#0a0515"/>
+                        </linearGradient>
+                        <linearGradient id="deskTop" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#f0ecf8"/>
+                            <stop offset="100%" stop-color="#ddd6ee"/>
+                        </linearGradient>
+                        <radialGradient id="shadowG" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="rgba(0,0,0,0.25)"/>
+                            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                        </radialGradient>
+                    </defs>
+
+                    <!-- Ground shadow -->
+                    <ellipse cx="98" cy="138" rx="70" ry="9" fill="url(#shadowG)"/>
+
+                    <!-- DESK — top surface -->
+                    <polygon points="90,64 130,86 102,103 62,81" fill="url(#deskTop)"/>
+                    <!-- Top gold edge -->
+                    <polyline points="62,81 102,103 130,86" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round" opacity="0.65"/>
+                    <line x1="90" y1="64" x2="62" y2="81" stroke="rgba(255,255,255,0.4)" stroke-width="0.8"/>
+                    <line x1="90" y1="64" x2="130" y2="86" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
+
+                    <!-- DESK — front face -->
+                    <polygon points="62,81 102,103 102,119 62,97" fill="#b8add0"/>
+                    <!-- DESK — right face -->
+                    <polygon points="130,86 102,103 102,119 130,102" fill="#ccc2de"/>
+                    <!-- Bottom edge highlight -->
+                    <line x1="62" y1="97" x2="102" y2="119" stroke="#c9a84c" stroke-width="0.7" opacity="0.35"/>
+                    <line x1="102" y1="119" x2="130" y2="102" stroke="#c9a84c" stroke-width="0.7" opacity="0.35"/>
+
+                    <!-- KEYBOARD -->
+                    <polygon points="70,88 96,101 101,97 75,85" fill="#ddd6ee"/>
+                    <polygon points="71,89 95,101 100,97 76,86" fill="#ede8f6" opacity="0.55"/>
+                    <line x1="74" y1="90" x2="93" y2="99" stroke="#c8bedc" stroke-width="0.6"/>
+                    <line x1="76" y1="93" x2="96" y2="102" stroke="#c8bedc" stroke-width="0.5"/>
+
+                    <!-- MONITOR STAND BASE (flat on desk) -->
+                    <polygon points="97,83 104,87 101,89 94,85" fill="#ccc2de"/>
+                    <!-- Stand neck -->
+                    <polygon points="100,73 104,75 104,83 100,81" fill="#ccc2de"/>
+
+                    <!-- MONITOR FRAME (bezel) -->
+                    <polygon points="92,50 117,62 117,83 92,71" fill="#ede8f6"/>
+                    <!-- Gold bezel rim -->
+                    <polygon points="91,49 118,61 118,84 91,72" fill="none" stroke="#c9a84c" stroke-width="0.9" opacity="0.45"/>
+
+                    <!-- MONITOR SCREEN -->
+                    <polygon points="94,52 115,63 115,81 94,70" fill="url(#screenBkg)"/>
+
+                    <!-- Screen UI: fake data lines -->
+                    <line x1="97" y1="59" x2="112" y2="67" stroke="#a78bfa" stroke-width="1.1" opacity="0.55"/>
+                    <line x1="97" y1="63" x2="110" y2="70" stroke="#a78bfa" stroke-width="0.8" opacity="0.38"/>
+                    <rect x="97" y="56" width="7" height="1.8" rx="0.9" fill="#c9a84c" opacity="0.55" transform="skewX(-8)"/>
+                    <!-- Cursor / accent -->
+                    <circle cx="109" cy="76" r="1.8" fill="#c9a84c" opacity="0.9"/>
+                    <!-- Subtle glow on screen -->
+                    <polygon points="94,52 115,63 115,81 94,70" fill="#6d28d9" opacity="0.06"/>
+
+                    <!-- MONITOR — top face -->
+                    <polygon points="91,49 118,61 115,63 88,51" fill="#ddd6ee"/>
+                    <!-- MONITOR — right face -->
+                    <polygon points="118,61 118,84 115,81 115,63" fill="#c8bedc"/>
+
+                    <!-- Screen glow on desk -->
+                    <ellipse cx="106" cy="88" rx="10" ry="4" fill="#7c3aed" opacity="0.07"/>
+
+                    <!-- PLANT — pot -->
+                    <polygon points="87,69 93,73 92,78 86,74" fill="#ccc2de"/>
+                    <!-- PLANT — leaves -->
+                    <ellipse cx="88" cy="64" rx="5" ry="4.5" fill="#86efac" opacity="0.9"/>
+                    <ellipse cx="91" cy="61" rx="4" ry="3.5" fill="#4ade80" opacity="0.85"/>
+                    <ellipse cx="86" cy="61" rx="3.5" ry="3" fill="#a3f4c0" opacity="0.75"/>
+                </svg>
+            </div>
         </div>
 
-        <!-- Greeting -->
+        <!-- ══ Booking ref bar ══ -->
+        <div class="ref-bar">
+            <span class="ref-label">Référence de réservation</span>
+            <span class="ref-number" th:text="${bookingRef}">EAO-2025-0847</span>
+        </div>
+
+        <!-- ══ Email body ══ -->
         <div class="email-body">
-            <p class="greeting">
-                Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,<br>
-                <span th:text="${eventMessage ?: 'Votre réservation est confirmée. Présentez le QR code ci-dessous à votre arrivée.'}">
-                    Votre réservation est confirmée. Présentez le QR code ci-dessous à votre arrivée.
-                </span>
+
+            <!-- Space details -->
+            <div class="section-label">Espace réservé</div>
+            <div class="space-card">
+                <div class="space-card-head">
+                    <div class="space-name" th:text="${spaceName}">Bureau Privé — Salle Jade</div>
+                    <div class="space-type-tag" th:text="${spaceType}">Bureau privé</div>
+                </div>
+
+                <!-- Date -->
+                <div class="detail-row">
+                    <div class="detail-icon-wrap">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="1.5" y="2.5" width="13" height="12" rx="2" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+                            <line x1="1.5" y1="5.5" x2="14.5" y2="5.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+                            <line x1="5" y1="1" x2="5" y2="4" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round"/>
+                            <line x1="11" y1="1" x2="11" y2="4" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round"/>
+                            <circle cx="5" cy="9.5" r="1" fill="rgba(201,168,76,0.7)"/>
+                            <circle cx="8" cy="9.5" r="1" fill="rgba(201,168,76,0.7)"/>
+                            <circle cx="11" cy="9.5" r="1" fill="rgba(201,168,76,0.7)"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="detail-label">Date</span>
+                        <span class="detail-value" th:text="${bookingDate}">Mardi 10 juin 2025</span>
+                    </div>
+                </div>
+
+                <!-- Horaires -->
+                <div class="detail-row">
+                    <div class="detail-icon-wrap">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="8" cy="8" r="6.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+                            <line x1="8" y1="4.5" x2="8" y2="8.2" stroke="rgba(201,168,76,0.8)" stroke-width="1.3" stroke-linecap="round"/>
+                            <line x1="8" y1="8" x2="10.5" y2="9.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" stroke-linecap="round"/>
+                            <circle cx="8" cy="8" r="1" fill="rgba(201,168,76,0.9)"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="detail-label">Horaires</span>
+                        <span class="detail-value">
+                            <span th:text="${startTime}">09:00</span>
+                            <span class="time-sep">→</span>
+                            <span th:text="${endTime}">13:00</span>
+                            <span style="font-size:12px; color:rgba(255,255,255,.3); margin-left:8px;" th:text="${duration}">4 heures</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Capacité -->
+                <div class="detail-row" th:if="${capacity}">
+                    <div class="detail-icon-wrap">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="6" cy="5" r="2.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+                            <path d="M1.5 13.5C1.5 11.015 3.515 9 6 9s4.5 2.015 4.5 4.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round"/>
+                            <circle cx="11.5" cy="5.5" r="2" stroke="rgba(255,255,255,0.25)" stroke-width="1.1"/>
+                            <path d="M10 13.5c0-1.5 1-2.5 2.5-2.5" stroke="rgba(255,255,255,0.25)" stroke-width="1.1" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="detail-label">Capacité</span>
+                        <span class="detail-value" th:text="${capacity}">4 personnes</span>
+                    </div>
+                </div>
+
+                <!-- Adresse -->
+                <div class="detail-row">
+                    <div class="detail-icon-wrap">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5C12.5 3.515 10.485 1.5 8 1.5z" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
+                            <circle cx="8" cy="6" r="1.5" fill="rgba(201,168,76,0.7)"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="detail-label">Adresse</span>
+                        <span class="detail-value">
+                            <span th:text="${address}">12 Rue de la Paix</span><br>
+                            <span style="color:rgba(255,255,255,.45); font-size:13px;" th:text="${city}">33000 Bordeaux</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price breakdown -->
+            <div class="section-label" style="margin-top: 20px;">Détail du paiement</div>
+            <div class="price-section">
+                <div class="price-total-row">
+                    <span class="price-total-label">Total</span>
+                    <span class="price-total-amount" th:text="${priceTTC}">149 000 F CFA</span>
+                </div>
+                <div class="price-line-row">
+                    <span class="price-line-label" th:text="${spaceName + ' × ' + duration}">Bureau Privé × 4 heures</span>
+                    <span class="price-line-amount" th:text="${priceHT}">120 000 F CFA</span>
+                </div>
+                <div class="price-line-row" th:if="${priceFees}">
+                    <span class="price-line-label">Frais de réservation</span>
+                    <span class="price-line-amount" th:text="${priceFees}">5 000 F CFA</span>
+                </div>
+                <div class="price-line-row">
+                    <span class="price-line-label" th:text="|TVA (${tvaPct ?: '20%'})|">TVA (20 %)</span>
+                    <span class="price-line-amount" th:text="${priceTVA}">24 000 F CFA</span>
+                </div>
+            </div>
+
+            <!-- Payment method -->
+            <div class="section-label" style="margin-top: 20px;">Paiement</div>
+            <div class="payment-section">
+                <div class="payment-row">
+                    <div class="payment-info">
+                        <div class="payment-card-icon">
+                            <!-- Card chip icon -->
+                            <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="20" height="14" rx="2.5" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+                                <rect x="4" y="5" width="6" height="5" rx="1" fill="rgba(201,168,76,0.45)"/>
+                                <line x1="4" y1="7.5" x2="10" y2="7.5" stroke="rgba(201,168,76,0.6)" stroke-width="0.8"/>
+                                <line x1="7" y1="5" x2="7" y2="10" stroke="rgba(201,168,76,0.6)" stroke-width="0.8"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <div class="payment-name">
+                                <span th:text="${paymentMethod}">Carte bancaire</span>
+                                <span th:if="${paymentLast4}" style="color:rgba(255,255,255,.4);">
+                                    ····<span th:text="${paymentLast4}">1234</span>
+                                </span>
+                            </div>
+                            <div class="payment-date" th:text="${paymentDate}">05/06/2025, 09:00</div>
+                        </div>
+                    </div>
+                    <span class="payment-amount" th:text="${priceTTC}">149 000 F CFA</span>
+                </div>
+                <!-- payment actions removed -->
+            </div>
+
+            <!-- CTAs -->
+            <div class="cta-group">
+                <a href="#" th:href="${bookingUrl}" class="cta-primary">Voir ma réservation</a>
+                <a href="#" th:href="${invoiceUrl}" class="cta-secondary">Télécharger le PDF</a>
+            </div>
+
+            <!-- Legal note -->
+            <p class="legal-note">
+                Le prix n'inclut pas d'éventuels frais bancaires. Contactez votre banque pour en savoir plus.<br>
+                Pour gérer vos réservations, rendez-vous sur <a th:href="${accountUrl ?: '#'}">votre espace personnel</a>.
             </p>
 
-            <!-- Détails -->
-            <div class="sec-label">Détails de la réservation</div>
-            <table class="info-table" role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td class="lbl">Espace / ressource</td>
-                    <td class="val" th:text="${resourceName ?: '—'}">Salle</td>
-                </tr>
-                <tr>
-                    <td class="lbl">Début</td>
-                    <td class="val" th:text="${startedAt}">—</td>
-                </tr>
-                <tr>
-                    <td class="lbl">Fin</td>
-                    <td class="val" th:text="${endedAt}">—</td>
-                </tr>
-                <tr>
-                    <td class="lbl">Quantité</td>
-                    <td class="val" th:text="${quantity ?: 1}">1</td>
-                </tr>
-                <tr>
-                    <td class="lbl">Mode de paiement</td>
-                    <td class="val" th:text="${paymentMode ?: '—'}">DIRECT</td>
-                </tr>
-            </table>
         </div>
 
-        <!-- QR access pass -->
-        <div class="pass-zone" th:if="${status == 'CONFIRMED' or status == 'CREATED'}">
-            <div class="pass">
-                <div class="pass-kicker">Carte d'accès</div>
-                <div class="pass-hint">Présentez ce code à l'accueil pour vous enregistrer</div>
-
-                <!-- QR image inline (CID) -->
-                <div class="qr-frame" th:if="${showQr}">
-                    <img src="cid:qr-booking" width="168" height="168" alt="QR code check-in">
-                </div>
-
-                <!-- Fallback si QR non disponible -->
-                <table class="qr-placeholder" role="presentation" cellpadding="0" cellspacing="0" th:if="${!showQr}">
-                    <tr><td>
-                        <svg width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true">
-                            <rect x="4" y="4" width="9" height="9" rx="1.5" stroke="#c9a84c" stroke-width="1.4"/>
-                            <rect x="17" y="4" width="9" height="9" rx="1.5" stroke="#c9a84c" stroke-width="1.4"/>
-                            <rect x="4" y="17" width="9" height="9" rx="1.5" stroke="#c9a84c" stroke-width="1.4"/>
-                            <rect x="18" y="18" width="3" height="3" fill="#c9a84c"/>
-                            <rect x="23" y="18" width="3" height="3" fill="#c9a84c"/>
-                            <rect x="18" y="23" width="3" height="3" fill="#c9a84c"/>
-                            <rect x="23" y="23" width="3" height="3" fill="#c9a84c"/>
-                        </svg>
-                        <div class="qr-placeholder-text">QR code disponible<br>dans votre espace client</div>
-                    </td></tr>
-                </table>
-
-                <!-- Token -->
-                <div th:if="${checkInToken != null}">
-                    <div class="pass-divider"></div>
-                    <div class="token-label">Code de vérification</div>
-                    <div class="token-value" th:text="${checkInToken}">TOKEN</div>
-                </div>
-
-                <div class="pass-ref">Réservation <strong th:text="${bookingNumber}">BKG-000</strong></div>
-            </div>
-
-            <!-- Steps -->
-            <div class="steps">
-                <table class="step-row" role="presentation" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td class="step-num">01</td>
-                        <td class="step-txt">Scannez le QR code à l'accueil — le check-in s'effectue automatiquement.</td>
-                    </tr>
-                    <tr>
-                        <td class="step-num">02</td>
-                        <td class="step-txt">Ce code est unique à votre réservation — ne le partagez pas.</td>
-                    </tr>
-                    <tr>
-                        <td class="step-num">03</td>
-                        <td class="step-txt">En cas de difficulté, communiquez votre numéro <strong th:text="${bookingNumber}">BKG-000</strong>.</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <!-- Notes -->
-        <div class="note-zone">
-            <div class="note-reason" th:if="${reason != null}">
-                <strong>Motif :</strong> <span th:text="${reason}">—</span>
-            </div>
-            <div class="note-help">
-                Une question ou une modification ? Contactez-nous via votre espace client ou au <strong>05&nbsp;204&nbsp;25&nbsp;52</strong>.
-            </div>
-        </div>
-
-        <!-- Footer -->
+        <!-- ══ Footer ══ -->
         <div class="email-footer">
-            <div class="footer-brand">Elle A Osé</div>
-            <div class="footer-text">coworkspace@elleaose.com · 05 204 25 52<br>Email généré automatiquement — merci de ne pas y répondre directement.</div>
-            <div class="footer-made">Made by SNI</div>
+            <div class="footer-brand">Elle A Osé · Espaces de travail</div>
+            <div style="font-size:10px; color:rgba(255,255,255,.15); letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Engineered by SNI</div>
+            <div class="footer-text">
+                Cet email est envoyé automatiquement suite à votre réservation.<br>
+                Pour toute question, contactez-nous à <a href="/cdn-cgi/l/email-protection#e784889088958c9497868482a7828b8b8286889482c984888a" style="color:rgba(255,255,255,.3);"><span class="__cf_email__" data-cfemail="34575b435b465f47445557517451585851555b47511a575b59">[email&#160;protected]</span></a> ou au <a href="tel:052042552" style="color:rgba(255,255,255,.3);">05 204 2552</a>
+            </div>
         </div>
 
     </div>
 </div>
-</body>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
 </html>
