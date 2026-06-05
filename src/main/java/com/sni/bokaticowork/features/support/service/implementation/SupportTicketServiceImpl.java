@@ -6,6 +6,10 @@ import com.sni.bokaticowork.core.richtext.RichTextSupport;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
 import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
+import com.sni.bokaticowork.features.notification.dto.request.SendNotificationRequest;
+import com.sni.bokaticowork.features.notification.enums.NotificationChannel;
+import com.sni.bokaticowork.features.notification.enums.NotificationRecipientType;
+import com.sni.bokaticowork.features.notification.service.interfaces.NotificationService;
 import com.sni.bokaticowork.features.support.dto.SupportDtos.*;
 import com.sni.bokaticowork.features.support.enums.*;
 import com.sni.bokaticowork.features.support.mapper.SupportTicketMapper;
@@ -18,10 +22,13 @@ import com.sni.bokaticowork.features.support.service.interfaces.SupportTicketSer
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
@@ -33,6 +40,7 @@ import java.util.Map;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class SupportTicketServiceImpl implements SupportTicketService {
 
     private final SupportTicketRepository ticketRepository;
@@ -42,6 +50,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     private final UserService userService;
     private final CustomerRepository customerRepository;
     private final MemberRepository memberRepository;
+    private final NotificationService notificationService;
     @Lazy private final SupportEmailService emailService;
 
     // ── Création ─────────────────────────────────────────────────
@@ -195,6 +204,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                 } else {
                     emailService.sendClientMessage(ticket, message);
                 }
+                notifyAgentClientReplied(ticket, message);
             }
         }
 
@@ -341,6 +351,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
             ticketRepository.save(ticket);
             emailService.sendClientMessage(ticket, message);
         }
+        notifyAgentClientReplied(ticket, message);
 
         return get(ticketNumber);
     }
@@ -394,5 +405,65 @@ public class SupportTicketServiceImpl implements SupportTicketService {
 
     private long resolutionHours(TicketPriority priority) {
         return switch (priority) { case URGENT -> 8; case HIGH -> 24; case MEDIUM -> 72; case LOW -> 120; };
+    }
+
+    private void notifyAgentClientReplied(SupportTicket ticket, TicketMessage message) {
+        if (ticket.getAssignedTo() == null) {
+            return;
+        }
+        String agentEmail;
+        try {
+            agentEmail = userService.getUserByIdForService(ticket.getAssignedTo()).getEmail();
+        } catch (Exception ex) {
+            log.warn("Cannot resolve agent email for notification (assignedTo={}): {}", ticket.getAssignedTo(), ex.getMessage());
+            return;
+        }
+        String senderName = StringUtils.hasText(message.getSenderName())
+                ? message.getSenderName()
+                : StringUtils.hasText(ticket.getContactName()) ? ticket.getContactName() : ticket.getOwnerCode();
+        String preview = message.getMessage() == null ? ""
+                : message.getMessage().length() > 120
+                        ? message.getMessage().substring(0, 120) + "…"
+                        : message.getMessage();
+
+        runAfterCommit(() -> {
+            try {
+                notificationService.send(new SendNotificationRequest(
+                        "SUPPORT_CLIENT_REPLY",
+                        "SUPPORT_TICKET",
+                        ticket.getTicketNumber(),
+                        NotificationChannel.IN_APP,
+                        NotificationRecipientType.ADMIN,
+                        null,
+                        agentEmail,
+                        null,
+                        "Réponse client — " + ticket.getTicketNumber(),
+                        null,
+                        null,
+                        Map.of(
+                                "ticketNumber", ticket.getTicketNumber(),
+                                "senderName", senderName,
+                                "ownerCode", ticket.getOwnerCode() != null ? ticket.getOwnerCode() : "",
+                                "preview", preview
+                        ),
+                        null
+                ));
+            } catch (Exception ex) {
+                log.warn("Could not send IN_APP notification for client reply on {}: {}", ticket.getTicketNumber(), ex.getMessage());
+            }
+        });
+    }
+
+    private void runAfterCommit(Runnable task) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    task.run();
+                }
+            });
+        } else {
+            task.run();
+        }
     }
 }
