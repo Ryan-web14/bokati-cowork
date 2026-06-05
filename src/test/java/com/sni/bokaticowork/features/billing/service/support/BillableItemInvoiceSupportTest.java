@@ -222,16 +222,30 @@ class BillableItemInvoiceSupportTest {
                 balanceDue,
                 BigDecimal.ZERO,
                 balanceDue,
+                BigDecimal.ZERO,
                 LocalDate.now(),
                 LocalDate.now(),
                 null,
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 List.of(),
                 List.of(),
                 List.of(),
-                List.of()
+                List.of(),
+                null,
+                null,
+                null
         );
     }
 }

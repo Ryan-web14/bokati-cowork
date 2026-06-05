@@ -114,6 +114,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Users getUserByUserIdForService(String userId) {
+        if (!StringUtils.hasText(userId)) {
+            throw new ResourceNotFoundException("No user found");
+        }
+        return userRepo.findByUserId(userId.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("No user found"));
+    }
+
+    @Override
     public Users getUserByEmailForService(String email) {
         return userRepo.findByEmail(email)
                 .orElseThrow(()-> new ResourceNotFoundException("No user found"));

@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
 import com.sni.bokaticowork.features.document.kyc.repository.KycCaseRepository;
+import com.sni.bokaticowork.features.billing.service.support.BillingTaxRuleResolver;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreateSubscriptionRequest;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillingScheduleStatus;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriptionEventType;
@@ -27,11 +28,15 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 
 @Component
 @RequiredArgsConstructor
 public class SubscriptionCreationOperator {
+
+    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionItemRepository subscriptionItemRepository;
@@ -43,6 +48,7 @@ public class SubscriptionCreationOperator {
     private final SubscriptionEventWriter eventWriter;
     private final SubscriptionCodeFactory codeFactory;
     private final KycCaseRepository kycCaseRepository;
+    private final BillingTaxRuleResolver taxRuleResolver;
     private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionEmailNotifier emailNotifier;
 
@@ -60,6 +66,7 @@ public class SubscriptionCreationOperator {
 
         LocalDate startDate = request.startDate();
         String subscriptionNumber = codeFactory.nextSubscriptionNumber(request.subscriberType(), planVersion, price.getBillingCycle(), startDate);
+        PriceAmounts priceAmounts = calculatePriceAmounts(price);
 
         Subscription subscription = Subscription.builder()
                 .subscriptionNumber(subscriptionNumber)
@@ -77,9 +84,9 @@ public class SubscriptionCreationOperator {
                 .autoRenew(request.autoRenew() == null || request.autoRenew())
                 .billingCycle(price.getBillingCycle())
                 .currency(price.getCurrency())
-                .subtotalAmount(price.getAmount())
-                .taxAmount(java.math.BigDecimal.ZERO)
-                .totalAmount(price.getAmount().add(price.getSetupFee()).add(price.getDepositAmount()))
+                .subtotalAmount(priceAmounts.subtotalAmount())
+                .taxAmount(priceAmounts.taxAmount())
+                .totalAmount(priceAmounts.totalAmount())
                 .metadataJson(trim(request.metadataJson()))
                 .build();
 
@@ -113,6 +120,61 @@ public class SubscriptionCreationOperator {
         return StringUtils.hasText(value) ? value.trim() : null;
     }
 
+    private PriceAmounts calculatePriceAmounts(PlanPrice price) {
+        BigDecimal recurringAmount = money(nonNegative(price.getAmount()));
+        BigDecimal setupFee = money(nonNegative(price.getSetupFee()));
+        BigDecimal depositAmount = money(nonNegative(price.getDepositAmount()));
+        BigDecimal taxableCharge = money(recurringAmount.add(setupFee));
+        BillingTaxRuleResolver.TaxProfile taxProfile = taxRuleResolver.defaultTaxProfile();
+        if (Boolean.TRUE.equals(price.getTaxIncluded())) {
+            BigDecimal subtotal = money(taxableCharge.divide(taxFactor(taxProfile.vatRate(), taxProfile.additionalCentRate()), 8, RoundingMode.HALF_UP));
+            BigDecimal tax = money(taxableCharge.subtract(subtotal));
+            return new PriceAmounts(subtotal, tax, money(taxableCharge.add(depositAmount)));
+        }
+        BigDecimal vatAmount = percentage(taxableCharge, taxProfile.vatRate());
+        BigDecimal additionalCentAmount = percentage(vatAmount, taxProfile.additionalCentRate());
+        BigDecimal tax = money(vatAmount.add(additionalCentAmount));
+        return new PriceAmounts(taxableCharge, tax, money(taxableCharge.add(tax).add(depositAmount)));
+    }
+
+    private BigDecimal percentage(BigDecimal amount, BigDecimal rate) {
+        if (rate == null || rate.signum() == 0) {
+            return BigDecimal.ZERO;
+        }
+        if (rate.signum() < 0) {
+            throw new BadRequestException("Percentage rate cannot be negative");
+        }
+        return money(amount.multiply(rate).divide(HUNDRED, 4, RoundingMode.HALF_UP));
+    }
+
+    private BigDecimal taxFactor(BigDecimal vatRate, BigDecimal additionalCentRate) {
+        BigDecimal vatFactor = rateFactor(vatRate);
+        BigDecimal additionalCentFactor = rateFactor(additionalCentRate);
+        return BigDecimal.ONE.add(vatFactor).add(vatFactor.multiply(additionalCentFactor));
+    }
+
+    private BigDecimal rateFactor(BigDecimal rate) {
+        if (rate == null || rate.signum() == 0) {
+            return BigDecimal.ZERO;
+        }
+        if (rate.signum() < 0) {
+            throw new BadRequestException("Percentage rate cannot be negative");
+        }
+        return rate.divide(HUNDRED, 8, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal nonNegative(BigDecimal value) {
+        BigDecimal candidate = value == null ? BigDecimal.ZERO : value;
+        if (candidate.signum() < 0) {
+            throw new BadRequestException("Plan price amounts cannot be negative");
+        }
+        return candidate;
+    }
+
+    private BigDecimal money(BigDecimal value) {
+        return (value == null ? BigDecimal.ZERO : value).setScale(4, RoundingMode.HALF_UP);
+    }
+
     private void validateRequiredKycLevel(PlanVersion planVersion, SubscriptionOwnerResolver.Owner owner) {
         Integer requiredLevel = planVersion.getPlan() == null ? null : planVersion.getPlan().getRequiredKycLevel();
         if (requiredLevel == null || requiredLevel <= 1) {
@@ -142,5 +204,10 @@ public class SubscriptionCreationOperator {
     }
 
     private record OwnerKyc(DocumentOwnerType ownerType, Long ownerId) {
+    }
+
+    private record PriceAmounts(BigDecimal subtotalAmount,
+                                BigDecimal taxAmount,
+                                BigDecimal totalAmount) {
     }
 }

@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -127,6 +128,54 @@ public class CrmServiceImpl implements CrmService {
         return new PaginatedResponse<>(
                 leadRepository.search(stageStr, assignedTo, sourceStr, text, pageable)
                         .map(this::response));
+    }
+
+    // ── Kanban Board ──────────────────────────────────────────────
+
+    @Override
+    @Transactional(readOnly = true)
+    public KanbanBoardResponse getBoard(Long assignedTo, LeadSource source,
+                                        LeadInterest interest, String searchText) {
+        String sourceStr   = source   != null ? source.name()   : null;
+        String interestStr = interest != null ? interest.name() : null;
+        String text        = StringUtils.hasText(searchText) ? searchText.trim() : null;
+
+        List<KanbanColumnResponse> columns = new ArrayList<>();
+        long totalLeads = 0;
+        BigDecimal totalValue = BigDecimal.ZERO;
+
+        for (LeadStage stage : LeadStage.values()) {
+            List<Lead> leads = leadRepository.findByStageFiltered(
+                    stage.name(), assignedTo, sourceStr, interestStr, text);
+
+            if (leads.isEmpty()) {
+                columns.add(new KanbanColumnResponse(stage, 0, BigDecimal.ZERO, List.of()));
+                continue;
+            }
+
+            List<Long> ids = leads.stream().map(Lead::getId).toList();
+            Map<Long, Integer> actCounts = activityRepository.countByLeadIds(ids).stream()
+                    .collect(Collectors.toMap(
+                            row -> ((Number) row[0]).longValue(),
+                            row -> ((Number) row[1]).intValue()));
+
+            List<KanbanCardResponse> cards = leads.stream()
+                    .map(l -> {
+                        int cnt = actCounts.getOrDefault(l.getId(), 0);
+                        return mapper.toKanbanCard(l, cnt, computeScore(l, cnt));
+                    })
+                    .toList();
+
+            BigDecimal colAmount = leads.stream()
+                    .map(l -> l.getEstimatedAmount() != null ? l.getEstimatedAmount() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            columns.add(new KanbanColumnResponse(stage, leads.size(), colAmount, cards));
+            totalLeads += leads.size();
+            if (stage != LeadStage.LOST) totalValue = totalValue.add(colAmount);
+        }
+
+        return new KanbanBoardResponse(columns, totalLeads, totalValue);
     }
 
     // ── Pipeline ─────────────────────────────────────────────────
@@ -228,6 +277,7 @@ public class CrmServiceImpl implements CrmService {
                 "Devis généré depuis le lead " + lead.getLeadNumber(),
                 BigDecimal.ONE,
                 amount,
+                null,
                 null,
                 null,
                 null,

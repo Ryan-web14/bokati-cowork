@@ -21,6 +21,8 @@ public interface UserRepository extends JpaRepository<Users, Long>, JpaSpecifica
 
     Optional<Users> findByEmailIgnoreCase(String email);
 
+    Optional<Users> findByUserId(String userId);
+
     @Query(nativeQuery = true, value = "SELECT email FROM users WHERE businessEntity = :businessId")
     List<String> findAllEntityUsers(@Param("businessId") Long businessId);
 

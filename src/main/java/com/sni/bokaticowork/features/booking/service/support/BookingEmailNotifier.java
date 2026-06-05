@@ -118,6 +118,10 @@ public class BookingEmailNotifier {
         context.setVariable("eventTitle", eventTitle(eventType));
         context.setVariable("eventSubtitle", eventSubtitle(eventType));
         context.setVariable("eventMessage", eventMessage(eventType, booking));
+        if (eventType == BookingEventType.BOOKING_COMPLETED) {
+            context.setVariable("csatUrl", apiBaseUrl.stripTrailing()
+                    + ApiPath.V1 + "/public/bookings/csat/" + booking.getBookingNumber() + "?score=");
+        }
         String template = template(eventType);
         return templateEngine.process(template, context);
     }
@@ -126,6 +130,7 @@ public class BookingEmailNotifier {
         return switch (eventType) {
             case BOOKING_CREATED, BOOKING_CONFIRMED -> "email/booking-confirmation";
             case BOOKING_CANCELLED -> "email/booking-cancelled";
+            case BOOKING_COMPLETED -> "email/booking-completed";
             default -> "email/booking-event";
         };
     }

@@ -144,6 +144,7 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 line.getDiscountRate(),
                 line.getDiscountAmount(),
                 line.getTaxable(),
+                line.getTaxIncluded(),
                 line.getVatRate(),
                 line.getAdditionalCentRate(),
                 line.getSubtotalAmount(),

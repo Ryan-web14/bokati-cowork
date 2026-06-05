@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.exception.customs.ValidationException;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePricingRuleRequest;
+import com.sni.bokaticowork.features.ressource.dto.request.UpdateResourcePricingRuleRequest;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse;
 import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -110,19 +112,46 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .filter(rule -> appliesLastMinute(rule, startedAt))
                 .findFirst()
                 .orElse(baseRule);
-        Integer finalPrice = applyAdjustment(baseRule.getPrice(), applied);
+
+        Integer unitPrice = applyAdjustment(baseRule.getPrice(), applied);
+        long quantity = quantityFor(unit, startedAt, endedAt);
+
         return ResourcePriceQuoteResponse.builder()
                 .resourceCode(resource.getCode())
                 .bookingUnit(unit.name())
                 .startedAt(startedAt)
                 .endedAt(endedAt)
                 .basePrice(baseRule.getPrice())
-                .finalPrice(finalPrice)
+                .finalPrice(unitPrice * (int) quantity)
                 .appliedRuleId(applied.getId())
                 .appliedRuleLabel(applied.getLabel())
                 .adjustmentType(applied.getAdjustmentType() == null ? null : applied.getAdjustmentType().name())
                 .adjustmentValue(applied.getAdjustmentValue())
                 .build();
+    }
+
+    @Override
+    public ResourcePricingRuleResponse updatePricingRule(Long id, UpdateResourcePricingRuleRequest request) {
+        ResourcePricingRule rule = getPricingRuleForService(id);
+        if (request.getBookingUnit() != null) {
+            rule.setResourceBookingUnit(parseUnit(request.getBookingUnit()));
+        }
+        if (request.getPrice() != null) {
+            if (request.getPrice() < 0) throw new BadRequestException("Price must be zero or greater");
+            rule.setPrice(request.getPrice());
+        }
+        if (request.getLabel() != null)            rule.setLabel(request.getLabel());
+        if (request.getDayOfWeek() != null)        rule.setDayOfWeek(request.getDayOfWeek());
+        if (request.getStartsAt() != null)         rule.setStartsAt(request.getStartsAt());
+        if (request.getEndsAt() != null)           rule.setEndsAt(request.getEndsAt());
+        if (request.getAdjustmentType() != null)   rule.setAdjustmentType(parseAdjustmentType(request.getAdjustmentType()));
+        if (request.getAdjustmentValue() != null)  rule.setAdjustmentValue(request.getAdjustmentValue());
+        if (request.getValidFrom() != null)        rule.setValidFrom(request.getValidFrom());
+        if (request.getValidUntil() != null)       rule.setValidUntil(request.getValidUntil());
+        if (request.getLastMinuteMinutes() != null) rule.setLastMinuteMinutes(request.getLastMinuteMinutes());
+        if (request.getPriority() != null)         rule.setPriority(request.getPriority());
+        if (request.getActive() != null)           rule.setActive(request.getActive());
+        return toResponse(pricingRuleRepository.save(rule));
     }
 
     @Override
@@ -200,6 +229,18 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
             case FIXED_PRICE -> adjustment;
             case AMOUNT_DELTA -> Math.max(0, basePrice + adjustment);
             case PERCENT_DELTA -> Math.max(0, basePrice + (basePrice * adjustment / 100));
+        };
+    }
+
+    private long quantityFor(ResourceBookingUnit unit, LocalDateTime startedAt, LocalDateTime endedAt) {
+        long minutes = ChronoUnit.MINUTES.between(startedAt, endedAt);
+        return switch (unit) {
+            case HOUR     -> Math.max(1, (long) Math.ceil(minutes / 60.0));
+            case HALF_DAY -> Math.max(1, (long) Math.ceil(minutes / (60.0 * 12)));
+            case DAY      -> Math.max(1, (long) Math.ceil(minutes / (60.0 * 24)));
+            case WEEK     -> Math.max(1, (long) Math.ceil(minutes / (60.0 * 24 * 7)));
+            case MONTH    -> Math.max(1, ChronoUnit.MONTHS.between(startedAt, endedAt)
+                    + (startedAt.plusMonths(ChronoUnit.MONTHS.between(startedAt, endedAt)).isBefore(endedAt) ? 1 : 0));
         };
     }
 

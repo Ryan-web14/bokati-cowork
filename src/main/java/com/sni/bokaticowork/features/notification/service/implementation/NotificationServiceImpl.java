@@ -82,6 +82,16 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<NotificationMessageResponse> listUnread(String recipientEmail, int limit) {
+        return messageRepository.findByRecipientEmailAndStatusOrderBySentAtDesc(
+                normalizeEmail(recipientEmail),
+                NotificationDeliveryStatus.SENT,
+                Pageable.ofSize(limit)
+        ).stream().map(mapper::toResponse).toList();
+    }
+
+    @Override
     public NotificationTemplateResponse upsertTemplate(NotificationTemplateRequest request) {
         return templateRepository.findByTemplateCodeIgnoreCase(request.templateCode())
                 .map(existing -> {

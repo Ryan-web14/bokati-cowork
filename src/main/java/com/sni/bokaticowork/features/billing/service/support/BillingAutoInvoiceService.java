@@ -106,6 +106,7 @@ public class BillingAutoInvoiceService {
                                 java.math.BigDecimal.ZERO,
                                 java.math.BigDecimal.ZERO,
                                 request.taxable() == null ? Boolean.FALSE : request.taxable(),
+                                Boolean.TRUE.equals(request.taxable()),
                                 java.math.BigDecimal.ZERO,
                                 java.math.BigDecimal.ZERO,
                                 request.sourceType().trim(),

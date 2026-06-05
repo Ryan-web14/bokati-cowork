@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.payment.service.implementation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
@@ -778,6 +779,14 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentTransactionResponse refundOrReverse(String transactionNumber, RefundPaymentRequest request, PaymentTransactionStatus status) {
         PaymentTransaction original = transactionRepository.findByTransactionNumber(transactionNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment transaction not found"));
+
+        if (original.getStatus() == PaymentTransactionStatus.REFUNDED) {
+            throw new ConflictException("payment_transaction", "transaction " + transactionNumber + " has already been refunded");
+        }
+        if (original.getStatus() == PaymentTransactionStatus.REVERSED) {
+            throw new ConflictException("payment_transaction", "transaction " + transactionNumber + " has already been reversed");
+        }
+
         BigDecimal amount = request.amount() == null ? original.getAmount() : request.amount();
         validatePositive(amount);
         if (amount.compareTo(original.getAmount()) > 0) {
@@ -798,7 +807,6 @@ public class PaymentServiceImpl implements PaymentService {
             return initiateMobileMoneyRefund(original, amount, request, status, refundTxnNumber);
         }
 
-
         PaymentTransaction refund = transactionRepository.save(PaymentTransaction.builder()
                 .transactionNumber(refundTxnNumber)
                 .paymentIntent(original.getPaymentIntent())
@@ -813,16 +821,16 @@ public class PaymentServiceImpl implements PaymentService {
                 .failureReason(trim(request.reason()))
                 .build());
 
-        PaymentIntent intent = original.getPaymentIntent();
+        original.setStatus(status);
+        transactionRepository.save(original);
 
-        if(status == PaymentTransactionStatus.REFUNDED) {
+        PaymentIntent intent = original.getPaymentIntent();
+        if (status == PaymentTransactionStatus.REFUNDED) {
             intent.setStatus(PaymentIntentStatus.REFUNDED);
-        }else if(status == PaymentTransactionStatus.REVERSED) {
+        } else if (status == PaymentTransactionStatus.REVERSED) {
             intent.setStatus(PaymentIntentStatus.REVERSED);
         }
-
         intentRepository.save(intent);
-
 
         publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus());
         return mapper.toTransactionResponse(refund);
@@ -862,6 +870,12 @@ public class PaymentServiceImpl implements PaymentService {
             refund.setStatus(targetStatus);
             refund.setPaidAt(Instant.now());
             transactionRepository.save(refund);
+            original.setStatus(targetStatus);
+            transactionRepository.save(original);
+            PaymentIntent intent = original.getPaymentIntent();
+            intent.setStatus(targetStatus == PaymentTransactionStatus.REFUNDED
+                    ? PaymentIntentStatus.REFUNDED : PaymentIntentStatus.REVERSED);
+            intentRepository.save(intent);
             publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus());
             return mapper.toTransactionResponse(refund);
         }

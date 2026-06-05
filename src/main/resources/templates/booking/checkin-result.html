@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${success} ? 'Check-in confirmé — Elle A Osé' : 'QR code invalide — Elle A Osé'">Check-in</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --ink: #201129;
+            --plum: #2a1635;
+            --plum-soft: #4b2755;
+            --cream: #fff8ea;
+            --paper: #ffffff;
+            --line: #eadfed;
+            --muted: #77647f;
+            --gold: #c89b2f;
+            --green: #166534;
+            --green-soft: #eaf8ef;
+            --red: #991b1b;
+            --red-soft: #fff1f2;
+        }
+        body {
+            min-height: 100vh;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 12% 12%, rgba(200,155,47,.18), transparent 28%),
+                linear-gradient(135deg, #fff8ea 0%, #f6eef8 48%, #efe5f5 100%);
+            font-size: 14px;
+        }
+        .topbar {
+            background: var(--plum);
+            padding: 18px 28px;
+            border-bottom: 4px solid var(--gold);
+        }
+        .topbar-brand {
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .topbar-sub {
+            color: #dccdde;
+            font-size: 11px;
+            margin-top: 4px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .topbar-stripe { display: none; }
+        .content {
+            min-height: calc(100vh - 136px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 42px 16px 30px;
+        }
+        .card {
+            width: 100%;
+            max-width: 560px;
+            overflow: hidden;
+            background: rgba(255,255,255,.96);
+            border: 1px solid rgba(42,22,53,.12);
+            border-radius: 22px;
+            box-shadow: 0 24px 70px rgba(42,22,53,.18);
+        }
+        .card-top-success,
+        .card-top-error {
+            padding: 30px 30px 24px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,.16);
+        }
+        .card-top-success {
+            background: linear-gradient(135deg, #12351f 0%, #166534 64%, #247a42 100%);
+        }
+        .card-top-error {
+            background: linear-gradient(135deg, #2a1635 0%, #3b1d2a 55%, #641e2e 100%);
+        }
+        .card-title {
+            color: #ffffff;
+            font-size: 30px;
+            line-height: 1.08;
+            font-weight: 700;
+            letter-spacing: -.4px;
+        }
+        .card-sub {
+            color: rgba(255,255,255,.78);
+            margin-top: 8px;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+        .card-body { padding: 26px 30px 30px; }
+        .booking-chip {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 7px 14px;
+            border: 1px solid rgba(200,155,47,.42);
+            border-radius: 999px;
+            background: var(--cream);
+            color: #7c5600;
+            font-family: "Courier New", monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 13px 0;
+            border-bottom: 1px solid #f0e8f2;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .lbl {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .info-row .val {
+            color: var(--ink);
+            text-align: right;
+            font-size: 14px;
+            font-weight: 800;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 10.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+        }
+        .badge-progress { background: #dcfce7; color: #166534; }
+        .badge-confirmed { background: #dbeafe; color: #1d4ed8; }
+        .badge-other { background: #ede9fe; color: #5b21b6; }
+        .welcome-box {
+            margin-top: 22px;
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #bbf7d0;
+            border-radius: 16px;
+            background: var(--green-soft);
+        }
+        .welcome-text {
+            color: var(--green);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 13.5px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+        .card-message {
+            color: #5c4f6e;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.75;
+        }
+        .ref-block {
+            margin-top: 20px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid #eadfed;
+            border-radius: 16px;
+            background: #fbf8fc;
+        }
+        .ref-label {
+            margin-bottom: 4px;
+            color: var(--plum-soft);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+        .ref-value {
+            color: var(--ink);
+            font-family: "Courier New", monospace;
+            font-size: 16px;
+            font-weight: 800;
+            letter-spacing: 1.6px;
+        }
+        .ref-badge {
+            flex-shrink: 0;
+            padding: 5px 11px;
+            border-radius: 999px;
+            background: var(--red-soft);
+            color: var(--red);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .7px;
+        }
+        .tips {
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid #f0e8f2;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+        .tips-title {
+            margin-bottom: 12px;
+            color: var(--plum-soft);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .tip {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 9px;
+            color: #5c4f6e;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .tip-dot {
+            flex-shrink: 0;
+            width: 6px;
+            height: 6px;
+            margin-top: 7px;
+            border-radius: 50%;
+            background: var(--gold);
+        }
+        .footer {
+            padding: 0 16px 20px;
+            color: #8a7a94;
+            text-align: center;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        .footer strong { color: var(--plum-soft); }
+        @media (max-width: 560px) {
+            .topbar { padding: 16px 20px; }
+            .content { align-items: flex-start; padding-top: 26px; }
+            .card { border-radius: 18px; }
+            .card-top-success, .card-top-error { padding: 26px 22px 22px; }
+            .card-title { font-size: 25px; }
+            .card-body { padding: 22px; }
+            .info-row { align-items: flex-start; flex-direction: column; gap: 5px; }
+            .info-row .val { text-align: left; }
+            .ref-block { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <div>
+        <div class="topbar-brand">Elle A Osé</div>
+        <div class="topbar-sub">Check-in réservation</div>
+    </div>
+</div>
+<div class="topbar-stripe"></div>
+
+<div class="content">
+    <div class="card">
+
+        <!-- ── Succès ── -->
+        <div th:if="${success}">
+            <div class="card-top-success">
+                <div class="card-title">Check-in confirmé</div>
+                <div class="card-sub">Enregistrement effectué avec succès</div>
+            </div>
+            <div class="card-body">
+
+                <div class="booking-chip" th:text="${bookingNumber}">BKG-000</div>
+
+                <div class="info-row">
+                    <span class="lbl">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="#7c6d8f" stroke-width="1.4"/><path d="M5 1.5v3M11 1.5v3M2 7h12" stroke="#7c6d8f" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        Espace
+                    </span>
+                    <span class="val" th:text="${resourceName}">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="lbl">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#7c6d8f" stroke-width="1.4"/><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5" stroke="#7c6d8f" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        Client
+                    </span>
+                    <span class="val" th:text="${contactName}">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="lbl">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#7c6d8f" stroke-width="1.4"/><path d="M8 5v3.5l2 2" stroke="#7c6d8f" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Début
+                    </span>
+                    <span class="val" th:text="${#temporals.format(startedAt, 'dd/MM/yyyy HH:mm')}">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="lbl">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#7c6d8f" stroke-width="1.4"/><path d="M8 5v3.5l-2 2" stroke="#7c6d8f" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Fin
+                    </span>
+                    <span class="val" th:text="${#temporals.format(endedAt, 'dd/MM/yyyy HH:mm')}">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="lbl">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M8 3v10" stroke="#7c6d8f" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="8" r="6" stroke="#7c6d8f" stroke-width="1.4"/></svg>
+                        Statut
+                    </span>
+                    <span>
+                        <span th:if="${status == 'IN_PROGRESS'}" class="badge badge-progress">En cours</span>
+                        <span th:if="${status == 'CONFIRMED'}"   class="badge badge-confirmed">Confirmé</span>
+                        <span th:if="${status != 'IN_PROGRESS' and status != 'CONFIRMED'}" class="badge badge-other" th:text="${status}">—</span>
+                    </span>
+                </div>
+
+                <div class="welcome-box">
+                    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" flex-shrink="0">
+                        <path d="M11 2a5 5 0 100 10A5 5 0 0011 2zM4 20c0-3.9 3.1-7 7-7h.1c3.8.1 6.9 3.2 6.9 7" stroke="#166534" stroke-width="1.7" stroke-linecap="round"/>
+                        <path d="M16 9l1.5 1.5L20 8" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="welcome-text">Bienvenue ! Votre accès est validé pour ce créneau.</div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── Erreur ── -->
+        <div th:unless="${success}">
+            <div class="card-top-error">
+                <div class="card-title">QR code invalide</div>
+                <div class="card-sub">Ce lien n'a pas pu être traité</div>
+            </div>
+            <div class="card-body">
+                <div class="card-message">
+                    Ce QR code est invalide, a déjà été utilisé, ou la réservation associée n'est plus éligible au check-in.
+                    Présentez votre numéro de réservation à l'accueil.
+                </div>
+
+                <div class="ref-block" th:if="${token != null and !#strings.isEmpty(token)}">
+                    <div>
+                        <div class="ref-label">Référence scannée</div>
+                        <div class="ref-value" th:text="${token}">—</div>
+                    </div>
+                    <div class="ref-badge">INVALIDE</div>
+                </div>
+
+                <div class="tips">
+                    <div class="tips-title">Que faire ?</div>
+                    <div class="tip">
+                        <div class="tip-dot"></div>
+                        <span>Vérifiez que le QR code est intact et lisible dans l'email de confirmation.</span>
+                    </div>
+                    <div class="tip">
+                        <div class="tip-dot"></div>
+                        <span>Communiquez votre numéro de réservation à l'accueil pour un check-in manuel.</span>
+                    </div>
+                    <div class="tip">
+                        <div class="tip-dot"></div>
+                        <span>Contactez-nous au <strong>05 204 25 52</strong> si le problème persiste.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="footer">
+    <strong>Elle A Osé</strong> — Espace de coworking<br>
+    05 204 25 52 · coworkspace@elleaose.com
+</div>
+
+</body>
+</html>
+

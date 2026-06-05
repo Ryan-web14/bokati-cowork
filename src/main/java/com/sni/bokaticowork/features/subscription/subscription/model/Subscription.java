@@ -24,6 +24,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -60,14 +62,17 @@ public class Subscription {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", foreignKey = @ForeignKey(name = "fk_subscription_member"))
+    @NotFound(action = NotFoundAction.IGNORE)
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", foreignKey = @ForeignKey(name = "fk_subscription_customer"))
+    @NotFound(action = NotFoundAction.IGNORE)
     private Customer customer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_entity_id", foreignKey = @ForeignKey(name = "fk_subscription_business"))
+    @NotFound(action = NotFoundAction.IGNORE)
     private BusinessEntity businessEntity;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

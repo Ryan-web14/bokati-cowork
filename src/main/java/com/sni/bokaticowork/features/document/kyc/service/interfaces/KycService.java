@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.document.kyc.service.interfaces;
 
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
+import com.sni.bokaticowork.features.document.kyc.KycDocumentVerificationStatus;
 import com.sni.bokaticowork.features.document.kyc.KycRiskLevel;
 import com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycAssignRequest;
@@ -14,6 +15,7 @@ import com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResp
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentOcrResultResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycExpiryDocumentStatus;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus;
@@ -42,6 +44,8 @@ public interface KycService {
     List<KycCaseResponse> expiringSoon(Integer days);
     List<KycExpiryDocumentStatus> expiryStatus(String code);
     KycCaseResponse updateRiskLevel(String code, KycRiskLevelRequest request);
+    List<KycDocumentResponse> reviewQueue();
+    List<KycDocumentResponse> reviewedDocuments(List<KycDocumentVerificationStatus> statuses);
     KycDocumentOcrResultResponse getOcrResult(String documentCode);
     KycBulkActionResponse bulkApprove(KycBulkApproveRequest request);
     KycBulkActionResponse bulkReject(KycBulkRejectRequest request);

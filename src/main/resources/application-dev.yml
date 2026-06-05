@@ -95,15 +95,15 @@ bokati:
       enabled: ${PAWAYPAY_ENABLED:true}
       api-key: ${PAWAYPAY_API_KEY:eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI0ODAiLCJtYXYiOiIxIiwiZXhwIjoyMDkzMTc4MTA1LCJpYXQiOjE3Nzc1NTg5MDUsInBtIjoiREFGLFBBRiIsImp0aSI6IjJhMWY1M2U4LTg5MmMtNGE0ZC1iMWM4LWFhN2U4NWUwYjVlOSJ9.WOY0BG_Xn-AurEZckuIIAJQwimuLBhsKt9NMS6qgdwR3LEbMZgjdWm3PlY2YmBuGnBYnldpRs638uSDSflY3eg}
       base-url: ${PAWAYPAY_BASE_URL:https://api.pawapay.io/}
-      callback-base-url: ${PAWAYPAY_CALLBACK_BASE_URL:https://21a1-102-129-81-86.ngrok-free.app}
+      callback-base-url: ${PAWAYPAY_CALLBACK_BASE_URL:https://0cae-102-129-68-237.ngrok-free.app}
       callback-secret: ${PAWAYPAY_CALLBACK_SECRET:}
       polling-delay-ms: ${PAWAYPAY_POLLING_DELAY_MS:300000}
       polling-max-age-minutes: ${PAWAYPAY_POLLING_MAX_AGE_MINUTES:10}
 
 app:
-  api-base-url: ${APP_BASE_URL:https://1612-102-129-68-124.ngrok-free.app}
+  api-base-url: ${APP_BASE_URL:https://0cae-102-129-68-237.ngrok-free.app}
   admin-access-url: ${ADMIN_ACCESS_URL:https://admin.elleaose.com}
-  verify-base-url: ${APP_VERIFY_BASE_URL:${APP_BASE_URL:https://1612-102-129-68-124.ngrok-free.app}}
+  verify-base-url: ${APP_VERIFY_BASE_URL:${APP_BASE_URL:https://0cae-102-129-68-237.ngrok-free.app}}
 
   document:
     storage:

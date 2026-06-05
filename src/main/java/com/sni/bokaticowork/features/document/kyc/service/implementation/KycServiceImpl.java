@@ -252,6 +252,7 @@ public class KycServiceImpl implements KycService {
         kycCase.setDecisionComment(trimToNull(request.getComment()));
         kycCase.setKycLevel(calculateKycLevel(kycCase));
         kycCase.setRiskLevel(kycCase.getRiskLevel() == null ? calculateRiskLevel(kycCase) : kycCase.getRiskLevel());
+        kycCase.setSlaDeadline(null);
         caseRepository.save(kycCase);
 
         if (kycCase.getOwnerType() == DocumentOwnerType.MEMBER) {
@@ -544,6 +545,21 @@ public class KycServiceImpl implements KycService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<KycDocumentResponse> reviewQueue() {
+        return reviewDocuments(List.of(KycDocumentVerificationStatus.PENDING));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<KycDocumentResponse> reviewedDocuments(List<KycDocumentVerificationStatus> statuses) {
+        List<KycDocumentVerificationStatus> effectiveStatuses = statuses == null || statuses.isEmpty()
+                ? List.of(KycDocumentVerificationStatus.VERIFIED, KycDocumentVerificationStatus.REJECTED)
+                : statuses;
+        return reviewDocuments(effectiveStatuses);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public KycDocumentOcrResultResponse getOcrResult(String documentCode) {
         if (!hasUsableDocumentCode(documentCode)) {
             return KycDocumentOcrResultResponse.builder().build();
@@ -557,6 +573,12 @@ public class KycServiceImpl implements KycService {
                 .orElseGet(() -> KycDocumentOcrResultResponse.builder()
                         .documentCode(normalizedCode)
                         .build());
+    }
+
+    private List<KycDocumentResponse> reviewDocuments(List<KycDocumentVerificationStatus> statuses) {
+        return documentRepository.findAllReviewDocumentsByStatusIn(statuses).stream()
+                .map(mapper::toDocumentResponse)
+                .toList();
     }
 
     @Override

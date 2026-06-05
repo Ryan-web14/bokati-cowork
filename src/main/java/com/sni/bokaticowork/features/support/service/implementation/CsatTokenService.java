@@ -13,7 +13,7 @@ import java.util.Base64;
 @Service
 public class CsatTokenService {
 
-    @Value("${token-hash.secret}")
+    @Value("${app.security.token-hash.secret}")
     private String secret;
 
     public String generate(String ticketNumber, int score) {

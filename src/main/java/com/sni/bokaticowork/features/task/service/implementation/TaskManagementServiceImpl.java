@@ -17,7 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -83,6 +87,21 @@ public class TaskManagementServiceImpl implements TaskManagementService {
     }
 
     @Override
+    public TaskResponse updateStatus(Long id, UpdateTaskStatusRequest request) {
+        if (request == null || request.status() == null) {
+            throw new BadRequestException("Status is required");
+        }
+        TaskItem task = getTask(id);
+        task.setStatus(request.status());
+        if (request.status() == TaskStatus.COMPLETED && task.getCompletedAt() == null) {
+            task.setCompletedAt(Instant.now());
+        } else if (request.status() != TaskStatus.COMPLETED) {
+            task.setCompletedAt(null);
+        }
+        return response(taskRepository.save(task));
+    }
+
+    @Override
     public TaskResponse assign(Long id, AssignTaskRequest request) {
         TaskItem task = getTask(id);
         task.setAssignedTo(request == null ? null : request.assignedTo());
@@ -118,6 +137,55 @@ public class TaskManagementServiceImpl implements TaskManagementService {
                 .stream()
                 .map(this::response)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TaskKanbanBoardResponse getBoard(Long assignedTo, TaskPriority priority,
+                                            String sourceType, String searchText) {
+        String priorityStr = priority != null ? priority.name() : null;
+        String text        = StringUtils.hasText(searchText) ? searchText.trim() : null;
+        String srcType     = StringUtils.hasText(sourceType) ? sourceType.trim() : null;
+
+        List<TaskKanbanColumnResponse> columns = new ArrayList<>();
+        long totalTasks  = 0;
+        long overdueTasks = 0;
+
+        for (TaskStatus status : Arrays.asList(TaskStatus.OPEN, TaskStatus.IN_PROGRESS,
+                                               TaskStatus.COMPLETED, TaskStatus.CANCELLED)) {
+            List<TaskItem> tasks = taskRepository.findByStatusFiltered(
+                    status.name(), assignedTo, priorityStr, srcType, text);
+
+            if (tasks.isEmpty()) {
+                columns.add(new TaskKanbanColumnResponse(status, 0, List.of()));
+                continue;
+            }
+
+            List<Long> ids = tasks.stream().map(TaskItem::getId).toList();
+
+            Map<Long, int[]> checklistCounts = checklistRepository.countByTaskIds(ids).stream()
+                    .collect(Collectors.toMap(
+                            row -> ((Number) row[0]).longValue(),
+                            row -> new int[]{((Number) row[1]).intValue(), ((Number) row[2]).intValue()}));
+
+            Map<Long, Integer> commentCounts = commentRepository.countByTaskIds(ids).stream()
+                    .collect(Collectors.toMap(
+                            row -> ((Number) row[0]).longValue(),
+                            row -> ((Number) row[1]).intValue()));
+
+            List<TaskKanbanCardResponse> cards = tasks.stream().map(t -> {
+                int[] cl = checklistCounts.getOrDefault(t.getId(), new int[]{0, 0});
+                int   cc = commentCounts.getOrDefault(t.getId(), 0);
+                return mapper.toKanbanCard(t, cl[0], cl[1], cc);
+            }).toList();
+
+            long colOverdue = cards.stream().filter(TaskKanbanCardResponse::overdue).count();
+            columns.add(new TaskKanbanColumnResponse(status, tasks.size(), cards));
+            totalTasks  += tasks.size();
+            overdueTasks += colOverdue;
+        }
+
+        return new TaskKanbanBoardResponse(columns, totalTasks, overdueTasks);
     }
 
     private TaskItem getTask(Long id) {

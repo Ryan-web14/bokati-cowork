@@ -16,6 +16,7 @@ public record BillingDocumentLineResponse(
         BigDecimal discountRate,
         BigDecimal discountAmount,
         Boolean taxable,
+        Boolean taxIncluded,
         BigDecimal vatRate,
         BigDecimal additionalCentRate,
         BigDecimal subtotalAmount,

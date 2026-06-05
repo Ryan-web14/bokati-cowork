@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+
 public interface NotificationMessageRepository extends JpaRepository<NotificationMessage, Long> {
 
     Optional<NotificationMessage> findByNotificationNumber(String notificationNumber);
@@ -19,6 +20,10 @@ public interface NotificationMessageRepository extends JpaRepository<Notificatio
     List<NotificationMessage> findByStatusInAndAvailableAtLessThanEqualOrderByCreatedAtAsc(Set<NotificationDeliveryStatus> statuses,
                                                                                            Instant availableAt,
                                                                                            Pageable pageable);
+
+    List<NotificationMessage> findByRecipientEmailAndStatusOrderBySentAtDesc(String recipientEmail,
+                                                                              NotificationDeliveryStatus status,
+                                                                              Pageable pageable);
 
     @Query(value = """
             SELECT message.*

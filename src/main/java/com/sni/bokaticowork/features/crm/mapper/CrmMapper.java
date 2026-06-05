@@ -49,6 +49,26 @@ public class CrmMapper {
         );
     }
 
+    public KanbanCardResponse toKanbanCard(Lead lead, int activityCount, int score) {
+        return new KanbanCardResponse(
+                lead.getId(),
+                lead.getLeadNumber(),
+                lead.getFullName(),
+                lead.getCompany(),
+                lead.getEmail(),
+                lead.getStage(),
+                lead.getSource(),
+                lead.getInterest(),
+                lead.getEstimatedAmount(),
+                lead.getProbability(),
+                score,
+                lead.getAssignedTo(),
+                lead.getLastActivityAt(),
+                activityCount,
+                lead.getCreatedAt()
+        );
+    }
+
     public OpportunityResponse toOpportunityResponse(Opportunity opp) {
         return new OpportunityResponse(
                 opp.getId(),

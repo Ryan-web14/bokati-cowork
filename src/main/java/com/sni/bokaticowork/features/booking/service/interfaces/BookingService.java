@@ -55,6 +55,10 @@ public interface BookingService {
 
     int markOverdueNoShows(int limit);
 
+    int markOverdueCompleted(int limit);
+
+    void recordCsat(String bookingNumber, int score);
+
     BookingResponse checkIn(String bookingNumber, BookingCheckRequest request);
 
     BookingResponse checkInByToken(String checkInToken, BookingCheckRequest request);

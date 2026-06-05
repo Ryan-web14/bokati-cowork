@@ -55,6 +55,36 @@
             padding: 4px 12px; border-radius: 20px;
             margin-bottom: 12px;
         }
+        .pill-icon {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 1.4px solid #c9a84c;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: -2px;
+            position: relative;
+        }
+        .pill-icon::before {
+            content: '';
+            position: absolute;
+            width: 1.4px;
+            height: 4px;
+            background: #c9a84c;
+            left: 5px;
+            top: 2px;
+        }
+        .pill-icon::after {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 1.4px;
+            background: #c9a84c;
+            left: 5px;
+            top: 6px;
+            transform: rotate(35deg);
+            transform-origin: left center;
+        }
         .headline {
             font-size: 24px; font-weight: 700;
             color: #ffffff; line-height: 1.2;
@@ -263,7 +293,7 @@
                 <div class="brand-name">Elle A Osé</div>
                 <div class="brand-sub">Cowork &amp; Studio</div>
 
-                <div class="pill">⏰ Rappel &nbsp;·&nbsp; Réservation à venir</div>
+                <div class="pill"><span class="pill-icon"></span>Rappel &nbsp;·&nbsp; Réservation à venir</div>
 
                 <div class="headline">À demain, <span th:text="${name ?: 'cher membre'}">cher membre</span>&nbsp;!</div>
                 <div class="subline">Voici un récapitulatif de votre prochaine réservation à Elle A Osé.</div>

@@ -39,7 +39,7 @@ public class RoleAssignmentAdminController {
 
     @GetMapping("/users/{userId}/roles")
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
-    public ResponseEntity<List<RoleResponse>> getUserRoles(@PathVariable Long userId) {
+    public ResponseEntity<List<RoleResponse>> getUserRoles(@PathVariable String userId) {
         return ResponseEntity.ok(roleUserService.getRoleUsers(userId));
     }
 
@@ -47,7 +47,7 @@ public class RoleAssignmentAdminController {
     @Audited(module = "ROLE_USER", action = "ASSIGN_ROLE", ressource = "role_user")
     @Idempotent(operation = "ROLE_USER_ASSIGN")
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
-    public ResponseEntity<Void> assignRole(@PathVariable Long userId,
+    public ResponseEntity<Void> assignRole(@PathVariable String userId,
                                            @Valid @RequestBody AssignRoleToUserRequest request,
                                            Authentication authentication) {
         roleUserService.addRoleToUser(userId, request.roleName(), actor(authentication));
@@ -57,7 +57,7 @@ public class RoleAssignmentAdminController {
     @DeleteMapping("/users/{userId}/roles/{roleId}")
     @Audited(module = "ROLE_USER", action = "REMOVE_ROLE", ressource = "role_user")
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
-    public ResponseEntity<Void> removeRole(@PathVariable Long userId, @PathVariable Long roleId) {
+    public ResponseEntity<Void> removeRole(@PathVariable String userId, @PathVariable Long roleId) {
         roleUserService.deleteRoleFromUser(userId, roleId);
         return ResponseEntity.noContent().build();
     }

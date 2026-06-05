@@ -29,6 +29,8 @@ public interface NotificationService {
 
     NotificationMessageResponse retry(String notificationNumber);
 
+    List<NotificationMessageResponse> listUnread(String recipientEmail, int limit);
+
     NotificationTemplateResponse upsertTemplate(NotificationTemplateRequest request);
 
     List<NotificationTemplateResponse> listTemplates(NotificationChannel channel, Boolean active);

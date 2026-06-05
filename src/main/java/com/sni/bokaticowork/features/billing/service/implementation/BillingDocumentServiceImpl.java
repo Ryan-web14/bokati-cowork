@@ -2,7 +2,10 @@ package com.sni.bokaticowork.features.billing.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.core.utils.code.CodeComposer;
+import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentAdvanceRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentClauseRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentDiscountRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentLineRequest;
@@ -16,14 +19,27 @@ import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscoun
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
+import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
+import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.enums.BillingLineType;
+import com.sni.bokaticowork.features.billing.model.BillingDocumentAdvance;
 import com.sni.bokaticowork.features.billing.mapper.interfaces.BillingDocumentMapper;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentLine;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentAdvanceRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentLineRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
+import com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus;
+import com.sni.bokaticowork.features.payment.enums.PaymentMethod;
+import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
+import com.sni.bokaticowork.features.payment.model.PaymentAllocation;
+import com.sni.bokaticowork.features.payment.model.PaymentIntent;
+import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
+import com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository;
+import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
+import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.billing.repository.specification.criteria.BillingDocumentSearchCriteria;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.billing.service.support.BillingCalculationService;
@@ -47,8 +63,10 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -58,6 +76,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     private final BillingDocumentRepository documentRepository;
     private final BillingDocumentLineRepository lineRepository;
+    private final BillingDocumentAdvanceRepository advanceRepository;
     private final BillableItemRepository billableItemRepository;
     private final BillingCalculationService calculationService;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
@@ -66,6 +85,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final BillingLifecycleSupport lifecycleSupport;
     private final BillingEventWriter eventWriter;
     private final BillingDocumentMapper mapper;
+    private final PaymentIntentRepository intentRepository;
+    private final PaymentTransactionRepository transactionRepository;
+    private final PaymentAllocationRepository allocationRepository;
+    private final SequenceGeneratorFacade sequenceGenerator;
 
     @Override
     public BillingDocumentResponse create(CreateBillingDocumentRequest request) {
@@ -110,6 +133,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                         BigDecimal.ZERO,
                         BigDecimal.ZERO,
                         Boolean.TRUE,
+                        Boolean.TRUE,
                         null,
                         null,
                         item.getSourceType(),
@@ -121,9 +145,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 BillingDocumentType.INVOICE,
                 firstItem.getSubscriberType().name(),
                 firstItem.getSubscriberCode(),
-                null,
-                null,
-                null,
+                firstItem.getSubscriberName(),
+                firstItem.getSubscriberEmail(),
+                firstItem.getSubscriberPhone(),
                 null,
                 "BILLABLE_ITEM",
                 String.join(",", request.billableNumbers()),
@@ -271,8 +295,53 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
         quote.setStatus(BillingDocumentStatus.DEPOSIT_PAID);
         BillingDocument saved = documentRepository.save(quote);
+        advanceRepository.findByDocument(saved).ifPresent(adv -> {
+            adv.setStatus(BillingAdvanceStatus.PAID);
+            adv.setPaidAt(Instant.now());
+            createDepositPaymentRecord(saved, adv.getComputedAmount());
+            advanceRepository.save(adv);
+        });
         eventWriter.write(saved, "QUOTE_DEPOSIT_PAID", null);
         return mapper.toResponse(saved);
+    }
+
+    private void createDepositPaymentRecord(BillingDocument quote, BigDecimal amount) {
+        String customerCtx = CodeComposer.abbrev(quote.getCustomerType());
+        long intentSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_intent"));
+        String intentNumber = CodeComposer.withDay("INT", customerCtx, LocalDate.now(), intentSeq);
+
+        PaymentIntent intent = intentRepository.save(PaymentIntent.builder()
+                .intentNumber(intentNumber)
+                .customerType(quote.getCustomerType())
+                .customerCode(quote.getCustomerCode())
+                .amount(amount)
+                .currency(quote.getCurrency())
+                .status(PaymentIntentStatus.SUCCEEDED)
+                .purpose("DEPOSIT_PAYMENT")
+                .sourceType("QUOTE_DEPOSIT")
+                .sourceCode(quote.getDocumentNumber())
+                .build());
+
+        String methodCtx = CodeComposer.abbrev(PaymentMethod.BANK_TRANSFER.name());
+        long txnSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
+        String txnNumber = CodeComposer.withDay("TXN", methodCtx, LocalDate.now(), txnSeq);
+
+        PaymentTransaction transaction = transactionRepository.save(PaymentTransaction.builder()
+                .transactionNumber(txnNumber)
+                .paymentIntent(intent)
+                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                .provider("MANUAL")
+                .amount(amount)
+                .currency(quote.getCurrency())
+                .status(PaymentTransactionStatus.SUCCEEDED)
+                .paidAt(Instant.now())
+                .build());
+
+        allocationRepository.save(PaymentAllocation.builder()
+                .paymentTransaction(transaction)
+                .billingDocumentNumber(quote.getDocumentNumber())
+                .allocatedAmount(amount)
+                .build());
     }
 
     @Override
@@ -306,7 +375,18 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse convertQuoteToInvoice(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
         lifecycleSupport.ensureQuoteCanConvert(quote);
+
+        Optional<BillingDocumentAdvance> quoteAdvanceOpt = advanceRepository.findByDocument(quote);
+        boolean depositPaid = quote.getStatus() == BillingDocumentStatus.DEPOSIT_PAID
+                && quoteAdvanceOpt.isPresent()
+                && quoteAdvanceOpt.get().getStatus() == BillingAdvanceStatus.PAID;
+
         BillingDocumentResponse quoteResponse = mapper.toResponse(quote);
+
+        CreateBillingDocumentAdvanceRequest invoiceAdvanceRequest = depositPaid
+                ? toAdvanceRequest(quoteAdvanceOpt.get(), quoteNumber)
+                : null;
+
         CreateBillingDocumentRequest request = new CreateBillingDocumentRequest(
                 BillingDocumentType.INVOICE,
                 quoteResponse.customerType(),
@@ -330,7 +410,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 quoteResponse.paymentReference(),
                 quoteResponse.paymentInstructions(),
                 quoteResponse.bankDetailsJson(),
-                null,
+                invoiceAdvanceRequest,
                 quoteResponse.customerReference(),
                 quoteResponse.poNumber(),
                 quoteResponse.projectCode(),
@@ -340,8 +420,51 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 quoteResponse.exchangeRate(),
                 null
         );
+
         BillingDocumentResponse invoice = create(request);
+
+        // Apply deposit as pre-payment on the invoice
+        if (depositPaid) {
+            BigDecimal depositAmount = quoteAdvanceOpt.get().getComputedAmount();
+            BillingDocument invoiceDoc = serviceByNumber(invoice.documentNumber());
+            BigDecimal paid = depositAmount.min(invoiceDoc.getTotalAmount());
+            invoiceDoc.setPaidAmount(paid);
+            invoiceDoc.setBalanceDue(invoiceDoc.getTotalAmount().subtract(paid).max(BigDecimal.ZERO));
+            invoiceDoc.setStatus(invoiceDoc.getBalanceDue().signum() == 0
+                    ? BillingDocumentStatus.PAID : BillingDocumentStatus.PARTIALLY_PAID);
+            if (invoiceDoc.getStatus() == BillingDocumentStatus.PAID) {
+                invoiceDoc.setPaidAt(Instant.now());
+            }
+            documentRepository.save(invoiceDoc);
+
+            // Mark the advance on the invoice as PAID
+            advanceRepository.findByDocument(invoiceDoc).ifPresent(adv -> {
+                adv.setStatus(BillingAdvanceStatus.PAID);
+                adv.setPaidAt(quoteAdvanceOpt.get().getPaidAt() != null
+                        ? quoteAdvanceOpt.get().getPaidAt() : Instant.now());
+                advanceRepository.save(adv);
+            });
+
+            // Reuse the deposit PaymentTransaction to create an allocation on the invoice
+            final BigDecimal allocatedOnInvoice = paid;
+            final BillingDocument finalInvoiceDoc = invoiceDoc;
+            intentRepository.findSucceededBySourceTypeAndSourceCode("QUOTE_DEPOSIT", quote.getDocumentNumber())
+                    .ifPresent(depositIntent -> transactionRepository
+                            .findAllByPaymentIntentIdOrderByCreatedAtDesc(depositIntent.getId())
+                            .stream()
+                            .filter(t -> t.getStatus() == PaymentTransactionStatus.SUCCEEDED)
+                            .findFirst()
+                            .ifPresent(depositTxn -> allocationRepository.save(PaymentAllocation.builder()
+                                    .paymentTransaction(depositTxn)
+                                    .billingDocumentNumber(finalInvoiceDoc.getDocumentNumber())
+                                    .allocatedAmount(allocatedOnInvoice)
+                                    .build())));
+
+            invoice = mapper.toResponse(invoiceDoc);
+        }
+
         quote.setStatus(BillingDocumentStatus.CONVERTED);
+        quote.setBalanceDue(BigDecimal.ZERO);
         documentRepository.save(quote);
         eventWriter.write(quote, "QUOTE_CONVERTED", java.util.Map.of("invoiceNumber", invoice.documentNumber()));
         return invoice;
@@ -356,7 +479,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             throw new BadRequestException("Invalid credit note amount");
         }
         List<CreateBillingDocumentLineRequest> lines = request.lines() == null || request.lines().isEmpty()
-                ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null))
+                ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null))
                 : request.lines();
         BillingDocumentResponse creditNote = create(new CreateBillingDocumentRequest(
                 BillingDocumentType.CREDIT_NOTE,
@@ -407,10 +530,18 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         String normalizedCustomerCode = requiredCustomerCode(customerCode);
         String normalizedCustomerType = normalizeCustomerType(customerType, normalizedCustomerCode);
         var documents = documentRepository.statementDocuments(normalizedCustomerType, normalizedCustomerCode, unsortedPageable).map(mapper::toResponse);
-        BigDecimal totalInvoiced = documents.getContent().stream().map(BillingDocumentResponse::totalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalPaid = documents.getContent().stream().map(BillingDocumentResponse::paidAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal balance = documents.getContent().stream().map(BillingDocumentResponse::balanceDue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<Object[]> totalsResult = documentRepository.statementTotals(normalizedCustomerType, normalizedCustomerCode);
+        Object[] row = totalsResult.isEmpty() ? null : totalsResult.get(0);
+        BigDecimal totalInvoiced = asBigDecimal(row != null ? row[0] : null);
+        BigDecimal totalPaid = asBigDecimal(row != null ? row[1] : null);
+        BigDecimal balance = asBigDecimal(row != null ? row[2] : null);
         return new CustomerStatementResponse(normalizedCustomerType, normalizedCustomerCode, totalInvoiced, totalPaid, balance, documents.getContent());
+    }
+
+    private static BigDecimal asBigDecimal(Object value) {
+        if (value instanceof BigDecimal bd) return bd;
+        if (value instanceof Number n) return new BigDecimal(n.toString());
+        return BigDecimal.ZERO;
     }
 
     @Override
@@ -553,8 +684,21 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private BillingDocument buildDocument(CreateBillingDocumentRequest request,
                                           BillingCustomerSnapshotResolver.CustomerSnapshot customer,
                                           BillingCalculationService.CalculatedDocument calculation) {
+        String documentNumber = numberingSupport.nextDocumentNumber(request.documentType(), customer.customerType());
+        String customerReference = StringUtils.hasText(trim(request.customerReference()))
+                ? trim(request.customerReference())
+                : "REF-" + documentNumber;
+        String poNumber = StringUtils.hasText(trim(request.poNumber()))
+                ? trim(request.poNumber())
+                : "BC-" + documentNumber;
+        String projectCode = StringUtils.hasText(trim(request.projectCode()))
+                ? trim(request.projectCode())
+                : "PRJ-" + documentNumber;
+        String salespersonCode = StringUtils.hasText(trim(request.salespersonCode()))
+                ? trim(request.salespersonCode())
+                : "SYSTEM";
         return BillingDocument.builder()
-                .documentNumber(numberingSupport.nextDocumentNumber(request.documentType(), customer.customerType()))
+                .documentNumber(documentNumber)
                 .documentType(request.documentType())
                 .status(BillingDocumentStatus.DRAFT)
                 .customerType(customer.customerType())
@@ -580,10 +724,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .balanceDue(calculation.totalAmount())
                 .issueDate(request.issueDate() == null ? LocalDate.now() : request.issueDate())
                 .dueDate(request.dueDate())
-                .customerReference(trim(request.customerReference()))
-                .poNumber(trim(request.poNumber()))
-                .projectCode(trim(request.projectCode()))
-                .salespersonCode(trim(request.salespersonCode()))
+                .customerReference(customerReference)
+                .poNumber(poNumber)
+                .projectCode(projectCode)
+                .salespersonCode(salespersonCode)
                 .deliveryAddressJson(trim(request.deliveryAddressJson()))
                 .language(trim(request.language()) == null ? "fr" : trim(request.language()))
                 .exchangeRate(request.exchangeRate())
@@ -592,6 +736,30 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .bankDetailsJson(trim(request.bankDetailsJson()))
                 .metadataJson(trim(request.metadataJson()))
                 .build();
+    }
+
+    private CreateBillingDocumentAdvanceRequest toAdvanceRequest(BillingDocumentAdvance advance, String quoteNumber) {
+        return new CreateBillingDocumentAdvanceRequest(
+                BillingAdvanceType.FIXED_AMOUNT,
+                advance.getComputedAmount(),
+                parseOrderString(advance.getIncludedLineOrders()),
+                parseOrderString(advance.getExcludedLineOrders()),
+                advance.getPaymentReference(),
+                advance.getReferenceLabel() != null
+                        ? advance.getReferenceLabel()
+                        : "Acompte reçu — Devis " + quoteNumber,
+                null,
+                advance.getNotes()
+        );
+    }
+
+    private List<Integer> parseOrderString(String orders) {
+        if (orders == null || orders.isBlank()) return null;
+        return Arrays.stream(orders.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .toList();
     }
 
     private List<BillableItem> resolveBillableItems(List<String> billableNumbers) {
@@ -701,6 +869,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.discountRate(),
                 line.discountAmount(),
                 line.taxable(),
+                line.taxIncluded(),
                 line.vatRate(),
                 line.additionalCentRate(),
                 line.sourceType(),

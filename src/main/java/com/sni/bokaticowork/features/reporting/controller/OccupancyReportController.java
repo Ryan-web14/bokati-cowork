@@ -18,7 +18,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(ApiPath.V1 + "/reports/occupancy")
+@RequestMapping({ApiPath.V1 + "/reports/occupancy", ApiPath.V1 + "/reporting/occupancy"})
 public class OccupancyReportController {
 
     private final OccupancyReportService service;
@@ -31,19 +31,27 @@ public class OccupancyReportController {
     @GetMapping
     public ResponseEntity<OccupancyReportResponse> occupancy(
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        return ResponseEntity.ok(service.occupancy(parseDate(from), parseDate(to)));
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        return ResponseEntity.ok(service.occupancy(resolveDate(fromDate, from), resolveDate(toDate, to)));
     }
 
     @GetMapping("/pdf")
     public ResponseEntity<byte[]> occupancyPdf(
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        byte[] pdf = reportPdfService.occupancyPdf(parseDate(from), parseDate(to));
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        byte[] pdf = reportPdfService.occupancyPdf(resolveDate(fromDate, from), resolveDate(toDate, to));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDisposition(ContentDisposition.attachment().filename("rapport-occupation.pdf").build());
         return ResponseEntity.ok().headers(headers).body(pdf);
+    }
+
+    private LocalDate resolveDate(String preferred, String fallback) {
+        return parseDate(preferred == null || preferred.isBlank() ? fallback : preferred);
     }
 
     private LocalDate parseDate(String value) {

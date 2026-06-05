@@ -41,6 +41,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -166,7 +167,7 @@ public class MemberServiceImpl  implements MemberService {
     @Override
     public MemberResponse getByMemberId(String memberId) {
 
-        return memberMapper.toResponse( memberRepo.findByMemberIdAndDeletedFalse(memberId)
+        return memberMapper.toResponse( memberRepo.findVisibleByMemberId(memberId)
                 .orElseThrow(()-> new ResourceNotFoundException("Member not found")));
     }
 
@@ -177,7 +178,7 @@ public class MemberServiceImpl  implements MemberService {
             throw new BadRequestException("Invalid email");
         }
 
-        return memberMapper.toResponse( memberRepo.findByEmailIgnoreCaseAndDeletedFalse(email)
+        return memberMapper.toResponse( memberRepo.findVisibleByEmail(email)
                 .orElseThrow(()-> new ResourceNotFoundException("Member not found")));
     }
 
@@ -205,7 +206,7 @@ public class MemberServiceImpl  implements MemberService {
     @Override
     public Member getByUserForService(Long userId) {
 
-        return memberRepo.findByUser_IdAndDeletedFalse(userId)
+        return memberRepo.findVisibleByUserId(userId)
                 .orElseThrow(()-> new ResourceNotFoundException("Member not found"));
     }
 
@@ -233,14 +234,14 @@ public class MemberServiceImpl  implements MemberService {
 
     @Override
     public List<MemberResponse> getAllMembers() {
-        return memberRepo.findAll().stream()
+        return memberRepo.findAllVisible(PageRequest.of(0, Integer.MAX_VALUE)).stream()
                 .map(memberMapper::toResponse)
                 .toList();
     }
 
     @Override
     public List<MemberSummaryResponse> getAllMembersSummary() {
-        return memberRepo.findAll().stream()
+        return memberRepo.findAllVisible(PageRequest.of(0, Integer.MAX_VALUE)).stream()
                 .map(memberMapper::toSummary)
                 .toList();
     }
@@ -248,14 +249,14 @@ public class MemberServiceImpl  implements MemberService {
     @Override
     public PaginatedResponse<MemberResponse> list(Pageable pageable) {
 
-        Page<MemberResponse> pages = memberRepo.findAll(pageable).map(memberMapper::toResponse);
+        Page<MemberResponse> pages = memberRepo.findAllVisible(unsorted(pageable)).map(memberMapper::toResponse);
 
         return new PaginatedResponse<>(pages);
     }
 
     @Override
     public PaginatedResponse<MemberSummaryResponse> listSummary(Pageable pageable) {
-        Page<MemberSummaryResponse> pages = memberRepo.findAll(pageable).map(memberMapper::toSummary);
+        Page<MemberSummaryResponse> pages = memberRepo.findAllVisible(unsorted(pageable)).map(memberMapper::toSummary);
 
         return new PaginatedResponse<MemberSummaryResponse>(pages);
     }
@@ -264,7 +265,7 @@ public class MemberServiceImpl  implements MemberService {
     public PaginatedResponse<MemberSummaryResponse> listSummaryByCustomer(String customerId, Pageable pageable) {
 
         Customer customer = customerService.getCustomerForService(customerId);
-        Page<MemberSummaryResponse> pages = memberRepo.findAllByCustomerAndDeletedFalse(customer, pageable)
+        Page<MemberSummaryResponse> pages = memberRepo.findAllVisibleByCustomerId(customer.getCustomerId(), unsorted(pageable))
                 .map(memberMapper::toSummary);
 
         return new PaginatedResponse<MemberSummaryResponse>(pages);
@@ -676,6 +677,10 @@ public class MemberServiceImpl  implements MemberService {
         }
 
         return memberRepo.fuzzySearchMemberIds(criteria.getQuery().trim());
+    }
+
+    private Pageable unsorted(Pageable pageable) {
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
     }
 
 }

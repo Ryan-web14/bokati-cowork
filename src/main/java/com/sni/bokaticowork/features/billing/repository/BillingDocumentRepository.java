@@ -88,16 +88,32 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                                  @Param("searchText") String searchText,
                                  Pageable pageable);
 
-    @Query(nativeQuery = true, value = """
-            SELECT *
-            FROM billing_document
-            WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
-              AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
-            ORDER BY created_at DESC
-            """)
+    @Query(nativeQuery = true,
+            value = """
+                    SELECT *
+                    FROM billing_document
+                    WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
+                      AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
+                    ORDER BY created_at DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM billing_document
+                    WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
+                      AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
+                    """)
     Page<BillingDocument> statementDocuments(@Param("customerType") String customerType,
                                              @Param("customerCode") String customerCode,
                                              Pageable pageable);
+
+    @Query(nativeQuery = true, value = """
+            SELECT COALESCE(SUM(total_amount), 0), COALESCE(SUM(paid_amount), 0), COALESCE(SUM(balance_due), 0)
+            FROM billing_document
+            WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
+              AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
+            """)
+    List<Object[]> statementTotals(@Param("customerType") String customerType,
+                                   @Param("customerCode") String customerCode);
 
     @Query(nativeQuery = true, value = """
             SELECT *

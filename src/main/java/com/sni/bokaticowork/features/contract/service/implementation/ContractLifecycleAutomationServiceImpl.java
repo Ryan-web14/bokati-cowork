@@ -8,6 +8,7 @@ import com.sni.bokaticowork.features.contract.service.interfaces.ContractLifecyc
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -69,6 +70,12 @@ public class ContractLifecycleAutomationServiceImpl implements ContractLifecycle
         payload.put("ownerType", contract.getOwnerType());
         payload.put("ownerCode", contract.getOwnerCode());
         payload.put("status", contract.getStatus());
+        String docCode = StringUtils.hasText(contract.getSignedDocumentCode())
+                ? contract.getSignedDocumentCode()
+                : contract.getDraftDocumentCode();
+        if (StringUtils.hasText(docCode)) {
+            payload.put("documentCode", docCode);
+        }
         outboxService.publish(eventType, "CONTRACT", contract.getContractCode(), payload);
     }
 }

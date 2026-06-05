@@ -55,7 +55,7 @@ public class QuoteSignaturePublicController {
         return ResponseEntity.ok(quoteSignatureService.confirmSignature(token, enriched));
     }
 
-    // ── Page HTML ──────────────────────────────────────────────────────────────
+    //  Page HTML
 
     private String buildPage(BillingDocumentSignature sig, BillingDocumentResponse quote) {
         String expiresStr = sig.getExpiresAt()

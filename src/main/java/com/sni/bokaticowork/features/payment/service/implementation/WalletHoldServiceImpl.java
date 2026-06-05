@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.payment.service.implementation;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.payment.dto.request.CreateWalletHoldRequest;
 import com.sni.bokaticowork.features.payment.dto.response.WalletHoldResponse;
 import com.sni.bokaticowork.features.payment.enums.WalletEntryType;
@@ -15,8 +16,11 @@ import com.sni.bokaticowork.features.payment.repository.WalletHoldRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.WalletHoldService;
 import com.sni.bokaticowork.features.payment.service.support.WalletLedgerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 
@@ -30,6 +34,19 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     private final WalletLedgerService ledgerService;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final PaymentMapper mapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginatedResponse<WalletHoldResponse> list(String walletNumber, String status, String sourceType, String sourceCode, Pageable pageable) {
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return new PaginatedResponse<>(holdRepository.list(
+                normalize(walletNumber),
+                parseStatus(status),
+                normalize(sourceType),
+                normalize(sourceCode),
+                unsortedPageable
+        ).map(mapper::toWalletHoldResponse));
+    }
 
     @Override
     public WalletHoldResponse create(CreateWalletHoldRequest request) {
@@ -101,6 +118,21 @@ public class WalletHoldServiceImpl implements WalletHoldService {
             throw new BadRequestException("Wallet hold is not active");
         }
         return hold;
+    }
+
+    private String normalize(String value) {
+        return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private WalletHoldStatus parseStatus(String status) {
+        if (!StringUtils.hasText(status)) {
+            return null;
+        }
+        try {
+            return WalletHoldStatus.valueOf(status.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException("Invalid wallet hold status");
+        }
     }
 
 }

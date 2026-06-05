@@ -42,6 +42,16 @@ public class RoleUserServiceImpl implements RoleUserService {
     @Override
     public void addRoleToUser(Long userId, String roleName, String assignedBy){
         Users user = userService.getUserByIdForService(userId);
+        addRoleToUser(user, roleName, assignedBy);
+    }
+
+    @Override
+    public void addRoleToUser(String userId, String roleName, String assignedBy) {
+        Users user = userService.getUserByUserIdForService(userId);
+        addRoleToUser(user, roleName, assignedBy);
+    }
+
+    private void addRoleToUser(Users user, String roleName, String assignedBy) {
         Role role = roleService.getRoleByNameService(roleName).orElseThrow(
                 ()-> new ResourceNotFoundException("Role with name " + roleName + " not found")
         );
@@ -72,6 +82,12 @@ public class RoleUserServiceImpl implements RoleUserService {
     }
 
     @Override
+    public void deleteRoleFromUser(String userId, Long roleId) {
+        Users user = userService.getUserByUserIdForService(userId);
+        deleteRoleFromUser(user.getId(), roleId);
+    }
+
+    @Override
     public void deleteRoleFromAllUser(Long roleId){
         log.debug("delete all user from role {}", roleId);
         roleUserRepo.deleteAllUserFromRole(roleId);
@@ -88,6 +104,12 @@ public class RoleUserServiceImpl implements RoleUserService {
         }
 
         return rolesResponse;
+    }
+
+    @Override
+    public List<RoleResponse> getRoleUsers(String userId) {
+        Users user = userService.getUserByUserIdForService(userId);
+        return getRoleUsers(user.getId());
     }
 
     @Override

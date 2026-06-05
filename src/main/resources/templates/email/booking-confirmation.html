@@ -6,67 +6,89 @@
     <title>Confirmation de réservation</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        .wrap { width: 100%; padding: 40px 16px; background: #f0eef5; }
-        .card { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30,10,60,.10); }
+        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        .wrap { width: 100%; padding: 56px 16px; background: #f0eef5; }
+        .card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 20px 60px rgba(26,10,46,.14); }
 
         /* ── Header ── */
-        .email-header { background: #1a0a2e; padding: 22px 28px 18px; position: relative; overflow: hidden; }
-        .email-header::after { content:''; position:absolute; top:0; right:-20px; width:140px; height:100%; background:rgba(255,255,255,.03); transform:skewX(-12deg); }
-        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
-        .logo-area { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; }
-        .brand-name { font-size:15px; font-weight:700; color:#fff; letter-spacing:3px; text-transform:uppercase; }
-        .brand-sub  { font-size:7px;  color:#9b8caa; letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
-        .status-tag { font-size:7.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; padding:4px 10px; border-radius:2px; }
-        .tag-confirmed { background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.4); color:#4ade80; }
-        .tag-cancelled { background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.4); color:#f87171; }
-        .tag-default   { background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.4); color:#c9a84c; }
+        .email-header { background: #1a0a2e; padding: 30px 40px 26px; position: relative; }
+        .logo-area { position: relative; z-index: 1; }
+        .header-row { width: 100%; }
+        .header-row td { vertical-align: middle; }
+        .brand-mark { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 9px; }
+        .brand-name { font-size: 21px; font-weight: 400; color: #fff; letter-spacing: 6px; text-transform: uppercase; white-space: nowrap; }
+        .brand-sub  { font-size: 8px; color: #9b8caa; letter-spacing: 3px; text-transform: uppercase; margin-top: 7px; }
+        .status-tag { display: inline-block; font-size: 8px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; padding: 6px 13px; border-radius: 2px; white-space: nowrap; }
+        .tag-confirmed { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.45); color: #5fd98a; }
+        .tag-cancelled { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.45); color: #f49ca0; }
+        .tag-default   { background: rgba(201,168,76,.12); border: 1px solid rgba(201,168,76,.5); color: #d4b85f; }
+        .header-rule { height: 1px; background: linear-gradient(90deg, transparent 0%, #c9a84c 18%, #c9a84c 82%, transparent 100%); }
 
-        /* ── Hero banner ── */
-        .hero { background: linear-gradient(135deg, #1a0a2e 0%, #2a1548 100%); padding: 24px 28px; text-align: center; border-bottom: 2px solid #c9a84c; }
-        .hero-icon { font-size: 32px; margin-bottom: 10px; }
-        .hero-title { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.3px; margin-bottom: 4px; }
-        .hero-sub { font-size: 12px; color: #9b8caa; }
-        .hero-number { display: inline-block; margin-top: 10px; background: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4); color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 14px; border-radius: 2px; font-family: monospace; }
+        /* ── Confirmation ── */
+        .confirm { padding: 42px 40px 30px; text-align: center; }
+        .check-ring { width: 60px; height: 60px; border-radius: 50%; border: 1px solid #c9a84c; margin: 0 auto 22px; }
+        .check-ring td { text-align: center; vertical-align: middle; }
+        .confirm-title { font-size: 23px; font-weight: 400; color: #1a0a2e; letter-spacing: -0.2px; margin-bottom: 9px; }
+        .confirm-sub { font-size: 13px; color: #7c6d8f; line-height: 1.6; max-width: 360px; margin: 0 auto; }
+        .confirm-number { display: inline-block; margin-top: 22px; color: #a8893a; font-size: 11px; font-weight: 700; letter-spacing: 3px; padding: 8px 0; font-family: "Courier New", monospace; border-top: 1px solid #ece4d2; border-bottom: 1px solid #ece4d2; min-width: 180px; }
 
-        /* ── Body ── */
-        .email-body { padding: 24px 28px; }
-        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 20px; }
+        /* ── Greeting ── */
+        .email-body { padding: 0 40px; }
+        .greeting { font-size: 14px; color: #3d2f52; line-height: 1.75; margin-bottom: 30px; text-align: center; }
+        .greeting strong { color: #1a0a2e; }
 
-        /* ── Info card ── */
-        .info-card { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
-        .info-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 14px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #fff; }
-        .info-table { width: 100%; border-collapse: collapse; }
-        .info-table tr { border-bottom: 1px solid #f0eaf8; }
-        .info-table tr:last-child { border-bottom: none; }
-        .info-table tr:nth-child(even) td { background: #faf8fd; }
-        .info-table td { padding: 10px 14px; font-size: 12.5px; vertical-align: middle; }
-        .info-table .lbl { color: #7c6d8f; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; width: 42%; }
-        .info-table .val { color: #1a0a2e; font-weight: 700; text-align: right; }
+        /* ── Section label ── */
+        .sec-label { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 2.4px; text-transform: uppercase; text-align: center; margin-bottom: 16px; }
+        .sec-label-line { display: inline-block; }
 
-        /* ── QR code ── */
-        .qr-section { margin-bottom: 20px; border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; }
-        .qr-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 14px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-        .qr-body { padding: 20px; background: #faf8fd; text-align: center; }
-        .qr-img-wrap { display: inline-block; padding: 10px; background: #fff; border: 1px solid #e8e0f0; border-radius: 4px; margin-bottom: 14px; }
-        .qr-img-wrap img { display: block; width: 160px; height: 160px; }
-        .qr-token-label { font-size: 9px; color: #9b8caa; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin-bottom: 4px; }
-        .qr-token-value { font-size: 12px; color: #1a0a2e; font-weight: 700; font-family: monospace; letter-spacing: 1px; word-break: break-all; }
-        .qr-placeholder { width: 160px; height: 160px; background: #f0eef5; border: 2px dashed #c9a84c; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; flex-direction: column; gap: 6px; }
-        .qr-placeholder-icon { font-size: 28px; }
-        .qr-placeholder-text { font-size: 9px; color: #7c6d8f; text-align: center; letter-spacing: 0.5px; }
-        .qr-instructions { background: #fffdf7; border: 1px solid #e8e0f0; border-radius: 3px; padding: 10px 14px; margin-top: 12px; text-align: left; }
-        .qr-instructions-title { font-size: 9px; font-weight: 700; color: #7c5600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-        .qr-step { font-size: 11px; color: #5c4f6e; padding: 2px 0; display: flex; gap: 8px; align-items: flex-start; }
-        .qr-step-num { font-weight: 700; color: #c9a84c; flex-shrink: 0; }
+        /* ── Details ── */
+        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 38px; }
+        .info-table td { padding: 14px 2px; font-size: 13.5px; vertical-align: middle; border-bottom: 1px solid #f0eaf8; }
+        .info-table tr:last-child td { border-bottom: none; }
+        .info-table .lbl { color: #9b8caa; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+        .info-table .val { color: #1a0a2e; font-weight: 700; text-align: right; font-size: 13.5px; }
+
+        /* ── QR access pass ── */
+        .pass-zone { padding: 0 40px; }
+        .pass { background: #1a0a2e; border-radius: 6px; padding: 34px 28px 30px; text-align: center; position: relative; }
+        .pass-kicker { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 5px; }
+        .pass-hint { font-size: 10.5px; color: #9b8caa; letter-spacing: 0.3px; margin-bottom: 24px; }
+        .qr-frame { display: inline-block; padding: 12px; background: #ffffff; border-radius: 4px; box-shadow: 0 0 0 1px rgba(201,168,76,.45), 0 14px 30px rgba(0,0,0,.3); }
+        .qr-frame img { display: block; width: 168px; height: 168px; }
+        .qr-placeholder { width: 192px; height: 192px; background: #ffffff; border-radius: 4px; box-shadow: 0 0 0 1px rgba(201,168,76,.45); margin: 0 auto; }
+        .qr-placeholder td { text-align: center; vertical-align: middle; }
+        .qr-placeholder-text { font-size: 10px; color: #7c6d8f; line-height: 1.55; letter-spacing: 0.4px; margin-top: 12px; }
+
+        .pass-divider { height: 1px; background: repeating-linear-gradient(90deg, rgba(201,168,76,.5) 0 5px, transparent 5px 11px); margin: 26px 0 22px; }
+        .token-label { font-size: 9px; color: #9b8caa; text-transform: uppercase; letter-spacing: 2.4px; font-weight: 700; margin-bottom: 11px; }
+        .token-value { font-size: 26px; color: #ffffff; font-weight: 400; font-family: "Courier New", monospace; letter-spacing: 9px; text-indent: 9px; }
+        .pass-ref { font-size: 9.5px; color: #6f5f86; letter-spacing: 1.5px; margin-top: 16px; text-transform: uppercase; }
+        .pass-ref strong { color: #c9a84c; font-weight: 700; }
+
+        /* ── Steps ── */
+        .steps { padding: 26px 40px 6px; }
+        .step-row { width: 100%; border-collapse: collapse; }
+        .step-row td { padding: 9px 0; vertical-align: top; }
+        .step-num { width: 26px; font-size: 11px; font-weight: 700; color: #c9a84c; font-family: "Courier New", monospace; letter-spacing: 1px; }
+        .step-txt { font-size: 12px; color: #5c4f6e; line-height: 1.6; }
+        .step-txt strong { color: #1a0a2e; }
 
         /* ── Note ── */
-        .note-box { background: #f7f5fb; border-left: 3px solid #8b5cf6; border-radius: 0 4px 4px 0; padding: 10px 14px; margin-bottom: 16px; font-size: 11.5px; color: #5c4f6e; line-height: 1.6; }
+        .note-zone { padding: 18px 40px 0; }
+        .note-reason { font-size: 12px; color: #5c4f6e; line-height: 1.65; padding: 14px 18px; background: #faf8fd; border-radius: 4px; border-left: 2px solid #c9a84c; margin-bottom: 14px; }
+        .note-reason strong { color: #1a0a2e; }
+        .note-help { font-size: 12px; color: #7c6d8f; line-height: 1.7; text-align: center; }
+        .note-help strong { color: #1a0a2e; }
 
         /* ── Footer ── */
-        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 14px 28px; text-align: center; }
-        .footer-brand { font-size: 9px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-        .footer-text  { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+        .email-footer { margin-top: 36px; background: #faf8fd; border-top: 1px solid #f0eaf8; padding: 26px 40px; text-align: center; }
+        .footer-brand { font-size: 13px; font-weight: 400; color: #1a0a2e; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 10px; }
+        .footer-text  { font-size: 10.5px; color: #9b8caa; line-height: 1.7; }
+        .footer-made  { font-size: 8.5px; color: #c8bdd8; margin-top: 12px; letter-spacing: 1px; text-transform: uppercase; }
+
+        @media only screen and (max-width: 480px) {
+            .email-header, .confirm, .email-body, .pass-zone, .steps, .note-zone, .email-footer { padding-left: 24px !important; padding-right: 24px !important; }
+        }
     </style>
 </head>
 <body>
@@ -75,114 +97,145 @@
 
         <!-- Header -->
         <div class="email-header">
-            <div class="logo-area">
-                <div>
-                    <div class="brand-name">Elle A Osé</div>
-                    <div class="brand-sub">Espace de coworking</div>
-                </div>
-                <span th:switch="${status}">
-                    <span th:case="'CONFIRMED'" class="status-tag tag-confirmed">Confirmée</span>
-                    <span th:case="'CREATED'"   class="status-tag tag-default">En attente</span>
-                    <span th:case="'CANCELLED'" class="status-tag tag-cancelled">Annulée</span>
-                    <span th:case="*"           class="status-tag tag-default" th:text="${status}">—</span>
-                </span>
-            </div>
+            <table class="header-row" role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td>
+                        <div class="brand-name">Elle A Osé</div>
+                        <div class="brand-sub">Espace de coworking</div>
+                    </td>
+                    <td style="text-align:right;">
+                        <span th:switch="${status}">
+                            <span th:case="'CONFIRMED'" class="status-tag tag-confirmed">Confirmée</span>
+                            <span th:case="'CREATED'"   class="status-tag tag-default">En attente</span>
+                            <span th:case="'CANCELLED'" class="status-tag tag-cancelled">Annulée</span>
+                            <span th:case="*"           class="status-tag tag-default" th:text="${status}">—</span>
+                        </span>
+                    </td>
+                </tr>
+            </table>
         </div>
-        <div class="header-stripe"></div>
+        <div class="header-rule"></div>
 
-        <!-- Hero -->
-        <div class="hero">
-            <div class="hero-icon">📅</div>
-            <div class="hero-title" th:text="${eventTitle ?: 'Réservation confirmée'}">Réservation confirmée</div>
-            <div class="hero-sub" th:text="${eventSubtitle ?: 'Votre accès est prêt pour le créneau réservé'}">Votre accès est prêt</div>
-            <div class="hero-number" th:text="${bookingNumber}">BKG-000</div>
+        <!-- Confirmation -->
+        <div class="confirm">
+            <table class="check-ring" role="presentation" cellpadding="0" cellspacing="0">
+                <tr><td>
+                    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+                        <path d="M7 13.4l3.6 3.6L19 8.4" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </td></tr>
+            </table>
+            <div class="confirm-title" th:text="${eventTitle ?: 'Réservation confirmée'}">Réservation confirmée</div>
+            <div class="confirm-sub" th:text="${eventSubtitle ?: 'Votre accès est prêt pour le créneau réservé'}">Votre accès est prêt pour le créneau réservé</div>
+            <div class="confirm-number" th:text="${bookingNumber}">BKG-000</div>
         </div>
 
-        <!-- Body -->
+        <!-- Greeting -->
         <div class="email-body">
-
             <p class="greeting">
                 Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,<br>
                 <span th:text="${eventMessage ?: 'Votre réservation est confirmée. Présentez le QR code ci-dessous à votre arrivée.'}">
-                    Votre réservation est confirmée.
+                    Votre réservation est confirmée. Présentez le QR code ci-dessous à votre arrivée.
                 </span>
             </p>
 
-            <!-- Détails réservation -->
-            <div class="info-card">
-                <div class="info-head">Détails de la réservation</div>
-                <table class="info-table">
+            <!-- Détails -->
+            <div class="sec-label">Détails de la réservation</div>
+            <table class="info-table" role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="lbl">Espace / ressource</td>
+                    <td class="val" th:text="${resourceName ?: '—'}">Salle</td>
+                </tr>
+                <tr>
+                    <td class="lbl">Début</td>
+                    <td class="val" th:text="${startedAt}">—</td>
+                </tr>
+                <tr>
+                    <td class="lbl">Fin</td>
+                    <td class="val" th:text="${endedAt}">—</td>
+                </tr>
+                <tr>
+                    <td class="lbl">Quantité</td>
+                    <td class="val" th:text="${quantity ?: 1}">1</td>
+                </tr>
+                <tr>
+                    <td class="lbl">Mode de paiement</td>
+                    <td class="val" th:text="${paymentMode ?: '—'}">DIRECT</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- QR access pass -->
+        <div class="pass-zone" th:if="${status == 'CONFIRMED' or status == 'CREATED'}">
+            <div class="pass">
+                <div class="pass-kicker">Carte d'accès</div>
+                <div class="pass-hint">Présentez ce code à l'accueil pour vous enregistrer</div>
+
+                <!-- QR image inline (CID) -->
+                <div class="qr-frame" th:if="${showQr}">
+                    <img src="cid:qr-booking" width="168" height="168" alt="QR code check-in">
+                </div>
+
+                <!-- Fallback si QR non disponible -->
+                <table class="qr-placeholder" role="presentation" cellpadding="0" cellspacing="0" th:if="${!showQr}">
+                    <tr><td>
+                        <svg width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true">
+                            <rect x="4" y="4" width="9" height="9" rx="1.5" stroke="#c9a84c" stroke-width="1.4"/>
+                            <rect x="17" y="4" width="9" height="9" rx="1.5" stroke="#c9a84c" stroke-width="1.4"/>
+                            <rect x="4" y="17" width="9" height="9" rx="1.5" stroke="#c9a84c" stroke-width="1.4"/>
+                            <rect x="18" y="18" width="3" height="3" fill="#c9a84c"/>
+                            <rect x="23" y="18" width="3" height="3" fill="#c9a84c"/>
+                            <rect x="18" y="23" width="3" height="3" fill="#c9a84c"/>
+                            <rect x="23" y="23" width="3" height="3" fill="#c9a84c"/>
+                        </svg>
+                        <div class="qr-placeholder-text">QR code disponible<br>dans votre espace client</div>
+                    </td></tr>
+                </table>
+
+                <!-- Token -->
+                <div th:if="${checkInToken != null}">
+                    <div class="pass-divider"></div>
+                    <div class="token-label">Code de vérification</div>
+                    <div class="token-value" th:text="${checkInToken}">TOKEN</div>
+                </div>
+
+                <div class="pass-ref">Réservation <strong th:text="${bookingNumber}">BKG-000</strong></div>
+            </div>
+
+            <!-- Steps -->
+            <div class="steps">
+                <table class="step-row" role="presentation" cellpadding="0" cellspacing="0">
                     <tr>
-                        <td class="lbl">Espace / ressource</td>
-                        <td class="val" th:text="${resourceName ?: '—'}">Salle</td>
+                        <td class="step-num">01</td>
+                        <td class="step-txt">Scannez le QR code à l'accueil — le check-in s'effectue automatiquement.</td>
                     </tr>
                     <tr>
-                        <td class="lbl">Début</td>
-                        <td class="val" th:text="${startedAt}">—</td>
+                        <td class="step-num">02</td>
+                        <td class="step-txt">Ce code est unique à votre réservation — ne le partagez pas.</td>
                     </tr>
                     <tr>
-                        <td class="lbl">Fin</td>
-                        <td class="val" th:text="${endedAt}">—</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Quantité</td>
-                        <td class="val" th:text="${quantity ?: 1}">1</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Mode de paiement</td>
-                        <td class="val" th:text="${paymentMode ?: '—'}">DIRECT</td>
+                        <td class="step-num">03</td>
+                        <td class="step-txt">En cas de difficulté, communiquez votre numéro <strong th:text="${bookingNumber}">BKG-000</strong>.</td>
                     </tr>
                 </table>
             </div>
+        </div>
 
-            <!-- QR code check-in -->
-            <div class="qr-section" th:if="${status == 'CONFIRMED' or status == 'CREATED'}">
-                <div class="qr-head">
-                    <span>QR Code check-in</span>
-                    <span style="font-size:9px; color:#9b8caa; font-weight:400;">Scanner à l'accueil pour s'enregistrer</span>
-                </div>
-                <div class="qr-body">
-
-                    <!-- QR code image inline (CID) -->
-                    <div class="qr-img-wrap" th:if="${showQr}">
-                        <img src="cid:qr-booking" width="160" height="160" alt="QR code check-in">
-                    </div>
-
-                    <!-- Fallback si QR non disponible -->
-                    <div class="qr-placeholder" th:if="${!showQr}">
-                        <div class="qr-placeholder-icon">📱</div>
-                        <div class="qr-placeholder-text">QR code disponible<br>dans votre espace client</div>
-                    </div>
-
-                    <!-- Token de vérification -->
-                    <div th:if="${checkInToken != null}">
-                        <div class="qr-token-label">Code de vérification</div>
-                        <div class="qr-token-value" th:text="${checkInToken}">TOKEN</div>
-                    </div>
-
-                    <!-- Instructions -->
-                    <div class="qr-instructions">
-                        <div class="qr-instructions-title">Comment l'utiliser</div>
-                        <div class="qr-step"><span class="qr-step-num">1.</span><span>Scannez le QR code à l'accueil — le check-in s'effectue automatiquement.</span></div>
-                        <div class="qr-step"><span class="qr-step-num">2.</span><span>Le code est unique à cette réservation — ne le partagez pas.</span></div>
-                        <div class="qr-step"><span class="qr-step-num">3.</span><span>En cas de problème, communiquez votre numéro : <strong th:text="${bookingNumber}">BKG-000</strong>.</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Raison si annulation / rejet -->
-            <div class="note-box" th:if="${reason != null}">
+        <!-- Notes -->
+        <div class="note-zone">
+            <div class="note-reason" th:if="${reason != null}">
                 <strong>Motif :</strong> <span th:text="${reason}">—</span>
             </div>
-
-            <div class="note-box">
-                Pour toute question ou modification, contactez-nous via votre espace client ou au <strong>05 204 25 52</strong>.
+            <div class="note-help">
+                Une question ou une modification ? Contactez-nous via votre espace client ou au <strong>05&nbsp;204&nbsp;25&nbsp;52</strong>.
             </div>
         </div>
 
+        <!-- Footer -->
         <div class="email-footer">
             <div class="footer-brand">Elle A Osé</div>
             <div class="footer-text">coworkspace@elleaose.com · 05 204 25 52<br>Email généré automatiquement — merci de ne pas y répondre directement.</div>
+            <div class="footer-made">Made by SNI</div>
         </div>
 
     </div>

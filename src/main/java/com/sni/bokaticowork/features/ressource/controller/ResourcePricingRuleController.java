@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePricingRuleRequest;
+import com.sni.bokaticowork.features.ressource.dto.request.UpdateResourcePricingRuleRequest;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteResponse;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourcePricingRuleService;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -64,6 +66,14 @@ public class ResourcePricingRuleController {
             @RequestParam LocalDateTime startedAt,
             @RequestParam LocalDateTime endedAt) {
         return ResponseEntity.ok(resourcePricingRuleService.quote(resourceCode, bookingUnit, startedAt, endedAt));
+    }
+
+    @RequestMapping(value = "/{id}", method = {RequestMethod.PATCH, RequestMethod.PUT})
+    @Audited(module = "RESOURCE", action = "UPDATE_PRICING_RULE", ressource = "resource_pricing_rule")
+    public ResponseEntity<ResourcePricingRuleResponse> update(
+            @PathVariable Long id,
+            @RequestBody UpdateResourcePricingRuleRequest request) {
+        return ResponseEntity.ok(resourcePricingRuleService.updatePricingRule(id, request));
     }
 
     @PatchMapping("/{id}/active")

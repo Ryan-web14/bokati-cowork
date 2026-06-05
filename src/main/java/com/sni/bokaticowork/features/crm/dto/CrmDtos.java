@@ -161,4 +161,37 @@ public class CrmDtos {
             Map<String, Long> byStage,
             BigDecimal pipelineValue
     ) {}
+
+    // ── Kanban Board ──────────────────────────────────────────────
+
+    public record KanbanCardResponse(
+            Long id,
+            String leadNumber,
+            String fullName,
+            String company,
+            String email,
+            LeadStage stage,
+            LeadSource source,
+            LeadInterest interest,
+            BigDecimal estimatedAmount,
+            Integer probability,
+            Integer score,
+            Long assignedTo,
+            Instant lastActivityAt,
+            int activityCount,
+            Instant createdAt
+    ) {}
+
+    public record KanbanColumnResponse(
+            LeadStage stage,
+            long count,
+            BigDecimal totalAmount,
+            List<KanbanCardResponse> cards
+    ) {}
+
+    public record KanbanBoardResponse(
+            List<KanbanColumnResponse> columns,
+            long totalLeads,
+            BigDecimal totalPipelineValue
+    ) {}
 }

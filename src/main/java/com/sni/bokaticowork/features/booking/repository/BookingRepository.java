@@ -58,9 +58,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
               AND (CAST(:startedTo AS timestamp) IS NULL OR b.started_at <= :startedTo)
               AND (
                     :query IS NULL
+                    OR b.booking_number    ILIKE '%' || :query || '%'
+                    OR b.owner_code        ILIKE '%' || :query || '%'
+                    OR COALESCE(b.contact_name,  '') ILIKE '%' || :query || '%'
+                    OR COALESCE(b.contact_email, '') ILIKE '%' || :query || '%'
+                    OR r.code              ILIKE '%' || :query || '%'
+                    OR r.name              ILIKE '%' || :query || '%'
                     OR normalize_text(b.booking_number) % normalize_text(:query)
                     OR normalize_text(b.owner_code) % normalize_text(:query)
-                    OR normalize_text(COALESCE(b.contact_name, '')) % normalize_text(:query)
+                    OR normalize_text(COALESCE(b.contact_name,  '')) % normalize_text(:query)
                     OR normalize_text(COALESCE(b.contact_email, '')) % normalize_text(:query)
                     OR normalize_text(r.code) % normalize_text(:query)
                     OR normalize_text(r.name) % normalize_text(:query)
@@ -93,9 +99,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
               AND (CAST(:startedTo AS timestamp) IS NULL OR b.started_at <= :startedTo)
               AND (
                     :query IS NULL
+                    OR b.booking_number    ILIKE '%' || :query || '%'
+                    OR b.owner_code        ILIKE '%' || :query || '%'
+                    OR COALESCE(b.contact_name,  '') ILIKE '%' || :query || '%'
+                    OR COALESCE(b.contact_email, '') ILIKE '%' || :query || '%'
+                    OR r.code              ILIKE '%' || :query || '%'
+                    OR r.name              ILIKE '%' || :query || '%'
                     OR normalize_text(b.booking_number) % normalize_text(:query)
                     OR normalize_text(b.owner_code) % normalize_text(:query)
-                    OR normalize_text(COALESCE(b.contact_name, '')) % normalize_text(:query)
+                    OR normalize_text(COALESCE(b.contact_name,  '')) % normalize_text(:query)
                     OR normalize_text(COALESCE(b.contact_email, '')) % normalize_text(:query)
                     OR normalize_text(r.code) % normalize_text(:query)
                     OR normalize_text(r.name) % normalize_text(:query)
@@ -218,4 +230,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             LIMIT :limit
             """)
     List<Booking> findOverdueNoShowCandidates(@Param("now") LocalDateTime now, @Param("limit") int limit);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM booking
+            WHERE deleted = false
+              AND status = 'IN_PROGRESS'
+              AND ended_at < :now
+              AND (checked_in_at IS NOT NULL OR started_event_at IS NOT NULL)
+            ORDER BY ended_at ASC
+            LIMIT :limit
+            """)
+    List<Booking> findOverdueCompletionCandidates(@Param("now") LocalDateTime now, @Param("limit") int limit);
 }

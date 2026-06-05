@@ -45,4 +45,40 @@ public class TaskDtos {
             List<ChecklistResponse> checklist,
             List<TaskCommentResponse> comments
     ) {}
+
+    public record UpdateTaskStatusRequest(
+            @jakarta.validation.constraints.NotNull TaskStatus status
+    ) {}
+
+    // ── Kanban Board ──────────────────────────────────────────────
+
+    public record TaskKanbanCardResponse(
+            Long id,
+            String title,
+            Long assignedTo,
+            TaskStatus status,
+            TaskPriority priority,
+            TaskRecurrence recurrence,
+            String sourceType,
+            String sourceCode,
+            Instant dueAt,
+            Instant completedAt,
+            Instant createdAt,
+            int checklistTotal,
+            int checklistDone,
+            int commentCount,
+            boolean overdue
+    ) {}
+
+    public record TaskKanbanColumnResponse(
+            TaskStatus status,
+            long count,
+            List<TaskKanbanCardResponse> cards
+    ) {}
+
+    public record TaskKanbanBoardResponse(
+            List<TaskKanbanColumnResponse> columns,
+            long totalTasks,
+            long overdueTasks
+    ) {}
 }

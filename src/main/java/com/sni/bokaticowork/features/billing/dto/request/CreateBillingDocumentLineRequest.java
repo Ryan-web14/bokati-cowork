@@ -17,6 +17,7 @@ public record CreateBillingDocumentLineRequest(
         BigDecimal discountRate,
         BigDecimal discountAmount,
         Boolean taxable,
+        Boolean taxIncluded,
         BigDecimal vatRate,
         BigDecimal additionalCentRate,
         String sourceType,

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Templates email — Elle A Osé v2</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+        .top-bar { background: #1a0a2e; padding: 28px 48px; display: flex; align-items: center; justify-content: space-between; }
+        .top-bar-brand { display: flex; flex-direction: column; gap: 6px; }
+        .top-bar-kicker { font-size: 8px; font-weight: 700; color: #c9a84c; letter-spacing: 3px; text-transform: uppercase; }
+        .top-bar-name   { font-size: 20px; font-weight: 400; color: #fff; letter-spacing: 6px; text-transform: uppercase; }
+        .top-bar-sub    { font-size: 8px; color: #9b8caa; letter-spacing: 2.5px; text-transform: uppercase; }
+        .top-bar-tag    { font-size: 8px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; padding: 6px 14px; border-radius: 2px; border: 1px solid rgba(201,168,76,.5); color: #d4b85f; background: rgba(201,168,76,.12); }
+        .header-rule { height: 1px; background: linear-gradient(90deg, transparent 0%, #c9a84c 18%, #c9a84c 82%, transparent 100%); }
+
+        .main { max-width: 960px; margin: 0 auto; padding: 56px 24px; }
+        .page-title { font-size: 13px; font-weight: 700; color: #c9a84c; letter-spacing: 2.4px; text-transform: uppercase; margin-bottom: 8px; }
+        .page-sub   { font-size: 13px; color: #7c6d8f; margin-bottom: 48px; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+
+        .template-card { background: #fff; border-radius: 4px; overflow: hidden; box-shadow: 0 8px 32px rgba(26,10,46,.08); transition: box-shadow .2s, transform .2s; text-decoration: none; display: block; }
+        .template-card:hover { box-shadow: 0 20px 50px rgba(26,10,46,.16); transform: translateY(-3px); }
+
+        .card-preview { height: 180px; background: #1a0a2e; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .card-preview-inner { text-align: center; }
+        .card-preview-icon { width: 52px; height: 52px; border-radius: 50%; border: 1px solid rgba(201,168,76,.5); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+        .card-preview-name { font-size: 14px; font-weight: 400; color: #fff; letter-spacing: 4px; text-transform: uppercase; }
+        .card-preview-rule { width: 60px; height: 1px; background: linear-gradient(90deg, transparent, #c9a84c, transparent); margin: 12px auto 0; }
+
+        .card-body { padding: 20px 22px 22px; }
+        .card-title { font-size: 14px; font-weight: 700; color: #1a0a2e; margin-bottom: 5px; }
+        .card-desc  { font-size: 12px; color: #7c6d8f; line-height: 1.6; margin-bottom: 16px; }
+        .card-vars  { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 18px; }
+        .var-chip   { font-size: 9px; font-family: "Courier New", monospace; color: #4c1d95; background: rgba(139,92,246,.1); border: 1px solid rgba(139,92,246,.2); padding: 2px 8px; border-radius: 2px; }
+        .card-link  { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: #c9a84c; padding: 9px 18px; border: 1px solid rgba(201,168,76,.5); border-radius: 2px; text-decoration: none; background: rgba(201,168,76,.06); }
+        .card-link:hover { background: rgba(201,168,76,.14); }
+
+        .type-email { border-top: 2px solid #c9a84c; }
+        .type-doc   { border-top: 2px solid #8b5cf6; }
+
+        .footer { text-align: center; padding: 40px 24px; font-size: 10.5px; color: #9b8caa; }
+        .footer strong { color: #1a0a2e; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="top-bar-brand">
+            <div class="top-bar-name">Elle A Osé</div>
+            <div class="top-bar-sub">Espace de coworking</div>
+        </div>
+        <div class="top-bar-tag">Templates v2</div>
+    </div>
+    <div class="header-rule"></div>
+
+    <div class="main">
+        <div class="page-title">Templates email &amp; documents</div>
+        <div class="page-sub">6 templates Thymeleaf — design épuré &amp; luxueux · Palette &amp; variables d'origine préservées</div>
+
+        <div class="grid">
+
+            <!-- Confirmation réservation -->
+            <a href="booking-confirmation-v2.html" class="template-card type-email">
+                <div class="card-preview">
+                    <div class="card-preview-inner">
+                        <div class="card-preview-icon">
+                            <svg width="22" height="22" viewBox="0 0 26 26" fill="none"><rect x="5" y="6.5" width="16" height="14" rx="2" stroke="#c9a84c" stroke-width="1.4"/><path d="M8 4.5v4M18 4.5v4M5 10h16" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round"/><path d="M9 16l2.3 2.3 5-5.2" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="card-preview-name">Réservation</div>
+                        <div class="card-preview-rule"></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Confirmation de réservation</div>
+                    <div class="card-desc">Avec carte d'accès QR premium intégrée. Gère les statuts CONFIRMED / CREATED / CANCELLED.</div>
+                    <div class="card-vars">
+                        <span class="var-chip">${status}</span>
+                        <span class="var-chip">${bookingNumber}</span>
+                        <span class="var-chip">${showQr}</span>
+                        <span class="var-chip">${checkInToken}</span>
+                        <span class="var-chip">${resourceName}</span>
+                    </div>
+                    <span class="card-link">Voir le template →</span>
+                </div>
+            </a>
+
+            <!-- Bienvenue compte -->
+            <a href="welcome-email-v2.html" class="template-card type-email">
+                <div class="card-preview">
+                    <div class="card-preview-inner">
+                        <div class="card-preview-icon">
+                            <svg width="22" height="22" viewBox="0 0 26 26" fill="none"><circle cx="13" cy="9" r="4.5" stroke="#c9a84c" stroke-width="1.4"/><path d="M5 21c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="card-preview-name">Bienvenue</div>
+                        <div class="card-preview-rule"></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Bienvenue — Création de compte</div>
+                    <div class="card-desc">Accueil nouveau client Bokati avec code client, type de compte et services disponibles.</div>
+                    <div class="card-vars">
+                        <span class="var-chip">${name}</span>
+                        <span class="var-chip">${customerId}</span>
+                        <span class="var-chip">${customerType}</span>
+                        <span class="var-chip">${email}</span>
+                    </div>
+                    <span class="card-link">Voir le template →</span>
+                </div>
+            </a>
+
+            <!-- Bienvenue membre -->
+            <a href="welcome-member-email-v2.html" class="template-card type-email">
+                <div class="card-preview">
+                    <div class="card-preview-inner">
+                        <div class="card-preview-icon">
+                            <svg width="22" height="22" viewBox="0 0 26 26" fill="none"><rect x="4" y="5" width="18" height="12" rx="2.5" stroke="#c9a84c" stroke-width="1.4"/><path d="M8 18l-1.5 3M18 18l1.5 3M9.5 21h7" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round"/><circle cx="13" cy="11" r="2.5" stroke="#c9a84c" stroke-width="1.3"/></svg>
+                        </div>
+                        <div class="card-preview-name">Membre</div>
+                        <div class="card-preview-rule"></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Bienvenue — Nouveau membre</div>
+                    <div class="card-desc">Carte membre premium, premiers pas, infos pratiques et signature de l'équipe.</div>
+                    <div class="card-vars">
+                        <span class="var-chip">${name}</span>
+                        <span class="var-chip">${plan}</span>
+                        <span class="var-chip">${memberId}</span>
+                        <span class="var-chip">${startDate}</span>
+                        <span class="var-chip">${endDate}</span>
+                    </div>
+                    <span class="card-link">Voir le template →</span>
+                </div>
+            </a>
+
+            <!-- KYC -->
+            <a href="kyc-email-v2.html" class="template-card type-email">
+                <div class="card-preview">
+                    <div class="card-preview-inner">
+                        <div class="card-preview-icon">
+                            <svg width="22" height="22" viewBox="0 0 26 26" fill="none"><path d="M13 4l9 9-9 9-9-9 9-9z" stroke="#c9a84c" stroke-width="1.4" stroke-linejoin="round"/><path d="M13 9v5M13 16v1" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/></svg>
+                        </div>
+                        <div class="card-preview-name">KYC</div>
+                        <div class="card-preview-rule"></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Notification KYC</div>
+                    <div class="card-desc">Mise à jour dossier avec statut APPROVED / PENDING / REJECTED et lien espace client.</div>
+                    <div class="card-vars">
+                        <span class="var-chip">${recipientName}</span>
+                        <span class="var-chip">${kycCaseCode}</span>
+                        <span class="var-chip">${eventType}</span>
+                        <span class="var-chip">${status}</span>
+                    </div>
+                    <span class="card-link">Voir le template →</span>
+                </div>
+            </a>
+
+            <!-- Contrat -->
+            <a href="contract-email-v2.html" class="template-card type-email">
+                <div class="card-preview">
+                    <div class="card-preview-inner">
+                        <div class="card-preview-icon">
+                            <svg width="22" height="22" viewBox="0 0 26 26" fill="none"><rect x="5" y="3" width="13" height="17" rx="1.5" stroke="#c9a84c" stroke-width="1.4"/><path d="M9 8h7M9 11h7M9 14h4.5" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round"/><path d="M15 3v4h4" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="card-preview-name">Contrat</div>
+                        <div class="card-preview-rule"></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Notification contrat</div>
+                    <div class="card-desc">Dépôt d'un nouveau contrat dans l'espace documentaire avec référence template et document.</div>
+                    <div class="card-vars">
+                        <span class="var-chip">${recipientName}</span>
+                        <span class="var-chip">${templateCode}</span>
+                        <span class="var-chip">${documentCode}</span>
+                    </div>
+                    <span class="card-link">Voir le template →</span>
+                </div>
+            </a>
+
+            <!-- Facture -->
+            <a href="invoice-v3.html" class="template-card type-doc">
+                <div class="card-preview">
+                    <div class="card-preview-inner">
+                        <div class="card-preview-icon">
+                            <svg width="22" height="22" viewBox="0 0 26 26" fill="none"><rect x="4" y="3" width="14" height="18" rx="1.5" stroke="#8b5cf6" stroke-width="1.4"/><path d="M8 8h8M8 11h8M8 14h5" stroke="#8b5cf6" stroke-width="1.4" stroke-linecap="round"/><path d="M14 19l2 2 4-4" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </div>
+                        <div class="card-preview-name">Facture</div>
+                        <div class="card-preview-rule"></div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Facture / Devis / Avoir</div>
+                    <div class="card-desc">Document PDF print-ready. Lignes, récapitulatif, paiements, clauses et mentions légales.</div>
+                    <div class="card-vars">
+                        <span class="var-chip">${document}</span>
+                        <span class="var-chip">${fmt}</span>
+                        <span class="var-chip">${payments}</span>
+                        <span class="var-chip">${qrCode}</span>
+                        <span class="var-chip">${logo}</span>
+                    </div>
+                    <span class="card-link">Voir le template →</span>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+    <div class="footer">
+        <strong>Elle A Osé</strong> — Bokati &nbsp;·&nbsp; Templates Thymeleaf v2 &nbsp;·&nbsp; Made by SNI
+    </div>
+
+</body>
+</html>

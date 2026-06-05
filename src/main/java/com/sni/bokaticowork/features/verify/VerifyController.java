@@ -35,22 +35,27 @@ public class VerifyController {
 
     @GetMapping("/doc/{documentNumber}")
     public String verifyDocument(@PathVariable String documentNumber, Model model) {
+        BillingDocumentResponse document;
         try {
-            BillingDocumentResponse document = billingDocumentService.get(documentNumber);
-            model.addAttribute("document", document);
-            model.addAttribute("fmt", new BillingDocumentPdfServiceImpl.BillingDocumentTemplateFormatter(document.currency(), objectMapper));
-            model.addAttribute("generatedAt", LocalDate.now());
-            model.addAttribute("payments", buildPaymentInfos(documentNumber));
-            return "verify/document";
+            document = billingDocumentService.get(documentNumber);
         } catch (Exception ex) {
             model.addAttribute("ref", documentNumber);
             model.addAttribute("type", "document");
             return "verify/not-found";
         }
+        model.addAttribute("document", document);
+        model.addAttribute("fmt", new BillingDocumentPdfServiceImpl.BillingDocumentTemplateFormatter(document.currency(), objectMapper));
+        model.addAttribute("generatedAt", LocalDate.now());
+        try {
+            model.addAttribute("payments", buildPaymentInfos(documentNumber));
+        } catch (Exception ignored) {
+            model.addAttribute("payments", List.of());
+        }
+        return "verify/document";
     }
 
     private List<BillingDocumentPdfServiceImpl.PaymentInfo> buildPaymentInfos(String documentNumber) {
-        return paymentAllocationRepository.findAllByBillingDocumentNumber(documentNumber)
+        return paymentAllocationRepository.findAllByBillingDocumentNumberFetchTransaction(documentNumber)
                 .stream()
                 .map(allocation -> {
                     var tx = allocation.getPaymentTransaction();
