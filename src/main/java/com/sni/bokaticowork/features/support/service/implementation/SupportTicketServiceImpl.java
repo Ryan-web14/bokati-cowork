@@ -50,7 +50,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     private final UserService userService;
     private final CustomerRepository customerRepository;
     private final MemberRepository memberRepository;
-    private final NotificationService notificationService;
+    @Lazy private final NotificationService notificationService;
     @Lazy private final SupportEmailService emailService;
 
     // ── Création ─────────────────────────────────────────────────
@@ -411,45 +411,49 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         if (ticket.getAssignedTo() == null) {
             return;
         }
-        String agentEmail;
-        try {
-            agentEmail = userService.getUserByIdForService(ticket.getAssignedTo()).getEmail();
-        } catch (Exception ex) {
-            log.warn("Cannot resolve agent email for notification (assignedTo={}): {}", ticket.getAssignedTo(), ex.getMessage());
-            return;
-        }
-        String senderName = StringUtils.hasText(message.getSenderName())
+        // Snapshot immutable values now (before commit), resolve agent email AFTER commit
+        // to avoid polluting the current transaction with any exception from userService
+        Long assignedTo      = ticket.getAssignedTo();
+        String ticketNumber  = ticket.getTicketNumber();
+        String ownerCode     = ticket.getOwnerCode() != null ? ticket.getOwnerCode() : "";
+        String senderName    = StringUtils.hasText(message.getSenderName())
                 ? message.getSenderName()
-                : StringUtils.hasText(ticket.getContactName()) ? ticket.getContactName() : ticket.getOwnerCode();
-        String preview = message.getMessage() == null ? ""
-                : message.getMessage().length() > 120
-                        ? message.getMessage().substring(0, 120) + "…"
-                        : message.getMessage();
+                : StringUtils.hasText(ticket.getContactName()) ? ticket.getContactName() : ownerCode;
+        String rawPreview    = message.getMessage();
+        String preview       = rawPreview == null ? ""
+                : rawPreview.length() > 120 ? rawPreview.substring(0, 120) + "…" : rawPreview;
 
         runAfterCommit(() -> {
             try {
+                String agentEmail;
+                try {
+                    agentEmail = userService.getUserByIdForService(assignedTo).getEmail();
+                } catch (Exception ex) {
+                    log.warn("Cannot resolve agent email for IN_APP notification (assignedTo={}): {}", assignedTo, ex.getMessage());
+                    return;
+                }
                 notificationService.send(new SendNotificationRequest(
                         "SUPPORT_CLIENT_REPLY",
                         "SUPPORT_TICKET",
-                        ticket.getTicketNumber(),
+                        ticketNumber,
                         NotificationChannel.IN_APP,
                         NotificationRecipientType.ADMIN,
                         null,
                         agentEmail,
                         null,
-                        "Réponse client — " + ticket.getTicketNumber(),
+                        "Réponse client — " + ticketNumber,
                         null,
                         null,
                         Map.of(
-                                "ticketNumber", ticket.getTicketNumber(),
-                                "senderName", senderName,
-                                "ownerCode", ticket.getOwnerCode() != null ? ticket.getOwnerCode() : "",
-                                "preview", preview
+                                "ticketNumber", ticketNumber,
+                                "senderName",   senderName != null ? senderName : "",
+                                "ownerCode",    ownerCode,
+                                "preview",      preview
                         ),
                         null
                 ));
             } catch (Exception ex) {
-                log.warn("Could not send IN_APP notification for client reply on {}: {}", ticket.getTicketNumber(), ex.getMessage());
+                log.warn("Could not send IN_APP notification for client reply on {}: {}", ticketNumber, ex.getMessage());
             }
         });
     }
