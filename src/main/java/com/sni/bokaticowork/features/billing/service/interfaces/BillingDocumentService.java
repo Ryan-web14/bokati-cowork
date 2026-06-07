@@ -5,7 +5,9 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRe
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.CreateReservationInvoiceRequest;
 import com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest;
+import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
@@ -18,10 +20,13 @@ import java.time.LocalDate;
 
 public interface BillingDocumentService {
     BillingDocumentResponse create(CreateBillingDocumentRequest request);
+    BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request);
     BillingDocumentResponse createManualInvoice(CreateManualBillingDocumentRequest request);
     BillingDocumentResponse createManualQuote(CreateManualBillingDocumentRequest request);
     BillingDocumentResponse createManualQuotation(CreateManualBillingDocumentRequest request);
     BillingDocumentResponse createInvoiceFromBillableItems(CreateInvoiceFromBillableItemsRequest request);
+    BillingDocumentResponse createInvoiceFromReservation(CreateReservationInvoiceRequest request);
+    BillingDocumentResponse duplicate(String documentNumber);
     BillingDocumentResponse issue(String documentNumber);
     BillingDocumentResponse send(String documentNumber);
     BillingDocumentResponse selectQuoteOptions(String quoteNumber, SelectQuoteOptionsRequest request);

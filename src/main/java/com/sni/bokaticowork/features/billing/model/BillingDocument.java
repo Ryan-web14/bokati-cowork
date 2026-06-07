@@ -182,6 +182,9 @@ public class BillingDocument {
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
 
+    @Column(name = "internal_notes", columnDefinition = "text")
+    private String internalNotes;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

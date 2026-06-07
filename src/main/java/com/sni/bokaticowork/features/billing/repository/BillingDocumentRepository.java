@@ -189,6 +189,19 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                                         Pageable pageable);
 
     @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM billing_document
+            WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+              AND status IN ('ISSUED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
+              AND balance_due > 0
+              AND (:customerType IS NULL OR UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
+              AND (:customerCode IS NULL OR UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
+            ORDER BY due_date ASC NULLS LAST
+            """)
+    List<BillingDocument> findForAgingReport(@Param("customerType") String customerType,
+                                             @Param("customerCode") String customerCode);
+
+    @Query(nativeQuery = true, value = """
             UPDATE billing_document
             SET status = 'OVERDUE', updated_at = NOW()
             WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
