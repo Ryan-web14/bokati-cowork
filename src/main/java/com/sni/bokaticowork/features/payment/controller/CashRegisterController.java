@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.payment.controller;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.payment.dto.request.AddCashMovementAttachmentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.ApproveCashVarianceRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CloseCashSessionRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreateCashMovementRequest;
@@ -122,6 +123,23 @@ public class CashRegisterController {
     public ResponseEntity<CashMovementResponse> createExitVoucher(@PathVariable String sessionNumber,
                                                                   @Valid @RequestBody CreateCashVoucherRequest request) {
         return ResponseEntity.ok(cashRegisterService.createExitVoucher(sessionNumber, request));
+    }
+
+    @PostMapping("/movements/{movementNumber}/attachments")
+    public ResponseEntity<CashMovementResponse> addAttachment(@PathVariable String movementNumber,
+                                                              @Valid @RequestBody AddCashMovementAttachmentRequest request) {
+        return ResponseEntity.ok(cashRegisterService.addAttachment(movementNumber, request));
+    }
+
+    @PatchMapping("/movements/{movementNumber}/sign")
+    public ResponseEntity<CashMovementResponse> signMovement(@PathVariable String movementNumber,
+                                                              @RequestParam String signedBy) {
+        return ResponseEntity.ok(cashRegisterService.signMovement(movementNumber, signedBy));
+    }
+
+    @PatchMapping("/movements/{movementNumber}/print")
+    public ResponseEntity<CashMovementResponse> markPrinted(@PathVariable String movementNumber) {
+        return ResponseEntity.ok(cashRegisterService.markMovementPrinted(movementNumber));
     }
 
     @GetMapping("/movements")

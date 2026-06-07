@@ -245,7 +245,9 @@ class BillableItemInvoiceSupportTest {
                 List.of(),
                 null,
                 null,
-                null
+                null,
+                null,
+                List.of()
         );
     }
 }

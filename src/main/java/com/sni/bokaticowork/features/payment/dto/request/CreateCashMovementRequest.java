@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.payment.dto.request;
 
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
+import com.sni.bokaticowork.features.payment.enums.CashMovementChannel;
 import com.sni.bokaticowork.features.payment.enums.CashMovementType;
 import jakarta.validation.constraints.NotNull;
 
@@ -19,6 +20,14 @@ public record CreateCashMovementRequest(
         String counterpartyName,
         String reason,
         String createdBy,
-        String metadataJson
+        String metadataJson,
+        String relatedMovementNumber,
+        String batchId,
+        BigDecimal exchangeRate,
+        CashMovementChannel channel,
+        String deviceCode,
+        String deviceIp,
+        String subCategory,
+        String tags
 ) {
 }

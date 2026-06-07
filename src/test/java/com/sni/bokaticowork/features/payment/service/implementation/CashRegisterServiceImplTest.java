@@ -254,6 +254,22 @@ class CashRegisterServiceImplTest {
                 null,
                 null,
                 movement.getMetadataJson(),
+                movement.getStatus(),
+                null,
+                movement.getBatchId(),
+                movement.getRunningBalance(),
+                movement.getExchangeRate(),
+                movement.getChannel(),
+                movement.getDeviceCode(),
+                movement.getDeviceIp(),
+                movement.getSubCategory(),
+                movement.getTags(),
+                movement.getRiskScore(),
+                movement.getRequiresSignature(),
+                movement.getSignedBy(),
+                movement.getSignedAt(),
+                movement.getPrintedAt(),
+                List.of(),
                 Instant.now()
         );
     }

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${request.requestNumber}">Demande de caisse</title>
+    <style>
+        @page { size: A4; margin: 28px 30px; }
+        * { box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #2b2030; font-size: 10px; line-height: 1.4; }
+        .header { border-bottom: 2px solid #d9a21b; padding-bottom: 10px; margin-bottom: 16px; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { border: none; padding: 0; vertical-align: top; }
+        .brand { font-size: 17px; font-weight: 700; color: #281332; letter-spacing: 2px; text-transform: uppercase; }
+        .brand-sub { font-size: 8px; color: #6f6478; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+        .doc-type { font-size: 18px; font-weight: 700; color: #281332; text-align: right; text-transform: uppercase; letter-spacing: 1.5px; }
+        .doc-number { font-size: 10px; color: #d9a21b; text-align: right; font-weight: 700; font-family: "Courier New", monospace; margin-top: 3px; }
+
+        .section-title {
+            font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            color: #ffffff; background: #281332; padding: 5px 10px; margin: 14px 0 8px;
+        }
+        table.info { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+        table.info td { padding: 3px 10px; border-bottom: 1px solid #efe9f2; vertical-align: top; }
+        table.info td.label { color: #6f6478; width: 38%; font-weight: 600; }
+        table.info td.value { color: #2b2030; font-weight: 600; }
+
+        .amount-box { border: 1px solid #d9a21b; background: #fffaf0; padding: 12px 16px; margin: 14px 0; text-align: center; }
+        .amount-box .label { font-size: 8px; color: #6f6478; text-transform: uppercase; letter-spacing: 1px; }
+        .amount-box .value { font-size: 22px; font-weight: 700; color: #281332; margin-top: 4px; }
+
+        .reason-box { border: 1px solid #efe9f2; padding: 10px; margin-top: 6px; background: #fbfafc; min-height: 40px; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 8px; font-weight: 700; letter-spacing: 0.6px; }
+        .badge-approved, .badge-executed { background: #e9f7ef; color: #1d7a46; }
+        .badge-pending { background: #fff6e0; color: #9a7000; }
+        .badge-rejected, .badge-cancelled { background: #fdecea; color: #b3261e; }
+
+        .signatures { width: 100%; border-collapse: collapse; margin-top: 32px; }
+        .signatures td { width: 50%; padding-top: 36px; border-top: 1px solid #2b2030; font-size: 8.5px; color: #6f6478; text-align: center; }
+
+        .footer { margin-top: 24px; font-size: 7.6px; color: #9b8caa; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <table class="header-table">
+        <tr>
+            <td>
+                <div class="brand">Bokati Cowork</div>
+                <div class="brand-sub" th:text="'Caisse ' + ${request.registerCode}">Caisse</div>
+            </td>
+            <td>
+                <div class="doc-type" th:text="${requestTypeLabel}">Demande de remise de fonds</div>
+                <div class="doc-number" th:text="${request.requestNumber}">CRQ-202601-000001</div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section-title">Informations générales</div>
+<table class="info">
+    <tr>
+        <td class="label">Session de caisse</td>
+        <td class="value" th:text="${request.sessionNumber}">CSS-202601-000001</td>
+        <td class="label">Date de soumission</td>
+        <td class="value" th:text="${fmt.timestamp(request.requestedAt)}">01/01/2026 10:00</td>
+    </tr>
+    <tr>
+        <td class="label">Demandeur</td>
+        <td class="value" th:text="${request.requestedBy} ?: '—'">—</td>
+        <td class="label">Statut</td>
+        <td class="value">
+            <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(request.status)}" th:text="${statusLabel}">—</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="label">Validé par</td>
+        <td class="value" th:text="${request.reviewedBy} ?: '—'">—</td>
+        <td class="label">Date de validation</td>
+        <td class="value" th:text="${fmt.timestamp(request.reviewedAt)}">—</td>
+    </tr>
+    <tr>
+        <td class="label">Mouvement généré</td>
+        <td class="value" th:text="${request.executedMovementNumber} ?: '—'">—</td>
+        <td class="label">Date d'exécution</td>
+        <td class="value" th:text="${fmt.timestamp(request.executedAt)}">—</td>
+    </tr>
+</table>
+
+<div class="amount-box">
+    <div class="label">Montant demandé</div>
+    <div class="value" th:text="${fmt.money(request.amount, request.currency)}">100 000 XAF</div>
+</div>
+
+<div class="section-title">Motif de la demande</div>
+<div class="reason-box" th:text="${request.reason} ?: 'Aucun motif renseigné.'">Motif détaillé de la demande.</div>
+
+<div class="section-title" th:if="${request.reviewNote != null and !#strings.isEmpty(request.reviewNote)}">Note du superviseur</div>
+<div class="reason-box" th:if="${request.reviewNote != null and !#strings.isEmpty(request.reviewNote)}" th:text="${request.reviewNote}">—</div>
+
+<table class="signatures">
+    <tr>
+        <td>Signature du demandeur<br/><span th:text="${request.requestedBy} ?: '—'">—</span></td>
+        <td>Signature du superviseur<br/><span th:text="${request.reviewedBy} ?: '—'">—</span></td>
+    </tr>
+</table>
+
+<div class="footer">
+    Document généré automatiquement par Bokati Cowork le <span th:text="${fmt.timestamp(generatedAt)}">01/01/2026 10:00</span> —
+    Pièce justificative pour la demande <span th:text="${request.requestNumber}">CRQ-202601-000001</span>.
+</div>
+</body>
+</html>

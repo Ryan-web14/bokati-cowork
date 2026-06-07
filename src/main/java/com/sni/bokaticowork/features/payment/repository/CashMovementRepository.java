@@ -7,9 +7,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface CashMovementRepository extends JpaRepository<CashMovement, Long> {
 
     boolean existsByReferenceTypeAndReferenceCode(String referenceType, String referenceCode);
+
+    Optional<CashMovement> findByMovementNumber(String movementNumber);
+
+    java.util.List<CashMovement> findByCashSession_IdOrderByCreatedAtAsc(Long cashSessionId);
+
+    java.util.List<CashMovement> findByCreatedByOrderByCreatedAtDesc(String createdBy);
 
     @Query(nativeQuery = true, value = """
             SELECT

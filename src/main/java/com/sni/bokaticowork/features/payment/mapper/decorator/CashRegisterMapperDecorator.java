@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.payment.mapper.decorator;
 
+import com.sni.bokaticowork.features.payment.dto.response.CashMovementAttachmentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashRegisterResponse;
 import com.sni.bokaticowork.features.payment.dto.response.CashSessionResponse;
@@ -8,9 +9,11 @@ import com.sni.bokaticowork.features.payment.enums.CashFlowDirection;
 import com.sni.bokaticowork.features.payment.enums.CashMovementType;
 import com.sni.bokaticowork.features.payment.mapper.interfaces.CashRegisterMapper;
 import com.sni.bokaticowork.features.payment.model.CashMovement;
+import com.sni.bokaticowork.features.payment.model.CashMovementAttachment;
 import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashSession;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
+import com.sni.bokaticowork.features.payment.repository.CashMovementAttachmentRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.payment.service.support.CashSessionSummarySupport;
 import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Component
 public abstract class CashRegisterMapperDecorator implements CashRegisterMapper {
@@ -36,6 +40,12 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
 
     @Autowired
     private CashSessionSummarySupport summarySupport;
+
+    @Autowired
+    private CashMovementAttachmentRepository attachmentRepository;
+
+    @Autowired
+    private com.sni.bokaticowork.features.payment.repository.CashMovementRepository cashMovementRepository;
 
     @Override
     public CashRegisterResponse toCashRegisterResponse(CashRegister cashRegister) {
@@ -90,6 +100,12 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
         TransactionContextResolver.SourceView source = paymentTransaction == null
                 ? contextResolver.resolveSource(cashMovement.getReferenceType(), cashMovement.getReferenceCode())
                 : contextResolver.resolveSource(paymentTransaction.getPaymentIntent().getSourceType(), paymentTransaction.getPaymentIntent().getSourceCode());
+        String relatedMovementNumber = relatedMovementNumber(cashMovement);
+        List<CashMovementAttachmentResponse> attachments = attachmentRepository
+                .findByCashMovement_IdOrderByUploadedAtDesc(cashMovement.getId())
+                .stream()
+                .map(this::toAttachmentResponse)
+                .toList();
         return new CashMovementResponse(
                 cashMovement.getMovementNumber(),
                 session == null ? null : session.getSessionNumber(),
@@ -124,8 +140,46 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 source.code(),
                 source.label(),
                 cashMovement.getMetadataJson(),
+                cashMovement.getStatus(),
+                relatedMovementNumber,
+                cashMovement.getBatchId(),
+                cashMovement.getRunningBalance(),
+                cashMovement.getExchangeRate(),
+                cashMovement.getChannel(),
+                cashMovement.getDeviceCode(),
+                cashMovement.getDeviceIp(),
+                cashMovement.getSubCategory(),
+                cashMovement.getTags(),
+                cashMovement.getRiskScore(),
+                cashMovement.getRequiresSignature(),
+                cashMovement.getSignedBy(),
+                cashMovement.getSignedAt(),
+                cashMovement.getPrintedAt(),
+                attachments,
                 cashMovement.getCreatedAt()
         );
+    }
+
+    private CashMovementAttachmentResponse toAttachmentResponse(CashMovementAttachment attachment) {
+        return new CashMovementAttachmentResponse(
+                attachment.getId(),
+                attachment.getFileName(),
+                attachment.getContentType(),
+                attachment.getStoragePath(),
+                attachment.getLabel(),
+                attachment.getUploadedBy(),
+                attachment.getUploadedAt()
+        );
+    }
+
+    private String relatedMovementNumber(CashMovement cashMovement) {
+        Long relatedId = cashMovement.getRelatedMovementId();
+        if (relatedId == null) {
+            return null;
+        }
+        return cashMovementRepository.findById(relatedId)
+                .map(CashMovement::getMovementNumber)
+                .orElse(null);
     }
 
     private PaymentTransaction relatedTransaction(CashMovement cashMovement) {

@@ -2,6 +2,8 @@ package com.sni.bokaticowork.features.payment.model;
 
 import com.sni.bokaticowork.core.annotation.IdGeneration;
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
+import com.sni.bokaticowork.features.payment.enums.CashMovementChannel;
+import com.sni.bokaticowork.features.payment.enums.CashMovementStatus;
 import com.sni.bokaticowork.features.payment.enums.CashMovementType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -72,6 +74,56 @@ public class CashMovement {
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 40)
+    private CashMovementStatus status = CashMovementStatus.CONFIRMED;
+
+    @Column(name = "related_movement_id")
+    private Long relatedMovementId;
+
+    @Column(name = "batch_id", length = 100)
+    private String batchId;
+
+    @Column(name = "running_balance", precision = 19, scale = 4)
+    private BigDecimal runningBalance;
+
+    @Column(name = "exchange_rate", precision = 19, scale = 6)
+    private BigDecimal exchangeRate;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "channel", nullable = false, length = 40)
+    private CashMovementChannel channel = CashMovementChannel.MANUAL;
+
+    @Column(name = "device_code", length = 120)
+    private String deviceCode;
+
+    @Column(name = "device_ip", length = 64)
+    private String deviceIp;
+
+    @Column(name = "sub_category", length = 120)
+    private String subCategory;
+
+    @Column(name = "tags", length = 500)
+    private String tags;
+
+    @Column(name = "risk_score", precision = 6, scale = 2)
+    private BigDecimal riskScore;
+
+    @Builder.Default
+    @Column(name = "requires_signature", nullable = false)
+    private Boolean requiresSignature = false;
+
+    @Column(name = "signed_by", length = 120)
+    private String signedBy;
+
+    @Column(name = "signed_at")
+    private Instant signedAt;
+
+    @Column(name = "printed_at")
+    private Instant printedAt;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
