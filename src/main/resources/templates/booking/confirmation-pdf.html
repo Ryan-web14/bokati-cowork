@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title th:text="|Confirmation réservation ${bookingNumber}|">Confirmation réservation</title>
+    <style>
+        @page { size: A4; margin: 14mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #12091f; background: #ffffff; font-size: 11px; line-height: 1.45; }
+        .page { min-height: 267mm; border: 1px solid #e5dff0; border-radius: 12px; overflow: hidden; }
+        .header { background: #0f0720; color: #ffffff; padding: 18px 22px 16px; border-bottom: 3px solid #c9a84c; }
+        .brand { font-size: 15px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-sub { margin-top: 3px; font-size: 8px; color: rgba(255,255,255,.42); letter-spacing: 1.5px; text-transform: uppercase; }
+        .tag { float: right; margin-top: 2px; padding: 5px 10px; border-radius: 99px; border: 1px solid rgba(34,197,94,.35); color: #4ade80; background: rgba(34,197,94,.12); font-size: 8px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
+        .hero { padding: 20px 22px 16px; background: #f4f0fb; border-bottom: 1px solid #e5dff0; }
+        .hero-label { color: #8a6b1d; font-size: 8px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; }
+        .hero-title { margin-top: 5px; font-size: 24px; font-weight: 850; color: #0f0720; letter-spacing: -.5px; }
+        .hero-sub { margin-top: 5px; color: #5f526d; font-size: 11px; }
+        .ref { padding: 10px 22px; background: #fff9e7; border-top: 1px solid #eadfb6; border-bottom: 1px solid #eadfb6; }
+        .ref-label { color: #7d6f8a; font-size: 8px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        .ref-number { float: right; color: #8a6b1d; font-family: Consolas, monospace; font-size: 12px; font-weight: 850; letter-spacing: 1px; }
+        .content { padding: 18px 22px 16px; }
+        .section-label { margin: 0 0 8px; color: #7d6f8a; font-size: 8px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        table.layout { width: 100%; border-collapse: collapse; }
+        table.layout td { vertical-align: top; }
+        .left { width: 62%; padding-right: 14px; }
+        .right { width: 38%; }
+        .card { border: 1px solid #e5dff0; border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+        .card-head { padding: 12px 14px; background: #fbf7ec; border-left: 3px solid #c9a84c; }
+        .space { font-size: 15px; font-weight: 800; color: #12091f; }
+        .space-type { margin-top: 3px; color: #9a7b22; font-size: 8px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; }
+        .row { padding: 9px 14px; border-top: 1px solid #eee8f3; }
+        .key { color: #7d6f8a; font-size: 8px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
+        .val { float: right; max-width: 64%; color: #170d28; font-size: 10px; font-weight: 750; text-align: right; }
+        .qr-card { border: 1px solid #e5dff0; border-radius: 10px; padding: 14px; text-align: center; }
+        .qr-card img { width: 132px; height: 132px; display: block; margin: 0 auto 10px; }
+        .code-label { color: #7d6f8a; font-size: 8px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        .code { display: inline-block; margin-top: 6px; padding: 7px 10px; border-radius: 7px; background: #fff9e7; border: 1px solid #eadfb6; color: #8a6b1d; font-family: Consolas, monospace; font-size: 10px; font-weight: 850; letter-spacing: .8px; }
+        .instructions { margin-top: 12px; padding-top: 10px; border-top: 1px solid #eee8f3; text-align: left; color: #5f526d; font-size: 9.5px; }
+        .instructions strong { color: #170d28; }
+        .instructions ol { margin: 6px 0 0 17px; padding: 0; }
+        .instructions li { margin-bottom: 4px; }
+        .contact { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #f7f3fb; border: 1px solid #e5dff0; color: #5f526d; }
+        .contact-title { color: #170d28; font-size: 10px; font-weight: 850; margin-bottom: 5px; }
+        .footer { padding: 12px 22px; border-top: 1px solid #e5dff0; color: #7d6f8a; font-size: 8.5px; }
+        .engineered { float: right; color: #b8adbf; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; }
+        .clearfix::after { content: ""; display: block; clear: both; }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="header clearfix">
+        <div class="tag">Confirmée</div>
+        <div class="brand">Elle A Osé</div>
+        <div class="brand-sub">Espaces de travail</div>
+    </div>
+    <div class="hero">
+        <div class="hero-label">Résumé de confirmation</div>
+        <div class="hero-title">Réservation confirmée</div>
+        <div class="hero-sub">Bonjour <strong th:text="${recipientName}">client</strong>, ce document reprend les informations utiles pour votre arrivée.</div>
+    </div>
+    <div class="ref clearfix">
+        <span class="ref-label">Référence réservation</span>
+        <span class="ref-number" th:text="${bookingNumber}">BKG-000</span>
+    </div>
+    <div class="content">
+        <table class="layout">
+            <tr>
+                <td class="left">
+                    <div class="section-label">Détails réservation</div>
+                    <div class="card">
+                        <div class="card-head">
+                            <div class="space" th:text="${resourceName}">Espace réservé</div>
+                            <div class="space-type" th:if="${resourceType}" th:text="${resourceType}">Type</div>
+                        </div>
+                        <div class="row clearfix"><span class="key">Date</span><span class="val" th:text="${bookingDate}">—</span></div>
+                        <div class="row clearfix"><span class="key">Horaires</span><span class="val"><span th:text="${startTime}">—</span> - <span th:text="${endTime}">—</span></span></div>
+                        <div class="row clearfix"><span class="key">Durée</span><span class="val" th:text="${durationLabel}">—</span></div>
+                        <div class="row clearfix"><span class="key">Quantité</span><span class="val" th:text="${quantity}">1</span></div>
+                        <div class="row clearfix"><span class="key">Statut</span><span class="val" th:text="${status}">—</span></div>
+                        <div class="row clearfix"><span class="key">Mode paiement</span><span class="val" th:text="${paymentMode}">—</span></div>
+                        <div class="row clearfix"><span class="key">Base HT</span><span class="val" th:text="${priceHT}">—</span></div>
+                        <div class="row clearfix"><span class="key" th:text="|TVA (${tvaPct})|">TVA (18.4 %)</span><span class="val" th:text="${priceTVA}">—</span></div>
+                        <div class="row clearfix"><span class="key" th:text="|Centime additionnel (${centimeAdditionnelPct})|">Centime additionnel (5 %)</span><span class="val" th:text="${priceCentimeAdditionnel}">—</span></div>
+                        <div class="row clearfix"><span class="key">Montant TTC</span><span class="val" th:text="${priceTTC}">—</span></div>
+                        <div class="row clearfix"><span class="key">Lieu</span><span class="val"><span th:text="${address}">84 Boulevard du Général de Gaulle</span><br /><span th:text="${city}">Espace de coworking</span></span></div>
+                    </div>
+                    <div class="contact">
+                        <div class="contact-title">Contact Elle A Osé</div>
+                        coworkspace@elleaose.com<br />05 204 2552
+                    </div>
+                </td>
+                <td class="right">
+                    <div class="section-label">QR code d'accès</div>
+                    <div class="qr-card">
+                        <img th:src="${qrDataUri}" alt="QR code réservation" />
+                        <div class="code-label">Code de vérification</div>
+                        <div class="code" th:text="${verificationCode}">CHK-0000</div>
+                        <div class="instructions">
+                            <strong>Instructions d'utilisation</strong>
+                            <ol>
+                                <li>Présentez ce QR code à l'accueil à votre arrivée.</li>
+                                <li>Si le QR code ne peut pas être scanné, communiquez le code de vérification.</li>
+                                <li>Conservez ce document jusqu'à la fin de votre réservation.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="footer clearfix">
+        Généré le <span th:text="${generatedAt}">2026-06-05</span>
+        <span class="engineered">Engineered by SNI</span>
+    </div>
+</div>
+</body>
+</html>

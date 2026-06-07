@@ -39,7 +39,8 @@
       "Bash(Format-List FullName)",
       "PowerShell(Rename-Item *)",
       "Bash(dir \"C:\\\\java-project\\\\bokati-cowork\\\\src\\\\main\\\\java\\\\com\\\\sni\\\\bokaticowork\\\\features\\\\payment\\\\repository\\\\\" | grep -i transaction *)",
-      "PowerShell(cd C:\\\\java-project\\\\bokati-cowork && .\\\\mvnw compile 2>&1 | Where-Object { $_ -match \"ERROR|error:\" } | Select-Object -First 20)"
+      "PowerShell(cd C:\\\\java-project\\\\bokati-cowork && .\\\\mvnw compile 2>&1 | Where-Object { $_ -match \"ERROR|error:\" } | Select-Object -First 20)",
+      "Bash(git push *)"
     ]
   }
 }

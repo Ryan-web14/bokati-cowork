@@ -1,8 +1,12 @@
 package com.sni.bokaticowork.features.booking.controller;
 
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.booking.service.support.BookingConfirmationDocumentService;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +24,26 @@ import org.springframework.web.servlet.ModelAndView;
 public class PublicBookingController {
 
     private final BookingService bookingService;
+    private final BookingConfirmationDocumentService confirmationDocumentService;
+
+    @GetMapping("/{bookingNumber}")
+    public ModelAndView view(@PathVariable String bookingNumber,
+                             @RequestParam String token) {
+        var booking = confirmationDocumentService.publicBooking(bookingNumber, token);
+        ModelAndView mav = new ModelAndView("booking/confirmation-view");
+        confirmationDocumentService.fillViewModel(mav.getModelMap(), booking);
+        return mav;
+    }
+
+    @GetMapping("/{bookingNumber}/confirmation.pdf")
+    public ResponseEntity<byte[]> confirmationPdf(@PathVariable String bookingNumber,
+                                                  @RequestParam String token) {
+        byte[] pdf = confirmationDocumentService.confirmationPdf(bookingNumber, token);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"booking-confirmation-" + bookingNumber + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
 
     /**
      * Déclenché par le scan du QR code reçu dans l'email de confirmation.

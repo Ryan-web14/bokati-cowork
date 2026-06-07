@@ -1,164 +1,130 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="|Réservation terminée — ${bookingNumber}|">Réservation terminée</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        .wrap { width: 100%; padding: 40px 16px; background: #f0eef5; }
-        .card { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30,10,60,.10); }
-
-        /* ── Header ── */
-        .email-header { background: #1a0a2e; padding: 22px 28px 18px; position: relative; overflow: hidden; }
-        .email-header::after { content:''; position:absolute; top:0; right:-20px; width:140px; height:100%; background:rgba(255,255,255,.03); transform:skewX(-12deg); }
-        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
-        .logo-area { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; }
-        .brand-name { font-size:15px; font-weight:700; color:#fff; letter-spacing:3px; text-transform:uppercase; }
-        .brand-sub  { font-size:7px;  color:#9b8caa; letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
-        .status-tag { font-size:7.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; padding:4px 10px; border-radius:2px; background:rgba(139,92,246,.15); border:1px solid rgba(139,92,246,.4); color:#a78bfa; }
-
-        /* ── Hero ── */
-        .hero { background: linear-gradient(135deg, #1a0a2e 0%, #2a1548 100%); padding: 28px 28px 22px; text-align: center; border-bottom: 2px solid #c9a84c; }
-        .hero-icon-wrap { width: 60px; height: 60px; border-radius: 50%; background: rgba(201,168,76,.1); border: 2px solid rgba(201,168,76,.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
-        .hero-title { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.3px; margin-bottom: 4px; }
-        .hero-sub { font-size: 12px; color: #9b8caa; }
-        .hero-number { display: inline-block; margin-top: 10px; background: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4); color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 14px; border-radius: 2px; font-family: monospace; }
-
-        /* ── Body ── */
-        .email-body { padding: 24px 28px; }
-        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 20px; }
-
-        /* ── Info card ── */
-        .info-card { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 24px; }
-        .info-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 14px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #fff; }
-        .info-table { width: 100%; border-collapse: collapse; }
-        .info-table tr { border-bottom: 1px solid #f0eaf8; }
-        .info-table tr:last-child { border-bottom: none; }
-        .info-table tr:nth-child(even) td { background: #faf8fd; }
-        .info-table td { padding: 10px 14px; font-size: 12.5px; vertical-align: middle; }
-        .info-table .lbl { color: #7c6d8f; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; width: 42%; }
-        .info-table .val { color: #1a0a2e; font-weight: 700; text-align: right; }
-
-        /* ── CSAT section ── */
-        .csat-section { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
-        .csat-head { background: #1a0a2e; border-left: 3px solid #8b5cf6; padding: 10px 14px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #fff; }
-        .csat-body { padding: 20px 14px; background: #faf8fd; text-align: center; }
-        .csat-question { font-size: 14px; font-weight: 700; color: #1a0a2e; margin-bottom: 6px; }
-        .csat-sub { font-size: 11px; color: #7c6d8f; margin-bottom: 18px; line-height: 1.5; }
-        .csat-buttons { display: table; width: 100%; border-collapse: separate; border-spacing: 6px; }
-        .csat-btn-cell { display: table-cell; width: 20%; }
-        .csat-btn { display: block; text-decoration: none; border-radius: 4px; padding: 10px 0; text-align: center; font-size: 16px; font-weight: 800; font-family: monospace; letter-spacing: 0; border: 2px solid transparent; }
-        .csat-btn-1 { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-        .csat-btn-2 { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
-        .csat-btn-3 { background: #fef9c3; color: #713f12; border-color: #fde047; }
-        .csat-btn-4 { background: #dcfce7; color: #166534; border-color: #86efac; }
-        .csat-btn-5 { background: #d1fae5; color: #065f46; border-color: #34d399; }
-        .csat-label-row { display: table; width: 100%; border-collapse: separate; border-spacing: 6px; margin-top: 4px; }
-        .csat-label-cell { display: table-cell; width: 20%; }
-        .csat-label { font-size: 9px; color: #9b8caa; text-align: center; display: block; }
-        .csat-note { font-size: 10px; color: #9b8caa; margin-top: 14px; }
-
-        /* ── Footer ── */
-        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 14px 28px; text-align: center; }
-        .footer-brand { font-size: 9px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-        .footer-text  { font-size: 10px; color: #9b8caa; line-height: 1.55; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title th:text="|Réservation terminée — ${bookingNumber}|">Réservation terminée</title>
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+    table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    body { margin:0; padding:0; background-color:#e8e4f0; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .wrap-td   { padding:40px 20px; background-color:#e8e4f0; }
+    .card      { background-color:#0f0720; border-radius:14px; overflow:hidden; max-width:600px; width:100%; }
+    .header-td { background-color:#0a0418; padding:22px 32px 18px; }
+    .stripe    { height:3px; background:linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size:0; line-height:0; }
+    .brand     { font-size:15px; font-weight:700; color:#ffffff; letter-spacing:3px; text-transform:uppercase; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .brand-sub { font-size:9px; color:rgba(255,255,255,.35); letter-spacing:2px; text-transform:uppercase; margin-top:4px; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .tag       { display:inline-block; font-size:10px; font-weight:700; letter-spacing:0.7px; text-transform:uppercase; padding:5px 12px; border-radius:100px; background-color:#1a2e1a; border:1px solid #22c55e55; color:#4ade80; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .hero-td   { background-color:#110820; padding:30px 32px 26px; border-bottom:1px solid rgba(255,255,255,.05); text-align:center; }
+    .hero-icon { font-size:42px; line-height:1; margin-bottom:14px; }
+    .hero-title { font-size:22px; font-weight:800; color:#ffffff; margin-bottom:6px; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .hero-sub  { font-size:13px; color:rgba(255,255,255,.45); font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .hero-ref  { display:inline-block; margin-top:12px; background-color:rgba(201,168,76,.12); border:1px solid rgba(201,168,76,.35); color:#c9a84c; font-size:11px; font-weight:700; letter-spacing:1.5px; padding:5px 14px; border-radius:4px; font-family:"Courier New",Courier,monospace; }
+    .body-td   { padding:26px 32px 30px; background-color:#0f0720; }
+    .sec-lbl   { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.28); margin-bottom:10px; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .info-card { border:1px solid rgba(255,255,255,.08); border-radius:10px; overflow:hidden; margin-bottom:22px; }
+    .info-head { background-color:#1e1035; border-left:3px solid #c9a84c; padding:9px 16px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.3px; color:#ffffff; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .info-lbl  { padding:10px 16px; font-size:11px; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:0.5px; font-weight:700; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .info-val  { padding:10px 16px; font-size:13px; font-weight:700; color:rgba(255,255,255,.85); text-align:right; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .csat-box  { border:1px solid rgba(255,255,255,.08); border-radius:10px; overflow:hidden; margin-bottom:20px; }
+    .csat-head { background-color:#1e1035; border-left:3px solid #a78bfa; padding:9px 16px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.3px; color:#ffffff; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .csat-body { padding:20px 16px; text-align:center; }
+    .csat-q    { font-size:14px; font-weight:700; color:#ffffff; margin-bottom:6px; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .csat-sub  { font-size:11px; color:rgba(255,255,255,.4); margin-bottom:18px; line-height:1.5; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .csat-btn  { display:inline-block; text-decoration:none; border-radius:6px; padding:10px 14px; font-size:18px; font-weight:800; border:2px solid transparent; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .c1 { background-color:#3f1515; color:#fca5a5; border-color:#7f1d1d; }
+    .c2 { background-color:#3f2f10; color:#fcd34d; border-color:#78350f; }
+    .c3 { background-color:#3a3312; color:#fde047; border-color:#713f12; }
+    .c4 { background-color:#143824; color:#86efac; border-color:#14532d; }
+    .c5 { background-color:#0e3326; color:#34d399; border-color:#064e3b; }
+    .csat-note { font-size:10px; color:rgba(255,255,255,.3); margin-top:10px; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .footer-td { background-color:#0a0418; border-top:1px solid rgba(255,255,255,.05); padding:20px 32px; text-align:center; }
+    .footer-brand { font-size:10px; font-weight:700; color:rgba(255,255,255,.3); letter-spacing:2.5px; text-transform:uppercase; margin-bottom:6px; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .footer-text  { font-size:11px; color:rgba(255,255,255,.2); line-height:1.65; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif; }
+    .footer-text a { color:rgba(255,255,255,.35); }
+    @media only screen and (max-width:480px) {
+        .wrap-td { padding:0 !important; }
+        .card { border-radius:0 !important; }
+        .header-td, .hero-td, .body-td, .footer-td { padding-left:20px !important; padding-right:20px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
 
-        <!-- Header -->
-        <div class="email-header">
-            <div class="logo-area">
-                <div>
-                    <div class="brand-name">Elle A Osé</div>
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+                <td valign="middle">
+                    <div class="brand">Elle A Osé</div>
                     <div class="brand-sub">Espace de coworking</div>
-                </div>
-                <span class="status-tag">Terminée</span>
-            </div>
-        </div>
-        <div class="header-stripe"></div>
+                </td>
+                <td align="right" valign="middle"><span class="tag">Terminée &#x2713;</span></td>
+            </tr></table>
+        </td>
+    </tr>
+    <tr><td class="stripe">&nbsp;</td></tr>
 
-        <!-- Hero -->
-        <div class="hero">
-            <div class="hero-icon-wrap">
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                    <circle cx="14" cy="14" r="12" stroke="#c9a84c" stroke-width="1.8"/>
-                    <path d="M8 14l4 4 8-8" stroke="#c9a84c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </div>
+    <tr>
+        <td class="hero-td">
+            <div class="hero-icon">&#x2705;</div>
             <div class="hero-title">Réservation terminée</div>
             <div class="hero-sub">Merci de votre présence à Elle A Osé</div>
-            <div class="hero-number" th:text="${bookingNumber}">BKG-000</div>
-        </div>
+            <div class="hero-ref" th:text="${bookingNumber}">BKG-000</div>
+        </td>
+    </tr>
 
-        <!-- Body -->
-        <div class="email-body">
+    <tr>
+        <td class="body-td">
+            <div class="sec-lbl">Récapitulatif</div>
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td colspan="2" class="info-head">Détails de la réservation</td></tr>
+                <tr>
+                    <td class="info-lbl">Espace</td>
+                    <td class="info-val" th:text="${resourceName ?: '—'}">—</td>
+                </tr>
+                <tr style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl">Début</td>
+                    <td class="info-val" th:text="${startedAt}">—</td>
+                </tr>
+                <tr>
+                    <td class="info-lbl">Fin</td>
+                    <td class="info-val" th:text="${endedAt}">—</td>
+                </tr>
+            </table>
 
-            <p class="greeting">
-                Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,<br>
-                Votre réservation <strong th:text="${bookingNumber}">BKG-000</strong> est maintenant clôturée.
-                Nous espérons que vous avez passé un excellent moment dans nos espaces.
-            </p>
+            <table class="csat-box" width="100%" cellpadding="0" cellspacing="0" border="0" th:if="${csatUrl != null}">
+                <tr><td colspan="5" class="csat-head">Votre avis nous intéresse &#x2728;</td></tr>
+                <tr><td class="csat-body">
+                    <div class="csat-q">Comment évaluez-vous votre expérience ?</div>
+                    <div class="csat-sub">Un clic suffit. Votre retour nous aide à améliorer nos espaces.</div>
+                    <table cellpadding="0" cellspacing="6" border="0" style="margin:0 auto;"><tr>
+                        <td><a th:href="${csatUrl + '1'}" href="#" class="csat-btn c1">1</a></td>
+                        <td><a th:href="${csatUrl + '2'}" href="#" class="csat-btn c2">2</a></td>
+                        <td><a th:href="${csatUrl + '3'}" href="#" class="csat-btn c3">3</a></td>
+                        <td><a th:href="${csatUrl + '4'}" href="#" class="csat-btn c4">4</a></td>
+                        <td><a th:href="${csatUrl + '5'}" href="#" class="csat-btn c5">5</a></td>
+                    </tr></table>
+                    <div class="csat-note">&#x1F641; Très mauvais &nbsp;&nbsp;&nbsp; &#x1F600; Excellent</div>
+                    <div class="csat-note">Réponse anonyme — merci !</div>
+                </td></tr>
+            </table>
+        </td>
+    </tr>
 
-            <!-- Détails -->
-            <div class="info-card">
-                <div class="info-head">Récapitulatif de la réservation</div>
-                <table class="info-table">
-                    <tr>
-                        <td class="lbl">Espace / ressource</td>
-                        <td class="val" th:text="${resourceName ?: '—'}">Salle</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Début</td>
-                        <td class="val" th:text="${startedAt}">—</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Fin</td>
-                        <td class="val" th:text="${endedAt}">—</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Quantité</td>
-                        <td class="val" th:text="${quantity ?: 1}">1</td>
-                    </tr>
-                </table>
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
+            <div class="footer-text">
+                <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552">05 204 2552</a>
             </div>
+        </td>
+    </tr>
 
-            <!-- CSAT -->
-            <div class="csat-section" th:if="${csatUrl != null}">
-                <div class="csat-head">Votre avis compte</div>
-                <div class="csat-body">
-                    <div class="csat-question">Comment évaluez-vous votre expérience ?</div>
-                    <div class="csat-sub">Cliquez sur une note pour nous faire part de votre satisfaction.<br>Cela prend moins de 5 secondes.</div>
-                    <div class="csat-buttons">
-                        <div class="csat-btn-cell"><a th:href="${csatUrl + '1'}" class="csat-btn csat-btn-1">1</a></div>
-                        <div class="csat-btn-cell"><a th:href="${csatUrl + '2'}" class="csat-btn csat-btn-2">2</a></div>
-                        <div class="csat-btn-cell"><a th:href="${csatUrl + '3'}" class="csat-btn csat-btn-3">3</a></div>
-                        <div class="csat-btn-cell"><a th:href="${csatUrl + '4'}" class="csat-btn csat-btn-4">4</a></div>
-                        <div class="csat-btn-cell"><a th:href="${csatUrl + '5'}" class="csat-btn csat-btn-5">5</a></div>
-                    </div>
-                    <div class="csat-label-row">
-                        <div class="csat-label-cell"><span class="csat-label">Très mauvais</span></div>
-                        <div class="csat-label-cell"></div>
-                        <div class="csat-label-cell"><span class="csat-label">Moyen</span></div>
-                        <div class="csat-label-cell"></div>
-                        <div class="csat-label-cell"><span class="csat-label">Excellent</span></div>
-                    </div>
-                    <div class="csat-note">Votre réponse est anonyme et nous aide à améliorer nos services.</div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="email-footer">
-            <div class="footer-brand">Elle A Osé</div>
-            <div class="footer-text">coworkspace@elleaose.com · 05 204 25 52<br>Email généré automatiquement — merci de ne pas y répondre directement.</div>
-        </div>
-
-    </div>
-</div>
+</table>
+</td></tr>
+</table>
 </body>
 </html>

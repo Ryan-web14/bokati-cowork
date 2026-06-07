@@ -1,731 +1,306 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Réservation confirmée — Elle A Osé</title>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réservation confirmée — Elle A Osé</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
 
-        body {
-            background: #e8e4f0;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            font-size: 15px;
-            line-height: 1.6;
-        }
+    body {
+        margin: 0; padding: 0;
+        background-color: #e8e4f0;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
 
-        /* ══ Wrapper ══ */
-        .wrap {
-            width: 100%;
-            min-height: 100vh;
-            padding: 48px 20px;
-            background: #e8e4f0;
-        }
+    /* Header */
+    .header-td   { background-color: #0a0418; padding: 24px 32px 20px; }
+    .header-stripe { height: 3px; background: linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand-name  { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub   { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .status-pill { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; background-color: #112b1c; border: 1px solid #22c55e55; color: #4ade80; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ══ Card — dark premium ══ */
-        .card {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #0f0720;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow:
-                0 1px 3px rgba(0,0,0,.4),
-                0 12px 36px rgba(0,0,0,.45),
-                0 40px 80px rgba(0,0,0,.3);
-        }
+    /* Hero */
+    .hero-td     { background-color: #110820; padding: 32px 32px 28px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title  { font-size: 24px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub    { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub strong { color: rgba(255,255,255,.75); font-weight: 600; }
 
-        /* ══ Header ══ */
-        .email-header {
-            background: #0a0418;
-            padding: 26px 36px 24px;
-            position: relative;
-            overflow: hidden;
-        }
-        .email-header::before {
-            content: '';
-            position: absolute;
-            top: -60px; right: -60px;
-            width: 200px; height: 200px;
-            background: radial-gradient(circle, rgba(201,168,76,.12) 0%, transparent 65%);
-            pointer-events: none;
-        }
-        .header-stripe {
-            height: 2px;
-            background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%);
-        }
-        .logo-area {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-        }
-        .brand-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 3.5px;
-            text-transform: uppercase;
-        }
-        .brand-sub {
-            font-size: 10px;
-            color: rgba(255,255,255,.3);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-top: 5px;
-        }
-        .tag-confirmed {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.7px;
-            text-transform: uppercase;
-            padding: 6px 14px;
-            border-radius: 100px;
-            white-space: nowrap;
-            flex-shrink: 0;
-            background: rgba(34,197,94,.14);
-            border: 1px solid rgba(34,197,94,.30);
-            color: #4ade80;
-        }
+    /* Ref bar */
+    .ref-bar-td  { background-color: #1a1030; border-top: 1px solid #c9a84c33; border-bottom: 1px solid #c9a84c33; padding: 12px 32px; }
+    .ref-label   { font-size: 10px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .ref-number  { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 1.5px; font-family: "Courier New", Courier, monospace; }
 
-        /* ══ Hero ══ */
-        .hero {
-            background: #110820;
-            padding: 36px 36px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 28px;
-            border-bottom: 1px solid rgba(255,255,255,.05);
-        }
-        .hero-text { flex: 1; min-width: 0; }
-        .hero-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: #c9a84c;
-            margin-bottom: 10px;
-        }
-        .hero-title {
-            font-size: 26px;
-            font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
-            margin-bottom: 10px;
-        }
-        .hero-sub {
-            font-size: 15px;
-            color: rgba(255,255,255,.45);
-            line-height: 1.6;
-        }
-        .hero-sub strong { color: rgba(255,255,255,.75); font-weight: 600; }
-        .hero-illustration {
-            flex-shrink: 0;
-            width: 180px;
-            height: 145px;
-        }
+    /* Body */
+    .body-td     { padding: 28px 32px 32px; background-color: #0f0720; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ══ Booking ref bar ══ */
-        .ref-bar {
-            background: rgba(201,168,76,.07);
-            border-top: 1px solid rgba(201,168,76,.12);
-            border-bottom: 1px solid rgba(201,168,76,.12);
-            padding: 13px 36px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        .ref-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(255,255,255,.35);
-            font-weight: 700;
-        }
-        .ref-number {
-            font-size: 14px;
-            font-weight: 700;
-            color: #c9a84c;
-            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-            letter-spacing: 1.5px;
-        }
+    /* Space card */
+    .space-card  { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .space-head  { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 14px 18px; }
+    .space-name  { font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .space-type  { font-size: 10px; color: #c9a84c; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ══ Body ══ */
-        .email-body { padding: 28px 36px 36px; }
+    /* Detail rows */
+    .detail-row  { border-bottom: 1px solid rgba(255,255,255,.04); }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-lbl-td { padding: 13px 12px 13px 18px; vertical-align: middle; width: 38%; }
+    .detail-val-td { padding: 13px 18px 13px 8px; vertical-align: middle; text-align: right; }
+    .detail-lbl  { font-size: 9px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .detail-val  { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .time-sep    { color: rgba(255,255,255,.3); margin: 0 5px; }
+    .time-dur    { font-size: 11px; color: rgba(255,255,255,.3); margin-left: 6px; }
 
-        .section-label {
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: rgba(255,255,255,.28);
-            margin-bottom: 12px;
-            margin-top: 4px;
-        }
+    /* Price */
+    .price-box   { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .price-total-tr { border-bottom: 1px solid rgba(255,255,255,.07); }
+    .price-total-lbl { padding: 16px 18px; font-size: 16px; font-weight: 700; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-total-amt { padding: 16px 18px; font-size: 22px; font-weight: 800; color: #c9a84c; text-align: right; letter-spacing: -0.3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-line-tr   { border-bottom: 1px solid rgba(255,255,255,.04); }
+    .price-line-lbl  { padding: 10px 18px; font-size: 12px; color: rgba(255,255,255,.45); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-line-amt  { padding: 10px 18px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.65); text-align: right; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ══ Space card ══ */
-        .space-card {
-            border: 1px solid rgba(255,255,255,.07);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        .space-card-head {
-            background: rgba(201,168,76,.09);
-            border-left: 3px solid #c9a84c;
-            padding: 16px 20px;
-        }
-        .space-name {
-            font-size: 17px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 4px;
-            line-height: 1.3;
-        }
-        .space-type-tag {
-            font-size: 11px;
-            color: #c9a84c;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-        }
+    /* Payment */
+    .pay-box     { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+    .pay-lbl-td  { padding: 13px 12px 13px 18px; font-size: 9px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; width: 38%; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .pay-val-td  { padding: 13px 18px 13px 8px; text-align: right; }
+    .pay-name    { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .pay-amt     { font-size: 14px; font-weight: 700; color: #c9a84c; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* Detail rows */
-        .detail-row {
-            padding: 13px 20px;
-            border-bottom: 1px solid rgba(255,255,255,.04);
-            display: flex;
-            gap: 14px;
-            align-items: center;
-        }
-        .detail-row:last-child { border-bottom: none; }
-        .detail-icon-wrap {
-            width: 34px;
-            height: 34px;
-            flex-shrink: 0;
-            background: rgba(255,255,255,.05);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .detail-icon-wrap svg { display: block; }
-        .detail-label {
-            font-size: 10px;
-            color: rgba(255,255,255,.35);
-            text-transform: uppercase;
-            letter-spacing: 0.7px;
-            font-weight: 700;
-            display: block;
-            margin-bottom: 3px;
-        }
-        .detail-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: rgba(255,255,255,.85);
-        }
-        .time-sep {
-            color: rgba(255,255,255,.25);
-            margin: 0 6px;
-            font-weight: 400;
-        }
+    /* QR */
+    .qr-box      { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 22px 18px; margin-bottom: 24px; text-align: center; background-color: rgba(255,255,255,.02); }
+    .qr-lbl      { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.3); margin-bottom: 16px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .qr-img-wrap { display: inline-block; padding: 12px; background-color: #ffffff; border-radius: 10px; margin-bottom: 12px; }
+    .qr-img      { width: 140px; height: 140px; display: block; }
+    .qr-placeholder { display: inline-block; width: 140px; height: 44px; background-color: #1a1030; border-radius: 6px; border: 1px solid rgba(201,168,76,.2); text-align: center; line-height: 44px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 0.8px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .qr-ref      { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 2px; margin-bottom: 4px; font-family: "Courier New", Courier, monospace; }
+    .verify-code { font-size: 11px; color: rgba(255,255,255,.3); margin-bottom: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .qr-steps    { text-align: left; }
+    .qr-step     { font-size: 11px; color: rgba(255,255,255,.38); line-height: 1.65; margin-bottom: 4px; padding-left: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ══ Price section ══ */
-        .price-section {
-            border: 1px solid rgba(255,255,255,.07);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-        .price-total-row {
-            padding: 18px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,.07);
-        }
-        .price-total-label {
-            font-size: 17px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-        .price-total-amount {
-            font-size: 24px;
-            font-weight: 800;
-            color: #c9a84c;
-            letter-spacing: -0.5px;
-        }
-        .price-line-row {
-            padding: 11px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,.04);
-        }
-        .price-line-row:last-child { border-bottom: none; }
-        .price-line-label { font-size: 13px; color: rgba(255,255,255,.45); }
-        .price-line-amount { font-size: 13px; color: rgba(255,255,255,.65); font-weight: 600; }
+    /* CTAs */
+    .cta-table   { width: 100%; border-collapse: separate; border-spacing: 8px; margin-bottom: 8px; }
+    .cta-primary { display: block; text-align: center; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .cta-secondary { display: block; text-align: center; background-color: transparent; color: rgba(255,255,255,.5); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ══ Payment section ══ */
-        .section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 12px;
-        }
-        .payment-section {
-            border: 1px solid rgba(255,255,255,.07);
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 28px;
-        }
-        .payment-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        .payment-info { display: flex; align-items: center; gap: 14px; }
-        .payment-card-icon {
-            width: 40px;
-            height: 28px;
-            background: rgba(255,255,255,.08);
-            border: 1px solid rgba(255,255,255,.12);
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .payment-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: rgba(255,255,255,.85);
-        }
-        .payment-date {
-            font-size: 12px;
-            color: rgba(255,255,255,.35);
-            margin-top: 2px;
-        }
-        .payment-amount {
-            font-size: 15px;
-            font-weight: 700;
-            color: rgba(255,255,255,.7);
-            white-space: nowrap;
-        }
+    /* Legal */
+    .legal { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.6; margin-top: 20px; text-align: center; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .legal a { color: rgba(255,255,255,.35); }
 
-        .payment-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 14px;
-            padding-top: 14px;
-            border-top: 1px solid rgba(255,255,255,.05);
-        }
-        .payment-action-text {
-            font-size: 13px;
-            color: rgba(255,255,255,.35);
-        }
-        .payment-action-btn {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.7px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,.5);
-            text-decoration: none;
-            padding: 7px 14px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,.12);
-            background: rgba(255,255,255,.04);
-        }
+    /* Footer */
+    .footer-td   { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text  { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text a { color: rgba(255,255,255,.35); }
 
-        /* ══ CTAs ══ */
-        .cta-group {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 4px;
-        }
-        .cta-primary {
-            flex: 1;
-            display: block;
-            text-align: center;
-            background: #c9a84c;
-            color: #0f0720;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            text-decoration: none;
-            padding: 15px 24px;
-            border-radius: 8px;
-        }
-        .cta-secondary {
-            flex: 1;
-            display: block;
-            text-align: center;
-            background: transparent;
-            color: rgba(255,255,255,.5);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 1.2px;
-            text-transform: uppercase;
-            text-decoration: none;
-            padding: 15px 24px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,.12);
-        }
-
-        /* ══ Legal note ══ */
-        .legal-note {
-            font-size: 12px;
-            color: rgba(255,255,255,.2);
-            line-height: 1.6;
-            margin-top: 20px;
-        }
-        .legal-note a { color: rgba(255,255,255,.35); }
-
-        /* ══ Footer ══ */
-        .email-footer {
-            background: #0a0418;
-            border-top: 1px solid rgba(255,255,255,.05);
-            padding: 24px 36px;
-            text-align: center;
-        }
-        .footer-brand {
-            font-size: 10px;
-            font-weight: 700;
-            color: rgba(255,255,255,.3);
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-        }
-        .footer-text {
-            font-size: 12px;
-            color: rgba(255,255,255,.2);
-            line-height: 1.65;
-        }
-
-        /* ══ Responsive — Tablet ══ */
-        @media (max-width: 640px) {
-            .wrap { padding: 24px 16px; }
-            .email-header { padding: 22px 24px 20px; }
-            .hero { padding: 28px 24px; gap: 20px; }
-            .hero-illustration { width: 150px; height: 120px; }
-            .ref-bar { padding: 12px 24px; }
-            .email-body { padding: 24px 24px 28px; }
-            .email-footer { padding: 20px 24px; }
-        }
-
-        /* ══ Responsive — Mobile ══ */
-        @media (max-width: 480px) {
-            .wrap { padding: 0; background: #0f0720; }
-            .card { border-radius: 0; box-shadow: none; }
-            .email-header { padding: 20px 20px 18px; }
-            .brand-name { font-size: 14px; letter-spacing: 2.5px; }
-            .hero {
-                flex-direction: column-reverse;
-                align-items: flex-start;
-                padding: 24px 20px 20px;
-                gap: 16px;
-            }
-            .hero-illustration { width: 160px; height: 128px; align-self: center; }
-            .hero-title { font-size: 22px; }
-            .ref-bar { padding: 12px 20px; flex-wrap: wrap; gap: 4px; }
-            .email-body { padding: 20px 20px 28px; }
-            .space-card-head { padding: 14px 16px; }
-            .detail-row { padding: 12px 16px; }
-            .price-total-row { padding: 16px; }
-            .price-total-amount { font-size: 22px; }
-            .price-line-row { padding: 10px 16px; }
-            .payment-section { padding: 14px 16px; }
-            .payment-row { flex-wrap: wrap; gap: 10px; }
-            .cta-group { flex-direction: column; }
-            .cta-primary, .cta-secondary { padding: 15px; }
-            .email-footer { padding: 20px; }
-        }
-    </style>
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .ref-bar-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+        .hero-title { font-size: 20px !important; }
+        .cta-table { border-spacing: 4px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
 
-        <!-- ══ Header ══ -->
-        <div class="email-header">
-            <div class="logo-area">
-                <div>
-                    <div class="brand-name">Elle A Osé</div>
-                    <div class="brand-sub">Espaces de travail</div>
-                </div>
-                <span class="tag-confirmed">Réservation confirmée</span>
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+
+    <!-- ══ HEADER ══ -->
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle">
+                        <div class="brand-name">Elle A Osé</div>
+                        <div class="brand-sub">Espace de coworking</div>
+                    </td>
+                    <td align="right" valign="middle" style="white-space:nowrap;">
+                        <span class="status-pill" th:text="${eventTag ?: 'Confirmée'}">Confirmée</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td class="header-stripe" style="height:3px; background:linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size:0; line-height:0;">&nbsp;</td></tr>
+
+    <!-- ══ HERO ══ -->
+    <tr>
+        <td class="hero-td">
+            <div class="hero-label">Tout est prêt &#x2714;</div>
+            <div class="hero-title">Votre réservation est confirmée</div>
+            <div class="hero-sub">
+                Bonjour <strong th:text="${recipientName}">client</strong>,
+                nous avons bien enregistré votre réservation.
             </div>
-        </div>
-        <div class="header-stripe"></div>
+        </td>
+    </tr>
 
-        <!-- ══ Hero ══ -->
-        <div class="hero">
-            <div class="hero-text">
-                <div class="hero-label">Tout est prêt</div>
-                <div class="hero-title">Votre réservation est confirmée</div>
-                <div class="hero-sub">
-                    Bonjour <strong th:text="${contactName}">Marie Dupont</strong>,
-                    nous avons bien enregistré votre réservation.
-                </div>
-            </div>
+    <!-- ══ REF BAR ══ -->
+    <tr>
+        <td class="ref-bar-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="ref-label">Référence de réservation</td>
+                    <td align="right" class="ref-number" th:text="${bookingNumber}">BKG-000001</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
 
-            <!-- 3D Workspace illustration -->
-            <div class="hero-illustration">
-                <svg viewBox="0 0 200 155" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" fill="none">
-                    <defs>
-                        <linearGradient id="screenBkg" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#3b1d7c"/>
-                            <stop offset="100%" stop-color="#0a0515"/>
-                        </linearGradient>
-                        <linearGradient id="deskTop" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#f0ecf8"/>
-                            <stop offset="100%" stop-color="#ddd6ee"/>
-                        </linearGradient>
-                        <radialGradient id="shadowG" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="rgba(0,0,0,0.25)"/>
-                            <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
-                        </radialGradient>
-                    </defs>
+    <!-- ══ BODY ══ -->
+    <tr>
+        <td class="body-td">
 
-                    <!-- Ground shadow -->
-                    <ellipse cx="98" cy="138" rx="70" ry="9" fill="url(#shadowG)"/>
-
-                    <!-- DESK — top surface -->
-                    <polygon points="90,64 130,86 102,103 62,81" fill="url(#deskTop)"/>
-                    <!-- Top gold edge -->
-                    <polyline points="62,81 102,103 130,86" stroke="#c9a84c" stroke-width="1.2" stroke-linecap="round" opacity="0.65"/>
-                    <line x1="90" y1="64" x2="62" y2="81" stroke="rgba(255,255,255,0.4)" stroke-width="0.8"/>
-                    <line x1="90" y1="64" x2="130" y2="86" stroke="rgba(255,255,255,0.5)" stroke-width="0.8"/>
-
-                    <!-- DESK — front face -->
-                    <polygon points="62,81 102,103 102,119 62,97" fill="#b8add0"/>
-                    <!-- DESK — right face -->
-                    <polygon points="130,86 102,103 102,119 130,102" fill="#ccc2de"/>
-                    <!-- Bottom edge highlight -->
-                    <line x1="62" y1="97" x2="102" y2="119" stroke="#c9a84c" stroke-width="0.7" opacity="0.35"/>
-                    <line x1="102" y1="119" x2="130" y2="102" stroke="#c9a84c" stroke-width="0.7" opacity="0.35"/>
-
-                    <!-- KEYBOARD -->
-                    <polygon points="70,88 96,101 101,97 75,85" fill="#ddd6ee"/>
-                    <polygon points="71,89 95,101 100,97 76,86" fill="#ede8f6" opacity="0.55"/>
-                    <line x1="74" y1="90" x2="93" y2="99" stroke="#c8bedc" stroke-width="0.6"/>
-                    <line x1="76" y1="93" x2="96" y2="102" stroke="#c8bedc" stroke-width="0.5"/>
-
-                    <!-- MONITOR STAND BASE (flat on desk) -->
-                    <polygon points="97,83 104,87 101,89 94,85" fill="#ccc2de"/>
-                    <!-- Stand neck -->
-                    <polygon points="100,73 104,75 104,83 100,81" fill="#ccc2de"/>
-
-                    <!-- MONITOR FRAME (bezel) -->
-                    <polygon points="92,50 117,62 117,83 92,71" fill="#ede8f6"/>
-                    <!-- Gold bezel rim -->
-                    <polygon points="91,49 118,61 118,84 91,72" fill="none" stroke="#c9a84c" stroke-width="0.9" opacity="0.45"/>
-
-                    <!-- MONITOR SCREEN -->
-                    <polygon points="94,52 115,63 115,81 94,70" fill="url(#screenBkg)"/>
-
-                    <!-- Screen UI: fake data lines -->
-                    <line x1="97" y1="59" x2="112" y2="67" stroke="#a78bfa" stroke-width="1.1" opacity="0.55"/>
-                    <line x1="97" y1="63" x2="110" y2="70" stroke="#a78bfa" stroke-width="0.8" opacity="0.38"/>
-                    <rect x="97" y="56" width="7" height="1.8" rx="0.9" fill="#c9a84c" opacity="0.55" transform="skewX(-8)"/>
-                    <!-- Cursor / accent -->
-                    <circle cx="109" cy="76" r="1.8" fill="#c9a84c" opacity="0.9"/>
-                    <!-- Subtle glow on screen -->
-                    <polygon points="94,52 115,63 115,81 94,70" fill="#6d28d9" opacity="0.06"/>
-
-                    <!-- MONITOR — top face -->
-                    <polygon points="91,49 118,61 115,63 88,51" fill="#ddd6ee"/>
-                    <!-- MONITOR — right face -->
-                    <polygon points="118,61 118,84 115,81 115,63" fill="#c8bedc"/>
-
-                    <!-- Screen glow on desk -->
-                    <ellipse cx="106" cy="88" rx="10" ry="4" fill="#7c3aed" opacity="0.07"/>
-
-                    <!-- PLANT — pot -->
-                    <polygon points="87,69 93,73 92,78 86,74" fill="#ccc2de"/>
-                    <!-- PLANT — leaves -->
-                    <ellipse cx="88" cy="64" rx="5" ry="4.5" fill="#86efac" opacity="0.9"/>
-                    <ellipse cx="91" cy="61" rx="4" ry="3.5" fill="#4ade80" opacity="0.85"/>
-                    <ellipse cx="86" cy="61" rx="3.5" ry="3" fill="#a3f4c0" opacity="0.75"/>
-                </svg>
-            </div>
-        </div>
-
-        <!-- ══ Booking ref bar ══ -->
-        <div class="ref-bar">
-            <span class="ref-label">Référence de réservation</span>
-            <span class="ref-number" th:text="${bookingRef}">EAO-2025-0847</span>
-        </div>
-
-        <!-- ══ Email body ══ -->
-        <div class="email-body">
-
-            <!-- Space details -->
-            <div class="section-label">Espace réservé</div>
-            <div class="space-card">
-                <div class="space-card-head">
-                    <div class="space-name" th:text="${spaceName}">Bureau Privé — Salle Jade</div>
-                    <div class="space-type-tag" th:text="${spaceType}">Bureau privé</div>
-                </div>
+            <!-- Section : Espace réservé -->
+            <div class="section-lbl">Espace réservé</div>
+            <table class="space-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="space-head">
+                        <div class="space-name" th:text="${resourceName}">Espace réservé</div>
+                        <div class="space-type" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
+                    </td>
+                </tr>
 
                 <!-- Date -->
-                <div class="detail-row">
-                    <div class="detail-icon-wrap">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="1.5" y="2.5" width="13" height="12" rx="2" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
-                            <line x1="1.5" y1="5.5" x2="14.5" y2="5.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
-                            <line x1="5" y1="1" x2="5" y2="4" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round"/>
-                            <line x1="11" y1="1" x2="11" y2="4" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round"/>
-                            <circle cx="5" cy="9.5" r="1" fill="rgba(201,168,76,0.7)"/>
-                            <circle cx="8" cy="9.5" r="1" fill="rgba(201,168,76,0.7)"/>
-                            <circle cx="11" cy="9.5" r="1" fill="rgba(201,168,76,0.7)"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="detail-label">Date</span>
-                        <span class="detail-value" th:text="${bookingDate}">Mardi 10 juin 2025</span>
-                    </div>
-                </div>
+                <tr class="detail-row">
+                    <td class="detail-lbl-td"><span class="detail-lbl">Date</span></td>
+                    <td class="detail-val-td"><span class="detail-val" th:text="${bookingDate ?: startedAt}">—</span></td>
+                </tr>
 
                 <!-- Horaires -->
-                <div class="detail-row">
-                    <div class="detail-icon-wrap">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="8" cy="8" r="6.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
-                            <line x1="8" y1="4.5" x2="8" y2="8.2" stroke="rgba(201,168,76,0.8)" stroke-width="1.3" stroke-linecap="round"/>
-                            <line x1="8" y1="8" x2="10.5" y2="9.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" stroke-linecap="round"/>
-                            <circle cx="8" cy="8" r="1" fill="rgba(201,168,76,0.9)"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="detail-label">Horaires</span>
-                        <span class="detail-value">
+                <tr class="detail-row" style="background-color:rgba(255,255,255,.02);">
+                    <td class="detail-lbl-td"><span class="detail-lbl">Horaires</span></td>
+                    <td class="detail-val-td">
+                        <span class="detail-val">
                             <span th:text="${startTime}">09:00</span>
-                            <span class="time-sep">→</span>
+                            <span class="time-sep">&mdash;</span>
                             <span th:text="${endTime}">13:00</span>
-                            <span style="font-size:12px; color:rgba(255,255,255,.3); margin-left:8px;" th:text="${duration}">4 heures</span>
+                            <span class="time-dur" th:text="${durationLabel}">4 h</span>
                         </span>
-                    </div>
-                </div>
+                    </td>
+                </tr>
 
                 <!-- Capacité -->
-                <div class="detail-row" th:if="${capacity}">
-                    <div class="detail-icon-wrap">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="6" cy="5" r="2.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
-                            <path d="M1.5 13.5C1.5 11.015 3.515 9 6 9s4.5 2.015 4.5 4.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round"/>
-                            <circle cx="11.5" cy="5.5" r="2" stroke="rgba(255,255,255,0.25)" stroke-width="1.1"/>
-                            <path d="M10 13.5c0-1.5 1-2.5 2.5-2.5" stroke="rgba(255,255,255,0.25)" stroke-width="1.1" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="detail-label">Capacité</span>
-                        <span class="detail-value" th:text="${capacity}">4 personnes</span>
-                    </div>
-                </div>
+                <tr class="detail-row" th:if="${resourceCapacity}">
+                    <td class="detail-lbl-td"><span class="detail-lbl">Capacité</span></td>
+                    <td class="detail-val-td"><span class="detail-val" th:text="${resourceCapacity} + ' personne(s)'">—</span></td>
+                </tr>
 
-                <!-- Adresse -->
-                <div class="detail-row">
-                    <div class="detail-icon-wrap">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.5 4.5 8.5 4.5 8.5s4.5-5 4.5-8.5C12.5 3.515 10.485 1.5 8 1.5z" stroke="rgba(255,255,255,0.4)" stroke-width="1.2"/>
-                            <circle cx="8" cy="6" r="1.5" fill="rgba(201,168,76,0.7)"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <span class="detail-label">Adresse</span>
-                        <span class="detail-value">
-                            <span th:text="${address}">12 Rue de la Paix</span><br>
-                            <span style="color:rgba(255,255,255,.45); font-size:13px;" th:text="${city}">33000 Bordeaux</span>
-                        </span>
-                    </div>
-                </div>
-            </div>
+                <!-- Localisation -->
+                <tr class="detail-row" th:if="${address}">
+                    <td class="detail-lbl-td"><span class="detail-lbl">Adresse</span></td>
+                    <td class="detail-val-td"><span class="detail-val" th:text="${address}">—</span></td>
+                </tr>
+            </table>
 
-            <!-- Price breakdown -->
-            <div class="section-label" style="margin-top: 20px;">Détail du paiement</div>
-            <div class="price-section">
-                <div class="price-total-row">
-                    <span class="price-total-label">Total</span>
-                    <span class="price-total-amount" th:text="${priceTTC}">149 000 F CFA</span>
-                </div>
-                <div class="price-line-row">
-                    <span class="price-line-label" th:text="${spaceName + ' × ' + duration}">Bureau Privé × 4 heures</span>
-                    <span class="price-line-amount" th:text="${priceHT}">120 000 F CFA</span>
-                </div>
-                <div class="price-line-row" th:if="${priceFees}">
-                    <span class="price-line-label">Frais de réservation</span>
-                    <span class="price-line-amount" th:text="${priceFees}">5 000 F CFA</span>
-                </div>
-                <div class="price-line-row">
-                    <span class="price-line-label" th:text="|TVA (${tvaPct ?: '20%'})|">TVA (20 %)</span>
-                    <span class="price-line-amount" th:text="${priceTVA}">24 000 F CFA</span>
-                </div>
-            </div>
+            <!-- Section : Détail du paiement -->
+            <div class="section-lbl" style="margin-top:20px;">Détail du paiement</div>
+            <table class="price-box" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr class="price-total-tr" style="border-bottom:1px solid rgba(255,255,255,.07);">
+                    <td class="price-total-lbl">Total TTC</td>
+                    <td class="price-total-amt" th:text="${priceTTC}">—</td>
+                </tr>
+                <tr class="price-line-tr" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                    <td class="price-line-lbl" th:text="|Base HT — ${resourceName} &times; ${durationLabel}|">Base HT</td>
+                    <td class="price-line-amt" th:text="${priceHT}">—</td>
+                </tr>
+                <tr class="price-line-tr" th:if="${priceFees}" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                    <td class="price-line-lbl">Frais de réservation</td>
+                    <td class="price-line-amt" th:text="${priceFees}">—</td>
+                </tr>
+                <tr class="price-line-tr" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                    <td class="price-line-lbl" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</td>
+                    <td class="price-line-amt" th:text="${priceTVA}">—</td>
+                </tr>
+                <tr>
+                    <td class="price-line-lbl" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
+                    <td class="price-line-amt" th:text="${priceCentimeAdditionnel}">—</td>
+                </tr>
+            </table>
 
-            <!-- Payment method -->
-            <div class="section-label" style="margin-top: 20px;">Paiement</div>
-            <div class="payment-section">
-                <div class="payment-row">
-                    <div class="payment-info">
-                        <div class="payment-card-icon">
-                            <!-- Card chip icon -->
-                            <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="1" y="1" width="20" height="14" rx="2.5" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-                                <rect x="4" y="5" width="6" height="5" rx="1" fill="rgba(201,168,76,0.45)"/>
-                                <line x1="4" y1="7.5" x2="10" y2="7.5" stroke="rgba(201,168,76,0.6)" stroke-width="0.8"/>
-                                <line x1="7" y1="5" x2="7" y2="10" stroke="rgba(201,168,76,0.6)" stroke-width="0.8"/>
-                            </svg>
+            <!-- Section : Paiement -->
+            <div class="section-lbl" style="margin-top:20px;">Paiement</div>
+            <table class="pay-box" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle" style="padding-right:14px; width:36px;"><span class="pay-emoji">&#x1F4B3;</span></td>
+                    <td valign="middle">
+                        <div class="pay-name" th:text="${paymentMethod}">Mode de paiement</div>
+                        <div class="pay-date" th:text="${paymentDate}">—</div>
+                    </td>
+                    <td align="right" valign="middle" class="pay-amt" th:text="${priceTTC}">—</td>
+                </tr>
+            </table>
+
+            <!-- Section : QR code -->
+            <table class="qr-box" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td align="center">
+                        <div class="qr-lbl">Présentez ce code à l'accueil</div>
+
+                        <!-- QR réel (CID inline) -->
+                        <div th:if="${showQr}" class="qr-img-wrap">
+                            <img src="cid:qr-booking" alt="QR Code" class="qr-img" width="140" height="140"/>
                         </div>
-                        <div>
-                            <div class="payment-name">
-                                <span th:text="${paymentMethod}">Carte bancaire</span>
-                                <span th:if="${paymentLast4}" style="color:rgba(255,255,255,.4);">
-                                    ····<span th:text="${paymentLast4}">1234</span>
-                                </span>
-                            </div>
-                            <div class="payment-date" th:text="${paymentDate}">05/06/2025, 09:00</div>
+
+                        <!-- Placeholder quand pas de QR -->
+                        <div th:unless="${showQr}" class="qr-placeholder">&#x1F4F1;</div>
+
+                        <div class="qr-ref" th:text="${bookingNumber}">BKG-000001</div>
+                        <div class="verify-code" th:if="${verificationCode}" th:text="|Code : ${verificationCode}|">Code : CHK-123</div>
+
+                        <div class="qr-steps" style="margin-top:12px;">
+                            <div class="qr-step">1. Présentez ce QR code à l'accueil à votre arrivée.</div>
+                            <div class="qr-step">2. Si le scan échoue, communiquez le code ci-dessus.</div>
+                            <div class="qr-step">3. Gardez cet email accessible jusqu'à la fin de votre session.</div>
                         </div>
-                    </div>
-                    <span class="payment-amount" th:text="${priceTTC}">149 000 F CFA</span>
-                </div>
-                <!-- payment actions removed -->
-            </div>
+                    </td>
+                </tr>
+            </table>
 
             <!-- CTAs -->
-            <div class="cta-group">
-                <a href="#" th:href="${bookingUrl}" class="cta-primary">Voir ma réservation</a>
-                <a href="#" th:href="${invoiceUrl}" class="cta-secondary">Télécharger le PDF</a>
-            </div>
+            <table class="cta-table" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td style="padding:4px;">
+                        <a th:href="${bookingUrl}" href="https://elleaose.com" class="cta-primary">Voir ma réservation</a>
+                    </td>
+                    <td style="padding:4px;">
+                        <a th:href="${invoiceUrl}" href="https://elleaose.com" class="cta-secondary">Télécharger le PDF</a>
+                    </td>
+                </tr>
+            </table>
 
-            <!-- Legal note -->
-            <p class="legal-note">
-                Le prix n'inclut pas d'éventuels frais bancaires. Contactez votre banque pour en savoir plus.<br>
-                Pour gérer vos réservations, rendez-vous sur <a th:href="${accountUrl ?: '#'}">votre espace personnel</a>.
+            <p class="legal">
+                Le prix n'inclut pas d'éventuels frais bancaires.<br>
+                Pour gérer vos réservations&nbsp;: <a th:href="${accountUrl ?: 'https://elleaose.com'}">elleaose.com</a>
             </p>
 
-        </div>
+        </td>
+    </tr>
 
-        <!-- ══ Footer ══ -->
-        <div class="email-footer">
-            <div class="footer-brand">Elle A Osé · Espaces de travail</div>
-            <div style="font-size:10px; color:rgba(255,255,255,.15); letter-spacing:1px; text-transform:uppercase; margin-bottom:10px;">Engineered by SNI</div>
+    <!-- ══ FOOTER ══ -->
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
             <div class="footer-text">
-                Cet email est envoyé automatiquement suite à votre réservation.<br>
-                Pour toute question, contactez-nous à <a href="/cdn-cgi/l/email-protection#e784889088958c9497868482a7828b8b8286889482c984888a" style="color:rgba(255,255,255,.3);"><span class="__cf_email__" data-cfemail="34575b435b465f47445557517451585851555b47511a575b59">[email&#160;protected]</span></a> ou au <a href="tel:052042552" style="color:rgba(255,255,255,.3);">05 204 2552</a>
+                Email généré automatiquement suite à votre réservation.<br>
+                <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552">05 204 2552</a>
             </div>
-        </div>
+        </td>
+    </tr>
 
-    </div>
-</div>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</table>
+</td></tr>
+</table>
+</body>
 </html>

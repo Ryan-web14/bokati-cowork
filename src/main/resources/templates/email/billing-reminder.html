@@ -3,36 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rappel de reglement</title>
+    <title>Rappel de règlement</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
-        .card { max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
-        .email-header { background: #1a0a2e; padding: 24px 32px 20px; position: relative; overflow: hidden; }
-        .email-header::after { content: ''; position: absolute; top: 0; right: -20px; width: 160px; height: 100%; background: rgba(255,255,255,0.03); transform: skewX(-12deg); }
-        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
-        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
-        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
-        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
-        .notification-tag { background: rgba(201, 168, 76, 0.15); border: 1px solid rgba(201, 168, 76, 0.4); color: #c9a84c; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
-        .email-body { padding: 32px 32px 28px; }
-        .event-title { font-size: 20px; font-weight: 700; color: #1a0a2e; text-align: center; margin-bottom: 6px; }
-        .event-subtitle { font-size: 12px; color: #7c6d8f; text-align: center; margin-bottom: 24px; }
-        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 10px; }
-        .message { font-size: 13px; color: #5c4f6e; line-height: 1.65; margin-bottom: 22px; }
-        .info-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 22px; }
-        .info-box-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
-        .info-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid #f0eaf8; font-size: 13px; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 1.6; }
+        .wrap { width: 100%; min-height: 100vh; padding: 48px 20px; background: #e8e4f0; }
+        .card { max-width: 600px; margin: 0 auto; background: #0f0720; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.4), 0 12px 36px rgba(0,0,0,.45), 0 40px 80px rgba(0,0,0,.3); }
+        .email-header { background: #0a0418; padding: 26px 36px 24px; position: relative; overflow: hidden; }
+        .email-header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(201,168,76,.12) 0%, transparent 65%); pointer-events: none; }
+        .header-stripe { height: 2px; background: linear-gradient(90deg, #f59e0b 0%, #c9a84c 45%, #4c1d95 100%); }
+        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .brand-name { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 3.5px; text-transform: uppercase; }
+        .brand-sub { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 5px; }
+        .status-tag { font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; background: rgba(245,158,11,.14); border: 1px solid rgba(245,158,11,.30); color: #fbbf24; white-space: nowrap; }
+        .hero { background: #110820; padding: 36px 36px 32px; border-bottom: 1px solid rgba(255,255,255,.05); }
+        .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #fbbf24; margin-bottom: 10px; }
+        .hero-title { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -.5px; line-height: 1.2; margin-bottom: 10px; }
+        .hero-sub { font-size: 15px; color: rgba(255,255,255,.45); line-height: 1.6; }
+        .hero-sub strong { color: rgba(255,255,255,.78); }
+        .ref-bar { background: rgba(245,158,11,.07); border-top: 1px solid rgba(245,158,11,.12); border-bottom: 1px solid rgba(245,158,11,.12); padding: 13px 36px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .ref-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.35); font-weight: 700; }
+        .ref-number { font-size: 14px; font-weight: 700; color: #fbbf24; font-family: "SF Mono", Consolas, monospace; letter-spacing: 1.5px; text-align: right; }
+        .email-body { padding: 28px 36px 36px; }
+        .message { color: rgba(255,255,255,.56); font-size: 14px; line-height: 1.75; margin-bottom: 22px; }
+        .message strong { color: rgba(255,255,255,.82); }
+        .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; }
+        .info-card { border: 1px solid rgba(255,255,255,.07); border-radius: 12px; overflow: hidden; margin-bottom: 22px; }
+        .info-head { background: rgba(245,158,11,.09); border-left: 3px solid #f59e0b; padding: 16px 20px; color: #fff; font-size: 16px; font-weight: 700; }
+        .info-row { padding: 13px 20px; border-bottom: 1px solid rgba(255,255,255,.04); display: flex; justify-content: space-between; gap: 16px; }
         .info-row:last-child { border-bottom: none; }
-        .info-key { color: #7c6d8f; font-size: 11px; font-weight: 600; width: 145px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .info-val { color: #1a0a2e; font-weight: 700; font-size: 12.5px; flex: 1; text-align: right; }
-        .cta-wrap { text-align: center; margin-bottom: 22px; }
-        .cta-btn { display: inline-block; background: #1a0a2e; color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 13px 32px; border-radius: 3px; border: 1.5px solid #c9a84c; }
-        .note { font-size: 11.5px; color: #7c6d8f; line-height: 1.65; text-align: center; }
-        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
-        .footer-brand { font-size: 10px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
+        .info-key { color: rgba(255,255,255,.35); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; }
+        .info-val { color: rgba(255,255,255,.85); font-size: 14px; font-weight: 600; text-align: right; }
+        .balance { color: #fbbf24; }
+        .cta-wrap { text-align: center; margin: 4px 0 22px; }
+        .cta-btn { display: inline-block; background: #c9a84c; color: #0f0720; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 15px 30px; border-radius: 8px; }
+        .note { border: 1px solid rgba(255,255,255,.07); border-left: 3px solid #c9a84c; border-radius: 12px; background: rgba(201,168,76,.06); padding: 16px 18px; color: rgba(255,255,255,.44); font-size: 12px; line-height: 1.7; text-align: center; }
+        .email-footer { background: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 24px 36px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; }
+        .footer-text { font-size: 12px; color: rgba(255,255,255,.2); line-height: 1.65; }
+        .footer-text a { color: rgba(255,255,255,.3); }
+        @media (max-width: 480px) { .wrap { padding: 0; background: #0f0720; } .card { border-radius: 0; box-shadow: none; } .email-header, .hero, .email-body, .email-footer { padding-left: 20px; padding-right: 20px; } .hero-title { font-size: 22px; } .ref-bar { padding: 12px 20px; flex-wrap: wrap; } .info-row { display: block; } .info-val { display: block; text-align: left; margin-top: 4px; } }
     </style>
 </head>
 <body>
@@ -41,36 +51,37 @@
         <div class="email-header">
             <div class="logo-area">
                 <div>
-                    <div class="brand-name">Elle A Ose</div>
-                    <div class="brand-sub">Cowork &amp; Studio</div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Espaces de travail</div>
                 </div>
-                <div class="notification-tag">Rappel</div>
+                <span class="status-tag">Rappel</span>
             </div>
         </div>
         <div class="header-stripe"></div>
+        <div class="hero">
+            <div class="hero-label">Action requise</div>
+            <div class="hero-title">Rappel de règlement</div>
+            <div class="hero-sub">Bonjour <strong th:text="${customerName ?: 'client'}">client</strong>, un solde reste à régler sur votre document.</div>
+        </div>
+        <div class="ref-bar">
+            <span class="ref-label">Référence document</span>
+            <span class="ref-number" th:text="${documentNumber}">FAC-000</span>
+        </div>
         <div class="email-body">
-            <div class="event-title">Rappel de reglement</div>
-            <div class="event-subtitle">Un solde reste a regler</div>
-            <p class="greeting">Bonjour <strong th:text="${customerName}">client</strong>,</p>
-            <p class="message">Sauf erreur de notre part, la facture <strong th:text="${documentNumber}">FAC-000</strong> presente encore un montant en attente. Vous pouvez retrouver le recapitulatif ci-dessous.</p>
-            <div class="info-box">
-                <div class="info-box-head">Montant a regler</div>
-                <div class="info-row">
-                    <span class="info-key">Reference</span>
-                    <span class="info-val" th:text="${documentNumber}">FAC-000</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-key">Solde</span>
-                    <span class="info-val"><span th:text="${balanceDue}">0</span> <span th:text="${currency}">XAF</span></span>
-                </div>
+            <p class="message">Sauf erreur de notre part, la facture <strong th:text="${documentNumber}">FAC-000</strong> présente encore un montant en attente. Vous pouvez retrouver le récapitulatif ci-dessous.</p>
+            <div class="section-label">Montant à régler</div>
+            <div class="info-card">
+                <div class="info-head">Solde en attente</div>
+                <div class="info-row"><span class="info-key">Référence</span><span class="info-val" th:text="${documentNumber}">FAC-000</span></div>
+                <div class="info-row"><span class="info-key">Solde</span><span class="info-val balance"><span th:text="${balanceDue}">0</span> <span th:text="${currency}">XAF</span></span></div>
             </div>
             <div class="cta-wrap" th:if="${paymentLink != null}">
-                <a th:href="${paymentLink}" class="cta-btn">Regler ma facture</a>
+                <a th:href="${paymentLink}" class="cta-btn">Régler ma facture</a>
             </div>
-            <p class="note">Si votre paiement a deja ete effectue, vous pouvez ignorer ce rappel. Notre equipe reste disponible pour toute precision.</p>
+            <p class="note">Si votre paiement a déjà été effectué, vous pouvez ignorer ce rappel. Pour toute précision, contactez <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> ou le <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a>.</p>
         </div>
         <div class="email-footer">
-            <div class="footer-brand">Elle A Osé</div>
+            <div class="footer-brand">Elle A Osé · Espaces de travail</div>
             <div class="footer-text">Merci pour votre confiance.</div>
         </div>
     </div>
