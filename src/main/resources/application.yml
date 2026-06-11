@@ -3,7 +3,7 @@ spring:
     name: bokati-cowork
 
   profiles:
-    active: dev
+    active: prod
 
   jpa:
     database: postgresql
