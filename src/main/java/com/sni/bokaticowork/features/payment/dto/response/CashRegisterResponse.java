@@ -12,6 +12,7 @@ public record CashRegisterResponse(
         Boolean active,
         Boolean cashControlEnabled,
         BigDecimal maxCashAmount,
+        String managerEmail,
         Instant createdAt,
         Instant updatedAt
 ) {

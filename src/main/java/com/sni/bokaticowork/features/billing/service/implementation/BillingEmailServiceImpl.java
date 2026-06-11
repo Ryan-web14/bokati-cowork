@@ -84,6 +84,16 @@ public class BillingEmailServiceImpl implements BillingEmailService {
 
     @Async
     @Override
+    public void sendDocumentAsync(String documentNumber) {
+        try {
+            sendDocument(documentNumber);
+        } catch (Exception e) {
+            log.warn("Envoi async facture {} échoué : {}", documentNumber, e.getMessage());
+        }
+    }
+
+    @Async
+    @Override
     public void sendPaymentConfirmation(BillingDocumentResponse document, PaymentTransactionResponse transaction) {
         if (!StringUtils.hasText(document.customerEmail())) {
             log.debug("No email for customer {}, skipping payment confirmation", document.customerCode());

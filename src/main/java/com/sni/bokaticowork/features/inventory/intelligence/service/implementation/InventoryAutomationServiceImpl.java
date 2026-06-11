@@ -12,25 +12,42 @@ import com.sni.bokaticowork.features.inventory.intelligence.service.interfaces.I
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
 import com.sni.bokaticowork.features.inventory.stock.model.StockLevel;
 import com.sni.bokaticowork.features.inventory.stock.model.StockMovement;
+import com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistRequest;
+import com.sni.bokaticowork.features.task.dto.TaskDtos.CreateTaskRequest;
+import com.sni.bokaticowork.features.task.enums.TaskPriority;
+import com.sni.bokaticowork.features.task.enums.TaskRecurrence;
+import com.sni.bokaticowork.features.task.service.interfaces.TaskManagementService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class InventoryAutomationServiceImpl implements InventoryAutomationService {
 
     private final InventoryAlertRepository alertRepository;
     private final InventoryReorderRuleRepository reorderRuleRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final OutboxService outboxService;
+    private final TaskManagementService taskManagementService;
+
+    @Value("${bokati.task.inventory-reorder-due-hours:24}")
+    private long inventoryReorderDueHours;
+
+    @Value("${bokati.task.inventory-default-assignee:}")
+    private String inventoryDefaultAssignee;
 
     @Override
     public void afterStockMovement(StockMovement movement, StockLevel... impactedLevels) {
@@ -141,6 +158,51 @@ public class InventoryAutomationServiceImpl implements InventoryAutomationServic
                 .build();
         alertRepository.save(alert);
         outboxService.publish("inventory.alert.created", "INVENTORY_ALERT", alert.getAlertCode(), alertPayload(alert));
+        createInventoryTask(alert);
+    }
+
+    private void createInventoryTask(InventoryAlert alert) {
+        if (alert.getAlertType() != InventoryAlertType.LOW_STOCK
+                && alert.getAlertType() != InventoryAlertType.RECURRING_LOW_STOCK) {
+            return;
+        }
+        try {
+            String itemName = alert.getItem() == null ? "stock item" : alert.getItem().getName();
+            String itemCode = alert.getItem() == null ? "N/A" : alert.getItem().getItemCode();
+            String locationCode = alert.getLocation() == null ? "GLOBAL" : alert.getLocation().getLocationCode();
+            taskManagementService.createFromAutomation(new CreateTaskRequest(
+                    "Reapprovisionner " + itemName,
+                    "Alerte inventaire " + alert.getAlertCode()
+                            + ". Article: " + itemCode
+                            + ". Emplacement: " + locationCode
+                            + ". Quantite actuelle: " + alert.getCurrentQuantity()
+                            + ". Seuil: " + alert.getThresholdQuantity(),
+                    configuredAssignee(),
+                    alert.getAlertType() == InventoryAlertType.RECURRING_LOW_STOCK ? TaskPriority.URGENT : TaskPriority.HIGH,
+                    Instant.now().plusSeconds(Math.max(1, inventoryReorderDueHours) * 3600),
+                    "INVENTORY",
+                    alert.getAlertCode(),
+                    TaskRecurrence.NONE,
+                    List.of(
+                            new ChecklistRequest("Verifier le stock physique", false, 1),
+                            new ChecklistRequest("Creer ou mettre a jour la demande d'achat", false, 2)
+                    )
+            ));
+        } catch (Exception ex) {
+            log.warn("Failed to create inventory reorder task for alert {}", alert.getAlertCode(), ex);
+        }
+    }
+
+    private Long configuredAssignee() {
+        if (!StringUtils.hasText(inventoryDefaultAssignee)) {
+            return null;
+        }
+        try {
+            return Long.parseLong(inventoryDefaultAssignee.trim());
+        } catch (NumberFormatException ex) {
+            log.warn("Ignoring invalid inventory task assignee configuration value '{}'", inventoryDefaultAssignee);
+            return null;
+        }
     }
 
     private void resolveOpen(StockLevel level, InventoryAlertType type) {

@@ -3,6 +3,8 @@ package com.sni.bokaticowork.features.client.member.repository.specification;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.client.member.repository.specification.criteria.MemberSearchCriteria;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
@@ -23,14 +25,21 @@ public class MemberSpecification {
 
             List<Predicate> predicates = new ArrayList<>();
             List<Predicate> textPredicates = new ArrayList<>();
+            Join<Object, Object> customerJoin = root.join("customer", JoinType.INNER);
+            Join<Object, Object> userJoin = root.join("user", JoinType.INNER);
+
+            predicates.add(cb.isFalse(root.get("deleted")));
+            predicates.add(cb.isFalse(customerJoin.get("deleted")));
+            predicates.add(cb.isFalse(userJoin.get("deleted")));
 
             if (criteria == null) {
                 if (fuzzyMatchedMemberIds == null) {
-                    return cb.conjunction();
+                    return cb.and(predicates.toArray(new Predicate[0]));
                 }
-                return fuzzyMatchedMemberIds.isEmpty()
+                predicates.add(fuzzyMatchedMemberIds.isEmpty()
                         ? cb.disjunction()
-                        : root.get("memberId").in(fuzzyMatchedMemberIds);
+                        : root.get("memberId").in(fuzzyMatchedMemberIds));
+                return cb.and(predicates.toArray(new Predicate[0]));
             }
 
             if (fuzzyMatchedMemberIds != null) {
@@ -43,7 +52,7 @@ public class MemberSpecification {
 
             if (StringUtils.hasText(criteria.getCustomerId())) {
                 predicates.add(
-                        fuzzyTextMatch(cb, root.get("customer").get("customerId").as(String.class), criteria.getCustomerId().trim())
+                        fuzzyTextMatch(cb, customerJoin.get("customerId").as(String.class), criteria.getCustomerId().trim())
                 );
             }
 

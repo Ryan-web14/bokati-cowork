@@ -251,7 +251,13 @@ UI:
 | `PATCH` | `/support/tickets/{ticketNumber}/assign` | `SUPPORT:ASSIGN` | Assigner |
 | `PATCH` | `/support/tickets/{ticketNumber}/status` | `SUPPORT:WRITE` | Changer statut |
 | `POST` | `/support/tickets/{ticketNumber}/messages` | `SUPPORT:WRITE` | Repondre |
+| `GET` | `/support/tickets/{ticketNumber}/timeline` | `SUPPORT:READ` | Historique evenements du ticket |
+| `POST` | `/support/tickets/{ticketNumber}/task` | `SUPPORT:WRITE` + `TASK:WRITE` | Convertir le ticket en tache operationnelle |
+| `GET` | `/support/tickets/by-owner?ownerType=&ownerCode=` | `SUPPORT:READ` | Resume support pour la fiche client/membre (Client 360) |
 | `GET` | `/support/tickets/metrics` | `SUPPORT:METRICS` | Metriques SLA |
+| `GET` | `/support/tickets/analytics?from=&to=` | `SUPPORT:METRICS` | Analytics enrichis sur la periode |
+| `GET` | `/support/tickets/analytics.csv?from=&to=` | `SUPPORT:METRICS` | Export CSV des analytics |
+| `GET` | `/support/tickets/agents/performance?from=&to=` | `SUPPORT:METRICS` | Performance par agent sur la periode |
 
 Filtres:
 
@@ -327,12 +333,38 @@ Categories:
 | `POST` | `/client/support/tickets/{ticketNumber}/messages` | Repondre |
 | `PATCH` | `/client/support/tickets/{ticketNumber}/close` | Clore |
 
+### Conversion ticket -> tache
+
+Depuis `SupportTicketDetailPage`, un agent disposant de `SUPPORT:WRITE` et `TASK:WRITE` peut transformer
+un ticket en tache operationnelle via `POST /support/tickets/{ticketNumber}/task`:
+
+```json
+{
+  "title": "Recontacter le client pour verifier la facture",
+  "description": "Suite au ticket TCK-1777480000000, verifier le calcul et rappeler le client.",
+  "assignedTo": 12,
+  "priority": "HIGH",
+  "dueAt": "2026-04-30T18:00:00Z",
+  "checklist": [
+    { "label": "Verifier le montant facture", "completed": false, "displayOrder": 1 },
+    { "label": "Rappeler le client", "completed": false, "displayOrder": 2 }
+  ]
+}
+```
+
+La tache creee porte `sourceType = "SUPPORT_TICKET"` et `sourceCode = ticketNumber`: elle est donc
+retrouvable depuis `GET /tasks?sourceType=SUPPORT_TICKET` (cf. section 6) et un evenement
+`TASK_CREATED` est ajoute a la timeline du ticket (`GET /support/tickets/{ticketNumber}/timeline`).
+La reponse est l'objet `TaskResponse` du module Task (memes champs que `POST /tasks`).
+
 UI admin:
 
 - `SupportTicketListPage` avec filtres statut, priorite, agent, owner;
-- `SupportTicketDetailPage` avec timeline messages;
+- `SupportTicketDetailPage` avec timeline messages et evenements (`/timeline`);
 - panneau SLA: premiere reponse, resolution;
 - bouton assigner si `SUPPORT:ASSIGN`;
+- bouton "Convertir en tache" si `SUPPORT:WRITE` + `TASK:WRITE`, ouvrant un formulaire reprenant
+  titre/description du ticket et permettant d'ajouter une checklist;
 - badges couleur par priorite.
 
 UI client:
@@ -342,6 +374,170 @@ UI client:
 - voir messages;
 - ajouter reponse;
 - fermer ticket.
+
+### Client 360 / resume support par owner
+
+`GET /support/tickets/by-owner?ownerType=MEMBER&ownerCode=MBR-000001` (`SUPPORT:READ`) retourne un
+resume du support pour un membre/client/entreprise donne, destine aux widgets de la fiche client (CRM)
+et de la fiche membre/visiteur :
+
+```json
+{
+  "ownerType": "MEMBER",
+  "ownerCode": "MBR-000001",
+  "openTickets": 2,
+  "slaBreaches": 1,
+  "avgCsatScore": 3.5,
+  "atRisk": true,
+  "recentTickets": [ /* 5 derniers SupportTicketResponse, plus recents en premier */ ]
+}
+```
+
+`atRisk` est calcule cote serveur: vrai si l'owner a au moins 3 tickets ouverts, au moins une
+violation de SLA en cours, ou une note CSAT moyenne inferieure a 3/5. `avgCsatScore` est `null`
+si l'owner n'a soumis aucune evaluation CSAT.
+
+UI suggeree: widgets "Tickets ouverts", "Derniers tickets", "CSAT moyen", "Violations SLA" et un
+badge "Client a risque" sur la fiche client/membre (CRM 360), alimentes par cet endpoint unique.
+
+### Creation automatique de tickets depuis les anomalies
+
+Deux flux declenchent desormais la creation automatique d'un ticket de support
+(`SupportTicketService.createFromAutomation`, qui evite les doublons en verifiant qu'aucun ticket
+`OPEN`/`IN_PROGRESS`/`WAITING_CLIENT` n'existe deja avec le meme `relatedType`/`relatedCode`) :
+
+- **Anomalies de caisse (facturation)**: toute anomalie de caisse de severite `HIGH` detectee par
+  `CashAnomalyDetectionServiceImpl` ouvre un ticket `BILLING` / `HIGH` avec
+  `ownerType = "CASHIER"`, `ownerCode = <caissier>`, `relatedType = "CASH_ANOMALY_FLAG"`,
+  `relatedCode = <numero du flag>`.
+- **Quota de no-show (reservation)**: lorsque `BookingPolicyEnforcer` detecte qu'un owner a atteint
+  le quota mensuel de no-show de sa politique de reservation, un ticket `BOOKING` / `HIGH` est cree
+  avec `ownerType`/`ownerCode` correspondant au client, `relatedType = "BOOKING_NO_SHOW_QUOTA"`,
+  `relatedCode = <ownerCode>`, **avant** que la reservation ne soit rejetee — le ticket est cree dans
+  une transaction independante (`PROPAGATION_REQUIRES_NEW`) afin de survivre au rollback de la
+  creation de reservation refusee.
+
+Ces tickets apparaissent dans `SupportTicketListPage` comme tout autre ticket et alimentent le widget
+"Derniers tickets" du resume Client 360 ci-dessus.
+
+### Base de connaissances (Knowledge Base)
+
+Endpoints admin (`SUPPORT:READ`/`SUPPORT:WRITE`/`SUPPORT:METRICS`):
+
+| Methode | Endpoint | Permission | Usage |
+| --- | --- | --- | --- |
+| `GET` | `/support/knowledge-base?category=&searchText=` | `SUPPORT:READ` | Lister/rechercher les articles |
+| `GET` | `/support/knowledge-base/{articleCode}` | `SUPPORT:READ` | Detail d'un article |
+| `POST` | `/support/knowledge-base` | `SUPPORT:WRITE` | Creer un article |
+| `PUT` | `/support/knowledge-base/{articleCode}` | `SUPPORT:WRITE` | Modifier un article |
+| `DELETE` | `/support/knowledge-base/{articleCode}` | `SUPPORT:WRITE` | Desactiver (soft-delete) |
+| `GET` | `/support/knowledge-base/suggestions?category=&searchText=&limit=5` | `SUPPORT:READ` | Suggestions (articles publics + internes) |
+| `GET` | `/support/knowledge-base/analytics?from=&to=` | `SUPPORT:METRICS` | Articles consultes vs tickets crees sur la periode |
+| `POST` | `/support/tickets/{ticketNumber}/messages/{messageId}/convert-to-article` | `SUPPORT:WRITE` | Convertir un message agent en article |
+
+Endpoints publics/client (authentifie, sans permission specifique — comme `/client/support/tickets`):
+
+| Methode | Endpoint | Usage |
+| --- | --- | --- |
+| `GET` | `/client/support/knowledge-base?category=&searchText=` | Rechercher les articles publics actifs |
+| `GET` | `/client/support/knowledge-base/{slug}` | Lire un article (incremente `viewCount`) |
+| `GET` | `/client/support/knowledge-base/suggestions?category=&searchText=&limit=5` | Suggestions publiques pendant la creation de ticket |
+
+Creation d'article:
+
+```json
+{
+  "title": "Comment modifier mes informations de facturation ?",
+  "slug": "modifier-informations-facturation",
+  "body": "<p>Rendez-vous dans...</p>",
+  "category": "BILLING",
+  "tags": ["facturation", "compte"],
+  "publicVisible": true,
+  "internalOnly": false,
+  "active": true
+}
+```
+
+Notes:
+
+- `articleCode` (genere, ex. `KB-1777480000000`) et `slug` (genere depuis le titre si absent, deduplique
+  automatiquement) sont retournes dans la reponse `KnowledgeArticleResponse`;
+- `tags` est expose en `List<String>` cote API (stocke en interne sous forme de chaine);
+- un article public (`publicVisible = true` et `active = true`) est consultable via le slug cote client,
+  ce qui incremente son `viewCount`;
+- la conversion message -> article reprend le contenu du message comme corps, et la categorie du ticket
+  si aucune n'est fournie;
+- l'endpoint `/suggestions` necessite au moins `category` ou `searchText` (sinon reponse vide), et limite
+  les resultats a 10 maximum.
+
+UI admin:
+
+- `KnowledgeBaseListPage` (recherche, filtres categorie, badges public/interne);
+- `KnowledgeArticleEditorPage` (titre, slug, corps riche, categorie, tags, visibilite);
+- panneau "Suggestions" affiche pendant la creation/edition d'un ticket (appel `/suggestions` avec
+  `category` + `searchText` du formulaire);
+- bouton "Convertir en article" sur un message agent dans `SupportTicketDetailPage`;
+- widget analytics: vues d'articles vs tickets crees sur la periode (`/analytics`).
+
+UI client:
+
+- `ClientKnowledgeBasePage` (recherche d'articles publics, suggestions pendant l'ouverture d'un ticket);
+- `ClientArticlePage` (lecture d'un article via son slug).
+
+### Analytics avances et exports
+
+`GET /support/tickets/analytics?from=&to=` (`SUPPORT:METRICS`) a ete enrichi avec de nouveaux
+indicateurs de pilotage, en plus des champs deja presents (`totalCreated`, `byCategory`,
+`agentWorkload`, etc.) :
+
+```json
+{
+  "slaBreachRate": 4.2,
+  "reopenedCount": 3,
+  "waitingClientCount": 7,
+  "volumeByRelatedType": { "INVOICE": 12, "BOOKING": 5, "CASH_ANOMALY_FLAG": 2 },
+  "backlogByAgent": { "12": 8, "15": 3 },
+  "csatByCategory": { "BILLING": 4.1, "TECHNICAL": 3.6 },
+  "csatByAgent": { "12": 4.4, "15": 3.9 }
+}
+```
+
+Notes :
+
+- `slaBreachRate` est le pourcentage de tickets crees sur la periode ayant subi une violation SLA ;
+- `reopenedCount` compte les evenements timeline `REOPENED` sur la periode ;
+- `waitingClientCount` est le nombre de tickets actuellement en statut `WAITING_CLIENT` (instantane,
+  non borne par `from`/`to`) — sert de proxy pour le widget "en attente client" ;
+- `backlogByAgent` est la charge actuelle (tickets `OPEN`/`IN_PROGRESS`/`WAITING_CLIENT`) par agent,
+  cle = `agentId` ;
+- `csatByCategory`/`csatByAgent` : note CSAT moyenne (1-5) groupee par categorie / par agent, absente
+  si aucune evaluation n'a ete soumise pour la cle.
+
+`GET /support/tickets/analytics.csv?from=&to=` (`SUPPORT:METRICS`) telecharge le meme rapport au
+format CSV (sections par indicateur puis par repartition), pret pour un export Excel.
+
+`GET /support/tickets/agents/performance?from=&to=` (`SUPPORT:METRICS`) retourne le detail par agent :
+
+```json
+[
+  {
+    "agentId": 12,
+    "assignedCount": 24,
+    "resolvedCount": 21,
+    "avgFirstResponseHours": 2.3,
+    "avgResolutionHours": 14.8,
+    "avgCsatScore": 4.4
+  }
+]
+```
+
+UI suggeree :
+
+- `SupportAnalyticsPage` : tuiles d'indicateurs (SLA breach rate, reouvertures, en attente client),
+  graphiques de repartition (categorie, priorite, type lie, tags), et bouton "Exporter en CSV"
+  pointant vers `/analytics.csv` ;
+- `SupportAgentPerformancePage` (ou onglet de la page analytics) : tableau triable par agent avec
+  charge assignee, taux de resolution, temps moyen de premiere reponse/resolution et CSAT moyen.
 
 ## 4. Visitor Management
 

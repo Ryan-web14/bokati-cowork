@@ -10,6 +10,7 @@ public record CreateCashRegisterRequest(
         String businessEntityCode,
         String deviceCode,
         Boolean cashControlEnabled,
-        BigDecimal maxCashAmount
+        BigDecimal maxCashAmount,
+        String managerEmail
 ) {
 }

@@ -293,7 +293,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
             case APPROVED, SIGNED -> KycDocumentVerificationStatus.VERIFIED;
             case REJECTED, ARCHIVED -> KycDocumentVerificationStatus.REJECTED;
             case EXPIRED -> KycDocumentVerificationStatus.EXPIRED;
-            case DRAFT, UPLOADED, PENDING_REVIEW, SUPERSEDED -> KycDocumentVerificationStatus.PENDING;
+            case DRAFT, UPLOADED, PENDING_REVIEW, NEEDS_CORRECTION, SUPERSEDED -> KycDocumentVerificationStatus.PENDING;
         };
     }
 

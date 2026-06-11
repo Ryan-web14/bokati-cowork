@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche de prêt d'actif</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0 0 16mm 0;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                font-size: 8px;
+                color: #9b8caa;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: #1a0a2e;
+            font-size: 10.5px;
+            line-height: 1.55;
+            margin: 0;
+            background: #ffffff;
+        }
+        h1, h2, h3, p { margin: 0; }
+        .doc-header {
+            background: #1a0a2e;
+            padding: 18px 26px 14px;
+        }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { vertical-align: middle; }
+        .brand-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        .brand-sub {
+            font-size: 7px;
+            color: #9b8caa;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 2px;
+        }
+        .doc-title-block { text-align: right; }
+        .doc-title-block h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+        .doc-title-block .doc-sub {
+            font-size: 9px;
+            color: #c9a84c;
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+        }
+        .content { padding: 22px 26px 0; }
+        .section {
+            margin-bottom: 18px;
+        }
+        .section-title {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #9b8caa;
+            border-bottom: 1px solid #e8e0f0;
+            padding-bottom: 4px;
+            margin-bottom: 10px;
+        }
+        table.info { width: 100%; border-collapse: collapse; }
+        table.info td {
+            padding: 4px 8px 4px 0;
+            vertical-align: top;
+        }
+        table.info td.label {
+            font-weight: 600;
+            color: #5a4a7a;
+            width: 36%;
+            font-size: 9.5px;
+        }
+        table.info td.value {
+            color: #1a0a2e;
+            font-size: 10px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 8.5px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .badge-active { background: #e8f5e9; color: #2e7d32; }
+        .badge-returned { background: #e3f2fd; color: #1565c0; }
+        .purpose-box {
+            background: #f5f0ff;
+            border-left: 3px solid #7c3aed;
+            padding: 10px 14px;
+            border-radius: 0 4px 4px 0;
+            font-size: 10.5px;
+            color: #1a0a2e;
+        }
+        .signature-row {
+            margin-top: 30px;
+        }
+        .sig-table { width: 100%; border-collapse: collapse; }
+        .sig-table td {
+            width: 50%;
+            padding: 0 12px 0 0;
+            vertical-align: top;
+        }
+        .sig-box {
+            border: 1px solid #c0b0d8;
+            border-radius: 4px;
+            padding: 8px 10px;
+            min-height: 60px;
+        }
+        .sig-label {
+            font-size: 8.5px;
+            color: #9b8caa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .sig-name {
+            font-weight: 600;
+            font-size: 10px;
+        }
+        .sig-placeholder {
+            color: #c0b0d8;
+            font-style: italic;
+            font-size: 9px;
+            margin-top: 16px;
+        }
+        .footer-note {
+            font-size: 8px;
+            color: #9b8caa;
+            margin-top: 22px;
+            text-align: center;
+            border-top: 1px solid #e8e0f0;
+            padding-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="doc-header">
+    <table class="header-table">
+        <tr>
+            <td>
+                <div class="brand-name">Bokati Cowork</div>
+                <div class="brand-sub">Espace de coworking</div>
+            </td>
+            <td class="doc-title-block">
+                <h1>Fiche de Prêt</h1>
+                <div class="doc-sub" th:text="'Généré le ' + ${generatedAt}"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="content">
+
+    <!-- Identification de l'actif -->
+    <div class="section">
+        <div class="section-title">Identification de l'actif</div>
+        <table class="info">
+            <tr>
+                <td class="label">Code actif</td>
+                <td class="value" th:text="${asset.assetCode}"></td>
+                <td class="label">Étiquette</td>
+                <td class="value" th:text="${asset.assetTag}"></td>
+            </tr>
+            <tr>
+                <td class="label">Article</td>
+                <td class="value" th:text="${asset.item.name}"></td>
+                <td class="label">Numéro de série</td>
+                <td class="value" th:text="${asset.serialNumber != null ? asset.serialNumber : '—'}"></td>
+            </tr>
+            <tr>
+                <td class="label">État au départ</td>
+                <td class="value" th:text="${assignment.checkoutCondition != null ? assignment.checkoutCondition : '—'}"></td>
+                <td class="label">Emplacement habituel</td>
+                <td class="value" th:text="${asset.location != null ? asset.location.name : '—'}"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Informations du prêt -->
+    <div class="section">
+        <div class="section-title">Informations du prêt</div>
+        <table class="info">
+            <tr>
+                <td class="label">Statut</td>
+                <td class="value">
+                    <span class="badge badge-active" th:if="${assignment.status.name() == 'ACTIVE'}">En cours</span>
+                    <span class="badge badge-returned" th:unless="${assignment.status.name() == 'ACTIVE'}" th:text="${assignment.status}"></span>
+                </td>
+                <td class="label">Remis par</td>
+                <td class="value" th:text="${assignment.assignedBy != null ? assignment.assignedBy : '—'}"></td>
+            </tr>
+            <tr>
+                <td class="label">Type bénéficiaire</td>
+                <td class="value" th:text="${assignment.assigneeType}"></td>
+                <td class="label">Code bénéficiaire</td>
+                <td class="value" th:text="${assignment.assigneeCode}"></td>
+            </tr>
+            <tr>
+                <td class="label">Date de début</td>
+                <td class="value" th:text="${assignment.startAt}"></td>
+                <td class="label">Retour prévu</td>
+                <td class="value" th:text="${assignment.expectedReturnAt != null ? assignment.expectedReturnAt : '—'}"></td>
+            </tr>
+            <tr th:if="${assignment.endAt != null}">
+                <td class="label">Date de retour effectif</td>
+                <td class="value" th:text="${assignment.endAt}"></td>
+                <td class="label">Retourné par</td>
+                <td class="value" th:text="${assignment.returnedBy != null ? assignment.returnedBy : '—'}"></td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Motif du prêt -->
+    <div class="section">
+        <div class="section-title">Motif du prêt</div>
+        <div class="purpose-box" th:text="${assignment.purpose != null ? assignment.purpose : '—'}"></div>
+    </div>
+
+    <!-- Notes éventuelles -->
+    <div class="section" th:if="${assignment.notes != null}">
+        <div class="section-title">Observations</div>
+        <div th:text="${assignment.notes}"></div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="section signature-row">
+        <div class="section-title">Signatures</div>
+        <table class="sig-table">
+            <tr>
+                <td>
+                    <div class="sig-box">
+                        <div class="sig-label">Remettant</div>
+                        <div class="sig-name" th:text="${assignment.assignedBy != null ? assignment.assignedBy : '—'}"></div>
+                        <div class="sig-placeholder" th:if="${assignment.receiverSignatureUrl == null}">Signature _______________</div>
+                    </div>
+                </td>
+                <td>
+                    <div class="sig-box">
+                        <div class="sig-label">Bénéficiaire (<span th:text="${assignment.assigneeCode}"></span>)</div>
+                        <div class="sig-placeholder">Signature _______________</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="footer-note">
+        Ce document constitue la preuve de remise temporaire de l'actif identifié ci-dessus.
+        Le bénéficiaire s'engage à restituer l'actif dans l'état indiqué avant la date de retour prévue.
+    </div>
+
+</div>
+
+</body>
+</html>

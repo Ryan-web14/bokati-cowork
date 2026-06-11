@@ -33,4 +33,6 @@ public interface AssetAssignmentRepository extends JpaRepository<AssetAssignment
     List<AssetAssignment> findAllByAssetOrderByStartAtDesc(Asset asset);
 
     List<AssetAssignment> findAllByStatusAndExpectedReturnAtBefore(AssetAssignmentStatus status, Instant expectedReturnAt);
+
+    List<AssetAssignment> findAllByStatusAndExpectedReturnAtBetween(AssetAssignmentStatus status, Instant from, Instant to);
 }

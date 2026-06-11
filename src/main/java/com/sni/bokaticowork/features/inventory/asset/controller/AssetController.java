@@ -18,7 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -118,5 +120,14 @@ public class AssetController {
     @GetMapping("/{assetCode}/location-history")
     public ResponseEntity<List<AssetLocationHistoryResponse>> locationHistory(@PathVariable String assetCode) {
         return ResponseEntity.ok(service.locationHistory(assetCode));
+    }
+
+    @GetMapping("/{assetCode}/assignments/{assignmentId}/loan-sheet.pdf")
+    public ResponseEntity<byte[]> loanSheetPdf(@PathVariable String assetCode, @PathVariable Long assignmentId) {
+        byte[] pdf = service.loanSheetPdf(assetCode, assignmentId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "loan-sheet-" + assetCode + "-" + assignmentId + ".pdf");
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 }

@@ -1,9 +1,13 @@
 package com.sni.bokaticowork.features.subscription.subscription.service.support.subscription;
 
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
 import com.sni.bokaticowork.features.contract.enums.ContractStatus;
 import com.sni.bokaticowork.features.contract.model.Contract;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractService;
+import com.sni.bokaticowork.features.payment.model.WalletHold;
+import com.sni.bokaticowork.features.payment.repository.WalletHoldRepository;
+import com.sni.bokaticowork.features.payment.service.interfaces.WalletHoldService;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.PauseSubscriptionRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.SubscriptionStatusChangeRequest;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillingScheduleStatus;
@@ -43,6 +47,9 @@ public class SubscriptionLifecycleOperator {
     private final @Lazy EntitlementService entitlementService;
     private final @Lazy ContractService contractService;
     private final SubscriptionEmailNotifier emailNotifier;
+    private final WalletHoldRepository walletHoldRepository;
+    private final WalletHoldService walletHoldService;
+    private final BillingDocumentRepository billingDocumentRepository;
 
     public void activate(Subscription subscription, String reason, String actor) {
         if (subscription.getStatus() == SubscriptionStatus.ACTIVE) {
@@ -115,9 +122,33 @@ public class SubscriptionLifecycleOperator {
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.CANCELLED);
         revokeActiveGrants(subscription);
         cancelAssociatedContract(subscription, cancelReason);
+        releaseDepositHold(subscription);
         Subscription saved = subscriptionRepository.save(subscription);
         emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
         return saved;
+    }
+
+    private void releaseDepositHold(Subscription subscription) {
+        List<WalletHold> activeHolds = walletHoldRepository.findAllByStatusAndSourceTypeAndSourceCode(
+                "ACTIVE", "SUBSCRIPTION", subscription.getSubscriptionNumber());
+        if (activeHolds.isEmpty()) {
+            return;
+        }
+        boolean hasUnpaidInvoices = !billingDocumentRepository.findRecoverableDocuments(
+                subscription.getSubscriberType().name(), subscription.getSubscriberCode()).isEmpty();
+        for (WalletHold hold : activeHolds) {
+            try {
+                if (hasUnpaidInvoices) {
+                    walletHoldService.capture(hold.getHoldNumber(), "SYSTEM");
+                    eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_CANCELLED,
+                            "Deposit hold " + hold.getHoldNumber() + " captured to cover outstanding invoices on cancellation");
+                } else {
+                    walletHoldService.release(hold.getHoldNumber(), "SYSTEM");
+                }
+            } catch (Exception ex) {
+                log.warn("Failed to release/capture deposit hold {} for subscription {}", hold.getHoldNumber(), subscription.getSubscriptionNumber(), ex);
+            }
+        }
     }
 
     public void renew(Subscription subscription) {

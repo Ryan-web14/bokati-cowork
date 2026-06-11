@@ -31,6 +31,7 @@ import com.sni.bokaticowork.features.payment.repository.CashMovementRepository;
 import com.sni.bokaticowork.features.payment.repository.CashRegisterRepository;
 import com.sni.bokaticowork.features.payment.repository.CashSessionRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService;
+import com.sni.bokaticowork.features.payment.service.support.CashEmailNotifier;
 import com.sni.bokaticowork.features.payment.service.support.CashSessionSummarySupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -67,6 +68,11 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final CashSessionSummarySupport summarySupport;
     private final CashRegisterMapper mapper;
+    private final CashEmailNotifier emailNotifier;
+    private final com.sni.bokaticowork.features.payment.repository.CashMovementAttachmentRepository attachmentRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+
+    private static final String CASH_SESSIONS_PATH = "/payments/cash-registers/sessions/";
 
     @Value("${bokati.payment.cash-session.auto-limit:10000000}")
     private BigDecimal autoSessionLimit;
@@ -85,6 +91,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .active(true)
                 .cashControlEnabled(request.cashControlEnabled() == null || request.cashControlEnabled())
                 .maxCashAmount(request.maxCashAmount() == null ? null : money(request.maxCashAmount()))
+                .managerEmail(trim(request.managerEmail()))
                 .build());
         return mapper.toCashRegisterResponse(register);
     }
@@ -191,7 +198,21 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         } else {
             session.setStatus(CashSessionStatus.CLOSING_REVIEW);
         }
-        return mapper.toCashSessionResponse(sessionRepository.save(session));
+        CashSession saved = sessionRepository.save(session);
+        if (variance.signum() != 0) {
+            emailNotifier.notifySupervisor(
+                    "Écart de caisse à valider — " + saved.getSessionNumber(),
+                    "La session " + saved.getSessionNumber() + " ouverte par " + saved.getOpenedBy()
+                            + " a été clôturée par " + saved.getClosedBy() + " avec un écart de " + variance
+                            + " " + CASH_CURRENCY + " (montant attendu : " + expected + ", montant compté : " + counted
+                            + "). Motif déclaré : " + trim(request.varianceReason())
+                            + ". Une validation par un superviseur est requise.",
+                    saved.getSessionNumber(),
+                    CASH_SESSIONS_PATH + saved.getSessionNumber()
+            );
+        }
+        eventPublisher.publishEvent(new com.sni.bokaticowork.features.payment.service.support.CashSessionClosedEvent(saved.getSessionNumber()));
+        return mapper.toCashSessionResponse(saved);
     }
 
     @Override
@@ -208,13 +229,73 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         }
         session.setStatus(CashSessionStatus.CLOSED);
         session.setClosedAt(Instant.now());
-        return mapper.toCashSessionResponse(sessionRepository.save(session));
+        CashSession saved = sessionRepository.save(session);
+        emailNotifier.notifyUser(
+                saved.getOpenedBy(),
+                "Écart de caisse validé — " + saved.getSessionNumber(),
+                "L'écart de " + trim(saved.getVarianceAmount() == null ? null : saved.getVarianceAmount().toPlainString())
+                        + " " + CASH_CURRENCY + " constaté sur votre session " + saved.getSessionNumber()
+                        + " a été validé par " + saved.getReviewedBy()
+                        + (StringUtils.hasText(request.note()) ? (" — Note : " + request.note().trim()) : "")
+                        + ". La session est désormais clôturée.",
+                saved.getSessionNumber(),
+                CASH_SESSIONS_PATH + saved.getSessionNumber()
+        );
+        return mapper.toCashSessionResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CashSessionSummaryResponse sessionSummary(String sessionNumber) {
         return summarySupport.summarize(session(sessionNumber));
+    }
+
+    @Override
+    public CashMovementResponse addAttachment(String movementNumber, com.sni.bokaticowork.features.payment.dto.request.AddCashMovementAttachmentRequest request) {
+        CashMovement movement = movementByNumber(movementNumber);
+        com.sni.bokaticowork.features.payment.model.CashMovementAttachment attachment =
+                com.sni.bokaticowork.features.payment.model.CashMovementAttachment.builder()
+                        .cashMovement(movement)
+                        .fileName(request.fileName().trim())
+                        .contentType(trim(request.contentType()))
+                        .storagePath(request.storagePath().trim())
+                        .label(trim(request.label()))
+                        .uploadedBy(trim(request.uploadedBy()))
+                        .build();
+        attachmentRepository.save(attachment);
+        return mapper.toCashMovementResponse(movement);
+    }
+
+    @Override
+    public CashMovementResponse signMovement(String movementNumber, String signedBy) {
+        if (!StringUtils.hasText(signedBy)) {
+            throw new BadRequestException("Signer identifier is required");
+        }
+        CashMovement movement = movementByNumber(movementNumber);
+        movement.setSignedBy(signedBy.trim());
+        movement.setSignedAt(Instant.now());
+        return mapper.toCashMovementResponse(movementRepository.save(movement));
+    }
+
+    @Override
+    public CashMovementResponse markMovementPrinted(String movementNumber) {
+        CashMovement movement = movementByNumber(movementNumber);
+        movement.setPrintedAt(Instant.now());
+        return mapper.toCashMovementResponse(movementRepository.save(movement));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CashMovementResponse getMovement(String movementNumber) {
+        return mapper.toCashMovementResponse(movementByNumber(movementNumber));
+    }
+
+    private CashMovement movementByNumber(String movementNumber) {
+        if (!StringUtils.hasText(movementNumber)) {
+            throw new BadRequestException("Cash movement number is required");
+        }
+        return movementRepository.findByMovementNumber(movementNumber.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Cash movement not found: " + movementNumber));
     }
 
     @Override
@@ -227,7 +308,76 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashMovement movement = saveManualMovement(session, type, request.amount(), request.documentType(), request.documentNumber(),
                 request.flowCategory(), request.referenceType(), request.referenceCode(), request.counterpartyType(),
                 request.counterpartyCode(), request.counterpartyName(), request.reason(), request.createdBy(), request.metadataJson());
+        movement = applyEnrichments(movement, request);
         return mapper.toCashMovementResponse(movement);
+    }
+
+    private CashMovement applyEnrichments(CashMovement movement, CreateCashMovementRequest request) {
+        boolean changed = false;
+        if (StringUtils.hasText(request.relatedMovementNumber())) {
+            movement.setRelatedMovementId(movementRepository.findByMovementNumber(request.relatedMovementNumber().trim())
+                    .map(CashMovement::getId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Related cash movement not found: " + request.relatedMovementNumber())));
+            changed = true;
+        }
+        if (StringUtils.hasText(request.batchId())) {
+            movement.setBatchId(request.batchId().trim());
+            changed = true;
+        }
+        if (request.exchangeRate() != null) {
+            movement.setExchangeRate(request.exchangeRate());
+            changed = true;
+        }
+        if (request.channel() != null) {
+            movement.setChannel(request.channel());
+            changed = true;
+        }
+        if (StringUtils.hasText(request.deviceCode())) {
+            movement.setDeviceCode(request.deviceCode().trim());
+            changed = true;
+        }
+        if (StringUtils.hasText(request.deviceIp())) {
+            movement.setDeviceIp(request.deviceIp().trim());
+            changed = true;
+        }
+        if (StringUtils.hasText(request.subCategory())) {
+            movement.setSubCategory(request.subCategory().trim());
+            changed = true;
+        }
+        if (StringUtils.hasText(request.tags())) {
+            movement.setTags(request.tags().trim());
+            changed = true;
+        }
+        BigDecimal runningBalance = computeRunningBalance(movement);
+        movement.setRunningBalance(runningBalance);
+        return changed || runningBalance != null ? movementRepository.save(movement) : movement;
+    }
+
+    private BigDecimal computeRunningBalance(CashMovement movement) {
+        CashSession session = movement.getCashSession();
+        if (session == null) {
+            return null;
+        }
+        BigDecimal balance = safeAmount(session.getOpeningAmount());
+        for (CashMovement entry : movementRepository.findByCashSession_IdOrderByCreatedAtAsc(session.getId())) {
+            balance = applyDirection(balance, entry);
+            if (entry.getId().equals(movement.getId())) {
+                return balance.setScale(4, RoundingMode.HALF_UP);
+            }
+        }
+        return balance.setScale(4, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal applyDirection(BigDecimal balance, CashMovement entry) {
+        return switch (entry.getMovementType()) {
+            case PAYMENT, CASH_IN, TRANSFER_IN, OPENING_FLOAT -> balance.add(entry.getAmount());
+            case REFUND, CASH_OUT, SAFE_DEPOSIT, TRANSFER_OUT -> balance.subtract(entry.getAmount());
+            case ADJUSTMENT, CLOSING_COUNT -> balance;
+        };
+    }
+
+    private BigDecimal safeAmount(BigDecimal amount) {
+        return amount == null ? BigDecimal.ZERO : amount;
     }
 
     @Override

@@ -88,16 +88,32 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                                  @Param("searchText") String searchText,
                                  Pageable pageable);
 
-    @Query(nativeQuery = true, value = """
-            SELECT *
-            FROM billing_document
-            WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
-              AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
-            ORDER BY created_at DESC
-            """)
+    @Query(nativeQuery = true,
+            value = """
+                    SELECT *
+                    FROM billing_document
+                    WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
+                      AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
+                    ORDER BY created_at DESC
+                    """,
+            countQuery = """
+                    SELECT COUNT(*)
+                    FROM billing_document
+                    WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
+                      AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
+                    """)
     Page<BillingDocument> statementDocuments(@Param("customerType") String customerType,
                                              @Param("customerCode") String customerCode,
                                              Pageable pageable);
+
+    @Query(nativeQuery = true, value = """
+            SELECT COALESCE(SUM(total_amount), 0), COALESCE(SUM(paid_amount), 0), COALESCE(SUM(balance_due), 0)
+            FROM billing_document
+            WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
+              AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
+            """)
+    List<Object[]> statementTotals(@Param("customerType") String customerType,
+                                   @Param("customerCode") String customerCode);
 
     @Query(nativeQuery = true, value = """
             SELECT *
@@ -171,6 +187,19 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                                         @Param("lineSourceCode") String lineSourceCode,
                                         @Param("searchText") String searchText,
                                         Pageable pageable);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM billing_document
+            WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+              AND status IN ('ISSUED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
+              AND balance_due > 0
+              AND (:customerType IS NULL OR UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR))))
+              AND (:customerCode IS NULL OR UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
+            ORDER BY due_date ASC NULLS LAST
+            """)
+    List<BillingDocument> findForAgingReport(@Param("customerType") String customerType,
+                                             @Param("customerCode") String customerCode);
 
     @Query(nativeQuery = true, value = """
             UPDATE billing_document

@@ -54,9 +54,13 @@ public class BillingCustomerSnapshotResolver {
             case "MEMBER" -> memberRepository.findByMemberIdAndDeletedFalse(customerCode.trim())
                     .map(this::fromMember)
                     .orElseThrow(() -> new ResourceNotFoundException("Member not found: " + customerCode));
-            case "CUSTOMER" -> customerRepository.findByCustomerId(customerCode.trim())
-                    .map(this::fromCustomer)
-                    .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerCode));
+            case "CUSTOMER" -> {
+                var found = customerRepository.findByCustomerId(customerCode.trim());
+                if (found.isPresent() && found.get().isDeleted()) {
+                    throw new BadRequestException("Le client " + customerCode + " est supprimé et ne peut plus être facturé");
+                }
+                yield found.map(this::fromCustomer).orElse(CustomerSnapshot.empty());
+            }
             case "BUSINESS", "BUSINESS_ENTITY" -> businessRepository.findByCode(customerCode.trim())
                     .map(this::fromBusiness)
                     .orElseThrow(() -> new ResourceNotFoundException("Business entity not found: " + customerCode));

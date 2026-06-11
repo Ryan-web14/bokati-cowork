@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.inventory.stock.dto.request;
 
+import com.sni.bokaticowork.features.inventory.stock.enums.StockOutReasonCode;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,13 +27,16 @@ public class StockAdjustmentRequest {
 
     private LocalDate expiryDate;
 
+    private StockOutReasonCode reasonCode;
+
     private StockReferenceType referenceType;
 
     private String referenceCode;
 
-    private String reason;
+    private String reasonDetails;
 
     private Boolean allowNegativeOverride;
 
+    @NotBlank
     private String performedBy;
 }

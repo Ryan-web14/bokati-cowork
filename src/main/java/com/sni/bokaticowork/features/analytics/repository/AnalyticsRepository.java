@@ -6,6 +6,7 @@ import jakarta.persistence.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 
 @Repository
 public class AnalyticsRepository {
@@ -84,6 +85,91 @@ public class AnalyticsRepository {
                 """, fromDate, toDate);
     }
 
+    public List<Object[]> bookingTrend(Instant fromDate, Instant toDate, String groupBy) {
+        Query query = entityManager.createNativeQuery("""
+                SELECT
+                    date_trunc(:groupBy, created_at)::date AS date,
+                    count(*) AS booking_count,
+                    count(*) FILTER (WHERE status = 'CONFIRMED') AS confirmed_count,
+                    count(*) FILTER (WHERE status = 'CANCELLED') AS cancelled_count,
+                    coalesce(sum(total_amount), 0) AS revenue
+                FROM booking
+                WHERE deleted = false
+                  AND (CAST(:fromDate AS timestamp) IS NULL OR created_at >= CAST(:fromDate AS timestamp))
+                  AND (CAST(:toDate AS timestamp) IS NULL OR created_at <= CAST(:toDate AS timestamp))
+                GROUP BY 1
+                ORDER BY 1
+                """);
+        query.setParameter("groupBy", groupBy);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = query.getResultList();
+        return results;
+    }
+
+    public List<Object[]> topOwners(Instant fromDate, Instant toDate, int limit) {
+        Query query = entityManager.createNativeQuery("""
+                SELECT
+                    owner_type,
+                    owner_code,
+                    coalesce(max(nullif(contact_name, '')), owner_code) AS owner_name,
+                    count(*) AS booking_count,
+                    count(*) FILTER (WHERE status = 'CONFIRMED') AS confirmed_count,
+                    count(*) FILTER (WHERE status = 'COMPLETED') AS completed_count,
+                    count(*) FILTER (WHERE status = 'CANCELLED') AS cancelled_count,
+                    coalesce(sum(total_amount), 0) AS revenue,
+                    coalesce(sum(duration_minutes), 0) AS booked_minutes
+                FROM booking
+                WHERE deleted = false
+                  AND (CAST(:fromDate AS timestamp) IS NULL OR created_at >= CAST(:fromDate AS timestamp))
+                  AND (CAST(:toDate AS timestamp) IS NULL OR created_at <= CAST(:toDate AS timestamp))
+                GROUP BY owner_type, owner_code
+                ORDER BY booking_count DESC, revenue DESC, owner_code ASC
+                LIMIT :limit
+                """);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
+        query.setParameter("limit", limit);
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = query.getResultList();
+        return results;
+    }
+
+    public List<Object[]> topResources(Instant fromDate, Instant toDate, int limit) {
+        Query query = entityManager.createNativeQuery("""
+                SELECT
+                    r.code AS resource_code,
+                    r.name AS resource_name,
+                    rt.code AS resource_type_code,
+                    rt.name AS resource_type_name,
+                    rg.code AS resource_group_code,
+                    rg.name AS resource_group_name,
+                    count(*) AS booking_count,
+                    count(*) FILTER (WHERE b.status = 'CONFIRMED') AS confirmed_count,
+                    count(*) FILTER (WHERE b.status = 'COMPLETED') AS completed_count,
+                    count(*) FILTER (WHERE b.status = 'CANCELLED') AS cancelled_count,
+                    coalesce(sum(b.total_amount), 0) AS revenue,
+                    coalesce(sum(b.duration_minutes), 0) AS booked_minutes
+                FROM booking b
+                JOIN resource r ON r.id = b.resource_id AND r.deleted = false
+                LEFT JOIN resource_type rt ON rt.id = r.type_id
+                LEFT JOIN resource_group rg ON rg.id = r.group_id
+                WHERE b.deleted = false
+                  AND (CAST(:fromDate AS timestamp) IS NULL OR b.created_at >= CAST(:fromDate AS timestamp))
+                  AND (CAST(:toDate AS timestamp) IS NULL OR b.created_at <= CAST(:toDate AS timestamp))
+                GROUP BY r.code, r.name, rt.code, rt.name, rg.code, rg.name
+                ORDER BY booking_count DESC, revenue DESC, r.code ASC
+                LIMIT :limit
+                """);
+        query.setParameter("fromDate", fromDate);
+        query.setParameter("toDate", toDate);
+        query.setParameter("limit", limit);
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = query.getResultList();
+        return results;
+    }
+
     public Object[] subscription() {
         return single("""
                 SELECT
@@ -118,6 +204,69 @@ public class AnalyticsRepository {
                     (SELECT count(*) FROM inventory_alert WHERE status = 'OPEN' AND alert_type IN ('LOW_STOCK', 'OUT_OF_STOCK')) AS low_stock_alerts,
                     (SELECT count(*) FROM inventory_purchase_order WHERE status IN ('APPROVED', 'ORDERED', 'PARTIALLY_RECEIVED')) AS open_purchase_orders
                 """, null, null);
+    }
+
+    public Object[] live() {
+        Object result = entityManager.createNativeQuery("""
+                SELECT
+                    -- ── Instantané ─────────────────────────────────────────────
+                    (SELECT COUNT(*) FROM booking
+                     WHERE deleted = false AND status IN ('CONFIRMED', 'IN_PROGRESS')
+                       AND started_at <= NOW() AND ended_at >= NOW()) AS active_bookings,
+
+                    (SELECT COUNT(*) FROM booking
+                     WHERE deleted = false AND status = 'IN_PROGRESS'
+                       AND checked_in_at IS NOT NULL) AS checked_in_bookings,
+
+                    (SELECT COUNT(DISTINCT resource_id) FROM booking
+                     WHERE deleted = false AND status IN ('CONFIRMED', 'IN_PROGRESS')
+                       AND started_at <= NOW() AND ended_at >= NOW()) AS occupied_resources,
+
+                    (SELECT COUNT(*) FROM resource
+                     WHERE deleted = false AND active = true AND booking_enabled = true) AS total_bookable_resources,
+
+                    (SELECT COUNT(*) FROM booking
+                     WHERE deleted = false AND status = 'PENDING_APPROVAL') AS pending_approval,
+
+                    (SELECT COUNT(*) FROM booking
+                     WHERE deleted = false AND status IN ('CONFIRMED', 'PENDING_APPROVAL')
+                       AND started_at > NOW() AND started_at <= NOW() + INTERVAL '1 hour') AS upcoming_next_hour,
+
+                    (SELECT COUNT(*) FROM booking_hold
+                     WHERE status = 'ACTIVE' AND expires_at > NOW()) AS active_holds,
+
+                    -- ── Aujourd'hui ─────────────────────────────────────────────
+                    (SELECT COUNT(*) FROM booking
+                     WHERE deleted = false AND started_at::date = CURRENT_DATE) AS bookings_today,
+
+                    (SELECT COALESCE(SUM(total_amount), 0) FROM booking
+                     WHERE deleted = false AND started_at::date = CURRENT_DATE
+                       AND status IN ('CONFIRMED', 'IN_PROGRESS', 'COMPLETED')) AS revenue_today,
+
+                    (SELECT COALESCE(AVG(total_amount), 0) FROM booking
+                     WHERE deleted = false AND started_at::date = CURRENT_DATE
+                       AND status IN ('CONFIRMED', 'IN_PROGRESS', 'COMPLETED')) AS avg_booking_amount,
+
+                    (SELECT COALESCE(SUM(duration_minutes), 0) FROM booking
+                     WHERE deleted = false AND started_at::date = CURRENT_DATE
+                       AND status IN ('CONFIRMED', 'IN_PROGRESS', 'COMPLETED')) AS booked_minutes_today,
+
+                    (SELECT COUNT(*) FROM booking
+                     WHERE deleted = false AND started_at::date = CURRENT_DATE
+                       AND status = 'CANCELLED') AS cancelled_today,
+
+                    (SELECT COUNT(*) FROM booking
+                     WHERE deleted = false AND started_at::date = CURRENT_DATE
+                       AND status = 'NO_SHOW') AS no_show_today,
+
+                    (SELECT COUNT(*) FROM booking
+                     WHERE deleted = false AND checked_in_at IS NOT NULL
+                       AND checked_in_at::date = CURRENT_DATE) AS check_ins_today,
+
+                    (SELECT COUNT(*) FROM member
+                     WHERE deleted = false AND created_at::date = CURRENT_DATE) AS new_members_today
+                """).getSingleResult();
+        return result instanceof Object[] row ? row : new Object[]{result};
     }
 
     private Object[] single(String sql, Instant fromDate, Instant toDate) {

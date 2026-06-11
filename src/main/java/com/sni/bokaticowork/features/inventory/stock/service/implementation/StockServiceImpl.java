@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.inventory.stock.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.inventory.asset.enums.AssetCondition;
@@ -20,6 +21,7 @@ import com.sni.bokaticowork.features.inventory.stock.dto.response.StockLevelResp
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockMovementResponse;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockReservationResponse;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockOutReasonCode;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReservationStatus;
 import com.sni.bokaticowork.features.inventory.stock.model.InventoryLocation;
@@ -30,6 +32,10 @@ import com.sni.bokaticowork.features.inventory.stock.model.StockMovementLot;
 import com.sni.bokaticowork.features.inventory.stock.model.StockReservation;
 import com.sni.bokaticowork.features.inventory.stock.mapper.interfaces.StockMapper;
 import com.sni.bokaticowork.features.inventory.intelligence.service.interfaces.InventoryAutomationService;
+import com.sni.bokaticowork.features.inventory.stock.dto.response.InventorySerialResponse;
+import com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus;
+import com.sni.bokaticowork.features.inventory.stock.model.InventoryItemSerial;
+import com.sni.bokaticowork.features.inventory.stock.repository.InventoryItemSerialRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockLevelRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockLotRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementLotRepository;
@@ -51,6 +57,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +72,7 @@ public class  StockServiceImpl implements StockService {
     private final StockMovementLotRepository movementLotRepository;
     private final StockReservationRepository reservationRepository;
     private final AssetRepository assetRepository;
+    private final InventoryItemSerialRepository serialRepository;
     private final StockMapper mapper;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final InventoryAutomationService automationService;
@@ -84,9 +92,10 @@ public class  StockServiceImpl implements StockService {
         receiveLotIfNeeded(item, location, request);
 
         StockMovement movement = saveMovement(item, null, location, StockMovementType.IN, request.getQuantity(),
-                request.getUnitCost(), request.getReferenceType(), request.getReferenceCode(), request.getReason(),
+                request.getUnitCost(), request.getReferenceType(), request.getReferenceCode(), null, request.getReason(),
                 false, request.getPerformedBy());
         createAssetsFromReceiptIfNeeded(item, location, request);
+        receiveSerialNumbersIfNeeded(item, location, request);
         automationService.afterStockMovement(movement, level);
         return mapper.toMovementResponse(movement);
     }
@@ -99,14 +108,18 @@ public class  StockServiceImpl implements StockService {
 
         boolean override = Boolean.TRUE.equals(request.getAllowNegativeOverride());
         ensureCanDecrease(item, level, request.getQuantity(), override);
-        List<LotConsumption> consumedLots = consumeLotsIfTracked(item, location, request.getQuantity(), override);
+        validateLotForConsumption(item, location, request.getLotNumber(), Boolean.TRUE.equals(request.getConfirmCreateLot()));
+        List<LotConsumption> consumedLots = consumeLotsIfTracked(item, location, request.getQuantity(),
+                request.getLotNumber(), override);
         level.setQuantityOnHand(level.getQuantityOnHand().subtract(request.getQuantity()));
         level.setLastMovementAt(Instant.now());
         level.recalculateAvailable();
         stockLevelRepository.save(level);
 
+        issueSerialNumbersIfNeeded(item, location, request.getSerialNumbers());
         StockMovement movement = saveMovement(item, location, null, StockMovementType.OUT, request.getQuantity(),
-                null, request.getReferenceType(), request.getReferenceCode(), request.getReason(), override, request.getPerformedBy());
+                null, request.getReferenceType(), request.getReferenceCode(), request.getReasonCode(),
+                request.getReasonDetails(), override, request.getPerformedBy());
         saveMovementLots(movement, consumedLots);
         automationService.afterStockMovement(movement, level);
         return mapper.toMovementResponse(movement);
@@ -125,7 +138,7 @@ public class  StockServiceImpl implements StockService {
 
         boolean override = Boolean.TRUE.equals(request.getAllowNegativeOverride());
         ensureCanDecrease(item, fromLevel, request.getQuantity(), override);
-        List<LotConsumption> consumedLots = consumeLotsIfTracked(item, from, request.getQuantity(), override);
+        List<LotConsumption> consumedLots = consumeLotsIfTracked(item, from, request.getQuantity(), null, override);
         moveConsumedLotsToDestination(item, to, consumedLots);
         fromLevel.setQuantityOnHand(fromLevel.getQuantityOnHand().subtract(request.getQuantity()));
         fromLevel.setLastMovementAt(Instant.now());
@@ -137,9 +150,10 @@ public class  StockServiceImpl implements StockService {
         stockLevelRepository.save(fromLevel);
         stockLevelRepository.save(toLevel);
 
+        transferSerialNumbersIfNeeded(item, from, to, request.getSerialNumbers());
         StockMovement movement = saveMovement(item, from, to, StockMovementType.TRANSFER, request.getQuantity(),
-                fromLevel.getAverageCost(), request.getReferenceType(), request.getReferenceCode(), request.getReason(),
-                override, request.getPerformedBy());
+                fromLevel.getAverageCost(), request.getReferenceType(), request.getReferenceCode(),
+                request.getReasonCode(), request.getReasonDetails(), override, request.getPerformedBy());
         saveMovementLots(movement, consumedLots);
         automationService.afterStockMovement(movement, fromLevel, toLevel);
         return mapper.toMovementResponse(movement);
@@ -159,7 +173,7 @@ public class  StockServiceImpl implements StockService {
 
         if (!positive) {
             ensureCanDecrease(item, level, absQuantity, override);
-            List<LotConsumption> consumedLots = consumeLotsIfTracked(item, location, absQuantity, override);
+            List<LotConsumption> consumedLots = consumeLotsIfTracked(item, location, absQuantity, null, override);
             level.setQuantityOnHand(level.getQuantityOnHand().add(request.getQuantityDelta()));
             level.setLastMovementAt(Instant.now());
             level.recalculateAvailable();
@@ -167,7 +181,7 @@ public class  StockServiceImpl implements StockService {
 
             StockMovement movement = saveMovement(item, location, null, StockMovementType.ADJUSTMENT_OUT,
                     absQuantity, request.getUnitCost(), defaultReferenceType(request.getReferenceType()),
-                    request.getReferenceCode(), request.getReason(), override, request.getPerformedBy());
+                    request.getReferenceCode(), request.getReasonCode(), request.getReasonDetails(), override, request.getPerformedBy());
             saveMovementLots(movement, consumedLots);
             automationService.afterStockMovement(movement, level);
             return mapper.toMovementResponse(movement);
@@ -185,7 +199,7 @@ public class  StockServiceImpl implements StockService {
 
         StockMovement movement = saveMovement(item, null, location, StockMovementType.ADJUSTMENT_IN,
                 absQuantity, request.getUnitCost(), defaultReferenceType(request.getReferenceType()),
-                request.getReferenceCode(), request.getReason(), override, request.getPerformedBy());
+                request.getReferenceCode(), null, request.getReasonDetails(), override, request.getPerformedBy());
         automationService.afterStockMovement(movement, level);
         return mapper.toMovementResponse(movement);
     }
@@ -237,7 +251,7 @@ public class  StockServiceImpl implements StockService {
         BigDecimal quantity = reservation.getQuantity();
         boolean override = Boolean.TRUE.equals(reservation.getItem().getAllowNegativeStock());
         ensureCanConsumeReserved(reservation.getItem(), level, quantity, override);
-        List<LotConsumption> consumedLots = consumeLotsIfTracked(reservation.getItem(), reservation.getLocation(), quantity, override);
+        List<LotConsumption> consumedLots = consumeLotsIfTracked(reservation.getItem(), reservation.getLocation(), quantity, null, override);
 
         level.setQuantityReserved(level.getQuantityReserved().subtract(quantity).max(BigDecimal.ZERO));
         level.setQuantityOnHand(level.getQuantityOnHand().subtract(quantity));
@@ -251,7 +265,8 @@ public class  StockServiceImpl implements StockService {
 
         StockMovement movement = saveMovement(reservation.getItem(), reservation.getLocation(), null, StockMovementType.OUT,
                 quantity, null, reservation.getReferenceType(), reservation.getReferenceCode(),
-                "Consumption from reservation " + reservation.getReservationCode(), override, performedBy);
+                StockOutReasonCode.CONSUMPTION, "Consumption from reservation " + reservation.getReservationCode(),
+                override, performedBy);
         saveMovementLots(movement, consumedLots);
         automationService.afterStockMovement(movement, level);
         return mapper.toMovementResponse(movement);
@@ -297,6 +312,24 @@ public class  StockServiceImpl implements StockService {
         if (movement.getReferenceType() == StockReferenceType.GOODS_RECEIPT) {
             throw new BadRequestException("Goods receipt movements cannot be reversed directly. Use supplier return or goods receipt correction.");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventorySerialResponse> getSerials(String itemCode, String locationCode, InventorySerialStatus status) {
+        if (!StringUtils.hasText(itemCode)) throw new BadRequestException("itemCode is required");
+        return serialRepository.findSerialsForItem(normalizeCode(itemCode), normalizeOptionalCode(locationCode), status)
+                .stream()
+                .map(s -> InventorySerialResponse.builder()
+                        .itemCode(s.getItem().getItemCode())
+                        .locationCode(s.getLocation().getLocationCode())
+                        .serialNumber(s.getSerialNumber())
+                        .status(s.getStatus())
+                        .lotNumber(s.getLot() == null ? null : s.getLot().getLotNumber())
+                        .receivedAt(s.getReceivedAt())
+                        .issuedAt(s.getIssuedAt())
+                        .build())
+                .toList();
     }
 
     @Override
@@ -387,14 +420,32 @@ public class  StockServiceImpl implements StockService {
         return stockLotRepository.save(lot);
     }
 
+    private void validateLotForConsumption(InventoryItem item, InventoryLocation location,
+                                           String requestedLotNumber, boolean confirmCreate) {
+        if (!isLotOrExpiryTracked(item) || !StringUtils.hasText(requestedLotNumber)) {
+            return;
+        }
+        String normalized = normalizeOptionalCode(requestedLotNumber);
+        boolean exists = stockLotRepository.findActiveLotForUpdate(item, location, normalized).isPresent();
+        if (!exists && !confirmCreate) {
+            throw new ConflictException("LOT_NOT_FOUND",
+                    "Lot '" + normalized + "' does not exist at this location. "
+                    + "To create it, set confirmCreateLot=true in your request.");
+        }
+    }
+
     private List<LotConsumption> consumeLotsIfTracked(InventoryItem item, InventoryLocation location,
-                                                      BigDecimal quantity, boolean override) {
+                                                      BigDecimal quantity, String requestedLotNumber, boolean override) {
         if (!isLotOrExpiryTracked(item)) {
             return List.of();
         }
         BigDecimal remaining = quantity;
         List<LotConsumption> consumed = new ArrayList<>();
         List<StockLot> lots = stockLotRepository.findConsumableLotsForUpdate(item, location);
+        if (StringUtils.hasText(requestedLotNumber)) {
+            String normalized = normalizeOptionalCode(requestedLotNumber);
+            lots = lots.stream().filter(l -> normalized.equalsIgnoreCase(l.getLotNumber())).toList();
+        }
         for (StockLot lot : lots) {
             if (remaining.compareTo(BigDecimal.ZERO) <= 0) break;
             BigDecimal consumedQuantity = lot.getRemainingQuantity().min(remaining);
@@ -431,13 +482,13 @@ public class  StockServiceImpl implements StockService {
         InventoryLocation location = original.getLocationTo();
         StockLevel level = getOrCreateLevelForUpdate(original.getItem(), location);
         ensureCanDecrease(original.getItem(), level, original.getQuantity(), false);
-        List<LotConsumption> consumedLots = consumeLotsIfTracked(original.getItem(), location, original.getQuantity(), false);
+        List<LotConsumption> consumedLots = consumeLotsIfTracked(original.getItem(), location, original.getQuantity(), null, false);
         level.setQuantityOnHand(level.getQuantityOnHand().subtract(original.getQuantity()));
         level.recalculateAvailable();
         stockLevelRepository.save(level);
         StockMovement reversal = saveMovement(original.getItem(), location, null, StockMovementType.ADJUSTMENT_OUT,
                 original.getQuantity(), original.getUnitCost(), original.getReferenceType(), original.getReferenceCode(),
-                reverseReason(reason, original), false, performedBy);
+                null, reverseReason(reason, original), false, performedBy);
         reversal.setReversalOfMovement(original);
         reversal = movementRepository.save(reversal);
         saveMovementLots(reversal, consumedLots);
@@ -456,7 +507,7 @@ public class  StockServiceImpl implements StockService {
         stockLevelRepository.save(level);
         StockMovement reversal = saveMovement(original.getItem(), null, location, StockMovementType.ADJUSTMENT_IN,
                 original.getQuantity(), original.getUnitCost(), original.getReferenceType(), original.getReferenceCode(),
-                reverseReason(reason, original), false, performedBy);
+                null, reverseReason(reason, original), false, performedBy);
         reversal.setReversalOfMovement(original);
         reversal = movementRepository.save(reversal);
         automationService.afterStockMovement(reversal, level);
@@ -467,7 +518,7 @@ public class  StockServiceImpl implements StockService {
         StockLevel sourceLevel = getOrCreateLevelForUpdate(original.getItem(), original.getLocationTo());
         StockLevel destinationLevel = getOrCreateLevelForUpdate(original.getItem(), original.getLocationFrom());
         ensureCanDecrease(original.getItem(), sourceLevel, original.getQuantity(), false);
-        List<LotConsumption> consumedLots = consumeLotsIfTracked(original.getItem(), original.getLocationTo(), original.getQuantity(), false);
+        List<LotConsumption> consumedLots = consumeLotsIfTracked(original.getItem(), original.getLocationTo(), original.getQuantity(), null, false);
         moveConsumedLotsToDestination(original.getItem(), original.getLocationFrom(), consumedLots);
         sourceLevel.setQuantityOnHand(sourceLevel.getQuantityOnHand().subtract(original.getQuantity()));
         destinationLevel.setQuantityOnHand(destinationLevel.getQuantityOnHand().add(original.getQuantity()));
@@ -477,7 +528,7 @@ public class  StockServiceImpl implements StockService {
         stockLevelRepository.save(destinationLevel);
         StockMovement reversal = saveMovement(original.getItem(), original.getLocationTo(), original.getLocationFrom(), StockMovementType.TRANSFER,
                 original.getQuantity(), original.getUnitCost(), original.getReferenceType(), original.getReferenceCode(),
-                reverseReason(reason, original), false, performedBy);
+                null, reverseReason(reason, original), false, performedBy);
         reversal.setReversalOfMovement(original);
         reversal = movementRepository.save(reversal);
         saveMovementLots(reversal, consumedLots);
@@ -504,6 +555,83 @@ public class  StockServiceImpl implements StockService {
         if ((Boolean.TRUE.equals(item.getRequiresExpiryDate()) || item.getTrackingType() == InventoryTrackingType.EXPIRY)
                 && expiryDate == null) {
             throw new BadRequestException("Expiry date is required for this inventory item");
+        }
+    }
+
+    private boolean requiresSerialTracking(InventoryItem item) {
+        return Boolean.TRUE.equals(item.getRequiresSerialNumber())
+                && item.getItemType() != InventoryItemType.ASSET;
+    }
+
+    private void receiveSerialNumbersIfNeeded(InventoryItem item, InventoryLocation location, StockInRequest request) {
+        if (!requiresSerialTracking(item)) {
+            return;
+        }
+        List<String> serials = request.getAssetSerialNumbers() == null ? List.of() : request.getAssetSerialNumbers();
+        int count = toWholeUnitCount(request.getQuantity());
+        if (serials.isEmpty()) {
+            throw new BadRequestException("Serial numbers are required for this item: expected " + count);
+        }
+        if (serials.size() != count) {
+            throw new BadRequestException("Serial numbers count (" + serials.size() + ") must match received quantity (" + count + ")");
+        }
+        for (String serial : serials) {
+            String normalized = trimToNull(serial);
+            if (normalized == null) throw new BadRequestException("Serial number must not be blank");
+            if (serialRepository.existsByItemAndSerialNumber(item, normalized)) {
+                throw new BadRequestException("Serial number already registered: " + normalized);
+            }
+            serialRepository.save(InventoryItemSerial.builder()
+                    .item(item)
+                    .location(location)
+                    .serialNumber(normalized)
+                    .status(InventorySerialStatus.AVAILABLE)
+                    .receivedAt(Instant.now())
+                    .build());
+        }
+    }
+
+    private void issueSerialNumbersIfNeeded(InventoryItem item, InventoryLocation location, List<String> serialNumbers) {
+        if (!requiresSerialTracking(item)) {
+            return;
+        }
+        if (serialNumbers == null || serialNumbers.isEmpty()) {
+            throw new BadRequestException("Serial numbers are required for this item");
+        }
+        for (String serial : serialNumbers) {
+            String normalized = trimToNull(serial);
+            if (normalized == null) throw new BadRequestException("Serial number must not be blank");
+            InventoryItemSerial tracked = serialRepository
+                    .findByItemAndSerialNumberAndStatus(item, normalized, InventorySerialStatus.AVAILABLE)
+                    .orElseThrow(() -> new BadRequestException("Serial number not available for issuance: " + normalized));
+            if (!tracked.getLocation().getId().equals(location.getId())) {
+                throw new BadRequestException("Serial number " + normalized + " is not at the requested location");
+            }
+            tracked.setStatus(InventorySerialStatus.ISSUED);
+            tracked.setIssuedAt(Instant.now());
+            serialRepository.save(tracked);
+        }
+    }
+
+    private void transferSerialNumbersIfNeeded(InventoryItem item, InventoryLocation from, InventoryLocation to, List<String> serialNumbers) {
+        if (!requiresSerialTracking(item)) {
+            return;
+        }
+        if (serialNumbers == null || serialNumbers.isEmpty()) {
+            throw new BadRequestException("Serial numbers are required for this item");
+        }
+        for (String serial : serialNumbers) {
+            String normalized = trimToNull(serial);
+            if (normalized == null) throw new BadRequestException("Serial number must not be blank");
+            InventoryItemSerial tracked = serialRepository
+                    .findByItemAndSerialNumberAndStatus(item, normalized, InventorySerialStatus.AVAILABLE)
+                    .orElseThrow(() -> new BadRequestException("Serial number not available for transfer: " + normalized));
+            if (!tracked.getLocation().getId().equals(from.getId())) {
+                throw new BadRequestException("Serial number " + normalized + " is not at the source location");
+            }
+            tracked.setLocation(to);
+            tracked.setStatus(InventorySerialStatus.AVAILABLE);
+            serialRepository.save(tracked);
         }
     }
 
@@ -603,7 +731,8 @@ public class  StockServiceImpl implements StockService {
 
     private StockMovement saveMovement(InventoryItem item, InventoryLocation from, InventoryLocation to,
                                        StockMovementType movementType, BigDecimal quantity, Long unitCost,
-                                       StockReferenceType referenceType, String referenceCode, String reason,
+                                       StockReferenceType referenceType, String referenceCode,
+                                       StockOutReasonCode reasonCode, String reason,
                                        boolean override, String performedBy) {
         StockMovement movement = StockMovement.builder()
                 .movementCode(generateMovementCode(movementType))
@@ -615,6 +744,7 @@ public class  StockServiceImpl implements StockService {
                 .unitCost(unitCost)
                 .referenceType(referenceType)
                 .referenceCode(normalizeOptionalCode(referenceCode))
+                .reasonCode(reasonCode)
                 .reason(trimToNull(reason))
                 .allowNegativeOverride(override)
                 .performedBy(trimToNull(performedBy))

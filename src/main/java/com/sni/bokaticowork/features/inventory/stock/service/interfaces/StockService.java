@@ -5,9 +5,11 @@ import com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockOutRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockReservationRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockTransferRequest;
+import com.sni.bokaticowork.features.inventory.stock.dto.response.InventorySerialResponse;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockLevelResponse;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockMovementResponse;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockReservationResponse;
+import com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReservationStatus;
@@ -15,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
+import java.util.List;
 
 public interface StockService {
 
@@ -41,4 +44,6 @@ public interface StockService {
     Page<StockMovementResponse> searchMovements(String itemCode, String locationCode, StockMovementType movementType,
                                                 StockReferenceType referenceType, String referenceCode,
                                                 Instant fromDate, Instant toDate, Pageable pageable);
+
+    List<InventorySerialResponse> getSerials(String itemCode, String locationCode, InventorySerialStatus status);
 }

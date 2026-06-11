@@ -28,6 +28,18 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntent, Lo
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM payment_intent
+            WHERE source_type = :sourceType
+              AND source_code = :sourceCode
+              AND status = 'SUCCEEDED'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """)
+    Optional<PaymentIntent> findSucceededBySourceTypeAndSourceCode(@Param("sourceType") String sourceType,
+                                                                   @Param("sourceCode") String sourceCode);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM payment_intent
             WHERE customer_type = :customerType
               AND customer_code = :customerCode
               AND source_type = :sourceType

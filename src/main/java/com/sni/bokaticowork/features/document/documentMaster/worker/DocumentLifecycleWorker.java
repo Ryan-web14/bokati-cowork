@@ -26,5 +26,9 @@ public class DocumentLifecycleWorker {
         if (processed > 0) {
             log.info("Expired {} document(s) automatically", processed);
         }
+        int reminded = automationService.notifyPreExpiry();
+        if (reminded > 0) {
+            log.info("Sent {} document pre-expiry reminder(s)", reminded);
+        }
     }
 }

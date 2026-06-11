@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.subscription.subscription.dto.request;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.sni.bokaticowork.core.configuration.FrontendInstantDeserializer;
 import com.sni.bokaticowork.features.subscription.subscription.enums.PassType;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 import jakarta.validation.Valid;
@@ -17,8 +19,8 @@ public record CreatePassRequest(
         Long planVersionId,
         @NotBlank String name,
         String description,
-        @NotNull Instant validFrom,
-        Instant validUntil,
+        @NotNull @JsonDeserialize(using = FrontendInstantDeserializer.class) Instant validFrom,
+        @JsonDeserialize(using = FrontendInstantDeserializer.class) Instant validUntil,
         Boolean transferable,
         Boolean shareable,
         Integer maxUses,

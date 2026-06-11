@@ -4,12 +4,14 @@ import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberReque
 import com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberProfileRequest;
 import com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberRequest;
 import com.sni.bokaticowork.features.client.member.dto.response.MemberResponse;
+import com.sni.bokaticowork.features.client.member.dto.response.MemberSummaryResponse;
 import com.sni.bokaticowork.features.client.member.mapper.interfaces.MemberMapper;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.client.member.model.MemberProfile;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.utils.format.Normalization;
 import com.sni.bokaticowork.core.utils.validation.ValidationUtils;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -143,11 +145,46 @@ public abstract class MemberMapperDecorator implements MemberMapper {
             return null;
         }
         MemberResponse response = delegate.toResponse(member);
-        response.setCustomerId(member.getCustomer() == null ? null : member.getCustomer().getCustomerId());
+        response.setCustomerId(safeCustomerId(member));
+        response.setUserId(safeUserId(member));
         response.setFullname(member.getDisplayName());
         response.setStatus(member.getStatus() == null ? null : member.getStatus().name());
         response.setPortalAccess(Boolean.TRUE.equals(member.getPortalAccess()));
         return response;
+    }
+
+    @Override
+    public MemberSummaryResponse toSummary(Member member) {
+        if (member == null) {
+            return null;
+        }
+        return MemberSummaryResponse.builder()
+                .memberId(member.getMemberId())
+                .customerId(safeCustomerId(member))
+                .fullName(member.getDisplayName().trim())
+                .email(member.getEmail())
+                .phone(member.getPhone())
+                .status(member.getStatus() == null ? null : member.getStatus().name())
+                .portalAccess(member.getPortalAccess())
+                .build();
+    }
+
+    private String safeCustomerId(Member member) {
+        try {
+            return member.getCustomer() == null ? null : member.getCustomer().getCustomerId();
+        } catch (EntityNotFoundException ex) {
+            log.warn("Member {} references a missing or deleted customer", member.getMemberId(), ex);
+            return null;
+        }
+    }
+
+    private String safeUserId(Member member) {
+        try {
+            return member.getUser() == null ? null : member.getUser().getUserId();
+        } catch (EntityNotFoundException ex) {
+            log.warn("Member {} references a missing or deleted user", member.getMemberId(), ex);
+            return null;
+        }
     }
 
     private static boolean hasText(String value) {

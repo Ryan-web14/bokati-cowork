@@ -1,191 +1,306 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmation de réservation</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        .wrap { width: 100%; padding: 40px 16px; background: #f0eef5; }
-        .card { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30,10,60,.10); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réservation confirmée — Elle A Osé</title>
+<!--[if mso]>
+<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
+<![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
 
-        /* ── Header ── */
-        .email-header { background: #1a0a2e; padding: 22px 28px 18px; position: relative; overflow: hidden; }
-        .email-header::after { content:''; position:absolute; top:0; right:-20px; width:140px; height:100%; background:rgba(255,255,255,.03); transform:skewX(-12deg); }
-        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
-        .logo-area { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; }
-        .brand-name { font-size:15px; font-weight:700; color:#fff; letter-spacing:3px; text-transform:uppercase; }
-        .brand-sub  { font-size:7px;  color:#9b8caa; letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
-        .status-tag { font-size:7.5px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; padding:4px 10px; border-radius:2px; }
-        .tag-confirmed { background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.4); color:#4ade80; }
-        .tag-cancelled { background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.4); color:#f87171; }
-        .tag-default   { background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.4); color:#c9a84c; }
+    body {
+        margin: 0; padding: 0;
+        background-color: #e8e4f0;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
 
-        /* ── Hero banner ── */
-        .hero { background: linear-gradient(135deg, #1a0a2e 0%, #2a1548 100%); padding: 24px 28px; text-align: center; border-bottom: 2px solid #c9a84c; }
-        .hero-icon { font-size: 32px; margin-bottom: 10px; }
-        .hero-title { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -0.3px; margin-bottom: 4px; }
-        .hero-sub { font-size: 12px; color: #9b8caa; }
-        .hero-number { display: inline-block; margin-top: 10px; background: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4); color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; padding: 4px 14px; border-radius: 2px; font-family: monospace; }
+    /* Header */
+    .header-td   { background-color: #0a0418; padding: 24px 32px 20px; }
+    .header-stripe { height: 3px; background: linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand-name  { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub   { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .status-pill { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; background-color: #112b1c; border: 1px solid #22c55e55; color: #4ade80; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ── Body ── */
-        .email-body { padding: 24px 28px; }
-        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 20px; }
+    /* Hero */
+    .hero-td     { background-color: #110820; padding: 32px 32px 28px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title  { font-size: 24px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub    { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub strong { color: rgba(255,255,255,.75); font-weight: 600; }
 
-        /* ── Info card ── */
-        .info-card { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
-        .info-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 14px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #fff; }
-        .info-table { width: 100%; border-collapse: collapse; }
-        .info-table tr { border-bottom: 1px solid #f0eaf8; }
-        .info-table tr:last-child { border-bottom: none; }
-        .info-table tr:nth-child(even) td { background: #faf8fd; }
-        .info-table td { padding: 10px 14px; font-size: 12.5px; vertical-align: middle; }
-        .info-table .lbl { color: #7c6d8f; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; width: 42%; }
-        .info-table .val { color: #1a0a2e; font-weight: 700; text-align: right; }
+    /* Ref bar */
+    .ref-bar-td  { background-color: #1a1030; border-top: 1px solid #c9a84c33; border-bottom: 1px solid #c9a84c33; padding: 12px 32px; }
+    .ref-label   { font-size: 10px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .ref-number  { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 1.5px; font-family: "Courier New", Courier, monospace; }
 
-        /* ── QR code ── */
-        .qr-section { margin-bottom: 20px; border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; }
-        .qr-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 14px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-        .qr-body { padding: 20px; background: #faf8fd; text-align: center; }
-        .qr-img-wrap { display: inline-block; padding: 10px; background: #fff; border: 1px solid #e8e0f0; border-radius: 4px; margin-bottom: 14px; }
-        .qr-img-wrap img { display: block; width: 160px; height: 160px; }
-        .qr-token-label { font-size: 9px; color: #9b8caa; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; margin-bottom: 4px; }
-        .qr-token-value { font-size: 12px; color: #1a0a2e; font-weight: 700; font-family: monospace; letter-spacing: 1px; word-break: break-all; }
-        .qr-placeholder { width: 160px; height: 160px; background: #f0eef5; border: 2px dashed #c9a84c; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; flex-direction: column; gap: 6px; }
-        .qr-placeholder-icon { font-size: 28px; }
-        .qr-placeholder-text { font-size: 9px; color: #7c6d8f; text-align: center; letter-spacing: 0.5px; }
-        .qr-instructions { background: #fffdf7; border: 1px solid #e8e0f0; border-radius: 3px; padding: 10px 14px; margin-top: 12px; text-align: left; }
-        .qr-instructions-title { font-size: 9px; font-weight: 700; color: #7c5600; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-        .qr-step { font-size: 11px; color: #5c4f6e; padding: 2px 0; display: flex; gap: 8px; align-items: flex-start; }
-        .qr-step-num { font-weight: 700; color: #c9a84c; flex-shrink: 0; }
+    /* Body */
+    .body-td     { padding: 28px 32px 32px; background-color: #0f0720; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ── Note ── */
-        .note-box { background: #f7f5fb; border-left: 3px solid #8b5cf6; border-radius: 0 4px 4px 0; padding: 10px 14px; margin-bottom: 16px; font-size: 11.5px; color: #5c4f6e; line-height: 1.6; }
+    /* Space card */
+    .space-card  { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .space-head  { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 14px 18px; }
+    .space-name  { font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .space-type  { font-size: 10px; color: #c9a84c; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-        /* ── Footer ── */
-        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 14px 28px; text-align: center; }
-        .footer-brand { font-size: 9px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-        .footer-text  { font-size: 10px; color: #9b8caa; line-height: 1.55; }
-    </style>
+    /* Detail rows */
+    .detail-row  { border-bottom: 1px solid rgba(255,255,255,.04); }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-lbl-td { padding: 13px 12px 13px 18px; vertical-align: middle; width: 38%; }
+    .detail-val-td { padding: 13px 18px 13px 8px; vertical-align: middle; text-align: right; }
+    .detail-lbl  { font-size: 9px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .detail-val  { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .time-sep    { color: rgba(255,255,255,.3); margin: 0 5px; }
+    .time-dur    { font-size: 11px; color: rgba(255,255,255,.3); margin-left: 6px; }
+
+    /* Price */
+    .price-box   { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .price-total-tr { border-bottom: 1px solid rgba(255,255,255,.07); }
+    .price-total-lbl { padding: 16px 18px; font-size: 16px; font-weight: 700; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-total-amt { padding: 16px 18px; font-size: 22px; font-weight: 800; color: #c9a84c; text-align: right; letter-spacing: -0.3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-line-tr   { border-bottom: 1px solid rgba(255,255,255,.04); }
+    .price-line-lbl  { padding: 10px 18px; font-size: 12px; color: rgba(255,255,255,.45); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-line-amt  { padding: 10px 18px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.65); text-align: right; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+
+    /* Payment */
+    .pay-box     { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+    .pay-lbl-td  { padding: 13px 12px 13px 18px; font-size: 9px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; width: 38%; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .pay-val-td  { padding: 13px 18px 13px 8px; text-align: right; }
+    .pay-name    { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .pay-amt     { font-size: 14px; font-weight: 700; color: #c9a84c; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+
+    /* QR */
+    .qr-box      { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 22px 18px; margin-bottom: 24px; text-align: center; background-color: rgba(255,255,255,.02); }
+    .qr-lbl      { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.3); margin-bottom: 16px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .qr-img-wrap { display: inline-block; padding: 12px; background-color: #ffffff; border-radius: 10px; margin-bottom: 12px; }
+    .qr-img      { width: 140px; height: 140px; display: block; }
+    .qr-placeholder { display: inline-block; width: 140px; height: 44px; background-color: #1a1030; border-radius: 6px; border: 1px solid rgba(201,168,76,.2); text-align: center; line-height: 44px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 0.8px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .qr-ref      { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 2px; margin-bottom: 4px; font-family: "Courier New", Courier, monospace; }
+    .verify-code { font-size: 11px; color: rgba(255,255,255,.3); margin-bottom: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .qr-steps    { text-align: left; }
+    .qr-step     { font-size: 11px; color: rgba(255,255,255,.38); line-height: 1.65; margin-bottom: 4px; padding-left: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+
+    /* CTAs */
+    .cta-table   { width: 100%; border-collapse: separate; border-spacing: 8px; margin-bottom: 8px; }
+    .cta-primary { display: block; text-align: center; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .cta-secondary { display: block; text-align: center; background-color: transparent; color: rgba(255,255,255,.5); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+
+    /* Legal */
+    .legal { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.6; margin-top: 20px; text-align: center; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .legal a { color: rgba(255,255,255,.35); }
+
+    /* Footer */
+    .footer-td   { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text  { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text a { color: rgba(255,255,255,.35); }
+
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .ref-bar-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+        .hero-title { font-size: 20px !important; }
+        .cta-table { border-spacing: 4px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
 
-        <!-- Header -->
-        <div class="email-header">
-            <div class="logo-area">
-                <div>
-                    <div class="brand-name">Elle A Osé</div>
-                    <div class="brand-sub">Espace de coworking</div>
-                </div>
-                <span th:switch="${status}">
-                    <span th:case="'CONFIRMED'" class="status-tag tag-confirmed">Confirmée</span>
-                    <span th:case="'CREATED'"   class="status-tag tag-default">En attente</span>
-                    <span th:case="'CANCELLED'" class="status-tag tag-cancelled">Annulée</span>
-                    <span th:case="*"           class="status-tag tag-default" th:text="${status}">—</span>
-                </span>
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+
+    <!-- ══ HEADER ══ -->
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle">
+                        <div class="brand-name">Elle A Osé</div>
+                        <div class="brand-sub">Espace de coworking</div>
+                    </td>
+                    <td align="right" valign="middle" style="white-space:nowrap;">
+                        <span class="status-pill" th:text="${eventTag ?: 'Confirmée'}">Confirmée</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td class="header-stripe" style="height:3px; background:linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size:0; line-height:0;">&nbsp;</td></tr>
+
+    <!-- ══ HERO ══ -->
+    <tr>
+        <td class="hero-td">
+            <div class="hero-label">Tout est prêt &#x2714;</div>
+            <div class="hero-title">Votre réservation est confirmée</div>
+            <div class="hero-sub">
+                Bonjour <strong th:text="${recipientName}">client</strong>,
+                nous avons bien enregistré votre réservation.
             </div>
-        </div>
-        <div class="header-stripe"></div>
+        </td>
+    </tr>
 
-        <!-- Hero -->
-        <div class="hero">
-            <div class="hero-icon">📅</div>
-            <div class="hero-title" th:text="${eventTitle ?: 'Réservation confirmée'}">Réservation confirmée</div>
-            <div class="hero-sub" th:text="${eventSubtitle ?: 'Votre accès est prêt pour le créneau réservé'}">Votre accès est prêt</div>
-            <div class="hero-number" th:text="${bookingNumber}">BKG-000</div>
-        </div>
+    <!-- ══ REF BAR ══ -->
+    <tr>
+        <td class="ref-bar-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="ref-label">Référence de réservation</td>
+                    <td align="right" class="ref-number" th:text="${bookingNumber}">BKG-000001</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
 
-        <!-- Body -->
-        <div class="email-body">
+    <!-- ══ BODY ══ -->
+    <tr>
+        <td class="body-td">
 
-            <p class="greeting">
-                Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,<br>
-                <span th:text="${eventMessage ?: 'Votre réservation est confirmée. Présentez le QR code ci-dessous à votre arrivée.'}">
-                    Votre réservation est confirmée.
-                </span>
+            <!-- Section : Espace réservé -->
+            <div class="section-lbl">Espace réservé</div>
+            <table class="space-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="space-head">
+                        <div class="space-name" th:text="${resourceName}">Espace réservé</div>
+                        <div class="space-type" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
+                    </td>
+                </tr>
+
+                <!-- Date -->
+                <tr class="detail-row">
+                    <td class="detail-lbl-td"><span class="detail-lbl">Date</span></td>
+                    <td class="detail-val-td"><span class="detail-val" th:text="${bookingDate ?: startedAt}">—</span></td>
+                </tr>
+
+                <!-- Horaires -->
+                <tr class="detail-row" style="background-color:rgba(255,255,255,.02);">
+                    <td class="detail-lbl-td"><span class="detail-lbl">Horaires</span></td>
+                    <td class="detail-val-td">
+                        <span class="detail-val">
+                            <span th:text="${startTime}">09:00</span>
+                            <span class="time-sep">&mdash;</span>
+                            <span th:text="${endTime}">13:00</span>
+                            <span class="time-dur" th:text="${durationLabel}">4 h</span>
+                        </span>
+                    </td>
+                </tr>
+
+                <!-- Capacité -->
+                <tr class="detail-row" th:if="${resourceCapacity}">
+                    <td class="detail-lbl-td"><span class="detail-lbl">Capacité</span></td>
+                    <td class="detail-val-td"><span class="detail-val" th:text="${resourceCapacity} + ' personne(s)'">—</span></td>
+                </tr>
+
+                <!-- Localisation -->
+                <tr class="detail-row" th:if="${address}">
+                    <td class="detail-lbl-td"><span class="detail-lbl">Adresse</span></td>
+                    <td class="detail-val-td"><span class="detail-val" th:text="${address}">—</span></td>
+                </tr>
+            </table>
+
+            <!-- Section : Détail du paiement -->
+            <div class="section-lbl" style="margin-top:20px;">Détail du paiement</div>
+            <table class="price-box" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr class="price-total-tr" style="border-bottom:1px solid rgba(255,255,255,.07);">
+                    <td class="price-total-lbl">Total TTC</td>
+                    <td class="price-total-amt" th:text="${priceTTC}">—</td>
+                </tr>
+                <tr class="price-line-tr" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                    <td class="price-line-lbl" th:text="|Base HT — ${resourceName} &times; ${durationLabel}|">Base HT</td>
+                    <td class="price-line-amt" th:text="${priceHT}">—</td>
+                </tr>
+                <tr class="price-line-tr" th:if="${priceFees}" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                    <td class="price-line-lbl">Frais de réservation</td>
+                    <td class="price-line-amt" th:text="${priceFees}">—</td>
+                </tr>
+                <tr class="price-line-tr" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                    <td class="price-line-lbl" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</td>
+                    <td class="price-line-amt" th:text="${priceTVA}">—</td>
+                </tr>
+                <tr>
+                    <td class="price-line-lbl" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
+                    <td class="price-line-amt" th:text="${priceCentimeAdditionnel}">—</td>
+                </tr>
+            </table>
+
+            <!-- Section : Paiement -->
+            <div class="section-lbl" style="margin-top:20px;">Paiement</div>
+            <table class="pay-box" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle" style="padding-right:14px; width:36px;"><span class="pay-emoji">&#x1F4B3;</span></td>
+                    <td valign="middle">
+                        <div class="pay-name" th:text="${paymentMethod}">Mode de paiement</div>
+                        <div class="pay-date" th:text="${paymentDate}">—</div>
+                    </td>
+                    <td align="right" valign="middle" class="pay-amt" th:text="${priceTTC}">—</td>
+                </tr>
+            </table>
+
+            <!-- Section : QR code -->
+            <table class="qr-box" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td align="center">
+                        <div class="qr-lbl">Présentez ce code à l'accueil</div>
+
+                        <!-- QR réel (CID inline) -->
+                        <div th:if="${showQr}" class="qr-img-wrap">
+                            <img src="cid:qr-booking" alt="QR Code" class="qr-img" width="140" height="140"/>
+                        </div>
+
+                        <!-- Placeholder quand pas de QR -->
+                        <div th:unless="${showQr}" class="qr-placeholder">&#x1F4F1;</div>
+
+                        <div class="qr-ref" th:text="${bookingNumber}">BKG-000001</div>
+                        <div class="verify-code" th:if="${verificationCode}" th:text="|Code : ${verificationCode}|">Code : CHK-123</div>
+
+                        <div class="qr-steps" style="margin-top:12px;">
+                            <div class="qr-step">1. Présentez ce QR code à l'accueil à votre arrivée.</div>
+                            <div class="qr-step">2. Si le scan échoue, communiquez le code ci-dessus.</div>
+                            <div class="qr-step">3. Gardez cet email accessible jusqu'à la fin de votre session.</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- CTAs -->
+            <table class="cta-table" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td style="padding:4px;">
+                        <a th:href="${bookingUrl}" href="https://elleaose.com" class="cta-primary">Voir ma réservation</a>
+                    </td>
+                    <td style="padding:4px;">
+                        <a th:href="${invoiceUrl}" href="https://elleaose.com" class="cta-secondary">Télécharger le PDF</a>
+                    </td>
+                </tr>
+            </table>
+
+            <p class="legal">
+                Le prix n'inclut pas d'éventuels frais bancaires.<br>
+                Pour gérer vos réservations&nbsp;: <a th:href="${accountUrl ?: 'https://elleaose.com'}">elleaose.com</a>
             </p>
 
-            <!-- Détails réservation -->
-            <div class="info-card">
-                <div class="info-head">Détails de la réservation</div>
-                <table class="info-table">
-                    <tr>
-                        <td class="lbl">Espace / ressource</td>
-                        <td class="val" th:text="${resourceName ?: '—'}">Salle</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Début</td>
-                        <td class="val" th:text="${startedAt}">—</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Fin</td>
-                        <td class="val" th:text="${endedAt}">—</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Quantité</td>
-                        <td class="val" th:text="${quantity ?: 1}">1</td>
-                    </tr>
-                    <tr>
-                        <td class="lbl">Mode de paiement</td>
-                        <td class="val" th:text="${paymentMode ?: '—'}">DIRECT</td>
-                    </tr>
-                </table>
+        </td>
+    </tr>
+
+    <!-- ══ FOOTER ══ -->
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
+            <div class="footer-text">
+                Email généré automatiquement suite à votre réservation.<br>
+                <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552">05 204 2552</a>
             </div>
+        </td>
+    </tr>
 
-            <!-- QR code check-in -->
-            <div class="qr-section" th:if="${status == 'CONFIRMED' or status == 'CREATED'}">
-                <div class="qr-head">
-                    <span>QR Code check-in</span>
-                    <span style="font-size:9px; color:#9b8caa; font-weight:400;">Scanner à l'accueil pour s'enregistrer</span>
-                </div>
-                <div class="qr-body">
-
-                    <!-- QR code image inline (CID) -->
-                    <div class="qr-img-wrap" th:if="${showQr}">
-                        <img src="cid:qr-booking" width="160" height="160" alt="QR code check-in">
-                    </div>
-
-                    <!-- Fallback si QR non disponible -->
-                    <div class="qr-placeholder" th:if="${!showQr}">
-                        <div class="qr-placeholder-icon">📱</div>
-                        <div class="qr-placeholder-text">QR code disponible<br>dans votre espace client</div>
-                    </div>
-
-                    <!-- Token de vérification -->
-                    <div th:if="${checkInToken != null}">
-                        <div class="qr-token-label">Code de vérification</div>
-                        <div class="qr-token-value" th:text="${checkInToken}">TOKEN</div>
-                    </div>
-
-                    <!-- Instructions -->
-                    <div class="qr-instructions">
-                        <div class="qr-instructions-title">Comment l'utiliser</div>
-                        <div class="qr-step"><span class="qr-step-num">1.</span><span>Scannez le QR code à l'accueil — le check-in s'effectue automatiquement.</span></div>
-                        <div class="qr-step"><span class="qr-step-num">2.</span><span>Le code est unique à cette réservation — ne le partagez pas.</span></div>
-                        <div class="qr-step"><span class="qr-step-num">3.</span><span>En cas de problème, communiquez votre numéro : <strong th:text="${bookingNumber}">BKG-000</strong>.</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Raison si annulation / rejet -->
-            <div class="note-box" th:if="${reason != null}">
-                <strong>Motif :</strong> <span th:text="${reason}">—</span>
-            </div>
-
-            <div class="note-box">
-                Pour toute question ou modification, contactez-nous via votre espace client ou au <strong>05 204 25 52</strong>.
-            </div>
-        </div>
-
-        <div class="email-footer">
-            <div class="footer-brand">Elle A Osé</div>
-            <div class="footer-text">coworkspace@elleaose.com · 05 204 25 52<br>Email généré automatiquement — merci de ne pas y répondre directement.</div>
-        </div>
-
-    </div>
-</div>
+</table>
+</td></tr>
+</table>
 </body>
 </html>

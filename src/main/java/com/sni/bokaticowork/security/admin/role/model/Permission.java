@@ -40,7 +40,7 @@ public class Permission {
     private String module;
 
     @NotBlank(message = "Action is required")
-    @Size(max = 20, message = "Action must not exceed 20 characters")
+    @Size(max = 60, message = "Action must not exceed 60 characters")
     @Column(name = "action", nullable = false)
     private String action;
 

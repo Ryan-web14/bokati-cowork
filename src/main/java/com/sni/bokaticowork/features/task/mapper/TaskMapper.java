@@ -20,8 +20,10 @@ public class TaskMapper {
                 task.getSourceType(),
                 task.getSourceCode(),
                 task.getRecurrence(),
+                task.getParentTaskId(),
                 task.getCompletedAt(),
                 task.getCreatedAt(),
+                task.getUpdatedAt(),
                 checklist == null ? List.of() : checklist.stream().map(this::toChecklistResponse).toList(),
                 comments == null ? List.of() : comments.stream().map(this::toCommentResponse).toList()
         );
@@ -33,5 +35,33 @@ public class TaskMapper {
 
     public TaskCommentResponse toCommentResponse(TaskComment comment) {
         return new TaskCommentResponse(comment.getId(), comment.getAuthorId(), comment.getAuthorName(), comment.getComment(), comment.getCreatedAt());
+    }
+
+    public TaskKanbanCardResponse toKanbanCard(TaskItem task, int checklistTotal,
+                                               int checklistDone, int commentCount) {
+        boolean overdue = task.getDueAt() != null
+                && task.getDueAt().isBefore(java.time.Instant.now())
+                && task.getStatus() != com.sni.bokaticowork.features.task.enums.TaskStatus.COMPLETED
+                && task.getStatus() != com.sni.bokaticowork.features.task.enums.TaskStatus.CANCELLED
+                && task.getStatus() != com.sni.bokaticowork.features.task.enums.TaskStatus.ARCHIVED;
+        return new TaskKanbanCardResponse(
+                task.getId(),
+                task.getTitle(),
+                task.getAssignedTo(),
+                task.getStatus(),
+                task.getPriority(),
+                task.getRecurrence(),
+                task.getParentTaskId(),
+                task.getSourceType(),
+                task.getSourceCode(),
+                task.getDueAt(),
+                task.getCompletedAt(),
+                task.getCreatedAt(),
+                task.getUpdatedAt(),
+                checklistTotal,
+                checklistDone,
+                commentCount,
+                overdue
+        );
     }
 }

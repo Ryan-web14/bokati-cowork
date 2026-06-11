@@ -96,6 +96,9 @@ public class NotificationMessage {
     @Column(name = "sent_at")
     private Instant sentAt;
 
+    @Column(name = "read_at")
+    private Instant readAt;
+
     @Column(name = "last_error", columnDefinition = "text")
     private String lastError;
 

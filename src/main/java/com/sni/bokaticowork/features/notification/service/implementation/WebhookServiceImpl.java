@@ -105,7 +105,7 @@ public class WebhookServiceImpl implements WebhookService {
                 status == null ? null : status.name(),
                 normalize(endpointCode),
                 upper(eventType),
-                pageable
+                PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
         ).map(mapper::toResponse);
     }
 

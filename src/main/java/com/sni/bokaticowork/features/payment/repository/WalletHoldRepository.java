@@ -1,6 +1,9 @@
 package com.sni.bokaticowork.features.payment.repository;
 
 import com.sni.bokaticowork.features.payment.model.WalletHold;
+import com.sni.bokaticowork.features.payment.enums.WalletHoldStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +18,22 @@ public interface WalletHoldRepository extends JpaRepository<WalletHold, Long> {
     @Query(nativeQuery = true, value = "SELECT * FROM wallet_hold WHERE hold_number = :holdNumber")
     Optional<WalletHold> findByHoldNumber(@Param("holdNumber") String holdNumber);
 
+    @Query("""
+            SELECT h
+            FROM WalletHold h
+            JOIN h.wallet w
+            WHERE (:walletNumber IS NULL OR w.walletNumber = :walletNumber)
+              AND (:status IS NULL OR h.status = :status)
+              AND (:sourceType IS NULL OR h.sourceType = :sourceType)
+              AND (:sourceCode IS NULL OR h.sourceCode = :sourceCode)
+            ORDER BY h.createdAt DESC
+            """)
+    Page<WalletHold> list(@Param("walletNumber") String walletNumber,
+                          @Param("status") WalletHoldStatus status,
+                          @Param("sourceType") String sourceType,
+                          @Param("sourceCode") String sourceCode,
+                          Pageable pageable);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM wallet_hold
@@ -24,6 +43,17 @@ public interface WalletHoldRepository extends JpaRepository<WalletHold, Long> {
             """)
     List<WalletHold> findAllByStatusAndExpiresAtLessThanEqual(@Param("status") String status,
                                                               @Param("expiresAt") Instant expiresAt);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM wallet_hold
+            WHERE status = CAST(:status AS VARCHAR)
+              AND source_type = CAST(:sourceType AS VARCHAR)
+              AND source_code = CAST(:sourceCode AS VARCHAR)
+            """)
+    List<WalletHold> findAllByStatusAndSourceTypeAndSourceCode(@Param("status") String status,
+                                                               @Param("sourceType") String sourceType,
+                                                               @Param("sourceCode") String sourceCode);
 
     @Modifying
     @Query(nativeQuery = true, value = """

@@ -2,11 +2,14 @@ package com.sni.bokaticowork.features.payment.dto.response;
 
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
 import com.sni.bokaticowork.features.payment.enums.CashFlowDirection;
+import com.sni.bokaticowork.features.payment.enums.CashMovementChannel;
+import com.sni.bokaticowork.features.payment.enums.CashMovementStatus;
 import com.sni.bokaticowork.features.payment.enums.CashMovementType;
 import com.sni.bokaticowork.features.payment.enums.CashSessionStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 
 public record CashMovementResponse(
         String movementNumber,
@@ -42,6 +45,22 @@ public record CashMovementResponse(
         String relatedSourceCode,
         String relatedSourceLabel,
         String metadataJson,
+        CashMovementStatus status,
+        String relatedMovementNumber,
+        String batchId,
+        BigDecimal runningBalance,
+        BigDecimal exchangeRate,
+        CashMovementChannel channel,
+        String movementDeviceCode,
+        String deviceIp,
+        String subCategory,
+        String tags,
+        BigDecimal riskScore,
+        Boolean requiresSignature,
+        String signedBy,
+        Instant signedAt,
+        Instant printedAt,
+        List<CashMovementAttachmentResponse> attachments,
         Instant createdAt
 ) {
 }

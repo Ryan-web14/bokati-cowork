@@ -101,8 +101,9 @@ public class InventoryDailyWorker {
         int warranties = detectWarrantySoon();
         int maintenance = detectMaintenanceDue();
         int overdueReturns = detectOverdueReturns();
-        log.info("Inventory asset worker: warrantySoon={}, maintenanceDue={}, overdueReturns={}",
-                warranties, maintenance, overdueReturns);
+        int returnReminders = detectReturnDueSoon();
+        log.info("Inventory asset worker: warrantySoon={}, maintenanceDue={}, overdueReturns={}, returnDueSoon={}",
+                warranties, maintenance, overdueReturns, returnReminders);
     }
 
     private int detectExpirySoon() {
@@ -256,6 +257,29 @@ public class InventoryDailyWorker {
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.ASSET_RETURN_OVERDUE,
                     "Retour asset en retard — " + asset.getAssetCode() + " attendu le " + assignment.getExpectedReturnAt());
+            alert.setAssetCode(asset.getAssetCode());
+            alert.setItem(asset.getItem());
+            alert.setLocation(asset.getLocation());
+            saveAndPublish(alert);
+            created++;
+        }
+        return created;
+    }
+
+    private int detectReturnDueSoon() {
+        int created = 0;
+        Instant from = Instant.now();
+        Instant to = Instant.now().plus(1, ChronoUnit.DAYS);
+        for (AssetAssignment assignment : assignmentRepository.findAllByStatusAndExpectedReturnAtBetween(
+                AssetAssignmentStatus.ACTIVE, from, to)) {
+            Asset asset = assignment.getAsset();
+            if (alertRepository.findFirstByAlertTypeAndAssetCodeAndStatusOrderByCreatedAtDesc(
+                    InventoryAlertType.ASSET_RETURN_DUE_SOON, asset.getAssetCode(), InventoryAlertStatus.OPEN).isPresent()) {
+                continue;
+            }
+            InventoryAlert alert = baseAlert(InventoryAlertType.ASSET_RETURN_DUE_SOON,
+                    "Retour prévu dans moins de 24h — asset " + asset.getAssetCode()
+                            + " attendu le " + assignment.getExpectedReturnAt());
             alert.setAssetCode(asset.getAssetCode());
             alert.setItem(asset.getItem());
             alert.setLocation(asset.getLocation());

@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.inventory.stock.model;
 import com.sni.bokaticowork.core.annotation.IdGeneration;
 import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItem;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockOutReasonCode;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -58,6 +59,10 @@ public class StockMovement {
 
     @Column(name = "reference_code", length = 120)
     private String referenceCode;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reason_code", length = 40)
+    private StockOutReasonCode reasonCode;
 
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;

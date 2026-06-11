@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${session.sessionNumber}">Rapport de clôture de caisse</title>
+    <style>
+        @page { size: A4; margin: 28px 30px; }
+        * { box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #2b2030; font-size: 9.6px; line-height: 1.4; }
+        .header { border-bottom: 2px solid #d9a21b; padding-bottom: 10px; margin-bottom: 16px; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { border: none; padding: 0; vertical-align: top; }
+        .brand { font-size: 17px; font-weight: 700; color: #281332; letter-spacing: 2px; text-transform: uppercase; }
+        .brand-sub { font-size: 8px; color: #6f6478; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+        .doc-type { font-size: 18px; font-weight: 700; color: #281332; text-align: right; text-transform: uppercase; letter-spacing: 1.5px; }
+        .doc-number { font-size: 10px; color: #d9a21b; text-align: right; font-weight: 700; font-family: "Courier New", monospace; margin-top: 3px; }
+
+        .section-title {
+            font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+            color: #ffffff; background: #281332; padding: 5px 10px; margin: 14px 0 8px;
+        }
+        table.info { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+        table.info td { padding: 3px 10px; border-bottom: 1px solid #efe9f2; vertical-align: top; }
+        table.info td.label { color: #6f6478; width: 38%; font-weight: 600; }
+        table.info td.value { color: #2b2030; font-weight: 600; }
+
+        table.totals { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        table.totals th { background: #f3eef6; color: #6f6478; font-size: 8px; text-transform: uppercase; letter-spacing: 0.6px; padding: 5px 8px; text-align: left; border-bottom: 1px solid #e6ddea; }
+        table.totals td { padding: 5px 8px; border-bottom: 1px solid #efe9f2; font-weight: 600; }
+        table.totals td.amount { text-align: right; font-family: "Courier New", monospace; }
+
+        .variance-box { border: 1px solid #d9a21b; background: #fffaf0; padding: 12px 16px; margin: 10px 0; text-align: center; }
+        .variance-box.ok { border-color: #1d7a46; background: #e9f7ef; }
+        .variance-box.bad { border-color: #b3261e; background: #fdecea; }
+        .variance-box .label { font-size: 8px; color: #6f6478; text-transform: uppercase; letter-spacing: 1px; }
+        .variance-box .value { font-size: 20px; font-weight: 700; color: #281332; margin-top: 4px; }
+
+        table.movements { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        table.movements th { background: #281332; color: #ffffff; font-size: 7.6px; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 6px; text-align: left; }
+        table.movements td { padding: 3px 6px; border-bottom: 1px solid #efe9f2; font-size: 8.4px; }
+        table.movements td.amount { text-align: right; font-family: "Courier New", monospace; }
+
+        .signatures { width: 100%; border-collapse: collapse; margin-top: 28px; }
+        .signatures td { width: 50%; padding-top: 36px; border-top: 1px solid #2b2030; font-size: 8.5px; color: #6f6478; text-align: center; }
+
+        .footer { margin-top: 18px; font-size: 7.6px; color: #9b8caa; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <table class="header-table">
+        <tr>
+            <td>
+                <div class="brand">Bokati Cowork</div>
+                <div class="brand-sub" th:text="'Caisse ' + ${session.registerCode}">Caisse</div>
+            </td>
+            <td>
+                <div class="doc-type">Rapport de clôture</div>
+                <div class="doc-number" th:text="${session.sessionNumber}">CSS-202601-000001</div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section-title">Informations de session</div>
+<table class="info">
+    <tr>
+        <td class="label">Ouverte par</td>
+        <td class="value" th:text="${summary.openedBy} ?: '—'">—</td>
+        <td class="label">Ouverte le</td>
+        <td class="value" th:text="${fmt.timestamp(summary.openedAt)}">—</td>
+    </tr>
+    <tr>
+        <td class="label">Clôturée par</td>
+        <td class="value" th:text="${summary.closedBy} ?: '—'">—</td>
+        <td class="label">Clôturée le</td>
+        <td class="value" th:text="${fmt.timestamp(summary.closedAt)}">—</td>
+    </tr>
+    <tr>
+        <td class="label">Statut</td>
+        <td class="value" th:text="${summary.status}">CLOSED</td>
+        <td class="label">Clôture demandée le</td>
+        <td class="value" th:text="${fmt.timestamp(summary.closingRequestedAt)}">—</td>
+    </tr>
+</table>
+
+<div class="section-title">Synthèse des flux</div>
+<table class="totals">
+    <tr><th>Libellé</th><th style="text-align:right;">Montant</th></tr>
+    <tr><td>Fonds d'ouverture</td><td class="amount" th:text="${fmt.money(summary.openingAmount)}">—</td></tr>
+    <tr><td>Total encaissements (paiements)</td><td class="amount" th:text="${fmt.money(summary.totalPayments)}">—</td></tr>
+    <tr><td>Total remboursements</td><td class="amount" th:text="${fmt.money(summary.totalRefunds)}">—</td></tr>
+    <tr><td>Total entrées de caisse</td><td class="amount" th:text="${fmt.money(summary.totalCashIn)}">—</td></tr>
+    <tr><td>Total sorties de caisse</td><td class="amount" th:text="${fmt.money(summary.totalCashOut)}">—</td></tr>
+    <tr><td>Total ajustements</td><td class="amount" th:text="${fmt.money(summary.totalAdjustments)}">—</td></tr>
+    <tr><td><strong>Montant attendu en caisse</strong></td><td class="amount" th:text="${fmt.money(summary.expectedClosingAmount)}"><strong>—</strong></td></tr>
+    <tr><td><strong>Montant compté en caisse</strong></td><td class="amount" th:text="${fmt.money(summary.countedClosingAmount)}"><strong>—</strong></td></tr>
+</table>
+
+<div class="variance-box"
+     th:classappend="${summary.varianceAmount == null or summary.varianceAmount.signum() == 0} ? 'ok' : 'bad'">
+    <div class="label">Écart de caisse</div>
+    <div class="value" th:text="${fmt.money(summary.varianceAmount)}">0 XAF</div>
+    <div th:if="${summary.varianceReason != null and !#strings.isEmpty(summary.varianceReason)}"
+         style="font-size: 8.5px; color: #6f6478; margin-top: 6px;" th:text="'Motif déclaré : ' + ${summary.varianceReason}">—</div>
+</div>
+
+<div class="section-title">Statistiques de la session</div>
+<table class="info">
+    <tr>
+        <td class="label">Durée</td>
+        <td class="value" th:text="${statistics.durationMinutes} + ' min'">—</td>
+        <td class="label">Nombre de mouvements</td>
+        <td class="value" th:text="${statistics.movementCount}">—</td>
+    </tr>
+    <tr>
+        <td class="label">Transactions / heure</td>
+        <td class="value" th:text="${statistics.transactionsPerHour}">—</td>
+        <td class="label">Montant moyen / mouvement</td>
+        <td class="value" th:text="${fmt.money(statistics.averageMovementAmount)}">—</td>
+    </tr>
+    <tr>
+        <td class="label">Ratio entrées / sorties</td>
+        <td class="value" th:text="${statistics.inOutRatio} ?: '—'">—</td>
+        <td class="label">Temps d'inactivité estimé</td>
+        <td class="value" th:text="${statistics.idleMinutes} + ' min'">—</td>
+    </tr>
+</table>
+
+<div class="section-title">Détail des mouvements</div>
+<table class="movements">
+    <tr>
+        <th>Heure</th>
+        <th>N° mouvement</th>
+        <th>Type</th>
+        <th>Catégorie</th>
+        <th style="text-align:right;">Montant</th>
+        <th style="text-align:right;">Solde</th>
+    </tr>
+    <tr th:each="movement : ${movements}">
+        <td th:text="${fmt.time(movement.createdAt)}">—</td>
+        <td th:text="${movement.movementNumber}">—</td>
+        <td th:text="${fmt.movementTypeLabel(movement.movementType)}">—</td>
+        <td th:text="${movement.flowCategory} ?: '—'">—</td>
+        <td class="amount" th:text="${fmt.money(movement.amount)}">—</td>
+        <td class="amount" th:text="${fmt.money(movement.runningBalance)}">—</td>
+    </tr>
+</table>
+
+<table class="signatures">
+    <tr>
+        <td>Signature du caissier<br/><span th:text="${summary.closedBy} ?: ${summary.openedBy}">—</span></td>
+        <td>Signature du superviseur<br/><span th:text="${reviewedBy} ?: '—'">—</span></td>
+    </tr>
+</table>
+
+<div class="footer">
+    Rapport généré automatiquement par Bokati Cowork le <span th:text="${fmt.timestamp(generatedAt)}">01/01/2026 10:00</span> —
+    Session <span th:text="${session.sessionNumber}">CSS-202601-000001</span> — Caisse <span th:text="${session.registerCode}">CSR-00001</span>.
+</div>
+</body>
+</html>

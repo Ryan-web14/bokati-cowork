@@ -3,6 +3,8 @@ package com.sni.bokaticowork.features.task.controller;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.task.dto.TaskDtos.*;
+import com.sni.bokaticowork.features.task.enums.TaskPriority;
+import com.sni.bokaticowork.features.task.enums.TaskStatus;
 import com.sni.bokaticowork.features.task.service.interfaces.TaskManagementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +31,20 @@ public class TaskManagementController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('TASK:READ','TASK_READ')")
-    public ResponseEntity<PaginatedResponse<TaskResponse>> list(@RequestParam(required = false) Long assignedTo,
-                                                                @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(service.list(assignedTo, pageable));
+    public ResponseEntity<PaginatedResponse<TaskResponse>> search(
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) Long assignedTo,
+            @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) String sourceType,
+            @RequestParam(required = false) String searchText,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(service.search(status, assignedTo, priority, sourceType, searchText, pageable));
+    }
+
+    @GetMapping("/metrics")
+    @PreAuthorize("hasAnyAuthority('TASK:READ','TASK_READ')")
+    public ResponseEntity<TaskMetricsResponse> metrics() {
+        return ResponseEntity.ok(service.metrics());
     }
 
     @GetMapping("/{id}")
@@ -40,10 +53,22 @@ public class TaskManagementController {
         return ResponseEntity.ok(service.get(id));
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('TASK:WRITE','TASK_WRITE')")
+    public ResponseEntity<TaskResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateTaskRequest request) {
+        return ResponseEntity.ok(service.update(id, request));
+    }
+
     @PatchMapping("/{id}/complete")
     @PreAuthorize("hasAnyAuthority('TASK:WRITE','TASK_WRITE')")
     public ResponseEntity<TaskResponse> complete(@PathVariable Long id) {
         return ResponseEntity.ok(service.complete(id));
+    }
+
+    @PatchMapping("/{id}/archive")
+    @PreAuthorize("hasAnyAuthority('TASK:WRITE','TASK_WRITE')")
+    public ResponseEntity<TaskResponse> archive(@PathVariable Long id) {
+        return ResponseEntity.ok(service.archive(id));
     }
 
     @PatchMapping("/{id}/assign")
@@ -58,9 +83,45 @@ public class TaskManagementController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.addComment(id, request));
     }
 
+    @PostMapping("/{id}/checklist")
+    @PreAuthorize("hasAnyAuthority('TASK:WRITE','TASK_WRITE')")
+    public ResponseEntity<TaskResponse> addChecklistItem(@PathVariable Long id, @Valid @RequestBody ChecklistRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addChecklistItem(id, request));
+    }
+
+    @PatchMapping("/{id}/checklist/{itemId}")
+    @PreAuthorize("hasAnyAuthority('TASK:WRITE','TASK_WRITE')")
+    public ResponseEntity<TaskResponse> updateChecklistItem(@PathVariable Long id, @PathVariable Long itemId,
+                                                            @Valid @RequestBody UpdateChecklistItemRequest request) {
+        return ResponseEntity.ok(service.updateChecklistItem(id, itemId, request));
+    }
+
+    @DeleteMapping("/{id}/checklist/{itemId}")
+    @PreAuthorize("hasAnyAuthority('TASK:WRITE','TASK_WRITE')")
+    public ResponseEntity<TaskResponse> removeChecklistItem(@PathVariable Long id, @PathVariable Long itemId) {
+        return ResponseEntity.ok(service.removeChecklistItem(id, itemId));
+    }
+
     @GetMapping("/due-today")
     @PreAuthorize("hasAnyAuthority('TASK:READ','TASK_READ')")
     public ResponseEntity<List<TaskResponse>> dueToday() {
         return ResponseEntity.ok(service.dueToday());
+    }
+
+    @GetMapping("/board")
+    @PreAuthorize("hasAnyAuthority('TASK:READ','TASK_READ')")
+    public ResponseEntity<TaskKanbanBoardResponse> board(
+            @RequestParam(required = false) Long assignedTo,
+            @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) String sourceType,
+            @RequestParam(required = false) String searchText) {
+        return ResponseEntity.ok(service.getBoard(assignedTo, priority, sourceType, searchText));
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasAnyAuthority('TASK:WRITE','TASK_WRITE')")
+    public ResponseEntity<TaskResponse> updateStatus(@PathVariable Long id,
+                                                     @Valid @RequestBody UpdateTaskStatusRequest request) {
+        return ResponseEntity.ok(service.updateStatus(id, request));
     }
 }

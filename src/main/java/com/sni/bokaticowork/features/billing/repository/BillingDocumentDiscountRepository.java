@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface BillingDocumentDiscountRepository extends JpaRepository<BillingDocumentDiscount, Long> {
     List<BillingDocumentDiscount> findAllByDocumentOrderByIdAsc(BillingDocument document);
+    void deleteAllByDocument(BillingDocument document);
 }

@@ -9,6 +9,7 @@ import com.sni.bokaticowork.features.inventory.stock.dto.request.StockTransferRe
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockTransferWorkflowRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockMovementResponse;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockTransferWorkflowResponse;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockOutReasonCode;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockTransferWorkflowStatus;
 import com.sni.bokaticowork.features.inventory.stock.model.InventoryLocation;
@@ -92,7 +93,8 @@ public class StockTransferWorkflowServiceImpl implements StockTransferWorkflowSe
         request.setQuantity(transfer.getQuantity());
         request.setReferenceType(StockReferenceType.OTHER);
         request.setReferenceCode(transfer.getTransferCode());
-        request.setReason("Approved stock transfer " + transfer.getTransferCode());
+        request.setReasonCode(StockOutReasonCode.INTERNAL_USE);
+        request.setReasonDetails("Approved stock transfer " + transfer.getTransferCode());
         request.setPerformedBy(receivedBy);
         StockMovementResponse movement = stockService.transfer(request);
         transfer.setStatus(StockTransferWorkflowStatus.RECEIVED);

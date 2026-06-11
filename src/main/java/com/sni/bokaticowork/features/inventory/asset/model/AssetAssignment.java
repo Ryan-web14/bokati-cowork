@@ -70,6 +70,9 @@ public class AssetAssignment {
     @Column(name = "receiver_signature_url", length = 500)
     private String receiverSignatureUrl;
 
+    @Column(name = "purpose", length = 500)
+    private String purpose;
+
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 

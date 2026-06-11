@@ -16,6 +16,7 @@ public interface UserService {
     UserResponse getUserByEmail(String email);
     List<UserResponse> getAllActiveUsers();
     Users getUserByIdForService(Long id);
+    Users getUserByUserIdForService(String userId);
     Users getUserByEmailForService(String email);
     PaginatedResponse<UserResponse> getPaginatedUsers(Pageable pageable);
 

@@ -70,6 +70,10 @@ public class BillingDocumentLine {
     @Column(name = "taxable", nullable = false)
     private Boolean taxable;
 
+    @Column(name = "tax_included", nullable = false)
+    @Builder.Default
+    private Boolean taxIncluded = Boolean.FALSE;
+
     @Column(name = "vat_rate", precision = 9, scale = 4)
     private BigDecimal vatRate;
 

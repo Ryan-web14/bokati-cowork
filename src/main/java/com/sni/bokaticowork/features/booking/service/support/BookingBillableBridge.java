@@ -3,6 +3,8 @@ package com.sni.bokaticowork.features.booking.service.support;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.service.interfaces.BillingEmailService;
 import com.sni.bokaticowork.features.billing.service.support.BillableItemInvoiceSupport;
 import com.sni.bokaticowork.features.booking.enums.BookingPaymentMode;
 import com.sni.bokaticowork.features.booking.model.Booking;
@@ -11,6 +13,7 @@ import com.sni.bokaticowork.features.subscription.repository.BillableItemReposit
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillableItemStatus;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -18,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class BookingBillableBridge {
@@ -26,6 +30,7 @@ public class BookingBillableBridge {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final BookingLineRepository lineRepository;
     private final BillableItemInvoiceSupport billableItemInvoiceSupport;
+    private final BillingEmailService billingEmailService;
     private final ObjectMapper objectMapper;
 
     public String ensureBillableItem(Booking booking) {
@@ -46,16 +51,22 @@ public class BookingBillableBridge {
                 .sourceId(booking.getBookingNumber())
                 .subscriberType(booking.getOwnerType())
                 .subscriberCode(booking.getOwnerCode())
+                .subscriberName(booking.getContactName())
+                .subscriberEmail(booking.getContactEmail())
+                .subscriberPhone(booking.getContactPhone())
                 .description(description)
                 .amount(amount)
                 .currency(booking.getCurrency())
                 .billingPeriodStart(booking.getStartedAt().toLocalDate())
                 .billingPeriodEnd(booking.getEndedAt().toLocalDate())
                 .status(BillableItemStatus.PENDING)
-                //.metadataJson(metadataJson)
                 .build());
 
-        billableItemInvoiceSupport.ensureInvoiced(item, buildInvoiceTitle(booking), description);
+        BillingDocumentResponse issued = billableItemInvoiceSupport.ensureInvoiced(item, buildInvoiceTitle(booking), description);
+
+        if (issued != null && StringUtils.hasText(booking.getContactEmail())) {
+            billingEmailService.sendDocumentAsync(issued.documentNumber());
+        }
 
         lineRepository.findByBookingId(booking.getId()).forEach(line -> {
             if (line.getBillableNumber() == null) {

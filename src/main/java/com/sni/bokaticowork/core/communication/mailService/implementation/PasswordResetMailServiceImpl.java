@@ -24,19 +24,26 @@ public class PasswordResetMailServiceImpl implements PasswordResetMailService {
     private final DefaultEmailSender emailSender;
     private final SpringTemplateEngine emailTemplteEngine;
 
-//    @Value("${frontend.base.url}")
-    private String frontendBaseURl;
+    @Value("${app.api-base-url:}")
+    private String apiBaseUrl;
+
+    private static final String FORM_PATH = "/sni/api/v1/auth/password-reset/form?token=";
 
     @Async
     @Override
     public CompletableFuture<Boolean> sendPasswordResetMail(Users user, PasswordResetToken resetToken) {
         String firstname = user.getEmail();
-        String link = frontendBaseURl + "/reset-password?token=" + resetToken.getPasswordToken();
+        String link = apiBaseUrl + FORM_PATH + resetToken.getPasswordToken();
+
+        long totalMinutes = resetToken.getExpiration() / (1000 * 60);
+        String expiryLabel = totalMinutes >= 60
+                ? (totalMinutes / 60) + " heure" + (totalMinutes / 60 > 1 ? "s" : "")
+                : totalMinutes + " min";
 
         Context context = new Context();
         context.setVariable("firstname", firstname);
         context.setVariable("resetLink", link);
-        context.setVariable("expiryMinute", resetToken.getExpiration()/(1000*60));
+        context.setVariable("expiryMinute", expiryLabel);
 
         String template = emailTemplteEngine.process("password_reset", context);
 

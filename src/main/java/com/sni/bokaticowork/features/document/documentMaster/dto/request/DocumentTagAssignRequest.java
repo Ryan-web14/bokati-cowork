@@ -1,0 +1,13 @@
+package com.sni.bokaticowork.features.document.documentMaster.dto.request;
+
+import jakarta.validation.constraints.NotEmpty;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class DocumentTagAssignRequest {
+
+    @NotEmpty
+    private List<String> tagCodes;
+}

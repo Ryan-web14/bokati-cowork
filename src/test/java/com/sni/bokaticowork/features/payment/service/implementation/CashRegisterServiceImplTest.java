@@ -78,6 +78,7 @@ class CashRegisterServiceImplTest {
                     value.getActive(),
                     value.getCashControlEnabled(),
                     value.getMaxCashAmount(),
+                    value.getManagerEmail(),
                     value.getCreatedAt(),
                     value.getUpdatedAt()
             );
@@ -89,7 +90,8 @@ class CashRegisterServiceImplTest {
                 "BUS-0001",
                 "POS-001",
                 true,
-                new BigDecimal("500000")
+                new BigDecimal("500000"),
+                "manager@example.com"
         ));
 
         assertEquals(true, response.registerCode().startsWith("CSR-"));
@@ -254,6 +256,22 @@ class CashRegisterServiceImplTest {
                 null,
                 null,
                 movement.getMetadataJson(),
+                movement.getStatus(),
+                null,
+                movement.getBatchId(),
+                movement.getRunningBalance(),
+                movement.getExchangeRate(),
+                movement.getChannel(),
+                movement.getDeviceCode(),
+                movement.getDeviceIp(),
+                movement.getSubCategory(),
+                movement.getTags(),
+                movement.getRiskScore(),
+                movement.getRequiresSignature(),
+                movement.getSignedBy(),
+                movement.getSignedAt(),
+                movement.getPrintedAt(),
+                List.of(),
                 Instant.now()
         );
     }

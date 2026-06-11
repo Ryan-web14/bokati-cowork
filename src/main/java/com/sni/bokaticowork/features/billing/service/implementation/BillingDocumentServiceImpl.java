@@ -2,7 +2,10 @@ package com.sni.bokaticowork.features.billing.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.core.utils.code.CodeComposer;
+import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentAdvanceRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentClauseRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentDiscountRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentLineRequest;
@@ -10,20 +13,43 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRe
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.CreateReservationInvoiceRequest;
 import com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest;
+import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentLineRequest;
+import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentClauseResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscountResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
+import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
+import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.enums.BillingLineType;
+import com.sni.bokaticowork.features.billing.model.BillingDocumentAdvance;
+import com.sni.bokaticowork.features.billing.model.BillingDocumentEditHistory;
 import com.sni.bokaticowork.features.billing.mapper.interfaces.BillingDocumentMapper;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentLine;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentAdvanceRepository;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentClauseRepository;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentDiscountRepository;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentEditHistoryRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentLineRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentTaxRepository;
+import com.sni.bokaticowork.features.booking.model.Booking;
+import com.sni.bokaticowork.features.booking.repository.BookingRepository;
+import com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus;
+import com.sni.bokaticowork.features.payment.enums.PaymentMethod;
+import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
+import com.sni.bokaticowork.features.payment.model.PaymentAllocation;
+import com.sni.bokaticowork.features.payment.model.PaymentIntent;
+import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
+import com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository;
+import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
+import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.billing.repository.specification.criteria.BillingDocumentSearchCriteria;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.billing.service.support.BillingCalculationService;
@@ -47,8 +73,10 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -58,7 +86,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     private final BillingDocumentRepository documentRepository;
     private final BillingDocumentLineRepository lineRepository;
+    private final BillingDocumentAdvanceRepository advanceRepository;
+    private final BillingDocumentDiscountRepository discountRepository;
+    private final BillingDocumentTaxRepository taxRepository;
+    private final BillingDocumentClauseRepository clauseRepository;
+    private final BillingDocumentEditHistoryRepository editHistoryRepository;
     private final BillableItemRepository billableItemRepository;
+    private final BookingRepository bookingRepository;
     private final BillingCalculationService calculationService;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
     private final BillingNumberingSupport numberingSupport;
@@ -66,6 +100,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final BillingLifecycleSupport lifecycleSupport;
     private final BillingEventWriter eventWriter;
     private final BillingDocumentMapper mapper;
+    private final PaymentIntentRepository intentRepository;
+    private final PaymentTransactionRepository transactionRepository;
+    private final PaymentAllocationRepository allocationRepository;
+    private final SequenceGeneratorFacade sequenceGenerator;
 
     @Override
     public BillingDocumentResponse create(CreateBillingDocumentRequest request) {
@@ -76,6 +114,175 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         documentWriter.saveEarlyPaymentDiscount(saved, request.earlyPaymentDiscount());
         eventWriter.write(saved, "BILLING_DOCUMENT_CREATED", null);
         return mapper.toResponse(saved);
+    }
+
+    @Override
+    public BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request) {
+        BillingDocument document = serviceByNumber(documentNumber);
+        boolean isDraft = document.getStatus() == BillingDocumentStatus.DRAFT;
+        boolean isRestrictedEdit = document.getStatus() == BillingDocumentStatus.ISSUED
+                || document.getStatus() == BillingDocumentStatus.SENT;
+
+        if (!isDraft && !isRestrictedEdit) {
+            throw new BadRequestException("Document in status " + document.getStatus() + " cannot be modified");
+        }
+
+        // Internal notes and restricted fields are always editable when status allows modification
+        if (StringUtils.hasText(request.internalNotes())) {
+            document.setInternalNotes(request.internalNotes().trim());
+        } else if (request.internalNotes() != null) {
+            document.setInternalNotes(null);
+        }
+        if (request.dueDate() != null) {
+            document.setDueDate(request.dueDate());
+        }
+        if (StringUtils.hasText(request.terms())) {
+            document.setTerms(request.terms().trim());
+        }
+        if (StringUtils.hasText(request.paymentInstructions())) {
+            document.setPaymentInstructions(request.paymentInstructions().trim());
+        }
+
+        if (isDraft) {
+            if (StringUtils.hasText(request.title())) document.setTitle(request.title().trim());
+            if (StringUtils.hasText(request.description())) document.setDescription(request.description().trim());
+            if (request.issueDate() != null) document.setIssueDate(request.issueDate());
+            if (StringUtils.hasText(request.customerReference())) document.setCustomerReference(request.customerReference().trim());
+            if (StringUtils.hasText(request.poNumber())) document.setPoNumber(request.poNumber().trim());
+            if (StringUtils.hasText(request.projectCode())) document.setProjectCode(request.projectCode().trim());
+            if (StringUtils.hasText(request.salespersonCode())) document.setSalespersonCode(request.salespersonCode().trim());
+            if (StringUtils.hasText(request.deliveryAddressJson())) document.setDeliveryAddressJson(request.deliveryAddressJson().trim());
+            if (StringUtils.hasText(request.language())) document.setLanguage(request.language().trim());
+            if (request.exchangeRate() != null) document.setExchangeRate(request.exchangeRate());
+            if (StringUtils.hasText(request.paymentReference())) document.setPaymentReference(request.paymentReference().trim());
+            if (StringUtils.hasText(request.bankDetailsJson())) document.setBankDetailsJson(request.bankDetailsJson().trim());
+
+            applyLineUpdates(document, request.lines());
+
+            if (request.discounts() != null) {
+                discountRepository.deleteAllByDocument(document);
+            }
+            if (request.clauses() != null) {
+                clauseRepository.deleteAllByDocument(document);
+            }
+
+            // Recalculate totals from remaining lines
+            List<BillingDocumentLine> remainingLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
+            if (!remainingLines.isEmpty()) {
+                List<CreateBillingDocumentLineRequest> lineRequests = remainingLines.stream()
+                        .map(this::toCreateLineRequest).toList();
+                BillingCalculationService.CalculatedDocument recalc = calculationService.calculate(
+                        lineRequests,
+                        request.discounts() != null ? request.discounts() : List.of()
+                );
+                document.setSubtotalAmount(recalc.subtotalAmount());
+                document.setDiscountAmount(recalc.discountAmount());
+                document.setTaxableAmount(recalc.taxableAmount());
+                document.setVatAmount(recalc.vatAmount());
+                document.setAdditionalCentAmount(recalc.additionalCentAmount());
+                document.setTaxAmount(recalc.taxAmount());
+                document.setTotalAmount(recalc.totalAmount());
+                document.setBalanceDue(recalc.totalAmount().subtract(document.getPaidAmount()));
+
+                // Rebuild discounts, clauses and taxes
+                if (request.discounts() != null) {
+                    documentWriter.save(document, recalc, request.discounts(), List.of(), null);
+                }
+                if (request.clauses() != null) {
+                    taxRepository.deleteAllByDocument(document);
+                    documentWriter.save(document, recalc, List.of(), request.clauses(), null);
+                }
+            }
+        }
+
+        BillingDocument saved = documentRepository.save(document);
+        editHistoryRepository.save(BillingDocumentEditHistory.builder()
+                .document(saved)
+                .editType(isDraft ? "FULL_EDIT" : "RESTRICTED_EDIT")
+                .changedBy("SYSTEM")
+                .changedAt(Instant.now())
+                .build());
+        eventWriter.write(saved, "BILLING_DOCUMENT_UPDATED", null);
+        return mapper.toResponse(saved);
+    }
+
+    private void applyLineUpdates(BillingDocument document, List<UpdateBillingDocumentLineRequest> lineUpdates) {
+        if (lineUpdates == null || lineUpdates.isEmpty()) {
+            return;
+        }
+        List<BillingDocumentLine> existing = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document);
+        for (UpdateBillingDocumentLineRequest upd : lineUpdates) {
+            if ("REMOVE".equalsIgnoreCase(upd.action())) {
+                existing.stream()
+                        .filter(l -> l.getLineOrder().equals(upd.lineOrder()))
+                        .findFirst()
+                        .ifPresent(lineRepository::delete);
+            } else {
+                // UPSERT
+                BillingDocumentLine line = existing.stream()
+                        .filter(l -> l.getLineOrder().equals(upd.lineOrder()))
+                        .findFirst()
+                        .orElse(null);
+                CreateBillingDocumentLineRequest lineReq = toUpdateLineAsCreate(upd);
+                BillingCalculationService.CalculatedDocument singleCalc =
+                        calculationService.calculate(List.of(lineReq), List.of());
+                BillingDocumentLine calculated = singleCalc.lines().get(0);
+                if (line == null) {
+                    calculated.setDocument(document);
+                    lineRepository.save(calculated);
+                } else {
+                    line.setLineType(calculated.getLineType());
+                    line.setItemCode(calculated.getItemCode());
+                    line.setDescription(calculated.getDescription());
+                    line.setDetailedDescription(calculated.getDetailedDescription());
+                    line.setQuantity(calculated.getQuantity());
+                    line.setUnit(calculated.getUnit());
+                    line.setUnitPrice(calculated.getUnitPrice());
+                    line.setDiscountRate(calculated.getDiscountRate());
+                    line.setDiscountAmount(calculated.getDiscountAmount());
+                    line.setTaxable(calculated.getTaxable());
+                    line.setTaxIncluded(calculated.getTaxIncluded());
+                    line.setVatRate(calculated.getVatRate());
+                    line.setAdditionalCentRate(calculated.getAdditionalCentRate());
+                    line.setSubtotalAmount(calculated.getSubtotalAmount());
+                    line.setTaxableAmount(calculated.getTaxableAmount());
+                    line.setVatAmount(calculated.getVatAmount());
+                    line.setAdditionalCentAmount(calculated.getAdditionalCentAmount());
+                    line.setTaxAmount(calculated.getTaxAmount());
+                    line.setTotalAmount(calculated.getTotalAmount());
+                    line.setSourceType(calculated.getSourceType());
+                    line.setSourceCode(calculated.getSourceCode());
+                    line.setExternalReference(calculated.getExternalReference());
+                    line.setNotes(calculated.getNotes());
+                    line.setOptional(calculated.getOptional());
+                    lineRepository.save(line);
+                }
+            }
+        }
+    }
+
+    private CreateBillingDocumentLineRequest toUpdateLineAsCreate(UpdateBillingDocumentLineRequest upd) {
+        return new CreateBillingDocumentLineRequest(
+                upd.lineOrder(),
+                upd.lineType(),
+                upd.itemCode(),
+                upd.description(),
+                upd.detailedDescription(),
+                upd.quantity(),
+                upd.unitPrice(),
+                upd.discountRate(),
+                upd.discountAmount(),
+                upd.taxable(),
+                upd.taxIncluded(),
+                upd.vatRate(),
+                upd.additionalCentRate(),
+                upd.sourceType(),
+                upd.sourceCode(),
+                upd.unit(),
+                upd.externalReference(),
+                upd.notes(),
+                upd.optional()
+        );
     }
 
     @Override
@@ -110,6 +317,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                         BigDecimal.ZERO,
                         BigDecimal.ZERO,
                         Boolean.TRUE,
+                        Boolean.TRUE,
                         null,
                         null,
                         item.getSourceType(),
@@ -121,9 +329,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 BillingDocumentType.INVOICE,
                 firstItem.getSubscriberType().name(),
                 firstItem.getSubscriberCode(),
-                null,
-                null,
-                null,
+                firstItem.getSubscriberName(),
+                firstItem.getSubscriberEmail(),
+                firstItem.getSubscriberPhone(),
                 null,
                 "BILLABLE_ITEM",
                 String.join(",", request.billableNumbers()),
@@ -148,6 +356,285 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             billableItemRepository.save(item);
         });
         return mapper.toResponse(invoice);
+    }
+
+    @Override
+    public BillingDocumentResponse createInvoiceFromReservation(CreateReservationInvoiceRequest request) {
+        if ("BOOKING".equalsIgnoreCase(request.mode())) {
+            return createInvoiceFromExistingBooking(request);
+        }
+        return createInvoiceFromExternalBooking(request);
+    }
+
+    private BillingDocumentResponse createInvoiceFromExistingBooking(CreateReservationInvoiceRequest request) {
+        if (!StringUtils.hasText(request.bookingNumber())) {
+            throw new BadRequestException("bookingNumber is required for mode BOOKING");
+        }
+        Booking booking = bookingRepository.findPublicByBookingNumberWithResource(request.bookingNumber().trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + request.bookingNumber()));
+
+        if (StringUtils.hasText(booking.getBillableNumber())) {
+            throw new BadRequestException("Booking " + booking.getBookingNumber() + " is already billed: " + booking.getBillableNumber());
+        }
+
+        var bookingStatuses = Set.of(
+                com.sni.bokaticowork.features.booking.enums.BookingStatus.CONFIRMED,
+                com.sni.bokaticowork.features.booking.enums.BookingStatus.IN_PROGRESS,
+                com.sni.bokaticowork.features.booking.enums.BookingStatus.COMPLETED
+        );
+        if (!bookingStatuses.contains(booking.getStatus())) {
+            throw new BadRequestException("Booking status " + booking.getStatus() + " is not billable");
+        }
+
+        String currency = StringUtils.hasText(booking.getCurrency()) ? booking.getCurrency() : "XAF";
+        BigDecimal unitPrice = booking.getUnitPrice() != null ? booking.getUnitPrice() : BigDecimal.ZERO;
+        BigDecimal quantity = BigDecimal.valueOf(booking.getQuantity() != null ? booking.getQuantity() : 1);
+        String unit = booking.getBookingUnit() != null ? booking.getBookingUnit().name() : null;
+        String resourceName = booking.getResource() != null ? booking.getResource().getName() : "Ressource";
+        String resourceDesc = booking.getResource() != null ? booking.getResource().getDescription() : null;
+        String period = (booking.getStartedAt() != null && booking.getEndedAt() != null)
+                ? booking.getStartedAt() + " → " + booking.getEndedAt()
+                : null;
+        String lineDesc = resourceName + (period != null ? " — " + period : "");
+
+        List<CreateBillingDocumentLineRequest> lines = new ArrayList<>();
+        lines.add(new CreateBillingDocumentLineRequest(
+                1,
+                BillingLineType.BOOKING,
+                booking.getBookingNumber(),
+                lineDesc,
+                resourceDesc,
+                quantity,
+                unitPrice,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                Boolean.TRUE,
+                Boolean.FALSE,
+                null,
+                null,
+                "BOOKING",
+                booking.getBookingNumber(),
+                unit,
+                null,
+                booking.getNotes(),
+                null
+        ));
+        if (request.extraLines() != null) {
+            int order = 2;
+            for (CreateBillingDocumentLineRequest extra : request.extraLines()) {
+                lines.add(new CreateBillingDocumentLineRequest(
+                        order++,
+                        extra.lineType(),
+                        extra.itemCode(),
+                        extra.description(),
+                        extra.detailedDescription(),
+                        extra.quantity(),
+                        extra.unitPrice(),
+                        extra.discountRate(),
+                        extra.discountAmount(),
+                        extra.taxable(),
+                        extra.taxIncluded(),
+                        extra.vatRate(),
+                        extra.additionalCentRate(),
+                        extra.sourceType(),
+                        extra.sourceCode(),
+                        extra.unit(),
+                        extra.externalReference(),
+                        extra.notes(),
+                        extra.optional()
+                ));
+            }
+        }
+
+        BillingDocumentType docType = request.documentType() != null ? request.documentType() : BillingDocumentType.INVOICE;
+        CreateBillingDocumentRequest createRequest = new CreateBillingDocumentRequest(
+                docType,
+                booking.getOwnerType().name(),
+                booking.getOwnerCode(),
+                StringUtils.hasText(booking.getContactName()) ? booking.getContactName() : booking.getOwnerCode(),
+                booking.getContactEmail(),
+                booking.getContactPhone(),
+                null,
+                "BOOKING",
+                booking.getBookingNumber(),
+                "Facture réservation — " + booking.getBookingNumber(),
+                trim(request.description()),
+                trim(request.terms()),
+                currency,
+                request.issueDate() != null ? request.issueDate() : LocalDate.now(),
+                request.dueDate(),
+                null,
+                lines,
+                List.of(),
+                defaultInvoiceClauses(),
+                null,
+                trim(request.paymentInstructions()),
+                null,
+                null,
+                null, null, null, null, null, null, null, null
+        );
+
+        BillingDocumentResponse response = create(createRequest);
+
+        // Apply internalNotes if provided
+        if (StringUtils.hasText(request.internalNotes())) {
+            BillingDocument doc = serviceByNumber(response.documentNumber());
+            doc.setInternalNotes(request.internalNotes().trim());
+            documentRepository.save(doc);
+        }
+
+        // Link booking → billing document
+        booking.setBillableNumber(response.documentNumber());
+        bookingRepository.save(booking);
+
+        return get(response.documentNumber());
+    }
+
+    private BillingDocumentResponse createInvoiceFromExternalBooking(CreateReservationInvoiceRequest request) {
+        if (request.externalBooking() == null) {
+            throw new BadRequestException("externalBooking details are required for mode EXTERNAL");
+        }
+        if (!StringUtils.hasText(request.customerType()) || !StringUtils.hasText(request.customerCode())) {
+            throw new BadRequestException("customerType and customerCode are required for mode EXTERNAL");
+        }
+
+        var ext = request.externalBooking();
+        String period = (ext.checkInAt() != null && ext.checkOutAt() != null)
+                ? ext.checkInAt() + " → " + ext.checkOutAt()
+                : null;
+        String lineDesc = ext.resourceName() + (period != null ? " — " + period : "");
+
+        CreateBillingDocumentLineRequest line = new CreateBillingDocumentLineRequest(
+                1,
+                BillingLineType.BOOKING,
+                null,
+                lineDesc,
+                ext.resourceDescription(),
+                ext.quantity() != null ? ext.quantity() : BigDecimal.ONE,
+                ext.unitPrice(),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                Boolean.TRUE,
+                Boolean.FALSE,
+                null,
+                null,
+                "EXTERNAL_BOOKING",
+                trim(ext.externalReference()),
+                ext.bookingUnit() != null ? ext.bookingUnit().name() : null,
+                trim(ext.externalReference()),
+                trim(ext.notes()),
+                null
+        );
+
+        List<CreateBillingDocumentLineRequest> lines = new ArrayList<>();
+        lines.add(line);
+        if (request.extraLines() != null) {
+            int order = 2;
+            for (CreateBillingDocumentLineRequest extra : request.extraLines()) {
+                lines.add(new CreateBillingDocumentLineRequest(
+                        order++, extra.lineType(), extra.itemCode(), extra.description(),
+                        extra.detailedDescription(), extra.quantity(), extra.unitPrice(),
+                        extra.discountRate(), extra.discountAmount(), extra.taxable(), extra.taxIncluded(),
+                        extra.vatRate(), extra.additionalCentRate(), extra.sourceType(), extra.sourceCode(),
+                        extra.unit(), extra.externalReference(), extra.notes(), extra.optional()
+                ));
+            }
+        }
+
+        String currency = StringUtils.hasText(request.currency()) ? request.currency() : "XAF";
+        BillingDocumentType docType = request.documentType() != null ? request.documentType() : BillingDocumentType.INVOICE;
+        CreateBillingDocumentRequest createRequest = new CreateBillingDocumentRequest(
+                docType,
+                request.customerType(),
+                request.customerCode(),
+                null, null, null, null,
+                "EXTERNAL_BOOKING",
+                trim(ext.externalReference()),
+                "Facture réservation externe — " + ext.resourceName(),
+                null,
+                trim(request.terms()),
+                currency,
+                request.issueDate() != null ? request.issueDate() : LocalDate.now(),
+                request.dueDate(),
+                null,
+                lines,
+                List.of(),
+                defaultInvoiceClauses(),
+                null, trim(request.paymentInstructions()), null, null,
+                null, null, null, null, null, null, null, null
+        );
+
+        BillingDocumentResponse response = create(createRequest);
+
+        if (StringUtils.hasText(request.internalNotes())) {
+            BillingDocument doc = serviceByNumber(response.documentNumber());
+            doc.setInternalNotes(request.internalNotes().trim());
+            documentRepository.save(doc);
+        }
+
+        return get(response.documentNumber());
+    }
+
+    @Override
+    public BillingDocumentResponse duplicate(String documentNumber) {
+        BillingDocument source = serviceByNumber(documentNumber);
+        List<BillingDocumentLine> sourceLines = lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(source);
+        if (sourceLines.isEmpty()) {
+            throw new BadRequestException("Cannot duplicate a document with no lines");
+        }
+        List<CreateBillingDocumentLineRequest> lines = sourceLines.stream()
+                .map(this::toCreateLineRequest)
+                .toList();
+        List<CreateBillingDocumentDiscountRequest> discounts = discountRepository.findAllByDocumentOrderByIdAsc(source)
+                .stream()
+                .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(), d.getDiscountType(), d.getValue()))
+                .toList();
+        List<CreateBillingDocumentClauseRequest> clauses = clauseRepository.findAllByDocumentOrderByDisplayOrderAscIdAsc(source)
+                .stream()
+                .map(c -> new CreateBillingDocumentClauseRequest(c.getClauseCode(), c.getTitle(), c.getBody(), c.getDisplayOrder()))
+                .toList();
+        CreateBillingDocumentRequest request = new CreateBillingDocumentRequest(
+                source.getDocumentType(),
+                source.getCustomerType(),
+                source.getCustomerCode(),
+                source.getCustomerName(),
+                source.getCustomerEmail(),
+                source.getCustomerPhone(),
+                source.getBillingAddressJson(),
+                source.getSourceType(),
+                source.getSourceCode(),
+                source.getTitle(),
+                source.getDescription(),
+                source.getTerms(),
+                source.getCurrency(),
+                LocalDate.now(),
+                source.getDueDate(),
+                source.getMetadataJson(),
+                lines,
+                discounts,
+                clauses,
+                source.getPaymentReference(),
+                source.getPaymentInstructions(),
+                source.getBankDetailsJson(),
+                null,
+                source.getCustomerReference(),
+                source.getPoNumber(),
+                source.getProjectCode(),
+                source.getSalespersonCode(),
+                source.getDeliveryAddressJson(),
+                source.getLanguage(),
+                source.getExchangeRate(),
+                null
+        );
+        BillingDocumentResponse duplicated = create(request);
+        if (StringUtils.hasText(source.getInternalNotes())) {
+            BillingDocument doc = serviceByNumber(duplicated.documentNumber());
+            doc.setInternalNotes("[Copie de " + source.getDocumentNumber() + "] " + source.getInternalNotes());
+            documentRepository.save(doc);
+        }
+        eventWriter.write(serviceByNumber(duplicated.documentNumber()), "BILLING_DOCUMENT_DUPLICATED",
+                java.util.Map.of("sourceDocumentNumber", source.getDocumentNumber()));
+        return get(duplicated.documentNumber());
     }
 
     @Override
@@ -271,8 +758,53 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
         quote.setStatus(BillingDocumentStatus.DEPOSIT_PAID);
         BillingDocument saved = documentRepository.save(quote);
+        advanceRepository.findByDocument(saved).ifPresent(adv -> {
+            adv.setStatus(BillingAdvanceStatus.PAID);
+            adv.setPaidAt(Instant.now());
+            createDepositPaymentRecord(saved, adv.getComputedAmount());
+            advanceRepository.save(adv);
+        });
         eventWriter.write(saved, "QUOTE_DEPOSIT_PAID", null);
         return mapper.toResponse(saved);
+    }
+
+    private void createDepositPaymentRecord(BillingDocument quote, BigDecimal amount) {
+        String customerCtx = CodeComposer.abbrev(quote.getCustomerType());
+        long intentSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_intent"));
+        String intentNumber = CodeComposer.withDay("INT", customerCtx, LocalDate.now(), intentSeq);
+
+        PaymentIntent intent = intentRepository.save(PaymentIntent.builder()
+                .intentNumber(intentNumber)
+                .customerType(quote.getCustomerType())
+                .customerCode(quote.getCustomerCode())
+                .amount(amount)
+                .currency(quote.getCurrency())
+                .status(PaymentIntentStatus.SUCCEEDED)
+                .purpose("DEPOSIT_PAYMENT")
+                .sourceType("QUOTE_DEPOSIT")
+                .sourceCode(quote.getDocumentNumber())
+                .build());
+
+        String methodCtx = CodeComposer.abbrev(PaymentMethod.BANK_TRANSFER.name());
+        long txnSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
+        String txnNumber = CodeComposer.withDay("TXN", methodCtx, LocalDate.now(), txnSeq);
+
+        PaymentTransaction transaction = transactionRepository.save(PaymentTransaction.builder()
+                .transactionNumber(txnNumber)
+                .paymentIntent(intent)
+                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                .provider("MANUAL")
+                .amount(amount)
+                .currency(quote.getCurrency())
+                .status(PaymentTransactionStatus.SUCCEEDED)
+                .paidAt(Instant.now())
+                .build());
+
+        allocationRepository.save(PaymentAllocation.builder()
+                .paymentTransaction(transaction)
+                .billingDocumentNumber(quote.getDocumentNumber())
+                .allocatedAmount(amount)
+                .build());
     }
 
     @Override
@@ -306,7 +838,18 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocumentResponse convertQuoteToInvoice(String quoteNumber) {
         BillingDocument quote = quote(quoteNumber);
         lifecycleSupport.ensureQuoteCanConvert(quote);
+
+        Optional<BillingDocumentAdvance> quoteAdvanceOpt = advanceRepository.findByDocument(quote);
+        boolean depositPaid = quote.getStatus() == BillingDocumentStatus.DEPOSIT_PAID
+                && quoteAdvanceOpt.isPresent()
+                && quoteAdvanceOpt.get().getStatus() == BillingAdvanceStatus.PAID;
+
         BillingDocumentResponse quoteResponse = mapper.toResponse(quote);
+
+        CreateBillingDocumentAdvanceRequest invoiceAdvanceRequest = depositPaid
+                ? toAdvanceRequest(quoteAdvanceOpt.get(), quoteNumber)
+                : null;
+
         CreateBillingDocumentRequest request = new CreateBillingDocumentRequest(
                 BillingDocumentType.INVOICE,
                 quoteResponse.customerType(),
@@ -330,7 +873,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 quoteResponse.paymentReference(),
                 quoteResponse.paymentInstructions(),
                 quoteResponse.bankDetailsJson(),
-                null,
+                invoiceAdvanceRequest,
                 quoteResponse.customerReference(),
                 quoteResponse.poNumber(),
                 quoteResponse.projectCode(),
@@ -340,8 +883,51 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 quoteResponse.exchangeRate(),
                 null
         );
+
         BillingDocumentResponse invoice = create(request);
+
+        // Apply deposit as pre-payment on the invoice
+        if (depositPaid) {
+            BigDecimal depositAmount = quoteAdvanceOpt.get().getComputedAmount();
+            BillingDocument invoiceDoc = serviceByNumber(invoice.documentNumber());
+            BigDecimal paid = depositAmount.min(invoiceDoc.getTotalAmount());
+            invoiceDoc.setPaidAmount(paid);
+            invoiceDoc.setBalanceDue(invoiceDoc.getTotalAmount().subtract(paid).max(BigDecimal.ZERO));
+            invoiceDoc.setStatus(invoiceDoc.getBalanceDue().signum() == 0
+                    ? BillingDocumentStatus.PAID : BillingDocumentStatus.PARTIALLY_PAID);
+            if (invoiceDoc.getStatus() == BillingDocumentStatus.PAID) {
+                invoiceDoc.setPaidAt(Instant.now());
+            }
+            documentRepository.save(invoiceDoc);
+
+            // Mark the advance on the invoice as PAID
+            advanceRepository.findByDocument(invoiceDoc).ifPresent(adv -> {
+                adv.setStatus(BillingAdvanceStatus.PAID);
+                adv.setPaidAt(quoteAdvanceOpt.get().getPaidAt() != null
+                        ? quoteAdvanceOpt.get().getPaidAt() : Instant.now());
+                advanceRepository.save(adv);
+            });
+
+            // Reuse the deposit PaymentTransaction to create an allocation on the invoice
+            final BigDecimal allocatedOnInvoice = paid;
+            final BillingDocument finalInvoiceDoc = invoiceDoc;
+            intentRepository.findSucceededBySourceTypeAndSourceCode("QUOTE_DEPOSIT", quote.getDocumentNumber())
+                    .ifPresent(depositIntent -> transactionRepository
+                            .findAllByPaymentIntentIdOrderByCreatedAtDesc(depositIntent.getId())
+                            .stream()
+                            .filter(t -> t.getStatus() == PaymentTransactionStatus.SUCCEEDED)
+                            .findFirst()
+                            .ifPresent(depositTxn -> allocationRepository.save(PaymentAllocation.builder()
+                                    .paymentTransaction(depositTxn)
+                                    .billingDocumentNumber(finalInvoiceDoc.getDocumentNumber())
+                                    .allocatedAmount(allocatedOnInvoice)
+                                    .build())));
+
+            invoice = mapper.toResponse(invoiceDoc);
+        }
+
         quote.setStatus(BillingDocumentStatus.CONVERTED);
+        quote.setBalanceDue(BigDecimal.ZERO);
         documentRepository.save(quote);
         eventWriter.write(quote, "QUOTE_CONVERTED", java.util.Map.of("invoiceNumber", invoice.documentNumber()));
         return invoice;
@@ -356,7 +942,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             throw new BadRequestException("Invalid credit note amount");
         }
         List<CreateBillingDocumentLineRequest> lines = request.lines() == null || request.lines().isEmpty()
-                ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null))
+                ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null))
                 : request.lines();
         BillingDocumentResponse creditNote = create(new CreateBillingDocumentRequest(
                 BillingDocumentType.CREDIT_NOTE,
@@ -407,10 +993,18 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         String normalizedCustomerCode = requiredCustomerCode(customerCode);
         String normalizedCustomerType = normalizeCustomerType(customerType, normalizedCustomerCode);
         var documents = documentRepository.statementDocuments(normalizedCustomerType, normalizedCustomerCode, unsortedPageable).map(mapper::toResponse);
-        BigDecimal totalInvoiced = documents.getContent().stream().map(BillingDocumentResponse::totalAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalPaid = documents.getContent().stream().map(BillingDocumentResponse::paidAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal balance = documents.getContent().stream().map(BillingDocumentResponse::balanceDue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<Object[]> totalsResult = documentRepository.statementTotals(normalizedCustomerType, normalizedCustomerCode);
+        Object[] row = totalsResult.isEmpty() ? null : totalsResult.get(0);
+        BigDecimal totalInvoiced = asBigDecimal(row != null ? row[0] : null);
+        BigDecimal totalPaid = asBigDecimal(row != null ? row[1] : null);
+        BigDecimal balance = asBigDecimal(row != null ? row[2] : null);
         return new CustomerStatementResponse(normalizedCustomerType, normalizedCustomerCode, totalInvoiced, totalPaid, balance, documents.getContent());
+    }
+
+    private static BigDecimal asBigDecimal(Object value) {
+        if (value instanceof BigDecimal bd) return bd;
+        if (value instanceof Number n) return new BigDecimal(n.toString());
+        return BigDecimal.ZERO;
     }
 
     @Override
@@ -553,8 +1147,21 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private BillingDocument buildDocument(CreateBillingDocumentRequest request,
                                           BillingCustomerSnapshotResolver.CustomerSnapshot customer,
                                           BillingCalculationService.CalculatedDocument calculation) {
+        String documentNumber = numberingSupport.nextDocumentNumber(request.documentType(), customer.customerType());
+        String customerReference = StringUtils.hasText(trim(request.customerReference()))
+                ? trim(request.customerReference())
+                : "REF-" + documentNumber;
+        String poNumber = StringUtils.hasText(trim(request.poNumber()))
+                ? trim(request.poNumber())
+                : "BC-" + documentNumber;
+        String projectCode = StringUtils.hasText(trim(request.projectCode()))
+                ? trim(request.projectCode())
+                : "PRJ-" + documentNumber;
+        String salespersonCode = StringUtils.hasText(trim(request.salespersonCode()))
+                ? trim(request.salespersonCode())
+                : "SYSTEM";
         return BillingDocument.builder()
-                .documentNumber(numberingSupport.nextDocumentNumber(request.documentType(), customer.customerType()))
+                .documentNumber(documentNumber)
                 .documentType(request.documentType())
                 .status(BillingDocumentStatus.DRAFT)
                 .customerType(customer.customerType())
@@ -580,10 +1187,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .balanceDue(calculation.totalAmount())
                 .issueDate(request.issueDate() == null ? LocalDate.now() : request.issueDate())
                 .dueDate(request.dueDate())
-                .customerReference(trim(request.customerReference()))
-                .poNumber(trim(request.poNumber()))
-                .projectCode(trim(request.projectCode()))
-                .salespersonCode(trim(request.salespersonCode()))
+                .customerReference(customerReference)
+                .poNumber(poNumber)
+                .projectCode(projectCode)
+                .salespersonCode(salespersonCode)
                 .deliveryAddressJson(trim(request.deliveryAddressJson()))
                 .language(trim(request.language()) == null ? "fr" : trim(request.language()))
                 .exchangeRate(request.exchangeRate())
@@ -592,6 +1199,30 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .bankDetailsJson(trim(request.bankDetailsJson()))
                 .metadataJson(trim(request.metadataJson()))
                 .build();
+    }
+
+    private CreateBillingDocumentAdvanceRequest toAdvanceRequest(BillingDocumentAdvance advance, String quoteNumber) {
+        return new CreateBillingDocumentAdvanceRequest(
+                BillingAdvanceType.FIXED_AMOUNT,
+                advance.getComputedAmount(),
+                parseOrderString(advance.getIncludedLineOrders()),
+                parseOrderString(advance.getExcludedLineOrders()),
+                advance.getPaymentReference(),
+                advance.getReferenceLabel() != null
+                        ? advance.getReferenceLabel()
+                        : "Acompte reçu — Devis " + quoteNumber,
+                null,
+                advance.getNotes()
+        );
+    }
+
+    private List<Integer> parseOrderString(String orders) {
+        if (orders == null || orders.isBlank()) return null;
+        return Arrays.stream(orders.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .toList();
     }
 
     private List<BillableItem> resolveBillableItems(List<String> billableNumbers) {
@@ -701,6 +1332,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.discountRate(),
                 line.discountAmount(),
                 line.taxable(),
+                line.taxIncluded(),
                 line.vatRate(),
                 line.additionalCentRate(),
                 line.sourceType(),
@@ -709,6 +1341,30 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.externalReference(),
                 line.notes(),
                 Boolean.TRUE.equals(line.optional()) ? Boolean.TRUE : null
+        );
+    }
+
+    private CreateBillingDocumentLineRequest toCreateLineRequest(BillingDocumentLine line) {
+        return new CreateBillingDocumentLineRequest(
+                line.getLineOrder(),
+                line.getLineType(),
+                line.getItemCode(),
+                line.getDescription(),
+                line.getDetailedDescription(),
+                line.getQuantity(),
+                line.getUnitPrice(),
+                line.getDiscountRate(),
+                line.getDiscountAmount(),
+                line.getTaxable(),
+                line.getTaxIncluded(),
+                line.getVatRate(),
+                line.getAdditionalCentRate(),
+                line.getSourceType(),
+                line.getSourceCode(),
+                line.getUnit(),
+                line.getExternalReference(),
+                line.getNotes(),
+                Boolean.TRUE.equals(line.getOptional()) ? Boolean.TRUE : null
         );
     }
 

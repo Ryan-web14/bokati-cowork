@@ -136,6 +136,9 @@ public class Booking {
     @Column(name = "virtual_meeting_url")
     private String virtualMeetingUrl;
 
+    @Column(name = "csat_score")
+    private Integer csatScore;
+
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
 

@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.crm.controller;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.crm.dto.CrmDtos.*;
+import com.sni.bokaticowork.features.crm.enums.LeadInterest;
 import com.sni.bokaticowork.features.crm.enums.LeadSource;
 import com.sni.bokaticowork.features.crm.enums.LeadStage;
 import com.sni.bokaticowork.features.crm.enums.OpportunityStage;
@@ -126,6 +127,18 @@ public class CrmController {
             @PathVariable Long id,
             @RequestBody UpdateOpportunityStageRequest request) {
         return ResponseEntity.ok(service.updateOpportunityStage(id, request));
+    }
+
+    // ── Kanban Board ──────────────────────────────────────────────
+
+    @GetMapping("/board")
+    @PreAuthorize("hasAnyAuthority('CRM:READ','CRM_READ')")
+    public ResponseEntity<KanbanBoardResponse> board(
+            @RequestParam(required = false) Long assignedTo,
+            @RequestParam(required = false) LeadSource source,
+            @RequestParam(required = false) LeadInterest interest,
+            @RequestParam(required = false) String searchText) {
+        return ResponseEntity.ok(service.getBoard(assignedTo, source, interest, searchText));
     }
 
     // ── Vue pipeline + métriques ──────────────────────────────────

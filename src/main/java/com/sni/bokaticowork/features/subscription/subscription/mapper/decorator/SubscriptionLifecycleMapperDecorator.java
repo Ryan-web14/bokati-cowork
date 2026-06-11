@@ -5,6 +5,7 @@ import com.sni.bokaticowork.features.subscription.subscription.dto.response.Subs
 import com.sni.bokaticowork.features.subscription.subscription.mapper.interfaces.SubscriptionLifecycleMapper;
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
 import com.sni.bokaticowork.features.subscription.subscription.model.SubscriptionStatusHistory;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -52,27 +53,31 @@ public abstract class SubscriptionLifecycleMapperDecorator implements Subscripti
     }
 
     private String resolveSubscriberName(Subscription subscription) {
-        if (subscription.getMember() != null) {
-            String displayName = normalize(subscription.getMember().getDisplayName());
-            if (displayName != null) {
-                return displayName;
+        try {
+            if (subscription.getMember() != null) {
+                String displayName = normalize(subscription.getMember().getDisplayName());
+                if (displayName != null) {
+                    return displayName;
+                }
             }
-        }
-        if (subscription.getCustomer() != null) {
-            String companyName = normalize(subscription.getCustomer().getCompanyName());
-            if (companyName != null) {
-                return companyName;
+            if (subscription.getCustomer() != null) {
+                String companyName = normalize(subscription.getCustomer().getCompanyName());
+                if (companyName != null) {
+                    return companyName;
+                }
+                String fullName = normalize(join(subscription.getCustomer().getFirstname(), subscription.getCustomer().getLastname()));
+                if (fullName != null) {
+                    return fullName;
+                }
             }
-            String fullName = normalize(join(subscription.getCustomer().getFirstname(), subscription.getCustomer().getLastname()));
-            if (fullName != null) {
-                return fullName;
+            if (subscription.getBusinessEntity() != null) {
+                String businessName = normalize(subscription.getBusinessEntity().getName());
+                if (businessName != null) {
+                    return businessName;
+                }
             }
-        }
-        if (subscription.getBusinessEntity() != null) {
-            String businessName = normalize(subscription.getBusinessEntity().getName());
-            if (businessName != null) {
-                return businessName;
-            }
+        } catch (EntityNotFoundException ignored) {
+            return subscription.getSubscriberCode();
         }
         return subscription.getSubscriberCode();
     }

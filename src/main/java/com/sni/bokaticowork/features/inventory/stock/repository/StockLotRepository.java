@@ -58,18 +58,42 @@ public interface StockLotRepository extends JpaRepository<StockLot, Long> {
             JOIN lot.location location
             WHERE (:itemCode IS NULL OR item.itemCode = :itemCode)
               AND (:locationCode IS NULL OR location.locationCode = :locationCode)
-              AND (:lotNumber IS NULL OR UPPER(lot.lotNumber) LIKE CONCAT('%', :lotNumber, '%'))
+              AND (:lotNumberPattern IS NULL OR UPPER(lot.lotNumber) LIKE :lotNumberPattern)
               AND (:expiringBefore IS NULL OR lot.expiryDate <= :expiringBefore)
               AND (:active IS NULL OR lot.active = :active)
               AND (:remainingOnly IS NULL OR :remainingOnly = FALSE OR lot.remainingQuantity > 0)
             """)
     Page<StockLot> search(@Param("itemCode") String itemCode,
                           @Param("locationCode") String locationCode,
-                          @Param("lotNumber") String lotNumber,
+                          @Param("lotNumberPattern") String lotNumberPattern,
                           @Param("expiringBefore") LocalDate expiringBefore,
                           @Param("active") Boolean active,
                           @Param("remainingOnly") Boolean remainingOnly,
                           Pageable pageable);
 
     long countByExpiryDateLessThanEqualAndRemainingQuantityGreaterThanAndActiveTrue(LocalDate expiryDate, BigDecimal remainingQuantity);
+
+    @Query("""
+            SELECT lot FROM StockLot lot
+            JOIN lot.item item
+            WHERE item.itemCode = :itemCode
+              AND (:locationCode IS NULL OR lot.location.locationCode = :locationCode)
+              AND (:activeOnly IS NULL OR :activeOnly = FALSE OR (lot.active = true AND lot.remainingQuantity > 0))
+            ORDER BY lot.expiryDate ASC NULLS LAST, lot.receivedAt ASC
+            """)
+    List<StockLot> findLotsForItem(@Param("itemCode") String itemCode,
+                                   @Param("locationCode") String locationCode,
+                                   @Param("activeOnly") Boolean activeOnly);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT lot FROM StockLot lot
+            WHERE lot.item = :item
+              AND lot.location = :location
+              AND lot.lotNumber = :lotNumber
+              AND lot.active = true
+            """)
+    Optional<StockLot> findActiveLotForUpdate(@Param("item") InventoryItem item,
+                                              @Param("location") InventoryLocation location,
+                                              @Param("lotNumber") String lotNumber);
 }

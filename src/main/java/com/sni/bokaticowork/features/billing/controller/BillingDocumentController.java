@@ -6,10 +6,18 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRe
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.CreateReservationInvoiceRequest;
 import com.sni.bokaticowork.features.billing.dto.request.RequestSignatureRequest;
 import com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest;
+import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.response.BillingAgingReportResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentSignatureResponse;
+import com.sni.bokaticowork.features.billing.dto.response.BillingRecoverableResponse;
+import com.sni.bokaticowork.features.billing.service.interfaces.BillingRecoverableService;
 import com.sni.bokaticowork.features.billing.service.interfaces.QuoteSignatureService;
+import com.sni.bokaticowork.features.billing.dto.request.AddRecoverableItemsRequest;
+import com.sni.bokaticowork.features.billing.dto.request.RecoverItemRequest;
+import com.sni.bokaticowork.features.billing.dto.request.WriteOffRecoverableRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
@@ -29,10 +37,12 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,6 +60,7 @@ public class BillingDocumentController {
     private final BillingEmailService billingEmailService;
     private final PaymentService paymentService;
     private final QuoteSignatureService quoteSignatureService;
+    private final BillingRecoverableService billingRecoverableService;
 
     @PostMapping("/documents")
     public ResponseEntity<BillingDocumentResponse> create(@Valid @RequestBody CreateBillingDocumentRequest request) {
@@ -74,6 +85,22 @@ public class BillingDocumentController {
     @PostMapping("/invoices/from-billable-items")
     public ResponseEntity<BillingDocumentResponse> createInvoiceFromBillableItems(@Valid @RequestBody CreateInvoiceFromBillableItemsRequest request) {
         return ResponseEntity.ok(billingDocumentService.createInvoiceFromBillableItems(request));
+    }
+
+    @PostMapping("/invoices/from-reservation")
+    public ResponseEntity<BillingDocumentResponse> createInvoiceFromReservation(@Valid @RequestBody CreateReservationInvoiceRequest request) {
+        return ResponseEntity.ok(billingDocumentService.createInvoiceFromReservation(request));
+    }
+
+    @PutMapping("/documents/{documentNumber}")
+    public ResponseEntity<BillingDocumentResponse> update(@PathVariable String documentNumber,
+                                                          @Valid @RequestBody UpdateBillingDocumentRequest request) {
+        return ResponseEntity.ok(billingDocumentService.update(documentNumber, request));
+    }
+
+    @PostMapping("/documents/{documentNumber}/duplicate")
+    public ResponseEntity<BillingDocumentResponse> duplicate(@PathVariable String documentNumber) {
+        return ResponseEntity.ok(billingDocumentService.duplicate(documentNumber));
     }
 
     @PatchMapping("/documents/{documentNumber}/issue")
@@ -218,6 +245,44 @@ public class BillingDocumentController {
             @RequestParam(required = false) String searchText,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(billingDocumentService.list(type, status, customerType, customerCode, sourceType, sourceCode, fromDate, toDate, searchText, pageable));
+    }
+
+    @PostMapping("/documents/{documentNumber}/recoverables")
+    public ResponseEntity<java.util.List<BillingRecoverableResponse>> addRecoverables(
+            @PathVariable String documentNumber,
+            @Valid @RequestBody AddRecoverableItemsRequest request) {
+        return ResponseEntity.ok(billingRecoverableService.addItems(documentNumber, request));
+    }
+
+    @GetMapping("/documents/{documentNumber}/recoverables")
+    public ResponseEntity<java.util.List<BillingRecoverableResponse>> listRecoverables(
+            @PathVariable String documentNumber,
+            @RequestParam(required = false) String status) {
+        return ResponseEntity.ok(billingRecoverableService.list(documentNumber, status));
+    }
+
+    @PatchMapping("/documents/{documentNumber}/recoverables/{recoverableNumber}/recover")
+    public ResponseEntity<BillingRecoverableResponse> recover(
+            @PathVariable String documentNumber,
+            @PathVariable String recoverableNumber,
+            @RequestBody(required = false) RecoverItemRequest request) {
+        return ResponseEntity.ok(billingRecoverableService.markRecovered(documentNumber, recoverableNumber, request));
+    }
+
+    @PatchMapping("/documents/{documentNumber}/recoverables/{recoverableNumber}/write-off")
+    public ResponseEntity<BillingRecoverableResponse> writeOff(
+            @PathVariable String documentNumber,
+            @PathVariable String recoverableNumber,
+            @RequestBody(required = false) WriteOffRecoverableRequest request) {
+        return ResponseEntity.ok(billingRecoverableService.writeOff(documentNumber, recoverableNumber, request));
+    }
+
+    @GetMapping("/aging-report")
+    public ResponseEntity<BillingAgingReportResponse> agingReport(
+            @RequestParam(required = false) String customerType,
+            @RequestParam(required = false) String customerCode,
+            @RequestParam(required = false, defaultValue = "XAF") String currency) {
+        return ResponseEntity.ok(billingRecoverableService.agingReport(customerType, customerCode, currency));
     }
 
     private String toStatementCsv(CustomerStatementResponse statement) {

@@ -16,6 +16,8 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
 
     Optional<SupportTicket> findByTicketNumber(String ticketNumber);
 
+    boolean existsByRelatedTypeAndRelatedCodeAndStatusIn(String relatedType, String relatedCode, List<TicketStatus> statuses);
+
     @Query(nativeQuery = true, value = """
             SELECT st.*
             FROM support_ticket st
@@ -23,6 +25,20 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
               AND (CAST(:assignedTo AS BIGINT) IS NULL OR st.assigned_to = CAST(:assignedTo AS BIGINT))
               AND (CAST(:ownerType AS TEXT) IS NULL OR st.owner_type = CAST(:ownerType AS TEXT))
               AND (CAST(:ownerCode AS TEXT) IS NULL OR st.owner_code = CAST(:ownerCode AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR st.category = CAST(:category AS TEXT))
+              AND (CAST(:priority AS TEXT) IS NULL OR st.priority = CAST(:priority AS TEXT))
+              AND (CAST(:relatedType AS TEXT) IS NULL OR st.related_type = CAST(:relatedType AS TEXT))
+              AND (CAST(:relatedCode AS TEXT) IS NULL OR st.related_code = CAST(:relatedCode AS TEXT))
+              AND (
+                CAST(:overdueOnly AS BOOLEAN) IS NOT TRUE
+                OR (
+                  st.status IN ('OPEN','IN_PROGRESS')
+                  AND (
+                    (st.first_responded_at IS NULL AND st.first_response_due_at < CAST(:now AS TIMESTAMPTZ))
+                    OR (st.resolved_at IS NULL AND st.resolution_due_at < CAST(:now AS TIMESTAMPTZ))
+                  )
+                )
+              )
               AND (
                 CAST(:searchText AS TEXT) IS NULL
                 OR LOWER(st.title) LIKE LOWER('%' || CAST(:searchText AS TEXT) || '%')
@@ -38,6 +54,20 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
               AND (CAST(:assignedTo AS BIGINT) IS NULL OR st.assigned_to = CAST(:assignedTo AS BIGINT))
               AND (CAST(:ownerType AS TEXT) IS NULL OR st.owner_type = CAST(:ownerType AS TEXT))
               AND (CAST(:ownerCode AS TEXT) IS NULL OR st.owner_code = CAST(:ownerCode AS TEXT))
+              AND (CAST(:category AS TEXT) IS NULL OR st.category = CAST(:category AS TEXT))
+              AND (CAST(:priority AS TEXT) IS NULL OR st.priority = CAST(:priority AS TEXT))
+              AND (CAST(:relatedType AS TEXT) IS NULL OR st.related_type = CAST(:relatedType AS TEXT))
+              AND (CAST(:relatedCode AS TEXT) IS NULL OR st.related_code = CAST(:relatedCode AS TEXT))
+              AND (
+                CAST(:overdueOnly AS BOOLEAN) IS NOT TRUE
+                OR (
+                  st.status IN ('OPEN','IN_PROGRESS')
+                  AND (
+                    (st.first_responded_at IS NULL AND st.first_response_due_at < CAST(:now AS TIMESTAMPTZ))
+                    OR (st.resolved_at IS NULL AND st.resolution_due_at < CAST(:now AS TIMESTAMPTZ))
+                  )
+                )
+              )
               AND (
                 CAST(:searchText AS TEXT) IS NULL
                 OR LOWER(st.title) LIKE LOWER('%' || CAST(:searchText AS TEXT) || '%')
@@ -49,6 +79,12 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
                                @Param("assignedTo") Long assignedTo,
                                @Param("ownerType") String ownerType,
                                @Param("ownerCode") String ownerCode,
+                               @Param("category") String category,
+                               @Param("priority") String priority,
+                               @Param("relatedType") String relatedType,
+                               @Param("relatedCode") String relatedCode,
+                               @Param("overdueOnly") Boolean overdueOnly,
+                               @Param("now") Instant now,
                                @Param("searchText") String searchText,
                                Pageable pageable);
 
@@ -194,4 +230,82 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
             GROUP BY t.assignedTo
             """)
     List<Object[]> agentWorkloadBetween(@Param("from") Instant from, @Param("to") Instant to);
+
+    // ── Client 360 / owner summary ────────────────────────────────
+    @Query("""
+            SELECT COUNT(t) FROM SupportTicket t
+            WHERE t.ownerType = :ownerType AND t.ownerCode = :ownerCode
+              AND t.status IN ('OPEN','IN_PROGRESS','WAITING_CLIENT')
+            """)
+    long countOpenByOwner(@Param("ownerType") String ownerType, @Param("ownerCode") String ownerCode);
+
+    @Query("""
+            SELECT COUNT(t) FROM SupportTicket t
+            WHERE t.ownerType = :ownerType AND t.ownerCode = :ownerCode
+              AND t.status IN ('OPEN','IN_PROGRESS')
+              AND (
+                (t.firstRespondedAt IS NULL AND t.firstResponseDueAt < :now)
+                OR (t.resolvedAt IS NULL AND t.resolutionDueAt < :now)
+              )
+            """)
+    long countSlaBreachesByOwner(@Param("ownerType") String ownerType,
+                                 @Param("ownerCode") String ownerCode,
+                                 @Param("now") Instant now);
+
+    @Query(nativeQuery = true, value = """
+            SELECT AVG(csat_score) FROM support_ticket
+            WHERE owner_type = :ownerType AND owner_code = :ownerCode
+              AND csat_submitted_at IS NOT NULL
+            """)
+    Double avgCsatScoreByOwner(@Param("ownerType") String ownerType, @Param("ownerCode") String ownerCode);
+
+    List<SupportTicket> findTop5ByOwnerTypeAndOwnerCodeOrderByCreatedAtDesc(String ownerType, String ownerCode);
+
+    // ── Analytics avancés (Phase 10) ───────────────────────────────
+    long countByStatus(TicketStatus status);
+
+    @Query("""
+            SELECT t.assignedTo, COUNT(t) FROM SupportTicket t
+            WHERE t.assignedTo IS NOT NULL AND t.status IN ('OPEN','IN_PROGRESS','WAITING_CLIENT')
+            GROUP BY t.assignedTo
+            """)
+    List<Object[]> currentBacklogByAgent();
+
+    @Query("""
+            SELECT t.relatedType, COUNT(t) FROM SupportTicket t
+            WHERE t.relatedType IS NOT NULL
+              AND t.createdAt >= :from AND t.createdAt <= :to
+            GROUP BY t.relatedType
+            """)
+    List<Object[]> volumeByRelatedTypeBetween(@Param("from") Instant from, @Param("to") Instant to);
+
+    @Query(nativeQuery = true, value = """
+            SELECT category, AVG(csat_score) FROM support_ticket
+            WHERE csat_submitted_at IS NOT NULL
+              AND created_at >= :from AND created_at <= :to
+            GROUP BY category
+            """)
+    List<Object[]> csatByCategoryBetween(@Param("from") Instant from, @Param("to") Instant to);
+
+    @Query(nativeQuery = true, value = """
+            SELECT assigned_to, AVG(csat_score) FROM support_ticket
+            WHERE csat_submitted_at IS NOT NULL AND assigned_to IS NOT NULL
+              AND created_at >= :from AND created_at <= :to
+            GROUP BY assigned_to
+            """)
+    List<Object[]> csatByAgentBetween(@Param("from") Instant from, @Param("to") Instant to);
+
+    @Query(nativeQuery = true, value = """
+            SELECT assigned_to,
+                   COUNT(*) AS assigned,
+                   COUNT(resolved_at) AS resolved,
+                   AVG(EXTRACT(EPOCH FROM (first_responded_at - created_at)) / 3600) AS avg_first_response_hours,
+                   AVG(EXTRACT(EPOCH FROM (resolved_at - created_at)) / 3600) AS avg_resolution_hours,
+                   AVG(csat_score) AS avg_csat
+            FROM support_ticket
+            WHERE assigned_to IS NOT NULL
+              AND created_at >= :from AND created_at <= :to
+            GROUP BY assigned_to
+            """)
+    List<Object[]> agentPerformanceBetween(@Param("from") Instant from, @Param("to") Instant to);
 }

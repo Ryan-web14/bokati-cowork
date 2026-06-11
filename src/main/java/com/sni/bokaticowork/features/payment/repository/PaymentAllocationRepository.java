@@ -20,4 +20,7 @@ public interface PaymentAllocationRepository extends JpaRepository<PaymentAlloca
     List<PaymentAllocation> findAllByPaymentTransactionId(@Param("paymentTransactionId") Long paymentTransactionId);
 
     List<PaymentAllocation> findAllByBillingDocumentNumber(String billingDocumentNumber);
+
+    @Query("SELECT pa FROM PaymentAllocation pa JOIN FETCH pa.paymentTransaction WHERE pa.billingDocumentNumber = :documentNumber ORDER BY pa.allocatedAt ASC")
+    List<PaymentAllocation> findAllByBillingDocumentNumberFetchTransaction(@Param("documentNumber") String documentNumber);
 }

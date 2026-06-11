@@ -55,6 +55,28 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
     @Query("SELECT l FROM Lead l WHERE l.stage = :stage")
     List<Lead> findAllByStage(@Param("stage") LeadStage stage);
 
+    @Query(nativeQuery = true, value = """
+            SELECT l.*
+            FROM crm_lead l
+            WHERE l.stage = CAST(:stage AS TEXT)
+              AND (CAST(:assignedTo AS BIGINT) IS NULL OR l.assigned_to = CAST(:assignedTo AS BIGINT))
+              AND (CAST(:source AS TEXT) IS NULL OR l.source = CAST(:source AS TEXT))
+              AND (CAST(:interest AS TEXT) IS NULL OR l.interest = CAST(:interest AS TEXT))
+              AND (
+                CAST(:searchText AS TEXT) IS NULL
+                OR LOWER(l.full_name) LIKE LOWER('%' || CAST(:searchText AS TEXT) || '%')
+                OR LOWER(COALESCE(l.email, '')) LIKE LOWER('%' || CAST(:searchText AS TEXT) || '%')
+                OR LOWER(COALESCE(l.company, '')) LIKE LOWER('%' || CAST(:searchText AS TEXT) || '%')
+                OR l.lead_number LIKE '%' || CAST(:searchText AS TEXT) || '%'
+              )
+            ORDER BY COALESCE(l.last_activity_at, l.created_at) DESC
+            """)
+    List<Lead> findByStageFiltered(@Param("stage") String stage,
+                                   @Param("assignedTo") Long assignedTo,
+                                   @Param("source") String source,
+                                   @Param("interest") String interest,
+                                   @Param("searchText") String searchText);
+
     // ── Dormant worker ────────────────────────────────────────────
     @Query("""
             SELECT l FROM Lead l

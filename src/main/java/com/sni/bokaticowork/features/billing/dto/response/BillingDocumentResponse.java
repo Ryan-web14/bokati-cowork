@@ -62,6 +62,8 @@ public record BillingDocumentResponse(
         List<BillingDocumentClauseResponse> clauses,
         BillingDocumentAdvanceResponse advance,
         EarlyPaymentDiscountResponse earlyPaymentDiscount,
-        BillingDocumentSignatureResponse signature
+        BillingDocumentSignatureResponse signature,
+        String internalNotes,
+        List<BillingRecoverableResponse> recoverables
 ) {
 }

@@ -63,4 +63,22 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
               AND status = 'PROCESSING'
             """)
     BigDecimal sumProcessingAmountByPaymentIntentId(@Param("paymentIntentId") Long paymentIntentId);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM payment_transaction
+            WHERE payment_intent_id = :paymentIntentId
+              AND status = 'SUCCEEDED'
+            ORDER BY created_at DESC
+            LIMIT 1
+            """)
+    Optional<PaymentTransaction> findSucceededByPaymentIntentId(@Param("paymentIntentId") Long paymentIntentId);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM payment_transaction
+            WHERE metadata_json ->> 'originalTransactionNumber' = :transactionNumber
+            ORDER BY created_at ASC
+            """)
+    List<PaymentTransaction> findAllByOriginalTransactionNumber(@Param("transactionNumber") String transactionNumber);
 }

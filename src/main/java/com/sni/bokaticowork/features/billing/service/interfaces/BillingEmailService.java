@@ -5,5 +5,6 @@ import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResp
 
 public interface BillingEmailService {
     boolean sendDocument(String documentNumber);
+    void sendDocumentAsync(String documentNumber);
     void sendPaymentConfirmation(BillingDocumentResponse document, PaymentTransactionResponse transaction);
 }

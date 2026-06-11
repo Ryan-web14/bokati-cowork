@@ -53,10 +53,10 @@ public class AdminUserController {
         return ResponseEntity.ok(userAdminService.searchByName(query));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{userCode}")
     @PreAuthorize("hasAuthority('SYSTEM:USERS')")
-    public ResponseEntity<AdminUserResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(userAdminService.getById(id));
+    public ResponseEntity<AdminUserResponse> getByCode(@PathVariable String userCode) {
+        return ResponseEntity.ok(userAdminService.getByCode(userCode));
     }
 
     @GetMapping("/by-email")
@@ -67,52 +67,61 @@ public class AdminUserController {
 
     @Audited(module = "USER", action = "ADMIN_UPDATE", ressource = "user")
     @Idempotent(operation = "ADMIN_USER_UPDATE", required = false)
-    @PutMapping("/{id}")
+    @PutMapping("/{userCode}")
     @PreAuthorize("hasAuthority('SYSTEM:USERS')")
-    public ResponseEntity<AdminUserResponse> update(@PathVariable Long id,
+    public ResponseEntity<AdminUserResponse> update(@PathVariable String userCode,
                                                     @Valid @RequestBody AdminUpdateUserRequest request,
                                                     Authentication authentication) {
-        return ResponseEntity.ok(userAdminService.update(id, request, actor(authentication)));
+        return ResponseEntity.ok(userAdminService.update(userCode, request, actor(authentication)));
     }
 
     @Audited(module = "USER", action = "ADMIN_ACTIVATE", ressource = "user")
     @Idempotent(operation = "ADMIN_USER_ACTIVATE", required = false)
-    @PatchMapping("/{id}/activate")
+    @PatchMapping({"/{userCode}/activate", "/{userCode}/enable"})
     @PreAuthorize("hasAuthority('SYSTEM:USERS')")
-    public ResponseEntity<AdminUserResponse> activate(@PathVariable Long id) {
-        return ResponseEntity.ok(userAdminService.activate(id));
+    public ResponseEntity<AdminUserResponse> activate(@PathVariable String userCode) {
+        return ResponseEntity.ok(userAdminService.activate(userCode));
     }
 
     @Audited(module = "USER", action = "ADMIN_DEACTIVATE", ressource = "user")
     @Idempotent(operation = "ADMIN_USER_DEACTIVATE", required = false)
-    @PatchMapping("/{id}/deactivate")
+    @PatchMapping({"/{userCode}/deactivate", "/{userCode}/disable"})
     @PreAuthorize("hasAuthority('SYSTEM:USERS')")
-    public ResponseEntity<AdminUserResponse> deactivate(@PathVariable Long id) {
-        return ResponseEntity.ok(userAdminService.deactivate(id));
+    public ResponseEntity<AdminUserResponse> deactivate(@PathVariable String userCode) {
+        return ResponseEntity.ok(userAdminService.deactivate(userCode));
     }
 
     @Audited(module = "USER", action = "ADMIN_UNLOCK", ressource = "user")
     @Idempotent(operation = "ADMIN_USER_UNLOCK", required = false)
-    @PatchMapping("/{id}/unlock")
+    @PatchMapping("/{userCode}/unlock")
     @PreAuthorize("hasAuthority('SYSTEM:USERS')")
-    public ResponseEntity<AdminUserResponse> unlock(@PathVariable Long id) {
-        return ResponseEntity.ok(userAdminService.unlock(id));
+    public ResponseEntity<AdminUserResponse> unlock(@PathVariable String userCode) {
+        return ResponseEntity.ok(userAdminService.unlock(userCode));
     }
 
     @Audited(module = "USER", action = "ADMIN_RESET_PASSWORD", ressource = "user")
     @Idempotent(operation = "ADMIN_USER_RESET_PASSWORD", required = false)
-    @PatchMapping("/{id}/password/reset")
+    @PatchMapping("/{userCode}/password/reset")
     @PreAuthorize("hasAuthority('SYSTEM:USERS')")
-    public ResponseEntity<AdminUserResponse> resetPassword(@PathVariable Long id,
+    public ResponseEntity<AdminUserResponse> resetPassword(@PathVariable String userCode,
                                                            @RequestBody(required = false) AdminResetUserPasswordRequest request) {
-        return ResponseEntity.ok(userAdminService.resetPassword(id, request));
+        return ResponseEntity.ok(userAdminService.resetPassword(userCode, request));
+    }
+
+    @Audited(module = "USER", action = "ADMIN_INITIATE_PASSWORD_RESET", ressource = "user")
+    @PostMapping("/{userCode}/reset-password")
+    @PreAuthorize("hasAuthority('SYSTEM:USERS')")
+    public ResponseEntity<Void> initiatePasswordReset(@PathVariable String userCode,
+                                                      Authentication authentication) {
+        userAdminService.initiatePasswordReset(userCode, actor(authentication));
+        return ResponseEntity.accepted().build();
     }
 
     @Audited(module = "USER", action = "ADMIN_ARCHIVE", ressource = "user")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{userCode}")
     @PreAuthorize("hasAuthority('SYSTEM:USERS')")
-    public ResponseEntity<Void> archive(@PathVariable Long id) {
-        userAdminService.archive(id);
+    public ResponseEntity<Void> archive(@PathVariable String userCode) {
+        userAdminService.archive(userCode);
         return ResponseEntity.noContent().build();
     }
 

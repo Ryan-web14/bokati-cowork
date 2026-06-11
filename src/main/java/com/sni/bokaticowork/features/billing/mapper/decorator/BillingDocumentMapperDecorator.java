@@ -7,6 +7,7 @@ import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineRes
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentSignatureResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentTaxResponse;
+import com.sni.bokaticowork.features.billing.dto.response.BillingRecoverableResponse;
 import com.sni.bokaticowork.features.billing.dto.response.EarlyPaymentDiscountResponse;
 import com.sni.bokaticowork.features.billing.mapper.interfaces.BillingDocumentMapper;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
@@ -22,6 +23,7 @@ import com.sni.bokaticowork.features.billing.repository.BillingDocumentClauseRep
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentDiscountRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentEarlyPaymentDiscountRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentLineRepository;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentRecoverableRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentSignatureRepository;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentTaxRepository;
 import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
@@ -60,6 +62,9 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
 
     @Autowired
     private BillingDocumentSignatureRepository signatureRepository;
+
+    @Autowired
+    private BillingDocumentRecoverableRepository recoverableRepository;
 
     @Autowired
     private TransactionContextResolver contextResolver;
@@ -126,7 +131,10 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 clauseRepository.findAllByDocumentOrderByDisplayOrderAscIdAsc(document).stream().map(this::toClauseResponse).toList(),
                 advanceRepository.findByDocument(document).map(this::toAdvanceResponse).orElse(null),
                 earlyPaymentDiscountRepository.findByDocument(document).map(this::toEarlyPaymentDiscountResponse).orElse(null),
-                signatureRepository.findFirstByDocumentOrderByCreatedAtDesc(document).map(this::toSignatureResponse).orElse(null)
+                signatureRepository.findFirstByDocumentOrderByCreatedAtDesc(document).map(this::toSignatureResponse).orElse(null),
+                document.getInternalNotes(),
+                recoverableRepository.findAllByDocumentOrderByCreatedAtAsc(document)
+                        .stream().map(this::toRecoverableResponse).toList()
         );
     }
 
@@ -144,6 +152,7 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 line.getDiscountRate(),
                 line.getDiscountAmount(),
                 line.getTaxable(),
+                line.getTaxIncluded(),
                 line.getVatRate(),
                 line.getAdditionalCentRate(),
                 line.getSubtotalAmount(),
@@ -204,6 +213,23 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 .filter(s -> !s.isEmpty())
                 .map(Integer::parseInt)
                 .toList();
+    }
+
+    private BillingRecoverableResponse toRecoverableResponse(com.sni.bokaticowork.features.billing.model.BillingDocumentRecoverable r) {
+        return new BillingRecoverableResponse(
+                r.getRecoverableNumber(),
+                r.getDocument().getDocumentNumber(),
+                r.getItemDescription(),
+                r.getQuantity(),
+                r.getUnit(),
+                r.getSourceType(),
+                r.getSourceCode(),
+                r.getStatus(),
+                r.getNotes(),
+                r.getRecoveredAt(),
+                r.getRecoveredBy(),
+                r.getCreatedAt()
+        );
     }
 
     @Override

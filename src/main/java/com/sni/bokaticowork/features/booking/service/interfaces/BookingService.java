@@ -37,6 +37,8 @@ public interface BookingService {
 
     List<BookingResponse> basicSearch(String query);
 
+    List<com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse> cancellationPolicies();
+
     BookingResponse confirm(String bookingNumber, BookingStatusChangeRequest request);
 
     BookingResponse approve(String bookingNumber, BookingApprovalRequest request);
@@ -54,6 +56,10 @@ public interface BookingService {
     BookingResponse noShow(String bookingNumber, BookingStatusChangeRequest request);
 
     int markOverdueNoShows(int limit);
+
+    int markOverdueCompleted(int limit);
+
+    void recordCsat(String bookingNumber, int score);
 
     BookingResponse checkIn(String bookingNumber, BookingCheckRequest request);
 

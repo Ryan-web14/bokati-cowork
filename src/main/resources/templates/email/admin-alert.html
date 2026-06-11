@@ -1,43 +1,83 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
-    <title>Alerte administration</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${subject ?: 'Alerte administration'}">Alerte administration</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 1.6; }
+        .wrap { width: 100%; min-height: 100vh; padding: 48px 20px; background: #e8e4f0; }
+        .card { max-width: 600px; margin: 0 auto; background: #0f0720; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.4), 0 12px 36px rgba(0,0,0,.45), 0 40px 80px rgba(0,0,0,.3); }
+        .email-header { background: #0a0418; padding: 26px 36px 24px; position: relative; overflow: hidden; }
+        .email-header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(239,68,68,.14) 0%, transparent 65%); pointer-events: none; }
+        .header-stripe { height: 2px; background: linear-gradient(90deg, #ef4444 0%, #c9a84c 55%, #4c1d95 100%); }
+        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .brand-name { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 3.5px; text-transform: uppercase; }
+        .brand-sub { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 5px; }
+        .status-tag { font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; background: rgba(239,68,68,.14); border: 1px solid rgba(239,68,68,.30); color: #fca5a5; white-space: nowrap; }
+        .hero { background: #110820; padding: 36px 36px 32px; border-bottom: 1px solid rgba(255,255,255,.05); }
+        .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #fca5a5; margin-bottom: 10px; }
+        .hero-title { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -.5px; line-height: 1.2; margin-bottom: 10px; }
+        .hero-sub { font-size: 15px; color: rgba(255,255,255,.45); line-height: 1.6; }
+        .ref-bar { background: rgba(239,68,68,.07); border-top: 1px solid rgba(239,68,68,.12); border-bottom: 1px solid rgba(239,68,68,.12); padding: 13px 36px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .ref-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.35); font-weight: 700; }
+        .ref-number { font-size: 14px; font-weight: 700; color: #fca5a5; font-family: "SF Mono", Consolas, monospace; letter-spacing: 1.5px; text-align: right; }
+        .email-body { padding: 28px 36px 36px; }
+        .message { border: 1px solid rgba(255,255,255,.07); border-left: 3px solid #ef4444; border-radius: 12px; background: rgba(239,68,68,.07); padding: 16px 18px; color: rgba(255,255,255,.62); font-size: 13px; line-height: 1.75; margin-bottom: 22px; }
+        .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; }
+        .info-card { border: 1px solid rgba(255,255,255,.07); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+        .info-head { background: rgba(239,68,68,.09); border-left: 3px solid #ef4444; padding: 16px 20px; color: #fff; font-size: 16px; font-weight: 700; }
+        .info-row { padding: 13px 20px; border-bottom: 1px solid rgba(255,255,255,.04); display: flex; justify-content: space-between; gap: 16px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-key { color: rgba(255,255,255,.35); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; }
+        .info-val { color: rgba(255,255,255,.85); font-size: 14px; font-weight: 600; text-align: right; word-break: break-word; }
+        .note { color: rgba(255,255,255,.24); font-size: 12px; line-height: 1.65; text-align: center; }
+        .email-footer { background: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 24px 36px; text-align: center; }
+        .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; }
+        .footer-text { font-size: 12px; color: rgba(255,255,255,.2); line-height: 1.65; }
+        .footer-text a { color: rgba(255,255,255,.3); }
+        @media (max-width: 480px) { .wrap { padding: 0; background: #0f0720; } .card { border-radius: 0; box-shadow: none; } .email-header, .hero, .email-body, .email-footer { padding-left: 20px; padding-right: 20px; } .hero-title { font-size: 22px; } .ref-bar { padding: 12px 20px; flex-wrap: wrap; } .info-row { display: block; } .info-val { display: block; text-align: left; margin-top: 4px; } }
+    </style>
 </head>
-<body style="margin:0;background:#f3f5f7;font-family:Arial,sans-serif;color:#1f2933;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f5f7;padding:24px 0;">
-    <tr>
-        <td align="center">
-            <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #d8dee6;border-radius:8px;overflow:hidden;">
-                <tr>
-                    <td style="padding:20px 24px;background:#b91c1c;color:#ffffff;">
-                        <h1 style="margin:0;font-size:20px;" th:text="${subject ?: 'Alerte administration'}">Alerte administration</h1>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:24px;">
-                        <p style="margin:0 0 16px;" th:text="${message ?: 'Un evenement demande une verification administrative.'}">
-                            Un evenement demande une verification administrative.
-                        </p>
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;font-size:13px;">
-                            <tr>
-                                <td style="padding:8px;border:1px solid #d8dee6;">Module</td>
-                                <td style="padding:8px;border:1px solid #d8dee6;" th:text="${aggregateType ?: 'N/A'}">N/A</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:8px;border:1px solid #d8dee6;">Evenement</td>
-                                <td style="padding:8px;border:1px solid #d8dee6;" th:text="${eventType ?: 'N/A'}">N/A</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:8px;border:1px solid #d8dee6;">Reference</td>
-                                <td style="padding:8px;border:1px solid #d8dee6;" th:text="${aggregateId ?: reference ?: 'N/A'}">N/A</td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<body>
+<div class="wrap">
+    <div class="card">
+        <div class="email-header">
+            <div class="logo-area">
+                <div>
+                    <div class="brand-name">Elle A Osé</div>
+                    <div class="brand-sub">Administration</div>
+                </div>
+                <span class="status-tag">Alerte</span>
+            </div>
+        </div>
+        <div class="header-stripe"></div>
+        <div class="hero">
+            <div class="hero-label">Surveillance système</div>
+            <div class="hero-title" th:text="${subject ?: 'Alerte administration'}">Alerte administration</div>
+            <div class="hero-sub">Un événement demande une vérification administrative.</div>
+        </div>
+        <div class="ref-bar">
+            <span class="ref-label">Référence</span>
+            <span class="ref-number" th:text="${aggregateId ?: reference ?: 'N/A'}">N/A</span>
+        </div>
+        <div class="email-body">
+            <div class="message" th:text="${message ?: 'Un événement demande une vérification administrative.'}">Un événement demande une vérification administrative.</div>
+            <div class="section-label">Contexte</div>
+            <div class="info-card">
+                <div class="info-head">Détails de l'alerte</div>
+                <div class="info-row"><span class="info-key">Module</span><span class="info-val" th:text="${aggregateType ?: 'N/A'}">N/A</span></div>
+                <div class="info-row"><span class="info-key">Événement</span><span class="info-val" th:text="${eventType ?: 'N/A'}">N/A</span></div>
+                <div class="info-row"><span class="info-key">Référence</span><span class="info-val" th:text="${aggregateId ?: reference ?: 'N/A'}">N/A</span></div>
+            </div>
+            <p class="note">Ce message est envoyé automatiquement par le système Elle A Osé. Vérifiez le module concerné avant toute action corrective.</p>
+        </div>
+        <div class="email-footer">
+            <div class="footer-brand">Elle A Osé · Administration</div>
+            <div class="footer-text">Contact: <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a></div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.interfaces;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.features.payment.dto.request.AddCashMovementAttachmentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.ApproveCashVarianceRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CloseCashSessionRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreateCashMovementRequest;
@@ -40,8 +41,12 @@ public interface CashRegisterService {
                                                           CashDocumentType documentType, String documentNumber, String flowCategory,
                                                           String referenceType, String referenceCode, String counterpartyCode, String counterpartyName, String createdBy,
                                                           Instant fromDate, Instant toDate, String searchText, Pageable pageable);
+    CashMovementResponse getMovement(String movementNumber);
     CashMetricsOverviewResponse overviewMetrics(String registerCode, String businessEntityCode, Instant fromDate, Instant toDate);
     java.util.List<CashRegisterMetricsResponse> registerMetrics(String businessEntityCode, Instant fromDate, Instant toDate);
     void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
     void recordAutomaticPayment(PaymentTransaction transaction);
+    CashMovementResponse addAttachment(String movementNumber, AddCashMovementAttachmentRequest request);
+    CashMovementResponse signMovement(String movementNumber, String signedBy);
+    CashMovementResponse markMovementPrinted(String movementNumber);
 }

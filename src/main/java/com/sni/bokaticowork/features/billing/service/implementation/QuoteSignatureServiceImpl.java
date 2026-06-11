@@ -87,7 +87,7 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
     @Override
     @Transactional(readOnly = true)
     public BillingDocumentSignature resolveToken(String token) {
-        BillingDocumentSignature sig = signatureRepository.findBySignatureToken(token)
+        BillingDocumentSignature sig = signatureRepository.findBySignatureTokenWithDocument(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Lien de signature invalide ou expiré"));
         if (sig.getStatus() == BillingSignatureStatus.SIGNED) {
             throw new BadRequestException("Ce devis a déjà été signé");

@@ -100,6 +100,11 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.basicSearch(query));
     }
 
+    @GetMapping("/cancellation-policy")
+    public ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse>> cancellationPolicy() {
+        return ResponseEntity.ok(bookingService.cancellationPolicies());
+    }
+
     @PatchMapping("/{bookingNumber}/confirm")
     public ResponseEntity<BookingResponse> confirm(@PathVariable String bookingNumber,
                                                    @RequestBody(required = false) BookingStatusChangeRequest request) {

@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.inventory.procurement.repository;
 import com.sni.bokaticowork.features.inventory.procurement.enums.PurchaseOrderStatus;
 import com.sni.bokaticowork.features.inventory.procurement.model.PurchaseOrder;
 import jakarta.persistence.LockModeType;
+import java.math.BigDecimal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -60,4 +61,14 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
     long countByStatusIn(java.util.Collection<PurchaseOrderStatus> statuses);
 
     List<PurchaseOrder> findAllBySupplier(Supplier supplier);
+
+    @Query("""
+            SELECT COALESCE(SUM(line.orderedQuantity - line.receivedQuantity), 0)
+            FROM PurchaseOrderLine line
+            JOIN line.purchaseOrder po
+            WHERE line.item.id = :itemId
+              AND po.status IN :statuses
+            """)
+    BigDecimal quantityOnOrderForItem(@Param("itemId") Long itemId,
+                                      @Param("statuses") java.util.Collection<PurchaseOrderStatus> statuses);
 }

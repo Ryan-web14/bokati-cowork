@@ -18,9 +18,14 @@ public class AssetAssignRequest {
 
     private Instant startAt;
 
+    @NotNull
     private Instant expectedReturnAt;
 
+    @NotBlank
     private String assignedBy;
+
+    @NotBlank
+    private String purpose;
 
     private String checkoutPhotoUrl;
 

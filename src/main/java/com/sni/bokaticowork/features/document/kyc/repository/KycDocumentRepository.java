@@ -5,6 +5,8 @@ import com.sni.bokaticowork.features.document.kyc.KycDocumentVerificationStatus;
 import com.sni.bokaticowork.features.document.kyc.model.KycCase;
 import com.sni.bokaticowork.features.document.kyc.model.KycDocument;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -30,4 +32,13 @@ public interface KycDocumentRepository extends JpaRepository<KycDocument, Long> 
     List<KycDocument> findAllByExpiryDateBeforeAndStatusNot(LocalDate date, KycDocumentVerificationStatus status);
 
     List<KycDocument> findAllByStatusIn(Collection<KycDocumentVerificationStatus> statuses);
+
+    @Query("""
+            select kd
+            from KycDocument kd
+            join fetch kd.document d
+            where kd.status in :statuses
+            order by d.updatedAt desc, kd.id desc
+            """)
+    List<KycDocument> findAllReviewDocumentsByStatusIn(@Param("statuses") Collection<KycDocumentVerificationStatus> statuses);
 }

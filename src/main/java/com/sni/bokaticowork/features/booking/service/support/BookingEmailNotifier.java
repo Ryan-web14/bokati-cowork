@@ -19,6 +19,12 @@ import org.thymeleaf.context.Context;
 
 import javax.imageio.ImageIO;
 import java.io.ByteArrayOutputStream;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
@@ -28,13 +34,23 @@ import java.util.concurrent.CompletableFuture;
 public class BookingEmailNotifier {
 
     private static final String QR_CONTENT_ID = "qr-booking";
+    private static final BigDecimal TVA_RATE = new BigDecimal("0.184");
+    private static final BigDecimal CENTIME_ADDITIONNEL_RATE = new BigDecimal("0.05");
+
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH);
+    private static final DateTimeFormatter TIME_FMT =
+            DateTimeFormatter.ofPattern("HH:mm");
 
     private final DefaultEmailSender emailSender;
     private final BookingEventWriter eventWriter;
     private final TemplateEngine templateEngine;
 
-    @Value("${app.api-base-url:https://1612-102-129-68-124.ngrok-free.app}")
+    @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
+
+    @Value("${app.frontend-url:https://elleaose.com}")
+    private String frontendUrl;
 
     public void notify(Booking booking, BookingEventType eventType) {
         if (!StringUtils.hasText(booking.getContactEmail())) {
@@ -75,17 +91,89 @@ public class BookingEmailNotifier {
         }
     }
 
+    private String body(BookingEventType eventType, Booking booking, boolean includeQr) {
+        Context ctx = new Context(Locale.FRENCH);
+        String resourceName = booking.getResource() == null ? "—" : booking.getResource().getName();
+        String durationLabel = formatDuration(booking.getDurationMinutes());
+        boolean showQr = includeQr && StringUtils.hasText(booking.getCheckInToken());
+
+        // ── Variables communes à tous les templates ─────────────────
+        ctx.setVariable("recipientName",  valueOrDefault(booking.getContactName(), "client"));
+        ctx.setVariable("bookingNumber",  booking.getBookingNumber());
+        ctx.setVariable("bookingRef",     booking.getBookingNumber());
+        ctx.setVariable("resourceName",   resourceName);
+        ctx.setVariable("spaceName",      resourceName);
+        ctx.setVariable("status",         booking.getStatus() == null ? "—" : booking.getStatus().name());
+        ctx.setVariable("startedAt",      formatDateTime(booking.getStartedAt()));
+        ctx.setVariable("endedAt",        formatDateTime(booking.getEndedAt()));
+        ctx.setVariable("quantity",       booking.getQuantity());
+        ctx.setVariable("paymentMode",    booking.getPaymentMode() == null ? "—" : booking.getPaymentMode().name());
+        ctx.setVariable("checkInToken",   booking.getCheckInToken());
+        ctx.setVariable("verificationCode", StringUtils.hasText(booking.getCheckInToken()) ? booking.getCheckInToken() : booking.getBookingNumber());
+        ctx.setVariable("showQr",         showQr);
+        ctx.setVariable("reason",         eventReason(eventType, booking));
+        ctx.setVariable("eventTag",       eventTag(eventType));
+        ctx.setVariable("eventTitle",     eventTitle(eventType));
+        ctx.setVariable("eventSubtitle",  eventSubtitle(eventType));
+        ctx.setVariable("eventMessage",   eventMessage(eventType, booking));
+
+        // ── Variables pour booking-confirmation ─────────────────────
+        ctx.setVariable("bookingDate",    formatDate(booking.getStartedAt()));
+        ctx.setVariable("startTime",      formatTime(booking.getStartedAt()));
+        ctx.setVariable("endTime",        formatTime(booking.getEndedAt()));
+        ctx.setVariable("durationLabel",  durationLabel);
+        ctx.setVariable("duration",       durationLabel);
+        ctx.setVariable("resourceType",   resolveResourceType(booking));
+        ctx.setVariable("resourceCapacity", resolveCapacity(booking));
+        ctx.setVariable("address",        resolveLocationLabel(booking));
+        ctx.setVariable("city",           resolveZone(booking));
+        BigDecimal taxableBase = computeTaxIncludedBase(booking.getTotalAmount());
+        ctx.setVariable("priceTTC",       formatAmount(booking.getTotalAmount(), booking.getCurrency()));
+        ctx.setVariable("priceHT",        formatAmount(taxableBase, booking.getCurrency()));
+        ctx.setVariable("priceTVA",       formatAmount(computeTaxAmount(taxableBase, TVA_RATE), booking.getCurrency()));
+        ctx.setVariable("priceCentimeAdditionnel", formatAmount(computeTaxAmount(taxableBase, CENTIME_ADDITIONNEL_RATE), booking.getCurrency()));
+        ctx.setVariable("priceFees",      null);
+        ctx.setVariable("tvaPct",         "18.4 %");
+        ctx.setVariable("centimeAdditionnelPct", "5 %");
+        ctx.setVariable("paymentMethod",  formatPaymentMode(booking.getPaymentMode()));
+        ctx.setVariable("paymentLast4",   null);
+        ctx.setVariable("paymentDate",    "—");
+        ctx.setVariable("qrCodeUrl",      showQr ? "cid:" + QR_CONTENT_ID : null);
+        ctx.setVariable("bookingUrl",     publicBookingViewUrl(booking));
+        ctx.setVariable("invoiceUrl",     publicBookingPdfUrl(booking));
+        ctx.setVariable("accountUrl",     frontendUrl);
+
+        // ── CSAT pour booking-completed ─────────────────────────────
+        if (eventType == BookingEventType.BOOKING_COMPLETED) {
+            ctx.setVariable("csatUrl", apiBaseUrl.stripTrailing()
+                    + ApiPath.V1 + "/public/bookings/csat/" + booking.getBookingNumber() + "?score=");
+        }
+
+        return templateEngine.process(template(eventType), ctx);
+    }
+
+    // ── Routing ──────────────────────────────────────────────────────
+
+    private String template(BookingEventType eventType) {
+        return switch (eventType) {
+            case BOOKING_CREATED, BOOKING_CONFIRMED -> "email/booking-confirmation";
+            case BOOKING_CANCELLED                  -> "email/booking-cancelled";
+            case BOOKING_COMPLETED                  -> "email/booking-completed";
+            default                                 -> "email/booking-event";
+        };
+    }
+
     private String subject(BookingEventType eventType, Booking booking) {
         return switch (eventType) {
-            case BOOKING_CONFIRMED, BOOKING_CREATED -> "Confirmation reservation " + booking.getBookingNumber();
-            case BOOKING_CANCELLED -> "Annulation reservation " + booking.getBookingNumber();
-            case BOOKING_REJECTED -> "Reservation rejetee " + booking.getBookingNumber();
-            case BOOKING_STARTED -> "Reservation demarree " + booking.getBookingNumber();
-            case BOOKING_CHECKED_IN -> "Check-in reservation " + booking.getBookingNumber();
-            case BOOKING_CHECKED_OUT -> "Check-out reservation " + booking.getBookingNumber();
-            case BOOKING_COMPLETED -> "Reservation terminee " + booking.getBookingNumber();
-            case BOOKING_NO_SHOW -> "Absence reservation " + booking.getBookingNumber();
-            default -> "Mise a jour reservation " + booking.getBookingNumber();
+            case BOOKING_CONFIRMED, BOOKING_CREATED -> "Confirmation réservation " + booking.getBookingNumber();
+            case BOOKING_CANCELLED  -> "Annulation réservation " + booking.getBookingNumber();
+            case BOOKING_REJECTED   -> "Réservation rejetée " + booking.getBookingNumber();
+            case BOOKING_STARTED    -> "Réservation démarrée " + booking.getBookingNumber();
+            case BOOKING_CHECKED_IN -> "Check-in réservation " + booking.getBookingNumber();
+            case BOOKING_CHECKED_OUT -> "Check-out réservation " + booking.getBookingNumber();
+            case BOOKING_COMPLETED  -> "Réservation terminée " + booking.getBookingNumber();
+            case BOOKING_NO_SHOW    -> "Absence réservation " + booking.getBookingNumber();
+            default -> "Mise à jour réservation " + booking.getBookingNumber();
         };
     }
 
@@ -101,114 +189,163 @@ public class BookingEmailNotifier {
                 || eventType == BookingEventType.BOOKING_NO_SHOW;
     }
 
-    private String body(BookingEventType eventType, Booking booking, boolean includeQr) {
-        Context context = new Context(Locale.FRENCH);
-        context.setVariable("recipientName", valueOrDefault(booking.getContactName(), "client"));
-        context.setVariable("bookingNumber", booking.getBookingNumber());
-        context.setVariable("resourceName", booking.getResource() == null ? "-" : booking.getResource().getName());
-        context.setVariable("status", booking.getStatus() == null ? "-" : booking.getStatus().name());
-        context.setVariable("startedAt", booking.getStartedAt());
-        context.setVariable("endedAt", booking.getEndedAt());
-        context.setVariable("quantity", booking.getQuantity());
-        context.setVariable("paymentMode", booking.getPaymentMode() == null ? "-" : booking.getPaymentMode().name());
-        context.setVariable("checkInToken", booking.getCheckInToken());
-        context.setVariable("showQr", includeQr && StringUtils.hasText(booking.getCheckInToken()));
-        context.setVariable("reason", eventReason(eventType, booking));
-        context.setVariable("eventTag", eventTag(eventType));
-        context.setVariable("eventTitle", eventTitle(eventType));
-        context.setVariable("eventSubtitle", eventSubtitle(eventType));
-        context.setVariable("eventMessage", eventMessage(eventType, booking));
-        String template = template(eventType);
-        return templateEngine.process(template, context);
-    }
-
-    private String template(BookingEventType eventType) {
-        return switch (eventType) {
-            case BOOKING_CREATED, BOOKING_CONFIRMED -> "email/booking-confirmation";
-            case BOOKING_CANCELLED -> "email/booking-cancelled";
-            default -> "email/booking-event";
-        };
-    }
+    // ── Labels ───────────────────────────────────────────────────────
 
     private String eventTag(BookingEventType eventType) {
         return switch (eventType) {
-            case BOOKING_REJECTED -> "Rejet";
-            case BOOKING_STARTED -> "Demarrage";
+            case BOOKING_REJECTED   -> "Rejeté";
+            case BOOKING_STARTED    -> "Démarré";
             case BOOKING_CHECKED_IN -> "Check-in";
             case BOOKING_CHECKED_OUT -> "Check-out";
-            case BOOKING_COMPLETED -> "Terminee";
-            case BOOKING_NO_SHOW -> "No-show";
-            default -> "Reservation";
+            case BOOKING_COMPLETED  -> "Terminé";
+            case BOOKING_NO_SHOW    -> "No-show";
+            default -> "Réservation";
         };
     }
 
     private String eventTitle(BookingEventType eventType) {
         return switch (eventType) {
-            case BOOKING_REJECTED -> "Reservation rejetee";
-            case BOOKING_STARTED -> "Reservation demarree";
-            case BOOKING_CHECKED_IN -> "Check-in enregistre";
-            case BOOKING_CHECKED_OUT -> "Check-out enregistre";
-            case BOOKING_COMPLETED -> "Reservation terminee";
-            case BOOKING_NO_SHOW -> "Absence enregistree";
-            default -> "Mise a jour reservation";
+            case BOOKING_REJECTED   -> "Réservation rejetée";
+            case BOOKING_STARTED    -> "Réservation démarrée";
+            case BOOKING_CHECKED_IN -> "Check-in enregistré";
+            case BOOKING_CHECKED_OUT -> "Check-out enregistré";
+            case BOOKING_COMPLETED  -> "Réservation terminée";
+            case BOOKING_NO_SHOW    -> "Absence enregistrée";
+            default -> "Mise à jour réservation";
         };
     }
 
     private String eventSubtitle(BookingEventType eventType) {
         return switch (eventType) {
-            case BOOKING_REJECTED -> "La demande de reservation n'a pas ete approuvee";
-            case BOOKING_STARTED -> "Le creneau reserve est maintenant en cours";
-            case BOOKING_CHECKED_IN -> "La presence a ete confirmee a l'arrivee";
-            case BOOKING_CHECKED_OUT -> "La sortie a ete confirmee";
-            case BOOKING_COMPLETED -> "Le creneau reserve est cloture";
-            case BOOKING_NO_SHOW -> "La reservation a ete marquee comme absence";
-            default -> "Une mise a jour a ete enregistree";
+            case BOOKING_REJECTED   -> "La demande de réservation n'a pas été approuvée";
+            case BOOKING_STARTED    -> "Le créneau réservé est maintenant en cours";
+            case BOOKING_CHECKED_IN -> "La présence a été confirmée à l'arrivée";
+            case BOOKING_CHECKED_OUT -> "La sortie a été confirmée";
+            case BOOKING_COMPLETED  -> "Le créneau réservé est clôturé";
+            case BOOKING_NO_SHOW    -> "La réservation a été marquée comme absence";
+            default -> "Une mise à jour a été enregistrée";
         };
     }
 
     private String eventMessage(BookingEventType eventType, Booking booking) {
-        String bookingNumber = booking.getBookingNumber();
+        String n = booking.getBookingNumber();
         return switch (eventType) {
-            case BOOKING_REJECTED -> "Votre reservation " + bookingNumber + " a ete rejetee.";
-            case BOOKING_STARTED -> "Votre reservation " + bookingNumber + " a demarre.";
-            case BOOKING_CHECKED_IN -> "Le check-in de la reservation " + bookingNumber + " a ete enregistre.";
-            case BOOKING_CHECKED_OUT -> "Le check-out de la reservation " + bookingNumber + " a ete enregistre.";
-            case BOOKING_COMPLETED -> "Votre reservation " + bookingNumber + " est maintenant terminee.";
-            case BOOKING_NO_SHOW -> "Votre reservation " + bookingNumber + " a ete marquee comme absence.";
-            default -> "Une mise a jour a ete enregistree sur votre reservation " + bookingNumber + ".";
+            case BOOKING_REJECTED   -> "Votre réservation " + n + " a été rejetée.";
+            case BOOKING_STARTED    -> "Votre réservation " + n + " a démarré.";
+            case BOOKING_CHECKED_IN -> "Le check-in de la réservation " + n + " a été enregistré.";
+            case BOOKING_CHECKED_OUT -> "Le check-out de la réservation " + n + " a été enregistré.";
+            case BOOKING_COMPLETED  -> "Votre réservation " + n + " est maintenant terminée.";
+            case BOOKING_NO_SHOW    -> "Votre réservation " + n + " a été marquée comme absence.";
+            default -> "Une mise à jour a été enregistrée sur votre réservation " + n + ".";
         };
     }
 
     private String eventReason(BookingEventType eventType, Booking booking) {
         return switch (eventType) {
             case BOOKING_CANCELLED -> booking.getCancellationReason();
-            case BOOKING_REJECTED -> booking.getRejectionReason();
+            case BOOKING_REJECTED  -> booking.getRejectionReason();
             default -> null;
         };
     }
 
-    private String plainTextBody(BookingEventType eventType, Booking booking) {
-        return """
-                Booking: %s
-                Resource: %s
-                Status: %s
-                Start: %s
-                End: %s
-                Event: %s
-                """.formatted(
-                booking.getBookingNumber(),
-                booking.getResource() == null ? "-" : booking.getResource().getName(),
-                booking.getStatus(),
-                booking.getStartedAt(),
-                booking.getEndedAt(),
-                eventType
-        );
+    // ── Formatters ───────────────────────────────────────────────────
+
+    private String formatDate(LocalDateTime dt) {
+        if (dt == null) return "—";
+        return DATE_FMT.format(dt);
     }
 
-    private byte[] generateQrBytes(Booking booking) {
-        if (!StringUtils.hasText(booking.getCheckInToken())) {
+    private String formatTime(LocalDateTime dt) {
+        if (dt == null) return "—";
+        return TIME_FMT.format(dt);
+    }
+
+    private String formatDateTime(LocalDateTime dt) {
+        if (dt == null) return "—";
+        return DATE_FMT.format(dt) + " à " + TIME_FMT.format(dt);
+    }
+
+    private String formatDuration(Integer minutes) {
+        if (minutes == null || minutes <= 0) return "—";
+        if (minutes < 60) return minutes + " min";
+        int h = minutes / 60;
+        int m = minutes % 60;
+        if (m == 0) return h + (h == 1 ? " heure" : " heures");
+        return h + "h" + String.format("%02d", m);
+    }
+
+    private String formatAmount(BigDecimal amount, String currency) {
+        if (amount == null) return "—";
+        NumberFormat fmt = NumberFormat.getIntegerInstance(Locale.FRENCH);
+        String curr = StringUtils.hasText(currency) ? " " + currency.toUpperCase() : " XAF";
+        return fmt.format(amount.setScale(0, java.math.RoundingMode.HALF_UP)) + curr;
+    }
+
+    private BigDecimal computeTaxIncludedBase(BigDecimal totalAmount) {
+        if (totalAmount == null) return null;
+        BigDecimal divisor = BigDecimal.ONE.add(TVA_RATE).add(CENTIME_ADDITIONNEL_RATE);
+        return totalAmount.divide(divisor, 8, java.math.RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal computeTaxAmount(BigDecimal taxableBase, BigDecimal rate) {
+        if (taxableBase == null || rate == null) return null;
+        return taxableBase.multiply(rate);
+    }
+
+    private String formatPaymentMode(com.sni.bokaticowork.features.booking.enums.BookingPaymentMode mode) {
+        if (mode == null) return "—";
+        return switch (mode) {
+            case DIRECT       -> "Paiement direct";
+            case SUBSCRIPTION -> "Abonnement";
+            case PASS         -> "Pass";
+            default           -> mode.name();
+        };
+    }
+
+    private String resolveResourceType(Booking booking) {
+        try {
+            if (booking.getResource() == null) return null;
+            var type = booking.getResource().getResourceType();
+            return type != null ? type.getName() : null;
+        } catch (Exception ex) {
             return null;
         }
+    }
+
+    private Integer resolveCapacity(Booking booking) {
+        try {
+            return booking.getResource() != null ? booking.getResource().getCapacity() : null;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private String resolveLocationLabel(Booking booking) {
+        try {
+            if (booking.getResource() == null || !StringUtils.hasText(booking.getResource().getLocationLabel())) {
+                return "84 Boulevard du Général de Gaulle";
+            }
+            return booking.getResource().getLocationLabel();
+        } catch (Exception ex) {
+            return "84 Boulevard du Général de Gaulle";
+        }
+    }
+
+    private String resolveZone(Booking booking) {
+        try {
+            if (booking.getResource() == null || !StringUtils.hasText(booking.getResource().getZone())) {
+                return "Espace de coworking";
+            }
+            return booking.getResource().getZone();
+        } catch (Exception ex) {
+            return "Espace de coworking";
+        }
+    }
+
+    // ── QR code ──────────────────────────────────────────────────────
+
+    private byte[] generateQrBytes(Booking booking) {
+        if (!StringUtils.hasText(booking.getCheckInToken())) return null;
         String scanUrl = apiBaseUrl.stripTrailing()
                 + ApiPath.V1 + "/public/bookings/check-in/scan/"
                 + booking.getCheckInToken();
@@ -222,6 +359,52 @@ public class BookingEmailNotifier {
             log.warn("Failed to generate booking QR code for {}", booking.getBookingNumber(), ex);
             return null;
         }
+    }
+
+    private String publicBookingViewUrl(Booking booking) {
+        return publicBookingBaseUrl(booking);
+    }
+
+    private String publicBookingPdfUrl(Booking booking) {
+        return apiBaseUrl.stripTrailing()
+                + ApiPath.V1
+                + "/public/bookings/"
+                + encode(booking.getBookingNumber())
+                + "/confirmation.pdf?token="
+                + encode(booking.getCheckInToken());
+    }
+
+    private String publicBookingBaseUrl(Booking booking) {
+        return apiBaseUrl.stripTrailing()
+                + ApiPath.V1
+                + "/public/bookings/"
+                + encode(booking.getBookingNumber())
+                + "?token="
+                + encode(booking.getCheckInToken());
+    }
+
+    private String encode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
+    }
+
+    // ── Plain text fallback ───────────────────────────────────────────
+
+    private String plainTextBody(BookingEventType eventType, Booking booking) {
+        return """
+                Réservation : %s
+                Ressource   : %s
+                Statut      : %s
+                Début       : %s
+                Fin         : %s
+                Événement   : %s
+                """.formatted(
+                booking.getBookingNumber(),
+                booking.getResource() == null ? "—" : booking.getResource().getName(),
+                booking.getStatus(),
+                formatDateTime(booking.getStartedAt()),
+                formatDateTime(booking.getEndedAt()),
+                eventType
+        );
     }
 
     private String valueOrDefault(String value, String fallback) {

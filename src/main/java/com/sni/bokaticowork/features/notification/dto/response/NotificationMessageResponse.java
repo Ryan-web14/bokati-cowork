@@ -24,6 +24,7 @@ public record NotificationMessageResponse(
         Integer attempts,
         Instant availableAt,
         Instant sentAt,
+        Instant readAt,
         String lastError,
         Instant createdAt
 ) {

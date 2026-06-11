@@ -67,7 +67,8 @@ public class WalletServiceImpl implements WalletService {
     @Transactional(readOnly = true)
     public PaginatedResponse<WalletLedgerEntryResponse> ledger(String walletNumber, Pageable pageable) {
         WalletAccount wallet = serviceWallet(walletNumber);
-        return new PaginatedResponse<>(ledgerRepository.findAllByWalletIdOrderByCreatedAtDesc(wallet.getId(), pageable).map(mapper::toLedgerEntryResponse));
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return new PaginatedResponse<>(ledgerRepository.findByWallet_IdOrderByCreatedAtDesc(wallet.getId(), unsortedPageable).map(mapper::toLedgerEntryResponse));
     }
 
     @Override

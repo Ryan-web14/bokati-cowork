@@ -48,4 +48,10 @@ public class DocumentReview {
 
     @Column(name = "rejection_reason_detail")
     private String rejectionReasonDetail;
+
+    @Column(name = "correction_deadline")
+    private java.time.Instant correctionDeadline;
+
+    @Column(name = "correction_note", columnDefinition = "TEXT")
+    private String correctionNote;
 }

@@ -26,6 +26,8 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
             DocumentStatus.PENDING_REVIEW
     );
 
+    private static final List<Integer> EXPIRY_REMINDER_DAYS = List.of(30, 7);
+
     private final DocumentRepository documentRepository;
     private final KycAutomationService kycAutomationService;
     private final OutboxService outboxService;
@@ -49,6 +51,22 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
         return processed;
     }
 
+    @Override
+    public int notifyPreExpiry() {
+        LocalDate today = LocalDate.now();
+        int total = 0;
+        for (int days : EXPIRY_REMINDER_DAYS) {
+            LocalDate target = today.plusDays(days);
+            List<Document> docs = documentRepository.findAllByStatusInAndExpiryDateBetween(
+                    EXPIRABLE_STATUSES, target, target);
+            for (Document doc : docs) {
+                publishPreExpiryEvent(doc, days);
+                total++;
+            }
+        }
+        return total;
+    }
+
     private void publishExpiredEvent(Document document) {
         HashMap<String, Object> payload = new HashMap<>();
         payload.put("documentCode", document.getCode());
@@ -56,5 +74,16 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
         payload.put("ownerId", document.getOwnerId());
         payload.put("status", document.getStatus());
         outboxService.publish("DOCUMENT_AUTO_EXPIRED", "DOCUMENT", document.getCode(), payload);
+    }
+
+    private void publishPreExpiryEvent(Document document, int daysUntilExpiry) {
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("documentCode", document.getCode());
+        payload.put("ownerType", document.getOwnerType());
+        payload.put("ownerId", document.getOwnerId());
+        payload.put("daysUntilExpiry", daysUntilExpiry);
+        payload.put("expiryDate", document.getExpiryDate());
+        payload.put("space", document.getSpace());
+        outboxService.publish("DOCUMENT_EXPIRY_REMINDER", "DOCUMENT", document.getCode(), payload);
     }
 }

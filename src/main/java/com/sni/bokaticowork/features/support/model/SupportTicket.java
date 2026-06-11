@@ -62,6 +62,14 @@ public class SupportTicket {
     private Instant csatSubmittedAt;
     private Instant csatEmailSentAt;
 
+    @Column(name = "escalation_level", nullable = false)
+    @Builder.Default
+    private Integer escalationLevel = 0;
+    private Instant escalatedAt;
+    @Column(name = "escalation_reason", columnDefinition = "TEXT")
+    private String escalationReason;
+    private Instant lastSlaAlertSentAt;
+
     @Builder.Default
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TicketMessage> messages = new ArrayList<>();

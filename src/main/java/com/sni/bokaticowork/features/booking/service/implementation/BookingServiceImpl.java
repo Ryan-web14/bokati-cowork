@@ -27,13 +27,22 @@ import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceAvailabilityService;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceService;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
+import com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistRequest;
+import com.sni.bokaticowork.features.task.dto.TaskDtos.CreateTaskRequest;
+import com.sni.bokaticowork.features.task.enums.TaskPriority;
+import com.sni.bokaticowork.features.task.enums.TaskRecurrence;
+import com.sni.bokaticowork.features.task.service.interfaces.TaskManagementService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -42,15 +51,20 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
+import java.security.SecureRandom;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class BookingServiceImpl implements BookingService {
+
+    private static final char[] TOKEN_CHARS = "ABCDEFGHJKLMNPRSTUVWXY23456789".toCharArray();
+    private static final SecureRandom TOKEN_RANDOM = new SecureRandom();
 
     private final BookingRepository bookingRepository;
     private final BookingLineRepository lineRepository;
@@ -59,6 +73,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingEventRepository eventRepository;
     private final BookingRecurrenceGroupRepository recurrenceGroupRepository;
     private final BookingHoldRepository holdRepository;
+    private final CancellationPolicyRepository cancellationPolicyRepository;
     private final ResourceService resourceService;
     private final ResourceAvailabilityService resourceAvailabilityService;
     private final BookingMapper bookingMapper;
@@ -72,7 +87,18 @@ public class BookingServiceImpl implements BookingService {
     private final BookingEmailNotifier emailNotifier;
     private final BookingPolicyEnforcer policyEnforcer;
     private final BookingBillableBridge billableBridge;
+    private final BookingCancellationRefundSupport cancellationRefundSupport;
     private final BookingVirtualMeetingSupport virtualMeetingSupport;
+    private final TaskManagementService taskManagementService;
+
+    @Value("${bokati.task.booking-prep-hours:2}")
+    private int bookingPrepHours;
+
+    @Value("${bokati.task.booking-default-assignee:}")
+    private String bookingDefaultAssignee;
+
+    @Value("${bokati.task.booking-cleanup-default-assignee:}")
+    private String bookingCleanupDefaultAssignee;
 
     @Override
     public BookingResponse create(CreateBookingRequest request) {
@@ -112,7 +138,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setContactName(identity.contactName());
         booking.setContactEmail(identity.contactEmail());
         booking.setContactPhone(identity.contactPhone());
-        booking.setCheckInToken(UUID.randomUUID().toString().replace("-", ""));
+        booking.setCheckInToken(generateCheckInToken());
 
         BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity);
         booking.setBookingUnit(price.unit());
@@ -225,6 +251,15 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse> cancellationPolicies() {
+        return cancellationPolicyRepository.findAllByActiveTrueOrderByRuleOrderAsc().stream()
+                .map(p -> new com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse(
+                        p.getId(), p.getHoursBeforeStart(), p.getRefundPercentage(), p.getRuleOrder(), p.getActive()))
+                .toList();
+    }
+
+    @Override
     public BookingResponse confirm(String bookingNumber, BookingStatusChangeRequest request) {
         return bookingMapper.toResponse(confirmInternal(getForService(bookingNumber), request));
     }
@@ -275,24 +310,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponse complete(String bookingNumber, BookingStatusChangeRequest request) {
-        Booking booking = getForService(bookingNumber);
-        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
-            throw new ConflictException("booking", "only confirmed or in-progress bookings can be completed");
-        }
-        BigDecimal entitlementQuantity = entitlementQuantity(booking);
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
-            entitlementBridge.consume(booking, entitlementQuantity);
-            eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "Booking entitlement was consumed", null);
-            eventWriter.write(booking, BookingEventType.USAGE_RECORDED, "Usage recorded", "Booking usage was recorded", null);
-        }
-        BookingStatus from = booking.getStatus();
-        booking.setStatus(BookingStatus.COMPLETED);
-        booking.setCompletedAt(Instant.now());
-        booking = bookingRepository.save(booking);
-        writeHistory(booking, from, BookingStatus.COMPLETED, changedBy(request), reason(request, "Booking completed"));
-        eventWriter.write(booking, BookingEventType.BOOKING_COMPLETED, "Booking completed", "Booking was completed", null);
-        notifyIfRequested(booking, BookingEventType.BOOKING_COMPLETED, request);
-        return bookingMapper.toResponse(booking);
+        return bookingMapper.toResponse(completeInternal(getForService(bookingNumber), request));
     }
 
     @Override
@@ -327,6 +345,23 @@ public class BookingServiceImpl implements BookingService {
             }
         }
         return marked;
+    }
+
+    @Override
+    public int markOverdueCompleted(int limit) {
+        int resolvedLimit = Math.max(1, limit);
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> candidates = bookingRepository.findOverdueCompletionCandidates(now, resolvedLimit);
+        int completed = 0;
+        for (Booking booking : candidates) {
+            if (booking.getStatus() == BookingStatus.IN_PROGRESS
+                    && booking.getEndedAt().isBefore(now)
+                    && (booking.getCheckedInAt() != null || booking.getStartedEventAt() != null)) {
+                completeInternal(booking, new BookingStatusChangeRequest("SYSTEM", "Automatic completion: booking ended after check-in", Boolean.FALSE));
+                completed++;
+            }
+        }
+        return completed;
     }
 
     @Override
@@ -429,6 +464,7 @@ public class BookingServiceImpl implements BookingService {
         writeHistory(booking, from, BookingStatus.CONFIRMED, changedBy(request), reason(request, "Booking confirmed"));
         eventWriter.write(booking, BookingEventType.BOOKING_CONFIRMED, "Booking confirmed", "Booking was confirmed", null);
         notifyIfRequested(booking, BookingEventType.BOOKING_CONFIRMED, request);
+        createBookingPreparationTask(booking);
         return booking;
     }
 
@@ -442,7 +478,8 @@ public class BookingServiceImpl implements BookingService {
         if (!systemOverride) {
             assertCancellationAllowed(booking);
         }
-        if (booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.IN_PROGRESS) {
+        boolean wasActive = booking.getStatus() == BookingStatus.CONFIRMED || booking.getStatus() == BookingStatus.IN_PROGRESS;
+        if (wasActive) {
             releaseResource(booking);
             eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
             if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
@@ -458,6 +495,13 @@ public class BookingServiceImpl implements BookingService {
         writeHistory(booking, from, BookingStatus.CANCELLED, changedBy(request), reason(request, "Booking cancelled"));
         eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Booking cancelled", booking.getCancellationReason(), null);
         notifyIfRequested(booking, BookingEventType.BOOKING_CANCELLED, request);
+        if (wasActive) {
+            try {
+                cancellationRefundSupport.processAutomaticCreditNote(booking);
+            } catch (Exception ex) {
+                log.warn("Failed to process automatic cancellation credit note for booking {}", booking.getBookingNumber(), ex);
+            }
+        }
         return booking;
     }
 
@@ -477,6 +521,89 @@ public class BookingServiceImpl implements BookingService {
         eventWriter.write(booking, BookingEventType.BOOKING_NO_SHOW, "Booking no-show", "Booking was marked as no-show", null);
         notifyIfRequested(booking, BookingEventType.BOOKING_NO_SHOW, request);
         return booking;
+    }
+
+    private Booking completeInternal(Booking booking, BookingStatusChangeRequest request) {
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
+            throw new ConflictException("booking", "only confirmed or in-progress bookings can be completed");
+        }
+        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
+            entitlementBridge.consume(booking, entitlementQuantity(booking));
+            eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "Booking entitlement was consumed", null);
+            eventWriter.write(booking, BookingEventType.USAGE_RECORDED, "Usage recorded", "Booking usage was recorded", null);
+        }
+        BookingStatus from = booking.getStatus();
+        booking.setStatus(BookingStatus.COMPLETED);
+        booking.setCompletedAt(Instant.now());
+        booking = bookingRepository.save(booking);
+        writeHistory(booking, from, BookingStatus.COMPLETED, changedBy(request), reason(request, "Booking completed"));
+        eventWriter.write(booking, BookingEventType.BOOKING_COMPLETED, "Booking completed", "Booking was completed", null);
+        notifyIfRequested(booking, BookingEventType.BOOKING_COMPLETED, request);
+        createBookingCleanupTask(booking);
+        return booking;
+    }
+
+    private void createBookingPreparationTask(Booking booking) {
+        try {
+            taskManagementService.createFromAutomation(new CreateTaskRequest(
+                    "Preparer la ressource " + booking.getResource().getName(),
+                    "Preparation automatique pour la reservation " + booking.getBookingNumber()
+                            + ". Ressource: " + booking.getResource().getName()
+                            + ". Debut: " + booking.getStartedAt()
+                            + ". Contact: " + nullSafe(booking.getContactName()),
+                    configuredAssignee(bookingDefaultAssignee),
+                    TaskPriority.HIGH,
+                    booking.getStartedAt().minusHours(Math.max(0, bookingPrepHours)).atZone(ZoneId.systemDefault()).toInstant(),
+                    "BOOKING",
+                    booking.getBookingNumber(),
+                    TaskRecurrence.NONE,
+                    List.of(
+                            new ChecklistRequest("Verifier disponibilite et configuration de la ressource", false, 1),
+                            new ChecklistRequest("Preparer les acces et supports necessaires", false, 2)
+                    )
+            ));
+        } catch (Exception ex) {
+            log.warn("Failed to create booking preparation task for {}", booking.getBookingNumber(), ex);
+        }
+    }
+
+    private void createBookingCleanupTask(Booking booking) {
+        try {
+            taskManagementService.createFromAutomation(new CreateTaskRequest(
+                    "Nettoyer la ressource " + booking.getResource().getName(),
+                    "Tache generee apres la reservation " + booking.getBookingNumber()
+                            + ". Ressource: " + booking.getResource().getName()
+                            + ". Fin: " + booking.getEndedAt(),
+                    configuredAssignee(bookingCleanupDefaultAssignee),
+                    TaskPriority.MEDIUM,
+                    booking.getEndedAt().atZone(ZoneId.systemDefault()).toInstant(),
+                    "BOOKING",
+                    booking.getBookingNumber(),
+                    TaskRecurrence.AFTER_BOOKING,
+                    List.of(
+                            new ChecklistRequest("Inspecter la ressource apres utilisation", false, 1),
+                            new ChecklistRequest("Remettre la ressource en etat pour la prochaine reservation", false, 2)
+                    )
+            ));
+        } catch (Exception ex) {
+            log.warn("Failed to create booking cleanup task for {}", booking.getBookingNumber(), ex);
+        }
+    }
+
+    private Long configuredAssignee(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return Long.parseLong(value.trim());
+        } catch (NumberFormatException ex) {
+            log.warn("Ignoring invalid task assignee configuration value '{}'", value);
+            return null;
+        }
+    }
+
+    private String nullSafe(String value) {
+        return StringUtils.hasText(value) ? value.trim() : "N/A";
     }
 
     private void reserveResource(Booking booking) {
@@ -720,5 +847,23 @@ public class BookingServiceImpl implements BookingService {
             return "Pass - consommation du pass " + booking.getEntitlementCode();
         }
         return "Entitlement consumption - " + booking.getEntitlementCode();
+    }
+
+    @Async
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordCsat(String bookingNumber, int score) {
+        if (score < 1 || score > 5) return;
+        Booking booking = getForService(bookingNumber);
+        booking.setCsatScore(score);
+        bookingRepository.save(booking);
+    }
+
+    private static String generateCheckInToken() {
+        char[] t = new char[9];
+        for (int i = 0; i < 4; i++) t[i] = TOKEN_CHARS[TOKEN_RANDOM.nextInt(TOKEN_CHARS.length)];
+        t[4] = '-';
+        for (int i = 5; i < 9; i++) t[i] = TOKEN_CHARS[TOKEN_RANDOM.nextInt(TOKEN_CHARS.length)];
+        return new String(t);
     }
 }

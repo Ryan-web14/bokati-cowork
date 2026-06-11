@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.payment.controller;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.payment.dto.request.AddCashMovementAttachmentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.ApproveCashVarianceRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CloseCashSessionRequest;
 import com.sni.bokaticowork.features.payment.dto.request.CreateCashMovementRequest;
@@ -122,6 +123,66 @@ public class CashRegisterController {
     public ResponseEntity<CashMovementResponse> createExitVoucher(@PathVariable String sessionNumber,
                                                                   @Valid @RequestBody CreateCashVoucherRequest request) {
         return ResponseEntity.ok(cashRegisterService.createExitVoucher(sessionNumber, request));
+    }
+
+    @GetMapping("/sessions/{sessionNumber}/entry-vouchers")
+    public ResponseEntity<PaginatedResponse<CashMovementResponse>> listEntryVouchers(
+            @PathVariable String sessionNumber,
+            @RequestParam(required = false) String documentNumber,
+            @RequestParam(required = false) String flowCategory,
+            @RequestParam(required = false) String referenceType,
+            @RequestParam(required = false) String referenceCode,
+            @RequestParam(required = false) String counterpartyCode,
+            @RequestParam(required = false) String counterpartyName,
+            @RequestParam(required = false) String createdBy,
+            @RequestParam(required = false) Instant fromDate,
+            @RequestParam(required = false) Instant toDate,
+            @RequestParam(required = false) String searchText,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(cashRegisterService.listMovements(null, sessionNumber, null, CashDocumentType.ENTRY_VOUCHER,
+                documentNumber, flowCategory, referenceType, referenceCode, counterpartyCode, counterpartyName,
+                createdBy, fromDate, toDate, searchText, pageable));
+    }
+
+    @GetMapping("/sessions/{sessionNumber}/exit-vouchers")
+    public ResponseEntity<PaginatedResponse<CashMovementResponse>> listExitVouchers(
+            @PathVariable String sessionNumber,
+            @RequestParam(required = false) String documentNumber,
+            @RequestParam(required = false) String flowCategory,
+            @RequestParam(required = false) String referenceType,
+            @RequestParam(required = false) String referenceCode,
+            @RequestParam(required = false) String counterpartyCode,
+            @RequestParam(required = false) String counterpartyName,
+            @RequestParam(required = false) String createdBy,
+            @RequestParam(required = false) Instant fromDate,
+            @RequestParam(required = false) Instant toDate,
+            @RequestParam(required = false) String searchText,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(cashRegisterService.listMovements(null, sessionNumber, null, CashDocumentType.EXIT_VOUCHER,
+                documentNumber, flowCategory, referenceType, referenceCode, counterpartyCode, counterpartyName,
+                createdBy, fromDate, toDate, searchText, pageable));
+    }
+
+    @PostMapping("/movements/{movementNumber}/attachments")
+    public ResponseEntity<CashMovementResponse> addAttachment(@PathVariable String movementNumber,
+                                                              @Valid @RequestBody AddCashMovementAttachmentRequest request) {
+        return ResponseEntity.ok(cashRegisterService.addAttachment(movementNumber, request));
+    }
+
+    @PatchMapping("/movements/{movementNumber}/sign")
+    public ResponseEntity<CashMovementResponse> signMovement(@PathVariable String movementNumber,
+                                                              @RequestParam String signedBy) {
+        return ResponseEntity.ok(cashRegisterService.signMovement(movementNumber, signedBy));
+    }
+
+    @PatchMapping("/movements/{movementNumber}/print")
+    public ResponseEntity<CashMovementResponse> markPrinted(@PathVariable String movementNumber) {
+        return ResponseEntity.ok(cashRegisterService.markMovementPrinted(movementNumber));
+    }
+
+    @GetMapping("/movements/{movementNumber}")
+    public ResponseEntity<CashMovementResponse> getMovement(@PathVariable String movementNumber) {
+        return ResponseEntity.ok(cashRegisterService.getMovement(movementNumber));
     }
 
     @GetMapping("/movements")

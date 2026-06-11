@@ -20,6 +20,7 @@ public class AssetAssignmentResponse {
     private Instant expectedReturnAt;
     private Instant endAt;
     private String assignedBy;
+    private String purpose;
     private String returnedBy;
     private AssetCondition checkoutCondition;
     private AssetCondition returnCondition;

@@ -10,8 +10,11 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
+import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
+import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
+import com.sni.bokaticowork.features.billing.enums.BillingSignatureStatus;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentPdfService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.payment.enums.PaymentMethod;
@@ -357,6 +360,41 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
 
         public List<String> addressLines(String billingAddressJson) {
             return jsonLines(billingAddressJson, List.of("createdAt", "updatedAt", "id"));
+        }
+
+        public String percent(BigDecimal rate) {
+            if (rate == null) return EMPTY_VALUE;
+            BigDecimal normalized = rate.stripTrailingZeros();
+            String val = normalized.scale() <= 0
+                    ? normalized.setScale(0).toPlainString()
+                    : normalized.toPlainString();
+            return val + " %";
+        }
+
+        public String advanceTypeLabel(BillingAdvanceType type) {
+            if (type == null) return EMPTY_VALUE;
+            return switch (type) {
+                case PERCENTAGE -> "Pourcentage";
+                case FIXED_AMOUNT -> "Montant fixe";
+            };
+        }
+
+        public String advanceStatusLabel(BillingAdvanceStatus status) {
+            if (status == null) return EMPTY_VALUE;
+            return switch (status) {
+                case PENDING -> "En attente";
+                case PAID -> "Réglé";
+                case CANCELLED -> "Annulé";
+            };
+        }
+
+        public String signatureStatusLabel(BillingSignatureStatus status) {
+            if (status == null) return EMPTY_VALUE;
+            return switch (status) {
+                case PENDING -> "En attente de signature";
+                case SIGNED -> "Signé";
+                case EXPIRED -> "Expiré";
+            };
         }
 
         private List<String> jsonLines(String payload, List<String> excludedKeys) {

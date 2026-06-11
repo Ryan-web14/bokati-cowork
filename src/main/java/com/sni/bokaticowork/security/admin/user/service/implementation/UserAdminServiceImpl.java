@@ -1,7 +1,9 @@
 package com.sni.bokaticowork.security.admin.user.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.security.service.passwordResetService.interfaces.PasswordResetService;
 import com.sni.bokaticowork.core.generator.password.GeneratorOfPassword;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.security.admin.role.model.RoleUser;
@@ -47,6 +49,7 @@ public class UserAdminServiceImpl implements UserAdminService {
     private final RoleUserService roleUserService;
     private final RoleUserRepository roleUserRepository;
     private final DefaultEmailSender emailSender;
+    private final PasswordResetService passwordResetService;
 
     @Value("${app.admin-access-url:https://admin.elleaose.com}")
     private String adminAccessUrl;
@@ -114,8 +117,8 @@ public class UserAdminServiceImpl implements UserAdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public AdminUserResponse getById(Long id) {
-        return toAdminResponse(userService.getUserByIdForService(id), null);
+    public AdminUserResponse getByCode(String userCode) {
+        return toAdminResponse(findByCode(userCode), null);
     }
 
     @Override
@@ -125,8 +128,8 @@ public class UserAdminServiceImpl implements UserAdminService {
     }
 
     @Override
-    public AdminUserResponse update(Long id, AdminUpdateUserRequest request, String assignedBy) {
-        Users user = userService.getUserByIdForService(id);
+    public AdminUserResponse update(String userCode, AdminUpdateUserRequest request, String assignedBy) {
+        Users user = findByCode(userCode);
         if (StringUtils.hasText(request.getEmail())
                 && !user.getEmail().equalsIgnoreCase(request.getEmail())
                 && userRepository.existsByEmailIgnoreCase(request.getEmail())) {
@@ -146,35 +149,35 @@ public class UserAdminServiceImpl implements UserAdminService {
         if (request.getRoleNames() != null) {
             syncRoles(user, request.getRoleNames(), assignedBy);
         }
-        return toAdminResponse(userService.getUserByIdForService(id), null);
+        return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
 
     @Override
-    public AdminUserResponse activate(Long id) {
-        Users user = userService.getUserByIdForService(id);
+    public AdminUserResponse activate(String userCode) {
+        Users user = findByCode(userCode);
         userService.activateUser(user.getEmail());
-        return toAdminResponse(userService.getUserByIdForService(id), null);
+        return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
 
     @Override
-    public AdminUserResponse deactivate(Long id) {
-        Users user = userService.getUserByIdForService(id);
+    public AdminUserResponse deactivate(String userCode) {
+        Users user = findByCode(userCode);
         userService.deactivateUser(user.getEmail());
-        return toAdminResponse(userService.getUserByIdForService(id), null);
+        return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
 
     @Override
-    public AdminUserResponse unlock(Long id) {
-        Users user = userService.getUserByIdForService(id);
+    public AdminUserResponse unlock(String userCode) {
+        Users user = findByCode(userCode);
         user.setIsAccountLocked(false);
         user.setFailedLoginAttempts(0);
         userRepository.save(user);
-        return toAdminResponse(userService.getUserByIdForService(id), null);
+        return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
 
     @Override
-    public AdminUserResponse resetPassword(Long id, AdminResetUserPasswordRequest request) {
-        Users user = userService.getUserByIdForService(id);
+    public AdminUserResponse resetPassword(String userCode, AdminResetUserPasswordRequest request) {
+        Users user = findByCode(userCode);
         boolean generate = request == null || request.getGeneratePassword() == null || request.getGeneratePassword();
         String generatedPassword = null;
         if (generate) {
@@ -189,13 +192,26 @@ public class UserAdminServiceImpl implements UserAdminService {
         user.setFailedLoginAttempts(0);
         user.setIsAccountLocked(false);
         userRepository.save(user);
-        return toAdminResponse(userService.getUserByIdForService(id), generatedPassword);
+        return toAdminResponse(userService.getUserByIdForService(user.getId()), generatedPassword);
     }
 
     @Override
-    public void archive(Long id) {
-        Users user = userService.getUserByIdForService(id);
+    public void initiatePasswordReset(String userId, String actor) {
+        Users user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userId));
+        passwordResetService.generatePasswordResetToken(user, actor);
+        log.info("Admin password reset initiated for {} by {}", userId, actor);
+    }
+
+    @Override
+    public void archive(String userCode) {
+        Users user = findByCode(userCode);
         userService.softDeleteUser(user.getEmail());
+    }
+
+    private Users findByCode(String userCode) {
+        return userRepository.findByUserId(userCode)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userCode));
     }
 
     private void syncRoles(Users user, List<String> roleNames, String assignedBy) {

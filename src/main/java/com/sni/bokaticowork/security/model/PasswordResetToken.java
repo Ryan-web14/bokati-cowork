@@ -44,4 +44,6 @@ public class PasswordResetToken {
     @Column(name = "expiration")
     private Long expiration;
 
+    @Column(name = "created_by", length = 255)
+    private String createdBy;
 }

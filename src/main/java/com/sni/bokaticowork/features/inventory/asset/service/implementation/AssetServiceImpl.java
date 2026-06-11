@@ -19,6 +19,7 @@ import com.sni.bokaticowork.features.inventory.asset.mapper.interfaces.AssetMapp
 import com.sni.bokaticowork.features.inventory.asset.repository.AssetAssignmentRepository;
 import com.sni.bokaticowork.features.inventory.asset.repository.AssetLocationHistoryRepository;
 import com.sni.bokaticowork.features.inventory.asset.repository.AssetRepository;
+import com.sni.bokaticowork.features.inventory.asset.service.support.AssetLoanSheetPdfRenderer;
 import com.sni.bokaticowork.features.inventory.asset.repository.specification.AssetSpecification;
 import com.sni.bokaticowork.features.inventory.intelligence.service.interfaces.InventoryAutomationService;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryItemType;
@@ -54,6 +55,7 @@ public class AssetServiceImpl implements AssetService {
     private final AssetMapper mapper;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final InventoryAutomationService automationService;
+    private final AssetLoanSheetPdfRenderer loanSheetPdfRenderer;
 
     @Override
     public AssetResponse create(AssetRequest request) {
@@ -125,6 +127,7 @@ public class AssetServiceImpl implements AssetService {
         assignment.setStartAt(request.getStartAt() == null ? Instant.now() : request.getStartAt());
         assignment.setExpectedReturnAt(request.getExpectedReturnAt());
         assignment.setAssignedBy(trimToNull(request.getAssignedBy()));
+        assignment.setPurpose(trimToNull(request.getPurpose()));
         assignment.setCheckoutCondition(asset.getCondition());
         assignment.setCheckoutPhotoUrl(trimToNull(request.getCheckoutPhotoUrl()));
         assignment.setReceiverSignatureUrl(trimToNull(request.getReceiverSignatureUrl()));
@@ -327,6 +330,18 @@ public class AssetServiceImpl implements AssetService {
                     assignment.setEndAt(Instant.now());
                     assignmentRepository.save(assignment);
                 });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] loanSheetPdf(String assetCode, Long assignmentId) {
+        Asset asset = findByCode(assetCode);
+        AssetAssignment assignment = assignmentRepository.findById(assignmentId)
+                .orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("Asset assignment not found"));
+        if (!assignment.getAsset().getId().equals(asset.getId())) {
+            throw new BadRequestException("Assignment does not belong to this asset");
+        }
+        return loanSheetPdfRenderer.render(asset, assignment);
     }
 
     private Asset findForUpdate(String assetCode) {

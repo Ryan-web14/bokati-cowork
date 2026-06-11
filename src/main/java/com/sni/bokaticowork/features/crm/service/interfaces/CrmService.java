@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.crm.service.interfaces;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.crm.dto.CrmDtos.*;
+import com.sni.bokaticowork.features.crm.enums.LeadInterest;
 import com.sni.bokaticowork.features.crm.enums.LeadSource;
 import com.sni.bokaticowork.features.crm.enums.LeadStage;
 import com.sni.bokaticowork.features.crm.enums.OpportunityStage;
@@ -22,6 +23,7 @@ public interface CrmService {
     LeadResponse updateStage(Long id, UpdateLeadStageRequest request);
     LeadResponse convert(Long id, ConvertLeadRequest request);
     LeadResponse addActivity(Long id, AddLeadActivityRequest request);
+    KanbanBoardResponse getBoard(Long assignedTo, LeadSource source, LeadInterest interest, String searchText);
     PipelineResponse pipeline();
     CrmMetricsResponse metrics();
     CrmAnalyticsResponse analytics(Instant from, Instant to);

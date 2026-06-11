@@ -12,6 +12,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +28,7 @@ public class JWTService {
     private static final String TOKEN_TYPE_ACCESS = "access";
     private static final String TOKEN_TYPE_REFRESH = "refresh";
     private static final String TOKEN_TYPE_VERIFICATION = "verification";
+    private static final int MIN_HMAC_KEY_BYTES = 32;
 
     @Value("${app.security.jwt.secret:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}")
     private String secret;
@@ -194,6 +197,21 @@ public class JWTService {
     }
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = secret == null ? new byte[0] : secret.trim().getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length >= MIN_HMAC_KEY_BYTES) {
+            return Keys.hmacShaKeyFor(keyBytes);
+        }
+        if (keyBytes.length == 0) {
+            throw new IllegalStateException("JWT secret must not be empty");
+        }
+        return Keys.hmacShaKeyFor(sha256(keyBytes));
+    }
+
+    private byte[] sha256(byte[] value) {
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(value);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 algorithm is not available", ex);
+        }
     }
 }

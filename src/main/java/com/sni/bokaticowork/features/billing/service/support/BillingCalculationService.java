@@ -55,9 +55,22 @@ public class BillingCalculationService {
             totalBeforeDocumentDiscount = totalBeforeDocumentDiscount.add(line.getTotalAmount());
         }
 
-        BigDecimal documentDiscount = calculateDocumentDiscounts(totalBeforeDocumentDiscount, discounts);
+        // La remise globale s'applique sur le HT net (= base taxable avant remise globale),
+        // pas sur le TTC — le montant taxé est le HT après remise.
+        BigDecimal netHT = taxable; // somme des (subtotal - remise ligne) par ligne
+        BigDecimal documentDiscount = calculateDocumentDiscounts(netHT, discounts);
+        BigDecimal adjustedTaxable = money(netHT.subtract(documentDiscount));
         BigDecimal discountAmount = money(lineDiscount.add(documentDiscount));
-        BigDecimal total = money(totalBeforeDocumentDiscount.subtract(documentDiscount));
+
+        // Réduction proportionnelle des taxes sur la base ajustée
+        BigDecimal scaleFactor = netHT.compareTo(BigDecimal.ZERO) > 0
+                ? adjustedTaxable.divide(netHT, 8, RoundingMode.HALF_UP)
+                : BigDecimal.ONE;
+        BigDecimal adjustedVat = money(vat.multiply(scaleFactor));
+        BigDecimal adjustedAdditionalCent = money(additionalCent.multiply(scaleFactor));
+        BigDecimal adjustedTax = money(adjustedVat.add(adjustedAdditionalCent));
+        BigDecimal total = money(adjustedTaxable.add(adjustedTax));
+
         if (total.signum() < 0) {
             throw new BadRequestException("Billing document total cannot be negative");
         }
@@ -65,10 +78,10 @@ public class BillingCalculationService {
                 calculatedLines,
                 money(subtotal),
                 discountAmount,
-                money(taxable),
-                money(vat),
-                money(additionalCent),
-                money(tax),
+                adjustedTaxable,
+                adjustedVat,
+                adjustedAdditionalCent,
+                adjustedTax,
                 total
         );
     }
@@ -78,18 +91,13 @@ public class BillingCalculationService {
                                               BillingTaxRuleResolver.TaxProfile taxProfile) {
         BigDecimal quantity = positiveOrDefault(request.quantity(), BigDecimal.ONE, "Line quantity must be positive");
         BigDecimal unitPrice = positiveOrDefault(request.unitPrice(), BigDecimal.ZERO, "Line unit price cannot be negative");
-        BigDecimal subtotal = money(quantity.multiply(unitPrice));
-        BigDecimal rateDiscount = percentage(subtotal, request.discountRate());
-        BigDecimal fixedDiscount = positiveOrDefault(request.discountAmount(), BigDecimal.ZERO, "Line discount cannot be negative");
-        BigDecimal discount = money(rateDiscount.add(fixedDiscount).min(subtotal));
         boolean taxable = request.taxable() == null || request.taxable();
+        boolean taxIncluded = taxable && Boolean.TRUE.equals(request.taxIncluded());
         BigDecimal vatRate = request.vatRate() == null ? taxProfile.vatRate() : request.vatRate();
         BigDecimal additionalCentRate = request.additionalCentRate() == null ? taxProfile.additionalCentRate() : request.additionalCentRate();
-        BigDecimal taxableAmount = taxable ? money(subtotal.subtract(discount)) : BigDecimal.ZERO;
-        BigDecimal vatAmount = taxable ? percentage(taxableAmount, vatRate) : BigDecimal.ZERO;
-        BigDecimal additionalCentAmount = taxable ? percentage(vatAmount, additionalCentRate) : BigDecimal.ZERO;
-        BigDecimal taxAmount = money(vatAmount.add(additionalCentAmount));
-        BigDecimal total = money(subtotal.subtract(discount).add(taxAmount));
+        LineAmounts amounts = taxIncluded
+                ? calculateTaxIncludedAmounts(quantity, unitPrice, request.discountRate(), request.discountAmount(), vatRate, additionalCentRate)
+                : calculateTaxExcludedAmounts(quantity, unitPrice, request.discountRate(), request.discountAmount(), taxable, vatRate, additionalCentRate);
 
         return BillingDocumentLine.builder()
                 .lineOrder(request.lineOrder() == null ? defaultOrder : request.lineOrder())
@@ -101,22 +109,68 @@ public class BillingCalculationService {
                 .unit(trim(request.unit()))
                 .unitPrice(money(unitPrice))
                 .discountRate(request.discountRate() == null ? BigDecimal.ZERO : money(request.discountRate()))
-                .discountAmount(discount)
+                .discountAmount(amounts.discountAmount())
                 .taxable(taxable)
+                .taxIncluded(taxIncluded)
                 .vatRate(taxable ? money(vatRate) : BigDecimal.ZERO)
                 .additionalCentRate(taxable ? money(additionalCentRate) : BigDecimal.ZERO)
-                .subtotalAmount(subtotal)
-                .taxableAmount(taxableAmount)
-                .vatAmount(vatAmount)
-                .additionalCentAmount(additionalCentAmount)
-                .taxAmount(taxAmount)
-                .totalAmount(total)
+                .subtotalAmount(amounts.subtotalAmount())
+                .taxableAmount(amounts.taxableAmount())
+                .vatAmount(amounts.vatAmount())
+                .additionalCentAmount(amounts.additionalCentAmount())
+                .taxAmount(amounts.taxAmount())
+                .totalAmount(amounts.totalAmount())
                 .sourceType(trim(request.sourceType()))
                 .sourceCode(trim(request.sourceCode()))
                 .externalReference(trim(request.externalReference()))
                 .notes(trim(request.notes()))
                 .optional(Boolean.TRUE.equals(request.optional()))
                 .build();
+    }
+
+    private LineAmounts calculateTaxExcludedAmounts(BigDecimal quantity,
+                                                    BigDecimal unitPrice,
+                                                    BigDecimal discountRate,
+                                                    BigDecimal discountAmount,
+                                                    boolean taxable,
+                                                    BigDecimal vatRate,
+                                                    BigDecimal additionalCentRate) {
+        BigDecimal subtotal = money(quantity.multiply(unitPrice));
+        BigDecimal rateDiscount = percentage(subtotal, discountRate);
+        BigDecimal fixedDiscount = positiveOrDefault(discountAmount, BigDecimal.ZERO, "Line discount cannot be negative");
+        BigDecimal discount = money(rateDiscount.add(fixedDiscount).min(subtotal));
+        BigDecimal taxableAmount = taxable ? money(subtotal.subtract(discount)) : BigDecimal.ZERO;
+        BigDecimal vatAmount = taxable ? percentage(taxableAmount, vatRate) : BigDecimal.ZERO;
+        BigDecimal additionalCentAmount = taxable ? percentage(vatAmount, additionalCentRate) : BigDecimal.ZERO;
+        BigDecimal taxAmount = money(vatAmount.add(additionalCentAmount));
+        BigDecimal total = money(subtotal.subtract(discount).add(taxAmount));
+        return new LineAmounts(subtotal, discount, taxableAmount, vatAmount, additionalCentAmount, taxAmount, total);
+    }
+
+    private LineAmounts calculateTaxIncludedAmounts(BigDecimal quantity,
+                                                    BigDecimal unitPrice,
+                                                    BigDecimal discountRate,
+                                                    BigDecimal discountAmount,
+                                                    BigDecimal vatRate,
+                                                    BigDecimal additionalCentRate) {
+        BigDecimal grossSubtotal = money(quantity.multiply(unitPrice));
+        BigDecimal grossRateDiscount = percentage(grossSubtotal, discountRate);
+        BigDecimal grossFixedDiscount = positiveOrDefault(discountAmount, BigDecimal.ZERO, "Line discount cannot be negative");
+        BigDecimal grossDiscount = money(grossRateDiscount.add(grossFixedDiscount).min(grossSubtotal));
+        BigDecimal grossTotal = money(grossSubtotal.subtract(grossDiscount));
+        BigDecimal factor = taxFactor(vatRate, additionalCentRate);
+
+        BigDecimal subtotal = money(grossSubtotal.divide(factor, 8, RoundingMode.HALF_UP));
+        BigDecimal taxableAmount = money(grossTotal.divide(factor, 8, RoundingMode.HALF_UP));
+        BigDecimal discount = money(subtotal.subtract(taxableAmount));
+        BigDecimal taxAmount = money(grossTotal.subtract(taxableAmount));
+        BigDecimal vatAmount = percentage(taxableAmount, vatRate);
+        BigDecimal additionalCentAmount = money(taxAmount.subtract(vatAmount));
+        if (additionalCentAmount.signum() < 0) {
+            vatAmount = taxAmount;
+            additionalCentAmount = BigDecimal.ZERO;
+        }
+        return new LineAmounts(subtotal, discount, taxableAmount, vatAmount, additionalCentAmount, taxAmount, grossTotal);
     }
 
     private BigDecimal calculateDocumentDiscounts(BigDecimal base, List<CreateBillingDocumentDiscountRequest> discounts) {
@@ -145,6 +199,22 @@ public class BillingCalculationService {
         return money(amount.multiply(rate).divide(HUNDRED, 4, RoundingMode.HALF_UP));
     }
 
+    private BigDecimal taxFactor(BigDecimal vatRate, BigDecimal additionalCentRate) {
+        BigDecimal vatFactor = rateFactor(vatRate);
+        BigDecimal additionalCentFactor = rateFactor(additionalCentRate);
+        return BigDecimal.ONE.add(vatFactor).add(vatFactor.multiply(additionalCentFactor));
+    }
+
+    private BigDecimal rateFactor(BigDecimal rate) {
+        if (rate == null || rate.signum() == 0) {
+            return BigDecimal.ZERO;
+        }
+        if (rate.signum() < 0) {
+            throw new BadRequestException("Percentage rate cannot be negative");
+        }
+        return rate.divide(HUNDRED, 8, RoundingMode.HALF_UP);
+    }
+
     private BigDecimal positiveOrDefault(BigDecimal value, BigDecimal defaultValue, String error) {
         BigDecimal candidate = value == null ? defaultValue : value;
         if (candidate.signum() < 0) {
@@ -169,5 +239,14 @@ public class BillingCalculationService {
                                      BigDecimal additionalCentAmount,
                                      BigDecimal taxAmount,
                                      BigDecimal totalAmount) {
+    }
+
+    private record LineAmounts(BigDecimal subtotalAmount,
+                               BigDecimal discountAmount,
+                               BigDecimal taxableAmount,
+                               BigDecimal vatAmount,
+                               BigDecimal additionalCentAmount,
+                               BigDecimal taxAmount,
+                               BigDecimal totalAmount) {
     }
 }

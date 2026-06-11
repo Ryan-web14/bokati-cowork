@@ -22,7 +22,11 @@ import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(ApiPath.V1 + "/reports/finance")
+@RequestMapping({
+        ApiPath.V1 + "/reports/finance",
+        ApiPath.V1 + "/reporting",
+        ApiPath.V1 + "/reporting/finance"
+})
 public class FinancialReportController {
 
     private final FinancialReportService service;
@@ -35,8 +39,10 @@ public class FinancialReportController {
     @GetMapping("/dashboard")
     public ResponseEntity<FinancialDashboardResponse> dashboard(
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        return ResponseEntity.ok(service.dashboard(parseDate(from), parseDate(to)));
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        return ResponseEntity.ok(service.dashboard(resolveDate(fromDate, from), resolveDate(toDate, to)));
     }
 
     /**
@@ -46,8 +52,10 @@ public class FinancialReportController {
     @GetMapping("/payments")
     public ResponseEntity<PaymentSourceReportResponse> payments(
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        return ResponseEntity.ok(service.paymentSources(parseDate(from), parseDate(to)));
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        return ResponseEntity.ok(service.paymentSources(resolveDate(fromDate, from), resolveDate(toDate, to)));
     }
 
     /**
@@ -66,8 +74,10 @@ public class FinancialReportController {
     @GetMapping("/cash-registers")
     public ResponseEntity<CashRegisterReportResponse> cashRegisters(
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        return ResponseEntity.ok(service.cashRegisters(parseDate(from), parseDate(to)));
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        return ResponseEntity.ok(service.cashRegisters(resolveDate(fromDate, from), resolveDate(toDate, to)));
     }
 
     /**
@@ -77,15 +87,19 @@ public class FinancialReportController {
     @GetMapping("/cash-flow")
     public ResponseEntity<CashFlowReportResponse> cashFlow(
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        return ResponseEntity.ok(service.cashFlow(parseDate(from), parseDate(to)));
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        return ResponseEntity.ok(service.cashFlow(resolveDate(fromDate, from), resolveDate(toDate, to)));
     }
 
     @GetMapping("/dashboard/pdf")
     public ResponseEntity<byte[]> dashboardPdf(
             @RequestParam(required = false) String from,
-            @RequestParam(required = false) String to) {
-        byte[] pdf = reportPdfService.financialDashboardPdf(parseDate(from), parseDate(to));
+            @RequestParam(required = false) String to,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate) {
+        byte[] pdf = reportPdfService.financialDashboardPdf(resolveDate(fromDate, from), resolveDate(toDate, to));
         return pdfResponse(pdf, "rapport-financier.pdf");
     }
 
@@ -94,6 +108,10 @@ public class FinancialReportController {
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDisposition(ContentDisposition.attachment().filename(filename).build());
         return ResponseEntity.ok().headers(headers).body(pdf);
+    }
+
+    private LocalDate resolveDate(String preferred, String fallback) {
+        return parseDate(preferred == null || preferred.isBlank() ? fallback : preferred);
     }
 
     private LocalDate parseDate(String value) {

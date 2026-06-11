@@ -171,7 +171,7 @@ app:
         window-seconds: ${RATE_LIMIT_ADMIN_WINDOW_SECONDS:60}
 
     jwt:
-      secret: ${APP_JWT_SECRET:K8sL2vQ9xM4pZ7tN1cR6aB3eY5uH0jD}
+      secret: ${APP_JWT_SECRET:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}
       access-token-expiration-ms: ${APP_JWT_ACCESS_EXPIRATION_MS:900000}
       refresh-token-expiration-ms: ${APP_JWT_REFRESH_EXPIRATION_MS:604800000}
       verification-token-expiration-ms: ${APP_JWT_VERIFICATION_EXPIRATION_MS:900000}

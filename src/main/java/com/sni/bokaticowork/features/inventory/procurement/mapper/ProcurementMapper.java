@@ -89,16 +89,17 @@ public class ProcurementMapper {
     }
 
     private ProcurementLineResponse toPurchaseRequestLineResponse(PurchaseRequestLine line) {
-
-        var decimalValue = line.getQuantity().multiply(BigDecimal.valueOf(line.getEstimatedUnitCost()));
-        var totalValue = decimalValue.longValue();
+        Long cost = line.getEstimatedUnitCost();
+        Long totalCost = cost != null
+                ? line.getQuantity().multiply(BigDecimal.valueOf(cost)).longValue()
+                : null;
 
         return ProcurementLineResponse.builder()
                 .itemCode(line.getItem().getItemCode())
                 .itemName(line.getItem().getName())
                 .quantity(line.getQuantity())
-                .unitCost(line.getEstimatedUnitCost())
-                .totalCost(totalValue)
+                .unitCost(cost)
+                .totalCost(totalCost)
                 .build();
     }
 

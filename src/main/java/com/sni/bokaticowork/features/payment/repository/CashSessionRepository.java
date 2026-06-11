@@ -14,6 +14,20 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
     @Query(nativeQuery = true, value = "SELECT * FROM cash_session WHERE session_number = :sessionNumber")
     Optional<CashSession> findBySessionNumber(@Param("sessionNumber") String sessionNumber);
 
+    java.util.List<CashSession> findByOpenedByOrderByOpenedAtDesc(String openedBy);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM cash_session
+            WHERE cash_register_id = :cashRegisterId
+              AND (CAST(:fromDate AS TIMESTAMPTZ) IS NULL OR opened_at >= CAST(:fromDate AS TIMESTAMPTZ))
+              AND (CAST(:toDate AS TIMESTAMPTZ) IS NULL OR opened_at <= CAST(:toDate AS TIMESTAMPTZ))
+            ORDER BY opened_at DESC
+            """)
+    java.util.List<CashSession> findByRegisterAndPeriod(@Param("cashRegisterId") Long cashRegisterId,
+                                                         @Param("fromDate") java.time.Instant fromDate,
+                                                         @Param("toDate") java.time.Instant toDate);
+
     @Query(nativeQuery = true, value = "SELECT * FROM cash_session WHERE session_number = :sessionNumber")
     Optional<CashSession> findBySessionNumberForUpdate(@Param("sessionNumber") String sessionNumber);
 

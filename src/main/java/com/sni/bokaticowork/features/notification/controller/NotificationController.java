@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -61,6 +62,23 @@ public class NotificationController {
                                                                   @RequestParam(required = false) String search,
                                                                   Pageable pageable) {
         return ResponseEntity.ok(notificationService.list(status, channel, eventType, recipientEmail, search, pageable));
+    }
+
+    @GetMapping("/unread")
+    public ResponseEntity<List<NotificationMessageResponse>> unread(Authentication authentication,
+                                                                    @RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(notificationService.listUnread(authentication.getName(), Math.min(limit, 50)));
+    }
+
+    @PatchMapping("/{notificationNumber}/read")
+    public ResponseEntity<NotificationMessageResponse> markAsRead(@PathVariable String notificationNumber) {
+        return ResponseEntity.ok(notificationService.markAsRead(notificationNumber));
+    }
+
+    @PatchMapping("/mark-all-read")
+    public ResponseEntity<Map<String, Integer>> markAllRead(Authentication authentication) {
+        int updated = notificationService.markAllRead(authentication.getName());
+        return ResponseEntity.ok(Map.of("updated", updated));
     }
 
     @PatchMapping("/{notificationNumber}/retry")

@@ -56,6 +56,9 @@ public class BookingIdentityResolver {
         if (StringUtils.hasText(customerId)) {
             Customer customer = customerRepository.findByCustomerId(customerId)
                     .orElseThrow(() -> new ResourceNotFoundException("Customer " + customerId + " not found"));
+            if (customer.isDeleted()) {
+                throw new BadRequestException("Le client " + customerId + " est supprimé et ne peut pas effectuer de nouvelles réservations");
+            }
             return fromCustomer(customer, safeLookup, false);
         }
         if (StringUtils.hasText(businessCode)) {

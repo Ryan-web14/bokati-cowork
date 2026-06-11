@@ -1,12 +1,18 @@
 package com.sni.bokaticowork.features.document.documentMaster.repository;
 
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentReviewStatus;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentReview;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface DocumentReviewRepository extends JpaRepository<DocumentReview, Long> {
 
     List<DocumentReview> findAllByDocumentOrderByReviewedAtDesc(Document document);
+
+    List<DocumentReview> findAllByReviewStatusAndReviewedAtAfter(DocumentReviewStatus status, Instant after);
+
+    List<DocumentReview> findAllByReviewStatusInAndReviewedAtAfter(List<DocumentReviewStatus> statuses, Instant after);
 }

@@ -54,6 +54,15 @@ public class BillableItem {
     @Column(name = "subscriber_code", nullable = false, length = 120)
     private String subscriberCode;
 
+    @Column(name = "subscriber_name", length = 200)
+    private String subscriberName;
+
+    @Column(name = "subscriber_email", length = 200)
+    private String subscriberEmail;
+
+    @Column(name = "subscriber_phone", length = 60)
+    private String subscriberPhone;
+
     @Column(name = "description", nullable = false, columnDefinition = "text")
     private String description;
 
