@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.notification.service.implementation;
 
+import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.notification.dto.request.NotificationTemplateRequest;
 import com.sni.bokaticowork.features.notification.dto.request.PublishNotificationEventRequest;
@@ -23,8 +24,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -84,11 +87,23 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional(readOnly = true)
     public List<NotificationMessageResponse> listUnread(String recipientEmail, int limit) {
-        return messageRepository.findByRecipientEmailAndStatusOrderBySentAtDesc(
+        return messageRepository.findByRecipientEmailAndReadAtIsNullAndStatusInOrderBySentAtDesc(
                 normalizeEmail(recipientEmail),
-                NotificationDeliveryStatus.SENT,
+                Set.of(NotificationDeliveryStatus.SENT, NotificationDeliveryStatus.DELIVERED),
                 Pageable.ofSize(limit)
         ).stream().map(mapper::toResponse).toList();
+    }
+
+    @Override
+    public NotificationMessageResponse markAsRead(String notificationNumber) {
+        messageRepository.markOneAsRead(notificationNumber, Instant.now());
+        return mapper.toResponse(messageRepository.findByNotificationNumber(notificationNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification introuvable : " + notificationNumber)));
+    }
+
+    @Override
+    public int markAllRead(String recipientEmail) {
+        return messageRepository.markAllAsRead(normalizeEmail(recipientEmail), Instant.now());
     }
 
     @Override

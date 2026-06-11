@@ -44,6 +44,17 @@ public interface WalletHoldRepository extends JpaRepository<WalletHold, Long> {
     List<WalletHold> findAllByStatusAndExpiresAtLessThanEqual(@Param("status") String status,
                                                               @Param("expiresAt") Instant expiresAt);
 
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM wallet_hold
+            WHERE status = CAST(:status AS VARCHAR)
+              AND source_type = CAST(:sourceType AS VARCHAR)
+              AND source_code = CAST(:sourceCode AS VARCHAR)
+            """)
+    List<WalletHold> findAllByStatusAndSourceTypeAndSourceCode(@Param("status") String status,
+                                                               @Param("sourceType") String sourceType,
+                                                               @Param("sourceCode") String sourceCode);
+
     @Modifying
     @Query(nativeQuery = true, value = """
             UPDATE wallet_hold

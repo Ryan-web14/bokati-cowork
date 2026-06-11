@@ -40,4 +40,6 @@ public interface AssetService {
     AssetResponse retire(String assetCode);
 
     List<AssetLocationHistoryResponse> locationHistory(String assetCode);
+
+    byte[] loanSheetPdf(String assetCode, Long assignmentId);
 }

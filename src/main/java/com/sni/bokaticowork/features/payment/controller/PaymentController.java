@@ -131,6 +131,11 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.refund(transactionNumber, request));
     }
 
+    @GetMapping("/transactions/{transactionNumber}/refunds")
+    public ResponseEntity<List<PaymentTransactionResponse>> listRefunds(@PathVariable String transactionNumber) {
+        return ResponseEntity.ok(paymentService.listRefunds(transactionNumber));
+    }
+
     @PostMapping("/transactions/{transactionNumber}/reverse")
     public ResponseEntity<PaymentTransactionResponse> reverse(@PathVariable String transactionNumber,
                                                               @Valid @RequestBody RefundPaymentRequest request) {

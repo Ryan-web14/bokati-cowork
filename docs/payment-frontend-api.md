@@ -1,4 +1,4 @@
-# Guide Frontend/API - Payment et Cash Register
+ces nouvelle # Guide Frontend/API - Payment et Cash Register
 
 Base API: `/sni/api/v1`
 
@@ -613,6 +613,87 @@ Comportement backend:
 - le module conserve la piece de caisse, la categorie de flux et le tiers concerne
 - ces flux sont integres automatiquement au resume de session et a la cloture
 
+### Lister les bons d'une session
+
+```http
+GET /cash-registers/sessions/{sessionNumber}/entry-vouchers
+GET /cash-registers/sessions/{sessionNumber}/exit-vouchers
+```
+
+Ces routes retournent une page de `CashMovementResponse` filtree automatiquement sur:
+
+- `entry-vouchers`: `documentType = ENTRY_VOUCHER`
+- `exit-vouchers`: `documentType = EXIT_VOUCHER`
+- `sessionNumber`: pris dans le chemin
+
+Filtres optionnels disponibles (identiques a `GET /cash-registers/movements`, sans `registerCode`/`movementType`/`documentType` qui sont deja fixes par la route):
+
+- `documentNumber`
+- `flowCategory`
+- `referenceType`
+- `referenceCode`
+- `counterpartyCode`
+- `counterpartyName`
+- `createdBy`
+- `fromDate`
+- `toDate`
+- `searchText`
+- `page`
+- `size`
+
+Exemple:
+
+```http
+GET /cash-registers/sessions/CSS-202604-000001/exit-vouchers?flowCategory=SUPPLIER_PAYMENT&page=0&size=20
+```
+
+Reponse cible (extrait, structure `PaginatedResponse<CashMovementResponse>`):
+
+```json
+{
+  "content": [
+    {
+      "movementNumber": "CMV-202604-000045",
+      "sessionNumber": "CSS-202604-000001",
+      "registerCode": "CR-HQ-01",
+      "movementType": "CASH_OUT",
+      "flowDirection": "OUT",
+      "amount": 12000,
+      "currency": "XAF",
+      "documentType": "EXIT_VOUCHER",
+      "documentNumber": "BS-202604-000001",
+      "flowCategory": "SUPPLIER_PAYMENT",
+      "referenceType": "SUPPLIER_INVOICE",
+      "referenceCode": "INV-SUP-001",
+      "counterpartyType": "SUPPLIER",
+      "counterpartyCode": "SUP-001",
+      "counterpartyName": "Fournisseur ABC",
+      "reason": "Paiement fournisseur",
+      "createdBy": "cashier-1",
+      "status": "RECORDED",
+      "createdAt": "2026-04-26T09:12:00Z"
+    }
+  ],
+  "page": { "number": 0, "size": 20, "totalElements": 1, "totalPages": 1 }
+}
+```
+
+Le tri est impose par le backend (du plus recent au plus ancien); un `sort` envoye par le frontend est ignore pour ces routes.
+
+### Detail d'un mouvement / bon
+
+```http
+GET /cash-registers/movements/{movementNumber}
+```
+
+Retourne le `CashMovementResponse` complet (montant, document, tiers, justificatif, signature, impression, pieces jointes `attachments`, etc.) pour un mouvement donne, qu'il s'agisse d'un bon d'entree, d'un bon de sortie ou de tout autre type de mouvement de caisse. Renvoie `404 RESOURCE_NOT_FOUND` si `movementNumber` est inconnu.
+
+Exemple:
+
+```http
+GET /cash-registers/movements/CMV-202604-000045
+```
+
 ### Lister les mouvements
 
 ```http
@@ -681,6 +762,60 @@ PATCH /cash-registers/sessions/{sessionNumber}/approve-variance
 ```
 
 La session passe en `CLOSED`.
+
+## Anomalies de caisse
+
+Le backend analyse automatiquement les sessions de caisse et signale les mouvements suspects (`CashAnomalyFlag`).
+
+### Lancer une analyse
+
+```http
+POST /cash-registers/anomalies/sessions/{sessionNumber}/analyze
+```
+
+Recalcule et retourne la liste des anomalies detectees pour la session (`List<CashAnomalyFlagResponse>`).
+
+### Lister les anomalies
+
+```http
+GET /cash-registers/anomalies
+```
+
+Filtres:
+
+- `registerCode`
+- `sessionNumber`
+- `severity` (`LOW`, `MEDIUM`, `HIGH`)
+- `status` (`OPEN`, `ACKNOWLEDGED`, `DISMISSED`, `ESCALATED`, `RESOLVED`)
+- `anomalyType` (`VARIANCE_OUTLIER`, `ROUND_NUMBER_PATTERN`, `EXCESSIVE_REFUNDS`, `EXCESSIVE_ADJUSTMENTS`, `OFF_HOURS_SESSION`, `THRESHOLD_STRUCTURING`, `NEAR_MAX_CASH_RECURRENCE`)
+- `page`, `size`
+
+Retourne une `PaginatedResponse<CashAnomalyFlagResponse>`, triee par `detectedAt` decroissant.
+
+### Detail d'une anomalie
+
+Le detail complet (incluant `description`, `score`, `reviewedBy`, `reviewedAt`, `reviewNote`) est porte par chaque element de `CashAnomalyFlagResponse` retourne par la liste — il n'y a pas d'endpoint `GET /{flagNumber}` dedie.
+
+### Examiner / cloturer une anomalie
+
+```http
+PATCH /cash-registers/anomalies/{flagNumber}/review
+```
+
+```json
+{
+  "reviewedBy": "manager-001",
+  "status": "RESOLVED",
+  "note": "Ecart explique par un retrait non enregistre, corrige sur la session"
+}
+```
+
+- `status` doit etre l'une des valeurs de `CashAnomalyStatus` ci-dessus (a l'exclusion de `OPEN`, qui est l'etat initial pose par l'analyse automatique).
+- `DISMISSED`: l'anomalie est un faux positif, aucune action requise.
+- `RESOLVED`: l'anomalie etait reelle et a ete corrigee/expliquee.
+- `ESCALATED`: transmise a un niveau superieur pour traitement.
+- `ACKNOWLEDGED`: prise en compte, en attente d'investigation.
+- Le backend rejette (400) la revue d'un flag dont le statut n'est plus `OPEN` ni `ACKNOWLEDGED` (deja `DISMISSED`, `ESCALATED` ou `RESOLVED`) avec le message `Anomaly flag {flagNumber} has already been resolved`.
 
 ## Workflows frontend
 

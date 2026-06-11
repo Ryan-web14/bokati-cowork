@@ -37,6 +37,7 @@ public interface PaymentService {
     PaymentTransactionResponse reverse(String transactionNumber, RefundPaymentRequest request);
     PaymentIntentResponse getIntent(String intentNumber);
     List<PaymentTransactionResponse> listIntentTransactions(String intentNumber);
+    List<PaymentTransactionResponse> listRefunds(String transactionNumber);
     PaginatedResponse<PaymentIntentResponse> listIntents(PaymentIntentStatus status, String customerType, String customerCode, String sourceType, String sourceCode, String searchText, Pageable pageable);
     String retryMobileMoneyDeposit(String intentNumber, String phoneNumber, String providerCode);
 }

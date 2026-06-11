@@ -42,6 +42,9 @@ public class Supplier {
     @Column(name = "status", nullable = false, length = 40)
     private SupplierStatus status;
 
+    @Column(name = "average_lead_time_days")
+    private Integer averageLeadTimeDays;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

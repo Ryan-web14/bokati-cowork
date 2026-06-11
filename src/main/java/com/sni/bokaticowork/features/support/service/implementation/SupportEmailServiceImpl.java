@@ -41,6 +41,9 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
     @Value("${bokati.support.manager-email:supportela@elleaose.com}")
     private String managerEmail;
 
+    @Value("${bokati.support.admin-email:supportela@elleaose.com}")
+    private String adminEmail;
+
     @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
 
@@ -129,6 +132,25 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("breachType", breachType);
         send(managerEmail,
                 "[ALERTE SLA] " + breachType + " — " + ticket.getTicketNumber(),
+                render(ctx), ticket.getTicketNumber());
+    }
+
+    @Override
+    @Async
+    public void sendEscalationAlert(SupportTicket ticket, int level, String reason) {
+        String recipient = switch (level) {
+            case 1 -> {
+                String agentEmail = resolveAgentEmail(ticket.getAssignedTo());
+                yield StringUtils.hasText(agentEmail) ? agentEmail : managerEmail;
+            }
+            case 2 -> managerEmail;
+            default -> adminEmail;
+        };
+        Context ctx = base(ticket, "SLA_ESCALATION");
+        ctx.setVariable("escalationLevel", level);
+        ctx.setVariable("escalationReason", reason);
+        send(recipient,
+                "[Escalade niveau " + level + "] " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
 

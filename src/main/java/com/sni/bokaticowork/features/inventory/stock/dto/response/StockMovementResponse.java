@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.inventory.stock.dto.response;
 
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockOutReasonCode;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import lombok.Builder;
 import lombok.Data;
@@ -34,6 +35,8 @@ public class StockMovementResponse {
     private StockReferenceType referenceType;
 
     private String referenceCode;
+
+    private StockOutReasonCode reasonCode;
 
     private String reason;
 

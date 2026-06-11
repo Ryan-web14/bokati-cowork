@@ -16,6 +16,7 @@ import com.sni.bokaticowork.features.inventory.control.model.InventoryCountItem;
 import com.sni.bokaticowork.features.inventory.control.repository.InventoryCountItemRepository;
 import com.sni.bokaticowork.features.inventory.control.repository.InventoryCountRepository;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockAdjustmentRequest;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockOutReasonCode;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.model.InventoryLocation;
 import com.sni.bokaticowork.features.inventory.stock.model.StockLevel;
@@ -130,7 +131,8 @@ public class InventoryCountServiceImpl implements InventoryCountService {
             adjustment.setQuantityDelta(item.getVarianceQuantity());
             adjustment.setReferenceType(StockReferenceType.INVENTORY_COUNT);
             adjustment.setReferenceCode(count.getCountCode());
-            adjustment.setReason("Inventory count variance validation");
+            adjustment.setReasonCode(StockOutReasonCode.CONSUMPTION);
+            adjustment.setReasonDetails("Inventory count variance validation");
             adjustment.setAllowNegativeOverride(true);
             adjustment.setPerformedBy(performedBy);
             stockService.adjust(adjustment);

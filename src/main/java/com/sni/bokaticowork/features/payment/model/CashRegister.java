@@ -42,6 +42,12 @@ public class CashRegister {
     @Column(name = "max_cash_amount", precision = 19, scale = 4)
     private java.math.BigDecimal maxCashAmount;
 
+    @Column(name = "manager_email", length = 180)
+    private String managerEmail;
+
+    @Column(name = "last_anomaly_alert_sent_at")
+    private Instant lastAnomalyAlertSentAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

@@ -16,14 +16,18 @@ import com.sni.bokaticowork.features.document.documentMaster.dto.request.Documen
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFileResult;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse;
+import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentCorrectionRequest;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.*;
 import com.sni.bokaticowork.features.document.documentMaster.mapper.interfaces.DocumentMapper;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentReview;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentVersion;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentMetadataRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentReviewRepository;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentTagAssignmentRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentTypeRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentVersionRepository;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService;
@@ -48,10 +52,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +71,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentVersionRepository documentVersionRepository;
     private final DocumentTypeRepository documentTypeRepository;
     private final DocumentReviewRepository documentReviewRepository;
+    private final DocumentTagAssignmentRepository tagAssignmentRepository;
+    private final DocumentMetadataRepository metadataRepository;
     private final KycCaseRepository kycCaseRepository;
     private final KycDocumentRepository kycDocumentRepository;
     private final CustomerService customerService;
@@ -89,6 +97,7 @@ public class DocumentServiceImpl implements DocumentService {
 
         applyDefaultExpiryDate(metadata, documentType);
         validateDocumentMetadata(metadata, documentType, file.getSize());
+        enforceMultipleAllowed(documentType, owner);
         List<String> allowedMimeTypes = parseAllowedMimeTypes(documentType.getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
 
@@ -104,6 +113,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .issueDate(metadata.getIssueDate())
                 .expiryDate(metadata.getExpiryDate())
                 .uploadedBy(uploadedBy)
+                .space(deriveSpace(owner.ownerType(), documentType.getCategory()))
                 .build();
 
         documentRepository.save(document);
@@ -142,6 +152,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .issueDate(metadata.getIssueDate())
                 .expiryDate(metadata.getExpiryDate())
                 .uploadedBy(uploadedBy)
+                .space(deriveSpace(owner.ownerType(), documentType.getCategory()))
                 .build();
 
         documentRepository.save(document);
@@ -211,6 +222,9 @@ public class DocumentServiceImpl implements DocumentService {
         syncKycDocumentStatus(document, KycDocumentVerificationStatus.VERIFIED);
         kycAutomationService.syncFromDocumentReview(document);
         publishDocumentEvent("DOCUMENT_APPROVED", document, request.getReviewedBy());
+        if (Boolean.TRUE.equals(document.getDocumentType().getRequiresSignature())) {
+            publishDocumentEvent("DOCUMENT_SIGNATURE_REQUIRED", document, request.getReviewedBy());
+        }
         return getByCode(documentCode);
     }
 
@@ -228,9 +242,106 @@ public class DocumentServiceImpl implements DocumentService {
         return getByCode(documentCode);
     }
 
+    @Override
+    public DocumentResponse requestCorrection(String documentCode, DocumentCorrectionRequest request) {
+        Document document = serviceDocument(documentCode);
+        assertReviewable(document);
+
+        Instant deadline = Instant.now().plus(
+                java.time.Duration.ofDays(request.getDeadlineDays() == null ? 7 : request.getDeadlineDays()));
+
+        document.setStatus(DocumentStatus.NEEDS_CORRECTION);
+        document.setCorrectionNote(request.getCorrectionNote().trim());
+        document.setCorrectionDeadline(deadline);
+        document.setCorrectionCount(document.getCorrectionCount() == null ? 1 : document.getCorrectionCount() + 1);
+        documentRepository.save(document);
+
+        DocumentReview review = DocumentReview.builder()
+                .document(document)
+                .versionNumber(document.getCurrentVersionNumber())
+                .reviewStatus(DocumentReviewStatus.NEEDS_CORRECTION)
+                .reviewedBy(request.getReviewedBy())
+                .reviewedAt(Instant.now())
+                .comment(trimToNull(request.getComment()))
+                .correctionNote(request.getCorrectionNote().trim())
+                .correctionDeadline(deadline)
+                .build();
+        documentReviewRepository.save(review);
+
+        syncKycDocumentStatus(document, KycDocumentVerificationStatus.PENDING);
+        publishDocumentEvent("DOCUMENT_CORRECTION_REQUESTED", document, request.getReviewedBy());
+        return getByCode(documentCode);
+    }
+
+    @Override
+    public DocumentResponse restoreVersion(String documentCode, Integer versionNumber) {
+        Document document = serviceDocument(documentCode);
+        DocumentVersion target = documentVersionRepository.findByDocumentAndVersionNumber(document, versionNumber)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Version " + versionNumber + " not found for document " + documentCode));
+
+        documentVersionRepository.findByDocumentAndCurrentTrue(document).ifPresent(current -> {
+            current.setCurrent(false);
+            documentVersionRepository.save(current);
+        });
+
+        int nextVersion = document.getCurrentVersionNumber() == null ? 1 : document.getCurrentVersionNumber() + 1;
+
+        DocumentVersion restored = DocumentVersion.builder()
+                .document(document)
+                .versionNumber(nextVersion)
+                .storageProvider(target.getStorageProvider())
+                .storagePath(target.getStoragePath())
+                .originalFileName(target.getOriginalFileName())
+                .storedFileName(target.getStoredFileName())
+                .mimeTypeDeclared(target.getMimeTypeDeclared())
+                .mimeTypeDetected(target.getMimeTypeDetected())
+                .fileExtension(target.getFileExtension())
+                .checksumSha256(target.getChecksumSha256())
+                .fileSizeBytes(target.getFileSizeBytes())
+                .uploadStatus(target.getUploadStatus())
+                .antivirusStatus(target.getAntivirusStatus())
+                .uploadedBy(currentUserId())
+                .current(true)
+                .build();
+        documentVersionRepository.save(restored);
+
+        document.setCurrentVersionNumber(nextVersion);
+        document.setFileName(restored.getOriginalFileName());
+        document.setFileUrl(restored.getStoragePath());
+        document.setFileSize(restored.getFileSizeBytes());
+        document.setMimeType(restored.getMimeTypeDetected());
+        document.setChecksumSha256(restored.getChecksumSha256());
+        document.setUpdatedAt(Instant.now());
+        documentRepository.save(document);
+
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("documentCode", document.getCode());
+        payload.put("restoredFromVersion", versionNumber);
+        payload.put("newVersion", nextVersion);
+        payload.put("actorId", currentUserId());
+        outboxService.publish("DOCUMENT_VERSION_RESTORED", "DOCUMENT", document.getCode(), payload);
+
+        return getByCode(documentCode);
+    }
+
+    @Override
+    public DocumentResponse archive(String documentCode, String reason) {
+        Document document = serviceDocument(documentCode);
+        if (document.getStatus() == DocumentStatus.ARCHIVED) {
+            throw new BadRequestException("Document is already archived");
+        }
+        document.setStatus(DocumentStatus.ARCHIVED);
+        documentRepository.save(document);
+        publishDocumentEvent("DOCUMENT_ARCHIVED", document, currentUserId());
+        return getByCode(documentCode);
+    }
+
     private void assertReviewable(Document document) {
         DocumentStatus status = document.getStatus();
-        if (status == DocumentStatus.PENDING_REVIEW || status == DocumentStatus.UPLOADED) {
+        if (status == DocumentStatus.PENDING_REVIEW
+                || status == DocumentStatus.UPLOADED
+                || status == DocumentStatus.NEEDS_CORRECTION) {
             return;
         }
         throw new BadRequestException(
@@ -394,6 +505,21 @@ public class DocumentServiceImpl implements DocumentService {
         documentReviewRepository.save(review);
     }
 
+    private void enforceMultipleAllowed(DocumentType documentType, OwnerResolution owner) {
+        if (Boolean.TRUE.equals(documentType.getMultipleAllowed())) {
+            return;
+        }
+        List<DocumentStatus> excluded = List.of(
+                DocumentStatus.REJECTED, DocumentStatus.ARCHIVED,
+                DocumentStatus.SUPERSEDED, DocumentStatus.EXPIRED);
+        long existing = documentRepository.countByOwnerTypeAndOwnerIdAndDocumentTypeAndStatusNotIn(
+                owner.ownerType(), owner.ownerId(), documentType, excluded);
+        if (existing > 0) {
+            throw new BadRequestException(
+                    "Only one document of type '" + documentType.getCode() + "' is allowed per owner");
+        }
+    }
+
     private void validateDocumentMetadata(DocumentUploadMetadataRequest metadata, DocumentType documentType, long fileSizeBytes) {
         if (documentType.getRequiresExpiryDate() && metadata.getExpiryDate() == null) {
             throw new BadRequestException("Expiry date is required for this document type");
@@ -442,9 +568,36 @@ public class DocumentServiceImpl implements DocumentService {
                 .toList()
                 : List.of();
 
+        List<DocumentTagResponse> tags = tagAssignmentRepository.findAllByDocument(document).stream()
+                .map(a -> {
+                    var t = a.getTag();
+                    return DocumentTagResponse.builder()
+                            .id(t.getId()).code(t.getCode()).label(t.getLabel())
+                            .color(t.getColor()).space(t.getSpace())
+                            .createdBy(t.getCreatedBy()).createdAt(t.getCreatedAt())
+                            .build();
+                })
+                .toList();
+
+        Map<String, String> metadata = new LinkedHashMap<>();
+        metadataRepository.findAllByDocument(document).forEach(m -> metadata.put(m.getMetaKey(), m.getMetaValue()));
+
         DocumentResponse response = mapper.toResponse(document);
         response.setVersions(versions);
+        response.setTags(tags);
+        response.setMetadata(metadata);
+        response.setSpace(document.getSpace());
+        response.setSpaceReferenceCode(document.getSpaceReferenceCode());
         return response;
+    }
+
+    private DocumentSpace deriveSpace(DocumentOwnerType ownerType, DocumentCategory category) {
+        if (category == DocumentCategory.KYC) return DocumentSpace.KYC_SPACE;
+        if (ownerType == DocumentOwnerType.CONTRACT) return DocumentSpace.CONTRACT_SPACE;
+        if (ownerType == DocumentOwnerType.INVOICE || ownerType == DocumentOwnerType.PAYMENT) return DocumentSpace.FINANCIAL_SPACE;
+        if (ownerType == DocumentOwnerType.ASSET) return DocumentSpace.ASSET_SPACE;
+        if (category == DocumentCategory.LEGAL || category == DocumentCategory.SYSTEM) return DocumentSpace.ADMINISTRATIVE;
+        return DocumentSpace.GENERIC;
     }
 
     private OwnerResolution resolveOwner(DocumentOwnerType ownerType, String ownerCode) {

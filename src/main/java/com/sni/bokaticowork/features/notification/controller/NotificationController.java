@@ -70,6 +70,17 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.listUnread(authentication.getName(), Math.min(limit, 50)));
     }
 
+    @PatchMapping("/{notificationNumber}/read")
+    public ResponseEntity<NotificationMessageResponse> markAsRead(@PathVariable String notificationNumber) {
+        return ResponseEntity.ok(notificationService.markAsRead(notificationNumber));
+    }
+
+    @PatchMapping("/mark-all-read")
+    public ResponseEntity<Map<String, Integer>> markAllRead(Authentication authentication) {
+        int updated = notificationService.markAllRead(authentication.getName());
+        return ResponseEntity.ok(Map.of("updated", updated));
+    }
+
     @PatchMapping("/{notificationNumber}/retry")
     public ResponseEntity<NotificationMessageResponse> retry(@PathVariable String notificationNumber) {
         return ResponseEntity.ok(notificationService.retry(notificationNumber));

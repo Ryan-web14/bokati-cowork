@@ -6,13 +6,17 @@ import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.Invent
 import com.sni.bokaticowork.features.inventory.intelligence.dto.request.InventoryReorderRuleRequest;
 import com.sni.bokaticowork.features.inventory.intelligence.dto.response.InventoryReorderRuleResponse;
 import com.sni.bokaticowork.features.inventory.intelligence.dto.response.ReorderSuggestionResponse;
+import com.sni.bokaticowork.features.inventory.intelligence.enums.ConsumptionTrend;
 import com.sni.bokaticowork.features.inventory.intelligence.enums.ReorderSuggestionReason;
 import com.sni.bokaticowork.features.inventory.intelligence.enums.ReorderSuggestionSeverity;
 import com.sni.bokaticowork.features.inventory.intelligence.mapper.interfaces.InventoryIntelligenceMapper;
 import com.sni.bokaticowork.features.inventory.intelligence.model.InventoryReorderRule;
 import com.sni.bokaticowork.features.inventory.intelligence.repository.InventoryReorderRuleRepository;
 import com.sni.bokaticowork.features.inventory.intelligence.service.interfaces.InventoryReorderRuleService;
-import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
+import com.sni.bokaticowork.features.inventory.procurement.enums.PurchaseOrderStatus;
+import com.sni.bokaticowork.features.inventory.procurement.model.SupplierItem;
+import com.sni.bokaticowork.features.inventory.procurement.repository.PurchaseOrderRepository;
+import com.sni.bokaticowork.features.inventory.procurement.repository.SupplierItemRepository;
 import com.sni.bokaticowork.features.inventory.stock.model.InventoryLocation;
 import com.sni.bokaticowork.features.inventory.stock.model.StockLevel;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockLevelRepository;
@@ -37,6 +41,9 @@ import java.util.Locale;
 public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleService {
 
     private static final int CONSUMPTION_WINDOW_DAYS = 30;
+    private static final List<PurchaseOrderStatus> ACTIVE_PO_STATUSES = List.of(
+            PurchaseOrderStatus.DRAFT, PurchaseOrderStatus.APPROVED,
+            PurchaseOrderStatus.ORDERED, PurchaseOrderStatus.PARTIALLY_RECEIVED);
 
     private final InventoryReorderRuleRepository repository;
     private final StockLevelRepository stockLevelRepository;
@@ -44,6 +51,8 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
     private final InventoryItemLookupService itemLookupService;
     private final InventoryLocationService locationService;
     private final InventoryIntelligenceMapper mapper;
+    private final PurchaseOrderRepository purchaseOrderRepository;
+    private final SupplierItemRepository supplierItemRepository;
 
     @Override
     public InventoryReorderRuleResponse createOrUpdate(InventoryReorderRuleRequest request) {
@@ -123,25 +132,44 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
                                                    InventoryLocation location,
                                                    ReorderSuggestionReason reasonCode) {
         BigDecimal targetQuantity = targetQuantity(rule, currentQuantity);
-        BigDecimal quantity = targetQuantity.subtract(currentQuantity).max(rule.getReorderQuantity());
         BigDecimal shortageQuantity = rule.getMinQuantity().subtract(currentQuantity).max(BigDecimal.ZERO);
 
         Long locationId = location != null ? location.getId() : (rule.getLocation() != null ? rule.getLocation().getId() : null);
-        BigDecimal consumption30 = movementRepository.consumptionSince(
-                rule.getItem().getId(), locationId,
-                Instant.now().minus(CONSUMPTION_WINDOW_DAYS, ChronoUnit.DAYS));
-        BigDecimal dailyRate = consumption30 != null && consumption30.signum() > 0
+        Instant now = Instant.now();
+        Instant windowEnd = now.minus(CONSUMPTION_WINDOW_DAYS, ChronoUnit.DAYS);
+        Instant prevWindowEnd = now.minus(2L * CONSUMPTION_WINDOW_DAYS, ChronoUnit.DAYS);
+
+        BigDecimal consumption30 = orZero(movementRepository.consumptionSince(rule.getItem().getId(), locationId, windowEnd));
+        BigDecimal consumptionPrev30 = orZero(movementRepository.consumptionBetween(rule.getItem().getId(), locationId, prevWindowEnd, windowEnd));
+
+        BigDecimal dailyRate = consumption30.signum() > 0
                 ? consumption30.divide(BigDecimal.valueOf(CONSUMPTION_WINDOW_DAYS), 4, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
         Integer daysRemaining = dailyRate.signum() > 0
                 ? currentQuantity.divide(dailyRate, 0, RoundingMode.CEILING).intValue()
                 : null;
 
+        ConsumptionTrend trend = consumptionTrend(consumption30, consumptionPrev30);
+        Integer trendPercent = consumptionTrendPercent(consumption30, consumptionPrev30);
+
+        BigDecimal quantityOnOrder = orZero(purchaseOrderRepository.quantityOnOrderForItem(
+                rule.getItem().getId(), ACTIVE_PO_STATUSES));
+        BigDecimal netShortage = shortageQuantity.subtract(quantityOnOrder).max(BigDecimal.ZERO);
+        BigDecimal reorderQty = targetQuantity.subtract(currentQuantity).subtract(quantityOnOrder).max(rule.getReorderQuantity());
+        if (trend == ConsumptionTrend.RISING && trendPercent != null && trendPercent > 20) {
+            reorderQty = reorderQty.multiply(BigDecimal.valueOf(1.2)).setScale(0, RoundingMode.CEILING);
+        }
+
         ReorderSuggestionSeverity severity = severityFor(reasonCode, currentQuantity, rule.getMinQuantity());
         severity = adjustSeverityByVelocity(severity, daysRemaining);
-        int priorityScore = priorityScore(severity, shortageQuantity, rule.getMinQuantity(), reasonCode);
-        Long estimatedOrderCost = estimatedOrderCost(rule, quantity);
+        int priorityScore = priorityScore(severity, netShortage, rule.getMinQuantity(), reasonCode, trend);
+        Long estimatedOrderCost = estimatedOrderCost(rule, reorderQty);
         String reason = reasonText(reasonCode, currentQuantity, rule.getMinQuantity(), targetQuantity);
+
+        List<SupplierItem> supplierItems = supplierItemRepository.findActiveByItemOrderByPriceAndLeadTime(rule.getItem());
+        SupplierItem bestSupplier = supplierItems.isEmpty() ? null : supplierItems.get(0);
+        int effectiveLeadTimeDays = effectiveLeadTimeDays(rule, bestSupplier);
+        Instant recommendedOrderByDate = recommendedOrderByDate(daysRemaining, effectiveLeadTimeDays, now);
 
         InventoryLocation responseLocation = location != null ? location : rule.getLocation();
         var item = rule.getItem();
@@ -163,9 +191,9 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
                 .quantityReserved(quantityReserved)
                 .minQuantity(rule.getMinQuantity())
                 .maxQuantity(rule.getMaxQuantity())
-                .reorderQuantity(quantity)
+                .reorderQuantity(reorderQty)
                 .targetQuantity(targetQuantity)
-                .shortageQuantity(shortageQuantity)
+                .shortageQuantity(netShortage)
                 .estimatedUnitCost(item.getDefaultCost())
                 .estimatedOrderCost(estimatedOrderCost)
                 .preferredSupplierCode(rule.getPreferredSupplierCode())
@@ -174,7 +202,17 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
                 .reason(reason)
                 .priorityScore(priorityScore)
                 .consumptionRateLast30Days(dailyRate.signum() > 0 ? dailyRate : null)
+                .consumptionRatePrev30Days(consumptionPrev30.signum() > 0
+                        ? consumptionPrev30.divide(BigDecimal.valueOf(CONSUMPTION_WINDOW_DAYS), 4, RoundingMode.HALF_UP)
+                        : null)
+                .consumptionTrend(trend)
+                .consumptionTrendPercent(trendPercent)
                 .daysOfStockRemaining(daysRemaining)
+                .quantityOnOrder(quantityOnOrder.signum() > 0 ? quantityOnOrder : null)
+                .recommendedOrderByDate(recommendedOrderByDate)
+                .bestSupplierCode(bestSupplier == null ? null : bestSupplier.getSupplier().getSupplierCode())
+                .bestSupplierPrice(bestSupplier == null ? null : bestSupplier.getUnitPrice())
+                .bestSupplierLeadTimeDays(bestSupplier == null ? null : bestSupplier.getLeadTimeDays())
                 .build();
     }
 
@@ -227,7 +265,8 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
         return ReorderSuggestionSeverity.MEDIUM;
     }
 
-    private int priorityScore(ReorderSuggestionSeverity severity, BigDecimal shortageQuantity, BigDecimal minQuantity, ReorderSuggestionReason reasonCode) {
+    private int priorityScore(ReorderSuggestionSeverity severity, BigDecimal shortageQuantity, BigDecimal minQuantity,
+                              ReorderSuggestionReason reasonCode, ConsumptionTrend trend) {
         int base = switch (severity) {
             case CRITICAL -> 100;
             case HIGH -> 75;
@@ -241,7 +280,40 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
             return base;
         }
         BigDecimal shortageRatio = shortageQuantity.divide(minQuantity, 2, RoundingMode.HALF_UP);
-        return base + shortageRatio.multiply(BigDecimal.TEN).intValue();
+        int score = base + shortageRatio.multiply(BigDecimal.TEN).intValue();
+        if (trend == ConsumptionTrend.RISING) score += 5;
+        return score;
+    }
+
+    private static BigDecimal orZero(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private static ConsumptionTrend consumptionTrend(BigDecimal current, BigDecimal prev) {
+        if (prev == null || prev.signum() == 0) return ConsumptionTrend.STABLE;
+        BigDecimal change = current.subtract(prev).divide(prev, 4, RoundingMode.HALF_UP);
+        if (change.compareTo(new BigDecimal("0.10")) > 0) return ConsumptionTrend.RISING;
+        if (change.compareTo(new BigDecimal("-0.10")) < 0) return ConsumptionTrend.FALLING;
+        return ConsumptionTrend.STABLE;
+    }
+
+    private static Integer consumptionTrendPercent(BigDecimal current, BigDecimal prev) {
+        if (prev == null || prev.signum() == 0) return null;
+        return current.subtract(prev).divide(prev, 4, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP).intValue();
+    }
+
+    private static int effectiveLeadTimeDays(InventoryReorderRule rule, SupplierItem bestSupplier) {
+        if (bestSupplier != null && bestSupplier.getLeadTimeDays() != null) {
+            return bestSupplier.getLeadTimeDays();
+        }
+        return 7;
+    }
+
+    private static Instant recommendedOrderByDate(Integer daysRemaining, int leadTimeDays, Instant now) {
+        if (daysRemaining == null) return now;
+        int buffer = Math.max(daysRemaining - leadTimeDays - 1, 0);
+        return now.plus(buffer, ChronoUnit.DAYS);
     }
 
     private Long estimatedOrderCost(InventoryReorderRule rule, BigDecimal reorderQuantity) {

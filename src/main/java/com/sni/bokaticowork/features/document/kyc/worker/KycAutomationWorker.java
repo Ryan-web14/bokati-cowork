@@ -59,7 +59,10 @@ public class KycAutomationWorker {
                     publishDocumentEvent("KYC_DOCUMENT_EXPIRY_REMINDER", item, Map.of("daysUntilExpiry", days)));
         }
 
-        kycDocumentRepository.findAllByExpiryDateBeforeAndStatusNot(today, KycDocumentVerificationStatus.EXPIRED)
+        int graceDays = properties.getExpiry().getGracePeriodDays() != null
+                ? properties.getExpiry().getGracePeriodDays() : 0;
+        LocalDate graceCutoff = today.minusDays(graceDays);
+        kycDocumentRepository.findAllByExpiryDateBeforeAndStatusNot(graceCutoff, KycDocumentVerificationStatus.EXPIRED)
                 .forEach(this::expireDocument);
     }
 

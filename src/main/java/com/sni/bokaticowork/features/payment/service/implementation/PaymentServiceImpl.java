@@ -500,6 +500,16 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<PaymentTransactionResponse> listRefunds(String transactionNumber) {
+        PaymentTransaction original = transactionRepository.findByTransactionNumber(transactionNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment transaction not found"));
+        return transactionRepository.findAllByOriginalTransactionNumber(original.getTransactionNumber()).stream()
+                .map(mapper::toTransactionResponse)
+                .toList();
+    }
+
+    @Override
     public String retryMobileMoneyDeposit(String intentNumber, String phoneNumber, String providerCode) {
         CongoCorrespondent correspondent;
         try {
@@ -780,18 +790,19 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentTransaction original = transactionRepository.findByTransactionNumber(transactionNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment transaction not found"));
 
-        if (original.getStatus() == PaymentTransactionStatus.REFUNDED) {
-            throw new ConflictException("payment_transaction", "transaction " + transactionNumber + " has already been refunded");
-        }
-        if (original.getStatus() == PaymentTransactionStatus.REVERSED) {
-            throw new ConflictException("payment_transaction", "transaction " + transactionNumber + " has already been reversed");
+        BigDecimal refundedSoFar = refundedTotal(original.getTransactionNumber());
+        BigDecimal remaining = original.getAmount().subtract(refundedSoFar);
+        if (remaining.signum() <= 0) {
+            String verb = status == PaymentTransactionStatus.REVERSED ? "reversed" : "refunded";
+            throw new ConflictException("payment_transaction", "transaction " + transactionNumber + " has already been fully " + verb);
         }
 
-        BigDecimal amount = request.amount() == null ? original.getAmount() : request.amount();
+        BigDecimal amount = request.amount() == null ? remaining : request.amount();
         validatePositive(amount);
-        if (amount.compareTo(original.getAmount()) > 0) {
-            throw new BadRequestException("Refund amount cannot exceed transaction amount");
+        if (amount.compareTo(remaining) > 0) {
+            throw new BadRequestException("Refund amount cannot exceed remaining refundable amount (" + remaining + ")");
         }
+        boolean fullyRefunded = refundedSoFar.add(amount).compareTo(original.getAmount()) >= 0;
         allocationService.reverseAllocations(original, amount);
         if (original.getPaymentMethod() == PaymentMethod.WALLET) {
             WalletAccount wallet = walletService.serviceWallet(original.getProviderReference());
@@ -804,7 +815,7 @@ public class PaymentServiceImpl implements PaymentService {
         // Mobile money refunds are async — initiate via provider and wait for callback
         if (original.getPaymentMethod() == PaymentMethod.MOBILE_MONEY
                 && StringUtils.hasText(original.getProviderReference())) {
-            return initiateMobileMoneyRefund(original, amount, request, status, refundTxnNumber);
+            return initiateMobileMoneyRefund(original, amount, request, status, refundTxnNumber, fullyRefunded);
         }
 
         PaymentTransaction refund = transactionRepository.save(PaymentTransaction.builder()
@@ -819,21 +830,40 @@ public class PaymentServiceImpl implements PaymentService {
                 .paidAt(Instant.now())
                 .receivedBy(trim(request.processedBy()))
                 .failureReason(trim(request.reason()))
+                .metadataJson(originalLinkMetadata(original.getTransactionNumber()))
                 .build());
 
-        original.setStatus(status);
-        transactionRepository.save(original);
+        if (fullyRefunded) {
+            original.setStatus(status);
+            transactionRepository.save(original);
 
-        PaymentIntent intent = original.getPaymentIntent();
-        if (status == PaymentTransactionStatus.REFUNDED) {
-            intent.setStatus(PaymentIntentStatus.REFUNDED);
-        } else if (status == PaymentTransactionStatus.REVERSED) {
-            intent.setStatus(PaymentIntentStatus.REVERSED);
+            PaymentIntent intent = original.getPaymentIntent();
+            if (status == PaymentTransactionStatus.REFUNDED) {
+                intent.setStatus(PaymentIntentStatus.REFUNDED);
+            } else if (status == PaymentTransactionStatus.REVERSED) {
+                intent.setStatus(PaymentIntentStatus.REVERSED);
+            }
+            intentRepository.save(intent);
         }
-        intentRepository.save(intent);
 
         publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus());
         return mapper.toTransactionResponse(refund);
+    }
+
+    private BigDecimal refundedTotal(String transactionNumber) {
+        return transactionRepository.findAllByOriginalTransactionNumber(transactionNumber).stream()
+                .filter(t -> t.getStatus() == PaymentTransactionStatus.REFUNDED || t.getStatus() == PaymentTransactionStatus.REVERSED)
+                .map(PaymentTransaction::getAmount)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private String originalLinkMetadata(String originalTransactionNumber) {
+        try {
+            return objectMapper.writeValueAsString(Map.of("originalTransactionNumber", originalTransactionNumber));
+        } catch (JsonProcessingException e) {
+            return "{\"originalTransactionNumber\":\"" + originalTransactionNumber + "\"}";
+        }
     }
 
     private PaymentTransactionResponse initiateMobileMoneyRefund(
@@ -841,7 +871,8 @@ public class PaymentServiceImpl implements PaymentService {
             BigDecimal amount,
             RefundPaymentRequest request,
             PaymentTransactionStatus targetStatus,
-            String refundTxnNumber) {
+            String refundTxnNumber,
+            boolean fullyRefunded) {
 
         PaymentTransaction refund = transactionRepository.save(PaymentTransaction.builder()
                 .transactionNumber(refundTxnNumber)
@@ -853,6 +884,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .status(PaymentTransactionStatus.PROCESSING)
                 .receivedBy(trim(request.processedBy()))
                 .failureReason(trim(request.reason()))
+                .metadataJson(originalLinkMetadata(original.getTransactionNumber()))
                 .build());
 
         MobileMoneyRefundResponse response = mobileMoneyProvider.refund(new MobileMoneyRefundRequest(
@@ -870,12 +902,14 @@ public class PaymentServiceImpl implements PaymentService {
             refund.setStatus(targetStatus);
             refund.setPaidAt(Instant.now());
             transactionRepository.save(refund);
-            original.setStatus(targetStatus);
-            transactionRepository.save(original);
-            PaymentIntent intent = original.getPaymentIntent();
-            intent.setStatus(targetStatus == PaymentTransactionStatus.REFUNDED
-                    ? PaymentIntentStatus.REFUNDED : PaymentIntentStatus.REVERSED);
-            intentRepository.save(intent);
+            if (fullyRefunded) {
+                original.setStatus(targetStatus);
+                transactionRepository.save(original);
+                PaymentIntent intent = original.getPaymentIntent();
+                intent.setStatus(targetStatus == PaymentTransactionStatus.REFUNDED
+                        ? PaymentIntentStatus.REFUNDED : PaymentIntentStatus.REVERSED);
+                intentRepository.save(intent);
+            }
             publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus());
             return mapper.toTransactionResponse(refund);
         }

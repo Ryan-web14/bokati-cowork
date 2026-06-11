@@ -609,6 +609,7 @@
                     <span th:case="'TICKET_REOPENED'"       class="tag tag-message">Réouvert</span>
                     <span th:case="'TICKET_REOPENED_AGENT'" class="tag tag-sla">Ticket réouvert</span>
                     <span th:case="'SLA_BREACH'"            class="tag tag-sla">⚠ Alerte SLA</span>
+                    <span th:case="'SLA_ESCALATION'"        class="tag tag-sla">⚠ Escalade SLA</span>
                     <span th:case="'CSAT_REQUEST'"          class="tag tag-csat">Votre avis</span>
                     <span th:case="*"                       class="tag tag-message">Support</span>
                 </span>
@@ -648,6 +649,10 @@
                     <div class="hero-sla-title">⚠ Délai SLA dépassé</div>
                     <div class="hero-sub" th:text="|Type : ${breachType}. Une action immédiate est requise.|">Alerte SLA</div>
                 </div>
+                <div th:case="'SLA_ESCALATION'">
+                    <div class="hero-sla-title" th:text="|⚠ Escalade niveau ${escalationLevel}|">Escalade SLA</div>
+                    <div class="hero-sub" th:text="${escalationReason}">Raison de l'escalade</div>
+                </div>
                 <div th:case="'CSAT_REQUEST'">
                     <div class="hero-title">Comment s'est passée votre expérience ?</div>
                     <div class="hero-sub">Votre avis nous aide à améliorer notre service. Cela prend moins d'une minute.</div>
@@ -663,7 +668,7 @@
             <!-- ═══════════════════════════════════ -->
             <!-- SLA BREACH — alerte prioritaire    -->
             <!-- ═══════════════════════════════════ -->
-            <div th:if="${eventType == 'SLA_BREACH'}">
+            <div th:if="${eventType == 'SLA_BREACH' or eventType == 'SLA_ESCALATION'}">
                 <div class="sla-alert">
                     <div class="sla-alert-head">⚠ &nbsp;Dépassement SLA · intervention requise</div>
                     <div class="sla-alert-body">
@@ -678,12 +683,17 @@
                                 <span class="sla-meta-lbl">Catégorie</span>
                                 <span style="font-size:14px; font-weight:700; color:#991b1b;" th:text="${ticketCategory}">—</span>
                             </div>
-                            <div>
+                            <div th:if="${eventType == 'SLA_BREACH'}">
                                 <span class="sla-meta-lbl">Type de dépassement</span>
                                 <span style="font-size:14px; font-weight:700; color:#991b1b;" th:text="${breachType}">—</span>
                             </div>
+                            <div th:if="${eventType == 'SLA_ESCALATION'}">
+                                <span class="sla-meta-lbl">Niveau d'escalade</span>
+                                <span style="font-size:14px; font-weight:700; color:#991b1b;" th:text="${escalationLevel}">—</span>
+                            </div>
                         </div>
-                        <div class="sla-action">→ Prenez en charge ce ticket immédiatement pour limiter l'impact client.</div>
+                        <div class="sla-action" th:if="${eventType == 'SLA_BREACH'}">→ Prenez en charge ce ticket immédiatement pour limiter l'impact client.</div>
+                        <div class="sla-action" th:if="${eventType == 'SLA_ESCALATION'}" th:text="${escalationReason}">Raison de l'escalade</div>
                     </div>
                 </div>
             </div>
@@ -691,7 +701,7 @@
             <!-- ═══════════════════════════════════ -->
             <!-- Tous les autres events : summary   -->
             <!-- ═══════════════════════════════════ -->
-            <div th:unless="${eventType == 'SLA_BREACH'}">
+            <div th:unless="${eventType == 'SLA_BREACH' or eventType == 'SLA_ESCALATION'}">
                 <div class="ticket-summary">
                     <div class="ticket-summary-head">
                         <span class="ticket-num" th:text="${ticketNumber}">TCK-000</span>

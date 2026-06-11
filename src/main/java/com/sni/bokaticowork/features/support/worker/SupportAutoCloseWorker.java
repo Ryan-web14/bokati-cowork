@@ -1,8 +1,10 @@
 package com.sni.bokaticowork.features.support.worker;
 
+import com.sni.bokaticowork.features.support.enums.TicketEventType;
 import com.sni.bokaticowork.features.support.enums.TicketStatus;
 import com.sni.bokaticowork.features.support.model.SupportTicket;
 import com.sni.bokaticowork.features.support.repository.SupportTicketRepository;
+import com.sni.bokaticowork.features.support.service.implementation.SupportTicketEventWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,7 @@ import java.util.List;
 public class SupportAutoCloseWorker {
 
     private final SupportTicketRepository ticketRepository;
+    private final SupportTicketEventWriter eventWriter;
 
     @Value("${bokati.support.auto-close-delay-days:5}")
     private int autoCloseDays;
@@ -37,6 +40,8 @@ public class SupportAutoCloseWorker {
                 ticket.setStatus(TicketStatus.CLOSED);
                 ticket.setClosedAt(Instant.now());
                 ticketRepository.save(ticket);
+                eventWriter.writeSystem(ticket, TicketEventType.AUTO_CLOSED,
+                        "Ticket clôturé automatiquement après " + autoCloseDays + " jour(s) sans réponse client suite à la résolution");
                 log.info("Ticket {} auto-fermé (résolu le {})", ticket.getTicketNumber(), ticket.getResolvedAt());
             } catch (Exception ex) {
                 log.error("Erreur auto-fermeture ticket {}", ticket.getTicketNumber(), ex);

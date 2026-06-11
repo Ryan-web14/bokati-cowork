@@ -15,10 +15,19 @@ import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashSession;
 import com.sni.bokaticowork.features.payment.repository.CashAnomalyFlagRepository;
 import com.sni.bokaticowork.features.payment.repository.CashMovementRepository;
+import com.sni.bokaticowork.features.payment.repository.CashRegisterRepository;
 import com.sni.bokaticowork.features.payment.repository.CashSessionRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashAnomalyDetectionService;
 import com.sni.bokaticowork.features.payment.service.support.CashEmailNotifier;
+import com.sni.bokaticowork.features.support.dto.SupportDtos.CreateTicketRequest;
+import com.sni.bokaticowork.features.support.enums.TicketCategory;
+import com.sni.bokaticowork.features.support.enums.TicketPriority;
+import com.sni.bokaticowork.features.support.service.interfaces.SupportTicketService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,9 +38,11 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -49,8 +60,13 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
     private final CashAnomalyFlagRepository anomalyFlagRepository;
     private final CashSessionRepository sessionRepository;
     private final CashMovementRepository movementRepository;
+    private final CashRegisterRepository cashRegisterRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final CashEmailNotifier emailNotifier;
+    @Lazy private final SupportTicketService supportTicketService;
+
+    @Value("${bokati.payment.cash-register.alert-cooldown-hours:6}")
+    private int alertCooldownHours;
 
     @Override
     @Transactional
@@ -66,6 +82,7 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
         detectOffHoursSession(session, newFlags);
         detectThresholdStructuring(session, movements, newFlags);
         detectNearMaxCashRecurrence(session, movements, newFlags);
+        detectMaxCashOverflow(session, movements);
 
         return newFlags.stream().map(this::toResponse).toList();
     }
@@ -74,13 +91,14 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
     @Transactional(readOnly = true)
     public PaginatedResponse<CashAnomalyFlagResponse> list(String registerCode, String sessionNumber, CashAnomalySeverity severity,
                                                             CashAnomalyStatus status, CashAnomalyType anomalyType, Pageable pageable) {
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return new PaginatedResponse<>(anomalyFlagRepository.search(
                 blankToNull(registerCode),
                 blankToNull(sessionNumber),
                 severity == null ? null : severity.name(),
                 status == null ? null : status.name(),
                 anomalyType == null ? null : anomalyType.name(),
-                pageable
+                unsortedPageable
         ).map(this::toResponse));
     }
 
@@ -242,6 +260,37 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
                 BigDecimal.valueOf(nearMax.size()), description, newFlags);
     }
 
+    private void detectMaxCashOverflow(CashSession session, List<CashMovement> movements) {
+        CashRegister register = session.getCashRegister();
+        BigDecimal maxCashAmount = register == null ? null : register.getMaxCashAmount();
+        if (register == null || maxCashAmount == null || maxCashAmount.signum() <= 0) {
+            return;
+        }
+        CashMovement overflow = movements.stream()
+                .filter(m -> m.getRunningBalance() != null && m.getRunningBalance().compareTo(maxCashAmount) > 0)
+                .reduce((first, second) -> second)
+                .orElse(null);
+        if (overflow == null) {
+            return;
+        }
+        Instant lastSent = register.getLastAnomalyAlertSentAt();
+        if (lastSent != null && Instant.now().isBefore(lastSent.plus(alertCooldownHours, ChronoUnit.HOURS))) {
+            return;
+        }
+        String description = "Le solde de la caisse " + register.getName() + " a dépassé le plafond autorisé ("
+                + maxCashAmount + ") — solde constaté : " + overflow.getRunningBalance()
+                + " lors de la session " + session.getSessionNumber() + ".";
+        emailNotifier.notifyRegisterManager(
+                register,
+                "Dépassement du plafond de caisse — " + register.getRegisterCode(),
+                description,
+                session.getSessionNumber(),
+                CASH_ANOMALIES_PATH + session.getSessionNumber()
+        );
+        register.setLastAnomalyAlertSentAt(Instant.now());
+        cashRegisterRepository.save(register);
+    }
+
     // ---- Persistence helpers ----
 
     private void flag(CashSession session, CashMovement movement, CashAnomalyType type, CashAnomalySeverity severity,
@@ -269,6 +318,27 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
                     savedFlag.getFlagNumber(),
                     CASH_ANOMALIES_PATH + savedFlag.getFlagNumber()
             );
+        }
+        if (severity == CashAnomalySeverity.HIGH) {
+            createTicketForAnomaly(session, savedFlag, description);
+        }
+    }
+
+    private void createTicketForAnomaly(CashSession session, CashAnomalyFlag flag, String description) {
+        try {
+            supportTicketService.createFromAutomation(new CreateTicketRequest(
+                    "Anomalie de caisse à risque élevé — " + flag.getFlagNumber(),
+                    description,
+                    TicketPriority.HIGH,
+                    TicketCategory.BILLING,
+                    "CASHIER",
+                    session.getOpenedBy(),
+                    null, null, null,
+                    "CASH_ANOMALY_FLAG",
+                    flag.getFlagNumber()
+            ));
+        } catch (Exception ex) {
+            log.warn("Failed to create support ticket for cash anomaly {}", flag.getFlagNumber(), ex);
         }
     }
 

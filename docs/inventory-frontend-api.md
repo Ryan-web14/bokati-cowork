@@ -23,6 +23,70 @@ Prefixe inventaire :
 
 - `/sni/api/v1/inventory`
 
+Document consolide le 2026-06-09 pour le frontend. Il regroupe les informations de :
+
+- `docs/inventory-module-design.md`
+- `docs/frontend-changes-consolidated.md`
+- `docs/changelog-2026-04.md`
+- `docs/roadmap-existing-modules-frontend-api.md`
+- `docs/roadmap-features-ameliorations.md`
+- `docs/plan-inventory-module-improvements.md`
+- les integrations inventaire referencees dans `docs/task-frontend-api.md`
+
+Les routes ci-dessous sont les routes frontend canoniques a utiliser. Les anciennes mentions de
+`/inventory/intelligence/reorder-rules/suggestions`, `/inventory/stock/transfer-workflows` ou
+`/inventory/import/template/{type}` doivent etre traitees comme historiques tant qu'un endpoint
+equivalent n'est pas confirme dans le backend actuel.
+
+---
+
+## Synthese consolidee frontend
+
+### Carte rapide des endpoints
+
+- Catalogue : `/inventory/items`, `/inventory/categories`, `/inventory/units`
+- Emplacements : `/inventory/locations`
+- Stock : `/inventory/stock/in`, `/inventory/stock/out`, `/inventory/stock/transfer`, `/inventory/stock/adjust`
+- Reservations : `/inventory/stock/reservations`
+- Lots par article : `GET /inventory/items/{itemCode}/lots`, `POST /inventory/items/{itemCode}/lots`
+- Lots global : `/inventory/stock/lots`
+- Numeros de serie : `GET /inventory/items/{itemCode}/serials`
+- Transferts avec workflow : `/inventory/stock/transfers`
+- Achats : `/inventory/procurement/suppliers`, `/inventory/procurement/purchase-requests`, `/inventory/procurement/purchase-orders`, `/inventory/procurement/goods-receipts`
+- Actifs : `/inventory/assets`, `/inventory/assets/{assetCode}/maintenances`, `GET /inventory/assets/{assetCode}/assignments/{assignmentId}/loan-sheet.pdf`
+- Comptages : `/inventory/counts`
+- Alertes : `/inventory/alerts`
+- Reappro : `/inventory/reorder-rules`, `/inventory/reorder-rules/suggestions`
+- Administration : `/inventory/admin/dashboard`, `/inventory/admin/labels`, `/inventory/admin/reports/*`
+- Import : `POST /inventory/import/{type}`
+
+### Points consolides a respecter cote frontend
+
+- Les filtres de rapports de mouvements utilisent `fromDate` et `toDate`, pas `from` et `to`.
+- Les exports de mouvements existent en JSON, CSV et PDF :
+  - `GET /inventory/admin/reports/movements`
+  - `GET /inventory/admin/reports/movements.csv`
+  - `GET /inventory/admin/reports/movements.pdf`
+- Les etiquettes peuvent etre generees a l'unite ou en batch :
+  - `GET /inventory/admin/labels/{type}/{code}`
+  - `POST /inventory/admin/labels`
+- Les sorties, transferts et ajustements negatifs exigent desormais `reasonCode` (enum `StockOutReasonCode`) et `performedBy` obligatoires. Le champ texte libre `reason` a ete renomme `reasonDetails` (optionnel). Si `referenceType` est fourni, `referenceCode` devient egalement obligatoire.
+- Pour les articles avec `requiresLotNumber = true`, le frontend doit alimenter le selecteur de lots via `GET /inventory/items/{itemCode}/lots` avant une sortie ou un transfert. Si le lot n'existe pas, le backend repond 409 `LOT_NOT_FOUND` ; le frontend peut relancer avec `confirmCreateLot: true` pour creer le lot a la volee, ou proposer de selectionner un lot existant.
+- Pour les articles avec `requiresSerialNumber = true` (non-ASSET), les sorties et transferts exigent `serialNumbers` (liste). Le frontend doit alimenter le selecteur via `GET /inventory/items/{itemCode}/serials?status=AVAILABLE`.
+- L'affectation d'actif exige maintenant `expectedReturnAt`, `assignedBy` et `purpose` en plus de `assigneeType` et `assigneeCode`. Une fiche de pret PDF est generee via `GET /inventory/assets/{assetCode}/assignments/{assignmentId}/loan-sheet.pdf`.
+- Les suggestions de reappro exposent maintenant des donnees de priorisation enrichies :
+  - `severity`, `priorityScore`
+  - `consumptionRateLast30Days`, `consumptionRatePrev30Days`
+  - `consumptionTrend` (`RISING`/`STABLE`/`FALLING`), `consumptionTrendPercent`
+  - `daysOfStockRemaining`, `estimatedOrderCost`
+  - `quantityOnOrder` (quantites deja commandees deduites)
+  - `recommendedOrderByDate` (date avant laquelle commander)
+  - `bestSupplierCode`, `bestSupplierPrice`, `bestSupplierLeadTimeDays`
+- L'approbation d'une demande d'achat peut recevoir `supplierCode` en query param et peut creer automatiquement un bon de commande. Le frontend doit afficher `autoCreatedOrderCode` quand il est present.
+- Les alertes `LOW_STOCK` et `RECURRING_LOW_STOCK` peuvent alimenter le module Task via des taches sourcees `INVENTORY` avec `sourceCode = alertCode`.
+- Le nouveau type d'alerte `ASSET_RETURN_DUE_SOON` est emis J-1 avant `expectedReturnAt` d'une affectation active.
+- Les workers inventaire generent les alertes en arriere-plan ; le frontend doit donc rafraichir les widgets d'alertes et de reappro apres les operations de stock, reception et comptage.
+
 ---
 
 ## Concepts principaux
@@ -63,6 +127,10 @@ Prefixe inventaire :
   - alerte automatique declenchee par des seuils ou anomalies
 - `InventoryReorderRule`
   - regle de reappro automatique ou de suggestion
+- `InventoryItemSerial`
+  - numero de serie d'un article non-ASSET traçable individuellement
+- `SupplierItem`
+  - association fournisseur/article avec prix unitaire et delai de livraison
 
 Types d'article (`InventoryItemType`) :
 
@@ -84,6 +152,30 @@ Types de mouvement de stock (`StockMovementType`) :
 - `TRANSFER`
 - `ADJUSTMENT_IN`
 - `ADJUSTMENT_OUT`
+
+Motifs de sortie (`StockOutReasonCode`) :
+
+- `CONSUMPTION` — consommation normale
+- `DAMAGE` — article endommage
+- `LOSS` — perte / article introuvable
+- `INTERNAL_USE` — usage interne
+- `SAMPLE` — echantillon
+- `DONATION` — don
+- `OTHER` — autre motif (exige `reasonDetails`)
+
+Tendance de consommation (`ConsumptionTrend`) :
+
+- `RISING` — consommation en hausse (>10 % vs periode precedente)
+- `STABLE` — consommation stable
+- `FALLING` — consommation en baisse (>10 % vs periode precedente)
+
+Statuts de numero de serie (`InventorySerialStatus`) :
+
+- `AVAILABLE`
+- `ISSUED`
+- `TRANSFERRED`
+- `LOST`
+- `DAMAGED`
 
 Statuts d'actif (`AssetStatus`) :
 
@@ -430,7 +522,8 @@ Reponse `201` :
   "totalCost": 450000,
   "referenceType": "GOODS_RECEIPT",
   "referenceCode": "REC-202604-0001",
-  "reason": "Reception commande fournisseur",
+  "reasonCode": null,
+  "reasonDetails": "Reception commande fournisseur",
   "lots": [],
   "performedBy": "USER-001",
   "performedAt": "2026-04-10T09:00:00Z"
@@ -448,13 +541,25 @@ Body :
   "itemCode": "ART-001",
   "locationCode": "ENTREPOT-A",
   "quantity": 2,
+  "reasonCode": "CONSUMPTION",
+  "reasonDetails": "Consommation reunion client du 09/06",
   "referenceType": "RESERVATION",
   "referenceCode": "RSV-202604-0001",
-  "reason": "Attribution bureau salle B",
   "allowNegativeOverride": false,
-  "performedBy": "USER-001"
+  "performedBy": "USER-001",
+  "lotNumber": "LOT-2026-04",
+  "confirmCreateLot": false,
+  "serialNumbers": []
 }
 ```
+
+Champs obligatoires : `itemCode`, `locationCode`, `quantity`, `reasonCode`, `performedBy`.
+
+Si `referenceType` est fourni, `referenceCode` est egalement obligatoire.
+
+Si l'article a `requiresSerialNumber = true` (non-ASSET), `serialNumbers` est obligatoire et doit correspondre exactement a la quantite demandee.
+
+Si l'article a `requiresLotNumber = true`, alimenter `lotNumber` depuis le selecteur de lots (`GET /inventory/items/{itemCode}/lots`). Si le lot n'existe pas → 409 `LOT_NOT_FOUND` ; relancer avec `confirmCreateLot: true` pour creer le lot, ou corriger le numero de lot.
 
 ### Transfert entre emplacements
 
@@ -468,10 +573,16 @@ Body :
   "locationFromCode": "ENTREPOT-A",
   "locationToCode": "BUREAU-B",
   "quantity": 3,
-  "reason": "Redeploiement mobilier",
-  "performedBy": "USER-001"
+  "reasonCode": "INTERNAL_USE",
+  "reasonDetails": "Redeploiement mobilier bureau B",
+  "performedBy": "USER-001",
+  "lotNumber": null,
+  "confirmCreateLot": false,
+  "serialNumbers": []
 }
 ```
+
+Champs obligatoires : `itemCode`, `locationFromCode`, `locationToCode`, `quantity`, `reasonCode`, `performedBy`.
 
 ### Ajustement de stock
 
@@ -484,14 +595,15 @@ Body :
   "itemCode": "ART-001",
   "locationCode": "ENTREPOT-A",
   "quantityDelta": -2,
-  "reason": "Correction apres comptage physique",
+  "reasonCode": "LOSS",
+  "reasonDetails": "Correction apres comptage physique — 2 unites introuvables",
   "referenceType": "INVENTORY_COUNT",
   "referenceCode": "CNT-202604-0001",
   "performedBy": "USER-001"
 }
 ```
 
-Note : `quantityDelta` peut etre positif (ajout) ou negatif (correction en baisse).
+Note : `quantityDelta` peut etre positif (ajout) ou negatif (correction en baisse). `reasonCode` est recommande pour les ajustements negatifs mais non obligatoire. `performedBy` est obligatoire.
 
 ### Inverser un mouvement
 
@@ -519,7 +631,7 @@ Usage frontend :
 
 ### Rechercher les mouvements
 
-`GET /inventory/stock/movements?itemCode=ART-001&locationCode=ENTREPOT-A&movementType=IN&from=2026-04-01&to=2026-04-30&page=0&size=20`
+`GET /inventory/stock/movements?itemCode=ART-001&locationCode=ENTREPOT-A&movementType=IN&fromDate=2026-04-01T00:00:00Z&toDate=2026-04-30T23:59:59Z&page=0&size=20`
 
 Parametres :
 
@@ -607,9 +719,14 @@ Usage frontend :
 
 ## 8. Stock — Lots
 
-### Consulter les lots d'un article
+### Selecteur de lots avant une sortie ou un transfert (NOUVEAU)
 
-`GET /inventory/stock/lots?itemCode=ART-CONSOM-001&locationCode=ENTREPOT-A`
+`GET /inventory/items/{itemCode}/lots?locationCode=ENTREPOT-A&activeOnly=true`
+
+Parametres :
+
+- `locationCode` — optionnel, filtre par emplacement
+- `activeOnly` — `true` par defaut pour n'afficher que les lots consommables
 
 Reponse :
 
@@ -633,9 +750,139 @@ Reponse :
 
 Usage frontend :
 
+- **a appeler juste avant d'afficher le formulaire de sortie / transfert** pour un article avec `requiresLotNumber = true`
+- alimenter un select/autocomplete `Numero de lot`
+- si la liste est vide, proposer la creation d'un nouveau lot (cf. section suivante)
+
+### Creer un lot explicitement (NOUVEAU)
+
+`POST /inventory/items/{itemCode}/lots`
+
+Body :
+
+```json
+{
+  "locationCode": "ENTREPOT-A",
+  "lotNumber": "LOT-2026-06-SPECIAL",
+  "expiryDate": "2026-12-31",
+  "initialQuantity": 50,
+  "ownershipType": "COWORK"
+}
+```
+
+Reponse `201` : `StockLotResponse` (meme structure que ci-dessus).
+
+Usage frontend :
+
+- regularisation de lot hors mouvement de stock (ex. stock initial, correction)
+- pre-enregistrement d'un lot avant la reception physique
+- creation manuelle si le lot saisi lors d'une sortie n'est pas reconnu
+
+### Gestion de l'erreur LOT_NOT_FOUND (409)
+
+Quand `POST /inventory/stock/out` ou `POST /inventory/stock/transfer` retourne 409 avec code `LOT_NOT_FOUND` :
+
+```json
+{
+  "status": 409,
+  "code": "LOT_NOT_FOUND",
+  "message": "Lot 'LOT-ERR' does not exist for item ART-001 at location ENTREPOT-A. Either select an existing lot or set confirmCreateLot=true to create it."
+}
+```
+
+Le frontend doit proposer deux actions :
+
+1. **Corriger le numero de lot** — ouvrir le selecteur `GET /inventory/items/{itemCode}/lots`
+2. **Creer le lot** — relancer la requete avec `"confirmCreateLot": true`
+
+### Consulter tous les lots (recherche globale)
+
+`GET /inventory/stock/lots?itemCode=ART-CONSOM-001&locationCode=ENTREPOT-A`
+
+Usage frontend :
+
 - affichage des lots sur la fiche article
 - alerte lots proches de l'expiration
-- selection du lot lors d'une sortie manuelle
+- vue d'ensemble des lots depuis la page rapports
+
+---
+
+## 8bis. Stock — Numeros de serie (non-ASSET)
+
+> Concerne uniquement les articles avec `requiresSerialNumber = true` et `itemType != ASSET`. Les actifs (`ASSET`) ont leurs propres numeros de serie geres dans le module actif.
+
+### Consulter les numeros de serie disponibles
+
+`GET /inventory/items/{itemCode}/serials?locationCode=ENTREPOT-A&status=AVAILABLE`
+
+Parametres :
+
+- `locationCode` — optionnel
+- `status` — `AVAILABLE`, `ISSUED`, `TRANSFERRED`, `LOST`, `DAMAGED`
+
+Reponse :
+
+```json
+[
+  {
+    "itemCode": "SPARE-001",
+    "locationCode": "ENTREPOT-A",
+    "serialNumber": "SN-20260601-001",
+    "status": "AVAILABLE",
+    "lotNumber": "LOT-2026-06",
+    "receivedAt": "2026-06-01T08:00:00Z",
+    "issuedAt": null
+  },
+  {
+    "itemCode": "SPARE-001",
+    "locationCode": "ENTREPOT-A",
+    "serialNumber": "SN-20260601-002",
+    "status": "AVAILABLE",
+    "lotNumber": "LOT-2026-06",
+    "receivedAt": "2026-06-01T08:00:00Z",
+    "issuedAt": null
+  }
+]
+```
+
+Usage frontend :
+
+- **a appeler avant d'afficher le formulaire de sortie / transfert** pour un article avec `requiresSerialNumber = true`
+- alimenter un select multiple `Numeros de serie` (la selection doit correspondre exactement a la quantite demandee)
+- les numeros de serie sont valides uniquement dans l'emplacement concerne
+
+### Saisie a la reception (entree de stock)
+
+Pour `POST /inventory/stock/in` sur un article avec `requiresSerialNumber = true`, fournir les numeros dans `assetSerialNumbers` :
+
+```json
+{
+  "itemCode": "SPARE-001",
+  "locationCode": "ENTREPOT-A",
+  "quantity": 3,
+  "assetSerialNumbers": ["SN-20260601-001", "SN-20260601-002", "SN-20260601-003"],
+  "performedBy": "USER-001"
+}
+```
+
+Le nombre de numeros de serie doit correspondre exactement a `quantity`.
+
+### Saisie a la sortie
+
+Dans `POST /inventory/stock/out`, utiliser le champ `serialNumbers` :
+
+```json
+{
+  "itemCode": "SPARE-001",
+  "locationCode": "ENTREPOT-A",
+  "quantity": 2,
+  "reasonCode": "INTERNAL_USE",
+  "serialNumbers": ["SN-20260601-001", "SN-20260601-002"],
+  "performedBy": "USER-001"
+}
+```
+
+Si un numero de serie n'est pas `AVAILABLE` sur l'emplacement → erreur 400.
 
 ---
 
@@ -643,7 +890,7 @@ Usage frontend :
 
 ### Creer une demande de transfert
 
-`POST /inventory/stock/transfer-workflows`
+`POST /inventory/stock/transfers`
 
 Body :
 
@@ -677,48 +924,31 @@ Reponse `201` :
 
 Statuts (`StockTransferWorkflowStatus`) :
 
-- `PENDING`
+- `REQUESTED`
 - `APPROVED`
-- `REJECTED`
-- `IN_TRANSIT`
-- `COMPLETED`
+- `SHIPPED`
+- `RECEIVED`
 - `CANCELLED`
 
 ### Approuver un transfert
 
-`PATCH /inventory/stock/transfer-workflows/{transferCode}/approve`
+`PATCH /inventory/stock/transfers/{transferCode}/approve?approvedBy=MANAGER-001`
 
-Body :
+### Expédier un transfert
 
-```json
-{
-  "approvedBy": "MANAGER-001",
-  "comment": "Transfert autorise"
-}
-```
+`PATCH /inventory/stock/transfers/{transferCode}/ship?shippedBy=USER-001`
 
-### Rejeter un transfert
+### Recevoir un transfert
 
-`PATCH /inventory/stock/transfer-workflows/{transferCode}/reject`
+`PATCH /inventory/stock/transfers/{transferCode}/receive?receivedBy=USER-002`
 
-Body :
+### Annuler un transfert
 
-```json
-{
-  "rejectedBy": "MANAGER-001",
-  "reason": "Stock insuffisant prevu pour les autres bureaux"
-}
-```
-
-### Demarrer / finaliser un transfert
-
-`PATCH /inventory/stock/transfer-workflows/{transferCode}/start`
-
-`PATCH /inventory/stock/transfer-workflows/{transferCode}/complete`
+`PATCH /inventory/stock/transfers/{transferCode}/cancel?cancelledBy=MANAGER-001&reason=Stock%20reserve`
 
 ### Rechercher les transferts
 
-`GET /inventory/stock/transfer-workflows?status=PENDING&page=0&size=20`
+`GET /inventory/stock/transfers?status=REQUESTED&page=0&size=20`
 
 ---
 
@@ -861,17 +1091,13 @@ Statuts (`PurchaseRequestStatus`) :
 
 ### Creer depuis des suggestions de reappro
 
-`POST /inventory/procurement/purchase-requests/from-reorder-suggestions`
+`POST /inventory/procurement/purchase-requests/from-reorder-suggestions?locationCode=ENTREPOT-A&supplierCode=FOURNISSEUR-001&requestedBy=USER-001`
 
-Body :
+Parametres :
 
-```json
-{
-  "locationCode": "ENTREPOT-A",
-  "requestedBy": "USER-001",
-  "suggestionCodes": ["SUGG-001", "SUGG-002"]
-}
-```
+- `locationCode`
+- `supplierCode` — optionnel, permet de rattacher la demande au fournisseur prefere
+- `requestedBy`
 
 Comportement :
 
@@ -884,13 +1110,22 @@ Comportement :
 
 ### Approuver une demande
 
-`PATCH /inventory/procurement/purchase-requests/{requestCode}/approve`
+`PATCH /inventory/procurement/purchase-requests/{requestCode}/approve?approvedBy=MANAGER-001&supplierCode=FOURNISSEUR-001`
 
-Body :
+Parametres :
+
+- `approvedBy`
+- `supplierCode` — optionnel ; si fourni, le backend peut creer automatiquement le bon de commande associe
+
+Reponse : afficher `autoCreatedOrderCode` si present.
 
 ```json
 {
-  "approvedBy": "MANAGER-001"
+  "requestCode": "PR-202604-000001",
+  "status": "APPROVED",
+  "approvedBy": "MANAGER-001",
+  "supplierCode": "FOURNISSEUR-001",
+  "autoCreatedOrderCode": "PO-202604-000008"
 }
 ```
 
@@ -963,7 +1198,6 @@ Reponse `201` :
 Statuts (`PurchaseOrderStatus`) :
 
 - `DRAFT`
-- `PENDING_APPROVAL`
 - `APPROVED`
 - `ORDERED`
 - `PARTIALLY_RECEIVED`
@@ -1228,9 +1462,13 @@ Body :
   "assigneeType": "MEMBER",
   "assigneeCode": "MBR-000001",
   "assignedBy": "MANAGER-001",
-  "notes": "Attribution poste fixe salle B"
+  "expectedReturnAt": "2026-07-01T17:00:00Z",
+  "purpose": "Deplacment client Yaounde — reunion direction",
+  "notes": "Chargeur fourni en complement"
 }
 ```
+
+Champs obligatoires : `assigneeType`, `assigneeCode`, `assignedBy`, `expectedReturnAt`, `purpose`.
 
 Types d'affectataire (`AssetAssigneeType`) :
 
@@ -1239,6 +1477,26 @@ Types d'affectataire (`AssetAssigneeType`) :
 - `BUSINESS`
 - `ROOM`
 - `LOCATION`
+
+### Telecharger la fiche de pret PDF (NOUVEAU)
+
+`GET /inventory/assets/{assetCode}/assignments/{assignmentId}/loan-sheet.pdf`
+
+Retourne un document PDF `application/pdf` avec :
+
+- identite de l'actif (code, article, numero de serie, tag)
+- beneficiaire (type, code)
+- qui a remis l'actif (`assignedBy`)
+- date de pret et date de retour prevue
+- motif du pret (`purpose`)
+- notes
+- blocs signature (remettant / beneficiaire)
+
+Usage frontend :
+
+- bouton `Imprimer fiche de pret` sur la fiche actif ou le detail d'affectation
+- a afficher juste apres la validation de l'affectation pour signature immediate
+- conserver le lien vers la fiche tant que le statut est `ASSIGNED` ou `IN_USE`
 
 ### Reserver un actif
 
@@ -1534,12 +1792,18 @@ Reponse :
 Types d'alerte (`InventoryAlertType`) :
 
 - `LOW_STOCK`
+- `RECURRING_LOW_STOCK`
 - `OUT_OF_STOCK`
 - `NEGATIVE_STOCK`
+- `OVERSTOCK`
+- `SLOW_MOVING`
 - `EXPIRY_SOON`
-- `LOT_EXPIRED`
-- `ASSET_WARRANTY_EXPIRING`
-- `ASSET_MAINTENANCE_DUE`
+- `EXPIRY_IMMINENT`
+- `WARRANTY_SOON`
+- `MAINTENANCE_DUE`
+- `ASSET_RETURN_DUE_SOON` — retour d'actif prevu dans les 24 heures (alerte J-1)
+- `ASSET_RETURN_OVERDUE` — retour d'actif en retard
+- `SUSPICIOUS_ADJUSTMENT`
 
 Statuts (`InventoryAlertStatus`) :
 
@@ -1582,12 +1846,21 @@ Usage frontend :
 - widget alertes dans le tableau de bord
 - centre de notifications avec tri par type
 - badge counter sur l'icone inventaire
+- action rapide `Creer une tache` pour les alertes ouvertes critiques
+- les alertes `LOW_STOCK` et `RECURRING_LOW_STOCK` peuvent deja creer une tache Task cote backend avec `sourceType=INVENTORY` et `sourceCode=alertCode`
+
+Workers backend a connaitre pour les rafraichissements frontend :
+
+- reservation expiree : `inventory.worker.reservation-cron`, defaut `0 */30 * * * *`
+- expiration proche : `inventory.worker.expiry-cron`, defaut `0 0 */2 * * *`
+- stock dormant / slow moving : `inventory.worker.slow-moving-cron`, defaut `0 0 */6 * * *`
+- actifs : `inventory.worker.asset-cron`, defaut `0 0 */3 * * *`
 
 ---
 
 ## 19. Regles de reappro
 
-### Creer une regle
+### Creer ou modifier une regle
 
 `POST /inventory/reorder-rules`
 
@@ -1603,13 +1876,11 @@ Body :
 }
 ```
 
-### Modifier une regle
-
-`PUT /inventory/reorder-rules/{ruleCode}`
-
 ### Lister les regles
 
-`GET /inventory/reorder-rules?itemCode=ART-CONSOM-001&active=true`
+`GET /inventory/reorder-rules`
+
+Note frontend : le controleur actuel ne prend pas de filtres serveur sur la liste des regles. Appliquer les filtres `itemCode`, `locationCode` ou `active` cote frontend si necessaire.
 
 Reponse :
 
@@ -1637,22 +1908,66 @@ Reponse :
 ```json
 [
   {
-    "suggestionCode": "SUGG-001",
     "itemCode": "ART-CONSOM-001",
     "itemName": "Capsules cafe",
+    "itemType": "CONSUMABLE",
+    "categoryCode": "CAT-CONSOM",
+    "categoryName": "Consommables",
+    "unitCode": "PCS",
+    "unitName": "Piece",
     "locationCode": "OFFICE-A",
+    "locationName": "Bureau A",
+    "ruleScope": "LOCATION",
     "currentQuantity": 5,
-    "minimumQuantity": 20,
-    "suggestedOrderQuantity": 100,
-    "estimatedCost": 50000
+    "quantityOnHand": 5,
+    "quantityReserved": 0,
+    "minQuantity": 20,
+    "maxQuantity": 200,
+    "reorderQuantity": 95,
+    "targetQuantity": 200,
+    "shortageQuantity": 15,
+    "estimatedUnitCost": 500,
+    "estimatedOrderCost": 47500,
+    "preferredSupplierCode": "FOURNISSEUR-001",
+    "severity": "HIGH",
+    "reasonCode": "BELOW_MINIMUM",
+    "reason": "Stock inferieur au minimum configure",
+    "priorityScore": 87,
+    "consumptionRateLast30Days": 3.5,
+    "consumptionRatePrev30Days": 2.9,
+    "consumptionTrend": "RISING",
+    "consumptionTrendPercent": 21,
+    "daysOfStockRemaining": 2,
+    "quantityOnOrder": 5,
+    "recommendedOrderByDate": "2026-06-10T08:00:00Z",
+    "bestSupplierCode": "FOURNISSEUR-001",
+    "bestSupplierPrice": 480,
+    "bestSupplierLeadTimeDays": 3
   }
 ]
 ```
+
+Champs cles :
+
+| Champ | Description |
+|-------|-------------|
+| `reorderQuantity` | Quantite a commander, **nette** des commandes deja en cours (`quantityOnOrder`). Augmentee automatiquement de 20 % si la tendance est `RISING` et `consumptionTrendPercent > 20`. |
+| `shortageQuantity` | Rupture nette apres deduction des commandes ouvertes. |
+| `quantityOnOrder` | Cumul des lignes ouvertes sur POs en statut `DRAFT`/`APPROVED`/`ORDERED`/`PARTIALLY_RECEIVED`. `null` si aucune commande ouverte. |
+| `consumptionTrend` | `RISING` si consommation 30j > periode precedente de +10 %, `FALLING` si baisse >10 %, sinon `STABLE`. |
+| `consumptionTrendPercent` | Variation en % entre les deux fenetres de 30 jours. `null` si donnees insuffisantes. |
+| `recommendedOrderByDate` | Date avant laquelle passer commande pour eviter la rupture, calculee avec le delai fournisseur. |
+| `bestSupplierCode/Price/LeadTimeDays` | Meilleur fournisseur associe a l'article (rapport prix/delai). Remplace `preferredSupplierCode` comme reference principale. |
 
 Usage frontend :
 
 - bouton `Creer une demande d'achat depuis les suggestions`
 - widget suggestions de reappro dans le tableau de bord achat
+- tri recommande : `severity`, puis `daysOfStockRemaining`, puis `priorityScore`
+- afficher `consumptionTrend` avec icone fleche (↑ rouge / → jaune / ↓ vert) a cote du taux de consommation
+- afficher `recommendedOrderByDate` en badge urgent si < 2 jours
+- afficher `quantityOnOrder` pour expliquer pourquoi la quantite suggere est reduite
+- afficher `bestSupplierCode` + `bestSupplierPrice` + `bestSupplierLeadTimeDays` dans la colonne fournisseur
 
 ---
 
@@ -1706,23 +2021,58 @@ Reponse :
 
 ```json
 {
-  "type": "asset",
+  "labelType": "asset",
   "code": "AST-001",
-  "name": "Chaise de bureau",
-  "barcode": "AST-001",
-  "qrContent": "AST-001",
-  "metadata": {
-    "serialNumber": "SN-20260410-001",
-    "assetTag": "TAG-001",
-    "locationName": "Entrepot principal"
-  }
+  "displayText": "Chaise de bureau",
+  "barcodeValue": "AST-001",
+  "qrValue": "AST-001"
 }
+```
+
+### Obtenir plusieurs etiquettes
+
+`POST /inventory/admin/labels`
+
+Body :
+
+```json
+{
+  "items": [
+    {
+      "type": "asset",
+      "code": "AST-001"
+    },
+    {
+      "type": "item",
+      "code": "ART-CONSOM-001"
+    },
+    {
+      "type": "location",
+      "code": "ENTREPOT-A"
+    }
+  ]
+}
+```
+
+Reponse :
+
+```json
+[
+  {
+    "labelType": "asset",
+    "code": "AST-001",
+    "displayText": "Chaise de bureau",
+    "barcodeValue": "AST-001",
+    "qrValue": "AST-001"
+  }
+]
 ```
 
 Usage frontend :
 
 - generation d'etiquettes imprimables (code QR ou code barre)
 - action `Imprimer etiquette` sur la fiche actif ou article
+- selection multiple dans les listes article, actif, emplacement et lot
 
 ---
 
@@ -1730,15 +2080,23 @@ Usage frontend :
 
 ### Rapport de mouvements (JSON)
 
-`GET /inventory/admin/reports/movements?itemCode=ART-001&locationCode=ENTREPOT-A&from=2026-04-01&to=2026-04-30`
+`GET /inventory/admin/reports/movements?itemCode=ART-001&locationCode=ENTREPOT-A&fromDate=2026-04-01&toDate=2026-04-30`
+
+Parametres :
+
+- `itemCode` — optionnel
+- `locationCode` — optionnel
+- `fromDate` — optionnel, date `YYYY-MM-DD` ou instant ISO
+- `toDate` — optionnel, date `YYYY-MM-DD` ou instant ISO
 
 ### Export CSV
 
-`GET /inventory/admin/reports/movements.csv?from=2026-04-01&to=2026-04-30`
+`GET /inventory/admin/reports/movements.csv?fromDate=2026-04-01&toDate=2026-04-30`
 
 Comportement :
 
 - retourne un fichier `.csv` en attachment
+- le CSV est structure pour la lecture humaine avec sections de synthese, filtres, lignes de mouvements, totaux et anomalies liees
 
 Usage frontend :
 
@@ -1746,11 +2104,12 @@ Usage frontend :
 
 ### Export PDF
 
-`GET /inventory/admin/reports/movements.pdf?from=2026-04-01&to=2026-04-30`
+`GET /inventory/admin/reports/movements.pdf?fromDate=2026-04-01&toDate=2026-04-30`
 
 Comportement :
 
 - retourne un fichier `.pdf` en attachment
+- utiliser le `Content-Disposition` backend pour le nom de fichier si present
 
 ### Rapport d'anomalies
 
@@ -1774,39 +2133,46 @@ Reponse :
 
 ### Importer des articles
 
-`POST /inventory/import/items`
+`POST /inventory/import/ITEMS?dryRun=false`
 
 Type de contenu : `multipart/form-data`
 
 Champs :
 
 - `file` — fichier CSV ou Excel
+- `dryRun` — query param optionnel, `false` par defaut
 
 ### Importer des actifs
 
-`POST /inventory/import/assets`
+`POST /inventory/import/ASSETS?dryRun=false`
 
 ### Importer des niveaux de stock initiaux
 
-`POST /inventory/import/stock`
+`POST /inventory/import/INITIAL_STOCK?dryRun=false`
 
-### Telecharger un template d'import
+### Importer des fournisseurs
 
-`GET /inventory/import/template/{type}`
+`POST /inventory/import/SUPPLIERS?dryRun=false`
 
 Types (`type`) :
 
-- `items`
-- `assets`
-- `stock`
+- `ITEMS`
+- `INITIAL_STOCK`
+- `SUPPLIERS`
+- `ASSETS`
 
-Comportement : retourne un fichier CSV avec les colonnes attendues
+Note frontend :
+
+- la route canonique est `POST /inventory/import/{type}`
+- aucun endpoint template n'est expose par le controleur actuel ; garder les templates CSV cote frontend si necessaire
 
 Reponse d'import :
 
 ```json
 {
   "importType": "ITEMS",
+  "fileName": "items.csv",
+  "dryRun": false,
   "totalRows": 50,
   "successCount": 48,
   "errorCount": 2,
@@ -1857,10 +2223,11 @@ Usage frontend :
 
 1. Creer l'actif depuis une fiche article de type `ASSET`.
 2. L'actif est `AVAILABLE` et rattache a un emplacement.
-3. Affecter l'actif a un membre, espace ou emplacement.
-4. Si probleme, creer une maintenance.
-5. Apres maintenance, retourner l'actif et changer son statut.
-6. En fin de vie, retirer l'actif (`retire`) ou le marquer `LOST`.
+3. Affecter l'actif — renseigner `assigneeCode`, `assignedBy`, `expectedReturnAt` et `purpose` (tous obligatoires).
+4. Telecharger la fiche de pret PDF (`GET .../loan-sheet.pdf`) et la faire signer.
+5. Si probleme, creer une maintenance.
+6. Apres maintenance, retourner l'actif et changer son statut.
+7. En fin de vie, retirer l'actif (`retire`) ou le marquer `LOST`.
 
 ### Comptage physique
 
@@ -2023,9 +2390,18 @@ Usage :
 
 Contenu recommande :
 
-- formulaire identique a l'entree mais en retrait
-- afficher le stock disponible apres confirmation
+- formulaire :
+  - article (autocomplete)
+  - emplacement
+  - quantite
+  - **motif structuré `reasonCode`** (select obligatoire) + commentaire libre `reasonDetails` (optionnel sauf si `OTHER`)
+  - **`performedBy`** (obligatoire)
+  - lot (select pre-alimente via `GET /inventory/items/{itemCode}/lots` si `requiresLotNumber = true`)
+  - numeros de serie (multi-select via `GET /inventory/items/{itemCode}/serials?status=AVAILABLE` si `requiresSerialNumber = true`)
+  - reference externe (`referenceType` + `referenceCode`)
+- afficher le stock disponible en temps reel
 - avertissement si stock insuffisant
+- en cas de 409 `LOT_NOT_FOUND` : afficher un dialogue avec option `Corriger le numero de lot` ou `Creer ce lot`
 
 ---
 
@@ -2141,7 +2517,7 @@ Contenu recommande :
 - fiche actif :
   - en-tete avec statut et condition
   - informations financieres (cout achat, depreciation)
-  - onglet `Affectation`
+  - onglet `Affectation` — afficher `purpose`, `expectedReturnAt`, badge `Retour prevu dans N jours`, bouton `Telecharger fiche de pret PDF`
   - onglet `Maintenance`
   - onglet `Historique localisation`
   - boutons d'action selon le statut actuel
@@ -2245,6 +2621,17 @@ Contenu recommande :
   - quantite de reappro suggere
   - actif / inactif
 - bouton `Generer une demande d'achat` depuis les suggestions
+
+### 15bis. Ecran suggestions de reappro (enrichi)
+
+Contenu recommande pour chaque suggestion :
+
+- colonne `Tendance` : icone fleche + `consumptionTrendPercent` (↑ rouge si `RISING`, → gris si `STABLE`, ↓ vert si `FALLING`)
+- colonne `Stock restant` : `daysOfStockRemaining` jours + barre de progression
+- colonne `Commander avant` : `recommendedOrderByDate` avec badge rouge si < 2 jours
+- colonne `Quantite suggere` : `reorderQuantity` avec mention `(X deja en commande)` si `quantityOnOrder > 0`
+- colonne `Meilleur fournisseur` : `bestSupplierCode` + prix + delai
+- action `Commander` : pre-remplit le formulaire de demande d'achat avec la quantite nette et le meilleur fournisseur
 
 ---
 
@@ -2353,6 +2740,10 @@ Contenu recommande :
 - `StockLevelTable`
 - `SupplierPerformanceCard`
 - `ReorderSuggestionWidget`
+- `ConsumptionTrendBadge`
+- `LotSelectorDropdown`
+- `SerialNumberMultiSelect`
+- `LoanSheetPdfButton`
 - `ImportResultReport`
 - `BarcodeLabel`
 - `MaintenanceCard`
@@ -2366,6 +2757,11 @@ Contenu recommande :
 - rendre visible le niveau d'approbation requis en cours de saisie du bon de commande selon le montant
 - sur mobile, remplacer les tableaux par des cartes avec actions swipe
 - afficher le numero de lot et la date d'expiration sur chaque sortie d'article traque par lot
+- pour les sorties d'articles avec `requiresSerialNumber = true`, afficher un multi-select des numeros disponibles — ne pas laisser saisir en texte libre
+- pour les sorties avec `requiresLotNumber = true`, toujours pre-charger la liste des lots via `GET /inventory/items/{itemCode}/lots` — ne pas laisser saisir le numero de lot en texte libre
+- sur la fiche de pret, rendre le bouton `Telecharger PDF` visible immediatement apres l'affectation
+- afficher l'alerte `ASSET_RETURN_DUE_SOON` dans le tableau de bord de gestion des actifs avec indication de la date de retour prevue
+- indiquer visuellement la tendance de consommation (`RISING`/`STABLE`/`FALLING`) sur les widgets de suggestions de reappro
 
 ---
 
@@ -2385,6 +2781,7 @@ Contenu recommande :
 - `StockReservationListPage`
 - `StockTransferListPage`
 - `LotListPage`
+- `SerialListPage`
 
 ### Cote achats
 
@@ -2467,3 +2864,10 @@ Ordre recommande :
 - alerte deja resolue lors d'une action doublon
 - fichier import incompatible (colonnes manquantes, format incorrect)
 - montant bon de commande depassant le seuil sans approbateur disponible
+- **sortie / transfert sans `reasonCode`** → 400 (champ obligatoire)
+- **sortie / transfert sans `performedBy`** → 400 (champ obligatoire)
+- **`referenceType` fourni sans `referenceCode`** → 400 (validation croisee)
+- **lot non trouve (`LOT_NOT_FOUND`)** → 409 ; proposer la selection d'un lot existant ou relancer avec `confirmCreateLot: true`
+- **numero de serie non disponible sur l'emplacement** → 400 ; verifier la liste via `GET /inventory/items/{itemCode}/serials`
+- **nombre de numeros de serie ne correspond pas a la quantite** → 400
+- **affectation d'actif sans `purpose`, `assignedBy` ou `expectedReturnAt`** → 400 (champs desormais obligatoires)

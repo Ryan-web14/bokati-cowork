@@ -5,7 +5,10 @@ import com.sni.bokaticowork.features.notification.model.NotificationMessage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -24,6 +27,30 @@ public interface NotificationMessageRepository extends JpaRepository<Notificatio
     List<NotificationMessage> findByRecipientEmailAndStatusOrderBySentAtDesc(String recipientEmail,
                                                                               NotificationDeliveryStatus status,
                                                                               Pageable pageable);
+
+    List<NotificationMessage> findByRecipientEmailAndReadAtIsNullAndStatusInOrderBySentAtDesc(String recipientEmail,
+                                                                                               Set<NotificationDeliveryStatus> statuses,
+                                                                                               Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = """
+            UPDATE notification_message
+            SET read_at = :readAt, updated_at = :readAt
+            WHERE notification_number = :notificationNumber
+              AND read_at IS NULL
+            """)
+    int markOneAsRead(@Param("notificationNumber") String notificationNumber, @Param("readAt") Instant readAt);
+
+    @Modifying
+    @Transactional
+    @Query(nativeQuery = true, value = """
+            UPDATE notification_message
+            SET read_at = :readAt, updated_at = :readAt
+            WHERE recipient_email = :recipientEmail
+              AND read_at IS NULL
+            """)
+    int markAllAsRead(@Param("recipientEmail") String recipientEmail, @Param("readAt") Instant readAt);
 
     @Query(value = """
             SELECT message.*

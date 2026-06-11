@@ -22,6 +22,7 @@ import com.sni.bokaticowork.features.crm.service.interfaces.CrmEmailService;
 import com.sni.bokaticowork.features.crm.service.interfaces.CrmService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -125,8 +126,9 @@ public class CrmServiceImpl implements CrmService {
         String stageStr  = stage  != null ? stage.name()  : null;
         String sourceStr = source != null ? source.name() : null;
         String text      = StringUtils.hasText(searchText) ? searchText.trim() : null;
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return new PaginatedResponse<>(
-                leadRepository.search(stageStr, assignedTo, sourceStr, text, pageable)
+                leadRepository.search(stageStr, assignedTo, sourceStr, text, unsortedPageable)
                         .map(this::response));
     }
 

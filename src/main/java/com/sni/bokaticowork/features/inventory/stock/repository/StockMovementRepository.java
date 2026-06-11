@@ -240,4 +240,18 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
     boolean existsByItemIdAndMovementTypeInAndPerformedAtAfter(Long itemId,
                                                                java.util.Collection<StockMovementType> movementTypes,
                                                                Instant performedAt);
+
+    @Query(value = """
+            SELECT COALESCE(SUM(sm.quantity), 0)
+            FROM stock_movement sm
+            WHERE sm.item_id = :itemId
+              AND sm.movement_type IN ('OUT', 'ADJUSTMENT_OUT')
+              AND (:locationId IS NULL OR sm.location_from_id = :locationId)
+              AND sm.performed_at >= :from
+              AND sm.performed_at < :to
+            """, nativeQuery = true)
+    BigDecimal consumptionBetween(@Param("itemId") Long itemId,
+                                  @Param("locationId") Long locationId,
+                                  @Param("from") Instant from,
+                                  @Param("to") Instant to);
 }

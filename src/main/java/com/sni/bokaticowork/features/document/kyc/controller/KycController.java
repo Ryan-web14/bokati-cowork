@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.document.kyc.controller;
 
 import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
+import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
@@ -19,6 +20,8 @@ import com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementSta
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycTimelineEntryResponse;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import lombok.RequiredArgsConstructor;
@@ -50,7 +53,7 @@ public class KycController {
     }
 
     @GetMapping
-    public ResponseEntity<List<KycCaseResponse>> list(
+    public ResponseEntity<PaginatedResponse<KycCaseResponse>> list(
             @RequestParam(required = false) KycCaseStatus status,
             @RequestParam(required = false) DocumentOwnerType ownerType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant submittedAfter,
@@ -58,10 +61,11 @@ public class KycController {
             @RequestParam(required = false) Long reviewedBy,
             @RequestParam(required = false) Boolean pendingReviewOnly,
             @RequestParam(required = false) Integer expiringWithinDays,
-            @RequestParam(required = false) KycRiskLevel riskLevel
+            @RequestParam(required = false) KycRiskLevel riskLevel,
+            @PageableDefault(size = 20, sort = "startedAt") Pageable pageable
     ) {
         return ResponseEntity.ok(service.search(status, ownerType, submittedAfter, submittedBefore, reviewedBy,
-                pendingReviewOnly, expiringWithinDays, riskLevel));
+                pendingReviewOnly, expiringWithinDays, riskLevel, pageable));
     }
 
     @GetMapping("/dashboard")
@@ -70,13 +74,17 @@ public class KycController {
     }
 
     @GetMapping("/expiring-soon")
-    public ResponseEntity<List<KycCaseResponse>> expiringSoon(@RequestParam(defaultValue = "30") Integer days) {
-        return ResponseEntity.ok(service.expiringSoon(days));
+    public ResponseEntity<PaginatedResponse<KycCaseResponse>> expiringSoon(
+            @RequestParam(defaultValue = "30") Integer days,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(service.expiringSoon(days, pageable));
     }
 
     @GetMapping("/my-queue")
-    public ResponseEntity<List<KycCaseResponse>> myQueue(@RequestParam(required = false) Long userId) {
-        return ResponseEntity.ok(service.myQueue(userId));
+    public ResponseEntity<PaginatedResponse<KycCaseResponse>> myQueue(
+            @RequestParam(required = false) Long userId,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(service.myQueue(userId, pageable));
     }
 
     @PostMapping("/{code}/submit")

@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.support;
 
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.security.admin.user.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,12 @@ public class CashEmailNotifier {
 
     public void notifySupervisor(String subject, String message, String reference, String actionPath) {
         send(supervisorFallbackEmail, "responsable", subject, message, reference, actionPath);
+    }
+
+    public void notifyRegisterManager(CashRegister register, String subject, String message, String reference, String actionPath) {
+        String to = StringUtils.hasText(register.getManagerEmail()) ? register.getManagerEmail() : supervisorFallbackEmail;
+        String recipientName = StringUtils.hasText(register.getManagerEmail()) ? register.getName() : "responsable";
+        send(to, recipientName, subject, message, reference, actionPath);
     }
 
     private void send(String to, String recipientName, String subject, String message, String reference, String actionPath) {

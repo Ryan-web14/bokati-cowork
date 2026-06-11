@@ -45,7 +45,7 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     @Override
     @Transactional
     public ServiceCatalogItemResponse create(CreateServiceCatalogItemRequest request) {
-        String itemCode = sequenceGenerator.next("billing_service_catalog");
+        String itemCode = sequenceGenerator.next("service_catalog_item");
         ServiceCatalogItem item = ServiceCatalogItem.builder()
                 .itemCode(itemCode)
                 .name(request.name())
@@ -64,7 +64,8 @@ public class ServiceCatalogServiceImpl implements ServiceCatalogService {
     @Override
     @Transactional(readOnly = true)
     public Page<ServiceCatalogItemResponse> list(Boolean active, String category, String searchText, Pageable pageable) {
-        return catalogItemRepository.search(active, category, searchText, pageable)
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return catalogItemRepository.search(active, category, searchText, unsortedPageable)
                 .map(this::toResponse);
     }
 

@@ -37,6 +37,8 @@ public interface BookingService {
 
     List<BookingResponse> basicSearch(String query);
 
+    List<com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse> cancellationPolicies();
+
     BookingResponse confirm(String bookingNumber, BookingStatusChangeRequest request);
 
     BookingResponse approve(String bookingNumber, BookingApprovalRequest request);

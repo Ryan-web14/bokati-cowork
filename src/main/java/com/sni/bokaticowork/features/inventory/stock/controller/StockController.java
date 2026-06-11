@@ -8,9 +8,11 @@ import com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockOutRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockReservationRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockTransferRequest;
+import com.sni.bokaticowork.features.inventory.stock.dto.response.InventorySerialResponse;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockLevelResponse;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockMovementResponse;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockReservationResponse;
+import com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReservationStatus;
@@ -25,6 +27,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -106,6 +109,13 @@ public class StockController {
                                                            @RequestParam(required = false) Boolean lowStock,
                                                            @PageableDefault(size = 20, sort = "item.name") Pageable pageable) {
         return ResponseEntity.ok(service.searchLevels(itemCode, locationCode, categoryCode, availableOnly, lowStock, pageable));
+    }
+
+    @GetMapping(ApiPath.V1 + "/inventory/items/{itemCode}/serials")
+    public ResponseEntity<List<InventorySerialResponse>> serials(@PathVariable String itemCode,
+                                                                  @RequestParam(required = false) String locationCode,
+                                                                  @RequestParam(required = false) InventorySerialStatus status) {
+        return ResponseEntity.ok(service.getSerials(itemCode, locationCode, status));
     }
 
     @GetMapping("/movements")

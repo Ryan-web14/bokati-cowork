@@ -73,4 +73,12 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             LIMIT 1
             """)
     Optional<PaymentTransaction> findSucceededByPaymentIntentId(@Param("paymentIntentId") Long paymentIntentId);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM payment_transaction
+            WHERE metadata_json ->> 'originalTransactionNumber' = :transactionNumber
+            ORDER BY created_at ASC
+            """)
+    List<PaymentTransaction> findAllByOriginalTransactionNumber(@Param("transactionNumber") String transactionNumber);
 }

@@ -31,6 +31,10 @@ public interface NotificationService {
 
     List<NotificationMessageResponse> listUnread(String recipientEmail, int limit);
 
+    NotificationMessageResponse markAsRead(String notificationNumber);
+
+    int markAllRead(String recipientEmail);
+
     NotificationTemplateResponse upsertTemplate(NotificationTemplateRequest request);
 
     List<NotificationTemplateResponse> listTemplates(NotificationChannel channel, Boolean active);

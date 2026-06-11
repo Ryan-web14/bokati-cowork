@@ -63,6 +63,28 @@ L'outbox traite ensuite l'evenement et cree les notifications/webhook deliveries
 
 Filtres disponibles: `status`, `channel`, `eventType`, `recipientEmail`, `search`, pagination Spring.
 
+## Notifications Non Lues
+
+`GET /notifications/unread?limit=20`
+
+Retourne les notifications de l'utilisateur authentifie (`recipientEmail` deduit du token) qui ont ete envoyees (statut `SENT` ou `DELIVERED`) et dont `readAt` est encore `null`. `limit` est plafonne a 50.
+
+## Marquer Toutes Les Notifications Comme Lues
+
+`PATCH /notifications/mark-all-read`
+
+Marque comme lues (`readAt = now()`) toutes les notifications de l'utilisateur authentifie qui ne l'etaient pas encore.
+
+Reponse:
+
+```json
+{
+  "updated": 7
+}
+```
+
+`updated` indique le nombre de notifications passees a l'etat lu.
+
 ## Retry Notification
 
 `PATCH /notifications/{notificationNumber}/retry`

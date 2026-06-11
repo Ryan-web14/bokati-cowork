@@ -91,6 +91,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .active(true)
                 .cashControlEnabled(request.cashControlEnabled() == null || request.cashControlEnabled())
                 .maxCashAmount(request.maxCashAmount() == null ? null : money(request.maxCashAmount()))
+                .managerEmail(trim(request.managerEmail()))
                 .build());
         return mapper.toCashRegisterResponse(register);
     }
@@ -281,6 +282,12 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashMovement movement = movementByNumber(movementNumber);
         movement.setPrintedAt(Instant.now());
         return mapper.toCashMovementResponse(movementRepository.save(movement));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CashMovementResponse getMovement(String movementNumber) {
+        return mapper.toCashMovementResponse(movementByNumber(movementNumber));
     }
 
     private CashMovement movementByNumber(String movementNumber) {

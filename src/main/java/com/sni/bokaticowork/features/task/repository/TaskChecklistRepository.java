@@ -7,9 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskChecklistRepository extends JpaRepository<TaskChecklist, Long> {
     List<TaskChecklist> findAllByTaskOrderByDisplayOrderAscIdAsc(TaskItem task);
+
+    Optional<TaskChecklist> findByIdAndTask_Id(Long id, Long taskId);
 
     @Query("""
             SELECT c.task.id, COUNT(c),

@@ -151,12 +151,19 @@ public class SupportInboundEmailWorker {
                     String documentCode = "ATT-" + ticket.getTicketNumber() + "-" + Instant.now().toEpochMilli() + "-" + idx;
                     var stored = documentStorageService.storeBytes(
                             "support/" + ticket.getTicketNumber(), documentCode, 1, fileName, content);
+                    String contentType = StringUtils.hasText(fa.getContentType()) ? fa.getContentType() : "application/octet-stream";
 
                     attachmentRepository.save(TicketAttachment.builder()
                             .ticket(ticket)
                             .message(ticketMessage)
-                            .documentCode(stored.storagePath())
+                            .documentCode(documentCode)
                             .fileName(fileName)
+                            .storageProvider(stored.provider())
+                            .storagePath(stored.storagePath())
+                            .contentType(contentType)
+                            .fileSize((long) content.length)
+                            .internal(false)
+                            .active(true)
                             .build());
 
                     log.info("Stored attachment '{}' for ticket {}", fileName, ticket.getTicketNumber());

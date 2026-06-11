@@ -8,14 +8,24 @@ import com.sni.bokaticowork.features.booking.repository.BookingQuotaOverrideRepo
 import com.sni.bokaticowork.features.booking.repository.BookingRepository;
 import com.sni.bokaticowork.features.ressource.model.Resource;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
+import com.sni.bokaticowork.features.support.dto.SupportDtos.CreateTicketRequest;
+import com.sni.bokaticowork.features.support.enums.TicketCategory;
+import com.sni.bokaticowork.features.support.enums.TicketPriority;
+import com.sni.bokaticowork.features.support.service.interfaces.SupportTicketService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class BookingPolicyEnforcer {
@@ -23,6 +33,8 @@ public class BookingPolicyEnforcer {
     private final BookingAudiencePolicyRepository policyRepository;
     private final BookingQuotaOverrideRepository overrideRepository;
     private final BookingRepository bookingRepository;
+    private final PlatformTransactionManager transactionManager;
+    @Lazy private final SupportTicketService supportTicketService;
 
     public EffectivePolicy enforce(SubscriberType ownerType, String ownerCode, Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
         BookingAudiencePolicy policy = policyRepository.findEffective(
@@ -67,11 +79,33 @@ public class BookingPolicyEnforcer {
         if (policy.getMaxNoShowsPerMonth() != null) {
             long noShows = bookingRepository.countNoShowsForOwnerBetween(ownerType.name(), ownerCode, monthStart.atStartOfDay(), monthStart.plusMonths(1).atStartOfDay());
             if (noShows >= policy.getMaxNoShowsPerMonth()) {
+                createNoShowTicket(ownerType, ownerCode, noShows);
                 throw new ConflictException("booking policy", "monthly no-show quota exceeded");
             }
         }
 
         return new EffectivePolicy(Boolean.TRUE.equals(policy.getApprovalRequired()));
+    }
+
+    private void createNoShowTicket(SubscriberType ownerType, String ownerCode, long noShows) {
+        try {
+            TransactionTemplate template = new TransactionTemplate(transactionManager);
+            template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            template.executeWithoutResult(status -> supportTicketService.createFromAutomation(new CreateTicketRequest(
+                    "Quota mensuel de no-show dépassé — " + ownerCode,
+                    "Le client " + ownerCode + " (" + ownerType.name() + ") a atteint " + noShows
+                            + " absence(s) non justifiée(s) ce mois-ci, dépassant le quota autorisé par sa politique de réservation.",
+                    TicketPriority.HIGH,
+                    TicketCategory.BOOKING,
+                    ownerType.name(),
+                    ownerCode,
+                    null, null, null,
+                    "BOOKING_NO_SHOW_QUOTA",
+                    ownerCode
+            )));
+        } catch (Exception ex) {
+            log.warn("Failed to create support ticket for no-show quota breach of owner {}/{}", ownerType, ownerCode, ex);
+        }
     }
 
     private void checkLimit(Integer baseLimit, int extra, long current, String message) {

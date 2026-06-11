@@ -352,7 +352,7 @@
             <td class="muted" style="font-size:8.5px;" th:text="${movement.movementCode}">STM</td>
             <td>
                 <span class="badge badge-neutral"
-                      th:classappend="${movement.movementType != null and movement.movementType.contains('IN') ? ' badge-in' : (movement.movementType != null and movement.movementType.contains('OUT') ? ' badge-out' : '')}"
+                      th:classappend="${movement.movementType != null and movement.movementType.name().contains('IN') ? ' badge-in' : (movement.movementType != null and movement.movementType.name().contains('OUT') ? ' badge-out' : '')}"
                       th:text="${movement.movementType}">IN</span>
             </td>
             <td>

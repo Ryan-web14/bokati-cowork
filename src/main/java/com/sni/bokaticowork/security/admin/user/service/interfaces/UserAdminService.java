@@ -11,13 +11,13 @@ public interface UserAdminService {
     AdminUserResponse createUser(AdminCreateUserRequest request, String assignedBy);
     PaginatedResponse<AdminUserResponse> list(String email, Boolean enabled, Boolean locked, Boolean deleted, Pageable pageable);
     java.util.List<AdminUserResponse> searchByName(String query);
-    AdminUserResponse getById(Long id);
+    AdminUserResponse getByCode(String userCode);
     AdminUserResponse getByEmail(String email);
-    AdminUserResponse update(Long id, AdminUpdateUserRequest request, String assignedBy);
-    AdminUserResponse activate(Long id);
-    AdminUserResponse deactivate(Long id);
-    AdminUserResponse unlock(Long id);
-    AdminUserResponse resetPassword(Long id, AdminResetUserPasswordRequest request);
+    AdminUserResponse update(String userCode, AdminUpdateUserRequest request, String assignedBy);
+    AdminUserResponse activate(String userCode);
+    AdminUserResponse deactivate(String userCode);
+    AdminUserResponse unlock(String userCode);
+    AdminUserResponse resetPassword(String userCode, AdminResetUserPasswordRequest request);
     void initiatePasswordReset(String userId, String actor);
-    void archive(Long id);
+    void archive(String userCode);
 }

@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.document.documentMaster.dto.response;
 
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentCategory;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus;
 import lombok.Builder;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.Data;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -17,6 +19,8 @@ public class DocumentResponse {
     private Long ownerId;
     private DocumentOwnerType ownerType;
     private DocumentCategory category;
+    private DocumentSpace space;
+    private String spaceReferenceCode;
     private String documentTypeCode;
     private String documentTypeName;
     private String title;
@@ -36,4 +40,6 @@ public class DocumentResponse {
     private Instant uploadedAt;
     private Instant updatedAt;
     private List<DocumentVersionResponse> versions;
+    private List<DocumentTagResponse> tags;
+    private Map<String, String> metadata;
 }

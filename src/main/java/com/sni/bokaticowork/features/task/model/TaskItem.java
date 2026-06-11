@@ -31,7 +31,10 @@ public class TaskItem {
     private String sourceCode;
     @Enumerated(EnumType.STRING)
     private TaskRecurrence recurrence;
+    private Long parentTaskId;
     private Instant completedAt;
+    private Instant dueSoonAlertSentAt;
+    private Instant overdueAlertSentAt;
     private Instant createdAt;
     private Instant updatedAt;
 

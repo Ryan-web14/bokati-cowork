@@ -95,7 +95,7 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (HttpMethod.GET.matches(method)) return permission("CASH", "READ");
             return permission("CASH", "ADJUST");
         }
-        if (path.startsWith("/bookings")) {
+        if (path.startsWith("/bookings") || path.startsWith("/client/bookings")) {
             if (path.contains("/check-in") || path.contains("/check-out")) return permission("BOOKING", "CHECKIN");
             if (path.contains("/cancel") || path.contains("/reject") || path.contains("/no-show")) return permission("BOOKING", "CANCEL");
             return permission("BOOKING", actionFor(method));
@@ -109,11 +109,17 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("KYC", "READ");
         }
         if (path.startsWith("/documents")) {
-            if (path.contains("/approve")) return permission("DOCUMENT", "APPROVE");
+            if (path.contains("/approve") || path.contains("/reject") ||
+                path.contains("/request-correction") || path.contains("/restore") ||
+                path.contains("/archive") || path.contains("/analytics") ||
+                path.contains("/export") || path.contains("/access-logs")) {
+                return permission("DOCUMENT", "REVIEW");
+            }
             if (HttpMethod.POST.matches(method)) return permission("DOCUMENT", "UPLOAD");
             return permission("DOCUMENT", "READ");
         }
-        if (path.startsWith("/subscriptions") || path.startsWith("/subscription")) {
+        if (path.startsWith("/subscriptions") || path.startsWith("/subscription")
+                || path.startsWith("/passes") || path.startsWith("/usage-records")) {
             if (path.contains("/activate") || path.contains("/renew") || path.contains("/resume")) return permission("SUBSCRIPTION", "ACTIVATE");
             if (path.contains("/cancel") || path.contains("/suspend") || path.contains("/pause")) return permission("SUBSCRIPTION", "CANCEL");
             return permission("SUBSCRIPTION", actionFor(method));
@@ -122,8 +128,9 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("/approve")) return permission("INVENTORY", "APPROVE");
             return permission("INVENTORY", actionFor(method));
         }
-        if (path.startsWith("/resources")) {
+        if (path.startsWith("/resources") || path.startsWith("/resource-")) {
             if (path.contains("price") || path.contains("pricing")) return permission("RESOURCE", "PRICE");
+            if (path.contains("/gallery") || path.contains("/photos")) return permission("RESOURCE", "GALLERY");
             return permission("RESOURCE", actionFor(method));
         }
         if (path.startsWith("/analytics") || path.startsWith("/reports") || path.startsWith("/reporting")) {
@@ -135,9 +142,11 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("/check-in") || path.contains("/check-out")) return permission("VISITOR", "CHECKIN");
             return permission("VISITOR", HttpMethod.GET.matches(method) ? "READ" : "WRITE");
         }
-        if (path.startsWith("/support")) {
+        if (path.startsWith("/support") || path.startsWith("/client/support")) {
             if (path.contains("/assign")) return permission("SUPPORT", "ASSIGN");
-            if (path.contains("/metrics")) return permission("SUPPORT", "METRICS");
+            if (path.contains("/metrics") || path.contains("/analytics") || path.contains("/performance")) {
+                return permission("SUPPORT", "METRICS");
+            }
             return permission("SUPPORT", HttpMethod.GET.matches(method) ? "READ" : "WRITE");
         }
         if (path.startsWith("/tasks")) {
@@ -150,6 +159,27 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         }
         if (path.startsWith("/countries") || path.startsWith("/currency") || path.startsWith("/currencies")) {
             return permission("SYSTEM", "SETTINGS");
+        }
+        if (path.startsWith("/wallets") || path.startsWith("/wallet-holds")
+                || path.startsWith("/payment-links") || path.startsWith("/billable-items")) {
+            if (path.contains("refund")) return permission("PAYMENT", "REFUND");
+            return permission("PAYMENT", HttpMethod.GET.matches(method) ? "READ" : "PROCESS");
+        }
+        if (path.startsWith("/promotions")) {
+            return permission("BILLING", actionFor(method));
+        }
+        if (path.startsWith("/contracts")) {
+            return permission("BILLING", actionFor(method));
+        }
+        if (path.startsWith("/notifications")) {
+            return permission("ADMIN", "ACCESS");
+        }
+        if (path.startsWith("/businesses") || path.startsWith("/document-types")
+                || path.startsWith("/document-requirements") || path.startsWith("/document-retention-policies")) {
+            return permission("SYSTEM", "SETTINGS");
+        }
+        if (path.startsWith("/review")) {
+            return permission("DOCUMENT", "REVIEW");
         }
 
         return null;

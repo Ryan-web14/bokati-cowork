@@ -59,20 +59,27 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
             return authenticationAndCreateSesison(token, httpReq);
     }
 
+    @Transactional
     public LoginResponse refreshToken(RefreshTokenRequest request, HttpServletRequest httpReq) {
         String oldRefreshToken = request.getRefreshToken();
         var storedRefreshToken = refreshTokenService.getActiveToken(oldRefreshToken);
-        Users user = storedRefreshToken.getUser();
+        Users staleUser = storedRefreshToken.getUser();
 
-        if (!jwtService.isTokenValid(oldRefreshToken, user)) {
+        if (!jwtService.isTokenValid(oldRefreshToken, staleUser)) {
             refreshTokenService.revokeToken(oldRefreshToken);
             sessionService.invalidateSessionByToken(oldRefreshToken);
             throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
         }
 
+        // Reload user within this transaction so all lazy associations (roles, permissions)
+        // are initialized before buildAccessToken creates a new UserPrincipal.
+        // open-in-view=false means the session from getActiveToken() is already closed.
+        UserPrincipal freshPrincipal = (UserPrincipal) userDetailService.loadUserByUsername(staleUser.getEmail());
+        Users freshUser = freshPrincipal.getUser();
+
         String sessionId = jwtService.extractSessionId(oldRefreshToken);
-        String newAccessToken = jwtService.generateAccesToken(user, sessionId);
-        String newRefreshToken = jwtService.generateRefreshToken(user, sessionId);
+        String newAccessToken = jwtService.generateAccesToken(freshUser, sessionId);
+        String newRefreshToken = jwtService.generateRefreshToken(freshUser, sessionId);
 
         refreshTokenService.rotateToken(oldRefreshToken, newRefreshToken);
         sessionService.refreshSession(sessionId, newRefreshToken);

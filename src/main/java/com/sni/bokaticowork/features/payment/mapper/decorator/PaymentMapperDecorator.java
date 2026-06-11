@@ -157,6 +157,7 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 cashRegister.getActive(),
                 cashRegister.getCashControlEnabled(),
                 cashRegister.getMaxCashAmount(),
+                cashRegister.getManagerEmail(),
                 cashRegister.getCreatedAt(),
                 cashRegister.getUpdatedAt()
         );

@@ -6,6 +6,10 @@ import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwner
 import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
 import com.sni.bokaticowork.features.document.kyc.repository.KycCaseRepository;
 import com.sni.bokaticowork.features.billing.service.support.BillingTaxRuleResolver;
+import com.sni.bokaticowork.features.payment.dto.request.CreateWalletHoldRequest;
+import com.sni.bokaticowork.features.payment.dto.response.WalletResponse;
+import com.sni.bokaticowork.features.payment.service.interfaces.WalletHoldService;
+import com.sni.bokaticowork.features.payment.service.interfaces.WalletService;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreateSubscriptionRequest;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillingScheduleStatus;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriptionEventType;
@@ -24,6 +28,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.S
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPlanResolver;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionCodeFactory;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -32,6 +37,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SubscriptionCreationOperator {
@@ -51,6 +57,8 @@ public class SubscriptionCreationOperator {
     private final BillingTaxRuleResolver taxRuleResolver;
     private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionEmailNotifier emailNotifier;
+    private final WalletService walletService;
+    private final WalletHoldService walletHoldService;
 
     public Subscription create(CreateSubscriptionRequest request) {
         PlanVersion planVersion = planResolver.resolvePlanVersion(request.planCode(), request.planVersionId());
@@ -91,6 +99,7 @@ public class SubscriptionCreationOperator {
                 .build();
 
         Subscription saved = subscriptionRepository.save(subscription);
+        createDepositHold(saved, price, owner);
         subscriptionItemRepository.save(SubscriptionItem.builder()
                 .subscription(saved)
                 .planVersion(planVersion)
@@ -114,6 +123,19 @@ public class SubscriptionCreationOperator {
             lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");
         }
         return saved;
+    }
+
+    private void createDepositHold(Subscription subscription, PlanPrice price, SubscriptionOwnerResolver.Owner owner) {
+        if (price.getDepositAmount() == null || price.getDepositAmount().signum() <= 0) {
+            return;
+        }
+        try {
+            WalletResponse wallet = walletService.getOrCreate(subscription.getSubscriberType().name(), owner.code(), price.getCurrency());
+            walletHoldService.create(new CreateWalletHoldRequest(wallet.walletNumber(), price.getDepositAmount(),
+                    "SUBSCRIPTION", subscription.getSubscriptionNumber(), null, "SYSTEM"));
+        } catch (Exception ex) {
+            log.warn("Failed to place deposit hold for subscription {}", subscription.getSubscriptionNumber(), ex);
+        }
     }
 
     private String trim(String value) {

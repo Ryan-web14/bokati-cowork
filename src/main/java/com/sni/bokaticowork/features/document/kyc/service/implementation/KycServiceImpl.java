@@ -60,6 +60,10 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
 import org.jsoup.nodes.Entities;
+import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -161,9 +165,9 @@ public class KycServiceImpl implements KycService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<KycCaseResponse> search(KycCaseStatus status, DocumentOwnerType ownerType, Instant submittedAfter,
-                                        Instant submittedBefore, Long reviewedBy, Boolean pendingReviewOnly,
-                                        Integer expiringWithinDays, KycRiskLevel riskLevel) {
+    public PaginatedResponse<KycCaseResponse> search(KycCaseStatus status, DocumentOwnerType ownerType, Instant submittedAfter,
+                                                     Instant submittedBefore, Long reviewedBy, Boolean pendingReviewOnly,
+                                                     Integer expiringWithinDays, KycRiskLevel riskLevel, Pageable pageable) {
         Specification<KycCase> spec = (root, query, cb) -> cb.conjunction();
         if (status != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
@@ -186,21 +190,17 @@ public class KycServiceImpl implements KycService {
         if (riskLevel != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("riskLevel"), riskLevel));
         }
-        Set<Long> expiringCaseIds = null;
         if (expiringWithinDays != null && expiringWithinDays > 0) {
             LocalDate today = LocalDate.now();
-            expiringCaseIds = documentRepository.findAllByExpiryDateBetween(today, today.plusDays(expiringWithinDays)).stream()
+            Set<Long> ids = documentRepository.findAllByExpiryDateBetween(today, today.plusDays(expiringWithinDays)).stream()
                     .map(KycDocument::getKycCase)
                     .filter(Objects::nonNull)
                     .map(KycCase::getId)
                     .collect(java.util.stream.Collectors.toSet());
-            Set<Long> ids = expiringCaseIds;
             spec = spec.and((root, query, cb) -> ids.isEmpty() ? cb.disjunction() : root.get("id").in(ids));
         }
-        List<KycCase> items = caseRepository.findAll(spec);
-        items.sort(Comparator.comparing(KycCase::getSubmittedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(KycCase::getStartedAt, Comparator.nullsLast(Comparator.reverseOrder())));
-        return items.stream().map(this::toResponse).toList();
+        Page<KycCase> page = caseRepository.findAll(spec, pageable);
+        return new PaginatedResponse<>(page.map(this::toResponse));
     }
 
     @Override
@@ -421,11 +421,14 @@ public class KycServiceImpl implements KycService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<KycCaseResponse> myQueue(Long userId) {
+    public PaginatedResponse<KycCaseResponse> myQueue(Long userId, Pageable pageable) {
         Long resolvedUserId = userId != null ? userId : currentUserId();
-        return caseRepository.findAllByAssignedToOrderBySubmittedAtAsc(resolvedUserId).stream()
-                .map(this::toResponse)
-                .toList();
+        List<KycCase> all = caseRepository.findAllByAssignedToOrderBySubmittedAtAsc(resolvedUserId);
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), all.size());
+        List<KycCase> pageContent = start > all.size() ? List.of() : all.subList(start, end);
+        Page<KycCase> page = new PageImpl<>(pageContent, pageable, all.size());
+        return new PaginatedResponse<>(page.map(this::toResponse));
     }
 
     @Override
@@ -505,7 +508,7 @@ public class KycServiceImpl implements KycService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<KycCaseResponse> expiringSoon(Integer days) {
+    public PaginatedResponse<KycCaseResponse> expiringSoon(Integer days, Pageable pageable) {
         int horizon = days == null || days <= 0 ? 30 : days;
         LocalDate today = LocalDate.now();
         Set<Long> caseIds = documentRepository.findAllByExpiryDateBetween(today, today.plusDays(horizon)).stream()
@@ -513,7 +516,10 @@ public class KycServiceImpl implements KycService {
                 .filter(Objects::nonNull)
                 .map(KycCase::getId)
                 .collect(java.util.stream.Collectors.toCollection(HashSet::new));
-        return caseRepository.findAllById(caseIds).stream().map(this::toResponse).toList();
+        Specification<KycCase> spec = (root, query, cb) ->
+                caseIds.isEmpty() ? cb.disjunction() : root.get("id").in(caseIds);
+        Page<KycCase> page = caseRepository.findAll(spec, pageable);
+        return new PaginatedResponse<>(page.map(this::toResponse));
     }
 
     @Override

@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Slf4j
@@ -47,18 +48,22 @@ public class PawapayRefundCallbackProcessor {
         }
 
         if ("COMPLETED".equals(payload.status())) {
+            PaymentIntent intent = transaction.getPaymentIntent();
+            PaymentTransaction original = transactionRepository.findSucceededByPaymentIntentId(intent.getId()).orElse(null);
+            BigDecimal projectedRefundedTotal = original == null
+                    ? BigDecimal.ZERO
+                    : refundedTotal(original.getTransactionNumber()).add(transaction.getAmount() == null ? BigDecimal.ZERO : transaction.getAmount());
+
             transaction.setStatus(PaymentTransactionStatus.REFUNDED);
             transaction.setPaidAt(Instant.now());
             transactionRepository.save(transaction);
 
-            PaymentIntent intent = transaction.getPaymentIntent();
-            transactionRepository.findSucceededByPaymentIntentId(intent.getId())
-                    .ifPresent(original -> {
-                        original.setStatus(PaymentTransactionStatus.REFUNDED);
-                        transactionRepository.save(original);
-                    });
-            intent.setStatus(PaymentIntentStatus.REFUNDED);
-            intentRepository.save(intent);
+            if (original != null && projectedRefundedTotal.compareTo(original.getAmount()) >= 0) {
+                original.setStatus(PaymentTransactionStatus.REFUNDED);
+                transactionRepository.save(original);
+                intent.setStatus(PaymentIntentStatus.REFUNDED);
+                intentRepository.save(intent);
+            }
 
             eventPublisher.publishEvent(new PaymentTransactionWorkflowEvent(
                     transaction.getTransactionNumber(), PaymentTransactionStatus.REFUNDED));
@@ -77,6 +82,14 @@ public class PawapayRefundCallbackProcessor {
             log.warn("Unexpected PawaPay refund callback status '{}' for refundId {}",
                     payload.status(), payload.refundId());
         }
+    }
+
+    private BigDecimal refundedTotal(String transactionNumber) {
+        return transactionRepository.findAllByOriginalTransactionNumber(transactionNumber).stream()
+                .filter(t -> t.getStatus() == PaymentTransactionStatus.REFUNDED || t.getStatus() == PaymentTransactionStatus.REVERSED)
+                .map(PaymentTransaction::getAmount)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private boolean isTerminal(PaymentTransactionStatus status) {

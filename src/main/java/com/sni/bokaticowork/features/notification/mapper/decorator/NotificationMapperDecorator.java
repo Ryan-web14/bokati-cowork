@@ -65,6 +65,7 @@ public abstract class NotificationMapperDecorator implements NotificationMapper 
                 message.getAttempts(),
                 message.getAvailableAt(),
                 message.getSentAt(),
+                message.getReadAt(),
                 message.getLastError(),
                 message.getCreatedAt()
         );

@@ -24,6 +24,7 @@ import com.sni.bokaticowork.features.payment.service.interfaces.CashRequestServi
 import com.sni.bokaticowork.features.payment.service.support.CashEmailNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -147,6 +148,7 @@ public class CashRequestServiceImpl implements CashRequestService {
     @Transactional(readOnly = true)
     public PaginatedResponse<CashRequestResponse> list(String registerCode, String sessionNumber, CashRequestType requestType,
                                                         CashRequestStatus status, String requestedBy, String searchText, Pageable pageable) {
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return new PaginatedResponse<>(requestRepository.search(
                 blankToNull(registerCode),
                 blankToNull(sessionNumber),
@@ -154,7 +156,7 @@ public class CashRequestServiceImpl implements CashRequestService {
                 status == null ? null : status.name(),
                 blankToNull(requestedBy),
                 blankToNull(searchText),
-                pageable
+                unsortedPageable
         ).map(this::toResponse));
     }
 

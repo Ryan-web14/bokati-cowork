@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.format.FormatterRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -73,6 +75,16 @@ public class ApplicationConfig {
         frontendDateModule.addDeserializer(Instant.class, new FrontendInstantDeserializer(appTimeZone));
         objectMapper.registerModule(frontendDateModule);
         return objectMapper;
+    }
+
+    @Bean
+    public WebMvcConfigurer instantQueryParamConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addFormatters(FormatterRegistry registry) {
+                registry.addConverter(new FrontendInstantConverter(appTimeZone));
+            }
+        };
     }
 
 }

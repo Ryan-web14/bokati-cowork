@@ -4,5 +4,6 @@ public enum CashAnomalyStatus {
     OPEN,
     ACKNOWLEDGED,
     DISMISSED,
-    ESCALATED
+    ESCALATED,
+    RESOLVED
 }

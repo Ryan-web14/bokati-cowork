@@ -17,3 +17,13 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
+bokati:
+  task:
+    reminder-cron: ${TASK_REMINDER_CRON:0 0 * * * *}
+    due-soon-hours: ${TASK_DUE_SOON_HOURS:24}
+    booking-prep-hours: ${TASK_BOOKING_PREP_HOURS:2}
+    booking-default-assignee: ${TASK_BOOKING_DEFAULT_ASSIGNEE:}
+    booking-cleanup-default-assignee: ${TASK_BOOKING_CLEANUP_DEFAULT_ASSIGNEE:}
+    inventory-reorder-due-hours: ${TASK_INVENTORY_REORDER_DUE_HOURS:24}
+    inventory-default-assignee: ${TASK_INVENTORY_DEFAULT_ASSIGNEE:}

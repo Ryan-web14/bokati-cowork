@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.document.documentMaster.model;
 import com.sni.bokaticowork.core.annotation.IdGeneration;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentCategory;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -94,6 +95,24 @@ public class Document {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "correction_deadline")
+    private java.time.Instant correctionDeadline;
+
+    @Column(name = "correction_note", columnDefinition = "TEXT")
+    private String correctionNote;
+
+    @Builder.Default
+    @Column(name = "correction_count", nullable = false)
+    private Integer correctionCount = 0;
+
+    @Builder.Default
+    @Column(name = "space", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    private DocumentSpace space = DocumentSpace.GENERIC;
+
+    @Column(name = "space_reference_code", length = 100)
+    private String spaceReferenceCode;
+
     @Builder.Default
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
@@ -105,6 +124,7 @@ public class Document {
         updatedAt = updatedAt == null ? now : updatedAt;
         currentVersionNumber = currentVersionNumber == null ? 0 : currentVersionNumber;
         deleted = deleted == null ? false : deleted;
+        space = space == null ? DocumentSpace.GENERIC : space;
         if (typeCode == null && documentType != null) {
             typeCode = documentType.getCode();
         }

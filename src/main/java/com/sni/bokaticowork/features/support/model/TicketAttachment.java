@@ -28,6 +28,30 @@ public class TicketAttachment {
     private String documentCode;
 
     private String fileName;
+
+    @Column(name = "storage_provider", length = 20)
+    private String storageProvider;
+
+    @Column(name = "storage_path", length = 500)
+    private String storagePath;
+
+    @Column(name = "content_type", length = 150)
+    private String contentType;
+
+    @Column(name = "file_size")
+    private Long fileSize;
+
+    @Column(name = "internal", nullable = false)
+    @Builder.Default
+    private Boolean internal = Boolean.FALSE;
+
+    @Column(name = "uploaded_by")
+    private Long uploadedBy;
+
+    @Column(name = "active", nullable = false)
+    @Builder.Default
+    private Boolean active = Boolean.TRUE;
+
     private Instant createdAt;
 
     @PrePersist
