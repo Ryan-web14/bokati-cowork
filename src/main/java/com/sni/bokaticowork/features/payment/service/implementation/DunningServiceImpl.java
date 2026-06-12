@@ -82,7 +82,6 @@ public class DunningServiceImpl implements DunningService {
     }
 
     @Override
-    @Transactional
     public void executeAttempt(PaymentDunningAttempt attempt) {
         attempt.setStatus(DunningAttemptStatus.EXECUTING);
         attempt.setExecutedAt(Instant.now());

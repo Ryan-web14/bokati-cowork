@@ -12,7 +12,7 @@ public class ValidationUtils {
         if (str.isEmpty()){
             return false;
         }
-        return str.matches("^[a-zA-Z0-9 ,]*$")  ;
+        return str.matches("^[\\p{L}\\p{N} ,.'\\-()/:&+]+$");
     }
 
     public static boolean validatePhoneNumber(String str){

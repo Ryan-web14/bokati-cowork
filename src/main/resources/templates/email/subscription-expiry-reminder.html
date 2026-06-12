@@ -1,116 +1,129 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Renouvellement d'abonnement - Elle A Ose</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
-        .card { max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
-        .email-header { background: #1a0a2e; padding: 24px 32px 20px; position: relative; overflow: hidden; }
-        .email-header::after { content: ''; position: absolute; top: 0; right: -20px; width: 160px; height: 100%; background: rgba(255,255,255,0.03); transform: skewX(-12deg); }
-        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
-        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
-        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
-        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
-        .notification-tag { background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.4); color: #fbbf24; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
-        .email-body { padding: 32px 32px 28px; }
-        .icon-wrap { width: 54px; height: 54px; border-radius: 50%; background: #fff8e6; border: 2px solid #c9a84c; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
-        .event-title { font-size: 19px; font-weight: 700; color: #1a0a2e; text-align: center; margin-bottom: 6px; letter-spacing: -0.3px; }
-        .event-subtitle { font-size: 11.5px; color: #7c6d8f; text-align: center; margin-bottom: 24px; }
-        .greeting { font-size: 13.5px; color: #3d2f52; line-height: 1.6; margin-bottom: 12px; }
-        .message { font-size: 13px; color: #5c4f6e; line-height: 1.7; margin-bottom: 22px; }
-        .urgency-banner { background: #fff8e6; border: 1px solid #f6d860; border-left: 3px solid #c9a84c; border-radius: 3px; padding: 12px 16px; margin-bottom: 22px; display: flex; align-items: center; gap: 12px; }
-        .urgency-banner svg { flex-shrink: 0; }
-        .urgency-text { font-size: 12px; color: #92400e; line-height: 1.5; }
-        .urgency-text strong { color: #1a0a2e; }
-        .info-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 22px; }
-        .info-box-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 9px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
-        .info-row { display: flex; align-items: center; padding: 11px 16px; border-bottom: 1px solid #f0eaf8; }
-        .info-row:last-child { border-bottom: none; }
-        .info-row:nth-child(even) { background: #faf8fd; }
-        .info-key { color: #7c6d8f; font-size: 11px; font-weight: 600; width: 150px; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }
-        .info-val { color: #1a0a2e; font-weight: 700; font-size: 12.5px; flex: 1; text-align: right; }
-        .info-val.date { color: #c9560c; }
-        .cta-wrap { text-align: center; margin-bottom: 0; }
-        .cta-btn { display: inline-block; background: #1a0a2e; color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 14px 36px; border-radius: 3px; border: 1.5px solid #c9a84c; }
-        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
-        .footer-brand { font-size: 10px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
-        .footer-made { font-size: 8.5px; color: #c8bdd8; margin-top: 8px; letter-spacing: 0.4px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renouvellement d'abonnement — Elle A Osé</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
+    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
+    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.35); color: #fbbf24; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #fbbf24; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .msg { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .alert-td { background-color: rgba(201,168,76,.06); border: 1px solid rgba(201,168,76,.2); border-left: 3px solid #c9a84c; border-radius: 8px; padding: 14px 16px; margin-bottom: 0; }
+    .alert-date { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .alert-hint { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .info-head-td { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-val { padding: 12px 16px 12px 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .cta-wrap-td { padding: 4px 0 20px; text-align: center; }
+    .cta-btn { display: inline-block; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
-        <div class="email-header">
-            <div class="logo-area">
-                <div>
-                    <div class="brand-name">Elle A Ose</div>
-                    <div class="brand-sub">Cowork &amp; Studio</div>
-                </div>
-                <div class="notification-tag">Rappel</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle">
+                        <div class="brand">Elle A Osé</div>
+                        <div class="brand-sub">Espace de coworking</div>
+                    </td>
+                    <td align="right" valign="middle"><span class="tag">Rappel</span></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td class="stripe">&nbsp;</td></tr>
+
+    <tr>
+        <td class="hero-td">
+            <div class="hero-label">Échéance imminente &#x23F3;</div>
+            <div class="hero-title">Renouvellement d'abonnement</div>
+            <div class="hero-sub">Votre abonnement arrive bientôt à échéance. Renouvelez-le pour continuer à profiter de vos services.</div>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="body-td">
+            <p class="msg">Bonjour <strong style="color:rgba(255,255,255,.82);" th:text="${subscriberName ?: 'client'}">client</strong>,<br>
+            votre abonnement <strong style="color:rgba(255,255,255,.82);">Bokati</strong> arrive à échéance prochainement. Renouvelez-le pour éviter toute interruption de service.</p>
+
+            <!-- Alert banner -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                    <td class="alert-td" style="background-color:rgba(201,168,76,.06); border:1px solid rgba(201,168,76,.2); border-left:3px solid #c9a84c; border-radius:8px; padding:14px 16px;">
+                        <div class="alert-date">Échéance le <span style="color:#fbbf24;" th:text="${currentPeriodEnd}">—</span></div>
+                        <div class="alert-hint">Renouvelez avant cette date pour éviter toute interruption de service.</div>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="section-lbl">Détails de l'abonnement</div>
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td class="info-head-td" colspan="2">Votre abonnement</td></tr>
+                <tr>
+                    <td class="info-lbl">Référence</td>
+                    <td class="info-val" th:text="${subscriptionNumber}">SUB-000</td>
+                </tr>
+                <tr style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl">Plan</td>
+                    <td class="info-val" th:text="${planName}">—</td>
+                </tr>
+                <tr>
+                    <td class="info-lbl" style="border-bottom:0;">Date d'échéance</td>
+                    <td class="info-val" style="color:#fbbf24; border-bottom:0;" th:text="${currentPeriodEnd}">—</td>
+                </tr>
+            </table>
+
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="cta-wrap-td">
+                        <a th:href="${actionUrl ?: '#'}" href="#" class="cta-btn">Renouveler mon abonnement</a>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
+            <div class="footer-text">
+                <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a><br>
+                Email généré automatiquement — merci de ne pas y répondre directement.
             </div>
-        </div>
-        <div class="header-stripe"></div>
+        </td>
+    </tr>
 
-        <div class="email-body">
-            <div class="icon-wrap">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="4" width="18" height="16" rx="2" stroke="#c9a84c" stroke-width="1.5"/>
-                    <path d="M3 9h18" stroke="#c9a84c" stroke-width="1.5"/>
-                    <path d="M8 2v4M16 2v4" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
-                    <circle cx="16" cy="16" r="1.5" fill="#c9a84c"/>
-                    <path d="M12 13v3" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
-                </svg>
-            </div>
-
-            <div class="event-title">Renouvellement d'abonnement</div>
-            <div class="event-subtitle">Votre abonnement arrive bientot a echeance</div>
-
-            <p class="greeting">Bonjour <strong th:text="${subscriberName ?: 'client'}">client</strong>,</p>
-            <p class="message">Nous vous informons que votre abonnement <strong>Bokati</strong> arrive a echeance prochainement. Renouvelez-le pour continuer a profiter de tous vos services sans interruption.</p>
-
-            <div class="urgency-banner">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 20h20L12 2z" stroke="#c9a84c" stroke-width="1.5" stroke-linejoin="round"/>
-                    <path d="M12 9v5" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/>
-                    <circle cx="12" cy="17" r="1" fill="#c9a84c"/>
-                </svg>
-                <div class="urgency-text">
-                    Echeance le <strong th:text="${currentPeriodEnd}">date</strong> - Renouvelez avant cette date pour eviter toute interruption de service.
-                </div>
-            </div>
-
-            <div class="info-box">
-                <div class="info-box-head">Details de l'abonnement</div>
-                <div class="info-row">
-                    <span class="info-key">Abonnement</span>
-                    <span class="info-val" th:text="${subscriptionNumber}">SUB-000</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-key">Plan</span>
-                    <span class="info-val" th:text="${planName}">Plan</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-key">Date d'echeance</span>
-                    <span class="info-val date" th:text="${currentPeriodEnd}">-</span>
-                </div>
-            </div>
-
-            <div class="cta-wrap">
-                <a th:href="${actionUrl ?: '#'}" class="cta-btn">Renouveler mon abonnement</a>
-            </div>
-        </div>
-
-        <div class="email-footer">
-            <div class="footer-brand">Elle A Osé</div>
-            <div class="footer-text">Cet email a ete envoye automatiquement, merci de ne pas y repondre directement.</div>
-            <div class="footer-made">Made by SNI</div>
-        </div>
-    </div>
-</div>
+</table>
+</td></tr>
+</table>
 </body>
 </html>

@@ -1,656 +1,154 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support — Elle A Osé</title>
-    <style>
-        /* ── Reset ── */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        /* ── Base ── */
-        body {
-            background: #eae6f2;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            color: #1a0a2e;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        /* ── Wrapper ── */
-        .wrap {
-            width: 100%;
-            min-height: 100vh;
-            padding: 48px 20px;
-            background: #eae6f2;
-        }
-
-        /* ── Card ── */
-        .card {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow:
-                0 1px 3px rgba(26,10,46,.06),
-                0 8px 24px rgba(26,10,46,.10),
-                0 32px 64px rgba(26,10,46,.08);
-        }
-
-        /* ══════════════════════════════════════
-           HEADER
-        ══════════════════════════════════════ */
-        .email-header {
-            background: #110720;
-            padding: 28px 36px 26px;
-            position: relative;
-            overflow: hidden;
-        }
-        .email-header::before {
-            content: '';
-            position: absolute;
-            top: -80px; right: -80px;
-            width: 240px; height: 240px;
-            background: radial-gradient(circle, rgba(201,168,76,.18) 0%, transparent 65%);
-            pointer-events: none;
-        }
-        .email-header::after {
-            content: '';
-            position: absolute;
-            bottom: -60px; left: -40px;
-            width: 180px; height: 180px;
-            background: radial-gradient(circle, rgba(139,92,246,.10) 0%, transparent 65%);
-            pointer-events: none;
-        }
-        .header-stripe {
-            height: 2px;
-            background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%);
-        }
-        .logo-area {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-        }
-        .brand-name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 3.5px;
-            text-transform: uppercase;
-        }
-        .brand-sub {
-            font-size: 10px;
-            color: rgba(255,255,255,.38);
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            margin-top: 5px;
-        }
-
-        /* ── Event tags ── */
-        .tag {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.7px;
-            text-transform: uppercase;
-            padding: 6px 14px;
-            border-radius: 100px;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        .tag-created  { background: rgba(34,197,94,.14);  border: 1px solid rgba(34,197,94,.30);  color: #4ade80; }
-        .tag-message  { background: rgba(139,92,246,.14); border: 1px solid rgba(139,92,246,.30); color: #c4b5fd; }
-        .tag-resolved { background: rgba(201,168,76,.14); border: 1px solid rgba(201,168,76,.30); color: #c9a84c; }
-        .tag-sla      { background: rgba(239,68,68,.14);  border: 1px solid rgba(239,68,68,.30);  color: #fca5a5; }
-        .tag-csat     { background: rgba(251,191,36,.14); border: 1px solid rgba(251,191,36,.30); color: #fbbf24; }
-
-        /* ══════════════════════════════════════
-           HERO
-        ══════════════════════════════════════ */
-        .hero {
-            padding: 32px 36px 28px;
-            border-bottom: 1px solid #f0ecfa;
-        }
-        .hero-title {
-            font-size: 26px;
-            font-weight: 800;
-            color: #110720;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
-            line-height: 1.2;
-        }
-        .hero-sub {
-            font-size: 15px;
-            color: #7c6d8f;
-            line-height: 1.6;
-        }
-        .hero-sla-title {
-            font-size: 26px;
-            font-weight: 800;
-            color: #dc2626;
-            margin-bottom: 10px;
-            line-height: 1.2;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* ══════════════════════════════════════
-           BODY
-        ══════════════════════════════════════ */
-        .email-body {
-            padding: 28px 36px 36px;
-        }
-        .greeting {
-            font-size: 15px;
-            color: #3d2f52;
-            line-height: 1.7;
-            margin-bottom: 24px;
-        }
-
-        /* ══════════════════════════════════════
-           TICKET SUMMARY
-        ══════════════════════════════════════ */
-        .ticket-summary {
-            border: 1px solid #ede8f6;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .ticket-summary-head {
-            background: #110720;
-            padding: 14px 22px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        .ticket-num {
-            font-size: 13px;
-            font-weight: 700;
-            color: #c9a84c;
-            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-            letter-spacing: 1.5px;
-        }
-        .ticket-date {
-            font-size: 12px;
-            color: rgba(255,255,255,.35);
-            flex-shrink: 0;
-        }
-        .ticket-summary-body {
-            padding: 22px;
-            background: #faf8fd;
-        }
-        .ticket-title-text {
-            font-size: 16px;
-            font-weight: 700;
-            color: #110720;
-            margin-bottom: 18px;
-            line-height: 1.4;
-        }
-        .meta-grid {
-            display: flex;
-            gap: 0;
-            flex-wrap: wrap;
-            padding-top: 18px;
-            border-top: 1px solid #ede8f6;
-        }
-        .meta-cell {
-            flex: 1;
-            min-width: 90px;
-        }
-        .meta-cell + .meta-cell {
-            padding-left: 18px;
-            margin-left: 18px;
-            border-left: 1px solid #ede8f6;
-        }
-        .meta-lbl {
-            font-size: 10px;
-            color: #a598b5;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-weight: 700;
-            display: block;
-            margin-bottom: 6px;
-        }
-        .meta-val {
-            font-size: 14px;
-            font-weight: 700;
-            color: #110720;
-        }
-
-        /* ── Priority / status badges ── */
-        .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 100px;
-            font-size: 11px;
-            font-weight: 700;
-        }
-        .badge-URGENT { background: #fee2e2; color: #991b1b; }
-        .badge-HIGH   { background: #ffedd5; color: #9a3412; }
-        .badge-MEDIUM { background: #fef9c3; color: #854d0e; }
-        .badge-LOW    { background: #dcfce7; color: #166534; }
-        .badge-OPEN        { background: #dbeafe; color: #1e40af; }
-        .badge-IN_PROGRESS { background: #ede9fe; color: #5b21b6; }
-        .badge-RESOLVED    { background: #dcfce7; color: #166534; }
-        .badge-CLOSED      { background: #f1f5f9; color: #475569; }
-
-        /* ── SLA deadline bar ── */
-        .sla-bar {
-            background: #fffdf5;
-            border: 1px solid #f3e5a6;
-            border-left: 3px solid #c9a84c;
-            border-radius: 0 8px 8px 0;
-            padding: 14px 18px;
-            margin-top: 18px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        .sla-label {
-            font-size: 11px;
-            color: #7c6d8f;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-        }
-        .sla-value {
-            font-size: 14px;
-            color: #110720;
-            font-weight: 700;
-        }
-
-        /* ══════════════════════════════════════
-           MESSAGE BUBBLE
-        ══════════════════════════════════════ */
-        .message-section { margin-bottom: 24px; }
-        .message-from {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.9px;
-            color: #a598b5;
-            margin-bottom: 10px;
-        }
-        .message-bubble {
-            border-radius: 4px 12px 12px 12px;
-            padding: 20px 22px;
-            font-size: 15px;
-            color: #3d2f52;
-            line-height: 1.75;
-        }
-        .message-bubble.agent {
-            background: #fffdf5;
-            border: 1px solid #ede8f6;
-            border-left: 3px solid #c9a84c;
-        }
-        .message-bubble.client {
-            background: #f5f2fc;
-            border: 1px solid #ede8f6;
-            border-left: 3px solid #8b5cf6;
-        }
-        .message-bubble p { margin: 0 0 12px; }
-        .message-bubble p:last-child { margin-bottom: 0; }
-        .message-bubble ul,
-        .message-bubble ol { margin: 10px 0 10px 22px; padding: 0; }
-        .message-bubble li { margin: 5px 0; }
-        .message-bubble blockquote {
-            margin: 12px 0;
-            padding: 8px 14px;
-            border-left: 3px solid #c9a84c;
-            background: rgba(255,255,255,.6);
-            color: #5c4f6e;
-            border-radius: 0 6px 6px 0;
-        }
-        .message-bubble pre {
-            white-space: pre-wrap;
-            margin: 12px 0;
-            padding: 14px 18px;
-            border-radius: 8px;
-            background: #110720;
-            color: #c4b5fd;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        .message-bubble code {
-            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-            background: rgba(26,10,46,.07);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        .message-bubble a { color: #5b21b6; font-weight: 600; }
-
-        /* ══════════════════════════════════════
-           SLA ALERT
-        ══════════════════════════════════════ */
-        .sla-alert {
-            background: #fff5f5;
-            border: 1px solid #fecaca;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .sla-alert-head {
-            background: #dc2626;
-            padding: 14px 22px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .sla-alert-body { padding: 22px; }
-        .sla-alert-ticket {
-            font-size: 13px;
-            font-weight: 700;
-            color: #991b1b;
-            font-family: "SF Mono", "Fira Code", monospace;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-        }
-        .sla-alert-desc {
-            font-size: 15px;
-            color: #7f1d1d;
-            line-height: 1.6;
-        }
-        .sla-meta-row {
-            margin-top: 18px;
-            display: flex;
-            gap: 28px;
-            flex-wrap: wrap;
-        }
-        .sla-meta-lbl {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: #991b1b;
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 700;
-        }
-        .sla-action {
-            margin-top: 16px;
-            background: #fee2e2;
-            border-radius: 8px;
-            padding: 13px 16px;
-            font-size: 13px;
-            color: #991b1b;
-            font-weight: 600;
-            line-height: 1.5;
-        }
-
-        /* ══════════════════════════════════════
-           CSAT
-        ══════════════════════════════════════ */
-        .csat-section {
-            background: #fdfbff;
-            border: 1px solid #ede8f6;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 24px;
-        }
-        .csat-head {
-            background: #110720;
-            border-left: 3px solid #c9a84c;
-            padding: 12px 22px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.3px;
-            color: #c9a84c;
-        }
-        .csat-body {
-            padding: 32px 28px;
-            text-align: center;
-        }
-        .csat-prompt {
-            font-size: 18px;
-            font-weight: 800;
-            color: #110720;
-            margin-bottom: 10px;
-            line-height: 1.3;
-            letter-spacing: -0.2px;
-        }
-        .csat-desc {
-            font-size: 14px;
-            color: #7c6d8f;
-            line-height: 1.65;
-            margin-bottom: 24px;
-        }
-        .csat-links-row {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 4px 0 16px;
-        }
-        .csat-star-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 52px;
-            height: 52px;
-            border: 1.5px solid #c9a84c;
-            border-radius: 50%;
-            font-size: 17px;
-            font-weight: 700;
-            color: #110720;
-            background: #ffffff;
-            text-decoration: none;
-        }
-        .csat-stars-fallback {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 4px 0 16px;
-        }
-        .csat-stars-fallback span {
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #ede8f6;
-            border-radius: 50%;
-            font-size: 15px;
-            font-weight: 700;
-            color: #a598b5;
-            background: #fff;
-        }
-        .csat-scale-hint {
-            font-size: 11px;
-            color: #a598b5;
-            margin-top: 4px;
-        }
-        .csat-ticket-ref {
-            font-size: 12px;
-            color: #a598b5;
-            margin-top: 18px;
-        }
-
-        /* ══════════════════════════════════════
-           CTA
-        ══════════════════════════════════════ */
-        .cta-wrap {
-            text-align: center;
-            margin-bottom: 4px;
-        }
-        .cta-btn {
-            display: inline-block;
-            background: #110720;
-            color: #c9a84c;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            text-decoration: none;
-            padding: 15px 40px;
-            border-radius: 8px;
-            border: 1.5px solid rgba(201,168,76,.5);
-        }
-
-        /* ══════════════════════════════════════
-           FOOTER
-        ══════════════════════════════════════ */
-        .email-footer {
-            background: #f7f4fc;
-            border-top: 1px solid #ede8f6;
-            padding: 24px 36px;
-            text-align: center;
-        }
-        .footer-brand {
-            font-size: 10px;
-            font-weight: 700;
-            color: #110720;
-            letter-spacing: 2.5px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-        .footer-text {
-            font-size: 13px;
-            color: #a598b5;
-            line-height: 1.65;
-        }
-
-        /* ══════════════════════════════════════
-           RESPONSIVE — TABLET
-        ══════════════════════════════════════ */
-        @media (max-width: 640px) {
-            .wrap { padding: 24px 16px; }
-            .email-header { padding: 22px 24px 20px; }
-            .hero { padding: 26px 24px; }
-            .email-body { padding: 22px 24px 28px; }
-            .ticket-summary-body { padding: 18px; }
-            .email-footer { padding: 20px 24px; }
-        }
-
-        /* ══════════════════════════════════════
-           RESPONSIVE — MOBILE
-        ══════════════════════════════════════ */
-        @media (max-width: 480px) {
-            .wrap { padding: 0; background: #fff; }
-            .card { border-radius: 0; box-shadow: none; }
-
-            .email-header { padding: 20px 20px 18px; }
-            .brand-name { font-size: 14px; letter-spacing: 2.5px; }
-            .logo-area { gap: 12px; }
-
-            .hero { padding: 24px 20px 22px; }
-            .hero-title,
-            .hero-sla-title { font-size: 22px; }
-            .hero-sub { font-size: 14px; }
-
-            .email-body { padding: 20px 20px 28px; }
-
-            .ticket-summary { border-radius: 10px; }
-            .ticket-summary-head { padding: 13px 18px; flex-wrap: wrap; }
-            .ticket-date { font-size: 11px; }
-            .ticket-summary-body { padding: 16px; }
-            .ticket-title-text { font-size: 15px; }
-
-            .meta-grid {
-                flex-direction: column;
-                gap: 0;
-            }
-            .meta-cell + .meta-cell {
-                padding-left: 0;
-                margin-left: 0;
-                border-left: none;
-                border-top: 1px solid #ede8f6;
-                padding-top: 14px;
-                margin-top: 14px;
-            }
-
-            .sla-bar { flex-direction: column; align-items: flex-start; gap: 4px; }
-
-            .message-bubble { padding: 16px 18px; font-size: 15px; }
-
-            .sla-alert { border-radius: 10px; }
-            .sla-alert-body { padding: 18px; }
-            .sla-meta-row { flex-direction: column; gap: 14px; }
-
-            .csat-section { border-radius: 10px; }
-            .csat-body { padding: 24px 18px; }
-            .csat-prompt { font-size: 17px; }
-            .csat-star-link { width: 46px; height: 46px; font-size: 16px; }
-            .csat-links-row { gap: 8px; }
-
-            .cta-btn { display: block; padding: 16px 24px; text-align: center; }
-
-            .email-footer { padding: 20px; }
-            .footer-text { font-size: 12px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support — Elle A Osé</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
+    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
+    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag-created  { background-color: rgba(34,197,94,.12);  border: 1px solid rgba(34,197,94,.30);  color: #4ade80; }
+    .tag-message  { background-color: rgba(167,139,250,.12); border: 1px solid rgba(167,139,250,.30); color: #c4b5fd; }
+    .tag-resolved { background-color: rgba(201,168,76,.12); border: 1px solid rgba(201,168,76,.30); color: #c9a84c; }
+    .tag-sla      { background-color: rgba(239,68,68,.12);  border: 1px solid rgba(239,68,68,.30);  color: #fca5a5; }
+    .tag-csat     { background-color: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.30); color: #fbbf24; }
+    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title-danger { font-size: 22px; font-weight: 800; color: #f87171; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
+    .greeting { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    /* Ticket summary card */
+    .ticket-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .ticket-head-td { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; }
+    .ticket-num { font-size: 12px; font-weight: 700; color: #c9a84c; letter-spacing: 1.2px; font-family: "Courier New", Courier, monospace; }
+    .ticket-date-td { background-color: #1e1035; text-align: right; font-size: 11px; color: rgba(255,255,255,.3); vertical-align: middle; padding: 11px 16px; }
+    .ticket-body-td { padding: 16px; background-color: rgba(255,255,255,.02); }
+    .ticket-title-text { font-size: 15px; font-weight: 700; color: #ffffff; margin-bottom: 14px; line-height: 1.4; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .meta-lbl { font-size: 9px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; display: block; margin-bottom: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .meta-val { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.75); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .sla-row-td { padding: 12px 16px; background-color: rgba(201,168,76,.06); border-top: 1px solid rgba(255,255,255,.05); }
+    .sla-lbl { font-size: 10px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .sla-val { font-size: 12px; font-weight: 700; color: #c9a84c; text-align: right; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    /* Badges — dynamic via th:classappend */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .badge-URGENT { background-color: rgba(239,68,68,.18); color: #f87171; border: 1px solid rgba(239,68,68,.3); }
+    .badge-HIGH   { background-color: rgba(251,146,60,.15); color: #fb923c; border: 1px solid rgba(251,146,60,.3); }
+    .badge-MEDIUM { background-color: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.3); }
+    .badge-LOW    { background-color: rgba(34,197,94,.12);  color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .badge-OPEN        { background-color: rgba(96,165,250,.12);  color: #93c5fd; border: 1px solid rgba(96,165,250,.3); }
+    .badge-IN_PROGRESS { background-color: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.3); }
+    .badge-RESOLVED    { background-color: rgba(34,197,94,.12);   color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
+    .badge-CLOSED      { background-color: rgba(255,255,255,.07); color: rgba(255,255,255,.45); border: 1px solid rgba(255,255,255,.1); }
+    /* SLA alert (red) */
+    .sla-alert-card { border: 1px solid rgba(239,68,68,.2); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .sla-alert-head-td { background-color: #ef4444; padding: 11px 16px; font-size: 11px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .sla-alert-body-td { padding: 16px; background-color: rgba(239,68,68,.06); }
+    .sla-alert-ticket { font-size: 12px; font-weight: 700; color: #f87171; letter-spacing: 1px; font-family: "Courier New", Courier, monospace; margin-bottom: 8px; }
+    .sla-alert-desc { font-size: 14px; color: rgba(255,255,255,.7); line-height: 1.6; margin-bottom: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .sla-action-box { border: 1px solid rgba(239,68,68,.25); border-radius: 6px; padding: 11px 14px; font-size: 12px; color: #fca5a5; line-height: 1.55; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    /* Message bubble */
+    .msg-section { margin-bottom: 20px; }
+    .msg-from { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.9px; color: rgba(255,255,255,.3); margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .msg-bubble-agent { border: 1px solid rgba(201,168,76,.2); border-left: 3px solid #c9a84c; border-radius: 0 8px 8px 8px; padding: 16px 18px; font-size: 13px; color: rgba(255,255,255,.65); line-height: 1.75; background-color: rgba(201,168,76,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .msg-bubble-client { border: 1px solid rgba(167,139,250,.2); border-left: 3px solid #8b5cf6; border-radius: 0 8px 8px 8px; padding: 16px 18px; font-size: 13px; color: rgba(255,255,255,.65); line-height: 1.75; background-color: rgba(139,92,246,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    /* CSAT */
+    .csat-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .csat-head-td { background-color: #1e1035; border-left: 3px solid #a78bfa; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #a78bfa; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .csat-body-td { padding: 24px 16px; text-align: center; background-color: rgba(255,255,255,.02); }
+    .csat-prompt { font-size: 15px; font-weight: 800; color: #ffffff; margin-bottom: 6px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .csat-desc { font-size: 12px; color: rgba(255,255,255,.4); line-height: 1.65; margin-bottom: 18px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .csat-star { display: inline-block; width: 46px; height: 46px; line-height: 46px; text-align: center; border: 2px solid #c9a84c; border-radius: 50%; font-size: 16px; font-weight: 800; color: #0f0720; background-color: #c9a84c; text-decoration: none; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .csat-hint { font-size: 10px; color: rgba(255,255,255,.28); margin-top: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .csat-ref { font-size: 11px; color: rgba(255,255,255,.25); margin-top: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .cta-wrap-td { padding: 4px 0 8px; text-align: center; }
+    .cta-btn { display: inline-block; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
 
-        <!-- ══ Header ══ -->
-        <div class="email-header">
-            <div class="logo-area">
-                <div>
-                    <div class="brand-name">Elle A Osé</div>
-                    <div class="brand-sub">Service client &amp; support</div>
-                </div>
-                <span th:switch="${eventType}">
-                    <span th:case="'TICKET_CREATED'"        class="tag tag-created">Nouveau ticket</span>
-                    <span th:case="'AGENT_MESSAGE'"         class="tag tag-message">Réponse agent</span>
-                    <span th:case="'CLIENT_MESSAGE'"        class="tag tag-message">Message client</span>
-                    <span th:case="'TICKET_RESOLVED'"       class="tag tag-resolved">Résolu ✓</span>
-                    <span th:case="'TICKET_REOPENED'"       class="tag tag-message">Réouvert</span>
-                    <span th:case="'TICKET_REOPENED_AGENT'" class="tag tag-sla">Ticket réouvert</span>
-                    <span th:case="'SLA_BREACH'"            class="tag tag-sla">⚠ Alerte SLA</span>
-                    <span th:case="'SLA_ESCALATION'"        class="tag tag-sla">⚠ Escalade SLA</span>
-                    <span th:case="'CSAT_REQUEST'"          class="tag tag-csat">Votre avis</span>
-                    <span th:case="*"                       class="tag tag-message">Support</span>
-                </span>
-            </div>
-        </div>
-        <div class="header-stripe"></div>
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle">
+                        <div class="brand">Elle A Osé</div>
+                        <div class="brand-sub">Service client &amp; support</div>
+                    </td>
+                    <td align="right" valign="middle">
+                        <span th:switch="${eventType}">
+                            <span th:case="'TICKET_CREATED'"        class="tag tag-created">Nouveau ticket</span>
+                            <span th:case="'AGENT_MESSAGE'"         class="tag tag-message">Réponse agent</span>
+                            <span th:case="'CLIENT_MESSAGE'"        class="tag tag-message">Message client</span>
+                            <span th:case="'TICKET_RESOLVED'"       class="tag tag-resolved">Résolu</span>
+                            <span th:case="'TICKET_REOPENED'"       class="tag tag-message">Réouvert</span>
+                            <span th:case="'TICKET_REOPENED_AGENT'" class="tag tag-sla">Ticket réouvert</span>
+                            <span th:case="'SLA_BREACH'"            class="tag tag-sla">Alerte SLA</span>
+                            <span th:case="'SLA_ESCALATION'"        class="tag tag-sla">Escalade SLA</span>
+                            <span th:case="'CSAT_REQUEST'"          class="tag tag-csat">Votre avis</span>
+                            <span th:case="*"                       class="tag tag-message">Support</span>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td class="stripe">&nbsp;</td></tr>
 
-        <!-- ══ Hero ══ -->
-        <div class="hero">
+    <tr>
+        <td class="hero-td">
             <div th:switch="${eventType}">
                 <div th:case="'TICKET_CREATED'">
                     <div class="hero-title">Votre ticket a été ouvert</div>
-                    <div class="hero-sub">Nous avons bien reçu votre demande. Notre équipe vous répond dans les délais indiqués ci-dessous.</div>
+                    <div class="hero-sub">Nous avons bien reçu votre demande. Notre équipe vous répond dans les délais indiqués.</div>
                 </div>
                 <div th:case="'AGENT_MESSAGE'">
                     <div class="hero-title">Notre équipe vous a répondu</div>
-                    <div class="hero-sub" th:if="${agentName}">Réponse de <strong th:text="${agentName}">l'agent</strong>, lisez le message ci-dessous.</div>
+                    <div class="hero-sub" th:if="${agentName}">Réponse de <strong style="color:rgba(255,255,255,.75);" th:text="${agentName}">l'agent</strong> — lisez le message ci-dessous.</div>
                     <div class="hero-sub" th:unless="${agentName}">Un message a été ajouté à votre ticket.</div>
                 </div>
                 <div th:case="'CLIENT_MESSAGE'">
                     <div class="hero-title">Nouveau message client</div>
-                    <div class="hero-sub"><strong th:text="${clientName ?: 'Le client'}">Client</strong> a répondu sur ce ticket. Vérifiez le message ci-dessous.</div>
+                    <div class="hero-sub"><strong style="color:rgba(255,255,255,.75);" th:text="${clientName ?: 'Le client'}">Client</strong> a répondu sur ce ticket.</div>
                 </div>
                 <div th:case="'TICKET_RESOLVED'">
-                    <div class="hero-title">Ticket résolu ✓</div>
-                    <div class="hero-sub">Ce ticket a été marqué comme résolu. Dites-nous si vous êtes satisfait(e) de notre prise en charge.</div>
+                    <div class="hero-title">Ticket résolu</div>
+                    <div class="hero-sub">Ce ticket a été marqué comme résolu. Dites-nous si vous êtes satisfait(e).</div>
                 </div>
                 <div th:case="'TICKET_REOPENED'">
                     <div class="hero-title">Ticket réouvert</div>
-                    <div class="hero-sub">Votre message a bien été reçu et votre ticket est réouvert. Notre équipe reprend en charge votre demande.</div>
+                    <div class="hero-sub">Votre message a bien été reçu et votre ticket est réouvert.</div>
                 </div>
                 <div th:case="'TICKET_REOPENED_AGENT'">
                     <div class="hero-title">Ticket réouvert par le client</div>
-                    <div class="hero-sub"><strong th:text="${clientName ?: 'Le client'}">Client</strong> a répondu sur un ticket fermé. Il est automatiquement réouvert et vous est assigné.</div>
+                    <div class="hero-sub"><strong style="color:rgba(255,255,255,.75);" th:text="${clientName ?: 'Le client'}">Client</strong> a répondu sur un ticket fermé — il est automatiquement réouvert.</div>
                 </div>
                 <div th:case="'SLA_BREACH'">
-                    <div class="hero-sla-title">⚠ Délai SLA dépassé</div>
+                    <div class="hero-title-danger">Délai SLA dépassé</div>
                     <div class="hero-sub" th:text="|Type : ${breachType}. Une action immédiate est requise.|">Alerte SLA</div>
                 </div>
                 <div th:case="'SLA_ESCALATION'">
-                    <div class="hero-sla-title" th:text="|⚠ Escalade niveau ${escalationLevel}|">Escalade SLA</div>
+                    <div class="hero-title-danger" th:text="|Escalade niveau ${escalationLevel}|">Escalade SLA</div>
                     <div class="hero-sub" th:text="${escalationReason}">Raison de l'escalade</div>
                 </div>
                 <div th:case="'CSAT_REQUEST'">
@@ -658,158 +156,170 @@
                     <div class="hero-sub">Votre avis nous aide à améliorer notre service. Cela prend moins d'une minute.</div>
                 </div>
             </div>
-        </div>
+        </td>
+    </tr>
 
-        <!-- ══ Body ══ -->
-        <div class="email-body">
+    <tr>
+        <td class="body-td">
+            <p class="greeting">Bonjour <strong style="color:rgba(255,255,255,.82);" th:text="${contactName ?: 'client'}">client</strong>,</p>
 
-            <p class="greeting">Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,</p>
-
-            <!-- ═══════════════════════════════════ -->
-            <!-- SLA BREACH — alerte prioritaire    -->
-            <!-- ═══════════════════════════════════ -->
+            <!-- SLA breach / escalation alert -->
             <div th:if="${eventType == 'SLA_BREACH' or eventType == 'SLA_ESCALATION'}">
-                <div class="sla-alert">
-                    <div class="sla-alert-head">⚠ &nbsp;Dépassement SLA · intervention requise</div>
-                    <div class="sla-alert-body">
-                        <div class="sla-alert-ticket" th:text="${ticketNumber}">TCK-000</div>
-                        <div class="sla-alert-desc" th:text="${ticketTitle}">Titre du ticket</div>
-                        <div class="sla-meta-row">
-                            <div>
-                                <span class="sla-meta-lbl">Priorité</span>
-                                <span class="badge" th:classappend="|badge-${ticketPriority}|" th:text="${ticketPriority}">—</span>
-                            </div>
-                            <div>
-                                <span class="sla-meta-lbl">Catégorie</span>
-                                <span style="font-size:14px; font-weight:700; color:#991b1b;" th:text="${ticketCategory}">—</span>
-                            </div>
-                            <div th:if="${eventType == 'SLA_BREACH'}">
-                                <span class="sla-meta-lbl">Type de dépassement</span>
-                                <span style="font-size:14px; font-weight:700; color:#991b1b;" th:text="${breachType}">—</span>
-                            </div>
-                            <div th:if="${eventType == 'SLA_ESCALATION'}">
-                                <span class="sla-meta-lbl">Niveau d'escalade</span>
-                                <span style="font-size:14px; font-weight:700; color:#991b1b;" th:text="${escalationLevel}">—</span>
-                            </div>
-                        </div>
-                        <div class="sla-action" th:if="${eventType == 'SLA_BREACH'}">→ Prenez en charge ce ticket immédiatement pour limiter l'impact client.</div>
-                        <div class="sla-action" th:if="${eventType == 'SLA_ESCALATION'}" th:text="${escalationReason}">Raison de l'escalade</div>
-                    </div>
-                </div>
+                <table class="sla-alert-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td class="sla-alert-head-td">Dépassement SLA &mdash; intervention requise</td></tr>
+                    <tr>
+                        <td class="sla-alert-body-td">
+                            <div class="sla-alert-ticket" th:text="${ticketNumber}">TCK-000</div>
+                            <div class="sla-alert-desc" th:text="${ticketTitle}">Titre du ticket</div>
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:14px;">
+                                <tr>
+                                    <td th:if="${ticketPriority}" style="vertical-align:top; padding-right:16px; width:33%;">
+                                        <span class="meta-lbl">Priorité</span>
+                                        <span class="badge" th:classappend="|badge-${ticketPriority}|" th:text="${ticketPriority}">—</span>
+                                    </td>
+                                    <td th:if="${ticketCategory}" style="vertical-align:top; padding-right:16px; width:33%;">
+                                        <span class="meta-lbl">Catégorie</span>
+                                        <span style="font-size:12px; font-weight:700; color:#fca5a5;" th:text="${ticketCategory}">—</span>
+                                    </td>
+                                    <td style="vertical-align:top; width:33%;">
+                                        <span class="meta-lbl" th:if="${eventType == 'SLA_BREACH'}">Type</span>
+                                        <span class="meta-lbl" th:if="${eventType == 'SLA_ESCALATION'}">Niveau</span>
+                                        <span style="font-size:12px; font-weight:700; color:#fca5a5;" th:text="${eventType == 'SLA_BREACH'} ? ${breachType} : ${escalationLevel}">—</span>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div class="sla-action-box" th:if="${eventType == 'SLA_BREACH'}">Prenez en charge ce ticket immédiatement pour limiter l'impact client.</div>
+                            <div class="sla-action-box" th:if="${eventType == 'SLA_ESCALATION'}" th:text="${escalationReason}">Raison de l'escalade</div>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
-            <!-- ═══════════════════════════════════ -->
-            <!-- Tous les autres events : summary   -->
-            <!-- ═══════════════════════════════════ -->
+            <!-- Ticket summary (all other events) -->
             <div th:unless="${eventType == 'SLA_BREACH' or eventType == 'SLA_ESCALATION'}">
-                <div class="ticket-summary">
-                    <div class="ticket-summary-head">
-                        <span class="ticket-num" th:text="${ticketNumber}">TCK-000</span>
-                        <span class="ticket-date" th:text="${createdAt}"></span>
-                    </div>
-                    <div class="ticket-summary-body">
-                        <div class="ticket-title-text" th:text="${ticketTitle}">Titre du ticket</div>
-                        <div class="meta-grid">
-                            <div class="meta-cell" th:if="${ticketPriority}">
-                                <span class="meta-lbl">Priorité</span>
-                                <span class="badge" th:classappend="|badge-${ticketPriority}|" th:text="${ticketPriority}">MEDIUM</span>
-                            </div>
-                            <div class="meta-cell" th:if="${ticketCategory}">
-                                <span class="meta-lbl">Catégorie</span>
-                                <span class="meta-val" th:text="${ticketCategory}">OTHER</span>
-                            </div>
-                            <div class="meta-cell" th:if="${ticketStatus}">
-                                <span class="meta-lbl">Statut</span>
-                                <span class="badge" th:classappend="|badge-${ticketStatus}|" th:text="${ticketStatus}">OPEN</span>
-                            </div>
-                        </div>
-
-                        <!-- SLA visible uniquement pour TICKET_CREATED -->
-                        <div class="sla-bar" th:if="${eventType == 'TICKET_CREATED' and slaDeadline != null}">
-                            <span class="sla-label">Délai de première réponse</span>
-                            <span class="sla-value" th:text="${slaDeadline}">—</span>
-                        </div>
-                    </div>
-                </div>
+                <table class="ticket-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td class="ticket-head-td"><span class="ticket-num" th:text="${ticketNumber}">TCK-000</span></td>
+                        <td class="ticket-date-td" th:text="${createdAt}"></td>
+                    </tr>
+                    <tr>
+                        <td class="ticket-body-td" colspan="2">
+                            <div class="ticket-title-text" th:text="${ticketTitle}">Titre du ticket</div>
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td th:if="${ticketPriority}" style="vertical-align:top; padding-right:16px; width:33%;">
+                                        <span class="meta-lbl">Priorité</span>
+                                        <span class="badge" th:classappend="|badge-${ticketPriority}|" th:text="${ticketPriority}">MEDIUM</span>
+                                    </td>
+                                    <td th:if="${ticketCategory}" style="vertical-align:top; padding-right:16px; width:33%;">
+                                        <span class="meta-lbl">Catégorie</span>
+                                        <span class="meta-val" th:text="${ticketCategory}">OTHER</span>
+                                    </td>
+                                    <td th:if="${ticketStatus}" style="vertical-align:top; width:33%;">
+                                        <span class="meta-lbl">Statut</span>
+                                        <span class="badge" th:classappend="|badge-${ticketStatus}|" th:text="${ticketStatus}">OPEN</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr th:if="${eventType == 'TICKET_CREATED' and slaDeadline != null}">
+                        <td class="sla-row-td" colspan="2">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td class="sla-lbl">Délai de première réponse</td>
+                                    <td class="sla-val" th:text="${slaDeadline}">—</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
-            <!-- ═══════════════════════════════════ -->
-            <!-- Message rich text                  -->
-            <!-- ═══════════════════════════════════ -->
-            <div class="message-section"
+            <!-- Message content (rich text) -->
+            <div class="msg-section"
                  th:if="${messageContentHtml != null
                           and !#strings.isEmpty(messageContentHtml)
                           and (eventType == 'TICKET_CREATED'
                                or eventType == 'AGENT_MESSAGE'
                                or eventType == 'CLIENT_MESSAGE'
                                or eventType == 'TICKET_REOPENED_AGENT')}">
-                <div class="message-from" th:switch="${eventType}">
+                <div class="msg-from" th:switch="${eventType}">
                     <span th:case="'TICKET_CREATED'">Description du ticket</span>
-                    <span th:case="'AGENT_MESSAGE'" th:text="|Réponse de ${agentName ?: 'notre équipe'}|">Réponse de notre équipe</span>
+                    <span th:case="'AGENT_MESSAGE'" th:text="|Réponse de ${agentName ?: 'notre équipe'}|">Réponse</span>
                     <span th:case="'CLIENT_MESSAGE'" th:text="|Message de ${clientName ?: 'votre client'}|">Message client</span>
                     <span th:case="'TICKET_REOPENED_AGENT'" th:text="|Message de ${clientName ?: 'le client'}|">Message client</span>
                 </div>
-                <div th:class="${eventType == 'CLIENT_MESSAGE' or eventType == 'TICKET_REOPENED_AGENT'} ? 'message-bubble client' : 'message-bubble agent'"
-                     th:utext="${messageContentHtml}">
-                    Contenu du message
-                </div>
+                <div th:if="${eventType == 'CLIENT_MESSAGE' or eventType == 'TICKET_REOPENED_AGENT'}"
+                     class="msg-bubble-client"
+                     th:utext="${messageContentHtml}">Contenu du message</div>
+                <div th:unless="${eventType == 'CLIENT_MESSAGE' or eventType == 'TICKET_REOPENED_AGENT'}"
+                     class="msg-bubble-agent"
+                     th:utext="${messageContentHtml}">Contenu du message</div>
             </div>
 
-            <!-- ═══════════════════════════════════ -->
-            <!-- CSAT                               -->
-            <!-- ═══════════════════════════════════ -->
-            <div class="csat-section"
-                 th:if="${eventType == 'CSAT_REQUEST' or eventType == 'TICKET_RESOLVED'}">
-                <div class="csat-head">Évaluez notre service</div>
-                <div class="csat-body">
-                    <div class="csat-prompt">Êtes-vous satisfait(e) de notre prise en charge ?</div>
-                    <div class="csat-desc">
-                        Cliquez sur votre note, aucune connexion requise.<br>
-                        Votre retour nous aide à améliorer notre service.
-                    </div>
+            <!-- CSAT -->
+            <div th:if="${eventType == 'CSAT_REQUEST' or eventType == 'TICKET_RESOLVED'}">
+                <table class="csat-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td class="csat-head-td">Évaluez notre service</td></tr>
+                    <tr>
+                        <td class="csat-body-td">
+                            <div class="csat-prompt">Êtes-vous satisfait(e) de notre prise en charge ?</div>
+                            <div class="csat-desc">Cliquez sur votre note — aucune connexion requise.<br>Votre retour nous aide à améliorer notre service.</div>
 
-                    <!-- Étoiles cliquables -->
-                    <div th:if="${csatLinks != null}">
-                        <div class="csat-links-row">
-                            <a th:each="entry : ${csatLinks}"
-                               th:href="${entry.value}"
-                               class="csat-star-link"
-                               th:title="|${entry.key} étoile(s)|"
-                               th:text="${entry.key}">1</a>
-                        </div>
-                        <div class="csat-scale-hint">1 = Très insatisfait &nbsp;·&nbsp; 5 = Très satisfait</div>
-                    </div>
+                            <!-- Star links via Thymeleaf map iteration -->
+                            <div th:if="${csatLinks != null}">
+                                <table cellpadding="0" cellspacing="6" border="0" style="margin:0 auto 4px;">
+                                    <tr>
+                                        <td th:each="entry : ${csatLinks}" style="padding:0 4px;">
+                                            <a th:href="${entry.value}"
+                                               class="csat-star"
+                                               th:title="|${entry.key} étoile(s)|"
+                                               th:text="${entry.key}">1</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div class="csat-hint">1 = Très insatisfait &nbsp;&middot;&nbsp; 5 = Très satisfait</div>
+                            </div>
 
-                    <!-- Fallback sans liens -->
-                    <div th:unless="${csatLinks != null}">
-                        <div class="csat-stars-fallback">
-                            <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
-                        </div>
-                        <div class="csat-scale-hint">1 = Très insatisfait &nbsp;·&nbsp; 5 = Très satisfait</div>
-                    </div>
+                            <!-- Fallback without links -->
+                            <div th:unless="${csatLinks != null}">
+                                <table cellpadding="0" cellspacing="6" border="0" style="margin:0 auto 4px;">
+                                    <tr>
+                                        <td style="padding:0 4px;"><span class="csat-star">1</span></td>
+                                        <td style="padding:0 4px;"><span class="csat-star">2</span></td>
+                                        <td style="padding:0 4px;"><span class="csat-star">3</span></td>
+                                        <td style="padding:0 4px;"><span class="csat-star">4</span></td>
+                                        <td style="padding:0 4px;"><span class="csat-star">5</span></td>
+                                    </tr>
+                                </table>
+                                <div class="csat-hint">1 = Très insatisfait &nbsp;&middot;&nbsp; 5 = Très satisfait</div>
+                            </div>
 
-                    <div class="csat-ticket-ref">Ticket concerné : <strong th:text="${ticketNumber}">TCK-000</strong></div>
-                </div>
+                            <div class="csat-ref">Ticket concerné : <strong th:text="${ticketNumber}">TCK-000</strong></div>
+                        </td>
+                    </tr>
+                </table>
             </div>
 
-            <!-- CTA -->
-            <div class="cta-wrap">
-                <a href="#" class="cta-btn">Voir mon ticket</a>
-            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td class="cta-wrap-td"><a href="#" class="cta-btn">Voir mon ticket</a></td></tr>
+            </table>
+        </td>
+    </tr>
 
-        </div>
-
-        <!-- ══ Footer ══ -->
-        <div class="email-footer">
-            <div class="footer-brand">Elle A Osé · Support client</div>
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Support client</div>
             <div class="footer-text">
                 Cet email est envoyé automatiquement suite à une activité sur votre ticket.<br>
-                Pour répondre, répondez directement à cet email : votre message sera ajouté au ticket.<br>
-                Si le ticket est fermé, votre réponse le réouvrira automatiquement.
+                Pour répondre, répondez directement à cet email — votre message sera ajouté au ticket.
             </div>
-        </div>
+        </td>
+    </tr>
 
-    </div>
-</div>
+</table>
+</td></tr>
+</table>
 </body>
 </html>

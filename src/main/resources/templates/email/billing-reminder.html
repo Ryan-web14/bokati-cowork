@@ -1,90 +1,127 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rappel de règlement</title>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 1.6; }
-        .wrap { width: 100%; min-height: 100vh; padding: 48px 20px; background: #e8e4f0; }
-        .card { max-width: 600px; margin: 0 auto; background: #0f0720; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.4), 0 12px 36px rgba(0,0,0,.45), 0 40px 80px rgba(0,0,0,.3); }
-        .email-header { background: #0a0418; padding: 26px 36px 24px; position: relative; overflow: hidden; }
-        .email-header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(201,168,76,.12) 0%, transparent 65%); pointer-events: none; }
-        .header-stripe { height: 2px; background: linear-gradient(90deg, #f59e0b 0%, #c9a84c 45%, #4c1d95 100%); }
-        .logo-area { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-        .brand-name { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 3.5px; text-transform: uppercase; }
-        .brand-sub { font-size: 10px; color: rgba(255,255,255,.3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 5px; }
-        .status-tag { font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; background: rgba(245,158,11,.14); border: 1px solid rgba(245,158,11,.30); color: #fbbf24; white-space: nowrap; }
-        .hero { background: #110820; padding: 36px 36px 32px; border-bottom: 1px solid rgba(255,255,255,.05); }
-        .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #fbbf24; margin-bottom: 10px; }
-        .hero-title { font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -.5px; line-height: 1.2; margin-bottom: 10px; }
-        .hero-sub { font-size: 15px; color: rgba(255,255,255,.45); line-height: 1.6; }
-        .hero-sub strong { color: rgba(255,255,255,.78); }
-        .ref-bar { background: rgba(245,158,11,.07); border-top: 1px solid rgba(245,158,11,.12); border-bottom: 1px solid rgba(245,158,11,.12); padding: 13px 36px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-        .ref-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.35); font-weight: 700; }
-        .ref-number { font-size: 14px; font-weight: 700; color: #fbbf24; font-family: "SF Mono", Consolas, monospace; letter-spacing: 1.5px; text-align: right; }
-        .email-body { padding: 28px 36px 36px; }
-        .message { color: rgba(255,255,255,.56); font-size: 14px; line-height: 1.75; margin-bottom: 22px; }
-        .message strong { color: rgba(255,255,255,.82); }
-        .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; }
-        .info-card { border: 1px solid rgba(255,255,255,.07); border-radius: 12px; overflow: hidden; margin-bottom: 22px; }
-        .info-head { background: rgba(245,158,11,.09); border-left: 3px solid #f59e0b; padding: 16px 20px; color: #fff; font-size: 16px; font-weight: 700; }
-        .info-row { padding: 13px 20px; border-bottom: 1px solid rgba(255,255,255,.04); display: flex; justify-content: space-between; gap: 16px; }
-        .info-row:last-child { border-bottom: none; }
-        .info-key { color: rgba(255,255,255,.35); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; }
-        .info-val { color: rgba(255,255,255,.85); font-size: 14px; font-weight: 600; text-align: right; }
-        .balance { color: #fbbf24; }
-        .cta-wrap { text-align: center; margin: 4px 0 22px; }
-        .cta-btn { display: inline-block; background: #c9a84c; color: #0f0720; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 15px 30px; border-radius: 8px; }
-        .note { border: 1px solid rgba(255,255,255,.07); border-left: 3px solid #c9a84c; border-radius: 12px; background: rgba(201,168,76,.06); padding: 16px 18px; color: rgba(255,255,255,.44); font-size: 12px; line-height: 1.7; text-align: center; }
-        .email-footer { background: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 24px 36px; text-align: center; }
-        .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; }
-        .footer-text { font-size: 12px; color: rgba(255,255,255,.2); line-height: 1.65; }
-        .footer-text a { color: rgba(255,255,255,.3); }
-        @media (max-width: 480px) { .wrap { padding: 0; background: #0f0720; } .card { border-radius: 0; box-shadow: none; } .email-header, .hero, .email-body, .email-footer { padding-left: 20px; padding-right: 20px; } .hero-title { font-size: 22px; } .ref-bar { padding: 12px 20px; flex-wrap: wrap; } .info-row { display: block; } .info-val { display: block; text-align: left; margin-top: 4px; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rappel de règlement — Elle A Osé</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
+    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
+    .stripe { height: 3px; background: linear-gradient(90deg, #f59e0b 0%, #c9a84c 45%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: rgba(245,158,11,.14); border: 1px solid rgba(245,158,11,.30); color: #fbbf24; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #fbbf24; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .ref-bar-td { background-color: rgba(245,158,11,.07); border-top: 1px solid rgba(245,158,11,.12); border-bottom: 1px solid rgba(245,158,11,.12); padding: 12px 32px; }
+    .ref-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.35); font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .ref-num { font-size: 14px; font-weight: 700; color: #fbbf24; font-family: "Courier New", Courier, monospace; letter-spacing: 1.5px; }
+    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .msg { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .info-head-td { background-color: rgba(245,158,11,.09); border-left: 3px solid #f59e0b; padding: 14px 16px; font-size: 14px; font-weight: 700; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-val { padding: 12px 16px 12px 8px; font-size: 14px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .cta-wrap-td { padding: 4px 0 20px; text-align: center; }
+    .cta-btn { display: inline-block; background-color: #c9a84c; color: #0f0720; font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 15px 30px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .gold-box { border: 1px solid rgba(201,168,76,.2); border-left: 3px solid #c9a84c; border-radius: 8px; background-color: rgba(201,168,76,.06); padding: 14px 16px; font-size: 12px; color: rgba(255,255,255,.44); line-height: 1.7; text-align: center; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+        .ref-bar-td { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
-        <div class="email-header">
-            <div class="logo-area">
-                <div>
-                    <div class="brand-name">Elle A Osé</div>
-                    <div class="brand-sub">Espaces de travail</div>
-                </div>
-                <span class="status-tag">Rappel</span>
-            </div>
-        </div>
-        <div class="header-stripe"></div>
-        <div class="hero">
-            <div class="hero-label">Action requise</div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle">
+                        <div class="brand">Elle A Osé</div>
+                        <div class="brand-sub">Espace de coworking</div>
+                    </td>
+                    <td align="right" valign="middle"><span class="tag">Rappel</span></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td class="stripe">&nbsp;</td></tr>
+
+    <tr>
+        <td class="hero-td">
+            <div class="hero-label">Action requise &#x1F4CB;</div>
             <div class="hero-title">Rappel de règlement</div>
-            <div class="hero-sub">Bonjour <strong th:text="${customerName ?: 'client'}">client</strong>, un solde reste à régler sur votre document.</div>
-        </div>
-        <div class="ref-bar">
-            <span class="ref-label">Référence document</span>
-            <span class="ref-number" th:text="${documentNumber}">FAC-000</span>
-        </div>
-        <div class="email-body">
-            <p class="message">Sauf erreur de notre part, la facture <strong th:text="${documentNumber}">FAC-000</strong> présente encore un montant en attente. Vous pouvez retrouver le récapitulatif ci-dessous.</p>
-            <div class="section-label">Montant à régler</div>
-            <div class="info-card">
-                <div class="info-head">Solde en attente</div>
-                <div class="info-row"><span class="info-key">Référence</span><span class="info-val" th:text="${documentNumber}">FAC-000</span></div>
-                <div class="info-row"><span class="info-key">Solde</span><span class="info-val balance"><span th:text="${balanceDue}">0</span> <span th:text="${currency}">XAF</span></span></div>
+            <div class="hero-sub">Bonjour <strong style="color:rgba(255,255,255,.78);" th:text="${customerName ?: 'client'}">client</strong>, un solde reste à régler sur votre document.</div>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="ref-bar-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle"><span class="ref-lbl">Référence document</span></td>
+                    <td align="right" valign="middle"><span class="ref-num" th:text="${documentNumber}">FAC-000</span></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="body-td">
+            <p class="msg">Sauf erreur de notre part, la facture <strong style="color:rgba(255,255,255,.82);" th:text="${documentNumber}">FAC-000</strong> présente encore un montant en attente. Retrouvez le récapitulatif ci-dessous.</p>
+
+            <div class="section-lbl">Montant à régler</div>
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td class="info-head-td" colspan="2">Solde en attente</td></tr>
+                <tr>
+                    <td class="info-lbl">Référence</td>
+                    <td class="info-val" th:text="${documentNumber}">FAC-000</td>
+                </tr>
+                <tr style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl" style="border-bottom:0;">Solde</td>
+                    <td class="info-val" style="color:#fbbf24; font-weight:700; border-bottom:0;">
+                        <span th:text="${balanceDue}">0</span> <span th:text="${currency}">XAF</span>
+                    </td>
+                </tr>
+            </table>
+
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" th:if="${paymentLink != null}">
+                <tr><td class="cta-wrap-td"><a th:href="${paymentLink}" href="#" class="cta-btn">Régler ma facture</a></td></tr>
+            </table>
+
+            <div class="gold-box">
+                Si votre paiement a déjà été effectué, vous pouvez ignorer ce rappel.<br>
+                Pour toute précision : <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a>
             </div>
-            <div class="cta-wrap" th:if="${paymentLink != null}">
-                <a th:href="${paymentLink}" class="cta-btn">Régler ma facture</a>
-            </div>
-            <p class="note">Si votre paiement a déjà été effectué, vous pouvez ignorer ce rappel. Pour toute précision, contactez <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> ou le <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a>.</p>
-        </div>
-        <div class="email-footer">
-            <div class="footer-brand">Elle A Osé · Espaces de travail</div>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
             <div class="footer-text">Merci pour votre confiance.</div>
-        </div>
-    </div>
-</div>
+        </td>
+    </tr>
+
+</table>
+</td></tr>
+</table>
 </body>
 </html>

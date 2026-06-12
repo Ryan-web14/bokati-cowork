@@ -1,114 +1,129 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenue membre - Elle A Osé</title>
-    <style>
-        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #2b2030; }
-        table { border-collapse: collapse; }
-        .page { width: 100%; background: #f0eef5; padding: 44px 14px; }
-        .card { width: 100%; max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e8e0f0; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
-        .header { background: #281332; padding: 28px 34px 25px; }
-        .brand-logo { display: block; width: 120px; max-width: 120px; height: auto; margin: 0 0 18px; }
-        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 4px; }
-        .brand-sub { font-size: 7px; color: #a397ad; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; }
-        .headline { font-size: 24px; font-weight: 700; color: #ffffff; line-height: 1.2; margin: 0 0 6px; }
-        .headline span { color: #d9a21b; }
-        .subhead { font-size: 12px; color: #a397ad; letter-spacing: 0.3px; margin: 0; }
-        .stripe { height: 4px; background: #d9a21b; }
-        .body { padding: 32px 34px 28px; }
-        .text { font-size: 13px; color: #5c4f6e; line-height: 1.7; margin: 0 0 16px; }
-        .text strong { color: #281332; }
-        .info-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin: 24px 0 20px; }
-        .info-head { background: #281332; border-left: 3px solid #d9a21b; padding: 10px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
-        .info-table { width: 100%; }
-        .info-table td { padding: 13px 16px; border-bottom: 1px solid #f0eaf8; font-size: 12.5px; vertical-align: middle; }
-        .info-table tr:nth-child(even) td { background: #faf8fd; }
-        .info-table tr:last-child td { border-bottom: none; }
-        .info-key { width: 155px; color: #7c6d8f; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .info-val { color: #281332; font-weight: 700; text-align: right; }
-        .password-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin: 20px 0 24px; }
-        .password-head { background: #281332; border-left: 3px solid #8b5cf6; padding: 10px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
-        .password-body { padding: 20px 24px; text-align: center; background: #faf8fd; }
-        .password-value { font-family: "Courier New", Courier, monospace; font-size: 25px; font-weight: 700; letter-spacing: 5px; color: #281332; margin-bottom: 10px; }
-        .password-hint { font-size: 11px; color: #7c6d8f; line-height: 1.6; }
-        .security-note { font-size: 11px; color: #7c6d8f; line-height: 1.6; text-align: center; padding: 14px 16px; background: #faf8fd; border: 1px solid #e8e0f0; border-left: 3px solid #8b5cf6; border-radius: 3px; }
-        .footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 17px 34px; text-align: center; }
-        .footer-brand { font-size: 10px; font-weight: 700; color: #281332; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
-        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
-        .footer-made { font-size: 8.5px; color: #c8bdd8; margin-top: 8px; letter-spacing: 0.4px; }
-        @media only screen and (max-width: 600px) {
-            .page { padding: 24px 10px; }
-            .header, .body, .footer { padding-left: 20px; padding-right: 20px; }
-            .headline { font-size: 22px; }
-            .info-key { width: 120px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bienvenue membre — Elle A Osé</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
+    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
+    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: rgba(167,139,250,.15); border: 1px solid rgba(167,139,250,.4); color: #a78bfa; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title span { color: #a78bfa; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .msg { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .info-head-td { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-val { padding: 12px 16px 12px 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .code-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .code-head-td { background-color: #1e1035; border-left: 3px solid rgba(167,139,250,.7); padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .code-body-td { padding: 24px 16px; text-align: center; background-color: rgba(255,255,255,.02); }
+    .code-value { font-family: "Courier New", Courier, monospace; font-size: 26px; font-weight: 700; letter-spacing: 6px; color: #ffffff; }
+    .code-hint { margin-top: 10px; font-size: 11px; color: rgba(255,255,255,.4); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .note-box { border: 1px solid rgba(255,255,255,.08); border-left: 3px solid rgba(167,139,250,.7); border-radius: 8px; padding: 14px 16px; font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+</style>
 </head>
 <body>
-<table class="page" role="presentation" width="100%" cellpadding="0" cellspacing="0">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+
     <tr>
-        <td align="center">
-            <table class="card" role="presentation" cellpadding="0" cellspacing="0">
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                    <td class="header">
-                        <img th:if="${logoUrl}" th:src="${logoUrl}" src="/images/logo.png" alt="Elle A Osé" class="brand-logo"/>
-                        <div th:if="${logoUrl == null}" class="brand-name">Elle A Osé</div>
-                        <div class="brand-sub">Coworking</div>
-                        <h1 class="headline">Votre espace <span>membre</span> est prêt</h1>
-                        <p class="subhead">Accédez à tous vos services depuis un seul endroit.</p>
+                    <td valign="middle">
+                        <div class="brand">Elle A Osé</div>
+                        <div class="brand-sub">Espace de coworking</div>
                     </td>
-                </tr>
-                <tr><td class="stripe"></td></tr>
-                <tr>
-                    <td class="body">
-                        <p class="text">Bonjour <strong th:text="${name ?: 'membre'}">membre</strong>,</p>
-                        <p class="text">
-                            Votre compte membre Elle A Osé a été créé avec succès. Utilisez les identifiants ci-dessous pour vous connecter
-                            à votre espace, suivre vos abonnements, documents et paiements.
-                        </p>
-
-                        <div class="info-box">
-                            <div class="info-head">Informations du membre</div>
-                            <table class="info-table" role="presentation" cellpadding="0" cellspacing="0">
-                                <tr>
-                                    <td class="info-key">Code membre</td>
-                                    <td class="info-val" th:text="${memberId}">MBR-000</td>
-                                </tr>
-                                <tr>
-                                    <td class="info-key">Email de connexion</td>
-                                    <td class="info-val" th:text="${email}">member@example.com</td>
-                                </tr>
-                            </table>
-                        </div>
-
-                        <div th:if="${generatedPassword != null}" class="password-box">
-                            <div class="password-head">Mot de passe temporaire</div>
-                            <div class="password-body">
-                                <div class="password-value" th:text="${generatedPassword}">PASSWORD</div>
-                                <div class="password-hint">Changez ce mot de passe après votre première connexion.</div>
-                            </div>
-                        </div>
-
-                        <div class="security-note">
-                            Si vous n'êtes pas à l'origine de cette création, contactez immédiatement notre équipe à <strong>contact@elleaose.com</strong>.
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="footer">
-                        <div class="footer-brand">Elle A Osé Coworking</div>
-                        <div class="footer-text">
-                            Message automatique — ne pas répondre à cet email.<br>
-                            Pour toute question : contact@elleaose.com · +242 05 204 25 52
-                        </div>
-                        <div class="footer-made">Made by SNI</div>
-                    </td>
+                    <td align="right" valign="middle"><span class="tag">Nouveau membre</span></td>
                 </tr>
             </table>
         </td>
     </tr>
+    <tr><td class="stripe">&nbsp;</td></tr>
+
+    <tr>
+        <td class="hero-td">
+            <div class="hero-label">Compte membre créé &#x1F389;</div>
+            <div class="hero-title">Bienvenue, <span th:text="${name ?: 'membre'}">membre</span>&nbsp;!</div>
+            <div class="hero-sub">
+                Votre espace membre Elle A Osé est prêt. Gérez abonnements, réservations et documents depuis votre tableau de bord.
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="body-td">
+            <p class="msg">Bonjour <strong style="color:rgba(255,255,255,.82);" th:text="${name ?: 'membre'}">membre</strong>,<br>
+            votre compte a été créé avec succès. Voici vos identifiants de connexion.</p>
+
+            <div class="section-lbl">Informations du membre</div>
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td class="info-head-td" colspan="2">Vos coordonnées</td></tr>
+                <tr>
+                    <td class="info-lbl">Code membre</td>
+                    <td class="info-val" th:text="${memberId}">MBR-000</td>
+                </tr>
+                <tr style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl" style="border-bottom:0;">Email de connexion</td>
+                    <td class="info-val" style="border-bottom:0;" th:text="${email}">member@example.com</td>
+                </tr>
+            </table>
+
+            <div th:if="${generatedPassword != null}">
+                <div class="section-lbl">Mot de passe temporaire</div>
+                <table class="code-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr><td class="code-head-td">Votre mot de passe provisoire</td></tr>
+                    <tr>
+                        <td class="code-body-td">
+                            <div class="code-value" th:text="${generatedPassword}">PASSWORD</div>
+                            <div class="code-hint">Modifiez ce mot de passe dès votre première connexion.</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="note-box">
+                Si vous n'êtes pas à l'origine de cette création, contactez immédiatement notre équipe à
+                <strong style="color:rgba(255,255,255,.7);">coworkspace@elleaose.com</strong>.
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
+            <div class="footer-text">
+                <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a><br>
+                Email généré automatiquement — merci de ne pas y répondre directement.
+            </div>
+        </td>
+    </tr>
+
+</table>
+</td></tr>
 </table>
 </body>
 </html>

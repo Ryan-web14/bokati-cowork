@@ -1,126 +1,164 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task - Elle A Ose</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1a0a2e; }
-        .wrap { width: 100%; padding: 40px 16px; background: #f0eef5; }
-        .card { max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 8px 32px rgba(30,10,60,.10); }
-        .header { background: #1a0a2e; padding: 22px 28px 18px; }
-        .brand { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
-        .brand-name { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: 3px; text-transform: uppercase; }
-        .brand-sub { font-size: 8px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
-        .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 60%, #4c1d95 100%); }
-        .tag { font-size: 8px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 5px 10px; border-radius: 3px; white-space: nowrap; }
-        .tag-assigned { background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.4); color: #4ade80; }
-        .tag-due { background: rgba(251,191,36,.15); border: 1px solid rgba(251,191,36,.4); color: #fbbf24; }
-        .tag-overdue { background: rgba(239,68,68,.15); border: 1px solid rgba(239,68,68,.4); color: #f87171; }
-        .body { padding: 28px; }
-        .title { font-size: 20px; font-weight: 800; color: #1a0a2e; margin-bottom: 8px; }
-        .subtitle { font-size: 13px; color: #7c6d8f; line-height: 1.6; margin-bottom: 22px; }
-        .task-card { border: 1px solid #e8e0f0; border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
-        .task-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 10px 14px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
-        .task-ref { font-size: 11px; font-weight: 700; color: #c9a84c; font-family: monospace; letter-spacing: 1px; }
-        .task-status { font-size: 10px; color: #c4b5fd; }
-        .task-body { padding: 16px; background: #faf8fd; }
-        .task-title { font-size: 17px; font-weight: 800; color: #1a0a2e; margin-bottom: 14px; line-height: 1.35; }
-        .meta { display: flex; gap: 18px; flex-wrap: wrap; }
-        .meta-item { font-size: 11px; }
-        .meta-label { color: #9b8caa; text-transform: uppercase; letter-spacing: .8px; display: block; margin-bottom: 3px; }
-        .meta-value { color: #1a0a2e; font-weight: 700; }
-        .alert { border-radius: 6px; padding: 13px 14px; margin-bottom: 20px; font-size: 13px; line-height: 1.55; }
-        .alert-due { background: #fffdf5; border: 1px solid #f3e5a6; border-left: 3px solid #c9a84c; color: #6b4e16; }
-        .alert-overdue { background: #fff5f5; border: 1px solid #fecaca; border-left: 3px solid #ef4444; color: #7f1d1d; }
-        .cta-wrap { text-align: center; margin-top: 6px; }
-        .cta { display: inline-block; background: #1a0a2e; color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; text-decoration: none; padding: 12px 28px; border-radius: 4px; border: 1.5px solid #c9a84c; }
-        .footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 14px 28px; text-align: center; }
-        .footer-brand { font-size: 9px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.5; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tâche — Elle A Osé</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
+    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
+    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag-assigned { background-color: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.35); color: #4ade80; }
+    .tag-due { background-color: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.35); color: #fbbf24; }
+    .tag-overdue { background-color: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: #f87171; }
+    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title-danger { font-size: 22px; font-weight: 800; color: #f87171; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .task-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .task-head-td { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; }
+    .task-ref { font-size: 11px; font-weight: 700; color: #c9a84c; letter-spacing: 1px; font-family: "Courier New", Courier, monospace; }
+    .task-status-td { text-align: right; font-size: 10px; color: rgba(255,255,255,.4); vertical-align: middle; padding: 11px 16px; background-color: #1e1035; }
+    .task-body-td { padding: 16px; background-color: rgba(255,255,255,.02); }
+    .task-title { font-size: 16px; font-weight: 800; color: #ffffff; margin-bottom: 14px; line-height: 1.35; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .meta-lbl { font-size: 9px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; display: block; margin-bottom: 3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .meta-val { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.75); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .alert-box { border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; font-size: 12px; line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .alert-due { border: 1px solid rgba(201,168,76,.2); border-left: 3px solid #c9a84c; color: rgba(255,255,255,.5); }
+    .alert-overdue { border: 1px solid rgba(239,68,68,.2); border-left: 3px solid #f87171; color: rgba(255,255,255,.5); }
+    .cta-wrap-td { padding: 4px 0 8px; text-align: center; }
+    .cta-btn { display: inline-block; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
-        <div class="header">
-            <div class="brand">
-                <div>
-                    <div class="brand-name">Elle A Ose</div>
-                    <div class="brand-sub">Task management</div>
-                </div>
-                <span th:switch="${eventType}">
-                    <span th:case="'TASK_ASSIGNED'" class="tag tag-assigned">Tache assignee</span>
-                    <span th:case="'TASK_DUE_SOON'" class="tag tag-due">Echeance proche</span>
-                    <span th:case="'TASK_OVERDUE'" class="tag tag-overdue">En retard</span>
-                    <span th:case="*" class="tag tag-due">Task</span>
-                </span>
-            </div>
-        </div>
-        <div class="stripe"></div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
 
-        <div class="body">
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle">
+                        <div class="brand">Elle A Osé</div>
+                        <div class="brand-sub">Task management</div>
+                    </td>
+                    <td align="right" valign="middle">
+                        <span th:switch="${eventType}">
+                            <span th:case="'TASK_ASSIGNED'" class="tag tag-assigned">Tâche assignée</span>
+                            <span th:case="'TASK_DUE_SOON'" class="tag tag-due">Échéance proche</span>
+                            <span th:case="'TASK_OVERDUE'" class="tag tag-overdue">En retard</span>
+                            <span th:case="*" class="tag tag-due">Tâche</span>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td class="stripe">&nbsp;</td></tr>
+
+    <tr>
+        <td class="hero-td">
+            <div class="hero-label">Notification tâche</div>
             <div th:switch="${eventType}">
                 <div th:case="'TASK_ASSIGNED'">
-                    <div class="title">Une tache vous a ete assignee</div>
-                    <div class="subtitle">Consultez les details et planifiez le suivi.</div>
+                    <div class="hero-title">Une tâche vous a été assignée</div>
+                    <div class="hero-sub">Consultez les détails et planifiez le suivi.</div>
                 </div>
                 <div th:case="'TASK_DUE_SOON'">
-                    <div class="title">Echeance proche</div>
-                    <div class="subtitle">Cette tache arrive bientot a echeance.</div>
+                    <div class="hero-title">Échéance proche</div>
+                    <div class="hero-sub">Cette tâche arrive bientôt à échéance — priorisez-la.</div>
                 </div>
                 <div th:case="'TASK_OVERDUE'">
-                    <div class="title">Tache en retard</div>
-                    <div class="subtitle">Cette tache a depasse son echeance et demande une action rapide.</div>
+                    <div class="hero-title-danger">Tâche en retard</div>
+                    <div class="hero-sub">Cette tâche a dépassé son échéance et demande une action rapide.</div>
+                </div>
+                <div th:case="*">
+                    <div class="hero-title">Mise à jour de tâche</div>
+                    <div class="hero-sub">Un événement a été enregistré sur votre tâche.</div>
                 </div>
             </div>
+        </td>
+    </tr>
 
-            <div class="task-card">
-                <div class="task-head">
-                    <span class="task-ref" th:text="|TASK-${taskId}|">TASK-0</span>
-                    <span class="task-status" th:text="${status}">OPEN</span>
-                </div>
-                <div class="task-body">
-                    <div class="task-title" th:text="${title}">Titre de la tache</div>
-                    <div class="meta">
-                        <div class="meta-item" th:if="${priority}">
-                            <span class="meta-label">Priorite</span>
-                            <span class="meta-value" th:text="${priority}">MEDIUM</span>
-                        </div>
-                        <div class="meta-item" th:if="${dueAt}">
-                            <span class="meta-label">Echeance</span>
-                            <span class="meta-value" th:text="${dueAt}">--</span>
-                        </div>
-                        <div class="meta-item" th:if="${sourceType}">
-                            <span class="meta-label">Source</span>
-                            <span class="meta-value" th:text="|${sourceType} ${sourceCode ?: ''}|">MANUAL</span>
-                        </div>
-                        <div class="meta-item" th:if="${recurrence}">
-                            <span class="meta-label">Recurrence</span>
-                            <span class="meta-value" th:text="${recurrence}">NONE</span>
-                        </div>
-                    </div>
-                </div>
+    <tr>
+        <td class="body-td">
+            <div class="section-lbl">Tâche</div>
+            <table class="task-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="task-head-td"><span class="task-ref" th:text="|TASK-${taskId}|">TASK-0</span></td>
+                    <td class="task-status-td" th:text="${status}">OPEN</td>
+                </tr>
+                <tr>
+                    <td class="task-body-td" colspan="2">
+                        <div class="task-title" th:text="${title}">Titre de la tâche</div>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td th:if="${priority}" style="padding:0 8px 8px 0; vertical-align:top; width:50%;">
+                                    <span class="meta-lbl">Priorité</span>
+                                    <span class="meta-val" th:text="${priority}">MEDIUM</span>
+                                </td>
+                                <td th:if="${dueAt}" style="padding:0 0 8px 0; vertical-align:top; width:50%;">
+                                    <span class="meta-lbl">Échéance</span>
+                                    <span class="meta-val" th:text="${dueAt}">—</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td th:if="${sourceType}" style="padding:0 8px 0 0; vertical-align:top; width:50%;">
+                                    <span class="meta-lbl">Source</span>
+                                    <span class="meta-val" th:text="|${sourceType} ${sourceCode ?: ''}|">MANUAL</span>
+                                </td>
+                                <td th:if="${recurrence}" style="padding:0; vertical-align:top; width:50%;">
+                                    <span class="meta-lbl">Récurrence</span>
+                                    <span class="meta-val" th:text="${recurrence}">NONE</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <div th:if="${eventType == 'TASK_DUE_SOON'}" class="alert-box alert-due">
+                L'échéance approche. Priorisez cette tâche ou ajustez sa date si le planning a changé.
+            </div>
+            <div th:if="${eventType == 'TASK_OVERDUE'}" class="alert-box alert-overdue">
+                Cette tâche est en retard. Mettez à jour son statut, son échéance ou ajoutez un commentaire de suivi.
             </div>
 
-            <div class="alert alert-due" th:if="${eventType == 'TASK_DUE_SOON'}">
-                L'echeance approche. Priorisez cette tache ou ajustez sa date si le planning a change.
-            </div>
-            <div class="alert alert-overdue" th:if="${eventType == 'TASK_OVERDUE'}">
-                Cette tache est en retard. Mettez a jour son statut, son echeance ou ajoutez un commentaire de suivi.
-            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td class="cta-wrap-td"><a href="#" class="cta-btn">Voir la tâche</a></td></tr>
+            </table>
+        </td>
+    </tr>
 
-            <div class="cta-wrap">
-                <a href="#" class="cta">Voir la tache</a>
-            </div>
-        </div>
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Task management</div>
+            <div class="footer-text">Email automatique généré par le système Bokati.</div>
+        </td>
+    </tr>
 
-        <div class="footer">
-            <div class="footer-brand">Elle A Ose - Task</div>
-            <div class="footer-text">Email automatique genere par le systeme Bokati.</div>
-        </div>
-    </div>
-</div>
+</table>
+</td></tr>
+</table>
 </body>
 </html>
