@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 ApiPath.V1 + "/auth/refresh",
                                 ApiPath.V1 + "/auth/ott/**",
                                 ApiPath.V1 + "/auth/password-reset/**",
+                                ApiPath.V1 + "/payments/mobile-money/providers",
                                 ApiPath.V1 + "/payments/mobile-money/pawapay/callback",
                                 ApiPath.V1 + "/payments/mobile-money/pawaypay/callback",
                                 ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback",
