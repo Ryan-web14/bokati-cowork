@@ -1,388 +1,175 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rappel de réservation — Elle A Osé</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            margin: 0; padding: 0;
-            background: #f0eef5;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
-        .card {
-            max-width: 580px; margin: 0 auto;
-            background: #ffffff; border-radius: 6px;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10);
-        }
-
-        /* HEADER */
-        .email-header {
-            background: #1a0a2e;
-            padding: 26px 36px 22px;
-            position: relative; overflow: hidden;
-        }
-        .email-header::after {
-            content: ''; position: absolute;
-            top: 0; right: -20px;
-            width: 200px; height: 100%;
-            background: rgba(255,255,255,0.03);
-            transform: skewX(-12deg);
-        }
-        .header-inner { position: relative; z-index: 1; }
-        .brand-name {
-            font-size: 14px; font-weight: 700;
-            color: #ffffff; letter-spacing: 3px;
-            text-transform: uppercase; margin-bottom: 2px;
-        }
-        .brand-sub {
-            font-size: 7px; color: #9b8caa;
-            letter-spacing: 2px; text-transform: uppercase;
-            margin-bottom: 18px;
-        }
-        .pill {
-            display: inline-block;
-            background: rgba(201, 168, 76, 0.15);
-            color: #c9a84c;
-            border: 1px solid rgba(201, 168, 76, 0.35);
-            font-size: 8.5px; font-weight: 700;
-            letter-spacing: 1.5px; text-transform: uppercase;
-            padding: 4px 12px; border-radius: 20px;
-            margin-bottom: 12px;
-        }
-        .pill-icon {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 1.4px solid #c9a84c;
-            border-radius: 50%;
-            margin-right: 6px;
-            vertical-align: -2px;
-            position: relative;
-        }
-        .pill-icon::before {
-            content: '';
-            position: absolute;
-            width: 1.4px;
-            height: 4px;
-            background: #c9a84c;
-            left: 5px;
-            top: 2px;
-        }
-        .pill-icon::after {
-            content: '';
-            position: absolute;
-            width: 4px;
-            height: 1.4px;
-            background: #c9a84c;
-            left: 5px;
-            top: 6px;
-            transform: rotate(35deg);
-            transform-origin: left center;
-        }
-        .headline {
-            font-size: 24px; font-weight: 700;
-            color: #ffffff; line-height: 1.2;
-            letter-spacing: -0.3px; margin-bottom: 6px;
-        }
-        .headline span { color: #c9a84c; }
-        .subline {
-            font-size: 12px; color: #c8bdd8;
-            line-height: 1.55;
-        }
-        .header-stripe {
-            height: 3px;
-            background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%);
-        }
-
-        /* BODY */
-        .body { padding: 28px 36px 22px; }
-        .greeting {
-            font-size: 14px; color: #1a0a2e;
-            line-height: 1.6; margin-bottom: 10px;
-        }
-        .message {
-            font-size: 13px; color: #5c4f6e;
-            line-height: 1.7; margin-bottom: 22px;
-            text-wrap: pretty;
-        }
-
-        /* COUNTDOWN */
-        .countdown {
-            background: linear-gradient(135deg, #1a0a2e 0%, #2a1548 100%);
-            border-radius: 6px;
-            padding: 18px 16px;
-            text-align: center;
-            margin-bottom: 22px;
-            position: relative;
-            overflow: hidden;
-        }
-        .countdown::after {
-            content: '';
-            position: absolute;
-            top: -30px; right: -30px;
-            width: 140px; height: 140px;
-            background: radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%);
-        }
-        .countdown-label {
-            font-size: 8px; font-weight: 700;
-            color: #c9a84c; letter-spacing: 2px;
-            text-transform: uppercase; margin-bottom: 4px;
-            position: relative; z-index: 1;
-        }
-        .countdown-value {
-            font-size: 22px; font-weight: 700;
-            color: #ffffff; line-height: 1.1;
-            position: relative; z-index: 1;
-        }
-        .countdown-sub {
-            font-size: 10px; color: #9b8caa;
-            margin-top: 4px; letter-spacing: 0.3px;
-            position: relative; z-index: 1;
-        }
-
-        /* BOOKING CARD */
-        .info-box {
-            border: 1px solid #e8e0f0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 22px;
-        }
-        .info-box-head {
-            background: #1a0a2e;
-            border-left: 3px solid #c9a84c;
-            padding: 9px 16px;
-            font-size: 8px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1.4px;
-            color: #ffffff;
-        }
-        .info-row {
-            display: flex; align-items: center;
-            padding: 11px 16px;
-            border-bottom: 1px solid #f0eaf8;
-        }
-        .info-row:last-child { border-bottom: none; }
-        .info-row:nth-child(even) { background: #faf8fd; }
-        .info-key {
-            color: #7c6d8f; font-size: 10.5px;
-            font-weight: 600; width: 130px;
-            flex-shrink: 0;
-            text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .info-val {
-            color: #1a0a2e; font-weight: 700;
-            font-size: 12.5px; flex: 1;
-            text-align: right;
-        }
-        .info-val small {
-            display: block; font-size: 10px;
-            color: #5c4f6e; font-weight: 400;
-            margin-top: 2px;
-        }
-
-        /* TIPS */
-        .tips-title {
-            font-size: 9px; font-weight: 700;
-            color: #8b5cf6; letter-spacing: 2px;
-            text-transform: uppercase; margin-bottom: 12px;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .tips-title::before {
-            content: '';
-            width: 18px; height: 2px;
-            background: #c9a84c;
-        }
-        .tips {
-            display: grid; grid-template-columns: 1fr;
-            gap: 7px; margin-bottom: 22px;
-        }
-        .tip {
-            font-size: 11.5px; color: #5c4f6e;
-            line-height: 1.55;
-            padding: 9px 14px 9px 28px;
-            background: #faf8fd;
-            border: 1px solid #e8e0f0;
-            border-left: 3px solid #c9a84c;
-            border-radius: 2px;
-            position: relative;
-        }
-        .tip::before {
-            content: '✓';
-            position: absolute;
-            left: 11px; top: 9px;
-            color: #c9a84c;
-            font-weight: 700;
-        }
-        .tip strong { color: #1a0a2e; }
-
-        /* CTA */
-        .cta-row { text-align: center; margin-bottom: 18px; }
-        .cta-primary {
-            display: inline-block;
-            background: #1a0a2e; color: #c9a84c;
-            font-size: 11px; font-weight: 700;
-            letter-spacing: 1.5px; text-transform: uppercase;
-            text-decoration: none;
-            padding: 14px 28px;
-            border-radius: 3px;
-            border: 1.5px solid #c9a84c;
-            margin: 0 4px 8px;
-        }
-        .cta-secondary {
-            display: inline-block;
-            color: #1a0a2e;
-            font-size: 10px; font-weight: 700;
-            letter-spacing: 1.5px; text-transform: uppercase;
-            text-decoration: none;
-            padding: 14px 22px;
-            border-radius: 3px;
-            border: 1.5px solid #d8d0e8;
-            margin: 0 4px 8px;
-        }
-
-        /* CANCEL NOTICE */
-        .cancel-notice {
-            font-size: 10.5px; color: #5c4f6e;
-            line-height: 1.6; text-align: center;
-            padding: 12px 16px;
-            background: #faf8fd;
-            border: 1px solid #e8e0f0;
-            border-left: 3px solid #8b5cf6;
-            border-radius: 3px;
-        }
-        .cancel-notice a {
-            color: #8b5cf6;
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        /* FOOTER */
-        .email-footer {
-            background: #f7f5fb;
-            border-top: 1px solid #e8e0f0;
-            padding: 16px 36px;
-            text-align: center;
-        }
-        .footer-brand {
-            font-size: 10px; font-weight: 700;
-            color: #1a0a2e; letter-spacing: 2px;
-            text-transform: uppercase; margin-bottom: 4px;
-        }
-        .footer-text {
-            font-size: 10px; color: #9b8caa;
-            line-height: 1.55;
-        }
-        .footer-made {
-            font-size: 8.5px; color: #c8bdd8;
-            margin-top: 8px; letter-spacing: 0.4px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rappel de réservation — Elle A Osé</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
+    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
+    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4); color: #c9a84c; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title span { color: #c9a84c; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .msg { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .countdown-td { background-color: #1a0b32; border-radius: 10px; padding: 20px 24px; text-align: center; margin-bottom: 0; }
+    .countdown-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #c9a84c; margin-bottom: 6px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .countdown-val { font-size: 26px; font-weight: 800; color: #ffffff; line-height: 1.1; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .countdown-sub { font-size: 11px; color: rgba(255,255,255,.35); margin-top: 6px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .info-head-td { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-val { padding: 12px 16px 12px 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tip-td { padding: 11px 14px 11px 16px; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.55; }
+    .tip-td strong { color: rgba(255,255,255,.75); }
+    .tip-check { color: #c9a84c; font-weight: 700; padding-right: 8px; }
+    .cta-wrap-td { padding: 4px 0 20px; text-align: center; }
+    .cta-btn-td { padding: 0 6px; }
+    .cta-btn-primary { display: inline-block; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 13px 24px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .cta-btn-ghost { display: inline-block; background-color: transparent; color: rgba(255,255,255,.55); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,.15); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .note-box { border: 1px solid rgba(255,255,255,.08); border-left: 3px solid rgba(167,139,250,.7); border-radius: 8px; padding: 14px 16px; font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap">
-    <div class="card">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
 
-        <!-- HEADER -->
-        <div class="email-header">
-            <div class="header-inner">
-                <div class="brand-name">Elle A Osé</div>
-                <div class="brand-sub">Cowork &amp; Studio</div>
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle">
+                        <div class="brand">Elle A Osé</div>
+                        <div class="brand-sub">Espace de coworking</div>
+                    </td>
+                    <td align="right" valign="middle"><span class="tag">Rappel</span></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td class="stripe">&nbsp;</td></tr>
 
-                <div class="pill"><span class="pill-icon"></span>Rappel &nbsp;·&nbsp; Réservation à venir</div>
+    <tr>
+        <td class="hero-td">
+            <div class="hero-label">Réservation à venir &#x23F0;</div>
+            <div class="hero-title">À bientôt, <span th:text="${name ?: 'cher membre'}">cher membre</span>&nbsp;!</div>
+            <div class="hero-sub">Voici un récapitulatif de votre prochaine réservation à Elle A Osé.</div>
+        </td>
+    </tr>
 
-                <div class="headline">À demain, <span th:text="${name ?: 'cher membre'}">cher membre</span>&nbsp;!</div>
-                <div class="subline">Voici un récapitulatif de votre prochaine réservation à Elle A Osé.</div>
+    <tr>
+        <td class="body-td">
+            <p class="msg">Bonjour <strong style="color:rgba(255,255,255,.82);" th:text="${name ?: 'cher membre'}">cher membre</strong>,<br>
+            votre réservation arrive très bientôt. Nous avons tout préparé pour vous accueillir dans les meilleures conditions.</p>
+
+            <!-- Countdown -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                    <td class="countdown-td" style="background-color:#1a0b32; border-radius:10px; padding:20px 24px; text-align:center;">
+                        <div class="countdown-lbl">Dans</div>
+                        <div class="countdown-val" th:text="${countdown ?: '23 heures'}">23 heures</div>
+                        <div class="countdown-sub" th:text="${dateFull}">—</div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- Booking details -->
+            <div class="section-lbl">Détails de la réservation</div>
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td class="info-head-td" colspan="2">Votre réservation</td></tr>
+                <tr>
+                    <td class="info-lbl">Référence</td>
+                    <td class="info-val" th:text="${bookingId}">RSV-000</td>
+                </tr>
+                <tr style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl">Espace</td>
+                    <td class="info-val" th:text="${room}">—</td>
+                </tr>
+                <tr>
+                    <td class="info-lbl">Date</td>
+                    <td class="info-val" th:text="${date}">—</td>
+                </tr>
+                <tr style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl">Créneau</td>
+                    <td class="info-val" th:text="${slot}">—</td>
+                </tr>
+                <tr th:if="${purpose}">
+                    <td class="info-lbl">Objet</td>
+                    <td class="info-val" th:text="${purpose}">—</td>
+                </tr>
+                <tr th:if="${attendees}" style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl" style="border-bottom:0;">Participants</td>
+                    <td class="info-val" style="border-bottom:0;" th:text="${attendees}">—</td>
+                </tr>
+            </table>
+
+            <!-- Tips -->
+            <div class="section-lbl">Petits rappels</div>
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                    <td class="tip-td"><span class="tip-check">&#x2713;</span><strong>Arrivée :</strong> 5 min avant pour récupérer la clé à l'accueil.</td>
+                </tr>
+                <tr style="background-color:rgba(255,255,255,.02);">
+                    <td class="tip-td"><span class="tip-check">&#x2713;</span><strong>Café &amp; eau :</strong> servis sur demande, prévenez le concierge.</td>
+                </tr>
+                <tr>
+                    <td class="tip-td" style="border-bottom:0;"><span class="tip-check">&#x2713;</span><strong>Annulation :</strong> gratuite jusqu'à 4 h avant le début du créneau.</td>
+                </tr>
+            </table>
+
+            <!-- CTAs -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+                <tr>
+                    <td align="center">
+                        <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td class="cta-btn-td"><a href="#" class="cta-btn-primary">Voir ma réservation</a></td>
+                                <td class="cta-btn-td"><a href="#" class="cta-btn-ghost">Modifier &middot; Annuler</a></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <div class="note-box">
+                Empêché·e ? Annulez avant le créneau — votre crédit d'heures sera remis automatiquement sur votre compte.
             </div>
-        </div>
-        <div class="header-stripe"></div>
+        </td>
+    </tr>
 
-        <!-- BODY -->
-        <div class="body">
-
-            <p class="greeting">Bonjour <strong th:text="${name ?: 'cher membre'}">cher membre</strong>,</p>
-            <p class="message">
-                Petit rappel amical : votre réservation arrive très bientôt. On a tout préparé pour vous accueillir dans les meilleures conditions.
-            </p>
-
-            <!-- COUNTDOWN -->
-            <div class="countdown">
-                <div class="countdown-label">Dans</div>
-                <div class="countdown-value" th:text="${countdown ?: '23 heures'}">23 heures</div>
-                <div class="countdown-sub" th:text="${dateFull ?: 'Mardi 05 mai 2026 — 09:00'}">Mardi 05 mai 2026 — 09:00</div>
-            </div>
-
-            <!-- BOOKING DETAILS -->
-            <div class="info-box">
-                <div class="info-box-head">Détails de la réservation</div>
-                <div class="info-row">
-                    <span class="info-key">Réf.</span>
-                    <span class="info-val" th:text="${bookingId ?: 'RSV-2026-0418'}">RSV-2026-0418</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-key">Espace</span>
-                    <span class="info-val">
-                        <span th:text="${room ?: 'Salle Audace'}">Salle Audace</span>
-                        <small>12 places · 1<sup>er</sup> étage</small>
-                    </span>
-                </div>
-                <div class="info-row">
-                    <span class="info-key">Date</span>
-                    <span class="info-val" th:text="${date ?: 'Mardi 05 mai 2026'}">Mardi 05 mai 2026</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-key">Créneau</span>
-                    <span class="info-val">
-                        <span th:text="${slot ?: '09:00 → 11:00'}">09:00 → 11:00</span>
-                        <small>2 h · décompté de votre forfait</small>
-                    </span>
-                </div>
-                <div class="info-row">
-                    <span class="info-key">Objet</span>
-                    <span class="info-val" th:text="${purpose ?: 'Comité de direction'}">Comité de direction</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-key">Participants</span>
-                    <span class="info-val" th:text="${attendees ?: '8 personnes'}">8 personnes</span>
-                </div>
-            </div>
-
-            <!-- TIPS -->
-            <div class="tips-title">Petits rappels</div>
-            <div class="tips">
-                <div class="tip"><strong>Arrivée :</strong> 5 min avant pour récupérer la clé à l'accueil.</div>
-                <div class="tip"><strong>Café &amp; eau :</strong> servis sur demande, prévenez le concierge.</div>
-                <div class="tip"><strong>Annulation :</strong> gratuite jusqu'à 4 h avant le début du créneau.</div>
-            </div>
-
-            <!-- CTA -->
-            <div class="cta-row">
-                <a href="#" class="cta-primary">Voir ma réservation</a>
-                <a href="#" class="cta-secondary">Modifier · annuler</a>
-            </div>
-
-            <!-- CANCEL -->
-            <div class="cancel-notice">
-                Empêché·e ? <a href="#">Annulez en un clic</a> avant le 05 mai à 05:00 — votre crédit d'heures sera remis automatiquement.
-            </div>
-
-        </div>
-
-        <!-- FOOTER -->
-        <div class="email-footer">
-            <div class="footer-brand">Elle A Osé</div>
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
             <div class="footer-text">
                 Message automatique — rappel envoyé 24 h avant votre réservation.<br>
-                Pour toute question, contactez votre concierge.
+                <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a>
             </div>
-            <div class="footer-made">Made by SNI</div>
-        </div>
+        </td>
+    </tr>
 
-    </div>
-</div>
+</table>
+</td></tr>
+</table>
 </body>
 </html>

@@ -1,56 +1,123 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmation remboursement</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { margin: 0; padding: 0; background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-        .wrap { width: 100%; padding: 48px 16px; background: #f0eef5; }
-        .card { max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 6px; overflow: hidden; box-shadow: 0 8px 32px rgba(30, 10, 60, 0.10); }
-        .email-header { background: #1a0a2e; padding: 24px 32px 20px; }
-        .header-stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #8b5cf6 55%, #4c1d95 100%); }
-        .logo-area { display: flex; align-items: center; justify-content: space-between; }
-        .brand-name { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
-        .brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
-        .notification-tag { background: rgba(201, 168, 76, 0.15); border: 1px solid rgba(201, 168, 76, 0.4); color: #c9a84c; font-size: 7.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; }
-        .email-body { padding: 32px; }
-        .event-title { font-size: 20px; font-weight: 700; color: #1a0a2e; text-align: center; margin-bottom: 6px; }
-        .event-subtitle { font-size: 12px; color: #7c6d8f; text-align: center; margin-bottom: 24px; }
-        .greeting, .message { font-size: 13px; color: #5c4f6e; line-height: 1.65; margin-bottom: 16px; }
-        .info-box { border: 1px solid #e8e0f0; border-radius: 4px; overflow: hidden; margin-bottom: 22px; }
-        .info-box-head { background: #1a0a2e; border-left: 3px solid #c9a84c; padding: 8px 16px; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #ffffff; }
-        .info-row { display: flex; padding: 11px 16px; border-bottom: 1px solid #f0eaf8; font-size: 13px; }
-        .info-row:nth-child(even) { background: #faf8fd; }
-        .info-key { color: #7c6d8f; font-size: 11px; font-weight: 600; width: 150px; text-transform: uppercase; }
-        .info-val { color: #1a0a2e; font-weight: 700; flex: 1; text-align: right; }
-        .amount { color: #166534; }
-        .email-footer { background: #f7f5fb; border-top: 1px solid #e8e0f0; padding: 16px 32px; text-align: center; }
-        .footer-brand { font-size: 10px; font-weight: 700; color: #1a0a2e; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-        .footer-text { font-size: 10px; color: #9b8caa; line-height: 1.55; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remboursement confirmé — Elle A Osé</title>
+<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+<style>
+    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
+    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
+    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
+    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4); color: #c9a84c; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .msg { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .info-head-td { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-val { padding: 12px 16px 12px 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .gold-box { border: 1px solid rgba(201,168,76,.2); border-left: 3px solid #c9a84c; border-radius: 8px; padding: 14px 16px; font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    @media only screen and (max-width: 480px) {
+        .wrap-td { padding: 0 !important; }
+        .card { border-radius: 0 !important; }
+        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+</style>
 </head>
 <body>
-<div class="wrap"><div class="card">
-    <div class="email-header"><div class="logo-area"><div><div class="brand-name">Elle A Ose</div><div class="brand-sub">Cowork &amp; Studio</div></div><div class="notification-tag">Remboursement</div></div></div>
-    <div class="header-stripe"></div>
-    <div class="email-body">
-        <div class="event-title">Remboursement confirme</div>
-        <div class="event-subtitle">L'operation a ete enregistree dans votre dossier</div>
-        <p class="greeting">Bonjour <strong th:text="${recipientName}">client</strong>,</p>
-        <p class="message">Nous confirmons le remboursement lie a la transaction <strong th:text="${transactionNumber}">TXN-000</strong>.</p>
-        <div class="info-box">
-            <div class="info-box-head">Details remboursement</div>
-            <div class="info-row"><span class="info-key">Montant</span><span class="info-val amount" th:text="${amount}">0 XAF</span></div>
-            <div class="info-row"><span class="info-key">Statut</span><span class="info-val" th:text="${status}">REFUNDED</span></div>
-            <div class="info-row"><span class="info-key">Methode</span><span class="info-val" th:text="${paymentMethod}">CASH</span></div>
-            <div class="info-row"><span class="info-key">Reference</span><span class="info-val" th:text="${providerReference}">-</span></div>
-            <div class="info-row"><span class="info-key">Intention</span><span class="info-val" th:text="${intentNumber}">INT-000</span></div>
-            <div class="info-row"><span class="info-key">Source</span><span class="info-val" th:text="${sourceCode ?: '-'}">-</span></div>
-        </div>
-    </div>
-    <div class="email-footer"><div class="footer-brand">Elle A Osé</div><div class="footer-text">coworkspace@elleaose.com - 05 204 25 52</div></div>
-</div></div>
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<tr><td class="wrap-td" align="center">
+<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+
+    <tr>
+        <td class="header-td">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td valign="middle">
+                        <div class="brand">Elle A Osé</div>
+                        <div class="brand-sub">Espace de coworking</div>
+                    </td>
+                    <td align="right" valign="middle"><span class="tag">Remboursement</span></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr><td class="stripe">&nbsp;</td></tr>
+
+    <tr>
+        <td class="hero-td">
+            <div class="hero-label">Opération enregistrée &#x2705;</div>
+            <div class="hero-title">Remboursement confirmé</div>
+            <div class="hero-sub">L'opération a été enregistrée dans votre dossier. Conservez cet email comme confirmation.</div>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="body-td">
+            <p class="msg">Bonjour <strong style="color:rgba(255,255,255,.82);" th:text="${recipientName ?: 'client'}">client</strong>,<br>
+            nous vous confirmons le remboursement lié à la transaction <strong style="color:rgba(255,255,255,.82);" th:text="${transactionNumber}">TXN-000</strong>.</p>
+
+            <div class="section-lbl">Détails du remboursement</div>
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td class="info-head-td" colspan="2">Récapitulatif</td></tr>
+                <tr>
+                    <td class="info-lbl">Montant</td>
+                    <td class="info-val" style="color:#4ade80; font-weight:700;" th:text="${amount}">0 XAF</td>
+                </tr>
+                <tr style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl">Statut</td>
+                    <td class="info-val" th:text="${status}">REFUNDED</td>
+                </tr>
+                <tr>
+                    <td class="info-lbl">Méthode</td>
+                    <td class="info-val" th:text="${paymentMethod}">—</td>
+                </tr>
+                <tr th:if="${providerReference}" style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl">Référence</td>
+                    <td class="info-val" th:text="${providerReference}">—</td>
+                </tr>
+                <tr th:if="${intentNumber}">
+                    <td class="info-lbl">Intention</td>
+                    <td class="info-val" th:text="${intentNumber}">INT-000</td>
+                </tr>
+                <tr th:if="${sourceCode}" style="background-color:rgba(255,255,255,.02);">
+                    <td class="info-lbl" style="border-bottom:0;">Source</td>
+                    <td class="info-val" style="border-bottom:0;" th:text="${sourceCode}">—</td>
+                </tr>
+            </table>
+
+            <div class="gold-box">
+                Pour toute question concernant ce remboursement, contactez notre équipe en citant la référence de transaction.
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+        <td class="footer-td">
+            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
+            <div class="footer-text">
+                <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a><br>
+                Email généré automatiquement — merci de ne pas y répondre directement.
+            </div>
+        </td>
+    </tr>
+
+</table>
+</td></tr>
+</table>
 </body>
 </html>

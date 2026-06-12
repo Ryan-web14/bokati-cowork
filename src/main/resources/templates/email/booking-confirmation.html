@@ -12,93 +12,76 @@
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
 
-    body {
-        margin: 0; padding: 0;
-        background-color: #e8e4f0;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    }
+    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
     .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
 
     /* Header */
-    .header-td   { background-color: #0a0418; padding: 24px 32px 20px; }
-    .header-stripe { height: 3px; background: linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size: 0; line-height: 0; }
-    .brand-name  { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .brand-sub   { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .status-pill { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 6px 14px; border-radius: 100px; background-color: #112b1c; border: 1px solid #22c55e55; color: #4ade80; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
+    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .status-pill { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: #112b1c; border: 1px solid rgba(34,197,94,.35); color: #4ade80; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
     /* Hero */
-    .hero-td     { background-color: #110820; padding: 32px 32px 28px; border-bottom: 1px solid rgba(255,255,255,.05); }
-    .hero-label  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-title  { font-size: 24px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-sub    { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
+    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     .hero-sub strong { color: rgba(255,255,255,.75); font-weight: 600; }
 
     /* Ref bar */
-    .ref-bar-td  { background-color: #1a1030; border-top: 1px solid #c9a84c33; border-bottom: 1px solid #c9a84c33; padding: 12px 32px; }
-    .ref-label   { font-size: 10px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .ref-number  { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 1.5px; font-family: "Courier New", Courier, monospace; }
+    .ref-bar-td { background-color: rgba(201,168,76,.07); border-top: 1px solid rgba(201,168,76,.12); border-bottom: 1px solid rgba(201,168,76,.12); padding: 12px 32px; }
+    .ref-label { font-size: 10px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .ref-number { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 1.5px; font-family: "Courier New", Courier, monospace; }
 
     /* Body */
-    .body-td     { padding: 28px 32px 32px; background-color: #0f0720; }
+    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
     .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-    /* Space card */
-    .space-card  { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-    .space-head  { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 14px 18px; }
-    .space-name  { font-size: 16px; font-weight: 700; color: #ffffff; margin-bottom: 3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .space-type  { font-size: 10px; color: #c9a84c; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    /* Info card */
+    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .info-head { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 12px 18px; font-size: 15px; font-weight: 700; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-head-sm { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-type { font-size: 10px; color: #c9a84c; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .info-val { padding: 12px 16px 12px 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .info-val-last { border-bottom: 0; }
+    .info-lbl-last { border-bottom: 0; }
+    .info-row-alt { background-color: rgba(255,255,255,.02); }
+    .time-sep { color: rgba(255,255,255,.3); margin: 0 5px; }
+    .time-dur { font-size: 11px; color: rgba(255,255,255,.3); margin-left: 6px; }
 
-    /* Detail rows */
-    .detail-row  { border-bottom: 1px solid rgba(255,255,255,.04); }
-    .detail-row:last-child { border-bottom: none; }
-    .detail-lbl-td { padding: 13px 12px 13px 18px; vertical-align: middle; width: 38%; }
-    .detail-val-td { padding: 13px 18px 13px 8px; vertical-align: middle; text-align: right; }
-    .detail-lbl  { font-size: 9px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .detail-val  { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .time-sep    { color: rgba(255,255,255,.3); margin: 0 5px; }
-    .time-dur    { font-size: 11px; color: rgba(255,255,255,.3); margin-left: 6px; }
-
-    /* Price */
-    .price-box   { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-    .price-total-tr { border-bottom: 1px solid rgba(255,255,255,.07); }
-    .price-total-lbl { padding: 16px 18px; font-size: 16px; font-weight: 700; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .price-total-amt { padding: 16px 18px; font-size: 22px; font-weight: 800; color: #c9a84c; text-align: right; letter-spacing: -0.3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .price-line-tr   { border-bottom: 1px solid rgba(255,255,255,.04); }
-    .price-line-lbl  { padding: 10px 18px; font-size: 12px; color: rgba(255,255,255,.45); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .price-line-amt  { padding: 10px 18px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.65); text-align: right; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-
-    /* Payment */
-    .pay-box     { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
-    .pay-lbl-td  { padding: 13px 12px 13px 18px; font-size: 9px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; width: 38%; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .pay-val-td  { padding: 13px 18px 13px 8px; text-align: right; }
-    .pay-name    { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .pay-amt     { font-size: 14px; font-weight: 700; color: #c9a84c; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    /* Price box */
+    .price-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+    .price-total-td { padding: 16px 18px; font-size: 15px; font-weight: 700; color: #ffffff; border-bottom: 1px solid rgba(255,255,255,.07); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-total-amt { padding: 16px 18px; font-size: 22px; font-weight: 800; color: #c9a84c; text-align: right; letter-spacing: -0.3px; border-bottom: 1px solid rgba(255,255,255,.07); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-line-lbl { padding: 10px 18px; font-size: 12px; color: rgba(255,255,255,.45); border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-line-amt { padding: 10px 18px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.65); text-align: right; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .price-line-last { border-bottom: 0; }
 
     /* QR */
-    .qr-box      { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 22px 18px; margin-bottom: 24px; text-align: center; background-color: rgba(255,255,255,.02); }
-    .qr-lbl      { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.3); margin-bottom: 16px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .qr-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 22px 18px; margin-bottom: 22px; background-color: rgba(255,255,255,.02); }
+    .qr-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.3); margin-bottom: 16px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     .qr-img-wrap { display: inline-block; padding: 12px; background-color: #ffffff; border-radius: 10px; margin-bottom: 12px; }
-    .qr-img      { width: 140px; height: 140px; display: block; }
+    .qr-img { width: 140px; height: 140px; display: block; }
     .qr-placeholder { display: inline-block; width: 140px; height: 44px; background-color: #1a1030; border-radius: 6px; border: 1px solid rgba(201,168,76,.2); text-align: center; line-height: 44px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 0.8px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .qr-ref      { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 2px; margin-bottom: 4px; font-family: "Courier New", Courier, monospace; }
+    .qr-ref { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 2px; margin-bottom: 4px; font-family: "Courier New", Courier, monospace; }
     .verify-code { font-size: 11px; color: rgba(255,255,255,.3); margin-bottom: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .qr-steps    { text-align: left; }
-    .qr-step     { font-size: 11px; color: rgba(255,255,255,.38); line-height: 1.65; margin-bottom: 4px; padding-left: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .qr-step { font-size: 11px; color: rgba(255,255,255,.38); line-height: 1.65; margin-bottom: 4px; padding-left: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
     /* CTAs */
-    .cta-table   { width: 100%; border-collapse: separate; border-spacing: 8px; margin-bottom: 8px; }
     .cta-primary { display: block; text-align: center; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .cta-secondary { display: block; text-align: center; background-color: transparent; color: rgba(255,255,255,.5); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .cta-ghost { display: block; text-align: center; background-color: transparent; color: rgba(255,255,255,.5); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
 
-    /* Legal */
-    .legal { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.6; margin-top: 20px; text-align: center; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .legal a { color: rgba(255,255,255,.35); }
+    /* Legal / note */
+    .note { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.6; margin-top: 20px; text-align: center; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .note a { color: rgba(255,255,255,.35); }
 
     /* Footer */
-    .footer-td   { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
+    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
     .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .footer-text  { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
+    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     .footer-text a { color: rgba(255,255,255,.35); }
 
     @media only screen and (max-width: 480px) {
@@ -106,7 +89,6 @@
         .card { border-radius: 0 !important; }
         .header-td, .hero-td, .ref-bar-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
         .hero-title { font-size: 20px !important; }
-        .cta-table { border-spacing: 4px !important; }
     }
 </style>
 </head>
@@ -122,7 +104,7 @@
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                     <td valign="middle">
-                        <div class="brand-name">Elle A Osé</div>
+                        <div class="brand">Elle A Osé</div>
                         <div class="brand-sub">Espace de coworking</div>
                     </td>
                     <td align="right" valign="middle" style="white-space:nowrap;">
@@ -132,7 +114,7 @@
             </table>
         </td>
     </tr>
-    <tr><td class="header-stripe" style="height:3px; background:linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size:0; line-height:0;">&nbsp;</td></tr>
+    <tr><td class="stripe" style="height:3px; background:linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size:0; line-height:0;">&nbsp;</td></tr>
 
     <!-- ══ HERO ══ -->
     <tr>
@@ -162,104 +144,98 @@
     <tr>
         <td class="body-td">
 
-            <!-- Section : Espace réservé -->
+            <!-- Espace réservé -->
             <div class="section-lbl">Espace réservé</div>
-            <table class="space-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                    <td class="space-head">
-                        <div class="space-name" th:text="${resourceName}">Espace réservé</div>
-                        <div class="space-type" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
+                    <td class="info-head" colspan="2">
+                        <div th:text="${resourceName}">Espace réservé</div>
+                        <div class="info-type" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
                     </td>
                 </tr>
-
-                <!-- Date -->
-                <tr class="detail-row">
-                    <td class="detail-lbl-td"><span class="detail-lbl">Date</span></td>
-                    <td class="detail-val-td"><span class="detail-val" th:text="${bookingDate ?: startedAt}">—</span></td>
+                <tr>
+                    <td class="info-lbl">Date</td>
+                    <td class="info-val" th:text="${bookingDate ?: startedAt}">—</td>
                 </tr>
-
-                <!-- Horaires -->
-                <tr class="detail-row" style="background-color:rgba(255,255,255,.02);">
-                    <td class="detail-lbl-td"><span class="detail-lbl">Horaires</span></td>
-                    <td class="detail-val-td">
-                        <span class="detail-val">
-                            <span th:text="${startTime}">09:00</span>
-                            <span class="time-sep">&mdash;</span>
-                            <span th:text="${endTime}">13:00</span>
-                            <span class="time-dur" th:text="${durationLabel}">4 h</span>
-                        </span>
+                <tr class="info-row-alt">
+                    <td class="info-lbl">Horaires</td>
+                    <td class="info-val">
+                        <span th:text="${startTime}">09:00</span>
+                        <span class="time-sep">&mdash;</span>
+                        <span th:text="${endTime}">13:00</span>
+                        <span class="time-dur" th:text="${durationLabel}">4 h</span>
                     </td>
                 </tr>
-
-                <!-- Capacité -->
-                <tr class="detail-row" th:if="${resourceCapacity}">
-                    <td class="detail-lbl-td"><span class="detail-lbl">Capacité</span></td>
-                    <td class="detail-val-td"><span class="detail-val" th:text="${resourceCapacity} + ' personne(s)'">—</span></td>
+                <tr th:if="${resourceCapacity}">
+                    <td class="info-lbl">Capacité</td>
+                    <td class="info-val" th:text="${resourceCapacity} + ' personne(s)'">—</td>
                 </tr>
-
-                <!-- Localisation -->
-                <tr class="detail-row" th:if="${address}">
-                    <td class="detail-lbl-td"><span class="detail-lbl">Adresse</span></td>
-                    <td class="detail-val-td"><span class="detail-val" th:text="${address}">—</span></td>
+                <tr th:if="${address}">
+                    <td class="info-lbl info-lbl-last">Adresse</td>
+                    <td class="info-val info-val-last" th:text="${address}">—</td>
+                </tr>
+                <tr th:unless="${address}">
+                    <td colspan="2" style="font-size:0;line-height:0;padding:0;border-bottom:0;"></td>
                 </tr>
             </table>
 
-            <!-- Section : Détail du paiement -->
-            <div class="section-lbl" style="margin-top:20px;">Détail du paiement</div>
-            <table class="price-box" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr class="price-total-tr" style="border-bottom:1px solid rgba(255,255,255,.07);">
-                    <td class="price-total-lbl">Total TTC</td>
+            <!-- Détail du paiement -->
+            <div class="section-lbl" style="margin-top:8px;">Détail du paiement</div>
+            <table class="price-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td class="price-total-td">Total TTC</td>
                     <td class="price-total-amt" th:text="${priceTTC}">—</td>
                 </tr>
-                <tr class="price-line-tr" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                <tr>
                     <td class="price-line-lbl" th:text="|Base HT — ${resourceName} &times; ${durationLabel}|">Base HT</td>
                     <td class="price-line-amt" th:text="${priceHT}">—</td>
                 </tr>
-                <tr class="price-line-tr" th:if="${priceFees}" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                <tr th:if="${priceFees}">
                     <td class="price-line-lbl">Frais de réservation</td>
                     <td class="price-line-amt" th:text="${priceFees}">—</td>
                 </tr>
-                <tr class="price-line-tr" style="border-bottom:1px solid rgba(255,255,255,.04);">
+                <tr>
                     <td class="price-line-lbl" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</td>
                     <td class="price-line-amt" th:text="${priceTVA}">—</td>
                 </tr>
                 <tr>
-                    <td class="price-line-lbl" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
-                    <td class="price-line-amt" th:text="${priceCentimeAdditionnel}">—</td>
+                    <td class="price-line-lbl price-line-last" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
+                    <td class="price-line-amt price-line-last" th:text="${priceCentimeAdditionnel}">—</td>
                 </tr>
             </table>
 
-            <!-- Section : Paiement -->
-            <div class="section-lbl" style="margin-top:20px;">Paiement</div>
-            <table class="pay-box" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <!-- Paiement -->
+            <div class="section-lbl" style="margin-top:8px;">Paiement</div>
+            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                    <td valign="middle" style="padding-right:14px; width:36px;"><span class="pay-emoji">&#x1F4B3;</span></td>
-                    <td valign="middle">
-                        <div class="pay-name" th:text="${paymentMethod}">Mode de paiement</div>
-                        <div class="pay-date" th:text="${paymentDate}">—</div>
-                    </td>
-                    <td align="right" valign="middle" class="pay-amt" th:text="${priceTTC}">—</td>
+                    <td class="info-lbl">Méthode</td>
+                    <td class="info-val" th:text="${paymentMethod}">—</td>
+                </tr>
+                <tr th:if="${paymentDate}" class="info-row-alt">
+                    <td class="info-lbl">Date</td>
+                    <td class="info-val" th:text="${paymentDate}">—</td>
+                </tr>
+                <tr>
+                    <td class="info-lbl info-lbl-last">Montant réglé</td>
+                    <td class="info-val info-val-last" style="color:#c9a84c; font-size:15px; font-weight:700;" th:text="${priceTTC}">—</td>
                 </tr>
             </table>
 
-            <!-- Section : QR code -->
-            <table class="qr-box" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <!-- QR code -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                    <td align="center">
+                    <td class="qr-card" align="center">
                         <div class="qr-lbl">Présentez ce code à l'accueil</div>
 
-                        <!-- QR réel (CID inline) -->
                         <div th:if="${showQr}" class="qr-img-wrap">
                             <img src="cid:qr-booking" alt="QR Code" class="qr-img" width="140" height="140"/>
                         </div>
-
-                        <!-- Placeholder quand pas de QR -->
                         <div th:unless="${showQr}" class="qr-placeholder">&#x1F4F1;</div>
 
                         <div class="qr-ref" th:text="${bookingNumber}">BKG-000001</div>
                         <div class="verify-code" th:if="${verificationCode}" th:text="|Code : ${verificationCode}|">Code : CHK-123</div>
 
-                        <div class="qr-steps" style="margin-top:12px;">
+                        <div style="text-align:left; margin-top:12px;">
                             <div class="qr-step">1. Présentez ce QR code à l'accueil à votre arrivée.</div>
                             <div class="qr-step">2. Si le scan échoue, communiquez le code ci-dessus.</div>
                             <div class="qr-step">3. Gardez cet email accessible jusqu'à la fin de votre session.</div>
@@ -269,18 +245,18 @@
             </table>
 
             <!-- CTAs -->
-            <table class="cta-table" cellpadding="0" cellspacing="0" border="0">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing:0; margin-bottom:8px;">
                 <tr>
-                    <td style="padding:4px;">
+                    <td style="padding:0 4px 0 0; width:50%;">
                         <a th:href="${bookingUrl}" href="https://elleaose.com" class="cta-primary">Voir ma réservation</a>
                     </td>
-                    <td style="padding:4px;">
-                        <a th:href="${invoiceUrl}" href="https://elleaose.com" class="cta-secondary">Télécharger le PDF</a>
+                    <td style="padding:0 0 0 4px; width:50%;">
+                        <a th:href="${invoiceUrl}" href="https://elleaose.com" class="cta-ghost">Télécharger le PDF</a>
                     </td>
                 </tr>
             </table>
 
-            <p class="legal">
+            <p class="note">
                 Le prix n'inclut pas d'éventuels frais bancaires.<br>
                 Pour gérer vos réservations&nbsp;: <a th:href="${accountUrl ?: 'https://elleaose.com'}">elleaose.com</a>
             </p>
