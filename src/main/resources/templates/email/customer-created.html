@@ -1,161 +1,124 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bienvenue — Elle A Osé</title>
-<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
-<style>
-    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
-    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
-    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
-    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
-    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4); color: #c9a84c; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
-    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-title span { color: #c9a84c; }
-    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
-    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .msg { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-    .info-head-td { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-val { padding: 12px 16px 12px 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .feat-td { text-align: center; padding: 0 6px; }
-    .feat-icon-td { width: 44px; height: 44px; border-radius: 50%; background-color: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); text-align: center; vertical-align: middle; }
-    .feat-lbl { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .cta-wrap-td { padding: 4px 0 20px; text-align: center; }
-    .cta-btn { display: inline-block; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .note { font-size: 11px; color: rgba(255,255,255,.25); line-height: 1.65; text-align: center; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
-    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    @media only screen and (max-width: 480px) {
-        .wrap-td { padding: 0 !important; }
-        .card { border-radius: 0 !important; }
-        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenue chez Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrap { width: 100%; padding: 48px 16px; background: #E8E5E0; }
+    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 28px 56px rgba(26,10,46,.10); }
+    .em-header { background: #110828; padding: 22px 36px; }
+    .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
+    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
+    .em-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
+    .em-body { padding: 44px 40px 40px; }
+    .wel-greeting { font-size: 12px; font-weight: 600; color: #A898B8; letter-spacing: .2px; margin-bottom: 5px; }
+    .wel-name { font-size: 32px; font-weight: 700; letter-spacing: -.5px; line-height: 1.1; color: #1A0A2E; margin-bottom: 22px; }
+    .em-intro { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 32px; }
+    .em-intro strong { color: #1A0A2E; font-weight: 700; }
+    .services-grid { display: flex; gap: 10px; margin-bottom: 32px; flex-wrap: wrap; }
+    .svc { flex: 1 1 calc(50% - 5px); min-width: 160px; background: #F8F7F5; border: 1px solid #EEE9F5; border-radius: 10px; padding: 16px 14px; display: flex; align-items: flex-start; gap: 12px; }
+    .svc-icon { flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px; background: #1A0A2E; display: flex; align-items: center; justify-content: center; }
+    .svc-icon svg { width: 17px; height: 17px; }
+    .svc-name { font-size: 12px; font-weight: 700; color: #1A0A2E; letter-spacing: .1px; margin-bottom: 2px; }
+    .svc-desc { font-size: 11px; color: #9B8CAA; line-height: 1.5; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; padding-bottom: 10px; border-bottom: 1px solid #EEE9F5; }
+    .dt { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+    .dt tr { border-bottom: 1px solid #EEE9F5; }
+    .dt tr:first-child { border-top: 1px solid #EEE9F5; }
+    .dt td { padding: 13px 0; vertical-align: middle; }
+    .dt-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; width: 130px; }
+    .dt-val { font-size: 13.5px; font-weight: 600; color: #1A0A2E; }
+    .dt-mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1.2px; }
+    .cta-dark { display: block; background: #1A0A2E; color: #C9A84C; text-decoration: none; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; text-align: center; border-radius: 8px; margin-bottom: 28px; }
+    .em-legal { font-size: 11.5px; color: #C0B4D0; line-height: 1.65; }
+    .em-legal a { color: #9B8CAA; text-decoration: none; }
+    .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
+    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
+    .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
+    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+    @media (max-width: 480px) {
+      .wrap { padding: 0; background: #fff; }
+      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .em-header { padding: 18px 24px; }
+      .em-body { padding: 32px 24px 32px; }
+      .em-footer { padding: 18px 24px; }
+      .wel-name { font-size: 26px; }
+      .svc { flex: 1 1 100%; }
     }
-</style>
+  </style>
 </head>
 <body>
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
-<tr><td class="wrap-td" align="center">
-<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+<div class="wrap">
+  <div class="card">
 
-    <tr>
-        <td class="header-td">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td valign="middle">
-                        <div class="brand">Elle A Osé</div>
-                        <div class="brand-sub">Espace de coworking</div>
-                    </td>
-                    <td align="right" valign="middle"><span class="tag">Nouveau compte</span></td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <tr><td class="stripe">&nbsp;</td></tr>
+    <div class="em-header">
+      <div class="em-brand" th:if="${logo == null}">Elle A Osé</div>
+      <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Elle A Osé" style="height:36px; display:block;"/>
+      <div class="em-brand-sub">Espace de coworking</div>
+    </div>
+    <div class="em-stripe"></div>
 
-    <tr>
-        <td class="hero-td">
-            <div class="hero-label">Compte créé &#x1F44B;</div>
-            <div class="hero-title">Bienvenue, <span th:text="${name ?: 'chez vous'}">chez vous</span>&nbsp;!</div>
-            <div class="hero-sub">
-                Votre espace client Bokati est prêt — suivez réservations, documents et paiements en un seul endroit.
-            </div>
-        </td>
-    </tr>
+    <div class="em-body">
+      <div class="wel-greeting">Bienvenue,</div>
+      <div class="wel-name" th:text="${name}">votre prénom</div>
 
-    <tr>
-        <td class="body-td">
-            <p class="msg">Bonjour <strong style="color:rgba(255,255,255,.82);" th:text="${name ?: 'client'}">client</strong>,<br>
-            votre fiche client a été créée avec succès. Voici vos informations d'accès.</p>
+      <div class="em-intro">
+        Votre compte client a été créé avec succès. Vous faites désormais partie de la communauté Elle A Osé — un espace pensé pour vous permettre de travailler dans les meilleures conditions.
+      </div>
 
-            <!-- Infos compte -->
-            <div class="section-lbl">Informations du compte</div>
-            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td class="info-head-td" colspan="2">Vos coordonnées</td></tr>
-                <tr>
-                    <td class="info-lbl">Code client</td>
-                    <td class="info-val" th:text="${customerId}">CUS-000</td>
-                </tr>
-                <tr style="background-color:rgba(255,255,255,.02);">
-                    <td class="info-lbl">Type</td>
-                    <td class="info-val" th:text="${customerType}">PERSON</td>
-                </tr>
-                <tr>
-                    <td class="info-lbl" style="border-bottom:0;">Email</td>
-                    <td class="info-val" style="border-bottom:0;" th:text="${email}">client@example.com</td>
-                </tr>
-            </table>
+      <div class="services-grid">
+        <div class="svc">
+          <div class="svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></div>
+          <div><div class="svc-name">Espaces de travail</div><div class="svc-desc">Bureaux privatifs, salles de réunion et postes partagés</div></div>
+        </div>
+        <div class="svc">
+          <div class="svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div><div class="svc-name">Communauté</div><div class="svc-desc">Networking, événements et ateliers exclusifs</div></div>
+        </div>
+        <div class="svc">
+          <div class="svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+          <div><div class="svc-name">Services premium</div><div class="svc-desc">Impression, café, réception du courrier</div></div>
+        </div>
+        <div class="svc">
+          <div class="svc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+          <div><div class="svc-name">Accès mobile</div><div class="svc-desc">Réservations, QR codes et gestion en ligne</div></div>
+        </div>
+      </div>
 
-            <!-- Services -->
-            <div class="section-lbl">Vos services</div>
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
-                <tr>
-                    <td class="feat-td">
-                        <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
-                            <tr><td class="feat-icon-td" width="44" height="44">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="#c9a84c" stroke-width="1.5"/><path d="M3 9h18M8 2v4M16 2v4M7 13h4M7 16h6" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/></svg>
-                            </td></tr>
-                        </table>
-                        <div class="feat-lbl">Réservations</div>
-                    </td>
-                    <td class="feat-td">
-                        <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
-                            <tr><td class="feat-icon-td" width="44" height="44">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="14" height="18" rx="1.5" stroke="#c9a84c" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/></svg>
-                            </td></tr>
-                        </table>
-                        <div class="feat-lbl">Factures</div>
-                    </td>
-                    <td class="feat-td">
-                        <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
-                            <tr><td class="feat-icon-td" width="44" height="44">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 6a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z" stroke="#c9a84c" stroke-width="1.5"/></svg>
-                            </td></tr>
-                        </table>
-                        <div class="feat-lbl">Documents</div>
-                    </td>
-                    <td class="feat-td">
-                        <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
-                            <tr><td class="feat-icon-td" width="44" height="44">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2" stroke="#c9a84c" stroke-width="1.5"/><path d="M2 10h20M6 15h4" stroke="#c9a84c" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="15" r="1.5" fill="#c9a84c"/></svg>
-                            </td></tr>
-                        </table>
-                        <div class="feat-lbl">Paiements</div>
-                    </td>
-                </tr>
-            </table>
+      <div class="section-lbl">Votre compte</div>
+      <table class="dt">
+        <tr>
+          <td class="dt-key">Identifiant</td>
+          <td class="dt-val dt-mono" th:text="${customerId}">CLI-000</td>
+        </tr>
+        <tr>
+          <td class="dt-key">Type</td>
+          <td class="dt-val" th:text="${customerType}">—</td>
+        </tr>
+        <tr>
+          <td class="dt-key">Email</td>
+          <td class="dt-val" th:text="${email}">—</td>
+        </tr>
+      </table>
 
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td class="cta-wrap-td"><a href="#" class="cta-btn">Accéder à mon espace</a></td></tr>
-            </table>
+      <a th:href="${portalUrl ?: '#'}" class="cta-dark">Accéder à mon espace</a>
 
-            <p class="note">Si vous n'êtes pas à l'origine de cette création, contactez immédiatement l'administration Bokati.</p>
-        </td>
-    </tr>
+      <div class="em-legal">
+        Si vous n'êtes pas à l'origine de cette inscription, contactez-nous immédiatement à <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a>.
+      </div>
+    </div>
 
-    <tr>
-        <td class="footer-td">
-            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
-            <div class="footer-text">
-                <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a><br>
-                Email généré automatiquement — merci de ne pas y répondre directement.
-            </div>
-        </td>
-    </tr>
+    <div class="em-footer">
+      <div class="em-footer-brand">Elle A Osé · Espace de coworking</div>
+      <div class="em-footer-text">
+        <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
+      </div>
+    </div>
 
-</table>
-</td></tr>
-</table>
+  </div>
+</div>
 </body>
 </html>
