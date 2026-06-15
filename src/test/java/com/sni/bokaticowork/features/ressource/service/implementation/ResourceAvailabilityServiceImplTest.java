@@ -10,8 +10,10 @@ import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
 import com.sni.bokaticowork.features.ressource.repository.repo.ResourceAvailabilityRepository;
 import com.sni.bokaticowork.features.ressource.repository.repo.ResourceClosureRepository;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceService;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -188,7 +190,7 @@ class ResourceAvailabilityServiceImplTest {
                 .active(true)
                 .build();
 
-        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class))).thenReturn(List.of());
+        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class), any(Limit.class))).thenReturn(List.of());
         when(availabilityRepository.findFutureForGroupedView(any(LocalDateTime.class))).thenReturn(List.of(firstSlot, secondSlot, thirdSlot));
 
         var grouped = service.listGroupedByResource();
@@ -239,8 +241,8 @@ class ResourceAvailabilityServiceImplTest {
                 .build();
 
         when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(resource);
-        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class))).thenReturn(List.of());
-        when(availabilityRepository.findFutureReservableSlots(eq(resource), any(LocalDateTime.class)))
+        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class), any(Limit.class))).thenReturn(List.of());
+        when(availabilityRepository.findFutureActiveSlots(eq(resource), any(LocalDateTime.class), any(Pageable.class)))
                 .thenReturn(List.of(firstSlot, secondSlot, thirdSlot));
 
         var windows = service.findRemainingWindows(RESOURCE_CODE, null, null, null, 1);
@@ -282,7 +284,7 @@ class ResourceAvailabilityServiceImplTest {
                 .active(true)
                 .build();
 
-        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class))).thenReturn(List.of(expiredSlot));
+        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class), any(Limit.class))).thenReturn(List.of(expiredSlot));
         when(availabilityRepository.findAllByEndedAtAfter(any(LocalDateTime.class), eq(PageRequest.of(0, 20))))
                 .thenReturn(new PageImpl<>(List.of(futureSlot)));
 
