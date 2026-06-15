@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -49,6 +50,7 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public WalletHoldResponse create(CreateWalletHoldRequest request) {
         WalletAccount wallet = walletRepository.findByWalletNumber(request.walletNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));

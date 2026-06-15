@@ -7,10 +7,11 @@ import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.company.model.BusinessEntity;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriptionEventType;
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -31,13 +32,35 @@ public class SubscriptionEmailNotifier {
         if (!StringUtils.hasText(recipient.email())) {
             return;
         }
-        Context context = context(subscription, recipient, eventType);
-        String template = template(eventType);
+        // Render template eagerly while entity is still in-session (avoids LazyInitializationException after commit)
+        String html;
         String subject = subject(subscription, eventType);
         try {
-            emailSender.sendHtmlEmail(recipient.email(), subject, templateEngine.process(template, context));
-        } catch (MessagingException ex) {
-            log.warn("Failed to queue subscription email {} for {}", eventType, subscription.getSubscriptionNumber(), ex);
+            html = templateEngine.process(template(eventType), context(subscription, recipient, eventType));
+        } catch (Exception ex) {
+            log.warn("Failed to render subscription email {} for {}", eventType, subscription.getSubscriptionNumber(), ex);
+            return;
+        }
+        String to = recipient.email();
+        String subscriptionNumber = subscription.getSubscriptionNumber();
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            // Defer sending until after commit — avoids emailing on rollback
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    dispatch(to, subject, html, subscriptionNumber, eventType);
+                }
+            });
+        } else {
+            dispatch(to, subject, html, subscriptionNumber, eventType);
+        }
+    }
+
+    private void dispatch(String to, String subject, String html, String subscriptionNumber, SubscriptionEventType eventType) {
+        try {
+            emailSender.sendHtmlEmail(to, subject, html);
+        } catch (Exception ex) {
+            log.warn("Failed to queue subscription email {} for {}", eventType, subscriptionNumber, ex);
         }
     }
 
