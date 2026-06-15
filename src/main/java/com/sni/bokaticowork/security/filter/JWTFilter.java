@@ -6,6 +6,8 @@ import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.service.tokenService.implementation.JWTService;
 import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,19 +64,33 @@ public class JWTFilter extends OncePerRequestFilter {
                 processToken(token);
                 filterChain.doFilter(request, response);
 
-            } catch (JWTVerificationException e) {
-                if (isPublicApiRequest(request)) {
-                    SecurityContextHolder.clearContext();
-                    logger.debug("Ignoring invalid JWT for public endpoint " + request.getRequestURI());
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-                logger.error("JWT Verification failed", e);
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT Token");
+            } catch (ExpiredJwtException e) {
+                handleJwtAuthenticationFailure(request, response, filterChain, "JWT token expired", "Expired JWT token");
+            } catch (JwtException | JWTVerificationException e) {
+                handleJwtAuthenticationFailure(request, response, filterChain, "Invalid JWT Token", "Invalid JWT token");
             } catch (Exception e) {
                 logger.error("Error processing JWT token", e);
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error processing JWT token");
             }
+    }
+
+    private void handleJwtAuthenticationFailure(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain,
+            String responseMessage,
+            String logMessage
+    ) throws IOException, ServletException {
+        SecurityContextHolder.clearContext();
+
+        if (isPublicApiRequest(request)) {
+            logger.debug(logMessage + " ignored for public endpoint " + request.getRequestURI());
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        logger.debug(logMessage + " for " + request.getRequestURI());
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, responseMessage);
     }
 
 
@@ -145,4 +161,3 @@ public class JWTFilter extends OncePerRequestFilter {
         );
     }
 }
-
