@@ -3,366 +3,861 @@
 <head>
 <meta charset="UTF-8"/>
 <title th:text="${request.title}">Contrat de souscription / Pass non remboursable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&display=swap" rel="stylesheet"/>
 <style>
 @page {
-    size: A4;
-    margin: 18mm 20mm 20mm 20mm;
-    @bottom-center {
-        content: "Page " counter(page) " / " counter(pages);
-        font-family: "Times New Roman", Times, serif;
-        font-size: 8pt;
-        color: #666;
-    }
+  size: A4;
+  margin: 22mm 24mm 24mm 24mm;
+  @bottom-center {
+    content: "Page " counter(page) " / " counter(pages);
+    font-family: "Spectral", "Times New Roman", serif;
+    font-size: 8pt;
+    color: #888;
+  }
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    font-family: "Times New Roman", Times, serif;
-    font-size: 10pt;
-    line-height: 1.6;
-    color: #111;
-    background: #fff;
+  font-family: "Spectral", "Times New Roman", serif;
+  font-size: 10.5pt;
+  line-height: 1.7;
+  color: #111;
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* ── LETTERHEAD ─────────────────────────────────── */
 .letterhead {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding-bottom: 10pt;
-    border-bottom: 2pt solid #111;
-    margin-bottom: 14pt;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0;
+  padding-bottom: 14pt;
 }
-.lh-brand-name { font-size: 15pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5pt; }
-.lh-brand-tag  { font-size: 8pt; color: #555; font-style: italic; margin-top: 2pt; }
-.lh-contact    { text-align: right; font-size: 8pt; color: #444; line-height: 1.55; }
+.lh-left { flex: 1; }
+.lh-logo-name {
+  font-size: 15pt;
+  font-weight: 700;
+  letter-spacing: 3pt;
+  text-transform: uppercase;
+  color: #111;
+  line-height: 1.15;
+}
+.lh-tagline {
+  font-size: 8.5pt;
+  color: #777;
+  font-style: italic;
+  letter-spacing: 0.3pt;
+  margin-top: 3pt;
+}
+.lh-rccm {
+  font-size: 8pt;
+  color: #888;
+  margin-top: 2pt;
+  letter-spacing: 0.2pt;
+}
+.lh-right {
+  text-align: right;
+  font-size: 8.5pt;
+  color: #555;
+  line-height: 1.6;
+  padding-top: 2pt;
+}
+.lh-rule {
+  border: none;
+  border-top: 1.5pt solid #111;
+  margin-bottom: 20pt;
+}
 
-.doc-title-block { text-align: center; margin: 0 0 10pt; }
-.doc-type   { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 2pt; color: #777; margin-bottom: 5pt; }
-.doc-title  { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1pt; }
-.doc-sub    { font-size: 9pt; font-style: italic; color: #444; margin-top: 4pt; }
-.title-rule { border: none; border-top: 1pt solid #888; width: 55%; margin: 8pt auto 0; }
+/* ── TITRE ──────────────────────────────────────── */
+.doc-header {
+  text-align: center;
+  margin-bottom: 20pt;
+}
+.doc-category {
+  font-size: 7.5pt;
+  letter-spacing: 4pt;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 8pt;
+}
+.doc-main-title {
+  font-size: 14pt;
+  font-weight: 700;
+  letter-spacing: 1.5pt;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.doc-subtitle {
+  font-size: 10pt;
+  font-style: italic;
+  color: #555;
+  margin-top: 5pt;
+}
+.title-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10pt;
+  margin: 10pt auto 0;
+  width: 60%;
+}
+.title-ornament::before,
+.title-ornament::after {
+  content: '';
+  flex: 1;
+  border-top: 0.75pt solid #aaa;
+}
+.title-ornament span {
+  font-size: 8pt;
+  color: #aaa;
+  letter-spacing: 2pt;
+  text-transform: uppercase;
+}
 
-/* Bannière non remboursable */
+/* ── BANNIÈRE NR ─────────────────────────────────── */
 .nr-banner {
-    border: 1pt solid #999;
-    border-left: 4pt solid #111;
-    padding: 7pt 10pt;
-    margin: 10pt 0 12pt;
-    font-size: 9pt;
-    line-height: 1.6;
-    text-align: justify;
+  margin: 18pt 0;
+  padding: 10pt 16pt 10pt 14pt;
+  border-left: 3pt solid #111;
+  background: #fafaf8;
+  font-size: 9.5pt;
+  line-height: 1.65;
+  color: #333;
 }
 .nr-label {
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    font-size: 8.5pt;
-    margin-bottom: 3pt;
+  font-weight: 600;
+  font-size: 8.5pt;
+  text-transform: uppercase;
+  letter-spacing: 1pt;
+  color: #111;
+  margin-bottom: 4pt;
 }
 
-.ref-bar {
-    border: 0.75pt solid #bbb;
-    padding: 5pt 10pt;
-    margin-bottom: 14pt;
-    display: flex;
-    justify-content: space-between;
-    font-size: 8pt;
-    color: #444;
-    background: #f8f8f8;
+/* ── RÉFÉRENCE ───────────────────────────────────── */
+.ref-line {
+  font-size: 8pt;
+  color: #999;
+  text-align: right;
+  margin-bottom: 22pt;
+  letter-spacing: 0.2pt;
+}
+.ref-line strong { color: #666; font-weight: 500; }
+
+/* ── PARTIES ─────────────────────────────────────── */
+.section-rule {
+  border: none;
+  border-top: 0.75pt solid #ccc;
+  margin: 18pt 0;
 }
 
-.parties-intro {
-    text-align: center;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    font-size: 9.5pt;
-    padding: 6pt 0;
-    margin: 14pt 0 10pt;
-    border-top: 1pt solid #bbb;
-    border-bottom: 1pt solid #bbb;
+.parties-title {
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: 3pt;
+  text-align: center;
+  color: #888;
+  margin-bottom: 16pt;
 }
 
-.party { margin-bottom: 8pt; padding-left: 14pt; border-left: 2pt solid #bbb; }
-.party-role   { font-size: 8pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; color: #555; margin-bottom: 2pt; }
-.party-name   { font-weight: bold; font-size: 10.5pt; }
-.party-detail { font-size: 9pt; color: #333; margin-top: 1pt; }
-.connector    { text-align: center; font-style: italic; color: #555; font-size: 9pt; margin: 4pt 0; }
+.party-prose {
+  font-size: 10.5pt;
+  line-height: 1.75;
+  text-align: justify;
+  margin-bottom: 10pt;
+  padding-left: 0;
+}
+.party-prose .party-name-inline {
+  font-weight: 700;
+  font-size: 11pt;
+}
 
+.connector-et {
+  text-align: center;
+  font-style: italic;
+  font-size: 10pt;
+  color: #777;
+  margin: 8pt 0;
+  letter-spacing: 1pt;
+}
+
+/* ── PRÉAMBULE ───────────────────────────────────── */
 .preamble {
-    text-align: center;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    font-size: 9.5pt;
-    padding: 6pt 0;
-    margin: 14pt 0 12pt;
-    border-top: 1pt solid #bbb;
-    border-bottom: 1pt solid #bbb;
+  text-align: center;
+  font-style: italic;
+  font-size: 10.5pt;
+  color: #444;
+  margin: 18pt 0 14pt;
+  letter-spacing: 0.3pt;
 }
 
-.article { margin-top: 12pt; }
+/* ── ARTICLES ────────────────────────────────────── */
+.article {
+  margin-top: 16pt;
+}
 .article-heading {
-    font-size: 10pt;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    border-bottom: 1pt solid #bbb;
-    padding-bottom: 3pt;
-    margin-bottom: 7pt;
+  font-size: 9.5pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5pt;
+  color: #111;
+  margin-bottom: 8pt;
+  padding-bottom: 4pt;
+  border-bottom: 0.5pt solid #ddd;
 }
-.article-text { font-size: 9.5pt; text-align: justify; line-height: 1.65; }
-.article-text p { margin-bottom: 5pt; }
-.article-text p:last-child { margin-bottom: 0; }
-
-.data-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-.data-table td { border: 0.75pt solid #bbb; padding: 5pt 8pt; vertical-align: top; }
-.data-table .lbl { width: 34%; font-weight: bold; background: #f5f5f5; color: #333; }
-
-.clause {
-    margin-bottom: 6pt;
-    font-size: 9.5pt;
-    line-height: 1.65;
-    text-align: justify;
-    padding-left: 14pt;
-    text-indent: -8pt;
+.article-body {
+  font-size: 10.5pt;
+  line-height: 1.75;
+  text-align: justify;
+  color: #111;
 }
-.clause::before { content: "– "; font-weight: bold; }
+.article-body p {
+  margin-bottom: 7pt;
+  text-indent: 0;
+}
+.article-body p:last-child { margin-bottom: 0; }
 
-.vars-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
-.vars-table td { border: 0.75pt solid #bbb; padding: 5pt 8pt; }
-.vars-table .key { width: 38%; font-weight: bold; background: #f5f5f5; color: #333; }
-.vars-table tr:nth-child(even) td { background: #fafafa; }
-.vars-table tr:nth-child(even) .key { background: #f0f0f0; }
+/* ── TABLE DONNÉES (Article 2) ───────────────────── */
+.ruled-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+  margin: 8pt 0;
+}
+.ruled-table tr {
+  border-bottom: 0.5pt solid #e0e0e0;
+}
+.ruled-table tr:first-child {
+  border-top: 1pt solid #bbb;
+}
+.ruled-table tr:last-child {
+  border-bottom: 1pt solid #bbb;
+}
+.ruled-table td {
+  padding: 5pt 8pt 5pt 0;
+  vertical-align: top;
+}
+.ruled-table .rlbl {
+  width: 36%;
+  font-weight: 600;
+  color: #333;
+  font-size: 9.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.4pt;
+  padding-right: 12pt;
+}
+.ruled-table .rval {
+  color: #111;
+}
 
+/* ── TABLE VARIABLES ─────────────────────────────── */
+.vars-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+  margin: 8pt 0;
+}
+.vars-table tr { border-bottom: 0.5pt solid #e8e8e8; }
+.vars-table tr:first-child { border-top: 0.75pt solid #ccc; }
+.vars-table tr:last-child { border-bottom: 0.75pt solid #ccc; }
+.vars-table td { padding: 4pt 8pt 4pt 0; vertical-align: top; }
+.vars-table .vk { width: 38%; font-weight: 600; font-size: 9.5pt; color: #444; padding-right: 12pt; }
+
+/* ── SERVICES ────────────────────────────────────── */
+.services-list {
+  margin: 8pt 0 6pt 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3pt 20pt;
+  font-size: 10pt;
+  color: #222;
+}
+.services-list {
+  list-style: disc;
+  padding-left: 18pt;
+}
+.services-list li::before {
+  display: none;
+}
+
+/* ── CLAUSES ─────────────────────────────────────── */
+.clause-item {
+  font-size: 10.5pt;
+  line-height: 1.7;
+  text-align: justify;
+  padding-left: 16pt;
+  text-indent: -12pt;
+  margin-bottom: 5pt;
+  color: #111;
+}
+.clause-item::before { content: "•\00a0"; color: #444; }
+
+/* ── NOTICE LÉGALE ───────────────────────────────── */
 .legal-notice {
-    margin-top: 10pt;
-    padding: 7pt 10pt;
-    border: 0.75pt solid #bbb;
-    border-left: 3pt solid #555;
-    font-size: 8.5pt;
-    color: #333;
-    line-height: 1.65;
-    text-align: justify;
+  margin-top: 8pt;
+  font-size: 9.5pt;
+  line-height: 1.7;
+  text-align: justify;
+  color: #333;
+  padding: 10pt 12pt;
+  border: 0.5pt solid #ccc;
+  border-left: 2.5pt solid #666;
+  background: #fafaf8;
 }
 
+/* ── CLÔTURE ─────────────────────────────────────── */
 .closing {
-    margin-top: 16pt;
-    padding-top: 8pt;
-    border-top: 1pt solid #bbb;
-    text-align: center;
-    font-size: 9pt;
-    font-style: italic;
-    color: #333;
+  margin-top: 24pt;
+  font-size: 10.5pt;
+  font-style: italic;
+  color: #444;
+  text-align: center;
 }
 
-.sig-table { width: 100%; border-collapse: collapse; margin-top: 18pt; }
-.sig-cell  { width: 50%; vertical-align: top; padding: 0 0 0 22pt; }
-.sig-cell:first-child { padding: 0 22pt 0 0; border-right: 1pt solid #bbb; }
+/* ── SIGNATURES ──────────────────────────────────── */
+.sig-section { margin-top: 24pt; }
+.sig-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.sig-col {
+  width: 50%;
+  vertical-align: top;
+  padding: 0 20pt 0 0;
+}
+.sig-col + .sig-col {
+  padding: 0 0 0 20pt;
+  border-left: 0.5pt solid #ddd;
+}
+.sig-party-label {
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 2pt;
+  color: #888;
+  margin-bottom: 2pt;
+}
+.sig-party-name {
+  font-size: 11pt;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 1pt;
+}
+.sig-party-role {
+  font-size: 9.5pt;
+  font-style: italic;
+  color: #555;
+  margin-bottom: 14pt;
+}
+.sig-box {
+  border-bottom: 0.75pt solid #888;
+  height: 52pt;
+  width: 100%;
+  margin-bottom: 6pt;
+  position: relative;
+}
+.sig-box.signed {
+  border: 0.75pt solid #333;
+  padding: 6pt 8pt;
+}
+.sig-stamp-name {
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+}
+.sig-stamp-sub {
+  font-size: 7.5pt;
+  color: #777;
+  margin-top: 1pt;
+}
+.sig-date-line {
+  font-size: 9pt;
+  color: #555;
+  margin-top: 4pt;
+}
+.sig-mention {
+  font-size: 8pt;
+  font-style: italic;
+  color: #999;
+  margin-top: 3pt;
+}
 
-.sig-role { font-size: 8.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 2pt; }
-.sig-name { font-size: 9pt; color: #333; margin-bottom: 1pt; }
-.sig-qual { font-size: 8.5pt; font-style: italic; color: #555; margin-bottom: 10pt; }
-.sig-box  { border: 1pt solid #888; height: 56pt; width: 100%; margin-bottom: 5pt; }
-.sig-box.signed { border: 2pt solid #111; padding: 8pt; }
-.sig-stamp { font-size: 11pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; }
-.sig-stamp-meta { font-size: 7.5pt; color: #555; margin-top: 2pt; }
-.sig-date    { font-size: 8pt; color: #444; margin-top: 3pt; }
-.sig-mention { font-size: 7.5pt; color: #888; font-style: italic; margin-top: 2pt; }
+/* ── GRILLE PÉRIODE / CONDITIONS ────────────────── */
+.period-grid {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 0 22pt;
+  margin: 8pt 0 10pt;
+}
+.period-divider {
+  background: #ddd;
+  width: 1px;
+}
+.period-col-title {
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 3pt;
+  color: #aaa;
+  margin-bottom: 10pt;
+  padding-bottom: 5pt;
+  border-bottom: 0.5pt solid #e8e8e8;
+}
+.pgitem {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 9pt;
+}
+.pglbl {
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.8pt;
+  color: #999;
+  margin-bottom: 1pt;
+}
+.pgval {
+  font-size: 10.5pt;
+  color: #111;
+  font-weight: 500;
+  line-height: 1.4;
+}
 
+/* ── PIED DE PAGE ────────────────────────────────── */
 .doc-footer {
-    margin-top: 20pt;
-    padding-top: 6pt;
-    border-top: 1pt solid #aaa;
-    font-size: 7.5pt;
-    color: #666;
-    text-align: center;
+  margin-top: 28pt;
+  padding-top: 7pt;
+  border-top: 0.75pt solid #ddd;
+  font-size: 8pt;
+  color: #aaa;
+  text-align: center;
+  letter-spacing: 0.3pt;
 }
 
-@media print { body { width: 210mm; } }
+@media print {
+  body { width: 210mm; }
+  .nr-banner, .legal-notice { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 </style>
 </head>
 <body>
 
-<!-- EN-TÊTE -->
+<!-- ─────────────────────────────────────────────────
+     EN-TÊTE LETTERHEAD
+     ───────────────────────────────────────────────── -->
 <div class="letterhead">
-  <div>
-    <div class="lh-brand-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
-    <div class="lh-brand-tag">Espace de coworking &amp; services aux entreprises</div>
+  <div class="lh-left">
+    <div class="lh-logo-name"
+         th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'Elle a Osé'}">
+      Elle a Osé
+    </div>
+    <div class="lh-tagline">Espace de coworking &amp; services aux entreprises</div>
+    <div class="lh-rccm">
+      RCCM&#160;:&#160;<span
+        th:text="${variables != null and variables['operatorRccm'] != null ? variables['operatorRccm'] : 'CG-PNR-01-2017-00472'}">
+        CG-PNR-01-2017-00472
+      </span>
+    </div>
   </div>
-  <div class="lh-contact">
-    <div th:if="${business != null and business.email != null}" th:text="${business.email}">contact@example.com</div>
-    <div th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
-    <div th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
+  <div class="lh-right">
+    <div th:text="${variables != null and variables['operatorAddress'] != null ? variables['operatorAddress'] : '84 bd du Général Charles de Gaulle'}">
+      84 bd du Général Charles de Gaulle
+    </div>
+    <div>Pointe-Noire, République du Congo</div>
+    <div th:if="${business != null and business.email != null}" th:text="${business.email}"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ec8f839b839e879f9c8d8f89ac898080898d839f89c28f8381">[email&#160;protected]</a></div>
+    <div th:if="${business != null and business.phone != null}" th:text="${business.phone}">05 204 2552</div>
   </div>
 </div>
+<hr class="lh-rule"/>
 
-<!-- TITRE -->
-<div class="doc-title-block">
-  <div class="doc-type">Document contractuel</div>
-  <div class="doc-title">Contrat de souscription / Pass</div>
-  <div class="doc-sub">Non remboursable &nbsp;—&nbsp; <span th:text="${request.title}">Contrat de souscription</span></div>
-  <hr class="title-rule"/>
+<!-- ─────────────────────────────────────────────────
+     TITRE DU DOCUMENT
+     ───────────────────────────────────────────────── -->
+<div class="doc-header">
+  <div class="doc-category">Prestation de services de coworking</div>
+  <div class="doc-main-title">Contrat de souscription / Pass</div>
+
 </div>
 
-<!-- NOTICE NON REMBOURSABLE -->
-<div class="nr-banner">
-  <div class="nr-label">Condition essentielle — Offre non remboursable</div>
-  La présente souscription ou pass est <strong>non remboursable</strong> après validation par le système,
-  sauf obligation légale contraire ou décision écrite et formelle de l'opérateur.
-  Le Bénéficiaire reconnaît avoir été informé de cette condition préalablement à la signature du présent contrat
-  et y adhère expressément.
+
+
+<!-- ─────────────────────────────────────────────────
+     RÉFÉRENCE
+     ───────────────────────────────────────────────── -->
+<div class="ref-line">
+  Généré le <strong th:text="${generatedAt}">2026-01-01</strong>
+  &#160;·&#160;
+  Réf.&#160;: <strong th:text="${request.templateCode}">subscription-pass-non-refundable</strong>
 </div>
 
-<!-- RÉFÉRENCE -->
-<div class="ref-bar">
-  <span>Date de génération&nbsp;: <strong th:text="${generatedAt}">2026-01-01</strong></span>
-  <span>Réf. modèle&nbsp;: <strong th:text="${request.templateCode}">subscription-pass-non-refundable</strong></span>
-</div>
+<!-- ─────────────────────────────────────────────────
+     PARTIES
+     ───────────────────────────────────────────────── -->
+<hr class="section-rule"/>
+<div class="parties-title">Entre les soussignés</div>
 
-<!-- PARTIES -->
-<div class="parties-intro">Entre les soussignés :</div>
+<p class="party-prose">
+  <span class="party-name-inline"
+        th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSÉ'}">
+    ELLE A OSÉ
+  </span>,
+  immatriculé au RCCM sous le numéro
+  <strong th:text="${variables != null and variables['operatorRccm'] != null ? variables['operatorRccm'] : 'CG-PNR-01-2017-00472'}">CG-PNR-01-2017-00472</strong>,
+  situé au
+  <span th:text="${variables != null and variables['operatorAddress'] != null ? variables['operatorAddress'] : '84 boulevard du Général Charles de Gaulle'}">84 boulevard du Général Charles de Gaulle</span>,
+  Pointe-Noire, République du Congo,
+  représenté par
+  <strong th:text="${variables != null and variables['operatorRepresentative'] != null ? variables['operatorRepresentative'] : 'Mme Hope MADHONE'}">Mme Hope MADHONE</strong>,
+  ci-après dénommé <strong>«&#160;le Prestataire&#160;»</strong>,
+</p>
 
-<div class="party">
-  <div class="party-role">L'Opérateur — Prestataire</div>
-  <div class="party-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
-  <div class="party-detail" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
-  <div class="party-detail" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@example.com</div>
-  <div class="party-detail">ci-après dénommé <strong>« l'Opérateur »</strong></div>
-</div>
+<div class="connector-et">· et ·</div>
 
-<div class="connector">— et —</div>
+<!-- CLIENT : PERSONNE MORALE (RCCM fourni) -->
+<p class="party-prose" th:if="${ownerRccm != null}">
+  <span class="party-name-inline" th:text="${ownerName}">Raison sociale</span>,
+  immatriculée au RCCM sous le numéro <strong th:text="${ownerRccm}">RCCM</strong>,
+  <span th:if="${ownerAddress != null}">dont le siège est situé à <span th:text="${ownerAddress}">adresse</span>,</span>
+  <span th:if="${ownerCode != null}">référencée sous le code client <strong th:text="${ownerCode}">CODE-001</strong>,</span>
+  <span th:if="${ownerEmail != null}">joignable à <span th:text="${ownerEmail}">email</span>,</span>
+  représentée par
+  <strong th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom signataire</strong>
+  en qualité de <span th:text="${request.signatoryRole != null ? request.signatoryRole : 'Représentant légal'}">Représentant légal</span>,
+  ci-après dénommée <strong>«&#160;le Client&#160;»</strong>.
+</p>
 
-<div class="party">
-  <div class="party-role">Le Bénéficiaire — Souscripteur</div>
-  <div class="party-name" th:text="${ownerName}">Nom du bénéficiaire</div>
-  <div class="party-detail" th:text="${ownerCode}">CODE-001</div>
-  <div class="party-detail" th:if="${ownerEmail}" th:text="${ownerEmail}">email@exemple.com</div>
-  <div class="party-detail" th:if="${ownerPhone}" th:text="${ownerPhone}">+000 000 000 000</div>
-  <div class="party-detail">ci-après dénommé(e) <strong>« le Bénéficiaire »</strong></div>
-</div>
+<!-- CLIENT : PERSONNE PHYSIQUE (pas de RCCM) -->
+<p class="party-prose" th:unless="${ownerRccm != null}">
+  <span class="party-name-inline" th:text="${ownerName}">Nom et prénom</span>,
+  <span th:if="${ownerAddress != null}">demeurant au <span th:text="${ownerAddress}">adresse</span>,</span>
+  <span th:if="${ownerCode != null}">référencé(e) sous le code client <strong th:text="${ownerCode}">CODE-001</strong>,</span>
+  <span th:if="${ownerEmail != null}">joignable à <span th:text="${ownerEmail}">email</span>,</span>
+  <span th:if="${ownerPhone != null}">ou au <span th:text="${ownerPhone}">téléphone</span>,</span>
+  agissant en son nom propre,
+  ci-après dénommé(e) <strong>«&#160;le Client&#160;»</strong>.
+</p>
 
-<div class="preamble">Il a été convenu et arrêté ce qui suit :</div>
+<hr class="section-rule"/>
+<p class="preamble">Il a été convenu et arrêté ce qui suit&#160;:</p>
 
-<!-- ARTICLE 1 : OBJET -->
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 1 — OBJET
+     ───────────────────────────────────────────────── -->
 <div class="article">
-  <div class="article-heading">Article 1 — Objet de la souscription</div>
-  <div class="article-text">
-    <p th:if="${request.description != null and !#strings.isEmpty(request.description)}" th:text="${request.description}">Description.</p>
+  <div class="article-heading">Article 1 : Objet de la souscription</div>
+  <div class="article-body">
+    <p th:if="${request.description != null and !#strings.isEmpty(request.description)}"
+       th:text="${request.description}">Description.</p>
     <p th:if="${request.description == null or #strings.isEmpty(request.description)}">
-      Le présent contrat formalise la souscription du Bénéficiaire à l'offre proposée par l'Opérateur,
-      selon les conditions définies ci-après. Le Bénéficiaire reconnaît expressément que la présente
-      offre est <strong>non remboursable</strong> une fois validée par le système de l'Opérateur.
+      Le présent contrat a pour objet la mise à disposition par le Prestataire, au bénéfice du Client,
+      d'un accès à l'espace de travail partagé de type
+      <strong th:text="${variables != null and variables['workspaceType'] != null ? variables['workspaceType'] : '[Bureau Fixe / Bureau Privatif / Poste Nomade]'}">[type d'espace]</strong>,
+      ainsi que des services associés, à savoir la connexion internet, l'électricité, le mobilier, la climatisation, le ménage
+      et l'accès aux espaces communs, conformément aux conditions définies ci-après.
+      Ce contrat ne constitue en aucun cas un bail commercial. La présente souscription est
+      <strong>non remboursable</strong> une fois validée par le système du Prestataire.
     </p>
   </div>
 </div>
 
-<!-- ARTICLE 2 : PÉRIODE ET CONDITIONS D'ACCÈS -->
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 2 — PÉRIODE ET CONDITIONS D'ACCÈS
+     ───────────────────────────────────────────────── -->
 <div class="article">
-  <div class="article-heading">Article 2 — Période et conditions d'accès</div>
-  <table class="data-table">
-    <tr>
-      <td class="lbl">Date d'effet</td>
-      <td th:text="${request.effectiveDate != null ? request.effectiveDate : '—'}">—</td>
-    </tr>
-    <tr>
-      <td class="lbl">Date de début</td>
-      <td th:text="${request.startDate != null ? request.startDate : '—'}">—</td>
-    </tr>
-    <tr>
-      <td class="lbl">Date de fin</td>
-      <td th:text="${request.endDate != null ? request.endDate : '—'}">—</td>
-    </tr>
-    <tr>
-      <td class="lbl">Signataire</td>
-      <td th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</td>
-    </tr>
-    <tr>
-      <td class="lbl">Qualité</td>
-      <td th:text="${request.signatoryRole != null ? request.signatoryRole : 'Bénéficiaire / Représentant'}">Qualité</td>
-    </tr>
-  </table>
-</div>
-
-<!-- ARTICLE 3 : CLAUSES -->
-<div class="article">
-  <div class="article-heading">Article 3 — Clauses contractuelles</div>
-  <div class="article-text">
-    <div th:if="${#lists.isEmpty(clauses)}">
-      <p>Les conditions applicables sont celles de l'offre validée au moment de la prise de souscription ou du pass.
-      Aucun remboursement ne sera accordé après la validation par le système de l'Opérateur.</p>
-      <p>Le Bénéficiaire s'engage à utiliser l'offre conformément aux conditions d'utilisation en vigueur et reconnaît
-      avoir pris connaissance de l'ensemble des modalités préalablement à la présente signature.</p>
+  <div class="article-heading">Article 2 : Période et conditions d'accès</div>
+  <div class="article-body">
+    <div class="period-grid">
+      <!-- colonne gauche : PÉRIODE -->
+      <div>
+        <div class="period-col-title">Période</div>
+        <div class="pgitem">
+          <span class="pglbl">Date d'effet</span>
+          <span class="pgval" th:text="${request.effectiveDate != null ? request.effectiveDate : 'À préciser'}">À préciser</span>
+        </div>
+        <div class="pgitem">
+          <span class="pglbl">Date de début</span>
+          <span class="pgval" th:text="${request.startDate != null ? request.startDate : 'À préciser'}">À préciser</span>
+        </div>
+        <div class="pgitem">
+          <span class="pglbl">Date de fin / expiration</span>
+          <span class="pgval" th:text="${request.endDate != null ? request.endDate : 'À préciser'}">À préciser</span>
+        </div>
+      </div>
+      <!-- séparateur -->
+      <div class="period-divider"></div>
+      <!-- colonne droite : CONDITIONS -->
+      <div>
+        <div class="period-col-title">Conditions d'accès</div>
+        <div class="pgitem">
+          <span class="pglbl">Type d'espace</span>
+          <span class="pgval" th:text="${variables != null and variables['workspaceType'] != null ? variables['workspaceType'] : 'À préciser'}">À préciser</span>
+        </div>
+        <div class="pgitem">
+          <span class="pglbl">Type de pass / souscription</span>
+          <span class="pgval" th:text="${variables != null and variables['passType'] != null ? variables['passType'] : 'À préciser'}">À préciser</span>
+        </div>
+        <div class="pgitem">
+          <span class="pglbl">Horaires d'accès</span>
+          <span class="pgval"
+                th:text="${variables != null and variables['accessHours'] != null ? variables['accessHours'] : 'Lundi au vendredi, 8h00 – 18h00'}">
+            Lundi au vendredi, 8h00 – 18h00
+          </span>
+        </div>
+        <div class="pgitem">
+          <span class="pglbl">Signataire</span>
+          <span class="pgval" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom signataire</span>
+        </div>
+        <div class="pgitem">
+          <span class="pglbl">Qualité</span>
+          <span class="pgval" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Bénéficiaire / Représentant'}">Qualité</span>
+        </div>
+      </div>
     </div>
-    <div th:each="clause : ${clauses}" class="clause" th:text="${clause}">Clause contractuelle.</div>
+    <p>
+      Le Client s'engage à respecter le règlement intérieur et les règles de bonne conduite de l'espace,
+      et à ne pas utiliser les locaux pour des activités illicites ou contraires à l'ordre public.
+    </p>
   </div>
 </div>
 
-<!-- ARTICLE 4 : INFORMATIONS DE L'OFFRE -->
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 3 — TARIFICATION ET SERVICES INCLUS
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 3 : Tarification et services inclus</div>
+  <div class="article-body">
+    <table class="ruled-table" style="margin-bottom:10pt;">
+      <tr>
+        <td class="rlbl">Montant souscrit</td>
+        <td class="rval">
+          <strong th:text="${variables != null and variables['passPrice'] != null ? variables['passPrice'] : '—'}">—</strong>
+          <span th:if="${variables != null and variables['passUnit'] != null}">&nbsp;/&nbsp;<span th:text="${variables['passUnit']}">unité</span></span>
+        </td>
+      </tr>
+      <tr th:if="${variables != null and variables['depositAmount'] != null}">
+        <td class="rlbl">Dépôt de garantie</td>
+        <td class="rval" th:text="${variables['depositAmount']}">—</td>
+      </tr>
+      <tr>
+        <td class="rlbl">Modes de paiement</td>
+        <td class="rval"
+            th:text="${variables != null and variables['paymentMethod'] != null ? variables['paymentMethod'] : 'Virement bancaire, chèque, espèces, Mobile Money (MTN MoMo / Airtel Money)'}">
+          Virement bancaire, chèque, espèces, Mobile Money (MTN MoMo / Airtel Money)
+        </td>
+      </tr>
+    </table>
+
+    <p>La présente souscription comprend les services suivants&#160;:</p>
+    <ul class="services-list">
+      <li>Connexion internet haut débit</li>
+      <li>Mobilier ergonomique</li>
+      <li>Climatisation et électricité</li>
+      <li>Accès à la cafétéria</li>
+      <li>Ménage et entretien des espaces</li>
+      <li th:if="${variables != null and variables['includesMeetingRoom'] == 'true'}">
+        Accès aux salles de réunion
+      </li>
+    </ul>
+
+    <p style="margin-top:9pt; font-size:9.5pt; color:#555; font-style:italic;">
+      Pour mémoire, les tarifs standards de l'espace&#160;: poste fixe 200&#160;000&#160;FCFA/mois,
+      poste nomade 150&#160;000&#160;FCFA/mois, pass journalier 15&#160;000&#160;FCFA/jour,
+      salle de réunion 21&#160;000&#160;FCFA/heure.
+      Domiciliation d'entreprise en option à 50&#160;000&#160;FCFA/mois.
+    </p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 4 — MODALITÉS DE PAIEMENT
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 4 : Modalités de paiement</div>
+  <div class="article-body">
+    <p>
+      Le montant de la présente souscription est payable intégralement et par avance dès la signature,
+      au plus tard le 5 de chaque mois pour les abonnements récurrents.
+      Le Prestataire accepte les règlements par virement bancaire, chèque, espèces
+      ou Mobile Money (MTN MoMo / Airtel Money).
+    </p>
+    <p>
+      La présente souscription étant <strong>non remboursable</strong>, aucun remboursement (total ou
+      partiel) ne sera accordé après validation par le système du Prestataire, quelle qu'en soit
+      la cause, sauf obligation légale contraire ou décision écrite et formelle du Prestataire.
+    </p>
+    <p th:if="${variables != null and variables['latePenalty'] != null}" th:text="${variables['latePenalty']}"></p>
+    <p th:if="${variables == null or variables['latePenalty'] == null}">
+      En cas de retard de paiement de plus de cinq (5) jours, une pénalité de 5&#160;% sera appliquée
+      et l'accès à l'espace ainsi qu'au réseau internet pourra être suspendu de plein droit
+      jusqu'à régularisation complète.
+    </p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 5 — RESPONSABILITÉS ET ASSURANCES
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 5 : Responsabilités et assurances</div>
+  <div class="article-body">
+    <p>
+      Le Client est seul responsable de ses biens personnels et de son matériel au sein des locaux.
+      Le Prestataire décline toute responsabilité en cas de vol, perte ou dégradation des équipements
+      appartenant au Client. Le Client s'engage à souscrire, à ses frais, une assurance responsabilité
+      civile couvrant ses équipements et activités au sein de l'espace.
+    </p>
+    <p>
+      Tout dommage causé aux locaux, équipements ou biens du Prestataire sera facturé au Client
+      à sa valeur de remplacement ou de réparation et pourra entraîner la résiliation immédiate
+      du présent contrat.
+    </p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 6 — CONFIDENTIALITÉ ET DONNÉES
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 6 : Confidentialité et protection des données</div>
+  <div class="article-body">
+    <p>
+      Le Prestataire garantit la confidentialité des informations échangées dans le cadre du présent
+      contrat et s'engage à ne pas divulguer les données personnelles et professionnelles du Client
+      à des tiers, sauf obligation légale. Le Client s'engage réciproquement à respecter la
+      confidentialité des informations relatives aux autres utilisateurs de l'espace.
+    </p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 7 — CLAUSES COMPLÉMENTAIRES (dynamique)
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 7 : Clauses contractuelles complémentaires</div>
+  <div class="article-body">
+    <div th:if="${clauses == null or #lists.isEmpty(clauses)}">
+      <p>
+        Les conditions applicables sont celles de l'offre validée au moment de la prise de souscription
+        ou du pass. Le Client reconnaît avoir pris connaissance de l'ensemble des modalités
+        préalablement à la présente signature. Le présent contrat constitue l'intégralité de l'accord
+        entre les parties&#160;; toute modification devra être faite par écrit et signée des deux parties.
+      </p>
+    </div>
+    <div th:each="clause : ${clauses}" class="clause-item" th:text="${clause}">Clause contractuelle.</div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 8 — PARAMÈTRES DE L'OFFRE (conditionnel)
+     ───────────────────────────────────────────────── -->
 <div class="article" th:if="${variables != null and !#maps.isEmpty(variables)}">
-  <div class="article-heading">Article 4 — Informations et paramètres de l'offre</div>
+  <div class="article-heading">Article 8 : Paramètres de l'offre</div>
   <table class="vars-table">
     <tr th:each="entry : ${variables.entrySet()}">
-      <td class="key" th:text="${entry.key}">Paramètre</td>
+      <td class="vk" th:text="${entry.key}">Paramètre</td>
       <td th:text="${entry.value}">Valeur</td>
     </tr>
   </table>
 </div>
 
-<!-- ARTICLE 5 : DISPOSITIONS LÉGALES -->
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 9 (ou 8) — DISPOSITIONS LÉGALES
+     ───────────────────────────────────────────────── -->
 <div class="article">
-  <div class="article-heading" th:text="${variables != null and !#maps.isEmpty(variables)} ? 'Article 5 — Dispositions légales et caractère non remboursable' : 'Article 4 — Dispositions légales et caractère non remboursable'">Article — Dispositions légales</div>
+  <div class="article-heading"
+       th:text="${variables != null and !#maps.isEmpty(variables)}
+                ? 'Article 9 : Dispositions légales et caractère non remboursable'
+                : 'Article 8 : Dispositions légales et caractère non remboursable'">
+    Article : Dispositions légales et caractère non remboursable
+  </div>
   <div class="legal-notice">
-    Le présent contrat est soumis au droit applicable dans le pays d'établissement de l'Opérateur.
-    La souscription ou le pass étant <strong>non remboursable</strong>, le Bénéficiaire renonce expressément
-    à tout droit de rétractation sur la présente transaction après confirmation du système de l'Opérateur.
-    Cette renonciation est conforme aux dispositions légales applicables aux services fournis immédiatement
-    après accord explicite du consommateur. En cas de litige, les parties s'engagent à rechercher une solution
-    amiable avant tout recours judiciaire. Le présent contrat est établi en deux (2) exemplaires originaux.
+    Le présent contrat est soumis au droit de la <strong>République du Congo</strong>.
+    La souscription ou le pass étant <strong>non remboursable</strong>, le Client renonce expressément
+    à tout droit de rétractation sur la présente transaction après confirmation par le système du
+    Prestataire, conformément aux dispositions légales applicables aux services fournis immédiatement
+    après accord explicite. En cas de litige, les parties s'engagent à rechercher une solution amiable
+    avant tout recours judiciaire&#160;; à défaut, la juridiction compétente sera celle de
+    <strong>Pointe-Noire</strong>. Le présent contrat est établi en deux (2) exemplaires originaux.
   </div>
 </div>
 
-<!-- CLÔTURE -->
+<!-- ─────────────────────────────────────────────────
+     CLÔTURE
+     ───────────────────────────────────────────────── -->
 <div class="closing">
-  Fait à __________________, le ____ / ____ / __________
+  Fait à Pointe-Noire, le _______ / _______ / _______________
 </div>
 
-<!-- SIGNATURES -->
-<table class="sig-table">
-  <tr>
-    <td class="sig-cell">
-      <div class="sig-role">Pour l'Opérateur</div>
-      <div class="sig-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
-      <div class="sig-qual" th:text="${variables != null and variables['operatorSignatureRole'] != null ? variables['operatorSignatureRole'] : 'Représentant habilité'}">Représentant habilité</div>
-      <div class="sig-box" th:classappend="${variables != null and variables['operatorSignatureName'] != null} ? ' signed' : ''">
-        <div class="sig-stamp" th:if="${variables != null and variables['operatorSignatureName'] != null}" th:text="${variables['operatorSignatureName']}">NOM</div>
-        <div class="sig-stamp-meta" th:if="${variables != null and variables['operatorSignatureName'] != null}">Signé par le système</div>
-      </div>
-      <div class="sig-date"
-           th:if="${variables != null and variables['operatorSignedAt'] != null}"
-           th:text="${'Date : ' + variables['operatorSignedAt']}">Date</div>
-      <div class="sig-date" th:unless="${variables != null and variables['operatorSignedAt'] != null}">Date : _____ / _____ / _________</div>
-      <div class="sig-mention">Signature et cachet</div>
-    </td>
-    <td class="sig-cell">
-      <div class="sig-role">Le Bénéficiaire</div>
-      <div class="sig-name" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</div>
-      <div class="sig-qual" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Bénéficiaire / Représentant'}">Qualité</div>
-      <div class="sig-box"></div>
-      <div class="sig-date">Date : _____ / _____ / _________</div>
-      <div class="sig-mention">Précédé de la mention manuscrite « Lu et approuvé — Non remboursable »</div>
-    </td>
-  </tr>
-</table>
+<!-- ─────────────────────────────────────────────────
+     SIGNATURES
+     ───────────────────────────────────────────────── -->
+<div class="sig-section">
+  <table class="sig-table">
+    <tr>
+      <!-- LE PRESTATAIRE -->
+      <td class="sig-col">
+        <div class="sig-party-label">Pour le Prestataire</div>
+        <div class="sig-party-name"
+             th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSÉ'}">
+          ELLE A OSÉ
+        </div>
+        <div class="sig-party-role"
+             th:text="${variables != null and variables['operatorRepresentative'] != null ? variables['operatorRepresentative'] : 'Mme Hope MADHONE'}">
+          Mme Hope MADHONE
+        </div>
+        <div class="sig-box"
+             th:classappend="${variables != null and variables['operatorSignatureName'] != null} ? ' signed' : ''">
+          <div class="sig-stamp-name"
+               th:if="${variables != null and variables['operatorSignatureName'] != null}"
+               th:text="${variables['operatorSignatureName']}">NOM</div>
+          <div class="sig-stamp-sub"
+               th:if="${variables != null and variables['operatorSignatureName'] != null}">
+            Signé par le système
+          </div>
+        </div>
+        <div class="sig-date-line"
+             th:if="${variables != null and variables['operatorSignedAt'] != null}"
+             th:text="${'Date : ' + variables['operatorSignedAt']}">Date</div>
+        <div class="sig-date-line"
+             th:unless="${variables != null and variables['operatorSignedAt'] != null}">
+          Date&#160;: _______ / _______ / ___________
+        </div>
+        <div class="sig-mention">Signature et cachet</div>
+      </td>
 
-<!-- PIED DE PAGE -->
+      <!-- LE CLIENT -->
+      <td class="sig-col">
+        <div class="sig-party-label">Le Client</div>
+        <div class="sig-party-name"
+             th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">
+          Nom du client
+        </div>
+        <div class="sig-party-role"
+             th:text="${request.signatoryRole != null ? request.signatoryRole : 'Bénéficiaire / Représentant'}">
+          Qualité
+        </div>
+        <div class="sig-box"></div>
+        <div class="sig-date-line">Date&#160;: _______ / _______ / ___________</div>
+        <div class="sig-mention">Précédé de la mention manuscrite « Lu et approuvé, offre non remboursable »</div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     PIED DE PAGE
+     ───────────────────────────────────────────────── -->
 <div class="doc-footer">
-  <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</span>
-  &nbsp;·&nbsp; Souscription / Pass — Non remboursable &nbsp;·&nbsp;
+  <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSÉ'}">ELLE A OSÉ</span>
+  &#160;·&#160; RCCM&#160;:
+  <span th:text="${variables != null and variables['operatorRccm'] != null ? variables['operatorRccm'] : 'CG-PNR-01-2017-00472'}">CG-PNR-01-2017-00472</span>
+  &#160;·&#160; Souscription / Pass non remboursable &#160;·&#160;
   Généré le <span th:text="${generatedAt}">2026-01-01</span>
-  &nbsp;·&nbsp; Document confidentiel — conserver précieusement
+  &#160;·&#160; Document confidentiel
 </div>
 
-</body>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
 </html>

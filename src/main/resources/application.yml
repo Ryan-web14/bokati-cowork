@@ -1,7 +1,7 @@
+
 spring:
   application:
     name: bokati-cowork
-
   profiles:
     active: prod
 
@@ -17,6 +17,10 @@ management:
     web:
       exposure:
         include: health,info,metrics
+
+app:
+  portal:
+    kyc-grace-period-days: ${PORTAL_KYC_GRACE_PERIOD_DAYS:7}
 
 bokati:
   task:

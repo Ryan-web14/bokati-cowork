@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest;
+import com.sni.bokaticowork.features.client.member.dto.request.KycGracePeriodRequest;
 import com.sni.bokaticowork.features.client.member.dto.request.TransferMemberCustomerRequest;
 import com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberProfileRequest;
 import com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberRequest;
@@ -155,6 +156,15 @@ public class MemberController {
         @Idempotent(operation = "MEMBER_DISABLE_PORTAL_ACCESS", requestBodyArgIndex = -1)
         public ResponseEntity<Void> disablePortalAccess(@PathVariable String id) {
             memberService.disablePortalAccess(id);
+            return ResponseEntity.noContent().build();
+        }
+
+        @PatchMapping("/{id}/kyc-grace-period")
+        @Audited(module = "MEMBER", action = "SET_KYC_GRACE_PERIOD", ressource = "member")
+        public ResponseEntity<Void> setKycGracePeriod(
+                @PathVariable String id,
+                @Valid @RequestBody KycGracePeriodRequest request) {
+            memberService.setKycGracePeriodDays(id, request.getGracePeriodDays());
             return ResponseEntity.noContent().build();
         }
 

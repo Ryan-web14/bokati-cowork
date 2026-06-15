@@ -1,135 +1,120 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Notification KYC — Elle A Osé</title>
-<!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
-<style>
-    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
-    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
-    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
-    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
-    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4); color: #c9a84c; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); text-align: center; }
-    .hero-icon-td { width: 56px; height: 56px; border-radius: 50%; background-color: rgba(201,168,76,.08); border: 2px solid #c9a84c; text-align: center; vertical-align: middle; }
-    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin: 18px 0 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
-    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .msg { font-size: 13px; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 20px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-    .info-head-td { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-val { padding: 12px 16px 12px 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .badge-approved { background-color: rgba(34,197,94,.15); color: #4ade80; border: 1px solid rgba(34,197,94,.3); }
-    .badge-pending { background-color: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.3); }
-    .badge-rejected { background-color: rgba(239,68,68,.12); color: #f87171; border: 1px solid rgba(239,68,68,.3); }
-    .badge-default { background-color: rgba(167,139,250,.12); color: #a78bfa; border: 1px solid rgba(167,139,250,.3); }
-    .cta-wrap-td { padding: 4px 0 20px; text-align: center; }
-    .cta-btn { display: inline-block; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .note { font-size: 11px; color: rgba(255,255,255,.25); line-height: 1.65; text-align: center; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
-    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    @media only screen and (max-width: 480px) {
-        .wrap-td { padding: 0 !important; }
-        .card { border-radius: 0 !important; }
-        .header-td, .hero-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notification KYC — Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrap { width: 100%; padding: 48px 16px; background: #E8E5E0; }
+    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 28px 56px rgba(26,10,46,.10); }
+    .em-header { background: #110828; padding: 22px 36px; }
+    .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
+    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
+    .em-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
+    .em-body { padding: 44px 40px 40px; }
+    .hero { text-align: center; margin-bottom: 36px; }
+    .hero-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: rgba(201,168,76,.08); border: 2px solid #C9A84C; margin-bottom: 20px; }
+    .em-doc-title { font-size: 19px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 6px; }
+    .em-doc-sub { font-size: 13.5px; color: #9B8CAA; line-height: 1.6; }
+    .em-intro { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 28px; }
+    .em-intro strong { color: #1A0A2E; font-weight: 700; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; padding-bottom: 10px; border-bottom: 1px solid #EEE9F5; margin-bottom: 0; }
+    .dt { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+    .dt tr { border-bottom: 1px solid #EEE9F5; }
+    .dt tr:first-child { border-top: 1px solid #EEE9F5; }
+    .dt td { padding: 13px 0; vertical-align: middle; }
+    .dt-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; width: 140px; }
+    .dt-val { font-size: 13.5px; font-weight: 600; color: #1A0A2E; }
+    .dt-mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1.2px; }
+    .status-approved { color: #059669; }
+    .status-pending { color: #D97706; }
+    .status-rejected { color: #DC2626; }
+    .cta-gold { display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; text-align: center; border-radius: 8px; margin-bottom: 28px; }
+    .em-legal { font-size: 11.5px; color: #C0B4D0; line-height: 1.65; }
+    .em-legal a { color: #9B8CAA; text-decoration: none; }
+    .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
+    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
+    .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
+    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+    @media (max-width: 480px) {
+      .wrap { padding: 0; background: #fff; }
+      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .em-header { padding: 18px 24px; }
+      .em-body { padding: 32px 24px 32px; }
+      .em-footer { padding: 18px 24px; }
     }
-</style>
+  </style>
 </head>
 <body>
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
-<tr><td class="wrap-td" align="center">
-<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+<div class="wrap">
+  <div class="card">
 
-    <tr>
-        <td class="header-td">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td valign="middle">
-                        <div class="brand">Elle A Osé</div>
-                        <div class="brand-sub">Espace de coworking</div>
-                    </td>
-                    <td align="right" valign="middle"><span class="tag">KYC</span></td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <tr><td class="stripe">&nbsp;</td></tr>
+    <div class="em-header">
+      <div class="em-brand">Elle A Osé</div>
+      <div class="em-brand-sub">Espace de coworking</div>
+    </div>
+    <div class="em-stripe"></div>
 
-    <tr>
-        <td class="hero-td">
-            <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
-                <tr>
-                    <td class="hero-icon-td" width="56" height="56">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M4 13h16M13 4l8 9-8 9" stroke="#c9a84c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </td>
-                </tr>
-            </table>
-            <div class="hero-title">Mise à jour dossier KYC</div>
-            <div class="hero-sub">Une modification a été apportée à votre dossier.</div>
-        </td>
-    </tr>
+    <div class="em-body">
+      <div class="hero">
+        <div class="hero-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="4" y="2" width="12" height="17" rx="1.5" stroke="#C9A84C" stroke-width="1.5"/>
+            <path d="M8 7h7M8 10h7M8 13h4" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M14 2v4h4" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="17" cy="17" r="4" fill="#fff" stroke="#C9A84C" stroke-width="1.5"/>
+            <path d="M15.5 17l1 1 2-2" stroke="#C9A84C" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="em-doc-title">Mise à jour de votre dossier KYC</div>
+        <div class="em-doc-sub">Une modification a été apportée à votre dossier d'identité.</div>
+      </div>
 
-    <tr>
-        <td class="body-td">
-            <p class="msg">Bonjour <strong style="color:rgba(255,255,255,.82);" th:text="${recipientName ?: 'client'}">client</strong>,<br>
-            votre dossier KYC a été mis à jour. Retrouvez ci-dessous le récapitulatif des informations liées à cet événement.</p>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, votre dossier KYC a été mis à jour. Retrouvez ci-dessous le récapitulatif de cet événement.
+      </div>
 
-            <div class="section-lbl">Détails de l'événement</div>
-            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td class="info-head-td" colspan="2">Votre dossier KYC</td></tr>
-                <tr>
-                    <td class="info-lbl">Dossier</td>
-                    <td class="info-val" th:text="${kycCaseCode}">KCS-001</td>
-                </tr>
-                <tr style="background-color:rgba(255,255,255,.02);">
-                    <td class="info-lbl">Événement</td>
-                    <td class="info-val" th:text="${eventType}">—</td>
-                </tr>
-                <tr>
-                    <td class="info-lbl" style="border-bottom:0;">Statut</td>
-                    <td class="info-val" style="border-bottom:0;">
-                        <span th:switch="${status}">
-                            <span th:case="'APPROVED'" class="badge badge-approved">Approuvé</span>
-                            <span th:case="'PENDING'" class="badge badge-pending">En attente</span>
-                            <span th:case="'REJECTED'" class="badge badge-rejected">Rejeté</span>
-                            <span th:case="*" class="badge badge-default" th:text="${status ?: '—'}">—</span>
-                        </span>
-                    </td>
-                </tr>
-            </table>
+      <div class="section-lbl">Détails de l'événement</div>
+      <table class="dt">
+        <tr>
+          <td class="dt-key">Dossier</td>
+          <td class="dt-val dt-mono" th:text="${kycCaseCode}">KCS-001</td>
+        </tr>
+        <tr>
+          <td class="dt-key">Événement</td>
+          <td class="dt-val" th:text="${eventType}">—</td>
+        </tr>
+        <tr>
+          <td class="dt-key">Statut</td>
+          <td class="dt-val">
+            <span th:switch="${status}">
+              <span th:case="'APPROVED'" class="status-approved">Approuvé</span>
+              <span th:case="'PENDING'" class="status-pending">En attente</span>
+              <span th:case="'REJECTED'" class="status-rejected">Rejeté</span>
+              <span th:case="*" th:text="${status ?: '—'}">—</span>
+            </span>
+          </td>
+        </tr>
+      </table>
 
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr><td class="cta-wrap-td"><a href="#" class="cta-btn">Consulter mon espace</a></td></tr>
-            </table>
+      <a href="#" class="cta-gold">Consulter mon espace</a>
 
-            <p class="note">Vérifiez si des pièces supplémentaires ou des corrections sont attendues dans votre espace personnel.</p>
-        </td>
-    </tr>
+      <div class="em-legal">
+        Vérifiez si des pièces supplémentaires sont attendues depuis votre espace personnel. Pour toute question, contactez <a href="mailto:supportela@elleaose.com">supportela@elleaose.com</a>.
+      </div>
+    </div>
 
-    <tr>
-        <td class="footer-td">
-            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
-            <div class="footer-text">
-                Email généré automatiquement — merci de ne pas y répondre directement.<br>
-                <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a>
-            </div>
-        </td>
-    </tr>
+    <div class="em-footer">
+      <div class="em-footer-brand">Elle A Osé · Espace de coworking</div>
+      <div class="em-footer-text">
+        Email généré automatiquement — merci de ne pas y répondre directement.<br>
+        <a href="mailto:supportela@elleaose.com">supportela@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
+      </div>
+    </div>
 
-</table>
-</td></tr>
-</table>
+  </div>
+</div>
 </body>
 </html>

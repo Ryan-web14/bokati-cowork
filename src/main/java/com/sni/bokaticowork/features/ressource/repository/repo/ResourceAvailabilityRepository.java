@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -115,6 +116,7 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
     @Query("""
             select ra
             from ResourceAvailability ra
+            join fetch ra.resource r
             where ra.resource = :resource
               and ra.active = true
               and ra.available = true
@@ -124,7 +126,23 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             """)
     List<ResourceAvailability> findFutureReservableSlots(
             @Param("resource") Resource resource,
-            @Param("startedAt") LocalDateTime startedAt
+            @Param("startedAt") LocalDateTime startedAt,
+            Pageable pageable
+    );
+
+    @Query("""
+            select ra
+            from ResourceAvailability ra
+            join fetch ra.resource r
+            where ra.resource = :resource
+              and ra.active = true
+              and ra.endedAt > :cutoff
+            order by ra.startedAt asc
+            """)
+    List<ResourceAvailability> findFutureActiveSlots(
+            @Param("resource") Resource resource,
+            @Param("cutoff") LocalDateTime cutoff,
+            Pageable pageable
     );
 
     @Query("""
@@ -134,5 +152,5 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
               and (ra.active = true or ra.available = true)
             order by ra.endedAt asc
             """)
-    List<ResourceAvailability> findExpiredSlots(@Param("cutoff") LocalDateTime cutoff);
+    List<ResourceAvailability> findExpiredSlots(@Param("cutoff") LocalDateTime cutoff, Limit limit);
 }

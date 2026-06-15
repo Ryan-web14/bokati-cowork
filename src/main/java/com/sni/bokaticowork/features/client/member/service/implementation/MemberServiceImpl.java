@@ -81,6 +81,9 @@ public class MemberServiceImpl  implements MemberService {
     @Value("${app.verify-base-url:}")
     private String publicBaseUrl;
 
+    @Value("${app.portal.kyc-grace-period-days:7}")
+    private int defaultKycGracePeriodDays;
+
     //Todo send password by email or let it be shown for printing
     @Transactional
     @Override
@@ -220,6 +223,11 @@ public class MemberServiceImpl  implements MemberService {
         
         if(member.getStatus() == MemberStatus.ACTIVE){
             member.setPortalAccess(true);
+            if (member.getPortalActivatedAt() == null) {
+                java.time.Instant now = java.time.Instant.now();
+                member.setPortalActivatedAt(now);
+                member.setKycGracePeriodEndAt(now.plus(defaultKycGracePeriodDays, java.time.temporal.ChronoUnit.DAYS));
+            }
             Customer cus = member.getCustomer();
             cus.setStatus(CustomerStatus.ACTIVE);
         } else if (member.getStatus() == MemberStatus.INACTIVE || member.getStatus() == MemberStatus.SUSPENDED) {
@@ -329,13 +337,28 @@ public class MemberServiceImpl  implements MemberService {
 
         Member member = getByMemberIdForService(memberId);
         member.setPortalAccess(true);
+        if (member.getPortalActivatedAt() == null) {
+            java.time.Instant now = java.time.Instant.now();
+            member.setPortalActivatedAt(now);
+            member.setKycGracePeriodEndAt(now.plus(defaultKycGracePeriodDays, java.time.temporal.ChronoUnit.DAYS));
+        }
 
         if(member.getStatus() == MemberStatus.INACTIVE || member.getStatus() == MemberStatus.SUSPENDED){
             member.setStatus(MemberStatus.ACTIVE);
-        }  
+        }
 
         memberRepo.save(member);
         kycAutomationService.syncMemberKyc(member.getMemberId());
+    }
+
+    @Override
+    public void setKycGracePeriodDays(String memberId, int gracePeriodDays) {
+        Member member = getByMemberIdForService(memberId);
+        java.time.Instant base = member.getPortalActivatedAt() != null
+                ? member.getPortalActivatedAt()
+                : java.time.Instant.now();
+        member.setKycGracePeriodEndAt(base.plus(gracePeriodDays, java.time.temporal.ChronoUnit.DAYS));
+        memberRepo.save(member);
     }
 
     @Override

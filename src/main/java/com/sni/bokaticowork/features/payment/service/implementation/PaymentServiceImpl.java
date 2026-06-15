@@ -295,7 +295,10 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentTransactionResponse payWithWallet(String intentNumber, WalletPaymentRequest request) {
         PaymentIntent intent = pendingIntent(intentNumber);
         WalletAccount wallet = walletService.serviceWallet(request.walletNumber());
-        if (!wallet.getOwnerType().equalsIgnoreCase(intent.getCustomerType()) || !wallet.getOwnerCode().equalsIgnoreCase(intent.getCustomerCode())) {
+        String normalizedWalletOwnerType = normalizeCustomerType(wallet.getOwnerType(), wallet.getOwnerCode());
+        if (normalizedWalletOwnerType == null
+                || !normalizedWalletOwnerType.equalsIgnoreCase(intent.getCustomerType())
+                || !wallet.getOwnerCode().equalsIgnoreCase(intent.getCustomerCode())) {
             throw new BadRequestException("Wallet owner does not match payment intent customer");
         }
         if (!wallet.getCurrency().equalsIgnoreCase(intent.getCurrency())) {

@@ -4,13 +4,14 @@ import com.sni.bokaticowork.core.exception.customs.*;
 import com.sni.bokaticowork.core.utils.error.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,240 +23,128 @@ import java.util.List;
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
-    
-    private final ErrorResponse errorResponse;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    private ResponseEntity<Object> buildResponseEntity(ApiError apiError){
-        return new ResponseEntity<>(apiError, HttpStatus.valueOf(apiError.getStatus()));
-    }
+    private final ErrorResponse errorResponse;
+
+    // ── Business / domain exceptions ─────────────────────────────────────────
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Object> handleRessourceNotFoundException(
-            ResourceNotFoundException ex, HttpServletRequest request
-    ) {
-        ApiError error =errorResponse.buildErrorResponse(
-                ErrorCode.RESOURCE_NOT_FOUND,
-                HttpStatus.NOT_FOUND,
-                ex.getMessage(),
-                "The requested ressouce was not found",
-                request,
-                ex,
-                null,
-                ex);
-        return buildResponseEntity(error);
+    public ResponseEntity<Object> handleResourceNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.RESOURCE_NOT_FOUND, HttpStatus.NOT_FOUND,
+                ex.getMessage(), request, ex, null));
+    }
+
+    @ExceptionHandler(ResourceAlreadyExistException.class)
+    public ResponseEntity<Object> handleResourceAlreadyExists(ResourceAlreadyExistException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.RESOURCE_ALREADY_EXISTS, HttpStatus.CONFLICT,
+                ex.getMessage(), request, ex, null));
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<Object> handleBadRequestException(
-            BadRequestException ex, HttpServletRequest request
-    ) {
-        ApiError error =errorResponse.buildErrorResponse(
-                ErrorCode.BAD_REQUEST,
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage(),
-                "Bad request error",
-                request,
-                ex,
-                null,
-                ex);
-        return buildResponseEntity(error);
+    public ResponseEntity<Object> handleBadRequest(BadRequestException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                ex.getMessage(), request, ex, null));
     }
 
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<Object> handleConflictException(
-            ConflictException ex, HttpServletRequest request
-    ) {
-        ApiError error =errorResponse.buildErrorResponse(
-                ErrorCode.CONFLICT,
-                HttpStatus.CONFLICT,
-                ex.getMessage(),
-                "Resource conflict error",
-                request,
-                ex,
-                null,
-                ex);
-        return buildResponseEntity(error);
-    }
-
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<Object> handleUnauthorizedException(
-            UnauthorizedException ex, HttpServletRequest request
-    ) {
-        ApiError error =errorResponse.buildErrorResponse(
-                ErrorCode.UNAUTHORIZED,
-                HttpStatus.UNAUTHORIZED,
-                ex.getMessage(),
-                "Authorization required",
-                request,
-                ex,
-                null,
-                ex);
-        return buildResponseEntity(error);
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<Object> handleForbidenException(
-            ForbiddenException ex, HttpServletRequest request
-    ) {
-        ApiError error =errorResponse.buildErrorResponse(
-                ErrorCode.FORBIDDEN,
-                HttpStatus.FORBIDDEN,
-                ex.getMessage(),
-                "Access to the resource is forbidden",
-                request,
-                ex,
-                null,
-                ex);
-        return buildResponseEntity(error);
+    public ResponseEntity<Object> handleConflict(ConflictException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.CONFLICT, HttpStatus.CONFLICT,
+                ex.getMessage(), request, ex, null));
     }
 
     @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<Object> handleValidationException(
-            ValidationException ex, HttpServletRequest request
-    ) {
-        ApiError error =errorResponse.buildErrorResponse(
-                ErrorCode.VALIDATION_FAILED,
-                HttpStatus.BAD_REQUEST,
-                ex.getMessage(),
-                "Validation error",
-                request,
-                ex,
-                ex.getErrors(),
-                ex);
-        return buildResponseEntity(error);
+    public ResponseEntity<Object> handleValidation(ValidationException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
+                ex.getMessage(), request, ex, ex.getErrors()));
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Object> handleMethodArgumentNotValidException(
-            MethodArgumentNotValidException ex, HttpServletRequest request
-    ) {
-        List<String> errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(this::formatFieldError)
-                .toList();
+    // ── Auth / access exceptions ──────────────────────────────────────────────
 
-        ApiError error = errorResponse.buildErrorResponse(
-                ErrorCode.VALIDATION_FAILED,
-                HttpStatus.BAD_REQUEST,
-                "Invalid request parameters",
-                "Validation error",
-                request,
-                ex,
-                errors,
-                ex);
-        return buildResponseEntity(error);
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Object> handleUnauthorized(UnauthorizedException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.UNAUTHORIZED, HttpStatus.UNAUTHORIZED,
+                ex.getMessage(), request, ex, null));
     }
 
-    @ExceptionHandler(BindException.class)
-    public ResponseEntity<Object> handleBindException(
-            BindException ex, HttpServletRequest request
-    ) {
-        List<String> errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(this::formatFieldError)
-                .toList();
-
-        ApiError error = errorResponse.buildErrorResponse(
-                ErrorCode.VALIDATION_FAILED,
-                HttpStatus.BAD_REQUEST,
-                "Invalid request parameters",
-                "Validation error",
-                request,
-                ex,
-                errors,
-                ex);
-        return buildResponseEntity(error);
-    }
-
-    @ExceptionHandler(MissingServletRequestPartException.class)
-    public ResponseEntity<Object> handleMissingServletRequestPartException(
-            MissingServletRequestPartException ex, HttpServletRequest request
-    ) {
-        ApiError error = errorResponse.buildErrorResponse(
-                ErrorCode.BAD_REQUEST,
-                HttpStatus.BAD_REQUEST,
-                "Missing multipart request part: " + ex.getRequestPartName(),
-                "Bad request error",
-                request,
-                ex,
-                List.of("Missing multipart request part: " + ex.getRequestPartName()),
-                ex);
-        return buildResponseEntity(error);
-    }
-
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<Object> handleMissingServletRequestParameterException(
-            MissingServletRequestParameterException ex, HttpServletRequest request
-    ) {
-        String message = "Missing request parameter: " + ex.getParameterName();
-        ApiError error = errorResponse.buildErrorResponse(
-                ErrorCode.BAD_REQUEST,
-                HttpStatus.BAD_REQUEST,
-                message,
-                "Bad request error",
-                request,
-                ex,
-                List.of(message),
-                ex);
-        return buildResponseEntity(error);
-    }
-
-    @ExceptionHandler(BadCredentialException.class)
-    public ResponseEntity<Object> handleBadCredentialException(
-            BadCredentialException ex, HttpServletRequest request
-    ) {
-        ApiError error =errorResponse.buildErrorResponse(
-                ErrorCode.INVALID_CREDENTIALS,
-                HttpStatus.UNAUTHORIZED,
-                ex.getMessage(),
-                "Invalid credentials provided",
-                request,
-                ex,
-                null,
-                ex);
-        return buildResponseEntity(error);
-    }
-
-    private String formatFieldError(FieldError error) {
-        Object rejectedValue = error.getRejectedValue();
-        String value = rejectedValue == null ? "null" : rejectedValue.toString();
-        return error.getField() + ": " + error.getDefaultMessage() + " (rejected value: " + value + ")";
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<Object> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.FORBIDDEN, HttpStatus.FORBIDDEN,
+                "Access to this resource is forbidden.", request, ex, null));
     }
 
     @ExceptionHandler(AccesDeniedException.class)
-    public ResponseEntity<Object> handleAccesDeniedException(
-            AccesDeniedException ex, HttpServletRequest request
-    ){
-        ApiError error =errorResponse.buildErrorResponse(
-                ErrorCode.ACCESS_DENIED,
-                HttpStatus.FORBIDDEN,
-                ex.getMessage(),
-                "Access denied",
-                request,
-                ex,
-                null,
-                ex);
-
-        return buildResponseEntity(error);
+    public ResponseEntity<Object> handleAccessDenied(AccesDeniedException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.ACCESS_DENIED, HttpStatus.FORBIDDEN,
+                "Access denied.", request, ex, null));
     }
 
+    @ExceptionHandler(BadCredentialException.class)
+    public ResponseEntity<Object> handleBadCredential(BadCredentialException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED,
+                "Invalid credentials provided.", request, ex, null));
+    }
 
+    // ── Spring MVC / binding exceptions ──────────────────────────────────────
 
-    // Handle all other exceptions
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        List<String> errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(this::formatFieldError)
+                .toList();
+        return respond(errorResponse.build(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
+                "Invalid request parameters.", request, ex, errors));
+    }
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<Object> handleBind(BindException ex, HttpServletRequest request) {
+        List<String> errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(this::formatFieldError)
+                .toList();
+        return respond(errorResponse.build(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
+                "Invalid request parameters.", request, ex, errors));
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<Object> handleMissingRequestPart(MissingServletRequestPartException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                "Missing required request part: " + ex.getRequestPartName() + ".", request, ex, null));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Object> handleMissingRequestParam(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                "Missing required parameter: " + ex.getParameterName() + ".", request, ex, null));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Object> handleMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
+                "Request body is missing or malformed.", request, ex, null));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Object> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.METHOD_NOT_SUPPORTED, HttpStatus.METHOD_NOT_ALLOWED,
+                "HTTP method " + ex.getMethod() + " is not supported for this endpoint.", request, ex, null));
+    }
+
+    // ── Catch-all ─────────────────────────────────────────────────────────────
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleGenericException(
-            Exception ex, HttpServletRequest request
-    ) {
-        ApiError error =errorResponse
-                .buildErrorResponse(
-                ErrorCode.INTERNAL_SERVER_ERROR,
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                ex.getMessage(),
-                "An unexpected error occurred",
-                request,
-                ex,
-                null,
-                ex);
-        LOGGER.error("Unexpected error occurred", ex);
-        return buildResponseEntity(error);
+    public ResponseEntity<Object> handleGeneric(Exception ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred. Please try again or contact support.", request, ex, null));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private ResponseEntity<Object> respond(ApiError apiError) {
+        return new ResponseEntity<>(apiError, HttpStatus.valueOf(apiError.getStatus()));
+    }
+
+    private String formatFieldError(FieldError error) {
+        return error.getField() + ": " + error.getDefaultMessage();
     }
 }

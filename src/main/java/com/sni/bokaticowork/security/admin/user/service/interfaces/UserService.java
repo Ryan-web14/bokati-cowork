@@ -35,6 +35,10 @@ public interface UserService {
     boolean userExists(String email);
     boolean isUserActive(String email);
 
+    void unlockAccount(String email);
+
+    void storePendingEmail(Long userId, String pendingEmail);
+    void applyPendingEmailChange(Long userId);
 
     //TODO implement later
     // Search and filter

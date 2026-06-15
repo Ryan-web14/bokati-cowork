@@ -41,7 +41,14 @@
       "Bash(dir \"C:\\\\java-project\\\\bokati-cowork\\\\src\\\\main\\\\java\\\\com\\\\sni\\\\bokaticowork\\\\features\\\\payment\\\\repository\\\\\" | grep -i transaction *)",
       "PowerShell(cd C:\\\\java-project\\\\bokati-cowork && .\\\\mvnw compile 2>&1 | Where-Object { $_ -match \"ERROR|error:\" } | Select-Object -First 20)",
       "Bash(git push *)",
-      "Bash(./mvnw -q compile -DskipTests)"
+      "Bash(./mvnw -q compile -DskipTests)",
+      "Bash(grep -rn \"existsActiveOverlap\\\\|overlap\" src/main/java/com/sni/bokaticowork/features/ressource/repository/ src/main/java/com/sni/bokaticowork/features/ressource/service/implementation/ResourceClosureServiceImpl.java)",
+      "Bash(ls src/main/java/com/sni/bokaticowork/features/ressource/mapper/decorator/)",
+      "Bash(git *)",
+      "Bash(grep -E \"\\\\.java$\")",
+      "Bash(sort -t'V' -k2 -n)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\java-project\\\\bokati-cowork\\\\src\\\\main\\\\java\\\\com\\\\sni\\\\bokaticowork\\\\features\\\\portal\\\\profile\\\\dto\\\\response\")",
+      "Bash(Out-Null)"
     ]
   }
 }

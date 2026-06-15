@@ -5,6 +5,7 @@ import com.sni.bokaticowork.security.authentication.dto.request.EmailRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.LoginRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.PasswordResetConfirmationRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.RefreshTokenRequest;
+import com.sni.bokaticowork.security.authentication.dto.request.RegisterMemberRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.ValidateOttRequest;
 import com.sni.bokaticowork.security.authentication.dto.response.CurrentUserResponse;
 import com.sni.bokaticowork.security.authentication.dto.response.LoginResponse;
@@ -72,6 +73,27 @@ public class AuthenticationController {
     public ResponseEntity<Void> logout(@RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
         authenticationService.logout(extractToken(authorizationHeader));
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<OttResponse> register(@Valid @RequestBody RegisterMemberRequest request) {
+        return ResponseEntity.status(201).body(authenticationService.register(request));
+    }
+
+    @PostMapping("/unlock-account")
+    public ResponseEntity<OttResponse> requestUnlockAccount(@Valid @RequestBody EmailRequest request) {
+        return ResponseEntity.ok(authenticationService.requestUnlockAccount(request.getEmail()));
+    }
+
+    @PostMapping("/unlock-account/confirm")
+    public ResponseEntity<Void> confirmUnlockAccount(@Valid @RequestBody ValidateOttRequest request) {
+        authenticationService.confirmUnlockAccount(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/email/verify/resend")
+    public ResponseEntity<OttResponse> resendEmailVerification(@Valid @RequestBody EmailRequest request) {
+        return ResponseEntity.ok(authenticationService.resendEmailVerification(request.getEmail()));
     }
 
     private String extractToken(String authorizationHeader) {

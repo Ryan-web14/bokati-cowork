@@ -2,6 +2,7 @@ package com.sni.bokaticowork.security.config;
 
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.security.authorization.AdminApiAuthorizationManager;
+import com.sni.bokaticowork.security.authorization.ClientPortalAuthorizationManager;
 import com.sni.bokaticowork.security.filter.JWTFilter;
 import com.sni.bokaticowork.security.ratelimit.RateLimitingFilter;
 import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
@@ -38,6 +39,7 @@ public class SecurityConfig {
     private final JWTFilter jwtFilter;
     private final RateLimitingFilter rateLimitingFilter;
     private final AdminApiAuthorizationManager adminApiAuthorizationManager;
+    private final ClientPortalAuthorizationManager clientPortalAuthorizationManager;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -49,8 +51,12 @@ public class SecurityConfig {
                         .requestMatchers(
                                 ApiPath.V1 + "/auth/login",
                                 ApiPath.V1 + "/auth/refresh",
+                                ApiPath.V1 + "/auth/register",
                                 ApiPath.V1 + "/auth/ott/**",
                                 ApiPath.V1 + "/auth/password-reset/**",
+                                ApiPath.V1 + "/auth/unlock-account",
+                                ApiPath.V1 + "/auth/unlock-account/confirm",
+                                ApiPath.V1 + "/auth/email/verify/resend",
                                 ApiPath.V1 + "/payments/mobile-money/providers",
                                 ApiPath.V1 + "/payments/mobile-money/pawapay/callback",
                                 ApiPath.V1 + "/payments/mobile-money/pawaypay/callback",
@@ -62,6 +68,7 @@ public class SecurityConfig {
 
                         ).permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers(ApiPath.V1 + "/client/**").access(clientPortalAuthorizationManager)
                         .requestMatchers(ApiPath.V1 + "/**").access(adminApiAuthorizationManager)
                         .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)

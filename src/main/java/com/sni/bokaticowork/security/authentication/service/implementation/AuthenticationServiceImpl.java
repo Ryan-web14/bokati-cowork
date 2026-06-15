@@ -4,7 +4,9 @@ package com.sni.bokaticowork.security.authentication.service.implementation;
 import com.sni.bokaticowork.core.audit.dto.response.UserSessionToken;
 import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
 import com.sni.bokaticowork.core.exception.customs.BadCredentialException;
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.provisioning.service.interfaces.UserProvisioningService;
@@ -12,6 +14,7 @@ import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
 import com.sni.bokaticowork.security.authentication.dto.request.LoginRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.PasswordResetConfirmationRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.RefreshTokenRequest;
+import com.sni.bokaticowork.security.authentication.dto.request.RegisterMemberRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.ValidateOttRequest;
 import com.sni.bokaticowork.security.authentication.dto.response.CurrentUserResponse;
 import com.sni.bokaticowork.security.authentication.dto.response.LoginResponse;
@@ -25,6 +28,7 @@ import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Map;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -158,6 +162,72 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+
+    @Override
+    @Transactional
+    public OttResponse register(RegisterMemberRequest request) {
+        CreateMemberRequest createReq = CreateMemberRequest.builder()
+                .firstname(request.getFirstname())
+                .lastname(request.getLastname())
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .phone(request.getPhone())
+                .whatsappPhone(request.getWhatsappPhone())
+                .customerType(request.getCustomerType())
+                .companyName(request.getCompanyName())
+                .generatePassword(false)
+                .build();
+        userProvisioningService.registerMemberFromPortal(createReq);
+        Users user = userService.getUserByEmailForService(request.getEmail());
+        String verificationToken = oneTimeTokenService.generateOneTimeToken(user);
+        return OttResponse.builder()
+                .verificationToken(verificationToken)
+                .message("Registration successful. Please verify your email with the code sent to " + request.getEmail())
+                .build();
+    }
+
+    @Override
+    public OttResponse requestUnlockAccount(String email) {
+        if (!userService.userExists(email)) {
+            return OttResponse.builder()
+                    .verificationToken(null)
+                    .message("If an account exists for this email, an unlock code has been sent.")
+                    .build();
+        }
+        Users user = userService.getUserByEmailForService(email);
+        String verificationToken = oneTimeTokenService.generateOneTimeToken(user);
+        return OttResponse.builder()
+                .verificationToken(verificationToken)
+                .message("If an account exists for this email, an unlock code has been sent.")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void confirmUnlockAccount(ValidateOttRequest request) {
+        Map<Boolean, String> result = oneTimeTokenService.validateOneTimeToken(request.getOttToken(), request.getVerificationToken());
+        String email = result.get(true);
+        if (email == null || email.isEmpty()) {
+            throw new BadCredentialException("Invalid or expired unlock code");
+        }
+        userService.unlockAccount(email);
+    }
+
+    @Override
+    public OttResponse resendEmailVerification(String email) {
+        if (!userService.userExists(email)) {
+            return OttResponse.builder()
+                    .verificationToken(null)
+                    .message("If an account exists for this email, a verification code has been sent.")
+                    .build();
+        }
+        Users user = userService.getUserByEmailForService(email);
+        String verificationToken = oneTimeTokenService.generateOneTimeToken(user);
+        return OttResponse.builder()
+                .verificationToken(verificationToken)
+                .message("Verification code resent to " + email)
+                .build();
+    }
 
     /**
      * Authenticates a user using the provided authentication token and establishes a new session, use for normal login(email, password)

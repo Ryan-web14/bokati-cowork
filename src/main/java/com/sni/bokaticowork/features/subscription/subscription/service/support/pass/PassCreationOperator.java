@@ -2,6 +2,12 @@ package com.sni.bokaticowork.features.subscription.subscription.service.support.
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreatePassRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.PassEntitlementRequest;
@@ -65,8 +71,8 @@ public class PassCreationOperator {
                 .status(PassStatus.ACTIVE)
                 .name(request.name().trim())
                 .description(trim(request.description()))
-                .validFrom(request.validFrom())
-                .validUntil(request.validUntil())
+                .validFrom(parseInstant(request.validFrom()))
+                .validUntil(parseInstant(request.validUntil()))
                 .transferable(Boolean.TRUE.equals(request.transferable()))
                 .shareable(Boolean.TRUE.equals(request.shareable()))
                 .maxUses(request.maxUses())
@@ -101,12 +107,28 @@ public class PassCreationOperator {
                 .entitlementDefinition(definition)
                 .quantity(unlimited ? null : request.quantity())
                 .unlimited(unlimited)
-                .validFrom(request.validFrom() == null ? pass.getValidFrom() : request.validFrom())
-                .validUntil(request.validUntil() == null ? pass.getValidUntil() : request.validUntil())
+                .validFrom(request.validFrom() == null ? pass.getValidFrom() : parseInstant(request.validFrom()))
+                .validUntil(request.validUntil() == null ? pass.getValidUntil() : parseInstant(request.validUntil()))
                 .build();
     }
 
     private String trim(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private static final DateTimeFormatter LOCAL_FLEXIBLE = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd'T'HH:mm")
+            .optionalStart().appendPattern(":ss").optionalEnd()
+            .toFormatter();
+
+    private static final ZoneId APP_ZONE = ZoneId.of("Africa/Lagos");
+
+    private Instant parseInstant(String value) {
+        if (!StringUtils.hasText(value)) return null;
+        String v = value.trim();
+        try { return Instant.parse(v); } catch (Exception ignored) {}
+        try { return OffsetDateTime.parse(v).toInstant(); } catch (Exception ignored) {}
+        try { return LocalDateTime.parse(v, LOCAL_FLEXIBLE).atZone(APP_ZONE).toInstant(); } catch (Exception ignored) {}
+        throw new BadRequestException("Invalid date-time format: " + v);
     }
 }

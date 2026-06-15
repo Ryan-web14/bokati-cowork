@@ -69,6 +69,15 @@ public class Member {
     @Builder.Default
     private Boolean portalAccess = false;
 
+    @Column(name = "portal_activated_at")
+    private Instant portalActivatedAt;
+
+    @Column(name = "kyc_grace_period_end_at")
+    private Instant kycGracePeriodEndAt;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Column(name = "create_by_admin", nullable = false)
     @Builder.Default
     private Boolean createByAdmin = false;
