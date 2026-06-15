@@ -34,5 +34,6 @@ public interface MemberService {
     MemberResponse transferCustomer (String memberId, String newCustomerId);
     void enablePortalAccess(String memberId);
     void disablePortalAccess(String memberId);
+    void setKycGracePeriodDays(String memberId, int gracePeriodDays);
 
 }

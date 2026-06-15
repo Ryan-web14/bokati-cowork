@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="|Bienvenue — ${name ?: 'Votre compte'} — Elle A Osé|">Bienvenue — Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #E8E5E0;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      width: 100%;
+      padding: 48px 16px;
+      background: #E8E5E0;
+    }
+
+    .card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 1px 2px rgba(26,10,46,.05),
+        0 8px 24px rgba(26,10,46,.10),
+        0 28px 56px rgba(26,10,46,.10);
+    }
+
+    /* ── Header ── */
+    .em-header {
+      background: #110828;
+      padding: 22px 36px;
+    }
+    .em-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .em-brand {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .em-brand-sub {
+      font-size: 8.5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.28);
+      margin-top: 5px;
+    }
+    .em-doc-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: #1A0A2E;
+      letter-spacing: -0.3px;
+      margin-bottom: 28px;
+    }
+    .em-stripe {
+      height: 2px;
+      background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%);
+    }
+
+    /* ── Body ── */
+    .em-body { padding: 44px 40px 40px; }
+
+    .wel-greeting {
+      font-size: 12px;
+      font-weight: 600;
+      color: #A898B8;
+      letter-spacing: .2px;
+      margin-bottom: 5px;
+    }
+    .wel-name {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -.6px;
+      line-height: 1.1;
+      color: #1A0A2E;
+      margin-bottom: 22px;
+    }
+    .wel-intro {
+      font-size: 14px;
+      color: #5C4F6E;
+      line-height: 1.75;
+      margin-bottom: 36px;
+    }
+
+    .wel-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 36px;
+    }
+    .wel-table tr { border-bottom: 1px solid #EEE9F5; }
+    .wel-table tr:first-child { border-top: 1px solid #EEE9F5; }
+    .wel-table td { padding: 13px 0; vertical-align: middle; }
+    .wel-key {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #B0A0C0;
+      width: 150px;
+    }
+    .wel-val {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1A0A2E;
+    }
+    .wel-badge {
+      display: inline-block;
+      background: #F0EBF8;
+      color: #5C3D9E;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+
+    .wel-cta-wrap { margin-bottom: 32px; }
+    .wel-cta {
+      display: inline-block;
+      background: #1A0A2E;
+      color: #C9A84C;
+      text-decoration: none;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      padding: 17px 44px;
+      border-radius: 8px;
+    }
+
+    .wel-security {
+      font-size: 12px;
+      color: #B0A0C0;
+      line-height: 1.65;
+      padding-top: 28px;
+      border-top: 1px solid #EEE9F5;
+    }
+
+    /* ── Footer ── */
+    .em-footer {
+      background: #F8F7F5;
+      border-top: 1px solid #EAE5F0;
+      padding: 22px 40px;
+      text-align: center;
+    }
+    .em-footer-brand {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #9B8CAA;
+      margin-bottom: 6px;
+    }
+    .em-footer-text {
+      font-size: 11px;
+      color: #C0B4D0;
+      line-height: 1.65;
+    }
+    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+
+    /* ── Mobile ── */
+    @media (max-width: 480px) {
+      .wrap { padding: 0; background: #fff; }
+      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .em-header { padding: 18px 24px; }
+      .em-body { padding: 32px 24px 32px; }
+      .em-footer { padding: 18px 24px; }
+      .wel-name { font-size: 28px; }
+      .wel-cta { display: block; text-align: center; padding: 17px 24px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+
+    <!-- Header -->
+    <div class="em-header">
+      <div class="em-brand" th:if="${logo == null}">Elle A Osé</div>
+      <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Elle A Osé" style="height:36px; display:block;"/>
+      <div class="em-brand-sub">Espace de coworking</div>
+    </div>
+    <div class="em-stripe"></div>
+
+    <!-- Body -->
+    <div class="em-body">
+
+      <div class="em-doc-title">Création de compte</div>
+      <div class="wel-greeting">Bonjour,</div>
+      <div class="wel-name" th:text="${name ?: 'cher client'}">Marie Koné</div>
+
+      <div class="wel-intro">
+        Votre compte Bokati a été créé avec succès. Vous pouvez dès maintenant accéder à votre espace personnel pour gérer vos réservations, consulter vos factures et télécharger vos documents.
+      </div>
+
+      <table class="wel-table">
+        <tr>
+          <td class="wel-key">Code client</td>
+          <td class="wel-val" th:text="${customerId ?: '—'}">CUS-0847</td>
+        </tr>
+        <tr>
+          <td class="wel-key">Type de compte</td>
+          <td class="wel-val">
+            <span class="wel-badge" th:text="${customerType ?: '—'}">Particulier</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="wel-key">Adresse email</td>
+          <td class="wel-val" th:text="${email ?: '—'}"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5a373b28333f743135343f1a3f373b333674393537">[email&#160;protected]</a></td>
+        </tr>
+      </table>
+
+      <div class="wel-cta-wrap">
+        <a th:href="${portalUrl ?: '#'}" class="wel-cta">Accéder à mon espace</a>
+      </div>
+
+      <div class="wel-security">
+        Si vous n'êtes pas à l'origine de la création de ce compte, contactez immédiatement l'équipe Elle A Osé.
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="em-footer">
+      <div class="em-footer-brand">Elle A Osé · Bokati</div>
+      <div class="em-footer-text">
+        Message automatique — Pour toute question,<br>
+        contactez <a href="/cdn-cgi/l/email-protection#01626e766e736a41646d6d64606e72642f626e6c"><span class="__cf_email__" data-cfemail="6704081008150c27020b0b02060814024904080a">[email&#160;protected]</span></a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>

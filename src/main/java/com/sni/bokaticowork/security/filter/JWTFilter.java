@@ -131,8 +131,12 @@ public class JWTFilter extends OncePerRequestFilter {
         return uri != null && (
                 uri.equals(ApiPath.V1 + "/auth/login")
                         || uri.equals(ApiPath.V1 + "/auth/refresh")
+                        || uri.equals(ApiPath.V1 + "/auth/register")
                         || uri.startsWith(ApiPath.V1 + "/auth/ott/")
                         || uri.startsWith(ApiPath.V1 + "/auth/password-reset/")
+                        || uri.equals(ApiPath.V1 + "/auth/unlock-account")
+                        || uri.equals(ApiPath.V1 + "/auth/unlock-account/confirm")
+                        || uri.equals(ApiPath.V1 + "/auth/email/verify/resend")
                         || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/callback")
                         || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/callback")
                         || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback")

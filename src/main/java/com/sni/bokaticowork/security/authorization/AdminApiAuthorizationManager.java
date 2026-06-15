@@ -95,7 +95,7 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (HttpMethod.GET.matches(method)) return permission("CASH", "READ");
             return permission("CASH", "ADJUST");
         }
-        if (path.startsWith("/bookings") || path.startsWith("/client/bookings")) {
+        if (path.startsWith("/bookings")) {
             if (path.contains("/check-in") || path.contains("/check-out")) return permission("BOOKING", "CHECKIN");
             if (path.contains("/cancel") || path.contains("/reject") || path.contains("/no-show")) return permission("BOOKING", "CANCEL");
             return permission("BOOKING", actionFor(method));
@@ -142,7 +142,7 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("/check-in") || path.contains("/check-out")) return permission("VISITOR", "CHECKIN");
             return permission("VISITOR", HttpMethod.GET.matches(method) ? "READ" : "WRITE");
         }
-        if (path.startsWith("/support") || path.startsWith("/client/support")) {
+        if (path.startsWith("/support")) {
             if (path.contains("/assign")) return permission("SUPPORT", "ASSIGN");
             if (path.contains("/metrics") || path.contains("/analytics") || path.contains("/performance")) {
                 return permission("SUPPORT", "METRICS");

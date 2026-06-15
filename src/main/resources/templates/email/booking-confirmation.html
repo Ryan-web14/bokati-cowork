@@ -1,282 +1,188 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Réservation confirmée — Elle A Osé</title>
-<!--[if mso]>
-<noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
-<![endif]-->
-<style>
-    body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
-    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    img { border: 0; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-
-    body { margin: 0; padding: 0; background-color: #e8e4f0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
-    .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
-
-    /* Header */
-    .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
-    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
-    .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .status-pill { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; background-color: #112b1c; border: 1px solid rgba(34,197,94,.35); color: #4ade80; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-
-    /* Hero */
-    .hero-td { background-color: #110820; padding: 30px 32px 26px; border-bottom: 1px solid rgba(255,255,255,.05); }
-    .hero-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #c9a84c; margin-bottom: 10px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-title { font-size: 22px; font-weight: 800; color: #ffffff; line-height: 1.2; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-sub { font-size: 14px; color: rgba(255,255,255,.45); line-height: 1.6; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .hero-sub strong { color: rgba(255,255,255,.75); font-weight: 600; }
-
-    /* Ref bar */
-    .ref-bar-td { background-color: rgba(201,168,76,.07); border-top: 1px solid rgba(201,168,76,.12); border-bottom: 1px solid rgba(201,168,76,.12); padding: 12px 32px; }
-    .ref-label { font-size: 10px; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .ref-number { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 1.5px; font-family: "Courier New", Courier, monospace; }
-
-    /* Body */
-    .body-td { padding: 28px 32px 32px; background-color: #0f0720; }
-    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.28); margin-bottom: 12px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-
-    /* Info card */
-    .info-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-    .info-head { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 12px 18px; font-size: 15px; font-weight: 700; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-head-sm { background-color: #1e1035; border-left: 3px solid #c9a84c; padding: 11px 16px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #ffffff; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-type { font-size: 10px; color: #c9a84c; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .info-lbl { padding: 12px 12px 12px 16px; width: 38%; font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; vertical-align: middle; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; border-bottom: 1px solid rgba(255,255,255,.04); }
-    .info-val { padding: 12px 16px 12px 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); text-align: right; vertical-align: middle; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; border-bottom: 1px solid rgba(255,255,255,.04); }
-    .info-val-last { border-bottom: 0; }
-    .info-lbl-last { border-bottom: 0; }
-    .info-row-alt { background-color: rgba(255,255,255,.02); }
-    .time-sep { color: rgba(255,255,255,.3); margin: 0 5px; }
-    .time-dur { font-size: 11px; color: rgba(255,255,255,.3); margin-left: 6px; }
-
-    /* Price box */
-    .price-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
-    .price-total-td { padding: 16px 18px; font-size: 15px; font-weight: 700; color: #ffffff; border-bottom: 1px solid rgba(255,255,255,.07); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .price-total-amt { padding: 16px 18px; font-size: 22px; font-weight: 800; color: #c9a84c; text-align: right; letter-spacing: -0.3px; border-bottom: 1px solid rgba(255,255,255,.07); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .price-line-lbl { padding: 10px 18px; font-size: 12px; color: rgba(255,255,255,.45); border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .price-line-amt { padding: 10px 18px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.65); text-align: right; border-bottom: 1px solid rgba(255,255,255,.04); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .price-line-last { border-bottom: 0; }
-
-    /* QR */
-    .qr-card { border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 22px 18px; margin-bottom: 22px; background-color: rgba(255,255,255,.02); }
-    .qr-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,.3); margin-bottom: 16px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .qr-img-wrap { display: inline-block; padding: 12px; background-color: #ffffff; border-radius: 10px; margin-bottom: 12px; }
-    .qr-img { width: 140px; height: 140px; display: block; }
-    .qr-placeholder { display: inline-block; width: 140px; height: 44px; background-color: #1a1030; border-radius: 6px; border: 1px solid rgba(201,168,76,.2); text-align: center; line-height: 44px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 0.8px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .qr-ref { font-size: 14px; font-weight: 700; color: #c9a84c; letter-spacing: 2px; margin-bottom: 4px; font-family: "Courier New", Courier, monospace; }
-    .verify-code { font-size: 11px; color: rgba(255,255,255,.3); margin-bottom: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .qr-step { font-size: 11px; color: rgba(255,255,255,.38); line-height: 1.65; margin-bottom: 4px; padding-left: 14px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-
-    /* CTAs */
-    .cta-primary { display: block; text-align: center; background-color: #c9a84c; color: #0f0720; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .cta-ghost { display: block; text-align: center; background-color: transparent; color: rgba(255,255,255,.5); font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; text-decoration: none; padding: 14px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,.12); font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-
-    /* Legal / note */
-    .note { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.6; margin-top: 20px; text-align: center; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .note a { color: rgba(255,255,255,.35); }
-
-    /* Footer */
-    .footer-td { background-color: #0a0418; border-top: 1px solid rgba(255,255,255,.05); padding: 22px 32px; text-align: center; }
-    .footer-brand { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.3); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 8px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .footer-text { font-size: 11px; color: rgba(255,255,255,.2); line-height: 1.65; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
-    .footer-text a { color: rgba(255,255,255,.35); }
-
-    @media only screen and (max-width: 480px) {
-        .wrap-td { padding: 0 !important; }
-        .card { border-radius: 0 !important; }
-        .header-td, .hero-td, .ref-bar-td, .body-td, .footer-td { padding-left: 20px !important; padding-right: 20px !important; }
-        .hero-title { font-size: 20px !important; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="|Réservation confirmée — ${bookingNumber ?: 'Votre réservation'} — Elle A Osé|">Réservation confirmée — Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrap { width: 100%; padding: 48px 16px; background: #E8E5E0; }
+    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 28px 56px rgba(26,10,46,.10); }
+    .em-header { background: #110828; padding: 22px 36px; }
+    .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
+    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
+    .em-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
+    .em-body { padding: 44px 40px 40px; }
+    .em-doc-title { font-size: 19px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 28px; }
+    .em-intro { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 32px; }
+    .em-intro strong { color: #1A0A2E; font-weight: 700; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; padding-bottom: 10px; border-bottom: 1px solid #EEE9F5; margin-bottom: 0; }
+    .dt { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+    .dt tr { border-bottom: 1px solid #EEE9F5; }
+    .dt td { padding: 13px 0; vertical-align: top; }
+    .dt-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; width: 110px; padding-top: 15px; }
+    .dt-val { font-size: 14px; font-weight: 600; color: #1A0A2E; line-height: 1.35; }
+    .dt-mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1.2px; }
+    .dt-sub { font-size: 12px; color: #9B8CAA; font-weight: 400; margin-top: 3px; }
+    .time-arrow { color: #C9A84C; margin: 0 8px; }
+    .time-dur { font-size: 12px; color: #B0A0C0; margin-left: 6px; font-weight: 400; }
+    .price-box { border: 1px solid #EEE9F5; border-radius: 8px; overflow: hidden; margin-bottom: 28px; }
+    .price-total { background: #1A0A2E; padding: 18px 22px; display: flex; justify-content: space-between; align-items: baseline; }
+    .price-total-label { font-size: 12px; font-weight: 500; color: rgba(255,255,255,.55); }
+    .price-total-amount { font-size: 22px; font-weight: 700; color: #C9A84C; letter-spacing: -.4px; }
+    .price-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 22px; border-bottom: 1px solid #F0ECF8; background: #FDFCFF; }
+    .price-row:last-child { border-bottom: none; }
+    .price-row-label { font-size: 13px; color: #7B6E8B; }
+    .price-row-amount { font-size: 13px; font-weight: 600; color: #1A0A2E; }
+    .payment-bar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 28px; border-bottom: 1px solid #EEE9F5; margin-bottom: 28px; }
+    .pay-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; display: block; margin-bottom: 5px; }
+    .pay-method { font-size: 13.5px; font-weight: 600; color: #1A0A2E; }
+    .pay-date { font-size: 12px; color: #B0A0C0; margin-top: 2px; }
+    .pay-amount { font-size: 15px; font-weight: 700; color: #1A0A2E; }
+    .qr-section { margin-bottom: 28px; text-align: center; }
+    .qr-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; margin-bottom: 20px; }
+    .qr-img-wrap { display: inline-block; padding: 14px; background: #fff; border-radius: 10px; border: 1px solid #EEE9F5; margin-bottom: 16px; }
+    .qr-ref { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 13px; font-weight: 700; color: #1A0A2E; letter-spacing: 2px; margin-bottom: 4px; }
+    .qr-code { font-size: 11px; color: #B0A0C0; margin-bottom: 16px; }
+    .qr-step { font-size: 12px; color: #9B8CAA; line-height: 1.7; margin-bottom: 3px; text-align: left; }
+    .cta-row { display: flex; gap: 10px; margin-bottom: 28px; }
+    .cta-gold { flex: 1; display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; text-align: center; border-radius: 8px; }
+    .cta-ghost { flex: 1; display: block; text-align: center; border: 1px solid #D5CCE0; color: #9B8CAA; text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 17px; border-radius: 8px; }
+    .em-legal { font-size: 11.5px; color: #C0B4D0; line-height: 1.65; }
+    .em-legal a { color: #9B8CAA; text-decoration: none; }
+    .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
+    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
+    .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
+    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+    @media (max-width: 480px) {
+      .wrap { padding: 0; background: #fff; }
+      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .em-header { padding: 18px 24px; }
+      .em-body { padding: 32px 24px 32px; }
+      .em-footer { padding: 18px 24px; }
+      .cta-row { flex-direction: column; }
     }
-</style>
+  </style>
 </head>
 <body>
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
-<tr><td class="wrap-td" align="center">
+<div class="wrap">
+  <div class="card">
 
-<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+    <div class="em-header">
+      <div class="em-brand" th:if="${logo == null}">Elle A Osé</div>
+      <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Elle A Osé" style="height:36px; display:block;"/>
+      <div class="em-brand-sub">Espace de coworking</div>
+    </div>
+    <div class="em-stripe"></div>
 
-    <!-- ══ HEADER ══ -->
-    <tr>
-        <td class="header-td">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td valign="middle">
-                        <div class="brand">Elle A Osé</div>
-                        <div class="brand-sub">Espace de coworking</div>
-                    </td>
-                    <td align="right" valign="middle" style="white-space:nowrap;">
-                        <span class="status-pill" th:text="${eventTag ?: 'Confirmée'}">Confirmée</span>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <tr><td class="stripe" style="height:3px; background:linear-gradient(90deg,#c9a84c 0%,#a78bfa 55%,#4c1d95 100%); font-size:0; line-height:0;">&nbsp;</td></tr>
+    <div class="em-body">
+      <div class="em-doc-title">Confirmation de réservation</div>
 
-    <!-- ══ HERO ══ -->
-    <tr>
-        <td class="hero-td">
-            <div class="hero-label">Tout est prêt &#x2714;</div>
-            <div class="hero-title">Votre réservation est confirmée</div>
-            <div class="hero-sub">
-                Bonjour <strong th:text="${recipientName}">client</strong>,
-                nous avons bien enregistré votre réservation.
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName}">client</strong>, votre réservation a bien été enregistrée. Retrouvez ci-dessous le récapitulatif complet.
+      </div>
+
+      <div class="section-lbl">Réservation</div>
+      <table class="dt">
+        <tr>
+          <td class="dt-key">Référence</td>
+          <td><div class="dt-val dt-mono" th:text="${bookingNumber}">BKG-000001</div></td>
+        </tr>
+        <tr>
+          <td class="dt-key">Espace</td>
+          <td>
+            <div class="dt-val" th:text="${resourceName}">Bureau Privé</div>
+            <div class="dt-sub" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="dt-key">Date</td>
+          <td><div class="dt-val" th:text="${bookingDate ?: startedAt}">—</div></td>
+        </tr>
+        <tr>
+          <td class="dt-key">Horaires</td>
+          <td>
+            <div class="dt-val">
+              <span th:text="${startTime}">09:00</span>
+              <span class="time-arrow">→</span>
+              <span th:text="${endTime}">13:00</span>
+              <span class="time-dur" th:text="${durationLabel}">4 h</span>
             </div>
-        </td>
-    </tr>
+          </td>
+        </tr>
+        <tr th:if="${resourceCapacity}">
+          <td class="dt-key">Capacité</td>
+          <td><div class="dt-val" th:text="${resourceCapacity} + ' personne(s)'">—</div></td>
+        </tr>
+        <tr th:if="${address}">
+          <td class="dt-key">Adresse</td>
+          <td><div class="dt-val" th:text="${address}">—</div></td>
+        </tr>
+      </table>
 
-    <!-- ══ REF BAR ══ -->
-    <tr>
-        <td class="ref-bar-td">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td class="ref-label">Référence de réservation</td>
-                    <td align="right" class="ref-number" th:text="${bookingNumber}">BKG-000001</td>
-                </tr>
-            </table>
-        </td>
-    </tr>
+      <div class="price-box">
+        <div class="price-total">
+          <span class="price-total-label">Total TTC</span>
+          <span class="price-total-amount" th:text="${priceTTC}">—</span>
+        </div>
+        <div class="price-row">
+          <span class="price-row-label" th:text="|${resourceName} × ${durationLabel}|">Base HT</span>
+          <span class="price-row-amount" th:text="${priceHT}">—</span>
+        </div>
+        <div class="price-row" th:if="${priceFees}">
+          <span class="price-row-label">Frais de réservation</span>
+          <span class="price-row-amount" th:text="${priceFees}">—</span>
+        </div>
+        <div class="price-row">
+          <span class="price-row-label" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</span>
+          <span class="price-row-amount" th:text="${priceTVA}">—</span>
+        </div>
+        <div class="price-row" th:if="${priceCentimeAdditionnel}">
+          <span class="price-row-label" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</span>
+          <span class="price-row-amount" th:text="${priceCentimeAdditionnel}">—</span>
+        </div>
+      </div>
 
-    <!-- ══ BODY ══ -->
-    <tr>
-        <td class="body-td">
+      <div class="payment-bar">
+        <div>
+          <span class="pay-label">Paiement</span>
+          <div class="pay-method" th:text="${paymentMethod}">—</div>
+          <div class="pay-date" th:if="${paymentDate}" th:text="${paymentDate}">—</div>
+        </div>
+        <div class="pay-amount" th:text="${priceTTC}">—</div>
+      </div>
 
-            <!-- Espace réservé -->
-            <div class="section-lbl">Espace réservé</div>
-            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td class="info-head" colspan="2">
-                        <div th:text="${resourceName}">Espace réservé</div>
-                        <div class="info-type" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="info-lbl">Date</td>
-                    <td class="info-val" th:text="${bookingDate ?: startedAt}">—</td>
-                </tr>
-                <tr class="info-row-alt">
-                    <td class="info-lbl">Horaires</td>
-                    <td class="info-val">
-                        <span th:text="${startTime}">09:00</span>
-                        <span class="time-sep">&mdash;</span>
-                        <span th:text="${endTime}">13:00</span>
-                        <span class="time-dur" th:text="${durationLabel}">4 h</span>
-                    </td>
-                </tr>
-                <tr th:if="${resourceCapacity}">
-                    <td class="info-lbl">Capacité</td>
-                    <td class="info-val" th:text="${resourceCapacity} + ' personne(s)'">—</td>
-                </tr>
-                <tr th:if="${address}">
-                    <td class="info-lbl info-lbl-last">Adresse</td>
-                    <td class="info-val info-val-last" th:text="${address}">—</td>
-                </tr>
-                <tr th:unless="${address}">
-                    <td colspan="2" style="font-size:0;line-height:0;padding:0;border-bottom:0;"></td>
-                </tr>
-            </table>
+      <div class="qr-section" th:if="${showQr != null}">
+        <div class="qr-label">Présentez ce code à l'accueil</div>
+        <div th:if="${showQr}" class="qr-img-wrap">
+          <img src="cid:qr-booking" alt="QR Code" width="140" height="140" style="display:block;"/>
+        </div>
+        <div class="qr-ref" th:text="${bookingNumber}">BKG-000001</div>
+        <div class="qr-code" th:if="${verificationCode}" th:text="|Code : ${verificationCode}|">Code : CHK-123</div>
+        <div class="qr-step">1. Présentez ce QR code à l'accueil à votre arrivée.</div>
+        <div class="qr-step">2. Si le scan échoue, communiquez le code ci-dessus.</div>
+        <div class="qr-step">3. Gardez cet email accessible jusqu'à la fin de votre session.</div>
+      </div>
 
-            <!-- Détail du paiement -->
-            <div class="section-lbl" style="margin-top:8px;">Détail du paiement</div>
-            <table class="price-card" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td class="price-total-td">Total TTC</td>
-                    <td class="price-total-amt" th:text="${priceTTC}">—</td>
-                </tr>
-                <tr>
-                    <td class="price-line-lbl" th:text="|Base HT — ${resourceName} &times; ${durationLabel}|">Base HT</td>
-                    <td class="price-line-amt" th:text="${priceHT}">—</td>
-                </tr>
-                <tr th:if="${priceFees}">
-                    <td class="price-line-lbl">Frais de réservation</td>
-                    <td class="price-line-amt" th:text="${priceFees}">—</td>
-                </tr>
-                <tr>
-                    <td class="price-line-lbl" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</td>
-                    <td class="price-line-amt" th:text="${priceTVA}">—</td>
-                </tr>
-                <tr>
-                    <td class="price-line-lbl price-line-last" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
-                    <td class="price-line-amt price-line-last" th:text="${priceCentimeAdditionnel}">—</td>
-                </tr>
-            </table>
+      <div class="cta-row">
+        <a th:href="${bookingUrl ?: '#'}" class="cta-gold">Voir ma réservation</a>
+        <a th:href="${invoiceUrl ?: '#'}" class="cta-ghost">Télécharger le PDF</a>
+      </div>
 
-            <!-- Paiement -->
-            <div class="section-lbl" style="margin-top:8px;">Paiement</div>
-            <table class="info-card" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td class="info-lbl">Méthode</td>
-                    <td class="info-val" th:text="${paymentMethod}">—</td>
-                </tr>
-                <tr th:if="${paymentDate}" class="info-row-alt">
-                    <td class="info-lbl">Date</td>
-                    <td class="info-val" th:text="${paymentDate}">—</td>
-                </tr>
-                <tr>
-                    <td class="info-lbl info-lbl-last">Montant réglé</td>
-                    <td class="info-val info-val-last" style="color:#c9a84c; font-size:15px; font-weight:700;" th:text="${priceTTC}">—</td>
-                </tr>
-            </table>
+      <div class="em-legal">
+        Cet email est envoyé automatiquement suite à votre réservation. Pour toute question, contactez
+        <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> ou consultez
+        <a th:href="${accountUrl ?: '#'}">votre espace client</a>.
+      </div>
+    </div>
 
-            <!-- QR code -->
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                    <td class="qr-card" align="center">
-                        <div class="qr-lbl">Présentez ce code à l'accueil</div>
+    <div class="em-footer">
+      <div class="em-footer-brand">Elle A Osé · Espace de coworking</div>
+      <div class="em-footer-text">Bokati Cowork · <a href="tel:052042552">05 204 2552</a></div>
+    </div>
 
-                        <div th:if="${showQr}" class="qr-img-wrap">
-                            <img src="cid:qr-booking" alt="QR Code" class="qr-img" width="140" height="140"/>
-                        </div>
-                        <div th:unless="${showQr}" class="qr-placeholder">&#x1F4F1;</div>
-
-                        <div class="qr-ref" th:text="${bookingNumber}">BKG-000001</div>
-                        <div class="verify-code" th:if="${verificationCode}" th:text="|Code : ${verificationCode}|">Code : CHK-123</div>
-
-                        <div style="text-align:left; margin-top:12px;">
-                            <div class="qr-step">1. Présentez ce QR code à l'accueil à votre arrivée.</div>
-                            <div class="qr-step">2. Si le scan échoue, communiquez le code ci-dessus.</div>
-                            <div class="qr-step">3. Gardez cet email accessible jusqu'à la fin de votre session.</div>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- CTAs -->
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-spacing:0; margin-bottom:8px;">
-                <tr>
-                    <td style="padding:0 4px 0 0; width:50%;">
-                        <a th:href="${bookingUrl}" href="https://elleaose.com" class="cta-primary">Voir ma réservation</a>
-                    </td>
-                    <td style="padding:0 0 0 4px; width:50%;">
-                        <a th:href="${invoiceUrl}" href="https://elleaose.com" class="cta-ghost">Télécharger le PDF</a>
-                    </td>
-                </tr>
-            </table>
-
-            <p class="note">
-                Le prix n'inclut pas d'éventuels frais bancaires.<br>
-                Pour gérer vos réservations&nbsp;: <a th:href="${accountUrl ?: 'https://elleaose.com'}">elleaose.com</a>
-            </p>
-
-        </td>
-    </tr>
-
-    <!-- ══ FOOTER ══ -->
-    <tr>
-        <td class="footer-td">
-            <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
-            <div class="footer-text">
-                Email généré automatiquement suite à votre réservation.<br>
-                <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552">05 204 2552</a>
-            </div>
-        </td>
-    </tr>
-
-</table>
-</td></tr>
-</table>
+  </div>
+</div>
 </body>
 </html>

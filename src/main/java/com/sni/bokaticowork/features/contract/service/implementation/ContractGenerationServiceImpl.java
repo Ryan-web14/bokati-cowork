@@ -2,7 +2,6 @@ package com.sni.bokaticowork.features.contract.service.implementation;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
-import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.service.interfaces.CustomerService;
 import com.sni.bokaticowork.features.client.member.model.Member;
@@ -26,7 +25,6 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -48,7 +46,6 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
     private final MemberService memberService;
     private final CustomerService customerService;
     private final BusinessService businessService;
-    private final OutboxService outboxService;
 
     @Override
     @Transactional(readOnly = true)
@@ -86,14 +83,12 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         metadata.setDescription(request.getDescription());
         metadata.setIssueDate(request.getEffectiveDate() == null ? LocalDate.now() : request.getEffectiveDate());
 
-        DocumentResponse response = documentService.createGeneratedDocument(
+        return documentService.createGeneratedDocument(
                 metadata,
                 sanitizeFileName(request.getTitle()) + ".pdf",
                 "application/pdf",
                 pdfBytes
         );
-        publishContractEvent(request, response);
-        return response;
     }
 
     private String renderHtml(GenerateContractRequest request) {
@@ -110,6 +105,8 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         context.setVariable("ownerName", ownerView.name());
         context.setVariable("ownerEmail", ownerView.email());
         context.setVariable("ownerPhone", ownerView.phone());
+        context.setVariable("ownerRccm", ownerView.rccm());
+        context.setVariable("ownerAddress", ownerView.address());
         context.setVariable("business", business);
         context.setVariable("clauses", resolvedClauses);
         context.setVariable("variables", enrichedVars);
@@ -130,14 +127,27 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         putIfNotBlank(vars, "contractTitle",   request.getTitle());
         vars.put("operatorName", business != null && StringUtils.hasText(business.getName()) ? business.getName().trim() : "ELLE A OSE");
         if (business != null) {
-            putIfNotBlank(vars, "businessName",  business.getName());
-            putIfNotBlank(vars, "businessEmail", business.getEmail());
-            putIfNotBlank(vars, "businessPhone", business.getPhone());
+            putIfNotBlank(vars, "businessName",    business.getName());
+            putIfNotBlank(vars, "businessEmail",   business.getEmail());
+            putIfNotBlank(vars, "businessPhone",   business.getPhone());
+            putIfNotBlank(vars, "operatorRccm",    business.getRccmNumber());
+            putIfNotBlank(vars, "operatorAddress", formatAddress(business.getAddress()));
         }
         if (request.getVariables() != null) {
             vars.putAll(request.getVariables());
         }
         return vars;
+    }
+
+    private String formatAddress(com.sni.bokaticowork.core.baseClasses.model.Address address) {
+        if (address == null) return null;
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.hasText(address.getStreetNumber())) sb.append(address.getStreetNumber()).append(" ");
+        if (StringUtils.hasText(address.getStreetName())) sb.append(address.getStreetName()).append(", ");
+        if (StringUtils.hasText(address.getDistrict())) sb.append(address.getDistrict()).append(", ");
+        if (StringUtils.hasText(address.getCity())) sb.append(address.getCity());
+        String result = sb.toString().replaceAll(",\\s*$", "").trim();
+        return result.isEmpty() ? null : result;
     }
 
     private static void putIfNotBlank(Map<String, String> map, String key, String value) {
@@ -184,18 +194,18 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         return switch (ownerType) {
             case MEMBER -> {
                 Member member = memberService.getByMemberIdForService(ownerCode.trim());
-                yield new OwnerView(member.getMemberId(), member.getDisplayName().trim(), member.getEmail(), member.getPhone());
+                yield new OwnerView(member.getMemberId(), member.getDisplayName().trim(), member.getEmail(), member.getPhone(), null, null);
             }
             case CUSTOMER -> {
                 Customer customer = customerService.getCustomerForService(ownerCode.trim());
                 String name = customer.getCompanyName() != null && !customer.getCompanyName().isBlank()
                         ? customer.getCompanyName()
                         : ((customer.getFirstname() == null ? "" : customer.getFirstname()) + " " + (customer.getLastname() == null ? "" : customer.getLastname())).trim();
-                yield new OwnerView(customer.getCustomerId(), name, customer.getEmail(), customer.getPhone());
+                yield new OwnerView(customer.getCustomerId(), name, customer.getEmail(), customer.getPhone(), null, null);
             }
             case BUSINESS -> {
-                BusinessEntity business = businessService.serviceBusinessByCode(ownerCode.trim());
-                yield new OwnerView(business.getCode(), business.getName(), business.getEmail(), business.getPhone());
+                BusinessEntity biz = businessService.serviceBusinessByCode(ownerCode.trim());
+                yield new OwnerView(biz.getCode(), biz.getName(), biz.getEmail(), biz.getPhone(), biz.getRccmNumber(), formatAddress(biz.getAddress()));
             }
             default -> throw new BadRequestException("Unsupported contract owner type: " + ownerType);
         };
@@ -236,17 +246,7 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
     private record ContractTemplateDescriptor(String code, String name, String description) {
     }
 
-    private record OwnerView(String code, String name, String email, String phone) {
+    private record OwnerView(String code, String name, String email, String phone, String rccm, String address) {
     }
 
-    private void publishContractEvent(GenerateContractRequest request, DocumentResponse response) {
-        HashMap<String, Object> payload = new HashMap<>();
-        payload.put("templateCode", request.getTemplateCode());
-        payload.put("ownerType", request.getOwnerType());
-        payload.put("ownerCode", request.getOwnerCode());
-        payload.put("businessCode", request.getBusinessCode());
-        payload.put("documentCode", response.getCode());
-        payload.put("uploadedBy", request.getUploadedBy());
-        outboxService.publish("CONTRACT_DRAFT_GENERATED", "CONTRACT", request.getOwnerCode(), payload);
-    }
 }

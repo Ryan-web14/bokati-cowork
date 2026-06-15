@@ -295,6 +295,41 @@ public class UserServiceImpl implements UserService {
         });
     }
 
+    @Override
+    @Transactional
+    public void storePendingEmail(Long userId, String pendingEmail) {
+        Users user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No user found"));
+        if (userRepo.existsByEmail(pendingEmail)) {
+            throw new BadRequestException("Email address is already in use");
+        }
+        user.setPendingEmail(pendingEmail);
+        userRepo.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void applyPendingEmailChange(Long userId) {
+        Users user = userRepo.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No user found"));
+        if (user.getPendingEmail() == null || user.getPendingEmail().isBlank()) {
+            throw new BadRequestException("No pending email change found");
+        }
+        user.setEmail(user.getPendingEmail());
+        user.setPendingEmail(null);
+        userRepo.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void unlockAccount(String email) {
+        Users user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User with email " + email + " not found"));
+        user.setIsAccountLocked(false);
+        user.setFailedLoginAttempts(0);
+        userRepo.save(user);
+    }
+
     private List<String> validateUser(UserRequest request){
 
         List<String> err = new ArrayList<>();

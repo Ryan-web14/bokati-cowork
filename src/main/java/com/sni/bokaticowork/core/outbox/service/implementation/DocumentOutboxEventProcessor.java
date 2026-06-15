@@ -30,7 +30,13 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
 
     @Override
     public void process(OutboxEvent event) {
-        JsonNode payload    = readPayload(event);
+        JsonNode payload        = readPayload(event);
+        String documentTypeCode = textValue(payload, "documentTypeCode");
+        if ("CONTRACT_DRAFT".equalsIgnoreCase(documentTypeCode)) {
+            log.info("Skipping notification for CONTRACT_DRAFT document event={}", event.getEventType());
+            return;
+        }
+
         DocumentOwnerType ownerType = enumValue(payload, "ownerType", DocumentOwnerType.class);
         Long ownerId        = longValue(payload, "ownerId");
         String documentCode = textValue(payload, "documentCode");

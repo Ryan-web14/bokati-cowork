@@ -5,6 +5,7 @@ import com.sni.bokaticowork.security.authentication.dto.request.LoginRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.PasswordResetConfirmationRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.RefreshTokenRequest;
 import com.sni.bokaticowork.security.authentication.dto.request.ValidateOttRequest;
+import com.sni.bokaticowork.security.authentication.dto.request.RegisterMemberRequest;
 import com.sni.bokaticowork.security.authentication.dto.response.CurrentUserResponse;
 import com.sni.bokaticowork.security.authentication.dto.response.LoginResponse;
 import com.sni.bokaticowork.security.authentication.dto.response.OttResponse;
@@ -21,5 +22,10 @@ public interface AuthenticationService {
     void resetPassword(String email);
     void validateResetPassword(PasswordResetConfirmationRequest request);
     CurrentUserResponse currentUser(Authentication authentication);
+
+    OttResponse register(RegisterMemberRequest request);
+    OttResponse requestUnlockAccount(String email);
+    void confirmUnlockAccount(ValidateOttRequest request);
+    OttResponse resendEmailVerification(String email);
 
 }

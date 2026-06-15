@@ -65,6 +65,9 @@ public class Users {
     @Column(name = "failed_login_attempts")
     private Integer failedLoginAttempts;
 
+    @Column(name = "pending_email", length = 250)
+    private String pendingEmail;
+
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

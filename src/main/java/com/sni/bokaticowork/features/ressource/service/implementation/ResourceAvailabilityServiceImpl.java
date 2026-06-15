@@ -19,6 +19,7 @@ import com.sni.bokaticowork.features.ressource.repository.repo.ResourceClosureRe
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceAvailabilityService;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -111,7 +112,6 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<ResourceAvailabilityWindowResponse> findRemainingWindows(
             String resourceCode,
             LocalDateTime startedAt,
@@ -395,9 +395,11 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         return quantity;
     }
 
+    private static final int EXPIRY_BATCH_SIZE = 200;
+
     private void expirePastAvailabilitySlots() {
         LocalDateTime now = LocalDateTime.now();
-        List<ResourceAvailability> expiredSlots = availabilityRepository.findExpiredSlots(now);
+        List<ResourceAvailability> expiredSlots = availabilityRepository.findExpiredSlots(now, Limit.of(EXPIRY_BATCH_SIZE));
         if (expiredSlots.isEmpty()) {
             return;
         }
@@ -410,24 +412,16 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     }
 
     private List<ResourceAvailabilityWindowResponse> findFullRemainingWindows(Resource resource, int quantity) {
-        List<ResourceAvailability> slots = availabilityRepository.findFutureReservableSlots(resource, LocalDateTime.now()).stream()
-                .sorted(Comparator.comparing(ResourceAvailability::getStartedAt))
-                .toList();
+        List<ResourceAvailability> slots = availabilityRepository.findFutureActiveSlots(resource, LocalDateTime.now(), Pageable.unpaged());
 
         List<ResourceAvailabilityWindowResponse> windows = new ArrayList<>();
         List<ResourceAvailability> currentWindow = new ArrayList<>();
 
         for (ResourceAvailability slot : slots) {
-            if (!allReservable(List.of(slot), quantity) || !respectsBookingNotice(resource, slot.getStartedAt())) {
-                flushWindow(resource, currentWindow, windows);
-                continue;
-            }
-
             if (currentWindow.isEmpty()) {
                 currentWindow.add(slot);
                 continue;
             }
-
             ResourceAvailability previous = currentWindow.getLast();
             if (!previous.getEndedAt().equals(slot.getStartedAt())) {
                 flushWindow(resource, currentWindow, windows);

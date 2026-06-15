@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="|Réservation confirmée — ${contactName ?: 'Votre réservation'} — Elle A Osé|">Réservation confirmée — Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #E8E5E0;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      width: 100%;
+      padding: 48px 16px;
+      background: #E8E5E0;
+    }
+
+    .card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 1px 2px rgba(26,10,46,.05),
+        0 8px 24px rgba(26,10,46,.10),
+        0 28px 56px rgba(26,10,46,.10);
+    }
+
+    /* ── Header ── */
+    .em-header {
+      background: #110828;
+      padding: 22px 36px;
+    }
+    .em-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .em-brand {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .em-brand-sub {
+      font-size: 8.5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.28);
+      margin-top: 5px;
+    }
+    .em-doc-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: #1A0A2E;
+      letter-spacing: -0.3px;
+      margin-bottom: 28px;
+    }
+    .em-stripe {
+      height: 2px;
+      background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%);
+    }
+    .bk-ref-val {
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      letter-spacing: 1.5px;
+      font-size: 14px;
+      color: #1A0A2E;
+    }
+
+    /* ── Body ── */
+    .em-body { padding: 44px 40px 40px; }
+
+    .bk-intro {
+      font-size: 14px;
+      color: #5C4F6E;
+      line-height: 1.75;
+      margin-bottom: 32px;
+    }
+    .bk-intro strong { color: #1A0A2E; font-weight: 700; }
+
+    .bk-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #B0A0C0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #EEE9F5;
+    }
+
+    .bk-detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 28px;
+    }
+    .bk-detail-table tr { border-bottom: 1px solid #EEE9F5; }
+    .bk-detail-table td { padding: 13px 0; vertical-align: top; }
+    .bk-key {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #B0A0C0;
+      width: 110px;
+      padding-top: 15px;
+    }
+    .bk-val {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1A0A2E;
+      line-height: 1.35;
+    }
+    .bk-val-sub {
+      font-size: 12px;
+      color: #9B8CAA;
+      font-weight: 400;
+      margin-top: 3px;
+    }
+    .bk-arrow { color: #C9A84C; margin: 0 8px; }
+    .bk-duration { font-size: 12px; color: #B0A0C0; margin-left: 6px; font-weight: 400; }
+
+    /* ── Price block ── */
+    .bk-price {
+      border: 1px solid #EEE9F5;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .bk-price-total {
+      background: #1A0A2E;
+      padding: 18px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .bk-price-total-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,.55);
+    }
+    .bk-price-total-amount {
+      font-size: 22px;
+      font-weight: 700;
+      color: #C9A84C;
+      letter-spacing: -.4px;
+    }
+    .bk-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 22px;
+      border-bottom: 1px solid #F0ECF8;
+      background: #FDFCFF;
+    }
+    .bk-price-row:last-child { border-bottom: none; }
+    .bk-price-row-label { font-size: 13px; color: #7B6E8B; }
+    .bk-price-row-amount { font-size: 13px; font-weight: 600; color: #1A0A2E; }
+
+    /* ── Payment line ── */
+    .bk-payment {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 28px;
+      border-bottom: 1px solid #EEE9F5;
+      margin-bottom: 28px;
+    }
+    .bk-pay-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #B0A0C0;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .bk-pay-method { font-size: 13.5px; font-weight: 600; color: #1A0A2E; }
+    .bk-pay-date { font-size: 12px; color: #B0A0C0; margin-top: 2px; }
+    .bk-pay-amount { font-size: 15px; font-weight: 700; color: #1A0A2E; }
+
+    /* ── CTA + QR ── */
+    .bk-bottom {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+    .bk-cta-col { flex: 1; }
+    .bk-cta-primary {
+      display: block;
+      background: #C9A84C;
+      color: #1A0A2E;
+      text-decoration: none;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      padding: 17px;
+      text-align: center;
+      border-radius: 8px;
+      margin-bottom: 14px;
+    }
+    .bk-cta-secondary {
+      display: block;
+      text-align: center;
+      font-size: 12px;
+      color: #9B8CAA;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: #D5CCE0;
+      font-weight: 500;
+    }
+    .bk-qr-col { flex-shrink: 0; text-align: center; }
+    .bk-qr-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #C0B4D0;
+      margin-bottom: 8px;
+    }
+    .bk-qr-box {
+      border: 1px solid #EEE9F5;
+      border-radius: 8px;
+      padding: 10px;
+      background: #FDFCFF;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+    .bk-qr-ref {
+      font-size: 9px;
+      color: #C9A84C;
+      font-family: monospace;
+      letter-spacing: 1.5px;
+    }
+
+    .bk-legal {
+      font-size: 11.5px;
+      color: #C0B4D0;
+      line-height: 1.65;
+    }
+    .bk-legal a { color: #9B8CAA; text-decoration: none; }
+
+    /* ── Footer ── */
+    .em-footer {
+      background: #F8F7F5;
+      border-top: 1px solid #EAE5F0;
+      padding: 22px 40px;
+      text-align: center;
+    }
+    .em-footer-brand {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #9B8CAA;
+      margin-bottom: 6px;
+    }
+    .em-footer-text {
+      font-size: 11px;
+      color: #C0B4D0;
+      line-height: 1.65;
+    }
+    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+
+    /* ── Mobile ── */
+    @media (max-width: 480px) {
+      .wrap { padding: 0; background: #fff; }
+      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .em-header { padding: 18px 24px; }
+      .em-body { padding: 32px 24px 32px; }
+      .em-footer { padding: 18px 24px; }
+      .bk-bottom { flex-direction: column; align-items: stretch; }
+      .bk-qr-col { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+
+    <!-- Header -->
+    <div class="em-header">
+      <div class="em-header-inner">
+        <div>
+          <div class="em-brand" th:if="${logo == null}">Elle A Osé</div>
+          <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Elle A Osé" style="height:36px; display:block;"/>
+          <div class="em-brand-sub">Espace de coworking</div>
+        </div>
+      </div>
+    </div>
+    <div class="em-stripe"></div>
+
+    <!-- Body -->
+    <div class="em-body">
+
+      <div class="em-doc-title">Confirmation de réservation</div>
+
+      <div class="bk-intro">
+        Bonjour <strong th:text="${contactName}">Marie Koné</strong>, votre réservation a bien été enregistrée. Retrouvez ci-dessous le récapitulatif complet.
+      </div>
+
+      <!-- Récapitulatif -->
+      <div class="bk-section-label">Récapitulatif</div>
+      <table class="bk-detail-table">
+        <tr>
+          <td class="bk-key">Référence</td>
+          <td><div class="bk-val bk-ref-val" th:text="${bookingRef}">EAO-2026-0847</div></td>
+        </tr>
+        <tr>
+          <td class="bk-key">Espace</td>
+          <td>
+            <div class="bk-val" th:text="${spaceName}">Bureau Privé — Salle Jade</div>
+            <div class="bk-val-sub" th:text="${spaceType}">Bureau privé</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="bk-key">Date</td>
+          <td><div class="bk-val" th:text="${bookingDate}">Mardi 10 juin 2026</div></td>
+        </tr>
+        <tr>
+          <td class="bk-key">Horaires</td>
+          <td>
+            <div class="bk-val">
+              <span th:text="${startTime}">09:00</span>
+              <span class="bk-arrow">→</span>
+              <span th:text="${endTime}">13:00</span>
+              <span class="bk-duration" th:text="${duration}">4 heures</span>
+            </div>
+          </td>
+        </tr>
+        <tr th:if="${capacity}">
+          <td class="bk-key">Capacité</td>
+          <td><div class="bk-val" th:text="${capacity}">4 personnes</div></td>
+        </tr>
+        <tr>
+          <td class="bk-key">Adresse</td>
+          <td>
+            <div class="bk-val" th:text="${address}">12 Rue de la Paix</div>
+            <div class="bk-val-sub" th:text="${city}">33000 Bordeaux</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Pricing -->
+      <div class="bk-price">
+        <div class="bk-price-total">
+          <span class="bk-price-total-label">Total TTC</span>
+          <span class="bk-price-total-amount" th:text="${priceTTC}">149 000 F CFA</span>
+        </div>
+        <div class="bk-price-row">
+          <span class="bk-price-row-label" th:text="${spaceName + ' × ' + duration}">Bureau Privé × 4 heures</span>
+          <span class="bk-price-row-amount" th:text="${priceHT}">120 000 F CFA</span>
+        </div>
+        <div class="bk-price-row" th:if="${priceFees}">
+          <span class="bk-price-row-label">Frais de réservation</span>
+          <span class="bk-price-row-amount" th:text="${priceFees}">5 000 F CFA</span>
+        </div>
+        <div class="bk-price-row">
+          <span class="bk-price-row-label" th:text="|TVA (${tvaPct ?: '20 %'})|">TVA (20 %)</span>
+          <span class="bk-price-row-amount" th:text="${priceTVA}">24 000 F CFA</span>
+        </div>
+      </div>
+
+      <!-- Payment -->
+      <div class="bk-payment">
+        <div>
+          <span class="bk-pay-label">Paiement</span>
+          <div class="bk-pay-method">
+            <span th:text="${paymentMethod}">Carte bancaire</span>
+            <span th:if="${paymentLast4}"> ····<span th:text="${paymentLast4}">1234</span></span>
+          </div>
+          <div class="bk-pay-date" th:text="${paymentDate}">Le 10 juin 2026, 08:47</div>
+        </div>
+        <div class="bk-pay-amount" th:text="${priceTTC}">149 000 F CFA</div>
+      </div>
+
+      <!-- CTA + QR -->
+      <div class="bk-bottom">
+        <div class="bk-cta-col">
+          <a th:href="${bookingUrl ?: '#'}" class="bk-cta-primary">Voir ma réservation</a>
+          <a th:href="${invoiceUrl ?: '#'}" class="bk-cta-secondary">Télécharger la facture PDF</a>
+        </div>
+        <div class="bk-qr-col" th:if="${qrCodeUrl != null}">
+          <div class="bk-qr-label">Présenter à l'accueil</div>
+          <div class="bk-qr-box">
+            <img th:src="${qrCodeUrl}" alt="QR Code" style="width:80px; height:80px; display:block;"/>
+          </div>
+          <div class="bk-qr-ref" th:text="${bookingRef}">EAO-2026-0847</div>
+        </div>
+      </div>
+
+      <!-- Legal -->
+      <div class="bk-legal">
+        Cet email est envoyé automatiquement suite à votre réservation. Pour toute question, contactez
+        <a href="/cdn-cgi/l/email-protection#385b574f574a53785d54545d59574b5d165b5755"><span class="__cf_email__" data-cfemail="75161a021a071e3510191910141a06105b161a18">[email&#160;protected]</span></a> ou consultez
+        <a th:href="${accountUrl ?: '#'}">votre espace client</a>.
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="em-footer">
+      <div class="em-footer-brand">Elle A Osé · Espace de coworking</div>
+      <div class="em-footer-text">
+        Bokati Cowork ·
+        <a href="tel:052042552">05 204 2552</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>
