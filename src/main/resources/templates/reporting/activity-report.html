@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"/>
+<title>Rapport d'activité</title>
+<style>
+@page {
+    size: A4;
+    margin: 0 0 14mm 0;
+    @bottom-center {
+        content: "Page " counter(page) " sur " counter(pages);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 7.5px; color: #9b8caa;
+    }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9.5px; color: #1a0a2e; background: #ffffff; }
+
+.header { background: #1a0a2e; padding: 18px 24px 14px; }
+.header-tbl { width: 100%; border-collapse: collapse; }
+.header-tbl td { border: none; padding: 0; vertical-align: middle; }
+.brand { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+.brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.doc-title { font-size: 14px; font-weight: 700; color: #ffffff; text-align: right; text-transform: uppercase; letter-spacing: 1.5px; }
+.doc-sub { font-size: 8px; color: #c9a84c; text-align: right; margin-top: 4px; }
+.stripe { height: 3px; background: #c9a84c; }
+
+.period-bar { background: #fdf8ed; border-bottom: 1px solid #f0dfa0; padding: 6px 24px; font-size: 8px; color: #8a6a00; }
+.content { padding: 14px 24px 0; }
+
+.section-tbl { width: 100%; border-collapse: collapse; margin: 14px 0 8px; }
+.section-tbl td { border: none; padding: 0; vertical-align: middle; }
+.sl-bar { width: 18px; height: 2px; background: #c9a84c; display: block; }
+.sl-text { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; color: #7c3aed; padding: 0 8px; white-space: nowrap; }
+.sl-line { height: 1px; background: #d8d0e8; }
+
+.kpi-tbl { width: 100%; border-collapse: collapse; }
+.kpi-tbl td { border: none; padding: 0 5px 0 0; vertical-align: top; }
+.kpi-tbl td:last-child { padding-right: 0; }
+.kpi-card { border: 1px solid #d8d0e8; border-radius: 3px; padding: 8px 10px; }
+.kpi-label { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5c4f6e; margin-bottom: 3px; }
+.kpi-value { font-size: 13px; font-weight: 700; color: #1a0a2e; }
+.kpi-value.gold { color: #8a6a00; }
+.kpi-value.green { color: #15803d; }
+.kpi-value.red { color: #b91c1c; }
+
+.var-tag { font-size: 7px; font-weight: 700; margin-top: 2px; }
+.var-tag.up { color: #15803d; }
+.var-tag.down { color: #b91c1c; }
+
+.footer { margin-top: 16px; padding: 9px 24px; border-top: 1px solid #d8d0e8; font-size: 7.5px; color: #9b8caa; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <table class="header-tbl"><tr>
+        <td>
+            <div class="brand">Elle A Osé</div>
+            <div class="brand-sub">Bokati Cowork &amp; Studio</div>
+        </td>
+        <td>
+            <div class="doc-title">Rapport d'activité</div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+        </td>
+    </tr></table>
+</div>
+<div class="stripe"></div>
+
+<div class="period-bar">
+    Période : <strong th:text="${fmt.date(report.fromDate())} + ' → ' + ${fmt.date(report.toDate())}">—</strong>
+</div>
+
+<div class="content">
+
+    <!-- RÉSERVATIONS -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Réservations</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl" th:if="${report.bookings() != null}">
+        <tr>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.bookings().totalCount())}">—</div>
+                    <div th:if="${report.bookings().variation() != null}" class="var-tag" th:classappend="${report.bookings().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.bookings().variation().changePercent())}"></div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Confirmées</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.bookings().confirmedCount())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Annulées</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.bookings().cancelledCount())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Revenus</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.bookings().totalRevenue())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- FACTURATION -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Facturation</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl" th:if="${report.invoices() != null}">
+        <tr>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Factures émises</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.invoices().totalCount())}">—</div>
+                    <div th:if="${report.invoices().variation() != null}" class="var-tag" th:classappend="${report.invoices().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.invoices().variation().changePercent())}"></div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Facturé</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.invoices().totalInvoiced())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Encaissé</div>
+                    <div class="kpi-value green" th:text="${fmt.money(report.invoices().totalPaid())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Encours</div>
+                    <div class="kpi-value red" th:text="${fmt.money(report.invoices().totalOutstanding())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- PAIEMENTS -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Paiements</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl" th:if="${report.payments() != null}">
+        <tr>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Transactions</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.payments().transactionCount())}">—</div>
+                    <div th:if="${report.payments().variation() != null}" class="var-tag" th:classappend="${report.payments().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.payments().variation().changePercent())}"></div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total reçu</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.payments().totalReceived())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Espèces</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.payments().cashAmount())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Mobile Money</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.payments().mobileMoneyAmount())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ABONNEMENTS -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Abonnements</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl" th:if="${report.subscriptions() != null}">
+        <tr>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Actifs</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.subscriptions().activeCount())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Nouveaux</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.subscriptions().newCount())}">—</div>
+                    <div th:if="${report.subscriptions().variation() != null}" class="var-tag" th:classappend="${report.subscriptions().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.subscriptions().variation().changePercent())}"></div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Annulés</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.subscriptions().cancelledCount())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Renouvelés</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.subscriptions().renewedCount())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- STOCK -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Mouvements de stock</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl" th:if="${report.stock() != null}">
+        <tr>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Entrées</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.stock().inboundMovements())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Sorties</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.stock().outboundMovements())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Valeur entrées</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.stock().inboundValue())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Valeur sorties</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.stock().outboundValue())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- CONTRATS -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Contrats</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl" th:if="${report.contracts() != null}">
+        <tr>
+            <td width="33%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Signés</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.contracts().signedCount())}">—</div>
+                </div>
+            </td>
+            <td width="33%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Expirés</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.contracts().expiredCount())}">—</div>
+                </div>
+            </td>
+            <td width="33%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Actifs</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.contracts().activeCount())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- MEMBRES -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Membres</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl" th:if="${report.members() != null}">
+        <tr>
+            <td width="50%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Membres actifs</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.members().totalActive())}">—</div>
+                </div>
+            </td>
+            <td width="50%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Nouveaux membres</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.members().newCount())}">—</div>
+                    <div th:if="${report.members().variation() != null}" class="var-tag" th:classappend="${report.members().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.members().variation().changePercent())}"></div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- SUPPORT -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Support</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl" th:if="${report.support() != null}">
+        <tr>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Ouverts</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.support().openedCount())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Résolus</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.support().resolvedCount())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Fermés</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.support().closedCount())}">—</div>
+                </div>
+            </td>
+            <td width="25%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Haute priorité</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.support().highPriorityCount())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+</div>
+
+<div class="footer">
+    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Rapport d'activité &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+</div>
+</body>
+</html>
