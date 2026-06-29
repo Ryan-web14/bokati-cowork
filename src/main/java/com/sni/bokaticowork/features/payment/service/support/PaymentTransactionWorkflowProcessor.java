@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.payment.service.support;
 
+import com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingService;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
@@ -7,6 +8,7 @@ import com.sni.bokaticowork.features.billing.service.interfaces.BillingEmailServ
 import com.sni.bokaticowork.features.contract.enums.ContractStatus;
 import com.sni.bokaticowork.features.contract.model.Contract;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractService;
+import com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus;
 import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
 import com.sni.bokaticowork.features.payment.model.PaymentIntent;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
@@ -49,6 +51,7 @@ public class PaymentTransactionWorkflowProcessor {
     private final RefundEmailNotifier refundEmailNotifier;
     private final BillingEmailService billingEmailService;
     private final CashRegisterService cashRegisterService;
+    private final com.sni.bokaticowork.features.subscription.subscription.service.support.pass.PassRenewalOperator passRenewalOperator;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -94,7 +97,11 @@ public class PaymentTransactionWorkflowProcessor {
         if (!BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(sourceType) && !MULTI_BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(sourceType)) {
             return;
         }
+        boolean fullySettled = intent.getStatus() == PaymentIntentStatus.SUCCEEDED;
         splitCodes(intent.getSourceCode()).forEach(documentNumber -> {
+            if (fullySettled) {
+                sefcValidateDocument(documentNumber, transaction.getTransactionNumber());
+            }
             try {
                 if (billingEmailService.sendDocument(documentNumber)) {
                     log.info("Sent billing document {} after payment {}", documentNumber, transaction.getTransactionNumber());
@@ -105,24 +112,68 @@ public class PaymentTransactionWorkflowProcessor {
         });
     }
 
+    private void sefcValidateDocument(String documentNumber, String transactionNumber) {
+        try {
+            billingDocumentService.validate(documentNumber);
+            log.info("SEFC validated document {} after full settlement of payment {}", documentNumber, transactionNumber);
+        } catch (Exception ex) {
+            log.warn("SEFC auto-validation of {} after payment {} skipped — {}", documentNumber, transactionNumber, ex.getMessage());
+        }
+    }
+
     private void handleSucceededTransaction(PaymentTransaction transaction, TransactionContextResolver.SourceView source) {
-        if (!"SUBSCRIPTION".equalsIgnoreCase(source.type())) {
+        if ("SUBSCRIPTION".equalsIgnoreCase(source.type())) {
+            Subscription subscription = subscriptionService.getForService(source.code());
+            if (subscription.getStatus() != SubscriptionStatus.PENDING_ACTIVATION) {
+                return;
+            }
+            if (!isSubscriptionPaymentSettled(transaction, subscription)) {
+                return;
+            }
+            subscriptionService.activate(source.code(), new SubscriptionStatusChangeRequest(
+                    "Activation automatique apres paiement " + transaction.getTransactionNumber(),
+                    SYSTEM_ACTOR,
+                    Boolean.FALSE
+            ));
             return;
         }
 
-        Subscription subscription = subscriptionService.getForService(source.code());
-        if (subscription.getStatus() != SubscriptionStatus.PENDING_ACTIVATION) {
-            return;
-        }
-        if (!isSubscriptionPaymentSettled(transaction, subscription)) {
+        if ("PASS".equalsIgnoreCase(source.type())) {
+            Pass pass = passService.getForService(source.code());
+            if (pass.getStatus() == PassStatus.PENDING_ACTIVATION) {
+                passService.activate(source.code(),
+                        "Activation après paiement " + transaction.getTransactionNumber());
+            }
             return;
         }
 
-        subscriptionService.activate(source.code(), new SubscriptionStatusChangeRequest(
-                "Activation automatique apres paiement " + transaction.getTransactionNumber(),
-                SYSTEM_ACTOR,
-                Boolean.FALSE
-        ));
+        if ("PASS_RENEWAL".equalsIgnoreCase(source.type())) {
+            Pass pass = passService.getForService(source.code());
+            passRenewalOperator.handleRenewalPaymentSucceeded(pass, transaction.getTransactionNumber());
+            return;
+        }
+
+        if ("BOOKING".equalsIgnoreCase(source.type())) {
+            confirmBookingIfFullyPaid(transaction, source.code());
+        }
+    }
+
+    private void confirmBookingIfFullyPaid(PaymentTransaction transaction, String bookingNumber) {
+        if (transaction.getPaymentIntent().getStatus() != PaymentIntentStatus.SUCCEEDED) {
+            log.debug("Booking {} payment partially received — awaiting full settlement before auto-confirm", bookingNumber);
+            return;
+        }
+        try {
+            bookingService.confirm(bookingNumber, new BookingStatusChangeRequest(
+                    "Confirmation automatique suite au paiement " + transaction.getTransactionNumber(),
+                    SYSTEM_ACTOR,
+                    Boolean.TRUE
+            ));
+            log.info("Booking {} auto-confirmed after payment {}", bookingNumber, transaction.getTransactionNumber());
+        } catch (Exception ex) {
+            log.warn("Auto-confirmation of booking {} after payment {} skipped — {}",
+                    bookingNumber, transaction.getTransactionNumber(), ex.getMessage());
+        }
     }
 
     private void handleRefundedTransaction(PaymentTransaction transaction, TransactionContextResolver.SourceView source) {

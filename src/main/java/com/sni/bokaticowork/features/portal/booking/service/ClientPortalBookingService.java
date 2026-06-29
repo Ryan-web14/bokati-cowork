@@ -88,9 +88,10 @@ public class ClientPortalBookingService {
         BookingResponse booking = bookingService.get(bookingNumber);
         verifyOwnership(member, booking);
         if (booking.status() != BookingStatus.CONFIRMED
-                && booking.status() != BookingStatus.PENDING_APPROVAL) {
+                && booking.status() != BookingStatus.PENDING_APPROVAL
+                && booking.status() != BookingStatus.PENDING_PAYMENT) {
             throw new BadRequestException(
-                    "Only CONFIRMED or PENDING_APPROVAL bookings can be cancelled. Current status: " + booking.status()
+                    "Only CONFIRMED, PENDING_APPROVAL or PENDING_PAYMENT bookings can be cancelled. Current status: " + booking.status()
             );
         }
         String reason = request != null ? request.getReason() : null;
@@ -118,7 +119,6 @@ public class ClientPortalBookingService {
         return bookingAvailabilityService.check(req);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private void verifyOwnership(Member member, BookingResponse booking) {
         if (booking.ownerType() != SubscriberType.MEMBER
@@ -130,10 +130,7 @@ public class ClientPortalBookingService {
     private ClientBookingSummaryResponse toSummary(BookingResponse b) {
         return ClientBookingSummaryResponse.builder()
                 .bookingNumber(b.bookingNumber())
-                .resourceCode(b.resourceCode())
                 .resourceName(b.resourceName())
-                .resourceTypeCode(b.resourceTypeCode())
-                .resourceGroupCode(b.resourceGroupCode())
                 .status(b.status())
                 .startedAt(b.startedAt())
                 .endedAt(b.endedAt())
@@ -146,17 +143,13 @@ public class ClientPortalBookingService {
                 .confirmedAt(b.confirmedAt())
                 .cancelledAt(b.cancelledAt())
                 .completedAt(b.completedAt())
-                .createdAt(b.createdAt())
                 .build();
     }
 
     private ClientBookingResponse toDetailResponse(BookingResponse b) {
         return ClientBookingResponse.builder()
                 .bookingNumber(b.bookingNumber())
-                .resourceCode(b.resourceCode())
                 .resourceName(b.resourceName())
-                .resourceTypeCode(b.resourceTypeCode())
-                .resourceGroupCode(b.resourceGroupCode())
                 .status(b.status())
                 .startedAt(b.startedAt())
                 .endedAt(b.endedAt())
@@ -166,7 +159,6 @@ public class ClientPortalBookingService {
                 .paymentMode(b.paymentMode())
                 .subscriptionNumber(b.subscriptionNumber())
                 .passNumber(b.passNumber())
-                .entitlementCode(b.entitlementCode())
                 .unitPrice(b.unitPrice())
                 .subtotalAmount(b.subtotalAmount())
                 .totalAmount(b.totalAmount())
@@ -178,8 +170,6 @@ public class ClientPortalBookingService {
                 .confirmedAt(b.confirmedAt())
                 .completedAt(b.completedAt())
                 .cancelledAt(b.cancelledAt())
-                .createdAt(b.createdAt())
-                .lines(b.lines())
                 .participants(b.participants())
                 .build();
     }

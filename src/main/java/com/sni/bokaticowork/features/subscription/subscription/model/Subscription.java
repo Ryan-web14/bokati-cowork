@@ -154,6 +154,10 @@ public class Subscription {
     @Column(name = "contract_code", length = 120)
     private String contractCode;
 
+    @Builder.Default
+    @Column(name = "kyc_compliant")
+    private Boolean kycCompliant = Boolean.TRUE;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

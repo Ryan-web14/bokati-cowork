@@ -4,6 +4,11 @@ import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.features.booking.config.BookingCheckInProperties;
+import com.sni.bokaticowork.features.booking.dto.request.BookingChangeResourceRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingRescheduleRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingTransferRequest;
+import com.sni.bokaticowork.features.ressource.enums.ResourceStatus;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.utils.code.CodeComposer;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
@@ -20,6 +25,7 @@ import com.sni.bokaticowork.features.booking.model.*;
 import com.sni.bokaticowork.features.booking.repository.*;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingService;
 import com.sni.bokaticowork.features.booking.service.support.*;
+import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
 import com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.model.Resource;
@@ -84,12 +90,13 @@ public class BookingServiceImpl implements BookingService {
     private final BookingResourceGuard resourceGuard;
     private final BookingEntitlementBridge entitlementBridge;
     private final BookingEventWriter eventWriter;
-    private final BookingEmailNotifier emailNotifier;
     private final BookingPolicyEnforcer policyEnforcer;
     private final BookingBillableBridge billableBridge;
     private final BookingCancellationRefundSupport cancellationRefundSupport;
     private final BookingVirtualMeetingSupport virtualMeetingSupport;
     private final TaskManagementService taskManagementService;
+    private final BookingCheckInProperties checkInProperties;
+    private final MemberInAppNotifier memberInAppNotifier;
 
     @Value("${bokati.task.booking-prep-hours:2}")
     private int bookingPrepHours;
@@ -148,8 +155,12 @@ public class BookingServiceImpl implements BookingService {
         booking.setCurrency(price.currency());
         booking.setApprovalRequired(effectivePolicy.approvalRequired());
         booking.setVirtualMeetingUrl(virtualMeetingSupport.meetingUrl(resource, booking.getBookingNumber()));
+        boolean requiresPayment = request.paymentMode() == BookingPaymentMode.DIRECT
+                || request.paymentMode() == BookingPaymentMode.WALLET;
         if (effectivePolicy.approvalRequired()) {
             booking.setStatus(BookingStatus.PENDING_APPROVAL);
+        } else if (requiresPayment) {
+            booking.setStatus(BookingStatus.PENDING_PAYMENT);
         }
         booking = bookingRepository.save(booking);
 
@@ -158,11 +169,16 @@ public class BookingServiceImpl implements BookingService {
         writeHistory(booking, null, BookingStatus.DRAFT, null, "Booking created");
         eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking created", "Booking was created", null);
 
-        if (!effectivePolicy.approvalRequired() && (request.confirmImmediately() == null || request.confirmImmediately())) {
-            booking = confirmInternal(booking, new BookingStatusChangeRequest(null, "Auto confirmation", request.sendEmail()));
-        } else if (effectivePolicy.approvalRequired()) {
+        if (effectivePolicy.approvalRequired()) {
             writeHistory(booking, BookingStatus.DRAFT, BookingStatus.PENDING_APPROVAL, null, "Approval required");
             eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking pending approval", "Booking requires approval", null);
+        } else if (requiresPayment) {
+            writeHistory(booking, BookingStatus.DRAFT, BookingStatus.PENDING_PAYMENT, null, "Awaiting payment");
+            eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking pending payment", "Booking awaiting payment before confirmation", null);
+            booking.setBillableNumber(billableBridge.ensureBillableItem(booking));
+            bookingRepository.save(booking);
+        } else if (request.confirmImmediately() == null || request.confirmImmediately()) {
+            booking = confirmInternal(booking, new BookingStatusChangeRequest(null, "Auto confirmation", request.sendEmail()));
         }
 
         return booking;
@@ -270,6 +286,19 @@ public class BookingServiceImpl implements BookingService {
         requireStatus(booking, BookingStatus.PENDING_APPROVAL);
         booking.setApprovedBy(request == null ? null : trim(request.actor()));
         booking.setApprovedAt(Instant.now());
+        boolean requiresPayment = booking.getPaymentMode() == BookingPaymentMode.DIRECT
+                || booking.getPaymentMode() == BookingPaymentMode.WALLET;
+        if (requiresPayment) {
+            booking.setStatus(BookingStatus.PENDING_PAYMENT);
+            booking = bookingRepository.save(booking);
+            writeHistory(booking, BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT, booking.getApprovedBy(), request == null ? "Approved — awaiting payment" : reason(request.reason(), "Approved — awaiting payment"));
+            eventWriter.write(booking, BookingEventType.BOOKING_APPROVED, "Booking approved", "Booking was approved, awaiting payment", null,
+                    emailRequested(request == null ? null : request.sendEmail()));
+            notifyIfRequested(booking, BookingEventType.BOOKING_APPROVED, new BookingStatusChangeRequest(booking.getApprovedBy(), null, request == null ? null : request.sendEmail()));
+            booking.setBillableNumber(billableBridge.ensureBillableItem(booking));
+            bookingRepository.save(booking);
+            return bookingMapper.toResponse(booking);
+        }
         booking.setStatus(BookingStatus.DRAFT);
         booking = bookingRepository.save(booking);
         writeHistory(booking, BookingStatus.PENDING_APPROVAL, BookingStatus.DRAFT, booking.getApprovedBy(), request == null ? "Approved" : reason(request.reason(), "Approved"));
@@ -288,7 +317,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setRejectionReason(request == null ? "Rejected" : reason(request.reason(), "Rejected"));
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.REJECTED, booking.getRejectedBy(), booking.getRejectionReason());
-        eventWriter.write(booking, BookingEventType.BOOKING_REJECTED, "Booking rejected", booking.getRejectionReason(), null);
+        eventWriter.write(booking, BookingEventType.BOOKING_REJECTED, "Booking rejected", booking.getRejectionReason(), null,
+                emailRequested(request == null ? null : request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_REJECTED, new BookingStatusChangeRequest(booking.getRejectedBy(), booking.getRejectionReason(), request == null ? null : request.sendEmail()));
         return bookingMapper.toResponse(booking);
     }
@@ -303,7 +333,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setStartedEventAt(Instant.now());
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.IN_PROGRESS, changedBy(request), reason(request, "Booking started"));
-        eventWriter.write(booking, BookingEventType.BOOKING_STARTED, "Booking started", "Booking is in progress", null);
+        eventWriter.write(booking, BookingEventType.BOOKING_STARTED, "Booking started", "Booking is in progress", null,
+                emailRequested(request));
         notifyIfRequested(booking, BookingEventType.BOOKING_STARTED, request);
         return bookingMapper.toResponse(booking);
     }
@@ -364,6 +395,8 @@ public class BookingServiceImpl implements BookingService {
         return completed;
     }
 
+
+
     @Override
     public BookingResponse checkIn(String bookingNumber, BookingCheckRequest request) {
         Booking booking = getForService(bookingNumber);
@@ -390,7 +423,8 @@ public class BookingServiceImpl implements BookingService {
             booking.setStatus(BookingStatus.IN_PROGRESS);
         }
         booking = bookingRepository.save(booking);
-        eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_IN, "Booking checked in", request == null ? null : request.note(), null);
+        eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_IN, "Booking checked in", request == null ? null : request.note(), null,
+                emailRequested(request == null ? null : request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_IN, new BookingStatusChangeRequest(request == null ? null : request.actor(), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
         return bookingMapper.toResponse(booking);
     }
@@ -403,8 +437,110 @@ public class BookingServiceImpl implements BookingService {
         }
         booking.setCheckedOutAt(Instant.now());
         booking = bookingRepository.save(booking);
-        eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_OUT, "Booking checked out", request == null ? null : request.note(), null);
+        eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_OUT, "Booking checked out", request == null ? null : request.note(), null,
+                emailRequested(request == null ? null : request.sendEmail()));
         notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_OUT, new BookingStatusChangeRequest(request == null ? null : request.actor(), request == null ? null : request.note(), request == null ? null : request.sendEmail()));
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    public BookingResponse earlyCheckIn(String bookingNumber, BookingCheckRequest request) {
+        Booking booking = getForService(bookingNumber);
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
+            throw new ConflictException("booking", "only confirmed or in-progress bookings can be checked in");
+        }
+        booking.setCheckedInAt(Instant.now());
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            booking.setStatus(BookingStatus.IN_PROGRESS);
+        }
+        booking = bookingRepository.save(booking);
+        eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_IN, "Early check-in by admin",
+                request == null ? null : request.note(), null,
+                emailRequested(request == null ? null : request.sendEmail()));
+        notifyIfRequested(booking, BookingEventType.BOOKING_CHECKED_IN,
+                new BookingStatusChangeRequest(
+                        request == null ? null : request.actor(),
+                        request == null ? null : request.note(),
+                        request == null ? null : request.sendEmail()));
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    public BookingResponse transfer(String bookingNumber, BookingTransferRequest request) {
+        Booking booking = getForService(bookingNumber);
+        if (booking.getStatus() == BookingStatus.COMPLETED || booking.getStatus() == BookingStatus.CANCELLED) {
+            throw new ConflictException("booking", "cannot transfer a completed or cancelled booking");
+        }
+        booking.setOwnerType(request.newOwnerType());
+        booking.setOwnerCode(request.newOwnerCode().trim());
+        if (StringUtils.hasText(request.newContactName())) booking.setContactName(request.newContactName().trim());
+        if (StringUtils.hasText(request.newContactEmail())) booking.setContactEmail(request.newContactEmail().trim());
+        if (StringUtils.hasText(request.newContactPhone())) booking.setContactPhone(request.newContactPhone().trim());
+        booking = bookingRepository.save(booking);
+        eventWriter.write(booking, BookingEventType.BOOKING_TRANSFERRED,
+                "Booking transferred to " + request.newOwnerCode(), request.note(), null,
+                emailRequested(request.sendEmail()));
+        notifyIfRequested(booking, BookingEventType.BOOKING_TRANSFERRED,
+                new BookingStatusChangeRequest(request.actor(), request.note(), request.sendEmail()));
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    public BookingResponse reschedule(String bookingNumber, BookingRescheduleRequest request) {
+        Booking booking = getForService(bookingNumber);
+        if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.PENDING_APPROVAL) {
+            throw new ConflictException("booking", "only CONFIRMED or PENDING_APPROVAL bookings can be rescheduled");
+        }
+        LocalDateTime newStart = request.newStartedAt();
+        LocalDateTime newEnd = request.newEndedAt();
+        if (!newEnd.isAfter(newStart)) {
+            throw new BadRequestException("New end time must be after start time");
+        }
+        Resource resource = booking.getResource();
+        validateForReschedule(resource, newStart, newEnd, bookingNumber);
+        releaseResourceSlot(resource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
+        eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released for reschedule",
+                booking.getStartedAt() + " – " + booking.getEndedAt(), null);
+        reserveResourceSlot(resource, newStart, newEnd, booking.getQuantity());
+        eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after reschedule",
+                newStart + " – " + newEnd, null);
+        BookingStatus from = booking.getStatus();
+        booking.setStartedAt(newStart);
+        booking.setEndedAt(newEnd);
+        booking.setDurationMinutes((int) Duration.between(newStart, newEnd).toMinutes());
+        booking = bookingRepository.save(booking);
+        writeHistory(booking, from, booking.getStatus(), request.actor(), reason(request.note(), "Booking rescheduled"));
+        eventWriter.write(booking, BookingEventType.BOOKING_RESCHEDULED, "Booking rescheduled",
+                "New slot: " + newStart + " – " + newEnd, null,
+                emailRequested(request.sendEmail()));
+        notifyIfRequested(booking, BookingEventType.BOOKING_RESCHEDULED,
+                new BookingStatusChangeRequest(request.actor(), request.note(), request.sendEmail()));
+        return bookingMapper.toResponse(booking);
+    }
+
+    @Override
+    public BookingResponse changeResource(String bookingNumber, BookingChangeResourceRequest request) {
+        Booking booking = getForService(bookingNumber);
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            throw new ConflictException("booking", "only CONFIRMED bookings can have their resource changed");
+        }
+        Resource newResource = resourceService.getResourceForService(request.newResourceCode().trim());
+        validateForReschedule(newResource, booking.getStartedAt(), booking.getEndedAt(), bookingNumber);
+        Resource oldResource = booking.getResource();
+        releaseResourceSlot(oldResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
+        eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released for resource change",
+                oldResource.getCode(), null);
+        booking.setResource(newResource);
+        reserveResourceSlot(newResource, booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
+        eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved after resource change",
+                newResource.getCode(), null);
+        booking = bookingRepository.save(booking);
+        eventWriter.write(booking, BookingEventType.BOOKING_RESOURCE_CHANGED,
+                "Resource changed from " + oldResource.getCode() + " to " + newResource.getCode(),
+                request.note(), null,
+                emailRequested(request.sendEmail()));
+        notifyIfRequested(booking, BookingEventType.BOOKING_RESOURCE_CHANGED,
+                new BookingStatusChangeRequest(request.actor(), request.note(), request.sendEmail()));
         return bookingMapper.toResponse(booking);
     }
 
@@ -444,7 +580,9 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private Booking confirmInternal(Booking booking, BookingStatusChangeRequest request) {
-        requireStatus(booking, BookingStatus.DRAFT);
+        if (booking.getStatus() != BookingStatus.DRAFT && booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
+            throw new ConflictException("booking", "expected status DRAFT or PENDING_PAYMENT but was " + booking.getStatus());
+        }
         resourceGuard.validateBookable(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
         resourceGuard.validateNoSingleCapacityConflict(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getBookingNumber());
         boolean confirmedFromHold = confirmHoldIfPresent(booking);
@@ -452,7 +590,7 @@ public class BookingServiceImpl implements BookingService {
             reserveResource(booking);
             eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved", "Booking resource availability was reserved", null);
         }
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
+        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
             entitlementBridge.reserve(booking, entitlementQuantity(booking));
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_RESERVED, "Entitlement reserved", "Booking entitlement was reserved", null);
         }
@@ -462,7 +600,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setConfirmedAt(Instant.now());
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.CONFIRMED, changedBy(request), reason(request, "Booking confirmed"));
-        eventWriter.write(booking, BookingEventType.BOOKING_CONFIRMED, "Booking confirmed", "Booking was confirmed", null);
+        eventWriter.write(booking, BookingEventType.BOOKING_CONFIRMED, "Booking confirmed", "Booking was confirmed", null,
+                emailRequested(request));
         notifyIfRequested(booking, BookingEventType.BOOKING_CONFIRMED, request);
         createBookingPreparationTask(booking);
         return booking;
@@ -482,7 +621,7 @@ public class BookingServiceImpl implements BookingService {
         if (wasActive) {
             releaseResource(booking);
             eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
-            if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
+            if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
                 entitlementBridge.release(booking, entitlementQuantity(booking));
                 eventWriter.write(booking, BookingEventType.ENTITLEMENT_RELEASED, "Entitlement released", "Booking entitlement reservation was released", null);
             }
@@ -493,7 +632,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setCancelledAt(Instant.now());
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.CANCELLED, changedBy(request), reason(request, "Booking cancelled"));
-        eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Booking cancelled", booking.getCancellationReason(), null);
+        eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Booking cancelled", booking.getCancellationReason(), null,
+                emailRequested(request));
         notifyIfRequested(booking, BookingEventType.BOOKING_CANCELLED, request);
         if (wasActive) {
             try {
@@ -509,7 +649,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
         }
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
+        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
             entitlementBridge.consume(booking, entitlementQuantity(booking));
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "No-show entitlement was consumed", null);
         }
@@ -518,7 +658,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setCompletedAt(Instant.now());
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.NO_SHOW, changedBy(request), reason(request, "No-show"));
-        eventWriter.write(booking, BookingEventType.BOOKING_NO_SHOW, "Booking no-show", "Booking was marked as no-show", null);
+        eventWriter.write(booking, BookingEventType.BOOKING_NO_SHOW, "Booking no-show", "Booking was marked as no-show", null,
+                emailRequested(request));
         notifyIfRequested(booking, BookingEventType.BOOKING_NO_SHOW, request);
         return booking;
     }
@@ -527,7 +668,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be completed");
         }
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT) {
+        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
             entitlementBridge.consume(booking, entitlementQuantity(booking));
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "Booking entitlement was consumed", null);
             eventWriter.write(booking, BookingEventType.USAGE_RECORDED, "Usage recorded", "Booking usage was recorded", null);
@@ -537,7 +678,8 @@ public class BookingServiceImpl implements BookingService {
         booking.setCompletedAt(Instant.now());
         booking = bookingRepository.save(booking);
         writeHistory(booking, from, BookingStatus.COMPLETED, changedBy(request), reason(request, "Booking completed"));
-        eventWriter.write(booking, BookingEventType.BOOKING_COMPLETED, "Booking completed", "Booking was completed", null);
+        eventWriter.write(booking, BookingEventType.BOOKING_COMPLETED, "Booking completed", "Booking was completed", null,
+                emailRequested(request));
         notifyIfRequested(booking, BookingEventType.BOOKING_COMPLETED, request);
         createBookingCleanupTask(booking);
         return booking;
@@ -648,6 +790,36 @@ public class BookingServiceImpl implements BookingService {
                 .build());
     }
 
+    private void releaseResourceSlot(Resource resource, LocalDateTime start, LocalDateTime end, int quantity) {
+        resourceAvailabilityService.release(ReleaseResourceAvailabilityRequest.builder()
+                .resourceCode(resource.getCode())
+                .startedAt(start)
+                .endedAt(end)
+                .quantity(quantity)
+                .build());
+    }
+
+    private void reserveResourceSlot(Resource resource, LocalDateTime start, LocalDateTime end, int quantity) {
+        resourceAvailabilityService.reserve(ReserveResourceAvailabilityRequest.builder()
+                .resourceCode(resource.getCode())
+                .startedAt(start)
+                .endedAt(end)
+                .quantity(quantity)
+                .build());
+    }
+
+    private void validateForReschedule(Resource resource, LocalDateTime start, LocalDateTime end, String excludedBookingNumber) {
+        if (!Boolean.TRUE.equals(resource.getBookingEnabled()) || !Boolean.TRUE.equals(resource.getActive())) {
+            throw new ConflictException("booking", "resource is not active or not booking-enabled");
+        }
+        if (resource.getStatus() != ResourceStatus.ACTIVE) {
+            throw new ConflictException("booking", "resource status does not allow booking");
+        }
+        if (bookingRepository.existsActiveConflict(resource.getId(), start, end, excludedBookingNumber)) {
+            throw new ConflictException("booking", "resource is already booked for this time slot");
+        }
+    }
+
     private void saveLines(Booking booking, BookingPricingCalculator.Price price) {
         lineRepository.save(BookingLine.builder()
                 .booking(booking)
@@ -687,7 +859,8 @@ public class BookingServiceImpl implements BookingService {
 
     private void assertCancellationAllowed(Booking booking) {
         ResourcePolicy policy = booking.getResource().getResourcePolicy();
-        if (policy == null || booking.getStatus() == BookingStatus.DRAFT) {
+        if (policy == null || booking.getStatus() == BookingStatus.DRAFT
+                || booking.getStatus() == BookingStatus.PENDING_PAYMENT) {
             return;
         }
         if (!Boolean.TRUE.equals(policy.getAllowCancellation())) {
@@ -698,13 +871,16 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
-    private void assertActivationAllowed(Booking booking, String action) {
+    private void assertActivationAllowed(Booking booking, @SuppressWarnings("unused") String action) {
         if (isCurrentUserAdmin()) {
             return;
         }
         LocalDateTime now = LocalDateTime.now();
-        if (now.isBefore(booking.getStartedAt()) || !now.isBefore(booking.getEndedAt())) {
-            throw new ForbiddenException("Only admins can " + action + " a booking outside its scheduled time window");
+        LocalDateTime earliestAllowed = booking.getStartedAt().minusMinutes(checkInProperties.getEarlyWindowMinutes());
+        if (now.isBefore(earliestAllowed) || !now.isBefore(booking.getEndedAt())) {
+            throw new ForbiddenException("Le check-in est disponible à partir de "
+                    + checkInProperties.getEarlyWindowMinutes()
+                    + " minutes avant le début de la réservation et jusqu'à l'heure de fin");
         }
     }
 
@@ -755,9 +931,37 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void notifyIfRequested(Booking booking, BookingEventType eventType, BookingStatusChangeRequest request) {
-        if (request == null || request.sendEmail() == null || request.sendEmail()) {
-            emailNotifier.notify(booking, eventType);
-        }
+        notifyInApp(booking, eventType);
+    }
+
+    private boolean emailRequested(BookingStatusChangeRequest request) {
+        return request == null || emailRequested(request.sendEmail());
+    }
+
+    private boolean emailRequested(Boolean sendEmail) {
+        return sendEmail == null || Boolean.TRUE.equals(sendEmail);
+    }
+
+    private void notifyInApp(Booking booking, BookingEventType eventType) {
+        String subject = switch (eventType) {
+            case BOOKING_CREATED, BOOKING_CONFIRMED -> "Reservation confirmee " + booking.getBookingNumber();
+            case BOOKING_CANCELLED -> "Reservation annulee " + booking.getBookingNumber();
+            default -> "Mise a jour reservation " + booking.getBookingNumber();
+        };
+        memberInAppNotifier.notify(
+                eventType.name(),
+                "BOOKING",
+                booking.getBookingNumber(),
+                booking.getContactEmail(),
+                booking.getContactName(),
+                booking.getOwnerCode(),
+                subject,
+                java.util.Map.of(
+                        "bookingNumber", booking.getBookingNumber(),
+                        "status", booking.getStatus() != null ? booking.getStatus().name() : "",
+                        "resourceName", booking.getResource() != null ? booking.getResource().getName() : ""
+                )
+        );
     }
 
     private String changedBy(BookingStatusChangeRequest request) {

@@ -5,6 +5,10 @@ import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
 import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
 import com.sni.bokaticowork.features.company.repository.BusinessRepository;
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
+import com.sni.bokaticowork.features.document.documentMaster.model.Document;
+import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentTypeRepository;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse;
@@ -14,6 +18,7 @@ import com.sni.bokaticowork.features.document.kyc.model.KycCase;
 import com.sni.bokaticowork.features.document.kyc.model.KycCaseNote;
 import com.sni.bokaticowork.features.document.kyc.model.KycDocument;
 import com.sni.bokaticowork.features.document.kyc.model.KycDocumentOcrResult;
+import com.sni.bokaticowork.security.admin.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +40,12 @@ public abstract class KycMapperDecorator implements KycMapper {
     @Autowired
     private BusinessRepository businessRepository;
 
+    @Autowired
+    private DocumentTypeRepository documentTypeRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
     @Value("${app.api-base-url:}")
     private String apiBaseUrl;
 
@@ -45,6 +56,8 @@ public abstract class KycMapperDecorator implements KycMapper {
             return response;
         }
         enrichOwnerInfo(kycCase, response);
+        response.setReviewedByEmail(resolveUserEmail(kycCase.getReviewedBy()));
+        response.setAssignedToEmail(resolveUserEmail(kycCase.getAssignedTo()));
         return response;
     }
 
@@ -63,6 +76,27 @@ public abstract class KycMapperDecorator implements KycMapper {
             response.setPreviewUrl(documentPreviewUrl(documentCode));
             response.setDownloadUrl(documentDownloadUrl(documentCode));
         }
+
+        response.setOwnerName(resolveOwnerName(document.getOwnerType(), document.getOwnerId()));
+
+        DocumentType docType = StringUtils.hasText(document.getDocumentType())
+                ? documentTypeRepository.findByCode(document.getDocumentType()).orElse(null)
+                : null;
+        response.setRequiresBackSide(docType != null ? docType.getRequiresBackSide() : Boolean.FALSE);
+
+        Document backDoc = document.getBackDocument();
+        if (backDoc != null) {
+            String backCode = backDoc.getCode();
+            response.setBackDocumentCode(backCode);
+            response.setBackFileName(backDoc.getFileName());
+            response.setBackFileSize(backDoc.getFileSize());
+            response.setBackMimeType(backDoc.getMimeType());
+            if (StringUtils.hasText(backCode) && StringUtils.hasText(backDoc.getFileUrl())) {
+                response.setBackPreviewUrl(documentPreviewUrl(backCode));
+                response.setBackDownloadUrl(documentDownloadUrl(backCode));
+            }
+        }
+
         return response;
     }
 
@@ -71,6 +105,9 @@ public abstract class KycMapperDecorator implements KycMapper {
         KycCaseNoteResponse response = delegate.toNoteResponse(note);
         if (note != null && note.getKycCase() != null) {
             response.setKycCaseCode(note.getKycCase().getCode());
+        }
+        if (note != null) {
+            response.setAuthorEmail(resolveUserEmail(note.getAuthorId()));
         }
         return response;
     }
@@ -113,6 +150,29 @@ public abstract class KycMapperDecorator implements KycMapper {
         String firstName = customer.getFirstname() == null ? "" : customer.getFirstname();
         String lastName = customer.getLastname() == null ? "" : customer.getLastname();
         return (firstName + " " + lastName).trim();
+    }
+
+    private String resolveUserEmail(Long userId) {
+        if (userId == null) return null;
+        try {
+            return userRepository.findById(userId).map(u -> u.getEmail()).orElse(null);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private String resolveOwnerName(DocumentOwnerType ownerType, Long ownerId) {
+        if (ownerType == null || ownerId == null) return null;
+        try {
+            return switch (ownerType) {
+                case MEMBER -> memberRepository.findById(ownerId).map(m -> m.getDisplayName()).orElse(null);
+                case CUSTOMER -> customerRepository.findById(ownerId).map(this::customerName).orElse(null);
+                case BUSINESS -> businessRepository.findById(ownerId).map(b -> b.getName()).orElse(null);
+                default -> null;
+            };
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private String documentPreviewUrl(String documentCode) {

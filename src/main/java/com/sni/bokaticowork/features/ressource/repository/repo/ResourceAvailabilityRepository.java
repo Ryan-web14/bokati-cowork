@@ -60,7 +60,7 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             from ResourceAvailability ra
             where ra.resource = :resource
               and ra.startedAt >= :startedAt
-              and ra.endedAt <= :endedAt
+              and ra.startedAt < :endedAt
             order by ra.startedAt asc
             """)
     List<ResourceAvailability> findAllSlotsInRange(

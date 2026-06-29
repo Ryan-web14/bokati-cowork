@@ -58,7 +58,7 @@ public class Customer {
     @Column(name = "whatsapp_phone")
     private String whatsappPhone;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id", foreignKey = @ForeignKey(name = "customer_address_fk"))
     private Address address;
 

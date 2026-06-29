@@ -32,6 +32,14 @@ public interface PassRepository extends JpaRepository<Pass, Long>, JpaSpecificat
     @Query(nativeQuery = true, value = "SELECT * FROM subscription_pass WHERE status = :status AND valid_until < :validUntil ORDER BY valid_until ASC")
     List<Pass> findAllByStatusAndValidUntilBefore(@Param("status") String status, @Param("validUntil") Instant validUntil);
 
+    @Query(nativeQuery = true, value = """
+            SELECT * FROM subscription_pass
+            WHERE status IN (:statuses) AND valid_until < :validUntil
+            ORDER BY valid_until ASC
+            """)
+    List<Pass> findAllByStatusInAndValidUntilBefore(@Param("statuses") List<String> statuses,
+                                                     @Param("validUntil") Instant validUntil);
+
     List<Pass> findAllByContractCode(String contractCode);
 
     @Query(nativeQuery = true, value = """

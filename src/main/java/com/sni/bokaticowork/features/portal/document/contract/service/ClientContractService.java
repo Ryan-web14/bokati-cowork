@@ -7,6 +7,8 @@ import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.contract.dto.response.ContractResponse;
 import com.sni.bokaticowork.features.contract.enums.ContractStatus;
 import com.sni.bokaticowork.features.contract.model.Contract;
+import com.sni.bokaticowork.features.contract.model.ContractParty;
+import com.sni.bokaticowork.features.contract.repository.ContractPartyRepository;
 import com.sni.bokaticowork.features.contract.repository.ContractRepository;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractService;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateDocumentSignatureRequest;
@@ -34,6 +36,7 @@ public class ClientContractService {
 
     private final ContractService contractService;
     private final ContractRepository contractRepository;
+    private final ContractPartyRepository contractPartyRepository;
     private final DocumentService documentService;
     private final DocumentSignatureService documentSignatureService;
 
@@ -74,6 +77,7 @@ public class ClientContractService {
         if (!StringUtils.hasText(contract.getDraftDocumentCode())) {
             throw new BadRequestException("Contract document has not been generated yet");
         }
+        enforceSignOrder(contract, member);
         String documentCode = contract.getDraftDocumentCode();
         CreateDocumentSignatureRequest signatureRequest = new CreateDocumentSignatureRequest(
                 "MEMBER",
@@ -94,6 +98,32 @@ public class ClientContractService {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private void enforceSignOrder(Contract contract, Member member) {
+        List<ContractParty> parties = contractPartyRepository.findAllByContractOrderBySignOrderAscIdAsc(contract);
+        if (parties.isEmpty() || !StringUtils.hasText(contract.getDraftDocumentCode())) {
+            return;
+        }
+        ContractParty currentParty = parties.stream()
+                .filter(p -> p.getPartyType() == DocumentOwnerType.MEMBER
+                        && member.getId().equals(p.getPartyId()))
+                .findFirst()
+                .orElse(null);
+        if (currentParty == null || currentParty.getSignOrder() == null) {
+            return;
+        }
+        List<DocumentSignatureResponse> signatures = documentSignatureService.list(contract.getDraftDocumentCode());
+        boolean predecessorsAllSigned = parties.stream()
+                .filter(p -> p.getSignOrder() != null && p.getSignOrder() < currentParty.getSignOrder())
+                .filter(p -> Boolean.TRUE.equals(p.getMustSign()))
+                .allMatch(p -> signatures.stream().anyMatch(
+                        s -> p.getPartyType().name().equalsIgnoreCase(s.signerType())
+                                && p.getPartyId().equals(s.signerId())
+                                && s.signedAt() != null));
+        if (!predecessorsAllSigned) {
+            throw new BadRequestException("You cannot sign yet — previous signatories have not completed their signatures");
+        }
+    }
 
     private Contract resolveOwnedContract(Member member, String contractCode) {
         Contract contract = contractRepository.findByContractCode(contractCode)

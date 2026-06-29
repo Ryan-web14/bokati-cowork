@@ -36,4 +36,7 @@ public interface ResourceTypeRepository extends JpaRepository<ResourceType, Long
     )
     List<ResourceType> basicSearch(@Param("query") String query);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM resource_type WHERE active = true ORDER BY name ASC")
+    List<ResourceType> findAllActive();
+
 }

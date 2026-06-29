@@ -9,8 +9,10 @@ import com.sni.bokaticowork.features.document.documentMaster.dto.response.Docume
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentRequirement;
+import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRequirementRepository;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentTypeRepository;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService;
 import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
 import com.sni.bokaticowork.features.document.kyc.KycDocumentVerificationStatus;
@@ -51,6 +53,7 @@ public class ClientKycService {
     private final DocumentService documentService;
     private final DocumentRepository documentRepository;
     private final DocumentRequirementRepository requirementRepository;
+    private final DocumentTypeRepository documentTypeRepository;
 
     @Transactional(readOnly = true)
     public ClientKycStatusResponse getMyCase(Member member) {
@@ -69,12 +72,15 @@ public class ClientKycService {
             KycRequirementStatus match = statuses.stream()
                     .filter(s -> s.getDocumentTypeCode().equals(r.getDocumentTypeCode()))
                     .findFirst().orElse(null);
+            DocumentType docType = documentTypeRepository.findByCode(r.getDocumentTypeCode()).orElse(null);
             return ClientKycRequirementResponse.builder()
                     .documentTypeCode(r.getDocumentTypeCode())
                     .documentTypeName(r.getDocumentTypeName())
                     .required(Boolean.TRUE.equals(r.getRequired()))
+                    .requiresBackSide(docType != null ? docType.getRequiresBackSide() : Boolean.FALSE)
                     .status(match != null && match.getStatus() != null ? match.getStatus().name() : null)
                     .documentCode(match != null ? match.getDocumentCode() : null)
+                    .backDocumentCode(match != null ? match.getBackDocumentCode() : null)
                     .build();
         }).toList();
     }
@@ -85,11 +91,12 @@ public class ClientKycService {
         KycCaseResponse caseResponse = kycService.getByCode(kycCase.getCode());
         List<ClientKycRequirementResponse> requirements = getRequirements(member);
         long totalRequired = requirements.stream().filter(ClientKycRequirementResponse::isRequired).count();
-        long totalSubmitted = requirements.stream()
+        boolean approved = kycCase.getStatus() == KycCaseStatus.APPROVED;
+        long totalSubmitted = approved ? totalRequired : requirements.stream()
                 .filter(r -> r.getStatus() != null && !r.getStatus().isEmpty()).count();
-        long totalVerified = requirements.stream()
+        long totalVerified = approved ? totalRequired : requirements.stream()
                 .filter(r -> "VERIFIED".equals(r.getStatus())).count();
-        int percent = totalRequired == 0 ? 0 : (int) (totalVerified * 100 / totalRequired);
+        int percent = approved ? 100 : (totalRequired == 0 ? 0 : (int) (totalVerified * 100 / totalRequired));
         return ClientKycCompletionResponse.builder()
                 .caseCode(kycCase.getCode())
                 .caseStatus(kycCase.getStatus().name())
@@ -128,7 +135,8 @@ public class ClientKycService {
                                                      String documentNumber,
                                                      LocalDate issueDate,
                                                      LocalDate expiryDate,
-                                                     MultipartFile file) {
+                                                     MultipartFile file,
+                                                     String side) {
         validateFile(file);
         KycCase kycCase = resolveCase(member);
         assertCaseEditable(kycCase);
@@ -137,7 +145,8 @@ public class ClientKycService {
         metadata.setOwnerType(DocumentOwnerType.MEMBER);
         metadata.setOwnerCode(member.getMemberId());
         metadata.setDocumentTypeCode(documentType);
-        metadata.setTitle(documentType.replace("_", " ") + " — " + member.getMemberId());
+        String sideLabel = "BACK".equalsIgnoreCase(side) ? " (Arrière)" : "";
+        metadata.setTitle(documentType.replace("_", " ") + sideLabel + " — " + member.getMemberId());
         metadata.setDocumentNumber(documentNumber);
         metadata.setIssueDate(issueDate);
         metadata.setExpiryDate(expiryDate);
@@ -145,6 +154,16 @@ public class ClientKycService {
         DocumentResponse docResponse = documentService.upload(metadata, file);
         Document document = documentRepository.findByCode(docResponse.getCode())
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found after upload"));
+
+        if ("BACK".equalsIgnoreCase(side)) {
+            KycDocument existing = kycDocumentRepository.findByKycCaseAndDocumentType(kycCase, documentType)
+                    .orElseThrow(() -> new BadRequestException(
+                            "Front side must be uploaded before the back side for document type: " + documentType));
+            existing.setBackDocument(document);
+            kycDocumentRepository.save(existing);
+            kycAutomationService.syncMemberKyc(member.getMemberId());
+            return toDocumentResponse(existing);
+        }
 
         KycDocument kycDocument = KycDocument.builder()
                 .kycCase(kycCase)
@@ -243,7 +262,8 @@ public class ClientKycService {
 
     private ClientKycDocumentResponse toDocumentResponse(KycDocument kycDocument) {
         Document document = kycDocument.getDocument();
-        return ClientKycDocumentResponse.builder()
+        DocumentType docType = documentTypeRepository.findByCode(kycDocument.getDocumentType()).orElse(null);
+        ClientKycDocumentResponse.ClientKycDocumentResponseBuilder builder = ClientKycDocumentResponse.builder()
                 .id(kycDocument.getId())
                 .documentCode(document.getCode())
                 .documentType(kycDocument.getDocumentType())
@@ -252,10 +272,20 @@ public class ClientKycService {
                 .fileSize(document.getFileSize())
                 .mimeType(document.getMimeType())
                 .status(kycDocument.getStatus() != null ? kycDocument.getStatus().name() : null)
+                .requiresBackSide(docType != null ? docType.getRequiresBackSide() : Boolean.FALSE)
                 .issueDate(kycDocument.getIssueDate())
                 .expiryDate(kycDocument.getExpiryDate())
-                .uploadedAt(document.getUploadedAt())
-                .build();
+                .uploadedAt(document.getUploadedAt());
+
+        Document backDoc = kycDocument.getBackDocument();
+        if (backDoc != null) {
+            builder.backDocumentCode(backDoc.getCode())
+                    .backFileName(backDoc.getFileName())
+                    .backFileSize(backDoc.getFileSize())
+                    .backMimeType(backDoc.getMimeType());
+        }
+
+        return builder.build();
     }
 
     private ClientKycStatusResponse toStatusResponse(KycCaseResponse caseResponse, KycCase kycCase) {
@@ -269,8 +299,10 @@ public class ClientKycService {
                         .documentTypeCode(r.getDocumentTypeCode())
                         .documentTypeName(r.getDocumentTypeName())
                         .required(r.isRequired())
+                        .requiresBackSide(r.getRequiresBackSide())
                         .status(r.getStatus() != null ? r.getStatus().name() : null)
                         .documentCode(r.getDocumentCode())
+                        .backDocumentCode(r.getBackDocumentCode())
                         .build())
                 .toList()
                 : List.of();

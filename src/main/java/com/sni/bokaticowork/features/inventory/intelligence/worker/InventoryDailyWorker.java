@@ -1,5 +1,8 @@
 package com.sni.bokaticowork.features.inventory.intelligence.worker;
 
+import com.sni.bokaticowork.core.event.WebSocketTopics;
+import com.sni.bokaticowork.core.event.dto.InventoryAlertEvent;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.inventory.asset.enums.AssetAssignmentStatus;
@@ -60,6 +63,7 @@ public class InventoryDailyWorker {
     private final InventoryReorderRuleRepository reorderRuleRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final OutboxService outboxService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     /**
      * Expire les réservations périmées toutes les 30 minutes.
@@ -308,5 +312,19 @@ public class InventoryDailyWorker {
         payload.put("locationCode", saved.getLocation() == null ? null : saved.getLocation().getLocationCode());
         payload.put("assetCode", saved.getAssetCode());
         outboxService.publish("inventory.alert.created", "INVENTORY_ALERT", saved.getAlertCode(), payload);
+
+        try {
+            messagingTemplate.convertAndSend(WebSocketTopics.INVENTORY_ALERTS, new InventoryAlertEvent(
+                    saved.getAlertCode(),
+                    saved.getAlertType().name(),
+                    saved.getItem() == null ? null : saved.getItem().getItemCode(),
+                    saved.getLocation() == null ? null : saved.getLocation().getLocationCode(),
+                    saved.getAssetCode(),
+                    saved.getMessage(),
+                    saved.getCreatedAt()
+            ));
+        } catch (Exception ex) {
+            log.warn("Failed to broadcast inventory alert {}", saved.getAlertCode(), ex);
+        }
     }
 }

@@ -4,21 +4,26 @@ import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.document.documentMaster.dto.request.BatchUploadMetadataRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentCorrectionRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentUploadMetadataRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAccessLogResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAnalyticsResponse;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkActionResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFileResult;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.ZipImportResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentCategory;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus;
 import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentAccessLogServiceImpl;
+import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentBatchService;
+import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentLockService;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentSearchService;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -48,6 +53,8 @@ public class DocumentController {
     private final DocumentService service;
     private final DocumentSearchService searchService;
     private final DocumentAccessLogServiceImpl accessLogService;
+    private final DocumentBatchService batchService;
+    private final DocumentLockService lockService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Audited(module = "DOCUMENT", action = "UPLOAD", ressource = "document")
@@ -147,6 +154,40 @@ public class DocumentController {
             @PathVariable String code,
             @RequestParam(required = false) String reason) {
         return ResponseEntity.ok(service.archive(code, reason));
+    }
+
+    // ── Lock / Unlock ────────────────────────────────────────────────────────
+
+    @PostMapping("/{code}/lock")
+    @Audited(module = "DOCUMENT", action = "LOCK", ressource = "document")
+    public ResponseEntity<Void> lock(@PathVariable String code) {
+        lockService.lock(code);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{code}/unlock")
+    @Audited(module = "DOCUMENT", action = "UNLOCK", ressource = "document")
+    public ResponseEntity<Void> unlock(@PathVariable String code) {
+        lockService.unlock(code);
+        return ResponseEntity.ok().build();
+    }
+
+    // ── Batch upload ─────────────────────────────────────────────────────────
+
+    @PostMapping(value = "/upload-batch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Audited(module = "DOCUMENT", action = "BATCH_UPLOAD", ressource = "document")
+    public ResponseEntity<DocumentBulkActionResponse> uploadBatch(
+            @RequestPart("files") List<MultipartFile> files,
+            @Valid @ModelAttribute BatchUploadMetadataRequest metadata) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(batchService.uploadBatch(files, metadata));
+    }
+
+    @PostMapping(value = "/import-zip", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Audited(module = "DOCUMENT", action = "IMPORT_ZIP", ressource = "document")
+    public ResponseEntity<ZipImportResponse> importZip(
+            @RequestPart("file") MultipartFile zipFile,
+            @Valid @ModelAttribute BatchUploadMetadataRequest metadata) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(batchService.importZip(zipFile, metadata));
     }
 
     // ── Search, dashboard, folder ────────────────────────────────────────────

@@ -48,7 +48,31 @@
       "Bash(grep -E \"\\\\.java$\")",
       "Bash(sort -t'V' -k2 -n)",
       "Bash(New-Item -ItemType Directory -Force \"C:\\\\java-project\\\\bokati-cowork\\\\src\\\\main\\\\java\\\\com\\\\sni\\\\bokaticowork\\\\features\\\\portal\\\\profile\\\\dto\\\\response\")",
-      "Bash(Out-Null)"
+      "Bash(Out-Null)",
+      "PowerShell(git *)",
+      "Bash(grep -E \"\\\\.\\(java|ts|tsx\\)$\")",
+      "Bash(grep -E \"\\\\.\\(java\\)$\")",
+      "Bash(xargs grep -l \"latitude\\\\|longitude\\\\|geoloc\")",
+      "Bash(xargs grep -l \"reschedul\\\\|transfer\\\\|amend\")",
+      "Bash(xargs -I {} basename {})",
+      "Read(//mnt/c/java-project/bokati-cowork/**)",
+      "Bash(ls -la \"Spécifications Techniques – Mise en Conformité du Module Devis & Facturation.pdf\")",
+      "Bash(which pdftotext *)",
+      "PowerShell(docker exec -i $\\(docker ps --filter \"name=postgres\" --format \"{{.Names}}\" | head -1\\) psql -U devuser -d cowork_dev_db -c \"DELETE FROM flyway_schema_history WHERE version = '156' AND success = false;\" 2>&1)",
+      "PowerShell(docker exec cowork_dev_db *)",
+      "Bash(xargs grep -l -i \"redis\")",
+      "PowerShell(./mvnw compile -DskipTests 2>&1 | Select-Object -Last 30)",
+      "PowerShell(./mvnw compile -DskipTests 2>&1 | Select-Object -Last 20)",
+      "PowerShell(./mvnw compile -DskipTests 2>&1 | Select-Object -Last 25)",
+      "PowerShell(./mvnw test-compile -DskipTests 2>&1 | Select-Object -Last 15)",
+      "Bash(xargs grep -l \"Query\\\\|SELECT\")",
+      "Bash(xargs grep -l \"\\\\.csv\\\\|CSV\\\\|CsvService\\\\|ExcelService\")",
+      "Bash(xargs grep -l \"COUNT\\\\|SUM\\\\|AVG\\\\|GROUP\")",
+      "Bash(mv docs/to-implement/implementation-pass-billing-commercial-module.md docs/a-realiser/plan-pass-billing-commercial.md)",
+      "Bash(mv docs/to-implement/remaining-audit-items.md docs/a-realiser/remaining-audit-items.md)",
+      "Bash(rmdir docs/to-implement)",
+      "Bash(awk '{print $1}')",
+      "Bash(grep -iE \"\\\\.key$|\\\\.pem$|\\\\.p12$|\\\\.jks$|secret|password|credential\")"
     ]
   }
 }

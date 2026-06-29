@@ -23,6 +23,21 @@ public abstract class SubscriptionBillingMapperDecorator implements Subscription
 
     @Override
     public BillingScheduleResponse toBillingScheduleResponse(BillingSchedule schedule) {
-        return new BillingScheduleResponse(schedule.getSubscription().getSubscriptionNumber(), schedule.getBillingCycle(), schedule.getNextBillingDate(), schedule.getCurrentPeriodStart(), schedule.getCurrentPeriodEnd(), schedule.getStatus(), schedule.getRetryCount(), schedule.getLastAttemptAt());
+        var sub = schedule.getSubscription();
+        return new BillingScheduleResponse(
+                sub.getSubscriptionNumber(),
+                schedule.getBillingCycle(),
+                schedule.getNextBillingDate(),
+                schedule.getCurrentPeriodStart(),
+                schedule.getCurrentPeriodEnd(),
+                schedule.getStatus(),
+                schedule.getRetryCount(),
+                schedule.getLastAttemptAt(),
+                sub.getCurrency(),
+                sub.getSubtotalAmount(),
+                sub.getTaxAmount(),
+                sub.getTotalAmount(),
+                sub.getTotalAmount()
+        );
     }
 }

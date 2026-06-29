@@ -16,6 +16,9 @@ import com.sni.bokaticowork.features.contract.dto.response.ContractResponse;
 import com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractGenerationService;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractService;
+import com.sni.bokaticowork.features.contract.enums.ContractPartyRole;
+import com.sni.bokaticowork.features.contract.enums.ContractRenewalType;
+import com.sni.bokaticowork.features.contract.enums.ContractSectionType;
 import com.sni.bokaticowork.features.contract.enums.ContractStatus;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
@@ -26,8 +29,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,6 +45,20 @@ public class ContractController {
     @GetMapping("/templates")
     public ResponseEntity<List<ContractTemplateResponse>> listTemplates() {
         return ResponseEntity.ok(generationService.listTemplates());
+    }
+
+    @GetMapping("/templates-drafting")
+    public ResponseEntity<Map<String, Object>> getTemplateDraftingReference() {
+        return ResponseEntity.ok(Map.of(
+                "templates", generationService.listTemplates(),
+                "sectionTypes", Arrays.stream(ContractSectionType.values()).map(Enum::name).toList(),
+                "renewalTypes", Arrays.stream(ContractRenewalType.values()).map(Enum::name).toList(),
+                "partyRoles", Arrays.stream(ContractPartyRole.values()).map(Enum::name).toList(),
+                "statuses", Arrays.stream(ContractStatus.values()).map(Enum::name).toList(),
+                "languages", List.of("fr", "en"),
+                "variableTypes", List.of("TEXT", "DATE", "NUMBER", "CURRENCY", "BOOLEAN", "SELECT"),
+                "variableSources", List.of("MEMBER", "CUSTOMER", "BUSINESS_ENTITY", "SUBSCRIPTION", "PASS", "BOOKING", "MANUAL")
+        ));
     }
 
     @Audited(module = "CONTRACT", action = "CREATE", ressource = "contract")
@@ -79,6 +98,24 @@ public class ContractController {
     public ResponseEntity<ContractResponse> updateStatus(@PathVariable String contractCode,
                                                          @Valid @RequestBody UpdateContractStatusRequest request) {
         return ResponseEntity.ok(contractService.updateStatus(contractCode, request));
+    }
+
+    @Audited(module = "CONTRACT", action = "APPROVE_REVIEW", ressource = "contract")
+    @PostMapping("/{contractCode}/approve")
+    public ResponseEntity<ContractResponse> approveReview(
+            @PathVariable String contractCode,
+            @RequestParam Long reviewedBy,
+            @RequestParam(required = false) String comment) {
+        return ResponseEntity.ok(contractService.approveReview(contractCode, reviewedBy, comment));
+    }
+
+    @Audited(module = "CONTRACT", action = "REJECT_REVIEW", ressource = "contract")
+    @PostMapping("/{contractCode}/reject-review")
+    public ResponseEntity<ContractResponse> rejectReview(
+            @PathVariable String contractCode,
+            @RequestParam Long reviewedBy,
+            @RequestParam(required = false) String comment) {
+        return ResponseEntity.ok(contractService.rejectReview(contractCode, reviewedBy, comment));
     }
 
     @Audited(module = "CONTRACT", action = "ACTIVATE", ressource = "contract")

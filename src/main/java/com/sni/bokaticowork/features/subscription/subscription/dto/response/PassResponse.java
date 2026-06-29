@@ -4,6 +4,7 @@ import com.sni.bokaticowork.features.subscription.subscription.enums.PassStatus;
 import com.sni.bokaticowork.features.subscription.subscription.enums.PassType;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -23,6 +24,18 @@ public record PassResponse(
         Integer maxUses,
         Integer usedCount,
         String contractCode,
-        List<EntitlementGrantResponse> entitlements
+        String planCode,
+        String planName,
+        Integer planVersion,
+        String currency,
+        BigDecimal subtotalAmount,
+        BigDecimal taxAmount,
+        BigDecimal totalAmount,
+        Boolean autoRenew,
+        Instant nextRenewalDate,
+        Integer renewalCount,
+        List<EntitlementGrantResponse> entitlements,
+        Instant createdAt,
+        Instant updatedAt
 ) {
 }

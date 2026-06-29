@@ -3,12 +3,16 @@ package com.sni.bokaticowork.features.portal.subscription.controller;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.client.member.model.Member;
+import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
+import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
+import com.sni.bokaticowork.features.portal.billing.dto.request.ClientInitiateMobileMoneyPaymentRequest;
 import com.sni.bokaticowork.features.portal.context.ClientContextService;
 import com.sni.bokaticowork.features.portal.subscription.service.ClientSubscriptionService;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.EntitlementGrantResponse;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.PassResponse;
 import com.sni.bokaticowork.features.subscription.subscription.enums.PassStatus;
 import com.sni.bokaticowork.features.subscription.subscription.enums.PassType;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -16,7 +20,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -29,7 +34,7 @@ public class ClientPassController {
     private final ClientContextService clientContextService;
     private final ClientSubscriptionService clientSubscriptionService;
 
-    // ── Passes ────────────────────────────────────────────────────────────────
+
 
     @GetMapping(ApiPath.V1 + "/client/passes")
     public ResponseEntity<PaginatedResponse<PassResponse>> listPasses(
@@ -46,7 +51,20 @@ public class ClientPassController {
         return ResponseEntity.ok(clientSubscriptionService.getPass(member, passNumber));
     }
 
-    // ── Entitlement balances ───────────────────────────────────────────────────
+    @PostMapping(ApiPath.V1 + "/client/passes/{passNumber}/pay/mobile-money")
+    public ResponseEntity<MobileMoneyDepositResponse> payWithMobileMoney(
+            @PathVariable String passNumber,
+            @Valid @RequestBody ClientInitiateMobileMoneyPaymentRequest request) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientSubscriptionService.payPassWithMobileMoney(
+                member, passNumber, request.getPhoneNumber(), request.getCorrespondent()));
+    }
+
+    @PostMapping(ApiPath.V1 + "/client/passes/{passNumber}/pay/wallet")
+    public ResponseEntity<PaymentTransactionResponse> payWithWallet(@PathVariable String passNumber) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientSubscriptionService.payPassWithWallet(member, passNumber));
+    }
 
     @GetMapping(ApiPath.V1 + "/client/entitlements/balances")
     public ResponseEntity<List<EntitlementGrantResponse>> getEntitlementBalances() {

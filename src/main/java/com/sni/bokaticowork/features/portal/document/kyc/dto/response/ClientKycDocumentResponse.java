@@ -20,6 +20,11 @@ public class ClientKycDocumentResponse {
     private Long fileSize;
     private String mimeType;
     private String status;
+    private Boolean requiresBackSide;
+    private String backDocumentCode;
+    private String backFileName;
+    private Long backFileSize;
+    private String backMimeType;
     private LocalDate issueDate;
     private LocalDate expiryDate;
     private Instant uploadedAt;

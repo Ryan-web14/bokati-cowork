@@ -9,6 +9,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.service.fiscal.FiscalQrCodeService;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
@@ -66,6 +67,8 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final ObjectMapper objectMapper;
     private final PaymentAllocationRepository paymentAllocationRepository;
     private final PawapayDepositRepository pawapayDepositRepository;
+    private final FiscalQrCodeService fiscalQrCodeService;
+    private final Locale appLocale;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
     private String verifyBaseUrl;
@@ -145,10 +148,10 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         if (BillingDocumentType.CREDIT_NOTE.equals(document.documentType())) {
             return renderCreditNoteHtml(document);
         }
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("document", document);
         context.setVariable("generatedAt", LocalDate.now());
-        context.setVariable("fmt", new BillingDocumentTemplateFormatter(document.currency(), objectMapper));
+        context.setVariable("fmt", new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale));
         context.setVariable("qrCode", generateQrCode(document));
         context.setVariable("payments", fetchPaymentInfos(document.documentNumber()));
         context.setVariable("logo", loadLogoBase64());
@@ -156,8 +159,8 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     }
 
     private String renderCreditNoteHtml(BillingDocumentResponse document) {
-        BillingDocumentTemplateFormatter fmt = new BillingDocumentTemplateFormatter(document.currency(), objectMapper);
-        Context context = new Context(Locale.FRANCE);
+        BillingDocumentTemplateFormatter fmt = new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale);
+        Context context = new Context(appLocale);
         context.setVariable("creditNote", toCreditNoteView(document, fmt));
         context.setVariable("customer", toCustomerView(document));
         context.setVariable("fmt", fmt);
@@ -269,7 +272,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private static final DateTimeFormatter QR_DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private String buildQrContent(BillingDocumentResponse document) {
-        return verifyBaseUrl.stripTrailing() + "/verify/doc/" + document.documentNumber();
+        return fiscalQrCodeService.buildContent(document);
     }
 
     public static final class BillingDocumentTemplateFormatter {
@@ -280,10 +283,12 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
 
         private final String currency;
         private final ObjectMapper objectMapper;
+        private final Locale locale;
 
-        public BillingDocumentTemplateFormatter(String currency, ObjectMapper objectMapper) {
+        public BillingDocumentTemplateFormatter(String currency, ObjectMapper objectMapper, Locale locale) {
             this.currency = currency;
             this.objectMapper = objectMapper;
+            this.locale = locale;
         }
 
         public String money(BigDecimal amount) {
@@ -298,7 +303,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             if (amount == null) {
                 return EMPTY_VALUE;
             }
-            NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+            NumberFormat nf = NumberFormat.getNumberInstance(locale);
             nf.setMaximumFractionDigits(0);
             nf.setMinimumFractionDigits(0);
             return nf.format(amount.setScale(0, RoundingMode.HALF_UP));

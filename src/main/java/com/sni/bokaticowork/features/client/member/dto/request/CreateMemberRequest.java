@@ -10,6 +10,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -51,6 +53,14 @@ public class CreateMemberRequest {
 
     @Valid
     private AddressRequest address;
+
+    private LocalDate birthDate;
+
+    @Size(max = 20)
+    private String gender;
+
+    @Size(max = 30)
+    private String preferredCommunicationChannel;
 
     private boolean generatePassword;
 

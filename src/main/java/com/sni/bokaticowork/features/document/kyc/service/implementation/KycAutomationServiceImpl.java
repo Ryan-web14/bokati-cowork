@@ -24,6 +24,7 @@ import com.sni.bokaticowork.features.document.kyc.repository.KycCaseRepository;
 import com.sni.bokaticowork.features.document.kyc.repository.KycDocumentRepository;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycOcrService;
+import com.sni.bokaticowork.features.company.service.interfaces.BusinessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     private final OutboxService outboxService;
     private final KycDocumentRepository kycDocumentRepository;
     private final KycOcrService kycOcrService;
+    private final BusinessService businessService;
 
     @Override
     public void initializeMemberKyc(String memberId) {
@@ -90,7 +92,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
             case PENDING -> KycCaseStatus.IN_PROGRESS;
             case UNDER_REVIEW -> KycCaseStatus.UNDER_REVIEW;
             case PENDING_CORRECTION, REJECTED -> KycCaseStatus.PENDING_CORRECTION;
-            case ACTIVE -> KycCaseStatus.APPROVED;
+            case ACTIVE -> kycCase.getStatus();
             case ARCHIVED -> KycCaseStatus.EXPIRED;
             case INACTIVE, SUSPENDED -> kycCase.getStatus();
         };
@@ -139,13 +141,45 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     }
 
     private boolean hasActiveRequirements(DocumentOwnerType ownerType, String customerType) {
+        return hasActiveRequirements(ownerType, customerType, null);
+    }
+
+    private boolean hasActiveRequirements(DocumentOwnerType ownerType, String customerType, String businessLegalForm) {
         List<DocumentRequirement> requirements = requirementRepository.findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(ownerType);
-        if (ownerType != DocumentOwnerType.CUSTOMER || customerType == null) {
-            return requirements.stream().anyMatch(item -> Boolean.TRUE.equals(item.getRequired()));
-        }
-        return requirements.stream()
-                .filter(item -> item.getCustomerType() == null || item.getCustomerType().isBlank() || customerType.equalsIgnoreCase(item.getCustomerType()))
+        return filterRequirements(requirements, ownerType, customerType, businessLegalForm)
                 .anyMatch(item -> Boolean.TRUE.equals(item.getRequired()));
+    }
+
+    List<DocumentRequirement> filteredRequirements(DocumentOwnerType ownerType, String customerType, String businessLegalForm) {
+        List<DocumentRequirement> requirements = requirementRepository.findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(ownerType);
+        return filterRequirements(requirements, ownerType, customerType, businessLegalForm).toList();
+    }
+
+    private java.util.stream.Stream<DocumentRequirement> filterRequirements(
+            List<DocumentRequirement> requirements, DocumentOwnerType ownerType, String customerType, String businessLegalForm) {
+        java.util.stream.Stream<DocumentRequirement> stream = requirements.stream();
+        if (ownerType == DocumentOwnerType.CUSTOMER && customerType != null) {
+            stream = stream.filter(item -> item.getCustomerType() == null
+                    || item.getCustomerType().isBlank()
+                    || customerType.equalsIgnoreCase(item.getCustomerType()));
+        }
+        if (ownerType == DocumentOwnerType.BUSINESS && businessLegalForm != null) {
+            stream = stream.filter(item -> item.getBusinessLegalForm() == null
+                    || item.getBusinessLegalForm().isBlank()
+                    || businessLegalForm.equalsIgnoreCase(item.getBusinessLegalForm()));
+        }
+        return stream;
+    }
+
+    private String resolveBusinessLegalForm(DocumentOwnerType ownerType, Long ownerId) {
+        if (ownerType != DocumentOwnerType.BUSINESS) {
+            return null;
+        }
+        try {
+            return businessService.serviceBusinessById(ownerId).getLegalForm();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private KycCase ensureCase(DocumentOwnerType ownerType, Long ownerId) {
@@ -171,6 +205,7 @@ public class KycAutomationServiceImpl implements KycAutomationService {
         if (kycCase.getStatus() == targetStatus) {
             return;
         }
+        KycCaseStatus previousStatus = kycCase.getStatus();
         kycCase.setStatus(targetStatus);
         if (targetStatus == KycCaseStatus.APPROVED) {
             Instant now = Instant.now();
@@ -196,7 +231,10 @@ public class KycAutomationServiceImpl implements KycAutomationService {
             kycCase.setCompletedAt(Instant.now());
         }
         kycCaseRepository.save(kycCase);
-        publishAutomationEvent("KYC_CASE_AUTO_STATUS_SYNC", kycCase);
+        String eventType = previousStatus == KycCaseStatus.APPROVED && targetStatus != KycCaseStatus.EXPIRED
+                ? "KYC_CASE_REOPENED"
+                : "KYC_CASE_AUTO_STATUS_SYNC";
+        publishAutomationEvent(eventType, kycCase);
     }
 
     private void attachOrRefreshKycDocument(KycCase kycCase, Document document) {
@@ -223,7 +261,8 @@ public class KycAutomationServiceImpl implements KycAutomationService {
     }
 
     private void recomputeCaseState(KycCase kycCase) {
-        List<DocumentRequirement> requirements = requirementRepository.findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(kycCase.getOwnerType());
+        String businessLegalForm = resolveBusinessLegalForm(kycCase.getOwnerType(), kycCase.getOwnerId());
+        List<DocumentRequirement> requirements = filteredRequirements(kycCase.getOwnerType(), null, businessLegalForm);
         List<KycDocument> documents = kycDocumentRepository.findAllByKycCaseOrderByIdAsc(kycCase);
 
         boolean hasRequiredRequirements = requirements.stream().anyMatch(item -> Boolean.TRUE.equals(item.getRequired()));

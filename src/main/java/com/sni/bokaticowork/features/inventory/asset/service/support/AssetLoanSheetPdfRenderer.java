@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.inventory.asset.service.support;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.inventory.asset.model.Asset;
+import lombok.RequiredArgsConstructor;
 import com.sni.bokaticowork.features.inventory.asset.model.AssetAssignment;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
@@ -15,10 +16,12 @@ import java.time.Instant;
 import java.util.Locale;
 
 @Component
+@RequiredArgsConstructor
 public class AssetLoanSheetPdfRenderer {
 
     private static final String TEMPLATE_NAME = "inventory/asset-loan-sheet";
 
+    private final Locale appLocale;
     private final SpringTemplateEngine templateEngine = buildTemplateEngine();
 
     public byte[] render(Asset asset, AssetAssignment assignment) {
@@ -36,7 +39,7 @@ public class AssetLoanSheetPdfRenderer {
     }
 
     private String renderHtml(Asset asset, AssetAssignment assignment) {
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("asset", asset);
         context.setVariable("assignment", assignment);
         context.setVariable("generatedAt", Instant.now().toString());

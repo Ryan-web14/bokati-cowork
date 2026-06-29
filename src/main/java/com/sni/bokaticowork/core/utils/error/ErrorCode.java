@@ -25,6 +25,7 @@ public final class ErrorCode {
     public static final String INVALID_TOKEN = "INVALID_TOKEN";
     public static final String TOKEN_EXPIRED = "TOKEN_EXPIRED";
     public static final String BAD_CREDENTIALS = "BAD_CREDENTIALS";
+    public static final String ACCOUNT_LOCKED = "ACCOUNT_LOCKED";
 
     // Server errors
     public static final String INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR";

@@ -12,28 +12,27 @@ import com.microsoft.graph.models.Recipient;
 import com.microsoft.graph.serviceclient.GraphServiceClient;
 import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody;
 import com.sni.bokaticowork.core.communication.mailService.config.MicrosoftGraphMailProperties;
+import com.sni.bokaticowork.core.communication.mailService.dto.EmailRabbitMessage;
 import com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse;
+import com.sni.bokaticowork.core.communication.mailService.enums.EmailPriority;
 import com.sni.bokaticowork.core.communication.mailService.model.EmailDeliveryLog;
 import com.sni.bokaticowork.core.communication.mailService.service.EmailDeliveryTracker;
+import com.sni.bokaticowork.core.communication.mailService.service.EmailRabbitPublisher;
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.microsoft.graph.models.InternetMessageHeader;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
 @Slf4j
@@ -48,6 +47,7 @@ public class DefaultEmailSender {
     private final MicrosoftGraphMailProperties graphProperties;
     private final EmailDeliveryTracker deliveryTracker;
     private final Executor taskExecutor;
+    private final EmailRabbitPublisher rabbitPublisher;
     private volatile GraphServiceClient graphClient;
 
     @Value("${spring.mail.microsoft.graph.sender-email:no-reply@elleaose.com}")
@@ -56,21 +56,33 @@ public class DefaultEmailSender {
     public DefaultEmailSender(ObjectProvider<JavaMailSender> mailSenderProvider,
                               MicrosoftGraphMailProperties graphProperties,
                               EmailDeliveryTracker deliveryTracker,
-                              @Qualifier("taskExecutor") Executor taskExecutor) {
+                              @Qualifier("taskExecutor") Executor taskExecutor,
+                              EmailRabbitPublisher rabbitPublisher) {
         this.mailSender = mailSenderProvider.getIfAvailable();
         this.graphProperties = graphProperties;
         this.deliveryTracker = deliveryTracker;
         this.taskExecutor = taskExecutor;
+        this.rabbitPublisher = rabbitPublisher;
     }
+
+    // ─────────────────── Async methods → publish to RabbitMQ ───────────────────
 
     public CompletableFuture<Boolean> sendEmail(String to, String subject, String content) {
         EmailDeliveryResponse delivery = createDelivery(to, subject, content, false, null, null);
-        return CompletableFuture.supplyAsync(() -> processQueued(delivery.emailNumber()), taskExecutor);
+        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                null, null, null, null);
+        return CompletableFuture.completedFuture(true);
     }
 
     public CompletableFuture<Boolean> sendHtmlEmail(String to, String subject, String content) throws MessagingException {
+        return sendHtmlEmail(to, subject, content, EmailPriority.NORMAL);
+    }
+
+    public CompletableFuture<Boolean> sendHtmlEmail(String to, String subject, String content, EmailPriority priority) throws MessagingException {
         EmailDeliveryResponse delivery = createDelivery(to, subject, content, true, null, null);
-        return CompletableFuture.supplyAsync(() -> processQueued(delivery.emailNumber()), taskExecutor);
+        publishToRabbit(delivery.emailNumber(), to, subject, content, priority,
+                null, null, null, null);
+        return CompletableFuture.completedFuture(true);
     }
 
     public CompletableFuture<Boolean> sendHtmlEmailWithInlineImage(String to,
@@ -79,10 +91,9 @@ public class DefaultEmailSender {
                                                                     String contentId,
                                                                     byte[] imageBytes) {
         EmailDeliveryResponse delivery = createDelivery(to, subject, content, true, null, null);
-        return CompletableFuture.supplyAsync(
-                () -> processQueuedWithInlineImage(delivery.emailNumber(), contentId, imageBytes),
-                taskExecutor
-        );
+        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                null, null, contentId, imageBytes);
+        return CompletableFuture.completedFuture(true);
     }
 
     public CompletableFuture<Boolean> sendHtmlEmailWithPdfAttachment(String to,
@@ -91,10 +102,9 @@ public class DefaultEmailSender {
                                                                      String attachmentName,
                                                                      byte[] attachmentBytes) {
         EmailDeliveryResponse delivery = createDelivery(to, subject, content, true, null, null);
-        return CompletableFuture.supplyAsync(
-                () -> processQueuedWithPdfAttachment(delivery.emailNumber(), attachmentName, attachmentBytes),
-                taskExecutor
-        );
+        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                attachmentName, attachmentBytes, null, null);
+        return CompletableFuture.completedFuture(true);
     }
 
     public EmailDeliveryResponse queueEmail(String to, String subject, String content, boolean html) {
@@ -108,7 +118,8 @@ public class DefaultEmailSender {
                                             String relatedType,
                                             String relatedCode) {
         EmailDeliveryResponse delivery = createDelivery(to, subject, content, html, relatedType, relatedCode);
-        CompletableFuture.runAsync(() -> processQueued(delivery.emailNumber()), taskExecutor);
+        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                null, null, null, null);
         return delivery;
     }
 
@@ -123,15 +134,35 @@ public class DefaultEmailSender {
                 providerName(), from, to, subject,
                 html ? BODY_TYPE_HTML : BODY_TYPE_TEXT,
                 content, relatedType, relatedCode);
-        CompletableFuture.runAsync(() -> processQueued(delivery.emailNumber()), taskExecutor);
+        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                null, null, null, null);
         return delivery;
     }
 
     public EmailDeliveryResponse retry(String emailNumber) {
         EmailDeliveryResponse delivery = deliveryTracker.resetForRetry(emailNumber);
-        CompletableFuture.runAsync(() -> processQueued(emailNumber), taskExecutor);
+        EmailDeliveryLog log = deliveryTracker.markSending(emailNumber);
+        deliveryTracker.resetForRetry(emailNumber);
+        publishToRabbit(emailNumber, log.getRecipientEmail(), log.getSubject(), log.getBodyContent(),
+                EmailPriority.NORMAL, null, null, null, null);
         return delivery;
     }
+
+    private void publishToRabbit(String emailNumber, String to, String subject, String content,
+                                 EmailPriority priority,
+                                 String attachmentName, byte[] attachmentBytes,
+                                 String inlineImageContentId, byte[] inlineImageBytes) {
+        EmailRabbitMessage message = new EmailRabbitMessage(
+                emailNumber, to, null, subject, content, priority,
+                null, null, null, null, null,
+                attachmentName, attachmentBytes,
+                inlineImageContentId, inlineImageBytes,
+                0, Instant.now()
+        );
+        rabbitPublisher.publishEmail(message);
+    }
+
+    // ─────────────── Blocking methods — used by EmailConsumer only ─────────────
 
     private EmailDeliveryResponse createDelivery(String to,
                                                  String subject,
@@ -151,102 +182,6 @@ public class DefaultEmailSender {
         );
     }
 
-    private boolean processQueued(String emailNumber) {
-        EmailDeliveryLog delivery = deliveryTracker.markSending(emailNumber);
-        try {
-            boolean sent = sendNow(delivery);
-            if (sent) {
-                deliveryTracker.markSent(emailNumber);
-            } else {
-                deliveryTracker.markFailed(emailNumber, "Email provider returned failure");
-            }
-            return sent;
-        } catch (Exception ex) {
-            deliveryTracker.markFailed(emailNumber, ex.getMessage());
-            log.error("Failed to process email delivery {}", emailNumber, ex);
-            return false;
-        }
-    }
-
-    private boolean processQueuedWithInlineImage(String emailNumber, String contentId, byte[] imageBytes) {
-        EmailDeliveryLog delivery = deliveryTracker.markSending(emailNumber);
-        try {
-            boolean sent = sendWithGraphInlineImage(
-                    resolveDeliverySender(delivery),
-                    delivery.getRecipientEmail(),
-                    delivery.getSubject(),
-                    delivery.getBodyContent(),
-                    contentId,
-                    imageBytes
-            );
-            if (sent) {
-                deliveryTracker.markSent(emailNumber);
-            } else {
-                deliveryTracker.markFailed(emailNumber, "Email provider returned failure");
-            }
-            return sent;
-        } catch (Exception ex) {
-            deliveryTracker.markFailed(emailNumber, ex.getMessage());
-            log.error("Failed to process email delivery {} with inline image", emailNumber, ex);
-            throw new CompletionException(ex);
-        }
-    }
-
-    private boolean processQueuedWithPdfAttachment(String emailNumber, String attachmentName, byte[] attachmentBytes) {
-        EmailDeliveryLog delivery = deliveryTracker.markSending(emailNumber);
-        try {
-            boolean sent = sendWithGraphPdfAttachment(
-                    resolveDeliverySender(delivery),
-                    delivery.getRecipientEmail(),
-                    delivery.getSubject(),
-                    delivery.getBodyContent(),
-                    attachmentName,
-                    attachmentBytes
-            );
-            if (sent) {
-                deliveryTracker.markSent(emailNumber);
-            } else {
-                deliveryTracker.markFailed(emailNumber, "Email provider returned failure");
-            }
-            return sent;
-        } catch (Exception ex) {
-            deliveryTracker.markFailed(emailNumber, ex.getMessage());
-            log.error("Failed to process email delivery {} with PDF attachment", emailNumber, ex);
-            throw new CompletionException(ex);
-        }
-    }
-
-    private boolean sendNow(EmailDeliveryLog delivery) {
-        boolean html = BODY_TYPE_HTML.equalsIgnoreCase(delivery.getBodyType());
-        List<InternetMessageHeader> headers = buildThreadingHeaders(delivery.getRelatedType(), delivery.getRelatedCode());
-        return sendWithGraph(resolveDeliverySender(delivery), delivery.getRecipientEmail(),
-                delivery.getSubject(), delivery.getBodyContent(), html, headers);
-    }
-
-    private List<InternetMessageHeader> buildThreadingHeaders(String relatedType, String relatedCode) {
-        if (!"SUPPORT_TICKET".equals(relatedType) || !StringUtils.hasText(relatedCode)) {
-            return Collections.emptyList();
-        }
-        InternetMessageHeader threadTopic = new InternetMessageHeader();
-        threadTopic.setName("X-Thread-Topic");
-        threadTopic.setValue("[Support] Ticket " + relatedCode);
-
-        InternetMessageHeader ticketRef = new InternetMessageHeader();
-        ticketRef.setName("X-Support-Ticket");
-        ticketRef.setValue(relatedCode);
-
-        return List.of(threadTopic, ticketRef);
-    }
-
-    private String resolveDeliverySender(EmailDeliveryLog delivery) {
-        return StringUtils.hasText(delivery.getFromEmail()) ? delivery.getFromEmail() : resolveOutboundMailboxEmail();
-    }
-
-    /**
-     * Envoi synchrone direct via Graph — utilisé par les processors outbox.
-     * Bloque le thread appelant jusqu'à la réponse de l'API.
-     * Lance une exception si l'envoi échoue → l'outbox peut retenter.
-     */
     public boolean sendHtmlEmailBlocking(String to, String subject, String content) {
         return sendWithGraph(resolveOutboundMailboxEmail(), to, subject, content, true);
     }
@@ -259,49 +194,15 @@ public class DefaultEmailSender {
         return sendWithGraphPdfAttachment(resolveOutboundMailboxEmail(), to, subject, content, attachmentName, attachmentBytes);
     }
 
-    private boolean sendTextWithSmtp(String to, String subject, String content) {
-        try {
-            if (mailSender == null) {
-                throw new IllegalStateException("No email provider configured. Microsoft Graph is incomplete and JavaMailSender is unavailable");
-            }
-            SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom(resolveOutboundMailboxEmail());
-            mail.setTo(to);
-            mail.setSubject(subject);
-            mail.setText(content);
-
-            mailSender.send(mail);
-            log.info("Email sent to {}", to);
-            return true;
-        } catch (MailException ex) {
-            log.error("Error while sending email to {}", to, ex);
-            throw new IllegalStateException("SMTP send failed: " + ex.getMessage(), ex);
-        }
+    public boolean sendWithGraphInlineImageBlocking(String to,
+                                                     String subject,
+                                                     String content,
+                                                     String contentId,
+                                                     byte[] imageBytes) {
+        return sendWithGraphInlineImage(resolveOutboundMailboxEmail(), to, subject, content, contentId, imageBytes);
     }
 
-    private boolean sendHtmlWithSmtp(String to, String subject, String content) throws MessagingException {
-        try {
-            if (mailSender == null) {
-                throw new IllegalStateException("No email provider configured. Microsoft Graph is incomplete and JavaMailSender is unavailable");
-            }
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(resolveOutboundMailboxEmail());
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(content, true);
-
-            mailSender.send(message);
-            log.info("HTML email sent to {}", to);
-            return true;
-        } catch (MessagingException ex) {
-            throw ex;
-        } catch (Exception ex) {
-            log.error("Failed to send HTML email to {}", to, ex);
-            throw new IllegalStateException("SMTP HTML send failed: " + ex.getMessage(), ex);
-        }
-    }
+    // ─────────────────── Microsoft Graph API implementation ───────────────────
 
     private boolean sendWithGraph(String sender, String to, String subject, String content, boolean html) {
         return sendWithGraph(sender, to, subject, content, html, Collections.emptyList());
@@ -441,15 +342,11 @@ public class DefaultEmailSender {
         return client;
     }
 
-
-
     private String providerName() {
-
         return graphProperties.getSenderEmail();
     }
 
     private String resolveOutboundMailboxEmail() {
-
         if (StringUtils.hasText(graphProperties.getSenderEmail())) {
             return graphProperties.getSenderEmail().trim();
         }

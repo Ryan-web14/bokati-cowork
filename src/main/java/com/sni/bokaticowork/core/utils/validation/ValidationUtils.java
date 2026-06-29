@@ -16,14 +16,11 @@ public class ValidationUtils {
     }
 
     public static boolean validatePhoneNumber(String str){
-
-        if(str.isEmpty()){
-            return true;
+        if(str == null || str.isEmpty()){
+            return false;
         }
-
         String cleanPhone = str.replaceAll("\\s+", "");
-
-        return !PHONE_PATTERN.matcher(cleanPhone).matches();
+        return PHONE_PATTERN.matcher(cleanPhone).matches();
     }
 
     public static boolean validateEmail(String str){

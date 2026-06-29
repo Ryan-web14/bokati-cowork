@@ -113,6 +113,19 @@ public class Document {
     @Column(name = "space_reference_code", length = 100)
     private String spaceReferenceCode;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id", foreignKey = @ForeignKey(name = "fk_document_folder"))
+    private DocumentFolder folder;
+
+    @Column(name = "locked_by")
+    private Long lockedBy;
+
+    @Column(name = "locked_at")
+    private Instant lockedAt;
+
+    @Column(name = "lock_expires_at")
+    private Instant lockExpiresAt;
+
     @Builder.Default
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;

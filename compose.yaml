@@ -59,6 +59,26 @@ services:
     volumes:
       - redis-data:/data
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: bokati-rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+      - '61613:61613'
+    environment:
+      RABBITMQ_DEFAULT_USER: bokati
+      RABBITMQ_DEFAULT_PASS: bokati_dev
+      RABBITMQ_DEFAULT_VHOST: bokati
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
     container_name: bokati-minio
@@ -78,6 +98,7 @@ volumes:
   dev_db_data:
   pgadmin_data:
   redis-data:
+  rabbitmq-data:
   minio-data:
 
 networks:

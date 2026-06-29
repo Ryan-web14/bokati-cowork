@@ -74,6 +74,7 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final SpringTemplateEngine templateEngine;
     private final ObjectMapper objectMapper;
+    private final Locale appLocale;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
     private String verifyBaseUrl;
@@ -272,10 +273,10 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
     }
 
     private String renderHtml(PaymentReceiptResponse receipt) {
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("receipt", receipt);
         context.setVariable("generatedAt", LocalDate.now());
-        context.setVariable("fmt", new PaymentReceiptTemplateFormatter(receipt.currency(), objectMapper));
+        context.setVariable("fmt", new PaymentReceiptTemplateFormatter(receipt.currency(), objectMapper, appLocale));
         context.setVariable("qrCode", generateQrCode(receipt));
         context.setVariable("logo", loadLogoBase64());
         return templateEngine.process("payment/receipt", context);
@@ -343,17 +344,19 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
 
         private final String currency;
         private final ObjectMapper objectMapper;
+        private final Locale locale;
 
-        public PaymentReceiptTemplateFormatter(String currency, ObjectMapper objectMapper) {
+        public PaymentReceiptTemplateFormatter(String currency, ObjectMapper objectMapper, Locale locale) {
             this.currency = currency;
             this.objectMapper = objectMapper;
+            this.locale = locale;
         }
 
         public String money(BigDecimal amount) {
             if (amount == null) {
                 return EMPTY_VALUE;
             }
-            NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+            NumberFormat nf = NumberFormat.getNumberInstance(locale);
             nf.setMaximumFractionDigits(0);
             nf.setMinimumFractionDigits(0);
             String formatted = nf.format(amount.setScale(0, RoundingMode.HALF_UP));

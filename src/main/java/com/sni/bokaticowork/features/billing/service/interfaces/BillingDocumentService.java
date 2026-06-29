@@ -59,4 +59,7 @@ public interface BillingDocumentService {
     BillingDocument applyPayment(String documentNumber, BigDecimal amount);
     BillingDocument reversePayment(String documentNumber, BigDecimal amount);
     BillingDocument cancelAndArchive(String documentNumber, String reason);
+
+    /** Valide fiscalement le document (SEFC) : assigne le numéro définitif et verrouille. */
+    BillingDocumentResponse validate(String documentNumber);
 }

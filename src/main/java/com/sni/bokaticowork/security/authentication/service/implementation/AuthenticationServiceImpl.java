@@ -3,6 +3,7 @@ package com.sni.bokaticowork.security.authentication.service.implementation;
 
 import com.sni.bokaticowork.core.audit.dto.response.UserSessionToken;
 import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
+import com.sni.bokaticowork.core.exception.customs.AccountLockedException;
 import com.sni.bokaticowork.core.exception.customs.BadCredentialException;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -30,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -173,8 +175,11 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                 .password(request.getPassword())
                 .phone(request.getPhone())
                 .whatsappPhone(request.getWhatsappPhone())
-                .customerType(request.getCustomerType())
-                .companyName(request.getCompanyName())
+                .customerType("PERSON")
+                .address(request.getAddress())
+                .birthDate(request.getBirthDate())
+                .gender(request.getGender())
+                .preferredCommunicationChannel(request.getPreferredCommunicationChannel())
                 .generatePassword(false)
                 .build();
         userProvisioningService.registerMemberFromPortal(createReq);
@@ -244,7 +249,10 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
             UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
             sessionService.invalidateOldestSessionByUser(principal.getUser());
             return createSessionAndResponse(request, principal);
-        }catch (AuthenticationException e){
+        } catch (LockedException e) {
+            log.warn("Login attempt on locked account: {}", token.getPrincipal());
+            throw new AccountLockedException("Your account is locked. Use the unlock-account flow to regain access.");
+        } catch (AuthenticationException e){
             Object principal = token.getPrincipal();
             if (principal instanceof String email) {
                 userService.recordLoginFailure(email);
@@ -268,7 +276,6 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                 principal.getAuthorities()
         );
 
-        authToken.setAuthenticated(true);
         authToken.setDetails((new WebAuthenticationDetailsSource().buildDetails(request)));
         SecurityContextHolder.getContext().setAuthentication(authToken);
 

@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.notification.repository;
 
+import com.sni.bokaticowork.features.notification.enums.NotificationChannel;
 import com.sni.bokaticowork.features.notification.enums.NotificationDeliveryStatus;
 import com.sni.bokaticowork.features.notification.model.NotificationMessage;
 import org.springframework.data.domain.Page;
@@ -31,6 +32,20 @@ public interface NotificationMessageRepository extends JpaRepository<Notificatio
     List<NotificationMessage> findByRecipientEmailAndReadAtIsNullAndStatusInOrderBySentAtDesc(String recipientEmail,
                                                                                                Set<NotificationDeliveryStatus> statuses,
                                                                                                Pageable pageable);
+
+    long countByRecipientEmailAndReadAtIsNullAndStatusIn(String recipientEmail,
+                                                         Set<NotificationDeliveryStatus> statuses);
+
+    List<NotificationMessage> findByRecipientEmailAndChannelAndReadAtIsNullAndStatusInOrderBySentAtDesc(
+            String recipientEmail,
+            NotificationChannel channel,
+            Set<NotificationDeliveryStatus> statuses,
+            Pageable pageable);
+
+    long countByRecipientEmailAndChannelAndReadAtIsNullAndStatusIn(
+            String recipientEmail,
+            NotificationChannel channel,
+            Set<NotificationDeliveryStatus> statuses);
 
     @Modifying
     @Transactional

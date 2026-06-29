@@ -49,28 +49,29 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
     private final CashRequestService cashRequestService;
     private final CashStatisticsService cashStatisticsService;
     private final SpringTemplateEngine templateEngine;
+    private final Locale appLocale;
 
     @Override
     public byte[] generateMovementDocument(String movementNumber) {
         CashMovement movement = movement(movementNumber);
         CashMovementResponse response = cashRegisterMapper.toCashMovementResponse(movement);
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("movement", response);
         context.setVariable("docTypeLabel", documentTypeLabel(response.documentType(), response.movementType()));
         context.setVariable("generatedAt", Instant.now());
-        context.setVariable("fmt", new CashDocumentTemplateFormatter());
+        context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
         return renderToPdf(templateEngine.process("cash/movement-document", context));
     }
 
     @Override
     public byte[] generateRequestDocument(String requestNumber) {
         CashRequestResponse request = cashRequestService.get(requestNumber);
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("request", request);
         context.setVariable("requestTypeLabel", requestTypeLabel(request.requestType()));
         context.setVariable("statusLabel", requestStatusLabel(request.status()));
         context.setVariable("generatedAt", Instant.now());
-        context.setVariable("fmt", new CashDocumentTemplateFormatter());
+        context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
         return renderToPdf(templateEngine.process("cash/request-document", context));
     }
 
@@ -84,13 +85,13 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
                 .map(cashRegisterMapper::toCashMovementResponse)
                 .toList();
 
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("summary", summary);
         context.setVariable("statistics", statistics);
         context.setVariable("movements", movements);
         context.setVariable("reviewedBy", session.getReviewedBy());
         context.setVariable("generatedAt", Instant.now());
-        context.setVariable("fmt", new CashDocumentTemplateFormatter());
+        context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
         return renderToPdf(templateEngine.process("cash/session-closing-report", context));
     }
 
@@ -186,6 +187,12 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
+        private final Locale locale;
+
+        public CashDocumentTemplateFormatter(Locale locale) {
+            this.locale = locale;
+        }
+
         public String money(BigDecimal amount) {
             return money(amount, null);
         }
@@ -194,7 +201,7 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
             if (amount == null) {
                 return EMPTY_VALUE;
             }
-            NumberFormat nf = NumberFormat.getNumberInstance(Locale.FRANCE);
+            NumberFormat nf = NumberFormat.getNumberInstance(locale);
             nf.setMaximumFractionDigits(0);
             nf.setMinimumFractionDigits(0);
             String formatted = nf.format(amount.setScale(0, RoundingMode.HALF_UP));

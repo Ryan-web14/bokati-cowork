@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.subscription.subscription.service.implemen
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreatePassPurchaseRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreatePassRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.PassResponse;
 import com.sni.bokaticowork.features.subscription.subscription.mapper.interfaces.SubscriptionPassMapper;
@@ -13,6 +14,7 @@ import com.sni.bokaticowork.features.subscription.repository.specification.speci
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.PassService;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.pass.PassCreationOperator;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.pass.PassLifecycleOperator;
+import com.sni.bokaticowork.features.subscription.subscription.service.support.pass.PassRenewalOperator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class PassServiceImpl implements PassService {
     private final SubscriptionPassMapper responseMapper;
     private final PassCreationOperator creationOperator;
     private final PassLifecycleOperator lifecycleOperator;
+    private final PassRenewalOperator renewalOperator;
 
     @Override
     public PassResponse create(CreatePassRequest request) {
@@ -63,7 +66,22 @@ public class PassServiceImpl implements PassService {
     }
 
     @Override
+    public PassResponse purchase(String planCode, CreatePassPurchaseRequest request) {
+        return responseMapper.toResponse(creationOperator.createFromPlan(planCode, request));
+    }
+
+    @Override
+    public PassResponse activate(String passNumber, String reason) {
+        return responseMapper.toResponse(lifecycleOperator.activate(getForService(passNumber), reason, "ADMIN"));
+    }
+
+    @Override
     public int expirePasses() {
         return lifecycleOperator.expirePasses();
+    }
+
+    @Override
+    public int renewDuePasses() {
+        return renewalOperator.renewDuePasses();
     }
 }

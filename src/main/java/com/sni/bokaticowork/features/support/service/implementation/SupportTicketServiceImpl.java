@@ -36,6 +36,7 @@ import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -75,6 +76,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     @Lazy private final NotificationService notificationService;
     @Lazy private final SupportEmailService emailService;
     @Lazy private final TaskManagementService taskManagementService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // ── Création ─────────────────────────────────────────────────
 
@@ -274,6 +276,15 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                 notifyAgentClientReplied(ticket, message);
             }
         }
+
+        TicketMessageResponse wsPayload = mapper.toMessageResponse(message);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                messagingTemplate.convertAndSend(
+                        "/topic/support/tickets/" + ticketNumber, wsPayload);
+            }
+        });
 
         return get(ticketNumber);
     }
@@ -620,6 +631,15 @@ public class SupportTicketServiceImpl implements SupportTicketService {
             emailService.sendClientMessage(ticket, message);
         }
         notifyAgentClientReplied(ticket, message);
+
+        TicketMessageResponse wsPayload = mapper.toMessageResponse(message);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                messagingTemplate.convertAndSend(
+                        "/topic/support/tickets/" + ticketNumber, wsPayload);
+            }
+        });
 
         return get(ticketNumber);
     }

@@ -30,7 +30,13 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
 
     @Override
     public void process(OutboxEvent event) {
-        JsonNode payload     = readPayload(event);
+        JsonNode payload = readPayload(event);
+
+        if ("CONTRACT_SIGNING_REQUESTED".equals(event.getEventType())) {
+            processSigningRequest(event, payload);
+            return;
+        }
+
         DocumentOwnerType ownerType = enumValue(payload, "ownerType", DocumentOwnerType.class);
         String ownerCode     = textValue(payload, "ownerCode");
         String documentCode  = textValue(payload, "documentCode");
@@ -57,6 +63,32 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
 
         mailService.sendContractNotification(recipient.email(), vars);
         log.info("Contract notification sent to {} for event={}", recipient.email(), event.getEventType());
+    }
+
+    private void processSigningRequest(OutboxEvent event, JsonNode payload) {
+        String signerEmail   = textValue(payload, "signerEmail");
+        String signerName    = textValue(payload, "signerName");
+        String contractCode  = textValue(payload, "contractCode");
+        String contractTitle = textValue(payload, "contractTitle");
+        String signingUrl    = textValue(payload, "signingUrl");
+        String expiresAt     = textValue(payload, "expiresAt");
+
+        log.info("Processing CONTRACT_SIGNING_REQUESTED contract={} signer={}", contractCode, signerEmail);
+
+        if (!StringUtils.hasText(signerEmail)) {
+            throw new IllegalStateException("CONTRACT_SIGNING_REQUESTED missing signerEmail");
+        }
+
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", StringUtils.hasText(signerName) ? signerName : "signataire");
+        vars.put("contractCode", contractCode);
+        vars.put("contractTitle", contractTitle);
+        vars.put("signingUrl", signingUrl);
+        vars.put("expiresAt", expiresAt);
+        vars.put("eventType", event.getEventType());
+
+        mailService.sendContractSigningNotification(signerEmail, "Signature requise — " + contractTitle, vars);
+        log.info("Signing request notification sent to {} for contract={}", signerEmail, contractCode);
     }
 
     private JsonNode readPayload(OutboxEvent event) {

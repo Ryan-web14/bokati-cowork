@@ -86,11 +86,23 @@ public class Contract {
     @Column(name = "termination_reason")
     private String terminationReason;
 
+    @Column(name = "suspension_reason")
+    private String suspensionReason;
+
     @Column(name = "draft_document_code")
     private String draftDocumentCode;
 
     @Column(name = "signed_document_code")
     private String signedDocumentCode;
+
+    @Column(name = "renewed_from_code", length = 120)
+    private String renewedFromCode;
+
+    @Column(name = "reviewed_by")
+    private Long reviewedBy;
+
+    @Column(name = "review_comment")
+    private String reviewComment;
 
     @Column(name = "created_by", nullable = false)
     private Long createdBy;

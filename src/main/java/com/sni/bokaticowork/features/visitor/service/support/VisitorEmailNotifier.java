@@ -28,6 +28,7 @@ public class VisitorEmailNotifier {
     private final DefaultEmailSender emailSender;
     private final VisitorPassRepository passRepository;
     private final VisitorQrGenerator qrGenerator;
+    private final Locale appLocale;
 
     private static final String QR_CONTENT_ID = "qr-visitor";
 
@@ -39,7 +40,7 @@ public class VisitorEmailNotifier {
         }
         try {
             byte[] qrBytes = qrGenerator.generateBytes(pass.getQrValue());
-            Context ctx = new Context(Locale.FRANCE);
+            Context ctx = new Context(appLocale);
             ctx.setVariable("visitorName",  visitor.getFullName());
             ctx.setVariable("visitorEmail", visitor.getEmail());
             ctx.setVariable("hostName",     pass.getHostName());

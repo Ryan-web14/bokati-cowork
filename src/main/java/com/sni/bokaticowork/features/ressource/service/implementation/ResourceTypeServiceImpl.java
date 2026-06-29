@@ -178,6 +178,26 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
         return new PaginatedResponse<>(new PageImpl<>(responses));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResourceTypeResponse> listActive() {
+        return typeRepository.findAllActive().stream()
+                .map(typeMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ResourceTypeResponse> searchActive(String query) {
+        if (!StringUtils.hasText(query)) {
+            throw new BadRequestException("Search query is required");
+        }
+        return typeRepository.basicSearch(query.trim()).stream()
+                .filter(t -> Boolean.TRUE.equals(t.getActive()))
+                .map(typeMapper::toResponse)
+                .toList();
+    }
+
     private List<String> validateForCreate(CreateResourceTypeRequest request) {
         List<String> errors = new ArrayList<>();
 

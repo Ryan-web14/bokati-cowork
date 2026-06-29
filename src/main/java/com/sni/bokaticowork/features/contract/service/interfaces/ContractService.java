@@ -18,6 +18,8 @@ public interface ContractService {
     ContractResponse updateStatus(String contractCode, UpdateContractStatusRequest request);
     ContractResponse markGenerated(String contractCode, String documentCode);
     ContractResponse markSigned(String contractCode, String documentCode);
+    ContractResponse approveReview(String contractCode, Long reviewedBy, String comment);
+    ContractResponse rejectReview(String contractCode, Long reviewedBy, String comment);
     ContractResponse activate(String contractCode);
     ContractResponse suspend(String contractCode, String reason);
     ContractResponse terminate(String contractCode, String reason);

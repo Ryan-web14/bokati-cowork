@@ -247,7 +247,12 @@ class BillableItemInvoiceSupportTest {
                 null,
                 null,
                 null,
-                List.of()
+                List.of(),
+                // SEFC fields
+                null, null, null, null,
+                null, null, null, null,
+                null, null,
+                null, null, null, null
         );
     }
 }

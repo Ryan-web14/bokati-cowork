@@ -201,6 +201,22 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     List<BillingDocument> findForAgingReport(@Param("customerType") String customerType,
                                              @Param("customerCode") String customerCode);
 
+    /**
+     * Récupère le hash du dernier document validé pour un type donné (chaînage SHA-256).
+     * FOR UPDATE SKIP LOCKED sérialise les validations concurrentes du même type.
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT current_hash
+            FROM billing_document
+            WHERE document_type = :type
+              AND locked = TRUE
+              AND current_hash IS NOT NULL
+            ORDER BY validated_at DESC
+            LIMIT 1
+            FOR UPDATE SKIP LOCKED
+            """)
+    java.util.Optional<String> findLastValidatedHash(@Param("type") String type);
+
     @Query(nativeQuery = true, value = """
             UPDATE billing_document
             SET status = 'OVERDUE', updated_at = NOW()
@@ -224,4 +240,13 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
             LIMIT :limit
             """)
     List<BillingDocument> findOverdueReminderCandidates(@Param("limit") int limit);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM billing_document
+            WHERE document_type = :type
+              AND locked = TRUE
+            ORDER BY validated_at ASC
+            """)
+    List<BillingDocument> findAllValidatedOrderByValidatedAt(@Param("type") String type);
 }

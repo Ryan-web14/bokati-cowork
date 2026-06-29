@@ -128,6 +128,8 @@ public interface MemberRepository extends JpaRepository<Member, Long>, JpaSpecif
     )
     List<String> fuzzySearchMemberIds(@Param("query") String query);
 
+    boolean existsByCustomerAndDeletedFalseAndIdNot(Customer customer, Long id);
+
     Page<Member> findAllByCustomerAndDeletedFalse(Customer customer, Pageable pageable);
 
     @Query(

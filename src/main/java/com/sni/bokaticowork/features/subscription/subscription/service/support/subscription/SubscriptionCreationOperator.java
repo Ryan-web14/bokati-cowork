@@ -27,6 +27,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.S
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPeriodCalculator;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPlanResolver;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionCodeFactory;
+import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -57,6 +58,7 @@ public class SubscriptionCreationOperator {
     private final BillingTaxRuleResolver taxRuleResolver;
     private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionEmailNotifier emailNotifier;
+    private final MemberInAppNotifier memberInAppNotifier;
     private final WalletService walletService;
     private final WalletHoldService walletHoldService;
 
@@ -115,7 +117,7 @@ public class SubscriptionCreationOperator {
 
         eventWriter.writeHistory(saved, null, saved.getStatus(), "Creation", "SYSTEM");
         eventWriter.writeEvent(saved, SubscriptionEventType.SUBSCRIPTION_CREATED, null);
-        emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
+        notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
         billingSupport.createBillableItem(saved, "SUBSCRIPTION_SETUP", "Initial subscription charge");
 
@@ -231,5 +233,37 @@ public class SubscriptionCreationOperator {
     private record PriceAmounts(BigDecimal subtotalAmount,
                                 BigDecimal taxAmount,
                                 BigDecimal totalAmount) {
+    }
+
+    private void notifyInApp(Subscription subscription, SubscriptionEventType eventType) {
+        String email = resolveRecipientEmail(subscription);
+        String name = resolveRecipientName(subscription);
+        String subject = "Abonnement cree " + subscription.getSubscriptionNumber();
+        memberInAppNotifier.notify(
+                eventType.name(), "SUBSCRIPTION", subscription.getSubscriptionNumber(),
+                email, name, subscription.getSubscriberCode(), subject,
+                java.util.Map.of(
+                        "subscriptionNumber", subscription.getSubscriptionNumber(),
+                        "status", subscription.getStatus() != null ? subscription.getStatus().name() : "",
+                        "planName", subscription.getPlanVersion() != null ? subscription.getPlanVersion().getName() : ""
+                )
+        );
+    }
+
+    private String resolveRecipientEmail(Subscription subscription) {
+        if (subscription.getMember() != null) return subscription.getMember().getEmail();
+        if (subscription.getCustomer() != null) {
+            return StringUtils.hasText(subscription.getCustomer().getBillingEmail())
+                    ? subscription.getCustomer().getBillingEmail() : subscription.getCustomer().getEmail();
+        }
+        if (subscription.getBusinessEntity() != null) return subscription.getBusinessEntity().getEmail();
+        return null;
+    }
+
+    private String resolveRecipientName(Subscription subscription) {
+        if (subscription.getMember() != null) return subscription.getMember().getDisplayName();
+        if (subscription.getCustomer() != null) return subscription.getCustomer().getFirstname();
+        if (subscription.getBusinessEntity() != null) return subscription.getBusinessEntity().getName();
+        return subscription.getSubscriberCode();
     }
 }

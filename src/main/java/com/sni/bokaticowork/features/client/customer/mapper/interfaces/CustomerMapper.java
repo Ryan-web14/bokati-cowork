@@ -48,9 +48,14 @@ public interface CustomerMapper {
     Customer updateEntity(Customer customer, CustomerRequest request);
 
     default CustomerSummaryresponse toSummary(Customer customer){
-
-        String name = customer.getType() == CustomerType.COMPANY ?
-                customer.getCompanyName() : customer.getFirstname() + " " + customer.getLastname();
+        String name;
+        if (customer.getType() == CustomerType.COMPANY) {
+            name = customer.getCompanyName() != null ? customer.getCompanyName() : "";
+        } else {
+            String first = customer.getFirstname() != null ? customer.getFirstname() : "";
+            String last = customer.getLastname() != null ? customer.getLastname() : "";
+            name = (first + " " + last).trim();
+        }
 
         return CustomerSummaryresponse.builder()
                 .id(customer.getId())
@@ -58,7 +63,7 @@ public interface CustomerMapper {
                 .displayName(name)
                 .email(customer.getEmail())
                 .phone(customer.getPhone())
-                .status(customer.getStatus().name())
+                .status(customer.getStatus() != null ? customer.getStatus().name() : null)
                 .build();
     }
 

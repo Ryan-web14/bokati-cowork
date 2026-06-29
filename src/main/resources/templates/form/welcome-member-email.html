@@ -1,247 +1,367 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenue parmi les membres — Elle A Osé</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-        .wrap { width: 100%; padding: 56px 16px; background: #f0eef5; }
-        .card { max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 20px 60px rgba(26,10,46,.14); }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenue parmi les membres — Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Header */
-        .email-header { background: #1a0a2e; padding: 30px 40px 26px; }
-        .hdr-table { width: 100%; border-collapse: collapse; }
-        .hdr-table td { vertical-align: middle; border: none; padding: 0; }
-        .brand-mark { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 9px; }
-        .brand-name { font-size: 21px; font-weight: 400; color: #fff; letter-spacing: 6px; text-transform: uppercase; white-space: nowrap; }
-        .brand-sub  { font-size: 8px; color: #9b8caa; letter-spacing: 3px; text-transform: uppercase; margin-top: 7px; }
-        .header-tag { display: inline-block; font-size: 8px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; padding: 6px 13px; border-radius: 2px; border: 1px solid rgba(201,168,76,.5); color: #d4b85f; background: rgba(201,168,76,.12); white-space: nowrap; }
-        .header-rule { height: 1px; background: linear-gradient(90deg, transparent 0%, #c9a84c 18%, #c9a84c 82%, transparent 100%); }
+    body {
+      background: #E8E5E0;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        /* Hero text */
-        .hero { padding: 44px 40px 30px; text-align: center; }
-        .hero-pill { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #c9a84c; border: 1px solid rgba(201,168,76,.4); padding: 5px 16px; border-radius: 20px; margin-bottom: 18px; }
-        .hero-title { font-size: 24px; font-weight: 400; color: #1a0a2e; letter-spacing: -0.3px; line-height: 1.25; margin-bottom: 12px; }
-        .hero-title span { color: #c9a84c; }
-        .hero-sub { font-size: 13px; color: #7c6d8f; line-height: 1.7; max-width: 420px; margin: 0 auto; text-wrap: pretty; }
+    .wrap {
+      width: 100%;
+      padding: 48px 16px;
+      background: #E8E5E0;
+    }
 
-        /* Body */
-        .email-body { padding: 0 40px; }
-        .greeting { font-size: 14px; color: #3d2f52; line-height: 1.75; margin-bottom: 10px; text-align: center; }
-        .message  { font-size: 13px; color: #5c4f6e; line-height: 1.75; margin-bottom: 32px; text-align: center; text-wrap: pretty; }
+    .card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow:
+        0 1px 2px rgba(26,10,46,.05),
+        0 8px 24px rgba(26,10,46,.10),
+        0 28px 56px rgba(26,10,46,.10);
+    }
 
-        /* Member pass card */
-        .pass-zone { padding: 0 40px; margin-bottom: 38px; }
-        .pass { background: #1a0a2e; border-radius: 6px; padding: 28px 28px 26px; position: relative; }
-        .pass-kicker { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px; }
-        .pass-name { font-size: 22px; font-weight: 400; color: #fff; letter-spacing: 1px; margin-bottom: 22px; }
-        .pass-divider { height: 1px; background: repeating-linear-gradient(90deg, rgba(201,168,76,.5) 0 5px, transparent 5px 11px); margin-bottom: 20px; }
-        .pass-grid { width: 100%; border-collapse: collapse; }
-        .pass-grid td { width: 50%; vertical-align: top; border: none; padding: 0; }
-        .pass-grid td + td { padding-left: 24px; border-left: 1px solid rgba(255,255,255,.08); }
-        .pass-cell { padding-bottom: 14px; }
-        .pass-key { font-size: 8px; font-weight: 700; color: #6f5f86; letter-spacing: 1.6px; text-transform: uppercase; margin-bottom: 4px; }
-        .pass-val { font-size: 13.5px; color: #fff; font-weight: 600; }
-        .pass-val.gold { color: #c9a84c; font-family: "Courier New", monospace; letter-spacing: 1px; }
+    /* Header */
+    .em-header {
+      background: #110828;
+      padding: 22px 36px;
+    }
+    .em-brand {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .em-brand-sub {
+      font-size: 8.5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.28);
+      margin-top: 5px;
+    }
+    .em-stripe {
+      height: 2px;
+      background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%);
+    }
 
-        /* Section label */
-        .sec-label { font-size: 9px; font-weight: 700; color: #c9a84c; letter-spacing: 2.4px; text-transform: uppercase; text-align: center; margin-bottom: 20px; }
+    /* Body */
+    .em-body { padding: 44px 40px 40px; }
 
-        /* Steps */
-        .steps-table { width: 100%; border-collapse: collapse; margin-bottom: 36px; }
-        .steps-table td { padding: 11px 0; vertical-align: top; border-bottom: 1px solid #f0eaf8; border: none; }
-        .steps-table tr { border-bottom: 1px solid #f0eaf8; }
-        .steps-table tr:last-child { border-bottom: none; }
-        .step-num { width: 34px; font-size: 11px; font-weight: 700; color: #c9a84c; font-family: "Courier New", monospace; letter-spacing: 1px; padding-top: 1px; }
-        .step-content { padding-left: 4px; }
-        .step-title { font-size: 13px; font-weight: 700; color: #1a0a2e; margin-bottom: 3px; }
-        .step-text  { font-size: 12px; color: #5c4f6e; line-height: 1.6; }
+    .em-doc-title {
+      font-size: 19px;
+      font-weight: 700;
+      color: #1A0A2E;
+      letter-spacing: -0.3px;
+      margin-bottom: 28px;
+    }
+    .wel-greeting {
+      font-size: 12px;
+      font-weight: 600;
+      color: #A898B8;
+      letter-spacing: .2px;
+      margin-bottom: 5px;
+    }
+    .wel-name {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -.6px;
+      line-height: 1.1;
+      color: #1A0A2E;
+      margin-bottom: 22px;
+    }
+    .wel-intro {
+      font-size: 14px;
+      color: #5C4F6E;
+      line-height: 1.75;
+      margin-bottom: 36px;
+    }
 
-        /* Practical grid */
-        .practical-table { width: 100%; border-collapse: collapse; margin-bottom: 36px; }
-        .practical-table td { width: 50%; vertical-align: top; padding: 0; border: none; }
-        .practical-cell { padding: 14px 0; border-bottom: 1px solid #f0eaf8; }
-        .practical-label { font-size: 9px; font-weight: 700; color: #9b8caa; letter-spacing: 1.4px; text-transform: uppercase; margin-bottom: 5px; }
-        .practical-value { font-size: 12.5px; color: #1a0a2e; font-weight: 700; line-height: 1.45; }
-        .practical-value small { display: block; font-size: 10.5px; color: #5c4f6e; font-weight: 400; margin-top: 2px; }
+    /* Info table */
+    .wel-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 36px;
+    }
+    .wel-table tr { border-bottom: 1px solid #EEE9F5; }
+    .wel-table tr:first-child { border-top: 1px solid #EEE9F5; }
+    .wel-table td { padding: 13px 0; vertical-align: middle; }
+    .wel-key {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #B0A0C0;
+      width: 150px;
+    }
+    .wel-val {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1A0A2E;
+    }
 
-        /* CTA */
-        .cta-row { text-align: center; margin-bottom: 30px; }
-        .cta-primary { display: inline-block; background: #1a0a2e; color: #c9a84c; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; padding: 15px 40px; border-radius: 3px; border: 1.5px solid #c9a84c; margin: 0 4px 8px; }
-        .cta-secondary { display: inline-block; color: #1a0a2e; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-decoration: none; padding: 15px 22px; border-radius: 3px; border: 1.5px solid #d8d0e8; margin: 0 4px 8px; }
+    /* Section label */
+    .sec-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #C9A84C;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
 
-        /* Signature */
-        .signature { padding: 18px 22px; border-left: 1px solid #c9a84c; margin: 0 40px 30px; }
-        .signature-text { font-size: 12.5px; color: #3d2f52; line-height: 1.7; font-style: italic; margin-bottom: 12px; text-wrap: pretty; }
-        .signature-name { font-size: 12px; color: #1a0a2e; font-weight: 700; }
-        .signature-role { font-size: 10.5px; color: #7c6d8f; }
+    /* Steps */
+    .steps-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 36px;
+    }
+    .steps-table tr { border-bottom: 1px solid #EEE9F5; }
+    .steps-table tr:last-child { border-bottom: none; }
+    .steps-table td { padding: 11px 0; vertical-align: top; }
+    .step-num {
+      width: 34px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #C9A84C;
+      font-family: "Courier New", monospace;
+      letter-spacing: 1px;
+      padding-top: 1px;
+    }
+    .step-content { padding-left: 4px; }
+    .step-title { font-size: 13px; font-weight: 700; color: #1A0A2E; margin-bottom: 3px; }
+    .step-text  { font-size: 12px; color: #5C4F6E; line-height: 1.6; }
 
-        /* Footer */
-        .email-footer { background: #faf8fd; border-top: 1px solid #f0eaf8; padding: 26px 40px; text-align: center; }
-        .footer-brand { font-size: 13px; font-weight: 400; color: #1a0a2e; letter-spacing: 5px; text-transform: uppercase; margin-bottom: 10px; }
-        .footer-text  { font-size: 10.5px; color: #9b8caa; line-height: 1.7; }
-        .footer-links { margin-top: 10px; font-size: 10.5px; color: #8b5cf6; }
-        .footer-links a { color: #8b5cf6; text-decoration: none; margin: 0 6px; }
-        .footer-made  { font-size: 8.5px; color: #c8bdd8; margin-top: 12px; letter-spacing: 1px; text-transform: uppercase; }
+    /* Practical info */
+    .practical-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 36px;
+    }
+    .practical-table td { width: 50%; vertical-align: top; padding: 0; }
+    .practical-cell { padding: 14px 0; border-bottom: 1px solid #EEE9F5; }
+    .practical-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: #B0A0C0;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .practical-value {
+      font-size: 12.5px;
+      color: #1A0A2E;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    .practical-value small {
+      display: block;
+      font-size: 10.5px;
+      color: #5C4F6E;
+      font-weight: 400;
+      margin-top: 2px;
+    }
 
-        @media only screen and (max-width: 480px) {
-            .email-header, .hero, .email-body, .pass-zone, .signature, .email-footer { padding-left: 24px !important; padding-right: 24px !important; }
-        }
-    </style>
+    /* CTA */
+    .wel-cta-wrap { text-align: center; margin-bottom: 32px; }
+    .wel-cta {
+      display: inline-block;
+      background: #1A0A2E;
+      color: #C9A84C;
+      text-decoration: none;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      padding: 17px 44px;
+      border-radius: 8px;
+    }
+
+    /* Signature */
+    .wel-signature {
+      padding: 18px 22px;
+      border-left: 1px solid #C9A84C;
+      margin-bottom: 30px;
+    }
+    .wel-signature-text {
+      font-size: 12.5px;
+      color: #3D2F52;
+      line-height: 1.7;
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    .wel-signature-name {
+      font-size: 12px;
+      color: #1A0A2E;
+      font-weight: 700;
+    }
+
+    /* Security */
+    .wel-security {
+      font-size: 12px;
+      color: #B0A0C0;
+      line-height: 1.65;
+      padding-top: 28px;
+      border-top: 1px solid #EEE9F5;
+    }
+
+    /* Footer */
+    .em-footer {
+      background: #F8F7F5;
+      border-top: 1px solid #EAE5F0;
+      padding: 22px 40px;
+      text-align: center;
+    }
+    .em-footer-brand {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #9B8CAA;
+      margin-bottom: 6px;
+    }
+    .em-footer-text {
+      font-size: 11px;
+      color: #C0B4D0;
+      line-height: 1.65;
+    }
+    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+
+    /* Mobile */
+    @media (max-width: 480px) {
+      .wrap { padding: 0; background: #fff; }
+      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .em-header { padding: 18px 24px; }
+      .em-body { padding: 32px 24px 32px; }
+      .em-footer { padding: 18px 24px; }
+      .wel-name { font-size: 28px; }
+      .wel-cta { display: block; text-align: center; padding: 17px 24px; }
+    }
+  </style>
 </head>
 <body>
 <div class="wrap">
-    <div class="card">
+  <div class="card">
 
-        <!-- Header -->
-        <div class="email-header">
-            <table class="hdr-table" role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td>
-                        <div class="brand-name">Elle A Osé</div>
-                        <div class="brand-sub">Espace de coworking</div>
-                    </td>
-                    <td style="text-align:right;">
-                        <div class="header-tag">Membre · <span th:text="${plan ?: 'Premium'}">Premium</span></div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <div class="header-rule"></div>
+    <!-- Header -->
+    <div class="em-header">
+      <div class="em-brand">Elle A Osé</div>
+      <div class="em-brand-sub">Espace de coworking</div>
+    </div>
+    <div class="em-stripe"></div>
 
-        <!-- Hero -->
-        <div class="hero">
-            <div class="hero-pill">Adhésion active</div>
-            <div class="hero-title">Bienvenue dans la <span>communauté</span>,<br><span th:text="${name ?: 'cher membre'}">cher membre</span>.</div>
-            <div class="hero-sub">Vous faites désormais partie des membres actifs de Bokati Cowork. Voici tout ce qu'il faut savoir pour profiter pleinement de votre adhésion dès le premier jour.</div>
-        </div>
+    <!-- Body -->
+    <div class="em-body">
 
-        <!-- Body -->
-        <div class="email-body">
-            <p class="greeting">Bonjour <strong th:text="${name ?: 'cher membre'}">cher membre</strong>,</p>
-            <p class="message">Votre adhésion est désormais active. Que vous soyez là pour bosser au calme, rencontrer d'autres entrepreneurs ou simplement changer d'air, l'équipe est là pour rendre votre expérience la plus fluide possible.</p>
-        </div>
+      <div class="em-doc-title">Bienvenue parmi les membres</div>
+      <div class="wel-greeting">Bonjour,</div>
+      <div class="wel-name" th:text="${name ?: 'cher membre'}">Marie Koné</div>
 
-        <!-- Member pass -->
-        <div class="pass-zone">
-            <div class="pass">
-                <div class="pass-kicker">Carte membre</div>
-                <div class="pass-name" th:text="${name ?: 'Nom du membre'}">Nom du membre</div>
-                <div class="pass-divider"></div>
-                <table class="pass-grid" role="presentation" cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td>
-                            <div class="pass-cell">
-                                <div class="pass-key">N° membre</div>
-                                <div class="pass-val gold" th:text="${memberId ?: 'MBR-2026-0042'}">MBR-2026-0042</div>
-                            </div>
-                            <div class="pass-cell">
-                                <div class="pass-key">Activée le</div>
-                                <div class="pass-val" th:text="${startDate ?: '04 mai 2026'}">04 mai 2026</div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="pass-cell">
-                                <div class="pass-key">Formule</div>
-                                <div class="pass-val" th:text="${plan ?: 'Premium'}">Premium</div>
-                            </div>
-                            <div class="pass-cell">
-                                <div class="pass-key">Valide jusqu'au</div>
-                                <div class="pass-val" th:text="${endDate ?: '03 mai 2027'}">03 mai 2027</div>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+      <div class="wel-intro">
+        Votre compte membre a été créé avec succès. Vous pouvez dès maintenant accéder à votre espace personnel pour gérer vos réservations, consulter vos factures et télécharger vos documents.
+      </div>
+
+      <table class="wel-table">
+        <tr>
+          <td class="wel-key">N° Membre</td>
+          <td class="wel-val" th:text="${memberId ?: ''}">MBR-2026-0042</td>
+        </tr>
+        <tr>
+          <td class="wel-key">Adresse e-mail</td>
+          <td class="wel-val" th:text="${email ?: ''}">membre@exemple.com</td>
+        </tr>
+      </table>
+
+      <!-- Premiers pas -->
+      <div class="sec-label">Vos premiers pas</div>
+      <table class="steps-table" role="presentation" cellpadding="0" cellspacing="0">
+        <tr>
+          <td class="step-num">01</td>
+          <td class="step-content">
+            <div class="step-title">Vérification de votre identité</div>
+            <div class="step-text">Rendez-vous dans votre espace personnel pour télécharger vos documents d'identité et compléter votre vérification.</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="step-num">02</td>
+          <td class="step-content">
+            <div class="step-title">Prenez votre premier abonnement ou pass</div>
+            <div class="step-text">Choisissez la formule qui correspond à vos besoins depuis votre espace membre.</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="step-num">03</td>
+          <td class="step-content">
+            <div class="step-title">Faites votre première réservation</div>
+            <div class="step-text">Réservez un bureau, une salle de réunion ou un espace de travail en quelques clics.</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Infos pratiques -->
+      <div class="sec-label">Infos pratiques</div>
+      <table class="practical-table" role="presentation" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="padding-right: 24px;">
+            <div class="practical-cell">
+              <div class="practical-label">Horaires</div>
+              <div class="practical-value">Lun - Ven 8h à 18h<small>Sam 8h à 12h</small></div>
             </div>
-        </div>
-
-        <!-- Steps -->
-        <div class="email-body">
-            <div class="sec-label">Vos premiers pas</div>
-            <table class="steps-table" role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td class="step-num">01</td>
-                    <td class="step-content">
-                        <div class="step-title">Activez votre badge d'accès</div>
-                        <div class="step-text">Présentez-vous à l'accueil avec une pièce d'identité pour récupérer votre badge nominatif et la connexion Wi-Fi membre.</div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="step-num">02</td>
-                    <td class="step-content">
-                        <div class="step-title">Réservez votre première salle</div>
-                        <div class="step-text">Depuis votre espace client, réservez salles de réunion, bureaux fermés ou créneaux studio — vos heures incluses sont visibles en haut de page.</div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="step-num">03</td>
-                    <td class="step-content">
-                        <div class="step-title">Rencontrez la communauté</div>
-                        <div class="step-text">Petit-déj' membres tous les premiers vendredis, afterworks réguliers, ateliers thématiques. Le calendrier est dans votre espace.</div>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- Practical info -->
-            <div class="sec-label">Infos pratiques</div>
-            <table class="practical-table" role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                    <td style="padding-right: 24px;">
-                        <div class="practical-cell">
-                            <div class="practical-label">Horaires</div>
-                            <div class="practical-value">Lun — Ven · 08h — 20h<small>Sam : 09h — 17h &nbsp;·&nbsp; Dim : fermé</small></div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="practical-cell">
-                            <div class="practical-label">Wi-Fi membre</div>
-                            <div class="practical-value">Réseau : Bokati-Members<small>Mot de passe remis à l'accueil</small></div>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding-right: 24px;">
-                        <div class="practical-cell" style="border-bottom: none;">
-                            <div class="practical-label">Salles incluses</div>
-                            <div class="practical-value">4 h / mois<small>Au-delà : tarif préférentiel membre</small></div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="practical-cell" style="border-bottom: none;">
-                            <div class="practical-label">Concierge</div>
-                            <div class="practical-value">05 204 25 52<small>coworkspace@elleaose.com</small></div>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- CTA -->
-            <div class="cta-row">
-                <a href="#" class="cta-primary">Accéder à mon espace</a>
-                <a href="#" class="cta-secondary">Voir les ateliers</a>
+          </td>
+          <td>
+            <div class="practical-cell">
+              <div class="practical-label">Réception</div>
+              <div class="practical-value">05 204 2552</div>
             </div>
-        </div>
-
-        <!-- Signature -->
-        <div class="signature">
-            <div class="signature-text">« Très heureuses de vous accueillir parmi nous. Si quoi que ce soit n'est pas clair, écrivez-moi directement — je réponds vite. »</div>
-            <div class="signature-name">L'équipe Elle A Osé</div>
-            <div class="signature-role">Bokati</div>
-        </div>
-
-        <!-- Footer -->
-        <div class="email-footer">
-            <div class="footer-brand">Elle A Osé</div>
-            <div class="footer-text">Vous recevez ce message suite à l'activation de votre adhésion.<br>Pour toute question, contactez votre concierge depuis votre espace membre.</div>
-            <div class="footer-links">
-                <a href="#">Instagram</a> · <a href="#">LinkedIn</a> · <a href="#">elleaose.cm</a>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <div class="practical-cell" style="border-bottom: none;">
+              <div class="practical-label">Email support</div>
+              <div class="practical-value">supportela@elleaose.com</div>
             </div>
-            <div class="footer-made">Made by SNI</div>
-        </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- CTA -->
+      <div class="wel-cta-wrap">
+        <a href="https://espace.elleaose.com" th:href="${portalUrl ?: 'https://espace.elleaose.com'}" class="wel-cta">Accéder à mon espace</a>
+      </div>
+
+      <!-- Signature -->
+      <div class="wel-signature">
+        <div class="wel-signature-text">Nous sommes heureux de vous compter parmi nos membres, nous espérons que notre espace servira d'outils pour votre productivité.</div>
+        <div class="wel-signature-name">L'équipe Elle A Osé</div>
+      </div>
+
+      <div class="wel-security">
+        Si vous n'êtes pas à l'origine de la création de ce compte, contactez immédiatement l'équipe Elle A Osé.
+      </div>
 
     </div>
+
+    <!-- Footer -->
+    <div class="em-footer">
+      <div class="em-footer-brand">Elle A Osé</div>
+      <div class="em-footer-text">
+        Message automatique. Pour toute question,<br>
+        contactez <a href="mailto:supportela@elleaose.com">supportela@elleaose.com</a>
+      </div>
+    </div>
+
+  </div>
 </div>
 </body>
 </html>

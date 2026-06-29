@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
 @Controller
 @RequestMapping("/verify")
@@ -32,6 +33,7 @@ public class VerifyController {
     private final PaymentAllocationRepository paymentAllocationRepository;
     private final PawapayDepositRepository pawapayDepositRepository;
     private final ObjectMapper objectMapper;
+    private final Locale appLocale;
 
     @GetMapping("/doc/{documentNumber}")
     public String verifyDocument(@PathVariable String documentNumber, Model model) {
@@ -44,7 +46,7 @@ public class VerifyController {
             return "verify/not-found";
         }
         model.addAttribute("document", document);
-        model.addAttribute("fmt", new BillingDocumentPdfServiceImpl.BillingDocumentTemplateFormatter(document.currency(), objectMapper));
+        model.addAttribute("fmt", new BillingDocumentPdfServiceImpl.BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale));
         model.addAttribute("generatedAt", LocalDate.now());
         try {
             model.addAttribute("payments", buildPaymentInfos(documentNumber));
@@ -89,7 +91,7 @@ public class VerifyController {
         try {
             PaymentReceiptResponse receipt = paymentReceiptService.getByReceiptNumber(receiptNumber);
             model.addAttribute("receipt", receipt);
-            model.addAttribute("fmt", new PaymentReceiptServiceImpl.PaymentReceiptTemplateFormatter(receipt.currency(), objectMapper));
+            model.addAttribute("fmt", new PaymentReceiptServiceImpl.PaymentReceiptTemplateFormatter(receipt.currency(), objectMapper, appLocale));
             model.addAttribute("generatedAt", LocalDate.now());
             return "verify/receipt";
         } catch (Exception ex) {

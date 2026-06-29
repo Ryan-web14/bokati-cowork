@@ -1,9 +1,11 @@
 package com.sni.bokaticowork.features.client.member.service.implementation;
 
+import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
+import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
 import com.sni.bokaticowork.features.client.customer.service.interfaces.CustomerService;
 import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest;
 import com.sni.bokaticowork.features.client.member.dto.response.MemberResponse;
@@ -19,12 +21,14 @@ import com.sni.bokaticowork.security.admin.user.dto.request.UserRequest;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.user.repository.UserRepository;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
+import com.sni.bokaticowork.security.service.passwordResetService.interfaces.PasswordResetService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -57,6 +61,9 @@ class MemberServiceImplTest {
     private CustomerService customerService;
 
     @Mock
+    private CustomerRepository customerRepo;
+
+    @Mock
     private UserService userService;
 
     @Mock
@@ -70,6 +77,15 @@ class MemberServiceImplTest {
 
     @Mock
     private MemberProfileRepository memberProfileRepository;
+
+    @Mock
+    private DefaultEmailSender emailSender;
+
+    @Mock
+    private SpringTemplateEngine emailTemplateEngine;
+
+    @Mock
+    private PasswordResetService passwordResetService;
 
     @InjectMocks
     private MemberServiceImpl memberService;
@@ -107,7 +123,12 @@ class MemberServiceImplTest {
         verify(customerService, never()).createCustomer(any());
         assertSame(customer, memberCaptor.getValue().getCustomer());
         assertEquals(MemberStatus.PENDING, memberCaptor.getValue().getStatus());
-        assertEquals("MBR-202604-00000001", memberCaptor.getValue().getMemberId());
+        String expectedMemberId = String.format(
+                "MBR-%d%02d-00000001",
+                LocalDate.now().getYear(),
+                LocalDate.now().getMonthValue()
+        );
+        assertEquals(expectedMemberId, memberCaptor.getValue().getMemberId());
         assertEquals(created.getMemberId(), response.getMemberId());
     }
 
@@ -147,7 +168,7 @@ class MemberServiceImplTest {
         when(memberRepo.existsByEmailIgnoreCaseAndDeletedFalse("jane@example.com")).thenReturn(false);
         when(memberRepo.existsByPhoneAndDeletedFalse("060000000")).thenReturn(false);
         when(userRepo.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
-        when(customerService.createCustomer(any())).thenReturn(customer);
+        when(customerService.createCustomerForMember(any())).thenReturn(customer);
         when(memberMapper.toEntity(request)).thenReturn(member);
         when(userService.createUser(any(UserRequest.class))).thenReturn(user);
         when(sequenceGenerator.next("MEMBER", LocalDate.now())).thenReturn("MEM-0001");
@@ -155,8 +176,43 @@ class MemberServiceImplTest {
 
         MemberResponse created = memberService.create(request, true);
 
-        verify(customerService).createCustomer(any());
+        verify(customerService).createCustomerForMember(any());
         assertEquals("MEM-0001", created.getMemberId());
+    }
+
+    @Test
+    void shouldSendPasswordResetLinkWhenAdminCreatesMember() {
+        CreateMemberRequest request = CreateMemberRequest.builder()
+                .firstname("Jane")
+                .lastname("Doe")
+                .email("jane@example.com")
+                .phone("060000000")
+                .password("Secret123")
+                .generatePassword(false)
+                .build();
+
+        Customer customer = Customer.builder().customerId("CUS-0001").build();
+        Member member = Member.builder()
+                .firstname("Jane")
+                .lastname("Doe")
+                .email("jane@example.com")
+                .phone("060000000")
+                .build();
+        Users user = Users.builder().id(99L).email("jane@example.com").build();
+        MemberResponse response = MemberResponse.builder().memberId("MEM-0001").email("jane@example.com").build();
+
+        when(memberRepo.existsByEmailIgnoreCaseAndDeletedFalse("jane@example.com")).thenReturn(false);
+        when(memberRepo.existsByPhoneAndDeletedFalse("060000000")).thenReturn(false);
+        when(userRepo.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
+        when(customerService.createCustomerForMember(any())).thenReturn(customer);
+        when(memberMapper.toEntity(request)).thenReturn(member);
+        when(userService.createUser(any(UserRequest.class))).thenReturn(user);
+        when(sequenceGenerator.next("MEMBER", LocalDate.now())).thenReturn("MEM-0001");
+        when(memberMapper.toResponse(member)).thenReturn(response);
+
+        memberService.create(request, true);
+
+        verify(passwordResetService).generatePasswordResetToken(user);
     }
 
     @Test

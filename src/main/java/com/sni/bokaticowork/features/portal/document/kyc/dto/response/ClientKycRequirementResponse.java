@@ -11,6 +11,8 @@ public class ClientKycRequirementResponse {
     private String documentTypeCode;
     private String documentTypeName;
     private boolean required;
+    private Boolean requiresBackSide;
     private String status;
     private String documentCode;
+    private String backDocumentCode;
 }

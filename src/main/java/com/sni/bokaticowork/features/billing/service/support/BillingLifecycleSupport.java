@@ -44,4 +44,29 @@ public class BillingLifecycleSupport {
             throw new BadRequestException("Quote must be accepted or have its deposit paid before conversion");
         }
     }
+
+    public void ensureNotLocked(BillingDocument document) {
+        if (Boolean.TRUE.equals(document.getLocked())) {
+            throw new BadRequestException(
+                    "Document " + document.getDocumentNumber() + " est validé (SEFC) — il ne peut plus être modifié");
+        }
+    }
+
+    public void ensureCanValidate(BillingDocument document) {
+        if (document.getDocumentType() != BillingDocumentType.INVOICE
+                && document.getDocumentType() != BillingDocumentType.CREDIT_NOTE
+                && document.getDocumentType() != BillingDocumentType.DEBIT_NOTE
+                && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+            throw new BadRequestException("Seules les factures, avoirs et notes de débit peuvent être validés");
+        }
+        if (Boolean.TRUE.equals(document.getLocked())) {
+            throw new BadRequestException("Document déjà validé");
+        }
+        if (document.getStatus() != BillingDocumentStatus.DRAFT
+                && document.getStatus() != BillingDocumentStatus.ISSUED
+                && document.getStatus() != BillingDocumentStatus.PAID) {
+            throw new BadRequestException(
+                    "Le document doit être en statut DRAFT, ISSUED ou PAID pour être validé, statut actuel : " + document.getStatus());
+        }
+    }
 }

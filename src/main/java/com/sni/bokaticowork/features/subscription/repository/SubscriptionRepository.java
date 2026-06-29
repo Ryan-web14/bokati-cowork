@@ -36,6 +36,20 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM subscription
+            WHERE subscriber_type = :subscriberType
+              AND subscriber_code = :subscriberCode
+              AND status = 'ACTIVE'
+              AND current_period_start <= :today
+              AND (current_period_end IS NULL OR current_period_end >= :today)
+            ORDER BY current_period_start DESC, created_at DESC
+            """)
+    List<Subscription> findAllCurrentActive(@Param("subscriberType") String subscriberType,
+                                            @Param("subscriberCode") String subscriberCode,
+                                            @Param("today") LocalDate today);
+
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM subscription
             WHERE status = :status
               AND next_billing_date <= :nextBillingDate
               AND auto_renew = true
@@ -79,7 +93,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
 
 
-    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscriber_code = :subscriberCode AND plan_version_id = :planVersion AND status = 'ACTIVE'")
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscriber_code = :subscriberCode AND plan_version_id = :planVersion AND status NOT IN ('CANCELLED', 'EXPIRED')")
     List<Subscription> findBySuscriberCodeAndPlanVersion(@Param("subscriberCode") String subscriberCode, @Param("planVersion") Long planVersion);
 
     List<Subscription> findAllByContractCode(String contractCode);

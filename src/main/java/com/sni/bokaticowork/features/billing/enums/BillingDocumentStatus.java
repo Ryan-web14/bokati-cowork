@@ -3,6 +3,8 @@ package com.sni.bokaticowork.features.billing.enums;
 public enum BillingDocumentStatus {
     DRAFT,
     ISSUED,
+    /** Facture fiscalement scellée (SEFC) — immuable, numéro définitif assigné. */
+    VALIDATED,
     SENT,
     /** Devis ouvert par le client (tracking email). */
     VIEWED,

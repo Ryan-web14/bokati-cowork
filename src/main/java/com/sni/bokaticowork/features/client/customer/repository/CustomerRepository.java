@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.client.customer.repository;
 
 import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -102,6 +103,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     )
     Boolean existsByCustomerIdAndDeletedFalse(String customerId);
 
+    @EntityGraph(attributePaths = "address")
     @Query("""
             SELECT c
             FROM Customer c
@@ -119,6 +121,14 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
             ORDER BY c.companyName ASC, c.firstname ASC, c.lastname ASC
             """)
     List<Customer> basicSearch(@Param("query") String query, @Param("type") CustomerType type);
+
+    @Query(nativeQuery = true,
+            value = "SELECT EXISTS(SELECT 1 FROM customer WHERE lower(email) = lower(:email) AND id <> :excludeId AND deleted = false)")
+    Boolean existsByEmailAndIdNot(@Param("email") String email, @Param("excludeId") Long excludeId);
+
+    @Query(nativeQuery = true,
+            value = "SELECT EXISTS(SELECT 1 FROM customer WHERE phone = :phone AND id <> :excludeId AND deleted = false)")
+    Boolean existsByPhoneAndIdNot(@Param("phone") String phone, @Param("excludeId") Long excludeId);
 
     @Modifying
     @Query(nativeQuery = true, value = "UPDATE customer SET deleted = true WHERE customer_id = :customerId ")

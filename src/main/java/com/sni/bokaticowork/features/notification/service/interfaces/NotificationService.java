@@ -31,6 +31,12 @@ public interface NotificationService {
 
     List<NotificationMessageResponse> listUnread(String recipientEmail, int limit);
 
+    List<NotificationMessageResponse> listUnread(String recipientEmail, NotificationChannel channel, int limit);
+
+    long countUnread(String recipientEmail);
+
+    long countUnread(String recipientEmail, NotificationChannel channel);
+
     NotificationMessageResponse markAsRead(String notificationNumber);
 
     int markAllRead(String recipientEmail);

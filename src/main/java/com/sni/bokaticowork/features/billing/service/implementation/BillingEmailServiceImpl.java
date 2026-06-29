@@ -36,6 +36,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
     private final BillingDocumentPdfService billingDocumentPdfService;
     private final DefaultEmailSender emailSender;
     private final SpringTemplateEngine templateEngine;
+    private final Locale appLocale;
 
     @Override
     @Transactional(readOnly = true)
@@ -62,7 +63,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
     private String renderBillingDocument(BillingDocumentResponse document) {
         boolean overdue = BillingDocumentStatus.OVERDUE.equals(document.status());
         String documentLabel = billingDocumentLabel(document.documentType());
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("customerName", valueOrDefault(document.customerName(), "client"));
         context.setVariable("documentLabel", documentLabel);
         context.setVariable("documentNumber", valueOrDefault(document.documentNumber(), "-"));
@@ -113,7 +114,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
     }
 
     private String renderPaymentConfirmation(BillingDocumentResponse document, String method, String amount) {
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("customerName", valueOrDefault(document.customerName(), "client"));
         context.setVariable("documentNumber", valueOrDefault(document.documentNumber(), "-"));
         context.setVariable("paidAmount", valueOrDefault(amount, ""));

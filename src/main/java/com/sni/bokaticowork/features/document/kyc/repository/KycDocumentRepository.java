@@ -41,4 +41,18 @@ public interface KycDocumentRepository extends JpaRepository<KycDocument, Long> 
             order by d.updatedAt desc, kd.id desc
             """)
     List<KycDocument> findAllReviewDocumentsByStatusIn(@Param("statuses") Collection<KycDocumentVerificationStatus> statuses);
+
+    @Query("""
+            select kd
+            from KycDocument kd
+            join fetch kd.document d
+            where kd.kycCase = :kycCase
+              and kd.status in :statuses
+            order by d.updatedAt desc, kd.id desc
+            """)
+    List<KycDocument> findAllReviewDocumentsByKycCaseAndStatusIn(
+            @Param("kycCase") KycCase kycCase,
+            @Param("statuses") Collection<KycDocumentVerificationStatus> statuses);
+
+    Optional<KycDocument> findByKycCaseAndDocumentType(KycCase kycCase, String documentType);
 }

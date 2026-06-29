@@ -36,6 +36,8 @@ public class DocumentTypeRequest {
 
     private Boolean multipleAllowed;
 
+    private Boolean requiresBackSide;
+
     private String allowedMimeTypes;
 
     private Long maxFileSizeBytes;

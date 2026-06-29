@@ -112,7 +112,7 @@ public class ClientSupportController {
         return ResponseEntity.ok().headers(headers).body(file.content());
     }
 
-    @PatchMapping("/{ticketNumber}/close")
+    @PostMapping("/{ticketNumber}/close")
     public ResponseEntity<SupportTicketResponse> close(@PathVariable String ticketNumber) {
         Member member = clientContextService.getAuthenticatedMember();
         return ResponseEntity.ok(clientSupportService.closeTicket(member, ticketNumber));

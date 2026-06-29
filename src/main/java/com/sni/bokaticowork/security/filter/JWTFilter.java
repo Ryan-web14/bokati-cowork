@@ -38,6 +38,15 @@ public class JWTFilter extends OncePerRequestFilter {
     @Value("${app.security.auto-admin.email:admin@bokati.com}")
     private String autoAdminEmail;
 
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        if (uri != null && uri.startsWith("/ws")) {
+            return true;
+        }
+        return isPublicApiRequest(request);
+    }
+
     @SuppressWarnings("null")
     @Override
     protected void doFilterInternal(
@@ -158,6 +167,8 @@ public class JWTFilter extends OncePerRequestFilter {
                         || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback")
                         || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback")
                         || uri.startsWith("/verify/")
+                        || uri.startsWith(ApiPath.V1 + "/client/catalog/plans")
+                        || uri.startsWith(ApiPath.V1 + "/shares/")
         );
     }
 }

@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 public class KycBulkApproveRequest {
     @NotEmpty
-    private List<String> documentCodes;
+    private List<String> documentIds;
 
     @NotNull
     private Long reviewedBy;

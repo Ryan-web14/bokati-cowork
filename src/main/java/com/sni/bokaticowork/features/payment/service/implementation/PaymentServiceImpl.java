@@ -457,7 +457,7 @@ public class PaymentServiceImpl implements PaymentService {
                 walletService.debit(wallet, intent.getAmount(), WalletEntryType.PAYMENT,
                         "PAYMENT_INTENT", intent.getIntentNumber(), intent.getIntentNumber(), request.processedBy());
                 yield saveSucceededTransaction(intent, PaymentMethod.WALLET, "INTERNAL_WALLET",
-                        wallet.getWalletNumber(), request.processedBy(), request.metadataJson());
+                        wallet.getWalletNumber(), resolveMemberProcessing(request.processedBy()), request.metadataJson());
             }
             case CASH -> {
                 if (!"XAF".equalsIgnoreCase(intent.getCurrency())) {
@@ -475,6 +475,14 @@ public class PaymentServiceImpl implements PaymentService {
                     request.paymentMethod().name(), request.providerReference(),
                     request.processedBy(), request.metadataJson());
         };
+    }
+
+    private String resolveMemberProcessing(String processedBy){
+
+        if(processedBy.contains("MBR")){
+            return "SYSTEM";
+        }
+        return processedBy;
     }
 
     @Override

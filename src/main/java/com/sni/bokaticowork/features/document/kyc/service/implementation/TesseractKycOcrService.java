@@ -37,14 +37,41 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class TesseractKycOcrService implements KycOcrService {
 
-    private static final Pattern DOCUMENT_NUMBER_PATTERN = Pattern.compile("(?i)(?:N[o°]|numero|number|id)\\s*[:#-]?\\s*([A-Z0-9\\-]{5,})");
+    private static final Pattern DOCUMENT_NUMBER_PATTERN = Pattern.compile(
+            "(?i)(?:N[o°]|numero|number|id|document\\s*n)\\s*[:#.-]?\\s*([A-Z0-9\\-]{5,})");
+
+    private static final List<Pattern> LAST_NAME_PATTERNS = List.of(
+            Pattern.compile("(?i)(?:nom|surname|last\\s*name)\\s*[:#/-]?\\s*([A-ZÀ-Ÿ][A-ZÀ-Ÿ' -]{1,40})"),
+            Pattern.compile("(?m)^\\s*(?:NOM|SURNAME)\\s*\\n\\s*([A-ZÀ-Ÿ][A-ZÀ-Ÿ' -]{1,40})")
+    );
+
+    private static final List<Pattern> FIRST_NAME_PATTERNS = List.of(
+            Pattern.compile("(?i)(?:pr[ée]noms?|given\\s*names?|first\\s*name|forenames?)\\s*[:#/-]?\\s*([A-ZÀ-Ÿ][A-ZÀ-Ÿa-zà-ÿ' -]{1,60})"),
+            Pattern.compile("(?m)^\\s*(?:PRENOMS?|GIVEN\\s*NAMES?)\\s*\\n\\s*([A-ZÀ-Ÿ][A-ZÀ-Ÿa-zà-ÿ' -]{1,60})")
+    );
+
+    private static final List<Pattern> DOB_PATTERNS = List.of(
+            Pattern.compile("(?i)(?:n[ée](?:\\(e\\))?\\s*le|date\\s*de\\s*naissance|date\\s*of\\s*birth|d\\.?\\s*o\\.?\\s*b\\.?|born)\\s*[:#/-]?\\s*(\\d{1,2}[/\\-.]\\d{1,2}[/\\-.]\\d{4})"),
+            Pattern.compile("(?i)(?:n[ée](?:\\(e\\))?\\s*le|date\\s*de\\s*naissance|date\\s*of\\s*birth)\\s*[:#/-]?\\s*(\\d{4}[/\\-.]\\d{1,2}[/\\-.]\\d{1,2})")
+    );
+
+    private static final List<Pattern> NATIONALITY_PATTERNS = List.of(
+            Pattern.compile("(?i)(?:nationalit[ée]|nationality)\\s*[:#/-]?\\s*([A-ZÀ-Ÿa-zà-ÿ]{3,30})"),
+            Pattern.compile("(?i)\\b(CONGOLAIS[E]?|CAMEROUNAIS[E]?|GABONAIS[E]?|CENTRAFRICAIN[E]?|TCHADIEN(?:NE)?|FRANCAIS[E]?|FRANÇAIS[E]?)\\b")
+    );
+
     private static final List<Pattern> DATE_PATTERNS = List.of(
             Pattern.compile("\\b(\\d{4}-\\d{2}-\\d{2})\\b"),
             Pattern.compile("\\b(\\d{2}/\\d{2}/\\d{4})\\b"),
-            Pattern.compile("\\b(\\d{2}-\\d{2}-\\d{4})\\b")
+            Pattern.compile("\\b(\\d{2}-\\d{2}-\\d{4})\\b"),
+            Pattern.compile("\\b(\\d{2}\\.\\d{2}\\.\\d{4})\\b")
     );
+
     private static final DateTimeFormatter DMY_SLASH = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DMY_DASH = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+    private static final DateTimeFormatter DMY_DOT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+    private static final int TOTAL_EXTRACTABLE_FIELDS = 6;
 
     private final KycAutomationProperties properties;
     private final KycDocumentOcrResultRepository ocrResultRepository;
@@ -118,9 +145,31 @@ public class TesseractKycOcrService implements KycOcrService {
 
     private void upsertSuccess(KycDocument kycDocument, String rawText) {
         KycDocumentOcrResult result = getOrCreate(kycDocument);
-        result.setExtractedDocumentNumber(firstMatch(DOCUMENT_NUMBER_PATTERN, rawText));
-        result.setExtractedExpiryDate(firstDate(rawText));
-        result.setConfidenceScore(BigDecimal.ONE);
+
+        String lastName = firstMatchFromPatterns(LAST_NAME_PATTERNS, rawText);
+        String firstName = firstMatchFromPatterns(FIRST_NAME_PATTERNS, rawText);
+        String nationality = firstMatchFromPatterns(NATIONALITY_PATTERNS, rawText);
+        String documentNumber = firstMatch(DOCUMENT_NUMBER_PATTERN, rawText);
+        LocalDate dateOfBirth = firstPastDate(rawText);
+        LocalDate expiryDate = firstFutureDate(rawText);
+
+        result.setExtractedLastName(cleanName(lastName));
+        result.setExtractedFirstName(cleanName(firstName));
+        result.setExtractedNationality(nationality != null ? nationality.trim().toUpperCase(Locale.ROOT) : null);
+        result.setExtractedDocumentNumber(documentNumber);
+        result.setExtractedDateOfBirth(dateOfBirth);
+        result.setExtractedExpiryDate(expiryDate);
+
+        int extracted = 0;
+        if (StringUtils.hasText(result.getExtractedLastName())) extracted++;
+        if (StringUtils.hasText(result.getExtractedFirstName())) extracted++;
+        if (StringUtils.hasText(result.getExtractedNationality())) extracted++;
+        if (StringUtils.hasText(result.getExtractedDocumentNumber())) extracted++;
+        if (result.getExtractedDateOfBirth() != null) extracted++;
+        if (result.getExtractedExpiryDate() != null) extracted++;
+
+        result.setConfidenceScore(BigDecimal.valueOf(extracted)
+                .divide(BigDecimal.valueOf(TOTAL_EXTRACTABLE_FIELDS), 4, java.math.RoundingMode.HALF_UP));
         result.setRawOcrJson(toJson("SUCCESS", rawText, null));
         result.setProcessedAt(Instant.now());
         ocrResultRepository.save(result);
@@ -157,7 +206,60 @@ public class TesseractKycOcrService implements KycOcrService {
         return matcher.find() ? matcher.group(1).trim().toUpperCase(Locale.ROOT) : null;
     }
 
-    private LocalDate firstDate(String text) {
+    private String firstMatchFromPatterns(List<Pattern> patterns, String text) {
+        if (!StringUtils.hasText(text)) {
+            return null;
+        }
+        for (Pattern pattern : patterns) {
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                String value = matcher.group(1).trim();
+                if (StringUtils.hasText(value) && value.length() >= 2) {
+                    return value;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String cleanName(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        String cleaned = raw.trim().replaceAll("\\s+", " ");
+        if (cleaned.length() < 2 || cleaned.matches(".*\\d.*")) {
+            return null;
+        }
+        return cleaned.toUpperCase(Locale.ROOT);
+    }
+
+    private LocalDate firstPastDate(String text) {
+        if (!StringUtils.hasText(text)) {
+            return null;
+        }
+        for (Pattern pattern : DOB_PATTERNS) {
+            Matcher matcher = pattern.matcher(text);
+            if (matcher.find()) {
+                LocalDate parsed = parseDate(matcher.group(1));
+                if (parsed != null && parsed.isBefore(LocalDate.now()) && parsed.isAfter(LocalDate.now().minusYears(120))) {
+                    return parsed;
+                }
+            }
+        }
+        for (Pattern pattern : DATE_PATTERNS) {
+            Matcher matcher = pattern.matcher(text);
+            while (matcher.find()) {
+                LocalDate parsed = parseDate(matcher.group(1));
+                if (parsed != null && parsed.isBefore(LocalDate.now().minusYears(10))
+                        && parsed.isAfter(LocalDate.now().minusYears(120))) {
+                    return parsed;
+                }
+            }
+        }
+        return null;
+    }
+
+    private LocalDate firstFutureDate(String text) {
         if (!StringUtils.hasText(text)) {
             return null;
         }
@@ -165,7 +267,7 @@ public class TesseractKycOcrService implements KycOcrService {
             Matcher matcher = pattern.matcher(text);
             while (matcher.find()) {
                 LocalDate parsed = parseDate(matcher.group(1));
-                if (parsed != null && parsed.isAfter(LocalDate.now().minusYears(1))) {
+                if (parsed != null && parsed.isAfter(LocalDate.now())) {
                     return parsed;
                 }
             }
@@ -178,7 +280,10 @@ public class TesseractKycOcrService implements KycOcrService {
             if (value.contains("/")) {
                 return LocalDate.parse(value, DMY_SLASH);
             }
-            if (value.charAt(2) == '-') {
+            if (value.contains(".") && value.charAt(2) == '.') {
+                return LocalDate.parse(value, DMY_DOT);
+            }
+            if (value.length() > 2 && value.charAt(2) == '-') {
                 return LocalDate.parse(value, DMY_DASH);
             }
             return LocalDate.parse(value);

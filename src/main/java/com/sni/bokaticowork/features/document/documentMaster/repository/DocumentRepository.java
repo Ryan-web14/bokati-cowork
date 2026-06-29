@@ -4,6 +4,7 @@ import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwner
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
+import com.sni.bokaticowork.features.document.documentMaster.model.DocumentFolder;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,10 @@ public interface DocumentRepository extends JpaRepository<Document, Long>, JpaSp
 
     Page<Document> findAllByOwnerTypeAndOwnerId(DocumentOwnerType ownerType, Long ownerId, Pageable pageable);
 
+    Page<Document> findAllByOwnerTypeAndOwnerIdAndStatusNot(DocumentOwnerType ownerType, Long ownerId, DocumentStatus status, Pageable pageable);
+
+    Page<Document> findAllByStatusNot(DocumentStatus status, Pageable pageable);
+
     List<Document> findAllByStatusInAndExpiryDateBefore(List<DocumentStatus> statuses, LocalDate date);
 
     long countByOwnerTypeAndOwnerIdAndDocumentTypeAndStatusNotIn(
@@ -35,4 +40,8 @@ public interface DocumentRepository extends JpaRepository<Document, Long>, JpaSp
     Page<Document> findAllByStatus(DocumentStatus status, Pageable pageable);
 
     List<Document> findAllByStatusInAndExpiryDateBetween(List<DocumentStatus> statuses, LocalDate from, LocalDate to);
+
+    Page<Document> findAllByFolderAndDeletedFalse(DocumentFolder folder, Pageable pageable);
+
+    long countByFolderAndDeletedFalse(DocumentFolder folder);
 }

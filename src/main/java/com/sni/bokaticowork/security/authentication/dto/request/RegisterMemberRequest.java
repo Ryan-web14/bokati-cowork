@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.authentication.dto.request;
 
+import com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -8,6 +10,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -40,9 +44,14 @@ public class RegisterMemberRequest {
     @Size(max = 30)
     private String whatsappPhone;
 
-    @Size(max = 30)
-    private String customerType;
+    @Valid
+    private AddressRequest address;
 
-    @Size(max = 300)
-    private String companyName;
+    private LocalDate birthDate;
+
+    @Size(max = 20)
+    private String gender;
+
+    @Size(max = 30)
+    private String preferredCommunicationChannel;
 }

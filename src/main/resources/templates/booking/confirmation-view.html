@@ -39,7 +39,12 @@
     .access-note { font-size: 12px; color: #9B8CAA; line-height: 1.65; }
     .actions { display: flex; gap: 12px; }
     .btn-primary { flex: 1; display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; text-align: center; border-radius: 8px; }
-    .btn-ghost { flex: 1; display: block; text-align: center; border: 1px solid #D5CCE0; color: #9B8CAA; text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 17px; border-radius: 8px; }
+    .btn-checkin { flex: 1; display: block; text-align: center; border: none; background: #110828; color: #fff; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; border-radius: 8px; cursor: pointer; }
+    .btn-checkin:hover { background: #2d1b4e; }
+    .btn-checkin:disabled { opacity: .5; cursor: not-allowed; }
+    .checkin-feedback { margin-top: 12px; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: none; }
+    .checkin-ok { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+    .checkin-err { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
     .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
     .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
     .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
@@ -141,8 +146,12 @@
 
       <div class="actions">
         <a class="btn-primary" th:href="${pdfUrl ?: '#'}">Télécharger le PDF</a>
-        <a class="btn-ghost" th:href="${scanUrl ?: '#'}">Ouvrir le QR check-in</a>
+        <button type="button" class="btn-checkin" id="checkinBtn"
+                th:attr="data-token=${checkInToken}, data-url=${selfCheckInUrl}, data-geo=${locationRequired}">
+          S'enregistrer (check-in)
+        </button>
       </div>
+      <div id="checkinFeedback" class="checkin-feedback"></div>
     </div>
 
     <div class="em-footer">
@@ -154,5 +163,57 @@
 
   </div>
 </div>
+<script>
+(function () {
+  var btn = document.getElementById('checkinBtn');
+  var feedback = document.getElementById('checkinFeedback');
+  if (!btn) return;
+
+  var token = btn.getAttribute('data-token');
+  var url = btn.getAttribute('data-url');
+  var requiresGeo = btn.getAttribute('data-geo') === 'true';
+
+  function showFeedback(ok, msg) {
+    feedback.textContent = msg;
+    feedback.className = 'checkin-feedback ' + (ok ? 'checkin-ok' : 'checkin-err');
+    feedback.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = ok ? 'Check-in effectué ✓' : 'S\'enregistrer (check-in)';
+  }
+
+  function doCheckIn(lat, lng) {
+    var params = new URLSearchParams({ token: token });
+    if (lat != null) { params.append('lat', lat); params.append('lng', lng); }
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (data.success) {
+          showFeedback(true, 'Bienvenue ! Votre check-in a été enregistré pour la réservation ' + data.bookingNumber + '.');
+        } else {
+          var msg = data.message || 'Le check-in a échoué. Présentez-vous à l\'accueil.';
+          if (data.error === 'time_invalid') msg = 'Le check-in n\'est pas encore disponible. Revenez 15 minutes avant votre réservation.';
+          if (data.error === 'location_invalid') msg = 'Vous devez être présent dans l\'espace pour effectuer le check-in.';
+          if (data.error === 'location_required') msg = 'Veuillez autoriser la géolocalisation pour effectuer le check-in.';
+          showFeedback(false, msg);
+        }
+      })
+      .catch(function () { showFeedback(false, 'Erreur réseau. Veuillez réessayer ou contacter l\'accueil.'); });
+  }
+
+  btn.addEventListener('click', function () {
+    btn.disabled = true;
+    btn.textContent = 'Vérification en cours…';
+    feedback.style.display = 'none';
+    if (requiresGeo && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { doCheckIn(pos.coords.latitude, pos.coords.longitude); },
+        function () { showFeedback(false, 'Géolocalisation refusée ou indisponible. Veuillez autoriser l\'accès à votre position.'); }
+      );
+    } else {
+      doCheckIn(null, null);
+    }
+  });
+}());
+</script>
 </body>
 </html>

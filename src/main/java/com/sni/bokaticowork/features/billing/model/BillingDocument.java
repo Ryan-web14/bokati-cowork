@@ -185,6 +185,85 @@ public class BillingDocument {
     @Column(name = "internal_notes", columnDefinition = "text")
     private String internalNotes;
 
+    // ── Champs SEFC Phase 1 ────────────────────────────────────────────────────
+
+    @Column(name = "locked", nullable = false)
+    @Builder.Default
+    private Boolean locked = false;
+
+    @Column(name = "validated_at")
+    private Instant validatedAt;
+
+    @Column(name = "fiscal_date")
+    private LocalDate fiscalDate;
+
+    /** Numéro fiscal SEFC définitif (FAC20260617-00001abc-BKTWK). Assigné à la validation. */
+    @Column(name = "fiscal_number", unique = true, length = 80)
+    private String fiscalNumber;
+
+    // ── Chaînage cryptographique (Phase 2) ─────────────────────────────────────
+
+    @Column(name = "previous_hash", length = 512)
+    private String previousHash;
+
+    @Column(name = "current_hash", length = 512)
+    private String currentHash;
+
+    @Column(name = "hash_algorithm", length = 40)
+    private String hashAlgorithm;
+
+    // ── Signature HMAC (Phase 2) ────────────────────────────────────────────────
+
+    @Column(name = "fiscal_signature", length = 512)
+    private String fiscalSignature;
+
+    @Column(name = "signature_algorithm", length = 40)
+    private String signatureAlgorithm;
+
+    @Column(name = "signed_at")
+    private Instant signedAt;
+
+    // ── Snapshot vendeur ────────────────────────────────────────────────────────
+
+    @Column(name = "seller_name", length = 255)
+    private String sellerName;
+
+    @Column(name = "seller_niu", length = 100)
+    private String sellerNiu;
+
+    @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
+    @Column(name = "seller_address_json", columnDefinition = "jsonb")
+    private String sellerAddressJson;
+
+    @Column(name = "seller_phone", length = 60)
+    private String sellerPhone;
+
+    @Column(name = "seller_email", length = 255)
+    private String sellerEmail;
+
+    // ── Identification fiscale client (optionnelle) ─────────────────────────────
+
+    /** NIU client — renseigné uniquement si c'est une entité immatriculée. */
+    @Column(name = "customer_niu", length = 100)
+    private String customerNiu;
+
+    /** ENTREPRISE ou PARTICULIER — toujours affiché sur le PDF. */
+    @Column(name = "customer_category", length = 40)
+    private String customerCategory;
+
+    // ── Suppression logique ─────────────────────────────────────────────────────
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Column(name = "deleted_by", length = 120)
+    private String deletedBy;
+
+    @Column(name = "delete_reason", columnDefinition = "text")
+    private String deleteReason;
+
+    // ────────────────────────────────────────────────────────────────────────────
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

@@ -99,15 +99,11 @@ public class ClientResourceService {
                 .toList();
         ResourcePolicy policy = resource.getResourcePolicy();
         ResourceType type = resource.getResourceType();
-        ResourceGroup group = resource.getResourceGroup();
         return ClientResourceDetailResponse.builder()
                 .code(resource.getCode())
                 .name(resource.getName())
                 .description(resource.getDescription())
-                .typeCode(type != null ? type.getCode() : null)
                 .typeName(type != null ? type.getName() : null)
-                .groupCode(group != null ? group.getCode() : null)
-                .groupName(group != null ? group.getName() : null)
                 .capacity(resource.getCapacity())
                 .zone(resource.getZone())
                 .locationLabel(resource.getLocationLabel())
@@ -157,15 +153,11 @@ public class ClientResourceService {
 
     private ClientResourceSummaryResponse toSummaryResponse(Resource resource) {
         ResourceType type = resource.getResourceType();
-        ResourceGroup group = resource.getResourceGroup();
         return ClientResourceSummaryResponse.builder()
                 .code(resource.getCode())
                 .name(resource.getName())
                 .description(resource.getDescription())
-                .typeCode(type != null ? type.getCode() : null)
                 .typeName(type != null ? type.getName() : null)
-                .groupCode(group != null ? group.getCode() : null)
-                .groupName(group != null ? group.getName() : null)
                 .capacity(resource.getCapacity())
                 .zone(resource.getZone())
                 .locationLabel(resource.getLocationLabel())

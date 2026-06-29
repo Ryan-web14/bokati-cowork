@@ -65,11 +65,19 @@ public class ClientKycController {
             @RequestParam("documentType") String documentType,
             @RequestParam(value = "documentNumber", required = false) String documentNumber,
             @RequestParam(value = "issueDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate issueDate,
-            @RequestParam(value = "expiryDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expiryDate) {
+            @RequestParam(value = "expiryDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expiryDate,
+            @RequestParam(value = "side", defaultValue = "FRONT") String side) {
         Member member = clientContextService.getAuthenticatedMember();
         ClientKycDocumentResponse response = clientKycService.uploadDocument(
-                member, documentType, documentNumber, issueDate, expiryDate, file);
+                member, documentType, documentNumber, issueDate, expiryDate, file, side);
         return ResponseEntity.status(201).body(response);
+    }
+
+    @PostMapping(value = "/documents", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ClientKycDocumentResponse> uploadDocumentJson() {
+        throw new com.sni.bokaticowork.core.exception.customs.BadRequestException(
+                "Document upload requires Content-Type: multipart/form-data with a 'file' part. "
+                        + "JSON body is not supported for file uploads.");
     }
 
     @GetMapping("/documents/{id}")
@@ -94,6 +102,13 @@ public class ClientKycController {
             @RequestParam("file") MultipartFile file) {
         Member member = clientContextService.getAuthenticatedMember();
         return ResponseEntity.ok(clientKycService.resubmitDocument(member, id, file));
+    }
+
+    @PutMapping(value = "/documents/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ClientKycDocumentResponse> resubmitDocumentJson(@PathVariable Long id) {
+        throw new com.sni.bokaticowork.core.exception.customs.BadRequestException(
+                "Document resubmission requires Content-Type: multipart/form-data with a 'file' part. "
+                        + "JSON body is not supported for file uploads.");
     }
 
     @DeleteMapping("/documents/{id}")
