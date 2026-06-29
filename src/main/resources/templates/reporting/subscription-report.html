@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"/>
+<title>Rapport abonnements</title>
+<style>
+@page {
+    size: A4;
+    margin: 0 0 14mm 0;
+    @bottom-center {
+        content: "Page " counter(page) " sur " counter(pages);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 7.5px; color: #9b8caa;
+    }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9.5px; color: #1a0a2e; background: #ffffff; }
+
+.header { background: #1a0a2e; padding: 18px 24px 14px; }
+.header-tbl { width: 100%; border-collapse: collapse; }
+.header-tbl td { border: none; padding: 0; vertical-align: middle; }
+.brand { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+.brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.doc-title { font-size: 14px; font-weight: 700; color: #ffffff; text-align: right; text-transform: uppercase; letter-spacing: 1.5px; }
+.doc-sub { font-size: 8px; color: #c9a84c; text-align: right; margin-top: 4px; }
+.stripe { height: 3px; background: #c9a84c; }
+
+.content { padding: 14px 24px 0; }
+
+.section-tbl { width: 100%; border-collapse: collapse; margin: 14px 0 8px; }
+.section-tbl td { border: none; padding: 0; vertical-align: middle; }
+.sl-bar { width: 18px; height: 2px; background: #c9a84c; display: block; }
+.sl-text { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; color: #7c3aed; padding: 0 8px; white-space: nowrap; }
+.sl-line { height: 1px; background: #d8d0e8; }
+
+.kpi-tbl { width: 100%; border-collapse: collapse; }
+.kpi-tbl td { border: none; padding: 0 5px 0 0; vertical-align: top; }
+.kpi-tbl td:last-child { padding-right: 0; }
+.kpi-card { border: 1px solid #d8d0e8; border-radius: 3px; padding: 8px 10px; }
+.kpi-label { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5c4f6e; margin-bottom: 3px; }
+.kpi-value { font-size: 13px; font-weight: 700; color: #1a0a2e; }
+.kpi-value.gold { color: #8a6a00; }
+.kpi-value.green { color: #15803d; }
+.kpi-value.red { color: #b91c1c; }
+
+.data-tbl { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.data-tbl th { background: #1a0a2e; color: #ffffff; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 9px; text-align: left; border: none; }
+.data-tbl th.r { text-align: right; }
+.data-tbl td { font-size: 9px; color: #1a0a2e; padding: 6px 9px; border-bottom: 1px solid #d8d0e8; vertical-align: top; }
+.data-tbl td.r { text-align: right; font-weight: 700; }
+.data-tbl tr.even td { background: #f0eaff; }
+
+.footer { margin-top: 16px; padding: 9px 24px; border-top: 1px solid #d8d0e8; font-size: 7.5px; color: #9b8caa; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <table class="header-tbl"><tr>
+        <td>
+            <div class="brand">Elle A Osé</div>
+            <div class="brand-sub">Bokati Cowork &amp; Studio</div>
+        </td>
+        <td>
+            <div class="doc-title">Analytics abonnements</div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+        </td>
+    </tr></table>
+</div>
+<div class="stripe"></div>
+
+<div class="content">
+
+    <!-- KPI -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Indicateurs clés</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl">
+        <tr>
+            <td width="50%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Abonnements actifs</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalActive())}">—</div>
+                </div>
+            </td>
+            <td width="50%">
+                <div class="kpi-card">
+                    <div class="kpi-label">MRR actuel</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.currentMrr())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- TENDANCE MRR -->
+    <table class="section-tbl" th:if="${report.mrrTrend() != null and !report.mrrTrend().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Tendance MRR</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.mrrTrend() != null and !report.mrrTrend().isEmpty()}">
+        <thead><tr>
+            <th>Mois</th>
+            <th class="r">MRR</th>
+            <th class="r">Abonnements actifs</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="dp, stat : ${report.mrrTrend()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${fmt.date(dp.month())}">—</td>
+                <td class="r" th:text="${fmt.money(dp.mrr())}">—</td>
+                <td class="r" th:text="${fmt.num(dp.activeCount())}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- DISTRIBUTION PAR PLAN -->
+    <table class="section-tbl" th:if="${report.activeByPlan() != null and !report.activeByPlan().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Distribution par plan</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.activeByPlan() != null and !report.activeByPlan().isEmpty()}">
+        <thead><tr>
+            <th>Plan</th>
+            <th class="r">Abonnements</th>
+            <th class="r">Montant total</th>
+            <th class="r">Part (%)</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="p, stat : ${report.activeByPlan()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${p.planName()}">—</td>
+                <td class="r" th:text="${fmt.num(p.subscriptionCount())}">—</td>
+                <td class="r" th:text="${fmt.money(p.totalAmount())}">—</td>
+                <td class="r" th:text="${fmt.pct(p.percentage())}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- TENDANCE CHURN -->
+    <table class="section-tbl" th:if="${report.churnTrend() != null and !report.churnTrend().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Tendance churn</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.churnTrend() != null and !report.churnTrend().isEmpty()}">
+        <thead><tr>
+            <th>Mois</th>
+            <th class="r">Annulés</th>
+            <th class="r">Total</th>
+            <th class="r">Taux churn</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="c, stat : ${report.churnTrend()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${fmt.date(c.month())}">—</td>
+                <td class="r" th:text="${fmt.num(c.cancelledCount())}">—</td>
+                <td class="r" th:text="${fmt.num(c.totalCount())}">—</td>
+                <td class="r" th:text="${fmt.pct(c.churnRate())}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- REVENUS PAR PLAN -->
+    <table class="section-tbl" th:if="${report.revenueByPlan() != null and !report.revenueByPlan().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Revenus par plan</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.revenueByPlan() != null and !report.revenueByPlan().isEmpty()}">
+        <thead><tr>
+            <th>Plan</th>
+            <th class="r">Abonnements</th>
+            <th class="r">Revenus</th>
+            <th class="r">Part (%)</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="r, stat : ${report.revenueByPlan()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${r.planName()}">—</td>
+                <td class="r" th:text="${fmt.num(r.subscriptionCount())}">—</td>
+                <td class="r" th:text="${fmt.money(r.totalRevenue())}">—</td>
+                <td class="r" th:text="${fmt.pct(r.percentage())}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- RENOUVELLEMENTS À VENIR -->
+    <table class="section-tbl" th:if="${report.upcomingRenewals() != null and !report.upcomingRenewals().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Renouvellements à venir</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.upcomingRenewals() != null and !report.upcomingRenewals().isEmpty()}">
+        <thead><tr>
+            <th>N° Abonnement</th>
+            <th>Souscripteur</th>
+            <th>Plan</th>
+            <th class="r">Montant</th>
+            <th>Fin période</th>
+            <th class="r">Jours restants</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="rn, stat : ${report.upcomingRenewals()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${rn.subscriptionNumber()}">—</td>
+                <td th:text="${rn.subscriberCode()}">—</td>
+                <td th:text="${rn.planName()}">—</td>
+                <td class="r" th:text="${fmt.money(rn.totalAmount())}">—</td>
+                <td th:text="${fmt.date(rn.currentPeriodEnd())}">—</td>
+                <td class="r" th:text="${fmt.days(rn.daysUntilRenewal())}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+<div class="footer">
+    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Analytics abonnements &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+</div>
+</body>
+</html>

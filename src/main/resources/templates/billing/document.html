@@ -96,6 +96,13 @@
         .badge-converted { background: #e0f2fe; color: #075985; }
         .badge-rejected { background: #fee2e2; color: #991b1b; }
         .badge-default { background: #f3d78a; color: #8a5a00; }
+        .status-text-cowork {
+            color: #281332;
+            font-size: 7.6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
 
         .content { padding: 12px 16px 0; }
         .section-label {
@@ -204,7 +211,7 @@
             border-top: 2px solid #f8e7b7;
         }
 
-        .qr-box { width: 96px; text-align: center; }
+        .qr-box { width: 140px; text-align: center; }
         .qr-label {
             font-size: 7.6px;
             color: #9b8caa;
@@ -294,7 +301,11 @@
                             <span th:case="'DEBIT_NOTE'">NOTE DE DÉBIT</span>
                             <span th:case="*">FACTURE</span>
                         </div>
-                        <div class="doc-number" th:text="${document.documentNumber()}">INV-000001</div>
+                        <div class="doc-number"
+                             th:text="${document.locked() != null and document.locked() and document.fiscalNumber() != null ? document.fiscalNumber() : document.documentNumber()}">INV-000001</div>
+                        <div th:if="${document.locked() != null and document.locked()}"
+                             style="font-size:7px; color:#b0a0bb; margin-top:3px; font-family:'Courier New',monospace; letter-spacing:0.8px;"
+                             th:text="${document.documentNumber()}"></div>
                     </div>
                 </td>
             </tr>
@@ -320,9 +331,12 @@
         <span th:case="'DEPOSIT_REQUESTED'"><span class="badge badge-default">Acompte demandé</span></span>
         <span th:case="'DEPOSIT_PAID'"><span class="badge badge-partial">Acompte reçu</span></span>
         <span th:case="'CANCELLED'"><span class="badge badge-rejected">Annulé</span></span>
+        <span th:case="'VALIDATED'"><span class="status-text-cowork">Validée Cowork</span></span>
         <span th:case="*"><span class="badge badge-default" th:text="${document.status()}">—</span></span>
     </span>
-    <span>Générée le <strong th:text="${generatedAt}">2026-05-01</strong></span>
+    <span th:if="${document.locked() != null and document.locked()}" style="margin-left:8px;">
+        <span style="font-size:7px; color:#6f6478; text-transform:uppercase; letter-spacing:0.8px;">document non modifiable</span>
+    </span>
 </div>
 
 <!-- CONTENT -->
@@ -341,6 +355,8 @@
                             <span th:if="${document.customerEmail()}"><strong>Email :</strong> <span th:text="${document.customerEmail()}"></span><br></span>
                             <span th:if="${document.customerPhone()}"><strong>Tél. :</strong> <span th:text="${document.customerPhone()}"></span><br></span>
                             <span th:each="addressLine : ${fmt.addressLines(document.billingAddressJson())}"><span th:text="${addressLine}"></span><br></span>
+                            <span th:if="${document.customerNiu() != null}"><strong>NIU :</strong> <span th:text="${document.customerNiu()}"></span><br></span>
+                            <span th:if="${document.customerCategory() != null}"><strong>Catégorie :</strong> <span th:text="${document.customerCategory()}"></span><br></span>
                         </div>
                     </div>
                 </div>
@@ -353,16 +369,27 @@
                             <tr><td class="lbl">Date d'émission</td><td class="val" th:text="${fmt.date(document.issueDate())}">—</td></tr>
                             <tr><td class="lbl">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}">—</td></tr>
                             <tr><td class="lbl">Devise</td><td class="val" th:text="${document.currency()}">XAF</td></tr>
+                            <tr>
+                                <td class="lbl">N° facture</td>
+                                <td class="val" style="font-family:'Courier New',monospace; color:#281332;"
+                                    th:text="${document.locked() != null and document.locked() and document.fiscalNumber() != null ? document.fiscalNumber() : document.documentNumber()}">INV-000001</td>
+                            </tr>
                             <tr><td class="lbl">Référence source</td><td class="val" th:text="${fmt.sourceReference(document.sourceType(), document.sourceCode())}">—</td></tr>
                             <tr th:if="${document.customerReference() != null}"><td class="lbl">Réf. client</td><td class="val" th:text="${document.customerReference()}">—</td></tr>
-                            <tr th:if="${document.poNumber() != null}"><td class="lbl">N° bon de commande</td><td class="val" th:text="${document.poNumber()}">—</td></tr>
-                            <tr th:if="${document.projectCode() != null}"><td class="lbl">Code projet</td><td class="val" th:text="${document.projectCode()}">—</td></tr>
                             <tr th:if="${document.salespersonCode() != null}"><td class="lbl">Commercial</td><td class="val" th:text="${document.salespersonCode()}">—</td></tr>
                             <tr th:if="${document.paymentReference() != null}"><td class="lbl">Réf. paiement</td><td class="val" th:text="${document.paymentReference()}">—</td></tr>
                             <tr th:if="${document.exchangeRate() != null}"><td class="lbl">Taux de change</td><td class="val" th:text="${document.exchangeRate()}">—</td></tr>
                             <tr th:if="${document.issuedAt() != null}"><td class="lbl">Émise le</td><td class="val" th:text="${fmt.timestamp(document.issuedAt())}">—</td></tr>
                             <tr th:if="${document.sentAt() != null}"><td class="lbl">Envoyée le</td><td class="val" th:text="${fmt.timestamp(document.sentAt())}">—</td></tr>
                             <tr th:if="${document.paidAt() != null}"><td class="lbl">Réglée le</td><td class="val" th:text="${fmt.timestamp(document.paidAt())}">—</td></tr>
+                            <tr th:if="${document.fiscalDate() != null}">
+                                <td class="lbl" style="color:#8a5a00;">Date fiscale</td>
+                                <td class="val" th:text="${fmt.date(document.fiscalDate())}">—</td>
+                            </tr>
+                            <tr th:if="${document.validatedAt() != null}">
+                                <td class="lbl" style="color:#8a5a00;">Validée le</td>
+                                <td class="val" th:text="${fmt.timestamp(document.validatedAt())}">—</td>
+                            </tr>
                         </table>
                     </div>
                 </div>
@@ -377,6 +404,21 @@
                         <div th:if="${document.deliveryAddressJson() != null}" class="info-detail" style="margin-top:8px;">
                             <strong>Adresse de livraison :</strong><br>
                             <span th:each="addressLine : ${fmt.addressLines(document.deliveryAddressJson())}"><span th:text="${addressLine}"></span><br></span>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr th:if="${document.sellerName() != null}">
+            <td colspan="2" style="padding-top:10px;">
+                <div class="info-card">
+                    <div class="info-card-head">Émetteur (Vendeur)</div>
+                    <div class="info-card-body">
+                        <div class="info-primary" th:text="${document.sellerName()}">Vendeur</div>
+                        <div class="info-detail">
+                            <span th:if="${document.sellerNiu() != null}"><strong>NIU :</strong> <span th:text="${document.sellerNiu()}"></span><br></span>
+                            <span th:if="${document.sellerEmail() != null}"><strong>Email :</strong> <span th:text="${document.sellerEmail()}"></span><br></span>
+                            <span th:if="${document.sellerPhone() != null}"><strong>Tél. :</strong> <span th:text="${document.sellerPhone()}"></span><br></span>
                         </div>
                     </div>
                 </div>
@@ -420,8 +462,20 @@
         <tr>
             <td style="width:42%; vertical-align:bottom; padding-right:10px;">
                 <div th:if="${qrCode != null}" class="qr-box">
-                    <img th:src="@{'data:image/png;base64,' + ${qrCode}}" style="width:86px; height:86px; display:block; margin:0 auto;" alt="QR Code"/>
-                    <div class="qr-label">Vérification</div>
+                    <!-- Document validé -->
+                    <div th:if="${document.locked() != null and document.locked()}" style="text-align:center;">
+                        <div style="display:inline-block; border:1px solid #3a1e45; border-radius:3px; padding:4px; background:#ffffff;">
+                            <img th:src="@{'data:image/png;base64,' + ${qrCode}}" style="width:130px; height:130px; display:block;" alt="QR Cowork"/>
+                        </div>
+                        <div style="margin-top:5px;">
+                            <span style="display:inline-block; background:#281332; color:#ffffff; font-size:6.8px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 8px; border-radius:2px;">Certifié Cowork</span>
+                        </div>
+                    </div>
+                    <!-- Document non validé -->
+                    <div th:if="${document.locked() == null or !document.locked()}" style="text-align:center;">
+                        <img th:src="@{'data:image/png;base64,' + ${qrCode}}" style="width:130px; height:130px; display:block; margin:0 auto;" alt="QR Code"/>
+                        <div class="qr-label">Vérification</div>
+                    </div>
                 </div>
                 <div class="contact-panel">
                     <div class="contact-panel-title">Contact Elle A Osé</div>
@@ -538,7 +592,11 @@
 
     <!-- FOOTER -->
     <div class="doc-footer">
-        Elle A Osé &nbsp;·&nbsp; <span th:text="${document.documentNumber()}">INV-000001</span> &nbsp;·&nbsp; Générée le <span th:text="${generatedAt}">2026-05-01</span> &nbsp;·&nbsp; Document électronique valable sans signature manuscrite.
+        <span th:if="${document.locked() != null and document.locked()}">
+            <span th:text="${document.fiscalNumber()}">—</span>
+        </span>
+        <span th:if="${document.locked() == null or !document.locked()}" th:text="${document.documentNumber()}">INV-000001</span>
+        &nbsp;·&nbsp; Document électronique valable sans signature manuscrite.
         <div class="made-by">Engineered by SNI</div>
     </div>
 

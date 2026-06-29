@@ -3,7 +3,12 @@ spring:
   application:
     name: bokati-cowork
   profiles:
-    active: prod
+    active: dev
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
   jpa:
     database: postgresql
@@ -19,10 +24,46 @@ management:
         include: health,info,metrics
 
 app:
+  locale: ${APP_LOCALE:fr_FR}
   portal:
     kyc-grace-period-days: ${PORTAL_KYC_GRACE_PERIOD_DAYS:7}
+  company:
+    name: ${COMPANY_NAME:Elle a Osé}
+    legal-name: ${COMPANY_LEGAL_NAME:Elle a Osé}
+    niu: ${COMPANY_NIU:}
+    fiscal-id: ${COMPANY_FISCAL_ID:000000}
+    machine-code: ${COMPANY_MACHINE_CODE:00000}
+
+billing:
+  fiscal:
+    signing-key: ${BILLING_FISCAL_SIGNING_KEY:12f70020a5b8526752f2f245f2148ea881223390f356e0e8246ccde588042d8f}
 
 bokati:
+  websocket:
+    use-stomp-relay: ${BOKATI_WEBSOCKET_USE_STOMP_RELAY:false}
+    stomp:
+      relay-host: ${BOKATI_STOMP_RELAY_HOST:localhost}
+      relay-port: ${BOKATI_STOMP_RELAY_PORT:61613}
+      virtual-host: ${BOKATI_STOMP_VIRTUAL_HOST:/}
+      client-login: ${BOKATI_STOMP_CLIENT_LOGIN:guest}
+      client-passcode: ${BOKATI_STOMP_CLIENT_PASSCODE:guest}
+      system-login: ${BOKATI_STOMP_SYSTEM_LOGIN:guest}
+      system-passcode: ${BOKATI_STOMP_SYSTEM_PASSCODE:guest}
+  graph-api:
+    rate-limit:
+      limit-for-period: ${GRAPH_RATE_LIMIT:800}
+      limit-refresh-period-ms: ${GRAPH_RATE_LIMIT_REFRESH_MS:60000}
+      timeout-ms: ${GRAPH_RATE_LIMIT_TIMEOUT_MS:30000}
+  billing:
+    workers:
+      fiscal-integrity-cron: ${BILLING_FISCAL_INTEGRITY_CRON:0 0 2 * * *}
+  checkin:
+    scanner-key: ${CHECKIN_SCANNER_KEY:}
+    early-window-minutes: ${CHECKIN_EARLY_WINDOW_MINUTES:15}
+    location:
+      latitude: ${CHECKIN_LOCATION_LAT:0}
+      longitude: ${CHECKIN_LOCATION_LNG:0}
+      radius-meters: ${CHECKIN_LOCATION_RADIUS:200}
   task:
     reminder-cron: ${TASK_REMINDER_CRON:0 0 * * * *}
     due-soon-hours: ${TASK_DUE_SOON_HOURS:24}

@@ -16,6 +16,9 @@ import com.sni.bokaticowork.features.document.documentMaster.dto.request.Documen
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService;
+import com.sni.bokaticowork.features.contract.model.ContractTemplate;
+import com.sni.bokaticowork.features.contract.repository.ContractTemplateRepository;
+import com.sni.bokaticowork.features.contract.service.support.ContractEmailNotifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,10 +49,29 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
     private final MemberService memberService;
     private final CustomerService customerService;
     private final BusinessService businessService;
+    private final ContractEmailNotifier contractEmailNotifier;
+    private final ContractTemplateRepository contractTemplateRepository;
+    private final Locale appLocale;
 
     @Override
     @Transactional(readOnly = true)
     public List<ContractTemplateResponse> listTemplates() {
+        List<ContractTemplate> dbTemplates = contractTemplateRepository.findAllByActiveTrueOrderByNameAsc();
+        if (!dbTemplates.isEmpty()) {
+            return dbTemplates.stream()
+                    .map(t -> ContractTemplateResponse.builder()
+                            .code(t.getCode())
+                            .name(t.getName())
+                            .description(t.getDescription())
+                            .language(t.getLanguage())
+                            .version(t.getVersion())
+                            .category(t.getCategory())
+                            .active(t.getActive())
+                            .createdAt(t.getCreatedAt())
+                            .updatedAt(t.getUpdatedAt())
+                            .build())
+                    .toList();
+        }
         return TEMPLATES.stream()
                 .map(item -> ContractTemplateResponse.builder()
                         .code(item.code())
@@ -83,21 +105,35 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         metadata.setDescription(request.getDescription());
         metadata.setIssueDate(request.getEffectiveDate() == null ? LocalDate.now() : request.getEffectiveDate());
 
-        return documentService.createGeneratedDocument(
+        DocumentResponse docResponse = documentService.createGeneratedDocument(
                 metadata,
                 sanitizeFileName(request.getTitle()) + ".pdf",
                 "application/pdf",
                 pdfBytes
         );
+
+        OwnerView ownerView = resolveOwnerView(request.getOwnerType(), request.getOwnerCode());
+        contractEmailNotifier.notifyGenerated(
+                ownerView.email(), ownerView.name(),
+                request.getTemplateCode(), docResponse.getCode());
+
+        return docResponse;
     }
 
     private String renderHtml(GenerateContractRequest request) {
-        Context context = new Context(Locale.FRANCE);
+        String code = normalizeTemplateCode(request.getTemplateCode());
         OwnerView ownerView = resolveOwnerView(request.getOwnerType(), request.getOwnerCode());
         BusinessEntity business = resolveBusiness(request.getBusinessCode());
         Map<String, String> enrichedVars = buildEnrichedVariables(request, ownerView, business);
+
+        java.util.Optional<ContractTemplate> dbTemplate = contractTemplateRepository.findByCode(code);
+        if (dbTemplate.isPresent() && org.springframework.util.StringUtils.hasText(dbTemplate.get().getHtmlContent())) {
+            return renderFromDbTemplate(dbTemplate.get(), enrichedVars);
+        }
+
         List<String> resolvedClauses = request.getClauses() == null ? List.of() :
                 request.getClauses().stream().map(c -> substituteTokens(c, enrichedVars)).toList();
+        Context context = new Context(appLocale);
         context.setVariable("request", request);
         context.setVariable("generatedAt", LocalDate.now());
         context.setVariable("ownerType", request.getOwnerType());
@@ -110,7 +146,27 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         context.setVariable("business", business);
         context.setVariable("clauses", resolvedClauses);
         context.setVariable("variables", enrichedVars);
-        return templateEngine.process("contracts/" + normalizeTemplateCode(request.getTemplateCode()), context);
+        return templateEngine.process("contracts/" + code, context);
+    }
+
+    private String renderFromDbTemplate(ContractTemplate template, Map<String, String> variables) {
+        StringBuilder html = new StringBuilder();
+        html.append("<!DOCTYPE html><html lang=\"").append(template.getLanguage()).append("\">");
+        html.append("<head><meta charset=\"UTF-8\"/>");
+        html.append("<title>").append(template.getName().replace("&", "&amp;").replace("<", "&lt;")).append("</title>");
+        if (org.springframework.util.StringUtils.hasText(template.getCssContent())) {
+            html.append("<style>").append(template.getCssContent()).append("</style>");
+        }
+        html.append("</head><body>");
+        if (org.springframework.util.StringUtils.hasText(template.getHeaderHtml())) {
+            html.append(substituteTokens(template.getHeaderHtml(), variables));
+        }
+        html.append(substituteTokens(template.getHtmlContent(), variables));
+        if (org.springframework.util.StringUtils.hasText(template.getFooterHtml())) {
+            html.append(substituteTokens(template.getFooterHtml(), variables));
+        }
+        html.append("</body></html>");
+        return html.toString();
     }
 
     private Map<String, String> buildEnrichedVariables(GenerateContractRequest request, OwnerView owner, BusinessEntity business) {
@@ -220,7 +276,9 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
 
     private void validate(GenerateContractRequest request) {
         String code = normalizeTemplateCode(request.getTemplateCode());
-        if (TEMPLATES.stream().noneMatch(item -> item.code().equals(code))) {
+        boolean knownInDb = contractTemplateRepository.existsByCode(code);
+        boolean knownHardcoded = TEMPLATES.stream().anyMatch(item -> item.code().equals(code));
+        if (!knownInDb && !knownHardcoded) {
             throw new BadRequestException("Unknown contract template: " + request.getTemplateCode());
         }
         if (request.getOwnerType() == DocumentOwnerType.CONTRACT

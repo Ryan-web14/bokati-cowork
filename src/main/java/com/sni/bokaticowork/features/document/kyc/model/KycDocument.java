@@ -40,6 +40,10 @@ public class KycDocument {
     @JoinColumn(name = "document_id", nullable = false, foreignKey = @ForeignKey(name = "fk_kyc_document_document"))
     private Document document;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "back_document_id", foreignKey = @ForeignKey(name = "fk_kyc_document_back_document"))
+    private Document backDocument;
+
     @Column(name = "document_type", nullable = false, length = 150)
     private String documentType;
 

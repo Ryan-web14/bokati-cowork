@@ -60,7 +60,7 @@ public class ResourceAvailabilityController {
         return ResponseEntity.ok(resourceAvailabilityService.listGroupedByResource());
     }
 
-    @GetMapping("/remaining")
+    @GetMapping("/remaining-slots")
     public ResponseEntity<List<ResourceAvailabilityWindowResponse>> remaining(
             @RequestParam String resourceCode,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startedAt,

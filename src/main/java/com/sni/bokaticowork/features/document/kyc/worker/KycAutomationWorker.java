@@ -26,6 +26,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.sni.bokaticowork.core.utils.constant.SystemActors;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -37,8 +39,6 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class KycAutomationWorker {
-
-    private static final Long SYSTEM_REVIEWER_ID = 0L;
 
     private final KycDocumentRepository kycDocumentRepository;
     private final KycCaseRepository kycCaseRepository;
@@ -98,7 +98,7 @@ public class KycAutomationWorker {
                 .forEach(item -> {
                     try {
                         DocumentReviewDecisionRequest decision = new DocumentReviewDecisionRequest();
-                        decision.setReviewedBy(SYSTEM_REVIEWER_ID);
+                        decision.setReviewedBy(SystemActors.SYSTEM_USER_ID);
                         decision.setComment("Auto-approved after configured delay");
                         documentService.approve(item.getDocument().getCode(), decision);
                     } catch (Exception ex) {

@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.inventory.admin.service.support;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
+import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.W3CDom;
 import org.jsoup.nodes.Document.OutputSettings;
@@ -19,10 +20,12 @@ import java.time.Instant;
 import java.util.Locale;
 
 @Component
+@RequiredArgsConstructor
 public class InventoryMovementReportPdfRenderer {
 
     private static final String TEMPLATE_NAME = "inventory/movement-report";
 
+    private final Locale appLocale;
     private final SpringTemplateEngine templateEngine = buildTemplateEngine();
 
     public byte[] render(InventoryMovementReportResponse report) {
@@ -46,7 +49,7 @@ public class InventoryMovementReportPdfRenderer {
     }
 
     private String renderHtml(InventoryMovementReportResponse report) {
-        Context context = new Context(Locale.FRANCE);
+        Context context = new Context(appLocale);
         context.setVariable("report", report);
         context.setVariable("generatedAt", Instant.now().toString());
         return templateEngine.process(TEMPLATE_NAME, context);

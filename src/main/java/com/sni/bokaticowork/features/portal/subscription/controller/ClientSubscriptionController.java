@@ -3,6 +3,9 @@ package com.sni.bokaticowork.features.portal.subscription.controller;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.client.member.model.Member;
+import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
+import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
+import com.sni.bokaticowork.features.portal.billing.dto.request.ClientInitiateMobileMoneyPaymentRequest;
 import com.sni.bokaticowork.features.portal.context.ClientContextService;
 import com.sni.bokaticowork.features.portal.subscription.dto.request.ClientCancelSubscriptionRequest;
 import com.sni.bokaticowork.features.portal.subscription.service.ClientSubscriptionService;
@@ -20,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -83,5 +87,21 @@ public class ClientSubscriptionController {
             @PathVariable String subscriptionNumber) {
         Member member = clientContextService.getAuthenticatedMember();
         return ResponseEntity.ok(clientSubscriptionService.getBillingSchedule(member, subscriptionNumber));
+    }
+
+    @PostMapping("/{subscriptionNumber}/pay/mobile-money")
+    public ResponseEntity<MobileMoneyDepositResponse> payWithMobileMoney(
+            @PathVariable String subscriptionNumber,
+            @Valid @RequestBody ClientInitiateMobileMoneyPaymentRequest request) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientSubscriptionService.paySubscriptionWithMobileMoney(
+                member, subscriptionNumber, request.getPhoneNumber(), request.getCorrespondent()));
+    }
+
+    @PostMapping("/{subscriptionNumber}/pay/wallet")
+    public ResponseEntity<PaymentTransactionResponse> payWithWallet(
+            @PathVariable String subscriptionNumber) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientSubscriptionService.paySubscriptionWithWallet(member, subscriptionNumber));
     }
 }

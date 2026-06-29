@@ -3,8 +3,11 @@ package com.sni.bokaticowork.features.booking.service.interfaces;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest;
 import com.sni.bokaticowork.features.booking.dto.request.BookingApprovalRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingChangeResourceRequest;
 import com.sni.bokaticowork.features.booking.dto.request.BookingCheckRequest;
 import com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingRescheduleRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingTransferRequest;
 import com.sni.bokaticowork.features.booking.dto.request.CreateRecurringBookingRequest;
 import com.sni.bokaticowork.features.booking.dto.request.CreateBookingRequest;
 import com.sni.bokaticowork.features.booking.dto.response.BookingEventResponse;
@@ -74,4 +77,12 @@ public interface BookingService {
     List<BookingStatusHistoryResponse> history(String bookingNumber);
 
     List<BookingEventResponse> events(String bookingNumber);
+
+    BookingResponse earlyCheckIn(String bookingNumber, BookingCheckRequest request);
+
+    BookingResponse transfer(String bookingNumber, BookingTransferRequest request);
+
+    BookingResponse reschedule(String bookingNumber, BookingRescheduleRequest request);
+
+    BookingResponse changeResource(String bookingNumber, BookingChangeResourceRequest request);
 }

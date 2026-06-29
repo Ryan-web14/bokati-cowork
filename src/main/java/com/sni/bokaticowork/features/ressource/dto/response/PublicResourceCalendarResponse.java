@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.ressource.dto.response;
 import lombok.Builder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
@@ -20,7 +21,20 @@ public record PublicResourceCalendarResponse(
             Integer availableSlots,
             Integer totalCapacity,
             Integer remainingCapacity,
-            String status
+            String status,
+            List<Window> windows
+    ) {
+    }
+
+    @Builder
+    public record Window(
+            LocalDateTime startedAt,
+            LocalDateTime endedAt,
+            Integer slotDurationMinutes,
+            Integer totalCapacity,
+            Integer remainingCapacity,
+            Boolean available,
+            Boolean active
     ) {
     }
 }

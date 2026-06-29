@@ -7,6 +7,8 @@ import com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse
 import com.sni.bokaticowork.features.ressource.model.ResourceType;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface ResourceTypeService {
 
     void createType(CreateResourceTypeRequest request);
@@ -18,4 +20,6 @@ public interface ResourceTypeService {
     ResourceType getTypeForService(Long id);
     PaginatedResponse<ResourceTypeResponse> list(Pageable pageable);
     PaginatedResponse<ResourceTypeResponse> search(String query);
+    List<ResourceTypeResponse> listActive();
+    List<ResourceTypeResponse> searchActive(String query);
 }

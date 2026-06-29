@@ -95,6 +95,36 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<NotificationMessageResponse> listUnread(String recipientEmail, NotificationChannel channel, int limit) {
+        return messageRepository.findByRecipientEmailAndChannelAndReadAtIsNullAndStatusInOrderBySentAtDesc(
+                normalizeEmail(recipientEmail),
+                channel,
+                Set.of(NotificationDeliveryStatus.SENT, NotificationDeliveryStatus.DELIVERED),
+                Pageable.ofSize(limit)
+        ).stream().map(mapper::toResponse).toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countUnread(String recipientEmail) {
+        return messageRepository.countByRecipientEmailAndReadAtIsNullAndStatusIn(
+                normalizeEmail(recipientEmail),
+                Set.of(NotificationDeliveryStatus.SENT, NotificationDeliveryStatus.DELIVERED)
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long countUnread(String recipientEmail, NotificationChannel channel) {
+        return messageRepository.countByRecipientEmailAndChannelAndReadAtIsNullAndStatusIn(
+                normalizeEmail(recipientEmail),
+                channel,
+                Set.of(NotificationDeliveryStatus.SENT, NotificationDeliveryStatus.DELIVERED)
+        );
+    }
+
+    @Override
     public NotificationMessageResponse markAsRead(String notificationNumber) {
         messageRepository.markOneAsRead(notificationNumber, Instant.now());
         return mapper.toResponse(messageRepository.findByNotificationNumber(notificationNumber)

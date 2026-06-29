@@ -6,6 +6,7 @@ import com.sni.bokaticowork.features.subscription.subscription.enums.Entitlement
 import com.sni.bokaticowork.features.subscription.subscription.mapper.interfaces.SubscriptionEntitlementMapper;
 import com.sni.bokaticowork.features.subscription.subscription.mapper.interfaces.SubscriptionPassMapper;
 import com.sni.bokaticowork.features.subscription.subscription.model.Pass;
+import com.sni.bokaticowork.features.subscription.subscription.model.PassPlanVersion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public abstract class SubscriptionPassMapperDecorator implements SubscriptionPas
 
     @Override
     public PassResponse toResponse(Pass pass) {
+        PassPlanVersion pv = pass.getPassVersion();
         return new PassResponse(
                 pass.getPassNumber(),
                 pass.getPassType(),
@@ -41,6 +43,16 @@ public abstract class SubscriptionPassMapperDecorator implements SubscriptionPas
                 pass.getMaxUses(),
                 pass.getUsedCount(),
                 pass.getContractCode(),
+                pv != null && pv.getPlan() != null ? pv.getPlan().getCode() : null,
+                pv != null && pv.getPlan() != null ? pv.getPlan().getName() : null,
+                pv != null ? pv.getVersionNumber() : null,
+                pass.getCurrency(),
+                pass.getSubtotalAmount(),
+                pass.getTaxAmount(),
+                pass.getTotalAmount(),
+                pass.getAutoRenew(),
+                pass.getNextRenewalDate(),
+                pass.getRenewalCount(),
                 entitlementGrantRepository.findAllByOwnerTypeAndOwnerCodeAndStatus(
                                 pass.getOwnerType().name(),
                                 pass.getOwnerCode(),
@@ -48,7 +60,9 @@ public abstract class SubscriptionPassMapperDecorator implements SubscriptionPas
                         ).stream()
                         .filter(grant -> grant.getPass() != null && grant.getPass().getId().equals(pass.getId()))
                         .map(entitlementMapper::toResponse)
-                        .toList()
+                        .toList(),
+                pass.getCreatedAt(),
+                pass.getUpdatedAt()
         );
     }
 }

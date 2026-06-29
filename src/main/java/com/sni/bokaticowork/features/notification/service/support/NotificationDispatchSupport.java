@@ -1,6 +1,9 @@
 package com.sni.bokaticowork.features.notification.service.support;
 
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.core.communication.mailService.dto.NotificationRabbitMessage;
+import com.sni.bokaticowork.core.communication.mailService.enums.EmailPriority;
+import com.sni.bokaticowork.core.communication.mailService.service.EmailRabbitPublisher;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -11,11 +14,9 @@ import com.sni.bokaticowork.features.notification.enums.NotificationDeliveryStat
 import com.sni.bokaticowork.features.notification.enums.NotificationRecipientType;
 import com.sni.bokaticowork.features.notification.mapper.interfaces.NotificationMapper;
 import com.sni.bokaticowork.features.notification.model.NotificationMessage;
-import com.sni.bokaticowork.features.notification.model.NotificationTemplate;
 import com.sni.bokaticowork.features.notification.repository.NotificationMessageRepository;
 import com.sni.bokaticowork.features.notification.repository.NotificationTemplateRepository;
 import com.sni.bokaticowork.features.notification.service.interfaces.WebhookService;
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
@@ -42,8 +43,9 @@ public class NotificationDispatchSupport {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final NotificationPayloadSupport payloadSupport;
     private final NotificationTemplateRenderer templateRenderer;
-    private final DefaultEmailSender emailSender;
     private final WebhookService webhookService;
+    private final EmailRabbitPublisher rabbitPublisher;
+    private final DefaultEmailSender emailSender;
 
     @Transactional
     public NotificationDispatchResponse create(SendNotificationRequest request) {
@@ -145,10 +147,12 @@ public class NotificationDispatchSupport {
 
         if (message.getChannel() == NotificationChannel.IN_APP) {
             markSent(message);
+            publishInAppToRabbit(message);
             return;
         }
         if (message.getChannel() == NotificationChannel.WEBHOOK) {
             markSent(message);
+            publishWebhookToRabbit(message);
             return;
         }
         if (!StringUtils.hasText(message.getRecipientEmail())) {
@@ -156,21 +160,69 @@ public class NotificationDispatchSupport {
             return;
         }
 
+        publishEmailToRabbit(message);
+        markSent(message);
+    }
+
+    private void publishInAppToRabbit(NotificationMessage message) {
+        try {
+            NotificationRabbitMessage rabbitMsg = new NotificationRabbitMessage(
+                    message.getNotificationNumber(),
+                    "IN_APP",
+                    message.getRecipientEmail(),
+                    message.getRecipientName(),
+                    message.getEventType(),
+                    message.getAggregateType(),
+                    message.getAggregateId(),
+                    message.getSubject(),
+                    message.getPayloadJson(),
+                    message.getTemplateCode(),
+                    message.getTemplateName(),
+                    message.getCreatedAt()
+            );
+            rabbitPublisher.publishNotification(rabbitMsg);
+        } catch (Exception ex) {
+            log.warn("Failed to publish IN_APP notification {} to RabbitMQ: {}",
+                    message.getNotificationNumber(), ex.getMessage());
+        }
+    }
+
+    private void publishWebhookToRabbit(NotificationMessage message) {
+        try {
+            NotificationRabbitMessage rabbitMsg = new NotificationRabbitMessage(
+                    message.getNotificationNumber(),
+                    "WEBHOOK",
+                    message.getRecipientEmail(),
+                    message.getRecipientName(),
+                    message.getEventType(),
+                    message.getAggregateType(),
+                    message.getAggregateId(),
+                    message.getSubject(),
+                    message.getPayloadJson(),
+                    message.getTemplateCode(),
+                    message.getTemplateName(),
+                    message.getCreatedAt()
+            );
+            rabbitPublisher.publishNotification(rabbitMsg);
+        } catch (Exception ex) {
+            log.warn("Failed to publish WEBHOOK notification {} to RabbitMQ: {}",
+                    message.getNotificationNumber(), ex.getMessage());
+        }
+    }
+
+    private void publishEmailToRabbit(NotificationMessage message) {
         Map<String, Object> variables = payloadSupport.toMap(message.getPayloadJson());
         variables.putIfAbsent("recipientName", defaultText(message.getRecipientName(), "client"));
         variables.putIfAbsent("eventType", message.getEventType());
         variables.putIfAbsent("subject", message.getSubject());
 
         String html = renderBody(message, variables);
+        EmailPriority priority = EmailPriority.fromEventType(message.getEventType());
+
         try {
-            Boolean sent = emailSender.sendHtmlEmail(message.getRecipientEmail(), message.getSubject(), html).join();
-            if (Boolean.TRUE.equals(sent)) {
-                markSent(message);
-            } else {
-                fail(message, "Email sender returned false");
-            }
-        } catch (MessagingException ex) {
-            fail(message, ex.getMessage());
+            emailSender.sendHtmlEmail(message.getRecipientEmail(), message.getSubject(), html, priority);
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to queue email for " + message.getRecipientEmail(), ex);
         }
     }
 
@@ -188,7 +240,8 @@ public class NotificationDispatchSupport {
         }
     }
 
-    private void applyTemplate(NotificationMessage message, NotificationTemplate template) {
+    private void applyTemplate(NotificationMessage message,
+                               com.sni.bokaticowork.features.notification.model.NotificationTemplate template) {
         if (StringUtils.hasText(template.getSubject())) {
             message.setSubject(template.getSubject());
         }

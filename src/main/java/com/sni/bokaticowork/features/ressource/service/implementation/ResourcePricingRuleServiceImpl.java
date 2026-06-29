@@ -11,6 +11,7 @@ import com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleR
 import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
 import com.sni.bokaticowork.features.ressource.enums.ResourcePriceAdjustmentType;
 import com.sni.bokaticowork.features.ressource.model.Resource;
+import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
 import com.sni.bokaticowork.features.ressource.model.ResourcePricingRule;
 import com.sni.bokaticowork.features.ressource.repository.repo.ResourcePricingRuleRepository;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourcePricingRuleService;
@@ -95,6 +96,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
             throw new BadRequestException("End date must be after start date");
         }
         Resource resource = resourceService.getResourceForService(resourceCode);
+        validateAgainstPolicy(resource, startedAt, endedAt);
         ResourceBookingUnit unit = parseUnit(bookingUnit);
         ResourcePricingRule baseRule = pricingRuleRepository.findAllActiveByResourceId(resource.getId()).stream()
                 .filter(rule -> unit.equals(rule.getResourceBookingUnit()))
@@ -195,6 +197,26 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .priority(rule.getPriority())
                 .active(rule.getActive())
                 .build();
+    }
+
+    private void validateAgainstPolicy(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        ResourcePolicy policy = resource.getResourcePolicy();
+        if (policy == null) {
+            return;
+        }
+        long durationMinutes = java.time.Duration.between(startedAt, endedAt).toMinutes();
+        if (policy.getMinBookingDurationMinutes() != null && durationMinutes < policy.getMinBookingDurationMinutes()) {
+            throw new BadRequestException("Booking duration (" + durationMinutes + " min) is below the minimum allowed (" + policy.getMinBookingDurationMinutes() + " min)");
+        }
+        if (policy.getMaxBookingDurationMinutes() != null && durationMinutes > policy.getMaxBookingDurationMinutes()) {
+            throw new BadRequestException("Booking duration (" + durationMinutes + " min) exceeds the maximum allowed (" + policy.getMaxBookingDurationMinutes() + " min)");
+        }
+        if (policy.getMinBookingNoticeMinutes() != null && policy.getMinBookingNoticeMinutes() > 0) {
+            long noticeMinutes = java.time.Duration.between(LocalDateTime.now(), startedAt).toMinutes();
+            if (noticeMinutes < policy.getMinBookingNoticeMinutes()) {
+                throw new BadRequestException("Booking requires at least " + policy.getMinBookingNoticeMinutes() + " minutes advance notice");
+            }
+        }
     }
 
     private ResourceBookingUnit parseUnit(String value) {

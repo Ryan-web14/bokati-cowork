@@ -177,7 +177,7 @@ public class MemberController {
             return ResponseEntity.ok(memberService.transferCustomer(id, request.customerId()));
         }
 
-    @GetMapping("/search/basic")
+    @GetMapping({"/search/by-name", "/search/basic"})
     public ResponseEntity<java.util.List<MemberSummaryResponse>> basicSearch(
             @RequestParam("query") String query) {
         return ResponseEntity.ok(memberService.basicSearch(query));
@@ -190,12 +190,6 @@ public class MemberController {
         return ResponseEntity.ok(memberService.search(criteria, pageable));
     }
 
-    @GetMapping("/search/by-name")
-    public ResponseEntity<PaginatedResponse<MemberSummaryResponse>> searchByName(
-            @RequestBody(required = false) MemberSearchCriteria criteria,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(memberService.search(criteria, pageable));
-    }
 
     @PostMapping("/portal/complete")
     @Audited(module = "MEMBER", action = "COMPLETE_PORTAL_REGISTRATION", ressource = "member")

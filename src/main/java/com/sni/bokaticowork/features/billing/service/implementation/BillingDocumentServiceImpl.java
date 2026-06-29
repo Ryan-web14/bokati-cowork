@@ -51,6 +51,10 @@ import com.sni.bokaticowork.features.payment.repository.PaymentAllocationReposit
 import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.billing.repository.specification.criteria.BillingDocumentSearchCriteria;
+import com.sni.bokaticowork.features.billing.service.fiscal.DocumentSequenceService;
+import com.sni.bokaticowork.features.billing.service.fiscal.FiscalAuditService;
+import com.sni.bokaticowork.features.billing.service.fiscal.FiscalHashService;
+import com.sni.bokaticowork.features.billing.service.fiscal.FiscalSignatureService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.billing.service.support.BillingCalculationService;
 import com.sni.bokaticowork.features.billing.service.support.BillingCustomerSnapshotResolver;
@@ -58,6 +62,7 @@ import com.sni.bokaticowork.features.billing.service.support.BillingDocumentWrit
 import com.sni.bokaticowork.features.billing.service.support.BillingEventWriter;
 import com.sni.bokaticowork.features.billing.service.support.BillingLifecycleSupport;
 import com.sni.bokaticowork.features.billing.service.support.BillingNumberingSupport;
+import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
 import com.sni.bokaticowork.features.subscription.repository.BillableItemRepository;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillableItemStatus;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
@@ -104,6 +109,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final PaymentTransactionRepository transactionRepository;
     private final PaymentAllocationRepository allocationRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
+    private final DocumentSequenceService documentSequenceService;
+    private final FiscalAuditService fiscalAuditService;
+    private final FiscalHashService fiscalHashService;
+    private final FiscalSignatureService fiscalSignatureService;
+    private final MemberInAppNotifier memberInAppNotifier;
 
     @Override
     public BillingDocumentResponse create(CreateBillingDocumentRequest request) {
@@ -119,6 +129,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request) {
         BillingDocument document = serviceByNumber(documentNumber);
+        lifecycleSupport.ensureNotLocked(document);
         boolean isDraft = document.getStatus() == BillingDocumentStatus.DRAFT;
         boolean isRestrictedEdit = document.getStatus() == BillingDocumentStatus.ISSUED
                 || document.getStatus() == BillingDocumentStatus.SENT;
@@ -645,6 +656,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         document.setIssuedAt(Instant.now());
         BillingDocument saved = documentRepository.save(document);
         eventWriter.write(saved, "BILLING_DOCUMENT_ISSUED", null);
+        memberInAppNotifier.notify("BILLING_DOCUMENT_ISSUED", "BILLING_DOCUMENT", saved.getDocumentNumber(),
+                saved.getCustomerEmail(), saved.getCustomerName(), saved.getCustomerCode(),
+                "Facture emise " + saved.getDocumentNumber(),
+                java.util.Map.of("documentNumber", saved.getDocumentNumber(),
+                        "documentType", saved.getDocumentType() != null ? saved.getDocumentType().name() : "",
+                        "status", saved.getStatus() != null ? saved.getStatus().name() : ""));
         return mapper.toResponse(saved);
     }
 
@@ -989,7 +1006,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     @Transactional(readOnly = true)
     public CustomerStatementResponse customerStatement(String customerType, String customerCode, Pageable pageable) {
-        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Pageable unsortedPageable = pageable.isPaged()
+                ? PageRequest.of(pageable.getPageNumber(), pageable.getPageSize())
+                : pageable;
         String normalizedCustomerCode = requiredCustomerCode(customerCode);
         String normalizedCustomerType = normalizeCustomerType(customerType, normalizedCustomerCode);
         var documents = documentRepository.statementDocuments(normalizedCustomerType, normalizedCustomerCode, unsortedPageable).map(mapper::toResponse);
@@ -1444,5 +1463,75 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             details.put("archived", archived);
         }
         return details;
+    }
+
+    /**
+     * Valide fiscalement un document SEFC — opération atomique en 12 étapes.
+     * Toutes les écritures se font dans la même transaction (@Transactional de classe).
+     *
+     * Étapes :
+     *  1.  Vérification du statut (ensureCanValidate)
+     *  2.  Date fiscale = aujourd'hui
+     *  3.  Numéro fiscal SEFC définitif (DocumentSequenceService, SELECT FOR UPDATE)
+     *  4.  Hash précédent (findLastValidatedHash, SELECT FOR UPDATE SKIP LOCKED)
+     *  5.  Hash courant SHA-256 (FiscalHashService)
+     *  6.  Signature HMAC-SHA256 (FiscalSignatureService)
+     *  7.  Verrouillage et statut VALIDATED
+     *  8.  Persistance
+     *  9.  Journal d'audit fiscal
+     * 10.  Événement métier
+     */
+    @Override
+    public BillingDocumentResponse validate(String documentNumber) {
+        // 1 — garde
+        BillingDocument document = serviceByNumber(documentNumber);
+        lifecycleSupport.ensureCanValidate(document);
+
+        // 2 — date fiscale
+        LocalDate fiscalDate = LocalDate.now();
+
+        // 3 — numéro fiscal SEFC (séquence annuelle, SELECT FOR UPDATE)
+        String fiscalNumber = documentSequenceService.nextFiscalNumber(document.getDocumentType(), fiscalDate);
+
+        document.setFiscalDate(fiscalDate);
+        document.setFiscalNumber(fiscalNumber);
+
+        // 4 — hash précédent (chaînage, SELECT FOR UPDATE SKIP LOCKED)
+        String previousHash = documentRepository
+                .findLastValidatedHash(document.getDocumentType().name())
+                .orElse(null);
+
+        // 5 — hash courant SHA-256
+        String currentHash = fiscalHashService.compute(document, previousHash);
+
+        // 6 — signature HMAC-SHA256
+        String signature = fiscalSignatureService.sign(currentHash);
+
+        // 7 — verrouillage
+        document.setPreviousHash(previousHash);
+        document.setCurrentHash(currentHash);
+        document.setHashAlgorithm(FiscalHashService.ALGORITHM);
+        document.setFiscalSignature(signature);
+        document.setSignatureAlgorithm(FiscalSignatureService.ALGORITHM);
+        document.setSignedAt(Instant.now());
+        document.setLocked(true);
+        document.setValidatedAt(Instant.now());
+        document.setStatus(BillingDocumentStatus.VALIDATED);
+
+        // 8 — persistance (une seule écriture atomique)
+        BillingDocument saved = documentRepository.save(document);
+
+        // 9 — journal d'audit
+        fiscalAuditService.log(
+                FiscalAuditService.INVOICE_VALIDATED,
+                "BILLING_DOCUMENT",
+                document.getDocumentNumber(),
+                null,
+                fiscalNumber + "|hash=" + currentHash.substring(0, 12)
+        );
+
+        // 10 — événement métier
+        eventWriter.write(saved, "BILLING_DOCUMENT_VALIDATED", null);
+        return mapper.toResponse(saved);
     }
 }

@@ -21,6 +21,8 @@ public class DocumentResponse {
     private DocumentCategory category;
     private DocumentSpace space;
     private String spaceReferenceCode;
+    private String folderCode;
+    private String folderName;
     private String documentTypeCode;
     private String documentTypeName;
     private String title;

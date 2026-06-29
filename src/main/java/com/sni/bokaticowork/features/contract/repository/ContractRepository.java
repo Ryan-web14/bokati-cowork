@@ -20,4 +20,7 @@ public interface ContractRepository extends JpaRepository<Contract, Long>, JpaSp
     List<Contract> findAllByStatusAndDeletedFalse(ContractStatus status);
     List<Contract> findAllByStatusInAndEndDateBeforeAndDeletedFalse(List<ContractStatus> statuses, LocalDate date);
     List<Contract> findAllByDraftDocumentCodeOrSignedDocumentCode(String draftDocumentCode, String signedDocumentCode);
+    List<Contract> findAllByRenewalTypeAndStatusInAndEndDateBetweenAndDeletedFalse(
+            com.sni.bokaticowork.features.contract.enums.ContractRenewalType renewalType,
+            List<ContractStatus> statuses, LocalDate from, LocalDate to);
 }

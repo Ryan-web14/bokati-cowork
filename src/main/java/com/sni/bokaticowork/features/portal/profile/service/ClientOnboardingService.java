@@ -28,8 +28,9 @@ public class ClientOnboardingService {
         Optional<KycCase> kycCaseOpt = kycCaseRepository
                 .findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(DocumentOwnerType.MEMBER, member.getId());
 
-        String kycStatus = kycCaseOpt.map(k -> k.getStatus().name()).orElse(KycCaseStatus.NOT_STARTED.name());
-        boolean kycApproved = kycCaseOpt.map(k -> k.getStatus() == KycCaseStatus.APPROVED).orElse(false);
+        KycCaseStatus rawStatus = kycCaseOpt.map(KycCase::getStatus).orElse(null);
+        String kycStatus = toFrontendKycStatus(rawStatus);
+        boolean kycApproved = "APPROVED".equals(kycStatus);
         int kycPercent = computeKycPercent(kycStatus);
 
         Instant now = Instant.now();
@@ -57,14 +58,32 @@ public class ClientOnboardingService {
                 .build();
     }
 
+    /**
+     * Maps the 9 backend KycCaseStatus values to 5 simplified frontend statuses:
+     *   NOT_STARTED  → NOT_STARTED  (no case or not started)
+     *   IN_PROGRESS  → DRAFT        (uploading documents, not yet submitted)
+     *   SUBMITTED, UNDER_REVIEW → SUBMITTED (documents being reviewed)
+     *   APPROVED     → APPROVED     (fully verified)
+     *   REJECTED, PENDING_CORRECTION, RENEWAL_REQUIRED, EXPIRED → REJECTED (needs action)
+     */
+    private String toFrontendKycStatus(KycCaseStatus status) {
+        if (status == null) return "NOT_STARTED";
+        return switch (status) {
+            case NOT_STARTED -> "NOT_STARTED";
+            case IN_PROGRESS -> "DRAFT";
+            case SUBMITTED, UNDER_REVIEW -> "SUBMITTED";
+            case APPROVED -> "APPROVED";
+            case REJECTED, PENDING_CORRECTION, RENEWAL_REQUIRED, EXPIRED -> "REJECTED";
+        };
+    }
+
     private int computeKycPercent(String status) {
         return switch (status) {
             case "NOT_STARTED" -> 0;
-            case "IN_PROGRESS" -> 30;
-            case "SUBMITTED" -> 60;
-            case "UNDER_REVIEW" -> 80;
+            case "DRAFT" -> 30;
+            case "SUBMITTED" -> 70;
             case "APPROVED" -> 100;
-            case "PENDING_CORRECTION" -> 50;
+            case "REJECTED" -> 40;
             default -> 0;
         };
     }
@@ -72,8 +91,9 @@ public class ClientOnboardingService {
     private String computeNextStep(boolean emailVerified, String kycStatus, boolean gracePeriodActive) {
         if (!emailVerified) return "VERIFY_EMAIL";
         if ("NOT_STARTED".equals(kycStatus)) return "SUBMIT_KYC";
-        if ("IN_PROGRESS".equals(kycStatus) || "PENDING_CORRECTION".equals(kycStatus)) return "COMPLETE_KYC";
-        if ("SUBMITTED".equals(kycStatus) || "UNDER_REVIEW".equals(kycStatus)) return "AWAIT_KYC_REVIEW";
+        if ("DRAFT".equals(kycStatus)) return "COMPLETE_KYC";
+        if ("REJECTED".equals(kycStatus)) return "CORRECT_KYC";
+        if ("SUBMITTED".equals(kycStatus)) return "AWAIT_KYC_REVIEW";
         if ("APPROVED".equals(kycStatus)) return "COMPLETED";
         if (gracePeriodActive) return "SUBMIT_KYC_BEFORE_GRACE_EXPIRES";
         return "CONTACT_SUPPORT";

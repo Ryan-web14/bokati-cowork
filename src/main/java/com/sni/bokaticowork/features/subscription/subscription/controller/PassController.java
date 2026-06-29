@@ -25,7 +25,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sni.bokaticowork.features.subscription.subscription.model.Pass;
+import com.sni.bokaticowork.features.subscription.subscription.model.PassEvent;
+import com.sni.bokaticowork.features.subscription.subscription.model.PassStatusHistory;
+import com.sni.bokaticowork.features.subscription.subscription.model.PassRenewalSchedule;
+import com.sni.bokaticowork.features.subscription.repository.PassEventRepository;
+import com.sni.bokaticowork.features.subscription.repository.PassStatusHistoryRepository;
+import com.sni.bokaticowork.features.subscription.repository.PassRenewalScheduleRepository;
+
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -34,6 +43,9 @@ import java.util.Map;
 public class PassController {
 
     private final PassService passService;
+    private final PassEventRepository passEventRepository;
+    private final PassStatusHistoryRepository passStatusHistoryRepository;
+    private final PassRenewalScheduleRepository passRenewalScheduleRepository;
 
     @PostMapping
     public ResponseEntity<PassResponse> create(@Valid @RequestBody CreatePassRequest request) {
@@ -65,9 +77,32 @@ public class PassController {
         ));
     }
 
+    @PostMapping("/{passNumber}/activate")
+    public ResponseEntity<PassResponse> activate(@PathVariable String passNumber) {
+        return ResponseEntity.ok(passService.activate(passNumber, "Activation manuelle"));
+    }
+
     @PatchMapping("/{passNumber}/cancel")
     public ResponseEntity<PassResponse> cancel(@PathVariable String passNumber,
                                                @RequestBody(required = false) Map<String, String> request) {
         return ResponseEntity.ok(passService.cancel(passNumber, request == null ? null : request.get("reason")));
+    }
+
+    @GetMapping("/{passNumber}/events")
+    public ResponseEntity<List<PassEvent>> events(@PathVariable String passNumber) {
+        Pass pass = passService.getForService(passNumber);
+        return ResponseEntity.ok(passEventRepository.findAllByPassOrderByOccurredAtDesc(pass));
+    }
+
+    @GetMapping("/{passNumber}/history")
+    public ResponseEntity<List<PassStatusHistory>> history(@PathVariable String passNumber) {
+        Pass pass = passService.getForService(passNumber);
+        return ResponseEntity.ok(passStatusHistoryRepository.findAllByPassOrderByChangedAtDesc(pass));
+    }
+
+    @GetMapping("/{passNumber}/renewal")
+    public ResponseEntity<PassRenewalSchedule> renewal(@PathVariable String passNumber) {
+        Pass pass = passService.getForService(passNumber);
+        return ResponseEntity.ok(passRenewalScheduleRepository.findByPassId(pass.getId()).orElse(null));
     }
 }

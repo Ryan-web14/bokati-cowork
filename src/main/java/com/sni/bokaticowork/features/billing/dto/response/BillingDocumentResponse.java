@@ -64,6 +64,22 @@ public record BillingDocumentResponse(
         EarlyPaymentDiscountResponse earlyPaymentDiscount,
         BillingDocumentSignatureResponse signature,
         String internalNotes,
-        List<BillingRecoverableResponse> recoverables
+        List<BillingRecoverableResponse> recoverables,
+        // ── Champs SEFC ──────────────────────────────────────────────────────────
+        Boolean locked,
+        String fiscalNumber,
+        LocalDate fiscalDate,
+        Instant validatedAt,
+        String sellerName,
+        String sellerNiu,
+        String sellerPhone,
+        String sellerEmail,
+        String customerNiu,
+        String customerCategory,
+        // ── Phase 2 : chaînage + signature ───────────────────────────────────────
+        String previousHash,
+        String currentHash,
+        String fiscalSignature,
+        Instant signedAt
 ) {
 }

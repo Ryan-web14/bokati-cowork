@@ -48,6 +48,13 @@ spring:
         tenant-id: ${MICROSOFT_GRAPH_TENANT_ID:e1006690-4205-4c71-9f74-1b9fdcbdcaf2}
         sender-email: ${MICROSOFT_SENDER_EMAIL:no-reply@elleaose.com}
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: bokati
+    password: bokati_dev
+    virtual-host: /
+
 logging:
   level:
     com.sni.bokaticowork: DEBUG
@@ -78,6 +85,16 @@ management:
         enabled: false
 
 bokati:
+  websocket:
+    use-stomp-relay: true
+    stomp:
+      relay-host: localhost
+      relay-port: 61613
+      virtual-host: /
+      client-login: bokati
+      client-passcode: bokati_dev
+      system-login: bokati
+      system-passcode: bokati_dev
   support:
     sender-email: ${SUPPORT_SENDER_EMAIL:supportela@elleaose.com}
     manager-email: ${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}
@@ -95,16 +112,16 @@ bokati:
       enabled: ${PAWAYPAY_ENABLED:true}
       api-key: ${PAWAYPAY_API_KEY:eyJraWQiOiIxIiwiYWxnIjoiRVMyNTYifQ.eyJ0dCI6IkFBVCIsInN1YiI6IjI0ODAiLCJtYXYiOiIxIiwiZXhwIjoyMDkzMTc4MTA1LCJpYXQiOjE3Nzc1NTg5MDUsInBtIjoiREFGLFBBRiIsImp0aSI6IjJhMWY1M2U4LTg5MmMtNGE0ZC1iMWM4LWFhN2U4NWUwYjVlOSJ9.WOY0BG_Xn-AurEZckuIIAJQwimuLBhsKt9NMS6qgdwR3LEbMZgjdWm3PlY2YmBuGnBYnldpRs638uSDSflY3eg}
       base-url: ${PAWAYPAY_BASE_URL:https://api.pawapay.io/}
-      callback-base-url: ${PAWAYPAY_CALLBACK_BASE_URL:https://d719-102-129-81-90.ngrok-free.app }
+      callback-base-url: ${PAWAYPAY_CALLBACK_BASE_URL:https://engaging-designer-equity.ngrok-free.dev}
       callback-secret: ${PAWAYPAY_CALLBACK_SECRET:}
       polling-delay-ms: ${PAWAYPAY_POLLING_DELAY_MS:300000}
       polling-max-age-minutes: ${PAWAYPAY_POLLING_MAX_AGE_MINUTES:10}
 
 app:
   dev-mode: false
-  api-base-url: ${APP_BASE_URL:https://d719-102-129-81-90.ngrok-free.app}
+  api-base-url: ${APP_BASE_URL:https://engaging-designer-equity.ngrok-free.dev}
   admin-access-url: ${ADMIN_ACCESS_URL:https://admin.elleaose.com}
-  verify-base-url: ${APP_VERIFY_BASE_URL:${APP_BASE_URL:https://d719-102-129-81-90.ngrok-free.app}}
+  verify-base-url: ${APP_VERIFY_BASE_URL:${APP_BASE_URL:https://engaging-designer-equity.ngrok-free.dev}}
 
   document:
     storage:
@@ -129,8 +146,8 @@ app:
   outbox:
     worker:
       enabled: ${OUTBOX_WORKER_ENABLED:true}
-      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:2000}
-      batch-size: ${OUTBOX_WORKER_BATCH_SIZE:25}
+      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:500}
+      batch-size: ${OUTBOX_WORKER_BATCH_SIZE:100}
 
   kyc:
     ocr:

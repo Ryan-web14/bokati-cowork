@@ -22,11 +22,13 @@ import com.sni.bokaticowork.features.document.documentMaster.enums.*;
 import com.sni.bokaticowork.features.document.documentMaster.mapper.interfaces.DocumentMapper;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentReview;
+import com.sni.bokaticowork.features.document.documentMaster.model.DocumentSignature;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentVersion;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentMetadataRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentReviewRepository;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentSignatureRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentTagAssignmentRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentTypeRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentVersionRepository;
@@ -50,6 +52,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.sni.bokaticowork.core.utils.constant.SystemActors;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -64,8 +68,6 @@ import java.util.Map;
 @Transactional
 @Slf4j
 public class DocumentServiceImpl implements DocumentService {
-
-    private static final Long SYSTEM_UPLOADER_ID = 0L;
 
     private final DocumentRepository documentRepository;
     private final DocumentVersionRepository documentVersionRepository;
@@ -84,6 +86,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final OutboxService outboxService;
     private final KycAutomationService kycAutomationService;
     private final DocumentRejectionCascadeService rejectionCascadeService;
+    private final DocumentSignatureRepository signatureRepository;
     private final DocumentMapper mapper;
 
     @Value("${app.document.default-expiry-years:5}")
@@ -197,9 +200,9 @@ public class DocumentServiceImpl implements DocumentService {
         Page<Document> page;
         if (ownerType != null && StringUtils.hasText(ownerCode)) {
             OwnerResolution owner = resolveOwner(ownerType, ownerCode);
-            page = documentRepository.findAllByOwnerTypeAndOwnerId(owner.ownerType(), owner.ownerId(), pageable);
+            page = documentRepository.findAllByOwnerTypeAndOwnerIdAndStatusNot(owner.ownerType(), owner.ownerId(), DocumentStatus.REJECTED, pageable);
         } else {
-            page = documentRepository.findAll(pageable);
+            page = documentRepository.findAllByStatusNot(DocumentStatus.REJECTED, pageable);
         }
         return new PaginatedResponse<>(page.map(document -> toResponse(document, false)));
     }
@@ -223,6 +226,7 @@ public class DocumentServiceImpl implements DocumentService {
         kycAutomationService.syncFromDocumentReview(document);
         publishDocumentEvent("DOCUMENT_APPROVED", document, request.getReviewedBy());
         if (Boolean.TRUE.equals(document.getDocumentType().getRequiresSignature())) {
+            createPendingSignature(document);
             publishDocumentEvent("DOCUMENT_SIGNATURE_REQUIRED", document, request.getReviewedBy());
         }
         return getByCode(documentCode);
@@ -505,6 +509,21 @@ public class DocumentServiceImpl implements DocumentService {
         documentReviewRepository.save(review);
     }
 
+    private void createPendingSignature(Document document) {
+        List<DocumentSignature> existing = signatureRepository.findAllByDocumentAndSignatureStatus(
+                document, DocumentSignatureStatus.PENDING);
+        if (!existing.isEmpty()) {
+            return;
+        }
+        DocumentSignature signature = DocumentSignature.builder()
+                .document(document)
+                .signerType(document.getOwnerType().name())
+                .signerId(document.getOwnerId())
+                .signatureStatus(DocumentSignatureStatus.PENDING)
+                .build();
+        signatureRepository.save(signature);
+    }
+
     private void enforceMultipleAllowed(DocumentType documentType, OwnerResolution owner) {
         if (Boolean.TRUE.equals(documentType.getMultipleAllowed())) {
             return;
@@ -680,6 +699,6 @@ public class DocumentServiceImpl implements DocumentService {
         if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
             return principal.getUser().getId();
         }
-        return SYSTEM_UPLOADER_ID;
+        return SystemActors.SYSTEM_USER_ID;
     }
 }

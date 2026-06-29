@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.subscription.subscription.service.interfaces;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreatePassPurchaseRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.CreatePassRequest;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.PassResponse;
 import com.sni.bokaticowork.features.subscription.subscription.model.Pass;
@@ -11,6 +12,10 @@ public interface PassService {
 
     PassResponse create(CreatePassRequest request);
 
+    PassResponse purchase(String planCode, CreatePassPurchaseRequest request);
+
+    PassResponse activate(String passNumber, String reason);
+
     PassResponse get(String passNumber);
 
     Pass getForService(String passNumber);
@@ -20,4 +25,6 @@ public interface PassService {
     PassResponse cancel(String passNumber, String reason);
 
     int expirePasses();
+
+    int renewDuePasses();
 }

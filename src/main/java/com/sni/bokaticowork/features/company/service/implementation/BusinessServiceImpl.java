@@ -285,7 +285,7 @@ public class BusinessServiceImpl implements BusinessService {
             errors.add("Invalid business request, the activity is not valid");
         }
 
-        if (!StringUtils.hasText(request.getPhone()) || ValidationUtils.validatePhoneNumber(request.getPhone().replaceAll("\\s+", ""))) {
+        if (!StringUtils.hasText(request.getPhone()) || !ValidationUtils.validatePhoneNumber(request.getPhone().replaceAll("\\s+", ""))) {
             errors.add("Invalid business request, the phone number is not valid");
         }
 

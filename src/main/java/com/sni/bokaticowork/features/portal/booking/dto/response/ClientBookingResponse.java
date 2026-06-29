@@ -1,6 +1,5 @@
 package com.sni.bokaticowork.features.portal.booking.dto.response;
 
-import com.sni.bokaticowork.features.booking.dto.response.BookingLineResponse;
 import com.sni.bokaticowork.features.booking.dto.response.BookingParticipantResponse;
 import com.sni.bokaticowork.features.booking.enums.BookingPaymentMode;
 import com.sni.bokaticowork.features.booking.enums.BookingStatus;
@@ -18,9 +17,7 @@ import java.util.List;
 public class ClientBookingResponse {
 
     private String bookingNumber;
-    private String resourceCode;
     private String resourceName;
-    private String resourceTypeCode;
     private String resourceGroupCode;
     private String zone;
     private String locationLabel;
@@ -33,7 +30,6 @@ public class ClientBookingResponse {
     private BookingPaymentMode paymentMode;
     private String subscriptionNumber;
     private String passNumber;
-    private String entitlementCode;
     private BigDecimal unitPrice;
     private BigDecimal subtotalAmount;
     private BigDecimal totalAmount;
@@ -46,6 +42,5 @@ public class ClientBookingResponse {
     private Instant completedAt;
     private Instant cancelledAt;
     private Instant createdAt;
-    private List<BookingLineResponse> lines;
     private List<BookingParticipantResponse> participants;
 }

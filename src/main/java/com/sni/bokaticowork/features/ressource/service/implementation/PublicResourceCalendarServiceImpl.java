@@ -48,6 +48,17 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
                     .count();
             int totalCapacity = daySlots.stream().map(ResourceAvailability::getTotalCapacity).filter(v -> v != null).mapToInt(Integer::intValue).sum();
             int remainingCapacity = daySlots.stream().map(ResourceAvailability::getRemainingCapacity).filter(v -> v != null).mapToInt(Integer::intValue).sum();
+            List<PublicResourceCalendarResponse.Window> windows = daySlots.stream()
+                    .map(slot -> PublicResourceCalendarResponse.Window.builder()
+                            .startedAt(slot.getStartedAt())
+                            .endedAt(slot.getEndedAt())
+                            .slotDurationMinutes(slot.getSlotDurationMinutes())
+                            .totalCapacity(slot.getTotalCapacity())
+                            .remainingCapacity(slot.getRemainingCapacity())
+                            .available(slot.getAvailable())
+                            .active(slot.getActive())
+                            .build())
+                    .toList();
             days.add(PublicResourceCalendarResponse.Day.builder()
                     .date(day)
                     .totalSlots(totalSlots)
@@ -55,6 +66,7 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
                     .totalCapacity(totalCapacity)
                     .remainingCapacity(remainingCapacity)
                     .status(status(totalSlots, availableSlots))
+                    .windows(windows)
                     .build());
         }
 

@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.document.documentMaster.service.implementa
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateDocumentSignatureRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.SignDocumentRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentSignatureResponse;
@@ -17,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -26,6 +29,7 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
 
     private final DocumentRepository documentRepository;
     private final DocumentSignatureRepository signatureRepository;
+    private final OutboxService outboxService;
 
     @Override
     public DocumentSignatureResponse requestSignature(String documentCode, CreateDocumentSignatureRequest request) {
@@ -38,7 +42,9 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
                 .signerEmail(trim(request.signerEmail()))
                 .signatureStatus(DocumentSignatureStatus.PENDING)
                 .build();
-        return toResponse(signatureRepository.save(signature));
+        DocumentSignature saved = signatureRepository.save(signature);
+        publishSignatureEvent("DOCUMENT_SIGNATURE_REQUESTED", saved);
+        return toResponse(saved);
     }
 
     @Override
@@ -57,7 +63,9 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
         signature.setIpAddress(trim(ipAddress));
         signature.setUserAgent(trim(userAgent));
         signature.setSignatureData(trim(request.signatureData()));
-        return toResponse(signatureRepository.save(signature));
+        DocumentSignature saved = signatureRepository.save(signature);
+        publishSignatureEvent("DOCUMENT_SIGNED", saved);
+        return toResponse(saved);
     }
 
     @Override
@@ -89,6 +97,17 @@ public class DocumentSignatureServiceImpl implements DocumentSignatureService {
                 signature.getIpAddress(),
                 signature.getUserAgent()
         );
+    }
+
+    private void publishSignatureEvent(String eventType, DocumentSignature signature) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("documentCode", signature.getDocument().getCode());
+        payload.put("signerName", signature.getSignerName());
+        payload.put("signerEmail", signature.getSignerEmail());
+        payload.put("signatureStatus", signature.getSignatureStatus().name());
+        payload.put("ownerType", signature.getDocument().getOwnerType() != null ? signature.getDocument().getOwnerType().name() : null);
+        payload.put("ownerId", signature.getDocument().getOwnerId());
+        outboxService.publish(eventType, "DOCUMENT_SIGNATURE", signature.getDocument().getCode(), payload);
     }
 
     private String trim(String value) {

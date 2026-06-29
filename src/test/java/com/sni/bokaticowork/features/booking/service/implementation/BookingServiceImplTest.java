@@ -34,6 +34,7 @@ class BookingServiceImplTest {
             null,
             null,
             null,
+            null,
             null
     );
 

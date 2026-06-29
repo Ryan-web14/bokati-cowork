@@ -384,8 +384,8 @@
       <!-- CTA + QR -->
       <div class="bk-bottom">
         <div class="bk-cta-col">
-          <a th:href="${bookingUrl ?: '#'}" class="bk-cta-primary">Voir ma réservation</a>
-          <a th:href="${invoiceUrl ?: '#'}" class="bk-cta-secondary">Télécharger la facture PDF</a>
+          <a th:href="${bookingUrl ?: 'https://espace.elleaose.com'}" class="bk-cta-primary">Voir ma réservation</a>
+          <a th:href="${invoiceUrl ?: 'https://espace.elleaose.com'}" class="bk-cta-secondary">Télécharger la facture PDF</a>
         </div>
         <div class="bk-qr-col" th:if="${qrCodeUrl != null}">
           <div class="bk-qr-label">Présenter à l'accueil</div>

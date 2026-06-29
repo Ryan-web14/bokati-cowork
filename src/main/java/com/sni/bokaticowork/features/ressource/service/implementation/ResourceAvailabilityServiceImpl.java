@@ -74,7 +74,6 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     }
 
     @Override
-    @Transactional(readOnly = true)
     public PaginatedResponse<ResourceAvailabilityResponse> list(Pageable pageable) {
         expirePastAvailabilitySlots();
         Page<ResourceAvailabilityResponse> page = availabilityRepository.findAllByEndedAtAfter(LocalDateTime.now(), pageable)
@@ -83,7 +82,6 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     }
 
     @Override
-    @Transactional(readOnly = true)
     public PaginatedResponse<ResourceAvailabilityResponse> listByResource(String resourceCode, Pageable pageable) {
         Resource resource = resourceService.getResourceForService(resourceCode);
         expirePastAvailabilitySlots();
@@ -93,7 +91,6 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<ResourceAvailabilityGroupResponse> listGroupedByResource() {
         expirePastAvailabilitySlots();
         Map<String, ResourceAvailabilityGroupResponse> grouped = new LinkedHashMap<>();

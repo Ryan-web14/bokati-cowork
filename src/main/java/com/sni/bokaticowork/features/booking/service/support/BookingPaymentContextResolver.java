@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -42,15 +43,24 @@ public class BookingPaymentContextResolver {
         String resourceGroupCode = resource.getResourceGroup() == null ? null : resource.getResourceGroup().getCode();
 
         if (paymentMode == BookingPaymentMode.SUBSCRIPTION) {
-            Subscription subscription = subscriptionRepository.findCurrentActive(ownerType, ownerCode, LocalDate.now())
-                    .orElseThrow(() -> new ResourceNotFoundException("No active subscription found for booking owner"));
-            EntitlementGrant grant = usableSubscriptionGrant(ownerType, ownerCode, subscription, resourceTypeCode, resourceGroupCode, now)
-                    .orElseThrow(() -> new ResourceNotFoundException(noSubscriptionGrantMessage(subscription, resourceTypeCode, resourceGroupCode)));
-            return new BookingPaymentContext(
-                    subscription.getSubscriptionNumber(),
-                    null,
-                    grant.getEntitlementDefinition().getCode()
-            );
+            List<Subscription> subscriptions = subscriptionRepository.findAllCurrentActive(ownerType, ownerCode, LocalDate.now());
+            if (subscriptions.isEmpty()) {
+                throw new ResourceNotFoundException("No active subscription found for booking owner");
+            }
+            for (Subscription subscription : subscriptions) {
+                Optional<EntitlementGrant> grant = usableSubscriptionGrant(ownerType, ownerCode, subscription, resourceTypeCode, resourceGroupCode, now);
+                if (grant.isPresent()) {
+                    return new BookingPaymentContext(
+                            subscription.getSubscriptionNumber(),
+                            null,
+                            grant.get().getEntitlementDefinition().getCode()
+                    );
+                }
+            }
+            throw new ResourceNotFoundException(
+                    "No active subscription with a matching entitlement found for resource type="
+                    + (resourceTypeCode == null ? "none" : resourceTypeCode)
+                    + ", group=" + (resourceGroupCode == null ? "none" : resourceGroupCode));
         }
 
         if (paymentMode == BookingPaymentMode.PASS) {
@@ -82,13 +92,6 @@ public class BookingPaymentContextResolver {
         entitlementService.grantForSubscription(subscription);
         return grantRepository.findUsableSubscriptionGrantForResource(
                 ownerType, ownerCode, subscription.getId(), resourceTypeCode, resourceGroupCode, Instant.now());
-    }
-
-    private String noSubscriptionGrantMessage(Subscription subscription, String resourceTypeCode, String resourceGroupCode) {
-        return "No usable subscription entitlement found for subscription "
-                + subscription.getSubscriptionNumber()
-                + " and resource type=" + (resourceTypeCode == null ? "none" : resourceTypeCode)
-                + ", group=" + (resourceGroupCode == null ? "none" : resourceGroupCode);
     }
 
     public record BookingPaymentContext(

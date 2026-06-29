@@ -20,6 +20,7 @@ public class DocumentTypeResponse {
     private Boolean requiresReview;
     private Boolean requiresSignature;
     private Boolean multipleAllowed;
+    private Boolean requiresBackSide;
     private String allowedMimeTypes;
     private Long maxFileSizeBytes;
     private Boolean active;

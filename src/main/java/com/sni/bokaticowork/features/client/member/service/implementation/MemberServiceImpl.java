@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.features.client.member.service.implementation;
 
+import com.sni.bokaticowork.core.baseClasses.model.Address;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.core.utils.format.Normalization;
 import com.sni.bokaticowork.features.client.customer.dto.request.CustomerRequest;
 import com.sni.bokaticowork.features.client.customer.enums.CustomerStatus;
 import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
@@ -33,6 +35,7 @@ import com.sni.bokaticowork.security.admin.user.dto.request.UserRequest;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.user.repository.UserRepository;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
+import com.sni.bokaticowork.security.service.passwordResetService.interfaces.PasswordResetService;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -77,6 +80,7 @@ public class MemberServiceImpl  implements MemberService {
     private final MemberProfileRepository memberProfileRepository;
     private final DefaultEmailSender emailSender;
     private final SpringTemplateEngine emailTemplateEngine;
+    private final PasswordResetService passwordResetService;
 
     @Value("${app.verify-base-url:}")
     private String publicBaseUrl;
@@ -84,7 +88,6 @@ public class MemberServiceImpl  implements MemberService {
     @Value("${app.portal.kyc-grace-period-days:7}")
     private int defaultKycGracePeriodDays;
 
-    //Todo send password by email or let it be shown for printing
     @Transactional
     @Override
     public MemberResponse create(CreateMemberRequest request,Boolean createByadmin) {
@@ -101,8 +104,9 @@ public class MemberServiceImpl  implements MemberService {
 
             Member member = memberMapper.toEntity(request);
             String generatedPassword = null;
+            boolean createdByAdmin = Boolean.TRUE.equals(createByadmin);
 
-            if(Boolean.TRUE.equals(createByadmin)){
+            if(createdByAdmin){
                 member.setCreateByAdmin(true);
                 if (request.isGeneratePassword()) {
                     generatedPassword = GeneratorOfPassword.generatePassword(GENERATED_PASSWORD_LENGTH);
@@ -121,6 +125,10 @@ public class MemberServiceImpl  implements MemberService {
             Users user = userService.createUser(userRequest);
 
             member.setCustomer(customer);
+            if (customer != null) {
+                customer.setMember(true);
+                customerRepo.save(customer);
+            }
             member.setUser(user);
             long memberSeq = CodeComposer.extractSeq(sequenceGenerator.next("MEMBER", LocalDate.now()));
             member.setMemberId(CodeComposer.simpleWithMonth("MBR", LocalDate.now(), memberSeq));
@@ -131,9 +139,12 @@ public class MemberServiceImpl  implements MemberService {
                 member.setWhatsappPhone(member.getPhone());
             }
             memberRepo.save(member);
-            createEmptyProfileIfMissing(member);
+            createProfileIfMissing(member, request, customer);
             kycAutomationService.initializeMemberKyc(member.getMemberId());
-            sendMemberCreatedEmailAfterCommit(member, generatedPassword);
+            sendMemberCreatedEmailAfterCommit(member, createdByAdmin);
+            if (createdByAdmin) {
+                sendPasswordSetupLinkAfterCommit(user);
+            }
 
             return memberMapper.toResponse(member);
         } catch (ResourceAlreadyExistException e){
@@ -240,16 +251,18 @@ public class MemberServiceImpl  implements MemberService {
         kycAutomationService.syncMemberKyc(member.getMemberId());
     }
 
+    private static final int MAX_LIST_SIZE = 1000;
+
     @Override
     public List<MemberResponse> getAllMembers() {
-        return memberRepo.findAllVisible(PageRequest.of(0, Integer.MAX_VALUE)).stream()
+        return memberRepo.findAllVisible(PageRequest.of(0, MAX_LIST_SIZE)).stream()
                 .map(memberMapper::toResponse)
                 .toList();
     }
 
     @Override
     public List<MemberSummaryResponse> getAllMembersSummary() {
-        return memberRepo.findAllVisible(PageRequest.of(0, Integer.MAX_VALUE)).stream()
+        return memberRepo.findAllVisible(PageRequest.of(0, MAX_LIST_SIZE)).stream()
                 .map(memberMapper::toSummary)
                 .toList();
     }
@@ -312,8 +325,14 @@ public class MemberServiceImpl  implements MemberService {
         member.setStatus(MemberStatus.ARCHIVED);
         member.setDeleted(true);
         memberRepo.save(member);
+        if (member.getCustomer() != null) {
+            boolean hasOtherMembers = memberRepo.existsByCustomerAndDeletedFalseAndIdNot(member.getCustomer(), member.getId());
+            if (!hasOtherMembers) {
+                member.getCustomer().setMember(false);
+                customerRepo.save(member.getCustomer());
+            }
+        }
         kycAutomationService.syncMemberKyc(member.getMemberId());
-
     }
 
 
@@ -371,44 +390,81 @@ public class MemberServiceImpl  implements MemberService {
         kycAutomationService.syncMemberKyc(member.getMemberId());
     }
 
-    private void createEmptyProfileIfMissing(Member member) {
+    private void createProfileIfMissing(Member member, CreateMemberRequest request, Customer customer) {
         if (member == null || member.getId() == null || memberProfileRepository.existsByMember_Id(member.getId())) {
             return;
         }
-        memberProfileRepository.save(MemberProfile.builder().member(member).build());
+        try {
+            MemberProfile.MemberProfileBuilder builder = MemberProfile.builder().member(member);
+            if (request != null) {
+                if (request.getBirthDate() != null) {
+                    builder.birthDate(request.getBirthDate());
+                }
+                if (StringUtils.hasText(request.getGender())) {
+                    builder.gender(request.getGender().trim());
+                }
+                if (StringUtils.hasText(request.getPreferredCommunicationChannel())) {
+                    builder.preferredCommunicationChannel(request.getPreferredCommunicationChannel().trim());
+                }
+            }
+            if (customer != null && customer.getAddress() != null) {
+                Address addr = customer.getAddress();
+                builder.address(formatStreet(addr));
+                builder.city(addr.getCity());
+                if (addr.getCountry() != null) {
+                    builder.country(addr.getCountry().getName());
+                }
+            }
+            memberProfileRepository.save(builder.build());
+        } catch (Exception ex) {
+            log.warn("Could not create profile for member {}: {}", member.getMemberId(), ex.getMessage());
+        }
     }
 
-    private void sendMemberCreatedEmailAfterCommit(Member member, String generatedPassword) {
+    private String formatStreet(Address addr) {
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.hasText(addr.getStreetNumber())) {
+            sb.append(addr.getStreetNumber()).append(" ");
+        }
+        if (StringUtils.hasText(addr.getStreetName())) {
+            sb.append(addr.getStreetName());
+        }
+        if (sb.isEmpty() && StringUtils.hasText(addr.getDistrict())) {
+            sb.append(addr.getDistrict());
+        }
+        return sb.isEmpty() ? null : sb.toString().trim();
+    }
+//TODO revoir cette methode
+    private void sendMemberCreatedEmailAfterCommit(Member member, boolean passwordSetupPending) {
         if (member == null || !StringUtils.hasText(member.getEmail())) {
             return;
         }
         Runnable task = () -> {
             try {
-                // Email 1 — bienvenue (onboarding, étapes, infos pratiques)
                 Context welcomeCtx = new Context();
                 welcomeCtx.setVariable("name", member.getDisplayName().trim());
                 welcomeCtx.setVariable("memberId", member.getMemberId());
                 welcomeCtx.setVariable("email", member.getEmail());
                 welcomeCtx.setVariable("portalAccess", Boolean.TRUE.equals(member.getPortalAccess()));
+                welcomeCtx.setVariable("passwordSetupPending", passwordSetupPending);
                 welcomeCtx.setVariable("plan", null);
                 welcomeCtx.setVariable("startDate", null);
                 String welcomeHtml = emailTemplateEngine.process("form/welcome-member-email", welcomeCtx);
                 emailSender.sendHtmlEmail(member.getEmail(),
                         "Bienvenue dans votre espace membre — Elle A Osé", welcomeHtml);
-
-                // Email 2 — credentials (uniquement si mot de passe temporaire généré)
-                if (StringUtils.hasText(generatedPassword)) {
-                    Context credCtx = new Context();
-                    credCtx.setVariable("name", member.getDisplayName().trim());
-                    credCtx.setVariable("memberId", member.getMemberId());
-                    credCtx.setVariable("email", member.getEmail());
-                    credCtx.setVariable("generatedPassword", generatedPassword);
-                    String credHtml = emailTemplateEngine.process("email/member-created", credCtx);
-                    emailSender.sendHtmlEmail(member.getEmail(),
-                            "Vos identifiants de connexion — Elle A Osé", credHtml);
-                }
             } catch (MessagingException ex) {
                 log.warn("Unable to send member creation email to {}", member.getEmail(), ex);
+            }
+        };
+        runAfterCommit(task);
+    }
+
+    private void sendPasswordSetupLinkAfterCommit(Users user) {
+        Runnable task = () -> {
+            try {
+                passwordResetService.generatePasswordResetToken(user);
+            } catch (Exception ex) {
+                log.warn("Unable to send password setup link to {}", user.getEmail(), ex);
             }
         };
         runAfterCommit(task);
@@ -442,8 +498,8 @@ public class MemberServiceImpl  implements MemberService {
     private void normalizeCreateRequest(CreateMemberRequest request) {
         request.setExistingCustomerId(normalizeWhitespace(request.getExistingCustomerId()));
         request.setCustomerType(normalizeCustomerType(request.getCustomerType()));
-        request.setFirstname(normalizeWhitespace(request.getFirstname()));
-        request.setLastname(normalizeWhitespace(request.getLastname()));
+        request.setFirstname(normalizeWhitespace(Normalization.normalizeFirstname(request.getFirstname())));
+        request.setLastname(normalizeWhitespace(Normalization.normalizeLastname(request.getLastname())));
         request.setCompanyName(normalizeWhitespace(request.getCompanyName()));
         request.setEmail(normalizeEmail(request.getEmail()));
         request.setBillingEmail(normalizeOptionalEmail(request.getBillingEmail()));
@@ -560,7 +616,7 @@ public class MemberServiceImpl  implements MemberService {
         }
 
         if (StringUtils.hasText(request.getPhone())) {
-            if (ValidationUtils.validatePhoneNumber(request.getPhone())) {
+            if (!ValidationUtils.validatePhoneNumber(request.getPhone())) {
                 throw new BadRequestException("A valid phone number is required");
             }
             if (!request.getPhone().equals(member.getPhone())
@@ -569,7 +625,7 @@ public class MemberServiceImpl  implements MemberService {
             }
         }
 
-        if (StringUtils.hasText(request.getWhatsappPhone()) && ValidationUtils.validatePhoneNumber(request.getWhatsappPhone())) {
+        if (StringUtils.hasText(request.getWhatsappPhone()) && !ValidationUtils.validatePhoneNumber(request.getWhatsappPhone())) {
             throw new BadRequestException("A valid whatsapp phone number is required");
         }
     }
@@ -608,7 +664,7 @@ public class MemberServiceImpl  implements MemberService {
             errors.add("A valid email is required");
         }
 
-        if (!StringUtils.hasText(request.getPhone()) || ValidationUtils.validatePhoneNumber(request.getPhone())) {
+        if (!StringUtils.hasText(request.getPhone()) || !ValidationUtils.validatePhoneNumber(request.getPhone())) {
             errors.add("A valid phone number is required");
         }
 

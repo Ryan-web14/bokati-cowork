@@ -2,11 +2,14 @@ package com.sni.bokaticowork.features.booking.controller;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
-import com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest;
 import com.sni.bokaticowork.features.booking.dto.request.BookingApprovalRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingChangeResourceRequest;
 import com.sni.bokaticowork.features.booking.dto.request.BookingCheckRequest;
 import com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingRescheduleRequest;
 import com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest;
+import com.sni.bokaticowork.features.booking.dto.request.BookingTransferRequest;
 import com.sni.bokaticowork.features.booking.dto.request.CreateBookingAudiencePolicyRequest;
 import com.sni.bokaticowork.features.booking.dto.request.CreateBookingHoldRequest;
 import com.sni.bokaticowork.features.booking.dto.request.CreateBookingQuotaOverrideRequest;
@@ -147,6 +150,12 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.noShow(bookingNumber, request));
     }
 
+    @PatchMapping("/{bookingNumber}/early-check-in")
+    public ResponseEntity<BookingResponse> earlyCheckIn(@PathVariable String bookingNumber,
+                                                        @RequestBody(required = false) BookingCheckRequest request) {
+        return ResponseEntity.ok(bookingService.earlyCheckIn(bookingNumber, request));
+    }
+
     @PatchMapping("/{bookingNumber}/check-in")
     public ResponseEntity<BookingResponse> checkIn(@PathVariable String bookingNumber,
                                                    @RequestBody(required = false) BookingCheckRequest request) {
@@ -163,6 +172,24 @@ public class BookingController {
     public ResponseEntity<BookingResponse> checkOut(@PathVariable String bookingNumber,
                                                     @RequestBody(required = false) BookingCheckRequest request) {
         return ResponseEntity.ok(bookingService.checkOut(bookingNumber, request));
+    }
+
+    @PatchMapping("/{bookingNumber}/transfer")
+    public ResponseEntity<BookingResponse> transfer(@PathVariable String bookingNumber,
+                                                    @Valid @RequestBody BookingTransferRequest request) {
+        return ResponseEntity.ok(bookingService.transfer(bookingNumber, request));
+    }
+
+    @PatchMapping("/{bookingNumber}/reschedule")
+    public ResponseEntity<BookingResponse> reschedule(@PathVariable String bookingNumber,
+                                                      @Valid @RequestBody BookingRescheduleRequest request) {
+        return ResponseEntity.ok(bookingService.reschedule(bookingNumber, request));
+    }
+
+    @PatchMapping("/{bookingNumber}/change-resource")
+    public ResponseEntity<BookingResponse> changeResource(@PathVariable String bookingNumber,
+                                                          @Valid @RequestBody BookingChangeResourceRequest request) {
+        return ResponseEntity.ok(bookingService.changeResource(bookingNumber, request));
     }
 
     @PostMapping("/{bookingNumber}/participants")

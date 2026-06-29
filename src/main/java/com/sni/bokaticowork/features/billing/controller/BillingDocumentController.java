@@ -108,6 +108,11 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.issue(documentNumber));
     }
 
+    @PatchMapping("/documents/{documentNumber}/validate")
+    public ResponseEntity<BillingDocumentResponse> validate(@PathVariable String documentNumber) {
+        return ResponseEntity.ok(billingDocumentService.validate(documentNumber));
+    }
+
     @PatchMapping("/documents/{documentNumber}/send")
     public ResponseEntity<BillingDocumentResponse> send(@PathVariable String documentNumber) {
         return ResponseEntity.ok(billingDocumentService.send(documentNumber));

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Configuration terminal scanner — Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; background: #E8E5E0; color: #1A0A2E; }
+    .topbar { background: #110828; padding: 18px 32px; }
+    .topbar-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
+    .topbar-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
+    .topbar-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
+    .content { min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+    .card { width: 100%; max-width: 460px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 24px rgba(26,10,46,.10), 0 32px 64px rgba(26,10,46,.12); }
+    .card-top-setup { padding: 28px 32px 22px; background: linear-gradient(135deg, #110828 0%, #1e3a5f 100%); }
+    .card-top-success { padding: 28px 32px 22px; background: linear-gradient(135deg, #052e16 0%, #166534 100%); }
+    .card-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
+    .card-title { color: #fff; font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+    .card-sub { color: rgba(255,255,255,.55); font-size: 12px; letter-spacing: .8px; text-transform: uppercase; margin-top: 8px; }
+    .card-body { padding: 28px 32px 32px; }
+    .info-text { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 24px; }
+    label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; margin-bottom: 8px; }
+    input[type=password] { width: 100%; padding: 14px 16px; border: 1px solid #D5CCE0; border-radius: 8px; font-size: 15px; font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 2px; color: #1A0A2E; outline: none; }
+    input:focus { border-color: #8B5CF6; box-shadow: 0 0 0 3px rgba(139,92,246,.15); }
+    .error-msg { font-size: 12px; color: #DC2626; margin-top: 8px; }
+    .btn { display: block; width: 100%; background: #C9A84C; color: #1A0A2E; border: none; font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 16px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+    .btn:hover { background: #b8943e; }
+    .success-box { display: flex; align-items: flex-start; gap: 14px; padding: 18px; background: #ECFDF5; border: 1px solid #BBF7D0; border-radius: 10px; }
+    .success-text { font-size: 14px; font-weight: 600; color: #166534; line-height: 1.55; }
+    .badge { display: inline-block; background: #DCFCE7; color: #166534; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; margin-top: 6px; }
+    .tip { font-size: 12px; color: #9B8CAA; margin-top: 16px; line-height: 1.65; }
+    .page-footer { text-align: center; padding: 16px; font-size: 11px; color: #B0A0C0; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">Elle A Osé</div>
+  <div class="topbar-sub">Configuration scanner</div>
+</div>
+<div class="topbar-stripe"></div>
+
+<div class="content">
+  <div class="card">
+
+    <!-- Success state -->
+    <div th:if="${setupSuccess}">
+      <div class="card-top-success">
+        <div class="card-title">Terminal configuré</div>
+        <div class="card-sub">Scanner autorisé avec succès</div>
+      </div>
+      <div class="card-stripe"></div>
+      <div class="card-body">
+        <div class="success-box">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" flex-shrink="0">
+            <circle cx="11" cy="11" r="9" stroke="#166534" stroke-width="1.5"/>
+            <path d="M7 11l3 3 5-5" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div>
+            <div class="success-text">Ce terminal est maintenant autorisé à effectuer des check-ins par scan de QR code.</div>
+            <span class="badge">Scanner actif</span>
+          </div>
+        </div>
+        <p class="tip">Ce navigateur conservera l'autorisation pendant 1 an. Pointez simplement la caméra sur les QR codes des clients pour les enregistrer automatiquement.</p>
+      </div>
+    </div>
+
+    <!-- Setup form -->
+    <div th:unless="${setupSuccess}">
+      <div class="card-top-setup">
+        <div class="card-title">Configuration scanner</div>
+        <div class="card-sub">Autoriser ce terminal à scanner les QR codes</div>
+      </div>
+      <div class="card-stripe"></div>
+      <div class="card-body">
+        <div class="info-text">
+          Entrez la clé de configuration scanner pour autoriser ce navigateur/terminal à effectuer des check-ins par QR code sans restriction de temps ou de localisation.
+        </div>
+
+        <div th:if="${scannerConfigured}">
+          <form method="post" th:action="@{/v1/public/bookings/check-in/scanner-setup}">
+            <label for="setupKey">Clé scanner</label>
+            <input type="password" id="setupKey" name="setupKey" placeholder="••••••••" autocomplete="off" required/>
+            <div class="error-msg" th:if="${error != null}" th:text="${error}"></div>
+            <button type="submit" class="btn">Configurer ce terminal</button>
+          </form>
+        </div>
+
+        <div th:unless="${scannerConfigured}" class="error-msg">
+          Le scanner n'est pas configuré sur ce serveur. Contactez l'administrateur système.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="page-footer">
+  <strong>Elle A Osé</strong> — Espace de coworking
+</div>
+
+</body>
+</html>

@@ -13,11 +13,20 @@ import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class KycOutboxEventProcessor implements OutboxEventProcessor {
+
+    private static final Set<String> NOTIFIABLE_EVENTS = Set.of(
+            "KYC_CASE_CREATED",
+            "KYC_CASE_AUTO_CREATED",
+            "KYC_CASE_APPROVED",
+            "KYC_CASE_REJECTED",
+            "KYC_CASE_CORRECTION_REQUESTED"
+    );
 
     private final ObjectMapper objectMapper;
     private final OutboxNotificationMailService mailService;
@@ -25,7 +34,8 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
 
     @Override
     public boolean supports(OutboxEvent event) {
-        return "KYC_CASE".equalsIgnoreCase(event.getAggregateType());
+        return "KYC_CASE".equalsIgnoreCase(event.getAggregateType())
+                && NOTIFIABLE_EVENTS.contains(event.getEventType());
     }
 
     @Override
@@ -50,15 +60,40 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
             return;
         }
 
+        String subject = resolveSubject(event.getEventType(), caseCode);
+
         Map<String, Object> vars = new HashMap<>();
         vars.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
         vars.put("kycCaseCode",   caseCode != null ? caseCode : "—");
         vars.put("eventType",     event.getEventType());
+        vars.put("eventLabel",    resolveEventLabel(event.getEventType()));
         vars.put("status",        status != null ? status : "N/A");
 
-        // Lance une exception si l'envoi échoue → outbox marque FAILED → retry automatique
-        mailService.sendKycNotification(recipient.email(), vars);
+        mailService.sendKycNotification(recipient.email(), subject, vars);
         log.info("KYC notification sent to {} for event={}", recipient.email(), event.getEventType());
+    }
+
+    private String resolveSubject(String eventType, String caseCode) {
+        String ref = caseCode != null ? " — " + caseCode : "";
+        return switch (eventType) {
+            case "KYC_CASE_CREATED"      -> "Nouveau dossier KYC" + ref;
+            case "KYC_CASE_AUTO_CREATED" -> "Dossier KYC créé automatiquement" + ref;
+            case "KYC_CASE_APPROVED"     -> "Dossier KYC approuvé" + ref;
+            case "KYC_CASE_REJECTED"     -> "Correction requise sur votre dossier KYC" + ref;
+            case "KYC_CASE_CORRECTION_REQUESTED" -> "Correction requise sur votre dossier KYC" + ref;
+            default                      -> "Notification KYC" + ref;
+        };
+    }
+
+    private String resolveEventLabel(String eventType) {
+        return switch (eventType) {
+            case "KYC_CASE_CREATED"      -> "Création de dossier";
+            case "KYC_CASE_AUTO_CREATED" -> "Création automatique de dossier";
+            case "KYC_CASE_APPROVED"     -> "Dossier approuvé";
+            case "KYC_CASE_REJECTED"     -> "Correction requise";
+            case "KYC_CASE_CORRECTION_REQUESTED" -> "Correction requise";
+            default                      -> "Notification";
+        };
     }
 
     private JsonNode readPayload(OutboxEvent event) {

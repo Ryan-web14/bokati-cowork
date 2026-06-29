@@ -22,6 +22,7 @@ public class ContractEmailNotifier {
     private final DefaultEmailSender emailSender;
     private final SpringTemplateEngine templateEngine;
     private final DocumentFileReader documentFileReader;
+    private final Locale appLocale;
 
     @Async
     public void notifyGenerated(String recipientEmail,
@@ -32,7 +33,7 @@ public class ContractEmailNotifier {
             return;
         }
         try {
-            Context ctx = new Context(Locale.FRANCE);
+            Context ctx = new Context(appLocale);
             ctx.setVariable("recipientName", StringUtils.hasText(recipientName) ? recipientName : "client");
             ctx.setVariable("templateCode", templateCode != null ? templateCode : "—");
             ctx.setVariable("documentCode", documentCode);

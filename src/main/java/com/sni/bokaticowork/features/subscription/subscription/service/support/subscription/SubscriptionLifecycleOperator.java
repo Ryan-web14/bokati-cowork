@@ -1,10 +1,15 @@
 package com.sni.bokaticowork.features.subscription.subscription.service.support.subscription;
 
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
+import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
 import com.sni.bokaticowork.features.contract.enums.ContractStatus;
 import com.sni.bokaticowork.features.contract.model.Contract;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractService;
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
+import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
+import com.sni.bokaticowork.features.document.kyc.model.KycCase;
+import com.sni.bokaticowork.features.document.kyc.repository.KycCaseRepository;
 import com.sni.bokaticowork.features.payment.model.WalletHold;
 import com.sni.bokaticowork.features.payment.repository.WalletHoldRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.WalletHoldService;
@@ -12,10 +17,12 @@ import com.sni.bokaticowork.features.subscription.subscription.dto.request.Pause
 import com.sni.bokaticowork.features.subscription.subscription.dto.request.SubscriptionStatusChangeRequest;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillingScheduleStatus;
 import com.sni.bokaticowork.features.subscription.subscription.enums.EntitlementGrantStatus;
+import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriptionEventType;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriptionStatus;
 import com.sni.bokaticowork.features.subscription.subscription.model.EntitlementGrant;
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
+import com.sni.bokaticowork.features.subscription.subscription.model.SubscriptionPlan;
 import com.sni.bokaticowork.features.subscription.repository.EntitlementGrantRepository;
 import com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.EntitlementService;
@@ -23,6 +30,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.S
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionEventWriter;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPeriodCalculator;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionStatusManager;
+import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -31,7 +39,9 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -47,9 +57,12 @@ public class SubscriptionLifecycleOperator {
     private final @Lazy EntitlementService entitlementService;
     private final @Lazy ContractService contractService;
     private final SubscriptionEmailNotifier emailNotifier;
+    private final MemberInAppNotifier memberInAppNotifier;
     private final WalletHoldRepository walletHoldRepository;
     private final WalletHoldService walletHoldService;
     private final BillingDocumentRepository billingDocumentRepository;
+    private final KycCaseRepository kycCaseRepository;
+    private final OutboxService outboxService;
 
     public void activate(Subscription subscription, String reason, String actor) {
         if (subscription.getStatus() == SubscriptionStatus.ACTIVE) {
@@ -63,7 +76,8 @@ public class SubscriptionLifecycleOperator {
             eventWriter.writeEvent(subscription, SubscriptionEventType.ENTITLEMENTS_GRANTED, null);
         }
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED, null);
-        emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
+        notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
+        checkKycCompliance(subscription);
     }
 
     public Subscription suspend(Subscription subscription, SubscriptionStatusChangeRequest request) {
@@ -124,7 +138,7 @@ public class SubscriptionLifecycleOperator {
         cancelAssociatedContract(subscription, cancelReason);
         releaseDepositHold(subscription);
         Subscription saved = subscriptionRepository.save(subscription);
-        emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
+        notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
         return saved;
     }
 
@@ -180,7 +194,7 @@ public class SubscriptionLifecycleOperator {
             revokeActiveGrants(subscription);
             cancelAssociatedContract(subscription, reason);
             Subscription saved = subscriptionRepository.save(subscription);
-            emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
+            notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
         });
         return subscriptions.size();
     }
@@ -201,11 +215,13 @@ public class SubscriptionLifecycleOperator {
         subscription.setCurrentPeriodStart(newStart);
         subscription.setCurrentPeriodEnd(periodCalculator.periodEnd(newStart, subscription.getBillingCycle()));
         subscription.setNextBillingDate(periodCalculator.nextBillingDate(newStart, subscription.getBillingCycle()));
-        billingSupport.createBillableItem(subscription, "SUBSCRIPTION_RENEWAL", "Subscription renewal");
+        java.math.BigDecimal recurringAmount = subscription.getSubtotalAmount().add(subscription.getTaxAmount());
+        billingSupport.createBillableItem(subscription, "SUBSCRIPTION_RENEWAL", "Subscription renewal", recurringAmount);
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.ACTIVE);
         subscriptionRepository.save(subscription);
         entitlementService.grantForSubscription(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED, null);
+        notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
     }
 
     public String reason(SubscriptionStatusChangeRequest request, String defaultReason) {
@@ -258,6 +274,59 @@ public class SubscriptionLifecycleOperator {
         }
     }
 
+    private void checkKycCompliance(Subscription subscription) {
+        try {
+            if (subscription.getPlanVersion() == null || subscription.getPlanVersion().getPlan() == null) return;
+            SubscriptionPlan plan = subscription.getPlanVersion().getPlan();
+            Integer requiredLevel = plan.getRequiredKycLevel();
+            if (requiredLevel == null || requiredLevel <= 1) return;
+
+            DocumentOwnerType ownerType = mapSubscriberType(subscription.getSubscriberType());
+            Long ownerId = resolveOwnerId(subscription);
+            if (ownerType == null || ownerId == null) return;
+
+            int currentLevel = kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(ownerType, ownerId)
+                    .filter(kycCase -> kycCase.getStatus() == KycCaseStatus.APPROVED)
+                    .map(KycCase::getKycLevel)
+                    .orElse(1);
+
+            boolean compliant = currentLevel >= requiredLevel;
+            subscription.setKycCompliant(compliant);
+            subscriptionRepository.save(subscription);
+
+            if (!compliant) {
+                log.warn("Subscription {} activated with insufficient KYC level (has={}, required={})",
+                        subscription.getSubscriptionNumber(), currentLevel, requiredLevel);
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("subscriptionNumber", subscription.getSubscriptionNumber());
+                payload.put("subscriberType", subscription.getSubscriberType().name());
+                payload.put("subscriberCode", subscription.getSubscriberCode());
+                payload.put("currentKycLevel", currentLevel);
+                payload.put("requiredKycLevel", requiredLevel);
+                outboxService.publish("KYC_COMPLIANCE_WARNING", "NOTIFICATION",
+                        subscription.getSubscriptionNumber(), payload);
+            }
+        } catch (Exception ex) {
+            log.warn("KYC compliance check failed for subscription {}: {}",
+                    subscription.getSubscriptionNumber(), ex.getMessage());
+        }
+    }
+
+    private DocumentOwnerType mapSubscriberType(SubscriberType type) {
+        return switch (type) {
+            case MEMBER -> DocumentOwnerType.MEMBER;
+            case CUSTOMER -> DocumentOwnerType.CUSTOMER;
+            case BUSINESS_ENTITY -> DocumentOwnerType.BUSINESS;
+        };
+    }
+
+    private Long resolveOwnerId(Subscription subscription) {
+        if (subscription.getMember() != null) return subscription.getMember().getId();
+        if (subscription.getCustomer() != null) return subscription.getCustomer().getId();
+        if (subscription.getBusinessEntity() != null) return subscription.getBusinessEntity().getId();
+        return null;
+    }
+
     private void revokeActiveGrants(Subscription subscription) {
         if (subscription.getId() == null) {
             return;
@@ -283,5 +352,43 @@ public class SubscriptionLifecycleOperator {
             log.warn("Could not revoke entitlement grants for subscription {}: {}",
                     subscription.getSubscriptionNumber(), ex.getMessage());
         }
+    }
+
+    private void notifyInApp(Subscription subscription, SubscriptionEventType eventType) {
+        String email = resolveRecipientEmail(subscription);
+        String name = resolveRecipientName(subscription);
+        String subject = switch (eventType) {
+            case SUBSCRIPTION_ACTIVATED -> "Abonnement active " + subscription.getSubscriptionNumber();
+            case SUBSCRIPTION_CANCELLED -> "Abonnement annule " + subscription.getSubscriptionNumber();
+            case SUBSCRIPTION_RENEWED -> "Abonnement renouvele " + subscription.getSubscriptionNumber();
+            case SUBSCRIPTION_EXPIRED -> "Abonnement expire " + subscription.getSubscriptionNumber();
+            default -> "Abonnement mis a jour " + subscription.getSubscriptionNumber();
+        };
+        memberInAppNotifier.notify(
+                eventType.name(), "SUBSCRIPTION", subscription.getSubscriptionNumber(),
+                email, name, subscription.getSubscriberCode(), subject,
+                Map.of(
+                        "subscriptionNumber", subscription.getSubscriptionNumber(),
+                        "status", subscription.getStatus() != null ? subscription.getStatus().name() : "",
+                        "planName", subscription.getPlanVersion() != null ? subscription.getPlanVersion().getName() : ""
+                )
+        );
+    }
+
+    private String resolveRecipientEmail(Subscription subscription) {
+        if (subscription.getMember() != null) return subscription.getMember().getEmail();
+        if (subscription.getCustomer() != null) {
+            return StringUtils.hasText(subscription.getCustomer().getBillingEmail())
+                    ? subscription.getCustomer().getBillingEmail() : subscription.getCustomer().getEmail();
+        }
+        if (subscription.getBusinessEntity() != null) return subscription.getBusinessEntity().getEmail();
+        return null;
+    }
+
+    private String resolveRecipientName(Subscription subscription) {
+        if (subscription.getMember() != null) return subscription.getMember().getDisplayName();
+        if (subscription.getCustomer() != null) return subscription.getCustomer().getFirstname();
+        if (subscription.getBusinessEntity() != null) return subscription.getBusinessEntity().getName();
+        return subscription.getSubscriberCode();
     }
 }

@@ -134,7 +134,21 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 signatureRepository.findFirstByDocumentOrderByCreatedAtDesc(document).map(this::toSignatureResponse).orElse(null),
                 document.getInternalNotes(),
                 recoverableRepository.findAllByDocumentOrderByCreatedAtAsc(document)
-                        .stream().map(this::toRecoverableResponse).toList()
+                        .stream().map(this::toRecoverableResponse).toList(),
+                document.getLocked(),
+                document.getFiscalNumber(),
+                document.getFiscalDate(),
+                document.getValidatedAt(),
+                document.getSellerName(),
+                document.getSellerNiu(),
+                document.getSellerPhone(),
+                document.getSellerEmail(),
+                document.getCustomerNiu(),
+                document.getCustomerCategory(),
+                document.getPreviousHash(),
+                document.getCurrentHash(),
+                document.getFiscalSignature(),
+                document.getSignedAt()
         );
     }
 

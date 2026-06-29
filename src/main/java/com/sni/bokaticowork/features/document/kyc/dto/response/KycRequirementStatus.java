@@ -10,6 +10,8 @@ public class KycRequirementStatus {
     private String documentTypeCode;
     private String documentTypeName;
     private boolean required;
+    private Boolean requiresBackSide;
     private KycDocumentVerificationStatus status;
     private String documentCode;
+    private String backDocumentCode;
 }

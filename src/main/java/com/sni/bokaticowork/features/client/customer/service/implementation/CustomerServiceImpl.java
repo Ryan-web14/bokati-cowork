@@ -15,6 +15,7 @@ import com.sni.bokaticowork.features.client.member.repository.repo.MemberReposit
 import com.sni.bokaticowork.core.baseClasses.model.Address;
 import com.sni.bokaticowork.core.baseClasses.service.interfaces.AddressService;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.utils.code.CodeComposer;
@@ -81,6 +82,17 @@ public class CustomerServiceImpl implements CustomerService {
             throw new IllegalArgumentException("Invalid customer request");
         }
 
+        if (StringUtils.hasText(request.getEmail())
+                && Boolean.TRUE.equals(customerRepo.existsByEmailAndDeletedFalse(request.getEmail().trim().toLowerCase(Locale.ROOT)))) {
+            throw new ResourceAlreadyExistException("A customer with this email already exists");
+        }
+        if (StringUtils.hasText(request.getPhone())) {
+            Optional<Customer> byPhone = customerRepo.findByPhoneAndDeletedFalse(request.getPhone().replaceAll("\\s+", ""));
+            if (byPhone.isPresent()) {
+                throw new ResourceAlreadyExistException("A customer with this phone number already exists");
+            }
+        }
+
         Customer obj = customerMapper.toEntity(request);
         if (request.getAddress() != null) {
             Address persistedAddress = addressService.createAddress(request.getAddress());
@@ -112,16 +124,41 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         Customer obj = customerRepo.findByCustomerId(customerId)
-                .orElseThrow(()-> new IllegalArgumentException("Customer with id " + customerId + " not found"));
+                .orElseThrow(()-> new ResourceNotFoundException("Customer with id " + customerId + " not found"));
+
+        if (StringUtils.hasText(request.getEmail())
+                && !request.getEmail().trim().equalsIgnoreCase(obj.getEmail())
+                && Boolean.TRUE.equals(customerRepo.existsByEmailAndIdNot(request.getEmail().trim().toLowerCase(Locale.ROOT), obj.getId()))) {
+            throw new ResourceAlreadyExistException("A customer with this email already exists");
+        }
+        if (StringUtils.hasText(request.getPhone())
+                && !request.getPhone().replaceAll("\\s+", "").equals(obj.getPhone())
+                && Boolean.TRUE.equals(customerRepo.existsByPhoneAndIdNot(request.getPhone().replaceAll("\\s+", ""), obj.getId()))) {
+            throw new ResourceAlreadyExistException("A customer with this phone number already exists");
+        }
 
         customerRepo.save(customerMapper.updateEntity(obj, request));
     }
+
+    private static final java.util.Map<CustomerStatus, java.util.Set<CustomerStatus>> ALLOWED_STATUS_TRANSITIONS = java.util.Map.of(
+            CustomerStatus.PENDING, java.util.Set.of(CustomerStatus.ACTIVE, CustomerStatus.INACTIVE, CustomerStatus.ARCHIVED),
+            CustomerStatus.ACTIVE, java.util.Set.of(CustomerStatus.SUSPENDED, CustomerStatus.INACTIVE, CustomerStatus.ARCHIVED),
+            CustomerStatus.SUSPENDED, java.util.Set.of(CustomerStatus.ACTIVE, CustomerStatus.INACTIVE, CustomerStatus.ARCHIVED),
+            CustomerStatus.INACTIVE, java.util.Set.of(CustomerStatus.ACTIVE, CustomerStatus.ARCHIVED),
+            CustomerStatus.ARCHIVED, java.util.Set.of()
+    );
 
     @Override
     public void changeStatus(String customerId, ChangeCustomerStatusRequest request) {
         Customer customer = customerRepo.findByCustomerId(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer with id " + customerId + " not found"));
-        customer.setStatus(request.getStatus());
+        CustomerStatus current = customer.getStatus();
+        CustomerStatus target = request.getStatus();
+        java.util.Set<CustomerStatus> allowed = ALLOWED_STATUS_TRANSITIONS.getOrDefault(current, java.util.Set.of());
+        if (!allowed.contains(target)) {
+            throw new BadRequestException("Status transition from " + current + " to " + target + " is not allowed");
+        }
+        customer.setStatus(target);
         customerRepo.save(customer);
         kycAutomationService.syncCustomerKyc(customer.getCustomerId());
     }
@@ -266,15 +303,13 @@ public class CustomerServiceImpl implements CustomerService {
             errors.add("Invalid customer request, the billing email is not valid");
         }
 
-        if (!StringUtils.hasText(request.getPhone()) || ValidationUtils.validatePhoneNumber(request.getPhone())) {
+        if (!StringUtils.hasText(request.getPhone()) || !ValidationUtils.validatePhoneNumber(request.getPhone())) {
             errors.add("Invalid customer request, the phone number is not valid");
         }
 
-//        if (request.getWhatsappPhone().isEmpty() || !ValidationUtils.validatePhoneNumber(request.getWhatsappPhone())) {
-//            errors.add("Invalid customer request, the whatsapp phone number is not valid");
-//
-//
-//        }
+        if (StringUtils.hasText(request.getWhatsappPhone()) && !ValidationUtils.validatePhoneNumber(request.getWhatsappPhone())) {
+            errors.add("Invalid customer request, the whatsapp phone number is not valid");
+        }
 
         return errors;
     }

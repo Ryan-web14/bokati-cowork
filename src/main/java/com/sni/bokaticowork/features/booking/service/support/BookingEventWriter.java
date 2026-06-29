@@ -15,10 +15,16 @@ public class BookingEventWriter {
 
     private final BookingEventRepository eventRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
+    private final BookingEventOutboxPublisher outboxPublisher;
 
     @Transactional
     public BookingEvent write(Booking booking, BookingEventType type, String title, String description, String payloadJson) {
-        return eventRepository.save(BookingEvent.builder()
+        return write(booking, type, title, description, payloadJson, false);
+    }
+
+    @Transactional
+    public BookingEvent write(Booking booking, BookingEventType type, String title, String description, String payloadJson, boolean emailRequested) {
+        BookingEvent event = eventRepository.save(BookingEvent.builder()
                 .eventNumber(sequenceGenerator.next("booking_event"))
                 .booking(booking)
                 .eventType(type)
@@ -26,5 +32,7 @@ public class BookingEventWriter {
                 .description(description)
                 .payloadJson(payloadJson)
                 .build());
+        outboxPublisher.publish(event, emailRequested);
+        return event;
     }
 }

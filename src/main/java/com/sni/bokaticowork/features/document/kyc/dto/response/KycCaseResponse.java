@@ -22,9 +22,11 @@ public class KycCaseResponse {
     private Instant submittedAt;
     private Instant completedAt;
     private Long reviewedBy;
+    private String reviewedByEmail;
     private Instant reviewedAt;
     private String decisionComment;
     private Long assignedTo;
+    private String assignedToEmail;
     private Instant assignedAt;
     private Instant slaDeadline;
     private Instant lastReminderSentAt;

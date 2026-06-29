@@ -13,11 +13,18 @@ import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
+
+    private static final Set<DocumentOwnerType> CLIENT_OWNER_TYPES = Set.of(
+            DocumentOwnerType.CUSTOMER,
+            DocumentOwnerType.MEMBER,
+            DocumentOwnerType.BUSINESS
+    );
 
     private final ObjectMapper objectMapper;
     private final OutboxNotificationMailService mailService;
@@ -47,6 +54,11 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
 
         if (ownerType == null || ownerId == null) {
             throw new IllegalStateException("DOCUMENT event " + event.getEventType() + " missing ownerType/ownerId");
+        }
+
+        if (CLIENT_OWNER_TYPES.contains(ownerType)) {
+            log.info("Skipping document email notification for client ownerType={} event={}", ownerType, event.getEventType());
+            return;
         }
 
         OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerId(ownerType, ownerId);

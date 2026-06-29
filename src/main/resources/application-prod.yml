@@ -43,6 +43,9 @@ spring:
     baseline-version: 1
     out-of-order: false
 
+  rabbitmq:
+    addresses: ${CLOUDAMQP_URL}
+
   jte:
     development-mode: false
 
@@ -84,6 +87,16 @@ management:
         enabled: false
 
 bokati:
+  websocket:
+    use-stomp-relay: ${BOKATI_WEBSOCKET_USE_STOMP_RELAY:true}
+    stomp:
+      relay-host: ${CLOUDAMQP_STOMP_HOST}
+      relay-port: ${CLOUDAMQP_STOMP_PORT:61614}
+      virtual-host: ${CLOUDAMQP_VHOST:/}
+      client-login: ${CLOUDAMQP_STOMP_USER}
+      client-passcode: ${CLOUDAMQP_STOMP_PASS}
+      system-login: ${CLOUDAMQP_STOMP_USER}
+      system-passcode: ${CLOUDAMQP_STOMP_PASS}
   support:
     sender-email: ${SUPPORT_SENDER_EMAIL:supportela@elleaose.com}
     manager-email: ${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}
@@ -136,8 +149,8 @@ app:
   outbox:
     worker:
       enabled: ${OUTBOX_WORKER_ENABLED:true}
-      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:2000}
-      batch-size: ${OUTBOX_WORKER_BATCH_SIZE:25}
+      fixed-delay-ms: ${OUTBOX_WORKER_FIXED_DELAY_MS:500}
+      batch-size: ${OUTBOX_WORKER_BATCH_SIZE:100}
 
   kyc:
     ocr:

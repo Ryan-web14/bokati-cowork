@@ -72,6 +72,10 @@ public class DocumentType {
     @Column(name = "multiple_allowed")
     private Boolean multipleAllowed = Boolean.FALSE;
 
+    @Builder.Default
+    @Column(name = "requires_back_side")
+    private Boolean requiresBackSide = Boolean.FALSE;
+
     @Column(name = "allowed_mime_types")
     private String allowedMimeTypes;
 

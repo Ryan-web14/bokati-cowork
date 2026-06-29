@@ -62,7 +62,7 @@ public class UserServiceImpl implements UserService {
 
             Users user =  userMapper.toEntity(request);
             user.setIsAccountEnabled(true);
-            user.setIsAccountLocked(true);
+            user.setIsAccountLocked(false);
             user.setIsAccountExpired(false);
             user.setFailedLoginAttempts(0);
             user.setUserId(generateUserIdentifier(DEFAULT_GENERATOR_LENGTH));

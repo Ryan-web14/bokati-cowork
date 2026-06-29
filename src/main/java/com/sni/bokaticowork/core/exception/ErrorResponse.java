@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,10 +41,21 @@ public class ErrorResponse {
 
         if (devMode) {
             builder.path(path)
-                    .debugMessage(ex != null ? ex.getMessage() : null)
+                    .debugMessage(ex != null ? buildDebugMessage(ex) : null)
                     .exceptionName(ex != null ? ex.getClass().getName() : null);
         }
 
         return builder.build();
+    }
+
+    private String buildDebugMessage(Throwable ex) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ex.getClass().getSimpleName()).append(": ").append(ex.getMessage());
+        Throwable cause = ex.getCause();
+        while (cause != null) {
+            sb.append(" → ").append(cause.getClass().getSimpleName()).append(": ").append(cause.getMessage());
+            cause = cause.getCause();
+        }
+        return sb.toString();
     }
 }

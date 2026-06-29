@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.subscription.subscription.dto.response;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillingCycle;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillingScheduleStatus;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -14,6 +15,11 @@ public record BillingScheduleResponse(
         LocalDate currentPeriodEnd,
         BillingScheduleStatus status,
         Integer retryCount,
-        Instant lastAttemptAt
+        Instant lastAttemptAt,
+        String currency,
+        BigDecimal subtotalAmount,
+        BigDecimal taxAmount,
+        BigDecimal totalAmount,
+        BigDecimal recurringAmount
 ) {
 }

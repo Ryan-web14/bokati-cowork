@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class CreateKycCaseRequest {
 
@@ -13,4 +15,6 @@ public class CreateKycCaseRequest {
 
     @NotBlank
     private String ownerCode;
+
+    private List<String> documentTypeCodes;
 }

@@ -9,12 +9,19 @@ import com.sni.bokaticowork.features.document.kyc.KycCaseStatus;
 import com.sni.bokaticowork.features.document.kyc.KycRiskLevel;
 import com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycAssignRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkApproveRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkRejectRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseCorrectionRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseNoteRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseRequirementRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycRiskLevelRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseRequirementResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycExpiryDocumentStatus;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycTimelineEntryResponse;
@@ -156,5 +163,62 @@ public class KycController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"kyc-" + code + ".pdf\"")
                 .body(pdf);
+    }
+
+    // ── Case Requirements ───────────────────────────────────────────────────
+
+    @GetMapping("/{code}/requirements")
+    public ResponseEntity<List<KycCaseRequirementResponse>> listCaseRequirements(@PathVariable String code) {
+        return ResponseEntity.ok(service.listCaseRequirements(code));
+    }
+
+    @PostMapping("/{code}/requirements")
+    @Audited(module = "KYC", action = "ADD_CASE_REQUIREMENT", ressource = "kyc_case")
+    public ResponseEntity<KycCaseRequirementResponse> addCaseRequirement(
+            @PathVariable String code,
+            @Valid @RequestBody KycCaseRequirementRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addCaseRequirement(code, request));
+    }
+
+    @DeleteMapping("/{code}/requirements/{documentTypeCode}")
+    @Audited(module = "KYC", action = "REMOVE_CASE_REQUIREMENT", ressource = "kyc_case")
+    public ResponseEntity<Void> removeCaseRequirement(
+            @PathVariable String code,
+            @PathVariable String documentTypeCode) {
+        service.removeCaseRequirement(code, documentTypeCode);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Case-scoped Document Review ─────────────────────────────────────────
+
+    @GetMapping("/{code}/review-queue")
+    public ResponseEntity<List<KycDocumentResponse>> caseReviewQueue(@PathVariable String code) {
+        return ResponseEntity.ok(service.caseReviewQueue(code));
+    }
+
+    @PostMapping("/{code}/documents/bulk-approve")
+    @Audited(module = "KYC", action = "CASE_BULK_APPROVE", ressource = "kyc_case")
+    @Idempotent(operation = "KYC_CASE_BULK_APPROVE")
+    public ResponseEntity<KycBulkActionResponse> caseBulkApprove(
+            @PathVariable String code,
+            @Valid @RequestBody KycCaseBulkApproveRequest request) {
+        return ResponseEntity.ok(service.caseBulkApprove(code, request));
+    }
+
+    @PostMapping("/{code}/documents/bulk-reject")
+    @Audited(module = "KYC", action = "CASE_BULK_REJECT", ressource = "kyc_case")
+    @Idempotent(operation = "KYC_CASE_BULK_REJECT")
+    public ResponseEntity<KycBulkActionResponse> caseBulkReject(
+            @PathVariable String code,
+            @Valid @RequestBody KycCaseBulkRejectRequest request) {
+        return ResponseEntity.ok(service.caseBulkReject(code, request));
+    }
+
+    @PostMapping("/{code}/documents/request-correction")
+    @Audited(module = "KYC", action = "CASE_CORRECTION_REQUEST", ressource = "kyc_case")
+    public ResponseEntity<KycDocumentResponse> caseCorrectionRequest(
+            @PathVariable String code,
+            @Valid @RequestBody KycCaseCorrectionRequest request) {
+        return ResponseEntity.ok(service.caseCorrectionRequest(code, request));
     }
 }

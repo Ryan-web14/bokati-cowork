@@ -8,10 +8,15 @@ import com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseReque
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycAssignRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkApproveRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkApproveRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkRejectRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseCorrectionRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseNoteRequest;
+import com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseRequirementRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.request.KycRiskLevelRequest;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse;
+import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseRequirementResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse;
 import com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse;
@@ -53,4 +58,13 @@ public interface KycService {
     KycBulkActionResponse bulkApprove(KycBulkApproveRequest request);
     KycBulkActionResponse bulkReject(KycBulkRejectRequest request);
     byte[] exportPdf(String code, boolean includeInternalNotes);
+
+    List<KycCaseRequirementResponse> listCaseRequirements(String caseCode);
+    KycCaseRequirementResponse addCaseRequirement(String caseCode, KycCaseRequirementRequest request);
+    void removeCaseRequirement(String caseCode, String documentTypeCode);
+
+    List<KycDocumentResponse> caseReviewQueue(String caseCode);
+    KycBulkActionResponse caseBulkApprove(String caseCode, KycCaseBulkApproveRequest request);
+    KycBulkActionResponse caseBulkReject(String caseCode, KycCaseBulkRejectRequest request);
+    KycDocumentResponse caseCorrectionRequest(String caseCode, KycCaseCorrectionRequest request);
 }

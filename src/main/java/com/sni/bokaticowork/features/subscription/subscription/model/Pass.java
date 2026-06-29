@@ -22,6 +22,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @AllArgsConstructor
@@ -63,6 +64,11 @@ public class Pass {
     @JoinColumn(name = "plan_version_id", foreignKey = @ForeignKey(name = "fk_subscription_pass_plan_version"))
     private PlanVersion planVersion;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pass_plan_version_id",
+            foreignKey = @ForeignKey(name = "fk_subscription_pass_plan_version_new"))
+    private PassPlanVersion passVersion;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 40)
     @Builder.Default
@@ -98,6 +104,38 @@ public class Pass {
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
+
+    @Column(name = "currency", length = 3)
+    private String currency;
+
+    @Column(name = "subtotal_amount", precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal subtotalAmount = BigDecimal.ZERO;
+
+    @Column(name = "tax_amount", precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal taxAmount = BigDecimal.ZERO;
+
+    @Column(name = "total_amount", precision = 19, scale = 4)
+    @Builder.Default
+    private BigDecimal totalAmount = BigDecimal.ZERO;
+
+    @Column(name = "auto_renew", nullable = false)
+    @Builder.Default
+    private Boolean autoRenew = Boolean.FALSE;
+
+    @Column(name = "next_renewal_date")
+    private Instant nextRenewalDate;
+
+    @Column(name = "renewal_count", nullable = false)
+    @Builder.Default
+    private Integer renewalCount = 0;
+
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
+
+    @Column(name = "cancellation_reason", columnDefinition = "text")
+    private String cancellationReason;
 
     @Column(name = "contract_code", length = 120)
     private String contractCode;

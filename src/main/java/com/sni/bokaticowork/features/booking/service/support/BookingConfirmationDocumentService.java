@@ -43,6 +43,7 @@ public class BookingConfirmationDocumentService {
 
     private final BookingRepository bookingRepository;
     private final SpringTemplateEngine templateEngine;
+    private final Locale appLocale;
 
     @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
@@ -89,7 +90,7 @@ public class BookingConfirmationDocumentService {
 
     public byte[] confirmationPdf(String bookingNumber, String token) {
         Booking booking = publicBooking(bookingNumber, token);
-        Context ctx = new Context(Locale.FRANCE);
+        Context ctx = new Context(appLocale);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("bookingNumber", booking.getBookingNumber());
         ctx.setVariable("recipientName", valueOrDefault(booking.getContactName(), "client"));

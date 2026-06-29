@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"/>
+<title>Rapport de recouvrement</title>
+<style>
+@page {
+    size: A4 landscape;
+    margin: 0 0 14mm 0;
+    @bottom-center {
+        content: "Page " counter(page) " sur " counter(pages);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 7.5px; color: #9b8caa;
+    }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9.5px; color: #1a0a2e; background: #ffffff; }
+
+.header { background: #1a0a2e; padding: 18px 24px 14px; }
+.header-tbl { width: 100%; border-collapse: collapse; }
+.header-tbl td { border: none; padding: 0; vertical-align: middle; }
+.brand { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+.brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.doc-title { font-size: 14px; font-weight: 700; color: #ffffff; text-align: right; text-transform: uppercase; letter-spacing: 1.5px; }
+.doc-sub { font-size: 8px; color: #c9a84c; text-align: right; margin-top: 4px; }
+.stripe { height: 3px; background: #c9a84c; }
+
+.content { padding: 14px 24px 0; }
+
+.section-tbl { width: 100%; border-collapse: collapse; margin: 14px 0 8px; }
+.section-tbl td { border: none; padding: 0; vertical-align: middle; }
+.sl-bar { width: 18px; height: 2px; background: #c9a84c; display: block; }
+.sl-text { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; color: #7c3aed; padding: 0 8px; white-space: nowrap; }
+.sl-line { height: 1px; background: #d8d0e8; }
+
+.kpi-tbl { width: 100%; border-collapse: collapse; }
+.kpi-tbl td { border: none; padding: 0 5px 0 0; vertical-align: top; }
+.kpi-tbl td:last-child { padding-right: 0; }
+.kpi-card { border: 1px solid #d8d0e8; border-radius: 3px; padding: 8px 10px; }
+.kpi-label { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5c4f6e; margin-bottom: 3px; }
+.kpi-value { font-size: 13px; font-weight: 700; color: #1a0a2e; }
+.kpi-value.gold { color: #8a6a00; }
+.kpi-value.green { color: #15803d; }
+.kpi-value.red { color: #b91c1c; }
+
+.data-tbl { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.data-tbl th { background: #1a0a2e; color: #ffffff; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 9px; text-align: left; border: none; }
+.data-tbl th.r { text-align: right; }
+.data-tbl td { font-size: 9px; color: #1a0a2e; padding: 6px 9px; border-bottom: 1px solid #d8d0e8; vertical-align: top; }
+.data-tbl td.r { text-align: right; font-weight: 700; }
+.data-tbl tr.even td { background: #f0eaff; }
+.data-tbl tr.total td { background: #fdf8ed; font-weight: 700; color: #8a6a00; border-top: 2px solid #c9a84c; }
+
+.aging-tbl { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.aging-tbl td { border: none; padding: 0 5px 0 0; vertical-align: top; width: 20%; }
+.aging-tbl td:last-child { padding-right: 0; }
+.aging-card { border: 1px solid #d8d0e8; border-radius: 2px; padding: 7px 9px; }
+.aging-label { font-size: 7px; font-weight: 700; color: #5c4f6e; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
+.aging-count { font-size: 8px; color: #5c4f6e; margin-top: 2px; }
+.aging-amount { font-size: 11px; font-weight: 700; color: #1a0a2e; }
+.aging-pct { font-size: 7px; color: #8a6a00; margin-top: 1px; }
+
+.footer { margin-top: 16px; padding: 9px 24px; border-top: 1px solid #d8d0e8; font-size: 7.5px; color: #9b8caa; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <table class="header-tbl"><tr>
+        <td>
+            <div class="brand">Elle A Osé</div>
+            <div class="brand-sub">Bokati Cowork &amp; Studio</div>
+        </td>
+        <td>
+            <div class="doc-title">Rapport de recouvrement</div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+        </td>
+    </tr></table>
+</div>
+<div class="stripe"></div>
+
+<div class="content">
+
+    <!-- KPI PRINCIPAUX -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Vue d'ensemble</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl">
+        <tr>
+            <td width="50%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total encours impayé</div>
+                    <div class="kpi-value red" th:text="${fmt.money(report.totalOutstanding())}">—</div>
+                </div>
+            </td>
+            <td width="50%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Factures impayées</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalInvoices())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- AGING -->
+    <table class="section-tbl" th:if="${report.aging() != null}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Analyse par ancienneté</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="aging-tbl" th:if="${report.aging() != null}">
+        <tr>
+            <td>
+                <div class="aging-card">
+                    <div class="aging-label" th:text="${report.aging().current().label()}">Non échu</div>
+                    <div class="aging-amount" th:text="${fmt.money(report.aging().current().totalAmount())}">—</div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().current().invoiceCount())} + ' facture(s)'">—</div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().current().percentage())}">—</div>
+                </div>
+            </td>
+            <td>
+                <div class="aging-card">
+                    <div class="aging-label" th:text="${report.aging().days1to30().label()}">1-30 j</div>
+                    <div class="aging-amount" th:text="${fmt.money(report.aging().days1to30().totalAmount())}">—</div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().days1to30().invoiceCount())} + ' facture(s)'">—</div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days1to30().percentage())}">—</div>
+                </div>
+            </td>
+            <td>
+                <div class="aging-card">
+                    <div class="aging-label" th:text="${report.aging().days31to60().label()}">31-60 j</div>
+                    <div class="aging-amount" th:text="${fmt.money(report.aging().days31to60().totalAmount())}">—</div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().days31to60().invoiceCount())} + ' facture(s)'">—</div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days31to60().percentage())}">—</div>
+                </div>
+            </td>
+            <td>
+                <div class="aging-card">
+                    <div class="aging-label" th:text="${report.aging().days61to90().label()}">61-90 j</div>
+                    <div class="aging-amount" th:text="${fmt.money(report.aging().days61to90().totalAmount())}">—</div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().days61to90().invoiceCount())} + ' facture(s)'">—</div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days61to90().percentage())}">—</div>
+                </div>
+            </td>
+            <td>
+                <div class="aging-card">
+                    <div class="aging-label" th:text="${report.aging().days90plus().label()}">+90 j</div>
+                    <div class="aging-amount red" th:text="${fmt.money(report.aging().days90plus().totalAmount())}">—</div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().days90plus().invoiceCount())} + ' facture(s)'">—</div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days90plus().percentage())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- DÉTAIL FACTURES IMPAYÉES -->
+    <table class="section-tbl" th:if="${report.unpaidInvoices() != null and !report.unpaidInvoices().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Détail des factures impayées</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.unpaidInvoices() != null and !report.unpaidInvoices().isEmpty()}">
+        <thead><tr>
+            <th>N° Facture</th>
+            <th>Client</th>
+            <th>Type</th>
+            <th>Émission</th>
+            <th>Échéance</th>
+            <th class="r">Total</th>
+            <th class="r">Payé</th>
+            <th class="r">Solde dû</th>
+            <th class="r">Retard</th>
+            <th>Tranche</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="inv, stat : ${report.unpaidInvoices()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${inv.documentNumber()}">—</td>
+                <td th:text="${inv.customerName()}">—</td>
+                <td th:text="${inv.customerType()}">—</td>
+                <td th:text="${fmt.date(inv.issueDate())}">—</td>
+                <td th:text="${fmt.date(inv.dueDate())}">—</td>
+                <td class="r" th:text="${fmt.money(inv.totalAmount())}">—</td>
+                <td class="r" th:text="${fmt.money(inv.paidAmount())}">—</td>
+                <td class="r" th:text="${fmt.money(inv.balanceDue())}">—</td>
+                <td class="r" th:text="${fmt.days(inv.agingDays())}">—</td>
+                <td th:text="${inv.agingBucket()}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+<div class="footer">
+    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Rapport de recouvrement &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+</div>
+</body>
+</html>

@@ -12,6 +12,7 @@ public class KycCaseNoteResponse {
     private String kycCaseCode;
     private String content;
     private Long authorId;
+    private String authorEmail;
     private Instant createdAt;
     private Boolean internal;
 }

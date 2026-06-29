@@ -35,6 +35,8 @@ public class ResourcePricingRule {
     @Enumerated(EnumType.STRING)
     private ResourceBookingUnit resourceBookingUnit;
 
+    @jakarta.validation.constraints.NotNull
+    @jakarta.validation.constraints.Min(0)
     @Column(name = "price")
     private Integer price;
 
@@ -54,6 +56,7 @@ public class ResourcePricingRule {
     @Enumerated(EnumType.STRING)
     private ResourcePriceAdjustmentType adjustmentType;
 
+    @jakarta.validation.constraints.Min(0)
     @Column(name = "adjustment_value")
     private Integer adjustmentValue;
 

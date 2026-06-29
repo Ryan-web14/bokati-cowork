@@ -24,12 +24,13 @@ public class VisitorBadgeService {
     private final SpringTemplateEngine templateEngine;
     private final VisitorPassRepository passRepository;
     private final VisitorQrGenerator qrGenerator;
+    private final Locale appLocale;
 
     public byte[] generateBadge(String passNumber) {
         VisitorPass pass = passRepository.findByPassNumber(passNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Visitor pass not found: " + passNumber));
         String qrCode = qrGenerator.generateBase64(pass.getQrValue());
-        Context ctx = new Context(Locale.FRANCE);
+        Context ctx = new Context(appLocale);
         ctx.setVariable("pass",        pass);
         ctx.setVariable("visitor",     pass.getVisitor());
         ctx.setVariable("qrCode",      qrCode);

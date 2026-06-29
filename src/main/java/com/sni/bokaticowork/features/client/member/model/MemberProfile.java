@@ -26,8 +26,8 @@ public class MemberProfile {
     @JoinColumn(name = "member_id",foreignKey = @ForeignKey(name = "fk_member"),unique = true, nullable = false)
     private Member member;
 
-//    @Column(name = "profile_picture_url")
-//    private String profilePictureUrl;
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
 
     @Column(name = "job_title")
     private String jobTitle;
@@ -38,8 +38,8 @@ public class MemberProfile {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
-//    @Column(name = "gender")
-//    private String gender;
+    @Column(name = "gender")
+    private String gender;
 
     @Column(name = "address")
     private String address;
@@ -49,5 +49,14 @@ public class MemberProfile {
 
     @Column(name = "country")
     private String country;
+
+    @Column(name = "preferred_communication_channel")
+    private String preferredCommunicationChannel;
+
+    @Column(name = "emergency_contact_name")
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_phone")
+    private String emergencyContactPhone;
 
 }

@@ -28,7 +28,11 @@ public class SubscriptionBillingSupport {
     private final BillableItemInvoiceSupport billableItemInvoiceSupport;
 
     public void createBillableItem(Subscription subscription, String sourceType, String description) {
-        if (subscription.getTotalAmount().signum() <= 0) {
+        createBillableItem(subscription, sourceType, description, subscription.getTotalAmount());
+    }
+
+    public void createBillableItem(Subscription subscription, String sourceType, String description, java.math.BigDecimal amount) {
+        if (amount == null || amount.signum() <= 0) {
             return;
         }
         BillableItem item = billableItemRepository.save(BillableItem.builder()
@@ -38,7 +42,7 @@ public class SubscriptionBillingSupport {
                 .subscriberType(subscription.getSubscriberType())
                 .subscriberCode(subscription.getSubscriberCode())
                 .description(description + " - " + subscription.getPlanVersion().getName())
-                .amount(subscription.getTotalAmount())
+                .amount(amount)
                 .currency(subscription.getCurrency())
                 .billingPeriodStart(subscription.getCurrentPeriodStart())
                 .billingPeriodEnd(subscription.getCurrentPeriodEnd())

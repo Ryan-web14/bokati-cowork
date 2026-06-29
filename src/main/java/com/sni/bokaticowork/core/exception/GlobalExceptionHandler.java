@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.List;
 
@@ -86,6 +88,12 @@ public class GlobalExceptionHandler {
                 "Invalid credentials provided.", request, ex, null));
     }
 
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<Object> handleAccountLocked(AccountLockedException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,
+                ex.getMessage(), request, ex, null));
+    }
+
     // ── Spring MVC / binding exceptions ──────────────────────────────────────
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -124,10 +132,27 @@ public class GlobalExceptionHandler {
                 "Request body is missing or malformed.", request, ex, null));
     }
 
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Object> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+        String supported = ex.getSupportedMediaTypes().stream()
+                .map(Object::toString)
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("unknown");
+        return respond(errorResponse.build(ErrorCode.MEDIA_TYPE_NOT_SUPPORTED, HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+                "Content-Type '" + ex.getContentType() + "' is not supported. Supported: " + supported + ".",
+                request, ex, null));
+    }
+
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Object> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex, HttpServletRequest request) {
         return respond(errorResponse.build(ErrorCode.METHOD_NOT_SUPPORTED, HttpStatus.METHOD_NOT_ALLOWED,
                 "HTTP method " + ex.getMethod() + " is not supported for this endpoint.", request, ex, null));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Object> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.ENDPOINT_NOT_FOUND, HttpStatus.NOT_FOUND,
+                "The requested endpoint does not exist.", request, ex, null));
     }
 
     // ── Catch-all ─────────────────────────────────────────────────────────────

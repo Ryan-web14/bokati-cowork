@@ -190,6 +190,33 @@ public class ContractServiceImpl implements ContractService {
     }
 
     @Override
+    public ContractResponse approveReview(String contractCode, Long reviewedBy, String comment) {
+        Contract contract = serviceByCode(contractCode);
+        ensureNotDeleted(contract);
+        validateTransition(contract.getStatus(), ContractStatus.AWAITING_SIGNATURE);
+        contract.setStatus(ContractStatus.AWAITING_SIGNATURE);
+        contract.setReviewedBy(reviewedBy);
+        contract.setReviewComment(comment);
+        contractRepository.save(contract);
+        return toResponse(contract);
+    }
+
+    @Override
+    public ContractResponse rejectReview(String contractCode, Long reviewedBy, String comment) {
+        Contract contract = serviceByCode(contractCode);
+        ensureNotDeleted(contract);
+        if (contract.getStatus() != ContractStatus.UNDER_REVIEW) {
+            throw new BadRequestException("Le contrat doit être en statut UNDER_REVIEW pour être rejeté");
+        }
+        validateTransition(contract.getStatus(), ContractStatus.GENERATED);
+        contract.setStatus(ContractStatus.GENERATED);
+        contract.setReviewedBy(reviewedBy);
+        contract.setReviewComment(comment);
+        contractRepository.save(contract);
+        return toResponse(contract);
+    }
+
+    @Override
     public ContractResponse activate(String contractCode) {
         return applyStatusTransition(serviceByCode(contractCode), ContractStatus.ACTIVE, null);
     }
@@ -255,20 +282,23 @@ public class ContractServiceImpl implements ContractService {
 
         contract.setStatus(targetStatus);
         switch (targetStatus) {
-            case ACTIVE -> contract.setActivatedAt(Instant.now());
+            case ACTIVE -> {
+                contract.setActivatedAt(Instant.now());
+                contract.setSuspensionReason(null);
+            }
             case TERMINATED, CANCELLED -> {
                 contract.setTerminatedAt(Instant.now());
                 contract.setTerminationReason(reason);
             }
-            case SUSPENDED -> contract.setTerminationReason(reason);
+            case SUSPENDED -> {
+                contract.setSuspensionReason(reason);
+            }
             default -> { }
         }
 
         if (targetStatus != ContractStatus.TERMINATED && targetStatus != ContractStatus.CANCELLED) {
             contract.setTerminatedAt(null);
-            if (targetStatus != ContractStatus.SUSPENDED) {
-                contract.setTerminationReason(null);
-            }
+            contract.setTerminationReason(null);
         }
 
         contractRepository.save(contract);

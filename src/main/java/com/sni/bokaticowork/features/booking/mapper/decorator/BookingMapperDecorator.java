@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.booking.mapper.decorator;
 
+import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest;
 import com.sni.bokaticowork.features.booking.dto.request.CreateBookingRequest;
 import com.sni.bokaticowork.features.booking.dto.response.*;
@@ -10,10 +11,17 @@ import com.sni.bokaticowork.features.booking.mapper.interfaces.BookingMapper;
 import com.sni.bokaticowork.features.booking.model.*;
 import com.sni.bokaticowork.features.booking.repository.BookingLineRepository;
 import com.sni.bokaticowork.features.booking.repository.BookingParticipantRepository;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.util.List;
 
 @Component
@@ -24,6 +32,9 @@ public abstract class BookingMapperDecorator implements BookingMapper {
 
     @Autowired
     private BookingParticipantRepository participantRepository;
+
+    @Value("${app.api-base-url:https://api.elleaose.com}")
+    private String apiBaseUrl;
 
     @Override
     public Booking toEntity(CreateBookingRequest request) {
@@ -89,7 +100,7 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getNotes(),
                 booking.getMetadataJson(),
                 booking.getCheckInToken(),
-                booking.getCheckInToken() == null ? null : "BOOKING_CHECK_IN:" + booking.getCheckInToken(),
+                booking.getCheckInToken() == null ? null : generateQrCode(apiBaseUrl.stripTrailing() + ApiPath.V1 + "/public/bookings/check-in/scan/" + booking.getCheckInToken()),
                 booking.getVirtualMeetingUrl(),
                 booking.getConfirmedAt(),
                 booking.getCompletedAt(),
@@ -151,6 +162,17 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 event.getPayloadJson(),
                 event.getCreatedAt()
         );
+    }
+
+    private String generateQrCode(String content) {
+        try {
+            BitMatrix matrix = new QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, 250, 250);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            MatrixToImageWriter.writeToStream(matrix, "PNG", out);
+            return "data:image/png;base64," + Base64.getEncoder().encodeToString(out.toByteArray());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private String trim(String value) {

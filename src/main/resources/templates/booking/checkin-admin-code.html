@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Code admin requis — Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; background: #E8E5E0; color: #1A0A2E; }
+    .topbar { background: #110828; padding: 18px 32px; }
+    .topbar-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
+    .topbar-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
+    .topbar-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
+    .content { min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+    .card { width: 100%; max-width: 480px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 24px rgba(26,10,46,.10), 0 32px 64px rgba(26,10,46,.12); }
+    .card-top { padding: 28px 32px 22px; background: linear-gradient(135deg, #110828 0%, #2d1b4e 100%); }
+    .card-top-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
+    .card-title { color: #fff; font-size: 22px; font-weight: 700; letter-spacing: -.3px; line-height: 1.1; }
+    .card-sub { color: rgba(255,255,255,.55); font-size: 12px; letter-spacing: .8px; text-transform: uppercase; margin-top: 8px; }
+    .card-body { padding: 28px 32px 32px; }
+    .info-text { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 24px; }
+    .ref-box { background: #F8F7F5; border: 1px solid #EEE9F5; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
+    .ref-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; }
+    .ref-val { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 14px; font-weight: 700; color: #1A0A2E; letter-spacing: 1.5px; }
+    label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; margin-bottom: 8px; }
+    input[type=password], input[type=text] { width: 100%; padding: 14px 16px; border: 1px solid #D5CCE0; border-radius: 8px; font-size: 15px; font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 2px; color: #1A0A2E; outline: none; margin-bottom: 6px; }
+    input:focus { border-color: #8B5CF6; box-shadow: 0 0 0 3px rgba(139,92,246,.15); }
+    .error-msg { font-size: 12px; color: #DC2626; margin-bottom: 16px; }
+    .btn { display: block; width: 100%; background: #C9A84C; color: #1A0A2E; border: none; font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 16px; border-radius: 8px; cursor: pointer; margin-top: 16px; }
+    .btn:hover { background: #b8943e; }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
+    .divider-line { flex: 1; height: 1px; background: #EEE9F5; }
+    .divider-text { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #C0B4D0; }
+    .fallback-box { padding: 16px; background: #F8F7F5; border: 1px solid #EEE9F5; border-radius: 8px; font-size: 13px; color: #5C4F6E; line-height: 1.65; }
+    .page-footer { text-align: center; padding: 16px; font-size: 11px; color: #B0A0C0; }
+    @media (max-width: 540px) {
+      .topbar { padding: 16px 20px; }
+      .content { padding: 0; align-items: flex-start; }
+      .card { border-radius: 0; box-shadow: none; }
+      .card-top { padding: 22px 20px 18px; }
+      .card-body { padding: 20px 20px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">Elle A Osé</div>
+  <div class="topbar-sub">Terminal de check-in</div>
+</div>
+<div class="topbar-stripe"></div>
+
+<div class="content">
+  <div class="card">
+    <div class="card-top">
+      <div class="card-title">Accès restreint</div>
+      <div class="card-sub">Ce terminal n'est pas configuré comme scanner autorisé</div>
+    </div>
+    <div class="card-top-stripe"></div>
+    <div class="card-body">
+
+      <div class="info-text">
+        Le scan de QR codes de check-in est réservé au terminal officiel de l'espace. Pour autoriser ce terminal, entrez le code administrateur ci-dessous.
+      </div>
+
+      <div class="ref-box" th:if="${checkInToken != null}">
+        <span class="ref-lbl">Token scanné</span>
+        <span class="ref-val" th:text="${checkInToken}">—</span>
+      </div>
+
+      <div th:if="${scannerConfigured}">
+        <form method="post" th:action="@{/v1/public/bookings/check-in/scanner-verify}">
+          <input type="hidden" name="checkInToken" th:value="${checkInToken}"/>
+          <label for="adminCode">Code administrateur</label>
+          <input type="password" id="adminCode" name="adminCode" placeholder="••••••••" autocomplete="off" required/>
+          <div class="error-msg" th:if="${error != null}" th:text="${error}"></div>
+          <button type="submit" class="btn">Valider et effectuer le check-in</button>
+        </form>
+      </div>
+
+      <div th:unless="${scannerConfigured}" class="error-msg">
+        Aucun code scanner n'est configuré. Contactez l'administrateur système.
+      </div>
+
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">Autre option</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <div class="fallback-box">
+        Demandez au client de communiquer son <strong>numéro de réservation</strong> et effectuez le check-in manuellement depuis le panneau d'administration.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="page-footer">
+  <strong>Elle A Osé</strong> — <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a>
+</div>
+
+</body>
+</html>

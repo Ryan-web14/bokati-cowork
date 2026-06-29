@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"/>
+<title>Rapport de valorisation stock</title>
+<style>
+@page {
+    size: A4;
+    margin: 0 0 14mm 0;
+    @bottom-center {
+        content: "Page " counter(page) " sur " counter(pages);
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-size: 7.5px; color: #9b8caa;
+    }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9.5px; color: #1a0a2e; background: #ffffff; }
+
+.header { background: #1a0a2e; padding: 18px 24px 14px; }
+.header-tbl { width: 100%; border-collapse: collapse; }
+.header-tbl td { border: none; padding: 0; vertical-align: middle; }
+.brand { font-size: 16px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
+.brand-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.doc-title { font-size: 14px; font-weight: 700; color: #ffffff; text-align: right; text-transform: uppercase; letter-spacing: 1.5px; }
+.doc-sub { font-size: 8px; color: #c9a84c; text-align: right; margin-top: 4px; }
+.stripe { height: 3px; background: #c9a84c; }
+
+.content { padding: 14px 24px 0; }
+
+.section-tbl { width: 100%; border-collapse: collapse; margin: 14px 0 8px; }
+.section-tbl td { border: none; padding: 0; vertical-align: middle; }
+.sl-bar { width: 18px; height: 2px; background: #c9a84c; display: block; }
+.sl-text { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; color: #7c3aed; padding: 0 8px; white-space: nowrap; }
+.sl-line { height: 1px; background: #d8d0e8; }
+
+.kpi-tbl { width: 100%; border-collapse: collapse; }
+.kpi-tbl td { border: none; padding: 0 5px 0 0; vertical-align: top; }
+.kpi-tbl td:last-child { padding-right: 0; }
+.kpi-card { border: 1px solid #d8d0e8; border-radius: 3px; padding: 8px 10px; }
+.kpi-label { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #5c4f6e; margin-bottom: 3px; }
+.kpi-value { font-size: 13px; font-weight: 700; color: #1a0a2e; }
+.kpi-value.gold { color: #8a6a00; }
+.kpi-value.red { color: #b91c1c; }
+
+.data-tbl { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.data-tbl th { background: #1a0a2e; color: #ffffff; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 9px; text-align: left; border: none; }
+.data-tbl th.r { text-align: right; }
+.data-tbl td { font-size: 9px; color: #1a0a2e; padding: 6px 9px; border-bottom: 1px solid #d8d0e8; vertical-align: top; }
+.data-tbl td.r { text-align: right; font-weight: 700; }
+.data-tbl tr.even td { background: #f0eaff; }
+.data-tbl tr.total td { background: #fdf8ed; font-weight: 700; color: #8a6a00; border-top: 2px solid #c9a84c; }
+
+.footer { margin-top: 16px; padding: 9px 24px; border-top: 1px solid #d8d0e8; font-size: 7.5px; color: #9b8caa; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <table class="header-tbl"><tr>
+        <td>
+            <div class="brand">Elle A Osé</div>
+            <div class="brand-sub">Bokati Cowork &amp; Studio</div>
+        </td>
+        <td>
+            <div class="doc-title">Valorisation stock</div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+        </td>
+    </tr></table>
+</div>
+<div class="stripe"></div>
+
+<div class="content">
+
+    <!-- KPI -->
+    <table class="section-tbl"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Vue d'ensemble</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="kpi-tbl">
+        <tr>
+            <td width="33%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Valeur totale du stock</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.totalValue())}">—</div>
+                </div>
+            </td>
+            <td width="33%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Articles référencés</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalItems())}">—</div>
+                </div>
+            </td>
+            <td width="33%">
+                <div class="kpi-card">
+                    <div class="kpi-label">Emplacements</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalLocations())}">—</div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- PAR CATÉGORIE -->
+    <table class="section-tbl" th:if="${report.byCategory() != null and !report.byCategory().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Valorisation par catégorie</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.byCategory() != null and !report.byCategory().isEmpty()}">
+        <thead><tr>
+            <th>Catégorie</th>
+            <th class="r">Articles</th>
+            <th class="r">Quantité</th>
+            <th class="r">Valeur</th>
+            <th class="r">Part (%)</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="cat, stat : ${report.byCategory()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${cat.categoryName() ?: cat.categoryCode()}">—</td>
+                <td class="r" th:text="${fmt.num(cat.itemCount())}">—</td>
+                <td class="r" th:text="${cat.totalQuantity().toPlainString()}">—</td>
+                <td class="r" th:text="${fmt.money(cat.totalValue())}">—</td>
+                <td class="r" th:text="${fmt.pct(cat.percentage())}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- PAR EMPLACEMENT -->
+    <table class="section-tbl" th:if="${report.byLocation() != null and !report.byLocation().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Valorisation par emplacement</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.byLocation() != null and !report.byLocation().isEmpty()}">
+        <thead><tr>
+            <th>Emplacement</th>
+            <th>Type</th>
+            <th class="r">Articles</th>
+            <th class="r">Quantité</th>
+            <th class="r">Valeur</th>
+            <th class="r">Part (%)</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="loc, stat : ${report.byLocation()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${loc.locationName() ?: loc.locationCode()}">—</td>
+                <td th:text="${loc.locationType()}">—</td>
+                <td class="r" th:text="${fmt.num(loc.itemCount())}">—</td>
+                <td class="r" th:text="${loc.totalQuantity().toPlainString()}">—</td>
+                <td class="r" th:text="${fmt.money(loc.totalValue())}">—</td>
+                <td class="r" th:text="${fmt.pct(loc.percentage())}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- STOCK FAIBLE -->
+    <table class="section-tbl" th:if="${report.lowStockItems() != null and !report.lowStockItems().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Articles en stock faible</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.lowStockItems() != null and !report.lowStockItems().isEmpty()}">
+        <thead><tr>
+            <th>Code</th>
+            <th>Article</th>
+            <th>Catégorie</th>
+            <th class="r">Qté disponible</th>
+            <th class="r">Seuil réappro.</th>
+            <th class="r">Qté à commander</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="item, stat : ${report.lowStockItems()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${item.itemCode()}">—</td>
+                <td th:text="${item.itemName()}">—</td>
+                <td th:text="${item.categoryName()}">—</td>
+                <td class="r" th:text="${item.quantityAvailable().toPlainString()}">—</td>
+                <td class="r" th:text="${item.reorderPoint().toPlainString()}">—</td>
+                <td class="r" th:text="${item.reorderQuantity().toPlainString()}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- STOCK MORT -->
+    <table class="section-tbl" th:if="${report.deadStockItems() != null and !report.deadStockItems().isEmpty()}"><tr>
+        <td style="width:18px;"><span class="sl-bar"></span></td>
+        <td class="sl-text">Stock dormant</td>
+        <td><div class="sl-line"></div></td>
+    </tr></table>
+
+    <table class="data-tbl" th:if="${report.deadStockItems() != null and !report.deadStockItems().isEmpty()}">
+        <thead><tr>
+            <th>Code</th>
+            <th>Article</th>
+            <th>Catégorie</th>
+            <th>Emplacement</th>
+            <th class="r">Qté en stock</th>
+            <th class="r">Valeur</th>
+            <th>Dernier mvt</th>
+            <th class="r">Inactif depuis</th>
+        </tr></thead>
+        <tbody>
+            <tr th:each="item, stat : ${report.deadStockItems()}" th:class="${stat.even} ? 'even' : ''">
+                <td th:text="${item.itemCode()}">—</td>
+                <td th:text="${item.itemName()}">—</td>
+                <td th:text="${item.categoryName()}">—</td>
+                <td th:text="${item.locationName()}">—</td>
+                <td class="r" th:text="${item.quantityOnHand().toPlainString()}">—</td>
+                <td class="r" th:text="${fmt.money(item.stockValue())}">—</td>
+                <td th:text="${fmt.date(item.lastMovementDate())}">—</td>
+                <td class="r" th:text="${fmt.days(item.daysSinceLastMovement())}">—</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+<div class="footer">
+    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Valorisation stock &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+</div>
+</body>
+</html>
