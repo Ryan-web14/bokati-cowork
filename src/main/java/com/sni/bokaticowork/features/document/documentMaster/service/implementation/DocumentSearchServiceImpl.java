@@ -291,7 +291,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
                 .filter(req -> Boolean.TRUE.equals(req.getRequired()))
                 .filter(req -> allDocs.stream().noneMatch(d ->
                         req.getDocumentTypeCode().equals(d.getTypeCode())
-                                && (d.getStatus() == DocumentStatus.APPROVED || d.getStatus() == DocumentStatus.SIGNED)))
+                                && d.getStatus() != DocumentStatus.REJECTED
+                                && d.getStatus() != DocumentStatus.EXPIRED
+                                && d.getStatus() != DocumentStatus.ARCHIVED
+                                && d.getStatus() != DocumentStatus.SUPERSEDED))
                 .map(req -> KycRequirementStatus.builder()
                         .documentTypeCode(req.getDocumentTypeCode())
                         .documentTypeName(req.getDocumentTypeName())

@@ -4,6 +4,7 @@ import com.sni.bokaticowork.features.document.kyc.KycDocumentVerificationStatus;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 @Data
@@ -29,4 +30,7 @@ public class KycDocumentResponse {
     private LocalDate issueDate;
     private LocalDate expiryDate;
     private KycDocumentVerificationStatus status;
+    private Long uploadedBy;
+    private String uploadedByEmail;
+    private Instant uploadedAt;
 }

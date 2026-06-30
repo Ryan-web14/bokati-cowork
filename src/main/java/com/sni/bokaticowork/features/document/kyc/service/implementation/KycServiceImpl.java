@@ -294,6 +294,7 @@ public class KycServiceImpl implements KycService {
         } else if (kycCase.getOwnerType() == DocumentOwnerType.CUSTOMER) {
             Customer customer = customerService.getCustomerForService(kycCase.getOwnerId());
             customer.setStatus(com.sni.bokaticowork.features.client.customer.enums.CustomerStatus.ACTIVE);
+            provisionDefaultWallet("CUSTOMER", customer.getCustomerId());
         }
 
         publishCaseEvent("KYC_CASE_APPROVED", kycCase, request.getReviewedBy());
@@ -512,10 +513,12 @@ public class KycServiceImpl implements KycService {
         }
         List<KycDocument> documents = documentRepository.findAllByKycCaseOrderByIdAsc(kycCase);
         for (KycDocument document : documents) {
+            Long uploaderId = document.getDocument() != null ? document.getDocument().getUploadedBy() : null;
+            String uploadActor = uploaderId != null ? "USR-" + uploaderId : ownerActor(kycCase);
             entries.add(KycTimelineEntryResponse.builder()
                     .timestamp(document.getDocument() == null ? kycCase.getStartedAt() : document.getDocument().getUploadedAt())
                     .action("DOCUMENT_UPLOADED")
-                    .actor(ownerActor(kycCase))
+                    .actor(uploadActor)
                     .description("Document " + document.getDocumentType() + " submitted")
                     .build());
         }

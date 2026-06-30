@@ -78,6 +78,9 @@ public abstract class KycMapperDecorator implements KycMapper {
         }
 
         response.setOwnerName(resolveOwnerName(document.getOwnerType(), document.getOwnerId()));
+        response.setUploadedBy(document.getDocument().getUploadedBy());
+        response.setUploadedByEmail(resolveUserEmail(document.getDocument().getUploadedBy()));
+        response.setUploadedAt(document.getDocument().getUploadedAt());
 
         DocumentType docType = StringUtils.hasText(document.getDocumentType())
                 ? documentTypeRepository.findByCode(document.getDocumentType()).orElse(null)
