@@ -7,10 +7,12 @@ import com.sni.bokaticowork.features.subscription.subscription.enums.PassStatus;
 import com.sni.bokaticowork.features.subscription.subscription.model.Pass;
 import com.sni.bokaticowork.features.subscription.subscription.model.PassTransaction;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.EntitlementService;
+import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.subscription.repository.EntitlementGrantRepository;
 import com.sni.bokaticowork.features.subscription.repository.PassRepository;
 import com.sni.bokaticowork.features.subscription.repository.PassTransactionRepository;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -29,6 +31,7 @@ public class PassLifecycleOperator {
     private final PassEmailNotifier emailNotifier;
     private final PassBillingSupport billingSupport;
     private final @Lazy EntitlementService entitlementService;
+    private final OutboxService outboxService;
 
     public Pass activate(Pass pass, String reason, String changedBy) {
         if (pass.getStatus() == PassStatus.ACTIVE) return pass;
@@ -55,6 +58,14 @@ public class PassLifecycleOperator {
         passTransactionRepository.save(PassTransaction.builder()
                 .pass(pass).transactionType("ACTIVATED")
                 .referenceType("PAYMENT").referenceId(reason).build());
+        if (!StringUtils.hasText(pass.getContractCode())) {
+            outboxService.publish(
+                    "CONTRACT_GENERATION_REQUESTED",
+                    "PASS",
+                    pass.getPassNumber(),
+                    java.util.Map.of("sourceType", "PASS", "sourceId", pass.getId())
+            );
+        }
         return pass;
     }
 

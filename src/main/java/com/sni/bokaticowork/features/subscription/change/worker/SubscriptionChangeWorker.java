@@ -15,9 +15,13 @@ public class SubscriptionChangeWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.change-delay-ms:900000}")
     public void applyDueChanges() {
-        int applied = changeRequestService.applyDueChanges();
-        if (applied > 0) {
-            log.info("Applied {} due subscription changes", applied);
+        try {
+            int applied = changeRequestService.applyDueChanges();
+            if (applied > 0) {
+                log.info("Applied {} due subscription changes", applied);
+            }
+        } catch (Exception ex) {
+            log.error("SubscriptionChangeWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

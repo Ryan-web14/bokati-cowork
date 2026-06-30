@@ -30,7 +30,7 @@ public class SubscriptionContractGenerationRepairWorker {
     @Value("${bokati.subscription.workers.contract-repair-batch-size:20}")
     private int batchSize;
 
-    @Value("${bokati.subscription.workers.contract-repair-min-age-seconds:120}")
+    @Value("${bokati.subscription.workers.contract-repair-min-age-seconds:300}")
     private long minAgeSeconds;
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.contract-repair-delay-ms:60000}")

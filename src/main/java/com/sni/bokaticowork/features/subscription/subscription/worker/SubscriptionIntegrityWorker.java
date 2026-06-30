@@ -15,9 +15,13 @@ public class SubscriptionIntegrityWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.integrity-delay-ms:1800000}")
     public void repairActiveSubscriptionsWithoutGrants() {
-        int repaired = subscriptionService.repairActiveSubscriptionsWithoutGrants();
-        if (repaired > 0) {
-            log.warn("Repaired {} active subscriptions without entitlement grants", repaired);
+        try {
+            int repaired = subscriptionService.repairActiveSubscriptionsWithoutGrants();
+            if (repaired > 0) {
+                log.warn("Repaired {} active subscriptions without entitlement grants", repaired);
+            }
+        } catch (Exception ex) {
+            log.error("SubscriptionIntegrityWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

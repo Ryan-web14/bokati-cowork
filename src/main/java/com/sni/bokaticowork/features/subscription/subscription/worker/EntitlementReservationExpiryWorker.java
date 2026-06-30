@@ -15,9 +15,13 @@ public class EntitlementReservationExpiryWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.reservation-expiry-delay-ms:300000}")
     public void expireReservations() {
-        int expired = entitlementService.expireReservations();
-        if (expired > 0) {
-            log.info("Expired {} entitlement reservations", expired);
+        try {
+            int expired = entitlementService.expireReservations();
+            if (expired > 0) {
+                log.info("Expired {} entitlement reservations", expired);
+            }
+        } catch (Exception ex) {
+            log.error("EntitlementReservationExpiryWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

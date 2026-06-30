@@ -15,9 +15,13 @@ public class SubscriptionCancellationWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.cancellation-delay-ms:900000}")
     public void cancelEndedSubscriptions() {
-        int cancelled = subscriptionService.cancelEndedSubscriptions();
-        if (cancelled > 0) {
-            log.info("Cancelled {} subscriptions at period end", cancelled);
+        try {
+            int cancelled = subscriptionService.cancelEndedSubscriptions();
+            if (cancelled > 0) {
+                log.info("Cancelled {} subscriptions at period end", cancelled);
+            }
+        } catch (Exception ex) {
+            log.error("SubscriptionCancellationWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

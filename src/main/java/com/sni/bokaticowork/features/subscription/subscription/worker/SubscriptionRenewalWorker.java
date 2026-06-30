@@ -15,9 +15,13 @@ public class SubscriptionRenewalWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.renewal-delay-ms:900000}")
     public void renewDueSubscriptions() {
-        int renewed = subscriptionService.renewDueSubscriptions();
-        if (renewed > 0) {
-            log.info("Renewed {} due subscriptions", renewed);
+        try {
+            int renewed = subscriptionService.renewDueSubscriptions();
+            if (renewed > 0) {
+                log.info("Renewed {} due subscriptions", renewed);
+            }
+        } catch (Exception ex) {
+            log.error("SubscriptionRenewalWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }
