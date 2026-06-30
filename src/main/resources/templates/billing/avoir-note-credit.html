@@ -6,487 +6,287 @@
     <style>
         @page {
             size: A4;
-            margin: 0 0 14mm 0;
+            margin: 0;
             @bottom-center {
                 content: "Page " counter(page) " sur " counter(pages);
-                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-                font-size: 7.5px;
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 7.6px;
                 color: #9b8caa;
             }
         }
 
         * { box-sizing: border-box; }
-
+        html, body { margin: 0; padding: 0; }
         body {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            color: #1a0a2e;
-            font-size: 9.5px;
-            line-height: 1.6;
-            margin: 0;
+            font-family: Helvetica, Arial, sans-serif;
+            color: #2b2030;
+            font-size: 9.8px;
+            line-height: 1.34;
             background: #ffffff;
         }
 
-        /* ── HEADER ── */
-        .header {
-            background: #1a0a2e;
-            padding: 20px 28px 16px;
-        }
-        .header-tbl { width: 100%; border-collapse: collapse; }
-        .header-tbl td { border: none; padding: 0; vertical-align: middle; }
+        .header { background: #281332; padding: 0; color: #ffffff; }
+        .header-inner { padding: 18px 16px 14px; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { border: none; padding: 0; vertical-align: middle; }
+        .brand-text { font-size: 19px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; line-height: 1; white-space: nowrap; }
+        .brand-sub { font-size: 7.6px; color: #d8cce1; letter-spacing: 1.6px; text-transform: uppercase; margin-top: 4px; }
+        .brand-contact { font-size: 7.4px; color: #f2e7f6; margin-top: 5px; letter-spacing: 0.2px; }
+        .doc-type { font-size: 25px; font-weight: 700; color: #ffffff; letter-spacing: 2.6px; text-transform: uppercase; line-height: 1; text-align: right; }
+        .doc-number { font-size: 9.6px; color: #d9a21b; margin-top: 4px; letter-spacing: 1.35px; font-weight: 700; font-family: "Courier New", monospace; text-align: right; }
+        .header-rule { height: 2px; background: #d9a21b; }
 
-        .brand-text {
-            font-size: 18px; font-weight: 700; color: #ffffff;
-            letter-spacing: 4px; text-transform: uppercase; line-height: 1;
-        }
-        .brand-sub {
-            font-size: 7px; color: #9b8caa;
-            letter-spacing: 2px; text-transform: uppercase; margin-top: 4px;
-        }
-        .doc-type {
-            font-size: 26px; font-weight: 700; color: #ffffff;
-            letter-spacing: 3px; text-transform: uppercase; line-height: 1;
-            text-align: right;
-        }
-        .doc-number {
-            font-size: 10px; color: #c9a84c;
-            margin-top: 6px; letter-spacing: 1px; font-weight: 600;
-            text-align: right;
-        }
+        /* Ribbon — informations de base en texte simple */
+        .ribbon { background: #fffdf8; border-bottom: 1px solid #e6ddea; padding: 5px 16px; font-size: 8px; color: #6f6478; }
 
-        .header-stripe {
-            height: 4px;
-            background: #c9a84c;
+        .content { padding: 12px 16px 0; }
+
+        .section-label {
+            font-size: 7.6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.35px;
+            color: #8a5a00;
+            border-bottom: 1px solid #e6ddea;
+            padding-bottom: 4px;
+            margin: 12px 0 7px;
         }
 
-        /* ── RIBBON ── */
-        .ribbon {
-            background: #fdfcf8;
-            border-bottom: 1px solid #d8d0e8;
-            padding: 7px 28px;
+        /* Info — colonnes plates */
+        .info-grid { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .info-grid td { vertical-align: top; padding: 0; border: none; }
+        .info-block-title {
+            font-size: 7px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #8a5a00;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #e6ddea;
         }
-        .ribbon-tbl { width: 100%; border-collapse: collapse; }
-        .ribbon-tbl td { border: none; padding: 0; vertical-align: middle; font-size: 9px; color: #5c4f6e; }
+        .info-primary { font-size: 11.3px; font-weight: 700; color: #281332; margin-bottom: 3px; }
+        .info-detail { font-size: 8.8px; color: #6f6478; line-height: 1.36; }
 
-        .badge {
-            display: inline-block; padding: 2px 10px;
-            font-size: 7.5px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.9px;
-            border-radius: 2px;
+        /* Motif — texte simple avec filet gauche */
+        .motif-text {
+            padding-left: 9px;
+            border-left: 1px solid #e6ddea;
+            font-size: 9.5px;
+            color: #2b2030;
+            line-height: 1.5;
+            margin-bottom: 4px;
         }
-        .badge-credit { background: #dcfce7; color: #15803d; }
-        .badge-link   { background: #d8c8f8; color: #3b1069; }
 
-        /* ── CONTENT ── */
-        .content { padding: 16px 28px 0; }
-
-        /* ── SECTION LABEL ── */
-        .section-label-tbl { width: 100%; border-collapse: collapse; margin: 16px 0 10px; }
-        .section-label-tbl td { border: none; padding: 0; vertical-align: middle; }
-        .sl-bar  { width: 18px; height: 2px; background: #c9a84c; display: block; }
-        .sl-text {
-            font-size: 7.5px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 1.6px; color: #7c3aed;
-            padding: 0 8px; white-space: nowrap;
-        }
-        .sl-line { height: 1px; background: #d8d0e8; }
-
-        /* ── INFO CARDS ── */
-        .info-tbl { width: 100%; border-collapse: collapse; }
-        .info-tbl td { border: none; padding: 0; vertical-align: top; }
-        .info-tbl td:first-child { padding-right: 8px; }
-        .info-tbl td:last-child  { padding-left: 8px; }
-
-        .info-card {
-            border: 1px solid #d8d0e8;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .info-card-head {
-            background: #2a1548;
-            border-left: 3px solid #c9a84c;
-            padding: 6px 12px;
-            font-size: 7.5px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1.2px;
+        /* Tableau des lignes */
+        .lines { width: 100%; border-collapse: collapse; font-size: 9.2px; }
+        .lines thead th {
+            background: #281332;
             color: #ffffff;
-        }
-        .info-card-body {
-            padding: 10px 12px;
-            background: #faf8fd;
-            font-size: 9.5px; color: #1a0a2e; line-height: 1.65;
-        }
-        .info-card-body .name { font-weight: 700; font-size: 11px; color: #1a0a2e; margin-bottom: 4px; }
-        .info-card-body .meta { font-size: 9px; color: #5c4f6e; }
-
-        /* ── META ROW ── */
-        .meta-tbl { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        .meta-tbl td { border: none; padding: 0 5px 0 0; vertical-align: top; width: 25%; }
-        .meta-tbl td:last-child { padding-right: 0; }
-        .meta-cell {
-            background: #faf8fd;
-            border: 1px solid #d8d0e8;
-            border-radius: 2px;
-            padding: 7px 10px;
-        }
-        .meta-label {
-            font-size: 6.5px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
-            color: #5c4f6e;
-        }
-        .meta-value {
-            font-size: 10px; font-weight: 700; color: #1a0a2e;
-            margin-top: 2px;
-        }
-
-        /* ── REASON BOX ── */
-        .reason-box {
-            border: 1px solid #d8d0e8;
-            border-left: 3px solid #7c3aed;
-            background: #f0eaff;
-            border-radius: 2px;
-            padding: 9px 12px;
-            margin-top: 4px;
-        }
-        .reason-label {
-            font-size: 7px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
-            color: #7c3aed; margin-bottom: 3px;
-        }
-        .reason-text { font-size: 9.5px; color: #1a0a2e; line-height: 1.6; }
-
-        /* ── ITEMS TABLE ── */
-        .items-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-        .items-table thead th {
-            background: #1a0a2e; color: #ffffff;
-            font-size: 7.5px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
-            padding: 8px 10px; text-align: left;
+            padding: 6px 8px;
+            font-size: 7.6px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
             border: none;
         }
-        .items-table thead th.num { text-align: right; }
-        .items-table tbody td {
-            font-size: 9.5px; color: #1a0a2e;
-            padding: 8px 10px;
-            border-bottom: 1px solid #d8d0e8;
+        .lines tbody td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e6ddea;
             vertical-align: top;
         }
-        .items-table tbody td.num { text-align: right; font-weight: 700; }
-        .items-table tbody tr.even td { background: #f0eaff; }
-        .item-desc { color: #5c4f6e; font-size: 8.5px; margin-top: 2px; line-height: 1.5; }
+        .lines tbody tr:nth-child(even) td { background: #fafafa; }
+        .lines tbody tr:last-child td { border-bottom: 2px solid #281332; }
+        .lines tbody td.col-amt { font-weight: 700; color: #281332; }
+        .line-name { font-weight: 700; color: #281332; }
+        .line-sub { font-size: 7.8px; color: #6f6478; margin-top: 2px; }
+        .r { text-align: right; }
+        .c { text-align: center; }
+        .num { white-space: nowrap; }
+        .muted { color: #9b8caa; }
 
-        /* ── TOTALS ── */
-        .totals-wrap-tbl { width: 100%; border-collapse: collapse; margin-top: 14px; }
-        .totals-wrap-tbl td { border: none; vertical-align: top; }
-        .totals-wrap-tbl td.note-col { padding-right: 16px; }
-        .totals-wrap-tbl td.totals-col { width: 280px; }
+        /* Récapitulatif */
+        .summary-wrap { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .summary-wrap td { border: none; padding: 0; vertical-align: top; }
+        .summary { width: 100%; border-collapse: collapse; font-size: 9px; }
+        .summary td { border: none; padding: 5px 0; border-bottom: 1px solid #e6ddea; }
+        .summary tr:last-child td { border-bottom: none; }
+        .summary .lbl { color: #6f6478; }
+        .summary .val { text-align: right; font-weight: 700; color: #2b2030; }
+        .total-row td { background: #281332; color: #ffffff; padding: 8px 10px; font-size: 11.5px; font-weight: 700; }
+        .total-row td.r { color: #d9a21b; }
+        .credit-row td { border-top: 2px solid #281332 !important; padding-top: 8px !important; padding-bottom: 8px !important; font-size: 10.6px; font-weight: 700; color: #166534; border-bottom: none !important; }
 
-        .totals-note {
-            font-size: 8.5px; color: #5c4f6e;
-            line-height: 1.6;
-            background: #fdf8ed;
-            border: 1px solid #f0dfa0;
-            border-left: 3px solid #c9a84c;
-            padding: 9px 12px;
-            border-radius: 2px;
-        }
+        /* Mode d'application — table simple */
+        .apply-table { width: 100%; border-collapse: collapse; font-size: 9px; }
+        .apply-table td { padding: 5px 0; border-bottom: 1px solid #e6ddea; vertical-align: top; }
+        .apply-table tr:last-child td { border-bottom: none; }
+        .apply-lbl { color: #6f6478; width: 38%; }
+        .apply-val { color: #2b2030; }
 
-        .totals-table { width: 100%; border-collapse: collapse; }
-        .totals-table td { padding: 6px 12px; font-size: 10px; border: none; }
-        .totals-table .label { color: #5c4f6e; }
-        .totals-table .value { text-align: right; font-weight: 700; color: #1a0a2e; }
-        .totals-table tr.divider td { border-top: 1px solid #d8d0e8; padding-top: 8px; }
-        .totals-table tr.grand td {
-            background: #1a0a2e; color: #ffffff;
-            font-size: 12px; font-weight: 700;
-            padding: 10px 12px; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .totals-table tr.grand td.value { color: #c9a84c; }
-        .totals-table tr.refund td {
-            background: #dcfce7; color: #15803d;
-            font-size: 9.5px; font-weight: 700;
-            padding: 7px 12px;
-        }
-        .totals-table tr.refund td.value { color: #15803d; }
+        .legal-section { margin-top: 11px; border-top: 1px solid #e6ddea; padding-top: 6px; }
+        .legal-head { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a5a00; margin-bottom: 4px; }
+        .legal-compact { font-size: 7px; color: #6f6478; line-height: 1.28; }
 
-        /* ── REFUND BLOCK ── */
-        .refund-tbl { width: 100%; border-collapse: collapse; margin-top: 4px; }
-        .refund-tbl td { border: none; padding: 0 5px 0 0; vertical-align: top; width: 33%; }
-        .refund-tbl td:last-child { padding-right: 0; }
-
-        .refund-card {
-            border: 1px solid #d8d0e8;
-            border-radius: 2px; overflow: hidden;
-        }
-        .refund-card-active { border: 1px solid #15803d; border-radius: 2px; overflow: hidden; }
-        .refund-head {
-            font-size: 7px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
-            background: #faf8fd; color: #5c4f6e;
-            padding: 5px 10px;
-            border-bottom: 1px solid #d8d0e8;
-        }
-        .refund-head-active {
-            font-size: 7px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
-            background: #dcfce7; color: #15803d;
-            padding: 5px 10px;
-            border-bottom: 1px solid #15803d;
-        }
-        .refund-body { padding: 9px 10px; font-size: 9px; color: #1a0a2e; line-height: 1.55; }
-        .refund-amount { font-size: 11px; font-weight: 700; color: #1a0a2e; margin-top: 2px; }
-        .refund-note   { color: #9b8caa; font-size: 8px; margin-top: 3px; }
-
-        /* ── LEGAL NOTICE ── */
-        .legal-notice {
-            margin-top: 14px;
-            background: #f0eaff;
-            border: 1px solid #d8d0e8;
-            border-left: 3px solid #7c3aed;
-            border-radius: 2px;
-            padding: 9px 12px;
-            font-size: 8.5px; color: #5c4f6e; line-height: 1.65;
-        }
-
-        /* ── SIGNATURE ── */
-        .sig-tbl { width: 100%; border-collapse: collapse; margin-top: 14px; }
-        .sig-tbl td { border: none; vertical-align: top; width: 50%; }
-        .sig-tbl td:first-child { padding-right: 16px; }
-        .sig-label { font-size: 7.5px; font-weight: 700; color: #5c4f6e; text-transform: uppercase; letter-spacing: 0.8px; }
-        .sig-line  { border-bottom: 1.5px solid #d8d0e8; min-height: 38px; margin: 6px 0 4px; }
-        .sig-caption { font-size: 7.5px; color: #9b8caa; margin-top: 2px; }
-
-        /* ── FOOTER ── */
-        .footer {
-            margin-top: 16px; padding: 10px 28px;
-            border-top: 1px solid #d8d0e8;
-            font-size: 7.5px; color: #9b8caa; text-align: center;
-        }
+        .doc-footer { margin-top: 8px; padding: 8px 0 9px; border-top: 1px solid #e6ddea; font-size: 7.8px; color: #8c7d96; text-align: center; }
+        .doc-footer .made-by { font-size: 7.4px; color: #4b3f52; font-weight: 700; letter-spacing: 0.5px; margin-top: 3px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <div class="header">
-    <table class="header-tbl">
-        <tr>
-            <td>
-                <div class="brand-text">Elle A Osé</div>
-                <div class="brand-sub">Cowork &amp; Studio</div>
-            </td>
-            <td style="text-align:right;">
-                <div class="doc-type">Avoir</div>
-                <div class="doc-number" th:text="${creditNote.number}">N° AV-2026-0042</div>
-            </td>
-        </tr>
-    </table>
+    <div class="header-inner">
+        <table class="header-table">
+            <tr>
+                <td>
+                    <div class="brand-text">Elle A Osé</div>
+                    <div class="brand-sub">Espace de coworking</div>
+                    <div class="brand-contact">coworkspace@elleaose.com · 05 204 2552</div>
+                </td>
+                <td>
+                    <div class="doc-type">Avoir</div>
+                    <div class="doc-number" th:text="${creditNote.number}">AV-2026-0001</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 </div>
-<div class="header-stripe"></div>
+<div class="header-rule"></div>
 
 <!-- RIBBON -->
 <div class="ribbon">
-    <table class="ribbon-tbl">
-        <tr>
-            <td>
-                <span class="badge badge-credit">Note de crédit</span>
-                &nbsp;&nbsp;Émis le <strong th:text="${creditNote.issueDate}">04 mai 2026</strong>
-            </td>
-            <td style="text-align:right;">
-                <span class="badge badge-link">Réf. facture &nbsp;<strong th:text="${creditNote.invoiceNumber}">FAC-2026-0118</strong></span>
-            </td>
-        </tr>
-    </table>
+    Note de crédit &nbsp;·&nbsp; Émis le <strong th:text="${creditNote.issueDate}">—</strong>
+    <span th:if="${creditNote.invoiceNumber != null}">&nbsp;·&nbsp; Réf. facture <strong th:text="${creditNote.invoiceNumber}">—</strong></span>
 </div>
 
+<!-- CONTENU -->
 <div class="content">
 
-    <!-- SECTION : PARTIES -->
-    <table class="section-label-tbl"><tr>
-        <td style="width:18px;"><span class="sl-bar"></span></td>
-        <td class="sl-text">Parties</td>
-        <td><div class="sl-line"></div></td>
-    </tr></table>
-
-    <table class="info-tbl">
+    <!-- PARTIES -->
+    <div class="section-label">Parties</div>
+    <table class="info-grid">
         <tr>
-            <td width="50%">
-                <div class="info-card">
-                    <div class="info-card-head">Émetteur</div>
-                    <div class="info-card-body">
-                        <div class="name">Elle A Osé — Bokati Cowork</div>
-                        <div class="meta">
-                            Adresse : ____________________________________<br/>
-                            RCCM : __________ &nbsp;·&nbsp; NIF : __________<br/>
-                            coworkspace@elleaose.com
-                        </div>
-                    </div>
+            <td style="width:50%; padding-right:14px; border-right:1px solid #e6ddea; vertical-align:top;">
+                <div class="info-block-title">Émetteur</div>
+                <div class="info-primary">Elle A Osé — Bokati Cowork</div>
+                <div class="info-detail">
+                    coworkspace@elleaose.com<br>
+                    RCCM : __________ &nbsp;·&nbsp; NIF : __________
                 </div>
             </td>
-            <td width="50%">
-                <div class="info-card">
-                    <div class="info-card-head">Bénéficiaire</div>
-                    <div class="info-card-body">
-                        <div class="name" th:text="${customer.name}">Nom du client</div>
-                        <div class="meta">
-                            Code client : <strong th:text="${customer.id}">CUS-000</strong><br/>
-                            Adresse : ____________________________________<br/>
-                            Email : <span th:text="${customer.email}">email@client.com</span>
-                        </div>
-                    </div>
+            <td style="width:50%; padding-left:14px; vertical-align:top;">
+                <div class="info-block-title">Bénéficiaire</div>
+                <div class="info-primary" th:text="${customer.name}">Nom du client</div>
+                <div class="info-detail">
+                    Code client : <strong th:text="${customer.id}">CUS-000</strong><br>
+                    <span th:if="${customer.email != null}">Email : <span th:text="${customer.email}"></span></span>
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- META -->
-    <table class="meta-tbl">
+    <!-- INFORMATIONS DU DOCUMENT -->
+    <div class="section-label">Informations</div>
+    <table style="width:100%; border-collapse:collapse; font-size:9px;">
         <tr>
-            <td><div class="meta-cell"><div class="meta-label">N° avoir</div><div class="meta-value" th:text="${creditNote.number}">AV-2026-0042</div></div></td>
-            <td><div class="meta-cell"><div class="meta-label">Date d'émission</div><div class="meta-value" th:text="${creditNote.issueDate}">04/05/2026</div></div></td>
-            <td><div class="meta-cell"><div class="meta-label">Facture liée</div><div class="meta-value" th:text="${creditNote.invoiceNumber}">FAC-2026-0118</div></div></td>
-            <td><div class="meta-cell"><div class="meta-label">Devise</div><div class="meta-value">XAF</div></div></td>
+            <td style="color:#6f6478; padding:3px 0; border-bottom:1px solid #e6ddea; width:40%;">N° avoir</td>
+            <td style="font-weight:700; color:#2b2030; padding:3px 0; border-bottom:1px solid #e6ddea; text-align:right; font-family:'Courier New',monospace;" th:text="${creditNote.number}">AV-2026-0001</td>
+        </tr>
+        <tr>
+            <td style="color:#6f6478; padding:3px 0; border-bottom:1px solid #e6ddea;">Date d'émission</td>
+            <td style="font-weight:700; color:#2b2030; padding:3px 0; border-bottom:1px solid #e6ddea; text-align:right;" th:text="${creditNote.issueDate}">—</td>
+        </tr>
+        <tr th:if="${creditNote.invoiceNumber != null}">
+            <td style="color:#6f6478; padding:3px 0; border-bottom:1px solid #e6ddea;">Facture liée</td>
+            <td style="font-weight:700; color:#2b2030; padding:3px 0; border-bottom:1px solid #e6ddea; text-align:right;" th:text="${creditNote.invoiceNumber}">—</td>
+        </tr>
+        <tr>
+            <td style="color:#6f6478; padding:3px 0;">Devise</td>
+            <td style="font-weight:700; color:#2b2030; padding:3px 0; text-align:right;">XAF</td>
         </tr>
     </table>
 
-    <!-- SECTION : MOTIF -->
-    <table class="section-label-tbl"><tr>
-        <td style="width:18px;"><span class="sl-bar"></span></td>
-        <td class="sl-text">Motif de l'avoir</td>
-        <td><div class="sl-line"></div></td>
-    </tr></table>
+    <!-- MOTIF -->
+    <div class="section-label">Motif de l'avoir</div>
+    <div class="motif-text" th:text="${creditNote.reason}">Motif de l'avoir.</div>
 
-    <div class="reason-box">
-        <div class="reason-label">Justification</div>
-        <div class="reason-text" th:text="${creditNote.reason}">Motif de l'avoir.</div>
-    </div>
-
-    <!-- SECTION : LIGNES -->
-    <table class="section-label-tbl"><tr>
-        <td style="width:18px;"><span class="sl-bar"></span></td>
-        <td class="sl-text">Lignes créditées</td>
-        <td><div class="sl-line"></div></td>
-    </tr></table>
-
-    <table class="items-table">
+    <!-- LIGNES CRÉDITÉES -->
+    <div class="section-label">Lignes créditées</div>
+    <table class="lines">
         <thead>
             <tr>
                 <th style="width:50%;">Désignation</th>
-                <th class="num" style="width:10%;">Qté</th>
-                <th class="num" style="width:18%;">P.U. HT</th>
-                <th class="num" style="width:22%;">Montant HT</th>
+                <th class="r" style="width:10%;">Qté</th>
+                <th class="r" style="width:20%;">P.U. HT</th>
+                <th class="r" style="width:20%;">Montant HT</th>
             </tr>
         </thead>
         <tbody>
-            <tr th:each="line, stat : ${creditNote.lines}" th:class="${stat.even} ? 'even' : ''">
+            <tr th:each="line : ${creditNote.lines}">
                 <td>
-                    <strong th:text="${line.label}">Désignation</strong>
-                    <div class="item-desc" th:if="${line.description}" th:text="${line.description}">Détail</div>
+                    <div class="line-name" th:text="${line.label}">Désignation</div>
+                    <div class="line-sub" th:if="${line.description}" th:text="${line.description}">Détail</div>
                 </td>
-                <td class="num" th:text="${line.quantity}">1</td>
-                <td class="num" th:text="${line.unitPrice}">0</td>
-                <td class="num" th:text="${line.total}">0</td>
+                <td class="r num" th:text="${line.quantity}">1</td>
+                <td class="r num" th:text="${line.unitPrice}">0</td>
+                <td class="r num col-amt" th:text="${line.total}">0</td>
             </tr>
         </tbody>
     </table>
 
-    <!-- TOTAUX -->
-    <table class="totals-wrap-tbl">
+    <!-- RÉCAPITULATIF -->
+    <table class="summary-wrap">
         <tr>
-            <td class="note-col">
-                <div class="totals-note">
-                    <strong>Avoir au crédit du client.</strong> Ce document constitue un titre de crédit et n'est pas un remboursement automatique.
-                    Le mode d'application est précisé ci-dessous. Le numéro de facture initiale doit être référencé en cas d'imputation.
+            <td style="width:42%; vertical-align:top; padding-right:10px;">
+                <div style="font-size:8.5px; color:#6f6478; line-height:1.5; padding-left:9px; border-left:1px solid #e6ddea;">
+                    Avoir au crédit du client. Ce document constitue un titre de crédit et n'est pas un remboursement automatique. Le mode d'application est précisé ci-dessous.
                 </div>
             </td>
-            <td class="totals-col">
-                <table class="totals-table">
-                    <tr>
-                        <td class="label">Total HT</td>
-                        <td class="value" th:text="${creditNote.totalHT}">0 XAF</td>
-                    </tr>
-                    <tr>
-                        <td class="label">TVA</td>
-                        <td class="value" th:text="${creditNote.tax}">0 XAF</td>
-                    </tr>
-                    <tr class="divider grand">
-                        <td>Total avoir TTC</td>
-                        <td class="value" th:text="${creditNote.totalTTC}">0 XAF</td>
-                    </tr>
-                    <tr class="refund">
-                        <td>Au crédit du client</td>
-                        <td class="value">− <span th:text="${creditNote.totalTTC}">0 XAF</span></td>
-                    </tr>
+            <td style="width:58%;">
+                <table class="summary">
+                    <tr><td class="lbl">Total HT</td><td class="val num" th:text="${creditNote.totalHT}">0 XAF</td></tr>
+                    <tr><td class="lbl">TVA</td><td class="val num" th:text="${creditNote.tax}">0 XAF</td></tr>
+                    <tr class="total-row"><td>Total avoir TTC</td><td class="r num" th:text="${creditNote.totalTTC}">0 XAF</td></tr>
+                    <tr class="credit-row"><td>Au crédit du client</td><td class="r num">− <span th:text="${creditNote.totalTTC}">0 XAF</span></td></tr>
                 </table>
             </td>
         </tr>
     </table>
 
-    <!-- SECTION : MODE D'APPLICATION -->
-    <table class="section-label-tbl"><tr>
-        <td style="width:18px;"><span class="sl-bar"></span></td>
-        <td class="sl-text">Mode d'application</td>
-        <td><div class="sl-line"></div></td>
-    </tr></table>
-
-    <table class="refund-tbl">
+    <!-- MODE D'APPLICATION -->
+    <div class="section-label">Mode d'application</div>
+    <table class="apply-table">
         <tr>
-            <td>
-                <div class="refund-card-active">
-                    <div class="refund-head-active">Imputation prochaine facture</div>
-                    <div class="refund-body">
-                        Crédit reporté sur le prochain document.
-                        <div class="refund-amount" th:text="${creditNote.totalTTC}">0 XAF</div>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="refund-card">
-                    <div class="refund-head">Remboursement</div>
-                    <div class="refund-body">
-                        Mobile money / virement / espèces.
-                        <div class="refund-note">Réf. transaction : ____________</div>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="refund-card">
-                    <div class="refund-head">Avoir partiel</div>
-                    <div class="refund-body">
-                        Solde restant à utiliser ultérieurement.
-                        <div class="refund-note">Validité : 12 mois</div>
-                    </div>
-                </div>
-            </td>
+            <td class="apply-lbl">Imputation prochaine facture</td>
+            <td class="apply-val"><strong>Crédit reporté sur le prochain document</strong> — <span th:text="${creditNote.totalTTC}">0 XAF</span></td>
+        </tr>
+        <tr>
+            <td class="apply-lbl">Remboursement</td>
+            <td class="apply-val" style="color:#6f6478;">Mobile money / virement / espèces &nbsp;·&nbsp; Réf. transaction : ____________</td>
+        </tr>
+        <tr>
+            <td class="apply-lbl">Avoir partiel</td>
+            <td class="apply-val" style="color:#6f6478;">Solde restant à utiliser ultérieurement &nbsp;·&nbsp; Validité : 12 mois</td>
         </tr>
     </table>
 
-    <!-- LEGAL -->
-    <div class="legal-notice">
-        Le présent avoir annule ou réduit, à due concurrence, la facture référencée ci-dessus. Il doit être conservé par le client à des fins
-        comptables et fiscales. La TVA mentionnée ne pourra être récupérée par le client que si elle a effectivement été déduite sur la facture initiale.
-        En cas de remboursement, l'opération sera effectuée selon le mode de paiement choisi, dans un délai de 14 jours ouvrés.
+    <!-- MENTIONS LÉGALES -->
+    <div class="legal-section">
+        <div class="legal-head">Mentions légales</div>
+        <div class="legal-compact">
+            Le présent avoir annule ou réduit, à due concurrence, la facture référencée ci-dessus. Il doit être conservé par le client à des fins comptables et fiscales.
+            La TVA mentionnée ne pourra être récupérée par le client que si elle a effectivement été déduite sur la facture initiale.
+            En cas de remboursement, l'opération sera effectuée selon le mode de paiement choisi, dans un délai de 14 jours ouvrés.
+        </div>
     </div>
 
-    <!-- SIGNATURES -->
-    <table class="sig-tbl">
-        <tr>
-            <td>
-                <div class="sig-label">Pour Elle A Osé — Bokati Cowork</div>
-                <div class="sig-line"></div>
-                <div class="sig-caption">Nom : ___________________ &nbsp;·&nbsp; Date : __ / __ / ____</div>
-            </td>
-            <td>
-                <div class="sig-label">Bénéficiaire (réception)</div>
-                <div class="sig-line"></div>
-                <div class="sig-caption">Nom : ___________________ &nbsp;·&nbsp; Date : __ / __ / ____</div>
-            </td>
-        </tr>
-    </table>
+    <!-- PIED DE PAGE -->
+    <div class="doc-footer">
+        Elle A Osé &nbsp;·&nbsp; <span th:text="${creditNote.number}">AV-2026-0001</span> &nbsp;·&nbsp; Avoir / Note de crédit &nbsp;·&nbsp; Document comptable — à conserver
+        <div class="made-by">Engineered by SNI</div>
+    </div>
 
 </div>
-
-<!-- FOOTER -->
-<div class="footer">
-    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Avoir / Note de crédit &nbsp;·&nbsp; Document comptable — à conserver
-</div>
-
 </body>
 </html>
