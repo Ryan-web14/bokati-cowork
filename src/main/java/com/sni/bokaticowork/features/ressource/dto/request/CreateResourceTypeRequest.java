@@ -20,4 +20,6 @@ public class CreateResourceTypeRequest {
     private String description;
 
     private Boolean active;
+
+    private Integer bookableSlots;
 }

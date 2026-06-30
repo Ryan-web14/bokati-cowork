@@ -31,14 +31,14 @@ public class BookingResourceGuard {
         if (quantity < 1) {
             throw new BadRequestException("Booking quantity must be greater than zero");
         }
-        if (resource.getCapacity() != null && quantity > resource.getCapacity()) {
-            throw new ConflictException("booking", "requested quantity exceeds resource capacity");
+        if (quantity > resource.resolveBookableSlots()) {
+            throw new ConflictException("booking", "requested quantity exceeds resource bookable slots");
         }
         validatePolicy(resource.getResourcePolicy(), startedAt, endedAt);
     }
 
     public void validateNoSingleCapacityConflict(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt, String excludedBookingNumber) {
-        if (resource.getCapacity() != null && resource.getCapacity() > 1) {
+        if (resource.resolveBookableSlots() > 1) {
             return;
         }
         if (bookingRepository.existsActiveConflict(resource.getId(), startedAt, endedAt, excludedBookingNumber)) {

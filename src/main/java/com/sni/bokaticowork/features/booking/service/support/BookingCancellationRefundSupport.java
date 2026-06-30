@@ -86,7 +86,7 @@ public class BookingCancellationRefundSupport {
                 + " — politique d'annulation (" + policy.getRefundPercentage().stripTrailingZeros().toPlainString() + "%)";
 
         billingDocumentService.createCreditNote(invoice.getDocumentNumber(),
-                new CreateCreditNoteRequest(refundAmount, reason, true, null));
+                new CreateCreditNoteRequest(refundAmount, reason, true, null, null));
 
         refundPaidTransactions(invoice.getDocumentNumber(), refundAmount, reason);
 

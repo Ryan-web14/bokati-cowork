@@ -22,11 +22,15 @@ public class VisitorPassExpiryWorker {
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void expireScheduledPasses() {
-        List<VisitorPass> expired = passRepository
-                .findAllByStatusAndValidUntilBefore(VisitorPassStatus.SCHEDULED, Instant.now());
-        if (expired.isEmpty()) return;
-        expired.forEach(p -> p.setStatus(VisitorPassStatus.EXPIRED));
-        passRepository.saveAll(expired);
-        log.info("Expired {} visitor passes", expired.size());
+        try {
+            List<VisitorPass> expired = passRepository
+                    .findAllByStatusAndValidUntilBefore(VisitorPassStatus.SCHEDULED, Instant.now());
+            if (expired.isEmpty()) return;
+            expired.forEach(p -> p.setStatus(VisitorPassStatus.EXPIRED));
+            passRepository.saveAll(expired);
+            log.info("Expired {} visitor passes", expired.size());
+        } catch (Exception ex) {
+            log.error("VisitorPassExpiryWorker failed: {}", ex.getMessage(), ex);
+        }
     }
 }

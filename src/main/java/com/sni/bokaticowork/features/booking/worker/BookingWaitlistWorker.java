@@ -15,10 +15,14 @@ public class BookingWaitlistWorker {
 
     @Scheduled(fixedDelayString = "${bokati.booking.waitlist.worker-delay-ms:300000}")
     public void process() {
-        int expired = waitlistService.expireOffers(100);
-        int promoted = waitlistService.promoteAvailable(100);
-        if (expired > 0 || promoted > 0) {
-            log.info("Booking waitlist processed: expired={}, promoted={}", expired, promoted);
+        try {
+            int expired = waitlistService.expireOffers(100);
+            int promoted = waitlistService.promoteAvailable(100);
+            if (expired > 0 || promoted > 0) {
+                log.info("Booking waitlist processed: expired={}, promoted={}", expired, promoted);
+            }
+        } catch (Exception ex) {
+            log.error("BookingWaitlistWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }
