@@ -5,13 +5,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
 
 import java.util.concurrent.Executor;
 
 @Configuration
 @EnableAsync
-public class AsyncConfig implements AsyncConfigurer {
+@EnableScheduling
+public class AsyncConfig implements AsyncConfigurer, SchedulingConfigurer {
 
     @Bean(name = "taskExecutor")
     @Override
@@ -27,17 +32,22 @@ public class AsyncConfig implements AsyncConfigurer {
         return executor;
     }
 
-    @Bean(name = "contractGenerationExecutor")
-    public Executor contractGenerationExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("contract-generation-");
-        executor.setWaitForTasksToCompleteOnShutdown(true);
-        executor.setAwaitTerminationSeconds(60);
-        executor.initialize();
-        return executor;
+    @Bean
+    public ThreadPoolTaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(8);
+        scheduler.setThreadNamePrefix("scheduler-");
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+        scheduler.setAwaitTerminationSeconds(30);
+        scheduler.setErrorHandler(ex ->
+                org.slf4j.LoggerFactory.getLogger(AsyncConfig.class)
+                        .error("Scheduler error: {}", ex.getMessage(), ex));
+        return scheduler;
+    }
+
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.setTaskScheduler(taskScheduler());
     }
 
     // Logs toutes les exceptions non catchées des méthodes @Async void

@@ -17,7 +17,6 @@ public class NotificationOutboxEventProcessor implements OutboxEventProcessor {
 
     private static final Set<String> SUPPORTED_AGGREGATES = Set.of(
             "NOTIFICATION",
-            "BOOKING",
             "SUBSCRIPTION",
             "SUBSCRIPTION_PASS",
             "PAYMENT",

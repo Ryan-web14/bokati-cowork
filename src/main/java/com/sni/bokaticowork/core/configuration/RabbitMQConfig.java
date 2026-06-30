@@ -225,4 +225,17 @@ public class RabbitMQConfig {
         factory.setDefaultRequeueRejected(false);
         return factory;
     }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory dlqListenerFactory(
+            ConnectionFactory connectionFactory, MessageConverter converter) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(converter);
+        factory.setConcurrentConsumers(1);
+        factory.setMaxConcurrentConsumers(1);
+        factory.setPrefetchCount(5);
+        factory.setDefaultRequeueRejected(false);
+        return factory;
+    }
 }

@@ -25,10 +25,13 @@ public class OutboxWorker {
         if (!enabled) {
             return;
         }
-
-        int processed = outboxService.processPending(batchSize);
-        if (processed > 0) {
-            log.info("Processed {} outbox event(s)", processed);
+        try {
+            int processed = outboxService.processPending(batchSize);
+            if (processed > 0) {
+                log.info("Processed {} outbox event(s)", processed);
+            }
+        } catch (Exception ex) {
+            log.error("OutboxWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }
