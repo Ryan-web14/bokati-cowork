@@ -21,6 +21,7 @@ public class ContractTemplateResponse {
     private String headerHtml;
     private String footerHtml;
     private List<TemplateVariableDefinition> variableDefinitions;
+    private List<ContractTemplateSectionResponse> sections;
     private Boolean active;
     private Instant createdAt;
     private Instant updatedAt;

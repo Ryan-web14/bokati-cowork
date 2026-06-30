@@ -4,10 +4,12 @@ import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.contract.dto.request.ContractDraftSectionRequest;
 import com.sni.bokaticowork.features.contract.dto.request.CreateContractTemplateRequest;
 import com.sni.bokaticowork.features.contract.dto.request.UpdateContractTemplateRequest;
 import com.sni.bokaticowork.features.contract.dto.response.ContractPreviewResponse;
 import com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse;
+import com.sni.bokaticowork.features.contract.dto.response.ContractTemplateSectionResponse;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractTemplateService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -83,5 +86,38 @@ public class ContractTemplateController {
     public ResponseEntity<Void> delete(@PathVariable String code) {
         templateService.delete(code);
         return ResponseEntity.noContent().build();
+    }
+
+    // ── Section management ─────────────────────────────────────────────────────
+
+    @Audited(module = "CONTRACT_TEMPLATE", action = "ADD_SECTION", ressource = "contract_template")
+    @PostMapping("/{code}/sections")
+    public ResponseEntity<ContractTemplateSectionResponse> addSection(
+            @PathVariable String code,
+            @Valid @RequestBody ContractDraftSectionRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(templateService.addSection(code, request));
+    }
+
+    @Audited(module = "CONTRACT_TEMPLATE", action = "UPDATE_SECTION", ressource = "contract_template")
+    @PutMapping("/{code}/sections/{sectionId}")
+    public ResponseEntity<ContractTemplateSectionResponse> updateSection(
+            @PathVariable String code,
+            @PathVariable Long sectionId,
+            @Valid @RequestBody ContractDraftSectionRequest request) {
+        return ResponseEntity.ok(templateService.updateSection(code, sectionId, request));
+    }
+
+    @Audited(module = "CONTRACT_TEMPLATE", action = "REMOVE_SECTION", ressource = "contract_template")
+    @DeleteMapping("/{code}/sections/{sectionId}")
+    public ResponseEntity<Void> removeSection(
+            @PathVariable String code,
+            @PathVariable Long sectionId) {
+        templateService.removeSection(code, sectionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{code}/sections")
+    public ResponseEntity<List<ContractTemplateSectionResponse>> listSections(@PathVariable String code) {
+        return ResponseEntity.ok(templateService.listSections(code));
     }
 }

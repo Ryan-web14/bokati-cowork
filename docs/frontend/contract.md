@@ -82,18 +82,38 @@ Cela garantit qu'une requête dupliquée (retry réseau) ne crée pas de doublon
 
 ### ContractStatus — Statut du contrat
 
-| Valeur               | Description                                      |
-|----------------------|--------------------------------------------------|
-| `DRAFT`              | Brouillon, contrat en cours de rédaction          |
-| `GENERATED`          | PDF brouillon généré                              |
-| `UNDER_REVIEW`       | En attente de validation interne                  |
-| `AWAITING_SIGNATURE` | Envoyé pour signature                             |
-| `SIGNED`             | Signé par toutes les parties                      |
-| `ACTIVE`             | Contrat en vigueur                                |
-| `SUSPENDED`          | Temporairement suspendu                           |
-| `EXPIRED`            | Expiré (fin de validité atteinte)                 |
-| `TERMINATED`         | Résilié avant terme                               |
-| `CANCELLED`          | Annulé (jamais entré en vigueur)                  |
+| Valeur               | Description                                                         |
+|----------------------|---------------------------------------------------------------------|
+| `DRAFT`              | Brouillon, contrat en cours de rédaction                            |
+| `GENERATED`          | PDF brouillon généré                                                |
+| `UNDER_REVIEW`       | En attente de validation interne                                    |
+| `AWAITING_SIGNATURE` | Envoyé pour signature                                               |
+| `SIGNED`             | Signé par toutes les parties                                        |
+| `ACTIVE`             | Contrat en vigueur                                                  |
+| `SUSPENDED`          | Temporairement suspendu                                             |
+| `AMENDED`            | Modifié par un avenant — le contrat effectif est l'avenant signé   |
+| `EXPIRED`            | Expiré (fin de validité atteinte)                                   |
+| `TERMINATED`         | Résilié avant terme                                                 |
+| `CANCELLED`          | Annulé (jamais entré en vigueur)                                    |
+
+### AmendmentStatus — Statut d'un avenant
+
+| Valeur              | Description                                                     |
+|---------------------|-----------------------------------------------------------------|
+| `DRAFT`             | Avenant en cours de rédaction — modifiable                     |
+| `UNDER_REVIEW`      | Soumis pour validation interne                                  |
+| `PENDING_SIGNATURE` | En attente de signature des parties                             |
+| `ACTIVE`            | Avenant signé et entré en vigueur                               |
+| `REJECTED`          | Rejeté lors de la revue                                         |
+| `CANCELLED`         | Annulé                                                          |
+
+### ContractAmendmentSectionAction — Action sur une section
+
+| Valeur   | Description                                              |
+|----------|----------------------------------------------------------|
+| `ADD`    | Ajoute un nouveau article/clause au contrat              |
+| `MODIFY` | Remplace le contenu d'un article existant                |
+| `REMOVE` | Supprime un article existant du contrat                  |
 
 ### ContractRenewalType — Type de renouvellement
 
@@ -337,6 +357,8 @@ GET /api/v1/contracts
 
 ### 4.4 Modifier un contrat
 
+> ⚠️ **Immutabilité post-signature** : Cette route retourne `400` si le contrat est en statut `SIGNED`, `ACTIVE`, `SUSPENDED` ou `AMENDED`. Pour modifier un contrat signé, utiliser le workflow d'avenant (Partie 5).
+
 ```
 PUT /api/v1/contracts/{contractCode}
 ```
@@ -487,12 +509,17 @@ PATCH /api/v1/contracts/{contractCode}/cancel
 DRAFT ──→ GENERATED ──→ UNDER_REVIEW ──→ AWAITING_SIGNATURE ──→ SIGNED ──→ ACTIVE
   │                          │                                               │
   │                          ▼                                               ├──→ SUSPENDED ──→ ACTIVE (réactivation)
-  │                     CANCELLED                                            │
-  │                                                                          ├──→ TERMINATED
-  ▼                                                                          │
-CANCELLED                                                                    ▼
+  │                     CANCELLED                                            │         │
+  │                                                                          │         ▼
+  ▼                                                                          ├──→ AMENDED (avenant signé)
+CANCELLED                                                                    │         │
+                                                                             ├──→ TERMINATED
+                                                                             │
+                                                                             ▼
                                                                           EXPIRED
 ```
+
+> **Règle d'or** : Un contrat en statut `SIGNED`, `ACTIVE`, `SUSPENDED` ou `AMENDED` ne peut **jamais** être modifié en place via `PUT /contracts/{code}`. Toute modification post-signature doit passer par un **avenant** (`POST /contracts/{code}/amendments`).
 
 ---
 
@@ -1684,6 +1711,634 @@ POST /api/v1/contract-drafts/{code}/generate
 | Actif         | Switch                    | Inclure dans le rendu                   |
 
 **Bouton « Insérer variable »** : Affiche un dropdown des variables disponibles (AUTO + MANUAL). Insère `{{variableName}}` à la position du curseur dans l'éditeur.
+
+---
+
+# PARTIE 5 — Avenants et Audit Trail
+
+---
+
+> Un contrat signé est un fait juridique immuable. Toute modification d'un contrat `ACTIVE` ou `SUSPENDED` passe obligatoirement par un **avenant** (`ContractAmendment`). L'avenant porte ses propres sections (ajout, modification, suppression d'articles) et variables. Une fois signé, l'avenant entre en vigueur et le contrat original passe à `AMENDED`.
+
+---
+
+## 19. Avenants — Cycle de vie
+
+> Base paths : `/api/v1/contracts/{contractCode}/amendments` et `/api/v1/amendments/{amendmentCode}`
+
+### Diagramme d'état d'un avenant
+
+```
+DRAFT ──→ UNDER_REVIEW ──→ PENDING_SIGNATURE ──→ ACTIVE
+  │              │
+  ▼              ▼
+CANCELLED     REJECTED
+```
+
+Les transitions autorisées :
+
+| De                  | Vers                | Action / endpoint                            |
+|---------------------|---------------------|----------------------------------------------|
+| `DRAFT`             | `UNDER_REVIEW`      | `POST /amendments/{code}/submit`             |
+| `DRAFT`             | `CANCELLED`         | `POST /amendments/{code}/cancel`             |
+| `UNDER_REVIEW`      | `PENDING_SIGNATURE` | `POST /amendments/{code}/approve`            |
+| `UNDER_REVIEW`      | `REJECTED`          | `POST /amendments/{code}/reject`             |
+| `UNDER_REVIEW`      | `CANCELLED`         | `POST /amendments/{code}/cancel`             |
+| `PENDING_SIGNATURE` | `ACTIVE`            | `POST /amendments/{code}/sign`               |
+| `PENDING_SIGNATURE` | `CANCELLED`         | `POST /amendments/{code}/cancel`             |
+
+> Quand un avenant passe à `ACTIVE`, le contrat original passe automatiquement à `AMENDED`.
+
+---
+
+### 19.1 Proposer un avenant
+
+```
+POST /api/v1/contracts/{contractCode}/amendments
+```
+
+**Pré-condition** : le contrat doit être `ACTIVE` ou `SUSPENDED`. Un seul avenant ouvert (DRAFT/UNDER_REVIEW/PENDING_SIGNATURE) par contrat à la fois.
+
+**Query params**
+
+| Param        | Type   | Requis | Description                         |
+|--------------|--------|--------|-------------------------------------|
+| `proposedBy` | number | oui    | ID de l'utilisateur proposant       |
+
+**Body**
+
+```json
+{
+  "description": "Modification du montant mensuel suite à la révision tarifaire 2026",
+  "effectiveDate": "2026-08-01"
+}
+```
+
+| Champ           | Type       | Requis | Description                                     |
+|-----------------|------------|--------|-------------------------------------------------|
+| `description`   | string     | oui    | Objet de l'avenant (raison de la modification)  |
+| `effectiveDate` | date (ISO) | non    | Date d'entrée en vigueur de l'avenant           |
+
+**Réponse** `201 Created` → `ContractAmendmentResponse`
+
+```json
+{
+  "code": "AMENDMENT-20260629-00001",
+  "originalContractCode": "CTR-20260701-00001",
+  "status": "DRAFT",
+  "description": "Modification du montant mensuel suite à la révision tarifaire 2026",
+  "proposedBy": 1,
+  "proposedAt": "2026-06-29T10:00:00Z",
+  "effectiveDate": "2026-08-01",
+  "draftDocumentCode": null,
+  "signedDocumentCode": null,
+  "signedAt": null,
+  "activatedAt": null,
+  "reviewedBy": null,
+  "reviewComment": null,
+  "rejectionReason": null,
+  "cancellationReason": null,
+  "createdAt": "2026-06-29T10:00:00Z",
+  "updatedAt": "2026-06-29T10:00:00Z",
+  "sections": [],
+  "variableChanges": []
+}
+```
+
+---
+
+### 19.2 Récupérer un avenant
+
+```
+GET /api/v1/amendments/{amendmentCode}
+```
+
+**Réponse** `200 OK` → `ContractAmendmentResponse` (avec sections et variableChanges)
+
+---
+
+### 19.3 Lister les avenants d'un contrat
+
+```
+GET /api/v1/contracts/{contractCode}/amendments
+```
+
+**Réponse** `200 OK` → `ContractAmendmentResponse[]` (triés du plus récent au plus ancien)
+
+---
+
+### 19.4 Soumettre pour revue
+
+```
+POST /api/v1/amendments/{amendmentCode}/submit
+```
+
+**Pré-condition** : L'avenant doit être en `DRAFT` et contenir au moins une modification de section ou de variable.
+
+**Réponse** `200 OK` → `ContractAmendmentResponse` (status = `UNDER_REVIEW`)
+
+---
+
+### 19.5 Approuver la revue
+
+```
+POST /api/v1/amendments/{amendmentCode}/approve
+```
+
+| Param        | Type   | Requis | In    | Description                    |
+|--------------|--------|--------|-------|--------------------------------|
+| `reviewedBy` | number | oui    | query | ID du réviseur                 |
+
+**Body** (optionnel)
+
+```json
+{
+  "comment": "Avenant conforme à l'accord verbal du 28/06/2026"
+}
+```
+
+**Réponse** `200 OK` → `ContractAmendmentResponse` (status = `PENDING_SIGNATURE`)
+
+---
+
+### 19.6 Rejeter la revue
+
+```
+POST /api/v1/amendments/{amendmentCode}/reject
+```
+
+| Param        | Type   | Requis | In    | Description                 |
+|--------------|--------|--------|-------|-----------------------------|
+| `reviewedBy` | number | oui    | query | ID du réviseur              |
+
+**Body** (optionnel)
+
+```json
+{
+  "comment": "Le montant proposé ne respecte pas la grille tarifaire approuvée"
+}
+```
+
+**Réponse** `200 OK` → `ContractAmendmentResponse` (status = `REJECTED`)
+
+---
+
+### 19.7 Signer l'avenant (entrée en vigueur)
+
+```
+POST /api/v1/amendments/{amendmentCode}/sign
+```
+
+| Param     | Type   | Requis | In    | Description                      |
+|-----------|--------|--------|-------|----------------------------------|
+| `actorId` | number | oui    | query | ID de la personne qui signe      |
+
+**Body** (optionnel)
+
+```json
+{
+  "signedDocumentCode": "DOC-20260629-00003",
+  "justification": "Avenant signé physiquement et scanné"
+}
+```
+
+| Champ                | Type   | Requis | Description                                  |
+|----------------------|--------|--------|----------------------------------------------|
+| `signedDocumentCode` | string | non    | Code du document signé (upload séparé)       |
+| `justification`      | string | non    | Commentaire sur la signature                 |
+
+**Réponse** `200 OK` → `ContractAmendmentResponse` (status = `ACTIVE`)
+
+> Le contrat original passe automatiquement à `AMENDED`. Un événement d'audit est enregistré pour les deux.
+
+---
+
+### 19.8 Annuler un avenant
+
+```
+POST /api/v1/amendments/{amendmentCode}/cancel
+```
+
+| Param     | Type   | Requis | In    | Description                  |
+|-----------|--------|--------|-------|------------------------------|
+| `actorId` | number | oui    | query | ID de l'utilisateur          |
+
+**Body** (optionnel)
+
+```json
+{
+  "reason": "Négociations abandonnées"
+}
+```
+
+**Réponse** `200 OK` → `ContractAmendmentResponse` (status = `CANCELLED`)
+
+---
+
+## 20. Modifications de contenu d'un avenant (en DRAFT)
+
+> Toutes les routes de cette section ne sont accessibles que lorsque l'avenant est en statut `DRAFT`.
+
+---
+
+### 20.1 Ajouter une modification de section
+
+```
+POST /api/v1/amendments/{amendmentCode}/sections
+```
+
+**Body**
+
+```json
+{
+  "action": "MODIFY",
+  "targetSectionRef": "Article 3 — Tarification",
+  "sectionType": "ARTICLE",
+  "title": "Article 3 — Tarification (révisée)",
+  "content": "<p>À compter du {{effectiveDate}}, le montant mensuel est porté à <strong>175 000 FCFA TTC</strong>, payable le 1er de chaque mois.</p>",
+  "sectionOrder": 3
+}
+```
+
+| Champ              | Type                          | Requis | Description                                                  |
+|--------------------|-------------------------------|--------|--------------------------------------------------------------|
+| `action`           | ContractAmendmentSectionAction| oui    | `ADD`, `MODIFY` ou `REMOVE`                                  |
+| `targetSectionRef` | string                        | cond.  | Référence de la section originale (requis pour MODIFY/REMOVE) |
+| `sectionType`      | ContractSectionType           | non    | Type de section (défaut: `ARTICLE`)                          |
+| `title`            | string                        | non    | Nouveau titre de la section                                  |
+| `content`          | string (HTML)                 | cond.  | Nouveau contenu avec `{{variables}}` (requis sauf REMOVE)    |
+| `sectionOrder`     | number                        | non    | Ordre d'affichage dans l'avenant (auto si omis)              |
+
+**Exemples par action :**
+
+**ADD** — Nouveau article qui n'existait pas dans le contrat original :
+```json
+{
+  "action": "ADD",
+  "sectionType": "CLAUSE",
+  "title": "Clause de confidentialité renforcée",
+  "content": "<p>En complément de l'article 7, le bénéficiaire s'engage à une clause de non-divulgation étendue à 24 mois après résiliation.</p>",
+  "sectionOrder": 8
+}
+```
+
+**MODIFY** — Remplacement d'un article existant :
+```json
+{
+  "action": "MODIFY",
+  "targetSectionRef": "Article 3 — Tarification",
+  "title": "Article 3 — Tarification (révisée)",
+  "content": "<p>Le montant mensuel est porté à 175 000 FCFA TTC à compter du {{effectiveDate}}.</p>"
+}
+```
+
+**REMOVE** — Suppression d'un article :
+```json
+{
+  "action": "REMOVE",
+  "targetSectionRef": "Article 6 — Clause d'exclusivité"
+}
+```
+
+**Réponse** `201 Created` → `ContractAmendmentSectionResponse`
+
+```json
+{
+  "id": 12,
+  "action": "MODIFY",
+  "targetSectionRef": "Article 3 — Tarification",
+  "sectionType": "ARTICLE",
+  "title": "Article 3 — Tarification (révisée)",
+  "content": "<p>Le montant mensuel est porté à 175 000 FCFA TTC...</p>",
+  "sectionOrder": 3,
+  "createdAt": "2026-06-29T10:05:00Z",
+  "updatedAt": "2026-06-29T10:05:00Z"
+}
+```
+
+---
+
+### 20.2 Modifier une section d'avenant
+
+```
+PUT /api/v1/amendments/{amendmentCode}/sections/{sectionId}
+```
+
+**Body** — Seuls les champs à modifier
+
+```json
+{
+  "content": "<p>Montant révisé : 180 000 FCFA TTC à compter du {{effectiveDate}}.</p>",
+  "title": "Article 3 — Tarification (révisée v2)"
+}
+```
+
+**Réponse** `200 OK` → `ContractAmendmentSectionResponse`
+
+---
+
+### 20.3 Lister les sections d'un avenant
+
+```
+GET /api/v1/amendments/{amendmentCode}/sections
+```
+
+**Réponse** `200 OK` → `ContractAmendmentSectionResponse[]` (triés par sectionOrder)
+
+---
+
+### 20.4 Supprimer une section d'avenant
+
+```
+DELETE /api/v1/amendments/{amendmentCode}/sections/{sectionId}
+```
+
+**Réponse** `204 No Content`
+
+---
+
+### 20.5 Définir les changements de variables
+
+> Remplace entièrement la liste des modifications de variables pour l'avenant.
+
+```
+PUT /api/v1/amendments/{amendmentCode}/variables
+```
+
+**Body** — Tableau de changements (remplace tout)
+
+```json
+[
+  {
+    "variableKey": "montantMensuel",
+    "previousValue": "150 000 FCFA",
+    "newValue": "175 000 FCFA"
+  },
+  {
+    "variableKey": "jourPaiement",
+    "previousValue": "1er",
+    "newValue": "5"
+  }
+]
+```
+
+| Champ           | Type   | Requis | Description                                          |
+|-----------------|--------|--------|------------------------------------------------------|
+| `variableKey`   | string | oui    | Clé de la variable (doit correspondre au template)   |
+| `previousValue` | string | non    | Valeur actuelle dans le contrat (pour audit)         |
+| `newValue`      | string | oui    | Nouvelle valeur proposée                             |
+
+**Réponse** `200 OK` → `ContractAmendmentVariableResponse[]`
+
+```json
+[
+  {
+    "id": 5,
+    "variableKey": "montantMensuel",
+    "previousValue": "150 000 FCFA",
+    "newValue": "175 000 FCFA",
+    "createdAt": "2026-06-29T10:10:00Z",
+    "updatedAt": "2026-06-29T10:10:00Z"
+  },
+  {
+    "id": 6,
+    "variableKey": "jourPaiement",
+    "previousValue": "1er",
+    "newValue": "5",
+    "createdAt": "2026-06-29T10:10:00Z",
+    "updatedAt": "2026-06-29T10:10:00Z"
+  }
+]
+```
+
+---
+
+### 20.6 Lister les changements de variables
+
+```
+GET /api/v1/amendments/{amendmentCode}/variables
+```
+
+**Réponse** `200 OK` → `ContractAmendmentVariableResponse[]` (triés par variableKey)
+
+---
+
+## 21. Prévisualisation & PDF d'avenant
+
+### 21.1 Prévisualiser l'avenant (HTML)
+
+```
+GET /api/v1/amendments/{amendmentCode}/preview
+```
+
+**Réponse** `200 OK` `text/html`
+
+> Retourne un HTML complet représentant l'avenant avec :
+> - En-tête avec référence de l'avenant et du contrat original
+> - Objet de l'avenant
+> - Toutes les modifications de sections (avec badges ADD/MODIFY/REMOVE en couleur)
+> - Tableau des changements de variables (ancienne vs nouvelle valeur)
+> - Clause de sauvegarde légale
+> - Bloc de signatures
+
+Le frontend peut afficher ce HTML dans un `<iframe>` ou un conteneur dédié.
+
+---
+
+### 21.2 Générer le PDF de l'avenant
+
+```
+POST /api/v1/amendments/{amendmentCode}/generate-pdf
+```
+
+| Param        | Type   | Requis | In    | Description                      |
+|--------------|--------|--------|-------|----------------------------------|
+| `uploadedBy` | number | oui    | query | ID de l'utilisateur générant     |
+
+**Réponse** `200 OK` → `DocumentResponse`
+
+```json
+{
+  "documentCode": "DOC-20260629-00010",
+  "fileName": "avenant-amendment-20260629-00001.pdf",
+  "fileType": "application/pdf",
+  "fileSize": 152000,
+  "uploadedAt": "2026-06-29T10:20:00Z"
+}
+```
+
+> Le `draftDocumentCode` de l'avenant est mis à jour avec ce code. Le PDF est stocké dans MinIO.
+
+---
+
+## 22. Piste d'audit chaînée par hash
+
+### 22.1 Récupérer la piste d'audit d'un contrat
+
+```
+GET /api/v1/contracts/{contractCode}/audit-events
+```
+
+**Réponse** `200 OK` → `ContractAuditEventResponse[]` (triés par date d'événement, du plus ancien au plus récent)
+
+```json
+[
+  {
+    "id": 1,
+    "contractCode": "CTR-20260701-00001",
+    "amendmentCode": null,
+    "eventType": "AMENDMENT_PROPOSED",
+    "actorId": 1,
+    "actorType": "USER",
+    "actorName": null,
+    "occurredAt": "2026-06-29T10:00:00Z",
+    "previousHash": null,
+    "eventHash": "a3f4e2b1c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2",
+    "payload": "{\"amendmentCode\":\"AMENDMENT-20260629-00001\"}",
+    "justification": "Avenant proposé : Modification du montant mensuel"
+  },
+  {
+    "id": 2,
+    "contractCode": "CTR-20260701-00001",
+    "amendmentCode": "AMENDMENT-20260629-00001",
+    "eventType": "AMENDMENT_SUBMITTED_FOR_REVIEW",
+    "actorId": null,
+    "actorType": "SYSTEM",
+    "actorName": null,
+    "occurredAt": "2026-06-29T10:30:00Z",
+    "previousHash": "a3f4e2b1c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2",
+    "eventHash": "b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+    "payload": null,
+    "justification": "Avenant soumis pour examen"
+  }
+]
+```
+
+| Champ           | Type    | Description                                                         |
+|-----------------|---------|---------------------------------------------------------------------|
+| `id`            | number  | Identifiant unique de l'événement                                   |
+| `contractCode`  | string  | Code du contrat concerné                                            |
+| `amendmentCode` | string  | Code de l'avenant concerné (null si événement sur le contrat lui-même) |
+| `eventType`     | string  | Type d'événement (voir tableau ci-dessous)                          |
+| `actorId`       | number  | ID de l'utilisateur ayant déclenché l'événement                     |
+| `actorType`     | string  | `USER` ou `SYSTEM`                                                  |
+| `actorName`     | string  | Nom de l'acteur (peut être null)                                    |
+| `occurredAt`    | instant | Timestamp précis de l'événement                                     |
+| `previousHash`  | string  | SHA-256 de l'événement précédent (null pour le premier)             |
+| `eventHash`     | string  | SHA-256 de cet événement (chaîné avec le précédent)                 |
+| `payload`       | string  | JSON optionnel avec des données supplémentaires                     |
+| `justification` | string  | Motif ou commentaire de l'événement                                 |
+
+### Types d'événements d'audit
+
+| eventType                       | Déclencheur                                           |
+|---------------------------------|-------------------------------------------------------|
+| `AMENDMENT_PROPOSED`            | Nouvel avenant créé                                   |
+| `AMENDMENT_SUBMITTED_FOR_REVIEW`| Soumission pour revue                                 |
+| `AMENDMENT_REVIEW_APPROVED`     | Revue approuvée                                       |
+| `AMENDMENT_REVIEW_REJECTED`     | Revue rejetée                                         |
+| `AMENDMENT_SIGNED`              | Avenant signé                                         |
+| `AMENDMENT_CANCELLED`           | Avenant annulé                                        |
+| `CONTRACT_AMENDED`              | Contrat original basculé en AMENDED suite à signature |
+
+### Vérification de l'intégrité de la chaîne
+
+Chaque `eventHash` est calculé :
+```
+SHA-256(previousHash | contractCode | eventType | actorId | timestamp | payload)
+```
+Si `previousHash` de l'événement N+1 ≠ `eventHash` de l'événement N, la chaîne a été altérée.
+
+---
+
+## 23. Workflows d'avenant recommandés
+
+### Workflow A — Modification tarifaire
+
+```
+1. POST /contracts/{code}/amendments?proposedBy=1           → Proposer l'avenant (DRAFT)
+2. PUT  /amendments/{amendCode}/variables                   → Définir les nouvelles valeurs
+3. POST /amendments/{amendCode}/sections                    → Modifier l'article "Tarification"
+4. GET  /amendments/{amendCode}/preview                     → Prévisualiser l'avenant HTML
+5. POST /amendments/{amendCode}/generate-pdf?uploadedBy=1  → Générer le PDF
+6. POST /amendments/{amendCode}/submit                      → Soumettre pour revue (UNDER_REVIEW)
+7. POST /amendments/{amendCode}/approve?reviewedBy=2        → Approuver (PENDING_SIGNATURE)
+8. POST /amendments/{amendCode}/sign?actorId=1              → Signer (ACTIVE)
+   → Contrat original passe automatiquement en AMENDED
+```
+
+### Workflow B — Ajout d'une clause
+
+```
+1. POST /contracts/{code}/amendments?proposedBy=1           → Proposer l'avenant
+2. POST /amendments/{amendCode}/sections                    → ADD: nouvelle clause
+3. POST /amendments/{amendCode}/submit                      → Soumettre
+4. POST /amendments/{amendCode}/approve?reviewedBy=2        → Approuver
+5. POST /amendments/{amendCode}/sign?actorId=1              → Signer
+```
+
+### Workflow C — Avenant rejeté, corrigé, resigné
+
+```
+1. POST /contracts/{code}/amendments                        → Proposer (DRAFT)
+2. PUT  /amendments/{amendCode}/variables                   → Définir les changements
+3. POST /amendments/{amendCode}/submit                      → Soumettre (UNDER_REVIEW)
+4. POST /amendments/{amendCode}/reject?reviewedBy=2         → Rejeter (REJECTED)
+   → L'avenant est figé en REJECTED — créer un nouvel avenant si nécessaire
+5. POST /contracts/{code}/amendments                        → Nouveau brouillon corrigé
+6. [Répéter les étapes 2-3-approve-sign]
+```
+
+---
+
+## 24. Écrans recommandés — Avenants
+
+### 24.1 Onglet « Avenants » dans le détail d'un contrat
+
+**Route** : `/admin/contracts/:contractCode` → onglet « Avenants »
+
+| Composant              | Description                                                          |
+|------------------------|----------------------------------------------------------------------|
+| Liste des avenants     | Tableau : Code, Date, Statut, Proposé par, Date entrée en vigueur   |
+| Badges statut          | Bleu=DRAFT, Orange=UNDER_REVIEW, Violet=PENDING_SIGNATURE, Vert=ACTIVE, Rouge=REJECTED/CANCELLED |
+| Bouton                 | « + Proposer un avenant » (visible si contrat ACTIVE/SUSPENDED)      |
+| Actions par avenant    | Voir, Modifier (si DRAFT), Soumettre, Approuver, Rejeter, Signer     |
+
+### 24.2 Éditeur d'avenant
+
+**Route** : `/admin/amendments/:amendmentCode/edit`
+
+| Section                | Description                                                          |
+|------------------------|----------------------------------------------------------------------|
+| En-tête                | Objet de l'avenant + statut (badge)                                  |
+| Contrat référencé      | Code + titre du contrat original (lien vers fiche)                   |
+| Date d'effet           | Date picker                                                          |
+| Modifications de sections | Tableau des changements avec actions ADD/MODIFY/REMOVE + éditeur HTML |
+| Variables modifiées    | Tableau : Variable / Ancienne valeur / Nouvelle valeur               |
+| Prévisualisation       | Bouton → ouverture HTML dans iframe / panel latéral                  |
+| Générer PDF            | Bouton → téléchargement PDF de l'avenant                             |
+| Actions                | Soumettre / Annuler (selon statut)                                   |
+
+**Éditeur de modification de section :**
+
+| Champ               | Input                  | Description                                     |
+|---------------------|------------------------|-------------------------------------------------|
+| Action              | Select (ADD/MODIFY/REMOVE) | Type de modification                        |
+| Section visée       | Text (autocomplete)    | Titre de la section originale à modifier/supprimer |
+| Type               | Select (ContractSectionType) | Type de la nouvelle section                |
+| Titre               | Text input             | Nouveau titre                                   |
+| Contenu             | Éditeur HTML riche     | Nouveau contenu avec `{{variables}}`            |
+
+### 24.3 Piste d'audit d'un contrat
+
+**Route** : `/admin/contracts/:contractCode` → onglet « Piste d'audit »
+
+| Composant             | Description                                                           |
+|-----------------------|-----------------------------------------------------------------------|
+| Timeline verticale    | Événements chronologiques (du plus récent au plus ancien)             |
+| Par événement         | Type, acteur, date, justification, lien vers avenant si applicable    |
+| Hash                  | Affichage condensé du hash (6 premiers caractères) avec tooltip complet |
+| Vérification          | Indicateur « Chaîne intègre » / « Chaîne compromise »                 |
 
 ---
 

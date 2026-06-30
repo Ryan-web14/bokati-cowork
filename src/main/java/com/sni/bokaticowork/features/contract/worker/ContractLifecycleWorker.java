@@ -22,9 +22,13 @@ public class ContractLifecycleWorker {
         if (!enabled) {
             return;
         }
-        int processed = automationService.processScheduledTransitions();
-        if (processed > 0) {
-            log.info("Processed {} contract lifecycle transition(s)", processed);
+        try {
+            int processed = automationService.processScheduledTransitions();
+            if (processed > 0) {
+                log.info("Processed {} contract lifecycle transition(s)", processed);
+            }
+        } catch (Exception ex) {
+            log.error("ContractLifecycleWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

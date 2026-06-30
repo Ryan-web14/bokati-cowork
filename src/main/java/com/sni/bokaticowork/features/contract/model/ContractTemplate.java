@@ -63,6 +63,11 @@ public class ContractTemplate {
     @Builder.Default
     private List<TemplateVariableDefinition> variableDefinitions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "template", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("sectionOrder ASC")
+    @Builder.Default
+    private List<ContractTemplateSection> sections = new ArrayList<>();
+
     @Builder.Default
     @Column(name = "active", nullable = false)
     private Boolean active = Boolean.TRUE;

@@ -8,6 +8,7 @@ public enum ContractStatus {
     SIGNED,
     ACTIVE,
     SUSPENDED,
+    AMENDED,
     EXPIRED,
     TERMINATED,
     CANCELLED
