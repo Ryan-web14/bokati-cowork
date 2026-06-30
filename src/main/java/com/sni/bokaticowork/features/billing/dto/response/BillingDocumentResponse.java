@@ -80,6 +80,10 @@ public record BillingDocumentResponse(
         String previousHash,
         String currentHash,
         String fiscalSignature,
-        Instant signedAt
+        Instant signedAt,
+        // ── Lien document-correctif ────────────────────────────────────────────
+        String originalDocumentNumber,
+        String originalDocumentType,
+        String creditNoteReason
 ) {
 }

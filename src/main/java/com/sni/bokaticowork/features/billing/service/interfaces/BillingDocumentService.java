@@ -62,4 +62,16 @@ public interface BillingDocumentService {
 
     /** Valide fiscalement le document (SEFC) : assigne le numéro définitif et verrouille. */
     BillingDocumentResponse validate(String documentNumber);
+
+    /**
+     * Applique un avoir validé (SEFC) sur n'importe quelle facture du même client.
+     * L'avoir doit être VALIDATED (locked). L'avoir est marqué ISSUED après application.
+     */
+    BillingDocumentResponse applyCreditNoteToInvoice(String creditNoteNumber, String targetInvoiceNumber);
+
+    /**
+     * Crée une facture rectificative (REC) référençant une facture validée.
+     * La rectificative est créée en DRAFT et doit être validée séparément.
+     */
+    BillingDocumentResponse createCorrectiveInvoice(String originalInvoiceNumber, CreateManualBillingDocumentRequest request);
 }

@@ -30,6 +30,18 @@ public class BillableItemInvoiceSupport {
     @Lazy
     private final PaymentService paymentService;
 
+    public BillingDocumentResponse ensureInvoicedGroup(List<BillableItem> items, String title, String description) {
+        if (items == null || items.isEmpty()) return null;
+        if (items.size() == 1) return ensureInvoiced(items.get(0), title, description);
+        List<String> numbers = items.stream().map(BillableItem::getBillableNumber).toList();
+        BillingDocumentResponse created = billingDocumentService.createInvoiceFromBillableItems(
+                new CreateInvoiceFromBillableItemsRequest(title, description, LocalDate.now(), LocalDate.now(), numbers)
+        );
+        BillingDocumentResponse issued = issueIfDraft(created);
+        ensurePaymentIntent(issued);
+        return issued;
+    }
+
     public BillingDocumentResponse ensureInvoiced(BillableItem item) {
         return ensureInvoiced(item, defaultTitle(item), defaultDescription(item));
     }
