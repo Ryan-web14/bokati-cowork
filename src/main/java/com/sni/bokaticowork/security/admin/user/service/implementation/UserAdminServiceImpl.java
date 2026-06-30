@@ -59,6 +59,8 @@ public class UserAdminServiceImpl implements UserAdminService {
         boolean generatePassword = request.getGeneratePassword() == null || request.getGeneratePassword();
         UserRequest userRequest = UserRequest.builder()
                 .email(request.getEmail())
+                .firstname(request.getFirstname())
+                .lastname(request.getLastname())
                 .password(generatePassword ? "GENERATED" : request.getPassword())
                 .generatePassword(generatePassword)
                 .build();
@@ -137,6 +139,12 @@ public class UserAdminServiceImpl implements UserAdminService {
         }
         if (StringUtils.hasText(request.getEmail())) {
             user.setEmail(request.getEmail().trim().toLowerCase(Locale.ROOT));
+        }
+        if (StringUtils.hasText(request.getFirstname())) {
+            user.setFirstname(request.getFirstname().trim());
+        }
+        if (StringUtils.hasText(request.getLastname())) {
+            user.setLastname(request.getLastname().trim());
         }
         if (request.getIsAccountEnabled() != null) {
             user.setIsAccountEnabled(request.getIsAccountEnabled());
@@ -248,6 +256,8 @@ public class UserAdminServiceImpl implements UserAdminService {
                 .id(user.getId())
                 .userId(user.getUserId())
                 .email(user.getEmail())
+                .firstname(user.getFirstname())
+                .lastname(user.getLastname())
                 .accountEnabled(user.getIsAccountEnabled())
                 .accountLocked(user.getIsAccountLocked())
                 .accountExpired(user.getIsAccountExpired())

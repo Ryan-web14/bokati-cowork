@@ -31,6 +31,7 @@ public interface UserMapper {
     @Mapping(target = "isAccountLocked", ignore = true)
     @Mapping(target = "isAccountEnabled", ignore = true)
     @Mapping(target = "failedLoginAttempts", ignore = true)
+    @Mapping(target = "pendingEmail", ignore = true)
     @Mapping(target = "roleUsers", ignore = true)
     Users toEntity(UserRequest request);
 }

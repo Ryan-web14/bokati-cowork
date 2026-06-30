@@ -9,6 +9,8 @@ import java.util.List;
 public class AdminUpdateUserRequest {
     @Email
     private String email;
+    private String firstname;
+    private String lastname;
     private Boolean isAccountEnabled;
     private Boolean isAccountLocked;
     private List<String> roleNames;
