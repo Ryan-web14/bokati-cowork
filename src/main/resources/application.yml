@@ -3,7 +3,8 @@ spring:
   application:
     name: bokati-cowork
   profiles:
-    active: prod
+    active: dev
+
 
   servlet:
     multipart:
@@ -56,7 +57,10 @@ bokati:
       timeout-ms: ${GRAPH_RATE_LIMIT_TIMEOUT_MS:30000}
   billing:
     workers:
-      fiscal-integrity-cron: ${BILLING_FISCAL_INTEGRITY_CRON:0 0 2 * * *}
+      fiscal-integrity-cron:  ${BILLING_FISCAL_INTEGRITY_CRON:0 0 2 * * *}
+      daily-closure-cron:     ${BILLING_DAILY_CLOSURE_CRON:0 30 23 * * *}
+      monthly-closure-cron:   ${BILLING_MONTHLY_CLOSURE_CRON:0 15 0 1 * *}
+      annual-closure-cron:    ${BILLING_ANNUAL_CLOSURE_CRON:0 0 1 1 1 *}
   checkin:
     scanner-key: ${CHECKIN_SCANNER_KEY:}
     early-window-minutes: ${CHECKIN_EARLY_WINDOW_MINUTES:15}
