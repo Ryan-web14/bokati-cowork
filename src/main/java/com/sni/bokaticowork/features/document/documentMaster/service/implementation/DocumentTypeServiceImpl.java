@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTypeRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentUploadConfigResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.documentMaster.mapper.interfaces.DocumentTypeMapper;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
@@ -15,8 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -117,6 +120,30 @@ public class DocumentTypeServiceImpl implements DocumentTypeService {
         if (request.getCategory() == null) {
             throw new BadRequestException("Document type category is required");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentUploadConfigResponse getUploadConfig(String code) {
+        DocumentType type = serviceByCode(code);
+        List<String> mimes = StringUtils.hasText(type.getAllowedMimeTypes())
+                ? Arrays.stream(type.getAllowedMimeTypes().split(","))
+                        .map(String::trim).filter(StringUtils::hasText).collect(Collectors.toList())
+                : List.of("application/pdf", "image/jpeg", "image/png");
+        long maxBytes = type.getMaxFileSizeBytes() != null && type.getMaxFileSizeBytes() > 0
+                ? type.getMaxFileSizeBytes() : 10L * 1024 * 1024;
+        return DocumentUploadConfigResponse.builder()
+                .documentTypeCode(type.getCode())
+                .documentTypeName(type.getName())
+                .helpText(type.getHelpText())
+                .requiresDocumentNumber(Boolean.TRUE.equals(type.getRequiresDocumentNumber()))
+                .requiresIssueDate(Boolean.TRUE.equals(type.getRequiresIssueDate()))
+                .requiresExpiryDate(Boolean.TRUE.equals(type.getRequiresExpiryDate()))
+                .requiresBackSide(Boolean.TRUE.equals(type.getRequiresBackSide()))
+                .allowedMimeTypes(mimes)
+                .maxFileSizeBytes(maxBytes)
+                .category(type.getCategory() != null ? type.getCategory().name() : null)
+                .build();
     }
 
     private String normalizeCode(String code) {

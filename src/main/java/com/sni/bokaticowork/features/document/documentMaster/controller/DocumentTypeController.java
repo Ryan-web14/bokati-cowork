@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTypeRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentUploadConfigResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentTypeService;
 import jakarta.validation.Valid;
@@ -67,5 +68,10 @@ public class DocumentTypeController {
     public ResponseEntity<Void> delete(@PathVariable String code) {
         service.delete(code);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{code}/upload-config")
+    public ResponseEntity<DocumentUploadConfigResponse> uploadConfig(@PathVariable String code) {
+        return ResponseEntity.ok(service.getUploadConfig(code));
     }
 }

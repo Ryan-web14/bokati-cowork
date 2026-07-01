@@ -20,4 +20,6 @@ public interface DocumentTypeRepository extends JpaRepository<DocumentType, Long
     List<DocumentType> findAllByOwnerTypeOrderByNameAsc(DocumentOwnerType ownerType);
 
     List<DocumentType> findAllByOwnerTypeAndActiveTrueOrderByNameAsc(DocumentOwnerType ownerType);
+
+    List<DocumentType> findAllByAutoApproveAfterDaysIsNotNull();
 }

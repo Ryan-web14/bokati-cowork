@@ -40,7 +40,10 @@ public abstract class DocumentTypeMapperDecorator implements DocumentTypeMapper 
     private void applyDefaults(DocumentType entity) {
         if (entity.getRequired() == null) entity.setRequired(Boolean.FALSE);
         if (entity.getRequiresExpiryDate() == null) entity.setRequiresExpiryDate(Boolean.FALSE);
+        if (entity.getRequiresIssueDate() == null) entity.setRequiresIssueDate(Boolean.FALSE);
+        if (entity.getRequiresDocumentNumber() == null) entity.setRequiresDocumentNumber(Boolean.FALSE);
         if (entity.getRequiresReview() == null) entity.setRequiresReview(Boolean.FALSE);
+        if (entity.getAutoApprove() == null) entity.setAutoApprove(Boolean.FALSE);
         if (entity.getRequiresSignature() == null) entity.setRequiresSignature(Boolean.FALSE);
         if (entity.getMultipleAllowed() == null) entity.setMultipleAllowed(Boolean.FALSE);
         if (entity.getActive() == null) entity.setActive(Boolean.TRUE);
