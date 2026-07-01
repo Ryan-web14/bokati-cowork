@@ -49,6 +49,7 @@ public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
                 formatAmount(request),
                 request.currency(),
                 null,
+                request.callbackUrl(),
                 request.clientReferenceId(),
                 request.customerMessage(),
                 request.metadata()
