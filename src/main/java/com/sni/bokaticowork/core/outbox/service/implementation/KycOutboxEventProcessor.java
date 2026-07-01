@@ -69,8 +69,13 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("eventLabel",    resolveEventLabel(event.getEventType()));
         vars.put("status",        status != null ? status : "N/A");
 
-        mailService.sendKycNotification(recipient.email(), subject, vars);
-        log.info("KYC notification sent to {} for event={}", recipient.email(), event.getEventType());
+        try {
+            mailService.sendKycNotification(recipient.email(), subject, vars);
+            log.info("KYC notification sent to {} for event={}", recipient.email(), event.getEventType());
+        } catch (Exception ex) {
+            log.warn("Failed to send KYC notification for event={} to {}: {}",
+                    event.getEventType(), recipient.email(), ex.getMessage());
+        }
     }
 
     private String resolveSubject(String eventType, String caseCode) {

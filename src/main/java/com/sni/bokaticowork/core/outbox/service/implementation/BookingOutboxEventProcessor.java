@@ -33,7 +33,7 @@ public class BookingOutboxEventProcessor implements OutboxEventProcessor {
         JsonNode payload = readPayload(event);
         BookingEventType eventType = resolveEventType(event, payload);
 
-        if (!emailRequested(payload) || !isEmailable(eventType)) {
+        if (eventType == null || !emailRequested(payload) || !isEmailable(eventType)) {
             log.debug("Booking outbox event {} processed without email dispatch", event.getId());
             return;
         }
@@ -44,10 +44,18 @@ public class BookingOutboxEventProcessor implements OutboxEventProcessor {
         }
 
         Booking booking = bookingRepository.findPublicByBookingNumberWithResource(bookingNumber)
-                .orElseThrow(() -> new IllegalStateException("Booking not found for outbox event " + event.getId()));
+                .orElse(null);
+        if (booking == null) {
+            log.warn("Booking not found for outbox event {} bookingNumber={} — skipping email", event.getId(), bookingNumber);
+            return;
+        }
 
-        emailNotifierProvider.getObject().notify(booking, eventType);
-        log.info("Booking email notification queued for booking={} event={}", bookingNumber, eventType);
+        try {
+            emailNotifierProvider.getObject().notify(booking, eventType);
+            log.info("Booking email notification queued for booking={} event={}", bookingNumber, eventType);
+        } catch (Exception ex) {
+            log.warn("Failed to send booking email for booking={} event={}: {}", bookingNumber, eventType, ex.getMessage());
+        }
     }
 
     private JsonNode readPayload(OutboxEvent event) {
@@ -67,7 +75,8 @@ public class BookingOutboxEventProcessor implements OutboxEventProcessor {
         try {
             return BookingEventType.valueOf(value);
         } catch (Exception ex) {
-            throw new IllegalStateException("Unsupported booking outbox event type " + value, ex);
+            log.warn("Unsupported booking outbox event type '{}' for event {} — skipping", value, event.getId());
+            return null;
         }
     }
 

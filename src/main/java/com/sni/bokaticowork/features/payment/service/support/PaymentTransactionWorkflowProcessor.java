@@ -74,12 +74,16 @@ public class PaymentTransactionWorkflowProcessor {
             return;
         }
         if (event.status() == PaymentTransactionStatus.REFUNDED || event.status() == PaymentTransactionStatus.REVERSED) {
-            refundEmailNotifier.notify(transaction);
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
-            if (!StringUtils.hasText(source.type()) || !StringUtils.hasText(source.code())) {
-                return;
+            if (StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
+                handleRefundedTransaction(transaction, source);
             }
-            handleRefundedTransaction(transaction, source);
+            try {
+                refundEmailNotifier.notify(transaction);
+            } catch (Exception ex) {
+                log.warn("Failed to send refund email for transaction {} — refund workflow already completed",
+                        transaction.getTransactionNumber(), ex);
+            }
         }
     }
 

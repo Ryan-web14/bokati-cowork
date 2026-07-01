@@ -48,8 +48,13 @@ public class DocumentSignatureOutboxEventProcessor implements OutboxEventProcess
         vars.put("eventType", event.getEventType());
         vars.put("status", signatureStatus != null ? signatureStatus : "N/A");
 
-        mailService.sendDocumentNotification(signerEmail, vars);
-        log.info("Document signature notification sent to {} for event={}", signerEmail, event.getEventType());
+        try {
+            mailService.sendDocumentNotification(signerEmail, vars);
+            log.info("Document signature notification sent to {} for event={}", signerEmail, event.getEventType());
+        } catch (Exception ex) {
+            log.warn("Failed to send document signature notification for event={} to {}: {}",
+                    event.getEventType(), signerEmail, ex.getMessage());
+        }
     }
 
     private JsonNode readPayload(OutboxEvent event) {

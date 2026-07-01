@@ -53,7 +53,8 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
                 event.getEventType(), ownerType, ownerId, documentCode);
 
         if (ownerType == null || ownerId == null) {
-            throw new IllegalStateException("DOCUMENT event " + event.getEventType() + " missing ownerType/ownerId");
+            log.warn("DOCUMENT event {} missing ownerType/ownerId — skipping notification", event.getEventType());
+            return;
         }
 
         if (CLIENT_OWNER_TYPES.contains(ownerType)) {
@@ -61,10 +62,18 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
             return;
         }
 
-        OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerId(ownerType, ownerId);
+        OutboxRecipientResolver.Recipient recipient;
+        try {
+            recipient = recipientResolver.resolveByOwnerId(ownerType, ownerId);
+        } catch (Exception ex) {
+            log.warn("Could not resolve recipient for DOCUMENT event={} ownerType={} ownerId={}: {}",
+                    event.getEventType(), ownerType, ownerId, ex.getMessage());
+            return;
+        }
         if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            throw new IllegalStateException("No document recipient for event=" + event.getEventType()
-                    + " ownerType=" + ownerType + " ownerId=" + ownerId);
+            log.warn("No email address for DOCUMENT event={} ownerType={} ownerId={} — skipping notification",
+                    event.getEventType(), ownerType, ownerId);
+            return;
         }
 
         Map<String, Object> vars = new HashMap<>();
@@ -73,8 +82,13 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("eventType",     event.getEventType());
         vars.put("status",        status != null ? status : "N/A");
 
-        mailService.sendDocumentNotification(recipient.email(), vars);
-        log.info("Document notification sent to {} for event={}", recipient.email(), event.getEventType());
+        try {
+            mailService.sendDocumentNotification(recipient.email(), vars);
+            log.info("Document notification sent to {} for event={}", recipient.email(), event.getEventType());
+        } catch (Exception ex) {
+            log.warn("Failed to send document notification for event={} to {}: {}",
+                    event.getEventType(), recipient.email(), ex.getMessage());
+        }
     }
 
     private JsonNode readPayload(OutboxEvent event) {
