@@ -267,7 +267,7 @@ public class SubscriptionContractSupport {
         request.setDisplayName(owner.displayName());
         request.setEmail(owner.email());
         request.setPhone(owner.phone());
-        request.setRole(ContractPartyRole.BENEFICIARY);
+        request.setRole(ContractPartyRole.SIGNATORY);
         request.setSignOrder(1);
         request.setMustSign(Boolean.FALSE);
         return request;
@@ -438,6 +438,7 @@ public class SubscriptionContractSupport {
                     .signatureStatus(DocumentSignatureStatus.SIGNED)
                     .signedAt(Instant.now())
                     .signatureData("AUTO_SIGNED_ON_PAYMENT")
+                    .signaturePath("SYSTEM_AUTO_SIGNED")
                     .build();
             documentSignatureRepository.save(signature);
         });

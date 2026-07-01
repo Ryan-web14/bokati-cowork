@@ -15,8 +15,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,10 +49,15 @@ class InventoryItemServiceImplTest {
         request.setPsku("123456789012");
         request.setItemType(InventoryItemType.ASSET);
 
+        // Code format: INV-{typeToken}-{categoryToken}-{YYYYMMDD}-{8digits}
+        // No category → GEN, ASSET → AST, sequence "00000001" → rightDigits = "00000001"
+        String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String expectedCode = "INV-AST-GEN-" + today + "-00000001";
+
         when(mapper.toEntity(request)).thenReturn(new InventoryItem());
-        when(sequenceGenerator.next("inventory_item")).thenReturn("ITM-00000001");
-        when(repository.existsByItemCode("ITM-00000001")).thenReturn(false);
-        when(repository.existsByPsku("123456789012")).thenReturn(false);
+        when(sequenceGenerator.next(eq("inventory_item"), any(LocalDate.class))).thenReturn("00000001");
+        when(repository.existsByItemCode(anyString())).thenReturn(false);
+        when(repository.existsByPsku(anyString())).thenReturn(false);
         when(repository.existsConflictingIdentification(any(), any(), any(), any(), any())).thenReturn(false);
         when(repository.save(any(InventoryItem.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(mapper.toResponse(any(InventoryItem.class))).thenAnswer(invocation -> {
@@ -59,10 +69,13 @@ class InventoryItemServiceImplTest {
 
         ArgumentCaptor<InventoryItem> itemCaptor = ArgumentCaptor.forClass(InventoryItem.class);
         verify(repository).save(itemCaptor.capture());
-        verify(sequenceGenerator).next("inventory_item");
-        assertEquals("ITM-00000001", response.getItemCode());
-        assertEquals("ITM-00000001", itemCaptor.getValue().getItemCode());
-        assertEquals("ITM-00000001", itemCaptor.getValue().getShortCode());
-        assertEquals("ITM-00000001", itemCaptor.getValue().getDisplayCode());
+        verify(sequenceGenerator).next(eq("inventory_item"), any(LocalDate.class));
+
+        assertNotNull(response.getItemCode());
+        assertTrue(response.getItemCode().startsWith("INV-AST-GEN-"), "Code should follow INV-{type}-{category}-{date}-{seq} format");
+        assertEquals(expectedCode, response.getItemCode());
+        assertEquals(expectedCode, itemCaptor.getValue().getItemCode());
+        assertNotNull(itemCaptor.getValue().getShortCode());
+        assertNotNull(itemCaptor.getValue().getDisplayCode());
     }
 }

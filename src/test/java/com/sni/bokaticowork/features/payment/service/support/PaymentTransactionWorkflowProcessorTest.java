@@ -64,6 +64,9 @@ class PaymentTransactionWorkflowProcessorTest {
     @Mock
     private ContractService contractService;
 
+    @Mock
+    private RefundEmailNotifier refundEmailNotifier;
+
     @InjectMocks
     private PaymentTransactionWorkflowProcessor processor;
 

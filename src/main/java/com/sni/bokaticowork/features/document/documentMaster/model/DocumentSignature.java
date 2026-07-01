@@ -54,4 +54,7 @@ public class DocumentSignature {
 
     @Column(name = "signature_data")
     private String signatureData;
+
+    @Column(name = "signature_path")
+    private String signaturePath;
 }

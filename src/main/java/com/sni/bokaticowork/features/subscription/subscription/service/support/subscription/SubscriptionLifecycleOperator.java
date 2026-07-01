@@ -82,7 +82,12 @@ public class SubscriptionLifecycleOperator {
         notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
         checkKycCompliance(subscription);
 
-        emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
+        try {
+            emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
+        } catch (Exception ex) {
+            log.warn("Failed to send activation email for subscription {} — continuing",
+                    subscription.getSubscriptionNumber(), ex);
+        }
 
         if (!StringUtils.hasText(subscription.getContractCode())) {
             outboxService.publish(
@@ -102,7 +107,12 @@ public class SubscriptionLifecycleOperator {
         subscription.setSuspendedAt(Instant.now());
         subscription.setSuspensionReason(reason(request, null));
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.PAUSED);
-        emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_SUSPENDED);
+        try {
+            emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_SUSPENDED);
+        } catch (Exception ex) {
+            log.warn("Failed to send suspension email for subscription {} — continuing",
+                    subscription.getSubscriptionNumber(), ex);
+        }
         return subscriptionRepository.save(subscription);
     }
 
@@ -154,7 +164,12 @@ public class SubscriptionLifecycleOperator {
         releaseDepositHold(subscription);
         Subscription saved = subscriptionRepository.save(subscription);
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
-        emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
+        try {
+            emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
+        } catch (Exception ex) {
+            log.warn("Failed to send cancellation email for subscription {} — continuing",
+                    saved.getSubscriptionNumber(), ex);
+        }
         return saved;
     }
 
@@ -211,7 +226,12 @@ public class SubscriptionLifecycleOperator {
             cancelAssociatedContract(subscription, reason);
             Subscription saved = subscriptionRepository.save(subscription);
             notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
-            emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
+            try {
+                emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
+            } catch (Exception ex) {
+                log.warn("Failed to send period-end cancellation email for subscription {} — continuing",
+                        saved.getSubscriptionNumber(), ex);
+            }
         });
         return subscriptions.size();
     }
@@ -243,7 +263,6 @@ public class SubscriptionLifecycleOperator {
         entitlementService.grantForSubscription(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED, null);
         notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
-        emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
 
         if (StringUtils.hasText(subscription.getContractCode())) {
             outboxService.publish(
@@ -260,6 +279,13 @@ public class SubscriptionLifecycleOperator {
                             "nextBillingDate", nextBilling.toString()
                     )
             );
+        }
+        // Notification after all business logic and outbox events
+        try {
+            emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
+        } catch (Exception ex) {
+            log.warn("Failed to send renewal email for subscription {} — continuing",
+                    subscription.getSubscriptionNumber(), ex);
         }
     }
 

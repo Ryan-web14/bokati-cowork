@@ -46,13 +46,22 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
                 event.getEventType(), ownerType, ownerCode, documentCode);
 
         if (ownerType == null || !StringUtils.hasText(ownerCode)) {
-            throw new IllegalStateException("CONTRACT event " + event.getEventType() + " missing ownerType/ownerCode");
+            log.warn("CONTRACT event {} missing ownerType/ownerCode — skipping notification", event.getEventType());
+            return;
         }
 
-        OutboxRecipientResolver.Recipient recipient = recipientResolver.resolveByOwnerCode(ownerType, ownerCode);
+        OutboxRecipientResolver.Recipient recipient;
+        try {
+            recipient = recipientResolver.resolveByOwnerCode(ownerType, ownerCode);
+        } catch (Exception ex) {
+            log.warn("Could not resolve recipient for CONTRACT event={} ownerType={} ownerCode={}: {}",
+                    event.getEventType(), ownerType, ownerCode, ex.getMessage());
+            return;
+        }
         if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            throw new IllegalStateException("No contract recipient for event=" + event.getEventType()
-                    + " ownerType=" + ownerType + " ownerCode=" + ownerCode);
+            log.warn("No email address for CONTRACT event={} ownerType={} ownerCode={} — skipping notification",
+                    event.getEventType(), ownerType, ownerCode);
+            return;
         }
 
         Map<String, Object> vars = new HashMap<>();
@@ -61,8 +70,13 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("documentCode",  documentCode);
         vars.put("eventType",     event.getEventType());
 
-        mailService.sendContractNotification(recipient.email(), vars);
-        log.info("Contract notification sent to {} for event={}", recipient.email(), event.getEventType());
+        try {
+            mailService.sendContractNotification(recipient.email(), vars);
+            log.info("Contract notification sent to {} for event={}", recipient.email(), event.getEventType());
+        } catch (Exception ex) {
+            log.warn("Failed to send contract notification for event={} to {}: {}",
+                    event.getEventType(), recipient.email(), ex.getMessage());
+        }
     }
 
     private void processSigningRequest(OutboxEvent event, JsonNode payload) {
@@ -76,7 +90,8 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
         log.info("Processing CONTRACT_SIGNING_REQUESTED contract={} signer={}", contractCode, signerEmail);
 
         if (!StringUtils.hasText(signerEmail)) {
-            throw new IllegalStateException("CONTRACT_SIGNING_REQUESTED missing signerEmail");
+            log.warn("CONTRACT_SIGNING_REQUESTED for contract={} has no signerEmail — skipping notification", contractCode);
+            return;
         }
 
         Map<String, Object> vars = new HashMap<>();
@@ -87,8 +102,13 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("expiresAt", expiresAt);
         vars.put("eventType", event.getEventType());
 
-        mailService.sendContractSigningNotification(signerEmail, "Signature requise — " + contractTitle, vars);
-        log.info("Signing request notification sent to {} for contract={}", signerEmail, contractCode);
+        try {
+            mailService.sendContractSigningNotification(signerEmail, "Signature requise — " + contractTitle, vars);
+            log.info("Signing request notification sent to {} for contract={}", signerEmail, contractCode);
+        } catch (Exception ex) {
+            log.warn("Failed to send signing notification for contract={} to {}: {}",
+                    contractCode, signerEmail, ex.getMessage());
+        }
     }
 
     private JsonNode readPayload(OutboxEvent event) {

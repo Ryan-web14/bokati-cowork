@@ -27,7 +27,7 @@ class ContractTemplateRenderingTest {
                 context("subscription-pass-non-refundable")
         ));
 
-        assertTrue(html.contains("Signé automatiquement par le système"));
+        assertTrue(html.contains("Signé par le système"));
     }
 
     @Test
