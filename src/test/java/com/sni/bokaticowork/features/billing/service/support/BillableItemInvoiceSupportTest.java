@@ -252,7 +252,9 @@ class BillableItemInvoiceSupportTest {
                 null, null, null, null,
                 null, null, null, null,
                 null, null,
-                null, null, null, null
+                null, null, null, null,
+                // credit note link
+                null, null, null
         );
     }
 }
