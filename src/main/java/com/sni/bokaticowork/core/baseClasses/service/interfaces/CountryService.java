@@ -17,4 +17,8 @@ public interface CountryService {
 //  public CountryResponse getCountryByName(String name);
 CountryResponse getCountryByCode(String code);
     List<CountryResponse> getAllCountries();
+
+    List<PhoneCodeEntry> getPhoneCodes();
+
+    record PhoneCodeEntry(String name, String countryCode, String phoneCode) {}
 }

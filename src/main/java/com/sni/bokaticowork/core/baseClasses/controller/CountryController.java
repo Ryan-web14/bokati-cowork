@@ -6,6 +6,7 @@ import com.sni.bokaticowork.core.baseClasses.dto.response.CountryResponse;
 import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.baseClasses.service.interfaces.CountryService;
+import com.sni.bokaticowork.core.baseClasses.service.interfaces.CountryService.PhoneCodeEntry;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +65,11 @@ public class CountryController {
         public ResponseEntity<Void> deleteCountry(@PathVariable String countryCode) {
             countryService.softDelete(countryCode);
             return ResponseEntity.noContent().build();
+        }
+
+        @GetMapping("/phone-codes")
+        public ResponseEntity<Collection<PhoneCodeEntry>> phoneCodes() {
+            return ResponseEntity.ok(countryService.getPhoneCodes());
         }
 
 }

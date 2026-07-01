@@ -159,6 +159,15 @@ public class CountryServiceImpl implements CountryService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public List<PhoneCodeEntry> getPhoneCodes() {
+        return countryRepo.findAllByOrderByNameAsc().stream()
+                .filter(c -> c.getPhoneCode() != null && !c.getPhoneCode().isBlank())
+                .map(c -> new PhoneCodeEntry(c.getName(), c.getCountryCode(), c.getPhoneCode()))
+                .toList();
+    }
+
 }
 
 
