@@ -8,7 +8,6 @@ import com.sni.bokaticowork.core.baseClasses.model.Address;
 import com.sni.bokaticowork.core.baseClasses.repository.AddressRepository;
 import com.sni.bokaticowork.core.baseClasses.service.interfaces.AddressService;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
-import com.sni.bokaticowork.core.utils.validation.ValidationUtils;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,37 +61,12 @@ public class AddressServiceImpl implements AddressService {
     }
 
 
-    //Validate address request
-    private void validateAddress(AddressRequest request){
-
-        log.debug("Validating address request");
-
-        if (request == null){
+    private void validateAddress(AddressRequest request) {
+        if (request == null) {
             throw new IllegalArgumentException("Address request cannot be null");
         }
-
-        if( request.getDistrict().isEmpty() || request.getCity().isEmpty()){
-            log.debug("Invalid address request, one or more fields are empty");
-            throw new IllegalArgumentException("Invalid address request, one or more fields are empty");
-        }
-
-        if(!ValidationUtils.isDigit(request.getStreetNumber())){
-            log.debug("Invalid address request, street number is not a number");
-            throw new IllegalArgumentException("Invalid address request, street number is not a number");
-        }else if (request.getStreetNumber().isEmpty()){
-            return;
-        }
-
-        if(!ValidationUtils.validateString(request.getStreetName())){
-            log.debug("Invalid address request, street name is not a string");
-            throw new IllegalArgumentException("Invalid address request, street name is not a string");
-        }else if (request.getStreetName().isEmpty()){
-            return;
-        }
-
-        if(!ValidationUtils.validateString(request.getDistrict())){
-            log.debug("Invalid address request, district is not a string");
-            throw new IllegalArgumentException("Invalid address request, district is not a string");
+        if (!org.springframework.util.StringUtils.hasText(request.getCity())) {
+            throw new IllegalArgumentException("City is required");
         }
     }
 }
