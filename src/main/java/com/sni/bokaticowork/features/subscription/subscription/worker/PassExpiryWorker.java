@@ -15,9 +15,13 @@ public class PassExpiryWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.pass-expiry-delay-ms:600000}")
     public void expirePasses() {
-        int expired = passService.expirePasses();
-        if (expired > 0) {
-            log.info("Expired {} passes", expired);
+        try {
+            int expired = passService.expirePasses();
+            if (expired > 0) {
+                log.info("Expired {} passes", expired);
+            }
+        } catch (Exception ex) {
+            log.error("PassExpiryWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

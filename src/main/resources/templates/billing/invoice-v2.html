@@ -25,79 +25,30 @@
             background: #ffffff;
         }
 
-        .header {
-            background: #281332;
-            padding: 0;
-            color: #ffffff;
-        }
+        .header { background: #281332; padding: 0; color: #ffffff; }
         .header-inner { padding: 18px 16px 14px; }
         .header-table { width: 100%; border-collapse: collapse; }
         .header-table td { border: none; padding: 0; vertical-align: middle; }
         .brand-logo { height: 38px; width: auto; display: block; }
-        .brand-text {
-            font-size: 19px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            line-height: 1;
-            white-space: nowrap;
-        }
-        .brand-sub {
-            font-size: 7.6px;
-            color: #d8cce1;
-            letter-spacing: 1.6px;
-            text-transform: uppercase;
-            margin-top: 4px;
-        }
+        .brand-text { font-size: 19px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; line-height: 1; white-space: nowrap; }
+        .brand-sub { font-size: 7.6px; color: #d8cce1; letter-spacing: 1.6px; text-transform: uppercase; margin-top: 4px; }
         .brand-contact { font-size: 7.4px; color: #f2e7f6; margin-top: 5px; letter-spacing: 0.2px; }
         .doc-type-block { text-align: right; }
-        .doc-type {
-            font-size: 25px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 2.6px;
-            text-transform: uppercase;
-            line-height: 1;
-        }
-        .doc-number {
-            font-size: 9.6px;
-            color: #d9a21b;
-            margin-top: 4px;
-            letter-spacing: 1.35px;
-            font-weight: 700;
-            font-family: "Courier New", monospace;
-        }
+        .doc-type { font-size: 25px; font-weight: 700; color: #ffffff; letter-spacing: 2.6px; text-transform: uppercase; line-height: 1; }
+        .doc-number { font-size: 9.6px; color: #d9a21b; margin-top: 4px; letter-spacing: 1.35px; font-weight: 700; font-family: "Courier New", monospace; }
         .header-rule { height: 2px; background: #d9a21b; }
 
-        .ribbon {
-            background: #fffdf8;
-            border-bottom: 1px solid #e6ddea;
-            padding: 5px 16px;
-            font-size: 8px;
-            color: #6f6478;
-        }
-        .ribbon span { vertical-align: middle; }
-        .badge {
-            display: inline-block;
-            padding: 2px 7px;
-            font-size: 7.6px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            border-radius: 2px;
-        }
-        .badge-paid { background: #dcfce7; color: #166534; }
-        .badge-partial { background: #fef9c3; color: #92400e; }
-        .badge-overdue { background: #fee2e2; color: #991b1b; }
-        .badge-draft { background: #e6ddea; color: #6f6478; }
-        .badge-sent { background: #e6d7ff; color: #4d2b7d; }
-        .badge-accepted { background: #dcfce7; color: #166534; }
-        .badge-converted { background: #e0f2fe; color: #075985; }
-        .badge-rejected { background: #fee2e2; color: #991b1b; }
-        .badge-default { background: #f3d78a; color: #8a5a00; }
+        /* Ribbon — statut en texte coloré, sans pilule */
+        .ribbon { background: #fffdf8; border-bottom: 1px solid #e6ddea; padding: 5px 16px; font-size: 8px; color: #6f6478; }
+        .st-paid    { color: #166534; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+        .st-partial { color: #92400e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+        .st-overdue { color: #991b1b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+        .st-draft   { color: #6f6478; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+        .st-sent    { color: #4d2b7d; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+        .st-default { color: #8a5a00; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
 
         .content { padding: 12px 16px 0; }
+
         .section-label {
             font-size: 7.6px;
             font-weight: 700;
@@ -109,26 +60,20 @@
             margin: 12px 0 7px;
         }
 
+        /* Info — colonnes plates sans card */
         .info-grid { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         .info-grid td { vertical-align: top; padding: 0; border: none; }
-        .info-card {
-            border: 1px solid #e6ddea;
-            border-radius: 3px;
-            overflow: hidden;
-            background: #ffffff;
-        }
-        .info-card-head {
-            padding: 6px 11px 5px;
-            font-size: 7.6px;
+        .info-block-title {
+            font-size: 7px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             color: #8a5a00;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
             border-bottom: 1px solid #e6ddea;
-            background: #fffdf8;
         }
-        .info-card-body { background: #ffffff; padding: 9px 11px; }
-        .info-primary { font-size: 11.3px; font-weight: 700; color: #281332; margin-bottom: 2px; }
+        .info-primary { font-size: 11.3px; font-weight: 700; color: #281332; margin-bottom: 3px; }
         .info-detail { font-size: 8.8px; color: #6f6478; line-height: 1.36; }
 
         .dates-row { width: 100%; border-collapse: collapse; }
@@ -138,19 +83,20 @@
         .dates-row .lbl { color: #6f6478; }
         .dates-row .val { text-align: right; font-weight: 700; color: #2b2030; }
 
+        /* Conditions — texte simple avec filet gauche */
         .detail-block {
-            background: #fff8e3;
-            border-left: 2px solid #d9a21b;
-            border-radius: 0 3px 3px 0;
-            padding: 6px 10px;
+            padding-left: 9px;
+            border-left: 1px solid #e6ddea;
             font-size: 9px;
-            color: #8a5a00;
+            color: #6f6478;
+            line-height: 1.4;
             margin-bottom: 8px;
         }
 
+        /* Tableau des lignes — en-tête uniforme */
         .lines { width: 100%; border-collapse: collapse; font-size: 9.2px; }
-        .lines thead th, .lines thead td {
-            background: #3a1e45;
+        .lines thead th {
+            background: #281332;
             color: #ffffff;
             padding: 6px 8px;
             font-size: 7.6px;
@@ -159,19 +105,14 @@
             letter-spacing: 0.7px;
             border: none;
         }
-        .lines thead th.col-total, .lines thead td.col-total { background: #d9a21b; color: #281332; }
         .lines tbody td {
             padding: 6px 8px;
             border-bottom: 1px solid #e6ddea;
-            border-left: none;
-            border-right: none;
-            border-top: none;
             vertical-align: top;
         }
-        .lines tbody tr:nth-child(even) td { background: #fffdf8; }
+        .lines tbody tr:nth-child(even) td { background: #fafafa; }
         .lines tbody tr:last-child td { border-bottom: 2px solid #281332; }
-        .lines tbody td.col-total { font-weight: 700; color: #8a5a00; background: #fff8e3; }
-        .lines tbody tr:nth-child(even) td.col-total { background: #f8e7b7; }
+        .lines tbody td.col-amt { font-weight: 700; color: #281332; }
         .line-name { font-weight: 700; color: #281332; }
         .line-sub { font-size: 7.8px; color: #6f6478; margin-top: 2px; }
         .r { text-align: right; }
@@ -179,94 +120,33 @@
         .num { white-space: nowrap; }
         .muted { color: #9b8caa; }
 
+        /* Récapitulatif */
         .summary-wrap { width: 100%; border-collapse: collapse; margin-top: 12px; }
         .summary-wrap td { border: none; padding: 0; vertical-align: top; }
-        .summary {
-            width: 100%;
-            border-collapse: collapse;
-            border: 1px solid #e6ddea;
-            border-radius: 3px;
-            font-size: 9px;
-            overflow: hidden;
-        }
-        .summary td { border: none; padding: 5px 10px; border-top: 1px solid #e6ddea; }
-        .summary tr:first-child td { border-top: none; }
+        .summary { width: 100%; border-collapse: collapse; font-size: 9px; }
+        .summary td { border: none; padding: 5px 0; border-bottom: 1px solid #e6ddea; }
+        .summary tr:last-child td { border-bottom: none; }
         .summary .lbl { color: #6f6478; }
         .summary .val { text-align: right; font-weight: 700; color: #2b2030; }
         .total-row td { background: #281332; color: #ffffff; padding: 8px 10px; font-size: 11.5px; font-weight: 700; }
         .total-row td.r { color: #d9a21b; }
-        .balance-row td {
-            background: #fff8e3;
-            color: #8a5a00;
-            padding: 7px 10px;
-            font-size: 10.6px;
-            font-weight: 700;
-            border-top: 2px solid #f8e7b7;
-        }
+        .balance-row td { border-top: 2px solid #281332 !important; padding-top: 8px !important; padding-bottom: 8px !important; font-size: 10.6px; font-weight: 700; color: #281332; border-bottom: none !important; }
 
         .qr-box { width: 96px; text-align: center; }
-        .qr-label {
-            font-size: 7.6px;
-            color: #9b8caa;
-            letter-spacing: 0.8px;
-            margin-top: 4px;
-            text-align: center;
-            text-transform: uppercase;
-        }
-        .contact-panel {
-            margin-top: 12px;
-            border: 1px solid #e6ddea;
-            background: #fffdf8;
-            padding: 8px 10px;
-            border-radius: 3px;
-            font-size: 8.7px;
-            color: #4b2755;
-            line-height: 1.35;
-        }
-        .contact-panel-title {
-            font-size: 7px;
-            color: #8a5a00;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
+        .qr-label { font-size: 7.6px; color: #9b8caa; letter-spacing: 0.8px; margin-top: 4px; text-align: center; text-transform: uppercase; }
+        .contact-info { margin-top: 12px; font-size: 8.7px; color: #4b2755; line-height: 1.5; }
+        .contact-info-title { font-size: 7px; color: #8a5a00; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
 
-        .clause {
-            border-left: 1px solid #e6d7ff;
-            padding: 5px 9px;
-            margin-bottom: 6px;
-            border-radius: 0 3px 3px 0;
-            background: #f7f1ff;
-        }
+        /* Clauses — filet gauche discret, sans fond coloré */
+        .clause { padding: 4px 0 4px 9px; border-left: 1px solid #e6ddea; margin-bottom: 6px; }
         .clause-title { font-weight: 700; color: #281332; margin-bottom: 2px; font-size: 9.2px; }
         .clause-body { color: #6f6478; font-size: 8.5px; line-height: 1.34; }
 
         .legal-section { margin-top: 11px; border-top: 1px solid #e6ddea; padding-top: 6px; }
-        .legal-head {
-            font-size: 6.5px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #8a5a00;
-            margin-bottom: 4px;
-        }
-        .legal-grid { width: 100%; border-collapse: collapse; }
-        .legal-grid td { width: 50%; vertical-align: top; border: none; padding-right: 8px; }
-        .legal-grid td + td { padding-right: 0; padding-left: 8px; border-left: 1px solid #e6ddea; }
-        .legal-item { margin-bottom: 4px; }
-        .legal-item-title { font-size: 6.5px; font-weight: 700; color: #4b2755; margin-bottom: 1px; }
-        .legal-item-body { font-size: 5.8px; color: #6f6478; line-height: 1.18; }
+        .legal-head { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #8a5a00; margin-bottom: 4px; }
         .legal-compact { font-size: 7px; color: #6f6478; line-height: 1.28; }
 
-        .doc-footer {
-            margin-top: 8px;
-            padding: 8px 0 9px;
-            border-top: 1px solid #e6ddea;
-            font-size: 7.8px;
-            color: #8c7d96;
-            text-align: center;
-        }
+        .doc-footer { margin-top: 8px; padding: 8px 0 9px; border-top: 1px solid #e6ddea; font-size: 7.8px; color: #8c7d96; text-align: center; }
         .doc-footer .made-by { font-size: 7.4px; color: #4b3f52; font-weight: 700; letter-spacing: 0.5px; margin-top: 3px; text-transform: uppercase; }
     </style>
 </head>
@@ -303,88 +183,75 @@
 </div>
 <div class="header-rule"></div>
 
-<!-- STATUS RIBBON -->
+<!-- STATUT -->
 <div class="ribbon">
     <span th:switch="${document.status().name()}">
-        <span th:case="'PAID'"><span class="badge badge-paid">Payée</span></span>
-        <span th:case="'PARTIALLY_PAID'"><span class="badge badge-partial">Paiement partiel</span></span>
-        <span th:case="'OVERDUE'"><span class="badge badge-overdue">En retard</span></span>
-        <span th:case="'DRAFT'"><span class="badge badge-draft">Brouillon</span></span>
-        <span th:case="'SENT'"><span class="badge badge-sent">Envoyée</span></span>
-        <span th:case="'ISSUED'"><span class="badge badge-sent">Émise</span></span>
-        <span th:case="'ACCEPTED'"><span class="badge badge-accepted">Accepté</span></span>
-        <span th:case="'CONVERTED'"><span class="badge badge-converted">Converti en facture</span></span>
-        <span th:case="'REJECTED'"><span class="badge badge-rejected">Rejeté</span></span>
-        <span th:case="'VIEWED'"><span class="badge badge-sent">Consulté</span></span>
-        <span th:case="'NEGOTIATION'"><span class="badge badge-default">En négociation</span></span>
-        <span th:case="'DEPOSIT_REQUESTED'"><span class="badge badge-default">Acompte demandé</span></span>
-        <span th:case="'DEPOSIT_PAID'"><span class="badge badge-partial">Acompte reçu</span></span>
-        <span th:case="'CANCELLED'"><span class="badge badge-rejected">Annulé</span></span>
-        <span th:case="*"><span class="badge badge-default" th:text="${document.status()}">—</span></span>
+        <span th:case="'PAID'"><span class="st-paid">Payée</span></span>
+        <span th:case="'PARTIALLY_PAID'"><span class="st-partial">Paiement partiel</span></span>
+        <span th:case="'OVERDUE'"><span class="st-overdue">En retard</span></span>
+        <span th:case="'DRAFT'"><span class="st-draft">Brouillon</span></span>
+        <span th:case="'SENT'"><span class="st-sent">Envoyée</span></span>
+        <span th:case="'ISSUED'"><span class="st-sent">Émise</span></span>
+        <span th:case="'ACCEPTED'"><span class="st-paid">Accepté</span></span>
+        <span th:case="'CONVERTED'"><span class="st-sent">Converti en facture</span></span>
+        <span th:case="'REJECTED'"><span class="st-overdue">Rejeté</span></span>
+        <span th:case="'VIEWED'"><span class="st-sent">Consulté</span></span>
+        <span th:case="'NEGOTIATION'"><span class="st-default">En négociation</span></span>
+        <span th:case="'DEPOSIT_REQUESTED'"><span class="st-default">Acompte demandé</span></span>
+        <span th:case="'DEPOSIT_PAID'"><span class="st-partial">Acompte reçu</span></span>
+        <span th:case="'CANCELLED'"><span class="st-overdue">Annulé</span></span>
+        <span th:case="*"><span class="st-default" th:text="${document.status()}">—</span></span>
     </span>
-    <span>Générée le <strong th:text="${generatedAt}">2026-05-01</strong></span>
+    &nbsp;·&nbsp; Générée le <strong th:text="${generatedAt}">2026-05-01</strong>
 </div>
 
-<!-- CONTENT -->
+<!-- CONTENU -->
 <div class="content">
 
     <table class="info-grid">
         <tr>
-            <td style="width:54%; padding-right:7px;">
-                <div class="info-card">
-                    <div class="info-card-head" th:text="${fmt.partyLabel(document.customerType())}">Client</div>
-                    <div class="info-card-body">
-                        <div class="info-primary" th:text="${document.customerName()}">Client SA</div>
-                        <div class="info-detail">
-                            <strong>Type :</strong> <span th:text="${fmt.partyLabel(document.customerType())}">Client</span><br>
-                            <strong>Réf. :</strong> <span th:text="${document.customerCode()}">CUS-001</span><br>
-                            <span th:if="${document.customerEmail()}"><strong>Email :</strong> <span th:text="${document.customerEmail()}"></span><br></span>
-                            <span th:if="${document.customerPhone()}"><strong>Tél. :</strong> <span th:text="${document.customerPhone()}"></span><br></span>
-                            <span th:each="addressLine : ${fmt.addressLines(document.billingAddressJson())}"><span th:text="${addressLine}"></span><br></span>
-                        </div>
-                    </div>
+            <td style="width:54%; padding-right:14px; border-right:1px solid #e6ddea; vertical-align:top;">
+                <div class="info-block-title" th:text="${fmt.partyLabel(document.customerType())}">Client</div>
+                <div class="info-primary" th:text="${document.customerName()}">Client SA</div>
+                <div class="info-detail">
+                    <strong>Type :</strong> <span th:text="${fmt.partyLabel(document.customerType())}">Client</span><br>
+                    <strong>Réf. :</strong> <span th:text="${document.customerCode()}">CUS-001</span><br>
+                    <span th:if="${document.customerEmail()}"><strong>Email :</strong> <span th:text="${document.customerEmail()}"></span><br></span>
+                    <span th:if="${document.customerPhone()}"><strong>Tél. :</strong> <span th:text="${document.customerPhone()}"></span><br></span>
+                    <span th:each="addressLine : ${fmt.addressLines(document.billingAddressJson())}"><span th:text="${addressLine}"></span><br></span>
                 </div>
             </td>
-            <td style="width:46%;">
-                <div class="info-card">
-                    <div class="info-card-head">Document</div>
-                    <div class="info-card-body">
-                        <table class="dates-row">
-                            <tr><td class="lbl">Date d'émission</td><td class="val" th:text="${fmt.date(document.issueDate())}">—</td></tr>
-                            <tr><td class="lbl">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}">—</td></tr>
-                            <tr><td class="lbl">Devise</td><td class="val" th:text="${document.currency()}">XAF</td></tr>
-                            <tr><td class="lbl">Référence source</td><td class="val" th:text="${fmt.sourceReference(document.sourceType(), document.sourceCode())}">—</td></tr>
-                            <tr th:if="${document.customerReference() != null}"><td class="lbl">Réf. client</td><td class="val" th:text="${document.customerReference()}">—</td></tr>
-                            <tr th:if="${document.poNumber() != null}"><td class="lbl">N° bon de commande</td><td class="val" th:text="${document.poNumber()}">—</td></tr>
-                            <tr th:if="${document.projectCode() != null}"><td class="lbl">Code projet</td><td class="val" th:text="${document.projectCode()}">—</td></tr>
-                            <tr th:if="${document.salespersonCode() != null}"><td class="lbl">Commercial</td><td class="val" th:text="${document.salespersonCode()}">—</td></tr>
-                            <tr th:if="${document.paymentReference() != null}"><td class="lbl">Réf. paiement</td><td class="val" th:text="${document.paymentReference()}">—</td></tr>
-                            <tr th:if="${document.exchangeRate() != null}"><td class="lbl">Taux de change</td><td class="val" th:text="${document.exchangeRate()}">—</td></tr>
-                            <tr th:if="${document.issuedAt() != null}"><td class="lbl">Émise le</td><td class="val" th:text="${fmt.timestamp(document.issuedAt())}">—</td></tr>
-                            <tr th:if="${document.sentAt() != null}"><td class="lbl">Envoyée le</td><td class="val" th:text="${fmt.timestamp(document.sentAt())}">—</td></tr>
-                            <tr th:if="${document.paidAt() != null}"><td class="lbl">Réglée le</td><td class="val" th:text="${fmt.timestamp(document.paidAt())}">—</td></tr>
-                        </table>
-                    </div>
-                </div>
+            <td style="width:46%; padding-left:14px; vertical-align:top;">
+                <div class="info-block-title">Document</div>
+                <table class="dates-row">
+                    <tr><td class="lbl">Date d'émission</td><td class="val" th:text="${fmt.date(document.issueDate())}">—</td></tr>
+                    <tr><td class="lbl">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}">—</td></tr>
+                    <tr><td class="lbl">Devise</td><td class="val" th:text="${document.currency()}">XAF</td></tr>
+                    <tr th:if="${document.customerReference() != null}"><td class="lbl">Réf. client</td><td class="val" th:text="${document.customerReference()}">—</td></tr>
+                    <tr th:if="${document.poNumber() != null}"><td class="lbl">N° bon de commande</td><td class="val" th:text="${document.poNumber()}">—</td></tr>
+                    <tr th:if="${document.projectCode() != null}"><td class="lbl">Code projet</td><td class="val" th:text="${document.projectCode()}">—</td></tr>
+                    <tr th:if="${document.salespersonCode() != null}"><td class="lbl">Commercial</td><td class="val" th:text="${document.salespersonCode()}">—</td></tr>
+                    <tr th:if="${document.paymentReference() != null}"><td class="lbl">Réf. paiement</td><td class="val" th:text="${document.paymentReference()}">—</td></tr>
+                    <tr th:if="${document.exchangeRate() != null}"><td class="lbl">Taux de change</td><td class="val" th:text="${document.exchangeRate()}">—</td></tr>
+                    <tr th:if="${document.issuedAt() != null}"><td class="lbl">Émise le</td><td class="val" th:text="${fmt.timestamp(document.issuedAt())}">—</td></tr>
+                    <tr th:if="${document.sentAt() != null}"><td class="lbl">Envoyée le</td><td class="val" th:text="${fmt.timestamp(document.sentAt())}">—</td></tr>
+                    <tr th:if="${document.paidAt() != null}"><td class="lbl">Réglée le</td><td class="val" th:text="${fmt.timestamp(document.paidAt())}">—</td></tr>
+                </table>
             </td>
         </tr>
         <tr>
-            <td colspan="2" style="padding-top:10px;">
-                <div class="info-card">
-                    <div class="info-card-head">Objet</div>
-                    <div class="info-card-body">
-                        <div class="info-primary" th:text="${fmt.documentSubject(document)}">Objet du document</div>
-                        <div th:if="${document.deliveryAddressJson() != null}" class="info-detail" style="margin-top:8px;">
-                            <strong>Adresse de livraison :</strong><br>
-                            <span th:each="addressLine : ${fmt.addressLines(document.deliveryAddressJson())}"><span th:text="${addressLine}"></span><br></span>
-                        </div>
-                    </div>
+            <td colspan="2" style="padding-top:12px; border-top:1px solid #e6ddea;">
+                <div class="info-block-title">Objet</div>
+                <div class="info-primary" th:text="${fmt.documentSubject(document)}">Objet du document</div>
+                <div th:if="${document.deliveryAddressJson() != null}" class="info-detail" style="margin-top:6px;">
+                    <strong>Adresse de livraison :</strong><br>
+                    <span th:each="addressLine : ${fmt.addressLines(document.deliveryAddressJson())}"><span th:text="${addressLine}"></span><br></span>
                 </div>
             </td>
         </tr>
     </table>
 
-    <!-- LINES -->
+    <!-- LIGNES -->
     <div class="section-label">Détail des prestations</div>
     <table class="lines">
         <thead>
@@ -393,7 +260,7 @@
                 <th style="width:52%;">Description</th>
                 <th class="r" style="width:10%;">Qté</th>
                 <th class="r" style="width:16%;">Prix unit.</th>
-                <th class="r col-total" style="width:18%;">Total</th>
+                <th class="r" style="width:18%;">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -402,20 +269,19 @@
                 <td>
                     <div class="line-name">
                         <span th:text="${line.description()}">Service</span>
-                        <span th:if="${line.optional()}" class="badge badge-default" style="font-size:7px; padding:1px 5px; margin-left:4px; vertical-align:middle;">Option</span>
+                        <span th:if="${line.optional()}" class="line-sub" style="margin-left:4px;">(option)</span>
                     </div>
                     <div class="line-sub" th:if="${line.detailedDescription()}" th:text="${line.detailedDescription()}"></div>
                     <div class="line-sub" th:if="${line.itemCode()}" th:text="|Art. : ${line.itemCode()}|"></div>
-                    <div class="line-sub" th:text="|Src : ${fmt.sourceReference(line.sourceType(), line.sourceCode())}|"></div>
                 </td>
                 <td class="r num" th:text="${fmt.quantity(line.quantity())}">1</td>
                 <td class="r num" th:text="${fmt.amount(line.unitPrice())}">0</td>
-                <td class="r num col-total" th:text="${fmt.amount(line.totalAmount())}">0</td>
+                <td class="r num col-amt" th:text="${fmt.amount(line.totalAmount())}">0</td>
             </tr>
         </tbody>
     </table>
 
-    <!-- SUMMARY -->
+    <!-- RÉCAPITULATIF -->
     <table class="summary-wrap">
         <tr>
             <td style="width:42%; vertical-align:bottom; padding-right:10px;">
@@ -423,8 +289,8 @@
                     <img th:src="@{'data:image/png;base64,' + ${qrCode}}" style="width:86px; height:86px; display:block; margin:0 auto;" alt="QR Code"/>
                     <div class="qr-label">Vérification</div>
                 </div>
-                <div class="contact-panel">
-                    <div class="contact-panel-title">Contact Elle A Osé</div>
+                <div class="contact-info">
+                    <div class="contact-info-title">Contact Elle A Osé</div>
                     <div>coworkspace@elleaose.com</div>
                     <div>05 204 2552</div>
                 </div>
@@ -437,10 +303,10 @@
                     <tr><td class="lbl">TVA</td><td class="val num" th:text="${fmt.money(document.vatAmount())}">0</td></tr>
                     <tr><td class="lbl">Centimes additionnels</td><td class="val num" th:text="${fmt.money(document.additionalCentAmount())}">0</td></tr>
                     <tr class="total-row"><td>TOTAL TTC</td><td class="r num" th:text="${fmt.money(document.totalAmount())}">0</td></tr>
-                    <tr th:if="${document.advance() != null and document.advance().status() != null and document.advance().status().name() == 'PAID'}" style="background:#f0fdf4;">
+                    <tr th:if="${document.advance() != null and document.advance().status() != null and document.advance().status().name() == 'PAID'}">
                         <td class="lbl" style="color:#166534;">
                             Acompte reçu
-                            <span th:if="${document.advance().referenceLabel() != null}" style="font-size:7.5px; display:block; color:#4ade80;" th:text="${document.advance().referenceLabel()}"></span>
+                            <span th:if="${document.advance().referenceLabel() != null}" style="font-size:7.5px; display:block;" th:text="${document.advance().referenceLabel()}"></span>
                         </td>
                         <td class="val num" style="color:#166534;" th:text="${fmt.money(document.advance().computedAmount())}">0</td>
                     </tr>
@@ -457,7 +323,7 @@
         </tr>
     </table>
 
-    <!-- PAYMENTS RECEIVED -->
+    <!-- PAIEMENTS REÇUS -->
     <div th:if="${payments != null and not #lists.isEmpty(payments)}" style="margin-top:8px;">
         <div class="section-label">Paiements reçus</div>
         <table class="lines">
@@ -466,7 +332,7 @@
                     <th>Méthode</th>
                     <th>Deposit ID / Référence</th>
                     <th>Numéro payeur</th>
-                    <th class="r col-total">Montant affecté</th>
+                    <th class="r">Montant affecté</th>
                     <th class="r">Date</th>
                 </tr>
             </thead>
@@ -475,14 +341,14 @@
                     <td style="font-weight:700;" th:text="${p.method()}">CASH</td>
                     <td style="font-size:9px;" th:text="${p.depositId() != null ? p.depositId() : (p.providerReference() != null ? p.providerReference() : '—')}">—</td>
                     <td th:text="${p.payerPhone() != null ? p.payerPhone() : '—'}">—</td>
-                    <td class="r num col-total" th:text="${fmt.money(p.allocatedAmount())}">0</td>
+                    <td class="r num col-amt" th:text="${fmt.money(p.allocatedAmount())}">0</td>
                     <td class="r" style="font-size:9px;" th:text="${p.paidAt() != null ? fmt.timestamp(p.paidAt()) : '—'}">—</td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <!-- ADVANCE / EARLY PAYMENT -->
+    <!-- ACOMPTE / ESCOMPTE -->
     <div th:if="${document.advance() != null or document.earlyPaymentDiscount() != null}" style="margin-top:8px;">
         <table style="width:100%; border-collapse:collapse;">
             <tr>
@@ -513,7 +379,7 @@
         </table>
     </div>
 
-    <!-- PAYMENT TERMS -->
+    <!-- CONDITIONS DE PAIEMENT -->
     <div th:if="${document.terms()}" style="margin-top:8px;">
         <div class="section-label">Conditions de paiement</div>
         <div class="detail-block" th:text="${document.terms()}">Paiement à réception</div>
@@ -536,7 +402,7 @@
         </div>
     </div>
 
-    <!-- FOOTER -->
+    <!-- PIED DE PAGE -->
     <div class="doc-footer">
         Elle A Osé &nbsp;·&nbsp; <span th:text="${document.documentNumber()}">INV-000001</span> &nbsp;·&nbsp; Générée le <span th:text="${generatedAt}">2026-05-01</span> &nbsp;·&nbsp; Document électronique valable sans signature manuscrite.
         <div class="made-by">Engineered by SNI</div>
@@ -545,12 +411,3 @@
 </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-

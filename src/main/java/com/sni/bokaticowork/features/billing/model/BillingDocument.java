@@ -251,6 +251,20 @@ public class BillingDocument {
     @Column(name = "customer_category", length = 40)
     private String customerCategory;
 
+    // ── Lien document-correctif ─────────────────────────────────────────────────
+
+    /** Numéro du document d'origine corrigé par cet avoir ou cette facture rectificative. */
+    @Column(name = "original_document_number", length = 100)
+    private String originalDocumentNumber;
+
+    /** Type du document d'origine (INVOICE, PROFORMA_INVOICE). */
+    @Column(name = "original_document_type", length = 40)
+    private String originalDocumentType;
+
+    /** Motif de l'avoir ou de la rectification. */
+    @Column(name = "credit_note_reason", columnDefinition = "TEXT")
+    private String creditNoteReason;
+
     // ── Suppression logique ─────────────────────────────────────────────────────
 
     @Column(name = "deleted_at")

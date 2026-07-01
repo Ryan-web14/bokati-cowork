@@ -10,6 +10,7 @@ import com.sni.bokaticowork.core.outbox.repository.OutboxEventRepository;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxEventProcessor;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,12 +25,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OutboxServiceImpl implements OutboxService {
 
     private static final long PROCESSING_LEASE_SECONDS = 300;
     private static final long RETRY_DELAY_SECONDS = 30;
+    private static final int MAX_ATTEMPTS = 10;
 
     private final OutboxEventRepository repository;
     private final ObjectMapper objectMapper;
@@ -152,10 +155,26 @@ public class OutboxServiceImpl implements OutboxService {
                 resolveProcessor(event).process(event);
                 markPublished(event.getId());
             } catch (RuntimeException ex) {
-                markFailed(event.getId(), ex.getMessage(), Instant.now().plusSeconds(RETRY_DELAY_SECONDS));
+                if (event.getAttemptCount() + 1 >= MAX_ATTEMPTS) {
+                    markDead(event.getId(), ex.getMessage());
+                } else {
+                    markFailed(event.getId(), ex.getMessage(), Instant.now().plusSeconds(RETRY_DELAY_SECONDS));
+                }
             }
         }
         return events.size();
+    }
+
+    private void markDead(Long eventId, String errorMessage) {
+        transactionTemplate.executeWithoutResult(status -> {
+            OutboxEvent event = find(eventId);
+            event.setStatus(OutboxEventStatus.DEAD);
+            event.setAttemptCount(event.getAttemptCount() + 1);
+            event.setLastError(errorMessage);
+            repository.save(event);
+        });
+        log.error("[OUTBOX DEAD] Event {} permanently failed after {} attempts — manual intervention required",
+                eventId, MAX_ATTEMPTS);
     }
 
     @Override

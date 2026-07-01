@@ -11,6 +11,8 @@ public class AdminCreateUserRequest {
     @Email
     @NotBlank
     private String email;
+    private String firstname;
+    private String lastname;
     private String password;
     private Boolean generatePassword;
     private List<String> roleNames;

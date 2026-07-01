@@ -5,4 +5,6 @@ public interface DocumentLifecycleAutomationService {
     int expireDocuments();
 
     int notifyPreExpiry();
+
+    int autoApproveDocuments();
 }

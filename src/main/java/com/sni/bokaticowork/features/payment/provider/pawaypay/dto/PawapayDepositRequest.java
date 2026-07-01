@@ -12,6 +12,7 @@ public record PawapayDepositRequest(
         String amount,
         String currency,
         String preAuthorisationCode,
+        String callbackUrl,
         String clientReferenceId,
         String customerMessage,
         List<Map<String, Object>> metadata

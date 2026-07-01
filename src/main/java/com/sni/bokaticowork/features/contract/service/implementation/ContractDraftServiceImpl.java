@@ -22,6 +22,7 @@ import com.sni.bokaticowork.features.contract.enums.ContractSectionType;
 import com.sni.bokaticowork.features.contract.model.ContractDraft;
 import com.sni.bokaticowork.features.contract.model.ContractDraftSection;
 import com.sni.bokaticowork.features.contract.model.ContractTemplate;
+import com.sni.bokaticowork.features.contract.model.ContractTemplateSection;
 import com.sni.bokaticowork.features.contract.repository.ContractDraftRepository;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractDraftService;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractTemplateService;
@@ -106,15 +107,26 @@ public class ContractDraftServiceImpl implements ContractDraftService {
                 .createdBy(request.getCreatedBy())
                 .build();
 
-        if (StringUtils.hasText(template.getHtmlContent())) {
-            ContractDraftSection mainSection = ContractDraftSection.builder()
+        if (!template.getSections().isEmpty()) {
+            int order = 0;
+            for (var ts : template.getSections()) {
+                if (!Boolean.TRUE.equals(ts.getActive())) continue;
+                draft.getSections().add(ContractDraftSection.builder()
+                        .draft(draft)
+                        .title(ts.getTitle())
+                        .content(ts.getContent())
+                        .sectionType(ts.getSectionType())
+                        .sectionOrder(order++)
+                        .build());
+            }
+        } else if (StringUtils.hasText(template.getHtmlContent())) {
+            draft.getSections().add(ContractDraftSection.builder()
                     .draft(draft)
                     .title(template.getName())
                     .content(template.getHtmlContent())
                     .sectionType(ContractSectionType.ARTICLE)
                     .sectionOrder(0)
-                    .build();
-            draft.getSections().add(mainSection);
+                    .build());
         }
 
         if (request.getSections() != null) {

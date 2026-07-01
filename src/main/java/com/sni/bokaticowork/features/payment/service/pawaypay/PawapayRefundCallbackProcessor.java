@@ -7,10 +7,9 @@ import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayRefundCallbackPayload;
 import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
-import com.sni.bokaticowork.features.payment.service.support.PaymentTransactionWorkflowEvent;
+import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,7 +24,7 @@ public class PawapayRefundCallbackProcessor {
 
     private final PaymentTransactionRepository transactionRepository;
     private final PaymentIntentRepository intentRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxService outboxService;
 
     public void process(PawapayRefundCallbackPayload payload) {
         if (payload.refundId() == null) {
@@ -65,8 +64,12 @@ public class PawapayRefundCallbackProcessor {
                 intentRepository.save(intent);
             }
 
-            eventPublisher.publishEvent(new PaymentTransactionWorkflowEvent(
-                    transaction.getTransactionNumber(), PaymentTransactionStatus.REFUNDED));
+            outboxService.publish(
+                    "PAYMENT_TRANSACTION_WORKFLOW",
+                    "PAYMENT",
+                    transaction.getTransactionNumber(),
+                    java.util.Map.of("transactionNumber", transaction.getTransactionNumber(), "status", PaymentTransactionStatus.REFUNDED.name())
+            );
             log.info("PawaPay refund completed — transaction={}, refundId={}",
                     transaction.getTransactionNumber(), payload.refundId());
         } else if ("FAILED".equals(payload.status())) {

@@ -13,6 +13,10 @@ import com.sni.bokaticowork.features.contract.service.interfaces.ContractGenerat
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractService;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSignatureStatus;
+import com.sni.bokaticowork.features.document.documentMaster.model.DocumentSignature;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentSignatureRepository;
 import com.sni.bokaticowork.features.subscription.addon.model.SubscriptionAddon;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 import com.sni.bokaticowork.features.subscription.subscription.model.Pass;
@@ -28,6 +32,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 @Component
 @RequiredArgsConstructor
@@ -39,6 +44,8 @@ public class SubscriptionContractSupport {
     private final ContractGenerationService contractGenerationService;
     private final SubscriptionOwnerResolver ownerResolver;
     private final SubscriptionContractTemplatePolicyResolver templatePolicyResolver;
+    private final DocumentRepository documentRepository;
+    private final DocumentSignatureRepository documentSignatureRepository;
 
     public String createAndSignForSubscription(Subscription subscription) {
         DocumentOwnerType ownerType = toDocumentOwnerType(subscription.getSubscriberType());
@@ -86,7 +93,9 @@ public class SubscriptionContractSupport {
                 ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
-        return contractService.markSigned(contract.getContractCode(), document.getCode()).getContractCode();
+        contractService.markSigned(contract.getContractCode(), document.getCode());
+        recordSystemSignature(document.getCode());
+        return contract.getContractCode();
     }
 
     public String createAndSignForAddon(SubscriptionAddon addon) {
@@ -137,7 +146,9 @@ public class SubscriptionContractSupport {
                 ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
-        return contractService.markSigned(contract.getContractCode(), document.getCode()).getContractCode();
+        contractService.markSigned(contract.getContractCode(), document.getCode());
+        recordSystemSignature(document.getCode());
+        return contract.getContractCode();
     }
 
     public String createAndSignForPass(Pass pass) {
@@ -187,7 +198,9 @@ public class SubscriptionContractSupport {
                 ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
-        return contractService.markSigned(contract.getContractCode(), document.getCode()).getContractCode();
+        contractService.markSigned(contract.getContractCode(), document.getCode());
+        recordSystemSignature(document.getCode());
+        return contract.getContractCode();
     }
 
     private CreateContractRequest baseCreateRequest(DocumentOwnerType ownerType,
@@ -254,9 +267,9 @@ public class SubscriptionContractSupport {
         request.setDisplayName(owner.displayName());
         request.setEmail(owner.email());
         request.setPhone(owner.phone());
-        request.setRole(ContractPartyRole.SIGNATORY);
+        request.setRole(ContractPartyRole.BENEFICIARY);
         request.setSignOrder(1);
-        request.setMustSign(Boolean.TRUE);
+        request.setMustSign(Boolean.FALSE);
         return request;
     }
 
@@ -406,12 +419,28 @@ public class SubscriptionContractSupport {
     }
 
     private Map<String, String> withSystemOperatorSignature(Map<String, String> variables) {
-        Map<String, String> enriched = new java.util.LinkedHashMap<>(variables);
+        Map<String, String> enriched = new LinkedHashMap<>(variables);
         enriched.put("operatorName", "ELLE A OSE");
         enriched.put("operatorSignatureName", "ELLE A OSE");
         enriched.put("operatorSignatureRole", "Signature automatique du système");
         enriched.put("operatorSignedAt", LocalDate.now().toString());
+        enriched.put("clientSignedAt", LocalDate.now().toString());
         return enriched;
+    }
+
+    private void recordSystemSignature(String documentCode) {
+        documentRepository.findByCode(documentCode).ifPresent(document -> {
+            DocumentSignature signature = DocumentSignature.builder()
+                    .document(document)
+                    .signerType("SYSTEM")
+                    .signerId(SYSTEM_ACTOR_ID)
+                    .signerName("SYSTÈME BOKATI")
+                    .signatureStatus(DocumentSignatureStatus.SIGNED)
+                    .signedAt(Instant.now())
+                    .signatureData("AUTO_SIGNED_ON_PAYMENT")
+                    .build();
+            documentSignatureRepository.save(signature);
+        });
     }
 
     private record OwnerContractView(String displayName, String email, String phone) {

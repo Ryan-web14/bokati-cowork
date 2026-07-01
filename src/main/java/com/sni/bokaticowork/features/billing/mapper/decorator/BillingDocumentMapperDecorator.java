@@ -148,7 +148,10 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 document.getPreviousHash(),
                 document.getCurrentHash(),
                 document.getFiscalSignature(),
-                document.getSignedAt()
+                document.getSignedAt(),
+                document.getOriginalDocumentNumber(),
+                document.getOriginalDocumentType(),
+                document.getCreditNoteReason()
         );
     }
 

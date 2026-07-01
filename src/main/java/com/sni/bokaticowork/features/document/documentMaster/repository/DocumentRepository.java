@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -44,4 +45,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long>, JpaSp
     Page<Document> findAllByFolderAndDeletedFalse(DocumentFolder folder, Pageable pageable);
 
     long countByFolderAndDeletedFalse(DocumentFolder folder);
+
+    List<Document> findAllByStatusAndDocumentTypeAndUploadedAtBefore(
+            DocumentStatus status, DocumentType documentType, Instant uploadedAtThreshold);
 }

@@ -23,9 +23,8 @@ import com.sni.bokaticowork.features.subscription.repository.BillableItemReposit
 import com.sni.bokaticowork.features.subscription.repository.PlanPriceRepository;
 import com.sni.bokaticowork.features.subscription.repository.PlanVersionRepository;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.SubscriptionService;
-import com.sni.bokaticowork.features.subscription.subscription.service.support.ContractGenerationEvent;
+import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +44,7 @@ public class SubscriptionAddonServiceImpl implements SubscriptionAddonService {
     private final BillableItemRepository billableItemRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final SubscriptionAddonMapper addonMapper;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxService outboxService;
     private final BillableItemInvoiceSupport billableItemInvoiceSupport;
 
     @Override
@@ -67,7 +66,12 @@ public class SubscriptionAddonServiceImpl implements SubscriptionAddonService {
         addon.setUnitPrice(price.getAmount());
         addon.setCurrency(price.getCurrency());
         addon = addonRepository.save(addon);
-        eventPublisher.publishEvent(ContractGenerationEvent.forAddon(addon.getId()));
+        outboxService.publish(
+                "CONTRACT_GENERATION_REQUESTED",
+                "ADDON",
+                String.valueOf(addon.getId()),
+                java.util.Map.of("sourceType", "ADDON", "sourceId", addon.getId())
+        );
 
         createBillableItem(subscription, addon, price.getAmount().multiply(BigDecimal.valueOf(addon.getQuantity())));
         return addonMapper.toResponse(addon);

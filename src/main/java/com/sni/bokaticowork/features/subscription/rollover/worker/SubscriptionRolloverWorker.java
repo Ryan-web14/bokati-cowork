@@ -15,9 +15,13 @@ public class SubscriptionRolloverWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.rollover-delay-ms:900000}")
     public void applyDueRollovers() {
-        int applied = rolloverService.applyDueRollovers();
-        if (applied > 0) {
-            log.info("Applied {} subscription rollovers", applied);
+        try {
+            int applied = rolloverService.applyDueRollovers();
+            if (applied > 0) {
+                log.info("Applied {} subscription rollovers", applied);
+            }
+        } catch (Exception ex) {
+            log.error("SubscriptionRolloverWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

@@ -81,11 +81,12 @@ public class DocumentSequenceService {
 
     private DocumentSequence createSequence(BillingDocumentType type, int year) {
         String prefix = switch (type) {
-            case QUOTE            -> "DEV";
-            case INVOICE          -> "FAC";
-            case CREDIT_NOTE      -> "AVR";
-            case DEBIT_NOTE       -> "DBN";
-            case PROFORMA_INVOICE -> "PRF";
+            case QUOTE               -> "DEV";
+            case INVOICE             -> "FAC";
+            case CREDIT_NOTE         -> "AVR";
+            case CORRECTIVE_INVOICE  -> "REC";
+            case DEBIT_NOTE          -> "DBN";
+            case PROFORMA_INVOICE    -> "PRF";
         };
         DocumentSequence seq = new DocumentSequence();
         seq.setDocumentType(type.name());

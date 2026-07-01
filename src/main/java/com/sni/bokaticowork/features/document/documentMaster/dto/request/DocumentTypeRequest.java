@@ -30,7 +30,15 @@ public class DocumentTypeRequest {
 
     private Boolean requiresExpiryDate;
 
+    private Boolean requiresIssueDate;
+
+    private Boolean requiresDocumentNumber;
+
     private Boolean requiresReview;
+
+    private Boolean autoApprove;
+
+    private Integer autoApproveAfterDays;
 
     private Boolean requiresSignature;
 

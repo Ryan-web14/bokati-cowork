@@ -107,7 +107,8 @@ public class SubscriptionEmailNotifier {
         return switch (eventType) {
             case SUBSCRIPTION_ACTIVATED -> "subscription-activated";
             case SUBSCRIPTION_CANCELLED -> "subscription-cancelled";
-            default -> "subscription-created";
+            case SUBSCRIPTION_RENEWED   -> "subscription-activated";
+            default                     -> "subscription-created";
         };
     }
 
@@ -116,7 +117,8 @@ public class SubscriptionEmailNotifier {
         return switch (eventType) {
             case SUBSCRIPTION_ACTIVATED -> "Abonnement active " + number;
             case SUBSCRIPTION_CANCELLED -> "Abonnement annule " + number;
-            default -> "Abonnement cree " + number;
+            case SUBSCRIPTION_RENEWED   -> "Abonnement renouvele " + number;
+            default                     -> "Abonnement cree " + number;
         };
     }
 

@@ -136,11 +136,12 @@ public class BillingEmailServiceImpl implements BillingEmailService {
             return "facture";
         }
         return switch (type) {
-            case QUOTE -> "devis";
-            case PROFORMA_INVOICE -> "facture pro forma";
-            case INVOICE -> "facture";
-            case CREDIT_NOTE -> "avoir";
-            case DEBIT_NOTE -> "note de debit";
+            case QUOTE               -> "devis";
+            case PROFORMA_INVOICE    -> "facture pro forma";
+            case INVOICE             -> "facture";
+            case CREDIT_NOTE         -> "avoir";
+            case CORRECTIVE_INVOICE  -> "facture rectificative";
+            case DEBIT_NOTE          -> "note de debit";
         };
     }
 

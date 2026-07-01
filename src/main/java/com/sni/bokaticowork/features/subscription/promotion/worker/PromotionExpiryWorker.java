@@ -15,9 +15,13 @@ public class PromotionExpiryWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.promotion-expiry-delay-ms:900000}")
     public void expireEndedPromotions() {
-        int expired = promotionService.expireEndedPromotions();
-        if (expired > 0) {
-            log.info("Expired {} promotions", expired);
+        try {
+            int expired = promotionService.expireEndedPromotions();
+            if (expired > 0) {
+                log.info("Expired {} promotions", expired);
+            }
+        } catch (Exception ex) {
+            log.error("PromotionExpiryWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

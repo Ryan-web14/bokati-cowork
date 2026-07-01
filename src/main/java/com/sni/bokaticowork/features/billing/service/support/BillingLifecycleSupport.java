@@ -55,9 +55,10 @@ public class BillingLifecycleSupport {
     public void ensureCanValidate(BillingDocument document) {
         if (document.getDocumentType() != BillingDocumentType.INVOICE
                 && document.getDocumentType() != BillingDocumentType.CREDIT_NOTE
+                && document.getDocumentType() != BillingDocumentType.CORRECTIVE_INVOICE
                 && document.getDocumentType() != BillingDocumentType.DEBIT_NOTE
                 && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
-            throw new BadRequestException("Seules les factures, avoirs et notes de débit peuvent être validés");
+            throw new BadRequestException("Seules les factures, avoirs, rectificatives et notes de débit peuvent être validés");
         }
         if (Boolean.TRUE.equals(document.getLocked())) {
             throw new BadRequestException("Document déjà validé");

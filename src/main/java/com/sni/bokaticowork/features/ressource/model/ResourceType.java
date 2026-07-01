@@ -35,6 +35,15 @@ public class ResourceType {
     @Column(name = "active")
     private Boolean active;
 
+    /**
+     * Maximum concurrent bookings allowed for resources of this type.
+     * Null = use Resource.capacity (default behaviour for most types).
+     * Set to 1 for exclusive-use resources (e.g. meeting rooms: RTY-001) where
+     * capacity describes seating but only one group may book at a time.
+     */
+    @Column(name = "bookable_slots")
+    private Integer bookableSlots;
+
     @Column(name = "created_at")
     private Instant createdAt;
 

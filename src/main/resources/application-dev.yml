@@ -118,7 +118,7 @@ bokati:
       polling-max-age-minutes: ${PAWAYPAY_POLLING_MAX_AGE_MINUTES:10}
 
 app:
-  dev-mode: false
+  dev-mode: true
   api-base-url: ${APP_BASE_URL:https://engaging-designer-equity.ngrok-free.dev}
   admin-access-url: ${ADMIN_ACCESS_URL:https://admin.elleaose.com}
   verify-base-url: ${APP_VERIFY_BASE_URL:${APP_BASE_URL:https://engaging-designer-equity.ngrok-free.dev}}

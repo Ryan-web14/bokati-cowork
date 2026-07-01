@@ -52,13 +52,12 @@ import com.sni.bokaticowork.features.payment.service.interfaces.PaymentService;
 import com.sni.bokaticowork.features.payment.service.interfaces.WalletService;
 import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayDepositService;
 import com.sni.bokaticowork.features.payment.service.support.PaymentAllocationService;
-import com.sni.bokaticowork.features.payment.service.support.PaymentTransactionWorkflowEvent;
+import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.subscription.repository.BillableItemRepository;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.BillableItemResponse;
 import com.sni.bokaticowork.features.subscription.subscription.mapper.interfaces.SubscriptionBillingMapper;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -105,7 +104,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PawapayDepositService pawapayDepositService;
     @org.springframework.context.annotation.Lazy
     private final BillingEmailService billingEmailService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxService outboxService;
 
     @Override
     public PaymentIntentResponse createIntent(CreatePaymentIntentRequest request) {
@@ -981,7 +980,12 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private void publishTransactionWorkflow(String transactionNumber, PaymentTransactionStatus status) {
-        eventPublisher.publishEvent(new PaymentTransactionWorkflowEvent(transactionNumber, status));
+        outboxService.publish(
+                "PAYMENT_TRANSACTION_WORKFLOW",
+                "PAYMENT",
+                transactionNumber,
+                java.util.Map.of("transactionNumber", transactionNumber, "status", status.name())
+        );
     }
 
     private void creditOverpayment(PaymentIntent intent, BigDecimal overpayment, String createdBy) {

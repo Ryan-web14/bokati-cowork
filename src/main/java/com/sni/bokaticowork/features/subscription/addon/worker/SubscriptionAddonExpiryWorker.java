@@ -15,9 +15,13 @@ public class SubscriptionAddonExpiryWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.addon-expiry-delay-ms:900000}")
     public void expireEndedAddons() {
-        int expired = addonService.expireEndedAddons();
-        if (expired > 0) {
-            log.info("Expired {} subscription add-ons", expired);
+        try {
+            int expired = addonService.expireEndedAddons();
+            if (expired > 0) {
+                log.info("Expired {} subscription add-ons", expired);
+            }
+        } catch (Exception ex) {
+            log.error("SubscriptionAddonExpiryWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

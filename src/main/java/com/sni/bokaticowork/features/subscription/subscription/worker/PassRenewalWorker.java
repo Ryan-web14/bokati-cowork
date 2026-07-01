@@ -15,9 +15,13 @@ public class PassRenewalWorker {
 
     @Scheduled(fixedDelayString = "${bokati.pass.workers.renewal-delay-ms:900000}")
     public void renewDuePasses() {
-        int renewed = passService.renewDuePasses();
-        if (renewed > 0) {
-            log.info("Renewed {} due passes", renewed);
+        try {
+            int renewed = passService.renewDuePasses();
+            if (renewed > 0) {
+                log.info("Renewed {} due passes", renewed);
+            }
+        } catch (Exception ex) {
+            log.error("PassRenewalWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

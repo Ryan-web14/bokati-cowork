@@ -15,9 +15,13 @@ public class EntitlementExpiryWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.entitlement-expiry-delay-ms:600000}")
     public void expireGrants() {
-        int expired = entitlementService.expireGrants();
-        if (expired > 0) {
-            log.info("Expired {} entitlement grants", expired);
+        try {
+            int expired = entitlementService.expireGrants();
+            if (expired > 0) {
+                log.info("Expired {} entitlement grants", expired);
+            }
+        } catch (Exception ex) {
+            log.error("EntitlementExpiryWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

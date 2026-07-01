@@ -20,7 +20,7 @@ import com.sni.bokaticowork.features.subscription.subscription.model.Subscriptio
 import com.sni.bokaticowork.features.subscription.subscription.model.SubscriptionItem;
 import com.sni.bokaticowork.features.subscription.repository.SubscriptionItemRepository;
 import com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository;
-import com.sni.bokaticowork.features.subscription.subscription.service.support.ContractGenerationEvent;
+
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionBillingSupport;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionEventWriter;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionOwnerResolver;
@@ -30,7 +30,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.S
 import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
+
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -56,7 +56,6 @@ public class SubscriptionCreationOperator {
     private final SubscriptionCodeFactory codeFactory;
     private final KycCaseRepository kycCaseRepository;
     private final BillingTaxRuleResolver taxRuleResolver;
-    private final ApplicationEventPublisher eventPublisher;
     private final SubscriptionEmailNotifier emailNotifier;
     private final MemberInAppNotifier memberInAppNotifier;
     private final WalletService walletService;
@@ -112,17 +111,17 @@ public class SubscriptionCreationOperator {
                 .status(saved.getStatus())
                 .build());
 
-        // Génération du contrat en asynchrone après commit — ne bloque pas la création
-        eventPublisher.publishEvent(ContractGenerationEvent.forSubscription(saved.getId()));
-
         eventWriter.writeHistory(saved, null, saved.getStatus(), "Creation", "SYSTEM");
         eventWriter.writeEvent(saved, SubscriptionEventType.SUBSCRIPTION_CREATED, null);
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
-        billingSupport.createBillableItem(saved, "SUBSCRIPTION_SETUP", "Initial subscription charge");
+        billingSupport.createSubscriptionSetupItems(saved, price);
 
         if (saved.getTotalAmount().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
             lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");
+        } else {
+            // Pas d'auto-activation — envoyer l'email de création en attente de paiement
+            emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         }
         return saved;
     }

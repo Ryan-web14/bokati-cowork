@@ -94,6 +94,18 @@ public class Resource {
     @Builder.Default
     private Boolean deleted = Boolean.FALSE;
 
+    /**
+     * Returns the maximum number of concurrent bookings allowed for this resource.
+     * If the resource type declares a bookableSlots constraint (e.g. 1 for meeting rooms),
+     * that value takes precedence over the person-capacity of the resource.
+     */
+    public int resolveBookableSlots() {
+        if (resourceType != null && resourceType.getBookableSlots() != null) {
+            return resourceType.getBookableSlots();
+        }
+        return capacity != null ? capacity : 1;
+    }
+
     @PrePersist
     public void prePersist() {
         this.createdAt = Instant.now();

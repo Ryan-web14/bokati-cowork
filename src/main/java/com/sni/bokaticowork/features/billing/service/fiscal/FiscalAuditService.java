@@ -14,13 +14,15 @@ import java.time.Instant;
 public class FiscalAuditService {
 
     // Actions fiscales — utiliser ces constantes dans tout le codebase
-    public static final String INVOICE_VALIDATED    = "INVOICE_VALIDATED";
-    public static final String CREDIT_NOTE_CREATED  = "CREDIT_NOTE_CREATED";
-    public static final String DEBIT_NOTE_CREATED   = "DEBIT_NOTE_CREATED";
-    public static final String DOCUMENT_DELETED     = "DOCUMENT_DELETED";
-    public static final String TAMPER_ATTEMPT       = "TAMPER_ATTEMPT";
-    public static final String PDF_EXPORTED         = "PDF_EXPORTED";
-    public static final String QUOTE_CONVERTED      = "QUOTE_CONVERTED";
+    public static final String INVOICE_VALIDATED          = "INVOICE_VALIDATED";
+    public static final String CREDIT_NOTE_CREATED        = "CREDIT_NOTE_CREATED";
+    public static final String CREDIT_NOTE_APPLIED        = "CREDIT_NOTE_APPLIED";
+    public static final String CORRECTIVE_INVOICE_CREATED = "CORRECTIVE_INVOICE_CREATED";
+    public static final String DEBIT_NOTE_CREATED         = "DEBIT_NOTE_CREATED";
+    public static final String DOCUMENT_DELETED           = "DOCUMENT_DELETED";
+    public static final String TAMPER_ATTEMPT             = "TAMPER_ATTEMPT";
+    public static final String PDF_EXPORTED               = "PDF_EXPORTED";
+    public static final String QUOTE_CONVERTED            = "QUOTE_CONVERTED";
 
     private final FiscalAuditLogRepository repository;
 

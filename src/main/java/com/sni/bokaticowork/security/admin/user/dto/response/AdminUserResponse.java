@@ -12,6 +12,8 @@ public class AdminUserResponse {
     private Long id;
     private String userId;
     private String email;
+    private String firstname;
+    private String lastname;
     private Boolean accountEnabled;
     private Boolean accountLocked;
     private Boolean accountExpired;

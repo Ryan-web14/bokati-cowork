@@ -332,10 +332,14 @@ public class ContractServiceImpl implements ContractService {
     }
 
     private void ensureMutable(Contract contract) {
-        if (contract.getStatus() == ContractStatus.TERMINATED
-                || contract.getStatus() == ContractStatus.CANCELLED
-                || contract.getStatus() == ContractStatus.EXPIRED) {
-            throw new BadRequestException("Ce contrat n'est plus modifiable dans son statut actuel");
+        switch (contract.getStatus()) {
+            case SIGNED, ACTIVE, SUSPENDED, AMENDED ->
+                    throw new BadRequestException(
+                            "Ce contrat a été signé et ne peut plus être modifié en place. Toute modification doit passer par un avenant.");
+            case TERMINATED, CANCELLED, EXPIRED ->
+                    throw new BadRequestException(
+                            "Ce contrat est clôturé et ne peut plus être modifié.");
+            default -> { /* états pré-signature : DRAFT, GENERATED, UNDER_REVIEW, AWAITING_SIGNATURE */ }
         }
     }
 
@@ -355,9 +359,11 @@ public class ContractServiceImpl implements ContractService {
                     || targetStatus == ContractStatus.CANCELLED;
             case GENERATED -> targetStatus == ContractStatus.UNDER_REVIEW
                     || targetStatus == ContractStatus.AWAITING_SIGNATURE
+                    || targetStatus == ContractStatus.SIGNED
                     || targetStatus == ContractStatus.CANCELLED;
             case UNDER_REVIEW -> targetStatus == ContractStatus.AWAITING_SIGNATURE
                     || targetStatus == ContractStatus.GENERATED
+                    || targetStatus == ContractStatus.SIGNED
                     || targetStatus == ContractStatus.CANCELLED;
             case AWAITING_SIGNATURE -> targetStatus == ContractStatus.SIGNED
                     || targetStatus == ContractStatus.GENERATED
@@ -366,10 +372,14 @@ public class ContractServiceImpl implements ContractService {
                     || targetStatus == ContractStatus.CANCELLED;
             case ACTIVE -> targetStatus == ContractStatus.SUSPENDED
                     || targetStatus == ContractStatus.TERMINATED
-                    || targetStatus == ContractStatus.EXPIRED;
+                    || targetStatus == ContractStatus.EXPIRED
+                    || targetStatus == ContractStatus.AMENDED;
             case SUSPENDED -> targetStatus == ContractStatus.ACTIVE
                     || targetStatus == ContractStatus.TERMINATED
-                    || targetStatus == ContractStatus.CANCELLED;
+                    || targetStatus == ContractStatus.CANCELLED
+                    || targetStatus == ContractStatus.AMENDED;
+            case AMENDED -> targetStatus == ContractStatus.TERMINATED
+                    || targetStatus == ContractStatus.EXPIRED;
             case EXPIRED, TERMINATED, CANCELLED -> false;
         };
         if (!allowed) {

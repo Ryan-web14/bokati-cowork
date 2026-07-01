@@ -25,9 +25,13 @@ public class NotificationWorker {
         if (!enabled) {
             return;
         }
-        int processed = notificationService.processPending(batchSize);
-        if (processed > 0) {
-            log.info("Processed {} notification(s)", processed);
+        try {
+            int processed = notificationService.processPending(batchSize);
+            if (processed > 0) {
+                log.info("Processed {} notification(s)", processed);
+            }
+        } catch (Exception ex) {
+            log.error("NotificationWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

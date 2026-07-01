@@ -24,13 +24,17 @@ public class BookingNoShowWorker {
 
     @Scheduled(fixedDelayString = "${bokati.booking.lifecycle.worker-delay-ms:${bokati.booking.no-show.worker-delay-ms:60000}}")
     public void processOverdueBookings() {
-        int noShows = bookingService.markOverdueNoShows(200);
-        if (noShows > 0) {
-            log.info("Auto no-show: {} réservation(s) marquée(s)", noShows);
-        }
-        int completed = bookingService.markOverdueCompleted(200);
-        if (completed > 0) {
-            log.info("Auto-terminée: {} réservation(s) clôturée(s)", completed);
+        try {
+            int noShows = bookingService.markOverdueNoShows(200);
+            if (noShows > 0) {
+                log.info("Auto no-show: {} réservation(s) marquée(s)", noShows);
+            }
+            int completed = bookingService.markOverdueCompleted(200);
+            if (completed > 0) {
+                log.info("Auto-terminée: {} réservation(s) clôturée(s)", completed);
+            }
+        } catch (Exception ex) {
+            log.error("BookingNoShowWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

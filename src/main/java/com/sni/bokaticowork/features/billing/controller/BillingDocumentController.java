@@ -192,6 +192,21 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.applyCreditNote(creditNoteNumber));
     }
 
+    @PatchMapping("/credit-notes/{creditNoteNumber}/apply-to/{targetInvoiceNumber}")
+    public ResponseEntity<BillingDocumentResponse> applyCreditNoteToInvoice(
+            @PathVariable String creditNoteNumber,
+            @PathVariable String targetInvoiceNumber) {
+        return ResponseEntity.ok(billingDocumentService.applyCreditNoteToInvoice(creditNoteNumber, targetInvoiceNumber));
+    }
+
+    @PostMapping("/invoices/{invoiceNumber}/corrective")
+    public ResponseEntity<BillingDocumentResponse> createCorrectiveInvoice(
+            @PathVariable String invoiceNumber,
+            @Valid @RequestBody CreateManualBillingDocumentRequest request) {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(billingDocumentService.createCorrectiveInvoice(invoiceNumber, request));
+    }
+
     @PostMapping("/invoices/{documentNumber}/pay")
     public ResponseEntity<PayInvoiceResponse> payInvoice(@PathVariable String documentNumber,
                                                          @Valid @RequestBody PayInvoiceRequest request) {

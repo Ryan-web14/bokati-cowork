@@ -54,6 +54,14 @@ public class DocumentType {
     private Boolean requiresExpiryDate = Boolean.FALSE;
 
     @Builder.Default
+    @Column(name = "requires_issue_date")
+    private Boolean requiresIssueDate = Boolean.FALSE;
+
+    @Builder.Default
+    @Column(name = "requires_document_number")
+    private Boolean requiresDocumentNumber = Boolean.FALSE;
+
+    @Builder.Default
     @Column(name = "requires_review")
     private Boolean requiresReview = Boolean.FALSE;
 

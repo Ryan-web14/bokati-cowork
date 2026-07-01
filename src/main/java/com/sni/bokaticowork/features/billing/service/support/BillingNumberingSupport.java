@@ -16,18 +16,20 @@ public class BillingNumberingSupport {
 
     public String nextDocumentNumber(BillingDocumentType type, String customerType) {
         String seqCode = switch (type) {
-            case QUOTE -> "billing_quote";
-            case PROFORMA_INVOICE -> "billing_proforma";
-            case INVOICE -> "billing_invoice";
-            case CREDIT_NOTE -> "billing_credit_note";
-            case DEBIT_NOTE -> "billing_debit_note";
+            case QUOTE               -> "billing_quote";
+            case PROFORMA_INVOICE    -> "billing_proforma";
+            case INVOICE             -> "billing_invoice";
+            case CREDIT_NOTE         -> "billing_credit_note";
+            case CORRECTIVE_INVOICE  -> "billing_corrective_invoice";
+            case DEBIT_NOTE          -> "billing_debit_note";
         };
         String prefix = switch (type) {
-            case QUOTE -> "QUO";
-            case PROFORMA_INVOICE -> "PRF";
-            case INVOICE -> "INV";
-            case CREDIT_NOTE -> "CRN";
-            case DEBIT_NOTE -> "DBN";
+            case QUOTE               -> "QUO";
+            case PROFORMA_INVOICE    -> "PRF";
+            case INVOICE             -> "INV";
+            case CREDIT_NOTE         -> "CRN";
+            case CORRECTIVE_INVOICE  -> "REC";
+            case DEBIT_NOTE          -> "DBN";
         };
         String ctx = CodeComposer.abbrev(customerType);
         long seq = CodeComposer.extractSeq(sequenceGenerator.next(seqCode));

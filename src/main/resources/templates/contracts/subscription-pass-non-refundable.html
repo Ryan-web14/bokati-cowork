@@ -787,8 +787,9 @@ body {
 <!-- ─────────────────────────────────────────────────
      CLÔTURE
      ───────────────────────────────────────────────── -->
-<div class="closing">
-  Fait à Pointe-Noire, le _______ / _______ / _______________
+<div class="closing"
+     th:text="${'Fait à Pointe-Noire, le ' + (variables != null and variables['clientSignedAt'] != null ? variables['clientSignedAt'] : generatedAt)}">
+  Fait à Pointe-Noire, le —
 </div>
 
 <!-- ─────────────────────────────────────────────────
@@ -835,13 +836,19 @@ body {
              th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">
           Nom du client
         </div>
-        <div class="sig-party-role"
-             th:text="${request.signatoryRole != null ? request.signatoryRole : 'Bénéficiaire / Représentant'}">
-          Qualité
+        <div class="sig-party-role">Bénéficiaire</div>
+        <div class="sig-box signed">
+          <div class="sig-stamp-name"
+               th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">NOM CLIENT</div>
+          <div class="sig-stamp-sub">Accepté électroniquement lors du paiement</div>
         </div>
-        <div class="sig-box"></div>
-        <div class="sig-date-line">Date&#160;: _______ / _______ / ___________</div>
-        <div class="sig-mention">Précédé de la mention manuscrite « Lu et approuvé, offre non remboursable »</div>
+        <div class="sig-date-line"
+             th:if="${variables != null and variables['clientSignedAt'] != null}"
+             th:text="${'Date : ' + variables['clientSignedAt']}">Date</div>
+        <div class="sig-date-line"
+             th:unless="${variables != null and variables['clientSignedAt'] != null}"
+             th:text="${'Date : ' + generatedAt}">Date</div>
+        <div class="sig-mention">Signature électronique — Lu et approuvé, offre non remboursable</div>
       </td>
     </tr>
   </table>

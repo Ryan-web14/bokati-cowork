@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.document.documentMaster.service.interfaces
 
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTypeRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentUploadConfigResponse;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
 
@@ -16,4 +17,5 @@ public interface DocumentTypeService {
     DocumentTypeResponse deactivate(String code);
     void delete(String code);
     DocumentType serviceByCode(String code);
+    DocumentUploadConfigResponse getUploadConfig(String code);
 }

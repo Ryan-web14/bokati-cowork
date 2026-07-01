@@ -17,7 +17,11 @@ public class DocumentTypeResponse {
     private String documentDetails;
     private Boolean required;
     private Boolean requiresExpiryDate;
+    private Boolean requiresIssueDate;
+    private Boolean requiresDocumentNumber;
     private Boolean requiresReview;
+    private Boolean autoApprove;
+    private Integer autoApproveAfterDays;
     private Boolean requiresSignature;
     private Boolean multipleAllowed;
     private Boolean requiresBackSide;

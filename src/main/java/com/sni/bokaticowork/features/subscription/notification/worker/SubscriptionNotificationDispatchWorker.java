@@ -15,9 +15,13 @@ public class SubscriptionNotificationDispatchWorker {
 
     @Scheduled(fixedDelayString = "${bokati.subscription.workers.notification-dispatch-delay-ms:60000}")
     public void dispatchDueNotifications() {
-        int dispatched = notificationService.dispatchDue(100);
-        if (dispatched > 0) {
-            log.info("Dispatched {} subscription notifications", dispatched);
+        try {
+            int dispatched = notificationService.dispatchDue(100);
+            if (dispatched > 0) {
+                log.info("Dispatched {} subscription notifications", dispatched);
+            }
+        } catch (Exception ex) {
+            log.error("SubscriptionNotificationDispatchWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

@@ -100,6 +100,8 @@ public class MemberServiceImpl  implements MemberService {
 
             UserRequest userRequest = UserRequest.builder()
                     .email(request.getEmail())
+                    .firstname(request.getFirstname())
+                    .lastname(request.getLastname())
                     .build();
 
             Member member = memberMapper.toEntity(request);
@@ -175,6 +177,7 @@ public class MemberServiceImpl  implements MemberService {
         validateUpdateRequest(member, request);
         member = memberMapper.updateEntity(member, request);
         syncUserEmail(member, request);
+        syncUserName(member, request);
         memberRepo.save(member);
     }
 
@@ -634,10 +637,26 @@ public class MemberServiceImpl  implements MemberService {
         if (!StringUtils.hasText(request.getEmail())) {
             return;
         }
-
         Users user = member.getUser();
         if (user != null && !request.getEmail().equalsIgnoreCase(user.getEmail())) {
             user.setEmail(request.getEmail());
+            userRepo.save(user);
+        }
+    }
+
+    private void syncUserName(Member member, UpdateMemberRequest request) {
+        Users user = member.getUser();
+        if (user == null) return;
+        boolean changed = false;
+        if (StringUtils.hasText(request.getFirstname()) && !request.getFirstname().equals(user.getFirstname())) {
+            user.setFirstname(request.getFirstname());
+            changed = true;
+        }
+        if (StringUtils.hasText(request.getLastname()) && !request.getLastname().equals(user.getLastname())) {
+            user.setLastname(request.getLastname());
+            changed = true;
+        }
+        if (changed) {
             userRepo.save(user);
         }
     }

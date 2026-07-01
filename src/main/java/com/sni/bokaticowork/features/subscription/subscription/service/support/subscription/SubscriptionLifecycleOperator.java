@@ -26,6 +26,7 @@ import com.sni.bokaticowork.features.subscription.subscription.model.Subscriptio
 import com.sni.bokaticowork.features.subscription.repository.EntitlementGrantRepository;
 import com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.EntitlementService;
+
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionBillingSupport;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionEventWriter;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPeriodCalculator;
@@ -33,6 +34,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.S
 import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -64,6 +66,7 @@ public class SubscriptionLifecycleOperator {
     private final KycCaseRepository kycCaseRepository;
     private final OutboxService outboxService;
 
+
     public void activate(Subscription subscription, String reason, String actor) {
         if (subscription.getStatus() == SubscriptionStatus.ACTIVE) {
             return;
@@ -78,6 +81,17 @@ public class SubscriptionLifecycleOperator {
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED, null);
         notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
         checkKycCompliance(subscription);
+
+        emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
+
+        if (!StringUtils.hasText(subscription.getContractCode())) {
+            outboxService.publish(
+                    "CONTRACT_GENERATION_REQUESTED",
+                    "SUBSCRIPTION",
+                    subscription.getSubscriptionNumber(),
+                    java.util.Map.of("sourceType", "SUBSCRIPTION", "sourceId", subscription.getId())
+            );
+        }
     }
 
     public Subscription suspend(Subscription subscription, SubscriptionStatusChangeRequest request) {
@@ -88,6 +102,7 @@ public class SubscriptionLifecycleOperator {
         subscription.setSuspendedAt(Instant.now());
         subscription.setSuspensionReason(reason(request, null));
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.PAUSED);
+        emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_SUSPENDED);
         return subscriptionRepository.save(subscription);
     }
 
@@ -139,6 +154,7 @@ public class SubscriptionLifecycleOperator {
         releaseDepositHold(subscription);
         Subscription saved = subscriptionRepository.save(subscription);
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
+        emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
         return saved;
     }
 
@@ -195,6 +211,7 @@ public class SubscriptionLifecycleOperator {
             cancelAssociatedContract(subscription, reason);
             Subscription saved = subscriptionRepository.save(subscription);
             notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
+            emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
         });
         return subscriptions.size();
     }
@@ -209,12 +226,16 @@ public class SubscriptionLifecycleOperator {
     }
 
     private void renewActive(Subscription subscription) {
-        LocalDate newStart = subscription.getCurrentPeriodEnd() == null
-                ? LocalDate.now()
-                : subscription.getCurrentPeriodEnd().plusDays(1);
+        LocalDate previousPeriodStart = subscription.getCurrentPeriodStart();
+        LocalDate previousPeriodEnd   = subscription.getCurrentPeriodEnd();
+
+        LocalDate newStart = previousPeriodEnd == null ? LocalDate.now() : previousPeriodEnd.plusDays(1);
+        LocalDate newEnd   = periodCalculator.periodEnd(newStart, subscription.getBillingCycle());
+        LocalDate nextBilling = periodCalculator.nextBillingDate(newStart, subscription.getBillingCycle());
+
         subscription.setCurrentPeriodStart(newStart);
-        subscription.setCurrentPeriodEnd(periodCalculator.periodEnd(newStart, subscription.getBillingCycle()));
-        subscription.setNextBillingDate(periodCalculator.nextBillingDate(newStart, subscription.getBillingCycle()));
+        subscription.setCurrentPeriodEnd(newEnd);
+        subscription.setNextBillingDate(nextBilling);
         java.math.BigDecimal recurringAmount = subscription.getSubtotalAmount().add(subscription.getTaxAmount());
         billingSupport.createBillableItem(subscription, "SUBSCRIPTION_RENEWAL", "Subscription renewal", recurringAmount);
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.ACTIVE);
@@ -222,6 +243,24 @@ public class SubscriptionLifecycleOperator {
         entitlementService.grantForSubscription(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED, null);
         notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
+        emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
+
+        if (StringUtils.hasText(subscription.getContractCode())) {
+            outboxService.publish(
+                    "CONTRACT_RENEWAL_AMENDMENT_REQUESTED",
+                    "SUBSCRIPTION",
+                    subscription.getSubscriptionNumber(),
+                    Map.of(
+                            "contractCode", subscription.getContractCode(),
+                            "subscriptionNumber", subscription.getSubscriptionNumber(),
+                            "previousPeriodStart", previousPeriodStart != null ? previousPeriodStart.toString() : "",
+                            "previousPeriodEnd",   previousPeriodEnd   != null ? previousPeriodEnd.toString()   : "",
+                            "newPeriodStart",  newStart.toString(),
+                            "newPeriodEnd",    newEnd.toString(),
+                            "nextBillingDate", nextBilling.toString()
+                    )
+            );
+        }
     }
 
     public String reason(SubscriptionStatusChangeRequest request, String defaultReason) {

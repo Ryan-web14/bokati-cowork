@@ -40,11 +40,11 @@ import com.sni.bokaticowork.features.subscription.repository.PassTransactionRepo
 import com.sni.bokaticowork.features.subscription.repository.PlanVersionRepository;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.EntitlementService;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.SubscriptionService;
-import com.sni.bokaticowork.features.subscription.subscription.service.support.ContractGenerationEvent;
+import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionOwnerResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -64,7 +64,7 @@ public class PassCreationOperator {
     private final PlanVersionRepository planVersionRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final SubscriptionOwnerResolver ownerResolver;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxService outboxService;
     private final @Lazy EntitlementService entitlementService;
     private final @Lazy SubscriptionService subscriptionService;
     private final PassCodeFactory codeFactory;
@@ -121,7 +121,12 @@ public class PassCreationOperator {
                 .build());
         entitlementService.grantForPass(pass);
         passRepository.save(pass);
-        eventPublisher.publishEvent(ContractGenerationEvent.forPass(pass.getId()));
+        outboxService.publish(
+                "CONTRACT_GENERATION_REQUESTED",
+                "PASS",
+                pass.getPassNumber(),
+                java.util.Map.of("sourceType", "PASS", "sourceId", pass.getId())
+        );
         return pass;
     }
 
@@ -221,7 +226,6 @@ public class PassCreationOperator {
         emailNotifier.notifyCreated(pass);
 
         passRepository.save(pass);
-        eventPublisher.publishEvent(ContractGenerationEvent.forPass(pass.getId()));
 
         return pass;
     }

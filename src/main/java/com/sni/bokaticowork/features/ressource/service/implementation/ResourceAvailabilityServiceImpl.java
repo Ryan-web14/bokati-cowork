@@ -368,7 +368,11 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     }
 
     private int resolveCapacity(Resource resource, Integer requestedCapacity) {
-        int baseCapacity = requestedCapacity != null ? requestedCapacity : resource.getCapacity();
+        int bookableSlots = resource.resolveBookableSlots();
+        // Never exceed the type-level concurrent booking limit, even if the caller passes a higher value.
+        int baseCapacity = requestedCapacity != null
+                ? Math.min(requestedCapacity, bookableSlots)
+                : bookableSlots;
         if (baseCapacity < 1) {
             throw new BadRequestException("Availability capacity must be greater than zero");
         }

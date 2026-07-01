@@ -961,7 +961,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         List<CreateBillingDocumentLineRequest> lines = request.lines() == null || request.lines().isEmpty()
                 ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null))
                 : request.lines();
-        BillingDocumentResponse creditNote = create(new CreateBillingDocumentRequest(
+        BillingDocumentResponse creditNoteResponse = create(new CreateBillingDocumentRequest(
                 BillingDocumentType.CREDIT_NOTE,
                 invoice.getCustomerType(),
                 invoice.getCustomerCode(),
@@ -984,10 +984,25 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 null, null, null, null,
                 null, null, null, null, null, null, null, null
         ));
-        if (Boolean.TRUE.equals(request.applyImmediately())) {
-            applyCreditNote(creditNote.documentNumber());
+
+        // Stocker le lien vers la facture d'origine
+        BillingDocument creditDoc = serviceByNumber(creditNoteResponse.documentNumber());
+        creditDoc.setOriginalDocumentNumber(invoiceNumber);
+        creditDoc.setOriginalDocumentType(invoice.getDocumentType().name());
+        creditDoc.setCreditNoteReason(request.reason());
+        documentRepository.save(creditDoc);
+
+        fiscalAuditService.log(FiscalAuditService.CREDIT_NOTE_CREATED,
+                "BILLING_DOCUMENT", creditDoc.getDocumentNumber(), invoiceNumber, null);
+
+        // Validation SEFC immédiate si demandée (doit précéder applyImmediately)
+        if (Boolean.TRUE.equals(request.validateImmediately())) {
+            validate(creditDoc.getDocumentNumber());
         }
-        return get(creditNote.documentNumber());
+        if (Boolean.TRUE.equals(request.applyImmediately())) {
+            applyCreditNote(creditDoc.getDocumentNumber());
+        }
+        return get(creditDoc.getDocumentNumber());
     }
 
     @Override
@@ -1143,6 +1158,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocument cancelAndArchive(String documentNumber, String reason) {
         BillingDocument document = serviceByNumber(documentNumber);
+
+        // Facture fiscalement scellée — on ne la mute pas, on émet un avoir
+        if (Boolean.TRUE.equals(document.getLocked())) {
+            return cancelLockedDocumentViaCreditNote(document, reason);
+        }
+
+        // Document non verrouillé — annulation directe (comportement existant)
         if (document.getStatus() != BillingDocumentStatus.CANCELLED) {
             document.setStatus(BillingDocumentStatus.CANCELLED);
             if (document.getCancelledAt() == null) {
@@ -1161,6 +1183,109 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             eventWriter.write(document, "BILLING_DOCUMENT_ARCHIVED", billingActionDetails(reason, null));
         }
         return document;
+    }
+
+    /**
+     * Annulation d'un document fiscalement scellé (locked=true).
+     * Émet un avoir pour le solde restant, le valide et l'applique.
+     * La facture originale n'est jamais mutée (invariant I3).
+     */
+    private BillingDocument cancelLockedDocumentViaCreditNote(BillingDocument document, String reason) {
+        BigDecimal creditAmount = document.getBalanceDue() != null && document.getBalanceDue().signum() > 0
+                ? document.getBalanceDue()
+                : document.getTotalAmount();
+
+        if (creditAmount.signum() <= 0) {
+            // Facture déjà intégralement réglée — archiver uniquement
+            if (document.getArchivedAt() == null) {
+                document.setArchivedAt(Instant.now());
+                document = documentRepository.save(document);
+                eventWriter.write(document, "BILLING_DOCUMENT_ARCHIVED", billingActionDetails(reason, null));
+            }
+            return document;
+        }
+
+        String creditReason = StringUtils.hasText(reason) ? reason : "Annulation de " + document.getDocumentNumber();
+        createCreditNote(document.getDocumentNumber(), new CreateCreditNoteRequest(
+                creditAmount,
+                creditReason,
+                true,   // applyImmediately
+                true,   // validateImmediately
+                null    // lignes auto-générées
+        ));
+
+        eventWriter.write(document, "BILLING_DOCUMENT_CANCELLED_VIA_CREDIT_NOTE",
+                billingActionDetails(reason, true));
+        return serviceByNumber(document.getDocumentNumber());
+    }
+
+    @Override
+    public BillingDocumentResponse applyCreditNoteToInvoice(String creditNoteNumber, String targetInvoiceNumber) {
+        BillingDocument creditNote = serviceByNumber(creditNoteNumber);
+        BillingDocument targetInvoice = serviceByNumber(targetInvoiceNumber);
+
+        if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE) {
+            throw new BadRequestException("Le document " + creditNoteNumber + " n'est pas un avoir");
+        }
+        if (!Boolean.TRUE.equals(creditNote.getLocked())) {
+            throw new BadRequestException("L'avoir doit être validé (SEFC) avant d'être appliqué à une autre facture");
+        }
+        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
+            throw new BadRequestException("L'avoir " + creditNoteNumber + " a déjà été consommé");
+        }
+        if (!creditNote.getCustomerCode().equals(targetInvoice.getCustomerCode())) {
+            throw new BadRequestException("L'avoir et la facture cible doivent appartenir au même client");
+        }
+        if (targetInvoice.getDocumentType() != BillingDocumentType.INVOICE
+                && targetInvoice.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+            throw new BadRequestException("La cible doit être une facture ou une facture proforma");
+        }
+
+        applyPayment(targetInvoiceNumber, creditNote.getTotalAmount());
+
+        creditNote.setStatus(BillingDocumentStatus.ISSUED);
+        BillingDocument savedCreditNote = documentRepository.save(creditNote);
+
+        fiscalAuditService.log(FiscalAuditService.CREDIT_NOTE_APPLIED,
+                "BILLING_DOCUMENT", creditNoteNumber,
+                creditNote.getOriginalDocumentNumber(),
+                "applied_to=" + targetInvoiceNumber + "|amount=" + creditNote.getTotalAmount().toPlainString());
+        eventWriter.write(savedCreditNote, "CREDIT_NOTE_APPLIED_TO_INVOICE",
+                java.util.Map.of("targetInvoiceNumber", targetInvoiceNumber,
+                                 "amount", creditNote.getTotalAmount().toPlainString()));
+
+        return mapper.toResponse(savedCreditNote);
+    }
+
+    @Override
+    public BillingDocumentResponse createCorrectiveInvoice(String originalInvoiceNumber,
+                                                           CreateManualBillingDocumentRequest request) {
+        BillingDocument original = serviceByNumber(originalInvoiceNumber);
+
+        if (original.getDocumentType() != BillingDocumentType.INVOICE
+                && original.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE) {
+            throw new BadRequestException("Seules les factures peuvent faire l'objet d'une facture rectificative");
+        }
+        if (!Boolean.TRUE.equals(original.getLocked())) {
+            throw new BadRequestException(
+                    "La facture d'origine doit être validée (SEFC) avant d'émettre une rectificative. " +
+                    "Pour un brouillon, utilisez directement update().");
+        }
+
+        BillingDocumentResponse corrective = create(toDocumentRequest(BillingDocumentType.CORRECTIVE_INVOICE, request));
+
+        BillingDocument correctiveDoc = serviceByNumber(corrective.documentNumber());
+        correctiveDoc.setOriginalDocumentNumber(originalInvoiceNumber);
+        correctiveDoc.setOriginalDocumentType(original.getDocumentType().name());
+        correctiveDoc.setCreditNoteReason(StringUtils.hasText(request.description())
+                ? request.description()
+                : "Rectification de " + originalInvoiceNumber);
+        documentRepository.save(correctiveDoc);
+
+        fiscalAuditService.log(FiscalAuditService.CORRECTIVE_INVOICE_CREATED,
+                "BILLING_DOCUMENT", corrective.documentNumber(), originalInvoiceNumber, null);
+
+        return get(corrective.documentNumber());
     }
 
     private BillingDocument buildDocument(CreateBillingDocumentRequest request,

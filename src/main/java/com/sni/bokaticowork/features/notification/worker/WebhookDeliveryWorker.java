@@ -25,9 +25,13 @@ public class WebhookDeliveryWorker {
         if (!enabled) {
             return;
         }
-        int processed = webhookService.processPending(batchSize);
-        if (processed > 0) {
-            log.info("Processed {} webhook delivery(ies)", processed);
+        try {
+            int processed = webhookService.processPending(batchSize);
+            if (processed > 0) {
+                log.info("Processed {} webhook delivery(ies)", processed);
+            }
+        } catch (Exception ex) {
+            log.error("WebhookDeliveryWorker failed: {}", ex.getMessage(), ex);
         }
     }
 }

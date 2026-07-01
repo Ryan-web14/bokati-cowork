@@ -28,23 +28,18 @@ import com.sni.bokaticowork.features.portal.document.kyc.dto.response.ClientKycC
 import com.sni.bokaticowork.features.portal.document.kyc.dto.response.ClientKycDocumentResponse;
 import com.sni.bokaticowork.features.portal.document.kyc.dto.response.ClientKycRequirementResponse;
 import com.sni.bokaticowork.features.portal.document.kyc.dto.response.ClientKycStatusResponse;
+import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentUploadValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ClientKycService {
-
-    private static final List<String> ALLOWED_MIME_TYPES = Arrays.asList(
-            "application/pdf", "image/jpeg", "image/png"
-    );
-    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024; // 10 MB
 
     private final KycService kycService;
     private final KycCaseRepository kycCaseRepository;
@@ -54,6 +49,7 @@ public class ClientKycService {
     private final DocumentRepository documentRepository;
     private final DocumentRequirementRepository requirementRepository;
     private final DocumentTypeRepository documentTypeRepository;
+    private final DocumentUploadValidator uploadValidator;
 
     @Transactional(readOnly = true)
     public ClientKycStatusResponse getMyCase(Member member) {
@@ -137,7 +133,15 @@ public class ClientKycService {
                                                      LocalDate expiryDate,
                                                      MultipartFile file,
                                                      String side) {
-        validateFile(file);
+        DocumentType docType = documentTypeRepository.findByCode(documentType)
+                .orElseThrow(() -> new BadRequestException("Type de document inconnu : " + documentType));
+
+        DocumentUploadMetadataRequest tempMeta = new DocumentUploadMetadataRequest();
+        tempMeta.setDocumentNumber(documentNumber);
+        tempMeta.setIssueDate(issueDate);
+        tempMeta.setExpiryDate(expiryDate);
+        uploadValidator.validateForClient(tempMeta, docType, file);
+
         KycCase kycCase = resolveCase(member);
         assertCaseEditable(kycCase);
 
@@ -183,7 +187,9 @@ public class ClientKycService {
 
     @Transactional
     public ClientKycDocumentResponse resubmitDocument(Member member, Long documentId, MultipartFile file) {
-        validateFile(file);
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException("Le fichier est requis");
+        }
         KycDocument kycDocument = resolveOwnedKycDocument(member, documentId);
         if (kycDocument.getStatus() != KycDocumentVerificationStatus.REJECTED
                 && kycDocument.getStatus() != KycDocumentVerificationStatus.PENDING) {
@@ -244,19 +250,6 @@ public class ClientKycService {
                 || kycCase.getStatus() == KycCaseStatus.UNDER_REVIEW
                 || kycCase.getStatus() == KycCaseStatus.SUBMITTED) {
             throw new BadRequestException("KYC case is not open for document uploads. Current status: " + kycCase.getStatus());
-        }
-    }
-
-    private void validateFile(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new BadRequestException("File is required");
-        }
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new BadRequestException("File size must not exceed 10 MB");
-        }
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType.toLowerCase())) {
-            throw new BadRequestException("File type not allowed. Accepted: PDF, JPEG, PNG");
         }
     }
 
