@@ -95,7 +95,7 @@ INSERT INTO currency (id, currency_code, currency_name, created_at, updated_at) 
   (1188, 'JMD', 'Jamaican Dollar',             now(), now()),
   (1189, 'TTD', 'Trinidad and Tobago Dollar',  now(), now()),
   (1190, 'ZWL', 'Zimbabwean Dollar',           now(), now())
-ON CONFLICT (currency_code) DO NOTHING;
+ON CONFLICT DO NOTHING;
 
 -- ── Countries ─────────────────────────────────────────────────────────────────
 INSERT INTO country (id, name, country_code, default_currency_code, phone_code, is_ohada_member, deleted, created_at, updated_at) VALUES
@@ -209,4 +209,4 @@ INSERT INTO country (id, name, country_code, default_currency_code, phone_code, 
   (2421, 'Jordanie',                         'JO', 1176, '+962', false, false, now(), now()),
   (2422, 'Irak',                             'IQ', 1179, '+964', false, false, now(), now()),
   (2423, 'Oman',                             'OM', 1175, '+968', false, false, now(), now())
-ON CONFLICT (country_code) DO NOTHING;
+ON CONFLICT DO NOTHING;
