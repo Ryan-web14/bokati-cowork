@@ -49,7 +49,6 @@ public class PassLifecycleOperator {
         eventWriter.writeHistory(pass, prev, PassStatus.ACTIVE, reason, changedBy);
         eventWriter.writeEvent(pass, PassEventType.PASS_ACTIVATED, null);
         eventWriter.writeEvent(pass, PassEventType.ENTITLEMENTS_GRANTED, null);
-        emailNotifier.notifyActivated(pass);
 
         if (Boolean.TRUE.equals(pass.getAutoRenew())) {
             eventWriter.writeEvent(pass, PassEventType.RENEWAL_SCHEDULED, null);
@@ -66,6 +65,8 @@ public class PassLifecycleOperator {
                     java.util.Map.of("sourceType", "PASS", "sourceId", pass.getId())
             );
         }
+        // Notification after all business logic and outbox events
+        emailNotifier.notifyActivated(pass);
         return pass;
     }
 
@@ -95,7 +96,6 @@ public class PassLifecycleOperator {
                 });
         eventWriter.writeHistory(pass, PassStatus.ACTIVE, PassStatus.CANCELLED, reason, "SYSTEM");
         eventWriter.writeEvent(pass, PassEventType.PASS_CANCELLED, null);
-        emailNotifier.notifyCancelled(pass, reason);
         passTransactionRepository.save(PassTransaction.builder()
                 .pass(pass)
                 .transactionType("CANCELLED")
@@ -103,6 +103,8 @@ public class PassLifecycleOperator {
                 .referenceId(pass.getPassNumber())
                 .payloadJson(StringUtils.hasText(reason) ? "{\"reason\":\"" + reason.trim().replace("\"", "'") + "\"}" : null)
                 .build());
+        // Notification after all business logic
+        emailNotifier.notifyCancelled(pass, reason);
         return pass;
     }
 

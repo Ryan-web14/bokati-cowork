@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.payment.service.implementation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -79,6 +80,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -399,8 +401,14 @@ public class PaymentServiceImpl implements PaymentService {
         creditOverpayment(intent, overpayment, request.processedBy());
 
         BillingDocumentResponse updatedDocument = billingDocumentService.get(documentNumber);
-        billingEmailService.sendPaymentConfirmation(updatedDocument, mapper.toTransactionResponse(transaction));
+        // Publish workflow event before sending email — activation/contract generation must not be blocked by email failure
         publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
+        try {
+            billingEmailService.sendPaymentConfirmation(updatedDocument, mapper.toTransactionResponse(transaction));
+        } catch (Exception ex) {
+            log.warn("Failed to send payment confirmation email for transaction {} — workflow already published",
+                    transaction.getTransactionNumber(), ex);
+        }
 
         return new PayInvoiceResponse(updatedDocument, mapper.toTransactionResponse(transaction));
     }

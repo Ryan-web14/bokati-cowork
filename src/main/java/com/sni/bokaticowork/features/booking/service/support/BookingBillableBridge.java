@@ -64,16 +64,22 @@ public class BookingBillableBridge {
 
         BillingDocumentResponse issued = billableItemInvoiceSupport.ensureInvoiced(item, buildInvoiceTitle(booking), description);
 
-        if (issued != null && StringUtils.hasText(booking.getContactEmail())) {
-            billingEmailService.sendDocumentAsync(issued.documentNumber());
-        }
-
         lineRepository.findByBookingId(booking.getId()).forEach(line -> {
             if (line.getBillableNumber() == null) {
                 line.setBillableNumber(item.getBillableNumber());
                 lineRepository.save(line);
             }
         });
+
+        // Notification after all business logic
+        if (issued != null && StringUtils.hasText(booking.getContactEmail())) {
+            try {
+                billingEmailService.sendDocumentAsync(issued.documentNumber());
+            } catch (Exception ex) {
+                log.warn("Failed to send billing document email for booking {} — billing already completed",
+                        booking.getBookingNumber(), ex);
+            }
+        }
         return item.getBillableNumber();
     }
 

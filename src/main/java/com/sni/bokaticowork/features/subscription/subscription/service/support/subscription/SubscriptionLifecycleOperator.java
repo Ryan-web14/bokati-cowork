@@ -263,7 +263,6 @@ public class SubscriptionLifecycleOperator {
         entitlementService.grantForSubscription(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED, null);
         notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
-        emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
 
         if (StringUtils.hasText(subscription.getContractCode())) {
             outboxService.publish(
@@ -280,6 +279,13 @@ public class SubscriptionLifecycleOperator {
                             "nextBillingDate", nextBilling.toString()
                     )
             );
+        }
+        // Notification after all business logic and outbox events
+        try {
+            emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
+        } catch (Exception ex) {
+            log.warn("Failed to send renewal email for subscription {} — continuing",
+                    subscription.getSubscriptionNumber(), ex);
         }
     }
 

@@ -64,20 +64,24 @@ public class PaymentTransactionWorkflowProcessor {
 
         PaymentIntent intent = transaction.getPaymentIntent();
         if (event.status() == PaymentTransactionStatus.SUCCEEDED) {
+            // Business logic first — in order of dependency
             recordAutomaticCashSession(transaction);
-            sendPaidBillingDocuments(transaction);
+            validatePaidBillingDocuments(transaction);
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
-            if (!StringUtils.hasText(source.type()) || !StringUtils.hasText(source.code())) {
-                return;
+            if (StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
+                handleSucceededTransaction(transaction, source);
             }
-            handleSucceededTransaction(transaction, source);
+            // Notifications only after all business logic is complete
+            sendPaidBillingDocumentEmails(transaction);
             return;
         }
         if (event.status() == PaymentTransactionStatus.REFUNDED || event.status() == PaymentTransactionStatus.REVERSED) {
+            // Business logic first
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
             if (StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
                 handleRefundedTransaction(transaction, source);
             }
+            // Notification after business logic
             try {
                 refundEmailNotifier.notify(transaction);
             } catch (Exception ex) {
@@ -95,17 +99,26 @@ public class PaymentTransactionWorkflowProcessor {
         }
     }
 
-    private void sendPaidBillingDocuments(PaymentTransaction transaction) {
+    private void validatePaidBillingDocuments(PaymentTransaction transaction) {
         PaymentIntent intent = transaction.getPaymentIntent();
         String sourceType = intent.getSourceType();
         if (!BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(sourceType) && !MULTI_BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(sourceType)) {
             return;
         }
-        boolean fullySettled = intent.getStatus() == PaymentIntentStatus.SUCCEEDED;
+        if (intent.getStatus() != PaymentIntentStatus.SUCCEEDED) {
+            return;
+        }
+        splitCodes(intent.getSourceCode()).forEach(documentNumber ->
+                sefcValidateDocument(documentNumber, transaction.getTransactionNumber()));
+    }
+
+    private void sendPaidBillingDocumentEmails(PaymentTransaction transaction) {
+        PaymentIntent intent = transaction.getPaymentIntent();
+        String sourceType = intent.getSourceType();
+        if (!BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(sourceType) && !MULTI_BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(sourceType)) {
+            return;
+        }
         splitCodes(intent.getSourceCode()).forEach(documentNumber -> {
-            if (fullySettled) {
-                sefcValidateDocument(documentNumber, transaction.getTransactionNumber());
-            }
             try {
                 if (billingEmailService.sendDocument(documentNumber)) {
                     log.info("Sent billing document {} after payment {}", documentNumber, transaction.getTransactionNumber());
