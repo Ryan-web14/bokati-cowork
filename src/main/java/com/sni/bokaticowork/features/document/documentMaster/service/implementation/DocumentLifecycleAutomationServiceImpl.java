@@ -3,7 +3,9 @@ package com.sni.bokaticowork.features.document.documentMaster.service.implementa
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
+import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentTypeRepository;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentLifecycleAutomationService;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,6 +32,7 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
     private static final List<Integer> EXPIRY_REMINDER_DAYS = List.of(30, 7);
 
     private final DocumentRepository documentRepository;
+    private final DocumentTypeRepository documentTypeRepository;
     private final KycAutomationService kycAutomationService;
     private final OutboxService outboxService;
 
@@ -74,6 +78,43 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
         payload.put("ownerId", document.getOwnerId());
         payload.put("status", document.getStatus());
         outboxService.publish("DOCUMENT_AUTO_EXPIRED", "DOCUMENT", document.getCode(), payload);
+    }
+
+    @Override
+    public int autoApproveDocuments() {
+        List<DocumentType> autoApproveTypes = documentTypeRepository.findAllByAutoApproveAfterDaysIsNotNull();
+        int approved = 0;
+        Instant now = Instant.now();
+        for (DocumentType type : autoApproveTypes) {
+            if (type.getAutoApproveAfterDays() == null || type.getAutoApproveAfterDays() <= 0) {
+                continue;
+            }
+            if (!Boolean.TRUE.equals(type.getAutoApprove())) {
+                continue;
+            }
+            Instant threshold = now.minus(type.getAutoApproveAfterDays(), ChronoUnit.DAYS);
+            List<Document> candidates = documentRepository
+                    .findAllByStatusAndDocumentTypeAndUploadedAtBefore(
+                            DocumentStatus.PENDING_REVIEW, type, threshold);
+            for (Document doc : candidates) {
+                doc.setStatus(DocumentStatus.APPROVED);
+                doc.setUpdatedAt(now);
+                documentRepository.save(doc);
+                kycAutomationService.syncFromDocumentReview(doc);
+                publishAutoApprovedEvent(doc);
+                approved++;
+            }
+        }
+        return approved;
+    }
+
+    private void publishAutoApprovedEvent(Document document) {
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("documentCode", document.getCode());
+        payload.put("ownerType", document.getOwnerType());
+        payload.put("ownerId", document.getOwnerId());
+        payload.put("documentType", document.getTypeCode());
+        outboxService.publish("DOCUMENT_AUTO_APPROVED", "DOCUMENT", document.getCode(), payload);
     }
 
     private void publishPreExpiryEvent(Document document, int daysUntilExpiry) {

@@ -31,6 +31,10 @@ public class DocumentLifecycleWorker {
             if (reminded > 0) {
                 log.info("Sent {} document pre-expiry reminder(s)", reminded);
             }
+            int autoApproved = automationService.autoApproveDocuments();
+            if (autoApproved > 0) {
+                log.info("Auto-approved {} document(s)", autoApproved);
+            }
         } catch (Exception ex) {
             log.error("DocumentLifecycleWorker failed: {}", ex.getMessage(), ex);
         }
