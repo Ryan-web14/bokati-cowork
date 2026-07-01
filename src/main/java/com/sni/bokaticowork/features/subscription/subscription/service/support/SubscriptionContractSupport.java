@@ -438,6 +438,7 @@ public class SubscriptionContractSupport {
                     .signatureStatus(DocumentSignatureStatus.SIGNED)
                     .signedAt(Instant.now())
                     .signatureData("AUTO_SIGNED_ON_PAYMENT")
+                    .signaturePath("SYSTEM_AUTO_SIGNED")
                     .build();
             documentSignatureRepository.save(signature);
         });
