@@ -85,6 +85,19 @@ public class TransactionContextResolver {
             return resolveSource(key.type(), key.code(), 1);
         }
         if (distinct.size() > 1) {
+            // Multiple raw line types may converge to the same registered entity once resolved
+            // (e.g. SUBSCRIPTION_RECURRING + DEPOSIT both pointing to the same subscription number).
+            Set<SourceKey> resolvedDistinct = new LinkedHashSet<>();
+            for (SourceKey key : distinct) {
+                SourceView sv = resolveSource(key.type(), key.code(), 1);
+                if (sv.registered() && StringUtils.hasText(sv.type()) && StringUtils.hasText(sv.code())) {
+                    resolvedDistinct.add(new SourceKey(sv.type(), sv.code()));
+                }
+            }
+            if (resolvedDistinct.size() == 1) {
+                SourceKey key = resolvedDistinct.iterator().next();
+                return resolveSource(key.type(), key.code(), 1);
+            }
             return new SourceView("MULTIPLE", document.getDocumentNumber(), "Sources multiples", false);
         }
         return resolveSource(document.getSourceType(), document.getSourceCode(), 1);
@@ -150,6 +163,12 @@ public class TransactionContextResolver {
                     .orElse(new SourceView(normalizedType, normalizedCode, genericLabel(normalizedType, normalizedCode), false));
         }
         if (upperType != null && upperType.contains("SUBSCRIPTION") && StringUtils.hasText(normalizedCode)) {
+            return subscriptionRepository.findBySubscriptionNumber(normalizedCode)
+                    .map(this::subscriptionSource)
+                    .orElse(new SourceView(normalizedType, normalizedCode, genericLabel(normalizedType, normalizedCode), false));
+        }
+        if ("DEPOSIT".equalsIgnoreCase(upperType) && StringUtils.hasText(normalizedCode)) {
+            // Deposits are always tied to their parent subscription; resolve via subscription number.
             return subscriptionRepository.findBySubscriptionNumber(normalizedCode)
                     .map(this::subscriptionSource)
                     .orElse(new SourceView(normalizedType, normalizedCode, genericLabel(normalizedType, normalizedCode), false));
