@@ -42,7 +42,7 @@ public class PawapayClient {
     public PawapayRefundResponse initiateRefund(PawapayRefundRequest request) {
         log.debug("Initiating PawaPay refund: refundId={}, depositId={}", request.refundId(), request.depositId());
         return restClient.post()
-                .uri("/v1/refunds")
+                .uri("/v2/refunds")
                 .body(request)
                 .retrieve()
                 .body(PawapayRefundResponse.class);

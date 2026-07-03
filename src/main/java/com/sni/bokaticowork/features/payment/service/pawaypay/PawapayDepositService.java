@@ -219,7 +219,6 @@ public class PawapayDepositService {
                 deposit.getAmount().setScale(0, RoundingMode.HALF_UP).toPlainString(),
                 deposit.getCurrency(),
                 null,
-                deposit.getCallbackUrl(),
                 deposit.getClientReferenceId(),
                 deposit.getCustomerMessage(),
                 metadata
