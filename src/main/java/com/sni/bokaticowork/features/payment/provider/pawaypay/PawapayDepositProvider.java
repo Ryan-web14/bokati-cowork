@@ -49,7 +49,6 @@ public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
                 formatAmount(request),
                 request.currency(),
                 null,
-                request.callbackUrl(),
                 request.clientReferenceId(),
                 request.customerMessage(),
                 request.metadata()
@@ -121,7 +120,7 @@ public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
     }
 
     private String formatBigDecimal(BigDecimal amount) {
-        return amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
+        return amount.setScale(0, RoundingMode.HALF_UP).toPlainString();
     }
 
     private String normalizePhone(String phone) {
