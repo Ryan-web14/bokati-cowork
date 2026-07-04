@@ -52,13 +52,14 @@ public class CountryController {
             return ResponseEntity.ok(countryService.getCountryByPhoneCode(phoneCode));
         }
 
-        @GetMapping({"", "/all"})
+        @GetMapping
         public ResponseEntity<Collection<CountryResponse>> getAllCountries(){
 
             List<CountryResponse> countries = countryService.getAllCountries();
 
             return ResponseEntity.status(HttpStatus.OK).body(countries);
         }
+
 
         @Audited(module = "COUNTRY", action = "DELETE_COUNTRY")
         @DeleteMapping("/{countryCode}")

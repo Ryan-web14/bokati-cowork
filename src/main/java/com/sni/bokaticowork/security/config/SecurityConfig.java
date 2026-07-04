@@ -74,7 +74,8 @@ public class SecurityConfig {
                                 ApiPath.V1 + "/public/**",
                                 ApiPath.V1 + "/client/catalog/plans",
                                 ApiPath.V1 + "/client/catalog/plans/**",
-                                ApiPath.V1 + "/shares/**"
+                                ApiPath.V1 + "/shares/**",
+                                ApiPath.V1 + "/countries"
 
                         ).permitAll()
                         .requestMatchers("/ws/**").permitAll()
