@@ -6,6 +6,8 @@ spring:
     active: prod
 
 
+
+
   servlet:
     multipart:
       max-file-size: 10MB
@@ -28,6 +30,9 @@ app:
   locale: ${APP_LOCALE:fr_FR}
   portal:
     kyc-grace-period-days: ${PORTAL_KYC_GRACE_PERIOD_DAYS:7}
+  event:
+    notification-email: ${EVENT_NOTIFICATION_EMAIL:coworkspace@elleaose.com}
+    opening-code: ${OPENING_EVENT_CODE:OUVERTURE}
   company:
     name: ${COMPANY_NAME:Elle a Osé}
     legal-name: ${COMPANY_LEGAL_NAME:Elle a Osé}

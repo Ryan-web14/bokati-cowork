@@ -157,6 +157,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("/convert")) return permission("CRM", "CONVERT");
             return permission("CRM", HttpMethod.GET.matches(method) ? "READ" : "WRITE");
         }
+        if (path.startsWith("/event-registrations")) {
+            if (path.contains("/validate") || path.contains("/reject")) return permission("CRM", "CONVERT");
+            return permission("CRM", HttpMethod.GET.matches(method) ? "READ" : "WRITE");
+        }
         if (path.startsWith("/countries") || path.startsWith("/currency") || path.startsWith("/currencies")) {
             return permission("SYSTEM", "SETTINGS");
         }
