@@ -3,7 +3,7 @@ spring:
   application:
     name: bokati-cowork
   profiles:
-    active: prod
+    active: dev
 
 
 

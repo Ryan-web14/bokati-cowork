@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.document.documentMaster.service.implementa
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.core.exception.customs.UnauthorizedException;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateShareLinkRequest;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.ShareLinkResponse;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
@@ -53,10 +54,11 @@ public class DocumentShareService {
     }
 
     @Transactional(readOnly = true)
-    public ShareLinkResponse access(String token) {
+    public ShareLinkResponse access(String token, String password) {
         DocumentShareLink link = shareRepository.findByTokenAndActiveTrue(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Share link not found or expired"));
         validateLink(link);
+        validatePassword(link, password);
         return toResponse(link);
     }
 
@@ -109,6 +111,15 @@ public class DocumentShareService {
         }
         if (link.getMaxAccessCount() != null && link.getAccessCount() >= link.getMaxAccessCount()) {
             throw new BadRequestException("This share link has reached its maximum access count");
+        }
+    }
+
+    private void validatePassword(DocumentShareLink link, String password) {
+        if (link.getPasswordHash() == null) {
+            return;
+        }
+        if (!StringUtils.hasText(password) || !passwordEncoder.matches(password, link.getPasswordHash())) {
+            throw new UnauthorizedException("This share link requires a valid password");
         }
     }
 
