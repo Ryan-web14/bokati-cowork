@@ -20,12 +20,18 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class KycOutboxEventProcessor implements OutboxEventProcessor {
 
+    // We only notify the client for meaningful, action-oriented milestones:
+    //  - KYC_CASE_CREATED             → a case was opened manually by an admin
+    //  - KYC_CASE_APPROVED            → the case was validated
+    //  - KYC_CASE_REJECTED / _CORRECTION_REQUESTED → a change is requested
+    //  - KYC_INCOMPLETE_REMINDER      → friendly reminder for a still-incomplete case
+    // Automatic case creation (KYC_CASE_AUTO_CREATED) is intentionally silent.
     private static final Set<String> NOTIFIABLE_EVENTS = Set.of(
             "KYC_CASE_CREATED",
-            "KYC_CASE_AUTO_CREATED",
             "KYC_CASE_APPROVED",
             "KYC_CASE_REJECTED",
-            "KYC_CASE_CORRECTION_REQUESTED"
+            "KYC_CASE_CORRECTION_REQUESTED",
+            "KYC_INCOMPLETE_REMINDER"
     );
 
     private final ObjectMapper objectMapper;
@@ -50,7 +56,7 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
                 event.getEventType(), caseCode, ownerType, ownerId);
 
         if (ownerType == null || ownerId == null) {
-            log.warn("KYC event {} missing ownerType or ownerId — skipping", event.getEventType());
+            log.warn("KYC event {} missing ownerType or ownerId - skipping", event.getEventType());
             return;
         }
 
@@ -64,7 +70,7 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
 
         Map<String, Object> vars = new HashMap<>();
         vars.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
-        vars.put("kycCaseCode",   caseCode != null ? caseCode : "—");
+        vars.put("kycCaseCode",   caseCode != null ? caseCode : "");
         vars.put("eventType",     event.getEventType());
         vars.put("eventLabel",    resolveEventLabel(event.getEventType()));
         vars.put("status",        status != null ? status : "N/A");
@@ -79,24 +85,24 @@ public class KycOutboxEventProcessor implements OutboxEventProcessor {
     }
 
     private String resolveSubject(String eventType, String caseCode) {
-        String ref = caseCode != null ? " — " + caseCode : "";
+        String ref = caseCode != null ? " - " + caseCode : "";
         return switch (eventType) {
-            case "KYC_CASE_CREATED"      -> "Nouveau dossier KYC" + ref;
-            case "KYC_CASE_AUTO_CREATED" -> "Dossier KYC créé automatiquement" + ref;
-            case "KYC_CASE_APPROVED"     -> "Dossier KYC approuvé" + ref;
-            case "KYC_CASE_REJECTED"     -> "Correction requise sur votre dossier KYC" + ref;
-            case "KYC_CASE_CORRECTION_REQUESTED" -> "Correction requise sur votre dossier KYC" + ref;
-            default                      -> "Notification KYC" + ref;
+            case "KYC_CASE_CREATED"      -> "Votre dossier KYC est ouvert" + ref;
+            case "KYC_CASE_APPROVED"     -> "Bonne nouvelle : votre dossier KYC est validé" + ref;
+            case "KYC_CASE_REJECTED",
+                 "KYC_CASE_CORRECTION_REQUESTED" -> "Une petite mise à jour est nécessaire sur votre dossier KYC" + ref;
+            case "KYC_INCOMPLETE_REMINDER" -> "Petit rappel : votre dossier KYC vous attend" + ref;
+            default                      -> "Votre dossier KYC" + ref;
         };
     }
 
     private String resolveEventLabel(String eventType) {
         return switch (eventType) {
-            case "KYC_CASE_CREATED"      -> "Création de dossier";
-            case "KYC_CASE_AUTO_CREATED" -> "Création automatique de dossier";
-            case "KYC_CASE_APPROVED"     -> "Dossier approuvé";
-            case "KYC_CASE_REJECTED"     -> "Correction requise";
-            case "KYC_CASE_CORRECTION_REQUESTED" -> "Correction requise";
+            case "KYC_CASE_CREATED"      -> "Dossier ouvert";
+            case "KYC_CASE_APPROVED"     -> "Dossier validé";
+            case "KYC_CASE_REJECTED",
+                 "KYC_CASE_CORRECTION_REQUESTED" -> "Mise à jour demandée";
+            case "KYC_INCOMPLETE_REMINDER" -> "Rappel";
             default                      -> "Notification";
         };
     }
