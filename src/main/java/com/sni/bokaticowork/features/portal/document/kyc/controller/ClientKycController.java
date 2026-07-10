@@ -28,7 +28,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping(ApiPath.V1 + "/client/documents/kyc")
+// Primary path plus a "/portal/kyc" alias kept for the client portal frontend.
+@RequestMapping({ApiPath.V1 + "/client/documents/kyc", ApiPath.V1 + "/portal/kyc"})
 @RequiredArgsConstructor
 public class ClientKycController {
 

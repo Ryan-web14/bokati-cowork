@@ -92,6 +92,8 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers(ApiPath.V1 + "/client/**").access(clientPortalAuthorizationManager)
+                        // Alias of the client KYC endpoints for the portal frontend.
+                        .requestMatchers(ApiPath.V1 + "/portal/kyc", ApiPath.V1 + "/portal/kyc/**").access(clientPortalAuthorizationManager)
                         .requestMatchers(ApiPath.V1 + "/**").access(adminApiAuthorizationManager)
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex
