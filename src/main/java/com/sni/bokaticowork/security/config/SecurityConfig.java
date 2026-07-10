@@ -94,6 +94,9 @@ public class SecurityConfig {
                         .requestMatchers(ApiPath.V1 + "/client/**").access(clientPortalAuthorizationManager)
                         // Alias of the client KYC endpoints for the portal frontend.
                         .requestMatchers(ApiPath.V1 + "/portal/kyc", ApiPath.V1 + "/portal/kyc/**").access(clientPortalAuthorizationManager)
+                        // Read-only document-type upload config (allowed formats, max size, sides) is
+                        // needed by clients to upload KYC documents; harmless to any authenticated user.
+                        .requestMatchers(HttpMethod.GET, ApiPath.V1 + "/document-types/*/upload-config").authenticated()
                         .requestMatchers(ApiPath.V1 + "/**").access(adminApiAuthorizationManager)
                         .anyRequest().authenticated())
                 .exceptionHandling(ex -> ex

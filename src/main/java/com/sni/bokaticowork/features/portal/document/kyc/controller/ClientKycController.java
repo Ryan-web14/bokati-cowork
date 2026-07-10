@@ -36,7 +36,7 @@ public class ClientKycController {
     private final ClientContextService clientContextService;
     private final ClientKycService clientKycService;
 
-    @GetMapping
+    @GetMapping({"", "/my-case"})
     public ResponseEntity<ClientKycStatusResponse> getMyCase() {
         Member member = clientContextService.getAuthenticatedMember();
         return ResponseEntity.ok(clientKycService.getMyCase(member));
