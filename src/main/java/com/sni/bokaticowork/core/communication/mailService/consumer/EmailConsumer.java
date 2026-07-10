@@ -46,15 +46,15 @@ public class EmailConsumer {
             boolean sent;
             if (message.attachmentBytes() != null && message.attachmentBytes().length > 0) {
                 sent = emailSender.sendHtmlEmailWithPdfAttachmentBlocking(
-                        message.to(), message.subject(), message.htmlContent(),
+                        message.from(), message.to(), message.subject(), message.htmlContent(),
                         message.attachmentName(), message.attachmentBytes());
             } else if (message.inlineImageBytes() != null && message.inlineImageBytes().length > 0) {
                 sent = emailSender.sendWithGraphInlineImageBlocking(
-                        message.to(), message.subject(), message.htmlContent(),
+                        message.from(), message.to(), message.subject(), message.htmlContent(),
                         message.inlineImageContentId(), message.inlineImageBytes());
             } else {
                 sent = emailSender.sendHtmlEmailBlocking(
-                        message.to(), message.subject(), message.htmlContent());
+                        message.from(), message.to(), message.subject(), message.htmlContent());
             }
 
             if (sent) {

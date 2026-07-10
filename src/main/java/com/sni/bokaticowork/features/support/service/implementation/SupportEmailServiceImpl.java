@@ -54,7 +54,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         Context ctx = base(ticket, "TICKET_CREATED");
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(ticket.getDescription()));
         send(ticket.getContactEmail(),
-                "Ticket ouvert — " + ticket.getTicketNumber(),
+                "Ticket ouvert - " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
 
@@ -85,7 +85,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("clientName", clientName);
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(agentEmail,
-                "[Support] Nouveau message client — " + ticket.getTicketNumber(),
+                "[Support] Nouveau message client - " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
 
@@ -95,7 +95,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         if (!StringUtils.hasText(ticket.getContactEmail())) return;
         Context ctx = base(ticket, "TICKET_RESOLVED");
         send(ticket.getContactEmail(),
-                "Ticket résolu — " + ticket.getTicketNumber(),
+                "Ticket résolu - " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
 
@@ -105,7 +105,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         if (!StringUtils.hasText(ticket.getContactEmail())) return;
         Context ctx = base(ticket, "TICKET_REOPENED");
         send(ticket.getContactEmail(),
-                "Ticket réouvert — " + ticket.getTicketNumber(),
+                "Ticket réouvert - " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
 
@@ -121,7 +121,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         ctx.setVariable("clientName", clientName);
         ctx.setVariable("messageContentHtml", richTextSupport.toSafeHtml(message == null ? null : message.getMessage()));
         send(agentEmail,
-                "[Support] Ticket réouvert par le client — " + ticket.getTicketNumber(),
+                "[Support] Ticket réouvert par le client - " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
 
@@ -131,7 +131,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         Context ctx = base(ticket, "SLA_BREACH");
         ctx.setVariable("breachType", breachType);
         send(managerEmail,
-                "[ALERTE SLA] " + breachType + " — " + ticket.getTicketNumber(),
+                "[ALERTE SLA] " + breachType + " - " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
 
@@ -160,7 +160,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         if (!StringUtils.hasText(ticket.getContactEmail())) return;
         Context ctx = base(ticket, "CSAT_REQUEST");
         send(ticket.getContactEmail(),
-                "Donnez votre avis — " + ticket.getTicketNumber(),
+                "Donnez votre avis - " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
 
