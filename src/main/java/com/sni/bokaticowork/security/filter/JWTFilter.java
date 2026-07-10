@@ -166,6 +166,8 @@ public class JWTFilter extends OncePerRequestFilter {
                         || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/callback")
                         || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback")
                         || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback")
+                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/return")
+                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/return")
                         || uri.startsWith("/verify/")
                         || uri.startsWith(ApiPath.V1 + "/client/catalog/plans")
                         || uri.startsWith(ApiPath.V1 + "/shares/")

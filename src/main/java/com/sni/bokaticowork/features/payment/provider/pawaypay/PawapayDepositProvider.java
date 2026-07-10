@@ -29,6 +29,7 @@ import java.util.UUID;
 public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
 
     public static final String PAWAYPAY_CALLBACK_PATH = "/payments/mobile-money/pawapay/callback";
+    public static final String PAWAYPAY_RETURN_PATH = "/payments/mobile-money/pawapay/return";
 
     private final PawapayClient client;
     private final PawapayProperties properties;

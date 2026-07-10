@@ -18,7 +18,7 @@ public class MemberProfileReportRepository {
                 SELECT
                     m.member_id, m.firstname, m.lastname, m.email, m.phone, m.whatsapp_phone,
                     m.member_status, m.portal_access, m.created_at,
-                    c.customer_code, c.company_name,
+                    c.customer_id, c.company_name,
                     mp.job_title, mp.company_role, mp.birth_date, mp.city, mp.country, mp.photo_url
                 FROM member m
                 JOIN customer c ON c.id = m.customer_id

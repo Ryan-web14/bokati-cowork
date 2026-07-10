@@ -95,6 +95,7 @@ bokati:
   websocket:
     use-stomp-relay: ${BOKATI_WEBSOCKET_USE_STOMP_RELAY:true}
     stomp:
+      use-tls: ${BOKATI_WEBSOCKET_STOMP_USE_TLS:true}
       relay-host: ${CLOUDAMQP_STOMP_HOST}
       relay-port: ${CLOUDAMQP_STOMP_PORT:61614}
       virtual-host: ${CLOUDAMQP_VHOST:/}
@@ -123,6 +124,10 @@ bokati:
       callback-secret: ${PAWAYPAY_CALLBACK_SECRET}
       polling-delay-ms: ${PAWAYPAY_POLLING_DELAY_MS:300000}
       polling-max-age-minutes: ${PAWAYPAY_POLLING_MAX_AGE_MINUTES:10}
+      max-polling-attempts: ${PAWAYPAY_MAX_POLLING_ATTEMPTS:3}
+      payment-page-country: ${PAWAYPAY_PAYMENT_PAGE_COUNTRY:COG}
+      payment-page-language: ${PAWAYPAY_PAYMENT_PAGE_LANGUAGE:fr}
+      payment-page-result-url: ${PAWAYPAY_PAYMENT_PAGE_RESULT_URL:https://app.elleaose.com/payment/result}
 
 app:
   dev-mode: false

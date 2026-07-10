@@ -1,15 +1,62 @@
 # KYC — Règles de validation croisée
 
-> Base : `/sni/api/v1/kyc/cross-validation-rules` — back-office, configuration compliance.
+> **Base URL** : `https://api.elleaose.com/sni/api/v1`
+> **Base de ce module** : `/kyc/cross-validation-rules` — **back-office**, configuration compliance.
 
-Une règle vérifie qu'un champ correspond entre deux types de documents d'un même dossier (ex: le nom doit être identique sur la CNI et le passeport).
+Une **règle de validation croisée** vérifie qu'un champ donné correspond entre **deux types de documents** d'un même dossier KYC (ex : le nom doit être identique sur la CNI et le passeport).
 
-| Méthode &amp; Route | Rôle | Paramètres clés | Réponse | 🔒 |
-|---|---|---|---|---|
-| `POST /kyc/cross-validation-rules` | Créer une règle | `documentTypeCode1*`, `documentTypeCode2*`, `fieldToCompare*`, `blocking` (bool), `active` (bool) | `KycCrossValidationRuleResponse` (201) | `KYC:READ` |
-| `PUT /kyc/cross-validation-rules/{id}` | Modifier | mêmes champs | `KycCrossValidationRuleResponse` | `KYC:READ` |
-| `GET /kyc/cross-validation-rules/{id}` | Détail | — | `KycCrossValidationRuleResponse` | `KYC:READ` |
-| `GET /kyc/cross-validation-rules` | Liste | query `activeOnly` (optionnel) | `List<KycCrossValidationRuleResponse>` | `KYC:READ` |
-| `DELETE /kyc/cross-validation-rules/{id}` | Supprimer | — | 204 | `KYC:READ` |
+---
 
-`blocking = true` signifie que la divergence bloque l'approbation automatique du dossier (nécessite une revue manuelle) plutôt que d'être un simple avertissement.
+## Le modèle `KycCrossValidationRuleResponse`
+
+```json
+{
+  "id": 5,
+  "documentTypeCode1": "CNI",
+  "documentTypeCode2": "PASSEPORT",
+  "fieldToCompare": "lastName",
+  "blocking": true,
+  "active": true
+}
+```
+
+---
+
+## 1. Créer une règle
+
+```http
+POST /kyc/cross-validation-rules
+Content-Type: application/json
+```
+```json
+{
+  "documentTypeCode1": "CNI",
+  "documentTypeCode2": "PASSEPORT",
+  "fieldToCompare": "lastName",
+  "blocking": true,
+  "active": true
+}
+```
+
+| Champ | Obligatoire | Règle |
+|---|---|---|
+| `documentTypeCode1` | ✅ | Premier type de document (max 150). |
+| `documentTypeCode2` | ✅ | Second type de document (max 150). |
+| `fieldToCompare` | ✅ | Champ à comparer entre les deux (max 80 ; ex `lastName`, `documentNumber`). |
+| `blocking` | — | `true` = une divergence **bloque** l'approbation automatique et impose une revue manuelle. `false` = simple avertissement. |
+| `active` | — | Règle active. |
+
+**Réponse** `201 Created` → `KycCrossValidationRuleResponse`.
+
+---
+
+## 2. Modifier / lire / supprimer
+
+```http
+PUT    /kyc/cross-validation-rules/{id}              → KycCrossValidationRuleResponse   (mêmes champs)
+GET    /kyc/cross-validation-rules/{id}              → KycCrossValidationRuleResponse
+GET    /kyc/cross-validation-rules?activeOnly=true    → List<KycCrossValidationRuleResponse>   (activeOnly optionnel)
+DELETE /kyc/cross-validation-rules/{id}              → 204 No Content
+```
+
+La liste renvoie un **tableau brut** (pas d'enveloppe paginée). Le path utilise l'**`id`** numérique de la règle.

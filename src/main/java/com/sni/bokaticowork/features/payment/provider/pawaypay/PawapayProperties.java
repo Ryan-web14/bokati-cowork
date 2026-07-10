@@ -18,4 +18,12 @@ public class PawapayProperties {
     private long pollingDelayMs = 300_000;
     /** Age threshold in minutes: only poll transactions older than this */
     private int pollingMaxAgeMinutes = 10;
+    /** Maximum number of status checks before a still-pending deposit is abandoned as FAILED */
+    private int maxPollingAttempts = 3;
+    /** Country code sent to the hosted Payment Page (required alongside a fixed amount) */
+    private String paymentPageCountry = "COG";
+    /** UI language for the hosted Payment Page */
+    private String paymentPageLanguage = "fr";
+    /** Frontend page the customer is redirected to after the hosted Payment Page (depositId + status appended) */
+    private String paymentPageResultUrl = "";
 }

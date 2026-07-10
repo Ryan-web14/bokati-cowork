@@ -16,6 +16,7 @@ import com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequ
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
+import com.sni.bokaticowork.features.payment.dto.response.PaymentLinkResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentRecoveryResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
 import com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus;
@@ -148,8 +149,8 @@ public class PaymentController {
     }
 
     @PostMapping("/intents/{intentNumber}/link")
-    public ResponseEntity<PaymentIntentResponse> createPaymentLink(@PathVariable String intentNumber,
-                                                                   @RequestBody(required = false) CreatePaymentLinkRequest request) {
+    public ResponseEntity<PaymentLinkResponse> createPaymentLink(@PathVariable String intentNumber,
+                                                                 @RequestBody(required = false) CreatePaymentLinkRequest request) {
         return ResponseEntity.ok(paymentLinkService.createLink(intentNumber, request));
     }
 

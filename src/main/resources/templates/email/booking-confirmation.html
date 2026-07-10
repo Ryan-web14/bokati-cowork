@@ -6,68 +6,57 @@
   <title th:text="|Réservation confirmée — ${bookingNumber ?: 'Votre réservation'} — Elle A Osé|">Réservation confirmée — Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-    .wrap { width: 100%; padding: 48px 16px; background: #E8E5E0; }
-    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 28px 56px rgba(26,10,46,.10); }
-    .em-header { background: #110828; padding: 22px 36px; }
+    body { background: #F4F2EF; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #2A2135; }
+    .wrap { width: 100%; padding: 40px 16px; background: #F4F2EF; }
+    .sheet { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #ECE7F2; }
+    .em-header { background: #110828; padding: 22px 40px; }
     .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
-    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
-    .em-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
-    .em-body { padding: 44px 40px 40px; }
-    .em-doc-title { font-size: 19px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 28px; }
-    .em-intro { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 32px; }
+    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.30); margin-top: 5px; }
+    .em-stripe { height: 3px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
+    .em-body { padding: 40px 40px 36px; }
+    .em-title { font-size: 21px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 10px; }
+    .em-intro { font-size: 14.5px; color: #5C4F6E; line-height: 1.7; margin-bottom: 32px; }
     .em-intro strong { color: #1A0A2E; font-weight: 700; }
-    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; padding-bottom: 10px; border-bottom: 1px solid #EEE9F5; margin-bottom: 0; }
-    .dt { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
-    .dt tr { border-bottom: 1px solid #EEE9F5; }
-    .dt td { padding: 13px 0; vertical-align: top; }
-    .dt-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; width: 110px; padding-top: 15px; }
-    .dt-val { font-size: 14px; font-weight: 600; color: #1A0A2E; line-height: 1.35; }
-    .dt-mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1.2px; }
-    .dt-sub { font-size: 12px; color: #9B8CAA; font-weight: 400; margin-top: 3px; }
-    .time-arrow { color: #C9A84C; margin: 0 8px; }
-    .time-dur { font-size: 12px; color: #B0A0C0; margin-left: 6px; font-weight: 400; }
-    .price-box { border: 1px solid #EEE9F5; border-radius: 8px; overflow: hidden; margin-bottom: 28px; }
-    .price-total { background: #1A0A2E; padding: 18px 22px; display: flex; justify-content: space-between; align-items: baseline; }
-    .price-total-label { font-size: 12px; font-weight: 500; color: rgba(255,255,255,.55); }
-    .price-total-amount { font-size: 22px; font-weight: 700; color: #C9A84C; letter-spacing: -.4px; }
-    .price-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 22px; border-bottom: 1px solid #F0ECF8; background: #FDFCFF; }
-    .price-row:last-child { border-bottom: none; }
-    .price-row-label { font-size: 13px; color: #7B6E8B; }
-    .price-row-amount { font-size: 13px; font-weight: 600; color: #1A0A2E; }
-    .payment-bar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 28px; border-bottom: 1px solid #EEE9F5; margin-bottom: 28px; }
-    .pay-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; display: block; margin-bottom: 5px; }
-    .pay-method { font-size: 13.5px; font-weight: 600; color: #1A0A2E; }
-    .pay-date { font-size: 12px; color: #B0A0C0; margin-top: 2px; }
-    .pay-amount { font-size: 15px; font-weight: 700; color: #1A0A2E; }
-    .qr-section { margin-bottom: 28px; text-align: center; }
-    .qr-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; margin-bottom: 20px; }
-    .qr-img-wrap { display: inline-block; padding: 14px; background: #fff; border-radius: 10px; border: 1px solid #EEE9F5; margin-bottom: 16px; }
-    .qr-ref { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 13px; font-weight: 700; color: #1A0A2E; letter-spacing: 2px; margin-bottom: 4px; }
-    .qr-code { font-size: 11px; color: #B0A0C0; margin-bottom: 16px; }
-    .qr-step { font-size: 12px; color: #9B8CAA; line-height: 1.7; margin-bottom: 3px; text-align: left; }
-    .cta-row { display: flex; gap: 10px; margin-bottom: 28px; }
-    .cta-gold { flex: 1; display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; text-align: center; border-radius: 8px; }
-    .cta-ghost { flex: 1; display: block; text-align: center; border: 1px solid #D5CCE0; color: #9B8CAA; text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 17px; border-radius: 8px; }
-    .em-legal { font-size: 11.5px; color: #C0B4D0; line-height: 1.65; }
-    .em-legal a { color: #9B8CAA; text-decoration: none; }
-    .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
-    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
-    .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
-    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #A99BBC; margin: 30px 0 6px; }
+    .rows { width: 100%; border-collapse: collapse; }
+    .rows tr { border-bottom: 1px solid #F0ECF6; }
+    .rows tr:last-child { border-bottom: none; }
+    .rows td { padding: 12px 0; vertical-align: top; }
+    .r-key { font-size: 13px; color: #8A7C9C; width: 42%; }
+    .r-val { font-size: 14px; font-weight: 600; color: #1A0A2E; text-align: right; line-height: 1.4; }
+    .r-sub { font-size: 12px; color: #A99BBC; font-weight: 400; margin-top: 2px; }
+    .mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1px; }
+    .arrow { color: #A99BBC; margin: 0 7px; }
+    .dur { font-size: 12px; color: #A99BBC; margin-left: 6px; font-weight: 400; }
+    .total-row td { padding-top: 16px; border-top: 2px solid #1A0A2E; }
+    .total-key { font-size: 13px; font-weight: 700; color: #1A0A2E; text-transform: uppercase; letter-spacing: 1px; }
+    .total-val { font-size: 20px; font-weight: 700; color: #B8860B; text-align: right; letter-spacing: -.3px; }
+    .qr-wrap { text-align: center; padding: 8px 0 4px; }
+    .qr-img { display: inline-block; padding: 12px; background: #fff; border: 1px solid #ECE7F2; border-radius: 12px; }
+    .qr-ref { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 14px; font-weight: 700; color: #1A0A2E; letter-spacing: 2px; margin-top: 14px; }
+    .qr-code { font-size: 12px; color: #8A7C9C; margin-top: 4px; }
+    .qr-steps { font-size: 12.5px; color: #8A7C9C; line-height: 1.9; margin-top: 16px; text-align: left; }
+    .cta-row { margin-top: 32px; }
+    .cta-gold { display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 16px; text-align: center; border-radius: 8px; margin-bottom: 10px; }
+    .cta-ghost { display: block; text-align: center; color: #8A7C9C; text-decoration: none; font-size: 13px; font-weight: 600; padding: 12px; }
+    .em-legal { font-size: 12px; color: #A99BBC; line-height: 1.65; margin-top: 28px; padding-top: 22px; border-top: 1px solid #F0ECF6; }
+    .em-legal a { color: #8A7C9C; text-decoration: underline; }
+    .em-footer { background: #FAF9F7; border-top: 1px solid #EEEAF3; padding: 22px 40px; text-align: center; }
+    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #A99BBC; margin-bottom: 6px; }
+    .em-footer-text { font-size: 11px; color: #B9AEC8; line-height: 1.65; }
+    .em-footer-text a { color: #8A7C9C; text-decoration: none; }
     @media (max-width: 480px) {
       .wrap { padding: 0; background: #fff; }
-      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .sheet { border-radius: 0; border: none; max-width: 100%; }
       .em-header { padding: 18px 24px; }
-      .em-body { padding: 32px 24px 32px; }
+      .em-body { padding: 30px 22px 28px; }
       .em-footer { padding: 18px 24px; }
-      .cta-row { flex-direction: column; }
     }
   </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="card">
+  <div class="sheet">
 
     <div class="em-header">
       <div class="em-brand" th:if="${logo == null}">Elle A Osé</div>
@@ -77,92 +66,96 @@
     <div class="em-stripe"></div>
 
     <div class="em-body">
-      <div class="em-doc-title">Confirmation de réservation</div>
-
+      <div class="em-title">Réservation confirmée</div>
       <div class="em-intro">
-        Bonjour <strong th:text="${recipientName}">client</strong>, votre réservation a bien été enregistrée. Retrouvez ci-dessous le récapitulatif complet.
+        Bonjour <strong th:text="${recipientName}">client</strong>, votre réservation est bien enregistrée.
+        Vous trouverez ci-dessous le récapitulatif et votre code d'accès.
       </div>
 
-      <div class="section-lbl">Réservation</div>
-      <table class="dt">
+      <div class="section-lbl">Votre réservation</div>
+      <table class="rows">
         <tr>
-          <td class="dt-key">Référence</td>
-          <td><div class="dt-val dt-mono" th:text="${bookingNumber}">BKG-000001</div></td>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${bookingNumber}">BKG-000001</td>
         </tr>
         <tr>
-          <td class="dt-key">Espace</td>
-          <td>
-            <div class="dt-val" th:text="${resourceName}">Bureau Privé</div>
-            <div class="dt-sub" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
+          <td class="r-key">Espace</td>
+          <td class="r-val">
+            <span th:text="${resourceName}">Bureau Privé</span>
+            <div class="r-sub" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
           </td>
         </tr>
         <tr>
-          <td class="dt-key">Date</td>
-          <td><div class="dt-val" th:text="${bookingDate ?: startedAt}">—</div></td>
+          <td class="r-key">Date</td>
+          <td class="r-val" th:text="${bookingDate ?: startedAt}">—</td>
         </tr>
         <tr>
-          <td class="dt-key">Horaires</td>
-          <td>
-            <div class="dt-val">
-              <span th:text="${startTime}">09:00</span>
-              <span class="time-arrow">→</span>
-              <span th:text="${endTime}">13:00</span>
-              <span class="time-dur" th:text="${durationLabel}">4 h</span>
-            </div>
+          <td class="r-key">Horaires</td>
+          <td class="r-val">
+            <span th:text="${startTime}">09:00</span>
+            <span class="arrow">à</span>
+            <span th:text="${endTime}">13:00</span>
+            <span class="dur" th:text="${durationLabel}">4 h</span>
           </td>
         </tr>
         <tr th:if="${resourceCapacity}">
-          <td class="dt-key">Capacité</td>
-          <td><div class="dt-val" th:text="${resourceCapacity} + ' personne(s)'">—</div></td>
+          <td class="r-key">Capacité</td>
+          <td class="r-val" th:text="${resourceCapacity} + ' personne(s)'">—</td>
         </tr>
         <tr th:if="${address}">
-          <td class="dt-key">Adresse</td>
-          <td><div class="dt-val" th:text="${address}">—</div></td>
+          <td class="r-key">Adresse</td>
+          <td class="r-val" th:text="${address}">—</td>
         </tr>
       </table>
 
-      <div class="price-box">
-        <div class="price-total">
-          <span class="price-total-label">Total TTC</span>
-          <span class="price-total-amount" th:text="${priceTTC}">—</span>
-        </div>
-        <div class="price-row">
-          <span class="price-row-label" th:text="|${resourceName} × ${durationLabel}|">Base HT</span>
-          <span class="price-row-amount" th:text="${priceHT}">—</span>
-        </div>
-        <div class="price-row" th:if="${priceFees}">
-          <span class="price-row-label">Frais de réservation</span>
-          <span class="price-row-amount" th:text="${priceFees}">—</span>
-        </div>
-        <div class="price-row">
-          <span class="price-row-label" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</span>
-          <span class="price-row-amount" th:text="${priceTVA}">—</span>
-        </div>
-        <div class="price-row" th:if="${priceCentimeAdditionnel}">
-          <span class="price-row-label" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</span>
-          <span class="price-row-amount" th:text="${priceCentimeAdditionnel}">—</span>
-        </div>
-      </div>
+      <div class="section-lbl">Détail du prix</div>
+      <table class="rows">
+        <tr>
+          <td class="r-key" th:text="|${resourceName} × ${durationLabel}|">Base HT</td>
+          <td class="r-val" th:text="${priceHT}">—</td>
+        </tr>
+        <tr th:if="${priceFees}">
+          <td class="r-key">Frais de réservation</td>
+          <td class="r-val" th:text="${priceFees}">—</td>
+        </tr>
+        <tr>
+          <td class="r-key" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</td>
+          <td class="r-val" th:text="${priceTVA}">—</td>
+        </tr>
+        <tr th:if="${priceCentimeAdditionnel}">
+          <td class="r-key" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
+          <td class="r-val" th:text="${priceCentimeAdditionnel}">—</td>
+        </tr>
+        <tr class="total-row">
+          <td class="total-key">Total TTC</td>
+          <td class="total-val" th:text="${priceTTC}">—</td>
+        </tr>
+      </table>
 
-      <div class="payment-bar">
-        <div>
-          <span class="pay-label">Paiement</span>
-          <div class="pay-method" th:text="${paymentMethod}">—</div>
-          <div class="pay-date" th:if="${paymentDate}" th:text="${paymentDate}">—</div>
-        </div>
-        <div class="pay-amount" th:text="${priceTTC}">—</div>
-      </div>
+      <div class="section-lbl">Paiement</div>
+      <table class="rows">
+        <tr>
+          <td class="r-key">Mode</td>
+          <td class="r-val" th:text="${paymentMethod}">—</td>
+        </tr>
+        <tr th:if="${paymentDate != null and paymentDate != '—'}">
+          <td class="r-key">Date</td>
+          <td class="r-val" th:text="${paymentDate}">—</td>
+        </tr>
+      </table>
 
-      <div class="qr-section" th:if="${showQr != null}">
-        <div class="qr-label">Présentez ce code à l'accueil</div>
-        <div th:if="${showQr}" class="qr-img-wrap">
-          <img src="cid:qr-booking" alt="QR Code" width="140" height="140" style="display:block;"/>
+      <div class="section-lbl">Votre code d'accès</div>
+      <div class="qr-wrap">
+        <div class="qr-img" th:if="${showQr}">
+          <img src="cid:qr-booking" alt="QR Code de réservation" width="150" height="150" style="display:block;"/>
         </div>
         <div class="qr-ref" th:text="${bookingNumber}">BKG-000001</div>
         <div class="qr-code" th:if="${verificationCode}" th:text="|Code : ${verificationCode}|">Code : CHK-123</div>
-        <div class="qr-step">1. Présentez ce QR code à l'accueil à votre arrivée.</div>
-        <div class="qr-step">2. Si le scan échoue, communiquez le code ci-dessus.</div>
-        <div class="qr-step">3. Gardez cet email accessible jusqu'à la fin de votre session.</div>
+        <div class="qr-steps">
+          1. Présentez ce QR code à l'accueil à votre arrivée.<br/>
+          2. Si le scan échoue, communiquez le code ci-dessus.<br/>
+          3. Gardez cet email accessible jusqu'à la fin de votre session.
+        </div>
       </div>
 
       <div class="cta-row">

@@ -80,6 +80,8 @@ public class SecurityConfig {
                                 ApiPath.V1 + "/payments/mobile-money/pawaypay/callback",
                                 ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback",
                                 ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback",
+                                ApiPath.V1 + "/payments/mobile-money/pawapay/return",
+                                ApiPath.V1 + "/payments/mobile-money/pawaypay/return",
                                 "/verify/**",
                                 ApiPath.V1 + "/admin/provisioning/bootstrap-admin",
                                 ApiPath.V1 + "/public/**",

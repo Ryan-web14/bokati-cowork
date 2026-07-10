@@ -8,7 +8,10 @@ import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResp
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyProviderOptionResponse;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyTestDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
+import com.sni.bokaticowork.features.payment.provider.MobileMoneyPaymentProvider;
+import com.sni.bokaticowork.features.payment.provider.MobileMoneyStatusResponse;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.CongoCorrespondent;
+import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayProperties;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapaySignatureVerifier;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayCallbackPayload;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayRefundCallbackPayload;
@@ -18,6 +21,8 @@ import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayDepositServ
 import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayRefundCallbackProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +30,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -44,6 +51,8 @@ public class MobileMoneyController {
     private final PawapayCallbackProcessor callbackProcessor;
     private final PawapayRefundCallbackProcessor refundCallbackProcessor;
     private final PawapaySignatureVerifier signatureVerifier;
+    private final MobileMoneyPaymentProvider mobileMoneyProvider;
+    private final PawapayProperties properties;
     private final ObjectMapper objectMapper;
 
     @GetMapping("/providers")
@@ -120,6 +129,36 @@ public class MobileMoneyController {
             log.error("Error processing PawaPay deposit callback", ex);
         }
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Landing endpoint for PawaPay's Payment Page returnUrl. Best-effort settles the deposit
+     * from its current status, then redirects the customer's browser to the frontend result page.
+     */
+    @GetMapping("/pawapay/return")
+    public ResponseEntity<Void> paymentPageReturn(@RequestParam("depositId") String depositId) {
+        String status = "PROCESSING";
+        try {
+            MobileMoneyStatusResponse checked = mobileMoneyProvider.checkStatus(depositId);
+            status = checked.status();
+            if ("SUCCEEDED".equals(status)) {
+                callbackProcessor.process(new PawapayCallbackPayload(
+                        depositId, "COMPLETED", null, null, null, null, null, null,
+                        null, null, null, null, null, null, null, null));
+            } else if ("FAILED".equals(status)) {
+                callbackProcessor.process(new PawapayCallbackPayload(
+                        depositId, "FAILED", null, null, null, null, null, null,
+                        null, null, null, null, null, null, null, null));
+            }
+        } catch (Exception ex) {
+            log.warn("PawaPay return status check failed for depositId {}: {}", depositId, ex.getMessage());
+        }
+
+        String base = properties.getPaymentPageResultUrl();
+        String target = StringUtils.hasText(base)
+                ? base + (base.contains("?") ? "&" : "?") + "depositId=" + depositId + "&status=" + status
+                : "/";
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(target)).build();
     }
 
     /**

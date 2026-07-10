@@ -98,6 +98,9 @@ public class Contract {
     @Column(name = "renewed_from_code", length = 120)
     private String renewedFromCode;
 
+    @Column(name = "expiry_alert_sent_days")
+    private Integer expiryAlertSentDays;
+
     @Column(name = "reviewed_by")
     private Long reviewedBy;
 

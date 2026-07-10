@@ -143,12 +143,13 @@ public class PawapayDepositService {
         repository.save(deposit);
     }
 
-    public void markStatusChecked(String depositId, String providerStatus) {
-        repository.findByDepositId(depositId).ifPresent(deposit -> {
+    public PawapayDeposit markStatusChecked(String depositId, String providerStatus) {
+        return repository.findByDepositId(depositId).map(deposit -> {
             deposit.setLastStatusCheckedAt(Instant.now());
             deposit.setProviderMessage(providerStatus);
-            repository.save(deposit);
-        });
+            deposit.setStatusCheckCount(deposit.getStatusCheckCount() + 1);
+            return repository.save(deposit);
+        }).orElse(null);
     }
 
     @Transactional(readOnly = true)

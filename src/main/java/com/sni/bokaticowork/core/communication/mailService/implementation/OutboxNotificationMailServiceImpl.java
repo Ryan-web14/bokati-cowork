@@ -53,18 +53,31 @@ public class OutboxNotificationMailServiceImpl implements OutboxNotificationMail
     public CompletableFuture<Boolean> sendContractNotification(String to, Map<String, Object> variables) {
         String html = renderTemplate("email/contract-event", variables);
         String documentCode = variables.get("documentCode") == null ? null : variables.get("documentCode").toString();
+        String subject = contractSubject(variables.get("eventType"));
 
         if (StringUtils.hasText(documentCode)) {
             try {
                 DocumentFileResult document = documentFileReader.read(documentCode);
                 String fileName = StringUtils.hasText(document.fileName()) ? document.fileName() : documentCode + ".pdf";
-                return emailSender.sendHtmlEmailWithPdfAttachment(to, "Notification contrat", html, fileName, document.content());
+                return emailSender.sendHtmlEmailWithPdfAttachment(to, subject, html, fileName, document.content());
             } catch (Exception ex) {
                 throw new IllegalStateException("Could not attach contract PDF " + documentCode, ex);
             }
         }
 
-        return sendViaQueue(to, "Notification contrat", html, EmailPriority.HIGH);
+        return sendViaQueue(to, subject, html, EmailPriority.HIGH);
+    }
+
+    private String contractSubject(Object eventType) {
+        String type = eventType == null ? "" : eventType.toString();
+        return switch (type) {
+            case "CONTRACT_AUTO_ACTIVATED"  -> "Votre contrat est actif — Elle A Osé";
+            case "CONTRACT_AUTO_EXPIRED"    -> "Votre contrat a expiré — Elle A Osé";
+            case "CONTRACT_AUTO_RENEWED"    -> "Votre contrat a été renouvelé — Elle A Osé";
+            case "CONTRACT_EXPIRY_ALERT"    -> "Votre contrat expire bientôt — Elle A Osé";
+            case "CONTRACT_DRAFT_GENERATED" -> "Votre contrat est prêt — Elle A Osé";
+            default -> "Notification contrat — Elle A Osé";
+        };
     }
 
     @Override
