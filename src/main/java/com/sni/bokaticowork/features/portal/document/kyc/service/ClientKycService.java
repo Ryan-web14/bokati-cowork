@@ -102,7 +102,7 @@ public class ClientKycService {
                 .totalRequired((int) totalRequired)
                 .totalSubmitted((int) totalSubmitted)
                 .totalVerified((int) totalVerified)
-                .missingDocumentTypeCodes(caseResponse.getMissingDocumentTypeCodes())
+                .missingDocumentTypeCodes(approved ? List.of() : caseResponse.getMissingDocumentTypeCodes())
                 .requirements(requirements)
                 .build();
     }
@@ -288,12 +288,14 @@ public class ClientKycService {
                 .findAllByKycCaseOrderByIdAsc(kycCase).stream()
                 .map(this::toDocumentResponse)
                 .toList();
+        // Once the case is approved the dossier is complete: nothing is required or missing anymore.
+        boolean approved = kycCase.getStatus() == KycCaseStatus.APPROVED;
         List<ClientKycRequirementResponse> requirements = caseResponse.getRequirements() != null
                 ? caseResponse.getRequirements().stream()
                 .map(r -> ClientKycRequirementResponse.builder()
                         .documentTypeCode(r.getDocumentTypeCode())
                         .documentTypeName(r.getDocumentTypeName())
-                        .required(r.isRequired())
+                        .required(!approved && r.isRequired())
                         .requiresBackSide(r.getRequiresBackSide())
                         .status(r.getStatus() != null ? r.getStatus().name() : null)
                         .documentCode(r.getDocumentCode())
@@ -301,7 +303,7 @@ public class ClientKycService {
                         .build())
                 .toList()
                 : List.of();
-        int completionPercent = computeCompletionPercent(requirements);
+        int completionPercent = approved ? 100 : computeCompletionPercent(requirements);
         return ClientKycStatusResponse.builder()
                 .caseCode(kycCase.getCode())
                 .status(kycCase.getStatus().name())
@@ -314,7 +316,7 @@ public class ClientKycService {
                 .submittedAt(kycCase.getSubmittedAt())
                 .completedAt(kycCase.getCompletedAt())
                 .decisionComment(kycCase.getDecisionComment())
-                .missingDocumentTypeCodes(caseResponse.getMissingDocumentTypeCodes())
+                .missingDocumentTypeCodes(approved ? List.of() : caseResponse.getMissingDocumentTypeCodes())
                 .requirements(requirements)
                 .documents(documents)
                 .build();
