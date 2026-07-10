@@ -28,14 +28,15 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping(ApiPath.V1 + "/client/documents/kyc")
+// Primary path plus a "/portal/kyc" alias kept for the client portal frontend.
+@RequestMapping({ApiPath.V1 + "/client/documents/kyc", ApiPath.V1 + "/portal/kyc"})
 @RequiredArgsConstructor
 public class ClientKycController {
 
     private final ClientContextService clientContextService;
     private final ClientKycService clientKycService;
 
-    @GetMapping
+    @GetMapping({"", "/my-case"})
     public ResponseEntity<ClientKycStatusResponse> getMyCase() {
         Member member = clientContextService.getAuthenticatedMember();
         return ResponseEntity.ok(clientKycService.getMyCase(member));
@@ -59,7 +60,7 @@ public class ClientKycController {
         return ResponseEntity.ok(clientKycService.listDocuments(member));
     }
 
-    @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = {"/documents", "/documents/upload"}, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ClientKycDocumentResponse> uploadDocument(
             @RequestParam("file") MultipartFile file,
             @RequestParam("documentType") String documentType,
@@ -73,7 +74,7 @@ public class ClientKycController {
         return ResponseEntity.status(201).body(response);
     }
 
-    @PostMapping(value = "/documents", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = {"/documents", "/documents/upload"}, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ClientKycDocumentResponse> uploadDocumentJson() {
         throw new com.sni.bokaticowork.core.exception.customs.BadRequestException(
                 "Document upload requires Content-Type: multipart/form-data with a 'file' part. "

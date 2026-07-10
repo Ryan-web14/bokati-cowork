@@ -4,7 +4,6 @@ import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEm
 import com.sni.bokaticowork.core.communication.mailService.enums.EmailPriority;
 import com.sni.bokaticowork.core.communication.mailService.interfaces.PasswordResetMailService;
 import com.sni.bokaticowork.security.admin.user.model.Users;
-import com.sni.bokaticowork.security.model.PasswordResetToken;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,11 +30,11 @@ public class PasswordResetMailServiceImpl implements PasswordResetMailService {
 
     @Async
     @Override
-    public CompletableFuture<Boolean> sendPasswordResetMail(Users user, PasswordResetToken resetToken) {
+    public CompletableFuture<Boolean> sendPasswordResetMail(Users user, String rawToken, long expirationMs) {
         String firstname = user.getEmail();
-        String link = apiBaseUrl + FORM_PATH + resetToken.getPasswordToken();
+        String link = apiBaseUrl + FORM_PATH + rawToken;
 
-        long totalMinutes = resetToken.getExpiration() / (1000 * 60);
+        long totalMinutes = expirationMs / (1000 * 60);
         String expiryLabel = totalMinutes >= 60
                 ? (totalMinutes / 60) + " heure" + (totalMinutes / 60 > 1 ? "s" : "")
                 : totalMinutes + " min";

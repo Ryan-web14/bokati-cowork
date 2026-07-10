@@ -37,8 +37,9 @@ public class DocumentShareController {
     }
 
     @GetMapping("/shares/{token}")
-    public ResponseEntity<ShareLinkResponse> access(@PathVariable String token) {
-        ShareLinkResponse response = service.access(token);
+    public ResponseEntity<ShareLinkResponse> access(@PathVariable String token,
+                                                     @RequestParam(required = false) String password) {
+        ShareLinkResponse response = service.access(token, password);
         service.recordAccess(token);
         return ResponseEntity.ok(response);
     }

@@ -8,6 +8,7 @@ import com.sni.bokaticowork.security.model.PasswordResetToken;
 import com.sni.bokaticowork.security.repository.PasswordResetTokenRepository;
 import com.sni.bokaticowork.security.repository.RefreshTokenRepository;
 import com.sni.bokaticowork.security.service.passwordResetService.interfaces.PasswordResetService;
+import com.sni.bokaticowork.security.service.passwordResetService.support.PasswordPolicyValidator;
 import com.sni.bokaticowork.security.service.passwordResetService.support.PasswordResetNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.HexFormat;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -30,8 +35,9 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetMailService mailService;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetNotifier notifier;
+    private final PasswordPolicyValidator passwordPolicyValidator;
 
-    @Value("${app.security.password-reset.expiration-ms:86400000}")
+    @Value("${app.security.password-reset.expiration-ms:900000}")
     private long expiration;
 
     @Override
@@ -45,9 +51,10 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     public void generatePasswordResetToken(Users user, String triggeredBy) {
         passwordResetTokenRepo.invalidateAllTokensForUser(user.getId());
 
-        String token = UUID.randomUUID().toString();
+        // The raw token travels only in the email link; only its hash is persisted.
+        String rawToken = UUID.randomUUID().toString();
         PasswordResetToken resetToken = PasswordResetToken.builder()
-                .passwordToken(token)
+                .passwordToken(hashToken(rawToken))
                 .used(false)
                 .createdAt(Instant.now())
                 .expiryDate(Instant.now().plusMillis(expiration))
@@ -58,7 +65,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         passwordResetTokenRepo.save(resetToken);
 
-        mailService.sendPasswordResetMail(user, resetToken)
+        mailService.sendPasswordResetMail(user, rawToken, expiration)
                 .thenAccept(sent -> {
                     if (Boolean.TRUE.equals(sent)) {
                         log.info("Password reset email sent to {} (triggered by: {})",
@@ -72,7 +79,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     @Transactional(readOnly = true)
     public boolean isTokenValid(String token) {
-        return passwordResetTokenRepo.findByPasswordToken(token)
+        return passwordResetTokenRepo.findByPasswordToken(hashToken(token))
                 .map(t -> !Boolean.TRUE.equals(t.getUsed()) && t.getExpiryDate().isAfter(Instant.now()))
                 .orElse(false);
     }
@@ -80,7 +87,11 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     @Transactional
     public void validatePasswordResetToken(String token, String newPassword) {
-        PasswordResetToken resetToken = passwordResetTokenRepo.findByPasswordToken(token)
+        // Authoritative password strength guard — covers both the form and the JSON confirm API.
+        passwordPolicyValidator.validateOrThrow(newPassword);
+
+        String tokenHash = hashToken(token);
+        PasswordResetToken resetToken = passwordResetTokenRepo.findByPasswordToken(tokenHash)
                 .orElseThrow(() -> new BadRequestException("Lien de réinitialisation invalide ou expiré"));
 
         if (Boolean.TRUE.equals(resetToken.getUsed())) {
@@ -96,7 +107,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         String triggeredBy = resetToken.getCreatedBy();
 
         userService.resetUserPassword(user, newPassword);
-        passwordResetTokenRepo.invalidateToken(token);
+        passwordResetTokenRepo.invalidateToken(tokenHash);
         refreshTokenRepository.revokeActiveTokensByUserId(user.getId());
 
         user.setFailedLoginAttempts(0);
@@ -122,6 +133,24 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             });
         } else {
             task.run();
+        }
+    }
+
+    /**
+     * Hashes a reset token for storage/lookup. Reset tokens are high-entropy random UUIDs,
+     * so a fast unsalted SHA-256 is appropriate: a database leak never exposes usable links,
+     * yet lookup by hash stays deterministic.
+     */
+    private String hashToken(String token) {
+        if (token == null) {
+            return null;
+        }
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 algorithm unavailable", ex);
         }
     }
 }

@@ -3,67 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Code de connexion — Elle A Osé</title>
+<title>Votre code de connexion, Elle A Osé</title>
 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 <style>
     body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-    body { margin: 0; padding: 0; background-color: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    body { margin: 0; padding: 0; background-color: #E8E5E0; }
     @media only screen and (max-width: 480px) {
         .wrap-td { padding: 0 !important; }
         .card { border-radius: 0 !important; }
-        .header-td { padding: 18px 24px !important; }
-        .body-td { padding: 32px 24px !important; }
-        .footer-td { padding: 18px 24px !important; }
-        .digit-cell { width: 36px !important; height: 44px !important; }
-        .digit-cell div { font-size: 22px !important; }
+        .header-td { padding: 20px 24px !important; }
+        .body-td { padding: 34px 24px !important; }
+        .footer-td { padding: 20px 24px !important; }
+        .digit-cell { padding: 0 4px !important; }
+        .digit-box { width: 40px !important; height: 50px !important; line-height: 50px !important; font-size: 24px !important; }
     }
 </style>
 </head>
 <body>
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#E8E5E0;">
-<tr><td class="wrap-td" style="padding:48px 16px;" align="center">
-<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(26,10,46,.05),0 8px 24px rgba(26,10,46,.10),0 28px 56px rgba(26,10,46,.10);">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#E8E5E0;">
+<tr><td class="wrap-td" style="padding:44px 16px;" align="center">
+<table role="presentation" class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(26,10,46,.05),0 10px 30px rgba(26,10,46,.10);">
 
     <!-- Header -->
     <tr>
-        <td class="header-td" style="background:#110828;padding:22px 36px;">
-            <div style="font-size:13px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:#fff;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Elle A Osé</div>
-            <div style="font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.28);margin-top:5px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Espace de coworking</div>
+        <td class="header-td" style="background:#110828;padding:24px 40px;">
+            <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:#ffffff;">Elle A Os&#233;</div>
+            <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.30);margin-top:6px;">Espace de coworking</div>
         </td>
     </tr>
-
-    <!-- Stripe -->
     <tr><td style="height:2px;background:linear-gradient(90deg,#C9A84C 0%,#8B5CF6 100%);font-size:0;line-height:0;">&nbsp;</td></tr>
 
     <!-- Body -->
     <tr>
-        <td class="body-td" style="padding:44px 40px 40px;background:#fff;">
+        <td class="body-td" style="padding:42px 40px 40px;background:#ffffff;">
 
-            <!-- Title -->
-            <div style="font-size:19px;font-weight:700;color:#1A0A2E;letter-spacing:-0.3px;margin-bottom:28px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Code de connexion</div>
+            <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:#1A0A2E;letter-spacing:-.3px;margin-bottom:18px;">Votre code de connexion</div>
 
-            <!-- Greeting + Intro -->
-            <p style="font-size:14px;color:#5C4F6E;line-height:1.75;margin:0 0 32px 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-                Bonjour <span th:text="${firstname}" style="font-weight:600;color:#1A0A2E;">membre</span>,<br><br>
-                Voici votre code de connexion sécurisé pour accéder à votre espace Bokati. Ce code est à usage unique.
+            <p style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;color:#5C4F6E;line-height:1.75;margin:0 0 30px 0;">
+                Bonjour <span th:text="${firstname}" style="font-weight:700;color:#1A0A2E;">membre</span>,<br>
+                Voici votre code &#224; usage unique pour acc&#233;der &#224; votre espace Elle A Os&#233;.
             </p>
 
-            <!-- OTT Code Boxes -->
-            <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 12px auto;">
+            <!-- Code -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto 14px auto;">
                 <tr>
-                    <td th:each="digit : ${tokenDigits}" class="digit-cell" style="padding:0 3px;">
-                        <div style="width:44px;height:52px;background:#F8F7F5;border:2px solid #EEE9F5;border-radius:10px;text-align:center;line-height:52px;font-family:'Courier New',Courier,monospace;font-size:28px;font-weight:700;color:#1A0A2E;" th:text="${digit}">0</div>
+                    <td th:each="digit : ${tokenDigits}" class="digit-cell" style="padding:0 4px;">
+                        <div class="digit-box" style="width:46px;height:56px;background:#F8F7F5;border:2px solid #EBE5F3;border-radius:12px;text-align:center;line-height:56px;font-family:'Courier New',Courier,monospace;font-size:28px;font-weight:700;color:#1A0A2E;" th:text="${digit}">0</div>
                     </td>
                 </tr>
             </table>
 
-            <!-- Expiry -->
-            <div style="text-align:center;font-size:12px;color:#B0A0C0;margin-bottom:32px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Valable pendant 15 minutes</div>
+            <div style="text-align:center;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;color:#A99BC0;margin-bottom:34px;">
+                Valable pendant <span style="font-weight:700;color:#7A5CC0;">15</span> minutes.
+            </div>
 
-            <!-- Security note -->
-            <div style="font-size:12px;color:#B0A0C0;line-height:1.65;padding-top:28px;border-top:1px solid #EEE9F5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-                Si vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message. Votre compte reste sécurisé.
+            <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12.5px;color:#A99BC0;line-height:1.7;padding-top:26px;border-top:1px solid #EEE9F5;">
+                Vous n&#8217;&#234;tes pas &#224; l&#8217;origine de cette connexion&#8202;? Ignorez simplement ce message, votre compte reste s&#233;curis&#233;.
             </div>
 
         </td>
@@ -72,9 +68,9 @@
     <!-- Footer -->
     <tr>
         <td class="footer-td" style="background:#F8F7F5;border-top:1px solid #EAE5F0;padding:22px 40px;text-align:center;">
-            <div style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#9B8CAA;margin-bottom:6px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">Elle A Osé</div>
-            <div style="font-size:11px;color:#C0B4D0;line-height:1.65;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-                Message automatique. Pour toute question, contactez
+            <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#9B8CAA;margin-bottom:6px;">Elle A Os&#233;</div>
+            <div style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;color:#B8ACC8;line-height:1.65;">
+                Message automatique. Une question&#8202;? &#201;crivez-nous &#224;
                 <a href="mailto:supportela@elleaose.com" style="color:#9B8CAA;text-decoration:none;">supportela@elleaose.com</a>
             </div>
         </td>

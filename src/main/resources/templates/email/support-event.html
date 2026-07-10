@@ -3,86 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Support — Elle A Osé</title>
+  <title>Support, Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-    .wrap { width: 100%; padding: 48px 16px; background: #E8E5E0; }
-    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 28px 56px rgba(26,10,46,.10); }
-    .em-header { background: #110828; padding: 22px 36px; }
-    .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
-    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
-    /* Stripe varies by event type — green for resolved, amber for SLA/reminders, gold-purple default */
-    .stripe-default  { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
-    .stripe-resolved { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #10B981 100%); }
-    .stripe-sla      { height: 2px; background: linear-gradient(90deg, #EF4444 0%, #C9A84C 100%); }
-    .stripe-csat     { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #F59E0B 100%); }
-    .em-body { padding: 44px 40px 40px; }
-    .em-doc-title { font-size: 19px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 6px; }
-    .em-doc-sub { font-size: 13px; color: #9B8CAA; margin-bottom: 28px; line-height: 1.6; }
-    .em-greeting { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 28px; }
-    .em-greeting strong { color: #1A0A2E; font-weight: 700; }
-    /* Ticket card */
-    .ticket-card { border: 1px solid #EEE9F5; border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
-    .ticket-head { background: #F8F7F5; border-bottom: 1px solid #EEE9F5; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; }
-    .ticket-num { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 12px; font-weight: 700; color: #C9A84C; letter-spacing: 1.2px; }
-    .ticket-date { font-size: 11px; color: #B0A0C0; }
-    .ticket-body { padding: 18px; }
-    .ticket-title { font-size: 15px; font-weight: 700; color: #1A0A2E; margin-bottom: 16px; line-height: 1.4; }
-    .meta-row { display: flex; gap: 24px; flex-wrap: wrap; }
-    .meta-item { display: flex; flex-direction: column; gap: 4px; }
-    .meta-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; }
-    .meta-val { font-size: 12px; font-weight: 700; color: #5C4F6E; }
-    /* Priority / status badges — functional content, not header decoration */
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
-    .badge-URGENT { background: #FEE2E2; color: #991B1B; }
-    .badge-HIGH   { background: #FEF3C7; color: #92400E; }
-    .badge-MEDIUM { background: #FEF9C3; color: #78350F; }
-    .badge-LOW    { background: #ECFDF5; color: #166534; }
-    .badge-OPEN        { background: #EFF6FF; color: #1D4ED8; }
-    .badge-IN_PROGRESS { background: #EDE9FE; color: #5B21B6; }
-    .badge-RESOLVED    { background: #ECFDF5; color: #166534; }
-    .badge-CLOSED      { background: #F9FAFB; color: #6B7280; }
-    /* SLA footer row inside ticket */
-    .sla-row { background: #FDFCFF; border-top: 1px solid #EEE9F5; padding: 11px 18px; display: flex; justify-content: space-between; align-items: center; }
-    .sla-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #B0A0C0; }
-    .sla-val { font-size: 12.5px; font-weight: 700; color: #C9A84C; }
-    /* SLA alert card */
-    .sla-alert { border: 1px solid #FECACA; border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
-    .sla-alert-head { background: #EF4444; padding: 12px 18px; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: .5px; }
-    .sla-alert-body { padding: 18px; background: #FEF2F2; }
-    .sla-alert-ref { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 12px; font-weight: 700; color: #DC2626; letter-spacing: 1px; margin-bottom: 8px; }
-    .sla-alert-desc { font-size: 14px; color: #5C4F6E; line-height: 1.6; margin-bottom: 14px; }
-    .sla-alert-meta { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; }
-    .sla-action-box { border: 1px solid #FECACA; border-radius: 6px; padding: 12px 14px; font-size: 12.5px; color: #DC2626; line-height: 1.55; }
-    /* Message bubbles */
-    .msg-section { margin-bottom: 24px; }
-    .msg-from { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; margin-bottom: 10px; }
-    .msg-bubble-agent { border: 1px solid #EEE9F5; border-left: 3px solid #C9A84C; border-radius: 0 8px 8px 8px; padding: 16px 18px; font-size: 13.5px; color: #5C4F6E; line-height: 1.75; background: #FDFCFF; }
-    .msg-bubble-client { border: 1px solid #EEE9F5; border-left: 3px solid #8B5CF6; border-radius: 0 8px 8px 8px; padding: 16px 18px; font-size: 13.5px; color: #5C4F6E; line-height: 1.75; background: #FDFCFF; }
-    /* CSAT */
-    .csat-card { border: 1px solid #EEE9F5; border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
-    .csat-head { background: #F8F7F5; border-bottom: 1px solid #EEE9F5; padding: 11px 18px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #8B5CF6; }
-    .csat-body { padding: 24px 18px; text-align: center; }
-    .csat-prompt { font-size: 15px; font-weight: 700; color: #1A0A2E; margin-bottom: 6px; }
-    .csat-desc { font-size: 12.5px; color: #9B8CAA; line-height: 1.65; margin-bottom: 20px; }
-    .csat-stars { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
-    .csat-star { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; border: 2px solid #C9A84C; border-radius: 50%; font-size: 16px; font-weight: 800; color: #1A0A2E; background: #C9A84C; text-decoration: none; }
-    .csat-hint { font-size: 11px; color: #B0A0C0; margin-top: 8px; }
-    .csat-ref { font-size: 11px; color: #C0B4D0; margin-top: 14px; }
-    .cta-gold { display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; text-align: center; border-radius: 8px; margin-bottom: 0; }
-    .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
-    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
-    .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
-    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+    body { background: #F4F2EF; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+    .wrap { width: 100%; padding: 32px 14px; }
+    .card {
+      max-width: 560px; width: 100%; margin: 0 auto; background: #FFFFFF;
+      border: 1px solid #ECE6F2; border-radius: 14px; padding: 36px 34px;
+      box-shadow: 0 1px 2px rgba(26,10,46,.04), 0 10px 30px rgba(26,10,46,.07);
+    }
+    .brand { font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #1A0A2E; margin-bottom: 6px; }
+    .brand-sub { font-size: 11px; color: #A79AB6; margin-bottom: 24px; }
+    .letter { font-size: 15px; line-height: 1.7; color: #33283F; overflow-wrap: break-word; word-break: break-word; }
+    .letter p { margin: 0 0 18px; }
+    .letter strong { color: #1A0A2E; }
+    .quote { border-left: 3px solid #C9A84C; padding: 4px 0 4px 16px; margin: 0 0 20px; color: #4A3F5A; font-size: 14.5px; line-height: 1.7; }
+    .quote-client { border-left-color: #8B5CF6; }
+    .quote-from { font-size: 12px; color: #A79AB6; margin-bottom: 6px; }
+    .ref { color: #8A7C9A; font-size: 13px; }
+    .link { color: #7A5CC0; text-decoration: underline; }
+    .sign { margin-top: 26px; }
+    .csat-prompt { font-weight: 700; color: #1A0A2E; margin-bottom: 4px; }
+    .csat-scale { margin: 14px 0 6px; }
+    .csat-note { display: inline-block; width: 40px; height: 40px; line-height: 40px; text-align: center; margin: 0 6px 6px 0; border: 1px solid #C9A84C; border-radius: 50%; color: #1A0A2E; font-weight: 700; text-decoration: none; }
+    .csat-hint { font-size: 12px; color: #A79AB6; }
+    .alert { border-left: 3px solid #DC2626; padding: 4px 0 4px 16px; margin: 0 0 20px; }
+    .alert-title { font-weight: 700; color: #DC2626; margin-bottom: 6px; }
+    .alert-meta { color: #6A5F7A; font-size: 13.5px; line-height: 1.7; }
+    .foot { font-size: 12px; line-height: 1.6; color: #A79AB6; margin-top: 34px; padding-top: 18px; border-top: 1px solid #E4DEEC; }
+    .foot a { color: #8A7C9A; }
     @media (max-width: 480px) {
-      .wrap { padding: 0; background: #fff; }
-      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
-      .em-header { padding: 18px 24px; }
-      .em-body { padding: 28px 20px 32px; }
-      .em-footer { padding: 18px 24px; }
-      .ticket-head { flex-direction: column; align-items: flex-start; gap: 4px; }
-      .sla-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+      .wrap { padding: 0; }
+      .card { max-width: 100%; border-radius: 0; border-left: 0; border-right: 0; padding: 28px 20px; box-shadow: none; }
     }
   </style>
 </head>
@@ -90,178 +43,130 @@
 <div class="wrap">
   <div class="card">
 
-    <div class="em-header">
-      <div class="em-brand">Elle A Osé</div>
-      <div class="em-brand-sub">Service client &amp; support</div>
+    <div class="brand">Elle A Os&#233;</div>
+    <div class="brand-sub">Service client &amp; support</div>
+
+    <div class="letter" th:switch="${eventType}">
+
+      <!-- ══════════════ CÔTÉ CLIENT ══════════════ -->
+
+      <!-- Ticket ouvert -->
+      <div th:case="'TICKET_CREATED'">
+        <p>Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,</p>
+        <p>Nous avons bien re&#231;u votre demande et votre ticket est ouvert. Notre &#233;quipe revient vers vous
+          au plus vite<span th:if="${slaDeadline}" th:text="|, au plus tard le ${slaDeadline}|"></span>.</p>
+        <p th:if="${ticketTitle}">Sujet&#8202;: <strong th:text="${ticketTitle}">Sujet</strong></p>
+        <div class="quote" th:if="${messageContentHtml != null and !#strings.isEmpty(messageContentHtml)}">
+          <div class="quote-from">Votre demande</div>
+          <div th:utext="${messageContentHtml}">Description</div>
+        </div>
+      </div>
+
+      <!-- Réponse de l'équipe -->
+      <div th:case="'AGENT_MESSAGE'">
+        <p>Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,</p>
+        <p><strong th:text="${agentName ?: 'Notre &#233;quipe'}">Notre &#233;quipe</strong> vous a r&#233;pondu au sujet de votre demande&#8202;:</p>
+        <div class="quote" th:if="${messageContentHtml != null and !#strings.isEmpty(messageContentHtml)}"
+             th:utext="${messageContentHtml}">R&#233;ponse</div>
+        <p>Pour poursuivre l&#8217;&#233;change, r&#233;pondez simplement &#224; cet email.</p>
+      </div>
+
+      <!-- Ticket résolu -->
+      <div th:case="'TICKET_RESOLVED'">
+        <p>Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,</p>
+        <p>Bonne nouvelle&#8202;: votre demande a &#233;t&#233; trait&#233;e et votre ticket est d&#233;sormais r&#233;solu.
+          Si quelque chose reste en suspens, r&#233;pondez &#224; cet email et nous rouvrons votre ticket.</p>
+      </div>
+
+      <!-- Ticket réouvert (côté client) -->
+      <div th:case="'TICKET_REOPENED'">
+        <p>Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,</p>
+        <p>Nous avons bien re&#231;u votre nouveau message&#8202;: votre ticket est r&#233;ouvert et notre &#233;quipe
+          le reprend en charge. Nous revenons vers vous rapidement.</p>
+      </div>
+
+      <!-- Demande d'avis (CSAT) -->
+      <div th:case="'CSAT_REQUEST'">
+        <p>Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,</p>
+        <p>Votre demande a &#233;t&#233; trait&#233;e et nous aimerions savoir comment cela s&#8217;est pass&#233;.
+          Cela ne prend qu&#8217;un instant.</p>
+      </div>
+
+      <!-- ══════════════ CÔTÉ ÉQUIPE (interne) ══════════════ -->
+
+      <!-- Nouveau message client -->
+      <div th:case="'CLIENT_MESSAGE'">
+        <p>Bonjour,</p>
+        <p><strong th:text="${clientName ?: 'Le client'}">Le client</strong> a envoy&#233; un nouveau message sur le ticket
+          <strong th:text="${ticketNumber}">TCK-000</strong><span th:if="${ticketTitle}" th:text="| (${ticketTitle})|"></span>.</p>
+        <div class="quote quote-client" th:if="${messageContentHtml != null and !#strings.isEmpty(messageContentHtml)}"
+             th:utext="${messageContentHtml}">Message client</div>
+      </div>
+
+      <!-- Ticket réouvert par le client (interne) -->
+      <div th:case="'TICKET_REOPENED_AGENT'">
+        <p>Bonjour,</p>
+        <p><strong th:text="${clientName ?: 'Le client'}">Le client</strong> a r&#233;pondu sur le ticket ferm&#233;
+          <strong th:text="${ticketNumber}">TCK-000</strong>&#8202;: il est automatiquement r&#233;ouvert.</p>
+        <div class="quote quote-client" th:if="${messageContentHtml != null and !#strings.isEmpty(messageContentHtml)}"
+             th:utext="${messageContentHtml}">Message client</div>
+      </div>
+
+      <!-- Dépassement SLA (interne) -->
+      <div th:case="'SLA_BREACH'">
+        <p>Bonjour,</p>
+        <div class="alert">
+          <div class="alert-title" th:text="|D&#233;lai SLA d&#233;pass&#233;&#8202;: ${breachType}|">D&#233;lai SLA d&#233;pass&#233;</div>
+          <div class="alert-meta">
+            Ticket <strong th:text="${ticketNumber}">TCK-000</strong><span th:if="${ticketTitle}" th:text="| (${ticketTitle})|"></span><br>
+            <span th:if="${ticketPriority}" th:text="|Priorit&#233;&#8202;: ${ticketPriority}|"></span>
+            <span th:if="${ticketCategory}" th:text="| · Cat&#233;gorie&#8202;: ${ticketCategory}|"></span>
+          </div>
+        </div>
+        <p>Merci de prendre ce ticket en charge sans attendre pour limiter l&#8217;impact client.</p>
+      </div>
+
+      <!-- Escalade SLA (interne) -->
+      <div th:case="'SLA_ESCALATION'">
+        <p>Bonjour,</p>
+        <div class="alert">
+          <div class="alert-title" th:text="|Escalade niveau ${escalationLevel}|">Escalade</div>
+          <div class="alert-meta">
+            Ticket <strong th:text="${ticketNumber}">TCK-000</strong><span th:if="${ticketTitle}" th:text="| (${ticketTitle})|"></span><br>
+            <span th:if="${escalationReason}" th:text="|Motif&#8202;: ${escalationReason}|"></span>
+          </div>
+        </div>
+        <p>Ce ticket requiert votre attention.</p>
+      </div>
+
+      <!-- Fallback -->
+      <div th:case="*">
+        <p>Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,</p>
+        <p>Votre ticket <strong th:text="${ticketNumber}">TCK-000</strong> a &#233;t&#233; mis &#224; jour.</p>
+      </div>
+
+      <!-- Bloc CSAT : résolution et demande d'avis uniquement -->
+      <div th:if="${(eventType == 'TICKET_RESOLVED' or eventType == 'CSAT_REQUEST') and csatLinks != null}">
+        <p class="csat-prompt">Comment jugez-vous notre prise en charge&#8202;?</p>
+        <p class="csat-hint" style="margin:0 0 6px;">Cliquez sur une note, de 1 (tr&#232;s insatisfait) &#224; 5 (tr&#232;s satisfait). Aucune connexion requise.</p>
+        <div class="csat-scale">
+          <a th:each="entry : ${csatLinks}" th:href="${entry.value}" class="csat-note" th:text="${entry.key}">1</a>
+        </div>
+      </div>
+
+      <p class="ref">Ticket de r&#233;f&#233;rence&#8202;: <span th:text="${ticketNumber}">TCK-000</span></p>
+
+      <p><a href="https://espace.elleaose.com" class="link">Voir mon ticket</a></p>
+
+      <p class="sign">L&#8217;&#233;quipe Elle A Os&#233;</p>
     </div>
 
-    <!-- Stripe varies by event type -->
-    <div th:switch="${eventType}">
-      <div th:case="'TICKET_RESOLVED'"  class="stripe-resolved"></div>
-      <div th:case="'SLA_BREACH'"       class="stripe-sla"></div>
-      <div th:case="'SLA_ESCALATION'"   class="stripe-sla"></div>
-      <div th:case="'CSAT_REQUEST'"     class="stripe-csat"></div>
-      <div th:case="*"                  class="stripe-default"></div>
-    </div>
-
-    <div class="em-body">
-
-      <!-- Hero title/subtitle per event type -->
-      <div th:switch="${eventType}">
-        <div th:case="'TICKET_CREATED'">
-          <div class="em-doc-title">Votre ticket a été ouvert</div>
-          <div class="em-doc-sub">Nous avons bien reçu votre demande. Notre équipe vous répond dans les délais indiqués.</div>
-        </div>
-        <div th:case="'AGENT_MESSAGE'">
-          <div class="em-doc-title">Notre équipe vous a répondu</div>
-          <div class="em-doc-sub" th:if="${agentName}" th:text="|Réponse de ${agentName} — lisez le message ci-dessous.|">Réponse</div>
-          <div class="em-doc-sub" th:unless="${agentName}">Un message a été ajouté à votre ticket.</div>
-        </div>
-        <div th:case="'CLIENT_MESSAGE'">
-          <div class="em-doc-title">Nouveau message client</div>
-          <div class="em-doc-sub"><strong th:text="${clientName ?: 'Le client'}">Client</strong> a répondu sur ce ticket.</div>
-        </div>
-        <div th:case="'TICKET_RESOLVED'">
-          <div class="em-doc-title">Ticket résolu</div>
-          <div class="em-doc-sub">Ce ticket a été marqué comme résolu. Dites-nous si vous êtes satisfait(e).</div>
-        </div>
-        <div th:case="'TICKET_REOPENED'">
-          <div class="em-doc-title">Ticket réouvert</div>
-          <div class="em-doc-sub">Votre message a bien été reçu et votre ticket est réouvert.</div>
-        </div>
-        <div th:case="'TICKET_REOPENED_AGENT'">
-          <div class="em-doc-title">Ticket réouvert par le client</div>
-          <div class="em-doc-sub"><strong th:text="${clientName ?: 'Le client'}">Client</strong> a répondu sur un ticket fermé — il est automatiquement réouvert.</div>
-        </div>
-        <div th:case="'SLA_BREACH'">
-          <div class="em-doc-title" style="color:#DC2626;">Délai SLA dépassé</div>
-          <div class="em-doc-sub" th:text="|Type : ${breachType}. Une action immédiate est requise.|">Alerte SLA</div>
-        </div>
-        <div th:case="'SLA_ESCALATION'">
-          <div class="em-doc-title" style="color:#DC2626;" th:text="|Escalade niveau ${escalationLevel}|">Escalade SLA</div>
-          <div class="em-doc-sub" th:text="${escalationReason}">Raison de l'escalade</div>
-        </div>
-        <div th:case="'CSAT_REQUEST'">
-          <div class="em-doc-title">Comment s'est passée votre expérience ?</div>
-          <div class="em-doc-sub">Votre avis nous aide à améliorer notre service. Cela prend moins d'une minute.</div>
-        </div>
-      </div>
-
-      <div class="em-greeting">
-        Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,
-      </div>
-
-      <!-- SLA breach / escalation alert -->
-      <div th:if="${eventType == 'SLA_BREACH' or eventType == 'SLA_ESCALATION'}">
-        <div class="sla-alert">
-          <div class="sla-alert-head">Dépassement SLA — intervention requise</div>
-          <div class="sla-alert-body">
-            <div class="sla-alert-ref" th:text="${ticketNumber}">TCK-000</div>
-            <div class="sla-alert-desc" th:text="${ticketTitle}">Titre du ticket</div>
-            <div class="sla-alert-meta">
-              <div class="meta-item" th:if="${ticketPriority}">
-                <span class="meta-lbl">Priorité</span>
-                <span class="badge" th:classappend="|badge-${ticketPriority}|" th:text="${ticketPriority}">—</span>
-              </div>
-              <div class="meta-item" th:if="${ticketCategory}">
-                <span class="meta-lbl">Catégorie</span>
-                <span class="meta-val" style="color:#DC2626;" th:text="${ticketCategory}">—</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-lbl" th:text="${eventType == 'SLA_BREACH'} ? 'Type' : 'Niveau'">Type</span>
-                <span class="meta-val" style="color:#DC2626;" th:text="${eventType == 'SLA_BREACH'} ? ${breachType} : ${escalationLevel}">—</span>
-              </div>
-            </div>
-            <div class="sla-action-box" th:if="${eventType == 'SLA_BREACH'}">Prenez en charge ce ticket immédiatement pour limiter l'impact client.</div>
-            <div class="sla-action-box" th:if="${eventType == 'SLA_ESCALATION'}" th:text="${escalationReason}">Raison de l'escalade</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Ticket summary (all other events) -->
-      <div th:unless="${eventType == 'SLA_BREACH' or eventType == 'SLA_ESCALATION'}">
-        <div class="ticket-card">
-          <div class="ticket-head">
-            <span class="ticket-num" th:text="${ticketNumber}">TCK-000</span>
-            <span class="ticket-date" th:text="${createdAt}">—</span>
-          </div>
-          <div class="ticket-body">
-            <div class="ticket-title" th:text="${ticketTitle}">Titre du ticket</div>
-            <div class="meta-row">
-              <div class="meta-item" th:if="${ticketPriority}">
-                <span class="meta-lbl">Priorité</span>
-                <span class="badge" th:classappend="|badge-${ticketPriority}|" th:text="${ticketPriority}">MEDIUM</span>
-              </div>
-              <div class="meta-item" th:if="${ticketCategory}">
-                <span class="meta-lbl">Catégorie</span>
-                <span class="meta-val" th:text="${ticketCategory}">OTHER</span>
-              </div>
-              <div class="meta-item" th:if="${ticketStatus}">
-                <span class="meta-lbl">Statut</span>
-                <span class="badge" th:classappend="|badge-${ticketStatus}|" th:text="${ticketStatus}">OPEN</span>
-              </div>
-            </div>
-          </div>
-          <div class="sla-row" th:if="${eventType == 'TICKET_CREATED' and slaDeadline != null}">
-            <span class="sla-lbl">Délai de première réponse</span>
-            <span class="sla-val" th:text="${slaDeadline}">—</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Message content -->
-      <div class="msg-section"
-           th:if="${messageContentHtml != null
-                    and !#strings.isEmpty(messageContentHtml)
-                    and (eventType == 'TICKET_CREATED'
-                         or eventType == 'AGENT_MESSAGE'
-                         or eventType == 'CLIENT_MESSAGE'
-                         or eventType == 'TICKET_REOPENED_AGENT')}">
-        <div class="msg-from" th:switch="${eventType}">
-          <span th:case="'TICKET_CREATED'">Description du ticket</span>
-          <span th:case="'AGENT_MESSAGE'" th:text="|Réponse de ${agentName ?: 'notre équipe'}|">Réponse</span>
-          <span th:case="'CLIENT_MESSAGE'" th:text="|Message de ${clientName ?: 'votre client'}|">Message client</span>
-          <span th:case="'TICKET_REOPENED_AGENT'" th:text="|Message de ${clientName ?: 'le client'}|">Message client</span>
-        </div>
-        <div th:if="${eventType == 'CLIENT_MESSAGE' or eventType == 'TICKET_REOPENED_AGENT'}"
-             class="msg-bubble-client" th:utext="${messageContentHtml}">Contenu du message</div>
-        <div th:unless="${eventType == 'CLIENT_MESSAGE' or eventType == 'TICKET_REOPENED_AGENT'}"
-             class="msg-bubble-agent" th:utext="${messageContentHtml}">Contenu du message</div>
-      </div>
-
-      <!-- CSAT -->
-      <div th:if="${eventType == 'CSAT_REQUEST' or eventType == 'TICKET_RESOLVED'}">
-        <div class="csat-card">
-          <div class="csat-head">Évaluez notre service</div>
-          <div class="csat-body">
-            <div class="csat-prompt">Êtes-vous satisfait(e) de notre prise en charge ?</div>
-            <div class="csat-desc">Cliquez sur votre note — aucune connexion requise.<br>Votre retour nous aide à améliorer notre service.</div>
-            <div class="csat-stars" th:if="${csatLinks != null}">
-              <a th:each="entry : ${csatLinks}" th:href="${entry.value}" class="csat-star" th:text="${entry.key}">1</a>
-            </div>
-            <div class="csat-stars" th:unless="${csatLinks != null}">
-              <span class="csat-star">1</span>
-              <span class="csat-star">2</span>
-              <span class="csat-star">3</span>
-              <span class="csat-star">4</span>
-              <span class="csat-star">5</span>
-            </div>
-            <div class="csat-hint">1 = Très insatisfait &nbsp;·&nbsp; 5 = Très satisfait</div>
-            <div class="csat-ref">Ticket concerné : <strong th:text="${ticketNumber}">TCK-000</strong></div>
-          </div>
-        </div>
-      </div>
-
-      <a href="https://espace.elleaose.com" class="cta-gold">Voir mon ticket</a>
-    </div>
-
-    <div class="em-footer">
-      <div class="em-footer-brand">Elle A Osé · Support client</div>
-      <div class="em-footer-text">
-        Cet email est envoyé automatiquement suite à une activité sur votre ticket.<br>
-        Pour répondre, répondez directement à cet email — votre message sera ajouté au ticket.<br>
-        <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
-      </div>
+    <div class="foot">
+      Vous pouvez r&#233;pondre directement &#224; cet email&#8202;: votre message sera ajout&#233; &#224; votre ticket
+      (gardez la r&#233;f&#233;rence <span th:text="${ticketNumber}">TCK-000</span> dans l&#8217;objet).<br>
+      Besoin d&#8217;aide&#8202;? &#201;crivez-nous &#224; <a href="mailto:supportela@elleaose.com">supportela@elleaose.com</a>
+      &#183; <a href="tel:052042552">05 204 2552</a><br>
+      Elle A Os&#233; &#183; Service client
     </div>
 
   </div>

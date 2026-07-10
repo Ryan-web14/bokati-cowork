@@ -63,6 +63,8 @@ public class ClientKycService {
         List<DocumentRequirement> reqs = requirementRepository
                 .findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(DocumentOwnerType.MEMBER);
         KycCase kycCase = resolveCase(member);
+        // Once the case is approved the dossier is complete: nothing is required or missing anymore.
+        boolean approved = kycCase.getStatus() == KycCaseStatus.APPROVED;
         List<KycRequirementStatus> statuses = kycService.getMissingRequirements(kycCase.getCode());
         return reqs.stream().map(r -> {
             KycRequirementStatus match = statuses.stream()
@@ -72,7 +74,7 @@ public class ClientKycService {
             return ClientKycRequirementResponse.builder()
                     .documentTypeCode(r.getDocumentTypeCode())
                     .documentTypeName(r.getDocumentTypeName())
-                    .required(Boolean.TRUE.equals(r.getRequired()))
+                    .required(!approved && Boolean.TRUE.equals(r.getRequired()))
                     .requiresBackSide(docType != null ? docType.getRequiresBackSide() : Boolean.FALSE)
                     .status(match != null && match.getStatus() != null ? match.getStatus().name() : null)
                     .documentCode(match != null ? match.getDocumentCode() : null)

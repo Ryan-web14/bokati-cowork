@@ -3,105 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notification KYC, Elle A Os&#233;</title>
+  <title>Votre dossier KYC, Elle A Os&#233;</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-    .wrap { width: 100%; padding: 48px 16px; background: #E8E5E0; }
-    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 28px 56px rgba(26,10,46,.10); }
-    .em-header { background: #110828; padding: 22px 36px; }
-    .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
-    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
-    .em-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
-    .em-body { padding: 44px 40px 40px; }
-    .em-title { font-size: 19px; font-weight: 700; color: #1A0A2E; margin-bottom: 28px; }
-    .em-intro { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 32px; }
-    .em-intro strong { color: #1A0A2E; font-weight: 700; }
-    .dt { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
-    .dt tr { border-bottom: 1px solid #EEE9F5; }
-    .dt tr:first-child { border-top: 1px solid #EEE9F5; }
-    .dt td { padding: 13px 0; vertical-align: middle; }
-    .dt-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; width: 150px; }
-    .dt-val { font-size: 13.5px; font-weight: 600; color: #1A0A2E; }
-    .cta { display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; text-align: center; border-radius: 8px; margin-bottom: 28px; }
-    .em-legal { font-size: 11.5px; color: #C0B4D0; line-height: 1.65; }
-    .em-legal a { color: #9B8CAA; text-decoration: none; }
-    .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
-    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
-    .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
-    @media (max-width: 480px) {
-      .wrap { padding: 0; background: #fff; }
-      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
-      .em-header { padding: 18px 24px; }
-      .em-body { padding: 32px 24px 32px; }
-      .em-footer { padding: 18px 24px; }
-    }
+    body { background: #F4F2EF; }
+    .wrap { width: 100%; padding: 40px 18px; }
+    .sheet { max-width: 560px; width: 100%; margin: 0 auto; }
+    .brand { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #1A0A2E; margin-bottom: 28px; }
+    .letter { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.7; color: #33283F; overflow-wrap: break-word; word-break: break-word; }
+    .letter p { margin: 0 0 18px; }
+    .letter strong { color: #1A0A2E; }
+    .ref { color: #8A7C9A; font-size: 13px; }
+    .link { color: #7A5CC0; text-decoration: underline; }
+    .sign { margin-top: 26px; }
+    .foot { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.6; color: #A79AB6; margin-top: 34px; padding-top: 18px; border-top: 1px solid #E4DEEC; }
+    .foot a { color: #8A7C9A; }
   </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="card">
+  <div class="sheet">
 
-    <div class="em-header">
-      <div class="em-brand">Elle A Os&#233;</div>
-      <div class="em-brand-sub">Espace de coworking</div>
+    <div class="brand">Elle A Os&#233;</div>
+
+    <div class="letter" th:switch="${eventType}">
+
+      <!-- Dossier ouvert manuellement par un admin -->
+      <div th:case="'KYC_CASE_CREATED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Nous venons d&#8217;ouvrir votre dossier de v&#233;rification (KYC) afin de finaliser votre inscription
+          chez Elle A Os&#233;. Il ne vous reste qu&#8217;&#224; d&#233;poser les quelques pi&#232;ces demand&#233;es
+          depuis votre espace personnel.</p>
+        <p>C&#8217;est rapide, et une fois vos documents re&#231;us nous nous occupons de tout.</p>
+      </div>
+
+      <!-- Dossier valid&#233; -->
+      <div th:case="'KYC_CASE_APPROVED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Bonne nouvelle&#8202;! Votre dossier de v&#233;rification vient d&#8217;&#234;tre <strong>valid&#233;</strong>.
+          Tout est en ordre, et vous pouvez d&#233;sormais profiter pleinement de votre espace et de nos services.</p>
+        <p>Merci de votre confiance, et &#224; tr&#232;s vite dans nos espaces.</p>
+      </div>
+
+      <!-- Correction / mise &#224; jour demand&#233;e -->
+      <div th:case="'KYC_CASE_REJECTED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Nous avons examin&#233; votre dossier et une petite mise &#224; jour est n&#233;cessaire avant de pouvoir le
+          valider. Rien d&#8217;inqui&#233;tant&#8202;: il s&#8217;agit simplement de corriger ou de renvoyer une ou plusieurs
+          pi&#232;ces.</p>
+        <p>Rendez-vous dans votre espace personnel, o&#249; le d&#233;tail des &#233;l&#233;ments attendus vous est indiqu&#233;.</p>
+      </div>
+      <div th:case="'KYC_CASE_CORRECTION_REQUESTED'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Nous avons examin&#233; votre dossier et une petite mise &#224; jour est n&#233;cessaire avant de pouvoir le
+          valider. Rien d&#8217;inqui&#233;tant&#8202;: il s&#8217;agit simplement de corriger ou de renvoyer une ou plusieurs
+          pi&#232;ces.</p>
+        <p>Rendez-vous dans votre espace personnel, o&#249; le d&#233;tail des &#233;l&#233;ments attendus vous est indiqu&#233;.</p>
+      </div>
+
+      <!-- Rappel amical : dossier incomplet -->
+      <div th:case="'KYC_INCOMPLETE_REMINDER'">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Un petit rappel amical&#8202;: votre dossier de v&#233;rification n&#8217;est pas encore complet. Il ne manque
+          que quelques pi&#232;ces pour le finaliser, et nous pourrons alors le valider rapidement.</p>
+        <p>D&#232;s que vous avez un instant, d&#233;posez les documents restants depuis votre espace personnel.</p>
+      </div>
+
+      <!-- Fallback -->
+      <div th:case="*">
+        <p>Bonjour <strong th:text="${recipientName}">client</strong>,</p>
+        <p>Votre dossier de v&#233;rification a &#233;t&#233; mis &#224; jour. Vous en retrouvez le d&#233;tail depuis
+          votre espace personnel.</p>
+      </div>
+
+      <p><a href="https://espace.elleaose.com" class="link">Acc&#233;der &#224; mon espace</a></p>
+
+      <p class="ref">Dossier de r&#233;f&#233;rence&#8202;: <span th:text="${kycCaseCode}">KCS-001</span></p>
+
+      <p class="sign">L&#8217;&#233;quipe Elle A Os&#233;</p>
     </div>
-    <div class="em-stripe"></div>
 
-    <div class="em-body">
-      <div class="em-title" th:switch="${eventType}">
-        <span th:case="'KYC_CASE_CREATED'">Nouveau dossier KYC</span>
-        <span th:case="'KYC_CASE_AUTO_CREATED'">Dossier KYC cr&#233;&#233; automatiquement</span>
-        <span th:case="'KYC_CASE_APPROVED'">Dossier KYC approuv&#233;</span>
-        <span th:case="'KYC_CASE_REJECTED'">Correction requise sur votre dossier KYC</span>
-        <span th:case="*">Mise &#224; jour de votre dossier KYC</span>
-      </div>
-
-      <div class="em-intro" th:switch="${eventType}">
-        <span th:case="'KYC_CASE_CREATED'">Bonjour <strong th:text="${recipientName}">client</strong>, un dossier KYC a &#233;t&#233; ouvert pour votre compte. Veuillez fournir les pi&#232;ces justificatives demand&#233;es.</span>
-        <span th:case="'KYC_CASE_AUTO_CREATED'">Bonjour <strong th:text="${recipientName}">client</strong>, un dossier KYC a &#233;t&#233; cr&#233;&#233; automatiquement. Veuillez v&#233;rifier les pi&#232;ces &#224; fournir depuis votre espace.</span>
-        <span th:case="'KYC_CASE_APPROVED'">Bonjour <strong th:text="${recipientName}">client</strong>, votre dossier KYC a &#233;t&#233; approuv&#233;. Vous pouvez d&#233;sormais profiter pleinement de votre espace.</span>
-        <span th:case="'KYC_CASE_REJECTED'">Bonjour <strong th:text="${recipientName}">client</strong>, des corrections sont requises sur votre dossier KYC. Veuillez mettre &#224; jour les pi&#232;ces demand&#233;es.</span>
-        <span th:case="*">Bonjour <strong th:text="${recipientName}">client</strong>, votre dossier KYC a &#233;t&#233; mis &#224; jour.</span>
-      </div>
-
-      <table class="dt">
-        <tr>
-          <td class="dt-key">Dossier</td>
-          <td class="dt-val" th:text="${kycCaseCode}">KCS-001</td>
-        </tr>
-        <tr>
-          <td class="dt-key">&#201;v&#233;nement</td>
-          <td class="dt-val" th:text="${eventLabel ?: eventType}">&#201;v&#233;nement</td>
-        </tr>
-        <tr>
-          <td class="dt-key">Statut</td>
-          <td class="dt-val">
-            <span th:switch="${status}">
-              <span th:case="'APPROVED'" style="color: #059669; font-weight: 600;">Approuv&#233;</span>
-              <span th:case="'IN_PROGRESS'" style="color: #D97706; font-weight: 600;">En cours</span>
-              <span th:case="'UNDER_REVIEW'" style="color: #D97706; font-weight: 600;">En examen</span>
-              <span th:case="'SUBMITTED'" style="color: #D97706; font-weight: 600;">Soumis</span>
-              <span th:case="'PENDING_CORRECTION'" style="color: #DC2626; font-weight: 600;">Correction requise</span>
-              <span th:case="'REJECTED'" style="color: #DC2626; font-weight: 600;">Rejet&#233;</span>
-              <span th:case="'EXPIRED'" style="color: #DC2626; font-weight: 600;">Expir&#233;</span>
-              <span th:case="*" th:text="${status}">Statut</span>
-            </span>
-          </td>
-        </tr>
-      </table>
-
-      <a href="https://espace.elleaose.com" class="cta">Consulter mon espace</a>
-
-      <div class="em-legal">
-        V&#233;rifiez si des pi&#232;ces suppl&#233;mentaires sont attendues depuis votre espace personnel.
-        Pour toute question, contactez <a href="mailto:supportela@elleaose.com">supportela@elleaose.com</a>.
-      </div>
-    </div>
-
-    <div class="em-footer">
-      <div class="em-footer-brand">Elle A Os&#233;</div>
-      <div class="em-footer-text">Message automatique. Pour toute question, contactez <a href="mailto:supportela@elleaose.com">supportela@elleaose.com</a></div>
+    <div class="foot">
+      Une question&#8202;? &#201;crivez-nous &#224; <a href="mailto:supportela@elleaose.com">supportela@elleaose.com</a>,
+      nous sommes l&#224; pour vous aider.<br>
+      Elle A Os&#233; &#183; Espace de coworking
     </div>
 
   </div>

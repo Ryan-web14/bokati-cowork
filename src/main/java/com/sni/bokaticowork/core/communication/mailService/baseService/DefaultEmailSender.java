@@ -134,7 +134,7 @@ public class DefaultEmailSender {
                 providerName(), from, to, subject,
                 html ? BODY_TYPE_HTML : BODY_TYPE_TEXT,
                 content, relatedType, relatedCode);
-        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+        publishToRabbit(from, delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
                 null, null, null, null);
         return delivery;
     }
@@ -143,7 +143,7 @@ public class DefaultEmailSender {
         EmailDeliveryResponse delivery = deliveryTracker.resetForRetry(emailNumber);
         EmailDeliveryLog log = deliveryTracker.markSending(emailNumber);
         deliveryTracker.resetForRetry(emailNumber);
-        publishToRabbit(emailNumber, log.getRecipientEmail(), log.getSubject(), log.getBodyContent(),
+        publishToRabbit(log.getFromEmail(), emailNumber, log.getRecipientEmail(), log.getSubject(), log.getBodyContent(),
                 EmailPriority.NORMAL, null, null, null, null);
         return delivery;
     }
@@ -152,8 +152,16 @@ public class DefaultEmailSender {
                                  EmailPriority priority,
                                  String attachmentName, byte[] attachmentBytes,
                                  String inlineImageContentId, byte[] inlineImageBytes) {
+        publishToRabbit(null, emailNumber, to, subject, content, priority,
+                attachmentName, attachmentBytes, inlineImageContentId, inlineImageBytes);
+    }
+
+    private void publishToRabbit(String from, String emailNumber, String to, String subject, String content,
+                                 EmailPriority priority,
+                                 String attachmentName, byte[] attachmentBytes,
+                                 String inlineImageContentId, byte[] inlineImageBytes) {
         EmailRabbitMessage message = new EmailRabbitMessage(
-                emailNumber, to, null, subject, content, priority,
+                emailNumber, to, from, subject, content, priority,
                 null, null, null, null, null,
                 attachmentName, attachmentBytes,
                 inlineImageContentId, inlineImageBytes,
@@ -183,7 +191,11 @@ public class DefaultEmailSender {
     }
 
     public boolean sendHtmlEmailBlocking(String to, String subject, String content) {
-        return sendWithGraph(resolveOutboundMailboxEmail(), to, subject, content, true);
+        return sendHtmlEmailBlocking(null, to, subject, content);
+    }
+
+    public boolean sendHtmlEmailBlocking(String from, String to, String subject, String content) {
+        return sendWithGraph(resolveSender(from), to, subject, content, true);
     }
 
     public boolean sendHtmlEmailWithPdfAttachmentBlocking(String to,
@@ -191,7 +203,16 @@ public class DefaultEmailSender {
                                                           String content,
                                                           String attachmentName,
                                                           byte[] attachmentBytes) {
-        return sendWithGraphPdfAttachment(resolveOutboundMailboxEmail(), to, subject, content, attachmentName, attachmentBytes);
+        return sendHtmlEmailWithPdfAttachmentBlocking(null, to, subject, content, attachmentName, attachmentBytes);
+    }
+
+    public boolean sendHtmlEmailWithPdfAttachmentBlocking(String from,
+                                                          String to,
+                                                          String subject,
+                                                          String content,
+                                                          String attachmentName,
+                                                          byte[] attachmentBytes) {
+        return sendWithGraphPdfAttachment(resolveSender(from), to, subject, content, attachmentName, attachmentBytes);
     }
 
     public boolean sendWithGraphInlineImageBlocking(String to,
@@ -199,7 +220,16 @@ public class DefaultEmailSender {
                                                      String content,
                                                      String contentId,
                                                      byte[] imageBytes) {
-        return sendWithGraphInlineImage(resolveOutboundMailboxEmail(), to, subject, content, contentId, imageBytes);
+        return sendWithGraphInlineImageBlocking(null, to, subject, content, contentId, imageBytes);
+    }
+
+    public boolean sendWithGraphInlineImageBlocking(String from,
+                                                     String to,
+                                                     String subject,
+                                                     String content,
+                                                     String contentId,
+                                                     byte[] imageBytes) {
+        return sendWithGraphInlineImage(resolveSender(from), to, subject, content, contentId, imageBytes);
     }
 
     // ─────────────────── Microsoft Graph API implementation ───────────────────
@@ -351,5 +381,14 @@ public class DefaultEmailSender {
             return graphProperties.getSenderEmail().trim();
         }
         return StringUtils.hasText(fromEmail) ? fromEmail.trim() : graphProperties.getSenderEmail();
+    }
+
+    /**
+     * Resolves the mailbox an email is actually sent from. When a caller supplies an explicit
+     * sender (e.g. the support mailbox so client replies land in the polled inbox), that mailbox
+     * is used; otherwise we fall back to the default outbound mailbox.
+     */
+    private String resolveSender(String from) {
+        return StringUtils.hasText(from) ? from.trim() : resolveOutboundMailboxEmail();
     }
 }
