@@ -30,7 +30,7 @@ public class CrmEmailServiceImpl implements CrmEmailService {
         if (!StringUtils.hasText(agentEmail)) return;
         Context ctx = base(lead);
         ctx.setVariable("eventType", "LEAD_ASSIGNED");
-        send(agentEmail, "Lead assigné — " + lead.getLeadNumber(), render(ctx));
+        send(agentEmail, "Lead assigné · " + lead.getLeadNumber(), render(ctx));
     }
 
     @Override
@@ -42,7 +42,7 @@ public class CrmEmailServiceImpl implements CrmEmailService {
         ctx.setVariable("eventType", "STAGE_CHANGED");
         ctx.setVariable("previousStage", previousStage);
         send(agentEmail,
-                "[CRM] Avancement — " + lead.getLeadNumber() + " → " + lead.getStage(),
+                "[CRM] Avancement · " + lead.getLeadNumber() + " → " + lead.getStage(),
                 render(ctx));
     }
 
@@ -53,7 +53,7 @@ public class CrmEmailServiceImpl implements CrmEmailService {
         if (!StringUtils.hasText(agentEmail)) return;
         Context ctx = base(lead);
         ctx.setVariable("eventType", "LEAD_DORMANT");
-        send(agentEmail, "[CRM] Lead dormant — " + lead.getLeadNumber(), render(ctx));
+        send(agentEmail, "[CRM] Lead dormant · " + lead.getLeadNumber(), render(ctx));
     }
 
     private Context base(Lead lead) {

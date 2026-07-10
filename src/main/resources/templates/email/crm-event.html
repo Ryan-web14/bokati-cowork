@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRM — Elle A Osé</title>
+<title>CRM · Elle A Osé</title>
 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 <style>
     body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
@@ -63,7 +63,7 @@
                 <tr>
                     <td valign="middle">
                         <div class="brand">Elle A Osé</div>
-                        <div class="brand-sub">CRM — Gestion des leads</div>
+                        <div class="brand-sub">CRM · Gestion des leads</div>
                     </td>
                     <td align="right" valign="middle">
                         <span th:switch="${eventType}">
@@ -115,27 +115,27 @@
                             <tr>
                                 <td th:if="${company}" style="padding:0 8px 8px 0; vertical-align:top; width:50%;">
                                     <span class="meta-lbl">Entreprise</span>
-                                    <span class="meta-val" th:text="${company}">—</span>
+                                    <span class="meta-val" th:text="${company}"></span>
                                 </td>
                                 <td th:if="${email}" style="padding:0 0 8px 0; vertical-align:top; width:50%;">
                                     <span class="meta-lbl">Email</span>
-                                    <span class="meta-val" th:text="${email}">—</span>
+                                    <span class="meta-val" th:text="${email}"></span>
                                 </td>
                             </tr>
                             <tr>
                                 <td th:if="${phone}" style="padding:0 8px 0 0; vertical-align:top; width:50%;">
                                     <span class="meta-lbl">Téléphone</span>
-                                    <span class="meta-val" th:text="${phone}">—</span>
+                                    <span class="meta-val" th:text="${phone}"></span>
                                 </td>
                                 <td th:if="${interest}" style="padding:0; vertical-align:top; width:50%;">
                                     <span class="meta-lbl">Intérêt</span>
-                                    <span class="meta-val" th:text="${interest}">—</span>
+                                    <span class="meta-val" th:text="${interest}"></span>
                                 </td>
                             </tr>
                             <tr th:if="${estimatedAmount}">
                                 <td colspan="2" style="padding-top:8px; vertical-align:top;">
                                     <span class="meta-lbl">Montant estimé</span>
-                                    <span class="meta-val" th:text="${estimatedAmount}">—</span>
+                                    <span class="meta-val" th:text="${estimatedAmount}"></span>
                                 </td>
                             </tr>
                         </table>
@@ -145,8 +145,8 @@
 
             <!-- Stage change alert -->
             <div th:if="${eventType == 'STAGE_CHANGED'}" class="alert-box alert-stage">
-                Ce lead a progressé de <strong style="color:rgba(255,255,255,.75);" th:text="${previousStage}">—</strong>
-                vers <strong style="color:rgba(255,255,255,.75);" th:text="${stage}">—</strong>.
+                Ce lead a progressé de <strong style="color:rgba(255,255,255,.75);" th:text="${previousStage}"></strong>
+                vers <strong style="color:rgba(255,255,255,.75);" th:text="${stage}"></strong>.
             </div>
 
             <!-- Dormant alert -->

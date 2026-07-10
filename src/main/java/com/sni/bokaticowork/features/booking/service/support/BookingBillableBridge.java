@@ -76,7 +76,7 @@ public class BookingBillableBridge {
             try {
                 billingEmailService.sendDocumentAsync(issued.documentNumber());
             } catch (Exception ex) {
-                log.warn("Failed to send billing document email for booking {} — billing already completed",
+                log.warn("Failed to send billing document email for booking {} · billing already completed",
                         booking.getBookingNumber(), ex);
             }
         }

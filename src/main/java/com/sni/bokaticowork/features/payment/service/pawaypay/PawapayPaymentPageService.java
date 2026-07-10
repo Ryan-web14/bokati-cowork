@@ -82,7 +82,7 @@ public class PawapayPaymentPageService {
                     + intent.getIntentNumber());
         }
 
-        log.info("PawaPay payment page created for intent {} — depositId={}, transaction={}",
+        log.info("PawaPay payment page created for intent {} · depositId={}, transaction={}",
                 intent.getIntentNumber(), depositId, txnNumber);
         return new Checkout(depositId, txnNumber, response.redirectUrl());
     }

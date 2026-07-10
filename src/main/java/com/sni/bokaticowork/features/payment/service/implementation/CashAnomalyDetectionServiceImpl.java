@@ -190,7 +190,7 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
         CashAnomalySeverity severity = ratio.compareTo(new BigDecimal("0.6")) >= 0 ? CashAnomalySeverity.HIGH : CashAnomalySeverity.MEDIUM;
         String description = refundCount + " remboursements pour " + paymentCount + " paiements sur la session, soit un ratio de "
                 + ratio.multiply(BigDecimal.valueOf(100)).setScale(0, RoundingMode.HALF_UP)
-                + " % — taux de remboursement anormalement élevé.";
+                + " % · taux de remboursement anormalement élevé.";
         flag(session, null, CashAnomalyType.EXCESSIVE_REFUNDS, severity, ratio.multiply(BigDecimal.valueOf(100)).setScale(2, RoundingMode.HALF_UP), description, newFlags);
     }
 
@@ -278,11 +278,11 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
             return;
         }
         String description = "Le solde de la caisse " + register.getName() + " a dépassé le plafond autorisé ("
-                + maxCashAmount + ") — solde constaté : " + overflow.getRunningBalance()
+                + maxCashAmount + ") · solde constaté : " + overflow.getRunningBalance()
                 + " lors de la session " + session.getSessionNumber() + ".";
         emailNotifier.notifyRegisterManager(
                 register,
-                "Dépassement du plafond de caisse — " + register.getRegisterCode(),
+                "Dépassement du plafond de caisse · " + register.getRegisterCode(),
                 description,
                 session.getSessionNumber(),
                 CASH_ANOMALIES_PATH + session.getSessionNumber()
@@ -312,7 +312,7 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
 
         if (severity == CashAnomalySeverity.MEDIUM || severity == CashAnomalySeverity.HIGH) {
             emailNotifier.notifySupervisor(
-                    "Anomalie de caisse détectée — " + savedFlag.getFlagNumber(),
+                    "Anomalie de caisse détectée · " + savedFlag.getFlagNumber(),
                     "Une anomalie de type " + type.name() + " (sévérité " + severity.name() + ") a été détectée sur la session "
                             + session.getSessionNumber() + " du caissier " + session.getOpenedBy() + ". " + description,
                     savedFlag.getFlagNumber(),
@@ -327,7 +327,7 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
     private void createTicketForAnomaly(CashSession session, CashAnomalyFlag flag, String description) {
         try {
             supportTicketService.createFromAutomation(new CreateTicketRequest(
-                    "Anomalie de caisse à risque élevé — " + flag.getFlagNumber(),
+                    "Anomalie de caisse à risque élevé · " + flag.getFlagNumber(),
                     description,
                     TicketPriority.HIGH,
                     TicketCategory.BILLING,

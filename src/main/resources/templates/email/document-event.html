@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mise à jour document — Elle A Osé</title>
+<title>Mise à jour document · Elle A Osé</title>
 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 <style>
     body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
@@ -99,7 +99,7 @@
                 </tr>
                 <tr style="background-color:rgba(255,255,255,.02);">
                     <td class="info-lbl">Événement</td>
-                    <td class="info-val" th:text="${eventType}">—</td>
+                    <td class="info-val" th:text="${eventType}"></td>
                 </tr>
                 <tr>
                     <td class="info-lbl" style="border-bottom:0;">Statut</td>
@@ -110,7 +110,7 @@
                             <span th:case="'PENDING_REVIEW'" class="badge badge-pending">En révision</span>
                             <span th:case="'REJECTED'" class="badge badge-rejected">Rejeté</span>
                             <span th:case="'SENT'" class="badge badge-default">Envoyé</span>
-                            <span th:case="*" class="badge badge-default" th:text="${status ?: '—'}">—</span>
+                            <span th:case="*" class="badge badge-default" th:text="${status ?: ''}"></span>
                         </span>
                     </td>
                 </tr>
@@ -128,7 +128,7 @@
         <td class="footer-td">
             <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
             <div class="footer-text">
-                Email généré automatiquement — merci de ne pas y répondre directement.<br>
+                Email généré automatique, merci de ne pas y répondre directement.<br>
                 <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a>
             </div>
         </td>

@@ -170,7 +170,7 @@ public class DefaultEmailSender {
         rabbitPublisher.publishEmail(message);
     }
 
-    // ─────────────── Blocking methods — used by EmailConsumer only ─────────────
+    // ─────────────── Blocking methods · used by EmailConsumer only ─────────────
 
     private EmailDeliveryResponse createDelivery(String to,
                                                  String subject,

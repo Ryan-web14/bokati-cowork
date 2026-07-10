@@ -13,7 +13,7 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class FiscalAuditService {
 
-    // Actions fiscales — utiliser ces constantes dans tout le codebase
+    // Actions fiscales · utiliser ces constantes dans tout le codebase
     public static final String INVOICE_VALIDATED          = "INVOICE_VALIDATED";
     public static final String CREDIT_NOTE_CREATED        = "CREDIT_NOTE_CREATED";
     public static final String CREDIT_NOTE_APPLIED        = "CREDIT_NOTE_APPLIED";

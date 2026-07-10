@@ -94,7 +94,7 @@ public class BookingEmailNotifier {
 
     private String body(BookingEventType eventType, Booking booking, boolean includeQr) {
         Context ctx = new Context(Locale.FRENCH);
-        String resourceName = booking.getResource() == null ? "—" : booking.getResource().getName();
+        String resourceName = booking.getResource() == null ? "" : booking.getResource().getName();
         String durationLabel = formatDuration(booking.getDurationMinutes());
         boolean showQr = includeQr && StringUtils.hasText(booking.getCheckInToken());
 
@@ -104,11 +104,11 @@ public class BookingEmailNotifier {
         ctx.setVariable("bookingRef",     booking.getBookingNumber());
         ctx.setVariable("resourceName",   resourceName);
         ctx.setVariable("spaceName",      resourceName);
-        ctx.setVariable("status",         booking.getStatus() == null ? "—" : booking.getStatus().name());
+        ctx.setVariable("status",         booking.getStatus() == null ? "" : booking.getStatus().name());
         ctx.setVariable("startedAt",      formatDateTime(booking.getStartedAt()));
         ctx.setVariable("endedAt",        formatDateTime(booking.getEndedAt()));
         ctx.setVariable("quantity",       booking.getQuantity());
-        ctx.setVariable("paymentMode",    booking.getPaymentMode() == null ? "—" : booking.getPaymentMode().name());
+        ctx.setVariable("paymentMode",    booking.getPaymentMode() == null ? "" : booking.getPaymentMode().name());
         ctx.setVariable("checkInToken",   booking.getCheckInToken());
         ctx.setVariable("verificationCode", StringUtils.hasText(booking.getCheckInToken()) ? booking.getCheckInToken() : booking.getBookingNumber());
         ctx.setVariable("showQr",         showQr);
@@ -138,7 +138,7 @@ public class BookingEmailNotifier {
         ctx.setVariable("centimeAdditionnelPct", "5 %");
         ctx.setVariable("paymentMethod",  formatPaymentMode(booking.getPaymentMode()));
         ctx.setVariable("paymentLast4",   null);
-        ctx.setVariable("paymentDate",    "—");
+        ctx.setVariable("paymentDate",    null);
         ctx.setVariable("qrCodeUrl",      showQr ? "cid:" + QR_CONTENT_ID : null);
         ctx.setVariable("bookingUrl",     publicBookingViewUrl(booking));
         ctx.setVariable("invoiceUrl",     publicBookingPdfUrl(booking));
@@ -252,22 +252,22 @@ public class BookingEmailNotifier {
     // ── Formatters ───────────────────────────────────────────────────
 
     private String formatDate(LocalDateTime dt) {
-        if (dt == null) return "—";
+        if (dt == null) return "";
         return DATE_FMT.format(dt);
     }
 
     private String formatTime(LocalDateTime dt) {
-        if (dt == null) return "—";
+        if (dt == null) return "";
         return TIME_FMT.format(dt);
     }
 
     private String formatDateTime(LocalDateTime dt) {
-        if (dt == null) return "—";
+        if (dt == null) return "";
         return DATE_FMT.format(dt) + " à " + TIME_FMT.format(dt);
     }
 
     private String formatDuration(Integer minutes) {
-        if (minutes == null || minutes <= 0) return "—";
+        if (minutes == null || minutes <= 0) return "";
         if (minutes < 60) return minutes + " min";
         int h = minutes / 60;
         int m = minutes % 60;
@@ -276,7 +276,7 @@ public class BookingEmailNotifier {
     }
 
     private String formatAmount(BigDecimal amount, String currency) {
-        if (amount == null) return "—";
+        if (amount == null) return "";
         NumberFormat fmt = NumberFormat.getIntegerInstance(Locale.FRENCH);
         String curr = StringUtils.hasText(currency) ? " " + currency.toUpperCase() : " XAF";
         return fmt.format(amount.setScale(0, java.math.RoundingMode.HALF_UP)) + curr;
@@ -294,7 +294,7 @@ public class BookingEmailNotifier {
     }
 
     private String formatPaymentMode(com.sni.bokaticowork.features.booking.enums.BookingPaymentMode mode) {
-        if (mode == null) return "—";
+        if (mode == null) return "";
         return switch (mode) {
             case DIRECT       -> "Paiement direct";
             case SUBSCRIPTION -> "Abonnement";
@@ -400,7 +400,7 @@ public class BookingEmailNotifier {
                 Événement   : %s
                 """.formatted(
                 booking.getBookingNumber(),
-                booking.getResource() == null ? "—" : booking.getResource().getName(),
+                booking.getResource() == null ? "" : booking.getResource().getName(),
                 booking.getStatus(),
                 formatDateTime(booking.getStartedAt()),
                 formatDateTime(booking.getEndedAt()),

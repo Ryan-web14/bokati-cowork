@@ -81,7 +81,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
 
     @Query(
             nativeQuery = true,
-            value = "SELECT EXISTS(SELECT 1 FROM customer WHERE lower(email) = lower(:email))"
+            value = "SELECT EXISTS(SELECT 1 FROM customer WHERE lower(email) = lower(:email) AND deleted = false)"
     )
     Boolean existsByEmailIgnoreCase(@Param("email") String email);
 

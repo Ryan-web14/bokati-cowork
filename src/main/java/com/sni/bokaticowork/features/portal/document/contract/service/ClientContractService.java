@@ -121,7 +121,7 @@ public class ClientContractService {
                                 && p.getPartyId().equals(s.signerId())
                                 && s.signedAt() != null));
         if (!predecessorsAllSigned) {
-            throw new BadRequestException("You cannot sign yet — previous signatories have not completed their signatures");
+            throw new BadRequestException("You cannot sign yet · previous signatories have not completed their signatures");
         }
     }
 

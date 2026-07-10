@@ -760,7 +760,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                         null,
                         agentEmail,
                         null,
-                        "Nouveau ticket assigné — " + ticketNumber,
+                        "Nouveau ticket assigné · " + ticketNumber,
                         null,
                         null,
                         Map.of(
@@ -810,7 +810,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                         null,
                         agentEmail,
                         null,
-                        "Réponse client — " + ticketNumber,
+                        "Réponse client · " + ticketNumber,
                         null,
                         null,
                         Map.of(

@@ -151,7 +151,7 @@ public class PawapayCallbackProcessor {
             try {
                 allocationService.allocateIfBillingDocument(transaction);
             } catch (Exception ex) {
-                log.error("Failed to allocate payment {} to billing documents — status update will still proceed",
+                log.error("Failed to allocate payment {} to billing documents · status update will still proceed",
                         transaction.getTransactionNumber(), ex);
             }
             outboxService.publish(
@@ -164,12 +164,12 @@ public class PawapayCallbackProcessor {
 
         reconcileIntent(transaction);
 
-        log.info("PawaPay deposit completed — transaction={}, depositId={}",
+        log.info("PawaPay deposit completed · transaction={}, depositId={}",
                 transaction.getTransactionNumber(), depositId);
     }
 
     private void reconcileIntent(PaymentTransaction transaction) {
-        // flush first — sumSucceededAmountByPaymentIntentId is a native query and Hibernate
+        // flush first · sumSucceededAmountByPaymentIntentId is a native query and Hibernate
         // does not auto-flush before native queries, so without this the just-saved
         // SUCCEEDED transaction is invisible to the SUM and the intent lands on PENDING.
         transactionRepository.flush();
@@ -205,7 +205,7 @@ public class PawapayCallbackProcessor {
                     transaction.getPaymentIntent().getIntentNumber(), ex.getMessage());
         }
 
-        log.info("PawaPay deposit failed — transaction={}, depositId={}, reason={}",
+        log.info("PawaPay deposit failed · transaction={}, depositId={}, reason={}",
                 transaction.getTransactionNumber(), transaction.getProviderReference(), reason);
     }
 

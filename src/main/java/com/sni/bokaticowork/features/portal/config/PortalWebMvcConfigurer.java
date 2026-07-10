@@ -16,7 +16,7 @@ public class PortalWebMvcConfigurer implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(clientOnboardingGuard)
                 .addPathPatterns("/sni/api/v1/client/**")
-                // KYC endpoints must stay accessible before KYC is approved —
+                // KYC endpoints must stay accessible before KYC is approved
                 // a member needs them to initiate and complete the process.
                 .excludePathPatterns("/sni/api/v1/client/documents/kyc/**");
     }

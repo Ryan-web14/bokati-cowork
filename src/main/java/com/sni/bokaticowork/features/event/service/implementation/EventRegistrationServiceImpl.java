@@ -215,7 +215,7 @@ public class EventRegistrationServiceImpl implements EventRegistrationService {
                 visitorCtx.setVariable("registrationNumber", registration.getRegistrationNumber());
                 String visitorHtml = emailTemplateEngine.process("event-registration", visitorCtx);
                 emailSender.queueEmail(registration.getEmail(),
-                        "Merci pour votre confirmation — " + event.getName(),
+                        "Merci pour votre confirmation · " + event.getName(),
                         visitorHtml, true, "EVENT_REGISTRATION", registration.getRegistrationNumber());
             } catch (Exception ex) {
                 log.warn("Unable to queue thank-you email to {}", registration.getEmail(), ex);
@@ -235,7 +235,7 @@ public class EventRegistrationServiceImpl implements EventRegistrationService {
                 staffCtx.setVariable("whatsappPhone", registration.getWhatsappPhone());
                 String staffHtml = emailTemplateEngine.process("event-registration", staffCtx);
                 emailSender.queueEmail(notificationEmail,
-                        "Nouvelle confirmation — " + event.getName(),
+                        "Nouvelle confirmation · " + event.getName(),
                         staffHtml, true, "EVENT_REGISTRATION", registration.getRegistrationNumber());
             } catch (Exception ex) {
                 log.warn("Unable to queue staff notification email to {}", notificationEmail, ex);

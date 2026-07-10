@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitation visiteur — Elle A Osé</title>
+    <title>Invitation visiteur · Elle A Osé</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #f0eef5; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
@@ -66,19 +66,19 @@
                 <div class="pass-grid">
                     <div class="pass-row">
                         <div class="pass-cell pass-key">Hôte</div>
-                        <div class="pass-cell pass-val" th:text="${hostName}">—</div>
+                        <div class="pass-cell pass-val" th:text="${hostName}"></div>
                     </div>
                     <div class="pass-row">
                         <div class="pass-cell pass-key">Objet</div>
-                        <div class="pass-cell pass-val" th:text="${purpose ?: '—'}">—</div>
+                        <div class="pass-cell pass-val" th:text="${purpose ?: ''}"></div>
                     </div>
                     <div class="pass-row">
                         <div class="pass-cell pass-key">Valide du</div>
-                        <div class="pass-cell pass-val" th:text="${validFrom}">—</div>
+                        <div class="pass-cell pass-val" th:text="${validFrom}"></div>
                     </div>
                     <div class="pass-row">
                         <div class="pass-cell pass-key">Au</div>
-                        <div class="pass-cell pass-val" th:text="${validUntil}">—</div>
+                        <div class="pass-cell pass-val" th:text="${validUntil}"></div>
                     </div>
                 </div>
             </div>
@@ -97,7 +97,7 @@
         </div>
 
         <div class="footer">
-            <div class="footer-brand">Elle A Osé — Bokati Cowork</div>
+            <div class="footer-brand">Elle A Osé · Bokati Cowork</div>
             <div class="footer-text">
                 Ce message est une invitation automatique. Ne pas répondre à cet email.<br>
                 Contact : coworkspace@elleaose.com

@@ -118,7 +118,7 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         // Send the "contract ready" email only once the surrounding transaction commits.
         // Otherwise a generation that later rolls back (e.g. the subscription contract-repair
         // worker retrying) would still fire the async email on every attempt, spamming the
-        // client — and the async reader could race the not-yet-committed document.
+        // client · and the async reader could race the not-yet-committed document.
         String recipientEmail = ownerView.email();
         String recipientName = ownerView.name();
         String templateCode = request.getTemplateCode();

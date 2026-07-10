@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document KYC à renouveler — Elle A Osé</title>
+  <title>Document KYC à renouveler · Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -69,18 +69,18 @@
       </div>
 
       <div class="em-intro">
-        Bonjour <strong th:text="${ownerName ?: 'client'}">client</strong>, le document <strong th:text="${documentType}">—</strong> associé à votre dossier arrive à expiration le <span class="expiry-date" th:text="${expiryDate}">—</span>. Veuillez en soumettre une version à jour depuis votre espace client.
+        Bonjour <strong th:text="${ownerName ?: 'client'}">client</strong>, le document <strong th:text="${documentType}"></strong> associé à votre dossier arrive à expiration le <span class="expiry-date" th:text="${expiryDate}"></span>. Veuillez en soumettre une version à jour depuis votre espace client.
       </div>
 
       <div class="section-lbl">Document concerné</div>
       <table class="dt">
         <tr>
           <td class="dt-key">Type de document</td>
-          <td class="dt-val" th:text="${documentType}">—</td>
+          <td class="dt-val" th:text="${documentType}"></td>
         </tr>
         <tr>
           <td class="dt-key">Date d'expiration</td>
-          <td class="dt-val dt-val-warn" th:text="${expiryDate}">—</td>
+          <td class="dt-val dt-val-warn" th:text="${expiryDate}"></td>
         </tr>
       </table>
 
@@ -98,7 +98,7 @@
     <div class="em-footer">
       <div class="em-footer-brand">Elle A Osé · Espace de coworking</div>
       <div class="em-footer-text">
-        Email généré automatiquement — merci de ne pas y répondre directement.<br>
+        Email généré automatique, merci de ne pas y répondre directement.<br>
         <a href="mailto:supportela@elleaose.com">supportela@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
       </div>
     </div>

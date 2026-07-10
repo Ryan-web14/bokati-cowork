@@ -152,7 +152,7 @@ public class ClientKycService {
         metadata.setOwnerCode(member.getMemberId());
         metadata.setDocumentTypeCode(documentType);
         String sideLabel = "BACK".equalsIgnoreCase(side) ? " (Arrière)" : "";
-        metadata.setTitle(documentType.replace("_", " ") + sideLabel + " — " + member.getMemberId());
+        metadata.setTitle(documentType.replace("_", " ") + sideLabel + " · " + member.getMemberId());
         metadata.setDocumentNumber(documentNumber);
         metadata.setIssueDate(issueDate);
         metadata.setExpiryDate(expiryDate);

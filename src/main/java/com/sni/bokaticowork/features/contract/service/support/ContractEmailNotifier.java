@@ -35,7 +35,7 @@ public class ContractEmailNotifier {
         try {
             Context ctx = new Context(appLocale);
             ctx.setVariable("recipientName", StringUtils.hasText(recipientName) ? recipientName : "client");
-            ctx.setVariable("templateCode", templateCode != null ? templateCode : "—");
+            ctx.setVariable("templateCode", templateCode != null ? templateCode : "");
             ctx.setVariable("documentCode", documentCode);
             ctx.setVariable("eventType", "CONTRACT_DRAFT_GENERATED");
 
@@ -47,7 +47,7 @@ public class ContractEmailNotifier {
                     String fileName = StringUtils.hasText(file.fileName()) ? file.fileName() : documentCode + ".pdf";
                     emailSender.sendHtmlEmailWithPdfAttachment(
                             recipientEmail,
-                            "Votre contrat est prêt — Elle A Osé",
+                            "Votre contrat est prêt · Elle A Osé",
                             html,
                             fileName,
                             file.content()
@@ -55,11 +55,11 @@ public class ContractEmailNotifier {
                     log.info("Contract email with PDF sent to {} documentCode={}", recipientEmail, documentCode);
                     return;
                 } catch (Exception ex) {
-                    log.warn("Could not attach contract PDF {} — sending without attachment: {}", documentCode, ex.getMessage());
+                    log.warn("Could not attach contract PDF {} · sending without attachment: {}", documentCode, ex.getMessage());
                 }
             }
 
-            emailSender.sendHtmlEmail(recipientEmail, "Votre contrat est prêt — Elle A Osé", html);
+            emailSender.sendHtmlEmail(recipientEmail, "Votre contrat est prêt · Elle A Osé", html);
             log.info("Contract email sent to {} documentCode={}", recipientEmail, documentCode);
 
         } catch (MessagingException ex) {

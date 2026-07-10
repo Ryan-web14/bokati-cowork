@@ -43,7 +43,7 @@ public class PawapaySignatureVerifier {
         }
         try {
             String expected = hmacSha256(properties.getCallbackSecret(), rawBody);
-            // PawaPay sends "sha256=<hex>" — strip the prefix if present
+            // PawaPay sends "sha256=<hex>" · strip the prefix if present
             String actual = signatureHeader.startsWith("sha256=")
                     ? signatureHeader.substring(7)
                     : signatureHeader;

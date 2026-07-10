@@ -454,7 +454,7 @@ public class MemberServiceImpl  implements MemberService {
                 welcomeCtx.setVariable("startDate", null);
                 String welcomeHtml = emailTemplateEngine.process("form/welcome-member-email", welcomeCtx);
                 emailSender.sendHtmlEmail(member.getEmail(),
-                        "Bienvenue dans votre espace membre — Elle A Osé", welcomeHtml);
+                        "Bienvenue dans votre espace membre · Elle A Osé", welcomeHtml);
             } catch (MessagingException ex) {
                 log.warn("Unable to send member creation email to {}", member.getEmail(), ex);
             }

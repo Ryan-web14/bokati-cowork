@@ -298,7 +298,7 @@ public class CrmServiceImpl implements CrmService {
                         lead.getPhone(),
                         null,
                         "CRM_LEAD", lead.getLeadNumber(),
-                        "Devis — " + lead.getFullName(),
+                        "Devis · " + lead.getFullName(),
                         lead.getNote(),
                         null,
                         request.currency().trim().toUpperCase(),

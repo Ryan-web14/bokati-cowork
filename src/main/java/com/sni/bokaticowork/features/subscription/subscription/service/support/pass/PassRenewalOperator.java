@@ -71,11 +71,11 @@ public class PassRenewalOperator {
 
         eventWriter.writeEvent(pass, PassEventType.PASS_RENEWED, null);
         eventWriter.writeEvent(pass, PassEventType.BILLING_SCHEDULED, null);
-        log.info("Renewed pass {} — new period {} to {}", pass.getPassNumber(), newFrom, newUntil);
+        log.info("Renewed pass {} · new period {} to {}", pass.getPassNumber(), newFrom, newUntil);
     }
 
     public void handleRenewalPaymentSucceeded(Pass pass, String transactionNumber) {
         eventWriter.writeEvent(pass, PassEventType.ENTITLEMENTS_GRANTED, null);
-        log.info("Renewal payment received for pass {} — transaction {}", pass.getPassNumber(), transactionNumber);
+        log.info("Renewal payment received for pass {} · transaction {}", pass.getPassNumber(), transactionNumber);
     }
 }

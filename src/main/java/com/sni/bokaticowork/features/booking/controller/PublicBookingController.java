@@ -59,7 +59,7 @@ public class PublicBookingController {
     }
 
     /**
-     * QR code scan endpoint — réservé aux terminaux scanner autorisés.
+     * QR code scan endpoint · réservé aux terminaux scanner autorisés.
      * Sans cookie scanner valide, affiche le formulaire de code admin.
      */
     @GetMapping("/check-in/scan/{checkInToken}")

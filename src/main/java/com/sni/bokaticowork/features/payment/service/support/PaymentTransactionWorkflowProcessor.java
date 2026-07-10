@@ -64,7 +64,7 @@ public class PaymentTransactionWorkflowProcessor {
 
         PaymentIntent intent = transaction.getPaymentIntent();
         if (event.status() == PaymentTransactionStatus.SUCCEEDED) {
-            // Business logic first — in order of dependency
+            // Business logic first · in order of dependency
             recordAutomaticCashSession(transaction);
             validatePaidBillingDocuments(transaction);
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
@@ -85,7 +85,7 @@ public class PaymentTransactionWorkflowProcessor {
             try {
                 refundEmailNotifier.notify(transaction);
             } catch (Exception ex) {
-                log.warn("Failed to send refund email for transaction {} — refund workflow already completed",
+                log.warn("Failed to send refund email for transaction {} · refund workflow already completed",
                         transaction.getTransactionNumber(), ex);
             }
         }
@@ -134,7 +134,7 @@ public class PaymentTransactionWorkflowProcessor {
             billingDocumentService.validate(documentNumber);
             log.info("SEFC validated document {} after full settlement of payment {}", documentNumber, transactionNumber);
         } catch (Exception ex) {
-            log.warn("SEFC auto-validation of {} after payment {} skipped — {}", documentNumber, transactionNumber, ex.getMessage());
+            log.warn("SEFC auto-validation of {} after payment {} skipped · {}", documentNumber, transactionNumber, ex.getMessage());
         }
     }
 
@@ -177,7 +177,7 @@ public class PaymentTransactionWorkflowProcessor {
 
     private void confirmBookingIfFullyPaid(PaymentTransaction transaction, String bookingNumber) {
         if (transaction.getPaymentIntent().getStatus() != PaymentIntentStatus.SUCCEEDED) {
-            log.debug("Booking {} payment partially received — awaiting full settlement before auto-confirm", bookingNumber);
+            log.debug("Booking {} payment partially received · awaiting full settlement before auto-confirm", bookingNumber);
             return;
         }
         try {
@@ -188,7 +188,7 @@ public class PaymentTransactionWorkflowProcessor {
             ));
             log.info("Booking {} auto-confirmed after payment {}", bookingNumber, transaction.getTransactionNumber());
         } catch (Exception ex) {
-            log.warn("Auto-confirmation of booking {} after payment {} skipped — {}",
+            log.warn("Auto-confirmation of booking {} after payment {} skipped · {}",
                     bookingNumber, transaction.getTransactionNumber(), ex.getMessage());
         }
     }

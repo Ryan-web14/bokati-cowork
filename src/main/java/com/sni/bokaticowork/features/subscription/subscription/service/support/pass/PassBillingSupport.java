@@ -35,7 +35,7 @@ public class PassBillingSupport {
         if (pass.getTotalAmount() == null || pass.getTotalAmount().signum() <= 0) return null;
         PassPlanVersion version = pass.getPassVersion();
         String description = "Émission du pass " + pass.getPassNumber()
-                + " — " + pass.getName()
+                + " · " + pass.getName()
                 + (version != null ? " (v" + version.getVersionNumber() + ")" : "");
 
         BillableItem item = billableItemRepository.save(BillableItem.builder()

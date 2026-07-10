@@ -44,7 +44,7 @@ public class SubscriptionEmailNotifier {
         String to = recipient.email();
         String subscriptionNumber = subscription.getSubscriptionNumber();
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            // Defer sending until after commit — avoids emailing on rollback
+            // Defer sending until after commit · avoids emailing on rollback
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {

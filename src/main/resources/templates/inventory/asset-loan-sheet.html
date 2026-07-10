@@ -182,13 +182,13 @@
                 <td class="label">Article</td>
                 <td class="value" th:text="${asset.item.name}"></td>
                 <td class="label">Numéro de série</td>
-                <td class="value" th:text="${asset.serialNumber != null ? asset.serialNumber : '—'}"></td>
+                <td class="value" th:text="${asset.serialNumber != null ? asset.serialNumber : ''}"></td>
             </tr>
             <tr>
                 <td class="label">État au départ</td>
-                <td class="value" th:text="${assignment.checkoutCondition != null ? assignment.checkoutCondition : '—'}"></td>
+                <td class="value" th:text="${assignment.checkoutCondition != null ? assignment.checkoutCondition : ''}"></td>
                 <td class="label">Emplacement habituel</td>
-                <td class="value" th:text="${asset.location != null ? asset.location.name : '—'}"></td>
+                <td class="value" th:text="${asset.location != null ? asset.location.name : ''}"></td>
             </tr>
         </table>
     </div>
@@ -204,7 +204,7 @@
                     <span class="badge badge-returned" th:unless="${assignment.status.name() == 'ACTIVE'}" th:text="${assignment.status}"></span>
                 </td>
                 <td class="label">Remis par</td>
-                <td class="value" th:text="${assignment.assignedBy != null ? assignment.assignedBy : '—'}"></td>
+                <td class="value" th:text="${assignment.assignedBy != null ? assignment.assignedBy : ''}"></td>
             </tr>
             <tr>
                 <td class="label">Type bénéficiaire</td>
@@ -216,13 +216,13 @@
                 <td class="label">Date de début</td>
                 <td class="value" th:text="${assignment.startAt}"></td>
                 <td class="label">Retour prévu</td>
-                <td class="value" th:text="${assignment.expectedReturnAt != null ? assignment.expectedReturnAt : '—'}"></td>
+                <td class="value" th:text="${assignment.expectedReturnAt != null ? assignment.expectedReturnAt : ''}"></td>
             </tr>
             <tr th:if="${assignment.endAt != null}">
                 <td class="label">Date de retour effectif</td>
                 <td class="value" th:text="${assignment.endAt}"></td>
                 <td class="label">Retourné par</td>
-                <td class="value" th:text="${assignment.returnedBy != null ? assignment.returnedBy : '—'}"></td>
+                <td class="value" th:text="${assignment.returnedBy != null ? assignment.returnedBy : ''}"></td>
             </tr>
         </table>
     </div>
@@ -230,7 +230,7 @@
     <!-- Motif du prêt -->
     <div class="section">
         <div class="section-title">Motif du prêt</div>
-        <div class="purpose-box" th:text="${assignment.purpose != null ? assignment.purpose : '—'}"></div>
+        <div class="purpose-box" th:text="${assignment.purpose != null ? assignment.purpose : ''}"></div>
     </div>
 
     <!-- Notes éventuelles -->
@@ -247,7 +247,7 @@
                 <td>
                     <div class="sig-box">
                         <div class="sig-label">Remettant</div>
-                        <div class="sig-name" th:text="${assignment.assignedBy != null ? assignment.assignedBy : '—'}"></div>
+                        <div class="sig-name" th:text="${assignment.assignedBy != null ? assignment.assignedBy : ''}"></div>
                         <div class="sig-placeholder" th:if="${assignment.receiverSignatureUrl == null}">Signature _______________</div>
                     </div>
                 </td>

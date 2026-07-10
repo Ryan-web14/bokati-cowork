@@ -38,13 +38,13 @@ public class DocumentSignatureOutboxEventProcessor implements OutboxEventProcess
                 event.getEventType(), documentCode, signerEmail);
 
         if (!StringUtils.hasText(signerEmail)) {
-            log.warn("DOCUMENT_SIGNATURE event {} has no signerEmail — skipping", event.getEventType());
+            log.warn("DOCUMENT_SIGNATURE event {} has no signerEmail · skipping", event.getEventType());
             return;
         }
 
         Map<String, Object> vars = new HashMap<>();
         vars.put("recipientName", StringUtils.hasText(signerName) ? signerName : "signataire");
-        vars.put("documentCode", documentCode != null ? documentCode : "—");
+        vars.put("documentCode", documentCode != null ? documentCode : "");
         vars.put("eventType", event.getEventType());
         vars.put("status", signatureStatus != null ? signatureStatus : "N/A");
 

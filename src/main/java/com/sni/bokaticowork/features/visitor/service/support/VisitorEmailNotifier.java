@@ -51,11 +51,11 @@ public class VisitorEmailNotifier {
             String html = templateEngine.process("visitor/visitor-invitation", ctx);
             if (qrBytes != null) {
                 emailSender.sendHtmlEmailWithInlineImage(visitor.getEmail(),
-                        "Votre invitation visiteur — Elle A Osé Bokati Cowork", html,
+                        "Votre invitation visiteur · Elle A Osé Bokati Cowork", html,
                         QR_CONTENT_ID, qrBytes);
             } else {
                 emailSender.sendHtmlEmail(visitor.getEmail(),
-                        "Votre invitation visiteur — Elle A Osé Bokati Cowork", html);
+                        "Votre invitation visiteur · Elle A Osé Bokati Cowork", html);
             }
             pass.setInvitationSentAt(java.time.Instant.now());
             passRepository.save(pass);
@@ -65,7 +65,7 @@ public class VisitorEmailNotifier {
     }
 
     private String fmt(java.time.Instant instant) {
-        if (instant == null) return "—";
+        if (instant == null) return "";
         return DT_FMT.format(instant.atZone(ZoneId.systemDefault()));
     }
 }

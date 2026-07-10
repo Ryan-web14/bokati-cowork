@@ -401,12 +401,12 @@ public class PaymentServiceImpl implements PaymentService {
         creditOverpayment(intent, overpayment, request.processedBy());
 
         BillingDocumentResponse updatedDocument = billingDocumentService.get(documentNumber);
-        // Publish workflow event before sending email — activation/contract generation must not be blocked by email failure
+        // Publish workflow event before sending email · activation/contract generation must not be blocked by email failure
         publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
         try {
             billingEmailService.sendPaymentConfirmation(updatedDocument, mapper.toTransactionResponse(transaction));
         } catch (Exception ex) {
-            log.warn("Failed to send payment confirmation email for transaction {} — workflow already published",
+            log.warn("Failed to send payment confirmation email for transaction {} · workflow already published",
                     transaction.getTransactionNumber(), ex);
         }
 
@@ -830,7 +830,7 @@ public class PaymentServiceImpl implements PaymentService {
         long refundSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
         String refundTxnNumber = CodeComposer.withDay("TXN", refundMethodCtx, LocalDate.now(), refundSeq);
 
-        // Mobile money refunds are async — initiate via provider and wait for callback
+        // Mobile money refunds are async · initiate via provider and wait for callback
         if (original.getPaymentMethod() == PaymentMethod.MOBILE_MONEY
                 && StringUtils.hasText(original.getProviderReference())) {
             return initiateMobileMoneyRefund(original, amount, request, status, refundTxnNumber, fullyRefunded);
@@ -916,7 +916,7 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         if ("NOT_IMPLEMENTED".equals(response.status())) {
-            // Noop provider in use — finalize synchronously
+            // Noop provider in use · finalize synchronously
             refund.setStatus(targetStatus);
             refund.setPaidAt(Instant.now());
             transactionRepository.save(refund);

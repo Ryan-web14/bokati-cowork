@@ -173,7 +173,7 @@ public class OutboxServiceImpl implements OutboxService {
             event.setLastError(errorMessage);
             repository.save(event);
         });
-        log.error("[OUTBOX DEAD] Event {} permanently failed after {} attempts — manual intervention required",
+        log.error("[OUTBOX DEAD] Event {} permanently failed after {} attempts · manual intervention required",
                 eventId, MAX_ATTEMPTS);
     }
 

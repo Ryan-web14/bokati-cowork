@@ -73,16 +73,16 @@
                             <div class="space" th:text="${resourceName}">Espace réservé</div>
                             <div class="space-type" th:if="${resourceType}" th:text="${resourceType}">Type</div>
                         </div>
-                        <div class="row clearfix"><span class="key">Date</span><span class="val" th:text="${bookingDate}">—</span></div>
-                        <div class="row clearfix"><span class="key">Horaires</span><span class="val"><span th:text="${startTime}">—</span> - <span th:text="${endTime}">—</span></span></div>
-                        <div class="row clearfix"><span class="key">Durée</span><span class="val" th:text="${durationLabel}">—</span></div>
+                        <div class="row clearfix"><span class="key">Date</span><span class="val" th:text="${bookingDate}"></span></div>
+                        <div class="row clearfix"><span class="key">Horaires</span><span class="val"><span th:text="${startTime}"></span> - <span th:text="${endTime}"></span></span></div>
+                        <div class="row clearfix"><span class="key">Durée</span><span class="val" th:text="${durationLabel}"></span></div>
                         <div class="row clearfix"><span class="key">Quantité</span><span class="val" th:text="${quantity}">1</span></div>
-                        <div class="row clearfix"><span class="key">Statut</span><span class="val" th:text="${status}">—</span></div>
-                        <div class="row clearfix"><span class="key">Mode paiement</span><span class="val" th:text="${paymentMode}">—</span></div>
-                        <div class="row clearfix"><span class="key">Base HT</span><span class="val" th:text="${priceHT}">—</span></div>
-                        <div class="row clearfix"><span class="key" th:text="|TVA (${tvaPct})|">TVA (18.4 %)</span><span class="val" th:text="${priceTVA}">—</span></div>
-                        <div class="row clearfix"><span class="key" th:text="|Centime additionnel (${centimeAdditionnelPct})|">Centime additionnel (5 %)</span><span class="val" th:text="${priceCentimeAdditionnel}">—</span></div>
-                        <div class="row clearfix"><span class="key">Montant TTC</span><span class="val" th:text="${priceTTC}">—</span></div>
+                        <div class="row clearfix"><span class="key">Statut</span><span class="val" th:text="${status}"></span></div>
+                        <div class="row clearfix"><span class="key">Mode paiement</span><span class="val" th:text="${paymentMode}"></span></div>
+                        <div class="row clearfix"><span class="key">Base HT</span><span class="val" th:text="${priceHT}"></span></div>
+                        <div class="row clearfix"><span class="key" th:text="|TVA (${tvaPct})|">TVA (18.4 %)</span><span class="val" th:text="${priceTVA}"></span></div>
+                        <div class="row clearfix"><span class="key" th:text="|Centime additionnel (${centimeAdditionnelPct})|">Centime additionnel (5 %)</span><span class="val" th:text="${priceCentimeAdditionnel}"></span></div>
+                        <div class="row clearfix"><span class="key">Montant TTC</span><span class="val" th:text="${priceTTC}"></span></div>
                         <div class="row clearfix"><span class="key">Lieu</span><span class="val"><span th:text="${address}">84 Boulevard du Général de Gaulle</span><br /><span th:text="${city}">Espace de coworking</span></span></div>
                     </div>
                     <div class="contact">

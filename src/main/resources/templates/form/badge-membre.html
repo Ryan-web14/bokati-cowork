@@ -2,7 +2,7 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="'Badge ' + ${member.name}">Badge membre — Elle A Osé</title>
+    <title th:text="'Badge ' + ${member.name}">Badge membre · Elle A Osé</title>
     <style>
         @page { size: A4; margin: 10mm; }
 
@@ -64,7 +64,7 @@
             gap: 6mm;
         }
 
-        /* ── BADGE — CR-80 ratio ── */
+        /* ── BADGE · CR-80 ratio ── */
         .badge {
             width: 86mm;
             height: 54mm;
@@ -176,7 +176,7 @@
         .badge.plan-fondateur .plan-pill { background: rgba(245,215,122,0.25); border-color: rgba(245,215,122,0.6); }
         .badge.plan-fondateur .valid strong { color: var(--gold-light); }
 
-        /* photo variant — when member.photoUrl provided */
+        /* photo variant · when member.photoUrl provided */
         .badge.with-photo .badge-body { grid-template-columns: 1fr 17mm 22mm; }
         .photo {
             width: 17mm; height: 22mm;
@@ -242,7 +242,7 @@
        member.tagLabel    : "Membre"             (badge en haut à droite)
        member.role        : "Carte d'accès"      (libellé au-dessus du nom)
        member.validUntil  : "03 / 05 / 27"
-       member.qrUrl       : URL d'image QR (PNG/SVG) — sinon placeholder
+       member.qrUrl       : URL d'image QR (PNG/SVG) · sinon placeholder
        member.photoUrl    : URL photo identité (optionnel)
 
      Mode planche d'impression :
@@ -257,7 +257,7 @@
     <code>member.planLabel</code>, <code>member.tagLabel</code>,
     <code>member.role</code>, <code>member.validUntil</code>,
     <code>member.qrUrl</code>, <code>member.photoUrl</code>.
-    Pour imprimer plusieurs badges, fournir <code>members</code> (List) — la boucle
+    Pour imprimer plusieurs badges, fournir <code>members</code> (List) · la boucle
     génère automatiquement recto + verso de chaque carte. Cette zone d'aide est
     masquée à l'impression.
 </div>
@@ -265,7 +265,7 @@
 <div class="sheet">
 
     <!-- ╔══════════════════════════════════════════════════════════
-         MODE 1 — Badge unique (par défaut, si `member` est défini)
+         MODE 1 · Badge unique (par défaut, si `member` est défini)
          ╚══════════════════════════════════════════════════════════ -->
     <th:block th:if="${member != null}">
 
@@ -301,7 +301,7 @@
 
             <div class="badge-bottom">
                 <span class="plan-pill" th:text="${member.planLabel ?: 'Premium'}">Premium</span>
-                <span class="valid">Valide jusqu'au <strong th:text="${member.validUntil ?: '— / — / —'}">03 / 05 / 27</strong></span>
+                <span class="valid">Valide jusqu'au <strong th:text="${member.validUntil ?: '· / · / ·'}">03 / 05 / 27</strong></span>
             </div>
         </div>
 
@@ -320,7 +320,7 @@
                 <div>
                     <div class="verso-title">Conditions d'utilisation</div>
                     <ul class="verso-list">
-                        <li>Carte personnelle, non cessible — à présenter à chaque accès.</li>
+                        <li>Carte personnelle, non cessible · à présenter à chaque accès.</li>
                         <li>En cas de perte, prévenir l'accueil dans les 24 h.</li>
                         <li>Restitution obligatoire à la fin de l'adhésion.</li>
                         <li>QR code = identifiant unique de réservation &amp; check-in.</li>
@@ -340,7 +340,7 @@
     </th:block>
 
     <!-- ╔══════════════════════════════════════════════════════════
-         MODE 2 — Planche multi-membres (si `members` est fourni)
+         MODE 2 · Planche multi-membres (si `members` est fourni)
          ╚══════════════════════════════════════════════════════════ -->
     <th:block th:if="${members != null}" th:each="m : ${members}">
 
@@ -370,7 +370,7 @@
             </div>
             <div class="badge-bottom">
                 <span class="plan-pill" th:text="${m.planLabel ?: 'Premium'}">Premium</span>
-                <span class="valid">Valide jusqu'au <strong th:text="${m.validUntil}">— / — / —</strong></span>
+                <span class="valid">Valide jusqu'au <strong th:text="${m.validUntil}">· / · / ·</strong></span>
             </div>
         </div>
 
@@ -388,7 +388,7 @@
                 <div>
                     <div class="verso-title">Conditions d'utilisation</div>
                     <ul class="verso-list">
-                        <li>Carte personnelle, non cessible — à présenter à chaque accès.</li>
+                        <li>Carte personnelle, non cessible · à présenter à chaque accès.</li>
                         <li>En cas de perte, prévenir l'accueil dans les 24 h.</li>
                         <li>Restitution obligatoire à la fin de l'adhésion.</li>
                         <li>QR code = identifiant unique de réservation &amp; check-in.</li>
@@ -408,7 +408,7 @@
     </th:block>
 
     <!-- ╔══════════════════════════════════════════════════════════
-         APERÇU — affichage par défaut quand aucune donnée n'est fournie
+         APERÇU · affichage par défaut quand aucune donnée n'est fournie
          (pour visualisation hors-Thymeleaf)
          ╚══════════════════════════════════════════════════════════ -->
     <th:block th:if="${member == null and members == null}">
@@ -452,7 +452,7 @@
                 <div>
                     <div class="verso-title">Conditions d'utilisation</div>
                     <ul class="verso-list">
-                        <li>Carte personnelle, non cessible — à présenter à chaque accès.</li>
+                        <li>Carte personnelle, non cessible · à présenter à chaque accès.</li>
                         <li>En cas de perte, prévenir l'accueil dans les 24 h.</li>
                         <li>Restitution obligatoire à la fin de l'adhésion.</li>
                         <li>QR code = identifiant unique de réservation &amp; check-in.</li>

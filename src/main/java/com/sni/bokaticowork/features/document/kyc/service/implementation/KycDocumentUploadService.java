@@ -61,7 +61,7 @@ public class KycDocumentUploadService {
         metadata.setOwnerCode(ownerCode);
         metadata.setDocumentTypeCode(documentTypeCode);
         String sideLabel = "BACK".equalsIgnoreCase(side) ? " (Arrière)" : "";
-        metadata.setTitle(docType.getName() + sideLabel + " — " + ownerCode);
+        metadata.setTitle(docType.getName() + sideLabel + " · " + ownerCode);
         metadata.setDocumentNumber(documentNumber);
         metadata.setIssueDate(issueDate);
         metadata.setExpiryDate(expiryDate);
@@ -76,7 +76,7 @@ public class KycDocumentUploadService {
         KycCase kycCase = kycCaseRepository
                 .findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(ownerType, ownerId)
                 .orElseThrow(() -> new BadRequestException(
-                        "Aucun dossier KYC actif pour ce propriétaire — créez-en un d'abord"));
+                        "Aucun dossier KYC actif pour ce propriétaire · créez-en un d'abord"));
 
         if ("BACK".equalsIgnoreCase(side)) {
             KycDocument frontDoc = kycDocumentRepository
@@ -93,7 +93,7 @@ public class KycDocumentUploadService {
             return toResponse(frontDoc, docType);
         }
 
-        // FRONT — check for existing KycDocument of this type in the case
+        // FRONT · check for existing KycDocument of this type in the case
         return kycDocumentRepository.findByKycCaseAndDocumentType(kycCase, documentTypeCode.toUpperCase())
                 .map(existing -> {
                     existing.setDocument(document);

@@ -227,17 +227,17 @@ body {
 <div class="parties-intro">Entre les soussignés :</div>
 
 <div class="party">
-  <div class="party-role">L'entité opératrice — Prestataire</div>
+  <div class="party-role">L'entité opératrice · Prestataire</div>
   <div class="party-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
   <div class="party-detail" th:if="${business != null and business.legalForm != null}" th:text="${business.legalForm}">SARL</div>
   <div class="party-detail" th:if="${business != null and business.email != null}" th:text="${business.email}">contact@example.com</div>
   <div class="party-detail">ci-après dénommée <strong>« le Prestataire »</strong></div>
 </div>
 
-<div class="connector">— et —</div>
+<div class="connector">et</div>
 
 <div class="party">
-  <div class="party-role">Le bénéficiaire — Membre</div>
+  <div class="party-role">Le bénéficiaire · Membre</div>
   <div class="party-name" th:text="${ownerName}">Nom du bénéficiaire</div>
   <div class="party-detail" th:text="${ownerCode}">CODE-001</div>
   <div class="party-detail" th:if="${ownerEmail}" th:text="${ownerEmail}">email@exemple.com</div>
@@ -249,7 +249,7 @@ body {
 
 <!-- ARTICLE 1 : OBJET -->
 <div class="article">
-  <div class="article-heading">Article 1 — Objet du contrat</div>
+  <div class="article-heading">Article 1 · Objet du contrat</div>
   <div class="article-text">
     <p th:if="${request.description != null and !#strings.isEmpty(request.description)}" th:text="${request.description}">Description.</p>
     <p th:if="${request.description == null or #strings.isEmpty(request.description)}">
@@ -261,19 +261,19 @@ body {
 
 <!-- ARTICLE 2 : CADRE CONTRACTUEL -->
 <div class="article">
-  <div class="article-heading">Article 2 — Cadre contractuel et durée</div>
+  <div class="article-heading">Article 2 · Cadre contractuel et durée</div>
   <table class="data-table">
     <tr>
       <td class="lbl">Date d'effet</td>
-      <td th:text="${request.effectiveDate != null ? request.effectiveDate : '—'}">—</td>
+      <td th:text="${request.effectiveDate != null ? request.effectiveDate : ''}"></td>
     </tr>
     <tr>
       <td class="lbl">Date de début</td>
-      <td th:text="${request.startDate != null ? request.startDate : '—'}">—</td>
+      <td th:text="${request.startDate != null ? request.startDate : ''}"></td>
     </tr>
     <tr>
       <td class="lbl">Date de fin</td>
-      <td th:text="${request.endDate != null ? request.endDate : '—'}">—</td>
+      <td th:text="${request.endDate != null ? request.endDate : ''}"></td>
     </tr>
     <tr>
       <td class="lbl">Signataire</td>
@@ -288,7 +288,7 @@ body {
 
 <!-- ARTICLE 3 : OBLIGATIONS ET ENGAGEMENTS -->
 <div class="article">
-  <div class="article-heading">Article 3 — Obligations et engagements des parties</div>
+  <div class="article-heading">Article 3 · Obligations et engagements des parties</div>
   <div class="article-text">
     <div th:if="${#lists.isEmpty(clauses)}">
       <p>Le Bénéficiaire s'engage à respecter le règlement intérieur, les conditions d'utilisation
@@ -302,7 +302,7 @@ body {
 
 <!-- ARTICLE 4 : CONDITIONS SPÉCIFIQUES -->
 <div class="article" th:if="${variables != null and !#maps.isEmpty(variables)}">
-  <div class="article-heading">Article 4 — Conditions spécifiques</div>
+  <div class="article-heading">Article 4 · Conditions spécifiques</div>
   <table class="vars-table">
     <tr th:each="entry : ${variables.entrySet()}">
       <td class="key" th:text="${entry.key}">Paramètre</td>
@@ -313,7 +313,7 @@ body {
 
 <!-- ARTICLE 5 : DISPOSITIONS LÉGALES -->
 <div class="article">
-  <div class="article-heading" th:text="${variables != null and !#maps.isEmpty(variables)} ? 'Article 5 — Dispositions légales et règlement des litiges' : 'Article 4 — Dispositions légales et règlement des litiges'">Article — Dispositions légales</div>
+  <div class="article-heading" th:text="${variables != null and !#maps.isEmpty(variables)} ? 'Article 5 · Dispositions légales et règlement des litiges' : 'Article 4 · Dispositions légales et règlement des litiges'">Article · Dispositions légales</div>
   <div class="legal-notice">
     Le présent contrat est régi par le droit applicable dans le pays d'établissement du Prestataire.
     En cas de différend relatif à l'interprétation ou à l'exécution du présent contrat, les parties s'engagent à
@@ -362,7 +362,7 @@ body {
   <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</span>
   &nbsp;·&nbsp; Contrat d'adhésion &nbsp;·&nbsp;
   Généré le <span th:text="${generatedAt}">2026-01-01</span>
-  &nbsp;·&nbsp; Document confidentiel — conserver précieusement
+  &nbsp;·&nbsp; Document confidentiel · conserver précieusement
 </div>
 
 </body>

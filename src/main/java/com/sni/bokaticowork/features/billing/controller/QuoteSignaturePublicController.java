@@ -62,7 +62,7 @@ public class QuoteSignaturePublicController {
                 .atZone(ZoneId.of("Africa/Brazzaville"))
                 .format(DATE_FMT);
         String totalStr = formatAmount(quote.totalAmount(), quote.currency());
-        String dueDateStr = quote.dueDate() != null ? quote.dueDate().format(DATE_FMT) : "—";
+        String dueDateStr = quote.dueDate() != null ? quote.dueDate().format(DATE_FMT) : "";
         String customMsg  = sig.getCustomMessage() != null
                 ? "<p style='background:#f0eef5;border-left:3px solid #8b5cf6;padding:10px 14px;"
                 + "border-radius:4px;font-size:13px;color:#5c4f6e;margin:16px 0'>"
@@ -75,7 +75,7 @@ public class QuoteSignaturePublicController {
                 <head>
                   <meta charset="UTF-8">
                   <meta name="viewport" content="width=device-width,initial-scale=1">
-                  <title>Signature — %s</title>
+                  <title>Signature · %s</title>
                   <style>
                     *{box-sizing:border-box;margin:0;padding:0}
                     body{background:#f0eef5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -239,7 +239,7 @@ public class QuoteSignaturePublicController {
     }
 
     private String formatAmount(BigDecimal amount, String currency) {
-        if (amount == null) return "—";
+        if (amount == null) return "";
         return String.format("%,.0f %s", amount, currency != null ? currency : "");
     }
 

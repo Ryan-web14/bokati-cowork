@@ -16,7 +16,7 @@ import java.util.Locale;
 
 /**
  * Sends cash-register supervisor/cashier notification emails using the shared
- * "generic-notification" Thymeleaf template — mirrors the lightweight notifier
+ * "generic-notification" Thymeleaf template · mirrors the lightweight notifier
  * pattern used across other features (KYC, contract, support, etc.).
  */
 @Slf4j

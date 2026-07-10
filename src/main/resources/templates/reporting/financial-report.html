@@ -74,14 +74,14 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </td>
         <td>
             <div class="doc-title">Rapport financier</div>
-            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}"></span></div>
         </td>
     </tr></table>
 </div>
 <div class="stripe"></div>
 
 <div class="period-bar">
-    Période : <strong th:text="${fmt.date(report.fromDate())} + ' → ' + ${fmt.date(report.toDate())}">—</strong>
+    Période : <strong th:text="${fmt.date(report.fromDate())} + ' → ' + ${fmt.date(report.toDate())}"></strong>
     &nbsp;·&nbsp; <strong th:text="${fmt.num(report.invoiceCount())}">0</strong> facture(s) émise(s)
 </div>
 
@@ -99,25 +99,25 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Total facturé</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.totalInvoiced())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.totalInvoiced())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Total encaissé</div>
-                    <div class="kpi-value green" th:text="${fmt.money(report.totalPaid())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.money(report.totalPaid())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Encours</div>
-                    <div class="kpi-value red" th:text="${fmt.money(report.totalOutstanding())}">—</div>
+                    <div class="kpi-value red" th:text="${fmt.money(report.totalOutstanding())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Taux de recouvrement</div>
-                    <div class="kpi-value gold" th:text="${fmt.pct(report.collectionRate())}">—</div>
+                    <div class="kpi-value gold" th:text="${fmt.pct(report.collectionRate())}"></div>
                 </div>
             </td>
         </tr>
@@ -128,25 +128,25 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">TVA collectée</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.totalVat())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.totalVat())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Remises accordées</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.totalDiscounts())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.totalDiscounts())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Factures en retard</div>
-                    <div class="kpi-value red" th:text="${fmt.num(report.overdueCount())} + ' (' + ${fmt.money(report.overdueAmount())} + ')'">—</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.overdueCount())} + ' (' + ${fmt.money(report.overdueAmount())} + ')'"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Factures annulées</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.cancelledInvoiceCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.cancelledInvoiceCount())}"></div>
                 </div>
             </td>
         </tr>
@@ -169,11 +169,11 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="src, stat : ${report.revenueBySource()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${src.sourceType()}">—</td>
-                <td class="r" th:text="${fmt.num(src.invoiceCount())}">—</td>
-                <td class="r" th:text="${fmt.money(src.totalInvoiced())}">—</td>
-                <td class="r" th:text="${fmt.money(src.totalPaid())}">—</td>
-                <td class="r" th:text="${fmt.money(src.outstandingAmount())}">—</td>
+                <td th:text="${src.sourceType()}"></td>
+                <td class="r" th:text="${fmt.num(src.invoiceCount())}"></td>
+                <td class="r" th:text="${fmt.money(src.totalInvoiced())}"></td>
+                <td class="r" th:text="${fmt.money(src.totalPaid())}"></td>
+                <td class="r" th:text="${fmt.money(src.outstandingAmount())}"></td>
             </tr>
         </tbody>
     </table>
@@ -187,17 +187,17 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 
     <table class="payment-tbl" th:if="${report.payments() != null}">
         <tr>
-            <td><div class="pm-card"><div class="pm-method">Espèces</div><div class="pm-amount" th:text="${fmt.money(report.payments().cashAmount())}">—</div></div></td>
-            <td><div class="pm-card"><div class="pm-method">Mobile money</div><div class="pm-amount" th:text="${fmt.money(report.payments().mobileMoneyAmount())}">—</div></div></td>
-            <td><div class="pm-card"><div class="pm-method">Portefeuille</div><div class="pm-amount" th:text="${fmt.money(report.payments().walletAmount())}">—</div></div></td>
-            <td><div class="pm-card"><div class="pm-method">Virement</div><div class="pm-amount" th:text="${fmt.money(report.payments().bankTransferAmount())}">—</div></div></td>
+            <td><div class="pm-card"><div class="pm-method">Espèces</div><div class="pm-amount" th:text="${fmt.money(report.payments().cashAmount())}"></div></div></td>
+            <td><div class="pm-card"><div class="pm-method">Mobile money</div><div class="pm-amount" th:text="${fmt.money(report.payments().mobileMoneyAmount())}"></div></div></td>
+            <td><div class="pm-card"><div class="pm-method">Portefeuille</div><div class="pm-amount" th:text="${fmt.money(report.payments().walletAmount())}"></div></div></td>
+            <td><div class="pm-card"><div class="pm-method">Virement</div><div class="pm-amount" th:text="${fmt.money(report.payments().bankTransferAmount())}"></div></div></td>
         </tr>
     </table>
 
 </div>
 
 <div class="footer">
-    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Rapport financier &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+    Elle A Osé · Bokati Cowork &nbsp;·&nbsp; Rapport financier &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}"></span> &nbsp;·&nbsp; Document confidentiel
 </div>
 </body>
 </html>

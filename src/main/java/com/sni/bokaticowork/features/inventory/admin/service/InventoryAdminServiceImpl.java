@@ -99,8 +99,8 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
         String normalizedLocation = normalizeOptional(locationCode);
 
         StringBuilder title = new StringBuilder("Rapport de mouvements de stock");
-        if (normalizedItem != null) title.append(" — Article ").append(normalizedItem);
-        if (normalizedLocation != null) title.append(" — Emplacement ").append(normalizedLocation);
+        if (normalizedItem != null) title.append(" · Article ").append(normalizedItem);
+        if (normalizedLocation != null) title.append(" · Emplacement ").append(normalizedLocation);
         if (fromDate != null) title.append(" | Du ").append(DISPLAY_FMT.format(fromDate));
         if (toDate != null) title.append(" au ").append(DISPLAY_FMT.format(toDate));
 

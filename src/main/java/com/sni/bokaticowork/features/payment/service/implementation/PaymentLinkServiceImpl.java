@@ -71,11 +71,11 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
 
         String recipientEmail = view.customerEmail();
         if (StringUtils.hasText(recipientEmail)) {
-            // Send only after the transaction commits — otherwise a rollback would still
+            // Send only after the transaction commits · otherwise a rollback would still
             // email a checkout URL whose backing transaction/deposit no longer exists.
             registerAfterCommitEmail(recipientEmail, view.customerName(), intent, amount, checkout.redirectUrl());
         } else {
-            log.warn("No email address for intent {} — payment link created but not emailed", intentNumber);
+            log.warn("No email address for intent {} · payment link created but not emailed", intentNumber);
         }
 
         return new PaymentLinkResponse(
@@ -111,7 +111,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
                                           PaymentIntent intent,
                                           BigDecimal amount,
                                           String checkoutUrl) {
-        String subject = "Lien de paiement — " + intent.getIntentNumber();
+        String subject = "Lien de paiement · " + intent.getIntentNumber();
         String html = buildEmailHtml(recipientName, amount, intent.getCurrency(), checkoutUrl);
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

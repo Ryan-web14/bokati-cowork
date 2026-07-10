@@ -46,7 +46,7 @@ public class OutboxNotificationMailServiceImpl implements OutboxNotificationMail
     @Override
     public CompletableFuture<Boolean> sendKycDocumentNotification(String to, Map<String, Object> variables) {
         String html = renderTemplate("email/kyc-expiry-reminder", variables);
-        return sendViaQueue(to, "Document KYC — action requise", html, EmailPriority.BULK);
+        return sendViaQueue(to, "Document KYC · action requise", html, EmailPriority.BULK);
     }
 
     @Override
@@ -71,12 +71,12 @@ public class OutboxNotificationMailServiceImpl implements OutboxNotificationMail
     private String contractSubject(Object eventType) {
         String type = eventType == null ? "" : eventType.toString();
         return switch (type) {
-            case "CONTRACT_AUTO_ACTIVATED"  -> "Votre contrat est actif — Elle A Osé";
-            case "CONTRACT_AUTO_EXPIRED"    -> "Votre contrat a expiré — Elle A Osé";
-            case "CONTRACT_AUTO_RENEWED"    -> "Votre contrat a été renouvelé — Elle A Osé";
-            case "CONTRACT_EXPIRY_ALERT"    -> "Votre contrat expire bientôt — Elle A Osé";
-            case "CONTRACT_DRAFT_GENERATED" -> "Votre contrat est prêt — Elle A Osé";
-            default -> "Notification contrat — Elle A Osé";
+            case "CONTRACT_AUTO_ACTIVATED"  -> "Votre contrat est actif · Elle A Osé";
+            case "CONTRACT_AUTO_EXPIRED"    -> "Votre contrat a expiré · Elle A Osé";
+            case "CONTRACT_AUTO_RENEWED"    -> "Votre contrat a été renouvelé · Elle A Osé";
+            case "CONTRACT_EXPIRY_ALERT"    -> "Votre contrat expire bientôt · Elle A Osé";
+            case "CONTRACT_DRAFT_GENERATED" -> "Votre contrat est prêt · Elle A Osé";
+            default -> "Notification contrat · Elle A Osé";
         };
     }
 

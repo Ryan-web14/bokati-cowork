@@ -63,7 +63,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </td>
         <td>
             <div class="doc-title">Analytics abonnements</div>
-            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}"></span></div>
         </td>
     </tr></table>
 </div>
@@ -83,13 +83,13 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="50%">
                 <div class="kpi-card">
                     <div class="kpi-label">Abonnements actifs</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.totalActive())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalActive())}"></div>
                 </div>
             </td>
             <td width="50%">
                 <div class="kpi-card">
                     <div class="kpi-label">MRR actuel</div>
-                    <div class="kpi-value gold" th:text="${fmt.money(report.currentMrr())}">—</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.currentMrr())}"></div>
                 </div>
             </td>
         </tr>
@@ -110,9 +110,9 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="dp, stat : ${report.mrrTrend()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${fmt.date(dp.month())}">—</td>
-                <td class="r" th:text="${fmt.money(dp.mrr())}">—</td>
-                <td class="r" th:text="${fmt.num(dp.activeCount())}">—</td>
+                <td th:text="${fmt.date(dp.month())}"></td>
+                <td class="r" th:text="${fmt.money(dp.mrr())}"></td>
+                <td class="r" th:text="${fmt.num(dp.activeCount())}"></td>
             </tr>
         </tbody>
     </table>
@@ -133,10 +133,10 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="p, stat : ${report.activeByPlan()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${p.planName()}">—</td>
-                <td class="r" th:text="${fmt.num(p.subscriptionCount())}">—</td>
-                <td class="r" th:text="${fmt.money(p.totalAmount())}">—</td>
-                <td class="r" th:text="${fmt.pct(p.percentage())}">—</td>
+                <td th:text="${p.planName()}"></td>
+                <td class="r" th:text="${fmt.num(p.subscriptionCount())}"></td>
+                <td class="r" th:text="${fmt.money(p.totalAmount())}"></td>
+                <td class="r" th:text="${fmt.pct(p.percentage())}"></td>
             </tr>
         </tbody>
     </table>
@@ -157,10 +157,10 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="c, stat : ${report.churnTrend()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${fmt.date(c.month())}">—</td>
-                <td class="r" th:text="${fmt.num(c.cancelledCount())}">—</td>
-                <td class="r" th:text="${fmt.num(c.totalCount())}">—</td>
-                <td class="r" th:text="${fmt.pct(c.churnRate())}">—</td>
+                <td th:text="${fmt.date(c.month())}"></td>
+                <td class="r" th:text="${fmt.num(c.cancelledCount())}"></td>
+                <td class="r" th:text="${fmt.num(c.totalCount())}"></td>
+                <td class="r" th:text="${fmt.pct(c.churnRate())}"></td>
             </tr>
         </tbody>
     </table>
@@ -181,10 +181,10 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="r, stat : ${report.revenueByPlan()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${r.planName()}">—</td>
-                <td class="r" th:text="${fmt.num(r.subscriptionCount())}">—</td>
-                <td class="r" th:text="${fmt.money(r.totalRevenue())}">—</td>
-                <td class="r" th:text="${fmt.pct(r.percentage())}">—</td>
+                <td th:text="${r.planName()}"></td>
+                <td class="r" th:text="${fmt.num(r.subscriptionCount())}"></td>
+                <td class="r" th:text="${fmt.money(r.totalRevenue())}"></td>
+                <td class="r" th:text="${fmt.pct(r.percentage())}"></td>
             </tr>
         </tbody>
     </table>
@@ -207,12 +207,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="rn, stat : ${report.upcomingRenewals()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${rn.subscriptionNumber()}">—</td>
-                <td th:text="${rn.subscriberCode()}">—</td>
-                <td th:text="${rn.planName()}">—</td>
-                <td class="r" th:text="${fmt.money(rn.totalAmount())}">—</td>
-                <td th:text="${fmt.date(rn.currentPeriodEnd())}">—</td>
-                <td class="r" th:text="${fmt.days(rn.daysUntilRenewal())}">—</td>
+                <td th:text="${rn.subscriptionNumber()}"></td>
+                <td th:text="${rn.subscriberCode()}"></td>
+                <td th:text="${rn.planName()}"></td>
+                <td class="r" th:text="${fmt.money(rn.totalAmount())}"></td>
+                <td th:text="${fmt.date(rn.currentPeriodEnd())}"></td>
+                <td class="r" th:text="${fmt.days(rn.daysUntilRenewal())}"></td>
             </tr>
         </tbody>
     </table>
@@ -220,7 +220,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 </div>
 
 <div class="footer">
-    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Analytics abonnements &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+    Elle A Osé · Bokati Cowork &nbsp;·&nbsp; Analytics abonnements &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}"></span> &nbsp;·&nbsp; Document confidentiel
 </div>
 </body>
 </html>

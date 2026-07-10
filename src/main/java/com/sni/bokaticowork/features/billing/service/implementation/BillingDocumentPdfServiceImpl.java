@@ -182,7 +182,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         return new CreditNoteView(
                 doc.documentNumber(),
                 fmt.date(doc.issueDate()),
-                doc.sourceCode() != null ? doc.sourceCode() : "—",
+                doc.sourceCode() != null ? doc.sourceCode() : "",
                 doc.description() != null ? doc.description() : doc.title(),
                 lines,
                 fmt.money(doc.subtotalAmount()),
@@ -277,7 +277,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
 
     public static final class BillingDocumentTemplateFormatter {
 
-        private static final String EMPTY_VALUE = "—";
+        private static final String EMPTY_VALUE = "";
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 

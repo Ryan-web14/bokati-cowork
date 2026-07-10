@@ -46,7 +46,7 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
                 event.getEventType(), ownerType, ownerCode, documentCode);
 
         if (ownerType == null || !StringUtils.hasText(ownerCode)) {
-            log.warn("CONTRACT event {} missing ownerType/ownerCode — skipping notification", event.getEventType());
+            log.warn("CONTRACT event {} missing ownerType/ownerCode · skipping notification", event.getEventType());
             return;
         }
 
@@ -59,14 +59,14 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
             return;
         }
         if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            log.warn("No email address for CONTRACT event={} ownerType={} ownerCode={} — skipping notification",
+            log.warn("No email address for CONTRACT event={} ownerType={} ownerCode={} · skipping notification",
                     event.getEventType(), ownerType, ownerCode);
             return;
         }
 
         Map<String, Object> vars = new HashMap<>();
         vars.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
-        vars.put("templateCode",  templateCode != null ? templateCode : "—");
+        vars.put("templateCode",  templateCode);
         vars.put("documentCode",  documentCode);
         vars.put("eventType",     event.getEventType());
         vars.put("contractCode",  textValue(payload, "contractCode"));
@@ -93,7 +93,7 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
         log.info("Processing CONTRACT_SIGNING_REQUESTED contract={} signer={}", contractCode, signerEmail);
 
         if (!StringUtils.hasText(signerEmail)) {
-            log.warn("CONTRACT_SIGNING_REQUESTED for contract={} has no signerEmail — skipping notification", contractCode);
+            log.warn("CONTRACT_SIGNING_REQUESTED for contract={} has no signerEmail · skipping notification", contractCode);
             return;
         }
 
@@ -106,7 +106,7 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("eventType", event.getEventType());
 
         try {
-            mailService.sendContractSigningNotification(signerEmail, "Signature requise — " + contractTitle, vars);
+            mailService.sendContractSigningNotification(signerEmail, "Signature requise · " + contractTitle, vars);
             log.info("Signing request notification sent to {} for contract={}", signerEmail, contractCode);
         } catch (Exception ex) {
             log.warn("Failed to send signing notification for contract={} to {}: {}",

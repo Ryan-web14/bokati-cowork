@@ -56,7 +56,7 @@ public class BillingCalculationService {
         }
 
         // La remise globale s'applique sur le HT net (= base taxable avant remise globale),
-        // pas sur le TTC — le montant taxé est le HT après remise.
+        // pas sur le TTC · le montant taxé est le HT après remise.
         BigDecimal netHT = taxable; // somme des (subtotal - remise ligne) par ligne
         BigDecimal documentDiscount = calculateDocumentDiscounts(netHT, discounts);
         BigDecimal adjustedTaxable = money(netHT.subtract(documentDiscount));

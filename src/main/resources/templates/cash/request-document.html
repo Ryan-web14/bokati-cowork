@@ -67,23 +67,23 @@
     </tr>
     <tr>
         <td class="label">Demandeur</td>
-        <td class="value" th:text="${request.requestedBy} ?: '—'">—</td>
+        <td class="value" th:text="${request.requestedBy} ?: ''"></td>
         <td class="label">Statut</td>
         <td class="value">
-            <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(request.status)}" th:text="${statusLabel}">—</span>
+            <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(request.status)}" th:text="${statusLabel}"></span>
         </td>
     </tr>
     <tr>
         <td class="label">Validé par</td>
-        <td class="value" th:text="${request.reviewedBy} ?: '—'">—</td>
+        <td class="value" th:text="${request.reviewedBy} ?: ''"></td>
         <td class="label">Date de validation</td>
-        <td class="value" th:text="${fmt.timestamp(request.reviewedAt)}">—</td>
+        <td class="value" th:text="${fmt.timestamp(request.reviewedAt)}"></td>
     </tr>
     <tr>
         <td class="label">Mouvement généré</td>
-        <td class="value" th:text="${request.executedMovementNumber} ?: '—'">—</td>
+        <td class="value" th:text="${request.executedMovementNumber} ?: ''"></td>
         <td class="label">Date d'exécution</td>
-        <td class="value" th:text="${fmt.timestamp(request.executedAt)}">—</td>
+        <td class="value" th:text="${fmt.timestamp(request.executedAt)}"></td>
     </tr>
 </table>
 
@@ -96,17 +96,17 @@
 <div class="reason-box" th:text="${request.reason} ?: 'Aucun motif renseigné.'">Motif détaillé de la demande.</div>
 
 <div class="section-title" th:if="${request.reviewNote != null and !#strings.isEmpty(request.reviewNote)}">Note du superviseur</div>
-<div class="reason-box" th:if="${request.reviewNote != null and !#strings.isEmpty(request.reviewNote)}" th:text="${request.reviewNote}">—</div>
+<div class="reason-box" th:if="${request.reviewNote != null and !#strings.isEmpty(request.reviewNote)}" th:text="${request.reviewNote}"></div>
 
 <table class="signatures">
     <tr>
-        <td>Signature du demandeur<br/><span th:text="${request.requestedBy} ?: '—'">—</span></td>
-        <td>Signature du superviseur<br/><span th:text="${request.reviewedBy} ?: '—'">—</span></td>
+        <td>Signature du demandeur<br/><span th:text="${request.requestedBy} ?: ''"></span></td>
+        <td>Signature du superviseur<br/><span th:text="${request.reviewedBy} ?: ''"></span></td>
     </tr>
 </table>
 
 <div class="footer">
-    Document généré automatiquement par Bokati Cowork le <span th:text="${fmt.timestamp(generatedAt)}">01/01/2026 10:00</span> —
+    Document généré automatiquement par Bokati Cowork le <span th:text="${fmt.timestamp(generatedAt)}">01/01/2026 10:00</span>.
     Pièce justificative pour la demande <span th:text="${request.requestNumber}">CRQ-202601-000001</span>.
 </div>
 </body>

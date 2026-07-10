@@ -73,7 +73,7 @@ public class SubscriptionLifecycleOperator {
         }
         statusManager.changeStatus(subscription, SubscriptionStatus.ACTIVE, reason, actor);
         subscriptionRepository.save(subscription);
-        // Use currently-valid ACTIVE grants only — expired/depleted/pass grants must not block re-activation
+        // Use currently-valid ACTIVE grants only · expired/depleted/pass grants must not block re-activation
         if (entitlementGrantRepository.findCurrentlyActiveBySubscription(subscription.getId(), Instant.now()).isEmpty()) {
             entitlementService.grantForSubscription(subscription);
             eventWriter.writeEvent(subscription, SubscriptionEventType.ENTITLEMENTS_GRANTED, null);
@@ -85,7 +85,7 @@ public class SubscriptionLifecycleOperator {
         try {
             emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
         } catch (Exception ex) {
-            log.warn("Failed to send activation email for subscription {} — continuing",
+            log.warn("Failed to send activation email for subscription {} · continuing",
                     subscription.getSubscriptionNumber(), ex);
         }
 
@@ -110,7 +110,7 @@ public class SubscriptionLifecycleOperator {
         try {
             emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_SUSPENDED);
         } catch (Exception ex) {
-            log.warn("Failed to send suspension email for subscription {} — continuing",
+            log.warn("Failed to send suspension email for subscription {} · continuing",
                     subscription.getSubscriptionNumber(), ex);
         }
         return subscriptionRepository.save(subscription);
@@ -167,7 +167,7 @@ public class SubscriptionLifecycleOperator {
         try {
             emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
         } catch (Exception ex) {
-            log.warn("Failed to send cancellation email for subscription {} — continuing",
+            log.warn("Failed to send cancellation email for subscription {} · continuing",
                     saved.getSubscriptionNumber(), ex);
         }
         return saved;
@@ -229,7 +229,7 @@ public class SubscriptionLifecycleOperator {
             try {
                 emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CANCELLED);
             } catch (Exception ex) {
-                log.warn("Failed to send period-end cancellation email for subscription {} — continuing",
+                log.warn("Failed to send period-end cancellation email for subscription {} · continuing",
                         saved.getSubscriptionNumber(), ex);
             }
         });
@@ -284,7 +284,7 @@ public class SubscriptionLifecycleOperator {
         try {
             emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
         } catch (Exception ex) {
-            log.warn("Failed to send renewal email for subscription {} — continuing",
+            log.warn("Failed to send renewal email for subscription {} · continuing",
                     subscription.getSubscriptionNumber(), ex);
         }
     }

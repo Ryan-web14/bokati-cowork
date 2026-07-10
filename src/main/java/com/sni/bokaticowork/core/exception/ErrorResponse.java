@@ -26,9 +26,9 @@ public class ErrorResponse {
         String path = request != null ? request.getRequestURI() : null;
 
         if (status.is5xxServerError()) {
-            LOGGER.error("[traceId={}] {} {} — {}", traceId, errorCode, path, message, ex);
+            LOGGER.error("[traceId={}] {} {} · {}", traceId, errorCode, path, message, ex);
         } else {
-            LOGGER.warn("[traceId={}] {} {} — {}", traceId, errorCode, path,
+            LOGGER.warn("[traceId={}] {} {} · {}", traceId, errorCode, path,
                     ex != null ? ex.getMessage() : message);
         }
 

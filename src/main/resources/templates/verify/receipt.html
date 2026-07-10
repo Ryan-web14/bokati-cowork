@@ -100,7 +100,7 @@
                     <span th:case="'SUCCEEDED'"><span class="badge badge-success">Succès</span></span>
                     <span th:case="'PENDING'"><span class="badge badge-pending">En attente</span></span>
                     <span th:case="'FAILED'"><span class="badge badge-failed">Échoué</span></span>
-                    <span th:case="*"><span class="badge badge-default" th:text="${receipt.transactionStatus()}">—</span></span>
+                    <span th:case="*"><span class="badge badge-default" th:text="${receipt.transactionStatus()}"></span></span>
                 </span>
                 <div style="font-size:11px; color:#9b8caa; margin-top:8px;">Vérifié le <span th:text="${generatedAt}"></span></div>
             </div>
@@ -139,15 +139,15 @@
         <div class="card">
             <div class="card-body">
                 <div class="info-label" th:text="${fmt.partyLabel(receipt.customerType())}">Client</div>
-                <div style="font-weight:700; font-size:14px; margin-bottom:10px;" th:text="${receipt.customerName() != null ? receipt.customerName() : '—'}">Nom</div>
+                <div style="font-weight:700; font-size:14px; margin-bottom:10px;" th:text="${receipt.customerName() != null ? receipt.customerName() : ''}">Nom</div>
                 <div class="info-row" th:if="${receipt.customerCode() != null}">
-                    <span class="lbl">Référence</span><span class="val" th:text="${receipt.customerCode()}">—</span>
+                    <span class="lbl">Référence</span><span class="val" th:text="${receipt.customerCode()}"></span>
                 </div>
                 <div class="info-row" th:if="${receipt.customerEmail() != null}">
-                    <span class="lbl">Email</span><span class="val" th:text="${receipt.customerEmail()}">—</span>
+                    <span class="lbl">Email</span><span class="val" th:text="${receipt.customerEmail()}"></span>
                 </div>
                 <div class="info-row" th:if="${receipt.customerPhone() != null}">
-                    <span class="lbl">Téléphone</span><span class="val" th:text="${receipt.customerPhone()}">—</span>
+                    <span class="lbl">Téléphone</span><span class="val" th:text="${receipt.customerPhone()}"></span>
                 </div>
                 <div th:if="${not #lists.isEmpty(fmt.addressLines(receipt.billingAddressJson()))}" style="margin-top:10px; font-size:12px; color:#5c4f6e; line-height:1.6;">
                     <div th:each="line : ${fmt.addressLines(receipt.billingAddressJson())}" th:text="${line}"></div>
@@ -159,19 +159,19 @@
             <div class="card-body">
                 <div class="info-label">Détails du paiement</div>
                 <div class="info-row" th:if="${receipt.paidAt() != null}">
-                    <span class="lbl">Payé le</span><span class="val" th:text="${fmt.timestamp(receipt.paidAt())}">—</span>
+                    <span class="lbl">Payé le</span><span class="val" th:text="${fmt.timestamp(receipt.paidAt())}"></span>
                 </div>
                 <div class="info-row" th:if="${receipt.receiptIssuedAt() != null}">
-                    <span class="lbl">Reçu émis le</span><span class="val" th:text="${fmt.timestamp(receipt.receiptIssuedAt())}">—</span>
+                    <span class="lbl">Reçu émis le</span><span class="val" th:text="${fmt.timestamp(receipt.receiptIssuedAt())}"></span>
                 </div>
                 <div class="info-row" th:if="${receipt.receivedBy() != null}">
-                    <span class="lbl">Encaissé par</span><span class="val" th:text="${receipt.receivedBy()}">—</span>
+                    <span class="lbl">Encaissé par</span><span class="val" th:text="${receipt.receivedBy()}"></span>
                 </div>
                 <div class="info-row" th:if="${receipt.providerReference() != null}">
-                    <span class="lbl">Réf. externe</span><span class="val" th:text="${receipt.providerReference()}">—</span>
+                    <span class="lbl">Réf. externe</span><span class="val" th:text="${receipt.providerReference()}"></span>
                 </div>
                 <div class="info-row" th:if="${receipt.purpose() != null}">
-                    <span class="lbl">Objet</span><span class="val" th:text="${receipt.purpose()}">—</span>
+                    <span class="lbl">Objet</span><span class="val" th:text="${receipt.purpose()}"></span>
                 </div>
                 <div class="info-row" th:if="${receipt.sourceType() != null}">
                     <span class="lbl">Source</span>
@@ -215,7 +215,7 @@
                         <div style="font-weight:700;" th:text="${allocation.documentNumber()}">INV-001</div>
                         <div style="font-size:11px; color:#9b8caa;" th:text="${allocation.documentType()}">INVOICE</div>
                     </td>
-                    <td style="color:#5c4f6e;" th:text="${allocation.title() != null ? allocation.title() : '—'}">Objet</td>
+                    <td style="color:#5c4f6e;" th:text="${allocation.title() != null ? allocation.title() : ''}">Objet</td>
                     <td class="r" th:text="${fmt.money(allocation.documentTotalAmount())}">0</td>
                     <td class="r" style="font-weight:700; color:#7c5600;" th:text="${fmt.money(allocation.allocatedAmount())}">0</td>
                     <td class="r" th:text="${fmt.money(allocation.remainingBalanceDue())}">0</td>
@@ -246,14 +246,14 @@
                 <span th:switch="${receipt.transactionStatus()?.toString()}">
                     <span th:case="'SUCCEEDED'" style="color:#166534; font-weight:700;" th:text="${receipt.transactionStatus()}">SUCCEEDED</span>
                     <span th:case="'FAILED'" style="color:#991b1b; font-weight:700;" th:text="${receipt.transactionStatus()}">FAILED</span>
-                    <span th:case="*" style="font-weight:700;" th:text="${receipt.transactionStatus()}">—</span>
+                    <span th:case="*" style="font-weight:700;" th:text="${receipt.transactionStatus()}"></span>
                 </span>
             </div>
         </div>
     </div>
 
     <div class="footer">
-        <strong>Bokati Cowork</strong> — Reçu de paiement officiel vérifié en ligne<br>
+        <strong>Bokati Cowork</strong> · Reçu de paiement officiel vérifié en ligne<br>
         Réf. : <span th:text="${receipt.receiptNumber()}"></span> · Consulté le <span th:text="${generatedAt}"></span><br>
         Ce reçu est édité électroniquement et fait foi sans signature manuscrite.
     </div>

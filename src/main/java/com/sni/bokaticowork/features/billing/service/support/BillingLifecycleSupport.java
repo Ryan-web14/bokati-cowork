@@ -48,7 +48,7 @@ public class BillingLifecycleSupport {
     public void ensureNotLocked(BillingDocument document) {
         if (Boolean.TRUE.equals(document.getLocked())) {
             throw new BadRequestException(
-                    "Document " + document.getDocumentNumber() + " est validé (SEFC) — il ne peut plus être modifié");
+                    "Document " + document.getDocumentNumber() + " est validé (SEFC) · il ne peut plus être modifié");
         }
     }
 

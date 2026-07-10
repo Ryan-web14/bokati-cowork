@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notification contrat — Elle A Osé</title>
+  <title>Notification contrat · Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #F4F2EF; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #2A2135; }
@@ -84,7 +84,7 @@
 
       <div class="section-lbl">Détails du contrat</div>
       <table class="rows">
-        <tr th:if="${templateCode != null and templateCode != '—' and templateCode != ''}">
+        <tr th:if="${!#strings.isEmpty(templateCode)}">
           <td class="r-key">Type</td>
           <td class="r-val" th:text="${templateCode}">Type</td>
         </tr>

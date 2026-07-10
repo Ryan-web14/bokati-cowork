@@ -514,7 +514,7 @@ body {
   ci-après dénommé <strong>«&#160;le Prestataire&#160;»</strong>,
 </p>
 
-<div class="connector-et">· et ·</div>
+<div class="connector-et">et</div>
 
 <!-- CLIENT : PERSONNE MORALE (RCCM fourni) -->
 <p class="party-prose" th:if="${ownerRccm != null}">
@@ -544,7 +544,7 @@ body {
 <p class="preamble">Il a été convenu et arrêté ce qui suit&#160;:</p>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 1 — OBJET
+     ARTICLE 1 · OBJET
      ───────────────────────────────────────────────── -->
 <div class="article">
   <div class="article-heading">Article 1 : Objet de la souscription</div>
@@ -564,7 +564,7 @@ body {
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 2 — PÉRIODE ET CONDITIONS D'ACCÈS
+     ARTICLE 2 · PÉRIODE ET CONDITIONS D'ACCÈS
      ───────────────────────────────────────────────── -->
 <div class="article">
   <div class="article-heading">Article 2 : Période et conditions d'accès</div>
@@ -624,7 +624,7 @@ body {
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 3 — TARIFICATION ET SERVICES INCLUS
+     ARTICLE 3 · TARIFICATION ET SERVICES INCLUS
      ───────────────────────────────────────────────── -->
 <div class="article">
   <div class="article-heading">Article 3 : Tarification et services inclus</div>
@@ -633,13 +633,13 @@ body {
       <tr>
         <td class="rlbl">Montant souscrit</td>
         <td class="rval">
-          <strong th:text="${variables != null and variables['passPrice'] != null ? variables['passPrice'] : '—'}">—</strong>
+          <strong th:text="${variables != null and variables['passPrice'] != null ? variables['passPrice'] : ''}"></strong>
           <span th:if="${variables != null and variables['passUnit'] != null}">&nbsp;/&nbsp;<span th:text="${variables['passUnit']}">unité</span></span>
         </td>
       </tr>
       <tr th:if="${variables != null and variables['depositAmount'] != null}">
         <td class="rlbl">Dépôt de garantie</td>
-        <td class="rval" th:text="${variables['depositAmount']}">—</td>
+        <td class="rval" th:text="${variables['depositAmount']}"></td>
       </tr>
       <tr>
         <td class="rlbl">Modes de paiement</td>
@@ -672,7 +672,7 @@ body {
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 4 — MODALITÉS DE PAIEMENT
+     ARTICLE 4 · MODALITÉS DE PAIEMENT
      ───────────────────────────────────────────────── -->
 <div class="article">
   <div class="article-heading">Article 4 : Modalités de paiement</div>
@@ -698,7 +698,7 @@ body {
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 5 — RESPONSABILITÉS ET ASSURANCES
+     ARTICLE 5 · RESPONSABILITÉS ET ASSURANCES
      ───────────────────────────────────────────────── -->
 <div class="article">
   <div class="article-heading">Article 5 : Responsabilités et assurances</div>
@@ -718,7 +718,7 @@ body {
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 6 — CONFIDENTIALITÉ ET DONNÉES
+     ARTICLE 6 · CONFIDENTIALITÉ ET DONNÉES
      ───────────────────────────────────────────────── -->
 <div class="article">
   <div class="article-heading">Article 6 : Confidentialité et protection des données</div>
@@ -733,7 +733,7 @@ body {
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 7 — CLAUSES COMPLÉMENTAIRES (dynamique)
+     ARTICLE 7 · CLAUSES COMPLÉMENTAIRES (dynamique)
      ───────────────────────────────────────────────── -->
 <div class="article">
   <div class="article-heading">Article 7 : Clauses contractuelles complémentaires</div>
@@ -751,7 +751,7 @@ body {
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 8 — PARAMÈTRES DE L'OFFRE (conditionnel)
+     ARTICLE 8 · PARAMÈTRES DE L'OFFRE (conditionnel)
      ───────────────────────────────────────────────── -->
 <div class="article" th:if="${variables != null and !#maps.isEmpty(variables)}">
   <div class="article-heading">Article 8 : Paramètres de l'offre</div>
@@ -764,7 +764,7 @@ body {
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 9 (ou 8) — DISPOSITIONS LÉGALES
+     ARTICLE 9 (ou 8) · DISPOSITIONS LÉGALES
      ───────────────────────────────────────────────── -->
 <div class="article">
   <div class="article-heading"
@@ -789,7 +789,7 @@ body {
      ───────────────────────────────────────────────── -->
 <div class="closing"
      th:text="${'Fait à Pointe-Noire, le ' + (variables != null and variables['clientSignedAt'] != null ? variables['clientSignedAt'] : generatedAt)}">
-  Fait à Pointe-Noire, le —
+  Fait à Pointe-Noire, le ____________
 </div>
 
 <!-- ─────────────────────────────────────────────────
@@ -848,7 +848,7 @@ body {
         <div class="sig-date-line"
              th:unless="${variables != null and variables['clientSignedAt'] != null}"
              th:text="${'Date : ' + generatedAt}">Date</div>
-        <div class="sig-mention">Signature électronique — Lu et approuvé, offre non remboursable</div>
+        <div class="sig-mention">Signature électronique · Lu et approuvé, offre non remboursable</div>
       </td>
     </tr>
   </table>

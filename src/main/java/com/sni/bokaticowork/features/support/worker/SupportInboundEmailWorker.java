@@ -84,7 +84,7 @@ public class SupportInboundEmailWorker {
 
         Matcher m = TICKET_NUMBER.matcher(subject);
         if (!m.find()) {
-            log.debug("Inbound email has no ticket number in subject — skipping: {}", subject);
+            log.debug("Inbound email has no ticket number in subject · skipping: {}", subject);
             return;
         }
         String ticketNumber = m.group(1);

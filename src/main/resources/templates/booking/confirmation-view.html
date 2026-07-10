@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="|Réservation ${bookingNumber} — Elle A Osé|">Réservation — Elle A Osé</title>
+  <title th:text="|Réservation ${bookingNumber} · Elle A Osé|">Réservation · Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1A0A2E; min-height: 100vh; }
@@ -92,15 +92,15 @@
               </tr>
               <tr>
                 <td class="dt-key">Date</td>
-                <td class="dt-val" th:text="${bookingDate}">—</td>
+                <td class="dt-val" th:text="${bookingDate}"></td>
               </tr>
               <tr>
                 <td class="dt-key">Horaires</td>
-                <td class="dt-val"><span th:text="${startTime}">—</span> → <span th:text="${endTime}">—</span></td>
+                <td class="dt-val"><span th:text="${startTime}"></span> → <span th:text="${endTime}"></span></td>
               </tr>
               <tr>
                 <td class="dt-key">Durée</td>
-                <td class="dt-val" th:text="${durationLabel}">—</td>
+                <td class="dt-val" th:text="${durationLabel}"></td>
               </tr>
               <tr th:if="${quantity}">
                 <td class="dt-key">Quantité</td>
@@ -108,27 +108,27 @@
               </tr>
               <tr>
                 <td class="dt-key">Statut</td>
-                <td class="dt-val" th:text="${status}">—</td>
+                <td class="dt-val" th:text="${status}"></td>
               </tr>
               <tr th:if="${address}">
                 <td class="dt-key">Lieu</td>
-                <td class="dt-val"><span th:text="${address}">—</span><br><span th:text="${city}" style="font-weight:400; font-size:12px; color:#9B8CAA;">—</span></td>
+                <td class="dt-val"><span th:text="${address}"></span><br><span th:text="${city}" style="font-weight:400; font-size:12px; color:#9B8CAA;"></span></td>
               </tr>
               <tr>
                 <td class="dt-key">Base HT</td>
-                <td class="dt-val" th:text="${priceHT}">—</td>
+                <td class="dt-val" th:text="${priceHT}"></td>
               </tr>
               <tr th:if="${priceTVA}">
                 <td class="dt-key" th:text="|TVA ${tvaPct}|">TVA</td>
-                <td class="dt-val" th:text="${priceTVA}">—</td>
+                <td class="dt-val" th:text="${priceTVA}"></td>
               </tr>
               <tr th:if="${priceCentimeAdditionnel}">
                 <td class="dt-key" th:text="|Centime ${centimeAdditionnelPct}|">Centime</td>
-                <td class="dt-val" th:text="${priceCentimeAdditionnel}">—</td>
+                <td class="dt-val" th:text="${priceCentimeAdditionnel}"></td>
               </tr>
               <tr class="dt-total">
                 <td class="dt-key">Total TTC</td>
-                <td class="dt-val" th:text="${priceTTC}">—</td>
+                <td class="dt-val" th:text="${priceTTC}"></td>
               </tr>
             </table>
           </div>

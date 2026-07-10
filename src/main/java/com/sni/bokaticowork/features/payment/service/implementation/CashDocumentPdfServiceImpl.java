@@ -154,7 +154,7 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
 
     private String requestStatusLabel(CashRequestStatus status) {
         if (status == null) {
-            return "—";
+            return "";
         }
         return switch (status) {
             case PENDING -> "En attente de validation";
@@ -183,7 +183,7 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
 
     public static final class CashDocumentTemplateFormatter {
 
-        private static final String EMPTY_VALUE = "—";
+        private static final String EMPTY_VALUE = "";
         private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
         private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 

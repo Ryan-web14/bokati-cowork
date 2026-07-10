@@ -45,7 +45,7 @@ public final class CodeComposer {
     }
 
     // -------------------------------------------------------------------------
-    // Code builders — operational entities (8-digit seq)
+    // Code builders · operational entities (8-digit seq)
     // -------------------------------------------------------------------------
 
     /**
@@ -89,7 +89,7 @@ public final class CodeComposer {
     }
 
     // -------------------------------------------------------------------------
-    // Code builders — reference / master data (6-digit seq)
+    // Code builders · reference / master data (6-digit seq)
     // -------------------------------------------------------------------------
 
     /**

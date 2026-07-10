@@ -120,7 +120,7 @@ public class SubscriptionCreationOperator {
         if (saved.getTotalAmount().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
             lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");
         } else {
-            // Pas d'auto-activation — envoyer l'email de création en attente de paiement
+            // Pas d'auto-activation · envoyer l'email de création en attente de paiement
             emailNotifier.notify(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         }
         return saved;

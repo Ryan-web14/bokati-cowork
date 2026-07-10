@@ -107,7 +107,7 @@ public class MobileMoneyController {
 
     /**
      * Webhook called by PawaPay when a deposit changes status (COMPLETED or FAILED).
-     * Always returns 200 — PawaPay retries on non-2xx responses.
+     * Always returns 200 · PawaPay retries on non-2xx responses.
      */
     @PostMapping({"/pawapay/callback", "/pawaypay/callback"})
     public ResponseEntity<Void> depositCallback(
@@ -117,7 +117,7 @@ public class MobileMoneyController {
         log.info("PawaPay deposit callback received");
 
         if (!signatureVerifier.verify(rawBody, signature)) {
-            log.warn("PawaPay deposit callback rejected — invalid signature");
+            log.warn("PawaPay deposit callback rejected · invalid signature");
             return ResponseEntity.ok().build();
         }
 
@@ -173,7 +173,7 @@ public class MobileMoneyController {
         log.info("PawaPay refund callback received");
 
         if (!signatureVerifier.verify(rawBody, signature)) {
-            log.warn("PawaPay refund callback rejected — invalid signature");
+            log.warn("PawaPay refund callback rejected · invalid signature");
             return ResponseEntity.ok().build();
         }
 

@@ -67,14 +67,14 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </td>
         <td>
             <div class="doc-title">Rapport d'occupation</div>
-            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}"></span></div>
         </td>
     </tr></table>
 </div>
 <div class="stripe"></div>
 
 <div class="period-bar">
-    Période : <strong th:text="${fmt.date(report.fromDate())} + ' → ' + ${fmt.date(report.toDate())}">—</strong>
+    Période : <strong th:text="${fmt.date(report.fromDate())} + ' → ' + ${fmt.date(report.toDate())}"></strong>
     &nbsp;·&nbsp; <strong th:text="${report.periodDays()}">0</strong> jour(s)
     &nbsp;·&nbsp; <strong th:text="${fmt.num(report.totalBookings())}">0</strong> réservation(s)
 </div>
@@ -93,19 +93,19 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Taux d'occupation global</div>
-                    <div class="kpi-value gold" th:text="${fmt.pct(report.overallOccupancyRate())}">—</div>
+                    <div class="kpi-value gold" th:text="${fmt.pct(report.overallOccupancyRate())}"></div>
                 </div>
             </td>
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Total réservations</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.totalBookings())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalBookings())}"></div>
                 </div>
             </td>
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Minutes réservées</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.totalBookedMinutes())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalBookedMinutes())}"></div>
                 </div>
             </td>
         </tr>
@@ -128,11 +128,11 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="t, stat : ${report.byResourceType()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${t.typeName() ?: t.typeCode()}">—</td>
-                <td class="r" th:text="${fmt.num(t.resourceCount())}">—</td>
-                <td class="r" th:text="${fmt.num(t.totalBookings())}">—</td>
-                <td class="r" th:text="${fmt.money(t.totalRevenue())}">—</td>
-                <td class="r" th:text="${fmt.pct(t.occupancyRate())}">—</td>
+                <td th:text="${t.typeName() ?: t.typeCode()}"></td>
+                <td class="r" th:text="${fmt.num(t.resourceCount())}"></td>
+                <td class="r" th:text="${fmt.num(t.totalBookings())}"></td>
+                <td class="r" th:text="${fmt.money(t.totalRevenue())}"></td>
+                <td class="r" th:text="${fmt.pct(t.occupancyRate())}"></td>
             </tr>
         </tbody>
     </table>
@@ -155,12 +155,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="r, stat : ${report.byResource()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${r.resourceName() ?: r.resourceCode()}">—</td>
-                <td th:text="${r.typeName() ?: r.typeCode()}">—</td>
-                <td class="r" th:text="${fmt.num(r.bookingCount())}">—</td>
-                <td class="r" th:text="${fmt.num(r.bookedMinutes())}">—</td>
-                <td class="r" th:text="${fmt.money(r.revenue())}">—</td>
-                <td class="r" th:text="${fmt.pct(r.occupancyRate())}">—</td>
+                <td th:text="${r.resourceName() ?: r.resourceCode()}"></td>
+                <td th:text="${r.typeName() ?: r.typeCode()}"></td>
+                <td class="r" th:text="${fmt.num(r.bookingCount())}"></td>
+                <td class="r" th:text="${fmt.num(r.bookedMinutes())}"></td>
+                <td class="r" th:text="${fmt.money(r.revenue())}"></td>
+                <td class="r" th:text="${fmt.pct(r.occupancyRate())}"></td>
             </tr>
         </tbody>
     </table>
@@ -168,7 +168,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 </div>
 
 <div class="footer">
-    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Rapport d'occupation &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+    Elle A Osé · Bokati Cowork &nbsp;·&nbsp; Rapport d'occupation &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}"></span> &nbsp;·&nbsp; Document confidentiel
 </div>
 </body>
 </html>

@@ -43,7 +43,7 @@ public class FiscalIntegrityCheckService {
         for (BillingDocument doc : invoices) {
             checked++;
 
-            // 1 — Continuité numérotation (réinitialisée par année)
+            // 1 · Continuité numérotation (réinitialisée par année)
             int docYear = doc.getFiscalDate() != null ? doc.getFiscalDate().getYear() : 0;
             long seq = extractSeq(doc.getFiscalNumber());
             if (docYear != previousYear) {
@@ -57,12 +57,12 @@ public class FiscalIntegrityCheckService {
                 previousSeq = seq;
             }
 
-            // 2 — Chaînage hash
+            // 2 · Chaînage hash
             String expectedHash = hashService.compute(doc, previousHash);
             if (!expectedHash.equals(doc.getCurrentHash())) brokenChains++;
             previousHash = doc.getCurrentHash();
 
-            // 3 — Signature HMAC
+            // 3 · Signature HMAC
             if (doc.getFiscalSignature() == null
                     || !signatureService.verify(doc.getCurrentHash(), doc.getFiscalSignature())) {
                 missingSignatures++;
@@ -91,7 +91,7 @@ public class FiscalIntegrityCheckService {
         reportRepository.save(entry);
         if (!report.valid()) {
             log.warn(
-                    "SEFC integrity check anomalies — chains:{} signatures:{} gaps:{} invoices:{}",
+                    "SEFC integrity check anomalies · chains:{} signatures:{} gaps:{} invoices:{}",
                     report.brokenChains(), report.missingSignatures(),
                     report.numberingGaps(), report.checkedInvoices());
         }
