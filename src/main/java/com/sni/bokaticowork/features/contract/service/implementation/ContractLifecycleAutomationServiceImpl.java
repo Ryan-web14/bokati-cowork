@@ -128,6 +128,14 @@ public class ContractLifecycleAutomationServiceImpl implements ContractLifecycle
                 if (contract.getRenewalType() == ContractRenewalType.AUTO_RENEW) {
                     continue;
                 }
+                // Skip if this contract has already been alerted at this threshold (or a closer one).
+                // Without this the hourly worker re-publishes the alert every hour for the whole day.
+                Integer alreadyAlerted = contract.getExpiryAlertSentDays();
+                if (alreadyAlerted != null && alreadyAlerted <= days) {
+                    continue;
+                }
+                contract.setExpiryAlertSentDays(days);
+                contractRepository.save(contract);
                 HashMap<String, Object> payload = new HashMap<>();
                 payload.put("contractCode", contract.getContractCode());
                 payload.put("ownerType", contract.getOwnerType());

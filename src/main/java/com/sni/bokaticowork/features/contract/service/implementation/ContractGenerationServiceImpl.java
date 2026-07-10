@@ -22,6 +22,8 @@ import com.sni.bokaticowork.features.contract.service.support.ContractEmailNotif
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -113,9 +115,24 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         );
 
         OwnerView ownerView = resolveOwnerView(request.getOwnerType(), request.getOwnerCode());
-        contractEmailNotifier.notifyGenerated(
-                ownerView.email(), ownerView.name(),
-                request.getTemplateCode(), docResponse.getCode());
+        // Send the "contract ready" email only once the surrounding transaction commits.
+        // Otherwise a generation that later rolls back (e.g. the subscription contract-repair
+        // worker retrying) would still fire the async email on every attempt, spamming the
+        // client — and the async reader could race the not-yet-committed document.
+        String recipientEmail = ownerView.email();
+        String recipientName = ownerView.name();
+        String templateCode = request.getTemplateCode();
+        String documentCode = docResponse.getCode();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    contractEmailNotifier.notifyGenerated(recipientEmail, recipientName, templateCode, documentCode);
+                }
+            });
+        } else {
+            contractEmailNotifier.notifyGenerated(recipientEmail, recipientName, templateCode, documentCode);
+        }
 
         return docResponse;
     }

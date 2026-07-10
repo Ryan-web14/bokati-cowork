@@ -69,6 +69,9 @@ public class ContractOutboxEventProcessor implements OutboxEventProcessor {
         vars.put("templateCode",  templateCode != null ? templateCode : "—");
         vars.put("documentCode",  documentCode);
         vars.put("eventType",     event.getEventType());
+        vars.put("contractCode",  textValue(payload, "contractCode"));
+        vars.put("endDate",       textValue(payload, "endDate"));
+        vars.put("daysUntilExpiry", textValue(payload, "daysUntilExpiry"));
 
         try {
             mailService.sendContractNotification(recipient.email(), vars);

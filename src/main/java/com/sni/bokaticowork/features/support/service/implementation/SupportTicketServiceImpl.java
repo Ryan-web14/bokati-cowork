@@ -281,8 +281,12 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                messagingTemplate.convertAndSend(
-                        "/topic/support/tickets/" + ticketNumber, wsPayload);
+                try {
+                    messagingTemplate.convertAndSend(
+                            "/topic/support/tickets/" + ticketNumber, wsPayload);
+                } catch (Exception ex) {
+                    log.warn("Failed to broadcast ticket message over WebSocket for {}", ticketNumber, ex);
+                }
             }
         });
 
@@ -636,8 +640,12 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                messagingTemplate.convertAndSend(
-                        "/topic/support/tickets/" + ticketNumber, wsPayload);
+                try {
+                    messagingTemplate.convertAndSend(
+                            "/topic/support/tickets/" + ticketNumber, wsPayload);
+                } catch (Exception ex) {
+                    log.warn("Failed to broadcast ticket message over WebSocket for {}", ticketNumber, ex);
+                }
             }
         });
 

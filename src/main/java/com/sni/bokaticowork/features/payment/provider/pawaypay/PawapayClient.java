@@ -3,6 +3,8 @@ package com.sni.bokaticowork.features.payment.provider.pawaypay;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayDepositRequest;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayDepositResponse;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayDepositStatusResponse;
+import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayPaymentPageRequest;
+import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayPaymentPageResponse;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayRefundRequest;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayRefundResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,15 @@ public class PawapayClient {
                 .uri("/v2/deposits/{depositId}", depositId)
                 .retrieve()
                 .body(PawapayDepositStatusResponse.class);
+    }
+
+    public PawapayPaymentPageResponse createPaymentPage(PawapayPaymentPageRequest request) {
+        log.debug("Creating PawaPay payment page: depositId={}", request.depositId());
+        return restClient.post()
+                .uri("/v2/paymentpage")
+                .body(request)
+                .retrieve()
+                .body(PawapayPaymentPageResponse.class);
     }
 
     public PawapayRefundResponse initiateRefund(PawapayRefundRequest request) {

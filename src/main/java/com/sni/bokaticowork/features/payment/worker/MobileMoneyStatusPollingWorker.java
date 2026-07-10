@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.worker;
 
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyPaymentProvider;
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyStatusResponse;
@@ -59,7 +61,7 @@ public class MobileMoneyStatusPollingWorker {
         if (!StringUtils.hasText(depositId)) return;
 
         MobileMoneyStatusResponse status = mobileMoneyProvider.checkStatus(depositId);
-        depositService.markStatusChecked(depositId, status.message());
+        PawapayDeposit deposit = depositService.markStatusChecked(depositId, status.message());
         log.debug("Poll result for transaction {}: status={}", transaction.getTransactionNumber(), status.status());
 
         if ("SUCCEEDED".equals(status.status())) {
@@ -73,7 +75,20 @@ public class MobileMoneyStatusPollingWorker {
                     depositId, "FAILED", null, null, null, null, null, null,
                     null, null, null, null, null, null, null, null
             ));
+        } else {
+            // Still PROCESSING at the operator. Give up once we have exhausted the retry
+            // budget so we stop polling the same stuck deposit forever and settle it FAILED.
+            int attempts = deposit != null ? deposit.getStatusCheckCount() : 0;
+            if (attempts >= properties.getMaxPollingAttempts()) {
+                log.warn("Abandoning mobile money transaction {} as FAILED after {} status check(s)",
+                        transaction.getTransactionNumber(), attempts);
+                callbackProcessor.process(new PawapayCallbackPayload(
+                        depositId, "FAILED", null, null, null, null, null, null,
+                        null, null, null, null, null, null, null,
+                        TextNode.valueOf("Abandoned after " + attempts + " status checks without resolution")
+                ));
+            }
+            // else: leave it for the next poll cycle
         }
-        // PROCESSING — still pending at the operator, leave it for the next poll cycle
     }
 }

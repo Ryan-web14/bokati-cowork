@@ -6,43 +6,46 @@
   <title>Remboursement confirmé — Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
-    .wrap { width: 100%; padding: 48px 16px; background: #E8E5E0; }
-    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 28px 56px rgba(26,10,46,.10); }
-    .em-header { background: #110828; padding: 22px 36px; }
+    body { background: #F4F2EF; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #2A2135; }
+    .wrap { width: 100%; padding: 40px 16px; background: #F4F2EF; }
+    .sheet { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #ECE7F2; }
+    .em-header { background: #110828; padding: 22px 40px; }
     .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
-    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
-    .em-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
-    .em-body { padding: 44px 40px 40px; }
-    .em-doc-title { font-size: 19px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 28px; }
-    .em-intro { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 32px; }
+    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.30); margin-top: 5px; }
+    .em-stripe { height: 3px; background: linear-gradient(90deg, #C9A84C 0%, #10B981 100%); }
+    .em-body { padding: 40px 40px 36px; }
+    .em-title { font-size: 21px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 10px; }
+    .em-intro { font-size: 14.5px; color: #5C4F6E; line-height: 1.7; margin-bottom: 12px; }
     .em-intro strong { color: #1A0A2E; font-weight: 700; }
-    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; padding-bottom: 10px; border-bottom: 1px solid #EEE9F5; }
-    .dt { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
-    .dt tr { border-bottom: 1px solid #EEE9F5; }
-    .dt tr:first-child { border-top: 1px solid #EEE9F5; }
-    .dt td { padding: 13px 0; vertical-align: middle; }
-    .dt-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; width: 170px; }
-    .dt-val { font-size: 13.5px; font-weight: 600; color: #1A0A2E; }
-    .dt-mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1.2px; }
-    .em-legal { font-size: 11.5px; color: #C0B4D0; line-height: 1.65; }
-    .em-legal a { color: #9B8CAA; text-decoration: none; }
-    .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
-    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
-    .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
-    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #A99BBC; margin: 30px 0 6px; }
+    .rows { width: 100%; border-collapse: collapse; }
+    .rows tr { border-bottom: 1px solid #F0ECF6; }
+    .rows tr:last-child { border-bottom: none; }
+    .rows td { padding: 12px 0; vertical-align: top; }
+    .r-key { font-size: 13px; color: #8A7C9C; width: 50%; }
+    .r-val { font-size: 14px; font-weight: 600; color: #1A0A2E; text-align: right; line-height: 1.4; }
+    .mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1px; }
+    .amt-row td { padding-top: 16px; border-top: 2px solid #1A0A2E; }
+    .amt-key { font-size: 13px; font-weight: 700; color: #1A0A2E; text-transform: uppercase; letter-spacing: 1px; }
+    .amt-val { font-size: 20px; font-weight: 700; color: #059669; text-align: right; letter-spacing: -.3px; }
+    .em-legal { font-size: 12px; color: #A99BBC; line-height: 1.65; margin-top: 28px; padding-top: 22px; border-top: 1px solid #F0ECF6; }
+    .em-legal a { color: #8A7C9C; text-decoration: underline; }
+    .em-footer { background: #FAF9F7; border-top: 1px solid #EEEAF3; padding: 22px 40px; text-align: center; }
+    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #A99BBC; margin-bottom: 6px; }
+    .em-footer-text { font-size: 11px; color: #B9AEC8; line-height: 1.65; }
+    .em-footer-text a { color: #8A7C9C; text-decoration: none; }
     @media (max-width: 480px) {
       .wrap { padding: 0; background: #fff; }
-      .card { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .sheet { border-radius: 0; border: none; max-width: 100%; }
       .em-header { padding: 18px 24px; }
-      .em-body { padding: 32px 24px 32px; }
+      .em-body { padding: 30px 22px 28px; }
       .em-footer { padding: 18px 24px; }
     }
   </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="card">
+  <div class="sheet">
 
     <div class="em-header">
       <div class="em-brand" th:if="${logo == null}">Elle A Osé</div>
@@ -52,46 +55,47 @@
     <div class="em-stripe"></div>
 
     <div class="em-body">
-      <div class="em-doc-title">Remboursement</div>
-
+      <div class="em-title">Remboursement confirmé</div>
       <div class="em-intro">
-        Bonjour <strong th:text="${recipientName}">client</strong>, un remboursement de <strong th:text="${amount}">—</strong> a été initié sur votre moyen de paiement. Le délai de crédit dépend de votre établissement bancaire.
+        Bonjour <strong th:text="${recipientName}">client</strong>, un remboursement de
+        <strong th:text="${amount}">montant</strong> a été initié sur votre moyen de paiement.
+        Le délai de crédit dépend de votre établissement bancaire.
       </div>
 
       <div class="section-lbl">Détails du remboursement</div>
-      <table class="dt">
+      <table class="rows">
         <tr>
-          <td class="dt-key">Référence transaction</td>
-          <td class="dt-val dt-mono" th:text="${transactionNumber}">TXN-000</td>
+          <td class="r-key">Référence transaction</td>
+          <td class="r-val mono" th:text="${transactionNumber}">TXN-000</td>
         </tr>
         <tr th:if="${intentNumber}">
-          <td class="dt-key">Référence intention</td>
-          <td class="dt-val dt-mono" th:text="${intentNumber}">INT-000</td>
+          <td class="r-key">Référence intention</td>
+          <td class="r-val mono" th:text="${intentNumber}">INT-000</td>
         </tr>
         <tr>
-          <td class="dt-key">Montant remboursé</td>
-          <td class="dt-val" th:text="${amount}">—</td>
-        </tr>
-        <tr>
-          <td class="dt-key">Statut</td>
-          <td class="dt-val" th:text="${status}">—</td>
+          <td class="r-key">Statut</td>
+          <td class="r-val" th:text="${status}">statut</td>
         </tr>
         <tr th:if="${paymentMethod}">
-          <td class="dt-key">Mode de paiement</td>
-          <td class="dt-val" th:text="${paymentMethod}">—</td>
+          <td class="r-key">Mode de paiement</td>
+          <td class="r-val" th:text="${paymentMethod}">moyen</td>
         </tr>
         <tr th:if="${providerReference}">
-          <td class="dt-key">Référence prestataire</td>
-          <td class="dt-val dt-mono" th:text="${providerReference}">—</td>
+          <td class="r-key">Référence prestataire</td>
+          <td class="r-val mono" th:text="${providerReference}">REF</td>
         </tr>
         <tr th:if="${sourceCode}">
-          <td class="dt-key">Code source</td>
-          <td class="dt-val dt-mono" th:text="${sourceCode}">—</td>
+          <td class="r-key">Code source</td>
+          <td class="r-val mono" th:text="${sourceCode}">SRC</td>
+        </tr>
+        <tr class="amt-row">
+          <td class="amt-key">Montant remboursé</td>
+          <td class="amt-val" th:text="${amount}">montant</td>
         </tr>
       </table>
 
       <div class="em-legal">
-        Conservez cet email comme preuve de remboursement. Pour toute question, contactez <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a>.
+        Conservez cet email comme preuve de remboursement. Pour toute question, écrivez-nous à <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a>.
       </div>
     </div>
 

@@ -103,6 +103,10 @@ public class PawapayDeposit {
     @Column(name = "last_status_checked_at")
     private Instant lastStatusCheckedAt;
 
+    @Builder.Default
+    @Column(name = "status_check_count", nullable = false)
+    private int statusCheckCount = 0;
+
     @Column(name = "completed_at")
     private Instant completedAt;
 
