@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * URL publique dédiée à la Grande Ouverture — plus simple à partager (site web, réseaux
+ * URL publique dédiée à la Grande Ouverture · plus simple à partager (site web, réseaux
  * sociaux, QR code) qu'un endpoint générique paramétré par {@code eventCode}. Délègue au
  * même {@link EventRegistrationService} générique, fixé sur l'événement configuré par
  * {@code app.event.opening-code} (pré-chargé en base sous le code "OUVERTURE").

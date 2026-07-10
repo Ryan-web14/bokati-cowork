@@ -92,7 +92,7 @@ public class BookingPolicyEnforcer {
             TransactionTemplate template = new TransactionTemplate(transactionManager);
             template.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
             template.executeWithoutResult(status -> supportTicketService.createFromAutomation(new CreateTicketRequest(
-                    "Quota mensuel de no-show dépassé — " + ownerCode,
+                    "Quota mensuel de no-show dépassé · " + ownerCode,
                     "Le client " + ownerCode + " (" + ownerType.name() + ") a atteint " + noShows
                             + " absence(s) non justifiée(s) ce mois-ci, dépassant le quota autorisé par sa politique de réservation.",
                     TicketPriority.HIGH,

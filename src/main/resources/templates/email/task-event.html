@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tâche — Elle A Osé</title>
+<title>Tâche · Elle A Osé</title>
 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 <style>
     body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
@@ -86,7 +86,7 @@
                 </div>
                 <div th:case="'TASK_DUE_SOON'">
                     <div class="hero-title">Échéance proche</div>
-                    <div class="hero-sub">Cette tâche arrive bientôt à échéance — priorisez-la.</div>
+                    <div class="hero-sub">Cette tâche arrive bientôt à échéance · priorisez-la.</div>
                 </div>
                 <div th:case="'TASK_OVERDUE'">
                     <div class="hero-title-danger">Tâche en retard</div>
@@ -119,7 +119,7 @@
                                 </td>
                                 <td th:if="${dueAt}" style="padding:0 0 8px 0; vertical-align:top; width:50%;">
                                     <span class="meta-lbl">Échéance</span>
-                                    <span class="meta-val" th:text="${dueAt}">—</span>
+                                    <span class="meta-val" th:text="${dueAt}"></span>
                                 </td>
                             </tr>
                             <tr>

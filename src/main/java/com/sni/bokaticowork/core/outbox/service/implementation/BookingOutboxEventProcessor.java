@@ -46,7 +46,7 @@ public class BookingOutboxEventProcessor implements OutboxEventProcessor {
         Booking booking = bookingRepository.findPublicByBookingNumberWithResource(bookingNumber)
                 .orElse(null);
         if (booking == null) {
-            log.warn("Booking not found for outbox event {} bookingNumber={} — skipping email", event.getId(), bookingNumber);
+            log.warn("Booking not found for outbox event {} bookingNumber={} · skipping email", event.getId(), bookingNumber);
             return;
         }
 
@@ -75,7 +75,7 @@ public class BookingOutboxEventProcessor implements OutboxEventProcessor {
         try {
             return BookingEventType.valueOf(value);
         } catch (Exception ex) {
-            log.warn("Unsupported booking outbox event type '{}' for event {} — skipping", value, event.getId());
+            log.warn("Unsupported booking outbox event type '{}' for event {} · skipping", value, event.getId());
             return null;
         }
     }

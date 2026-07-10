@@ -18,7 +18,7 @@ public class FiscalIntegrityWorker {
         log.info("Starting nightly SEFC fiscal integrity check");
         FiscalIntegrityCheckService.FiscalIntegrityReport report =
                 integrityCheckService.checkAndSave("SCHEDULER");
-        log.info("SEFC integrity check complete — valid:{} checked:{} chains:{} sigs:{} gaps:{}",
+        log.info("SEFC integrity check complete · valid:{} checked:{} chains:{} sigs:{} gaps:{}",
                 report.valid(), report.checkedInvoices(),
                 report.brokenChains(), report.missingSignatures(), report.numberingGaps());
     }

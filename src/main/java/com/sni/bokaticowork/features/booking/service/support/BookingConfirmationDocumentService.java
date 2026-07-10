@@ -66,7 +66,7 @@ public class BookingConfirmationDocumentService {
         model.addAttribute("recipientName", valueOrDefault(booking.getContactName(), "client"));
         model.addAttribute("resourceName", resourceName(booking));
         model.addAttribute("resourceType", resourceType(booking));
-        model.addAttribute("status", booking.getStatus() == null ? "—" : booking.getStatus().name());
+        model.addAttribute("status", booking.getStatus() == null ? "" : booking.getStatus().name());
         model.addAttribute("bookingDate", formatDate(booking.getStartedAt()));
         model.addAttribute("startTime", formatTime(booking.getStartedAt()));
         model.addAttribute("endTime", formatTime(booking.getEndedAt()));
@@ -81,7 +81,7 @@ public class BookingConfirmationDocumentService {
         model.addAttribute("priceCentimeAdditionnel", money(computeTaxAmount(taxableBase, CENTIME_ADDITIONNEL_RATE), booking.getCurrency()));
         model.addAttribute("tvaPct", "18.4 %");
         model.addAttribute("centimeAdditionnelPct", "5 %");
-        model.addAttribute("paymentMode", booking.getPaymentMode() == null ? "—" : booking.getPaymentMode().name());
+        model.addAttribute("paymentMode", booking.getPaymentMode() == null ? "" : booking.getPaymentMode().name());
         model.addAttribute("verificationCode", booking.getCheckInToken());
         model.addAttribute("scanUrl", scanUrl(booking));
         model.addAttribute("viewUrl", publicBookingViewUrl(booking));
@@ -96,7 +96,7 @@ public class BookingConfirmationDocumentService {
         ctx.setVariable("recipientName", valueOrDefault(booking.getContactName(), "client"));
         ctx.setVariable("resourceName", resourceName(booking));
         ctx.setVariable("resourceType", resourceType(booking));
-        ctx.setVariable("status", booking.getStatus() == null ? "—" : booking.getStatus().name());
+        ctx.setVariable("status", booking.getStatus() == null ? "" : booking.getStatus().name());
         ctx.setVariable("bookingDate", formatDate(booking.getStartedAt()));
         ctx.setVariable("startTime", formatTime(booking.getStartedAt()));
         ctx.setVariable("endTime", formatTime(booking.getEndedAt()));
@@ -111,7 +111,7 @@ public class BookingConfirmationDocumentService {
         ctx.setVariable("priceCentimeAdditionnel", money(computeTaxAmount(taxableBase, CENTIME_ADDITIONNEL_RATE), booking.getCurrency()));
         ctx.setVariable("tvaPct", "18.4 %");
         ctx.setVariable("centimeAdditionnelPct", "5 %");
-        ctx.setVariable("paymentMode", booking.getPaymentMode() == null ? "—" : booking.getPaymentMode().name());
+        ctx.setVariable("paymentMode", booking.getPaymentMode() == null ? "" : booking.getPaymentMode().name());
         ctx.setVariable("verificationCode", booking.getCheckInToken());
         ctx.setVariable("qrDataUri", "data:image/png;base64," + Base64.getEncoder().encodeToString(qrBytes(booking)));
         return renderPdf(templateEngine.process("booking/confirmation-pdf", ctx));
@@ -175,7 +175,7 @@ public class BookingConfirmationDocumentService {
     }
 
     private String resourceName(Booking booking) {
-        return booking.getResource() == null ? "—" : booking.getResource().getName();
+        return booking.getResource() == null ? "" : booking.getResource().getName();
     }
 
     private String resourceType(Booking booking) {
@@ -209,15 +209,15 @@ public class BookingConfirmationDocumentService {
     }
 
     private String formatDate(LocalDateTime dt) {
-        return dt == null ? "—" : DATE_FMT.format(dt);
+        return dt == null ? "" : DATE_FMT.format(dt);
     }
 
     private String formatTime(LocalDateTime dt) {
-        return dt == null ? "—" : TIME_FMT.format(dt);
+        return dt == null ? "" : TIME_FMT.format(dt);
     }
 
     private String formatDuration(Integer minutes) {
-        if (minutes == null || minutes <= 0) return "—";
+        if (minutes == null || minutes <= 0) return "";
         if (minutes < 60) return minutes + " min";
         int h = minutes / 60;
         int m = minutes % 60;
@@ -226,7 +226,7 @@ public class BookingConfirmationDocumentService {
     }
 
     private String money(BigDecimal amount, String currency) {
-        if (amount == null) return "—";
+        if (amount == null) return "";
         NumberFormat nf = NumberFormat.getIntegerInstance(Locale.FRENCH);
         String curr = StringUtils.hasText(currency) ? " " + currency.toUpperCase() : " XAF";
         return nf.format(amount.setScale(0, RoundingMode.HALF_UP)) + curr;

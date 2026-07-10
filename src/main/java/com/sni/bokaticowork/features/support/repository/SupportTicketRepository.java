@@ -125,7 +125,7 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
             """)
     List<SupportTicket> findCsatRequestCandidates(@Param("closedBefore") Instant closedBefore);
 
-    // ── Metrics (count queries — évite le findAll()) ──────────────
+    // ── Metrics (count queries · évite le findAll()) ──────────────
     @Query("SELECT COUNT(t) FROM SupportTicket t WHERE t.status IN ('OPEN','IN_PROGRESS')")
     long countOpen();
 

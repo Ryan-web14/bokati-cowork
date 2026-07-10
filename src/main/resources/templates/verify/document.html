@@ -114,7 +114,7 @@
                     <span th:case="'DRAFT'"><span class="badge badge-draft">Brouillon</span></span>
                     <span th:case="'SENT'"><span class="badge badge-sent">Envoyée</span></span>
                     <span th:case="'ISSUED'"><span class="badge badge-sent">Émise</span></span>
-                    <span th:case="*"><span class="badge badge-default" th:text="${document.status()}">—</span></span>
+                    <span th:case="*"><span class="badge badge-default" th:text="${document.status()}"></span></span>
                 </span>
                 <div style="font-size:11px; color:#9b8caa; margin-top:8px;">Vérifiée le <span th:text="${generatedAt}"></span></div>
             </div>
@@ -128,13 +128,13 @@
                 <div class="info-label" th:text="${fmt.partyLabel(document.customerType())}">Client</div>
                 <div style="font-weight:700; font-size:14px; margin-bottom:10px;" th:text="${document.customerName()}">Nom</div>
                 <div class="info-row" th:if="${document.customerCode() != null}">
-                    <span class="lbl">Référence</span><span class="val" th:text="${document.customerCode()}">—</span>
+                    <span class="lbl">Référence</span><span class="val" th:text="${document.customerCode()}"></span>
                 </div>
                 <div class="info-row" th:if="${document.customerEmail() != null}">
-                    <span class="lbl">Email</span><span class="val" th:text="${document.customerEmail()}">—</span>
+                    <span class="lbl">Email</span><span class="val" th:text="${document.customerEmail()}"></span>
                 </div>
                 <div class="info-row" th:if="${document.customerPhone() != null}">
-                    <span class="lbl">Téléphone</span><span class="val" th:text="${document.customerPhone()}">—</span>
+                    <span class="lbl">Téléphone</span><span class="val" th:text="${document.customerPhone()}"></span>
                 </div>
                 <div th:if="${not #lists.isEmpty(fmt.addressLines(document.billingAddressJson()))}" style="margin-top:10px; font-size:12px; color:#5c4f6e; line-height:1.6;">
                     <div th:each="line : ${fmt.addressLines(document.billingAddressJson())}" th:text="${line}"></div>
@@ -146,22 +146,22 @@
             <div class="card-body">
                 <div class="info-label">Détails du document</div>
                 <div class="info-row">
-                    <span class="lbl">Date d'émission</span><span class="val" th:text="${fmt.date(document.issueDate())}">—</span>
+                    <span class="lbl">Date d'émission</span><span class="val" th:text="${fmt.date(document.issueDate())}"></span>
                 </div>
                 <div class="info-row">
-                    <span class="lbl">Date d'échéance</span><span class="val" th:text="${fmt.date(document.dueDate())}">—</span>
+                    <span class="lbl">Date d'échéance</span><span class="val" th:text="${fmt.date(document.dueDate())}"></span>
                 </div>
                 <div class="info-row">
                     <span class="lbl">Devise</span><span class="val" th:text="${document.currency()}">XAF</span>
                 </div>
                 <div class="info-row">
-                    <span class="lbl">Référence source</span><span class="val" th:text="${fmt.sourceReference(document.sourceType(), document.sourceCode())}">—</span>
+                    <span class="lbl">Référence source</span><span class="val" th:text="${fmt.sourceReference(document.sourceType(), document.sourceCode())}"></span>
                 </div>
                 <div class="info-row" th:if="${document.issuedAt() != null}">
-                    <span class="lbl">Émise le</span><span class="val" th:text="${fmt.timestamp(document.issuedAt())}">—</span>
+                    <span class="lbl">Émise le</span><span class="val" th:text="${fmt.timestamp(document.issuedAt())}"></span>
                 </div>
                 <div class="info-row" th:if="${document.paidAt() != null}">
-                    <span class="lbl">Réglée le</span><span class="val" th:text="${fmt.timestamp(document.paidAt())}">—</span>
+                    <span class="lbl">Réglée le</span><span class="val" th:text="${fmt.timestamp(document.paidAt())}"></span>
                 </div>
             </div>
         </div>
@@ -284,10 +284,10 @@
                 <tbody>
                 <tr th:each="p : ${payments}">
                     <td style="font-weight:700;" th:text="${p.method()}">CASH</td>
-                    <td style="font-family:monospace; font-size:11px;" th:text="${p.depositId() != null ? p.depositId() : (p.providerReference() != null ? p.providerReference() : '—')}">—</td>
-                    <td style="font-weight:600;" th:text="${p.payerPhone() != null ? p.payerPhone() : '—'}">—</td>
+                    <td style="font-family:monospace; font-size:11px;" th:text="${p.depositId() != null ? p.depositId() : (p.providerReference() != null ? p.providerReference() : '')}"></td>
+                    <td style="font-weight:600;" th:text="${p.payerPhone() != null ? p.payerPhone() : ''}"></td>
                     <td class="r" style="font-weight:700; color:#7c5600;" th:text="${fmt.money(p.allocatedAmount())}">0</td>
-                    <td class="r" style="font-size:11px; color:#9b8caa;" th:text="${p.paidAt() != null ? fmt.timestamp(p.paidAt()) : '—'}">—</td>
+                    <td class="r" style="font-size:11px; color:#9b8caa;" th:text="${p.paidAt() != null ? fmt.timestamp(p.paidAt()) : ''}"></td>
                 </tr>
                 </tbody>
             </table>
@@ -312,7 +312,7 @@
     </div>
 
     <div class="footer">
-        <strong>Bokati Cowork</strong> — Document officiel vérifié en ligne<br>
+        <strong>Bokati Cowork</strong> · Document officiel vérifié en ligne<br>
         Référence : <span th:text="${document.documentNumber()}"></span> · Consulté le <span th:text="${generatedAt}"></span><br>
         Ce document est édité électroniquement et fait foi sans signature manuscrite.
     </div>

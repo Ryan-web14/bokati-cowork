@@ -21,19 +21,19 @@ public class PassEmailNotifier {
     private final SubscriptionOwnerResolver ownerResolver;
 
     @Async
-    public void notifyCreated(Pass pass) { send(pass, "Votre pass a été créé — "); }
+    public void notifyCreated(Pass pass) { send(pass, "Votre pass a été créé · "); }
 
     @Async
-    public void notifyActivated(Pass pass) { send(pass, "Votre pass est actif — "); }
+    public void notifyActivated(Pass pass) { send(pass, "Votre pass est actif · "); }
 
     @Async
-    public void notifyRenewed(Pass pass) { send(pass, "Votre pass a été renouvelé — "); }
+    public void notifyRenewed(Pass pass) { send(pass, "Votre pass a été renouvelé · "); }
 
     @Async
-    public void notifyCancelled(Pass pass, String reason) { send(pass, "Votre pass a été annulé — "); }
+    public void notifyCancelled(Pass pass, String reason) { send(pass, "Votre pass a été annulé · "); }
 
     @Async
-    public void notifyPastDue(Pass pass) { send(pass, "Échec renouvellement pass — "); }
+    public void notifyPastDue(Pass pass) { send(pass, "Échec renouvellement pass · "); }
 
     private void send(Pass pass, String subjectPrefix) {
         String email = resolveEmail(pass);

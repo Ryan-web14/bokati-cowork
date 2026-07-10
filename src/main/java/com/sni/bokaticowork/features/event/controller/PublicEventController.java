@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Endpoints publics — aucune authentification requise. Réutilisables pour tout
+ * Endpoints publics · aucune authentification requise. Réutilisables pour tout
  * événement nécessitant une confirmation de présence (identifié par son {@code eventCode}) :
  * il suffit qu'un {@code Event} actif existe avec ce code (ex: "OUVERTURE").
  */

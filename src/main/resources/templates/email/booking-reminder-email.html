@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rappel de réservation — Elle A Osé</title>
+<title>Rappel de réservation · Elle A Osé</title>
 <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 <style>
     body, table, td, p, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
@@ -89,7 +89,7 @@
                     <td class="countdown-td" style="background-color:#1a0b32; border-radius:10px; padding:20px 24px; text-align:center;">
                         <div class="countdown-lbl">Dans</div>
                         <div class="countdown-val" th:text="${countdown ?: '23 heures'}">23 heures</div>
-                        <div class="countdown-sub" th:text="${dateFull}">—</div>
+                        <div class="countdown-sub" th:text="${dateFull}"></div>
                     </td>
                 </tr>
             </table>
@@ -104,23 +104,23 @@
                 </tr>
                 <tr style="background-color:rgba(255,255,255,.02);">
                     <td class="info-lbl">Espace</td>
-                    <td class="info-val" th:text="${room}">—</td>
+                    <td class="info-val" th:text="${room}"></td>
                 </tr>
                 <tr>
                     <td class="info-lbl">Date</td>
-                    <td class="info-val" th:text="${date}">—</td>
+                    <td class="info-val" th:text="${date}"></td>
                 </tr>
                 <tr style="background-color:rgba(255,255,255,.02);">
                     <td class="info-lbl">Créneau</td>
-                    <td class="info-val" th:text="${slot}">—</td>
+                    <td class="info-val" th:text="${slot}"></td>
                 </tr>
                 <tr th:if="${purpose}">
                     <td class="info-lbl">Objet</td>
-                    <td class="info-val" th:text="${purpose}">—</td>
+                    <td class="info-val" th:text="${purpose}"></td>
                 </tr>
                 <tr th:if="${attendees}" style="background-color:rgba(255,255,255,.02);">
                     <td class="info-lbl" style="border-bottom:0;">Participants</td>
-                    <td class="info-val" style="border-bottom:0;" th:text="${attendees}">—</td>
+                    <td class="info-val" style="border-bottom:0;" th:text="${attendees}"></td>
                 </tr>
             </table>
 
@@ -153,7 +153,7 @@
             </table>
 
             <div class="note-box">
-                Empêché·e ? Annulez avant le créneau — votre crédit d'heures sera remis automatiquement sur votre compte.
+                Empêché·e ? Annulez avant le créneau · votre crédit d'heures sera remis automatiquement sur votre compte.
             </div>
         </td>
     </tr>
@@ -162,7 +162,7 @@
         <td class="footer-td">
             <div class="footer-brand">Elle A Osé &middot; Espace de coworking</div>
             <div class="footer-text">
-                Message automatique — rappel envoyé 24 h avant votre réservation.<br>
+                Message automatique · rappel envoyé 24 h avant votre réservation.<br>
                 <a href="mailto:coworkspace@elleaose.com" style="color:rgba(255,255,255,.35);">coworkspace@elleaose.com</a> &nbsp;&middot;&nbsp; <a href="tel:052042552" style="color:rgba(255,255,255,.35);">05 204 2552</a>
             </div>
         </td>

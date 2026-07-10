@@ -113,17 +113,17 @@
 
                     <div class="info-block">
                         <div class="info-label">Entrée</div>
-                        <div class="info-value gold" th:text="${validFrom}">—</div>
+                        <div class="info-value gold" th:text="${validFrom}"></div>
                     </div>
                     <div class="info-block">
                         <div class="info-label">Sortie prévue</div>
-                        <div class="info-value" th:text="${validUntil}">—</div>
+                        <div class="info-value" th:text="${validUntil}"></div>
                     </div>
 
                     <div class="divider"></div>
 
                     <div class="host-label">Invité par</div>
-                    <div class="host-name" th:text="${pass.hostName ?: '—'}">Hôte</div>
+                    <div class="host-name" th:text="${pass.hostName ?: ''}">Hôte</div>
                 </td>
                 <td class="col-right">
                     <div class="qr-label">Scan entrée</div>
@@ -134,7 +134,7 @@
                 </td>
             </tr>
         </table>
-        <div class="brand-footer">Elle A Osé — Bokati Cowork</div>
+        <div class="brand-footer">Elle A Osé · Bokati Cowork</div>
     </div>
 </div>
 </body>

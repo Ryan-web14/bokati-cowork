@@ -89,7 +89,7 @@ public class SupportCsatPublicController {
                 <head>
                   <meta charset="UTF-8">
                   <meta name="viewport" content="width=device-width,initial-scale=1">
-                  <title>%s — Elle A Osé Support</title>
+                  <title>%s · Elle A Osé Support</title>
                   <style>
                     *{box-sizing:border-box;margin:0;padding:0}
                     body{background:#f0eef5;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -117,7 +117,7 @@ public class SupportCsatPublicController {
                 <body>
                   <div class="card">
                     <div class="card-header">
-                      <div class="brand">Elle A Osé — Support client</div>
+                      <div class="brand">Elle A Osé · Support client</div>
                       <div class="icon-wrap">%s</div>
                     </div>
                     <div class="card-stripe"></div>

@@ -126,7 +126,7 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
         String signatureUrl = baseUrl + "/public/quotes/sign/" + token;
         String body = buildSignatureEmailHtml(signerName, quoteNumber, signatureUrl, customMessage);
         try {
-            emailSender.sendHtmlEmail(to, "Signature électronique — Devis " + quoteNumber, body);
+            emailSender.sendHtmlEmail(to, "Signature électronique · Devis " + quoteNumber, body);
         } catch (Exception ex) {
             log.warn("Signature email send failed for {}: {}", quoteNumber, ex.getMessage());
         }

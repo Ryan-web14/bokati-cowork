@@ -61,14 +61,14 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </td>
         <td>
             <div class="doc-title">Rapport d'activité</div>
-            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}"></span></div>
         </td>
     </tr></table>
 </div>
 <div class="stripe"></div>
 
 <div class="period-bar">
-    Période : <strong th:text="${fmt.date(report.fromDate())} + ' → ' + ${fmt.date(report.toDate())}">—</strong>
+    Période : <strong th:text="${fmt.date(report.fromDate())} + ' → ' + ${fmt.date(report.toDate())}"></strong>
 </div>
 
 <div class="content">
@@ -85,26 +85,26 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Total</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.bookings().totalCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.bookings().totalCount())}"></div>
                     <div th:if="${report.bookings().variation() != null}" class="var-tag" th:classappend="${report.bookings().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.bookings().variation().changePercent())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Confirmées</div>
-                    <div class="kpi-value green" th:text="${fmt.num(report.bookings().confirmedCount())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.bookings().confirmedCount())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Annulées</div>
-                    <div class="kpi-value red" th:text="${fmt.num(report.bookings().cancelledCount())}">—</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.bookings().cancelledCount())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Revenus</div>
-                    <div class="kpi-value gold" th:text="${fmt.money(report.bookings().totalRevenue())}">—</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.bookings().totalRevenue())}"></div>
                 </div>
             </td>
         </tr>
@@ -122,26 +122,26 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Factures émises</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.invoices().totalCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.invoices().totalCount())}"></div>
                     <div th:if="${report.invoices().variation() != null}" class="var-tag" th:classappend="${report.invoices().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.invoices().variation().changePercent())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Facturé</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.invoices().totalInvoiced())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.invoices().totalInvoiced())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Encaissé</div>
-                    <div class="kpi-value green" th:text="${fmt.money(report.invoices().totalPaid())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.money(report.invoices().totalPaid())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Encours</div>
-                    <div class="kpi-value red" th:text="${fmt.money(report.invoices().totalOutstanding())}">—</div>
+                    <div class="kpi-value red" th:text="${fmt.money(report.invoices().totalOutstanding())}"></div>
                 </div>
             </td>
         </tr>
@@ -159,26 +159,26 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Transactions</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.payments().transactionCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.payments().transactionCount())}"></div>
                     <div th:if="${report.payments().variation() != null}" class="var-tag" th:classappend="${report.payments().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.payments().variation().changePercent())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Total reçu</div>
-                    <div class="kpi-value gold" th:text="${fmt.money(report.payments().totalReceived())}">—</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.payments().totalReceived())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Espèces</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.payments().cashAmount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.payments().cashAmount())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Mobile Money</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.payments().mobileMoneyAmount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.payments().mobileMoneyAmount())}"></div>
                 </div>
             </td>
         </tr>
@@ -196,26 +196,26 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Actifs</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.subscriptions().activeCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.subscriptions().activeCount())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Nouveaux</div>
-                    <div class="kpi-value green" th:text="${fmt.num(report.subscriptions().newCount())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.subscriptions().newCount())}"></div>
                     <div th:if="${report.subscriptions().variation() != null}" class="var-tag" th:classappend="${report.subscriptions().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.subscriptions().variation().changePercent())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Annulés</div>
-                    <div class="kpi-value red" th:text="${fmt.num(report.subscriptions().cancelledCount())}">—</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.subscriptions().cancelledCount())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Renouvelés</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.subscriptions().renewedCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.subscriptions().renewedCount())}"></div>
                 </div>
             </td>
         </tr>
@@ -233,25 +233,25 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Entrées</div>
-                    <div class="kpi-value green" th:text="${fmt.num(report.stock().inboundMovements())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.stock().inboundMovements())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Sorties</div>
-                    <div class="kpi-value red" th:text="${fmt.num(report.stock().outboundMovements())}">—</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.stock().outboundMovements())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Valeur entrées</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.stock().inboundValue())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.stock().inboundValue())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Valeur sorties</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.stock().outboundValue())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.stock().outboundValue())}"></div>
                 </div>
             </td>
         </tr>
@@ -269,19 +269,19 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Signés</div>
-                    <div class="kpi-value green" th:text="${fmt.num(report.contracts().signedCount())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.contracts().signedCount())}"></div>
                 </div>
             </td>
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Expirés</div>
-                    <div class="kpi-value red" th:text="${fmt.num(report.contracts().expiredCount())}">—</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.contracts().expiredCount())}"></div>
                 </div>
             </td>
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Actifs</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.contracts().activeCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.contracts().activeCount())}"></div>
                 </div>
             </td>
         </tr>
@@ -299,13 +299,13 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="50%">
                 <div class="kpi-card">
                     <div class="kpi-label">Membres actifs</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.members().totalActive())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.members().totalActive())}"></div>
                 </div>
             </td>
             <td width="50%">
                 <div class="kpi-card">
                     <div class="kpi-label">Nouveaux membres</div>
-                    <div class="kpi-value green" th:text="${fmt.num(report.members().newCount())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.members().newCount())}"></div>
                     <div th:if="${report.members().variation() != null}" class="var-tag" th:classappend="${report.members().variation().changePercent().signum() >= 0} ? 'up' : 'down'" th:text="${fmt.variation(report.members().variation().changePercent())}"></div>
                 </div>
             </td>
@@ -324,25 +324,25 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Ouverts</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.support().openedCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.support().openedCount())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Résolus</div>
-                    <div class="kpi-value green" th:text="${fmt.num(report.support().resolvedCount())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.num(report.support().resolvedCount())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Fermés</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.support().closedCount())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.support().closedCount())}"></div>
                 </div>
             </td>
             <td width="25%">
                 <div class="kpi-card">
                     <div class="kpi-label">Haute priorité</div>
-                    <div class="kpi-value red" th:text="${fmt.num(report.support().highPriorityCount())}">—</div>
+                    <div class="kpi-value red" th:text="${fmt.num(report.support().highPriorityCount())}"></div>
                 </div>
             </td>
         </tr>
@@ -351,7 +351,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 </div>
 
 <div class="footer">
-    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Rapport d'activité &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+    Elle A Osé · Bokati Cowork &nbsp;·&nbsp; Rapport d'activité &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}"></span> &nbsp;·&nbsp; Document confidentiel
 </div>
 </body>
 </html>

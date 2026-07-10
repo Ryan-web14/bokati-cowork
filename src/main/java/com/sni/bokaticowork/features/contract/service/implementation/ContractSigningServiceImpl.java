@@ -77,7 +77,7 @@ public class ContractSigningServiceImpl implements ContractSigningService {
         outboxService.publish("CONTRACT_SIGNING_REQUESTED", "CONTRACT", contract.getContractCode(), payload);
         memberInAppNotifier.notify("CONTRACT_SIGNING_REQUESTED", "CONTRACT", contract.getContractCode(),
                 token.getSignerEmail(), token.getSignerName(), contract.getOwnerCode(),
-                "Nouveau contrat a signer — " + contract.getTitle(),
+                "Nouveau contrat a signer · " + contract.getTitle(),
                 Map.of("contractCode", contract.getContractCode(), "contractTitle", contract.getTitle()));
 
         log.info("Signing request created for contract={} signer={}", contractCode, token.getSignerEmail());
@@ -126,7 +126,7 @@ public class ContractSigningServiceImpl implements ContractSigningService {
         outboxService.publish("CONTRACT_SIGNED_VIA_ESIGN", "CONTRACT", contract.getContractCode(), payload);
         memberInAppNotifier.notify("CONTRACT_SIGNED_VIA_ESIGN", "CONTRACT", contract.getContractCode(),
                 token.getSignerEmail(), token.getSignerName(), contract.getOwnerCode(),
-                "Contrat signe — " + contract.getTitle(),
+                "Contrat signe · " + contract.getTitle(),
                 Map.of("contractCode", contract.getContractCode(), "contractTitle", contract.getTitle()));
 
         log.info("Contract {} signed by {} via e-signature", contract.getContractCode(), token.getSignerEmail());

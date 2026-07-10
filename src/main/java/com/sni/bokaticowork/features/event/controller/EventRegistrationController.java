@@ -15,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Back-office — validation/rejet des précomptes créés via les inscriptions publiques
+ * Back-office · validation/rejet des précomptes créés via les inscriptions publiques
  * (voir {@link PublicEventController}). Réutilisable pour tout événement.
  */
 @RestController

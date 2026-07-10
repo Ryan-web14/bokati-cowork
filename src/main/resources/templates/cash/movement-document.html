@@ -53,7 +53,7 @@
         <tr>
             <td>
                 <div class="brand">Bokati Cowork</div>
-                <div class="brand-sub" th:text="${movement.registerName} + ' — ' + ${movement.registerCode}">Caisse</div>
+                <div class="brand-sub" th:text="${movement.registerName} + ' · ' + ${movement.registerCode}">Caisse</div>
             </td>
             <td>
                 <div class="doc-type" th:text="${docTypeLabel}">Pièce justificative</div>
@@ -75,19 +75,19 @@
         <td class="label">Type de mouvement</td>
         <td class="value" th:text="${fmt.movementTypeLabel(movement.movementType)}">Sortie de caisse</td>
         <td class="label">Catégorie</td>
-        <td class="value" th:text="${movement.flowCategory} ?: '—'">—</td>
+        <td class="value" th:text="${movement.flowCategory} ?: ''"></td>
     </tr>
     <tr>
         <td class="label">Émis par</td>
-        <td class="value" th:text="${movement.createdBy} ?: '—'">—</td>
+        <td class="value" th:text="${movement.createdBy} ?: ''"></td>
         <td class="label">Contrepartie</td>
-        <td class="value" th:text="${movement.counterpartyName} ?: (${movement.counterpartyCode} ?: '—')">—</td>
+        <td class="value" th:text="${movement.counterpartyName} ?: (${movement.counterpartyCode} ?: '')"></td>
     </tr>
     <tr>
         <td class="label">Référence</td>
-        <td class="value" th:text="${movement.referenceCode} ?: '—'">—</td>
+        <td class="value" th:text="${movement.referenceCode} ?: ''"></td>
         <td class="label">Document n°</td>
-        <td class="value" th:text="${movement.documentNumber} ?: '—'">—</td>
+        <td class="value" th:text="${movement.documentNumber} ?: ''"></td>
     </tr>
 </table>
 
@@ -105,28 +105,28 @@
         <td class="label">Signature requise</td>
         <td class="value">
             <span class="badge" th:classappend="${movement.signedAt != null} ? 'badge-signed' : 'badge-pending'"
-                  th:text="${movement.signedAt != null} ? 'SIGNÉ' : (${movement.requiresSignature} ? 'EN ATTENTE DE SIGNATURE' : 'NON REQUISE')">—</span>
+                  th:text="${movement.signedAt != null} ? 'SIGNÉ' : (${movement.requiresSignature} ? 'EN ATTENTE DE SIGNATURE' : 'NON REQUISE')"></span>
         </td>
         <td class="label">Signé par</td>
-        <td class="value" th:text="${movement.signedBy} ?: '—'">—</td>
+        <td class="value" th:text="${movement.signedBy} ?: ''"></td>
     </tr>
     <tr>
         <td class="label">Date de signature</td>
-        <td class="value" th:text="${fmt.timestamp(movement.signedAt)}">—</td>
+        <td class="value" th:text="${fmt.timestamp(movement.signedAt)}"></td>
         <td class="label">Solde courant</td>
-        <td class="value" th:text="${fmt.money(movement.runningBalance, movement.currency)}">—</td>
+        <td class="value" th:text="${fmt.money(movement.runningBalance, movement.currency)}"></td>
     </tr>
 </table>
 
 <table class="signatures">
     <tr>
-        <td>Signature de l'émetteur<br/><span th:text="${movement.createdBy} ?: '—'">—</span></td>
-        <td>Signature du superviseur / responsable<br/><span th:text="${movement.signedBy} ?: '—'">—</span></td>
+        <td>Signature de l'émetteur<br/><span th:text="${movement.createdBy} ?: ''"></span></td>
+        <td>Signature du superviseur / responsable<br/><span th:text="${movement.signedBy} ?: ''"></span></td>
     </tr>
 </table>
 
 <div class="footer">
-    Document généré automatiquement par Bokati Cowork le <span th:text="${fmt.timestamp(generatedAt)}">01/01/2026 10:00</span> —
+    Document généré automatiquement par Bokati Cowork le <span th:text="${fmt.timestamp(generatedAt)}">01/01/2026 10:00</span>.
     Ce document fait foi de pièce justificative pour le mouvement <span th:text="${movement.movementNumber}">CSM-202601-000001</span>.
 </div>
 </body>

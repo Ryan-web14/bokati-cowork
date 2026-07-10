@@ -243,11 +243,11 @@ public class BillingDocument {
 
     // ── Identification fiscale client (optionnelle) ─────────────────────────────
 
-    /** NIU client — renseigné uniquement si c'est une entité immatriculée. */
+    /** NIU client · renseigné uniquement si c'est une entité immatriculée. */
     @Column(name = "customer_niu", length = 100)
     private String customerNiu;
 
-    /** ENTREPRISE ou PARTICULIER — toujours affiché sur le PDF. */
+    /** ENTREPRISE ou PARTICULIER · toujours affiché sur le PDF. */
     @Column(name = "customer_category", length = 40)
     private String customerCategory;
 

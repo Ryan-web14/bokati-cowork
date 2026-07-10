@@ -201,7 +201,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashSession saved = sessionRepository.save(session);
         if (variance.signum() != 0) {
             emailNotifier.notifySupervisor(
-                    "Écart de caisse à valider — " + saved.getSessionNumber(),
+                    "Écart de caisse à valider · " + saved.getSessionNumber(),
                     "La session " + saved.getSessionNumber() + " ouverte par " + saved.getOpenedBy()
                             + " a été clôturée par " + saved.getClosedBy() + " avec un écart de " + variance
                             + " " + CASH_CURRENCY + " (montant attendu : " + expected + ", montant compté : " + counted
@@ -232,11 +232,11 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashSession saved = sessionRepository.save(session);
         emailNotifier.notifyUser(
                 saved.getOpenedBy(),
-                "Écart de caisse validé — " + saved.getSessionNumber(),
+                "Écart de caisse validé · " + saved.getSessionNumber(),
                 "L'écart de " + trim(saved.getVarianceAmount() == null ? null : saved.getVarianceAmount().toPlainString())
                         + " " + CASH_CURRENCY + " constaté sur votre session " + saved.getSessionNumber()
                         + " a été validé par " + saved.getReviewedBy()
-                        + (StringUtils.hasText(request.note()) ? (" — Note : " + request.note().trim()) : "")
+                        + (StringUtils.hasText(request.note()) ? (" · Note : " + request.note().trim()) : "")
                         + ". La session est désormais clôturée.",
                 saved.getSessionNumber(),
                 CASH_SESSIONS_PATH + saved.getSessionNumber()

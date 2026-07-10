@@ -37,7 +37,7 @@ public class GraphApiRateLimiter {
         try {
             if (!semaphore.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new IllegalStateException(
-                        "Microsoft Graph rate limit exceeded — could not acquire permit within " + timeoutMs + "ms");
+                        "Microsoft Graph rate limit exceeded · could not acquire permit within " + timeoutMs + "ms");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

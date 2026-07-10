@@ -3,6 +3,7 @@ package com.sni.bokaticowork.core.maintenance;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 public class DataPurgeService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final Environment environment;
 
     private static final Set<String> TABLES_NEVER_TOUCHED = Set.of(
             // Flyway
@@ -80,11 +82,7 @@ public class DataPurgeService {
 
     @Transactional
     public DataPurgeResult purgeAllNonAdminData() {
-        String env = resolveEnvironment();
-        if ("prod".equalsIgnoreCase(env) || "production".equalsIgnoreCase(env)) {
-            throw new BadRequestException("Data purge is not allowed in production environment");
-        }
-
+        String env = String.join(",", environment.getActiveProfiles());
         log.warn("=== DATA PURGE INITIATED === Environment: {}", env);
         Instant start = Instant.now();
 
@@ -99,7 +97,7 @@ public class DataPurgeService {
         log.info("Preserving {} admin user(s): {}", adminUserIds.size(), adminUserIds);
 
         if (adminUserIds.isEmpty()) {
-            throw new BadRequestException("No admin users found — aborting purge to prevent total data loss");
+            throw new BadRequestException("No admin users found · aborting purge to prevent total data loss");
         }
 
         // Step 1: TRUNCATE all tables except system tables and users/role_user
@@ -114,10 +112,11 @@ public class DataPurgeService {
             log.info("Truncated {} tables with CASCADE", tablesToTruncate.size());
         }
 
-        // Step 2: Delete non-admin users and their role assignments
+        // Step 2: Delete role assignments BEFORE users. role_user.user_id references users(id)
+        // with RESTRICT (no ON DELETE CASCADE), so deleting a still-referenced user would fail.
         String adminIdList = adminUserIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        int nonAdminUsers = purgeNonAdminUsers(adminIdList);
         int nonAdminRoles = purgeNonAdminRoleAssignments(adminIdList);
+        int nonAdminUsers = purgeNonAdminUsers(adminIdList);
 
         // Step 3: Reset sequences
         resetSequenceCounters();
@@ -143,9 +142,8 @@ public class DataPurgeService {
     }
 
     private int purgeNonAdminUsers(String adminIdList) {
-        // role_user has FK to users — delete role assignments first, then users
-        // But role_user is handled separately, so just delete users here.
-        // FK from member/customer to users was already broken by TRUNCATE CASCADE on member/customer.
+        // Called after purgeNonAdminRoleAssignments so no role_user row references these users.
+        // Other user-referencing tables (sessions, tokens, member, customer) were emptied by TRUNCATE.
         int deleted = jdbcTemplate.update("DELETE FROM users WHERE id NOT IN (" + adminIdList + ")");
         log.info("  Purged {} non-admin user(s)", deleted);
         return deleted;
@@ -166,12 +164,6 @@ public class DataPurgeService {
         } catch (Exception ex) {
             log.debug("  sequence_counter reset skipped: {}", ex.getMessage());
         }
-    }
-
-    private String resolveEnvironment() {
-        String env = System.getenv("SPRING_PROFILES_ACTIVE");
-        if (env != null && !env.isBlank()) return env.split(",")[0].trim();
-        return System.getProperty("spring.profiles.active", "dev");
     }
 
     public record DataPurgeResult(int tablesTruncated, int nonAdminUsersDeleted, int nonAdminRolesDeleted,

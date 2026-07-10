@@ -66,35 +66,35 @@
 <table class="info">
     <tr>
         <td class="label">Ouverte par</td>
-        <td class="value" th:text="${summary.openedBy} ?: '—'">—</td>
+        <td class="value" th:text="${summary.openedBy} ?: ''"></td>
         <td class="label">Ouverte le</td>
-        <td class="value" th:text="${fmt.timestamp(summary.openedAt)}">—</td>
+        <td class="value" th:text="${fmt.timestamp(summary.openedAt)}"></td>
     </tr>
     <tr>
         <td class="label">Clôturée par</td>
-        <td class="value" th:text="${summary.closedBy} ?: '—'">—</td>
+        <td class="value" th:text="${summary.closedBy} ?: ''"></td>
         <td class="label">Clôturée le</td>
-        <td class="value" th:text="${fmt.timestamp(summary.closedAt)}">—</td>
+        <td class="value" th:text="${fmt.timestamp(summary.closedAt)}"></td>
     </tr>
     <tr>
         <td class="label">Statut</td>
         <td class="value" th:text="${summary.status}">CLOSED</td>
         <td class="label">Clôture demandée le</td>
-        <td class="value" th:text="${fmt.timestamp(summary.closingRequestedAt)}">—</td>
+        <td class="value" th:text="${fmt.timestamp(summary.closingRequestedAt)}"></td>
     </tr>
 </table>
 
 <div class="section-title">Synthèse des flux</div>
 <table class="totals">
     <tr><th>Libellé</th><th style="text-align:right;">Montant</th></tr>
-    <tr><td>Fonds d'ouverture</td><td class="amount" th:text="${fmt.money(summary.openingAmount)}">—</td></tr>
-    <tr><td>Total encaissements (paiements)</td><td class="amount" th:text="${fmt.money(summary.totalPayments)}">—</td></tr>
-    <tr><td>Total remboursements</td><td class="amount" th:text="${fmt.money(summary.totalRefunds)}">—</td></tr>
-    <tr><td>Total entrées de caisse</td><td class="amount" th:text="${fmt.money(summary.totalCashIn)}">—</td></tr>
-    <tr><td>Total sorties de caisse</td><td class="amount" th:text="${fmt.money(summary.totalCashOut)}">—</td></tr>
-    <tr><td>Total ajustements</td><td class="amount" th:text="${fmt.money(summary.totalAdjustments)}">—</td></tr>
-    <tr><td><strong>Montant attendu en caisse</strong></td><td class="amount" th:text="${fmt.money(summary.expectedClosingAmount)}"><strong>—</strong></td></tr>
-    <tr><td><strong>Montant compté en caisse</strong></td><td class="amount" th:text="${fmt.money(summary.countedClosingAmount)}"><strong>—</strong></td></tr>
+    <tr><td>Fonds d'ouverture</td><td class="amount" th:text="${fmt.money(summary.openingAmount)}"></td></tr>
+    <tr><td>Total encaissements (paiements)</td><td class="amount" th:text="${fmt.money(summary.totalPayments)}"></td></tr>
+    <tr><td>Total remboursements</td><td class="amount" th:text="${fmt.money(summary.totalRefunds)}"></td></tr>
+    <tr><td>Total entrées de caisse</td><td class="amount" th:text="${fmt.money(summary.totalCashIn)}"></td></tr>
+    <tr><td>Total sorties de caisse</td><td class="amount" th:text="${fmt.money(summary.totalCashOut)}"></td></tr>
+    <tr><td>Total ajustements</td><td class="amount" th:text="${fmt.money(summary.totalAdjustments)}"></td></tr>
+    <tr><td><strong>Montant attendu en caisse</strong></td><td class="amount" th:text="${fmt.money(summary.expectedClosingAmount)}"><strong></strong></td></tr>
+    <tr><td><strong>Montant compté en caisse</strong></td><td class="amount" th:text="${fmt.money(summary.countedClosingAmount)}"><strong></strong></td></tr>
 </table>
 
 <div class="variance-box"
@@ -102,28 +102,28 @@
     <div class="label">Écart de caisse</div>
     <div class="value" th:text="${fmt.money(summary.varianceAmount)}">0 XAF</div>
     <div th:if="${summary.varianceReason != null and !#strings.isEmpty(summary.varianceReason)}"
-         style="font-size: 8.5px; color: #6f6478; margin-top: 6px;" th:text="'Motif déclaré : ' + ${summary.varianceReason}">—</div>
+         style="font-size: 8.5px; color: #6f6478; margin-top: 6px;" th:text="'Motif déclaré : ' + ${summary.varianceReason}"></div>
 </div>
 
 <div class="section-title">Statistiques de la session</div>
 <table class="info">
     <tr>
         <td class="label">Durée</td>
-        <td class="value" th:text="${statistics.durationMinutes} + ' min'">—</td>
+        <td class="value" th:text="${statistics.durationMinutes} + ' min'"></td>
         <td class="label">Nombre de mouvements</td>
-        <td class="value" th:text="${statistics.movementCount}">—</td>
+        <td class="value" th:text="${statistics.movementCount}"></td>
     </tr>
     <tr>
         <td class="label">Transactions / heure</td>
-        <td class="value" th:text="${statistics.transactionsPerHour}">—</td>
+        <td class="value" th:text="${statistics.transactionsPerHour}"></td>
         <td class="label">Montant moyen / mouvement</td>
-        <td class="value" th:text="${fmt.money(statistics.averageMovementAmount)}">—</td>
+        <td class="value" th:text="${fmt.money(statistics.averageMovementAmount)}"></td>
     </tr>
     <tr>
         <td class="label">Ratio entrées / sorties</td>
-        <td class="value" th:text="${statistics.inOutRatio} ?: '—'">—</td>
+        <td class="value" th:text="${statistics.inOutRatio} ?: ''"></td>
         <td class="label">Temps d'inactivité estimé</td>
-        <td class="value" th:text="${statistics.idleMinutes} + ' min'">—</td>
+        <td class="value" th:text="${statistics.idleMinutes} + ' min'"></td>
     </tr>
 </table>
 
@@ -138,25 +138,25 @@
         <th style="text-align:right;">Solde</th>
     </tr>
     <tr th:each="movement : ${movements}">
-        <td th:text="${fmt.time(movement.createdAt)}">—</td>
-        <td th:text="${movement.movementNumber}">—</td>
-        <td th:text="${fmt.movementTypeLabel(movement.movementType)}">—</td>
-        <td th:text="${movement.flowCategory} ?: '—'">—</td>
-        <td class="amount" th:text="${fmt.money(movement.amount)}">—</td>
-        <td class="amount" th:text="${fmt.money(movement.runningBalance)}">—</td>
+        <td th:text="${fmt.time(movement.createdAt)}"></td>
+        <td th:text="${movement.movementNumber}"></td>
+        <td th:text="${fmt.movementTypeLabel(movement.movementType)}"></td>
+        <td th:text="${movement.flowCategory} ?: ''"></td>
+        <td class="amount" th:text="${fmt.money(movement.amount)}"></td>
+        <td class="amount" th:text="${fmt.money(movement.runningBalance)}"></td>
     </tr>
 </table>
 
 <table class="signatures">
     <tr>
-        <td>Signature du caissier<br/><span th:text="${summary.closedBy} ?: ${summary.openedBy}">—</span></td>
-        <td>Signature du superviseur<br/><span th:text="${reviewedBy} ?: '—'">—</span></td>
+        <td>Signature du caissier<br/><span th:text="${summary.closedBy} ?: ${summary.openedBy}"></span></td>
+        <td>Signature du superviseur<br/><span th:text="${reviewedBy} ?: ''"></span></td>
     </tr>
 </table>
 
 <div class="footer">
-    Rapport généré automatiquement par Bokati Cowork le <span th:text="${fmt.timestamp(generatedAt)}">01/01/2026 10:00</span> —
-    Session <span th:text="${session.sessionNumber}">CSS-202601-000001</span> — Caisse <span th:text="${session.registerCode}">CSR-00001</span>.
+    Rapport généré automatiquement par Bokati Cowork le <span th:text="${fmt.timestamp(generatedAt)}">01/01/2026 10:00</span>.
+    Session <span th:text="${session.sessionNumber}">CSS-202601-000001</span> · Caisse <span th:text="${session.registerCode}">CSR-00001</span>.
 </div>
 </body>
 </html>

@@ -135,7 +135,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
 
     public static final class ReportFormatter {
         private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        private static final String DASH = "—";
+        private static final String DASH = "";
 
         private final Locale locale;
 

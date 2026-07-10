@@ -21,11 +21,11 @@ public class ApiError {
     private String message;
     private String traceId;
 
-    // Validation field errors — included when non-empty
+    // Validation field errors · included when non-empty
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private List<String> errors;
 
-    // Dev-only debug fields — null in production, excluded by NON_NULL
+    // Dev-only debug fields · null in production, excluded by NON_NULL
     private String path;
     private String debugMessage;
     private String exceptionName;

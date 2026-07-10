@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="|Réservation confirmée — ${contactName ?: 'Votre réservation'} — Elle A Osé|">Réservation confirmée — Elle A Osé</title>
+  <title th:text="|Réservation confirmée · ${contactName ?: 'Votre réservation'} · Elle A Osé|">Réservation confirmée · Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -316,7 +316,7 @@
         <tr>
           <td class="bk-key">Espace</td>
           <td>
-            <div class="bk-val" th:text="${spaceName}">Bureau Privé — Salle Jade</div>
+            <div class="bk-val" th:text="${spaceName}">Bureau Privé · Salle Jade</div>
             <div class="bk-val-sub" th:text="${spaceType}">Bureau privé</div>
           </td>
         </tr>

@@ -63,7 +63,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </td>
         <td>
             <div class="doc-title">Valorisation stock</div>
-            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}"></span></div>
         </td>
     </tr></table>
 </div>
@@ -83,19 +83,19 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Valeur totale du stock</div>
-                    <div class="kpi-value gold" th:text="${fmt.money(report.totalValue())}">—</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.totalValue())}"></div>
                 </div>
             </td>
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Articles référencés</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.totalItems())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalItems())}"></div>
                 </div>
             </td>
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Emplacements</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.totalLocations())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalLocations())}"></div>
                 </div>
             </td>
         </tr>
@@ -118,11 +118,11 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="cat, stat : ${report.byCategory()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${cat.categoryName() ?: cat.categoryCode()}">—</td>
-                <td class="r" th:text="${fmt.num(cat.itemCount())}">—</td>
-                <td class="r" th:text="${cat.totalQuantity().toPlainString()}">—</td>
-                <td class="r" th:text="${fmt.money(cat.totalValue())}">—</td>
-                <td class="r" th:text="${fmt.pct(cat.percentage())}">—</td>
+                <td th:text="${cat.categoryName() ?: cat.categoryCode()}"></td>
+                <td class="r" th:text="${fmt.num(cat.itemCount())}"></td>
+                <td class="r" th:text="${cat.totalQuantity().toPlainString()}"></td>
+                <td class="r" th:text="${fmt.money(cat.totalValue())}"></td>
+                <td class="r" th:text="${fmt.pct(cat.percentage())}"></td>
             </tr>
         </tbody>
     </table>
@@ -145,12 +145,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="loc, stat : ${report.byLocation()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${loc.locationName() ?: loc.locationCode()}">—</td>
-                <td th:text="${loc.locationType()}">—</td>
-                <td class="r" th:text="${fmt.num(loc.itemCount())}">—</td>
-                <td class="r" th:text="${loc.totalQuantity().toPlainString()}">—</td>
-                <td class="r" th:text="${fmt.money(loc.totalValue())}">—</td>
-                <td class="r" th:text="${fmt.pct(loc.percentage())}">—</td>
+                <td th:text="${loc.locationName() ?: loc.locationCode()}"></td>
+                <td th:text="${loc.locationType()}"></td>
+                <td class="r" th:text="${fmt.num(loc.itemCount())}"></td>
+                <td class="r" th:text="${loc.totalQuantity().toPlainString()}"></td>
+                <td class="r" th:text="${fmt.money(loc.totalValue())}"></td>
+                <td class="r" th:text="${fmt.pct(loc.percentage())}"></td>
             </tr>
         </tbody>
     </table>
@@ -173,12 +173,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="item, stat : ${report.lowStockItems()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${item.itemCode()}">—</td>
-                <td th:text="${item.itemName()}">—</td>
-                <td th:text="${item.categoryName()}">—</td>
-                <td class="r" th:text="${item.quantityAvailable().toPlainString()}">—</td>
-                <td class="r" th:text="${item.reorderPoint().toPlainString()}">—</td>
-                <td class="r" th:text="${item.reorderQuantity().toPlainString()}">—</td>
+                <td th:text="${item.itemCode()}"></td>
+                <td th:text="${item.itemName()}"></td>
+                <td th:text="${item.categoryName()}"></td>
+                <td class="r" th:text="${item.quantityAvailable().toPlainString()}"></td>
+                <td class="r" th:text="${item.reorderPoint().toPlainString()}"></td>
+                <td class="r" th:text="${item.reorderQuantity().toPlainString()}"></td>
             </tr>
         </tbody>
     </table>
@@ -203,14 +203,14 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="item, stat : ${report.deadStockItems()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${item.itemCode()}">—</td>
-                <td th:text="${item.itemName()}">—</td>
-                <td th:text="${item.categoryName()}">—</td>
-                <td th:text="${item.locationName()}">—</td>
-                <td class="r" th:text="${item.quantityOnHand().toPlainString()}">—</td>
-                <td class="r" th:text="${fmt.money(item.stockValue())}">—</td>
-                <td th:text="${fmt.date(item.lastMovementDate())}">—</td>
-                <td class="r" th:text="${fmt.days(item.daysSinceLastMovement())}">—</td>
+                <td th:text="${item.itemCode()}"></td>
+                <td th:text="${item.itemName()}"></td>
+                <td th:text="${item.categoryName()}"></td>
+                <td th:text="${item.locationName()}"></td>
+                <td class="r" th:text="${item.quantityOnHand().toPlainString()}"></td>
+                <td class="r" th:text="${fmt.money(item.stockValue())}"></td>
+                <td th:text="${fmt.date(item.lastMovementDate())}"></td>
+                <td class="r" th:text="${fmt.days(item.daysSinceLastMovement())}"></td>
             </tr>
         </tbody>
     </table>
@@ -218,7 +218,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 </div>
 
 <div class="footer">
-    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Valorisation stock &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+    Elle A Osé · Bokati Cowork &nbsp;·&nbsp; Valorisation stock &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}"></span> &nbsp;·&nbsp; Document confidentiel
 </div>
 </body>
 </html>

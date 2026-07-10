@@ -54,7 +54,7 @@ public class ContractRenewalAmendmentOutboxEventProcessor implements OutboxEvent
 
         LocalDate effectiveDate = LocalDate.parse(newPeriodStart);
         String description = String.format(
-                "Renouvellement de l'abonnement %s — nouvelle période du %s au %s",
+                "Renouvellement de l'abonnement %s · nouvelle période du %s au %s",
                 subscriptionNumber, newPeriodStart, valueOrDash(newPeriodEnd));
 
         ProposeAmendmentRequest proposeRequest = new ProposeAmendmentRequest();

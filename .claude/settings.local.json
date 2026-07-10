@@ -75,7 +75,10 @@
       "Bash(grep -iE \"\\\\.key$|\\\\.pem$|\\\\.p12$|\\\\.jks$|secret|password|credential\")",
       "Bash(grep -v \"^$\")",
       "Bash(grep -E \"^country$|^currency$|^email_delivery_log$|^sequence_counter$|^sequence_definition$\" /tmp/dev_tables.txt)",
-      "Bash(sort -t V -k2 -n)"
+      "Bash(sort -t V -k2 -n)",
+      "Bash(./mvnw test *)",
+      "Bash(docker exec cowork_dev_db *)",
+      "Bash(./mvnw -q -o compile -DskipTests)"
     ]
   }
 }

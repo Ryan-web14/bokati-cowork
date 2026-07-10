@@ -73,7 +73,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </td>
         <td>
             <div class="doc-title">Rapport de recouvrement</div>
-            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}"></span></div>
         </td>
     </tr></table>
 </div>
@@ -93,13 +93,13 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="50%">
                 <div class="kpi-card">
                     <div class="kpi-label">Total encours impayé</div>
-                    <div class="kpi-value red" th:text="${fmt.money(report.totalOutstanding())}">—</div>
+                    <div class="kpi-value red" th:text="${fmt.money(report.totalOutstanding())}"></div>
                 </div>
             </td>
             <td width="50%">
                 <div class="kpi-card">
                     <div class="kpi-label">Factures impayées</div>
-                    <div class="kpi-value" th:text="${fmt.num(report.totalInvoices())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.num(report.totalInvoices())}"></div>
                 </div>
             </td>
         </tr>
@@ -117,41 +117,41 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td>
                 <div class="aging-card">
                     <div class="aging-label" th:text="${report.aging().current().label()}">Non échu</div>
-                    <div class="aging-amount" th:text="${fmt.money(report.aging().current().totalAmount())}">—</div>
-                    <div class="aging-count" th:text="${fmt.num(report.aging().current().invoiceCount())} + ' facture(s)'">—</div>
-                    <div class="aging-pct" th:text="${fmt.pct(report.aging().current().percentage())}">—</div>
+                    <div class="aging-amount" th:text="${fmt.money(report.aging().current().totalAmount())}"></div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().current().invoiceCount())} + ' facture(s)'"></div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().current().percentage())}"></div>
                 </div>
             </td>
             <td>
                 <div class="aging-card">
                     <div class="aging-label" th:text="${report.aging().days1to30().label()}">1-30 j</div>
-                    <div class="aging-amount" th:text="${fmt.money(report.aging().days1to30().totalAmount())}">—</div>
-                    <div class="aging-count" th:text="${fmt.num(report.aging().days1to30().invoiceCount())} + ' facture(s)'">—</div>
-                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days1to30().percentage())}">—</div>
+                    <div class="aging-amount" th:text="${fmt.money(report.aging().days1to30().totalAmount())}"></div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().days1to30().invoiceCount())} + ' facture(s)'"></div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days1to30().percentage())}"></div>
                 </div>
             </td>
             <td>
                 <div class="aging-card">
                     <div class="aging-label" th:text="${report.aging().days31to60().label()}">31-60 j</div>
-                    <div class="aging-amount" th:text="${fmt.money(report.aging().days31to60().totalAmount())}">—</div>
-                    <div class="aging-count" th:text="${fmt.num(report.aging().days31to60().invoiceCount())} + ' facture(s)'">—</div>
-                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days31to60().percentage())}">—</div>
+                    <div class="aging-amount" th:text="${fmt.money(report.aging().days31to60().totalAmount())}"></div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().days31to60().invoiceCount())} + ' facture(s)'"></div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days31to60().percentage())}"></div>
                 </div>
             </td>
             <td>
                 <div class="aging-card">
                     <div class="aging-label" th:text="${report.aging().days61to90().label()}">61-90 j</div>
-                    <div class="aging-amount" th:text="${fmt.money(report.aging().days61to90().totalAmount())}">—</div>
-                    <div class="aging-count" th:text="${fmt.num(report.aging().days61to90().invoiceCount())} + ' facture(s)'">—</div>
-                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days61to90().percentage())}">—</div>
+                    <div class="aging-amount" th:text="${fmt.money(report.aging().days61to90().totalAmount())}"></div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().days61to90().invoiceCount())} + ' facture(s)'"></div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days61to90().percentage())}"></div>
                 </div>
             </td>
             <td>
                 <div class="aging-card">
                     <div class="aging-label" th:text="${report.aging().days90plus().label()}">+90 j</div>
-                    <div class="aging-amount red" th:text="${fmt.money(report.aging().days90plus().totalAmount())}">—</div>
-                    <div class="aging-count" th:text="${fmt.num(report.aging().days90plus().invoiceCount())} + ' facture(s)'">—</div>
-                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days90plus().percentage())}">—</div>
+                    <div class="aging-amount red" th:text="${fmt.money(report.aging().days90plus().totalAmount())}"></div>
+                    <div class="aging-count" th:text="${fmt.num(report.aging().days90plus().invoiceCount())} + ' facture(s)'"></div>
+                    <div class="aging-pct" th:text="${fmt.pct(report.aging().days90plus().percentage())}"></div>
                 </div>
             </td>
         </tr>
@@ -179,16 +179,16 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="inv, stat : ${report.unpaidInvoices()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${inv.documentNumber()}">—</td>
-                <td th:text="${inv.customerName()}">—</td>
-                <td th:text="${inv.customerType()}">—</td>
-                <td th:text="${fmt.date(inv.issueDate())}">—</td>
-                <td th:text="${fmt.date(inv.dueDate())}">—</td>
-                <td class="r" th:text="${fmt.money(inv.totalAmount())}">—</td>
-                <td class="r" th:text="${fmt.money(inv.paidAmount())}">—</td>
-                <td class="r" th:text="${fmt.money(inv.balanceDue())}">—</td>
-                <td class="r" th:text="${fmt.days(inv.agingDays())}">—</td>
-                <td th:text="${inv.agingBucket()}">—</td>
+                <td th:text="${inv.documentNumber()}"></td>
+                <td th:text="${inv.customerName()}"></td>
+                <td th:text="${inv.customerType()}"></td>
+                <td th:text="${fmt.date(inv.issueDate())}"></td>
+                <td th:text="${fmt.date(inv.dueDate())}"></td>
+                <td class="r" th:text="${fmt.money(inv.totalAmount())}"></td>
+                <td class="r" th:text="${fmt.money(inv.paidAmount())}"></td>
+                <td class="r" th:text="${fmt.money(inv.balanceDue())}"></td>
+                <td class="r" th:text="${fmt.days(inv.agingDays())}"></td>
+                <td th:text="${inv.agingBucket()}"></td>
             </tr>
         </tbody>
     </table>
@@ -196,7 +196,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 </div>
 
 <div class="footer">
-    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Rapport de recouvrement &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+    Elle A Osé · Bokati Cowork &nbsp;·&nbsp; Rapport de recouvrement &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}"></span> &nbsp;·&nbsp; Document confidentiel
 </div>
 </body>
 </html>

@@ -19,7 +19,7 @@ public class ContractAmendmentSectionRequest {
     /** Nouveau titre (pour ADD et MODIFY) */
     private String title;
 
-    /** Nouveau contenu — supporte les tokens {{variable}} (pour ADD et MODIFY) */
+    /** Nouveau contenu · supporte les tokens {{variable}} (pour ADD et MODIFY) */
     private String content;
 
     /** Position dans l'avenant (0-based) */

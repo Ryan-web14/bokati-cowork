@@ -61,7 +61,7 @@ public class VisitorBadgeService {
     }
 
     private String fmt(java.time.Instant instant) {
-        if (instant == null) return "—";
+        if (instant == null) return "";
         return DT_FMT.format(instant.atZone(ZoneId.systemDefault()));
     }
 }

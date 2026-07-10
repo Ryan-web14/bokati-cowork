@@ -79,7 +79,7 @@ public class BillingPeriodClosureServiceImpl {
                     .build();
 
             closureRepository.save(closure);
-            log.info("Period closure saved: {} {} {} — {} docs, {} invoiced",
+            log.info("Period closure saved: {} {} {} · {} docs, {} invoiced",
                     periodType, periodLabel, docType, totalDocs, totalInv);
         }
     }

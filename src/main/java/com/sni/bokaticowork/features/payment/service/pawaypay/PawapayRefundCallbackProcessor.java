@@ -41,7 +41,7 @@ public class PawapayRefundCallbackProcessor {
         }
 
         if (isTerminal(transaction.getStatus())) {
-            log.info("Ignoring duplicate PawaPay refund callback for refundId {} — already in terminal state {}",
+            log.info("Ignoring duplicate PawaPay refund callback for refundId {} · already in terminal state {}",
                     payload.refundId(), transaction.getStatus());
             return;
         }
@@ -70,7 +70,7 @@ public class PawapayRefundCallbackProcessor {
                     transaction.getTransactionNumber(),
                     java.util.Map.of("transactionNumber", transaction.getTransactionNumber(), "status", PaymentTransactionStatus.REFUNDED.name())
             );
-            log.info("PawaPay refund completed — transaction={}, refundId={}",
+            log.info("PawaPay refund completed · transaction={}, refundId={}",
                     transaction.getTransactionNumber(), payload.refundId());
         } else if ("FAILED".equals(payload.status())) {
             String reason = payload.failureReason() != null
@@ -79,7 +79,7 @@ public class PawapayRefundCallbackProcessor {
             transaction.setStatus(PaymentTransactionStatus.FAILED);
             transaction.setFailureReason(reason);
             transactionRepository.save(transaction);
-            log.info("PawaPay refund failed — transaction={}, refundId={}, reason={}",
+            log.info("PawaPay refund failed · transaction={}, refundId={}, reason={}",
                     transaction.getTransactionNumber(), payload.refundId(), reason);
         } else {
             log.warn("Unexpected PawaPay refund callback status '{}' for refundId {}",

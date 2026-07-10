@@ -16,7 +16,7 @@ public class EmailDlqConsumer {
 
     @RabbitListener(queues = "email.dlq", containerFactory = "dlqListenerFactory")
     public void consumeDlq(EmailRabbitMessage message) {
-        log.error("[EMAIL DLQ] Livraison définitivement échouée — emailNumber={} to={} subject={}",
+        log.error("[EMAIL DLQ] Livraison définitivement échouée · emailNumber={} to={} subject={}",
                 message.emailNumber(), message.to(), message.subject());
         try {
             deliveryTracker.markFailed(

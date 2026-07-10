@@ -87,7 +87,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     @Transactional
     public void validatePasswordResetToken(String token, String newPassword) {
-        // Authoritative password strength guard — covers both the form and the JSON confirm API.
+        // Authoritative password strength guard · covers both the form and the JSON confirm API.
         passwordPolicyValidator.validateOrThrow(newPassword);
 
         String tokenHash = hashToken(token);
@@ -116,7 +116,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         log.info("Password successfully reset for user: {} (triggered by: {})",
                 userEmail, triggeredBy != null ? triggeredBy : "self");
 
-        // Fire async notifications after commit — non-blocking, no thread held
+        // Fire async notifications after commit · non-blocking, no thread held
         runAfterCommit(() -> {
             notifier.sendPasswordChangedConfirmation(userEmail);
             notifier.notifyAdminResetCompleted(triggeredBy, userEmail);

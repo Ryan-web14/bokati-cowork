@@ -406,7 +406,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         String period = (booking.getStartedAt() != null && booking.getEndedAt() != null)
                 ? booking.getStartedAt() + " → " + booking.getEndedAt()
                 : null;
-        String lineDesc = resourceName + (period != null ? " — " + period : "");
+        String lineDesc = resourceName + (period != null ? " · " + period : "");
 
         List<CreateBillingDocumentLineRequest> lines = new ArrayList<>();
         lines.add(new CreateBillingDocumentLineRequest(
@@ -468,7 +468,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 null,
                 "BOOKING",
                 booking.getBookingNumber(),
-                "Facture réservation — " + booking.getBookingNumber(),
+                "Facture réservation · " + booking.getBookingNumber(),
                 trim(request.description()),
                 trim(request.terms()),
                 currency,
@@ -513,7 +513,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         String period = (ext.checkInAt() != null && ext.checkOutAt() != null)
                 ? ext.checkInAt() + " → " + ext.checkOutAt()
                 : null;
-        String lineDesc = ext.resourceName() + (period != null ? " — " + period : "");
+        String lineDesc = ext.resourceName() + (period != null ? " · " + period : "");
 
         CreateBillingDocumentLineRequest line = new CreateBillingDocumentLineRequest(
                 1,
@@ -561,7 +561,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 null, null, null, null,
                 "EXTERNAL_BOOKING",
                 trim(ext.externalReference()),
-                "Facture réservation externe — " + ext.resourceName(),
+                "Facture réservation externe · " + ext.resourceName(),
                 null,
                 trim(request.terms()),
                 currency,
@@ -1159,12 +1159,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocument cancelAndArchive(String documentNumber, String reason) {
         BillingDocument document = serviceByNumber(documentNumber);
 
-        // Facture fiscalement scellée — on ne la mute pas, on émet un avoir
+        // Facture fiscalement scellée · on ne la mute pas, on émet un avoir
         if (Boolean.TRUE.equals(document.getLocked())) {
             return cancelLockedDocumentViaCreditNote(document, reason);
         }
 
-        // Document non verrouillé — annulation directe (comportement existant)
+        // Document non verrouillé · annulation directe (comportement existant)
         if (document.getStatus() != BillingDocumentStatus.CANCELLED) {
             document.setStatus(BillingDocumentStatus.CANCELLED);
             if (document.getCancelledAt() == null) {
@@ -1196,7 +1196,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 : document.getTotalAmount();
 
         if (creditAmount.signum() <= 0) {
-            // Facture déjà intégralement réglée — archiver uniquement
+            // Facture déjà intégralement réglée · archiver uniquement
             if (document.getArchivedAt() == null) {
                 document.setArchivedAt(Instant.now());
                 document = documentRepository.save(document);
@@ -1354,7 +1354,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 advance.getPaymentReference(),
                 advance.getReferenceLabel() != null
                         ? advance.getReferenceLabel()
-                        : "Acompte reçu — Devis " + quoteNumber,
+                        : "Acompte reçu · Devis " + quoteNumber,
                 null,
                 advance.getNotes()
         );
@@ -1591,7 +1591,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     }
 
     /**
-     * Valide fiscalement un document SEFC — opération atomique en 12 étapes.
+     * Valide fiscalement un document SEFC · opération atomique en 12 étapes.
      * Toutes les écritures se font dans la même transaction (@Transactional de classe).
      *
      * Étapes :
@@ -1608,31 +1608,31 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
      */
     @Override
     public BillingDocumentResponse validate(String documentNumber) {
-        // 1 — garde
+        // 1 · garde
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureCanValidate(document);
 
-        // 2 — date fiscale
+        // 2 · date fiscale
         LocalDate fiscalDate = LocalDate.now();
 
-        // 3 — numéro fiscal SEFC (séquence annuelle, SELECT FOR UPDATE)
+        // 3 · numéro fiscal SEFC (séquence annuelle, SELECT FOR UPDATE)
         String fiscalNumber = documentSequenceService.nextFiscalNumber(document.getDocumentType(), fiscalDate);
 
         document.setFiscalDate(fiscalDate);
         document.setFiscalNumber(fiscalNumber);
 
-        // 4 — hash précédent (chaînage, SELECT FOR UPDATE SKIP LOCKED)
+        // 4 · hash précédent (chaînage, SELECT FOR UPDATE SKIP LOCKED)
         String previousHash = documentRepository
                 .findLastValidatedHash(document.getDocumentType().name())
                 .orElse(null);
 
-        // 5 — hash courant SHA-256
+        // 5 · hash courant SHA-256
         String currentHash = fiscalHashService.compute(document, previousHash);
 
-        // 6 — signature HMAC-SHA256
+        // 6 · signature HMAC-SHA256
         String signature = fiscalSignatureService.sign(currentHash);
 
-        // 7 — verrouillage
+        // 7 · verrouillage
         document.setPreviousHash(previousHash);
         document.setCurrentHash(currentHash);
         document.setHashAlgorithm(FiscalHashService.ALGORITHM);
@@ -1643,10 +1643,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         document.setValidatedAt(Instant.now());
         document.setStatus(BillingDocumentStatus.VALIDATED);
 
-        // 8 — persistance (une seule écriture atomique)
+        // 8 · persistance (une seule écriture atomique)
         BillingDocument saved = documentRepository.save(document);
 
-        // 9 — journal d'audit
+        // 9 · journal d'audit
         fiscalAuditService.log(
                 FiscalAuditService.INVOICE_VALIDATED,
                 "BILLING_DOCUMENT",
@@ -1655,7 +1655,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 fiscalNumber + "|hash=" + currentHash.substring(0, 12)
         );
 
-        // 10 — événement métier
+        // 10 · événement métier
         eventWriter.write(saved, "BILLING_DOCUMENT_VALIDATED", null);
         return mapper.toResponse(saved);
     }

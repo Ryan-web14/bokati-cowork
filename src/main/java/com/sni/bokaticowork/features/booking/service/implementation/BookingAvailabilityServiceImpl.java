@@ -39,7 +39,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
         Resource resource = resourceService.getResourceForService(request.resourceCode().trim());
         int quantity = request.quantity() == null ? 1 : request.quantity();
 
-        // Step 1: check physical slot availability — if this fails the slot is truly occupied
+        // Step 1: check physical slot availability · if this fails the slot is truly occupied
         try {
             resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity);
             resourceGuard.validateNoSingleCapacityConflict(resource, request.startedAt(), request.endedAt(), null);
@@ -57,7 +57,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
             return unavailableResponse(resource, request, quantity, ex.getMessage());
         }
 
-        // "fits within" instead of exact equality — handles cases where the window spans the full day
+        // "fits within" instead of exact equality · handles cases where the window spans the full day
         boolean slotFits = windows.stream().anyMatch(w ->
                 !w.getStartedAt().isAfter(request.startedAt()) && !w.getEndedAt().isBefore(request.endedAt()));
 
@@ -73,7 +73,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
                 var identity = identityResolver.resolve(request.identityLookup());
                 paymentContextResolver.resolve(request.paymentMode(), identity, resource);
             } catch (ResourceNotFoundException | BadRequestException ex) {
-                // Slot is available but payment context is missing — return clear payment error
+                // Slot is available but payment context is missing · return clear payment error
                 return unavailableResponse(resource, request, quantity, ex.getMessage());
             }
         }
@@ -83,9 +83,9 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
             BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity);
             String message = "Disponible";
             if (request.paymentMode() == BookingPaymentMode.SUBSCRIPTION) {
-                message = "Disponible — couvert par abonnement";
+                message = "Disponible · couvert par abonnement";
             } else if (request.paymentMode() == BookingPaymentMode.PASS) {
-                message = "Disponible — couvert par pass";
+                message = "Disponible · couvert par pass";
             }
             return new BookingAvailabilityResponse(
                     resource.getCode(),

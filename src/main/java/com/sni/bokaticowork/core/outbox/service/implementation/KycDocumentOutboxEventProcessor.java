@@ -41,7 +41,7 @@ public class KycDocumentOutboxEventProcessor implements OutboxEventProcessor {
                 event.getEventType(), ownerType, ownerId);
 
         if (ownerType == null || ownerId == null) {
-            log.warn("KYC_DOCUMENT event {} missing ownerType/ownerId — skipping", event.getEventType());
+            log.warn("KYC_DOCUMENT event {} missing ownerType/ownerId · skipping", event.getEventType());
             return;
         }
 
@@ -55,8 +55,8 @@ public class KycDocumentOutboxEventProcessor implements OutboxEventProcessor {
         Map<String, Object> vars = new HashMap<>();
         vars.put("ownerName",    StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
         vars.put("documentType", documentType != null ? documentType : "document");
-        vars.put("expiryDate",   expiryDate  != null ? expiryDate  : "—");
-        vars.put("kycCaseCode",  kycCaseCode != null ? kycCaseCode : "—");
+        vars.put("expiryDate",   expiryDate  != null ? expiryDate  : "");
+        vars.put("kycCaseCode",  kycCaseCode != null ? kycCaseCode : "");
         vars.put("eventType",    event.getEventType());
 
         try {

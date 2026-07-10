@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="|Réservation confirmée — ${bookingNumber ?: 'Votre réservation'} — Elle A Osé|">Réservation confirmée — Elle A Osé</title>
+  <title th:text="|Réservation confirmée · ${bookingNumber ?: 'Votre réservation'} · Elle A Osé|">Réservation confirmée · Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #F4F2EF; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #2A2135; }
@@ -87,7 +87,7 @@
         </tr>
         <tr>
           <td class="r-key">Date</td>
-          <td class="r-val" th:text="${bookingDate ?: startedAt}">—</td>
+          <td class="r-val" th:text="${bookingDate ?: startedAt}"></td>
         </tr>
         <tr>
           <td class="r-key">Horaires</td>
@@ -100,11 +100,11 @@
         </tr>
         <tr th:if="${resourceCapacity}">
           <td class="r-key">Capacité</td>
-          <td class="r-val" th:text="${resourceCapacity} + ' personne(s)'">—</td>
+          <td class="r-val" th:text="${resourceCapacity} + ' personne(s)'"></td>
         </tr>
         <tr th:if="${address}">
           <td class="r-key">Adresse</td>
-          <td class="r-val" th:text="${address}">—</td>
+          <td class="r-val" th:text="${address}"></td>
         </tr>
       </table>
 
@@ -112,23 +112,23 @@
       <table class="rows">
         <tr>
           <td class="r-key" th:text="|${resourceName} × ${durationLabel}|">Base HT</td>
-          <td class="r-val" th:text="${priceHT}">—</td>
+          <td class="r-val" th:text="${priceHT}"></td>
         </tr>
         <tr th:if="${priceFees}">
           <td class="r-key">Frais de réservation</td>
-          <td class="r-val" th:text="${priceFees}">—</td>
+          <td class="r-val" th:text="${priceFees}"></td>
         </tr>
         <tr>
           <td class="r-key" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</td>
-          <td class="r-val" th:text="${priceTVA}">—</td>
+          <td class="r-val" th:text="${priceTVA}"></td>
         </tr>
         <tr th:if="${priceCentimeAdditionnel}">
           <td class="r-key" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
-          <td class="r-val" th:text="${priceCentimeAdditionnel}">—</td>
+          <td class="r-val" th:text="${priceCentimeAdditionnel}"></td>
         </tr>
         <tr class="total-row">
           <td class="total-key">Total TTC</td>
-          <td class="total-val" th:text="${priceTTC}">—</td>
+          <td class="total-val" th:text="${priceTTC}"></td>
         </tr>
       </table>
 
@@ -136,11 +136,11 @@
       <table class="rows">
         <tr>
           <td class="r-key">Mode</td>
-          <td class="r-val" th:text="${paymentMethod}">—</td>
+          <td class="r-val" th:text="${paymentMethod}"></td>
         </tr>
-        <tr th:if="${paymentDate != null and paymentDate != '—'}">
+        <tr th:if="${!#strings.isEmpty(paymentDate)}">
           <td class="r-key">Date</td>
-          <td class="r-val" th:text="${paymentDate}">—</td>
+          <td class="r-val" th:text="${paymentDate}"></td>
         </tr>
       </table>
 

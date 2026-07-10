@@ -122,7 +122,7 @@ public class InventoryDailyWorker {
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.EXPIRY_SOON,
                     "Lot " + lot.getLotNumber() + " expire le " + lot.getExpiryDate()
-                            + " (" + EXPIRY_WINDOW_DAYS + " jours) — qte: " + lot.getRemainingQuantity());
+                            + " (" + EXPIRY_WINDOW_DAYS + " jours) · qte: " + lot.getRemainingQuantity());
             alert.setItem(lot.getItem());
             alert.setLocation(lot.getLocation());
             alert.setCurrentQuantity(lot.getRemainingQuantity());
@@ -141,8 +141,8 @@ public class InventoryDailyWorker {
                 continue;
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.EXPIRY_IMMINENT,
-                    "URGENT — Lot " + lot.getLotNumber() + " expire le " + lot.getExpiryDate()
-                            + " (sous " + EXPIRY_IMMINENT_DAYS + " jours) — qte: " + lot.getRemainingQuantity());
+                    "URGENT · Lot " + lot.getLotNumber() + " expire le " + lot.getExpiryDate()
+                            + " (sous " + EXPIRY_IMMINENT_DAYS + " jours) · qte: " + lot.getRemainingQuantity());
             alert.setItem(lot.getItem());
             alert.setLocation(lot.getLocation());
             alert.setCurrentQuantity(lot.getRemainingQuantity());
@@ -177,7 +177,7 @@ public class InventoryDailyWorker {
                     }
                     InventoryAlert alert = baseAlert(InventoryAlertType.SLOW_MOVING,
                             "Article a rotation lente : " + level.getItem().getItemCode()
-                                    + " — aucune sortie depuis " + SLOW_MOVING_DAYS + " jours, stock: " + level.getQuantityAvailable());
+                                    + " · aucune sortie depuis " + SLOW_MOVING_DAYS + " jours, stock: " + level.getQuantityAvailable());
                     alert.setItem(level.getItem());
                     alert.setLocation(level.getLocation());
                     alert.setCurrentQuantity(level.getQuantityAvailable());
@@ -260,7 +260,7 @@ public class InventoryDailyWorker {
                 continue;
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.ASSET_RETURN_OVERDUE,
-                    "Retour asset en retard — " + asset.getAssetCode() + " attendu le " + assignment.getExpectedReturnAt());
+                    "Retour asset en retard · " + asset.getAssetCode() + " attendu le " + assignment.getExpectedReturnAt());
             alert.setAssetCode(asset.getAssetCode());
             alert.setItem(asset.getItem());
             alert.setLocation(asset.getLocation());
@@ -282,7 +282,7 @@ public class InventoryDailyWorker {
                 continue;
             }
             InventoryAlert alert = baseAlert(InventoryAlertType.ASSET_RETURN_DUE_SOON,
-                    "Retour prévu dans moins de 24h — asset " + asset.getAssetCode()
+                    "Retour prévu dans moins de 24h · asset " + asset.getAssetCode()
                             + " attendu le " + assignment.getExpectedReturnAt());
             alert.setAssetCode(asset.getAssetCode());
             alert.setItem(asset.getItem());

@@ -53,7 +53,7 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
                 event.getEventType(), ownerType, ownerId, documentCode);
 
         if (ownerType == null || ownerId == null) {
-            log.warn("DOCUMENT event {} missing ownerType/ownerId — skipping notification", event.getEventType());
+            log.warn("DOCUMENT event {} missing ownerType/ownerId · skipping notification", event.getEventType());
             return;
         }
 
@@ -71,14 +71,14 @@ public class DocumentOutboxEventProcessor implements OutboxEventProcessor {
             return;
         }
         if (recipient == null || !StringUtils.hasText(recipient.email())) {
-            log.warn("No email address for DOCUMENT event={} ownerType={} ownerId={} — skipping notification",
+            log.warn("No email address for DOCUMENT event={} ownerType={} ownerId={} · skipping notification",
                     event.getEventType(), ownerType, ownerId);
             return;
         }
 
         Map<String, Object> vars = new HashMap<>();
         vars.put("recipientName", StringUtils.hasText(recipient.displayName()) ? recipient.displayName() : "client");
-        vars.put("documentCode",  documentCode != null ? documentCode : "—");
+        vars.put("documentCode",  documentCode != null ? documentCode : "");
         vars.put("eventType",     event.getEventType());
         vars.put("status",        status != null ? status : "N/A");
 

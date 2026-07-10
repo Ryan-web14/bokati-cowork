@@ -338,7 +338,7 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
 
     public static final class PaymentReceiptTemplateFormatter {
 
-        private static final String EMPTY_VALUE = "—";
+        private static final String EMPTY_VALUE = "";
         private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 

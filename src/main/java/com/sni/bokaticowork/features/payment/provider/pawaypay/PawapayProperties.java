@@ -12,7 +12,7 @@ public class PawapayProperties {
     private String apiKey;
     private String baseUrl = "https://api.pawapay.io/";
     private String callbackBaseUrl = "http://localhost:8080";
-    /** HMAC-SHA256 shared secret from PawaPay dashboard — leave empty to skip verification */
+    /** HMAC-SHA256 shared secret from PawaPay dashboard · leave empty to skip verification */
     private String callbackSecret;
     /** Interval in ms between polling runs for stuck PROCESSING transactions */
     private long pollingDelayMs = 300_000;

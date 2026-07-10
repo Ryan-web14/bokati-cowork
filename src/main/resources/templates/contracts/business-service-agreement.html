@@ -206,7 +206,7 @@ body {
   <div class="party-detail">ci-après dénommé <strong>« le Prestataire »</strong></div>
 </div>
 
-<div class="connector">— et —</div>
+<div class="connector">et</div>
 
 <div class="party">
   <div class="party-role">Le Client / Cocontractant</div>
@@ -227,7 +227,7 @@ body {
 
 <!-- ARTICLE 1 : OBJET -->
 <div class="article">
-  <div class="article-heading">Article 1 — Objet du contrat</div>
+  <div class="article-heading">Article 1 · Objet du contrat</div>
   <div class="article-text">
     <p th:if="${request.description != null and !#strings.isEmpty(request.description)}" th:text="${request.description}">Description.</p>
     <p th:if="${request.description == null or #strings.isEmpty(request.description)}">
@@ -240,19 +240,19 @@ body {
 
 <!-- ARTICLE 2 : PÉRIODE ET EXÉCUTION -->
 <div class="article">
-  <div class="article-heading">Article 2 — Période d'exécution et cadre contractuel</div>
+  <div class="article-heading">Article 2 · Période d'exécution et cadre contractuel</div>
   <table class="data-table">
     <tr>
       <td class="lbl">Date d'effet</td>
-      <td th:text="${request.effectiveDate != null ? request.effectiveDate : '—'}">—</td>
+      <td th:text="${request.effectiveDate != null ? request.effectiveDate : ''}"></td>
     </tr>
     <tr>
       <td class="lbl">Date de début</td>
-      <td th:text="${request.startDate != null ? request.startDate : '—'}">—</td>
+      <td th:text="${request.startDate != null ? request.startDate : ''}"></td>
     </tr>
     <tr>
       <td class="lbl">Date de fin</td>
-      <td th:text="${request.endDate != null ? request.endDate : '—'}">—</td>
+      <td th:text="${request.endDate != null ? request.endDate : ''}"></td>
     </tr>
     <tr>
       <td class="lbl">Signataire</td>
@@ -267,7 +267,7 @@ body {
 
 <!-- ARTICLE 3 : CLAUSES CONTRACTUELLES -->
 <div class="article">
-  <div class="article-heading">Article 3 — Clauses contractuelles et obligations</div>
+  <div class="article-heading">Article 3 · Clauses contractuelles et obligations</div>
   <div class="article-text">
     <div th:if="${#lists.isEmpty(clauses)}">
       <p>Les services sont fournis conformément aux conditions commerciales et opérationnelles validées entre les parties.</p>
@@ -280,7 +280,7 @@ body {
 
 <!-- ARTICLE 4 : CONDITIONS ET PARAMÈTRES SPÉCIFIQUES -->
 <div class="article" th:if="${variables != null and !#maps.isEmpty(variables)}">
-  <div class="article-heading">Article 4 — Conditions et paramètres spécifiques</div>
+  <div class="article-heading">Article 4 · Conditions et paramètres spécifiques</div>
   <table class="vars-table">
     <tr th:each="entry : ${variables.entrySet()}">
       <td class="key" th:text="${entry.key}">Paramètre</td>
@@ -291,7 +291,7 @@ body {
 
 <!-- ARTICLE 5 : DISPOSITIONS LÉGALES -->
 <div class="article">
-  <div class="article-heading" th:text="${variables != null and !#maps.isEmpty(variables)} ? 'Article 5 — Dispositions légales et règlement des litiges' : 'Article 4 — Dispositions légales et règlement des litiges'">Article — Dispositions légales</div>
+  <div class="article-heading" th:text="${variables != null and !#maps.isEmpty(variables)} ? 'Article 5 · Dispositions légales et règlement des litiges' : 'Article 4 · Dispositions légales et règlement des litiges'">Article · Dispositions légales</div>
   <div class="legal-notice">
     Le présent contrat est soumis au droit applicable dans le pays d'établissement du Prestataire.
     Les présentes dispositions entrent en vigueur à compter de la date d'effet mentionnée ci-dessus.
@@ -341,7 +341,7 @@ body {
   <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</span>
   &nbsp;·&nbsp; Contrat de prestation de services &nbsp;·&nbsp;
   Généré le <span th:text="${generatedAt}">2026-01-01</span>
-  &nbsp;·&nbsp; Document confidentiel — usage strictement professionnel
+  &nbsp;·&nbsp; Document confidentiel · usage strictement professionnel
 </div>
 
 </body>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title th:text="${success} ? 'Check-in confirmé — Elle A Osé' : 'QR code invalide — Elle A Osé'">Check-in — Elle A Osé</title>
+  <title th:text="${success} ? 'Check-in confirmé · Elle A Osé' : 'QR code invalide · Elle A Osé'">Check-in · Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { min-height: 100vh; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; background: #E8E5E0; color: #1A0A2E; }
@@ -83,26 +83,26 @@
           </tr>
           <tr>
             <td class="lbl">Espace</td>
-            <td class="val" th:text="${resourceName}">—</td>
+            <td class="val" th:text="${resourceName}"></td>
           </tr>
           <tr>
             <td class="lbl">Client</td>
-            <td class="val" th:text="${contactName}">—</td>
+            <td class="val" th:text="${contactName}"></td>
           </tr>
           <tr>
             <td class="lbl">Début</td>
-            <td class="val" th:text="${#temporals.format(startedAt, 'dd/MM/yyyy HH:mm')}">—</td>
+            <td class="val" th:text="${#temporals.format(startedAt, 'dd/MM/yyyy HH:mm')}"></td>
           </tr>
           <tr>
             <td class="lbl">Fin</td>
-            <td class="val" th:text="${#temporals.format(endedAt, 'dd/MM/yyyy HH:mm')}">—</td>
+            <td class="val" th:text="${#temporals.format(endedAt, 'dd/MM/yyyy HH:mm')}"></td>
           </tr>
           <tr>
             <td class="lbl">Statut</td>
             <td class="val">
               <span th:if="${status == 'IN_PROGRESS'}" class="status-pill pill-progress">En cours</span>
               <span th:if="${status == 'CONFIRMED'}" class="status-pill pill-confirmed">Confirmé</span>
-              <span th:if="${status != 'IN_PROGRESS' and status != 'CONFIRMED'}" class="status-pill pill-other" th:text="${status}">—</span>
+              <span th:if="${status != 'IN_PROGRESS' and status != 'CONFIRMED'}" class="status-pill pill-other" th:text="${status}"></span>
             </td>
           </tr>
         </table>
@@ -133,7 +133,7 @@
 
         <div class="ref-row" th:if="${token != null and !#strings.isEmpty(token)}">
           <span class="ref-label">Référence scannée</span>
-          <span class="ref-value" th:text="${token}">—</span>
+          <span class="ref-value" th:text="${token}"></span>
         </div>
 
         <div class="tips">
@@ -150,7 +150,7 @@
 </div>
 
 <div class="page-footer">
-  <strong>Elle A Osé</strong> — <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
+  <strong>Elle A Osé</strong> · <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
 </div>
 
 </body>

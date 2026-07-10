@@ -78,7 +78,7 @@ public class CashRequestServiceImpl implements CashRequestService {
         cashRequest = requestRepository.save(cashRequest);
 
         emailNotifier.notifySupervisor(
-                "Nouvelle demande de caisse — " + cashRequest.getRequestNumber(),
+                "Nouvelle demande de caisse · " + cashRequest.getRequestNumber(),
                 requesterLabel(cashRequest) + " a soumis une demande de type " + cashRequest.getRequestType().name()
                         + " pour un montant de " + cashRequest.getAmount() + " " + cashRequest.getCurrency()
                         + " sur la session " + session.getSessionNumber() + ". Motif : " + cashRequest.getReason(),
@@ -103,10 +103,10 @@ public class CashRequestServiceImpl implements CashRequestService {
 
         emailNotifier.notifyUser(
                 cashRequest.getRequestedBy(),
-                "Demande de caisse approuvée — " + cashRequest.getRequestNumber(),
+                "Demande de caisse approuvée · " + cashRequest.getRequestNumber(),
                 "Votre demande " + cashRequest.getRequestType().name() + " de " + cashRequest.getAmount() + " "
                         + cashRequest.getCurrency() + " a été approuvée par " + cashRequest.getReviewedBy()
-                        + (StringUtils.hasText(cashRequest.getReviewNote()) ? (" — Note : " + cashRequest.getReviewNote()) : "")
+                        + (StringUtils.hasText(cashRequest.getReviewNote()) ? (" · Note : " + cashRequest.getReviewNote()) : "")
                         + ". Un mouvement de caisse a été généré automatiquement.",
                 cashRequest.getRequestNumber(),
                 CASH_REQUESTS_PATH + cashRequest.getRequestNumber()
@@ -127,10 +127,10 @@ public class CashRequestServiceImpl implements CashRequestService {
 
         emailNotifier.notifyUser(
                 cashRequest.getRequestedBy(),
-                "Demande de caisse rejetée — " + cashRequest.getRequestNumber(),
+                "Demande de caisse rejetée · " + cashRequest.getRequestNumber(),
                 "Votre demande " + cashRequest.getRequestType().name() + " de " + cashRequest.getAmount() + " "
                         + cashRequest.getCurrency() + " a été rejetée par " + cashRequest.getReviewedBy()
-                        + (StringUtils.hasText(cashRequest.getReviewNote()) ? (" — Motif : " + cashRequest.getReviewNote()) : "") + ".",
+                        + (StringUtils.hasText(cashRequest.getReviewNote()) ? (" · Motif : " + cashRequest.getReviewNote()) : "") + ".",
                 cashRequest.getRequestNumber(),
                 CASH_REQUESTS_PATH + cashRequest.getRequestNumber()
         );

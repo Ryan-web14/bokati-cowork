@@ -291,7 +291,7 @@ public class BookingServiceImpl implements BookingService {
         if (requiresPayment) {
             booking.setStatus(BookingStatus.PENDING_PAYMENT);
             booking = bookingRepository.save(booking);
-            writeHistory(booking, BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT, booking.getApprovedBy(), request == null ? "Approved — awaiting payment" : reason(request.reason(), "Approved — awaiting payment"));
+            writeHistory(booking, BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT, booking.getApprovedBy(), request == null ? "Approved · awaiting payment" : reason(request.reason(), "Approved · awaiting payment"));
             eventWriter.write(booking, BookingEventType.BOOKING_APPROVED, "Booking approved", "Booking was approved, awaiting payment", null,
                     emailRequested(request == null ? null : request.sendEmail()));
             notifyIfRequested(booking, BookingEventType.BOOKING_APPROVED, new BookingStatusChangeRequest(booking.getApprovedBy(), null, request == null ? null : request.sendEmail()));

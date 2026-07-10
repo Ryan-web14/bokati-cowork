@@ -38,7 +38,7 @@
         .doc-number { font-size: 9.6px; color: #d9a21b; margin-top: 4px; letter-spacing: 1.35px; font-weight: 700; font-family: "Courier New", monospace; }
         .header-rule { height: 2px; background: #d9a21b; }
 
-        /* Ribbon — statut en texte coloré, sans pilule */
+        /* Ribbon · statut en texte coloré, sans pilule */
         .ribbon { background: #fffdf8; border-bottom: 1px solid #e6ddea; padding: 5px 16px; font-size: 8px; color: #6f6478; }
         .st-paid    { color: #166534; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
         .st-partial { color: #92400e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
@@ -60,7 +60,7 @@
             margin: 12px 0 7px;
         }
 
-        /* Info — colonnes plates sans card */
+        /* Info · colonnes plates sans card */
         .info-grid { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         .info-grid td { vertical-align: top; padding: 0; border: none; }
         .info-block-title {
@@ -83,7 +83,7 @@
         .dates-row .lbl { color: #6f6478; }
         .dates-row .val { text-align: right; font-weight: 700; color: #2b2030; }
 
-        /* Conditions — texte simple avec filet gauche */
+        /* Conditions · texte simple avec filet gauche */
         .detail-block {
             padding-left: 9px;
             border-left: 1px solid #e6ddea;
@@ -93,7 +93,7 @@
             margin-bottom: 8px;
         }
 
-        /* Tableau des lignes — en-tête uniforme */
+        /* Tableau des lignes · en-tête uniforme */
         .lines { width: 100%; border-collapse: collapse; font-size: 9.2px; }
         .lines thead th {
             background: #281332;
@@ -137,7 +137,7 @@
         .contact-info { margin-top: 12px; font-size: 8.7px; color: #4b2755; line-height: 1.5; }
         .contact-info-title { font-size: 7px; color: #8a5a00; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
 
-        /* Clauses — filet gauche discret, sans fond coloré */
+        /* Clauses · filet gauche discret, sans fond coloré */
         .clause { padding: 4px 0 4px 9px; border-left: 1px solid #e6ddea; margin-bottom: 6px; }
         .clause-title { font-weight: 700; color: #281332; margin-bottom: 2px; font-size: 9.2px; }
         .clause-body { color: #6f6478; font-size: 8.5px; line-height: 1.34; }
@@ -200,7 +200,7 @@
         <span th:case="'DEPOSIT_REQUESTED'"><span class="st-default">Acompte demandé</span></span>
         <span th:case="'DEPOSIT_PAID'"><span class="st-partial">Acompte reçu</span></span>
         <span th:case="'CANCELLED'"><span class="st-overdue">Annulé</span></span>
-        <span th:case="*"><span class="st-default" th:text="${document.status()}">—</span></span>
+        <span th:case="*"><span class="st-default" th:text="${document.status()}"></span></span>
     </span>
     &nbsp;·&nbsp; Générée le <strong th:text="${generatedAt}">2026-05-01</strong>
 </div>
@@ -224,18 +224,18 @@
             <td style="width:46%; padding-left:14px; vertical-align:top;">
                 <div class="info-block-title">Document</div>
                 <table class="dates-row">
-                    <tr><td class="lbl">Date d'émission</td><td class="val" th:text="${fmt.date(document.issueDate())}">—</td></tr>
-                    <tr><td class="lbl">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}">—</td></tr>
+                    <tr><td class="lbl">Date d'émission</td><td class="val" th:text="${fmt.date(document.issueDate())}"></td></tr>
+                    <tr><td class="lbl">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}"></td></tr>
                     <tr><td class="lbl">Devise</td><td class="val" th:text="${document.currency()}">XAF</td></tr>
-                    <tr th:if="${document.customerReference() != null}"><td class="lbl">Réf. client</td><td class="val" th:text="${document.customerReference()}">—</td></tr>
-                    <tr th:if="${document.poNumber() != null}"><td class="lbl">N° bon de commande</td><td class="val" th:text="${document.poNumber()}">—</td></tr>
-                    <tr th:if="${document.projectCode() != null}"><td class="lbl">Code projet</td><td class="val" th:text="${document.projectCode()}">—</td></tr>
-                    <tr th:if="${document.salespersonCode() != null}"><td class="lbl">Commercial</td><td class="val" th:text="${document.salespersonCode()}">—</td></tr>
-                    <tr th:if="${document.paymentReference() != null}"><td class="lbl">Réf. paiement</td><td class="val" th:text="${document.paymentReference()}">—</td></tr>
-                    <tr th:if="${document.exchangeRate() != null}"><td class="lbl">Taux de change</td><td class="val" th:text="${document.exchangeRate()}">—</td></tr>
-                    <tr th:if="${document.issuedAt() != null}"><td class="lbl">Émise le</td><td class="val" th:text="${fmt.timestamp(document.issuedAt())}">—</td></tr>
-                    <tr th:if="${document.sentAt() != null}"><td class="lbl">Envoyée le</td><td class="val" th:text="${fmt.timestamp(document.sentAt())}">—</td></tr>
-                    <tr th:if="${document.paidAt() != null}"><td class="lbl">Réglée le</td><td class="val" th:text="${fmt.timestamp(document.paidAt())}">—</td></tr>
+                    <tr th:if="${document.customerReference() != null}"><td class="lbl">Réf. client</td><td class="val" th:text="${document.customerReference()}"></td></tr>
+                    <tr th:if="${document.poNumber() != null}"><td class="lbl">N° bon de commande</td><td class="val" th:text="${document.poNumber()}"></td></tr>
+                    <tr th:if="${document.projectCode() != null}"><td class="lbl">Code projet</td><td class="val" th:text="${document.projectCode()}"></td></tr>
+                    <tr th:if="${document.salespersonCode() != null}"><td class="lbl">Commercial</td><td class="val" th:text="${document.salespersonCode()}"></td></tr>
+                    <tr th:if="${document.paymentReference() != null}"><td class="lbl">Réf. paiement</td><td class="val" th:text="${document.paymentReference()}"></td></tr>
+                    <tr th:if="${document.exchangeRate() != null}"><td class="lbl">Taux de change</td><td class="val" th:text="${document.exchangeRate()}"></td></tr>
+                    <tr th:if="${document.issuedAt() != null}"><td class="lbl">Émise le</td><td class="val" th:text="${fmt.timestamp(document.issuedAt())}"></td></tr>
+                    <tr th:if="${document.sentAt() != null}"><td class="lbl">Envoyée le</td><td class="val" th:text="${fmt.timestamp(document.sentAt())}"></td></tr>
+                    <tr th:if="${document.paidAt() != null}"><td class="lbl">Réglée le</td><td class="val" th:text="${fmt.timestamp(document.paidAt())}"></td></tr>
                 </table>
             </td>
         </tr>
@@ -339,10 +339,10 @@
             <tbody>
                 <tr th:each="p : ${payments}">
                     <td style="font-weight:700;" th:text="${p.method()}">CASH</td>
-                    <td style="font-size:9px;" th:text="${p.depositId() != null ? p.depositId() : (p.providerReference() != null ? p.providerReference() : '—')}">—</td>
-                    <td th:text="${p.payerPhone() != null ? p.payerPhone() : '—'}">—</td>
+                    <td style="font-size:9px;" th:text="${p.depositId() != null ? p.depositId() : (p.providerReference() != null ? p.providerReference() : '')}"></td>
+                    <td th:text="${p.payerPhone() != null ? p.payerPhone() : ''}"></td>
                     <td class="r num col-amt" th:text="${fmt.money(p.allocatedAmount())}">0</td>
-                    <td class="r" style="font-size:9px;" th:text="${p.paidAt() != null ? fmt.timestamp(p.paidAt()) : '—'}">—</td>
+                    <td class="r" style="font-size:9px;" th:text="${p.paidAt() != null ? fmt.timestamp(p.paidAt()) : ''}"></td>
                 </tr>
             </tbody>
         </table>
@@ -356,23 +356,23 @@
                     th:style="${document.earlyPaymentDiscount() != null ? 'width:50%; padding-right:5px; vertical-align:top;' : 'width:100%; vertical-align:top;'}">
                     <div class="section-label">Acompte</div>
                     <table class="summary">
-                        <tr><td class="lbl">Type</td><td class="val" th:text="${fmt.advanceTypeLabel(document.advance().advanceType())}">—</td></tr>
-                        <tr><td class="lbl">Montant</td><td class="val num" th:text="${fmt.money(document.advance().computedAmount())}">—</td></tr>
-                        <tr th:if="${document.advance().dueDate() != null}"><td class="lbl">Échéance</td><td class="val" th:text="${fmt.date(document.advance().dueDate())}">—</td></tr>
-                        <tr th:if="${document.advance().referenceLabel() != null}"><td class="lbl">Libellé</td><td class="val" th:text="${document.advance().referenceLabel()}">—</td></tr>
-                        <tr th:if="${document.advance().paymentReference() != null}"><td class="lbl">Réf. paiement</td><td class="val" th:text="${document.advance().paymentReference()}">—</td></tr>
-                        <tr><td class="lbl">Statut</td><td class="val" th:text="${fmt.advanceStatusLabel(document.advance().status())}">—</td></tr>
-                        <tr th:if="${document.advance().paidAt() != null}"><td class="lbl">Réglé le</td><td class="val" th:text="${fmt.timestamp(document.advance().paidAt())}">—</td></tr>
+                        <tr><td class="lbl">Type</td><td class="val" th:text="${fmt.advanceTypeLabel(document.advance().advanceType())}"></td></tr>
+                        <tr><td class="lbl">Montant</td><td class="val num" th:text="${fmt.money(document.advance().computedAmount())}"></td></tr>
+                        <tr th:if="${document.advance().dueDate() != null}"><td class="lbl">Échéance</td><td class="val" th:text="${fmt.date(document.advance().dueDate())}"></td></tr>
+                        <tr th:if="${document.advance().referenceLabel() != null}"><td class="lbl">Libellé</td><td class="val" th:text="${document.advance().referenceLabel()}"></td></tr>
+                        <tr th:if="${document.advance().paymentReference() != null}"><td class="lbl">Réf. paiement</td><td class="val" th:text="${document.advance().paymentReference()}"></td></tr>
+                        <tr><td class="lbl">Statut</td><td class="val" th:text="${fmt.advanceStatusLabel(document.advance().status())}"></td></tr>
+                        <tr th:if="${document.advance().paidAt() != null}"><td class="lbl">Réglé le</td><td class="val" th:text="${fmt.timestamp(document.advance().paidAt())}"></td></tr>
                     </table>
                 </td>
                 <td th:if="${document.earlyPaymentDiscount() != null}"
                     th:style="${document.advance() != null ? 'width:50%; padding-left:5px; vertical-align:top;' : 'width:100%; vertical-align:top;'}">
                     <div class="section-label">Escompte paiement anticipé</div>
                     <table class="summary">
-                        <tr><td class="lbl">Taux</td><td class="val" th:text="${fmt.percent(document.earlyPaymentDiscount().discountRate())}">—</td></tr>
-                        <tr><td class="lbl">Si réglé avant</td><td class="val" th:text="${fmt.date(document.earlyPaymentDiscount().ifPaidBefore())}">—</td></tr>
-                        <tr><td class="lbl">Montant économisé</td><td class="val num" th:text="${fmt.money(document.earlyPaymentDiscount().computedAmount())}">—</td></tr>
-                        <tr th:if="${document.earlyPaymentDiscount().label() != null}"><td class="lbl">Label</td><td class="val" th:text="${document.earlyPaymentDiscount().label()}">—</td></tr>
+                        <tr><td class="lbl">Taux</td><td class="val" th:text="${fmt.percent(document.earlyPaymentDiscount().discountRate())}"></td></tr>
+                        <tr><td class="lbl">Si réglé avant</td><td class="val" th:text="${fmt.date(document.earlyPaymentDiscount().ifPaidBefore())}"></td></tr>
+                        <tr><td class="lbl">Montant économisé</td><td class="val num" th:text="${fmt.money(document.earlyPaymentDiscount().computedAmount())}"></td></tr>
+                        <tr th:if="${document.earlyPaymentDiscount().label() != null}"><td class="lbl">Label</td><td class="val" th:text="${document.earlyPaymentDiscount().label()}"></td></tr>
                     </table>
                 </td>
             </tr>

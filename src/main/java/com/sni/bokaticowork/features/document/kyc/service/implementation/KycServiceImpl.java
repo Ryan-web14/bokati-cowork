@@ -948,7 +948,7 @@ public class KycServiceImpl implements KycService {
         }
         String value = documentCode.trim();
         return !value.equals("-")
-                && !value.equals("—")
+                && !value.equals("")
                 && !value.equals("–")
                 && !value.equalsIgnoreCase("null")
                 && !value.equalsIgnoreCase("undefined");

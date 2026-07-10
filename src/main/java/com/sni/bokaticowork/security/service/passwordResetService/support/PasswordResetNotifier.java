@@ -69,7 +69,7 @@ public class PasswordResetNotifier {
                     ),
                     null
             ));
-            log.info("IN_APP notification sent to admin {} — user {} completed password reset", adminEmail, userEmail);
+            log.info("IN_APP notification sent to admin {} · user {} completed password reset", adminEmail, userEmail);
         } catch (Exception ex) {
             log.warn("Could not send IN_APP notification to admin {}: {}", adminEmail, ex.getMessage());
         }

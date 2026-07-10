@@ -57,11 +57,11 @@ public class SupportSlaEscalationWorker {
 
         if (firstResponseBreached) {
             emailService.sendSlaBreachAlert(ticket, "FIRST_RESPONSE");
-            log.warn("SLA première réponse dépassé — {}", ticket.getTicketNumber());
+            log.warn("SLA première réponse dépassé · {}", ticket.getTicketNumber());
         }
         if (resolutionBreached) {
             emailService.sendSlaBreachAlert(ticket, "RESOLUTION");
-            log.warn("SLA résolution dépassé — {}", ticket.getTicketNumber());
+            log.warn("SLA résolution dépassé · {}", ticket.getTicketNumber());
             bumpPriority(ticket);
         }
 
@@ -78,14 +78,14 @@ public class SupportSlaEscalationWorker {
             ticket.setLastSlaAlertSentAt(now);
             ticketRepository.save(ticket);
             eventWriter.writeSystem(ticket, TicketEventType.SLA_ESCALATED,
-                    "Escalade niveau " + nextLevel + " — " + reason);
+                    "Escalade niveau " + nextLevel + " · " + reason);
             emailService.sendEscalationAlert(ticket, nextLevel, reason);
             log.warn("Escalade niveau {} pour ticket {} ({})", nextLevel, ticket.getTicketNumber(), reason);
         }
     }
 
     /**
-     * Niveau 1 : agent assigné — niveau 2 : manager support — niveau 3 : admin/direction.
+     * Niveau 1 : agent assigné · niveau 2 : manager support · niveau 3 : admin/direction.
      * Le délai entre deux escalades croît avec le niveau pour éviter le spam de notifications.
      */
     private boolean canEscalateAgain(SupportTicket ticket, Instant now) {

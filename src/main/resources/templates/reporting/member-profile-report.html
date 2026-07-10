@@ -70,7 +70,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </td>
         <td>
             <div class="doc-title">Fiche membre 360°</div>
-            <div class="doc-sub">Généré le <span th:text="${generatedAt}">—</span></div>
+            <div class="doc-sub">Généré le <span th:text="${generatedAt}"></span></div>
         </td>
     </tr></table>
 </div>
@@ -86,17 +86,17 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
     </tr></table>
 
     <table class="info-tbl" th:if="${report.member() != null}">
-        <tr><td class="lbl">Code membre</td><td th:text="${report.member().memberCode()}">—</td></tr>
-        <tr><td class="lbl">Nom complet</td><td th:text="${report.member().firstname() + ' ' + report.member().lastname()}">—</td></tr>
-        <tr><td class="lbl">Email</td><td th:text="${report.member().email()}">—</td></tr>
-        <tr><td class="lbl">Téléphone</td><td th:text="${report.member().phone()}">—</td></tr>
-        <tr><td class="lbl">WhatsApp</td><td th:text="${report.member().whatsappPhone()}">—</td></tr>
-        <tr><td class="lbl">Statut</td><td><span class="badge" th:classappend="${report.member().status() == 'ACTIVE'} ? 'active' : 'inactive'" th:text="${report.member().status()}">—</span></td></tr>
-        <tr><td class="lbl">Client</td><td th:text="${report.member().customerCode() + ' — ' + report.member().customerName()}">—</td></tr>
-        <tr><td class="lbl">Poste</td><td th:text="${report.member().jobTitle()}">—</td></tr>
-        <tr><td class="lbl">Ville / Pays</td><td th:text="${(report.member().city() ?: '') + ' / ' + (report.member().country() ?: '')}">—</td></tr>
-        <tr><td class="lbl">Accès portail</td><td th:text="${report.member().portalAccess()} ? 'Oui' : 'Non'">—</td></tr>
-        <tr><td class="lbl">Date d'inscription</td><td th:text="${fmt.date(report.member().createdAt())}">—</td></tr>
+        <tr><td class="lbl">Code membre</td><td th:text="${report.member().memberCode()}"></td></tr>
+        <tr><td class="lbl">Nom complet</td><td th:text="${report.member().firstname() + ' ' + report.member().lastname()}"></td></tr>
+        <tr><td class="lbl">Email</td><td th:text="${report.member().email()}"></td></tr>
+        <tr><td class="lbl">Téléphone</td><td th:text="${report.member().phone()}"></td></tr>
+        <tr><td class="lbl">WhatsApp</td><td th:text="${report.member().whatsappPhone()}"></td></tr>
+        <tr><td class="lbl">Statut</td><td><span class="badge" th:classappend="${report.member().status() == 'ACTIVE'} ? 'active' : 'inactive'" th:text="${report.member().status()}"></span></td></tr>
+        <tr><td class="lbl">Client</td><td th:text="${report.member().customerCode() + ' · ' + report.member().customerName()}"></td></tr>
+        <tr><td class="lbl">Poste</td><td th:text="${report.member().jobTitle()}"></td></tr>
+        <tr><td class="lbl">Ville / Pays</td><td th:text="${(report.member().city() ?: '') + ' / ' + (report.member().country() ?: '')}"></td></tr>
+        <tr><td class="lbl">Accès portail</td><td th:text="${report.member().portalAccess()} ? 'Oui' : 'Non'"></td></tr>
+        <tr><td class="lbl">Date d'inscription</td><td th:text="${fmt.date(report.member().createdAt())}"></td></tr>
     </table>
 
     <!-- ABONNEMENTS -->
@@ -117,12 +117,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="s, stat : ${report.subscriptions()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${s.subscriptionNumber()}">—</td>
-                <td th:text="${s.planName()}">—</td>
-                <td th:text="${s.status()}">—</td>
-                <td th:text="${s.billingCycle()}">—</td>
-                <td class="r" th:text="${fmt.money(s.totalAmount())}">—</td>
-                <td th:text="${fmt.date(s.currentPeriodEnd())}">—</td>
+                <td th:text="${s.subscriptionNumber()}"></td>
+                <td th:text="${s.planName()}"></td>
+                <td th:text="${s.status()}"></td>
+                <td th:text="${s.billingCycle()}"></td>
+                <td class="r" th:text="${fmt.money(s.totalAmount())}"></td>
+                <td th:text="${fmt.date(s.currentPeriodEnd())}"></td>
             </tr>
         </tbody>
     </table>
@@ -145,12 +145,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="b, stat : ${report.bookings()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${b.bookingNumber()}">—</td>
-                <td th:text="${b.resourceName()}">—</td>
-                <td th:text="${b.status()}">—</td>
-                <td th:text="${fmt.date(b.startDate())}">—</td>
-                <td class="r" th:text="${b.durationMinutes()}">—</td>
-                <td class="r" th:text="${fmt.money(b.totalAmount())}">—</td>
+                <td th:text="${b.bookingNumber()}"></td>
+                <td th:text="${b.resourceName()}"></td>
+                <td th:text="${b.status()}"></td>
+                <td th:text="${fmt.date(b.startDate())}"></td>
+                <td class="r" th:text="${b.durationMinutes()}"></td>
+                <td class="r" th:text="${fmt.money(b.totalAmount())}"></td>
             </tr>
         </tbody>
     </table>
@@ -174,13 +174,13 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="inv, stat : ${report.invoices()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${inv.documentNumber()}">—</td>
-                <td th:text="${inv.status()}">—</td>
-                <td class="r" th:text="${fmt.money(inv.totalAmount())}">—</td>
-                <td class="r" th:text="${fmt.money(inv.paidAmount())}">—</td>
-                <td class="r" th:text="${fmt.money(inv.balanceDue())}">—</td>
-                <td th:text="${fmt.date(inv.issueDate())}">—</td>
-                <td th:text="${fmt.date(inv.dueDate())}">—</td>
+                <td th:text="${inv.documentNumber()}"></td>
+                <td th:text="${inv.status()}"></td>
+                <td class="r" th:text="${fmt.money(inv.totalAmount())}"></td>
+                <td class="r" th:text="${fmt.money(inv.paidAmount())}"></td>
+                <td class="r" th:text="${fmt.money(inv.balanceDue())}"></td>
+                <td th:text="${fmt.date(inv.issueDate())}"></td>
+                <td th:text="${fmt.date(inv.dueDate())}"></td>
             </tr>
         </tbody>
     </table>
@@ -202,11 +202,11 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="p, stat : ${report.payments()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${p.transactionNumber()}">—</td>
-                <td th:text="${p.paymentMethod()}">—</td>
-                <td class="r" th:text="${fmt.money(p.amount())}">—</td>
-                <td th:text="${p.status()}">—</td>
-                <td th:text="${fmt.date(p.paidAt())}">—</td>
+                <td th:text="${p.transactionNumber()}"></td>
+                <td th:text="${p.paymentMethod()}"></td>
+                <td class="r" th:text="${fmt.money(p.amount())}"></td>
+                <td th:text="${p.status()}"></td>
+                <td th:text="${fmt.date(p.paidAt())}"></td>
             </tr>
         </tbody>
     </table>
@@ -223,19 +223,19 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Solde disponible</div>
-                    <div class="kpi-value green" th:text="${fmt.money(report.wallet().availableBalance())}">—</div>
+                    <div class="kpi-value green" th:text="${fmt.money(report.wallet().availableBalance())}"></div>
                 </div>
             </td>
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Solde comptable</div>
-                    <div class="kpi-value" th:text="${fmt.money(report.wallet().ledgerBalance())}">—</div>
+                    <div class="kpi-value" th:text="${fmt.money(report.wallet().ledgerBalance())}"></div>
                 </div>
             </td>
             <td width="33%">
                 <div class="kpi-card">
                     <div class="kpi-label">Montant bloqué</div>
-                    <div class="kpi-value gold" th:text="${fmt.money(report.wallet().heldBalance())}">—</div>
+                    <div class="kpi-value gold" th:text="${fmt.money(report.wallet().heldBalance())}"></div>
                 </div>
             </td>
         </tr>
@@ -259,12 +259,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="c, stat : ${report.contracts()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${c.contractCode()}">—</td>
-                <td th:text="${c.title()}">—</td>
-                <td th:text="${c.status()}">—</td>
-                <td th:text="${fmt.date(c.startDate())}">—</td>
-                <td th:text="${fmt.date(c.endDate())}">—</td>
-                <td th:text="${fmt.date(c.signedAt())}">—</td>
+                <td th:text="${c.contractCode()}"></td>
+                <td th:text="${c.title()}"></td>
+                <td th:text="${c.status()}"></td>
+                <td th:text="${fmt.date(c.startDate())}"></td>
+                <td th:text="${fmt.date(c.endDate())}"></td>
+                <td th:text="${fmt.date(c.signedAt())}"></td>
             </tr>
         </tbody>
     </table>
@@ -287,12 +287,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
         </tr></thead>
         <tbody>
             <tr th:each="t, stat : ${report.tickets()}" th:class="${stat.even} ? 'even' : ''">
-                <td th:text="${t.ticketNumber()}">—</td>
-                <td th:text="${t.title()}">—</td>
-                <td th:text="${t.status()}">—</td>
-                <td th:text="${t.priority()}">—</td>
-                <td th:text="${fmt.date(t.createdAt())}">—</td>
-                <td th:text="${fmt.date(t.resolvedAt())}">—</td>
+                <td th:text="${t.ticketNumber()}"></td>
+                <td th:text="${t.title()}"></td>
+                <td th:text="${t.status()}"></td>
+                <td th:text="${t.priority()}"></td>
+                <td th:text="${fmt.date(t.createdAt())}"></td>
+                <td th:text="${fmt.date(t.resolvedAt())}"></td>
             </tr>
         </tbody>
     </table>
@@ -300,7 +300,7 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 </div>
 
 <div class="footer">
-    Elle A Osé — Bokati Cowork &nbsp;·&nbsp; Fiche membre 360° &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}">—</span> &nbsp;·&nbsp; Document confidentiel
+    Elle A Osé · Bokati Cowork &nbsp;·&nbsp; Fiche membre 360° &nbsp;·&nbsp; Généré le <span th:text="${generatedAt}"></span> &nbsp;·&nbsp; Document confidentiel
 </div>
 </body>
 </html>

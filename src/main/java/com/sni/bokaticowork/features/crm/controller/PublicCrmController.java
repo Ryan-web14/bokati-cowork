@@ -17,7 +17,7 @@ import java.util.Map;
 
 /**
  * Endpoint public pour la création de leads depuis le formulaire de contact
- * du site web — aucune authentification requise.
+ * du site web · aucune authentification requise.
  */
 @RestController
 @RequiredArgsConstructor

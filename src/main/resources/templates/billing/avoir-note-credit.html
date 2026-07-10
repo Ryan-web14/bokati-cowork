@@ -2,7 +2,7 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Avoir — Elle A Osé</title>
+    <title>Avoir · Elle A Osé</title>
     <style>
         @page {
             size: A4;
@@ -36,7 +36,7 @@
         .doc-number { font-size: 9.6px; color: #d9a21b; margin-top: 4px; letter-spacing: 1.35px; font-weight: 700; font-family: "Courier New", monospace; text-align: right; }
         .header-rule { height: 2px; background: #d9a21b; }
 
-        /* Ribbon — informations de base en texte simple */
+        /* Ribbon · informations de base en texte simple */
         .ribbon { background: #fffdf8; border-bottom: 1px solid #e6ddea; padding: 5px 16px; font-size: 8px; color: #6f6478; }
 
         .content { padding: 12px 16px 0; }
@@ -52,7 +52,7 @@
             margin: 12px 0 7px;
         }
 
-        /* Info — colonnes plates */
+        /* Info · colonnes plates */
         .info-grid { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
         .info-grid td { vertical-align: top; padding: 0; border: none; }
         .info-block-title {
@@ -68,7 +68,7 @@
         .info-primary { font-size: 11.3px; font-weight: 700; color: #281332; margin-bottom: 3px; }
         .info-detail { font-size: 8.8px; color: #6f6478; line-height: 1.36; }
 
-        /* Motif — texte simple avec filet gauche */
+        /* Motif · texte simple avec filet gauche */
         .motif-text {
             padding-left: 9px;
             border-left: 1px solid #e6ddea;
@@ -117,7 +117,7 @@
         .total-row td.r { color: #d9a21b; }
         .credit-row td { border-top: 2px solid #281332 !important; padding-top: 8px !important; padding-bottom: 8px !important; font-size: 10.6px; font-weight: 700; color: #166534; border-bottom: none !important; }
 
-        /* Mode d'application — table simple */
+        /* Mode d'application · table simple */
         .apply-table { width: 100%; border-collapse: collapse; font-size: 9px; }
         .apply-table td { padding: 5px 0; border-bottom: 1px solid #e6ddea; vertical-align: top; }
         .apply-table tr:last-child td { border-bottom: none; }
@@ -156,8 +156,8 @@
 
 <!-- RIBBON -->
 <div class="ribbon">
-    Note de crédit &nbsp;·&nbsp; Émis le <strong th:text="${creditNote.issueDate}">—</strong>
-    <span th:if="${creditNote.invoiceNumber != null}">&nbsp;·&nbsp; Réf. facture <strong th:text="${creditNote.invoiceNumber}">—</strong></span>
+    Note de crédit &nbsp;·&nbsp; Émis le <strong th:text="${creditNote.issueDate}"></strong>
+    <span th:if="${creditNote.invoiceNumber != null}">&nbsp;·&nbsp; Réf. facture <strong th:text="${creditNote.invoiceNumber}"></strong></span>
 </div>
 
 <!-- CONTENU -->
@@ -169,7 +169,7 @@
         <tr>
             <td style="width:50%; padding-right:14px; border-right:1px solid #e6ddea; vertical-align:top;">
                 <div class="info-block-title">Émetteur</div>
-                <div class="info-primary">Elle A Osé — Bokati Cowork</div>
+                <div class="info-primary">Elle A Osé · Bokati Cowork</div>
                 <div class="info-detail">
                     coworkspace@elleaose.com<br>
                     RCCM : __________ &nbsp;·&nbsp; NIF : __________
@@ -195,11 +195,11 @@
         </tr>
         <tr>
             <td style="color:#6f6478; padding:3px 0; border-bottom:1px solid #e6ddea;">Date d'émission</td>
-            <td style="font-weight:700; color:#2b2030; padding:3px 0; border-bottom:1px solid #e6ddea; text-align:right;" th:text="${creditNote.issueDate}">—</td>
+            <td style="font-weight:700; color:#2b2030; padding:3px 0; border-bottom:1px solid #e6ddea; text-align:right;" th:text="${creditNote.issueDate}"></td>
         </tr>
         <tr th:if="${creditNote.invoiceNumber != null}">
             <td style="color:#6f6478; padding:3px 0; border-bottom:1px solid #e6ddea;">Facture liée</td>
-            <td style="font-weight:700; color:#2b2030; padding:3px 0; border-bottom:1px solid #e6ddea; text-align:right;" th:text="${creditNote.invoiceNumber}">—</td>
+            <td style="font-weight:700; color:#2b2030; padding:3px 0; border-bottom:1px solid #e6ddea; text-align:right;" th:text="${creditNote.invoiceNumber}"></td>
         </tr>
         <tr>
             <td style="color:#6f6478; padding:3px 0;">Devise</td>
@@ -259,7 +259,7 @@
     <table class="apply-table">
         <tr>
             <td class="apply-lbl">Imputation prochaine facture</td>
-            <td class="apply-val"><strong>Crédit reporté sur le prochain document</strong> — <span th:text="${creditNote.totalTTC}">0 XAF</span></td>
+            <td class="apply-val"><strong>Crédit reporté sur le prochain document</strong> · <span th:text="${creditNote.totalTTC}">0 XAF</span></td>
         </tr>
         <tr>
             <td class="apply-lbl">Remboursement</td>
@@ -283,7 +283,7 @@
 
     <!-- PIED DE PAGE -->
     <div class="doc-footer">
-        Elle A Osé &nbsp;·&nbsp; <span th:text="${creditNote.number}">AV-2026-0001</span> &nbsp;·&nbsp; Avoir / Note de crédit &nbsp;·&nbsp; Document comptable — à conserver
+        Elle A Osé &nbsp;·&nbsp; <span th:text="${creditNote.number}">AV-2026-0001</span> &nbsp;·&nbsp; Avoir / Note de crédit &nbsp;·&nbsp; Document comptable · à conserver
         <div class="made-by">Engineered by SNI</div>
     </div>
 

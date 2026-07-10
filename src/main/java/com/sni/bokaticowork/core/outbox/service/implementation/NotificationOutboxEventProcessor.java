@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 import java.util.Set;
 
-// Broad fallback processor — claims any event from a known aggregate type.
+// Broad fallback processor · claims any event from a known aggregate type.
 // Event types with dedicated processors are explicitly excluded so findFirst() in
 // OutboxServiceImpl always routes workflow events to their specific processor first.
 // @Order(Integer.MAX_VALUE) reinforces this as a last-resort bean when injected as a List.
@@ -36,7 +36,7 @@ public class NotificationOutboxEventProcessor implements OutboxEventProcessor {
             "ADMIN"
     );
 
-    // Event types handled by dedicated processors — must never be claimed here.
+    // Event types handled by dedicated processors · must never be claimed here.
     private static final Set<String> DEDICATED_EVENT_TYPES = Set.of(
             "PAYMENT_TRANSACTION_WORKFLOW",
             "CONTRACT_GENERATION_REQUESTED",

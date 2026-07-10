@@ -30,7 +30,7 @@ public class KycDocumentAdminController {
      *  - ownerCode       : the owner's public code
      *  - documentTypeCode: e.g. CNI, PASSEPORT, NIU
      *  - side            : FRONT (default) | BACK
-     *  - documentNumber  : (optional — enforced per type)
+     *  - documentNumber  : (optional · enforced per type)
      *  - issueDate       : yyyy-MM-dd (optional)
      *  - expiryDate      : yyyy-MM-dd (optional)
      *  - file            : the document file
