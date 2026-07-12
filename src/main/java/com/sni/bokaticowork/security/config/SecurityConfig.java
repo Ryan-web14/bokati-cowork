@@ -7,6 +7,7 @@ import com.sni.bokaticowork.security.filter.JWTFilter;
 import com.sni.bokaticowork.security.ratelimit.RateLimitingFilter;
 import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -49,6 +50,9 @@ public class SecurityConfig {
     private final ClientPortalAuthorizationManager clientPortalAuthorizationManager;
     private final ObjectMapper objectMapper;
 
+    @Value("${app.documents.public-preview-enabled:true}")
+    private boolean publicDocumentPreviewEnabled;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -64,9 +68,15 @@ public class SecurityConfig {
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true)
                                 .maxAgeInSeconds(31536000)))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(
+                .authorizeHttpRequests(auth -> {
+                        auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                        // View-only document preview without a bearer token so browsers can load
+                        // images directly (<img src>). Download stays authenticated. Toggle off
+                        // with app.documents.public-preview-enabled=false.
+                        if (publicDocumentPreviewEnabled) {
+                            auth.requestMatchers(HttpMethod.GET, ApiPath.V1 + "/documents/*/preview").permitAll();
+                        }
+                        auth.requestMatchers(
                                 ApiPath.V1 + "/auth/login",
                                 ApiPath.V1 + "/auth/refresh",
                                 ApiPath.V1 + "/auth/register",
@@ -90,17 +100,18 @@ public class SecurityConfig {
                                 ApiPath.V1 + "/shares/**",
                                 ApiPath.V1 + "/countries"
 
-                        ).permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers(ApiPath.V1 + "/client/**").access(clientPortalAuthorizationManager)
+                        ).permitAll();
+                        auth.requestMatchers("/ws/**").permitAll();
+                        auth.requestMatchers("/actuator/health", "/actuator/info").permitAll();
+                        auth.requestMatchers(ApiPath.V1 + "/client/**").access(clientPortalAuthorizationManager);
                         // Alias of the client KYC endpoints for the portal frontend.
-                        .requestMatchers(ApiPath.V1 + "/portal/kyc", ApiPath.V1 + "/portal/kyc/**").access(clientPortalAuthorizationManager)
+                        auth.requestMatchers(ApiPath.V1 + "/portal/kyc", ApiPath.V1 + "/portal/kyc/**").access(clientPortalAuthorizationManager);
                         // Read-only document-type upload config (allowed formats, max size, sides) is
                         // needed by clients to upload KYC documents; harmless to any authenticated user.
-                        .requestMatchers(HttpMethod.GET, ApiPath.V1 + "/document-types/*/upload-config").authenticated()
-                        .requestMatchers(ApiPath.V1 + "/**").access(adminApiAuthorizationManager)
-                        .anyRequest().authenticated())
+                        auth.requestMatchers(HttpMethod.GET, ApiPath.V1 + "/document-types/*/upload-config").authenticated();
+                        auth.requestMatchers(ApiPath.V1 + "/**").access(adminApiAuthorizationManager);
+                        auth.anyRequest().authenticated();
+                })
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

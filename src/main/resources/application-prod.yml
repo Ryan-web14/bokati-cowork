@@ -1,4 +1,4 @@
-# Behind the TLS-terminating proxy, honour X-Forwarded-* so request.isSecure(),
+#Behind the TLS-terminating proxy, honour X-Forwarded-* so request.isSecure(),
 # the request scheme and generated redirects reflect the original HTTPS request.
 server:
   forward-headers-strategy: framework
