@@ -38,6 +38,9 @@ public class JWTFilter extends OncePerRequestFilter {
     @Value("${app.security.auto-admin.email:admin@bokati.com}")
     private String autoAdminEmail;
 
+    @Value("${app.documents.public-preview-enabled:true}")
+    private boolean publicDocumentPreviewEnabled;
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
@@ -171,6 +174,19 @@ public class JWTFilter extends OncePerRequestFilter {
                         || uri.startsWith("/verify/")
                         || uri.startsWith(ApiPath.V1 + "/client/catalog/plans")
                         || uri.startsWith(ApiPath.V1 + "/shares/")
+                        || isPublicDocumentPreview(request, uri)
         );
+    }
+
+    /**
+     * View-only document preview accessible without a bearer token so browsers can load
+     * images directly (&lt;img src&gt;). Only GET .../documents/{code}/preview — downloads
+     * stay authenticated. Toggle off with app.documents.public-preview-enabled=false.
+     */
+    private boolean isPublicDocumentPreview(HttpServletRequest request, String uri) {
+        return publicDocumentPreviewEnabled
+                && "GET".equalsIgnoreCase(request.getMethod())
+                && uri.startsWith(ApiPath.V1 + "/documents/")
+                && uri.endsWith("/preview");
     }
 }

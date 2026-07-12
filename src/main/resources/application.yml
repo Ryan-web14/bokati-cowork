@@ -28,6 +28,11 @@ management:
 
 app:
   locale: ${APP_LOCALE:fr_FR}
+  documents:
+    # When true, GET /documents/{code}/preview is viewable without a bearer token
+    # (so browsers can load images via <img src>). Download stays authenticated.
+    # Set to false to require authentication for preview as well.
+    public-preview-enabled: ${DOCUMENTS_PUBLIC_PREVIEW_ENABLED:true}
   portal:
     kyc-grace-period-days: ${PORTAL_KYC_GRACE_PERIOD_DAYS:7}
   event:
