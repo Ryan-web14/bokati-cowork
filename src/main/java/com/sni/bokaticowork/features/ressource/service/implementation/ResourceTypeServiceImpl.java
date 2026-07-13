@@ -231,7 +231,7 @@ public class ResourceTypeServiceImpl implements ResourceTypeService {
             errors.add("Invalid resource type request, the name is not valid");
         }
 
-        if (StringUtils.hasText(description) && !ValidationUtils.validateString(description.trim())) {
+        if (StringUtils.hasText(description) && !ValidationUtils.validateDescription(description.trim())) {
             errors.add("Invalid resource type request, the description is not valid");
         }
     }

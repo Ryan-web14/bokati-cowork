@@ -116,19 +116,53 @@ public class MobileMoneyController {
 
         log.info("PawaPay deposit callback received");
 
-        if (!signatureVerifier.verify(rawBody, signature)) {
-            log.warn("PawaPay deposit callback rejected · invalid signature");
-            return ResponseEntity.ok().build();
-        }
+        boolean signatureValid = signatureVerifier.verify(rawBody, signature);
 
         try {
             PawapayCallbackPayload payload = objectMapper.readValue(rawBody, PawapayCallbackPayload.class);
-            log.info("PawaPay deposit callback: depositId={}, status={}", payload.depositId(), payload.status());
-            callbackProcessor.process(payload);
+            log.info("PawaPay deposit callback: depositId={}, status={}, signatureVerified={}",
+                    payload.depositId(), payload.status(), signatureValid);
+
+            if (signatureValid) {
+                callbackProcessor.process(payload);
+            } else if (StringUtils.hasText(payload.depositId())) {
+                // The signature could not be verified — e.g. in production the provider does not
+                // send the HMAC header this verifier expects. Rather than silently dropping a real
+                // payment notification, confirm the deposit's authoritative status through PawaPay's
+                // (API-key authenticated) status endpoint before touching any state. A spoofed
+                // callback therefore cannot fake a SUCCEEDED result.
+                log.warn("PawaPay deposit callback signature not verified · settling {} from provider status",
+                        payload.depositId());
+                settleDepositFromProviderStatus(payload.depositId());
+            } else {
+                log.warn("PawaPay deposit callback ignored · unverified signature and no depositId");
+            }
         } catch (Exception ex) {
             log.error("Error processing PawaPay deposit callback", ex);
         }
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Fetches the authoritative deposit status from PawaPay and settles the transaction accordingly.
+     * Returns the resolved status (e.g. SUCCEEDED / FAILED / PROCESSING). PROCESSING is left untouched
+     * for the polling worker / next callback to resolve.
+     */
+    private String settleDepositFromProviderStatus(String depositId) {
+        MobileMoneyStatusResponse checked = mobileMoneyProvider.checkStatus(depositId);
+        String status = checked.status();
+        if ("SUCCEEDED".equals(status)) {
+            callbackProcessor.process(statusPayload(depositId, "COMPLETED"));
+        } else if ("FAILED".equals(status)) {
+            callbackProcessor.process(statusPayload(depositId, "FAILED"));
+        }
+        return status;
+    }
+
+    private PawapayCallbackPayload statusPayload(String depositId, String status) {
+        return new PawapayCallbackPayload(
+                depositId, status, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null);
     }
 
     /**
@@ -139,17 +173,7 @@ public class MobileMoneyController {
     public ResponseEntity<Void> paymentPageReturn(@RequestParam("depositId") String depositId) {
         String status = "PROCESSING";
         try {
-            MobileMoneyStatusResponse checked = mobileMoneyProvider.checkStatus(depositId);
-            status = checked.status();
-            if ("SUCCEEDED".equals(status)) {
-                callbackProcessor.process(new PawapayCallbackPayload(
-                        depositId, "COMPLETED", null, null, null, null, null, null,
-                        null, null, null, null, null, null, null, null));
-            } else if ("FAILED".equals(status)) {
-                callbackProcessor.process(new PawapayCallbackPayload(
-                        depositId, "FAILED", null, null, null, null, null, null,
-                        null, null, null, null, null, null, null, null));
-            }
+            status = settleDepositFromProviderStatus(depositId);
         } catch (Exception ex) {
             log.warn("PawaPay return status check failed for depositId {}: {}", depositId, ex.getMessage());
         }

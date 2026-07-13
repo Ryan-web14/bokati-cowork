@@ -251,7 +251,7 @@ public class ResourcePolicyServiceImpl implements ResourcePolicyService {
             errors.add("Invalid resource policy request, the name is not valid");
         }
 
-        if (StringUtils.hasText(description) && !ValidationUtils.validateString(description.trim())) {
+        if (StringUtils.hasText(description) && !ValidationUtils.validateDescription(description.trim())) {
             errors.add("Invalid resource policy request, the description is not valid");
         }
 

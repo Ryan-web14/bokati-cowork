@@ -24,6 +24,8 @@ import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatu
 import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentAccessLogServiceImpl;
 import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentBatchService;
 import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentLockService;
+import com.sni.bokaticowork.features.document.documentMaster.service.support.DocumentAccessTokenService;
+import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentSearchService;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,6 +46,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -55,6 +58,7 @@ public class DocumentController {
     private final DocumentAccessLogServiceImpl accessLogService;
     private final DocumentBatchService batchService;
     private final DocumentLockService lockService;
+    private final DocumentAccessTokenService accessTokenService;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Audited(module = "DOCUMENT", action = "UPLOAD", ressource = "document")
@@ -105,6 +109,40 @@ public class DocumentController {
 
     @GetMapping("/{code}/preview")
     public ResponseEntity<byte[]> preview(@PathVariable String code, HttpServletRequest request) {
+        DocumentFileResult result = service.getFileWithMeta(code);
+        accessLogService.log(code, "PREVIEW", clientIp(request), request.getHeader("User-Agent"));
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(result.mimeType()));
+        headers.setContentDisposition(ContentDisposition.inline().filename(result.fileName()).build());
+        headers.setContentLength(result.content().length);
+        return ResponseEntity.ok().headers(headers).body(result.content());
+    }
+
+    /**
+     * Issues a short-lived, document-scoped signed token so the browser can load this
+     * document's preview via {@code /signed-preview} without a bearer header. Authenticated.
+     */
+    @GetMapping("/{code}/preview-token")
+    public ResponseEntity<Map<String, Object>> previewToken(@PathVariable String code) {
+        DocumentAccessTokenService.IssuedToken issued = accessTokenService.issue(code);
+        return ResponseEntity.ok(Map.of(
+                "token", issued.token(),
+                "signedPreviewUrl", ApiPath.V1 + "/documents/" + code + "/signed-preview?token=" + issued.token(),
+                "expiresAt", issued.expiresAt().toString()
+        ));
+    }
+
+    /**
+     * View-only preview reachable without a bearer token, authorized by a valid signed
+     * ?token= (see /preview-token). Unguessable and time-limited; download stays authenticated.
+     */
+    @GetMapping("/{code}/signed-preview")
+    public ResponseEntity<byte[]> signedPreview(@PathVariable String code,
+                                                @RequestParam(name = "token", required = false) String token,
+                                                HttpServletRequest request) {
+        if (!accessTokenService.verify(code, token)) {
+            throw new ForbiddenException("A valid access token is required to preview this document");
+        }
         DocumentFileResult result = service.getFileWithMeta(code);
         accessLogService.log(code, "PREVIEW", clientIp(request), request.getHeader("User-Agent"));
         HttpHeaders headers = new HttpHeaders();

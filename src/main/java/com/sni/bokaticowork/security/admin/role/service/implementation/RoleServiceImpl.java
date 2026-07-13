@@ -14,6 +14,7 @@ import com.sni.bokaticowork.security.admin.role.service.interfaces.RoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -170,7 +171,8 @@ public class RoleServiceImpl implements RoleService {
             err.add("Invalid role request, the name is not valid");
         }
 
-        if(ValidationUtils.validateString(request.getDescription())){
+        if(StringUtils.hasText(request.getDescription())
+                && !ValidationUtils.validateDescription(request.getDescription().trim())){
             err.add("Invalid role request, the description is not valid");
         }
 

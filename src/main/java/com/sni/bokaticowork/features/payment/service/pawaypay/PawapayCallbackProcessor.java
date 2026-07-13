@@ -10,7 +10,6 @@ import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayCallba
 import com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
-import com.sni.bokaticowork.features.payment.service.interfaces.DunningService;
 import com.sni.bokaticowork.features.payment.service.support.PaymentAllocationService;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +34,6 @@ public class PawapayCallbackProcessor {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final PawapayDepositService depositService;
     private final PawapayDepositRepository depositRepository;
-    private final DunningService dunningService;
 
     public void process(PawapayCallbackPayload payload) {
         String depositId = payload.depositId();
@@ -198,11 +196,15 @@ public class PawapayCallbackProcessor {
 
         reconcileIntent(transaction);
 
-        try {
-            dunningService.scheduleForFailedIntent(transaction.getPaymentIntent(), null);
-        } catch (Exception ex) {
-            log.error("Failed to schedule dunning for intent {} after payment failure: {}",
-                    transaction.getPaymentIntent().getIntentNumber(), ex.getMessage());
+        // A failed mobile money deposit invalidates the payment intent right away · no
+        // retry/dunning. If the intent is not otherwise settled (nothing paid, nothing in
+        // flight), cancel it so it stops sitting in PENDING and is no longer payable.
+        PaymentIntent intent = transaction.getPaymentIntent();
+        if (intent.getStatus() == PaymentIntentStatus.PENDING) {
+            intent.setStatus(PaymentIntentStatus.CANCELLED);
+            intentRepository.save(intent);
+            log.info("Cancelled payment intent {} after mobile money deposit failure",
+                    intent.getIntentNumber());
         }
 
         log.info("PawaPay deposit failed · transaction={}, depositId={}, reason={}",

@@ -145,7 +145,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
             }
 
             if (StringUtils.hasText(request.getDescription())
-                    && !ValidationUtils.validateString(request.getDescription().trim())) {
+                    && !ValidationUtils.validateDescription(request.getDescription().trim())) {
                 errors.add("Invalid resource group request, the description is not valid");
             }
         }
@@ -169,7 +169,7 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
             }
 
             if (StringUtils.hasText(request.getDescription())
-                    && !ValidationUtils.validateString(request.getDescription().trim())) {
+                    && !ValidationUtils.validateDescription(request.getDescription().trim())) {
                 errors.add("Invalid resource group request, the description is not valid");
             }
         }
