@@ -70,11 +70,13 @@ public class SecurityConfig {
                                 .maxAgeInSeconds(31536000)))
                 .authorizeHttpRequests(auth -> {
                         auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
-                        // View-only document preview without a bearer token so browsers can load
-                        // images directly (<img src>). Download stays authenticated. Toggle off
-                        // with app.documents.public-preview-enabled=false.
+                        // Token-gated, view-only document preview reachable without a bearer so
+                        // browsers can load images directly (<img src>). The endpoint itself
+                        // requires a valid signed ?token= (see /preview-token); plain /preview and
+                        // /download stay authenticated. Toggle off with
+                        // app.documents.public-preview-enabled=false.
                         if (publicDocumentPreviewEnabled) {
-                            auth.requestMatchers(HttpMethod.GET, ApiPath.V1 + "/documents/*/preview").permitAll();
+                            auth.requestMatchers(HttpMethod.GET, ApiPath.V1 + "/documents/*/signed-preview").permitAll();
                         }
                         auth.requestMatchers(
                                 ApiPath.V1 + "/auth/login",

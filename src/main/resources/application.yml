@@ -29,10 +29,15 @@ management:
 app:
   locale: ${APP_LOCALE:fr_FR}
   documents:
-    # When true, GET /documents/{code}/preview is viewable without a bearer token
-    # (so browsers can load images via <img src>). Download stays authenticated.
-    # Set to false to require authentication for preview as well.
+    # When true, GET /documents/{code}/signed-preview is reachable without a bearer token,
+    # authorized instead by a short-lived signed ?token= (issued by GET /{code}/preview-token).
+    # Lets browsers load images via <img src> without exposing the JWT or being enumerable.
+    # Plain /preview and /download stay authenticated. Set to false to disable it entirely.
     public-preview-enabled: ${DOCUMENTS_PUBLIC_PREVIEW_ENABLED:true}
+    preview-token:
+      # Lifetime for signed preview tokens. Signing secret defaults to the JWT secret
+      # (override with DOCUMENTS_PREVIEW_TOKEN_SECRET); see DocumentAccessTokenService.
+      ttl-seconds: ${DOCUMENTS_PREVIEW_TOKEN_TTL_SECONDS:300}
   portal:
     kyc-grace-period-days: ${PORTAL_KYC_GRACE_PERIOD_DAYS:7}
   event:

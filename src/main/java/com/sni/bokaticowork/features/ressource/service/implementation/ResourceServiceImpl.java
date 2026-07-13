@@ -362,10 +362,10 @@ public class ResourceServiceImpl implements ResourceService {
                 request -> requireRequestBody(request, "resource"),
                 request -> requireTextField(request, request == null ? null : request.getTypeId(), "typeId", "Invalid resource request, the type is required"),
                 request -> requireValidTextField(request, request == null ? null : request.getName(), "name", "Invalid resource request, the name is not valid"),
-                request -> optionalValidTextField(request, request == null ? null : request.getDescription(), "description", "Invalid resource request, the description is not valid"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getDescription(), "description", "Invalid resource request, the description is not valid"),
                 request -> positiveIntegerField(request, request == null ? null : request.getCapacity(), "capacity", "Invalid resource request, the capacity must be greater than zero"),
-                request -> optionalValidTextField(request, request == null ? null : request.getZone(), "zone", "Invalid resource request, the zone is not valid"),
-                request -> optionalValidTextField(request, request == null ? null : request.getLocationLabel(), "locationLabel", "Invalid resource request, the location label is not valid"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getZone(), "zone", "Invalid resource request, the zone is not valid"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getLocationLabel(), "locationLabel", "Invalid resource request, the location label is not valid"),
                 request -> validStatusField(request, request == null ? null : request.getStatus())
         );
     }
@@ -374,10 +374,10 @@ public class ResourceServiceImpl implements ResourceService {
         return List.of(
                 request -> requireRequestBody(request, "resource"),
                 request -> validateOptionalTextField(request, request == null ? null : request.getName(), "name", "Invalid resource request, the name is not valid"),
-                request -> optionalValidTextField(request, request == null ? null : request.getDescription(), "description", "Invalid resource request, the description is not valid"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getDescription(), "description", "Invalid resource request, the description is not valid"),
                 request -> positiveIntegerField(request, request == null ? null : request.getCapacity(), "capacity", "Invalid resource request, the capacity must be greater than zero"),
-                request -> optionalValidTextField(request, request == null ? null : request.getZone(), "zone", "Invalid resource request, the zone is not valid"),
-                request -> optionalValidTextField(request, request == null ? null : request.getLocationLabel(), "locationLabel", "Invalid resource request, the location label is not valid")
+                request -> optionalDescriptionField(request, request == null ? null : request.getZone(), "zone", "Invalid resource request, the zone is not valid"),
+                request -> optionalDescriptionField(request, request == null ? null : request.getLocationLabel(), "locationLabel", "Invalid resource request, the location label is not valid")
         );
     }
 
@@ -418,11 +418,11 @@ public class ResourceServiceImpl implements ResourceService {
         return List.of();
     }
 
-    private <T> List<ValidationError> optionalValidTextField(T request, String value, String field, String message) {
+    private <T> List<ValidationError> optionalDescriptionField(T request, String value, String field, String message) {
         if (request == null || !StringUtils.hasText(value)) {
             return List.of();
         }
-        if (!ValidationUtils.validateString(value.trim())) {
+        if (!ValidationUtils.validateDescription(value.trim())) {
             return List.of(error(field, "invalid", message));
         }
         return List.of();

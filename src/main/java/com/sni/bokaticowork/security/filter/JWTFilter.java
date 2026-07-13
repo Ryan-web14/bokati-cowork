@@ -179,14 +179,15 @@ public class JWTFilter extends OncePerRequestFilter {
     }
 
     /**
-     * View-only document preview accessible without a bearer token so browsers can load
-     * images directly (&lt;img src&gt;). Only GET .../documents/{code}/preview — downloads
-     * stay authenticated. Toggle off with app.documents.public-preview-enabled=false.
+     * Token-gated document preview reachable without a bearer so browsers can load images
+     * directly (&lt;img src&gt;). Only GET .../documents/{code}/signed-preview, which requires a
+     * valid signed ?token=; plain /preview and /download stay authenticated. Toggle off with
+     * app.documents.public-preview-enabled=false.
      */
     private boolean isPublicDocumentPreview(HttpServletRequest request, String uri) {
         return publicDocumentPreviewEnabled
                 && "GET".equalsIgnoreCase(request.getMethod())
                 && uri.startsWith(ApiPath.V1 + "/documents/")
-                && uri.endsWith("/preview");
+                && uri.endsWith("/signed-preview");
     }
 }
