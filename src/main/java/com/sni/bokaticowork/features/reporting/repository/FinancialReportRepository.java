@@ -19,13 +19,13 @@ public class FinancialReportRepository {
                 SELECT
                     count(*) FILTER (WHERE document_type = 'INVOICE' AND status NOT IN ('DRAFT','CANCELLED','VOIDED')) AS invoice_count,
                     coalesce(sum(total_amount) FILTER (WHERE document_type = 'INVOICE' AND status NOT IN ('DRAFT','CANCELLED','VOIDED')), 0) AS total_invoiced,
-                    coalesce(sum(paid_amount)  FILTER (WHERE document_type = 'INVOICE'), 0) AS total_paid,
+                    coalesce(sum(paid_amount)  FILTER (WHERE document_type = 'INVOICE' AND status NOT IN ('CANCELLED','VOIDED')), 0) AS total_paid,
                     coalesce(sum(balance_due)  FILTER (WHERE document_type = 'INVOICE' AND status NOT IN ('DRAFT','CANCELLED','VOIDED','PAID')), 0) AS total_outstanding,
                     count(*) FILTER (WHERE document_type = 'INVOICE' AND status = 'OVERDUE') AS overdue_count,
                     coalesce(sum(balance_due)  FILTER (WHERE document_type = 'INVOICE' AND status = 'OVERDUE'), 0) AS overdue_amount,
-                    coalesce(sum(vat_amount)   FILTER (WHERE document_type = 'INVOICE'), 0) AS total_vat,
-                    coalesce(sum(additional_cent_amount) FILTER (WHERE document_type = 'INVOICE'), 0) AS total_additional_cent,
-                    coalesce(sum(discount_amount) FILTER (WHERE document_type = 'INVOICE'), 0) AS total_discounts,
+                    coalesce(sum(vat_amount)   FILTER (WHERE document_type = 'INVOICE' AND status NOT IN ('CANCELLED','VOIDED')), 0) AS total_vat,
+                    coalesce(sum(additional_cent_amount) FILTER (WHERE document_type = 'INVOICE' AND status NOT IN ('CANCELLED','VOIDED')), 0) AS total_additional_cent,
+                    coalesce(sum(discount_amount) FILTER (WHERE document_type = 'INVOICE' AND status NOT IN ('CANCELLED','VOIDED')), 0) AS total_discounts,
                     count(*) FILTER (WHERE document_type = 'INVOICE' AND status IN ('CANCELLED','VOIDED')) AS cancelled_count
                 FROM billing_document
                 WHERE (CAST(:from AS timestamptz) IS NULL OR created_at >= CAST(:from AS timestamptz))

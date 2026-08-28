@@ -55,6 +55,16 @@ billing:
     signing-key: ${BILLING_FISCAL_SIGNING_KEY:12f70020a5b8526752f2f245f2148ea881223390f356e0e8246ccde588042d8f}
 
 bokati:
+  maintenance:
+    member-purge:
+      # Suppression definitive d'un membre et de toutes ses donnees (facture, portefeuille,
+      # contrat, abonnement, reservation, compte utilisateur). Irreversible et sans sauvegarde.
+      # Se declenche uniquement sur DELETE /members/{id}?purge=true ou sur les points d'entree
+      # /admin/maintenance/members : l'archivage reste le comportement par defaut du retrait d'un
+      # membre. Mettre a false pour fermer completement la capacite ; la previsualisation, en
+      # lecture seule, reste accessible dans les deux cas.
+      enabled: ${MEMBER_PURGE_ENABLED:true}
+      max-batch-size: ${MEMBER_PURGE_MAX_BATCH_SIZE:25}
   websocket:
     use-stomp-relay: ${BOKATI_WEBSOCKET_USE_STOMP_RELAY:false}
     stomp:

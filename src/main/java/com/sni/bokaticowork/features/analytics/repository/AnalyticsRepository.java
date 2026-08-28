@@ -27,7 +27,8 @@ public class AnalyticsRepository {
                     coalesce(sum(vat_amount), 0) AS vat_amount,
                     coalesce(sum(additional_cent_amount), 0) AS additional_cent_amount
                 FROM billing_document
-                WHERE (CAST(:fromDate AS timestamptz) IS NULL OR created_at >= CAST(:fromDate AS timestamptz))
+                WHERE status NOT IN ('CANCELLED','VOIDED')
+                  AND (CAST(:fromDate AS timestamptz) IS NULL OR created_at >= CAST(:fromDate AS timestamptz))
                   AND (CAST(:toDate AS timestamptz) IS NULL OR created_at <= CAST(:toDate AS timestamptz))
                 """, fromDate, toDate);
     }
