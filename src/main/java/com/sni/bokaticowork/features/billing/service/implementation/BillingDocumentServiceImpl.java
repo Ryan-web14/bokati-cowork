@@ -1346,35 +1346,54 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     /**
      * Annulation d'un document fiscalement scellé (locked=true).
      * Émet un avoir pour le solde restant, le valide et l'applique.
-     * La facture originale n'est jamais mutée (invariant I3).
+     * Les montants de la facture originale ne sont jamais mutés (invariant I3) : seuls les
+     * champs de suivi (statut, dates d'annulation et d'archivage, solde dû) évoluent, et le
+     * trigger {@code trg_billing_document_immutable} ne les protège pas.
      */
     private BillingDocument cancelLockedDocumentViaCreditNote(BillingDocument document, String reason) {
         BigDecimal creditAmount = document.getBalanceDue() != null && document.getBalanceDue().signum() > 0
                 ? document.getBalanceDue()
                 : document.getTotalAmount();
 
-        if (creditAmount.signum() <= 0) {
-            // Facture déjà intégralement réglée · archiver uniquement
-            if (document.getArchivedAt() == null) {
-                document.setArchivedAt(Instant.now());
-                document = documentRepository.save(document);
-                eventWriter.write(document, "BILLING_DOCUMENT_ARCHIVED", billingActionDetails(reason, null));
-            }
-            return document;
+        if (creditAmount.signum() > 0) {
+            String creditReason = StringUtils.hasText(reason) ? reason : "Annulation de " + document.getDocumentNumber();
+            createCreditNote(document.getDocumentNumber(), new CreateCreditNoteRequest(
+                    creditAmount,
+                    creditReason,
+                    true,   // applyImmediately
+                    true,   // validateImmediately
+                    null    // lignes auto-générées
+            ));
         }
 
-        String creditReason = StringUtils.hasText(reason) ? reason : "Annulation de " + document.getDocumentNumber();
-        createCreditNote(document.getDocumentNumber(), new CreateCreditNoteRequest(
-                creditAmount,
-                creditReason,
-                true,   // applyImmediately
-                true,   // validateImmediately
-                null    // lignes auto-générées
-        ));
-
-        eventWriter.write(document, "BILLING_DOCUMENT_CANCELLED_VIA_CREDIT_NOTE",
+        // L'avoir est appliqué via applyPayment, qui solde la facture et la laisse donc en PAID.
+        // Une facture annulee ressortait ainsi comme encaissee : elle restait comptee dans le
+        // chiffre d'affaires, puisque les agregats comptables excluent CANCELLED et VOIDED mais
+        // pas PAID. Le statut est donc repositionne apres l'application de l'avoir.
+        BillingDocument cancelled = markCancelledAndArchived(document.getDocumentNumber());
+        eventWriter.write(cancelled, "BILLING_DOCUMENT_CANCELLED_VIA_CREDIT_NOTE",
                 billingActionDetails(reason, true));
-        return serviceByNumber(document.getDocumentNumber());
+        return cancelled;
+    }
+
+    /**
+     * Bascule un document en {@code CANCELLED} et l'archive, sans toucher aux montants.
+     * {@code paidAmount} est conservé tel quel : il fait partie de l'historique fiscal, et
+     * l'exclusion du document des agrégats comptables se fait sur le statut.
+     */
+    private BillingDocument markCancelledAndArchived(String documentNumber) {
+        BillingDocument document = serviceByNumber(documentNumber);
+        if (document.getStatus() != BillingDocumentStatus.CANCELLED) {
+            document.setStatus(BillingDocumentStatus.CANCELLED);
+            if (document.getCancelledAt() == null) {
+                document.setCancelledAt(Instant.now());
+            }
+        }
+        document.setBalanceDue(BigDecimal.ZERO);
+        if (document.getArchivedAt() == null) {
+            document.setArchivedAt(Instant.now());
+        }
+        return documentRepository.save(document);
     }
 
     @Override
