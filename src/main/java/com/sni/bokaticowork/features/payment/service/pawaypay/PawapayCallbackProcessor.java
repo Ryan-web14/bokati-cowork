@@ -149,8 +149,20 @@ public class PawapayCallbackProcessor {
             try {
                 allocationService.allocateIfBillingDocument(transaction);
             } catch (Exception ex) {
-                log.error("Failed to allocate payment {} to billing documents · status update will still proceed",
+                // On ne fait pas echouer l'encaissement : l'argent est bien recu et la transaction
+                // doit passer SUCCEEDED. Mais l'echec d'imputation laissait auparavant la facture
+                // impayee sans aucun rattrapage - le client avait paye et relancait quand meme.
+                // On le transforme en evenement outbox rejouable avec backoff.
+                log.error("Echec d'imputation du paiement {} · rattrapage programme via l'outbox",
                         transaction.getTransactionNumber(), ex);
+                outboxService.publish(
+                        "PAYMENT_ALLOCATION_RETRY",
+                        "PAYMENT",
+                        transaction.getTransactionNumber(),
+                        java.util.Map.of(
+                                "transactionNumber", transaction.getTransactionNumber(),
+                                "reason", String.valueOf(ex.getMessage()))
+                );
             }
             outboxService.publish(
                     "PAYMENT_TRANSACTION_WORKFLOW",

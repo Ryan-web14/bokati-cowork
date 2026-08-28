@@ -111,7 +111,7 @@ public class BillingAutoInvoiceService {
                                 java.math.BigDecimal.ZERO,
                                 request.sourceType().trim(),
                                 request.sourceCode().trim(),
-                                null, null, null, null
+                                null, null, null, null, null
                         )),
                         java.util.List.of(),
                         defaultClauses(),

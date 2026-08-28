@@ -16,6 +16,7 @@ import com.sni.bokaticowork.features.payment.repository.WalletLedgerEntryReposit
 import com.sni.bokaticowork.features.payment.service.interfaces.WalletService;
 import com.sni.bokaticowork.features.payment.service.support.WalletLedgerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,13 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public WalletResponse adminTopUp(WalletTopUpRequest request) {
         WalletAccount wallet = getOrCreateWallet(request.ownerType(), request.ownerCode(), request.currency());
-        ledgerService.credit(wallet, request.amount(), WalletEntryType.ADMIN_TOPUP, "ADMIN_TOPUP", request.reference(), request.reference(), request.createdBy());
+        // Une recharge sans reference n'est pas deduplicable : deux recharges manuelles du meme
+        // montant sur le meme portefeuille sont indiscernables et peuvent etre toutes deux legitimes.
+        String idempotencyKey = StringUtils.hasText(request.reference())
+                ? "ADMIN_TOPUP:" + request.reference().trim()
+                : null;
+        ledgerService.credit(wallet, request.amount(), WalletEntryType.ADMIN_TOPUP, "ADMIN_TOPUP",
+                request.reference(), request.reference(), request.createdBy(), idempotencyKey);
         return mapper.toWalletResponse(walletRepository.findByWalletNumber(wallet.getWalletNumber()).orElse(wallet));
     }
 
@@ -82,32 +89,49 @@ public class WalletServiceImpl implements WalletService {
     }
 
     @Override
-    public void credit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType, String sourceCode, String reference, String createdBy) {
-        ledgerService.credit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy);
+    public void credit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
+                       String sourceCode, String reference, String createdBy, String idempotencyKey) {
+        ledgerService.credit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy, idempotencyKey);
     }
 
     @Override
-    public void debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType, String sourceCode, String reference, String createdBy) {
+    public void debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
+                      String sourceCode, String reference, String createdBy, String idempotencyKey) {
         ensureUsable(wallet);
-        ledgerService.debit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy);
+        ledgerService.debit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy, idempotencyKey);
     }
 
     private WalletAccount getOrCreateWallet(String ownerType, String ownerCode, String currency) {
         if (!StringUtils.hasText(ownerType) || !StringUtils.hasText(ownerCode) || !StringUtils.hasText(currency)) {
             throw new BadRequestException("Wallet owner type, owner code and currency are required");
         }
+        String normalizedType = ownerType.trim();
+        String normalizedCode = ownerCode.trim();
         String normalizedCurrency = currency.trim().toUpperCase();
-        return walletRepository.findByOwnerAndCurrency(ownerType.trim(), ownerCode.trim(), normalizedCurrency)
-                .orElseGet(() -> walletRepository.save(WalletAccount.builder()
-                        .walletNumber(sequenceGenerator.next("wallet_account"))
-                        .ownerType(ownerType.trim())
-                        .ownerCode(ownerCode.trim())
-                        .currency(normalizedCurrency)
-                        .status(WalletStatus.ACTIVE)
-                        .availableBalance(BigDecimal.ZERO)
-                        .ledgerBalance(BigDecimal.ZERO)
-                        .heldBalance(BigDecimal.ZERO)
-                        .build()));
+        return walletRepository.findByOwnerAndCurrency(normalizedType, normalizedCode, normalizedCurrency)
+                .orElseGet(() -> createWallet(normalizedType, normalizedCode, normalizedCurrency));
+    }
+
+    private WalletAccount createWallet(String ownerType, String ownerCode, String currency) {
+        try {
+            return walletRepository.saveAndFlush(WalletAccount.builder()
+                    .walletNumber(sequenceGenerator.next("wallet_account"))
+                    .ownerType(ownerType)
+                    .ownerCode(ownerCode)
+                    .currency(currency)
+                    .status(WalletStatus.ACTIVE)
+                    .availableBalance(BigDecimal.ZERO)
+                    .ledgerBalance(BigDecimal.ZERO)
+                    .heldBalance(BigDecimal.ZERO)
+                    .build());
+        } catch (DataIntegrityViolationException ex) {
+            // Course perdue contre une instance concurrente sur ux_wallet_account_owner_currency :
+            // le portefeuille de l'autre transaction fait autorite. Sans cette reprise, deux
+            // paiements simultanes d'un nouveau client creaient deux portefeuilles et les soldes
+            // se repartissaient entre les deux.
+            return walletRepository.findByOwnerAndCurrency(ownerType, ownerCode, currency)
+                    .orElseThrow(() -> ex);
+        }
     }
 
     private void ensureUsable(WalletAccount wallet) {

@@ -115,6 +115,17 @@
         .lines tbody td.col-amt { font-weight: 700; color: #281332; }
         .line-name { font-weight: 700; color: #281332; }
         .line-sub { font-size: 7.8px; color: #6f6478; margin-top: 2px; }
+        .line-category {
+            /* nowrap : le moteur PDF calcule mal la largeur shrink-to-fit d'un inline-block
+               combinant text-transform et letter-spacing, et coupait "Espace de travail" en
+               deux lignes alors que la colonne etait quasi vide. */
+            display: inline-block; white-space: nowrap;
+            font-size: 7.2px; font-weight: 700; letter-spacing: .4px;
+            text-transform: uppercase; color: #6f4a86; background: #f2ecf7;
+            border-radius: 2px; padding: 1px 4px; margin-bottom: 2px;
+        }
+        .line-unit { font-size: 7.8px; color: #6f6478; margin-left: 2px; }
+        .line-discount { color: #b0343c; font-weight: 700; }
         .r { text-align: right; }
         .c { text-align: center; }
         .num { white-space: nowrap; }
@@ -286,16 +297,18 @@
         <thead>
             <tr>
                 <th style="width:4%; text-align:center;">#</th>
-                <th style="width:52%;">Description</th>
-                <th class="r" style="width:10%;">Qté</th>
-                <th class="r" style="width:16%;">Prix unit.</th>
-                <th class="r" style="width:18%;">Total</th>
+                <th style="width:42%;">Description</th>
+                <th class="r" style="width:12%;">Qté</th>
+                <th class="r" style="width:14%;">Prix unit.</th>
+                <th class="r" style="width:12%;">Remise</th>
+                <th class="r" style="width:16%;">Total</th>
             </tr>
         </thead>
         <tbody>
             <tr th:each="line : ${document.lines()}">
                 <td class="c muted" th:text="${line.lineOrder()}">1</td>
                 <td>
+                    <div class="line-category" th:if="${line.category()}" th:text="${line.category()}">Catégorie</div>
                     <div class="line-name">
                         <span th:text="${line.description()}">Service</span>
                         <span th:if="${line.optional()}" class="line-sub" style="margin-left:4px;">(option)</span>
@@ -303,8 +316,25 @@
                     <div class="line-sub" th:if="${line.detailedDescription()}" th:text="${line.detailedDescription()}"></div>
                     <div class="line-sub" th:if="${line.itemCode()}" th:text="|Art. : ${line.itemCode()}|"></div>
                 </td>
-                <td class="r num" th:text="${fmt.quantity(line.quantity())}">1</td>
+                <!-- Quantite et unite dans la meme cellule : l'unite n'a aucun sens seule et
+                     une colonne dediee couterait 8 % de largeur au detriment de la description. -->
+                <td class="r num">
+                    <span th:text="${fmt.quantity(line.quantity())}">1</span>
+                    <span class="line-unit" th:if="${line.unit()}" th:text="${line.unit()}">h</span>
+                </td>
                 <td class="r num" th:text="${fmt.amount(line.unitPrice())}">0</td>
+                <!-- Remise portee par la ligne elle-meme. Le recapitulatif ne montre que le
+                     cumul : sans cette colonne, le client voit un total remise sans pouvoir
+                     rattacher chaque remise a la prestation concernee. -->
+                <td class="r num">
+                    <span th:if="${line.discountRate() != null and line.discountRate().signum() > 0}"
+                          class="line-discount" th:text="${'-' + fmt.percent(line.discountRate())}">-10 %</span>
+                    <div th:if="${line.discountAmount() != null and line.discountAmount().signum() > 0}"
+                         class="line-sub line-discount" th:text="${'-' + fmt.amount(line.discountAmount())}">-0</div>
+                    <span class="muted"
+                          th:if="${(line.discountRate() == null or line.discountRate().signum() == 0)
+                                   and (line.discountAmount() == null or line.discountAmount().signum() == 0)}">—</span>
+                </td>
                 <td class="r num col-amt" th:text="${fmt.amount(line.totalAmount())}">0</td>
             </tr>
         </tbody>

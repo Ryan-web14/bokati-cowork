@@ -111,6 +111,12 @@ public class SecurityConfig {
                         // Read-only document-type upload config (allowed formats, max size, sides) is
                         // needed by clients to upload KYC documents; harmless to any authenticated user.
                         auth.requestMatchers(HttpMethod.GET, ApiPath.V1 + "/document-types/*/upload-config").authenticated();
+                        // Identite et fin de session · accessibles a tout compte authentifie.
+                        // Ces chemins ne correspondent a aucune regle de AdminApiAuthorizationManager
+                        // et retombaient donc sur le repli ADMIN:ACCESS : un compte prive de cette
+                        // permission ne pouvait meme plus consulter ses propres droits, ce qui rend
+                        // un incident d'habilitation indiagnosticable par l'utilisateur lui-meme.
+                        auth.requestMatchers(ApiPath.V1 + "/auth/me", ApiPath.V1 + "/auth/logout").authenticated();
                         auth.requestMatchers(ApiPath.V1 + "/**").access(adminApiAuthorizationManager);
                         auth.anyRequest().authenticated();
                 })
@@ -133,6 +139,15 @@ public class SecurityConfig {
                             body.put("error", "Forbidden");
                             body.put("message", "You do not have permission to access this resource.");
                             body.put("path", request.getRequestURI());
+                            // Nommer la permission exigee : sans elle, un 403 en production est
+                            // indiscernable entre un droit reellement absent et une permission mal
+                            // resolue par le mapping de chemins. Seul le nom de la permission est
+                            // expose, jamais les autorites du compte (journalisees cote serveur).
+                            Object requiredPermission =
+                                    request.getAttribute(AdminApiAuthorizationManager.REQUIRED_PERMISSION_ATTRIBUTE);
+                            if (requiredPermission != null) {
+                                body.put("requiredPermission", requiredPermission);
+                            }
                             objectMapper.writeValue(response.getOutputStream(), body);
                         }))
                 .formLogin(AbstractHttpConfigurer::disable)

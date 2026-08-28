@@ -27,6 +27,8 @@ public record UpdateBillingDocumentLineRequest(
         String sourceCode,
         String externalReference,
         String notes,
-        Boolean optional
+        Boolean optional,
+        /** Voir {@link CreateBillingDocumentLineRequest#category()}. */
+        String category
 ) {
 }

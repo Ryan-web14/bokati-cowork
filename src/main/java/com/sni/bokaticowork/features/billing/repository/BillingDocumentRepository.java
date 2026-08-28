@@ -1,13 +1,16 @@
 package com.sni.bokaticowork.features.billing.repository;
 
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +20,20 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
 
     @Query(nativeQuery = true, value = "SELECT * FROM billing_document WHERE document_number = :documentNumber")
     Optional<BillingDocument> findByDocumentNumber(@Param("documentNumber") String documentNumber);
+
+    /**
+     * Charge le document sous verrou exclusif, pour serialiser les mutations de
+     * {@code paid_amount} / {@code balance_due} / {@code status}.
+     * <p>
+     * Un reglement portefeuille et un callback mobile money visant la meme facture au meme
+     * instant lisaient tous deux l'ancien montant paye et le second ecrasait le premier.
+     * <p>
+     * Requete JPQL et non native : Spring Data ignore {@code @Lock} sur les requetes natives,
+     * ce qui rendrait le verrou silencieusement inoperant.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT d FROM BillingDocument d WHERE d.documentNumber = :documentNumber")
+    Optional<BillingDocument> lockByDocumentNumber(@Param("documentNumber") String documentNumber);
 
     @Query(nativeQuery = true, value = """
             SELECT *
@@ -236,10 +253,14 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
               AND status = 'OVERDUE'
               AND balance_due > 0
               AND due_date IS NOT NULL
+              AND payment_reminder_count < :maxReminders
+              AND (payment_reminder_sent_at IS NULL OR payment_reminder_sent_at < :notRemindedSince)
             ORDER BY due_date ASC
             LIMIT :limit
             """)
-    List<BillingDocument> findOverdueReminderCandidates(@Param("limit") int limit);
+    List<BillingDocument> findOverdueReminderCandidates(@Param("limit") int limit,
+                                                        @Param("maxReminders") int maxReminders,
+                                                        @Param("notRemindedSince") Instant notRemindedSince);
 
     @Query(nativeQuery = true, value = """
             SELECT *

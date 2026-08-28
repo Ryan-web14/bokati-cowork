@@ -68,6 +68,14 @@ public class WalletLedgerEntry {
     @Column(name = "reference", length = 180)
     private String reference;
 
+    /**
+     * Cle de deduplication couverte par l'index unique partiel {@code ux_wallet_ledger_idempotency_key}.
+     * Nulle lorsque l'operation n'a pas de source identifiable (recharge admin sans reference) :
+     * on ne peut alors pas distinguer deux operations manuelles legitimes du meme montant.
+     */
+    @Column(name = "idempotency_key", length = 180)
+    private String idempotencyKey;
+
     @Column(name = "created_by", length = 120)
     private String createdBy;
 

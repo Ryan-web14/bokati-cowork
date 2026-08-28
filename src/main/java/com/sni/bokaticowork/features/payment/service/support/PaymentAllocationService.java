@@ -73,6 +73,12 @@ public class PaymentAllocationService {
     }
 
     private BigDecimal allocateOne(PaymentTransaction transaction, String documentNumber, BigDecimal amount) {
+        // Rejeu : cette transaction a deja ete imputee a cette facture (rattrapage outbox,
+        // callback duplique). On ne reimpute pas, sinon le montant paye serait double.
+        if (allocationRepository.existsByPaymentTransaction_IdAndBillingDocumentNumber(
+                transaction.getId(), documentNumber)) {
+            return amount;
+        }
         BillingDocument before = billingDocumentService.serviceByNumber(documentNumber);
         BigDecimal allocated = amount.min(before.getBalanceDue());
         if (allocated.signum() == 0) {

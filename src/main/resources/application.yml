@@ -65,9 +65,19 @@ bokati:
       client-passcode: ${BOKATI_STOMP_CLIENT_PASSCODE:guest}
       system-login: ${BOKATI_STOMP_SYSTEM_LOGIN:guest}
       system-passcode: ${BOKATI_STOMP_SYSTEM_PASSCODE:guest}
+  email:
+    # Deduplication window per outbound mail. Mail carrying a business reference (invoice,
+    # contract, KYC case) is keyed on that reference; everything else falls back to
+    # recipient + subject, so its window stays short.
+    dedup:
+      enabled: ${EMAIL_DEDUP_ENABLED:true}
+      business-window-seconds: ${EMAIL_DEDUP_BUSINESS_WINDOW_SECONDS:86400}
+      generic-window-seconds: ${EMAIL_DEDUP_GENERIC_WINDOW_SECONDS:3600}
   graph-api:
     rate-limit:
-      limit-for-period: ${GRAPH_RATE_LIMIT:800}
+      # Exchange Online caps a mailbox at roughly 30 messages/minute; this limiter is also
+      # per-instance, so the effective ceiling is this value times the number of dynos.
+      limit-for-period: ${GRAPH_RATE_LIMIT:25}
       limit-refresh-period-ms: ${GRAPH_RATE_LIMIT_REFRESH_MS:60000}
       timeout-ms: ${GRAPH_RATE_LIMIT_TIMEOUT_MS:30000}
   billing:

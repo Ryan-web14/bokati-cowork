@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +37,25 @@ public class EmailDeliveryTracker {
                                        String bodyContent,
                                        String relatedType,
                                        String relatedCode) {
+        return queue(provider, fromEmail, recipientEmail, subject, bodyType, bodyContent,
+                relatedType, relatedCode, null);
+    }
+
+    /**
+     * Inserts the delivery row. A non-null {@code dedupKey} is protected by a unique index, so a
+     * concurrent insert of the same logical email throws {@link org.springframework.dao.DataIntegrityViolationException}
+     * rather than producing a second send — callers treat that as "someone else already queued it".
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public EmailDeliveryResponse queue(String provider,
+                                       String fromEmail,
+                                       String recipientEmail,
+                                       String subject,
+                                       String bodyType,
+                                       String bodyContent,
+                                       String relatedType,
+                                       String relatedCode,
+                                       String dedupKey) {
         EmailDeliveryLog log = EmailDeliveryLog.builder()
                 .emailNumber(sequenceGenerator.next(SEQUENCE_CODE))
                 .provider(provider)
@@ -45,10 +66,19 @@ public class EmailDeliveryTracker {
                 .bodyContent(bodyContent)
                 .relatedType(relatedType)
                 .relatedCode(relatedCode)
+                .dedupKey(dedupKey)
                 .status(EmailDeliveryStatus.QUEUED)
                 .attempts(0)
                 .build();
-        return toResponse(repository.save(log));
+        return toResponse(repository.saveAndFlush(log));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    public Optional<EmailDeliveryResponse> findByDedupKeys(Collection<String> dedupKeys) {
+        if (dedupKeys == null || dedupKeys.isEmpty()) {
+            return Optional.empty();
+        }
+        return repository.findFirstByDedupKeyInOrderByCreatedAtDesc(dedupKeys).map(this::toResponse);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

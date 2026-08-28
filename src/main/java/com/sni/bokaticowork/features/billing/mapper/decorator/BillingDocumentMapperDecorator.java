@@ -161,6 +161,7 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 line.getLineOrder(),
                 line.getLineType(),
                 line.getItemCode(),
+                line.getCategory(),
                 line.getDescription(),
                 line.getDetailedDescription(),
                 line.getQuantity(),

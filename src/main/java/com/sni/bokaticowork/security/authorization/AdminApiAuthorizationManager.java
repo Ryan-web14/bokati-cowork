@@ -2,6 +2,7 @@ package com.sni.bokaticowork.security.authorization;
 
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -17,6 +18,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.Supplier;
 
+@Slf4j
 @Component
 public class AdminApiAuthorizationManager implements AuthorizationManager<RequestAuthorizationContext> {
 
@@ -35,6 +37,29 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             "ROLE_OPERATIONS_AGENT"
     );
 
+    /**
+     * Seuls modules qui declarent reellement une permission {@code <MODULE>_DELETE} en base.
+     * Toute resolution vers une permission absente du referentiel equivaut a un refus definitif,
+     * quelle que soit la configuration des roles : cette liste doit rester alignee sur la table
+     * {@code permission}.
+     */
+    private static final Set<String> MODULES_WITH_DELETE_PERMISSION = Set.of(
+            "CLIENT",
+            "INVENTORY",
+            "RESOURCE"
+    );
+
+    /**
+     * Attribut de requete portant la permission exigee lorsque l'acces est refuse.
+     * <p>
+     * Lu par le {@code accessDeniedHandler} de {@code SecurityConfig} pour que la reponse 403
+     * nomme la permission manquante. Sans cela le client ne recoit qu'un "you do not have
+     * permission to access this resource" indifferencie : impossible de distinguer un droit
+     * reellement absent d'une permission mal resolue par le mapping de chemins, ce qui rend tout
+     * incident de production non diagnosticable sans acces a la base.
+     */
+    public static final String REQUIRED_PERMISSION_ATTRIBUTE = "bokati.security.requiredPermission";
+
     @Override
     public AuthorizationResult authorize(Supplier<? extends Authentication> authentication, RequestAuthorizationContext context) {
         Authentication auth = authentication.get();
@@ -46,17 +71,40 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (has(authorities, SUPER_ADMIN)) {
             return new AuthorizationDecision(true);
         }
+        HttpServletRequest request = context.getRequest();
         if (ADMIN_REALM_ROLES.stream().noneMatch(role -> has(authorities, role))) {
+            deny(request, auth, null, "aucun role du realm d'administration");
             return new AuthorizationDecision(false);
         }
 
-        String requiredPermission = resolvePermission(context.getRequest());
+        String requiredPermission = resolvePermission(request);
         if (!StringUtils.hasText(requiredPermission)) {
-            return new AuthorizationDecision(has(authorities, "ADMIN:ACCESS") || has(authorities, "ADMIN_ACCESS"));
+            boolean granted = has(authorities, "ADMIN:ACCESS") || has(authorities, "ADMIN_ACCESS");
+            if (!granted) {
+                // Aucune regle de chemin n'a matche : c'est le repli generique. Le signaler
+                // explicitement evite de chercher un droit metier qui n'est jamais consulte.
+                deny(request, auth, "ADMIN:ACCESS", "aucune regle de chemin ne couvre cette URL");
+            }
+            return new AuthorizationDecision(granted);
         }
 
+        boolean granted = has(authorities, requiredPermission)
+                || has(authorities, requiredPermission.replace(':', '_'));
+        if (!granted) {
+            deny(request, auth, requiredPermission, "permission absente des autorites de l'utilisateur");
+        }
+        return new AuthorizationDecision(granted);
+    }
 
-        return new AuthorizationDecision(has(authorities, requiredPermission) || has(authorities, requiredPermission.replace(':', '_')));
+    private void deny(HttpServletRequest request, Authentication auth, String requiredPermission, String cause) {
+        if (requiredPermission != null) {
+            request.setAttribute(REQUIRED_PERMISSION_ATTRIBUTE, requiredPermission);
+        }
+        // Les autorites sont journalisees cote serveur uniquement : la reponse ne renvoie que la
+        // permission exigee, pas la liste des droits du compte.
+        log.warn("Acces refuse · {} {} · permission exigee={} · cause={} · utilisateur={} · autorites={}",
+                request.getMethod(), request.getRequestURI(), requiredPermission, cause,
+                auth.getName(), auth.getAuthorities());
     }
 
     private String resolvePermission(HttpServletRequest request) {
@@ -83,7 +131,12 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("/send")) return permission("BILLING", "SEND");
             if (path.contains("/pay")) return permission("PAYMENT", "PROCESS");
             if (path.contains("/cancel") || path.contains("/credit-note")) return permission("BILLING", "CANCEL");
-            return permission("BILLING", actionFor(method));
+            // Le module facturation n'a pas de suppression dure : l'immuabilite fiscale impose
+            // qu'un DELETE sur un document soit une annulation (directe si le document n'est pas
+            // scelle, via avoir automatique sinon). C'est donc BILLING:CANCEL qui s'applique, et
+            // surtout pas BILLING:UPDATE - annuler est plus lourd que corriger.
+            if (HttpMethod.DELETE.matches(method)) return permission("BILLING", "CANCEL");
+            return permission("BILLING", actionFor("BILLING", method));
         }
         if (path.startsWith("/payments")) {
             if (path.contains("refund")) return permission("PAYMENT", "REFUND");
@@ -98,10 +151,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/bookings")) {
             if (path.contains("/check-in") || path.contains("/check-out")) return permission("BOOKING", "CHECKIN");
             if (path.contains("/cancel") || path.contains("/reject") || path.contains("/no-show")) return permission("BOOKING", "CANCEL");
-            return permission("BOOKING", actionFor(method));
+            return permission("BOOKING", actionFor("BOOKING", method));
         }
         if (path.startsWith("/customers") || path.startsWith("/members")) {
-            return permission("CLIENT", actionFor(method));
+            return permission("CLIENT", actionFor("CLIENT", method));
         }
         if (path.startsWith("/kyc")) {
             if (path.contains("/approve")) return permission("KYC", "APPROVE");
@@ -122,16 +175,16 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
                 || path.startsWith("/passes") || path.startsWith("/usage-records")) {
             if (path.contains("/activate") || path.contains("/renew") || path.contains("/resume")) return permission("SUBSCRIPTION", "ACTIVATE");
             if (path.contains("/cancel") || path.contains("/suspend") || path.contains("/pause")) return permission("SUBSCRIPTION", "CANCEL");
-            return permission("SUBSCRIPTION", actionFor(method));
+            return permission("SUBSCRIPTION", actionFor("SUBSCRIPTION", method));
         }
         if (path.startsWith("/inventory")) {
             if (path.contains("/approve")) return permission("INVENTORY", "APPROVE");
-            return permission("INVENTORY", actionFor(method));
+            return permission("INVENTORY", actionFor("INVENTORY", method));
         }
         if (path.startsWith("/resources") || path.startsWith("/resource-")) {
             if (path.contains("price") || path.contains("pricing")) return permission("RESOURCE", "PRICE");
             if (path.contains("/gallery") || path.contains("/photos")) return permission("RESOURCE", "GALLERY");
-            return permission("RESOURCE", actionFor(method));
+            return permission("RESOURCE", actionFor("RESOURCE", method));
         }
         if (path.startsWith("/analytics") || path.startsWith("/reports") || path.startsWith("/reporting")) {
             return path.endsWith(".csv") || path.contains("/export")
@@ -170,10 +223,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("PAYMENT", HttpMethod.GET.matches(method) ? "READ" : "PROCESS");
         }
         if (path.startsWith("/promotions")) {
-            return permission("BILLING", actionFor(method));
+            return permission("BILLING", actionFor("BILLING", method));
         }
         if (path.startsWith("/contracts")) {
-            return permission("BILLING", actionFor(method));
+            return permission("BILLING", actionFor("BILLING", method));
         }
         if (path.startsWith("/notifications")) {
             return permission("ADMIN", "ACCESS");
@@ -200,10 +253,26 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         return uri.toLowerCase(Locale.ROOT);
     }
 
-    private String actionFor(String method) {
+    /**
+     * Resout l'action attendue pour une methode HTTP, en tenant compte des modules qui ne
+     * definissent pas de permission de suppression.
+     * <p>
+     * Renvoyer systematiquement {@code DELETE} produisait une permission inexistante pour
+     * BILLING, BOOKING et SUBSCRIPTION : aucun role ne pouvant la porter, la decision etait
+     * refusee pour <b>tout le monde sauf SUPER_ADMIN</b> (seul a beneficier du court-circuit de
+     * role plus haut), et l'appel remontait un 403 avant meme d'atteindre le controleur. Un
+     * administrateur voyait donc une erreur de permission sur une action autorisee, et le defaut
+     * paraissait lie a son role alors qu'il venait du referentiel.
+     * <p>
+     * Pour ces modules, supprimer est une variante de modification et retombe sur {@code UPDATE}
+     * (la facturation est traitee a part, voir {@link #resolvePermission}).
+     */
+    private String actionFor(String module, String method) {
         if (HttpMethod.GET.matches(method)) return "READ";
         if (HttpMethod.POST.matches(method)) return "CREATE";
-        if (HttpMethod.DELETE.matches(method)) return "DELETE";
+        if (HttpMethod.DELETE.matches(method)) {
+            return MODULES_WITH_DELETE_PERMISSION.contains(module) ? "DELETE" : "UPDATE";
+        }
         return "UPDATE";
     }
 

@@ -95,14 +95,19 @@ bokati:
   websocket:
     use-stomp-relay: ${BOKATI_WEBSOCKET_USE_STOMP_RELAY:true}
     stomp:
-      use-tls: ${BOKATI_WEBSOCKET_STOMP_USE_TLS:true}
-      relay-host: ${CLOUDAMQP_STOMP_HOST}
+      # Derive relay host / credentials / vhost / TLS from the same URL used for AMQP.
+      # The Heroku CloudAMQP add-on only provides CLOUDAMQP_URL, so this is the single
+      # source of truth and avoids the vhost defaulting to "/" (wrong on shared plans).
+      broker-url: ${CLOUDAMQP_URL:}
       relay-port: ${CLOUDAMQP_STOMP_PORT:61614}
+      # Optional explicit overrides · only used when broker-url is empty.
+      use-tls: ${BOKATI_WEBSOCKET_STOMP_USE_TLS:true}
+      relay-host: ${CLOUDAMQP_STOMP_HOST:localhost}
       virtual-host: ${CLOUDAMQP_VHOST:/}
-      client-login: ${CLOUDAMQP_STOMP_USER}
-      client-passcode: ${CLOUDAMQP_STOMP_PASS}
-      system-login: ${CLOUDAMQP_STOMP_USER}
-      system-passcode: ${CLOUDAMQP_STOMP_PASS}
+      client-login: ${CLOUDAMQP_STOMP_USER:guest}
+      client-passcode: ${CLOUDAMQP_STOMP_PASS:guest}
+      system-login: ${CLOUDAMQP_STOMP_USER:guest}
+      system-passcode: ${CLOUDAMQP_STOMP_PASS:guest}
   support:
     sender-email: ${SUPPORT_SENDER_EMAIL:supportela@elleaose.com}
     manager-email: ${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}

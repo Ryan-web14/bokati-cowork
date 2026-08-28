@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateReservationInvoic
 import com.sni.bokaticowork.features.billing.dto.request.RequestSignatureRequest;
 import com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingRecipientRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingAgingReportResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentSignatureResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingRecoverableResponse;
@@ -96,6 +97,34 @@ public class BillingDocumentController {
     public ResponseEntity<BillingDocumentResponse> update(@PathVariable String documentNumber,
                                                           @Valid @RequestBody UpdateBillingDocumentRequest request) {
         return ResponseEntity.ok(billingDocumentService.update(documentNumber, request));
+    }
+
+    /**
+     * Corrige les coordonnees imprimees du destinataire (nom, email, telephone, NIU, adresses)
+     * sans changer le client auquel le document est rattache. Reste possible sur un document
+     * fiscalement scelle : aucun de ces champs n'entre dans la chaine de hachage fiscale.
+     */
+    @PatchMapping("/documents/{documentNumber}/recipient")
+    public ResponseEntity<BillingDocumentResponse> updateRecipient(@PathVariable String documentNumber,
+                                                                   @Valid @RequestBody UpdateBillingRecipientRequest request) {
+        return ResponseEntity.ok(billingDocumentService.updateRecipient(documentNumber, request));
+    }
+
+    /**
+     * Annule un devis ou une facture.
+     * <p>
+     * DELETE et non POST /cancel : c'est le contrat deja publie au frontend
+     * (docs/frontend/billing-immutability.md). Il n'y a pas de suppression dure dans ce module,
+     * l'immuabilite fiscale l'interdit - le verbe DELETE porte donc ici une annulation.
+     * <p>
+     * Le comportement depend de l'etat du document et est resolu cote serveur : annulation
+     * directe si le document n'est pas scelle, emission et application automatiques d'un avoir
+     * s'il l'est. Le frontend n'a pas a tester {@code locked} avant d'appeler.
+     */
+    @DeleteMapping("/documents/{documentNumber}")
+    public ResponseEntity<BillingDocumentResponse> cancel(@PathVariable String documentNumber,
+                                                          @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(billingDocumentService.cancelAndArchiveDocument(documentNumber, reason));
     }
 
     @PostMapping("/documents/{documentNumber}/duplicate")

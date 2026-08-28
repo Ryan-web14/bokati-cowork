@@ -38,6 +38,10 @@ public class PaymentIntentExpiryAlertWorker {
         for (PaymentIntent intent : expiring) {
             try {
                 sendAlert(intent);
+                // The 2 h alert window spans four runs of this worker. Marking the intent here —
+                // even when sendAlert had nothing to send — is what keeps it to one reminder.
+                intent.setExpiryAlertSentAt(now);
+                intentRepository.save(intent);
             } catch (Exception ex) {
                 log.error("Expiry alert failed for intent {}: {}", intent.getIntentNumber(), ex.getMessage());
             }

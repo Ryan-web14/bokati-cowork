@@ -181,6 +181,12 @@ public class OutboxServiceImpl implements OutboxService {
     @Transactional
     public void requeue(Long eventId) {
         OutboxEvent event = find(eventId);
+        if (event.getStatus() == OutboxEventStatus.PUBLISHED) {
+            // Processors send mail, so replaying a published event re-sends it. Only stuck or
+            // dead events are meant to be requeued.
+            throw new BadRequestException("Outbox event " + eventId + " was already published on "
+                    + event.getPublishedAt() + " and cannot be requeued");
+        }
         event.setStatus(OutboxEventStatus.PENDING);
         event.setAvailableAt(Instant.now());
         event.setLastError(null);

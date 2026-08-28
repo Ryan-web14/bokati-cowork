@@ -287,7 +287,7 @@ public class CrmServiceImpl implements CrmService {
                 null,
                 "CRM_LEAD",
                 lead.getLeadNumber(),
-                null, null, null, null
+                null, null, null, null, null
         );
 
         BillingDocumentResponse quote = billingDocumentService.createManualQuote(

@@ -130,6 +130,17 @@ public class BillingDocument {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    /**
+     * Last overdue reminder sent, and how many have gone out. An invoice stays OVERDUE until it is
+     * paid, so without these the daily worker re-sent the document — PDF included — indefinitely.
+     */
+    @Column(name = "payment_reminder_sent_at")
+    private Instant paymentReminderSentAt;
+
+    @Column(name = "payment_reminder_count", nullable = false)
+    @Builder.Default
+    private Integer paymentReminderCount = 0;
+
     @Column(name = "issued_at")
     private Instant issuedAt;
 
