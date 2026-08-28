@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class MemberPurgeProperties {
 
     /** Autorise la suppression effective. La previsualisation reste disponible meme a false. */
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     /** Nombre maximum de membres qu'un seul appel peut purger. */
     private int maxBatchSize = 25;

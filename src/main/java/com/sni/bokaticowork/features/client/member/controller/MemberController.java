@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.client.member.controller;
 
 import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
+import com.sni.bokaticowork.core.maintenance.MemberPurgeService;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest;
@@ -38,6 +39,7 @@ public class MemberController {
     private final MemberService memberService;
     private final MemberProfileService memberProfileService;
     private final UserProvisioningService userProvisioningService;
+    private final MemberPurgeService memberPurgeService;
 
     //Todo revenir sur l'activation portail et le profil membre
 
@@ -214,9 +216,28 @@ public class MemberController {
         }
         return principal.getUsername();
     }
+    /**
+     * Retire un membre. Par defaut il est archive : le membre passe en ARCHIVED, ses factures,
+     * contrats et mouvements restent en base et restent opposables.
+     *
+     * <p>Avec {@code purge=true}, le membre et toutes ses donnees sont supprimes definitivement
+     * — compte utilisateur, factures, portefeuille, contrats, abonnements, reservations — et les
+     * montants correspondants disparaissent des agregats comptables. C'est irreversible et sans
+     * sauvegarde : reserve au retrait de jeux de test restes en production.
+     *
+     * <p>La purge n'est pas le defaut a dessein. Ce point d'entree est celui que l'interface
+     * appelle pour retirer un membre ordinaire, et une suppression definitive declenchee par ce
+     * bouton detruirait la facturation d'un client reel. Previsualiser d'abord avec
+     * {@code GET /admin/maintenance/members/{code}/purge-preview}.
+     */
     @DeleteMapping("/{id}")
     @Audited(module = "MEMBER", action = "ARCHIVE", ressource = "member")
-    public ResponseEntity<Void> archive(@PathVariable String id) {
+    public ResponseEntity<?> archive(@PathVariable String id,
+                                     @RequestParam(defaultValue = "false") boolean purge,
+                                     @RequestParam(required = false) String reason) {
+        if (purge) {
+            return ResponseEntity.ok(memberPurgeService.purge(id, reason));
+        }
         memberService.delete(id);
         return ResponseEntity.noContent().build();
     }
