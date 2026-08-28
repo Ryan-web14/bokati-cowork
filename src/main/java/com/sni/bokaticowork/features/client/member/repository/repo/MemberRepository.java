@@ -25,6 +25,14 @@ public interface MemberRepository extends JpaRepository<Member, Long>, JpaSpecif
 
     Optional<Member> findByMemberIdAndDeletedFalse(String memberId);
 
+    /**
+     * Retrouve un membre par son code sans exclure les archives, et sans dependre de la casse ni
+     * des espaces de bord. Sert aux operations de retrait : chercher avec {@code DeletedFalse}
+     * fait repondre "Member not found" sur un membre deja archive, alors qu'il existe bel et bien.
+     */
+    @Query("SELECT m FROM Member m WHERE UPPER(TRIM(m.memberId)) = UPPER(TRIM(:memberId))")
+    Optional<Member> findByMemberIdIncludingArchived(@Param("memberId") String memberId);
+
     Optional<Member> findByEmailIgnoreCaseAndDeletedFalse(String email);
 
     @Query(

@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.client.member.service.implementation;
 
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
@@ -147,6 +148,37 @@ class MemberServiceImplTest {
         verify(memberRepo).save(member);
         assertSame(customer, member.getCustomer());
         assertEquals("CUS-0002", transferred.getCustomerId());
+    }
+
+    @Test
+    void shouldArchiveAMemberThatIsStillActive() {
+        Member member = Member.builder().memberId("MEM-0003").deleted(false).build();
+        when(memberRepo.findByMemberIdIncludingArchived("MEM-0003")).thenReturn(Optional.of(member));
+
+        memberService.delete("MEM-0003");
+
+        verify(memberRepo).save(member);
+        assertTrue(member.getDeleted());
+    }
+
+    @Test
+    void shouldNotFailWhenArchivingAMemberAlreadyArchived() {
+        // Regression : la recherche filtrait sur DeletedFalse, si bien qu'un second appel
+        // repondait 404 "Member not found" sur un membre qui existe et qui est simplement
+        // deja archive. L'operation est idempotente.
+        Member archived = Member.builder().memberId("MEM-0004").deleted(true).build();
+        when(memberRepo.findByMemberIdIncludingArchived("MEM-0004")).thenReturn(Optional.of(archived));
+
+        memberService.delete("MEM-0004");
+
+        verify(memberRepo, never()).save(any(Member.class));
+    }
+
+    @Test
+    void shouldStillReportAnUnknownMemberCodeAsNotFound() {
+        when(memberRepo.findByMemberIdIncludingArchived("MEM-9999")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> memberService.delete("MEM-9999"));
     }
 
     @Test

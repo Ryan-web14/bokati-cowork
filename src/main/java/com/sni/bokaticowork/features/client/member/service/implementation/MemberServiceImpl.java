@@ -324,7 +324,14 @@ public class MemberServiceImpl  implements MemberService {
 
     @Override
     public void delete(String memberId) {
-        Member member = getByMemberIdForService(memberId);
+        // La recherche inclut les archives : chercher avec DeletedFalse faisait repondre
+        // "Member not found" sur un membre deja archive, message trompeur puisque le membre
+        // existe. L'archivage est donc idempotent, et un second appel ne renvoie plus d'erreur.
+        Member member = memberRepo.findByMemberIdIncludingArchived(memberId)
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found"));
+        if (Boolean.TRUE.equals(member.getDeleted())) {
+            return;
+        }
         member.setStatus(MemberStatus.ARCHIVED);
         member.setDeleted(true);
         memberRepo.save(member);
