@@ -21,6 +21,14 @@ public interface PaymentAllocationRepository extends JpaRepository<PaymentAlloca
 
     List<PaymentAllocation> findAllByBillingDocumentNumber(String billingDocumentNumber);
 
+    /**
+     * Garde d'idempotence de {@code PaymentAllocationService.allocateOne} : une transaction n'est
+     * imputee qu'une fois a une facture donnee. Indispensable pour que le rattrapage
+     * PAYMENT_ALLOCATION_RETRY puisse rejouer une imputation partiellement reussie sans
+     * doubler les lignes deja creees, et adosse a l'index unique ux_payment_allocation_txn_document.
+     */
+    boolean existsByPaymentTransaction_IdAndBillingDocumentNumber(Long paymentTransactionId, String billingDocumentNumber);
+
     @Query("SELECT pa FROM PaymentAllocation pa JOIN FETCH pa.paymentTransaction WHERE pa.billingDocumentNumber = :documentNumber ORDER BY pa.allocatedAt ASC")
     List<PaymentAllocation> findAllByBillingDocumentNumberFetchTransaction(@Param("documentNumber") String documentNumber);
 }

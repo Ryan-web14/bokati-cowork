@@ -37,19 +37,28 @@ public class NotificationInAppConsumer {
                 false
         );
 
-        messagingTemplate.convertAndSendToUser(
-                message.recipientEmail(),
-                WebSocketTopics.USER_NOTIFICATIONS,
-                payload
-        );
+        // The real-time WebSocket push is best-effort: the notification is already
+        // persisted and the client fetches it on (re)connect. A broker outage
+        // (STOMP relay not active) or an offline user must not send the message to the
+        // DLQ, which would drop it permanently. Swallow delivery failures and ack.
+        try {
+            messagingTemplate.convertAndSendToUser(
+                    message.recipientEmail(),
+                    WebSocketTopics.USER_NOTIFICATIONS,
+                    payload
+            );
 
-        messagingTemplate.convertAndSendToUser(
-                message.recipientEmail(),
-                WebSocketTopics.USER_UNREAD_COUNT,
-                Map.of("action", "INCREMENT")
-        );
+            messagingTemplate.convertAndSendToUser(
+                    message.recipientEmail(),
+                    WebSocketTopics.USER_UNREAD_COUNT,
+                    Map.of("action", "INCREMENT")
+            );
 
-        log.debug("Pushed IN_APP notification {} to user {}",
-                message.notificationNumber(), message.recipientEmail());
+            log.debug("Pushed IN_APP notification {} to user {}",
+                    message.notificationNumber(), message.recipientEmail());
+        } catch (Exception ex) {
+            log.warn("Real-time push of IN_APP notification {} to {} failed ({}) · notification stays persisted for retrieval on reconnect",
+                    message.notificationNumber(), message.recipientEmail(), ex.getMessage());
+        }
     }
 }

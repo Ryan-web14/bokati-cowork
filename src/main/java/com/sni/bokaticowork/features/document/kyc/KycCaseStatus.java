@@ -11,3 +11,4 @@ public enum KycCaseStatus {
     RENEWAL_REQUIRED,
     EXPIRED
 }
+

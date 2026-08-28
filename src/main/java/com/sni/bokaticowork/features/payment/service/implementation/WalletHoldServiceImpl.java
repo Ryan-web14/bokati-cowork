@@ -6,7 +6,6 @@ import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.Seq
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.payment.dto.request.CreateWalletHoldRequest;
 import com.sni.bokaticowork.features.payment.dto.response.WalletHoldResponse;
-import com.sni.bokaticowork.features.payment.enums.WalletEntryType;
 import com.sni.bokaticowork.features.payment.enums.WalletHoldStatus;
 import com.sni.bokaticowork.features.payment.mapper.interfaces.PaymentMapper;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
@@ -54,15 +53,13 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     public WalletHoldResponse create(CreateWalletHoldRequest request) {
         WalletAccount wallet = walletRepository.findByWalletNumber(request.walletNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Wallet not found"));
-        if (wallet.getAvailableBalance().compareTo(request.amount()) < 0) {
-            throw new BadRequestException("Insufficient wallet balance");
-        }
-        wallet.setAvailableBalance(wallet.getAvailableBalance().subtract(request.amount()));
-        wallet.setHeldBalance(wallet.getHeldBalance().add(request.amount()));
-        walletRepository.save(wallet);
-        ledgerService.entryOnly(wallet, request.amount(), WalletEntryType.HOLD, request.sourceType(), request.sourceCode(), null, request.createdBy());
+        // Le numero de blocage est genere avant l'ecriture : il sert de cle d'idempotence, donc
+        // il doit exister au moment ou le grand livre est ecrit.
+        String holdNumber = sequenceGenerator.next("wallet_hold");
+        ledgerService.placeHold(wallet, request.amount(), request.sourceType(), request.sourceCode(),
+                holdNumber, request.createdBy(), "HOLD:" + holdNumber);
         return mapper.toWalletHoldResponse(holdRepository.save(WalletHold.builder()
-                .holdNumber(sequenceGenerator.next("wallet_hold"))
+                .holdNumber(holdNumber)
                 .wallet(wallet)
                 .amount(request.amount())
                 .currency(wallet.getCurrency())
@@ -77,11 +74,8 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     @Override
     public WalletHoldResponse capture(String holdNumber, String createdBy) {
         WalletHold hold = activeHold(holdNumber);
-        WalletAccount wallet = hold.getWallet();
-        wallet.setHeldBalance(wallet.getHeldBalance().subtract(hold.getAmount()));
-        wallet.setLedgerBalance(wallet.getLedgerBalance().subtract(hold.getAmount()));
-        walletRepository.save(wallet);
-        ledgerService.entryOnly(wallet, hold.getAmount(), WalletEntryType.PAYMENT, hold.getSourceType(), hold.getSourceCode(), "CAPTURE_HOLD", createdBy);
+        ledgerService.captureHold(hold.getWallet(), hold.getAmount(), hold.getSourceType(), hold.getSourceCode(),
+                "CAPTURE_HOLD", createdBy, "HOLD_CAPTURE:" + hold.getHoldNumber());
         hold.setStatus(WalletHoldStatus.CAPTURED);
         return mapper.toWalletHoldResponse(holdRepository.save(hold));
     }
@@ -104,11 +98,8 @@ public class WalletHoldServiceImpl implements WalletHoldService {
     }
 
     private void releaseHold(WalletHold hold, String createdBy, WalletHoldStatus status) {
-        WalletAccount wallet = hold.getWallet();
-        wallet.setHeldBalance(wallet.getHeldBalance().subtract(hold.getAmount()));
-        wallet.setAvailableBalance(wallet.getAvailableBalance().add(hold.getAmount()));
-        walletRepository.save(wallet);
-        ledgerService.entryOnly(wallet, hold.getAmount(), WalletEntryType.HOLD_RELEASE, hold.getSourceType(), hold.getSourceCode(), status.name(), createdBy);
+        ledgerService.releaseHold(hold.getWallet(), hold.getAmount(), hold.getSourceType(), hold.getSourceCode(),
+                status.name(), createdBy, "HOLD_RELEASE:" + hold.getHoldNumber());
         hold.setStatus(status);
         holdRepository.save(hold);
     }

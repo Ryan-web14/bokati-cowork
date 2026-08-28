@@ -49,6 +49,17 @@ public class BillingDocumentLine {
     @Column(name = "item_code", length = 120)
     private String itemCode;
 
+    /**
+     * Categorie de la prestation, figee a la creation de la ligne.
+     * <p>
+     * Reprise de {@code ServiceCatalogItem.category} quand la ligne reference un article du
+     * catalogue, sauf si l'appelant en fournit une explicitement. On la fige au lieu de la
+     * relire du catalogue a l'impression : un document emis doit rester identique meme si le
+     * catalogue evolue ensuite.
+     */
+    @Column(name = "category", length = 100)
+    private String category;
+
     @Column(name = "description", nullable = false, columnDefinition = "text")
     private String description;
 

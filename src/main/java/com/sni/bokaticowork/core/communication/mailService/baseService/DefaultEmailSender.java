@@ -14,15 +14,19 @@ import com.microsoft.graph.users.item.sendmail.SendMailPostRequestBody;
 import com.sni.bokaticowork.core.communication.mailService.config.MicrosoftGraphMailProperties;
 import com.sni.bokaticowork.core.communication.mailService.dto.EmailRabbitMessage;
 import com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse;
+import com.sni.bokaticowork.core.communication.mailService.enums.EmailDeliveryStatus;
 import com.sni.bokaticowork.core.communication.mailService.enums.EmailPriority;
 import com.sni.bokaticowork.core.communication.mailService.model.EmailDeliveryLog;
+import com.sni.bokaticowork.core.communication.mailService.service.EmailDedupKeyFactory;
 import com.sni.bokaticowork.core.communication.mailService.service.EmailDeliveryTracker;
 import com.sni.bokaticowork.core.communication.mailService.service.EmailRabbitPublisher;
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -32,6 +36,7 @@ import com.microsoft.graph.models.InternetMessageHeader;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -48,6 +53,7 @@ public class DefaultEmailSender {
     private final EmailDeliveryTracker deliveryTracker;
     private final Executor taskExecutor;
     private final EmailRabbitPublisher rabbitPublisher;
+    private final EmailDedupKeyFactory dedupKeyFactory;
     private volatile GraphServiceClient graphClient;
 
     @Value("${spring.mail.microsoft.graph.sender-email:no-reply@elleaose.com}")
@@ -57,20 +63,24 @@ public class DefaultEmailSender {
                               MicrosoftGraphMailProperties graphProperties,
                               EmailDeliveryTracker deliveryTracker,
                               @Qualifier("taskExecutor") Executor taskExecutor,
-                              EmailRabbitPublisher rabbitPublisher) {
+                              EmailRabbitPublisher rabbitPublisher,
+                              EmailDedupKeyFactory dedupKeyFactory) {
         this.mailSender = mailSenderProvider.getIfAvailable();
         this.graphProperties = graphProperties;
         this.deliveryTracker = deliveryTracker;
         this.taskExecutor = taskExecutor;
         this.rabbitPublisher = rabbitPublisher;
+        this.dedupKeyFactory = dedupKeyFactory;
     }
 
     // ─────────────────── Async methods → publish to RabbitMQ ───────────────────
 
     public CompletableFuture<Boolean> sendEmail(String to, String subject, String content) {
-        EmailDeliveryResponse delivery = createDelivery(to, subject, content, false, null, null);
-        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
-                null, null, null, null);
+        Queued queued = createDelivery(null, to, subject, content, false, null, null);
+        if (!queued.duplicate()) {
+            publishToRabbit(queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                    null, null, null, null);
+        }
         return CompletableFuture.completedFuture(true);
     }
 
@@ -79,9 +89,11 @@ public class DefaultEmailSender {
     }
 
     public CompletableFuture<Boolean> sendHtmlEmail(String to, String subject, String content, EmailPriority priority) throws MessagingException {
-        EmailDeliveryResponse delivery = createDelivery(to, subject, content, true, null, null);
-        publishToRabbit(delivery.emailNumber(), to, subject, content, priority,
-                null, null, null, null);
+        Queued queued = createDelivery(null, to, subject, content, true, null, null);
+        if (!queued.duplicate()) {
+            publishToRabbit(queued.emailNumber(), to, subject, content, priority,
+                    null, null, null, null);
+        }
         return CompletableFuture.completedFuture(true);
     }
 
@@ -90,9 +102,11 @@ public class DefaultEmailSender {
                                                                     String content,
                                                                     String contentId,
                                                                     byte[] imageBytes) {
-        EmailDeliveryResponse delivery = createDelivery(to, subject, content, true, null, null);
-        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
-                null, null, contentId, imageBytes);
+        Queued queued = createDelivery(null, to, subject, content, true, null, null);
+        if (!queued.duplicate()) {
+            publishToRabbit(queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                    null, null, contentId, imageBytes);
+        }
         return CompletableFuture.completedFuture(true);
     }
 
@@ -101,9 +115,11 @@ public class DefaultEmailSender {
                                                                      String content,
                                                                      String attachmentName,
                                                                      byte[] attachmentBytes) {
-        EmailDeliveryResponse delivery = createDelivery(to, subject, content, true, null, null);
-        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
-                attachmentName, attachmentBytes, null, null);
+        Queued queued = createDelivery(null, to, subject, content, true, null, null);
+        if (!queued.duplicate()) {
+            publishToRabbit(queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                    attachmentName, attachmentBytes, null, null);
+        }
         return CompletableFuture.completedFuture(true);
     }
 
@@ -117,10 +133,7 @@ public class DefaultEmailSender {
                                             boolean html,
                                             String relatedType,
                                             String relatedCode) {
-        EmailDeliveryResponse delivery = createDelivery(to, subject, content, html, relatedType, relatedCode);
-        publishToRabbit(delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
-                null, null, null, null);
-        return delivery;
+        return queueEmail(null, to, subject, content, html, relatedType, relatedCode);
     }
 
     public EmailDeliveryResponse queueEmail(String from,
@@ -130,19 +143,27 @@ public class DefaultEmailSender {
                                             boolean html,
                                             String relatedType,
                                             String relatedCode) {
-        EmailDeliveryResponse delivery = deliveryTracker.queue(
-                providerName(), from, to, subject,
-                html ? BODY_TYPE_HTML : BODY_TYPE_TEXT,
-                content, relatedType, relatedCode);
-        publishToRabbit(from, delivery.emailNumber(), to, subject, content, EmailPriority.NORMAL,
-                null, null, null, null);
-        return delivery;
+        Queued queued = createDelivery(from, to, subject, content, html, relatedType, relatedCode);
+        if (!queued.duplicate()) {
+            publishToRabbit(from, queued.emailNumber(), to, subject, content, EmailPriority.NORMAL,
+                    null, null, null, null);
+        }
+        return queued.delivery();
     }
 
+    /**
+     * Re-ships an existing delivery. Deliberately bypasses deduplication — an operator asking for a
+     * resend has already decided the first attempt did not land. Delivered mail is refused instead,
+     * so the endpoint cannot be used to double-send.
+     */
     public EmailDeliveryResponse retry(String emailNumber) {
+        EmailDeliveryLog log = deliveryTracker.getEntity(emailNumber);
+        if (log.getStatus() == EmailDeliveryStatus.SENT) {
+            throw new BadRequestException("Email " + emailNumber + " was already delivered on " + log.getSentAt()
+                    + " and cannot be retried");
+        }
+
         EmailDeliveryResponse delivery = deliveryTracker.resetForRetry(emailNumber);
-        EmailDeliveryLog log = deliveryTracker.markSending(emailNumber);
-        deliveryTracker.resetForRetry(emailNumber);
         publishToRabbit(log.getFromEmail(), emailNumber, log.getRecipientEmail(), log.getSubject(), log.getBodyContent(),
                 EmailPriority.NORMAL, null, null, null, null);
         return delivery;
@@ -172,22 +193,57 @@ public class DefaultEmailSender {
 
     // ─────────────── Blocking methods · used by EmailConsumer only ─────────────
 
-    private EmailDeliveryResponse createDelivery(String to,
-                                                 String subject,
-                                                 String content,
-                                                 boolean html,
-                                                 String relatedType,
-                                                 String relatedCode) {
-        return deliveryTracker.queue(
-                providerName(),
-                resolveOutboundMailboxEmail(),
-                to,
-                subject,
-                html ? BODY_TYPE_HTML : BODY_TYPE_TEXT,
-                content,
-                relatedType,
-                relatedCode
-        );
+    /**
+     * Records the delivery, or recognises it as a duplicate of one already queued.
+     *
+     * <p>Two guards, because they catch different failures: the lookup stops a worker that
+     * re-selects the same rows on every run, and the unique-index violation stops two instances
+     * racing on the same logical email. Either way the caller must not publish to RabbitMQ.
+     */
+    private Queued createDelivery(String from,
+                                  String to,
+                                  String subject,
+                                  String content,
+                                  boolean html,
+                                  String relatedType,
+                                  String relatedCode) {
+        EmailDedupKeyFactory.Keys dedup = dedupKeyFactory.build(to, subject, relatedType, relatedCode);
+
+        Optional<EmailDeliveryResponse> alreadyQueued = deliveryTracker.findByDedupKeys(dedup.lookupKeys());
+        if (alreadyQueued.isPresent()) {
+            log.info("Duplicate email suppressed · to={} subject='{}' · already queued as {}",
+                    to, subject, alreadyQueued.get().emailNumber());
+            return new Queued(alreadyQueued.get(), true);
+        }
+
+        try {
+            return new Queued(deliveryTracker.queue(
+                    providerName(),
+                    StringUtils.hasText(from) ? from.trim() : resolveOutboundMailboxEmail(),
+                    to,
+                    subject,
+                    html ? BODY_TYPE_HTML : BODY_TYPE_TEXT,
+                    content,
+                    relatedType,
+                    relatedCode,
+                    dedup.key()
+            ), false);
+        } catch (DataIntegrityViolationException ex) {
+            return deliveryTracker.findByDedupKeys(dedup.lookupKeys())
+                    .map(winner -> {
+                        log.info("Concurrent duplicate email suppressed · to={} subject='{}' · kept {}",
+                                to, subject, winner.emailNumber());
+                        return new Queued(winner, true);
+                    })
+                    .orElseThrow(() -> ex);
+        }
+    }
+
+    private record Queued(EmailDeliveryResponse delivery, boolean duplicate) {
+
+        String emailNumber() {
+            return delivery.emailNumber();
+        }
     }
 
     public boolean sendHtmlEmailBlocking(String to, String subject, String content) {

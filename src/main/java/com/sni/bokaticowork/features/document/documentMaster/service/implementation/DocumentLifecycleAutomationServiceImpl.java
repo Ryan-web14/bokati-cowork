@@ -64,7 +64,16 @@ public class DocumentLifecycleAutomationServiceImpl implements DocumentLifecycle
             List<Document> docs = documentRepository.findAllByStatusInAndExpiryDateBetween(
                     EXPIRABLE_STATUSES, target, target);
             for (Document doc : docs) {
+                // A document sits on a threshold for a whole day, and this worker runs hourly, so
+                // it matches 24 times. Thresholds are walked from the furthest out to the nearest,
+                // hence "strictly closer than the one already sent".
+                Integer alreadySent = doc.getExpiryReminderSentDays();
+                if (alreadySent != null && alreadySent <= days) {
+                    continue;
+                }
                 publishPreExpiryEvent(doc, days);
+                doc.setExpiryReminderSentDays(days);
+                documentRepository.save(doc);
                 total++;
             }
         }

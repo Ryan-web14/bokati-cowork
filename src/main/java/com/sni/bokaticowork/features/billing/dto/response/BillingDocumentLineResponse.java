@@ -8,6 +8,7 @@ public record BillingDocumentLineResponse(
         Integer lineOrder,
         BillingLineType lineType,
         String itemCode,
+        String category,
         String description,
         String detailedDescription,
         BigDecimal quantity,

@@ -8,6 +8,7 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocu
 import com.sni.bokaticowork.features.billing.dto.request.CreateReservationInvoiceRequest;
 import com.sni.bokaticowork.features.billing.dto.request.SelectQuoteOptionsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingRecipientRequest;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
@@ -21,6 +22,28 @@ import java.time.LocalDate;
 public interface BillingDocumentService {
     BillingDocumentResponse create(CreateBillingDocumentRequest request);
     BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request);
+
+    /**
+     * Corrige les coordonnees du destinataire imprimees sur le document sans changer le client
+     * auquel il est rattache. Le proprietaire ({@code customerType} / {@code customerCode})
+     * n'est jamais modifiable par ce chemin : le DTO ne le porte pas.
+     * <p>
+     * Sur un document <b>non scelle</b>, tous les champs du destinataire sont corrigeables.
+     * <p>
+     * Sur un document <b>scelle</b> ({@code locked = true}), seules les coordonnees de contact
+     * le restent - email, telephone, categorie, reference, adresse de livraison. L'identite
+     * legale ({@code customerName}, {@code customerNiu}, {@code billingAddressJson}) est figee
+     * par le declencheur {@code trg_billing_document_immutable} et toute tentative leve une
+     * {@code BadRequestException} orientant vers l'avoir ou la rectificative.
+     * <p>
+     * A noter : ce declencheur est plus strict que la chaine de hachage fiscale, qui ne couvre
+     * que {@code fiscalNumber|fiscalDate|customerCode|totalAmount|previousHash}
+     * (voir {@code FiscalHashService}). Se fier au seul hachage pour decider de ce qui est
+     * modifiable est donc faux.
+     * <p>
+     * Chaque correction est tracee dans l'historique d'edition ({@code RECIPIENT_UPDATED}).
+     */
+    BillingDocumentResponse updateRecipient(String documentNumber, UpdateBillingRecipientRequest request);
     BillingDocumentResponse createManualInvoice(CreateManualBillingDocumentRequest request);
     BillingDocumentResponse createManualQuote(CreateManualBillingDocumentRequest request);
     BillingDocumentResponse createManualQuotation(CreateManualBillingDocumentRequest request);
@@ -58,7 +81,11 @@ public interface BillingDocumentService {
     BillingDocument serviceByNumber(String documentNumber);
     BillingDocument applyPayment(String documentNumber, BigDecimal amount);
     BillingDocument reversePayment(String documentNumber, BigDecimal amount);
+    /** Variante interne : renvoie l'entite, utilisee par le workflow de paiement. */
     BillingDocument cancelAndArchive(String documentNumber, String reason);
+
+    /** Variante exposee par l'API : meme comportement, renvoie la representation du document. */
+    BillingDocumentResponse cancelAndArchiveDocument(String documentNumber, String reason);
 
     /** Valide fiscalement le document (SEFC) : assigne le numéro définitif et verrouille. */
     BillingDocumentResponse validate(String documentNumber);

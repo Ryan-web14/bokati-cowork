@@ -75,6 +75,15 @@ public class EmailDeliveryLog {
     @Column(name = "related_code", length = 120)
     private String relatedCode;
 
+    /**
+     * Hash of the logical email (recipient, subject, business reference) plus a time bucket.
+     * Null disables deduplication for this row — used by admin-triggered resends, which must
+     * always ship. Backed by a partial unique index, so a concurrent insert of the same
+     * logical email fails instead of producing a second send.
+     */
+    @Column(name = "dedup_key", length = 120)
+    private String dedupKey;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

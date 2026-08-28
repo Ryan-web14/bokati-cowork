@@ -25,6 +25,11 @@ public record CreateBillingDocumentLineRequest(
         String unit,
         String externalReference,
         String notes,
-        Boolean optional
+        Boolean optional,
+        /**
+         * Categorie affichee sur le document. Laisser null pour reprendre automatiquement celle
+         * de l'article du catalogue designe par {@code itemCode}.
+         */
+        String category
 ) {
 }

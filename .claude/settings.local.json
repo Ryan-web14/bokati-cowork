@@ -78,7 +78,20 @@
       "Bash(sort -t V -k2 -n)",
       "Bash(./mvnw test *)",
       "Bash(docker exec cowork_dev_db *)",
-      "Bash(./mvnw -q -o compile -DskipTests)"
+      "Bash(./mvnw -q -o compile -DskipTests)",
+      "PowerShell(.\\\\mvnw.cmd -q clean compile -DskipTests 2>&1 | Select-Object -Last 60)",
+      "PowerShell(Out-File *)",
+      "Bash(grep -n \"^#\\\\{1,3\\\\} \" docs/frontend/inventory.md)",
+      "Bash(cd *)",
+      "Bash(perl *)",
+      "Bash(curl -s -o /dev/null -w \"\" http://localhost:8090/actuator/health)",
+      "Bash(curl -s http://localhost:8090/actuator/health)",
+      "Bash(curl -s -o /dev/null -w \"health:%{http_code}\\\\n\" http://localhost:8090/actuator/health)",
+      "Bash(curl -s -o /tmp/me.json -w \"HTTP %{http_code}\\\\n\" http://localhost:8090/sni/api/v1/auth/me)",
+      "Read(//tmp/**)",
+      "Bash(echo *)",
+      "Bash(python -)",
+      "Bash(python -c ' *)"
     ]
   }
 }

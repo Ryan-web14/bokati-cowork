@@ -70,6 +70,14 @@ public class SupportTicket {
     private String escalationReason;
     private Instant lastSlaAlertSentAt;
 
+    /**
+     * One breach alert per ticket per SLA type. These sat outside the escalation cooldown, so a
+     * ticket left open past its SLA mailed every hour for as long as it stayed open. Continued
+     * nagging is the escalation alert's job, and that one is already paced.
+     */
+    private Instant firstResponseAlertSentAt;
+    private Instant resolutionAlertSentAt;
+
     @Builder.Default
     @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TicketMessage> messages = new ArrayList<>();

@@ -66,7 +66,13 @@ import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNoti
 import com.sni.bokaticowork.features.subscription.repository.BillableItemRepository;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillableItemStatus;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingRecipientRequest;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -80,15 +86,19 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
 public class BillingDocumentServiceImpl implements BillingDocumentService {
 
+    private final ObjectMapper objectMapper;
     private final BillingDocumentRepository documentRepository;
     private final BillingDocumentLineRepository lineRepository;
     private final BillingDocumentAdvanceRepository advanceRepository;
@@ -114,6 +124,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final FiscalHashService fiscalHashService;
     private final FiscalSignatureService fiscalSignatureService;
     private final MemberInAppNotifier memberInAppNotifier;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public BillingDocumentResponse create(CreateBillingDocumentRequest request) {
@@ -217,6 +230,121 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         return mapper.toResponse(saved);
     }
 
+    @Override
+    public BillingDocumentResponse updateRecipient(String documentNumber, UpdateBillingRecipientRequest request) {
+        if (request == null) {
+            throw new BadRequestException("Recipient payload is required");
+        }
+        BillingDocument document = serviceByNumber(documentNumber);
+        ensureRecipientChangeAllowed(document, request);
+
+        Map<String, Object> before = recipientSnapshot(document);
+
+        applyIfPresent(request.customerName(), document::setCustomerName);
+        applyIfPresent(request.customerEmail(), document::setCustomerEmail);
+        applyIfPresent(request.customerPhone(), document::setCustomerPhone);
+        applyIfPresent(request.customerNiu(), document::setCustomerNiu);
+        applyIfPresent(request.customerCategory(), document::setCustomerCategory);
+        applyIfPresent(request.customerReference(), document::setCustomerReference);
+        applyIfPresent(request.billingAddressJson(), document::setBillingAddressJson);
+        applyIfPresent(request.deliveryAddressJson(), document::setDeliveryAddressJson);
+
+        BillingDocument saved = documentRepository.save(document);
+
+        Map<String, Object> auditPayload = new LinkedHashMap<>();
+        auditPayload.put("before", before);
+        auditPayload.put("after", recipientSnapshot(saved));
+        auditPayload.put("reason", request.reason());
+        editHistoryRepository.save(BillingDocumentEditHistory.builder()
+                .document(saved)
+                .editType("RECIPIENT_UPDATED")
+                .changedBy(StringUtils.hasText(request.changedBy()) ? request.changedBy().trim() : "SYSTEM")
+                .changedAt(Instant.now())
+                .snapshotJson(writeJson(auditPayload))
+                .build());
+        eventWriter.write(saved, "BILLING_DOCUMENT_RECIPIENT_UPDATED", Map.of("reason", String.valueOf(request.reason())));
+        return mapper.toResponse(saved);
+    }
+
+    /**
+     * Sur un document scelle, seules les coordonnees de contact restent corrigeables.
+     * <p>
+     * L'identite legale du destinataire - raison sociale, NIU, adresse de facturation - est
+     * protegee par le declencheur {@code trg_billing_document_immutable}, qui est plus strict
+     * que la chaine de hachage fiscale : celle-ci ne couvre que {@code customer_code}, mais la
+     * base considere que l'identite imprimee fait partie du document emis. Corriger une raison
+     * sociale sur une facture validee passe donc par un avoir ou une rectificative.
+     * <p>
+     * Sans ce controle, la contrainte remontait en {@code JpaSystemException} au flush, donc en
+     * 500 opaque cote client au lieu d'une erreur metier exploitable.
+     */
+    private void ensureRecipientChangeAllowed(BillingDocument document, UpdateBillingRecipientRequest request) {
+        if (!Boolean.TRUE.equals(document.getLocked())) {
+            return;
+        }
+        List<String> blocked = new ArrayList<>();
+        if (changes(request.customerName(), document.getCustomerName())) {
+            blocked.add("customerName");
+        }
+        if (changes(request.customerNiu(), document.getCustomerNiu())) {
+            blocked.add("customerNiu");
+        }
+        if (changes(request.billingAddressJson(), document.getBillingAddressJson())) {
+            blocked.add("billingAddressJson");
+        }
+        if (!blocked.isEmpty()) {
+            throw new BadRequestException(
+                    "Le document " + document.getDocumentNumber() + " est validé : "
+                            + String.join(", ", blocked)
+                            + " ne peuvent plus être modifiés. Émettez un avoir ou une facture rectificative. "
+                            + "Les coordonnées de contact (email, téléphone, catégorie, référence, adresse de livraison) "
+                            + "restent corrigeables.");
+        }
+    }
+
+    /** Un champ absent de la requete ou identique a la valeur en place n'est pas une modification. */
+    private boolean changes(String requested, String current) {
+        if (requested == null) {
+            return false;
+        }
+        String normalized = requested.isBlank() ? null : requested.trim();
+        return !java.util.Objects.equals(normalized, current);
+    }
+
+    /**
+     * {@code null} laisse la valeur en place, une chaine vide la vide : sans cette distinction,
+     * il serait impossible d'effacer un NIU ou un telephone errone.
+     */
+    private void applyIfPresent(String value, java.util.function.Consumer<String> setter) {
+        if (value == null) {
+            return;
+        }
+        setter.accept(value.isBlank() ? null : value.trim());
+    }
+
+    private Map<String, Object> recipientSnapshot(BillingDocument document) {
+        Map<String, Object> snapshot = new LinkedHashMap<>();
+        snapshot.put("customerName", document.getCustomerName());
+        snapshot.put("customerEmail", document.getCustomerEmail());
+        snapshot.put("customerPhone", document.getCustomerPhone());
+        snapshot.put("customerNiu", document.getCustomerNiu());
+        snapshot.put("customerCategory", document.getCustomerCategory());
+        snapshot.put("customerReference", document.getCustomerReference());
+        snapshot.put("billingAddressJson", document.getBillingAddressJson());
+        snapshot.put("deliveryAddressJson", document.getDeliveryAddressJson());
+        return snapshot;
+    }
+
+    private String writeJson(Map<String, Object> payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (Exception ex) {
+            // L'historique ne doit jamais faire echouer la correction elle-meme.
+            log.warn("Impossible de serialiser l'historique de correction destinataire", ex);
+            return null;
+        }
+    }
+
     private void applyLineUpdates(BillingDocument document, List<UpdateBillingDocumentLineRequest> lineUpdates) {
         if (lineUpdates == null || lineUpdates.isEmpty()) {
             return;
@@ -244,6 +372,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 } else {
                     line.setLineType(calculated.getLineType());
                     line.setItemCode(calculated.getItemCode());
+                    line.setCategory(calculated.getCategory());
                     line.setDescription(calculated.getDescription());
                     line.setDetailedDescription(calculated.getDetailedDescription());
                     line.setQuantity(calculated.getQuantity());
@@ -292,7 +421,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 upd.unit(),
                 upd.externalReference(),
                 upd.notes(),
-                upd.optional()
+                upd.optional(),
+                upd.category()
         );
     }
 
@@ -333,7 +463,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                         null,
                         item.getSourceType(),
                         item.getSourceId(),
-                        null, null, null, null
+                        null, null, null, null, null
                 ))
                 .toList();
         CreateBillingDocumentRequest createRequest = new CreateBillingDocumentRequest(
@@ -428,7 +558,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 unit,
                 null,
                 booking.getNotes(),
-                null
+                null,
+                "Réservation"
         ));
         if (request.extraLines() != null) {
             int order = 2;
@@ -452,7 +583,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                         extra.unit(),
                         extra.externalReference(),
                         extra.notes(),
-                        extra.optional()
+                        extra.optional(),
+                        extra.category()
                 ));
             }
         }
@@ -534,7 +666,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 ext.bookingUnit() != null ? ext.bookingUnit().name() : null,
                 trim(ext.externalReference()),
                 trim(ext.notes()),
-                null
+                null,
+                "Réservation"
         );
 
         List<CreateBillingDocumentLineRequest> lines = new ArrayList<>();
@@ -547,7 +680,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                         extra.detailedDescription(), extra.quantity(), extra.unitPrice(),
                         extra.discountRate(), extra.discountAmount(), extra.taxable(), extra.taxIncluded(),
                         extra.vatRate(), extra.additionalCentRate(), extra.sourceType(), extra.sourceCode(),
-                        extra.unit(), extra.externalReference(), extra.notes(), extra.optional()
+                        extra.unit(), extra.externalReference(), extra.notes(), extra.optional(), extra.category()
                 ));
             }
         }
@@ -959,7 +1092,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             throw new BadRequestException("Invalid credit note amount");
         }
         List<CreateBillingDocumentLineRequest> lines = request.lines() == null || request.lines().isEmpty()
-                ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null))
+                ? List.of(new CreateBillingDocumentLineRequest(null, BillingLineType.ADJUSTMENT, invoice.getDocumentNumber(), request.reason(), null, BigDecimal.ONE, amount, BigDecimal.ZERO, BigDecimal.ZERO, false, false, BigDecimal.ZERO, BigDecimal.ZERO, "INVOICE", invoice.getDocumentNumber(), null, null, null, null, null))
                 : request.lines();
         BillingDocumentResponse creditNoteResponse = create(new CreateBillingDocumentRequest(
                 BillingDocumentType.CREDIT_NOTE,
@@ -1115,12 +1248,32 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Billing document not found"));
     }
 
+    /**
+     * Charge un document sous {@code SELECT ... FOR UPDATE} pour serialiser les mutations de
+     * montant paye.
+     * <p>
+     * Le {@code refresh} est indispensable : sans lui Hibernate rendrait l'instance deja chargee
+     * dans le contexte de persistance avec ses valeurs d'origine, donc le verrou serait pose mais
+     * le calcul se ferait sur un montant paye perime. Le {@code flush} prealable couvre le cas
+     * d'un document cree dans la meme transaction et pas encore ecrit en base.
+     */
+    private BillingDocument lockedByNumber(String documentNumber) {
+        if (!StringUtils.hasText(documentNumber)) {
+            throw new BadRequestException("Billing document number is required");
+        }
+        entityManager.flush();
+        BillingDocument document = documentRepository.lockByDocumentNumber(documentNumber.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Billing document not found"));
+        entityManager.refresh(document, LockModeType.PESSIMISTIC_WRITE);
+        return document;
+    }
+
     @Override
     public BillingDocument applyPayment(String documentNumber, BigDecimal amount) {
         if (amount == null || amount.signum() <= 0) {
             throw new BadRequestException("Payment amount must be positive");
         }
-        BillingDocument document = serviceByNumber(documentNumber);
+        BillingDocument document = lockedByNumber(documentNumber);
         lifecycleSupport.ensureCanPay(document);
         BigDecimal paid = document.getPaidAmount().add(amount).min(document.getTotalAmount());
         document.setPaidAmount(paid);
@@ -1139,7 +1292,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (amount == null || amount.signum() <= 0) {
             throw new BadRequestException("Reversal amount must be positive");
         }
-        BillingDocument document = serviceByNumber(documentNumber);
+        BillingDocument document = lockedByNumber(documentNumber);
         BigDecimal paid = document.getPaidAmount().subtract(amount);
         if (paid.signum() < 0) {
             paid = BigDecimal.ZERO;
@@ -1153,6 +1306,11 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
         }
         return documentRepository.save(document);
+    }
+
+    @Override
+    public BillingDocumentResponse cancelAndArchiveDocument(String documentNumber, String reason) {
+        return mapper.toResponse(cancelAndArchive(documentNumber, reason));
     }
 
     @Override
@@ -1484,7 +1642,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.unit(),
                 line.externalReference(),
                 line.notes(),
-                Boolean.TRUE.equals(line.optional()) ? Boolean.TRUE : null
+                Boolean.TRUE.equals(line.optional()) ? Boolean.TRUE : null,
+                line.category()
         );
     }
 
@@ -1508,7 +1667,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.getUnit(),
                 line.getExternalReference(),
                 line.getNotes(),
-                Boolean.TRUE.equals(line.getOptional()) ? Boolean.TRUE : null
+                Boolean.TRUE.equals(line.getOptional()) ? Boolean.TRUE : null,
+                line.getCategory()
         );
     }
 

@@ -71,6 +71,13 @@ public class PaymentIntent {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
+    /**
+     * When the pre-expiry reminder was sent. The alert window spans several worker runs, so
+     * without this marker the same reminder went out on every run inside that window.
+     */
+    @Column(name = "expiry_alert_sent_at")
+    private Instant expiryAlertSentAt;
+
     @Column(name = "payment_link_token", unique = true, length = 120)
     private String paymentLinkToken;
 

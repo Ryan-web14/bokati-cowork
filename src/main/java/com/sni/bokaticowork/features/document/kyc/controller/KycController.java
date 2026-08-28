@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.document.kyc.controller;
 
 import com.sni.bokaticowork.core.audit.aop.Audited;
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
@@ -35,10 +36,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequiredArgsConstructor
@@ -61,7 +64,7 @@ public class KycController {
 
     @GetMapping
     public ResponseEntity<PaginatedResponse<KycCaseResponse>> list(
-            @RequestParam(required = false) KycCaseStatus status,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) DocumentOwnerType ownerType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant submittedAfter,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant submittedBefore,
@@ -71,8 +74,31 @@ public class KycController {
             @RequestParam(required = false) KycRiskLevel riskLevel,
             @PageableDefault(size = 20, sort = "startedAt") Pageable pageable
     ) {
-        return ResponseEntity.ok(service.search(status, ownerType, submittedAfter, submittedBefore, reviewedBy,
+        return ResponseEntity.ok(service.search(resolveCaseStatus(status), ownerType, submittedAfter, submittedBefore, reviewedBy,
                 pendingReviewOnly, expiringWithinDays, riskLevel, pageable));
+    }
+
+    /**
+     * Resolves the {@code status} filter to a {@link KycCaseStatus}, tolerating UI-side aliases
+     * ({@code PENDING_REVIEW} → {@code SUBMITTED}, {@code IN_REVIEW} → {@code UNDER_REVIEW}) as well
+     * as the exact enum names. An unknown value yields a 400 (BadRequest) rather than a 500.
+     */
+    private KycCaseStatus resolveCaseStatus(String status) {
+        if (!StringUtils.hasText(status)) {
+            return null;
+        }
+        String normalized = status.trim().toUpperCase(Locale.ROOT);
+        return switch (normalized) {
+            case "PENDING_REVIEW", "PENDING" -> KycCaseStatus.SUBMITTED;
+            case "IN_REVIEW", "REVIEWING" -> KycCaseStatus.UNDER_REVIEW;
+            default -> {
+                try {
+                    yield KycCaseStatus.valueOf(normalized);
+                } catch (IllegalArgumentException ex) {
+                    throw new BadRequestException("Unsupported KYC case status: " + status);
+                }
+            }
+        };
     }
 
     @GetMapping("/dashboard")

@@ -306,7 +306,11 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BadRequestException("Wallet currency does not match payment intent currency");
         }
         BigDecimal paymentAmount = requestedIntentAmount(request.amount(), intent);
-        walletService.debit(wallet, paymentAmount, WalletEntryType.PAYMENT, "PAYMENT_INTENT", intent.getIntentNumber(), intent.getIntentNumber(), request.createdBy());
+        // Une intention de paiement n'est reglee qu'une fois : un double-clic ou un rejeu
+        // retombe sur l'ecriture d'origine au lieu de debiter deux fois.
+        walletService.debit(wallet, paymentAmount, WalletEntryType.PAYMENT, "PAYMENT_INTENT",
+                intent.getIntentNumber(), intent.getIntentNumber(), request.createdBy(),
+                "WALLET_PAYMENT:" + intent.getIntentNumber());
         PaymentTransaction transaction = saveSucceededTransaction(intent, PaymentMethod.WALLET, "INTERNAL_WALLET", wallet.getWalletNumber(), request.createdBy(), request.metadataJson(), paymentAmount);
         reconcileIntent(intent);
         creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), request.createdBy());
@@ -462,7 +466,8 @@ public class PaymentServiceImpl implements PaymentService {
                     throw new BadRequestException("La devise du portefeuille ne correspond pas à celle de la facture");
                 }
                 walletService.debit(wallet, intent.getAmount(), WalletEntryType.PAYMENT,
-                        "PAYMENT_INTENT", intent.getIntentNumber(), intent.getIntentNumber(), request.processedBy());
+                        "PAYMENT_INTENT", intent.getIntentNumber(), intent.getIntentNumber(), request.processedBy(),
+                        "WALLET_PAYMENT:" + intent.getIntentNumber());
                 yield saveSucceededTransaction(intent, PaymentMethod.WALLET, "INTERNAL_WALLET",
                         wallet.getWalletNumber(), resolveMemberProcessing(request.processedBy()), request.metadataJson());
             }
@@ -824,7 +829,11 @@ public class PaymentServiceImpl implements PaymentService {
         allocationService.reverseAllocations(original, amount);
         if (original.getPaymentMethod() == PaymentMethod.WALLET) {
             WalletAccount wallet = walletService.serviceWallet(original.getProviderReference());
-            walletService.credit(wallet, amount, WalletEntryType.REFUND, "PAYMENT_TRANSACTION", original.getTransactionNumber(), request.reason(), request.processedBy());
+            // Pas de cle d'idempotence : une transaction peut etre remboursee en plusieurs fois.
+            // La protection contre le sur-remboursement reste le controle refundedSoFar + amount
+            // <= original.amount effectue plus haut.
+            walletService.credit(wallet, amount, WalletEntryType.REFUND, "PAYMENT_TRANSACTION",
+                    original.getTransactionNumber(), request.reason(), request.processedBy(), null);
         }
         String refundMethodCtx = CodeComposer.abbrev(original.getPaymentMethod().name());
         long refundSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
@@ -1002,7 +1011,9 @@ public class PaymentServiceImpl implements PaymentService {
         }
         var wallet = walletService.getOrCreate(intent.getCustomerType(), intent.getCustomerCode(), intent.getCurrency());
         WalletAccount account = walletService.serviceWallet(wallet.walletNumber());
-        walletService.credit(account, overpayment, WalletEntryType.OVERPAYMENT_CREDIT, "PAYMENT_INTENT", intent.getIntentNumber(), "OVERPAYMENT", createdBy);
+        walletService.credit(account, overpayment, WalletEntryType.OVERPAYMENT_CREDIT, "PAYMENT_INTENT",
+                intent.getIntentNumber(), "OVERPAYMENT", createdBy,
+                "OVERPAYMENT:" + intent.getIntentNumber());
     }
 
     private void validatePositive(BigDecimal amount) {

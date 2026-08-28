@@ -6,13 +6,17 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentLi
 import com.sni.bokaticowork.features.billing.enums.BillingDiscountType;
 import com.sni.bokaticowork.features.billing.enums.BillingLineType;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentLine;
+import com.sni.bokaticowork.features.billing.model.ServiceCatalogItem;
+import com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,6 +25,7 @@ public class BillingCalculationService {
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private final BillingTaxRuleResolver taxRuleResolver;
+    private final ServiceCatalogItemRepository catalogItemRepository;
 
     public CalculatedDocument calculate(List<CreateBillingDocumentLineRequest> lines,
                                         List<CreateBillingDocumentDiscountRequest> discounts) {
@@ -36,7 +41,9 @@ public class BillingCalculationService {
         BigDecimal vat = BigDecimal.ZERO;
         BigDecimal additionalCent = BigDecimal.ZERO;
         BigDecimal tax = BigDecimal.ZERO;
-        BigDecimal totalBeforeDocumentDiscount = BigDecimal.ZERO;
+        // Net HT des lignes exonerees. Indispensable : leur taxableAmount vaut zero par
+        // construction, donc les additionner a la base taxable les ferait disparaitre du total.
+        BigDecimal nonTaxableNet = BigDecimal.ZERO;
 
         int index = 1;
         for (CreateBillingDocumentLineRequest request : lines) {
@@ -52,24 +59,41 @@ public class BillingCalculationService {
             vat = vat.add(line.getVatAmount());
             additionalCent = additionalCent.add(line.getAdditionalCentAmount());
             tax = tax.add(line.getTaxAmount());
-            totalBeforeDocumentDiscount = totalBeforeDocumentDiscount.add(line.getTotalAmount());
+            if (!Boolean.TRUE.equals(line.getTaxable())) {
+                nonTaxableNet = nonTaxableNet.add(
+                        money(line.getSubtotalAmount().subtract(line.getDiscountAmount())));
+            }
         }
 
-        // La remise globale s'applique sur le HT net (= base taxable avant remise globale),
-        // pas sur le TTC · le montant taxé est le HT après remise.
-        BigDecimal netHT = taxable; // somme des (subtotal - remise ligne) par ligne
+        // La remise globale s'applique sur le HT net de TOUTES les lignes, exonerees comprises.
+        //
+        // Le total du document se calculait auparavant comme "base taxable + taxes". Comme
+        // calculateTaxExcludedAmounts force taxableAmount a zero sur une ligne exoneree, toute
+        // ligne non taxable etait comptee pour zero dans le total : un avoir - dont la ligne
+        // d'ajustement est toujours taxable=false - ressortait a 0,00 et son application levait
+        // "Payment amount must be positive", rendant impossible l'annulation d'une facture scellee.
+        BigDecimal taxableNet = taxable;
+        BigDecimal netHT = money(taxableNet.add(nonTaxableNet));
         BigDecimal documentDiscount = calculateDocumentDiscounts(netHT, discounts);
-        BigDecimal adjustedTaxable = money(netHT.subtract(documentDiscount));
         BigDecimal discountAmount = money(lineDiscount.add(documentDiscount));
 
+        // La remise globale est repartie au prorata entre part taxable et part exoneree : seule
+        // la fraction imputee au taxable doit reduire l'assiette et donc les taxes.
+        BigDecimal taxableShare = netHT.signum() > 0
+                ? taxableNet.divide(netHT, 8, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        BigDecimal discountOnTaxable = money(documentDiscount.multiply(taxableShare));
+        BigDecimal adjustedTaxable = money(taxableNet.subtract(discountOnTaxable));
+        BigDecimal adjustedNonTaxable = money(nonTaxableNet.subtract(documentDiscount.subtract(discountOnTaxable)));
+
         // Réduction proportionnelle des taxes sur la base ajustée
-        BigDecimal scaleFactor = netHT.compareTo(BigDecimal.ZERO) > 0
-                ? adjustedTaxable.divide(netHT, 8, RoundingMode.HALF_UP)
+        BigDecimal scaleFactor = taxableNet.compareTo(BigDecimal.ZERO) > 0
+                ? adjustedTaxable.divide(taxableNet, 8, RoundingMode.HALF_UP)
                 : BigDecimal.ONE;
         BigDecimal adjustedVat = money(vat.multiply(scaleFactor));
         BigDecimal adjustedAdditionalCent = money(additionalCent.multiply(scaleFactor));
         BigDecimal adjustedTax = money(adjustedVat.add(adjustedAdditionalCent));
-        BigDecimal total = money(adjustedTaxable.add(adjustedTax));
+        BigDecimal total = money(adjustedTaxable.add(adjustedNonTaxable).add(adjustedTax));
 
         if (total.signum() < 0) {
             throw new BadRequestException("Billing document total cannot be negative");
@@ -86,6 +110,27 @@ public class BillingCalculationService {
         );
     }
 
+    /** Valeurs reprises du catalogue quand la ligne ne les precise pas. */
+    private record CatalogDefaults(String category, String unit) {
+        static final CatalogDefaults NONE = new CatalogDefaults(null, null);
+    }
+
+    private CatalogDefaults catalogDefaults(String itemCode) {
+        if (!StringUtils.hasText(itemCode)) {
+            return CatalogDefaults.NONE;
+        }
+        Optional<ServiceCatalogItem> item = catalogItemRepository.findByItemCode(itemCode.trim());
+        return item.map(found -> new CatalogDefaults(found.getCategory(), found.getUnit()))
+                .orElse(CatalogDefaults.NONE);
+    }
+
+    private String firstNonBlank(String preferred, String fallback) {
+        if (StringUtils.hasText(preferred)) {
+            return preferred.trim();
+        }
+        return StringUtils.hasText(fallback) ? fallback.trim() : null;
+    }
+
     private BillingDocumentLine calculateLine(CreateBillingDocumentLineRequest request,
                                               int defaultOrder,
                                               BillingTaxRuleResolver.TaxProfile taxProfile) {
@@ -99,14 +144,20 @@ public class BillingCalculationService {
                 ? calculateTaxIncludedAmounts(quantity, unitPrice, request.discountRate(), request.discountAmount(), vatRate, additionalCentRate)
                 : calculateTaxExcludedAmounts(quantity, unitPrice, request.discountRate(), request.discountAmount(), taxable, vatRate, additionalCentRate);
 
+        // Categorie et unite sont figees sur la ligne. Quand elles ne sont pas fournies et que la
+        // ligne designe un article du catalogue, on les en reprend : sans ce repli, elles
+        // resteraient nulles dans la quasi-totalite des cas et n'apparaitraient jamais au PDF.
+        CatalogDefaults defaults = catalogDefaults(request.itemCode());
+
         return BillingDocumentLine.builder()
                 .lineOrder(request.lineOrder() == null ? defaultOrder : request.lineOrder())
                 .lineType(request.lineType() == null ? BillingLineType.SERVICE : request.lineType())
                 .itemCode(trim(request.itemCode()))
+                .category(firstNonBlank(request.category(), defaults.category()))
                 .description(request.description().trim())
                 .detailedDescription(trim(request.detailedDescription()))
                 .quantity(money(quantity))
-                .unit(trim(request.unit()))
+                .unit(firstNonBlank(request.unit(), defaults.unit()))
                 .unitPrice(money(unitPrice))
                 .discountRate(request.discountRate() == null ? BigDecimal.ZERO : money(request.discountRate()))
                 .discountAmount(amounts.discountAmount())

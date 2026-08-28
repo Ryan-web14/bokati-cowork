@@ -86,6 +86,13 @@ public class Document {
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
+    /**
+     * Closest pre-expiry threshold (in days) already notified. The hourly worker matches the same
+     * document on every run of the day it hits a threshold, so it needs this to stop re-notifying.
+     */
+    @Column(name = "expiry_reminder_sent_days")
+    private Integer expiryReminderSentDays;
+
     @Column(name = "uploaded_by")
     private Long uploadedBy;
 

@@ -115,6 +115,7 @@ public interface PaymentIntentRepository extends JpaRepository<PaymentIntent, Lo
               AND expires_at IS NOT NULL
               AND expires_at > :now
               AND expires_at <= :alertThreshold
+              AND expiry_alert_sent_at IS NULL
             ORDER BY expires_at ASC
             """)
     java.util.List<PaymentIntent> findExpiringSoon(@Param("now") Instant now,

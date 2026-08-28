@@ -11,6 +11,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -59,6 +60,15 @@ public class WalletAccount {
 
     @Column(name = "held_balance", nullable = false, precision = 19, scale = 4)
     private BigDecimal heldBalance;
+
+    /**
+     * Verrou optimiste · seconde ligne de defense derriere le SELECT ... FOR UPDATE pose par
+     * {@code WalletLedgerService}. Tout chemin d'ecriture qui oublierait le verrou pessimiste
+     * echoue au commit au lieu d'ecraser le solde ecrit par une transaction concurrente.
+     */
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
 
     @Column(name = "opened_at", nullable = false)
     private Instant openedAt;

@@ -16,6 +16,14 @@ public interface WalletAccountRepository extends JpaRepository<WalletAccount, Lo
     @Query(nativeQuery = true, value = "SELECT * FROM wallet_account WHERE wallet_number = :walletNumber")
     Optional<WalletAccount> findByWalletNumber(@Param("walletNumber") String walletNumber);
 
+    /**
+     * Identifiants des portefeuilles a rapprocher, pour le worker de reconciliation.
+     * Requete sur la cle seule : le worker recharge chaque compte dans sa propre transaction
+     * afin qu'un ecart isole ne fasse pas echouer le lot entier.
+     */
+    @Query(nativeQuery = true, value = "SELECT id FROM wallet_account WHERE status <> 'CLOSED' ORDER BY id")
+    java.util.List<Long> findAllOpenIds();
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM wallet_account

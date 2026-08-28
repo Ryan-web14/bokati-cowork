@@ -2,8 +2,11 @@ package com.sni.bokaticowork.core.communication.mailService.consumer;
 
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.communication.mailService.dto.EmailRabbitMessage;
+import com.sni.bokaticowork.core.communication.mailService.enums.EmailDeliveryStatus;
+import com.sni.bokaticowork.core.communication.mailService.model.EmailDeliveryLog;
 import com.sni.bokaticowork.core.communication.mailService.service.EmailDeliveryTracker;
 import com.sni.bokaticowork.core.communication.mailService.service.GraphApiRateLimiter;
+import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -39,6 +42,25 @@ public class EmailConsumer {
     }
 
     private void processEmail(EmailRabbitMessage message) {
+        EmailDeliveryLog deliveryLog;
+        try {
+            deliveryLog = deliveryTracker.getEntity(message.emailNumber());
+        } catch (ResourceNotFoundException ex) {
+            // Nothing to track the send against. Nacking would loop the message through the DLQ
+            // forever, so drop it here instead — an untracked send is worse than a lost one.
+            log.error("No delivery log for email {} · dropping message to {}",
+                    message.emailNumber(), message.to());
+            return;
+        }
+
+        if (deliveryLog.getStatus() == EmailDeliveryStatus.SENT) {
+            // A broker redelivery or a duplicate publish for a message that already went out.
+            // Ack and stop, otherwise the recipient gets a second copy.
+            log.warn("Email {} already delivered to {} on {} · skipping duplicate send",
+                    message.emailNumber(), deliveryLog.getRecipientEmail(), deliveryLog.getSentAt());
+            return;
+        }
+
         rateLimiter.acquirePermission();
 
         deliveryTracker.markSending(message.emailNumber());

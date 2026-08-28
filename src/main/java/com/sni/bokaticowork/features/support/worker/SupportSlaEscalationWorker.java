@@ -55,12 +55,19 @@ public class SupportSlaEscalationWorker {
 
         if (!firstResponseBreached && !resolutionBreached) return;
 
-        if (firstResponseBreached) {
+        // Un ticket reste en dépassement tant qu'il n'est pas traité, et ce worker tourne toutes
+        // les heures : sans ces marqueurs l'alerte repartait à chaque passage, indéfiniment. La
+        // relance dans la durée est le rôle de l'escalade ci-dessous, qui a déjà son délai.
+        if (firstResponseBreached && ticket.getFirstResponseAlertSentAt() == null) {
             emailService.sendSlaBreachAlert(ticket, "FIRST_RESPONSE");
+            ticket.setFirstResponseAlertSentAt(now);
+            ticketRepository.save(ticket);
             log.warn("SLA première réponse dépassé · {}", ticket.getTicketNumber());
         }
-        if (resolutionBreached) {
+        if (resolutionBreached && ticket.getResolutionAlertSentAt() == null) {
             emailService.sendSlaBreachAlert(ticket, "RESOLUTION");
+            ticket.setResolutionAlertSentAt(now);
+            ticketRepository.save(ticket);
             log.warn("SLA résolution dépassé · {}", ticket.getTicketNumber());
             bumpPriority(ticket);
         }

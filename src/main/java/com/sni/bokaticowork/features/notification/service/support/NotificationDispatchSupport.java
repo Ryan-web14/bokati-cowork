@@ -22,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
@@ -124,6 +126,10 @@ public class NotificationDispatchSupport {
     public NotificationMessage retry(String notificationNumber) {
         NotificationMessage message = messageRepository.findByNotificationNumber(notificationNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification " + notificationNumber + " not found"));
+        if (message.getStatus() == NotificationDeliveryStatus.SENT) {
+            throw new BadRequestException("Notification " + notificationNumber + " was already sent on "
+                    + message.getSentAt() + " and cannot be retried");
+        }
         message.setStatus(NotificationDeliveryStatus.PENDING);
         message.setAvailableAt(Instant.now());
         message.setLastError(null);
@@ -134,6 +140,11 @@ public class NotificationDispatchSupport {
     public NotificationMessage dispatchIfDue(String notificationNumber) {
         NotificationMessage message = messageRepository.findByNotificationNumber(notificationNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification " + notificationNumber + " not found"));
+        // Callers dispatch straight after create(), which races the worker for the same row.
+        // Whoever gets there second must not send it again.
+        if (message.getStatus() != NotificationDeliveryStatus.PENDING) {
+            return message;
+        }
         if (message.getAvailableAt() != null && message.getAvailableAt().isAfter(Instant.now())) {
             return message;
         }
@@ -147,12 +158,12 @@ public class NotificationDispatchSupport {
 
         if (message.getChannel() == NotificationChannel.IN_APP) {
             markSent(message);
-            publishInAppToRabbit(message);
+            afterCommit(() -> publishInAppToRabbit(message));
             return;
         }
         if (message.getChannel() == NotificationChannel.WEBHOOK) {
             markSent(message);
-            publishWebhookToRabbit(message);
+            afterCommit(() -> publishWebhookToRabbit(message));
             return;
         }
         if (!StringUtils.hasText(message.getRecipientEmail())) {
@@ -160,8 +171,26 @@ public class NotificationDispatchSupport {
             return;
         }
 
-        publishEmailToRabbit(message);
+        // Render inside the transaction, so a template failure still marks the message FAILED, but
+        // hand the mail over only once SENT is committed. Publishing inline meant a rollback of the
+        // batch restored the row to PENDING with the mail already on the wire, and the next worker
+        // run sent it a second time.
+        Runnable publish = prepareEmailPublish(message);
         markSent(message);
+        afterCommit(publish);
+    }
+
+    private void afterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 
     private void publishInAppToRabbit(NotificationMessage message) {
@@ -210,7 +239,11 @@ public class NotificationDispatchSupport {
         }
     }
 
-    private void publishEmailToRabbit(NotificationMessage message) {
+    /**
+     * Renders the mail now and returns the hand-off to run after commit. A rendering failure still
+     * propagates inside the transaction, so the message is marked FAILED and retried as before.
+     */
+    private Runnable prepareEmailPublish(NotificationMessage message) {
         Map<String, Object> variables = payloadSupport.toMap(message.getPayloadJson());
         variables.putIfAbsent("recipientName", defaultText(message.getRecipientName(), "client"));
         variables.putIfAbsent("eventType", message.getEventType());
@@ -218,12 +251,20 @@ public class NotificationDispatchSupport {
 
         String html = renderBody(message, variables);
         EmailPriority priority = EmailPriority.fromEventType(message.getEventType());
+        String recipient = message.getRecipientEmail();
+        String subject = message.getSubject();
+        String notificationNumber = message.getNotificationNumber();
 
-        try {
-            emailSender.sendHtmlEmail(message.getRecipientEmail(), message.getSubject(), html, priority);
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to queue email for " + message.getRecipientEmail(), ex);
-        }
+        return () -> {
+            try {
+                emailSender.sendHtmlEmail(recipient, subject, html, priority);
+            } catch (Exception ex) {
+                // Past the commit the status can no longer be rolled back to FAILED. The send is
+                // tracked on its own delivery log, which is where a failure surfaces from here.
+                log.error("Failed to queue email for notification {} to {}: {}",
+                        notificationNumber, recipient, ex.getMessage());
+            }
+        };
     }
 
     private void applyTemplate(NotificationMessage message) {
