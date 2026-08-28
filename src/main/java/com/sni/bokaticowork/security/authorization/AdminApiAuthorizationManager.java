@@ -123,6 +123,12 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/admin/audit") || path.startsWith("/admin/settings-audit")) {
             return permission("SYSTEM", "AUDIT");
         }
+        // AdminNotificationController est monte sous /admin/notifications : sans cette regle il
+        // tombe dans le repli /admin/ et la cloche de notifications exige SYSTEM:SETTINGS, un
+        // droit de configuration systeme. On aligne sur /notifications, qui demande ADMIN:ACCESS.
+        if (path.startsWith("/admin/notifications")) {
+            return permission("ADMIN", "ACCESS");
+        }
         if (path.startsWith("/admin/")) {
             return permission("SYSTEM", "SETTINGS");
         }

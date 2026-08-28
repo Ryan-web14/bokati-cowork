@@ -79,6 +79,21 @@ class AdminApiAuthorizationManagerTest {
     }
 
     @Test
+    void shouldNotRequireSystemSettingsToReadTheNotificationBell() {
+        // Regression : AdminNotificationController est monte sous /admin/notifications, donc le
+        // repli /admin/ exigeait SYSTEM:SETTINGS pour afficher le compteur de non-lus. Un admin
+        // sans droit de configuration systeme recevait un 403 sur sa propre cloche.
+        assertThat(requiredPermissionFor("GET", BASE + "/admin/notifications/unread-count"))
+                .isEqualTo("ADMIN:ACCESS");
+        assertThat(requiredPermissionFor("GET", BASE + "/admin/notifications/unread"))
+                .isEqualTo("ADMIN:ACCESS");
+
+        // Les autres routes /admin/ restent sur SYSTEM:SETTINGS.
+        assertThat(requiredPermissionFor("GET", BASE + "/admin/settings"))
+                .isEqualTo("SYSTEM:SETTINGS");
+    }
+
+    @Test
     void shouldExposeTheRequiredPermissionOnDenialSoA403IsDiagnosable() {
         MockHttpServletRequest request = new MockHttpServletRequest("PATCH", BASE + "/billing/documents/INV-001/issue");
         manager.authorize(() -> authentication(List.of("ROLE_ADMIN")), new RequestAuthorizationContext(request));
