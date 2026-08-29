@@ -56,7 +56,10 @@ public class BillingDiscountGuard {
                                             BigDecimal totalDiscount) {
         List<DiscountViolation> violations = new ArrayList<>();
         if (lines != null) {
-            lines.forEach(line -> evaluateLine(line, violations));
+            lines.forEach(line -> {
+                evaluateLineFallback(line, violations);
+                evaluateLineAgainstCatalog(line, violations);
+            });
         }
         evaluateDocument(subtotal, totalDiscount, violations);
         return violations;
@@ -96,7 +99,46 @@ public class BillingDiscountGuard {
     // Controles
     // =================================================================================
 
-    private void evaluateLine(BillingDocumentLine line, List<DiscountViolation> violations) {
+    /**
+     * Garde-fou de dernier recours, independant du catalogue.
+     *
+     * <p>Il couvre le cas le plus courant et le moins surveille : la ligne libre, saisie sans
+     * article, pour laquelle aucune limite catalogue n'existe et qui echapperait donc a tout
+     * controle par ligne. Par defaut, une ligne conserve au moins la moitie de son montant de base.
+     *
+     * <p>Il s'applique meme lorsque l'article porte la politique {@code NONE} : celle-ci retire les
+     * limites <b>de l'article</b>, elle ne leve pas la limite du systeme.
+     */
+    private void evaluateLineFallback(BillingDocumentLine line, List<DiscountViolation> violations) {
+        if (line == null || !properties.isEnabled()) {
+            return;
+        }
+        BigDecimal gross = orZero(line.getSubtotalAmount());
+        BigDecimal net = gross.subtract(orZero(line.getDiscountAmount()));
+
+        BigDecimal minRate = properties.getDefaultMinNetRate();
+        if (minRate != null && minRate.signum() > 0 && gross.signum() > 0) {
+            BigDecimal minNet = gross.multiply(minRate).divide(HUNDRED, 4, RoundingMode.HALF_UP);
+            if (net.compareTo(minNet) < 0) {
+                violations.add(new DiscountViolation(
+                        ViolationType.LINE_MIN_NET_RATE.name(), Severity.BLOCK.name(),
+                        line.getItemCode(), line.getDescription(), net, minNet,
+                        "« " + label(line) + " » tombe a " + plain(net) + " alors qu'une ligne doit conserver "
+                                + plain(minRate) + " % de son montant de base, soit " + plain(minNet)));
+            }
+        }
+
+        BigDecimal minAmount = properties.getMinLineNetAmount();
+        if (minAmount != null && gross.signum() > 0 && net.compareTo(minAmount) < 0) {
+            violations.add(new DiscountViolation(
+                    ViolationType.LINE_MIN_NET_AMOUNT.name(), Severity.BLOCK.name(),
+                    line.getItemCode(), line.getDescription(), net, minAmount,
+                    "« " + label(line) + " » tombe a " + plain(net)
+                            + " alors que le montant net minimal est " + plain(minAmount)));
+        }
+    }
+
+    private void evaluateLineAgainstCatalog(BillingDocumentLine line, List<DiscountViolation> violations) {
         if (line == null || !StringUtils.hasText(line.getItemCode())) {
             return;
         }
@@ -216,9 +258,28 @@ public class BillingDiscountGuard {
         return value.stripTrailingZeros().toPlainString();
     }
 
+    /** Libelle lisible d'une ligne · sa description, a defaut son code article. */
+    private String label(BillingDocumentLine line) {
+        if (StringUtils.hasText(line.getDescription())) {
+            return line.getDescription();
+        }
+        return StringUtils.hasText(line.getItemCode()) ? line.getItemCode() : "ligne sans libelle";
+    }
+
     public enum Severity { WARN, BLOCK }
 
-    public enum ViolationType { FLOOR_PRICE, MAX_DISCOUNT_RATE, DOCUMENT_DISCOUNT_RATE, DOCUMENT_DISCOUNT_AMOUNT }
+    public enum ViolationType {
+        /** Prix net sous le plancher de l'article, saisi ou derive de son cout. */
+        FLOOR_PRICE,
+        /** Taux de remise au-dela du maximum admis par l'article. */
+        MAX_DISCOUNT_RATE,
+        /** Ligne descendue sous la part minimale du montant de base fixee par configuration. */
+        LINE_MIN_NET_RATE,
+        /** Ligne descendue sous le montant net minimal absolu. */
+        LINE_MIN_NET_AMOUNT,
+        DOCUMENT_DISCOUNT_RATE,
+        DOCUMENT_DISCOUNT_AMOUNT
+    }
 
     /**
      * @param observed valeur constatee · taux en % ou montant selon le type

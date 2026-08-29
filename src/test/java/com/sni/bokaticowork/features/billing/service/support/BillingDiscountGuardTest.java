@@ -84,8 +84,11 @@ class BillingDiscountGuardTest {
 
     @Test
     void shouldCountLineDiscountsInTheGlobalThreshold() {
-        // Aucune limite au catalogue · seul le seuil global joue. 30 % depasse les 20 % admis.
+        // Le seuil global porte sur la remise totale · une remise portee par la ligne, et non par
+        // le document, doit malgre tout le declencher.
         when(catalogItemRepository.findByItemCode(anyString())).thenReturn(Optional.empty());
+        properties.setMaxDocumentDiscountRate(new BigDecimal("20"));
+        properties.setDefaultMinNetRate(null);
 
         var violations = guard.evaluate(List.of(line("10000", "3000", "1")),
                 new BigDecimal("10000"), new BigDecimal("3000"));
@@ -96,12 +99,74 @@ class BillingDiscountGuardTest {
     }
 
     @Test
-    void shouldApplyNoGlobalThresholdWhenTheGuardIsDisabled() {
+    void shouldStopALineFromFallingBelowHalfOfItsBaseAmount() {
+        // Le repli par defaut · aucune limite au catalogue, mais une ligne ne peut pas conserver
+        // moins de la moitie de son montant de base.
+        when(catalogItemRepository.findByItemCode(anyString())).thenReturn(Optional.empty());
+
+        var violations = guard.evaluate(List.of(line("10000", "6000", "1")),
+                new BigDecimal("10000"), new BigDecimal("6000"));
+
+        assertThat(violations).extracting("type")
+                .contains("LINE_MIN_NET_RATE");
+        var fallback = violations.stream().filter(v -> v.type().equals("LINE_MIN_NET_RATE")).findFirst().orElseThrow();
+        assertThat(fallback.observed()).isEqualByComparingTo("4000");
+        assertThat(fallback.limit()).isEqualByComparingTo("5000");
+        assertThat(fallback.severity()).isEqualTo("BLOCK");
+    }
+
+    @Test
+    void shouldAcceptALineSittingExactlyOnTheHalfwayMark() {
+        when(catalogItemRepository.findByItemCode(anyString())).thenReturn(Optional.empty());
+
+        assertThat(guard.evaluate(List.of(line("10000", "5000", "1")),
+                new BigDecimal("10000"), new BigDecimal("5000"))).isEmpty();
+    }
+
+    @Test
+    void shouldApplyTheFallbackEvenToAnItemWhosePolicyIsNone() {
+        // NONE retire les limites DE L'ARTICLE · elle ne leve pas la limite du systeme.
+        catalogReturns(item("NONE", null, null));
+
+        assertThat(guard.evaluate(List.of(line("10000", "6000", "1")),
+                new BigDecimal("10000"), new BigDecimal("6000")))
+                .extracting("type").contains("LINE_MIN_NET_RATE");
+    }
+
+    @Test
+    void shouldEnforceAConfiguredMinimumNetAmountPerLine() {
+        when(catalogItemRepository.findByItemCode(anyString())).thenReturn(Optional.empty());
+        properties.setDefaultMinNetRate(null);
+        properties.setMinLineNetAmount(new BigDecimal("8000"));
+
+        var violations = guard.evaluate(List.of(line("10000", "3000", "1")),
+                new BigDecimal("10000"), new BigDecimal("3000"));
+
+        assertThat(violations).hasSize(1);
+        assertThat(violations.getFirst().type()).isEqualTo("LINE_MIN_NET_AMOUNT");
+        assertThat(violations.getFirst().observed()).isEqualByComparingTo("7000");
+    }
+
+    @Test
+    void shouldApplyNoConfiguredLimitWhenTheGuardIsDisabled() {
+        // enabled ne gouverne que les limites de configuration · repli par ligne compris.
         properties.setEnabled(false);
         when(catalogItemRepository.findByItemCode(anyString())).thenReturn(Optional.empty());
 
         assertThat(guard.evaluate(List.of(line("10000", "9000", "1")),
                 new BigDecimal("10000"), new BigDecimal("9000"))).isEmpty();
+    }
+
+    @Test
+    void shouldKeepCatalogLimitsActiveWhenTheConfiguredGuardIsDisabled() {
+        // Couper les limites de configuration ne doit pas desarmer le catalogue : un plancher
+        // pose sur un article reste un plancher.
+        properties.setEnabled(false);
+        catalogReturns(item("BLOCK", "14000", null));
+
+        assertThat(guard.evaluate(List.of(line("15000", "2000", "1")),
+                new BigDecimal("15000"), new BigDecimal("2000")))
+                .extracting("type").containsExactly("FLOOR_PRICE");
     }
 
     @Test

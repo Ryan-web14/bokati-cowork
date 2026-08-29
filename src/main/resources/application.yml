@@ -92,14 +92,23 @@ bokati:
       timeout-ms: ${GRAPH_RATE_LIMIT_TIMEOUT_MS:30000}
   billing:
     discount-guard:
-      # Seuil global de remise, applique au document entier. Il complete les limites par article
-      # du catalogue (floor_price, max_discount_rate, discount_policy) : celles-ci encadrent
-      # chaque prestation, celui-ci encadre l'offre dans son ensemble. Le seuil porte sur la
-      # remise TOTALE, remises de ligne comprises · ne compter que la remise document laisserait
-      # le contourner en eclatant la meme remise sur les lignes.
+      # Limites de remise fixees par configuration, en complement de celles portees par chaque
+      # article du catalogue (floor_price, max_discount_rate, discount_policy).
+      # enabled ne gouverne que les limites ci-dessous · celles du catalogue relevent de la
+      # politique propre a chaque article et restent actives.
       # Le depassement reste possible avec la permission BILLING:DISCOUNT_OVERRIDE et un motif.
       enabled: ${BILLING_DISCOUNT_GUARD_ENABLED:true}
-      max-document-discount-rate: ${BILLING_MAX_DOCUMENT_DISCOUNT_RATE:20}
+
+      # Repli par ligne · part minimale du montant de base conservee apres remise. Couvre le cas
+      # le plus courant et le moins surveille : la ligne libre, saisie sans article, qui
+      # echapperait sinon a tout controle. A 50, une ligne de 10 000 ne descend pas sous 5 000.
+      default-min-net-rate: ${BILLING_MIN_LINE_NET_RATE:50}
+      # Montant net minimal absolu par ligne · vide, seul le taux ci-dessus s'applique.
+      min-line-net-amount: ${BILLING_MIN_LINE_NET_AMOUNT:}
+
+      # Seuil global · porte sur la remise TOTALE, remises de ligne comprises. Ne compter que la
+      # remise document laisserait le contourner en eclatant la meme remise sur les lignes.
+      max-document-discount-rate: ${BILLING_MAX_DOCUMENT_DISCOUNT_RATE:50}
       # Vide : seul le taux s'applique.
       max-document-discount-amount: ${BILLING_MAX_DOCUMENT_DISCOUNT_AMOUNT:}
     workers:
