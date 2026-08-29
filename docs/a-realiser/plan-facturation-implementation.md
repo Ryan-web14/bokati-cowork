@@ -75,26 +75,30 @@ Tous facultatifs sauf mention. Laissés vides, le comportement reste celui d'auj
 | `external_reference` | `VARCHAR(120)` | Référence dans un système tiers. |
 | `valid_from` / `valid_until` | `date` | Fenêtre de validité tarifaire. Hors fenêtre, l'article n'est plus proposé mais reste lisible sur les documents passés. |
 
-### 1.2 API d'administration
+### 1.2 API d'administration — correction
 
-`ServiceCatalogItem` ne se peuple aujourd'hui que par migration. Sans écran, ni le plancher ni
-le coût ne sont maintenables. C'est ce qui met ce lot en premier.
+**L'API existe déjà.** `ServiceCatalogController` expose la création, la liste paginée avec
+filtres, la mise à jour, l'activation, la désactivation, la suppression et un `lookup` unifié sur
+trois sources (catalogue, inventaire, ressources). Mon inventaire précédent affirmait le
+contraire ; c'était faux.
 
-```
-GET    /billing/catalog/items?category=&subcategory=&active=&q=
-GET    /billing/catalog/items/{itemCode}
-POST   /billing/catalog/items
-PUT    /billing/catalog/items/{itemCode}
-PATCH  /billing/catalog/items/{itemCode}/activate
-PATCH  /billing/catalog/items/{itemCode}/deactivate
-GET    /billing/catalog/categories
-```
+Ce lot se réduit donc à **enrichir l'existant** : les nouveaux champs traversent l'entité, les
+deux DTO de requête et le DTO de réponse, sans nouvel endpoint.
 
-Permission : `BILLING:READ` en lecture, `BILLING:UPDATE` en écriture, via les règles de chemin
-existantes. Aucune permission nouvelle à créer, donc aucun risque de droit fantôme.
+Deux ajouts au passage :
 
-**Suppression :** pas de `DELETE`. Un article référencé par des documents passés ne doit pas
-disparaître ; la désactivation le retire des propositions et préserve l'historique.
+- **`clearFields`** sur la requête de mise à jour. L'implémentation n'applique que les champs
+  non nuls ; sans mécanisme d'effacement explicite, un plancher posé par erreur ne pourrait
+  jamais être retiré par l'API.
+- **`effectiveFloorPrice` et `floorPriceOrigin`** sur la réponse. L'interface doit afficher le
+  plancher réellement appliqué — qui peut être dérivé alors que `floorPrice` est vide — et
+  pouvoir expliquer d'où il vient plutôt qu'opposer un nombre nu.
+
+**Remarque sur le `DELETE` existant.** Il supprime physiquement l'article. Comme
+`billing_document_line` conserve `item_code` sous forme de chaîne et non de clé étrangère,
+l'intégrité référentielle n'est pas menacée, mais la définition de l'article est perdue pour les
+documents passés. La désactivation reste préférable. Je ne l'ai pas retiré : ce serait une
+rupture d'API.
 
 ### 1.3 Migration
 

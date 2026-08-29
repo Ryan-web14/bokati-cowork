@@ -156,6 +156,20 @@ public class BillingDocument {
     @Column(name = "archived_at")
     private Instant archivedAt;
 
+    /**
+     * Derogation aux limites de remise. Les trois champs vont ensemble : un depassement
+     * silencieux n'aurait aucune valeur de controle, c'est le motif ecrit qui distingue une
+     * derogation assumee d'un contournement.
+     */
+    @Column(name = "discount_override_reason", columnDefinition = "text")
+    private String discountOverrideReason;
+
+    @Column(name = "discount_override_by", length = 180)
+    private String discountOverrideBy;
+
+    @Column(name = "discount_override_at")
+    private Instant discountOverrideAt;
+
     @Column(name = "customer_reference", length = 100)
     private String customerReference;
 
