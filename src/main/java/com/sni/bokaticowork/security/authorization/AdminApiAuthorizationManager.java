@@ -129,6 +129,13 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/admin/notifications")) {
             return permission("ADMIN", "ACCESS");
         }
+        // Maintenance : les lectures (previsualisation d'une purge, liste des candidats) ne
+        // modifient rien et doivent rester consultables sans droit de configuration systeme,
+        // sans quoi on ne peut pas verifier ce qu'une suppression emporterait avant de la lancer.
+        // Les verbes destructeurs restent, eux, sur SYSTEM:SETTINGS via le repli ci-dessous.
+        if (path.startsWith("/admin/maintenance") && HttpMethod.GET.matches(method)) {
+            return permission("ADMIN", "ACCESS");
+        }
         if (path.startsWith("/admin/")) {
             return permission("SYSTEM", "SETTINGS");
         }

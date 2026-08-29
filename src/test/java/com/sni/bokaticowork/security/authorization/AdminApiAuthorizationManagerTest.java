@@ -94,6 +94,24 @@ class AdminApiAuthorizationManagerTest {
     }
 
     @Test
+    void shouldSeparateMaintenanceReadsFromMaintenanceWrites() {
+        // Previsualiser ce qu'une purge emporterait ne modifie rien : exiger SYSTEM:SETTINGS pour
+        // cette lecture empechait de verifier avant de supprimer. La suppression elle-meme reste
+        // sur le droit de configuration systeme.
+        assertThat(requiredPermissionFor("GET", BASE + "/admin/maintenance/members/MBR-001/purge-preview"))
+                .isEqualTo("ADMIN:ACCESS");
+        assertThat(requiredPermissionFor("GET", BASE + "/admin/maintenance/members/purge-candidates"))
+                .isEqualTo("ADMIN:ACCESS");
+
+        assertThat(requiredPermissionFor("DELETE", BASE + "/admin/maintenance/members/MBR-001"))
+                .isEqualTo("SYSTEM:SETTINGS");
+        assertThat(requiredPermissionFor("POST", BASE + "/admin/maintenance/members/purge-batch"))
+                .isEqualTo("SYSTEM:SETTINGS");
+        assertThat(requiredPermissionFor("DELETE", BASE + "/admin/maintenance/purge-data"))
+                .isEqualTo("SYSTEM:SETTINGS");
+    }
+
+    @Test
     void shouldExposeTheRequiredPermissionOnDenialSoA403IsDiagnosable() {
         MockHttpServletRequest request = new MockHttpServletRequest("PATCH", BASE + "/billing/documents/INV-001/issue");
         manager.authorize(() -> authentication(List.of("ROLE_ADMIN")), new RequestAuthorizationContext(request));
