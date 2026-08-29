@@ -139,33 +139,121 @@ reste cohérent.
 
 ---
 
-## 5. Autres manques repérés
+## 5. Autres fonctionnalités proposées
 
-Classés par rapport valeur / coût. Aucun n'est demandé, tous sont des trous réels.
+Aucune n'est demandée. Toutes correspondent à un manque vérifié dans le code, pas à une liste
+générique de fonctions de facturation. Les relances sont volontairement exclues.
 
-| # | Manque | Pourquoi ça compte | Coût |
-|---|---|---|---|
-| 5.1 | **Le catalogue n'a pas d'API d'administration** — `ServiceCatalogItem` se peuple par migration | Sans écran, les garde-fous du § 3 ne sont pas administrables | 1 j |
-| 5.2 | **Grilles tarifaires par client** — un tarif négocié se ressaisit à chaque facture | Source d'erreur récurrente, et rend le § 3 bien plus utile | 2 j |
-| 5.3 | **Duplication avec report de date** — `duplicate` existe mais recopie les dates | Facturation récurrente manuelle | 0,5 j |
-| 5.4 | **Pas d'avoir partiel par ligne** — l'avoir porte un montant global | Un litige porte presque toujours sur une ligne précise | 1 j |
-| 5.5 | **`statementTotals` ne filtre pas `document_type`** — les devis entrent dans le total facturé du relevé client | Défaut de calcul, repéré le 2026-08-28, non corrigé | 0,25 j |
-| 5.6 | **Pas de relance graduée** — un seul modèle de rappel | Le recouvrement en dépend | 1 j |
+### 5.a — Encadrement commercial
 
-Le **5.5** est un vrai défaut et non une amélioration : il fausse un chiffre affiché au client.
-À traiter en premier, il coûte deux heures.
+Même famille que le § 3 : ce sont les garde-fous qui rendent la remise encadrée réellement utile.
+
+**5.1 — Encours client autorisé.** Aucune notion de plafond d'encours n'existe dans le code
+(`creditLimit` est introuvable). Un client peut accumuler des factures impayées sans qu'aucun
+seuil ne se déclenche. Deux champs sur `customer` — `creditLimit` et `creditLimitPolicy`
+(`NONE` / `WARN` / `BLOCK`) — et le contrôle à l'émission d'une facture ou à la confirmation
+d'une réservation. Le montant se lit déjà : `statementTotals` le calcule.
+**1,5 j.**
+
+**5.2 — Prix de revient et marge.** `ServiceCatalogItem` porte `unitPrice` mais aucun coût. En
+ajoutant `costPrice`, la simulation du § 1 affiche la marge par ligne et pour le document, et
+surtout le plancher du § 3 se **déduit du coût** au lieu d'être saisi à la main. C'est la
+différence entre bloquer sur un taux arbitraire et bloquer sur une marge réelle. Cette
+fonctionnalité change la nature du § 3 ; à décider avant de le construire.
+**1,5 j.**
+
+**5.3 — Validation à deux mains.** Au-delà d'un montant, une facture exige une seconde
+validation avant émission. Complète la permission `BILLING:DISCOUNT_OVERRIDE` du § 3 : l'une
+encadre la remise, l'autre le montant.
+**1,5 j.**
+
+### 5.b — Traitement des encaissements
+
+**5.4 — Lettrage multi-facture.** `PaymentAllocationService.allocateIfBillingDocument` rattache
+une transaction à **un seul** document, celui de son `sourceCode`. Un client qui règle trois
+factures d'un virement unique ne peut donc pas être lettré : il faut trois paiements séparés.
+Allocation automatique en FIFO sur les factures ouvertes du client, avec reprise manuelle.
+C'est, de toute la liste, le manque qui coûte le plus de temps administratif.
+**2 j.**
+
+### 5.c — Volume et cycle
+
+**5.5 — Facturation périodique consolidée.** `BillingAutoInvoiceService` émet une facture **par
+transaction de paiement**. Un client qui réserve quinze fois dans le mois reçoit quinze
+factures. Un travail périodique qui regroupe la consommation d'une période en un document
+unique par client réduirait d'autant le volume émis, envoyé et à recouvrer.
+**2,5 j.**
+
+**5.6 — Duplication avec report de date.** `duplicate` existe mais recopie les dates
+d'origine. Reporter la période d'un cran en fait l'outil de la facturation récurrente manuelle,
+en attendant le 5.5.
+**0,5 j.**
+
+**5.7 — Actions par lot.** Émettre, envoyer ou exporter l'ensemble des documents d'un filtre,
+en une opération suivie. Aujourd'hui tout se fait document par document.
+**1 j.**
+
+### 5.d — Documents
+
+**5.8 — Révisions de devis.** Un devis renégocié s'écrase. `BillingDocumentEditHistory` garde
+bien un instantané JSON par modification, mais il n'existe aucune notion de **version envoyée
+au client** : impossible de dire ce que le client a vu, ni de lui montrer ce qui a changé entre
+deux propositions. Numéroter les révisions et conserver chaque version émise.
+**1,5 j.**
+
+**5.9 — Avoir partiel par ligne.** L'avoir porte un montant global. Un litige porte presque
+toujours sur une ligne précise, et l'imputation comptable devrait la suivre.
+**1 j.**
+
+**5.10 — Pièces jointes.** Bon de commande client, procès-verbal de réception, justificatif.
+Le module documentaire et le stockage existent déjà, il ne manque que le rattachement.
+**0,75 j.**
+
+**5.11 — Règle d'arrondi.** L'arrondi est fixé dans le code. En XAF, les pièces sous 5 F ne
+circulent pas : pouvoir arrondir le total au franc ou aux 5 F évite les écarts de caisse à
+l'encaissement.
+**0,5 j.**
+
+### 5.e — Catalogue
+
+**5.12 — API d'administration du catalogue.** `ServiceCatalogItem` ne se peuple que par
+migration. Sans écran, ni les garde-fous du § 3 ni le coût du 5.2 ne sont administrables : ce
+point conditionne les deux.
+**1 j.**
+
+**5.13 — Grilles tarifaires par client.** Un tarif négocié se ressaisit à chaque facture.
+Source d'erreur récurrente, et rend le § 3 nettement plus pertinent — le plancher devient
+propre au contrat.
+**2 j.**
 
 ---
 
 ## 6. Ordre proposé
 
-1. **§ 5.5** — corriger le relevé client. 0,25 j, c'est un bug.
-2. **§ 1** — simulation. 0,5 j, débloque immédiatement le travail à la calculatrice.
-3. **§ 3** — garde-fous catalogue et seuil global. 2 j, sous réserve des décisions D-A à D-C.
-4. **§ 2** — remise cible. 1 j, s'appuie sur le § 1.
-5. **§ 4** — réassignation. 1,5 j.
-6. **§ 5.1** puis **§ 5.2** — catalogue administrable, puis grilles par client. 3 j.
+1. **§ 1** — simulation. *Livré le 2026-08-29.*
+2. **§ 5.12** — catalogue administrable. 1 j. Conditionne le § 3 et le 5.2.
+3. **§ 5.2** — prix de revient. 1,5 j. À trancher **avant** le § 3, dont il change la nature.
+4. **§ 3** — garde-fous et seuil global. 2 j, sous réserve des décisions D-A à D-C.
+5. **§ 2** — remise cible. 1 j.
+6. **§ 5.4** — lettrage multi-facture. 2 j. Le plus gros gain administratif de la liste.
+7. **§ 4** — réassignation. 1,5 j.
+8. **§ 5.1** — encours client. 1,5 j.
+9. Le reste, par ordre de besoin.
 
-Total pour les points demandés (§ 1 à § 4) : **5 j**. Avec le § 5 complet : **11 j**.
+Points demandés (§ 1 à § 4) : **4,5 j** restants. Avec le § 5 complet : **≈ 22 j**.
 
-Le § 1 et le § 5.5 ne dépendent d'aucune décision et peuvent démarrer tout de suite.
+Deux remarques sur l'enchaînement :
+
+- **Le 5.2 doit être tranché avant le § 3.** Bloquer sur une marge réelle plutôt que sur un
+  taux saisi à la main change la conception des garde-fous, pas seulement leur paramétrage.
+- **Le 5.12 conditionne les deux.** Tant que le catalogue se peuple par migration, un plancher
+  ou un coût ne peuvent pas être maintenus par un administrateur.
+
+---
+
+## 7. Déjà corrigé
+
+- **Relevé client.** `statementTotals` sommait tous les types de documents : les devis entraient
+  dans le total facturé montré au client. Limité aux factures et proformas le 2026-08-29.
+- **Facture annulée.** Elle restait en statut `PAID` après annulation par avoir, et son montant
+  continuait donc d'être compté en chiffre d'affaires. Corrigé le 2026-08-29.
