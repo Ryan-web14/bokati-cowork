@@ -20,6 +20,7 @@ import com.sni.bokaticowork.features.billing.dto.request.AddRecoverableItemsRequ
 import com.sni.bokaticowork.features.billing.dto.request.RecoverItemRequest;
 import com.sni.bokaticowork.features.billing.dto.request.WriteOffRecoverableRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.dto.response.SimulateBillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
@@ -66,6 +67,21 @@ public class BillingDocumentController {
     @PostMapping("/documents")
     public ResponseEntity<BillingDocumentResponse> create(@Valid @RequestBody CreateBillingDocumentRequest request) {
         return ResponseEntity.ok(billingDocumentService.create(request));
+    }
+
+    /**
+     * Calcule les totaux sans creer le document : rien n'est ecrit, aucun numero de sequence
+     * n'est consomme. Accepte le meme corps que la creation, ce qui permet a l'interface de
+     * simuler a chaque saisie puis d'envoyer la meme charge utile pour de bon.
+     *
+     * <p>La reponse detaille chaque ligne — brut, remise, taux de remise reellement obtenu, net —
+     * de sorte qu'il n'y ait plus a chercher un montant a la calculatrice ni a creer un brouillon
+     * pour connaitre un total.
+     */
+    @PostMapping("/documents/simulate")
+    public ResponseEntity<SimulateBillingDocumentResponse> simulate(
+            @Valid @RequestBody CreateBillingDocumentRequest request) {
+        return ResponseEntity.ok(billingDocumentService.simulate(request));
     }
 
     @PostMapping("/invoices/manual")

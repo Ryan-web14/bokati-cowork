@@ -21,6 +21,7 @@ import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentClauseR
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscountResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.dto.response.SimulateBillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
@@ -127,6 +128,64 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Override
+    @Transactional(readOnly = true)
+    public SimulateBillingDocumentResponse simulate(CreateBillingDocumentRequest request) {
+        BillingCalculationService.CalculatedDocument calculation =
+                calculationService.calculate(request.lines(), request.discounts());
+
+        List<SimulateBillingDocumentResponse.SimulatedLine> lines = calculation.lines().stream()
+                .map(this::simulatedLine)
+                .toList();
+
+        // La remise document n'est pas exposee separement par le calcul · elle se deduit de
+        // l'ecart entre la remise totale et la somme des remises portees par les lignes.
+        BigDecimal lineDiscount = calculation.lines().stream()
+                .map(line -> line.getDiscountAmount() == null ? BigDecimal.ZERO : line.getDiscountAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal documentDiscount = calculation.discountAmount().subtract(lineDiscount).max(BigDecimal.ZERO);
+
+        return new SimulateBillingDocumentResponse(
+                lines,
+                calculation.subtotalAmount(),
+                lineDiscount,
+                documentDiscount,
+                calculation.discountAmount(),
+                calculation.taxableAmount(),
+                calculation.vatAmount(),
+                calculation.additionalCentAmount(),
+                calculation.taxAmount(),
+                calculation.totalAmount());
+    }
+
+    private SimulateBillingDocumentResponse.SimulatedLine simulatedLine(BillingDocumentLine line) {
+        BigDecimal gross = line.getSubtotalAmount() == null ? BigDecimal.ZERO : line.getSubtotalAmount();
+        BigDecimal discount = line.getDiscountAmount() == null ? BigDecimal.ZERO : line.getDiscountAmount();
+        BigDecimal net = gross.subtract(discount);
+        // Le taux effectif est recalcule meme lorsque la remise a ete saisie en montant : c'est
+        // precisement le chiffre que l'on cherchait a la calculatrice.
+        BigDecimal effectiveRate = gross.signum() == 0
+                ? BigDecimal.ZERO
+                : discount.multiply(BigDecimal.valueOf(100)).divide(gross, 4, RoundingMode.HALF_UP);
+
+        return new SimulateBillingDocumentResponse.SimulatedLine(
+                line.getItemCode(),
+                line.getDescription(),
+                line.getCategory(),
+                line.getUnit(),
+                line.getQuantity(),
+                line.getUnitPrice(),
+                gross,
+                line.getDiscountRate(),
+                discount,
+                effectiveRate,
+                net,
+                line.getTaxAmount(),
+                line.getTotalAmount(),
+                line.getTaxable(),
+                line.getOptional());
+    }
 
     @Override
     public BillingDocumentResponse create(CreateBillingDocumentRequest request) {

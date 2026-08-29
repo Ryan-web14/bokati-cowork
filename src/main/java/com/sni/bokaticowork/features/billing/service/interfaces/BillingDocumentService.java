@@ -11,6 +11,7 @@ import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentRe
 import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingRecipientRequest;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.dto.response.SimulateBillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
@@ -21,6 +22,13 @@ import java.time.LocalDate;
 
 public interface BillingDocumentService {
     BillingDocumentResponse create(CreateBillingDocumentRequest request);
+
+    /**
+     * Calcule les totaux d'un document sans le creer : rien n'est ecrit, aucun numero de
+     * sequence n'est consomme. Accepte le meme corps que {@link #create}, de sorte que
+     * l'interface puisse simuler puis envoyer la meme charge utile.
+     */
+    SimulateBillingDocumentResponse simulate(CreateBillingDocumentRequest request);
     BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request);
 
     /**

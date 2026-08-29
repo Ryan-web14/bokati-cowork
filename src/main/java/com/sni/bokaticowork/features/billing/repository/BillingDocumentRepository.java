@@ -129,6 +129,7 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
             WHERE UPPER(TRIM(customer_type)) = UPPER(TRIM(CAST(:customerType AS VARCHAR)))
               AND UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR)))
               AND status NOT IN ('CANCELLED','VOIDED')
+              AND document_type IN ('INVOICE', 'PROFORMA_INVOICE')
             """)
     List<Object[]> statementTotals(@Param("customerType") String customerType,
                                    @Param("customerCode") String customerCode);
