@@ -148,9 +148,18 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.duplicate(documentNumber));
     }
 
+    /**
+     * Émet le document. C'est ici que les limites de remise bloquent — au brouillon elles se
+     * contentent d'avertir, de sorte qu'une offre puisse se construire librement.
+     *
+     * <p>{@code discountOverrideReason} lève le blocage, à condition que l'appelant détienne
+     * {@code BILLING:DISCOUNT_OVERRIDE}. Le motif est conservé sur le document et tracé.
+     */
     @PatchMapping("/documents/{documentNumber}/issue")
-    public ResponseEntity<BillingDocumentResponse> issue(@PathVariable String documentNumber) {
-        return ResponseEntity.ok(billingDocumentService.issue(documentNumber));
+    public ResponseEntity<BillingDocumentResponse> issue(
+            @PathVariable String documentNumber,
+            @RequestParam(required = false) String discountOverrideReason) {
+        return ResponseEntity.ok(billingDocumentService.issue(documentNumber, discountOverrideReason));
     }
 
     @PatchMapping("/documents/{documentNumber}/validate")

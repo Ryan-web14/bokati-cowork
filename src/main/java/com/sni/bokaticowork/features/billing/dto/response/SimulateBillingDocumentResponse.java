@@ -27,7 +27,14 @@ public record SimulateBillingDocumentResponse(
         BigDecimal vatAmount,
         BigDecimal additionalCentAmount,
         BigDecimal taxAmount,
-        BigDecimal totalAmount) {
+        BigDecimal totalAmount,
+        /**
+         * Depassements constates · la simulation les annonce sans jamais refuser. Ceux de
+         * severite {@code BLOCK} empecheront l'emission, sauf derogation motivee. C'est ce qui
+         * permet a l'interface d'avertir pendant la saisie plutot qu'au moment d'emettre.
+         */
+        List<com.sni.bokaticowork.features.billing.service.support.BillingDiscountGuard.DiscountViolation> violations,
+        Boolean blocked) {
 
     /**
      * @param netAmount      brut moins remise · le montant reellement facture pour cette ligne

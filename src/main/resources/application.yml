@@ -91,6 +91,17 @@ bokati:
       limit-refresh-period-ms: ${GRAPH_RATE_LIMIT_REFRESH_MS:60000}
       timeout-ms: ${GRAPH_RATE_LIMIT_TIMEOUT_MS:30000}
   billing:
+    discount-guard:
+      # Seuil global de remise, applique au document entier. Il complete les limites par article
+      # du catalogue (floor_price, max_discount_rate, discount_policy) : celles-ci encadrent
+      # chaque prestation, celui-ci encadre l'offre dans son ensemble. Le seuil porte sur la
+      # remise TOTALE, remises de ligne comprises · ne compter que la remise document laisserait
+      # le contourner en eclatant la meme remise sur les lignes.
+      # Le depassement reste possible avec la permission BILLING:DISCOUNT_OVERRIDE et un motif.
+      enabled: ${BILLING_DISCOUNT_GUARD_ENABLED:true}
+      max-document-discount-rate: ${BILLING_MAX_DOCUMENT_DISCOUNT_RATE:20}
+      # Vide : seul le taux s'applique.
+      max-document-discount-amount: ${BILLING_MAX_DOCUMENT_DISCOUNT_AMOUNT:}
     workers:
       fiscal-integrity-cron:  ${BILLING_FISCAL_INTEGRITY_CRON:0 0 2 * * *}
       daily-closure-cron:     ${BILLING_DAILY_CLOSURE_CRON:0 30 23 * * *}

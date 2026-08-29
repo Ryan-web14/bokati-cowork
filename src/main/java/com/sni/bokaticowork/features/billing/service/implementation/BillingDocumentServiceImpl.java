@@ -58,6 +58,7 @@ import com.sni.bokaticowork.features.billing.service.fiscal.FiscalHashService;
 import com.sni.bokaticowork.features.billing.service.fiscal.FiscalSignatureService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.billing.service.support.BillingCalculationService;
+import com.sni.bokaticowork.features.billing.service.support.BillingDiscountGuard;
 import com.sni.bokaticowork.features.billing.service.support.BillingCustomerSnapshotResolver;
 import com.sni.bokaticowork.features.billing.service.support.BillingDocumentWriter;
 import com.sni.bokaticowork.features.billing.service.support.BillingEventWriter;
@@ -110,6 +111,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final BillableItemRepository billableItemRepository;
     private final BookingRepository bookingRepository;
     private final BillingCalculationService calculationService;
+    private final BillingDiscountGuard discountGuard;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
     private final BillingNumberingSupport numberingSupport;
     private final BillingDocumentWriter documentWriter;
@@ -146,6 +148,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal documentDiscount = calculation.discountAmount().subtract(lineDiscount).max(BigDecimal.ZERO);
 
+        // La simulation constate mais ne refuse jamais · c'est l'emission qui bloque.
+        List<BillingDiscountGuard.DiscountViolation> violations = discountGuard.evaluate(
+                calculation.lines(), calculation.subtotalAmount(), calculation.discountAmount());
+        boolean blocked = violations.stream()
+                .anyMatch(violation -> BillingDiscountGuard.Severity.BLOCK.name().equals(violation.severity()));
+
         return new SimulateBillingDocumentResponse(
                 lines,
                 calculation.subtotalAmount(),
@@ -156,7 +164,18 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 calculation.vatAmount(),
                 calculation.additionalCentAmount(),
                 calculation.taxAmount(),
-                calculation.totalAmount());
+                calculation.totalAmount(),
+                violations,
+                blocked);
+    }
+
+    /** Auteur d'une derogation · le nom du principal, ou SYSTEM hors contexte authentifie. */
+    private String currentUserName() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        return authentication == null || !StringUtils.hasText(authentication.getName())
+                ? "SYSTEM"
+                : authentication.getName();
     }
 
     private SimulateBillingDocumentResponse.SimulatedLine simulatedLine(BillingDocumentLine line) {
@@ -842,8 +861,30 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     @Override
     public BillingDocumentResponse issue(String documentNumber) {
+        return issue(documentNumber, null);
+    }
+
+    @Override
+    public BillingDocumentResponse issue(String documentNumber, String discountOverrideReason) {
         BillingDocument document = serviceByNumber(documentNumber);
         lifecycleSupport.ensureCanIssue(document);
+
+        // Les limites de remise ne bloquent qu'ici, jamais au brouillon : le commercial
+        // construit son offre librement, on l'arrete avant qu'elle n'engage.
+        String override = discountGuard.enforce(
+                discountGuard.evaluate(
+                        lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document),
+                        document.getSubtotalAmount(),
+                        document.getDiscountAmount()),
+                discountOverrideReason);
+        if (override != null) {
+            document.setDiscountOverrideReason(override);
+            document.setDiscountOverrideBy(currentUserName());
+            document.setDiscountOverrideAt(Instant.now());
+            fiscalAuditService.log("DISCOUNT_OVERRIDE", "BILLING_DOCUMENT", document.getDocumentNumber(),
+                    null, "reason=" + override);
+        }
+
         document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE ? BillingDocumentStatus.SENT : BillingDocumentStatus.ISSUED);
         document.setIssuedAt(Instant.now());
         BillingDocument saved = documentRepository.save(document);

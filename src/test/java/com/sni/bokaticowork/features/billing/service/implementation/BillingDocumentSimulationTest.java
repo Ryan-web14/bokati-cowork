@@ -2,13 +2,17 @@ package com.sni.bokaticowork.features.billing.service.implementation;
 
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.response.SimulateBillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.config.BillingDiscountGuardProperties;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentLine;
+import com.sni.bokaticowork.features.billing.repository.ServiceCatalogItemRepository;
 import com.sni.bokaticowork.features.billing.service.support.BillingCalculationService;
+import com.sni.bokaticowork.features.billing.service.support.BillingDiscountGuard;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -16,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +32,14 @@ class BillingDocumentSimulationTest {
 
     @Mock
     private com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository documentRepository;
+
+    /**
+     * Garde-fou reel plutot que simule : la simulation doit remonter les depassements, et un
+     * mock renverrait toujours une liste vide sans qu'on s'en apercoive.
+     */
+    @Spy
+    private BillingDiscountGuard discountGuard = new BillingDiscountGuard(
+            mock(ServiceCatalogItemRepository.class), new BillingDiscountGuardProperties());
 
     @InjectMocks
     private BillingDocumentServiceImpl service;

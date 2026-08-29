@@ -59,6 +59,12 @@ public interface BillingDocumentService {
     BillingDocumentResponse createInvoiceFromReservation(CreateReservationInvoiceRequest request);
     BillingDocumentResponse duplicate(String documentNumber);
     BillingDocumentResponse issue(String documentNumber);
+
+    /**
+     * Émission avec dérogation aux limites de remise. Le motif est obligatoire dès qu'une limite
+     * bloquante est dépassée, et son auteur doit détenir {@code BILLING:DISCOUNT_OVERRIDE}.
+     */
+    BillingDocumentResponse issue(String documentNumber, String discountOverrideReason);
     BillingDocumentResponse send(String documentNumber);
     BillingDocumentResponse selectQuoteOptions(String quoteNumber, SelectQuoteOptionsRequest request);
     BillingDocumentResponse markViewed(String quoteNumber);
