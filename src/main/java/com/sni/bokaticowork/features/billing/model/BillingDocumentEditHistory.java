@@ -44,9 +44,29 @@ public class BillingDocumentEditHistory {
     @Column(name = "changed_at", nullable = false)
     private Instant changedAt;
 
+    /**
+     * Etat complet du document <b>avant</b> la modification · en-tete, lignes, remises. C'est
+     * cette colonne qui fait la difference entre savoir qu'une modification a eu lieu et savoir
+     * ce qu'elle a change.
+     */
     @ColumnTransformer(write = "?::jsonb")
     @Column(name = "snapshot_json", columnDefinition = "jsonb")
     private String snapshotJson;
+
+    /** Numero croissant par document, a partir de 1. */
+    @Column(name = "version_number")
+    private Integer versionNumber;
+
+    /**
+     * Horodatage de l'envoi de cette version au client. Distingue un brouillon retouche d'une
+     * proposition reellement transmise · seules les versions envoyees ont une valeur probante.
+     */
+    @Column(name = "sent_to_customer_at")
+    private Instant sentToCustomerAt;
+
+    /** Resume lisible des champs modifies, calcule par comparaison avec la version precedente. */
+    @Column(name = "change_summary", columnDefinition = "text")
+    private String changeSummary;
 
     @PrePersist
     public void prePersist() {

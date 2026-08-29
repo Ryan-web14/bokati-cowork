@@ -11,6 +11,7 @@ import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingDocumentRe
 import com.sni.bokaticowork.features.billing.dto.request.UpdateBillingRecipientRequest;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentVersionResponse;
 import com.sni.bokaticowork.features.billing.dto.response.SimulateBillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
@@ -65,6 +66,21 @@ public interface BillingDocumentService {
      * bloquante est dépassée, et son auteur doit détenir {@code BILLING:DISCOUNT_OVERRIDE}.
      */
     BillingDocumentResponse issue(String documentNumber, String discountOverrideReason);
+
+    /** Versions archivées d'un document, de la plus ancienne à la plus récente, sans instantané. */
+    java.util.List<BillingDocumentVersionResponse> versions(String documentNumber);
+
+    /** Une version précise, instantané complet compris. */
+    BillingDocumentVersionResponse version(String documentNumber, Integer versionNumber);
+
+    /** Écart entre deux versions archivées, champ par champ. */
+    BillingDocumentVersionResponse.Diff versionDiff(String documentNumber, Integer from, Integer to);
+
+    /**
+     * Reverse un avoir au portefeuille du client au lieu de l'imputer sur une facture. Utile
+     * lorsqu'il n'y a plus rien à imputer, la créance devant rester acquise au client.
+     */
+    BillingDocumentResponse refundCreditNoteToWallet(String creditNoteNumber, String reason);
     BillingDocumentResponse send(String documentNumber);
     BillingDocumentResponse selectQuoteOptions(String quoteNumber, SelectQuoteOptionsRequest request);
     BillingDocumentResponse markViewed(String quoteNumber);

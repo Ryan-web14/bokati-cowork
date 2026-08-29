@@ -20,6 +20,8 @@ import com.sni.bokaticowork.features.billing.dto.request.AddRecoverableItemsRequ
 import com.sni.bokaticowork.features.billing.dto.request.RecoverItemRequest;
 import com.sni.bokaticowork.features.billing.dto.request.WriteOffRecoverableRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentVersionResponse;
+import java.util.List;
 import com.sni.bokaticowork.features.billing.dto.response.SimulateBillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
@@ -162,6 +164,29 @@ public class BillingDocumentController {
         return ResponseEntity.ok(billingDocumentService.issue(documentNumber, discountOverrideReason));
     }
 
+    /**
+     * Versions archivées du document. Une modification n'écrase plus l'état précédent : elle
+     * l'archive, de sorte qu'on puisse reconstituer ce que le client avait sous les yeux.
+     */
+    @GetMapping("/documents/{documentNumber}/versions")
+    public ResponseEntity<List<BillingDocumentVersionResponse>> versions(@PathVariable String documentNumber) {
+        return ResponseEntity.ok(billingDocumentService.versions(documentNumber));
+    }
+
+    @GetMapping("/documents/{documentNumber}/versions/{versionNumber}")
+    public ResponseEntity<BillingDocumentVersionResponse> version(@PathVariable String documentNumber,
+                                                                  @PathVariable Integer versionNumber) {
+        return ResponseEntity.ok(billingDocumentService.version(documentNumber, versionNumber));
+    }
+
+    /** Ce qui a changé entre deux propositions · à montrer au client lors d'une renégociation. */
+    @GetMapping("/documents/{documentNumber}/versions/{from}/diff/{to}")
+    public ResponseEntity<BillingDocumentVersionResponse.Diff> versionDiff(@PathVariable String documentNumber,
+                                                                           @PathVariable Integer from,
+                                                                           @PathVariable Integer to) {
+        return ResponseEntity.ok(billingDocumentService.versionDiff(documentNumber, from, to));
+    }
+
     @PatchMapping("/documents/{documentNumber}/validate")
     public ResponseEntity<BillingDocumentResponse> validate(@PathVariable String documentNumber) {
         return ResponseEntity.ok(billingDocumentService.validate(documentNumber));
@@ -239,6 +264,20 @@ public class BillingDocumentController {
     public ResponseEntity<BillingDocumentResponse> createCreditNote(@PathVariable String invoiceNumber,
                                                                     @Valid @RequestBody CreateCreditNoteRequest request) {
         return ResponseEntity.ok(billingDocumentService.createCreditNote(invoiceNumber, request));
+    }
+
+    /**
+     * Reverse l'avoir au portefeuille du client plutôt que de l'imputer sur une facture.
+     *
+     * <p>À utiliser quand il n'y a plus rien à imputer : le client n'a pas de facture ouverte,
+     * mais la créance existe et doit lui rester acquise. L'opération est idempotente — un second
+     * appel retrouve l'écriture d'origine au lieu de recréditer.
+     */
+    @PostMapping("/credit-notes/{creditNoteNumber}/refund-to-wallet")
+    public ResponseEntity<BillingDocumentResponse> refundCreditNoteToWallet(
+            @PathVariable String creditNoteNumber,
+            @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(billingDocumentService.refundCreditNoteToWallet(creditNoteNumber, reason));
     }
 
     @PatchMapping("/credit-notes/{creditNoteNumber}/apply")

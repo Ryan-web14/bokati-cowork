@@ -21,6 +21,7 @@ import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentClauseR
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscountResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentVersionResponse;
 import com.sni.bokaticowork.features.billing.dto.response.SimulateBillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
@@ -58,7 +59,10 @@ import com.sni.bokaticowork.features.billing.service.fiscal.FiscalHashService;
 import com.sni.bokaticowork.features.billing.service.fiscal.FiscalSignatureService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.billing.service.support.BillingCalculationService;
+import com.sni.bokaticowork.features.payment.service.interfaces.WalletService;
+import com.sni.bokaticowork.features.payment.enums.WalletEntryType;
 import com.sni.bokaticowork.features.billing.service.support.BillingDiscountGuard;
+import com.sni.bokaticowork.features.billing.service.support.BillingDocumentVersionService;
 import com.sni.bokaticowork.features.billing.service.support.BillingCustomerSnapshotResolver;
 import com.sni.bokaticowork.features.billing.service.support.BillingDocumentWriter;
 import com.sni.bokaticowork.features.billing.service.support.BillingEventWriter;
@@ -112,6 +116,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final BookingRepository bookingRepository;
     private final BillingCalculationService calculationService;
     private final BillingDiscountGuard discountGuard;
+    private final BillingDocumentVersionService versionService;
+    private final WalletService walletService;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
     private final BillingNumberingSupport numberingSupport;
     private final BillingDocumentWriter documentWriter;
@@ -229,6 +235,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             throw new BadRequestException("Document in status " + document.getStatus() + " cannot be modified");
         }
 
+        // L'etat precedent est archive AVANT toute modification · c'est lui qui permet de
+        // reconstituer ce que le client avait sous les yeux. Le document ne s'ecrase plus.
+        versionService.archive(document,
+                lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document),
+                isDraft ? "FULL_EDIT" : "RESTRICTED_EDIT");
+
         // Internal notes and restricted fields are always editable when status allows modification
         if (StringUtils.hasText(request.internalNotes())) {
             document.setInternalNotes(request.internalNotes().trim());
@@ -298,14 +310,26 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         }
 
         BillingDocument saved = documentRepository.save(document);
-        editHistoryRepository.save(BillingDocumentEditHistory.builder()
-                .document(saved)
-                .editType(isDraft ? "FULL_EDIT" : "RESTRICTED_EDIT")
-                .changedBy("SYSTEM")
-                .changedAt(Instant.now())
-                .build());
         eventWriter.write(saved, "BILLING_DOCUMENT_UPDATED", null);
         return mapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BillingDocumentVersionResponse> versions(String documentNumber) {
+        return versionService.versions(serviceByNumber(documentNumber));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BillingDocumentVersionResponse version(String documentNumber, Integer versionNumber) {
+        return versionService.version(serviceByNumber(documentNumber), versionNumber);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BillingDocumentVersionResponse.Diff versionDiff(String documentNumber, Integer from, Integer to) {
+        return versionService.diff(serviceByNumber(documentNumber), from, to);
     }
 
     @Override
@@ -905,6 +929,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE ? BillingDocumentStatus.SENT : BillingDocumentStatus.SENT);
         document.setSentAt(Instant.now());
         BillingDocument saved = documentRepository.save(document);
+        // Sans horodatage de transmission, rien ne distingue un brouillon retouche d'une
+        // proposition reellement envoyee · seules les versions transmises ont valeur probante.
+        versionService.markLastVersionSent(saved);
         eventWriter.write(saved, "BILLING_DOCUMENT_SENT", null);
         return mapper.toResponse(saved);
     }
@@ -1236,6 +1263,62 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             applyCreditNote(creditDoc.getDocumentNumber());
         }
         return get(creditDoc.getDocumentNumber());
+    }
+
+    /**
+     * Reverse un avoir au portefeuille du client, au lieu de l'imputer sur une facture.
+     *
+     * <p>Utile lorsqu'il n'y a rien a imputer : le client n'a plus de facture ouverte, mais la
+     * creance existe et doit lui rester acquise pour ses prochaines commandes.
+     *
+     * <p>La cle d'idempotence rend un second appel inoffensif · il retrouve l'ecriture d'origine
+     * au lieu de recrediter. C'est indispensable ici : un double clic ou un rejeu de requete
+     * doublerait sinon un avoir bel et bien fini.
+     */
+    @Override
+    public BillingDocumentResponse refundCreditNoteToWallet(String creditNoteNumber, String reason) {
+        BillingDocument creditNote = serviceByNumber(creditNoteNumber);
+
+        if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE) {
+            throw new BadRequestException("Le document " + creditNoteNumber + " n'est pas un avoir");
+        }
+        if (!Boolean.TRUE.equals(creditNote.getLocked())) {
+            throw new BadRequestException(
+                    "L'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre reverse · "
+                            + "un avoir non scelle n'a pas de valeur");
+        }
+        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
+            throw new BadRequestException("L'avoir " + creditNoteNumber + " a deja ete consomme");
+        }
+        BigDecimal amount = creditNote.getTotalAmount();
+        if (amount == null || amount.signum() <= 0) {
+            throw new BadRequestException("L'avoir " + creditNoteNumber + " est d'un montant nul");
+        }
+
+        // Les portefeuilles sont uniques par proprietaire et devise depuis V206 · demander celui
+        // de la devise de l'avoir donne donc le bon compte, sans conversion implicite.
+        var wallet = walletService.serviceWallet(
+                walletService.getOrCreate(creditNote.getCustomerType(), creditNote.getCustomerCode(),
+                        creditNote.getCurrency()).walletNumber());
+
+        String motive = StringUtils.hasText(reason)
+                ? reason.trim()
+                : "Avoir " + creditNoteNumber;
+        walletService.credit(wallet, amount, WalletEntryType.REFUND, "CREDIT_NOTE", creditNoteNumber,
+                motive, currentUserName(), "CREDIT_NOTE_REFUND:" + creditNoteNumber);
+
+        creditNote.setStatus(BillingDocumentStatus.ISSUED);
+        BillingDocument saved = documentRepository.save(creditNote);
+
+        fiscalAuditService.log("CREDIT_NOTE_REFUNDED_TO_WALLET", "BILLING_DOCUMENT", creditNoteNumber,
+                creditNote.getOriginalDocumentNumber(),
+                "wallet=" + wallet.getWalletNumber() + "|amount=" + amount.toPlainString());
+        eventWriter.write(saved, "CREDIT_NOTE_REFUNDED_TO_WALLET",
+                java.util.Map.of("walletNumber", wallet.getWalletNumber(),
+                        "amount", amount.toPlainString(),
+                        "reason", motive));
+
+        return mapper.toResponse(saved);
     }
 
     @Override
