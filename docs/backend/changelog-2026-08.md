@@ -130,7 +130,37 @@ sont pas touchés : ils appartiennent à l'historique fiscal, et le trigger
 La branche « aucun avoir nécessaire » (montant nul) se contentait d'archiver sans changer le
 statut ; elle annule désormais aussi.
 
-### 2.3 Agrégats comptables ne filtrant pas le statut
+### 2.3 Règles d'annulation — avoir seulement si encaissement
+
+Deux défauts distincts, rapportés depuis la production.
+
+**Un avoir était émis même sans encaissement.** `cancelAndArchive` déclenchait un avoir dès que
+le document était scellé, sans regarder ce qui avait été perçu. Or un avoir constate une créance
+en faveur du client : sur une facture dont rien n'a été encaissé, il n'y a rien à créditer, et
+l'émission d'un avoir à 0 encaissé crée un document comptable sans contrepartie.
+
+La règle est désormais : avoir **si et seulement si** le document est une facture scellée **et**
+`paidAmount > 0`. Sinon, annulation directe — datée, tracée, et sortant le document des agrégats.
+
+> Une facture scellée annulée sans avoir ne laisse pas de document comptable de contrepassation.
+> C'est acceptable tant que rien n'a été perçu : il n'y a aucun flux à contrepasser, et
+> l'annulation reste horodatée et auditée. Si le contexte fiscal exige un avoir dans tous les cas,
+> la condition tient en une ligne de `requiresCreditNoteToCancel`.
+
+**Un avoir ne pouvait pas être annulé.** `cancelAndArchive` sur un avoir tentait d'émettre un
+avoir d'avoir, et échouait sur `ensureCanPay` avec « Payments can only be allocated to invoices ».
+Un avoir, un devis et une note de débit s'annulent maintenant directement.
+
+`releaseCreditNoteBeforeCancellation` défait d'abord l'effet d'un avoir déjà consommé — sans quoi
+la contrepartie resterait en place, donc un document annulé continuant de peser sur un solde :
+
+- **imputé sur une facture** → l'imputation est retirée par `reversePayment`, sauf si la facture
+  est elle-même annulée : elle ne doit pas ressortir du néant avec un solde rouvert ;
+- **reversé au portefeuille** → refus explicite. Le solde a pu être dépensé depuis ; le reprendre
+  silencieusement créerait un découvert. C'est une décision de gestion, pas une écriture
+  technique.
+
+### 2.4 Agrégats comptables ne filtrant pas le statut
 
 | Requête | Défaut |
 |---|---|
@@ -146,7 +176,7 @@ facturé du relevé client**, chiffre montré au client. Limité aux factures et
 `findRecoverableDocuments`. Les avoirs restent pris en compte indirectement, par le montant payé
 de la facture à laquelle ils s'imputent.
 
-### 2.4 Ligne de facture — remise, catégorie, unité
+### 2.5 Ligne de facture — remise, catégorie, unité
 
 - La remise apparaît sur la ligne du PDF, plus seulement dans le récapitulatif des totaux.
 - `billing_document_line.category` (`V207` / `V203`), reprise du catalogue quand la ligne ne la
@@ -155,7 +185,7 @@ de la facture à laquelle ils s'imputent.
   *shrink-to-fit* d'un `inline-block` combinant `text-transform` et `letter-spacing`, et le badge
   se coupait sur deux lignes. Défaut invisible autrement qu'en rendant le PDF en image.
 
-### 2.5 Correction du destinataire — `PATCH /documents/{n}/recipient`
+### 2.6 Correction du destinataire — `PATCH /documents/{n}/recipient`
 
 Corrige les coordonnées imprimées sans changer le client propriétaire.
 
@@ -163,7 +193,7 @@ Corrige les coordonnées imprimées sans changer le client propriétaire.
 document validé. Le trigger d'immutabilité protège ces trois colonnes : sans ce contrôle amont,
 la tentative remonte en `JpaSystemException` 500 au lieu d'un 400 explicite.
 
-### 2.6 Verrou sur l'application de paiement
+### 2.7 Verrou sur l'application de paiement
 
 `lockedByNumber` — `flush`, `lockByDocumentNumber` en JPQL, puis
 `refresh(PESSIMISTIC_WRITE)`. Utilisé par `applyPayment` et `reversePayment`, pour la même raison

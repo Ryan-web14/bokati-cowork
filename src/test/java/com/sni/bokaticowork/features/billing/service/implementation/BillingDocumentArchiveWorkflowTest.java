@@ -82,18 +82,22 @@ class BillingDocumentArchiveWorkflowTest {
         // et la laisse en PAID. Une facture annulee ressortait donc comme encaissee et restait
         // comptee dans le chiffre d'affaires, les agregats comptables excluant CANCELLED et
         // VOIDED mais pas PAID.
+        //
+        // La facture est ici partiellement encaissee : depuis la revision des regles
+        // d'annulation, c'est l'encaissement qui declenche l'emission d'un avoir. Une facture
+        // scellee dont rien n'a ete percu s'annule directement.
         BillingDocument sealed = BillingDocument.builder()
                 .documentNumber("INV-SEAL-001")
                 .documentType(BillingDocumentType.INVOICE)
-                .status(BillingDocumentStatus.ISSUED)
+                .status(BillingDocumentStatus.PARTIALLY_PAID)
                 .locked(true)
                 .customerType("MEMBER")
                 .customerCode("MBR-001")
                 .customerName("Jean")
                 .currency("XAF")
                 .totalAmount(new BigDecimal("100.0000"))
-                .paidAmount(BigDecimal.ZERO)
-                .balanceDue(new BigDecimal("100.0000"))
+                .paidAmount(new BigDecimal("40.0000"))
+                .balanceDue(new BigDecimal("60.0000"))
                 .issueDate(LocalDate.of(2026, 4, 27))
                 .build();
 
