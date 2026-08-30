@@ -1,322 +1,99 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title th:text="|Vérification ${document.documentNumber()}|">Vérification document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <title th:text="|Vérification ${view.reference()}|">Vérification</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; background: #f3f0fa; color: #1a0a2e; font-size: 14px; }
-
-        /* ── Topbar ── */
-        .topbar { background: #1a0a2e; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
-        .topbar-brand { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-        .topbar-sub { color: #9b8caa; font-size: 11px; margin-top: 3px; letter-spacing: 0.5px; }
-        .topbar-stripe { height: 3px; background: #c9a84c; border-right: 200px solid #8b5cf6; }
-        .verified-badge { background: #22c55e; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px; }
-
-        /* ── Layout ── */
-        .container { max-width: 740px; margin: 28px auto; padding: 0 16px 48px; }
-
-        /* ── Cards ── */
-        .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 6px rgba(26,10,46,.07); margin-bottom: 16px; overflow: hidden; border: 1px solid #e8e0f0; }
-        .card-header { background: #1a0a2e; border-left: 4px solid #c9a84c; color: #fff; padding: 11px 16px; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-        .card-header .sub { font-weight: 400; font-size: 11px; color: #9b8caa; text-transform: none; letter-spacing: 0; }
-        .card-body { padding: 16px 18px; }
-
-        /* ── Hero ── */
-        .doc-title { font-size: 24px; font-weight: 800; color: #1a0a2e; }
-        .doc-number { font-size: 13px; color: #8b5cf6; margin-top: 4px; font-weight: 600; font-family: monospace; }
-
-        /* ── Badges ── */
-        .badge { display: inline-block; padding: 3px 11px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-paid     { background: #dcfce7; color: #166534; }
-        .badge-partial  { background: #fef9c3; color: #92400e; }
-        .badge-overdue  { background: #fee2e2; color: #991b1b; }
-        .badge-draft    { background: #f3f0fa; color: #5c4f6e; }
-        .badge-sent     { background: #ede9fe; color: #5b21b6; }
-        .badge-default  { background: #ede9fe; color: #5b21b6; }
-
-        /* ── Grid ── */
-        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
-
-        /* ── Info rows ── */
-        .info-label { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #8b5cf6; margin-bottom: 10px; border-bottom: 1px solid #e8e0f0; padding-bottom: 5px; }
-        .info-row { display: flex; justify-content: space-between; align-items: baseline; padding: 5px 0; border-bottom: 1px solid #f3f0fa; font-size: 13px; gap: 8px; }
-        .info-row:last-child { border-bottom: none; }
-        .info-row .lbl { color: #5c4f6e; white-space: nowrap; }
-        .info-row .val { font-weight: 600; color: #1a0a2e; text-align: right; word-break: break-all; }
-
-        /* ── Table lignes ── */
-        table.lines { width: 100%; border-collapse: collapse; font-size: 12px; }
-        table.lines thead th { background: #2a1548; color: #fff; padding: 8px 10px; text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
-        table.lines thead th.r { text-align: right; }
-        table.lines thead th.gold { background: #c9a84c; color: #1a0a2e; }
-        table.lines tbody td { padding: 9px 10px; border-bottom: 1px solid #e8e0f0; vertical-align: top; }
-        table.lines tbody tr:nth-child(even) td { background: #fdf9ff; }
-        table.lines tbody tr:last-child td { border-bottom: none; }
-        table.lines tbody td.r { text-align: right; }
-        .line-name { font-weight: 700; color: #1a0a2e; }
-        .line-sub { font-size: 11px; color: #5c4f6e; margin-top: 2px; }
-
-        /* ── Totaux ── */
-        .summary-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .summary-table td { padding: 7px 0; border-bottom: 1px solid #f3f0fa; }
-        .summary-table tr:last-child td { border-bottom: none; }
-        .summary-table .lbl { color: #5c4f6e; }
-        .summary-table .val { text-align: right; font-weight: 600; }
-        .summary-total { background: #1a0a2e; color: #fff; border-radius: 6px; padding: 13px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 16px; font-weight: 800; }
-        .summary-total .amount { color: #c9a84c; }
-        .summary-balance { background: #fffdf7; border: 1px solid #e8e0f0; border-radius: 6px; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 13px; font-weight: 700; color: #7c5600; }
-
-        /* ── Clauses ── */
-        .clause-item { border-left: 3px solid #c9a84c; padding: 9px 13px; margin-bottom: 10px; background: #fffdf7; border-radius: 0 6px 6px 0; }
-        .clause-title { font-weight: 700; color: #1a0a2e; font-size: 13px; margin-bottom: 4px; }
-        .clause-body { color: #5c4f6e; font-size: 12px; line-height: 1.6; }
-
-        .footer { text-align: center; font-size: 11px; color: #9b8caa; margin-top: 28px; line-height: 1.7; }
-        .footer strong { color: #5c4f6e; }
+        *{ box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #f6f4f9; color: #1a0a2e;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px; line-height: 1.6;
+        }
+        .card {
+            background: #fff; border-radius: 10px; max-width: 420px; width: 100%;
+            box-shadow: 0 2px 16px rgba(26,10,46,.08); overflow: hidden;
+        }
+        .head { padding: 28px 26px 22px; border-bottom: 1px solid #efeaf4; text-align: center; }
+        .seal {
+            width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 14px;
+            background: #e9f6ec; color: #1f7a3d;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+        }
+        .verdict { font-size: 17px; font-weight: 800; color: #1f7a3d; }
+        .verdict.cancelled { color: #b0343c; }
+        .seal.cancelled { background: #fdecee; color: #b0343c; }
+        .kind { font-size: 12px; color: #9b8caa; margin-top: 4px; }
+        .body { padding: 20px 26px 24px; }
+        .row { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; font-size: 13px; }
+        .row + .row { border-top: 1px solid #f4f0f8; }
+        .lbl { color: #7a6b8c; }
+        .val { font-weight: 700; text-align: right; word-break: break-all; }
+        .note {
+            margin-top: 18px; padding: 12px 14px; background: #faf8fc; border-radius: 6px;
+            font-size: 11.5px; color: #7a6b8c; line-height: 1.65;
+        }
+        .foot { padding: 14px 26px 20px; text-align: center; font-size: 11px; color: #b3a7c0; }
     </style>
 </head>
 <body>
-
-<div class="topbar">
-    <div>
-        <div class="topbar-brand">Bokati Cowork</div>
-        <div class="topbar-sub">Vérification de document officiel</div>
+<div class="card">
+    <div class="head">
+        <div class="seal" th:classappend="${view.statusLabel() == 'Annulé'} ? 'cancelled' : ''"
+             th:text="${view.statusLabel() == 'Annulé'} ? '✕' : '✓'">✓</div>
+        <div class="verdict" th:classappend="${view.statusLabel() == 'Annulé'} ? 'cancelled' : ''"
+             th:text="${view.statusLabel() == 'Annulé'} ? 'Document annulé' : 'Document authentique'">
+            Document authentique
+        </div>
+        <div class="kind" th:text="|${view.documentLabel()} émis par Elle a Osé|">Facture</div>
     </div>
-    <div class="verified-badge">✓ AUTHENTIQUE</div>
-</div>
-<div class="topbar-stripe"></div>
 
-<div class="container">
+    <div class="body">
+        <div class="row">
+            <span class="lbl">Référence</span>
+            <span class="val" th:text="${view.reference()}">INV-000001</span>
+        </div>
+        <div class="row" th:if="${!#strings.isEmpty(view.issueDate())}">
+            <span class="lbl">Date d'émission</span>
+            <span class="val" th:text="${view.issueDate()}">01/01/2026</span>
+        </div>
+        <div class="row">
+            <span class="lbl">Statut</span>
+            <span class="val" th:text="${view.statusLabel()}">Émis</span>
+        </div>
 
-    <!-- Hero -->
-    <div class="card">
-        <div class="card-body" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:14px;">
-            <div>
-                <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#9b8caa; margin-bottom:6px;">Document officiel</div>
-                <div class="doc-title" th:switch="${document.documentType().name()}">
-                    <span th:case="'QUOTE'">Devis</span>
-                    <span th:case="'PROFORMA_INVOICE'">Facture proforma</span>
-                    <span th:case="'CREDIT_NOTE'">Avoir</span>
-                    <span th:case="'DEBIT_NOTE'">Note de débit</span>
-                    <span th:case="*">Facture</span>
-                </div>
-                <div class="doc-number" th:text="${document.documentNumber()}">INV-000001</div>
+        <!--/*
+            Les champs ci-dessous ne s'affichent que sur presentation du prefixe de signature
+            encode dans le QR code du document · ils confirment un document que l'on tient deja,
+            ils ne servent pas a le reconstituer. Ne rien ajouter ici sans se demander ce que cela
+            revelerait a quelqu'un qui enumere les numeros.
+        */-->
+        <th:block th:if="${view.detailed()}">
+            <div class="row" th:if="${!#strings.isEmpty(view.partyName())}">
+                <span class="lbl">Destinataire</span>
+                <span class="val" th:text="${view.partyName()}">Nom</span>
             </div>
-            <div style="text-align:right;">
-                <span th:switch="${document.status().name()}">
-                    <span th:case="'PAID'"><span class="badge badge-paid">Payée</span></span>
-                    <span th:case="'PARTIALLY_PAID'"><span class="badge badge-partial">Paiement partiel</span></span>
-                    <span th:case="'OVERDUE'"><span class="badge badge-overdue">En retard</span></span>
-                    <span th:case="'DRAFT'"><span class="badge badge-draft">Brouillon</span></span>
-                    <span th:case="'SENT'"><span class="badge badge-sent">Envoyée</span></span>
-                    <span th:case="'ISSUED'"><span class="badge badge-sent">Émise</span></span>
-                    <span th:case="*"><span class="badge badge-default" th:text="${document.status()}"></span></span>
-                </span>
-                <div style="font-size:11px; color:#9b8caa; margin-top:8px;">Vérifiée le <span th:text="${generatedAt}"></span></div>
+            <div class="row" th:if="${!#strings.isEmpty(view.totalAmount())}">
+                <span class="lbl">Montant total</span>
+                <span class="val" th:text="|${view.totalAmount()} ${view.currency()}|">0 XAF</span>
             </div>
+        </th:block>
+
+        <div class="note" th:unless="${view.detailed()}">
+            Cette page confirme qu'un document portant cette référence a bien été émis par notre
+            plateforme. Pour en afficher le détail, scannez le QR code figurant sur le document
+            lui-même.
+        </div>
+        <div class="note" th:if="${view.detailed()}">
+            Ces informations proviennent de nos systèmes. Si elles diffèrent du document que vous
+            détenez, celui-ci a été modifié après son émission.
         </div>
     </div>
 
-    <!-- Client + Détails -->
-    <div class="grid2">
-        <div class="card">
-            <div class="card-body">
-                <div class="info-label" th:text="${fmt.partyLabel(document.customerType())}">Client</div>
-                <div style="font-weight:700; font-size:14px; margin-bottom:10px;" th:text="${document.customerName()}">Nom</div>
-                <div class="info-row" th:if="${document.customerCode() != null}">
-                    <span class="lbl">Référence</span><span class="val" th:text="${document.customerCode()}"></span>
-                </div>
-                <div class="info-row" th:if="${document.customerEmail() != null}">
-                    <span class="lbl">Email</span><span class="val" th:text="${document.customerEmail()}"></span>
-                </div>
-                <div class="info-row" th:if="${document.customerPhone() != null}">
-                    <span class="lbl">Téléphone</span><span class="val" th:text="${document.customerPhone()}"></span>
-                </div>
-                <div th:if="${not #lists.isEmpty(fmt.addressLines(document.billingAddressJson()))}" style="margin-top:10px; font-size:12px; color:#5c4f6e; line-height:1.6;">
-                    <div th:each="line : ${fmt.addressLines(document.billingAddressJson())}" th:text="${line}"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-body">
-                <div class="info-label">Détails du document</div>
-                <div class="info-row">
-                    <span class="lbl">Date d'émission</span><span class="val" th:text="${fmt.date(document.issueDate())}"></span>
-                </div>
-                <div class="info-row">
-                    <span class="lbl">Date d'échéance</span><span class="val" th:text="${fmt.date(document.dueDate())}"></span>
-                </div>
-                <div class="info-row">
-                    <span class="lbl">Devise</span><span class="val" th:text="${document.currency()}">XAF</span>
-                </div>
-                <div class="info-row">
-                    <span class="lbl">Référence source</span><span class="val" th:text="${fmt.sourceReference(document.sourceType(), document.sourceCode())}"></span>
-                </div>
-                <div class="info-row" th:if="${document.issuedAt() != null}">
-                    <span class="lbl">Émise le</span><span class="val" th:text="${fmt.timestamp(document.issuedAt())}"></span>
-                </div>
-                <div class="info-row" th:if="${document.paidAt() != null}">
-                    <span class="lbl">Réglée le</span><span class="val" th:text="${fmt.timestamp(document.paidAt())}"></span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Objet -->
-    <div class="card" th:if="${document.title() != null or document.description() != null}">
-        <div class="card-body">
-            <div class="info-label">Objet</div>
-            <div style="font-weight:700; font-size:14px;" th:text="${fmt.documentSubject(document)}"></div>
-            <div th:if="${document.description() != null and document.description() != document.title()}"
-                 style="font-size:13px; color:#5c4f6e; margin-top:6px; line-height:1.6;" th:text="${document.description()}"></div>
-        </div>
-    </div>
-
-    <!-- Lignes de prestation -->
-    <div class="card">
-        <div class="card-header">
-            <span>Détail des prestations</span>
-            <span class="sub" th:text="|${#lists.size(document.lines())} ligne(s)|"></span>
-        </div>
-        <div style="overflow-x:auto;">
-            <table class="lines">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Description</th>
-                    <th class="r">Qté</th>
-                    <th class="r">Prix unit.</th>
-                    <th class="r">Remise</th>
-                    <th class="r">TVA</th>
-                    <th class="r gold">Total</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="line : ${document.lines()}">
-                    <td style="color:#9b8caa; font-size:12px;" th:text="${line.lineOrder()}">1</td>
-                    <td>
-                        <div class="line-name" th:text="${line.description()}">Service</div>
-                        <div class="line-sub" th:if="${line.detailedDescription()}" th:text="${line.detailedDescription()}"></div>
-                        <div class="line-sub" th:if="${line.itemCode()}" th:text="|Article : ${line.itemCode()}|"></div>
-                    </td>
-                    <td class="r" th:text="${fmt.quantity(line.quantity())}">1</td>
-                    <td class="r" th:text="${fmt.amount(line.unitPrice())}">0</td>
-                    <td class="r" th:text="${fmt.amount(line.discountAmount())}">0</td>
-                    <td class="r" th:text="${fmt.amount(line.vatAmount())}">0</td>
-                    <td class="r" style="font-weight:700; color:#7c5600;" th:text="${fmt.amount(line.totalAmount())}">0</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Récapitulatif financier -->
-    <div class="card">
-        <div class="card-header">Récapitulatif financier</div>
-        <div class="card-body">
-            <table class="summary-table">
-                <tr>
-                    <td class="lbl">Sous-total HT</td>
-                    <td class="val" th:text="${fmt.money(document.subtotalAmount())}">0</td>
-                </tr>
-                <tr th:if="${document.discountAmount() != null}">
-                    <td class="lbl">Remises</td>
-                    <td class="val" th:text="${fmt.money(document.discountAmount())}">0</td>
-                </tr>
-                <tr>
-                    <td class="lbl">Base taxable</td>
-                    <td class="val" th:text="${fmt.money(document.taxableAmount())}">0</td>
-                </tr>
-                <tr>
-                    <td class="lbl">TVA</td>
-                    <td class="val" th:text="${fmt.money(document.vatAmount())}">0</td>
-                </tr>
-                <tr th:if="${document.additionalCentAmount() != null}">
-                    <td class="lbl">Centimes additionnels</td>
-                    <td class="val" th:text="${fmt.money(document.additionalCentAmount())}">0</td>
-                </tr>
-                <tr>
-                    <td class="lbl">Montant réglé</td>
-                    <td class="val" th:text="${fmt.money(document.paidAmount())}">0</td>
-                </tr>
-                <tr th:if="${payments != null and not #lists.isEmpty(payments)}">
-                    <td class="lbl">Mode de paiement</td>
-                    <td class="val" style="font-size:12px;">
-                        <span th:each="p, stat : ${payments}">
-                            <span th:text="${p.method()}"></span><span th:if="${!stat.last}">, </span>
-                        </span>
-                    </td>
-                </tr>
-            </table>
-            <div class="summary-total">
-                <span>Total</span>
-                <span class="amount" th:text="${fmt.money(document.totalAmount())}">0</span>
-            </div>
-            <div class="summary-balance">
-                <span>Reste dû</span>
-                <span th:text="${fmt.money(document.balanceDue())}">0</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Paiements reçus -->
-    <div class="card" th:if="${payments != null and not #lists.isEmpty(payments)}">
-        <div class="card-header">
-            <span>Paiements reçus</span>
-            <span class="sub" th:text="|${#lists.size(payments)} paiement(s)|"></span>
-        </div>
-        <div style="overflow-x:auto;">
-            <table class="lines">
-                <thead>
-                <tr>
-                    <th>Méthode</th>
-                    <th>Deposit ID / Référence</th>
-                    <th>Numéro payeur</th>
-                    <th class="r gold">Montant</th>
-                    <th class="r">Date</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="p : ${payments}">
-                    <td style="font-weight:700;" th:text="${p.method()}">CASH</td>
-                    <td style="font-family:monospace; font-size:11px;" th:text="${p.depositId() != null ? p.depositId() : (p.providerReference() != null ? p.providerReference() : '')}"></td>
-                    <td style="font-weight:600;" th:text="${p.payerPhone() != null ? p.payerPhone() : ''}"></td>
-                    <td class="r" style="font-weight:700; color:#7c5600;" th:text="${fmt.money(p.allocatedAmount())}">0</td>
-                    <td class="r" style="font-size:11px; color:#9b8caa;" th:text="${p.paidAt() != null ? fmt.timestamp(p.paidAt()) : ''}"></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Conditions de paiement -->
-    <div class="card" th:if="${document.terms() != null}">
-        <div class="card-header">Conditions de paiement</div>
-        <div class="card-body" style="color:#5c4f6e; font-size:13px; line-height:1.6;" th:text="${document.terms()}"></div>
-    </div>
-
-    <!-- Clauses -->
-    <div class="card" th:if="${!#lists.isEmpty(document.clauses())}">
-        <div class="card-header">Conditions et clauses</div>
-        <div class="card-body">
-            <div th:each="clause : ${document.clauses()}" class="clause-item">
-                <div class="clause-title" th:text="${clause.title()}">Titre</div>
-                <div class="clause-body" th:text="${clause.body()}">Corps</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="footer">
-        <strong>Bokati Cowork</strong> · Document officiel vérifié en ligne<br>
-        Référence : <span th:text="${document.documentNumber()}"></span> · Consulté le <span th:text="${generatedAt}"></span><br>
-        Ce document est édité électroniquement et fait foi sans signature manuscrite.
-    </div>
-
+    <div class="foot">Vérifié le <span th:text="${generatedAt}">01/01/2026</span></div>
 </div>
 </body>
 </html>
