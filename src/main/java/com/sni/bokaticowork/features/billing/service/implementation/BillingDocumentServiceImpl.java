@@ -52,6 +52,7 @@ import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
+import com.sni.bokaticowork.features.payment.repository.WalletLedgerEntryRepository;
 import com.sni.bokaticowork.features.billing.repository.specification.criteria.BillingDocumentSearchCriteria;
 import com.sni.bokaticowork.features.billing.service.fiscal.DocumentSequenceService;
 import com.sni.bokaticowork.features.billing.service.fiscal.FiscalAuditService;
@@ -118,6 +119,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final BillingDiscountGuard discountGuard;
     private final BillingDocumentVersionService versionService;
     private final WalletService walletService;
+    private final WalletLedgerEntryRepository walletLedgerEntryRepository;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
     private final BillingNumberingSupport numberingSupport;
     private final BillingDocumentWriter documentWriter;
@@ -1500,12 +1502,14 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     public BillingDocument cancelAndArchive(String documentNumber, String reason) {
         BillingDocument document = serviceByNumber(documentNumber);
 
-        // Facture fiscalement scellée · on ne la mute pas, on émet un avoir
-        if (Boolean.TRUE.equals(document.getLocked())) {
+        if (document.getDocumentType() == BillingDocumentType.CREDIT_NOTE) {
+            // Un avoir ne s'annule jamais par un avoir · il faut d'abord defaire son imputation.
+            releaseCreditNoteBeforeCancellation(document);
+        } else if (requiresCreditNoteToCancel(document)) {
             return cancelLockedDocumentViaCreditNote(document, reason);
         }
 
-        // Document non verrouillé · annulation directe (comportement existant)
+        // Annulation directe
         if (document.getStatus() != BillingDocumentStatus.CANCELLED) {
             document.setStatus(BillingDocumentStatus.CANCELLED);
             if (document.getCancelledAt() == null) {
@@ -1524,6 +1528,66 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             eventWriter.write(document, "BILLING_DOCUMENT_ARCHIVED", billingActionDetails(reason, null));
         }
         return document;
+    }
+
+    /**
+     * Un avoir est-il nécessaire pour annuler ce document ?
+     *
+     * <p>Non, sauf si de l'argent a réellement été encaissé. Un avoir sert à constater une
+     * créance en faveur du client ; sur une facture dont rien n'a été perçu, il n'y a rien à
+     * créditer et l'annulation directe suffit — elle est datée, tracée et sort le document des
+     * agrégats comptables.
+     *
+     * <p>Non plus pour un devis, un avoir ou une note de débit : émettre un avoir d'avoir n'a
+     * aucun sens, et c'est ce que le code faisait, avec pour seul effet un refus
+     * « Payments can only be allocated to invoices » venu de {@code ensureCanPay}.
+     */
+    private boolean requiresCreditNoteToCancel(BillingDocument document) {
+        if (!Boolean.TRUE.equals(document.getLocked())) {
+            return false;
+        }
+        if (document.getDocumentType() != BillingDocumentType.INVOICE
+                && document.getDocumentType() != BillingDocumentType.PROFORMA_INVOICE
+                && document.getDocumentType() != BillingDocumentType.CORRECTIVE_INVOICE) {
+            return false;
+        }
+        BigDecimal paid = document.getPaidAmount();
+        return paid != null && paid.signum() > 0;
+    }
+
+    /**
+     * Défait l'imputation d'un avoir avant de l'annuler.
+     *
+     * <p>Un avoir déjà consommé a produit un effet ailleurs : soit il a soldé une facture, soit
+     * il a crédité un portefeuille. L'annuler sans défaire cet effet laisserait la contrepartie
+     * en place, donc un document annulé qui continue de peser sur un solde.
+     */
+    private void releaseCreditNoteBeforeCancellation(BillingDocument creditNote) {
+        if (creditNote.getStatus() != BillingDocumentStatus.ISSUED) {
+            // Avoir non consommé · rien à défaire.
+            return;
+        }
+
+        // Reversé au portefeuille : le solde a pu être dépensé depuis, on ne le reprend pas
+        // silencieusement. C'est une décision de gestion, pas une écriture technique.
+        boolean refundedToWallet = walletLedgerEntryRepository
+                .findByIdempotencyKey("CREDIT_NOTE_REFUND:" + creditNote.getDocumentNumber())
+                .isPresent();
+        if (refundedToWallet) {
+            throw new BadRequestException("L'avoir " + creditNote.getDocumentNumber()
+                    + " a ete reverse au portefeuille du client · le solde a pu etre utilise depuis. "
+                    + "Debiter le portefeuille du montant correspondant avant d'annuler l'avoir.");
+        }
+
+        // Imputé sur une facture · retirer l'imputation, sauf si la facture est elle-même
+        // annulée : elle ne doit pas ressortir du néant avec un solde rouvert.
+        String target = creditNote.getSourceCode();
+        if (StringUtils.hasText(target) && "INVOICE".equalsIgnoreCase(creditNote.getSourceType())) {
+            documentRepository.findByDocumentNumber(target)
+                    .filter(invoice -> invoice.getStatus() != BillingDocumentStatus.CANCELLED
+                            && invoice.getStatus() != BillingDocumentStatus.VOIDED)
+                    .ifPresent(invoice -> reversePayment(target, creditNote.getTotalAmount()));
+        }
     }
 
     /**
