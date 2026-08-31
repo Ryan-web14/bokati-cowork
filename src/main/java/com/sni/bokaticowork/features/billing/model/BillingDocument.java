@@ -170,6 +170,26 @@ public class BillingDocument {
     @Column(name = "discount_override_at")
     private Instant discountOverrideAt;
 
+    /**
+     * PDF fige a la validation · c'est cette version qui est servie ensuite, et son empreinte
+     * qui permet de dire si un fichier presente est bien celui qui a ete emis.
+     *
+     * <p>Sans gel, la comparaison serait vaine : PDFBox inscrit une date de creation dans les
+     * metadonnees et la liste des paiements imprimee evolue, si bien que deux generations
+     * successives du meme document ne produisent pas le meme fichier.
+     */
+    @Column(name = "pdf_storage_provider", length = 30)
+    private String pdfStorageProvider;
+
+    @Column(name = "pdf_storage_path", length = 500)
+    private String pdfStoragePath;
+
+    @Column(name = "pdf_sha256", length = 64)
+    private String pdfSha256;
+
+    @Column(name = "pdf_sealed_at")
+    private Instant pdfSealedAt;
+
     @Column(name = "customer_reference", length = 100)
     private String customerReference;
 

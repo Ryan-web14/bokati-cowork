@@ -37,6 +37,14 @@
             font-size: 11.5px; color: #7a6b8c; line-height: 1.65;
         }
         .foot { padding: 14px 26px 20px; text-align: center; font-size: 11px; color: #b3a7c0; }
+        .compare { margin-top: 18px; padding-top: 16px; border-top: 1px solid #f0eaf4; }
+        .compare-label { display: block; font-size: 12px; font-weight: 700; color: #1a0a2e; }
+        .compare-hint { font-size: 11.5px; color: #7a6b8c; margin: 4px 0 10px; line-height: 1.55; }
+        .compare input[type=file] { display: block; width: 100%; font-size: 11.5px; color: #5c4f6e; }
+        .compare button {
+            margin-top: 10px; width: 100%; padding: 9px 12px; border: none; border-radius: 6px;
+            background: #281332; color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -91,6 +99,19 @@
             Ces informations proviennent de nos systèmes. Si elles diffèrent du document que vous
             détenez, celui-ci a été modifié après son émission.
         </div>
+
+        <!--/* Comparaison octet par octet · la lecture a l'ecran ne detecte pas un montant
+               retouche dans un PDF, l'empreinte si. */-->
+        <form class="compare" th:action="@{'/verify/doc/' + ${view.reference()} + '/compare'}"
+              method="post" enctype="multipart/form-data">
+            <label class="compare-label" for="file">Vérifier un fichier</label>
+            <div class="compare-hint">
+                Déposez le PDF que vous détenez : nous dirons s'il s'agit exactement de celui que
+                nous avons émis.
+            </div>
+            <input type="file" id="file" name="file" accept="application/pdf" required>
+            <button type="submit">Comparer</button>
+        </form>
     </div>
 
     <div class="foot">Vérifié le <span th:text="${generatedAt}">01/01/2026</span></div>

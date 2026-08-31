@@ -116,6 +116,16 @@
 			<artifactId>openhtmltopdf-pdfbox</artifactId>
 			<version>1.0.10</version>
 		</dependency>
+		<!--
+			Signature PAdES des PDF. PDFBox sait inserer un champ de signature dans le document
+			mais ne produit pas la structure CMS/PKCS#7 qui l'occupe : c'est BouncyCastle qui la
+			fabrique. bcpkix entraine bcprov et bcutil.
+		-->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk18on</artifactId>
+			<version>1.78.1</version>
+		</dependency>
 		<dependency>
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>

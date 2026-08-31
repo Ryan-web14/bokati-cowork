@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentCl
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentDiscountRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentLineRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.SimulateBillingDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
@@ -120,6 +121,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final BillingDocumentVersionService versionService;
     private final WalletService walletService;
     private final WalletLedgerEntryRepository walletLedgerEntryRepository;
+
+    /** Devise retenue quand la simulation n'en precise aucune · celle du catalogue. */
+    @org.springframework.beans.factory.annotation.Value("${bokati.billing.default-currency:XAF}")
+    private String defaultCurrency;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
     private final BillingNumberingSupport numberingSupport;
     private final BillingDocumentWriter documentWriter;
@@ -141,9 +146,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     @Override
     @Transactional(readOnly = true)
-    public SimulateBillingDocumentResponse simulate(CreateBillingDocumentRequest request) {
+    public SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request) {
         BillingCalculationService.CalculatedDocument calculation =
-                calculationService.calculate(request.lines(), request.discounts());
+                calculationService.calculate(request.lines(), request.resolvedDiscounts());
 
         List<SimulateBillingDocumentResponse.SimulatedLine> lines = calculation.lines().stream()
                 .map(this::simulatedLine)
@@ -163,6 +168,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .anyMatch(violation -> BillingDiscountGuard.Severity.BLOCK.name().equals(violation.severity()));
 
         return new SimulateBillingDocumentResponse(
+                request.resolvedDocumentType(),
+                request.resolvedCurrency(defaultCurrency),
+                request.title(),
                 lines,
                 calculation.subtotalAmount(),
                 lineDiscount,
@@ -1696,7 +1704,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                     "Pour un brouillon, utilisez directement update().");
         }
 
-        BillingDocumentResponse corrective = create(toDocumentRequest(BillingDocumentType.CORRECTIVE_INVOICE, request));
+        // Une rectificative corrige une facture precise · son destinataire est celui de la
+        // facture d'origine, il n'a pas a etre resaisi. Sans cette reprise, l'appel echouait sur
+        // « Customer name is required when customer cannot be resolved » alors que le client
+        // etait parfaitement determine. Une valeur explicitement fournie reste prioritaire.
+        BillingDocumentResponse corrective = create(
+                inheritCustomer(toDocumentRequest(BillingDocumentType.CORRECTIVE_INVOICE, request), original));
 
         BillingDocument correctiveDoc = serviceByNumber(corrective.documentNumber());
         correctiveDoc.setOriginalDocumentNumber(originalInvoiceNumber);
@@ -1857,6 +1870,58 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         );
     }
 
+    /**
+     * Reprend le destinataire d'un document de reference lorsque la requete ne le precise pas.
+     *
+     * <p>Une rectificative corrige une facture donnee : son destinataire est celui de cette
+     * facture, et le resaisir n'apporte rien qu'un risque de divergence. Une valeur explicitement
+     * fournie reste prioritaire — corriger les coordonnees imprimees fait justement partie des
+     * motifs d'emission d'une rectificative.
+     */
+    private CreateBillingDocumentRequest inheritCustomer(CreateBillingDocumentRequest request,
+                                                         BillingDocument source) {
+        if (StringUtils.hasText(request.customerCode()) || StringUtils.hasText(request.customerName())) {
+            return request;
+        }
+        return new CreateBillingDocumentRequest(
+                request.documentType(),
+                firstNonBlank(request.customerType(), source.getCustomerType()),
+                firstNonBlank(request.customerCode(), source.getCustomerCode()),
+                firstNonBlank(request.customerName(), source.getCustomerName()),
+                firstNonBlank(request.customerEmail(), source.getCustomerEmail()),
+                firstNonBlank(request.customerPhone(), source.getCustomerPhone()),
+                firstNonBlank(request.billingAddressJson(), source.getBillingAddressJson()),
+                request.sourceType(),
+                request.sourceCode(),
+                request.title(),
+                request.description(),
+                request.terms(),
+                firstNonBlank(request.currency(), source.getCurrency()),
+                request.issueDate(),
+                request.dueDate(),
+                request.metadataJson(),
+                request.lines(),
+                request.discounts(),
+                request.clauses(),
+                request.paymentReference(),
+                request.paymentInstructions(),
+                request.bankDetailsJson(),
+                request.advance(),
+                request.customerReference(),
+                request.poNumber(),
+                request.projectCode(),
+                request.salespersonCode(),
+                request.deliveryAddressJson(),
+                request.language(),
+                request.exchangeRate(),
+                request.earlyPaymentDiscount()
+        );
+    }
+
+    private String firstNonBlank(String preferred, String fallback) {
+        return StringUtils.hasText(preferred) ? preferred : fallback;
+    }
+
     private BillingLineType lineTypeFromBillable(BillableItem item) {
         String sourceType = item.getSourceType() == null ? "" : item.getSourceType().toUpperCase();
         if (sourceType.contains("BOOKING")) {
@@ -1888,6 +1953,33 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         return quote;
     }
 
+    /**
+     * Part <b>fixe</b> de la remise d'une ligne deja calculee.
+     *
+     * <p>Le moteur additionne la remise exprimee en taux et celle exprimee en montant, puis
+     * conserve sur la ligne le taux fourni <i>et</i> le montant resolu. Recopier les deux tels
+     * quels — a la conversion d'un devis, a la duplication, a chaque modification — fait
+     * recalculer le taux et l'ajouter a un montant qui le contenait deja : la remise double, et
+     * se cumule a chaque nouvelle copie.
+     *
+     * <p>On ne renvoie donc que ce que le taux ne reproduit pas. Le taux, lui, est recopie tel
+     * quel : il reste affiche sur le document et sera recalcule a l'identique.
+     */
+    private BigDecimal residualFixedDiscount(BigDecimal subtotal, BigDecimal discountRate,
+                                             BigDecimal discountAmount) {
+        BigDecimal amount = discountAmount == null ? BigDecimal.ZERO : discountAmount;
+        if (discountRate == null || discountRate.signum() <= 0
+                || subtotal == null || subtotal.signum() <= 0) {
+            return amount;
+        }
+        // Meme arrondi que BillingCalculationService.percentage · un ecart de rounding ici
+        // reapparaitrait comme un residu de quelques centimes a chaque copie.
+        BigDecimal fromRate = subtotal.multiply(discountRate)
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        BigDecimal residual = amount.subtract(fromRate);
+        return residual.signum() > 0 ? residual : BigDecimal.ZERO;
+    }
+
     private CreateBillingDocumentLineRequest toCreateLineRequest(BillingDocumentLineResponse line) {
         return new CreateBillingDocumentLineRequest(
                 line.lineOrder(),
@@ -1898,7 +1990,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.quantity(),
                 line.unitPrice(),
                 line.discountRate(),
-                line.discountAmount(),
+                residualFixedDiscount(line.subtotalAmount(), line.discountRate(), line.discountAmount()),
                 line.taxable(),
                 line.taxIncluded(),
                 line.vatRate(),
@@ -1923,7 +2015,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.getQuantity(),
                 line.getUnitPrice(),
                 line.getDiscountRate(),
-                line.getDiscountAmount(),
+                residualFixedDiscount(line.getSubtotalAmount(), line.getDiscountRate(), line.getDiscountAmount()),
                 line.getTaxable(),
                 line.getTaxIncluded(),
                 line.getVatRate(),

@@ -1,6 +1,6 @@
 package com.sni.bokaticowork.features.billing.service.implementation;
 
-import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.SimulateBillingDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.response.SimulateBillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.config.BillingDiscountGuardProperties;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
@@ -117,11 +117,44 @@ class BillingDocumentSimulationTest {
                 .build();
     }
 
-    private CreateBillingDocumentRequest request() {
-        return new CreateBillingDocumentRequest(
-                BillingDocumentType.QUOTE, "MEMBER", "MBR-001", "Jean", null, null, null,
-                null, null, "Devis", null, null, "XAF", null, null, null,
-                List.of(), List.of(), List.of(),
-                null, null, null, null, null, null, null, null, null, null, null, null);
+    private SimulateBillingDocumentRequest request() {
+        return new SimulateBillingDocumentRequest(
+                BillingDocumentType.QUOTE, "XAF", "Devis", List.of(), List.of());
+    }
+
+    @Test
+    void shouldNotRequireADocumentTypeNorACurrency() {
+        // Simuler n'engage rien · exiger un type de document faisait echouer l'appel en 400
+        // « documentType: must not be null » alors que le calcul n'en a aucun besoin.
+        when(calculationService.calculate(any(), any())).thenReturn(
+                new BillingCalculationService.CalculatedDocument(
+                        List.of(line("Salle", "1000", "0")),
+                        new BigDecimal("1000"), BigDecimal.ZERO, new BigDecimal("1000"),
+                        new BigDecimal("180"), new BigDecimal("9"), new BigDecimal("189"),
+                        new BigDecimal("1189")));
+
+        var simulation = service.simulate(
+                new SimulateBillingDocumentRequest(null, null, null, List.of(), null));
+
+        assertThat(simulation.documentType()).isEqualTo(BillingDocumentType.INVOICE);
+        assertThat(simulation.totalAmount()).isEqualByComparingTo("1189");
+    }
+
+    @Test
+    void shouldEchoBackWhatItAssumed() {
+        // L'apercu doit pouvoir afficher son en-tete sans deviner ce que le serveur a suppose.
+        when(calculationService.calculate(any(), any())).thenReturn(
+                new BillingCalculationService.CalculatedDocument(
+                        List.of(line("Salle", "1000", "0")),
+                        new BigDecimal("1000"), BigDecimal.ZERO, new BigDecimal("1000"),
+                        new BigDecimal("180"), new BigDecimal("9"), new BigDecimal("189"),
+                        new BigDecimal("1189")));
+
+        var simulation = service.simulate(new SimulateBillingDocumentRequest(
+                BillingDocumentType.QUOTE, "EUR", "Devis salle", List.of(), List.of()));
+
+        assertThat(simulation.documentType()).isEqualTo(BillingDocumentType.QUOTE);
+        assertThat(simulation.currency()).isEqualTo("EUR");
+        assertThat(simulation.title()).isEqualTo("Devis salle");
     }
 }

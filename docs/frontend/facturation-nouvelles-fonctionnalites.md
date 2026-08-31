@@ -16,7 +16,11 @@ calculatrice et les brouillons créés pour être aussitôt supprimés.
 POST /billing/documents/simulate
 ```
 
-Le corps est **exactement celui de `POST /billing/documents`**. Rien n'est écrit, aucun numéro de
+Le corps reprend celui de `POST /billing/documents`, en plus permissif : **`documentType` et
+`currency` sont facultatifs** — simuler n'engage rien, exiger un type de document n'aurait pas de
+sens. À défaut, le serveur retient `INVOICE` et la devise par défaut, et les renvoie dans la
+réponse avec le `title`, pour que l'aperçu affiche son en-tête sans rien deviner. Seules les
+lignes sont validées. Rien n'est écrit, aucun numéro de
 séquence n'est consommé. L'interface peut donc appeler `simulate` à chaque frappe, puis envoyer
 la même charge utile pour de bon.
 
@@ -154,6 +158,20 @@ Les endpoints n'ont pas changé (`/billing/catalog`). Les corps se sont étoffé
 
 Tous facultatifs. Laissés vides, l'article se comporte comme avant.
 
+### Désigner un article du catalogue
+
+Le champ est **`itemCode`**. `catalogSourceCode` est accepté comme alias, de même que
+`catalogSourceType` pour `sourceType` — les deux orthographes fonctionnent, sur la création
+comme sur la modification.
+
+> **Pourquoi cet alias existe.** Une clé mal nommée sur ce champ n'échoue pas : la propriété
+> inconnue est ignorée, la ligne n'est rattachée à aucun article, et le plancher de prix, le taux
+> de remise maximal, la catégorie et l'unité cessent tous de s'appliquer — sans le moindre
+> message. Une remise de 40 % passait ainsi sans déclencher un seul garde-fou.
+>
+> Si vous écrivez une nouvelle intégration, employez `itemCode` : c'est le nom du champ, l'autre
+> n'est qu'un alias de compatibilité.
+
 ### Deux champs en lecture seule qui comptent
 
 `effectiveFloorPrice` est le plancher **réellement appliqué** — il peut exister alors que
@@ -264,6 +282,33 @@ Refus possibles, tous en 400 :
 | Montant nul | `montant nul` |
 
 Après reversement, l'avoir passe au statut `ISSUED`, qui signifie ici « consommé ».
+
+---
+
+## 5 bis. Propriétés inconnues refusées
+
+L'API **refuse désormais toute propriété qu'elle ne connaît pas**, au lieu de l'ignorer
+silencieusement, et nomme le champ fautif :
+
+```json
+{
+  "errorCode": "VALIDATION_FAILED",
+  "status": 400,
+  "message": "Propriete inconnue dans le corps de la requete : itemCod.",
+  "errors": ["itemCod : propriete inconnue · attendu parmi : ..., itemCode, lineOrder, ..."]
+}
+```
+
+**Pourquoi ce durcissement.** Une clé mal orthographiée ne produisait aucune erreur : le champ
+était jeté, et ce qui en dépendait cessait de s'appliquer sans le moindre message. C'est ainsi que
+`catalogSourceCode` a désarmé le plancher de prix et le taux de remise maximal.
+
+**Une exception, délibérée** : `POST /billing/documents/simulate` reste tolérant, pour que
+l'interface puisse lui envoyer la charge utile complète de la création sans avoir à en retirer les
+champs du document.
+
+Si une intégration tierce envoyait des champs superflus, `API_STRICT_PAYLOAD=false` désactive le
+durcissement sans redéploiement.
 
 ---
 

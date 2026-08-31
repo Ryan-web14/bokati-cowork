@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -34,6 +35,33 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT d FROM BillingDocument d WHERE d.documentNumber = :documentNumber")
     Optional<BillingDocument> lockByDocumentNumber(@Param("documentNumber") String documentNumber);
+
+    /**
+     * Enregistre le PDF fige, mais seulement si aucun ne l'est deja.
+     *
+     * <p>Le scellement se declenche au premier acces : deux telechargements simultanes pourraient
+     * donc l'entreprendre en meme temps. La clause {@code pdfSha256 IS NULL} fait qu'un seul
+     * gagne · l'autre obtient zero ligne modifiee, relit et sert la version retenue. Sans elle,
+     * le second ecraserait l'empreinte du premier, et un fichier deja remis au client cesserait
+     * de correspondre.
+     *
+     * @return 1 si ce document vient d'etre scelle, 0 s'il l'etait deja
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            UPDATE BillingDocument d
+               SET d.pdfStorageProvider = :provider,
+                   d.pdfStoragePath     = :path,
+                   d.pdfSha256          = :sha256,
+                   d.pdfSealedAt        = :sealedAt
+             WHERE d.documentNumber = :documentNumber
+               AND d.pdfSha256 IS NULL
+            """)
+    int sealPdf(@Param("documentNumber") String documentNumber,
+                @Param("provider") String provider,
+                @Param("path") String path,
+                @Param("sha256") String sha256,
+                @Param("sealedAt") java.time.Instant sealedAt);
 
     @Query(nativeQuery = true, value = """
             SELECT *

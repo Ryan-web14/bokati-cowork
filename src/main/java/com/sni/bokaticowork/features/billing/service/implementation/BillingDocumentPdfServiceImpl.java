@@ -9,7 +9,11 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.model.BillingDocument;
+import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
+import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentStorageService;
 import com.sni.bokaticowork.features.billing.service.fiscal.FiscalQrCodeService;
+import com.sni.bokaticowork.features.billing.service.support.PdfSignatureService;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
@@ -25,6 +29,7 @@ import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository;
 import com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.beans.factory.annotation.Value;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -55,8 +60,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.time.Instant;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -68,14 +73,130 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final PaymentAllocationRepository paymentAllocationRepository;
     private final PawapayDepositRepository pawapayDepositRepository;
     private final FiscalQrCodeService fiscalQrCodeService;
+    private final BillingDocumentRepository documentRepository;
+    private final DocumentStorageService documentStorageService;
+    private final PdfSignatureService pdfSignatureService;
     private final Locale appLocale;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
     private String verifyBaseUrl;
 
+    /**
+     * Rend le PDF du document · fige a la volee la version canonique d'un document scelle.
+     *
+     * <p>Le gel se declenche au premier acces plutot qu'a la validation : cela evite d'injecter
+     * ce service dans {@code BillingDocumentServiceImpl}, qui produirait un cycle puisque ce
+     * service depend deja de lui. Le moment est de surcroit le bon — on fige l'artefact
+     * exactement quand il commence a exister pour quelqu'un — et les documents valides avant
+     * cette version sont couverts sans reprise.
+     */
     @Override
+    @Transactional
     public byte[] generatePdf(String documentNumber) {
         BillingDocumentResponse document = billingDocumentService.get(documentNumber);
+
+        byte[] canonical = storedPdf(documentNumber);
+        if (canonical == null) {
+            canonical = render(document);
+            if (Boolean.TRUE.equals(document.locked())) {
+                // La signature precede le gel · ce sont les octets signes qui sont stockes et
+                // dont l'empreinte est conservee. Signer apres coup produirait un fichier qui
+                // verifie dans le lecteur PDF mais ne correspond plus a l'empreinte de reference.
+                canonical = seal(documentNumber, pdfSignatureService.sign(canonical));
+            }
+        }
+
+        String watermark = resolveWatermark(document.status(), document.locked());
+        if (watermark == null) {
+            return canonical;
+        }
+        try {
+            return addWatermark(canonical, watermark);
+        } catch (Exception ex) {
+            throw new BadRequestException("Unable to watermark billing document PDF", ex);
+        }
+    }
+
+    /**
+     * Compare un fichier a la version canonique du document.
+     *
+     * <p>Repond a la seule question qui compte dans un litige : « ce fichier est-il celui que
+     * vous avez emis ? »
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public PdfComparison compare(String documentNumber, byte[] candidate) {
+        BillingDocument document = documentRepository.findByDocumentNumber(documentNumber)
+                .orElseThrow(() -> new BadRequestException("Document introuvable : " + documentNumber));
+
+        String expected = document.getPdfSha256();
+        String provided = sha256(candidate == null ? new byte[0] : candidate);
+
+        if (!StringUtils.hasText(expected)) {
+            return new PdfComparison(false, false, null, provided, document.getStatus());
+        }
+        return new PdfComparison(true, expected.equalsIgnoreCase(provided), expected, provided,
+                document.getStatus());
+    }
+
+    /** Octets figes du document, ou {@code null} s'il n'a pas encore ete scelle. */
+    private byte[] storedPdf(String documentNumber) {
+        return documentRepository.findByDocumentNumber(documentNumber)
+                .filter(doc -> StringUtils.hasText(doc.getPdfSha256())
+                        && StringUtils.hasText(doc.getPdfStoragePath()))
+                .map(doc -> {
+                    try {
+                        return documentStorageService.read(doc.getPdfStorageProvider(), doc.getPdfStoragePath());
+                    } catch (RuntimeException ex) {
+                        // Fichier introuvable ou stockage indisponible · on regenere plutot que
+                        // de refuser le telechargement. L'empreinte reste en base et le signalera.
+                        log.warn("PDF fige illisible pour {} · regeneration : {}",
+                                documentNumber, ex.getMessage());
+                        return null;
+                    }
+                })
+                .orElse(null);
+    }
+
+    /**
+     * Stocke les octets et enregistre leur empreinte. En cas de course, celui qui perd relit et
+     * sert la version retenue plutot que d'imposer la sienne : un fichier deja remis au client ne
+     * doit pas cesser de correspondre.
+     */
+    private byte[] seal(String documentNumber, byte[] pdfBytes) {
+        try {
+            DocumentStorageService.StoredDocument stored = documentStorageService.storeBytes(
+                    "billing", documentNumber, 1, documentNumber + ".pdf", pdfBytes);
+            int sealed = documentRepository.sealPdf(documentNumber, stored.provider(),
+                    stored.storagePath(), sha256(pdfBytes), Instant.now());
+            if (sealed == 0) {
+                byte[] winner = storedPdf(documentNumber);
+                return winner != null ? winner : pdfBytes;
+            }
+            log.info("PDF fige pour {} · {} octets", documentNumber, pdfBytes.length);
+            return pdfBytes;
+        } catch (RuntimeException ex) {
+            // Le gel est une garantie supplementaire, pas une condition du telechargement.
+            log.warn("Impossible de figer le PDF de {} · sert la version generee : {}",
+                    documentNumber, ex.getMessage());
+            return pdfBytes;
+        }
+    }
+
+    private String sha256(byte[] bytes) {
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+            StringBuilder hex = new StringBuilder(digest.length * 2);
+            for (byte b : digest) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (java.security.NoSuchAlgorithmException ex) {
+            throw new IllegalStateException("SHA-256 indisponible", ex);
+        }
+    }
+
+    private byte[] render(BillingDocumentResponse document) {
         String html = renderHtml(document);
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             org.jsoup.nodes.Document jsoupDoc = org.jsoup.Jsoup.parse(html);
@@ -89,16 +210,30 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoupDoc), null);
             builder.toStream(out);
             builder.run();
-            byte[] pdfBytes = out.toByteArray();
-            String watermark = resolveWatermark(document.status());
-            return watermark != null ? addWatermark(pdfBytes, watermark) : pdfBytes;
+            // Le filigrane n'est plus appose ici · il depend du statut courant, qui evolue,
+            // alors que ces octets-ci sont la version canonique et doivent rester stables.
+            return out.toByteArray();
         } catch (Exception ex) {
             throw new BadRequestException("Unable to generate billing document PDF", ex);
         }
     }
 
-    private String resolveWatermark(BillingDocumentStatus status) {
+    /**
+     * Filigrane a apposer, selon le statut et selon que le document est scelle.
+     *
+     * <p>Sur un document scelle, seule l'annulation en merite un : faire circuler une facture
+     * annulee sans marque visible est le seul cas reellement dangereux. « EN RETARD » est un etat
+     * commercial, qui change avec le temps et se resorbe au paiement · il n'a rien a faire sur un
+     * artefact cense rester identique a lui-meme.
+     */
+    private String resolveWatermark(BillingDocumentStatus status, Boolean locked) {
         if (status == null) return null;
+        if (Boolean.TRUE.equals(locked)) {
+            return switch (status) {
+                case CANCELLED, VOIDED -> "ANNULÉ";
+                default -> null;
+            };
+        }
         return switch (status) {
             case DRAFT -> "BROUILLON";
             case OVERDUE -> "EN RETARD";
