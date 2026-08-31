@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.billing.service.interfaces;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.SimulateBillingDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
@@ -29,7 +30,7 @@ public interface BillingDocumentService {
      * sequence n'est consomme. Accepte le meme corps que {@link #create}, de sorte que
      * l'interface puisse simuler puis envoyer la meme charge utile.
      */
-    SimulateBillingDocumentResponse simulate(CreateBillingDocumentRequest request);
+    SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request);
     BillingDocumentResponse update(String documentNumber, UpdateBillingDocumentRequest request);
 
     /**

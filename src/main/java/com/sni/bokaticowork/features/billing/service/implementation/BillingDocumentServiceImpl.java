@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentCl
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentDiscountRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentLineRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.SimulateBillingDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
@@ -120,6 +121,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final BillingDocumentVersionService versionService;
     private final WalletService walletService;
     private final WalletLedgerEntryRepository walletLedgerEntryRepository;
+
+    /** Devise retenue quand la simulation n'en precise aucune · celle du catalogue. */
+    @org.springframework.beans.factory.annotation.Value("${bokati.billing.default-currency:XAF}")
+    private String defaultCurrency;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
     private final BillingNumberingSupport numberingSupport;
     private final BillingDocumentWriter documentWriter;
@@ -141,9 +146,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     @Override
     @Transactional(readOnly = true)
-    public SimulateBillingDocumentResponse simulate(CreateBillingDocumentRequest request) {
+    public SimulateBillingDocumentResponse simulate(SimulateBillingDocumentRequest request) {
         BillingCalculationService.CalculatedDocument calculation =
-                calculationService.calculate(request.lines(), request.discounts());
+                calculationService.calculate(request.lines(), request.resolvedDiscounts());
 
         List<SimulateBillingDocumentResponse.SimulatedLine> lines = calculation.lines().stream()
                 .map(this::simulatedLine)
@@ -163,6 +168,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .anyMatch(violation -> BillingDiscountGuard.Severity.BLOCK.name().equals(violation.severity()));
 
         return new SimulateBillingDocumentResponse(
+                request.resolvedDocumentType(),
+                request.resolvedCurrency(defaultCurrency),
+                request.title(),
                 lines,
                 calculation.subtotalAmount(),
                 lineDiscount,

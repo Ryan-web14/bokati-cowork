@@ -18,6 +18,13 @@ import java.util.List;
  * @param discountAmount         somme des deux · c'est ce montant que le seuil global controle
  */
 public record SimulateBillingDocumentResponse(
+        /**
+         * Type, devise et titre retenus · repris de la requete ou completes par defaut. L'apercu
+         * peut ainsi afficher son en-tete sans avoir a deviner ce que le serveur a suppose.
+         */
+        com.sni.bokaticowork.features.billing.enums.BillingDocumentType documentType,
+        String currency,
+        String title,
         List<SimulatedLine> lines,
         BigDecimal subtotalAmount,
         BigDecimal lineDiscountAmount,

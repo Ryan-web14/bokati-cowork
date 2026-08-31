@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.billing.controller;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.billing.dto.request.CreateBillingDocumentRequest;
+import com.sni.bokaticowork.features.billing.dto.request.SimulateBillingDocumentRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateInvoiceFromBillableItemsRequest;
 import com.sni.bokaticowork.features.billing.dto.request.CreateManualBillingDocumentRequest;
@@ -82,7 +83,7 @@ public class BillingDocumentController {
      */
     @PostMapping("/documents/simulate")
     public ResponseEntity<SimulateBillingDocumentResponse> simulate(
-            @Valid @RequestBody CreateBillingDocumentRequest request) {
+            @Valid @RequestBody SimulateBillingDocumentRequest request) {
         return ResponseEntity.ok(billingDocumentService.simulate(request));
     }
 
