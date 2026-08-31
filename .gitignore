@@ -43,3 +43,6 @@ CLAUDE.md.md
 .env
 .env.*
 !.env.example
+# Keystores de signature PDF · une cle privee ne va jamais dans le depot.
+*.p12
+*.jks

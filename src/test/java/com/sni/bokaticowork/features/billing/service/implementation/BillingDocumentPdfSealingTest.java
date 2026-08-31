@@ -33,6 +33,7 @@ class BillingDocumentPdfSealingTest {
             mock(com.sni.bokaticowork.features.billing.service.fiscal.FiscalQrCodeService.class),
             documentRepository,
             storageService,
+            mock(com.sni.bokaticowork.features.billing.service.support.PdfSignatureService.class),
             java.util.Locale.FRANCE);
 
     @Test

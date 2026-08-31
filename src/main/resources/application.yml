@@ -90,6 +90,31 @@ bokati:
       limit-for-period: ${GRAPH_RATE_LIMIT:25}
       limit-refresh-period-ms: ${GRAPH_RATE_LIMIT_REFRESH_MS:60000}
       timeout-ms: ${GRAPH_RATE_LIMIT_TIMEOUT_MS:30000}
+  pdf:
+    signature:
+      # Signature PAdES des documents scellés · seul mécanisme qui fait qu'un lecteur PDF signale
+      # de lui-même qu'un document a été modifié, sans démarche du destinataire.
+      #
+      # Avec un certificat auto-signé, le lecteur affiche « signature valide, émetteur non
+      # vérifié » — bandeau jaune plutôt que vert. L'essentiel est acquis pour autant : le
+      # bandeau change dès qu'un octet bouge. Passer à une autorité reconnue ne changera pas une
+      # ligne de code, seulement la source du keystore.
+      #
+      # Générer un keystore de développement :
+      #   keytool -genkeypair -alias bokati -keyalg RSA -keysize 2048 -validity 3650 \
+      #           -storetype PKCS12 -keystore storage/pdf-signing.p12 -storepass changeit \
+      #           -dname "CN=Elle a Ose, OU=Bokati Cowork, O=SNI, L=Brazzaville, C=CG"
+      #
+      # En production, fournir le keystore en base64 (PDF_SIGNATURE_KEYSTORE_BASE64) · une clé
+      # privée ne va jamais dans le dépôt. Sa compromission permettrait de signer de faux
+      # documents : prévoir la rotation avant la mise en service.
+      enabled: ${PDF_SIGNATURE_ENABLED:false}
+      keystore-base64: ${PDF_SIGNATURE_KEYSTORE_BASE64:}
+      keystore-path: ${PDF_SIGNATURE_KEYSTORE_PATH:}
+      keystore-password: ${PDF_SIGNATURE_KEYSTORE_PASSWORD:}
+      alias: ${PDF_SIGNATURE_ALIAS:bokati}
+      reason: ${PDF_SIGNATURE_REASON:Document emis par Bokati Cowork}
+      location: ${PDF_SIGNATURE_LOCATION:Brazzaville, Congo}
   billing:
     discount-guard:
       # Limites de remise fixees par configuration, en complement de celles portees par chaque

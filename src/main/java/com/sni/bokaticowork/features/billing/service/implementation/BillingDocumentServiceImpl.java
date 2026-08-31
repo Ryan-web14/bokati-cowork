@@ -1696,7 +1696,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                     "Pour un brouillon, utilisez directement update().");
         }
 
-        BillingDocumentResponse corrective = create(toDocumentRequest(BillingDocumentType.CORRECTIVE_INVOICE, request));
+        // Une rectificative corrige une facture precise · son destinataire est celui de la
+        // facture d'origine, il n'a pas a etre resaisi. Sans cette reprise, l'appel echouait sur
+        // « Customer name is required when customer cannot be resolved » alors que le client
+        // etait parfaitement determine. Une valeur explicitement fournie reste prioritaire.
+        BillingDocumentResponse corrective = create(
+                inheritCustomer(toDocumentRequest(BillingDocumentType.CORRECTIVE_INVOICE, request), original));
 
         BillingDocument correctiveDoc = serviceByNumber(corrective.documentNumber());
         correctiveDoc.setOriginalDocumentNumber(originalInvoiceNumber);
@@ -1855,6 +1860,58 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 request.exchangeRate(),
                 request.earlyPaymentDiscount()
         );
+    }
+
+    /**
+     * Reprend le destinataire d'un document de reference lorsque la requete ne le precise pas.
+     *
+     * <p>Une rectificative corrige une facture donnee : son destinataire est celui de cette
+     * facture, et le resaisir n'apporte rien qu'un risque de divergence. Une valeur explicitement
+     * fournie reste prioritaire — corriger les coordonnees imprimees fait justement partie des
+     * motifs d'emission d'une rectificative.
+     */
+    private CreateBillingDocumentRequest inheritCustomer(CreateBillingDocumentRequest request,
+                                                         BillingDocument source) {
+        if (StringUtils.hasText(request.customerCode()) || StringUtils.hasText(request.customerName())) {
+            return request;
+        }
+        return new CreateBillingDocumentRequest(
+                request.documentType(),
+                firstNonBlank(request.customerType(), source.getCustomerType()),
+                firstNonBlank(request.customerCode(), source.getCustomerCode()),
+                firstNonBlank(request.customerName(), source.getCustomerName()),
+                firstNonBlank(request.customerEmail(), source.getCustomerEmail()),
+                firstNonBlank(request.customerPhone(), source.getCustomerPhone()),
+                firstNonBlank(request.billingAddressJson(), source.getBillingAddressJson()),
+                request.sourceType(),
+                request.sourceCode(),
+                request.title(),
+                request.description(),
+                request.terms(),
+                firstNonBlank(request.currency(), source.getCurrency()),
+                request.issueDate(),
+                request.dueDate(),
+                request.metadataJson(),
+                request.lines(),
+                request.discounts(),
+                request.clauses(),
+                request.paymentReference(),
+                request.paymentInstructions(),
+                request.bankDetailsJson(),
+                request.advance(),
+                request.customerReference(),
+                request.poNumber(),
+                request.projectCode(),
+                request.salespersonCode(),
+                request.deliveryAddressJson(),
+                request.language(),
+                request.exchangeRate(),
+                request.earlyPaymentDiscount()
+        );
+    }
+
+    private String firstNonBlank(String preferred, String fallback) {
+        return StringUtils.hasText(preferred) ? preferred : fallback;
     }
 
     private BillingLineType lineTypeFromBillable(BillableItem item) {

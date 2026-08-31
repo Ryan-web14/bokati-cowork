@@ -13,6 +13,7 @@ import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository;
 import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentStorageService;
 import com.sni.bokaticowork.features.billing.service.fiscal.FiscalQrCodeService;
+import com.sni.bokaticowork.features.billing.service.support.PdfSignatureService;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
@@ -74,6 +75,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final FiscalQrCodeService fiscalQrCodeService;
     private final BillingDocumentRepository documentRepository;
     private final DocumentStorageService documentStorageService;
+    private final PdfSignatureService pdfSignatureService;
     private final Locale appLocale;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
@@ -97,7 +99,10 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         if (canonical == null) {
             canonical = render(document);
             if (Boolean.TRUE.equals(document.locked())) {
-                canonical = seal(documentNumber, canonical);
+                // La signature precede le gel · ce sont les octets signes qui sont stockes et
+                // dont l'empreinte est conservee. Signer apres coup produirait un fichier qui
+                // verifie dans le lecteur PDF mais ne correspond plus a l'empreinte de reference.
+                canonical = seal(documentNumber, pdfSignatureService.sign(canonical));
             }
         }
 
