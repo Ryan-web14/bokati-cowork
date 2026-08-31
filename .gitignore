@@ -43,6 +43,10 @@ CLAUDE.md.md
 .env
 .env.*
 !.env.example
-# Keystores de signature PDF · une cle privee ne va jamais dans le depot.
+# Signature PDF · une cle privee et son mot de passe ne vont jamais dans le depot.
+# Le base64 du keystore est exactement aussi sensible que le keystore lui-meme.
 *.p12
 *.jks
+*.b64
+storage/.prod-pw.txt
+storage/.pdf-signing-prod.password
