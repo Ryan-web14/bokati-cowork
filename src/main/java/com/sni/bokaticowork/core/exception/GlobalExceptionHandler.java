@@ -8,6 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+// Jackson 3 · Spring Boot 4 expose tools.jackson, et non com.fasterxml.jackson.
+// La classe homonyme de Jackson 2 reste sur le classpath : l'importer ferait echouer
+// le instanceof en silence, sans la moindre erreur de compilation.
+import tools.jackson.databind.exc.UnrecognizedPropertyException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -128,8 +132,41 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Object> handleMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        // Une propriete inconnue merite d'etre nommee. Repondre "malformed" sans dire laquelle
+        // laisse chercher, alors que la cause est presque toujours une clef mal orthographiee :
+        // c'est exactement le defaut qui a laisse catalogSourceCode desarmer silencieusement les
+        // garde-fous de remise pendant des semaines.
+        // La cause n'est pas toujours directe : quand la propriete fautive est dans une liste,
+        // Jackson enveloppe l'erreur d'un niveau. On parcourt donc la chaine.
+        UnrecognizedPropertyException unknown = unrecognizedProperty(ex);
+        if (unknown != null) {
+            String known = unknown.getKnownPropertyIds() == null
+                    ? ""
+                    : unknown.getKnownPropertyIds().stream()
+                            .map(String::valueOf)
+                            .sorted()
+                            .collect(java.util.stream.Collectors.joining(", "));
+            List<String> errors = List.of(
+                    unknown.getPropertyName() + " : propriete inconnue"
+                            + (known.isBlank() ? "" : " · attendu parmi : " + known));
+            return respond(errorResponse.build(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
+                    "Propriete inconnue dans le corps de la requete : " + unknown.getPropertyName() + ".",
+                    request, ex, errors));
+        }
         return respond(errorResponse.build(ErrorCode.BAD_REQUEST, HttpStatus.BAD_REQUEST,
                 "Request body is missing or malformed.", request, ex, null));
+    }
+
+    private UnrecognizedPropertyException unrecognizedProperty(Throwable ex) {
+        for (Throwable current = ex; current != null; current = current.getCause()) {
+            if (current instanceof UnrecognizedPropertyException unknown) {
+                return unknown;
+            }
+            if (current.getCause() == current) {
+                break;
+            }
+        }
+        return null;
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)

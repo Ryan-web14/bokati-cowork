@@ -285,6 +285,33 @@ Après reversement, l'avoir passe au statut `ISSUED`, qui signifie ici « consom
 
 ---
 
+## 5 bis. Propriétés inconnues refusées
+
+L'API **refuse désormais toute propriété qu'elle ne connaît pas**, au lieu de l'ignorer
+silencieusement, et nomme le champ fautif :
+
+```json
+{
+  "errorCode": "VALIDATION_FAILED",
+  "status": 400,
+  "message": "Propriete inconnue dans le corps de la requete : itemCod.",
+  "errors": ["itemCod : propriete inconnue · attendu parmi : ..., itemCode, lineOrder, ..."]
+}
+```
+
+**Pourquoi ce durcissement.** Une clé mal orthographiée ne produisait aucune erreur : le champ
+était jeté, et ce qui en dépendait cessait de s'appliquer sans le moindre message. C'est ainsi que
+`catalogSourceCode` a désarmé le plancher de prix et le taux de remise maximal.
+
+**Une exception, délibérée** : `POST /billing/documents/simulate` reste tolérant, pour que
+l'interface puisse lui envoyer la charge utile complète de la création sans avoir à en retirer les
+champs du document.
+
+Si une intégration tierce envoyait des champs superflus, `API_STRICT_PAYLOAD=false` désactive le
+durcissement sans redéploiement.
+
+---
+
 ## 6. Ce qui change sur l'existant
 
 - **`ServiceCatalogItemResponse`** gagne vingt champs. Aucun n'est retiré.

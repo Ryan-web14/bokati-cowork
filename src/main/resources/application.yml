@@ -13,6 +13,18 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  jackson:
+    deserialization:
+      # Une propriete inconnue est refusee au lieu d'etre ignoree. Sans cela une clef mal
+      # orthographiee ne produit aucune erreur : le champ est simplement jete, et ce qui en
+      # dependait cesse de s'appliquer en silence. C'est ainsi que catalogSourceCode a desarme
+      # le plancher de prix et le taux de remise maximal sans le moindre message.
+      #
+      # Le durcissement porte sur TOUTES les requetes de l'API. Passer API_STRICT_PAYLOAD a
+      # false le desactive sans redeploiement, si une integration tierce envoyait des champs
+      # superflus.
+      fail-on-unknown-properties: ${API_STRICT_PAYLOAD:true}
+
   jpa:
     database: postgresql
     open-in-view: false
