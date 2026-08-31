@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.verify;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
+import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentPdfService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentReceiptService;
 import org.junit.jupiter.api.Test;
@@ -24,8 +25,10 @@ class VerifyControllerTest {
     private final BillingDocumentService billingDocumentService = mock(BillingDocumentService.class);
     private final PaymentReceiptService paymentReceiptService = mock(PaymentReceiptService.class);
 
+    private final BillingDocumentPdfService pdfService = mock(BillingDocumentPdfService.class);
+
     private final VerifyController controller =
-            new VerifyController(billingDocumentService, paymentReceiptService, Locale.FRANCE);
+            new VerifyController(billingDocumentService, paymentReceiptService, pdfService, Locale.FRANCE);
 
     @Test
     void shouldRevealNothingBeyondExistenceWithoutTheSignaturePrefix() {

@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.verify;
 
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentPdfService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentReceiptResponse;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentReceiptService;
@@ -10,8 +11,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -41,6 +45,7 @@ public class VerifyController {
 
     private final BillingDocumentService billingDocumentService;
     private final PaymentReceiptService paymentReceiptService;
+    private final BillingDocumentPdfService billingDocumentPdfService;
     private final Locale appLocale;
 
     @GetMapping("/doc/{documentNumber}")
@@ -64,6 +69,30 @@ public class VerifyController {
                 : VerificationView.minimal(document.documentNumber(), label, issueDate, status));
         model.addAttribute("generatedAt", LocalDate.now().format(DATE_FMT));
         return "verify/document";
+    }
+
+    /**
+     * Compare un fichier depose a la version canonique du document.
+     *
+     * <p>C'est l'outil qui tranche un litige : le client presente le PDF qu'il detient, la page
+     * dit s'il s'agit bien de celui qui a ete emis. Aucune donnee du document n'est revelee au
+     * passage — la reponse se limite a « conforme » ou « different ».
+     */
+    @PostMapping("/doc/{documentNumber}/compare")
+    public String compareDocument(@PathVariable String documentNumber,
+                                  @RequestParam("file") MultipartFile file,
+                                  Model model) {
+        BillingDocumentPdfService.PdfComparison comparison;
+        try {
+            comparison = billingDocumentPdfService.compare(documentNumber, file.getBytes());
+        } catch (IOException | RuntimeException ex) {
+            return notFound(model, documentNumber, "document");
+        }
+
+        model.addAttribute("comparison", comparison);
+        model.addAttribute("reference", documentNumber);
+        model.addAttribute("generatedAt", LocalDate.now().format(DATE_FMT));
+        return "verify/comparison";
     }
 
     @GetMapping("/receipt/{receiptNumber}")
