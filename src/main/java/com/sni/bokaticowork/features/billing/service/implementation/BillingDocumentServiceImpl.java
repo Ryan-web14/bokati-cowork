@@ -1945,6 +1945,33 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         return quote;
     }
 
+    /**
+     * Part <b>fixe</b> de la remise d'une ligne deja calculee.
+     *
+     * <p>Le moteur additionne la remise exprimee en taux et celle exprimee en montant, puis
+     * conserve sur la ligne le taux fourni <i>et</i> le montant resolu. Recopier les deux tels
+     * quels — a la conversion d'un devis, a la duplication, a chaque modification — fait
+     * recalculer le taux et l'ajouter a un montant qui le contenait deja : la remise double, et
+     * se cumule a chaque nouvelle copie.
+     *
+     * <p>On ne renvoie donc que ce que le taux ne reproduit pas. Le taux, lui, est recopie tel
+     * quel : il reste affiche sur le document et sera recalcule a l'identique.
+     */
+    private BigDecimal residualFixedDiscount(BigDecimal subtotal, BigDecimal discountRate,
+                                             BigDecimal discountAmount) {
+        BigDecimal amount = discountAmount == null ? BigDecimal.ZERO : discountAmount;
+        if (discountRate == null || discountRate.signum() <= 0
+                || subtotal == null || subtotal.signum() <= 0) {
+            return amount;
+        }
+        // Meme arrondi que BillingCalculationService.percentage · un ecart de rounding ici
+        // reapparaitrait comme un residu de quelques centimes a chaque copie.
+        BigDecimal fromRate = subtotal.multiply(discountRate)
+                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        BigDecimal residual = amount.subtract(fromRate);
+        return residual.signum() > 0 ? residual : BigDecimal.ZERO;
+    }
+
     private CreateBillingDocumentLineRequest toCreateLineRequest(BillingDocumentLineResponse line) {
         return new CreateBillingDocumentLineRequest(
                 line.lineOrder(),
@@ -1955,7 +1982,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.quantity(),
                 line.unitPrice(),
                 line.discountRate(),
-                line.discountAmount(),
+                residualFixedDiscount(line.subtotalAmount(), line.discountRate(), line.discountAmount()),
                 line.taxable(),
                 line.taxIncluded(),
                 line.vatRate(),
@@ -1980,7 +2007,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 line.getQuantity(),
                 line.getUnitPrice(),
                 line.getDiscountRate(),
-                line.getDiscountAmount(),
+                residualFixedDiscount(line.getSubtotalAmount(), line.getDiscountRate(), line.getDiscountAmount()),
                 line.getTaxable(),
                 line.getTaxIncluded(),
                 line.getVatRate(),
