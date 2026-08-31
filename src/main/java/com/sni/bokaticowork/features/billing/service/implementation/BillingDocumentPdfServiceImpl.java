@@ -285,6 +285,27 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         private final ObjectMapper objectMapper;
         private final Locale locale;
 
+        /**
+         * Montant net HT d'une ligne · brut moins remise de ligne.
+         *
+         * <p>La colonne « Total » affichait {@code line.totalAmount()}, qui est TTC. Additionnée,
+         * elle ne retombait ni sur le sous-total HT ni sur le total TTC du recapitulatif, celui-ci
+         * appliquant en plus les remises document. Une colonne qui ne se totalise vers rien de
+         * reconnaissable oblige le lecteur a refaire le calcul pour se rassurer.
+         *
+         * <p>En net HT, la ligne se verifie de gauche a droite : quantite x prix unitaire moins
+         * remise.
+         */
+        public java.math.BigDecimal netHt(BillingDocumentLineResponse line) {
+            if (line == null || line.subtotalAmount() == null) {
+                return java.math.BigDecimal.ZERO;
+            }
+            java.math.BigDecimal discount = line.discountAmount() == null
+                    ? java.math.BigDecimal.ZERO
+                    : line.discountAmount();
+            return line.subtotalAmount().subtract(discount);
+        }
+
         public BillingDocumentTemplateFormatter(String currency, ObjectMapper objectMapper, Locale locale) {
             this.currency = currency;
             this.objectMapper = objectMapper;

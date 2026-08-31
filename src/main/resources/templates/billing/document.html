@@ -110,11 +110,12 @@
             border-bottom: 1px solid #e6ddea;
             vertical-align: top;
         }
-        .lines tbody tr:nth-child(even) td { background: #fafafa; }
+        /* Un seul separateur entre les lignes · le fond alterne s'ajoutait a la bordure et
+           produisait une double separation, lourde des que le document depasse trois lignes. */
         .lines tbody tr:last-child td { border-bottom: 2px solid #281332; }
         .lines tbody td.col-amt { font-weight: 700; color: #281332; }
         .line-name { font-weight: 700; color: #281332; }
-        .line-sub { font-size: 7.8px; color: #6f6478; margin-top: 2px; }
+        .line-sub { font-size: 8.2px; color: #6f6478; margin-top: 2px; }
         .line-category {
             /* nowrap : le moteur PDF calcule mal la largeur shrink-to-fit d'un inline-block
                combinant text-transform et letter-spacing, et coupait "Espace de travail" en
@@ -122,10 +123,16 @@
             display: inline-block; white-space: nowrap;
             font-size: 7.2px; font-weight: 700; letter-spacing: .4px;
             text-transform: uppercase; color: #6f4a86; background: #f2ecf7;
-            border-radius: 2px; padding: 1px 4px; margin-bottom: 2px;
+            border-radius: 2px; padding: 1px 4px; margin-right: 4px;
         }
-        .line-unit { font-size: 7.8px; color: #6f6478; margin-left: 2px; }
+        /* L'unite se lit avec la quantite, pas comme une annotation · meme corps, teinte plus
+           douce, et une vraie espace pour que "2 h" ne se lise pas "2h". */
+        .line-unit { color: #6f6478; font-weight: 400; }
         .line-discount { color: #b0343c; font-weight: 700; }
+        .line-discount-rate { font-size: 8px; color: #b0343c; margin-top: 1px; }
+        /* Montant brut barre au-dessus du net · le client voit la remise s'appliquer sans avoir
+           a la recalculer. */
+        .line-gross { font-size: 8px; color: #9b8caa; text-decoration: line-through; margin-bottom: 1px; }
         .r { text-align: right; }
         .c { text-align: center; }
         .num { white-space: nowrap; }
@@ -243,7 +250,9 @@
                 <div class="info-block-title">Document</div>
                 <table class="dates-row">
                     <tr><td class="lbl">Date d'émission</td><td class="val" th:text="${fmt.date(document.issueDate())}"></td></tr>
-                    <tr><td class="lbl">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}"></td></tr>
+                    <!-- Un libelle sans valeur en face se lit comme une information manquante ·
+                         mieux vaut ne pas imprimer la ligne. -->
+                    <tr th:if="${document.dueDate() != null}"><td class="lbl">Date d'échéance</td><td class="val" th:text="${fmt.date(document.dueDate())}"></td></tr>
                     <tr><td class="lbl">Devise</td><td class="val" th:text="${document.currency()}">XAF</td></tr>
                     <tr>
                         <td class="lbl">N° facture</td>
@@ -268,7 +277,13 @@
                 </table>
             </td>
         </tr>
-        <tr>
+        <!-- documentSubject retombe sur le numero de document faute de titre · le bloc
+             repetait alors une reference deja imprimee dans l'en-tete et dans le tableau
+             Document. On ne l'affiche que s'il porte une information propre.
+             La condition porte sur la ligne et non sur la cellule : masquer la seule cellule
+             laisserait une ligne vide, avec son filet superieur. -->
+        <tr th:if="${document.title() != null or document.description() != null
+                     or document.deliveryAddressJson() != null}">
             <td colspan="2" style="padding-top:12px; border-top:1px solid #e6ddea;">
                 <div class="info-block-title">Objet</div>
                 <div class="info-primary" th:text="${fmt.documentSubject(document)}">Objet du document</div>
@@ -297,19 +312,22 @@
         <thead>
             <tr>
                 <th style="width:4%; text-align:center;">#</th>
-                <th style="width:42%;">Description</th>
-                <th class="r" style="width:12%;">Qté</th>
+                <th style="width:40%;">Description</th>
+                <th class="r" style="width:11%;">Qté</th>
                 <th class="r" style="width:14%;">Prix unit.</th>
-                <th class="r" style="width:12%;">Remise</th>
-                <th class="r" style="width:16%;">Total</th>
+                <th class="r" style="width:13%;">Remise</th>
+                <th class="r" style="width:18%;">Total HT</th>
             </tr>
         </thead>
         <tbody>
             <tr th:each="line : ${document.lines()}">
                 <td class="c muted" th:text="${line.lineOrder()}">1</td>
                 <td>
-                    <div class="line-category" th:if="${line.category()}" th:text="${line.category()}">Catégorie</div>
+                    <!-- Categorie en tete de libelle plutot que sur sa propre ligne : elle
+                         qualifie la prestation, elle ne merite pas une hauteur de ligne sur
+                         chaque poste. -->
                     <div class="line-name">
+                        <span class="line-category" th:if="${line.category()}" th:text="${line.category()}">Catégorie</span>
                         <span th:text="${line.description()}">Service</span>
                         <span th:if="${line.optional()}" class="line-sub" style="margin-left:4px;">(option)</span>
                     </div>
@@ -317,25 +335,37 @@
                     <div class="line-sub" th:if="${line.itemCode()}" th:text="|Art. : ${line.itemCode()}|"></div>
                 </td>
                 <!-- Quantite et unite dans la meme cellule : l'unite n'a aucun sens seule et
-                     une colonne dediee couterait 8 % de largeur au detriment de la description. -->
+                     une colonne dediee couterait de la largeur au detriment de la description. -->
                 <td class="r num">
-                    <span th:text="${fmt.quantity(line.quantity())}">1</span>
-                    <span class="line-unit" th:if="${line.unit()}" th:text="${line.unit()}">h</span>
+                    <span th:text="${fmt.quantity(line.quantity())}">1</span><span
+                          class="line-unit" th:if="${line.unit()}" th:text="${' ' + line.unit()}"> h</span>
                 </td>
                 <td class="r num" th:text="${fmt.amount(line.unitPrice())}">0</td>
                 <!-- Remise portee par la ligne elle-meme. Le recapitulatif ne montre que le
                      cumul : sans cette colonne, le client voit un total remise sans pouvoir
-                     rattacher chaque remise a la prestation concernee. -->
+                     rattacher chaque remise a la prestation concernee.
+                     Le montant est l'information principale · c'est lui qui se reconcilie avec
+                     le total. Le taux, quand il a ete saisi, vient en second : affiche seul, il
+                     obligeait a refaire le calcul pour savoir ce qui avait ete deduit. -->
                 <td class="r num">
-                    <span th:if="${line.discountRate() != null and line.discountRate().signum() > 0}"
-                          class="line-discount" th:text="${'-' + fmt.percent(line.discountRate())}">-10 %</span>
-                    <div th:if="${line.discountAmount() != null and line.discountAmount().signum() > 0}"
-                         class="line-sub line-discount" th:text="${'-' + fmt.amount(line.discountAmount())}">-0</div>
+                    <th:block th:if="${line.discountAmount() != null and line.discountAmount().signum() > 0}">
+                        <div class="line-discount" th:text="${'-' + fmt.amount(line.discountAmount())}">-0</div>
+                        <div class="line-discount-rate"
+                             th:if="${line.discountRate() != null and line.discountRate().signum() > 0}"
+                             th:text="${'-' + fmt.percent(line.discountRate())}">-10 %</div>
+                    </th:block>
                     <span class="muted"
-                          th:if="${(line.discountRate() == null or line.discountRate().signum() == 0)
-                                   and (line.discountAmount() == null or line.discountAmount().signum() == 0)}">—</span>
+                          th:unless="${line.discountAmount() != null and line.discountAmount().signum() > 0}">—</span>
                 </td>
-                <td class="r num col-amt" th:text="${fmt.amount(line.totalAmount())}">0</td>
+                <!-- Brut barre au-dessus du net des qu'une remise s'applique · la deduction se
+                     lit sans calcul, et le montant facture reste celui mis en avant. -->
+                <td class="r num col-amt">
+                    <div class="line-gross"
+                         th:if="${line.discountAmount() != null and line.discountAmount().signum() > 0
+                                  and line.subtotalAmount() != null}"
+                         th:text="${fmt.amount(line.subtotalAmount())}">0</div>
+                    <span th:text="${fmt.amount(fmt.netHt(line))}">0</span>
+                </td>
             </tr>
         </tbody>
     </table>
