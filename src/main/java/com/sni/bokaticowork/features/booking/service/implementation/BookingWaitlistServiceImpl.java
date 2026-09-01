@@ -123,7 +123,8 @@ public class BookingWaitlistServiceImpl implements BookingWaitlistService {
                 entry.getPaymentMode(),
                 entry.getStartedAt(),
                 entry.getEndedAt(),
-                entry.getQuantity()
+                entry.getQuantity(),
+                null
         ));
     }
 

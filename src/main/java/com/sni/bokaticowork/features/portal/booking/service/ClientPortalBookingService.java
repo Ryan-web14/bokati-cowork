@@ -77,6 +77,9 @@ public class ClientPortalBookingService {
                 true,
                 request.getNotes(),
                 null,
+                // Aucune unite imposee : cote client, le tarif se deduit de la duree, point.
+                // ClientCreateBookingRequest ne porte volontairement aucun champ correspondant.
+                null,
                 request.getParticipants()
         );
         return toDetailResponse(bookingService.create(req));
@@ -114,7 +117,8 @@ public class ClientPortalBookingService {
                 null,
                 request.getStartedAt(),
                 request.getEndedAt(),
-                request.getQuantity()
+                request.getQuantity(),
+                null
         );
         return bookingAvailabilityService.check(req);
     }

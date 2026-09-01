@@ -147,7 +147,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setContactPhone(identity.contactPhone());
         booking.setCheckInToken(generateCheckInToken());
 
-        BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity);
+        BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
         booking.setBookingUnit(price.unit());
         booking.setUnitPrice(price.unitPrice());
         booking.setSubtotalAmount(price.amount());
@@ -1018,6 +1018,9 @@ public class BookingServiceImpl implements BookingService {
                 base.sendEmail(),
                 base.notes(),
                 base.metadataJson(),
+                // Chaque occurrence herite de l'unite imposee · sinon la premiere serait facturee
+                // en demi-journee et les suivantes a l'heure, pour des creneaux identiques.
+                base.bookingUnit(),
                 base.participants()
         );
     }
