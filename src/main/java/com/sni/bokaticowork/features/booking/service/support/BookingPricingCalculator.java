@@ -27,7 +27,7 @@ public class BookingPricingCalculator {
      * tarif journalier alors qu'il reste deux heures ouvrables devant elle.
      */
     private static final long HALF_DAY_MINUTES = 300;
-    private static final long DAY_MINUTES = 600;
+    public static final long DAY_MINUTES = 600;
     private static final long WEEK_MINUTES = 10080;
     private static final long MONTH_MINUTES = 43200;
 
@@ -65,10 +65,6 @@ public class BookingPricingCalculator {
                 .multiply(BigDecimal.valueOf(quantity));
         BigDecimal amount = unitPrice.multiply(units).setScale(4, RoundingMode.HALF_UP);
         return new Price(unit, unitPrice, units, amount, "XAF");
-    }
-
-    public BigDecimal entitlementQuantity(ResourceBookingUnit unit, LocalDateTime startedAt, LocalDateTime endedAt, int quantity) {
-        return units(unit, startedAt, endedAt).multiply(BigDecimal.valueOf(quantity)).setScale(4, RoundingMode.HALF_UP);
     }
 
     /**

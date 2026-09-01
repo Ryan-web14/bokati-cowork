@@ -591,7 +591,7 @@ public class BookingServiceImpl implements BookingService {
             eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved", "Booking resource availability was reserved", null);
         }
         if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
-            entitlementBridge.reserve(booking, entitlementQuantity(booking));
+            entitlementBridge.reserve(booking);
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_RESERVED, "Entitlement reserved", "Booking entitlement was reserved", null);
         }
         booking.setBillableNumber(billableBridge.ensureBillableItem(booking));
@@ -622,7 +622,7 @@ public class BookingServiceImpl implements BookingService {
             releaseResource(booking);
             eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
             if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
-                entitlementBridge.release(booking, entitlementQuantity(booking));
+                entitlementBridge.release(booking);
                 eventWriter.write(booking, BookingEventType.ENTITLEMENT_RELEASED, "Entitlement released", "Booking entitlement reservation was released", null);
             }
         }
@@ -650,7 +650,7 @@ public class BookingServiceImpl implements BookingService {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
         }
         if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
-            entitlementBridge.consume(booking, entitlementQuantity(booking));
+            entitlementBridge.consume(booking);
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "No-show entitlement was consumed", null);
         }
         BookingStatus from = booking.getStatus();
@@ -669,7 +669,7 @@ public class BookingServiceImpl implements BookingService {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be completed");
         }
         if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
-            entitlementBridge.consume(booking, entitlementQuantity(booking));
+            entitlementBridge.consume(booking);
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "Booking entitlement was consumed", null);
             eventWriter.write(booking, BookingEventType.USAGE_RECORDED, "Usage recorded", "Booking usage was recorded", null);
         }
@@ -832,12 +832,15 @@ public class BookingServiceImpl implements BookingService {
                 .currency(price.currency())
                 .build());
         if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && StringUtils.hasText(booking.getEntitlementCode())) {
+            // Meme source que le debit reel · la ligne annonce ce qui est retire au droit, dans
+            // l'unite de celui-ci, et non dans celle de la reservation.
+            BookingEntitlementBridge.Charge charge = entitlementBridge.charge(booking);
             lineRepository.save(BookingLine.builder()
                     .booking(booking)
                     .lineType(BookingLineType.ENTITLEMENT)
                     .description(entitlementLineDescription(booking))
-                    .quantity(entitlementQuantity(booking))
-                    .unit(booking.getBookingUnit())
+                    .quantity(charge.quantity())
+                    .unit(charge.displayUnit())
                     .unitPrice(BigDecimal.ZERO)
                     .amount(BigDecimal.ZERO)
                     .currency(booking.getCurrency())
@@ -907,10 +910,6 @@ public class BookingServiceImpl implements BookingService {
         }
         return bookingRepository.findByBookingNumber(bookingNumber.trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Booking " + bookingNumber + " not found"));
-    }
-
-    private BigDecimal entitlementQuantity(Booking booking) {
-        return pricingCalculator.entitlementQuantity(booking.getBookingUnit(), booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
     }
 
     private void writeHistory(Booking booking, BookingStatus from, BookingStatus to, String changedBy, String reason) {
