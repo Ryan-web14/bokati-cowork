@@ -55,6 +55,17 @@ public class Resource {
     @Column(name = "description")
     private String description;
 
+    /**
+     * Duree d'un creneau de reservation, en minutes. Doit diviser 60.
+     *
+     * <p>Portee par la ressource et non par chaque disponibilite : le moteur compose une fenetre
+     * a partir de creneaux contigus, et des durees melangees sur une meme ressource fausseraient
+     * ce decompte en silence. Voir {@code ResourceSlotPolicy}.
+     */
+    @Column(name = "slot_duration_minutes", nullable = false)
+    @Builder.Default
+    private Integer slotDurationMinutes = 30;
+
     @Column(name = "capacity", nullable = false)
     @Builder.Default
     private Integer capacity = 1 ;

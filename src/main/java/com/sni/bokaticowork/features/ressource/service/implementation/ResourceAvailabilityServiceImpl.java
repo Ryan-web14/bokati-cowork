@@ -12,6 +12,7 @@ import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailability
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse;
 import com.sni.bokaticowork.features.ressource.enums.ResourceStatus;
 import com.sni.bokaticowork.features.ressource.model.Resource;
+import com.sni.bokaticowork.features.ressource.service.support.ResourceSlotPolicy;
 import com.sni.bokaticowork.features.ressource.model.ResourceAvailability;
 import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
 import com.sni.bokaticowork.features.ressource.repository.repo.ResourceAvailabilityRepository;
@@ -40,7 +41,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityService {
 
-    private static final int SLOT_MINUTES = 30;
     private static final int MAX_AVAILABILITY_CREATION_MONTHS = 1;
     private static final LocalTime WORKING_DAY_START = LocalTime.of(8, 0);
     private static final LocalTime WORKING_DAY_END = LocalTime.of(20, 0);
@@ -48,6 +48,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private final ResourceAvailabilityRepository availabilityRepository;
     private final ResourceClosureRepository closureRepository;
     private final ResourceService resourceService;
+    private final ResourceSlotPolicy slotPolicy;
 
     @Override
     public void createAvailability(CreateResourceAvailabilityRequest request) {
@@ -57,7 +58,9 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
+        resource = applyRequestedSlotDuration(resource, request.getSlotDurationMinutes());
         assertResourceBookable(resource);
+        slotPolicy.assertAligned(resource, request.getStartedAt(), request.getEndedAt());
         assertAvailabilityCreationWindow(request.getStartedAt(), request.getEndedAt());
 
         if (closureRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
@@ -123,7 +126,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             return findFullRemainingWindows(resource, normalizedQuantity);
         }
 
-        int normalizedDuration = normalizeDurationMinutes(durationMinutes);
+        int normalizedDuration = normalizeDurationMinutes(resource, durationMinutes);
         validateSearchWindow(startedAt, endedAt, normalizedDuration);
         assertPolicyAllowsWindow(resource, startedAt, startedAt.plusMinutes(normalizedDuration));
 
@@ -131,7 +134,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                 .sorted(Comparator.comparing(ResourceAvailability::getStartedAt))
                 .toList();
 
-        int requiredSlots = normalizedDuration / SLOT_MINUTES;
+        int requiredSlots = slotPolicy.slotCount(resource, normalizedDuration);
         List<ResourceAvailabilityWindowResponse> windows = new ArrayList<>();
 
         for (int index = 0; index <= slots.size() - requiredSlots; index++) {
@@ -173,6 +176,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
+        slotPolicy.assertAligned(resource, request.getStartedAt(), request.getEndedAt());
         assertResourceBookable(resource);
         assertPolicyAllowsWindow(resource, request.getStartedAt(), request.getEndedAt());
 
@@ -204,6 +208,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
 
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
+        slotPolicy.assertAligned(resource, request.getStartedAt(), request.getEndedAt());
         List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, request.getStartedAt(), request.getEndedAt());
         assertExactRequestedCoverage(slots, request.getStartedAt(), request.getEndedAt());
 
@@ -278,6 +283,9 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                                                   LocalDateTime endedAt,
                                                   int capacity,
                                                   Boolean active) {
+        // Copie figee de la duree de la ressource · lire l'historique d'un creneau ne doit pas
+        // dependre d'une valeur que la ressource peut changer ensuite.
+        int slotMinutes = slotPolicy.slotMinutes(resource);
         List<ResourceAvailability> slots = new ArrayList<>();
         LocalDateTime current = startedAt;
 
@@ -296,7 +304,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                 continue;
             }
 
-            LocalDateTime next = current.plusMinutes(SLOT_MINUTES);
+            LocalDateTime next = current.plusMinutes(slotMinutes);
             if (next.isAfter(workingDayEnd) || next.isAfter(endedAt)) {
                 break;
             }
@@ -304,7 +312,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                     .resource(resource)
                     .startedAt(current)
                     .endedAt(next)
-                    .slotDurationMinutes(SLOT_MINUTES)
+                    .slotDurationMinutes(slotMinutes)
                     .totalCapacity(capacity)
                     .remainingCapacity(capacity)
                     .available(capacity > 0)
@@ -361,10 +369,48 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             throw new ConflictException("resource reservation", "no availability exists for the requested range");
         }
 
-        long expectedSlotCount = Duration.between(startedAt, endedAt).toMinutes() / SLOT_MINUTES;
+        long expectedSlotCount = slotPolicy.slotCount(
+                slots.getFirst().getResource(), Duration.between(startedAt, endedAt).toMinutes());
         if (slots.size() != expectedSlotCount || !slots.getFirst().getStartedAt().equals(startedAt) || !slots.getLast().getEndedAt().equals(endedAt) || !isContiguous(slots)) {
             throw new ConflictException("resource reservation", "the requested range is not fully covered by contiguous availability slots");
         }
+    }
+
+    /**
+     * Prend en compte une duree de creneau fournie a la creation d'une disponibilite.
+     *
+     * <p>La duree appartient a la ressource, pas a la disponibilite · le champ de la requete ne
+     * fait donc que porter la valeur jusqu'a elle. Trois cas :
+     *
+     * <ul>
+     *   <li>absente ou identique a celle de la ressource · rien ne change. C'est le cas courant,
+     *       et c'est ce qui rend la reprise indolore : une interface qui envoie 30 sur un parc a
+     *       30 continue de fonctionner a l'identique ;</li>
+     *   <li>differente, et la ressource n'a aucun creneau futur · elle est adoptee ;</li>
+     *   <li>differente, mais des creneaux futurs existent · refus. Les changer laisserait la
+     *       ressource avec des creneaux de durees melangees, ce qui fausserait silencieusement la
+     *       composition des fenetres.</li>
+     * </ul>
+     */
+    private Resource applyRequestedSlotDuration(Resource resource, Integer requested) {
+        if (requested == null) {
+            return resource;
+        }
+        slotPolicy.assertAcceptable(requested);
+        int current = slotPolicy.slotMinutes(resource);
+        if (requested == current) {
+            return resource;
+        }
+        long futureSlots = availabilityRepository.countByResourceAndEndedAtAfter(resource, LocalDateTime.now());
+        if (futureSlots > 0) {
+            throw new ConflictException("resource availability",
+                    "La ressource " + resource.getCode() + " a " + futureSlots + " creneau(x) futur(s) de "
+                            + current + " minutes · supprimez-les avant de passer a " + requested
+                            + " minutes, sinon ses creneaux auraient des durees melangees et les"
+                            + " fenetres calculees seraient fausses.");
+        }
+        resource.setSlotDurationMinutes(requested);
+        return resourceService.saveResource(resource);
     }
 
     private int resolveCapacity(Resource resource, Integer requestedCapacity) {
@@ -379,12 +425,13 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         return baseCapacity;
     }
 
-    private int normalizeDurationMinutes(Integer durationMinutes) {
-        if (durationMinutes == null || durationMinutes < SLOT_MINUTES) {
-            throw new BadRequestException("Duration must be at least 30 minutes");
+    private int normalizeDurationMinutes(Resource resource, Integer durationMinutes) {
+        int slotMinutes = slotPolicy.slotMinutes(resource);
+        if (durationMinutes == null || durationMinutes < slotMinutes) {
+            throw new BadRequestException("Duration must be at least " + slotMinutes + " minutes");
         }
-        if (durationMinutes % SLOT_MINUTES != 0) {
-            throw new BadRequestException("Duration must be a multiple of 30 minutes");
+        if (durationMinutes % slotMinutes != 0) {
+            throw new BadRequestException("Duration must be a multiple of " + slotMinutes + " minutes");
         }
         return durationMinutes;
     }
@@ -530,13 +577,9 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             if (!endedAt.isAfter(startedAt)) {
                 errors.add("The end date must be after the start date");
             }
-            long minutes = Duration.between(startedAt, endedAt).toMinutes();
-            if (minutes % SLOT_MINUTES != 0) {
-                errors.add("The requested range must be aligned on 30-minute intervals");
-            }
-            if (startedAt.getMinute() % SLOT_MINUTES != 0 || endedAt.getMinute() % SLOT_MINUTES != 0) {
-                errors.add("The requested range must start and end on a 30-minute boundary");
-            }
+            // L'alignement sur les creneaux ne se verifie pas ici : il depend de la duree de la
+            // ressource, encore inconnue a ce stade. Il est controle apres resolution, par
+            // ResourceSlotPolicy.assertAligned, qui peut alors nommer la duree effective.
             if (startedAt.getSecond() != 0 || endedAt.getSecond() != 0 || startedAt.getNano() != 0 || endedAt.getNano() != 0) {
                 errors.add("The requested range must not contain seconds or fractional seconds");
             }

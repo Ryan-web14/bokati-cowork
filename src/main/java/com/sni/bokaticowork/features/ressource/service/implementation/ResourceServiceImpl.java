@@ -134,6 +134,11 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    public Resource saveResource(Resource resource) {
+        return resourceRepository.save(resource);
+    }
+
+    @Override
     public Resource getResourceForService(String code) {
         String normalizedCode = normalizeCode(code, "Resource code is required");
         return resourceRepository.findByCode(normalizedCode)

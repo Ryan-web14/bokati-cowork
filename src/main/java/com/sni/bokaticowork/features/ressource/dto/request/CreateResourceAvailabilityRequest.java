@@ -44,9 +44,18 @@ public class CreateResourceAvailabilityRequest {
     /** Creneaux ouverts a la reservation. Vide, ils le sont. */
     private Boolean active;
 
-    // La duree de creneau n'est volontairement pas exposee. Le moteur raisonne partout en creneaux
-    // de 30 minutes (ResourceAvailabilityServiceImpl.SLOT_MINUTES), y compris pour composer une
-    // fenetre a partir de plusieurs creneaux contigus : une duree variable par disponibilite
-    // fausserait ce decompte. Accepter slotDurationMinutes pour l'ignorer redonnerait exactement
-    // le silence que l'on cherche a supprimer · le champ est donc refuse.
+    /**
+     * Duree d'un creneau, en minutes. Facultatif · absent, celle de la ressource s'applique, et
+     * une ressource qui n'en porte aucune reste a 30. Une interface qui envoie 30 sur un parc a
+     * 30 ne change donc rien.
+     *
+     * <p>Le champ ne definit pas la duree de CETTE disponibilite : il porte la valeur jusqu'a la
+     * ressource, ou elle appartient. Le moteur compose une fenetre a partir de creneaux contigus,
+     * et des durees melangees sur une meme ressource fausseraient ce decompte en silence.
+     *
+     * <p>Une valeur differente de celle de la ressource n'est donc acceptee que si celle-ci n'a
+     * aucun creneau futur · sinon la creation est refusee, avec le compte des creneaux a
+     * supprimer d'abord. Seuls les diviseurs de 60 sont admis.
+     */
+    private Integer slotDurationMinutes;
 }

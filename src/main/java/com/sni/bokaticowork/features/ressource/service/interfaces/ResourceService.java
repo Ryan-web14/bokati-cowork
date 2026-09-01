@@ -24,6 +24,12 @@ public interface ResourceService {
 
     ResourceResponse getResource(String code);
     Resource getResourceForService(String code);
+
+    /**
+     * Enregistre la ressource telle quelle · utilise pour porter une duree de creneau fournie a
+     * la creation d'une disponibilite jusqu'a la ressource, ou elle appartient.
+     */
+    Resource saveResource(Resource resource);
     Resource getResourceForService(Long id);
 
     PaginatedResponse<ResourceResponse> list(Pageable pageable);

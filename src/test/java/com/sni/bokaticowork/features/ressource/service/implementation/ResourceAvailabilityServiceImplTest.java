@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
+import org.mockito.Spy;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -50,6 +51,14 @@ class ResourceAvailabilityServiceImplTest {
 
     @Mock
     private ResourceService resourceService;
+
+    /**
+     * La vraie politique plutot qu'un simulacre · elle n'a aucune dependance, et un mock
+     * renverrait toujours 30 sans que l'on s'apercoive d'une regression sur l'alignement.
+     */
+    @Spy
+    private com.sni.bokaticowork.features.ressource.service.support.ResourceSlotPolicy slotPolicy =
+            new com.sni.bokaticowork.features.ressource.service.support.ResourceSlotPolicy();
 
     @InjectMocks
     private ResourceAvailabilityServiceImpl service;
