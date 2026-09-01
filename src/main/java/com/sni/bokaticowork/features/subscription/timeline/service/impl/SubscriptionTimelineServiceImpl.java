@@ -14,6 +14,7 @@ import com.sni.bokaticowork.features.subscription.timeline.model.SubscriptionTim
 import com.sni.bokaticowork.features.subscription.timeline.repository.SubscriptionTimelineEventRepository;
 import com.sni.bokaticowork.features.subscription.timeline.service.SubscriptionTimelineService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +79,11 @@ public class SubscriptionTimelineServiceImpl implements SubscriptionTimelineServ
                                                                      Instant occurredFrom,
                                                                      Instant occurredTo,
                                                                      Pageable pageable) {
+        // Le tri est retire de la pagination · Spring Data l'ajoute tel quel a une requete
+        // NATIVE, sans traduire occurredAt en occurred_at, et la requete echoue sur une colonne
+        // inexistante. L'ordre est donc fixe dans la requete elle-meme. Meme parade que dans
+        // BillingDocumentServiceImpl.
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return new PaginatedResponse<>(timelineRepository.search(
                 trim(subscriptionNumber),
                 ownerType == null ? null : ownerType.name(),
@@ -85,7 +91,7 @@ public class SubscriptionTimelineServiceImpl implements SubscriptionTimelineServ
                 eventType == null ? null : eventType.name(),
                 occurredFrom,
                 occurredTo,
-                pageable
+                unsortedPageable
         ).map(timelineMapper::toResponse));
     }
 
