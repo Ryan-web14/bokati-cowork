@@ -80,7 +80,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
 
         // Step 4: pricing and success response
         try {
-            BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity);
+            BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
             String message = "Disponible";
             if (request.paymentMode() == BookingPaymentMode.SUBSCRIPTION) {
                 message = "Disponible · couvert par abonnement";

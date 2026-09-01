@@ -1124,6 +1124,111 @@ Frequences recommandees:
 - notifications: toutes les 1 a 5 minutes
 - repair: toutes les heures ou une fois par jour selon volume
 
+## Tarification : paliers de duree et unite imposee
+
+Ajoute le 2026-09-01. La journee normale va de 08h00 a 18h00, soit dix heures.
+
+### Ce que la duree declenche
+
+| Duree | Unite retenue | Montant |
+|---|---|---|
+| moins de 5h | `HOUR` | duree x tarif horaire |
+| **5h pile** | `HALF_DAY` | 1 x forfait demi-journee |
+| de 5h01 a 9h59 | `HOUR` | duree x tarif horaire |
+| **10h et au-dela** | `DAY` | 1 x forfait journalier |
+
+Sur une grille a 10 000 l'heure, 40 000 la demi-journee et 70 000 la journee :
+
+```
+  2h00  ->  20 000   HOUR
+  4h00  ->  40 000   HOUR
+  5h00  ->  40 000   HALF_DAY
+  5h30  ->  55 000   HOUR
+  6h00  ->  60 000   HOUR
+  9h30  ->  95 000   HOUR
+ 10h00  ->  70 000   DAY
+```
+
+**Le forfait ne vaut qu'a sa duree exacte.** 5h30 repasse a l'heure : si le forfait couvrait
+toute la tranche, une reservation de 5h30 serait facturee 5h et le systeme rendrait une demi-heure
+sans que personne ne l'ait decide.
+
+Deux consequences a assumer dans l'interface, car elles surprennent :
+
+- **5h coute moins cher que 4h30** (40 000 contre 45 000). C'est le propre d'un forfait : il est
+  remise. Un simulateur qui affiche le montant en direct rend la chose lisible ; un formulaire muet
+  la fait decouvrir sur la facture.
+- **9h30 coute plus cher que 10h** (95 000 contre 70 000). Suggerer d'arrondir a la journee est un
+  bon geste commercial, et evite une reclamation.
+
+Ce qui change par rapport a l'existant : le seuil journalier etait a **8h**, il passe a **10h** ;
+et tout ce qui depassait 5h basculait en demi-journee, donc **6h etait facturee 5h**.
+
+### Imposer l'unite · administration uniquement
+
+`bookingUnit` est accepte sur `POST /bookings` et `POST /bookings/check-availability`. Il impose
+l'unite de facturation la ou la duree en designerait une autre.
+
+```json
+{
+  "resourceCode": "RES-SAL-202609-00000002",
+  "startedAt": "2026-09-25T08:00",
+  "endedAt": "2026-09-25T14:00",
+  "quantity": 1,
+  "paymentMode": "DIRECT",
+  "bookingUnit": "HALF_DAY"
+}
+```
+
+Valeurs : `HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH`. Vide, l'unite se deduit de la duree.
+
+**Le prix n'est jamais saisi.** Il est lu dans la grille tarifaire de la ressource pour cette
+unite. Un montant facture reste donc rattache a une regle, et explicable apres coup. Pour un geste
+hors grille, ce n'est pas ce mecanisme : passez par une remise sur la facture.
+
+Sur les memes 6h, qui partiraient automatiquement a 60 000 :
+
+| `bookingUnit` | Montant |
+|---|---|
+| absent | 60 000 · 6 x horaire |
+| `HALF_DAY` | 40 000 · 1 forfait |
+| `DAY` | 70 000 · 1 forfait |
+| `HOUR` | 60 000 · inchange |
+
+**Un forfait impose reste un forfait**, quelle que soit la duree : `HALF_DAY` donne 40 000 sur 4h,
+sur 6h comme sur 10h. Sans cela, l'arrondi au superieur en compterait deux sur 6h et imposer le
+forfait couterait plus cher que de ne rien imposer. L'heure fait exception, elle reste
+proportionnelle : un forfait couvre une plage, une heure se compte.
+
+`quantity` multiplie ensuite le tout : 2 places en demi-journee imposee font 2 forfaits.
+
+### Refus quand la grille manque
+
+Si la ressource n'a pas de regle tarifaire active pour l'unite demandee, la demande est refusee
+plutot que repliee en silence sur une autre unite :
+
+```
+La ressource RES-SAL-202609-00000001 n'a aucune grille tarifaire active en HALF_DAY ·
+creez-la avant d'imposer cette unite, ou laissez le calcul automatique.
+```
+
+Sur `POST /bookings` c'est une erreur `400`. Sur `POST /bookings/check-availability`, le devis
+revient avec `available: false` et ce message : le point d'entree existe pour renseigner, pas pour
+echouer. Message a afficher tel quel, il nomme la ressource et l'unite.
+
+Pour eviter le refus, l'interface peut n'ouvrir le selecteur qu'aux unites reellement tarifees,
+lisibles par `GET /resource-pricing-rules?resourceCode=...`.
+
+### Le portail client n'a pas ce champ
+
+`POST /client/bookings` et `POST /client/bookings/availability` ne portent aucun `bookingUnit` :
+le tarif s'y deduit toujours de la duree. Envoyer le champ sur une session client authentifiee
+donne un `400 Propriete inconnue dans le corps de la requete : bookingUnit`, le rejet des
+proprietes inconnues etant global. C'est voulu — un client ne choisit pas son propre tarif.
+
+Une reservation client passe donc forcement par le tableau des paliers ci-dessus, et le montant
+affiche avant confirmation est celui qui sera facture.
+
 ## Checklist integration frontend
 
 - Ne pas envoyer `ownerCode`, `subscriptionNumber`, `passNumber`, `entitlementCode` dans les payloads de creation.
@@ -1135,3 +1240,6 @@ Frequences recommandees:
 - Afficher les messages d'erreur backend tels quels pour les conflits de policy/quota.
 - Refresh du detail apres chaque transition de statut.
 - Prevoir un acces admin pour policies, quota overrides, workers et metrics.
+- Afficher le montant estime en direct : les paliers de duree produisent des sauts que le
+  formulaire seul ne laisse pas deviner.
+- `bookingUnit` est reserve a l'administration · ne pas l'exposer dans le parcours client.

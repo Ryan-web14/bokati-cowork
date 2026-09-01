@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.booking.dto.request;
 
 import com.sni.bokaticowork.features.booking.enums.BookingPaymentMode;
+import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -22,7 +23,10 @@ public record BookingAvailabilityRequest(
         BookingPaymentMode paymentMode,
         @NotNull LocalDateTime startedAt,
         @NotNull LocalDateTime endedAt,
-        @Min(1) Integer quantity
+        @Min(1) Integer quantity,
+
+        /** Voir {@link CreateBookingRequest#bookingUnit()} · ici pour que le devis annonce ce qui sera facture. */
+        ResourceBookingUnit bookingUnit
 ) {
         public BookingIdentityLookup identityLookup() {
                 return new BookingIdentityLookup(memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail, contactPhone);

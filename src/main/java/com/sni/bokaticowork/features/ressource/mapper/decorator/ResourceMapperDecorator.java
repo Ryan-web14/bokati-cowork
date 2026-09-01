@@ -64,6 +64,7 @@ public abstract class ResourceMapperDecorator implements ResourceMapper {
                 .portalVisible(resource.getPortalVisible())
                 .displayOrder(resource.getDisplayOrder())
                 .active(resource.getActive())
+                .slotDurationMinutes(resource.getSlotDurationMinutes())
                 .build();
     }
 

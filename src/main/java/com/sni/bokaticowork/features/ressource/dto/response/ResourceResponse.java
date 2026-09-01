@@ -25,4 +25,14 @@ public class ResourceResponse {
     private Boolean portalVisible;
     private Integer displayOrder;
     private Boolean active;
+
+    /**
+     * Duree d'un creneau de cette ressource, en minutes.
+     *
+     * <p>En lecture seule ici : elle se fixe a l'ouverture des disponibilites, ou l'invariant
+     * — pas de durees melangees sur une ressource ayant des creneaux futurs — peut etre verifie.
+     * Sans ce champ, une interface ne pouvait ni afficher la duree en vigueur ni pre-remplir le
+     * formulaire, et proposait 30 par defaut a une ressource qui travaille en quarts d'heure.
+     */
+    private Integer slotDurationMinutes;
 }
