@@ -76,6 +76,15 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                                                        @Param("sourceCode") String sourceCode,
                                                        @Param("documentType") String documentType);
 
+    /**
+     * Recherche paginee des documents.
+     *
+     * <p>Les tests de nullite des dates sont enveloppes dans le meme {@code CAST} que la
+     * comparaison. Un parametre nu compare a NULL n'offre a PostgreSQL aucun contexte pour en
+     * deduire le type, et la requete echoue en « could not determine data type of parameter ».
+     * Les filtres textuels y echappent parce que le pilote leur associe deja VARCHAR ; une date
+     * nulle, non. C'est la convention deja suivie par les requetes de reporting.
+     */
     @Query(
             nativeQuery = true,
             value = """
@@ -87,8 +96,8 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                       AND (:customerCode IS NULL OR UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
                       AND (:sourceType IS NULL OR source_type = CAST(:sourceType AS VARCHAR))
                       AND (:sourceCode IS NULL OR source_code = CAST(:sourceCode AS VARCHAR))
-                      AND (:fromDate IS NULL OR issue_date >= CAST(:fromDate AS DATE))
-                      AND (:toDate IS NULL OR issue_date <= CAST(:toDate AS DATE))
+                      AND (CAST(:fromDate AS DATE) IS NULL OR issue_date >= CAST(:fromDate AS DATE))
+                      AND (CAST(:toDate AS DATE) IS NULL OR issue_date <= CAST(:toDate AS DATE))
                       AND (:searchText IS NULL OR (
                           document_number ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
                           OR customer_name ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
@@ -109,8 +118,8 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                       AND (:customerCode IS NULL OR UPPER(TRIM(customer_code)) = UPPER(TRIM(CAST(:customerCode AS VARCHAR))))
                       AND (:sourceType IS NULL OR source_type = CAST(:sourceType AS VARCHAR))
                       AND (:sourceCode IS NULL OR source_code = CAST(:sourceCode AS VARCHAR))
-                      AND (:fromDate IS NULL OR issue_date >= CAST(:fromDate AS DATE))
-                      AND (:toDate IS NULL OR issue_date <= CAST(:toDate AS DATE))
+                      AND (CAST(:fromDate AS DATE) IS NULL OR issue_date >= CAST(:fromDate AS DATE))
+                      AND (CAST(:toDate AS DATE) IS NULL OR issue_date <= CAST(:toDate AS DATE))
                       AND (:searchText IS NULL OR (
                           document_number ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
                           OR customer_name ILIKE CONCAT('%', CAST(:searchText AS VARCHAR), '%')
