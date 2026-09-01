@@ -10,6 +10,10 @@ import com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteRe
 import com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse;
 import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
 import com.sni.bokaticowork.features.ressource.enums.ResourcePriceAdjustmentType;
+import com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourcePricingRuleRequest;
+import com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse;
+import com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse;
+import com.sni.bokaticowork.features.ressource.service.support.ResourceBulkExecutor;
 import com.sni.bokaticowork.features.ressource.model.Resource;
 import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
 import com.sni.bokaticowork.features.ressource.model.ResourcePricingRule;
@@ -36,6 +40,108 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
 
     private final ResourcePricingRuleRepository pricingRuleRepository;
     private final ResourceService resourceService;
+    private final ResourceBulkExecutor bulkExecutor;
+
+    @org.springframework.beans.factory.annotation.Value("${bokati.resource.bulk-max-resources:20}")
+    private int maxBulkResources;
+
+    /**
+     * Delegue a {@link #createPricingRule} ressource par ressource · la validation existante
+     * s'applique donc a l'identique. Volontairement non transactionnelle : c'est l'executeur qui
+     * ouvre une transaction par ressource.
+     */
+    @Override
+    public BulkResourceOperationResponse createPricingRuleBulk(BulkCreateResourcePricingRuleRequest request) {
+        return bulkExecutor.run(request.getResourceCodes(), maxBulkResources, code -> {
+            createPricingRule(request.forResource(code));
+            return null;
+        });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PricingRuleConflictPreviewResponse previewPricingRuleBulk(BulkCreateResourcePricingRuleRequest request) {
+        ResourceBookingUnit unit = parseUnit(request.getBookingUnit());
+        int priority = request.getPriority() == null ? 0 : request.getPriority();
+        List<PricingRuleConflictPreviewResponse.ResourcePreview> previews = new ArrayList<>();
+
+        // Meme normalisation que la creation · un lot accepte ici doit l'etre a la creation.
+        List<String> codes = bulkExecutor.normalizeCodes(request.getResourceCodes(), maxBulkResources);
+
+        for (String code : codes) {
+            Resource resource = resourceService.getResourceForService(code);
+            List<ResourcePricingRule> existing = pricingRuleRepository.findAllActiveByResourceId(resource.getId());
+
+            List<PricingRuleConflictPreviewResponse.CompetingRule> overlapping = existing.stream()
+                    .filter(rule -> rule.getResourceBookingUnit() == unit)
+                    .filter(rule -> overlaps(rule, request))
+                    .map(rule -> new PricingRuleConflictPreviewResponse.CompetingRule(
+                            rule.getId(), rule.getLabel(), rule.getPrice(),
+                            rule.getPriority(), rule.getDayOfWeek(),
+                            asText(rule.getStartsAt()), asText(rule.getEndsAt()),
+                            // A priorite egale, findApplicableRules departage par id decroissant ·
+                            // la regle nouvelle, plus recente, l'emporterait donc.
+                            orZero(rule.getPriority()) > priority))
+                    .toList();
+
+            boolean duplicate = existing.stream()
+                    .anyMatch(rule -> rule.getResourceBookingUnit() == unit && isStrictDuplicate(rule, request));
+
+            previews.add(new PricingRuleConflictPreviewResponse.ResourcePreview(
+                    resource.getCode(), duplicate, overlapping));
+        }
+
+        return new PricingRuleConflictPreviewResponse(
+                previews.size(),
+                (int) previews.stream().filter(p -> !p.overlapping().isEmpty()).count(),
+                (int) previews.stream().filter(PricingRuleConflictPreviewResponse.ResourcePreview::duplicate).count(),
+                previews);
+    }
+
+    /**
+     * Les deux regles peuvent-elles s'appliquer au meme moment ?
+     *
+     * <p>Une borne absente vaut « toujours » · une regle sans jour ni horaire couvre toute la
+     * semaine, et chevauche donc n'importe quelle autre.
+     */
+    private boolean overlaps(ResourcePricingRule rule, BulkCreateResourcePricingRuleRequest request) {
+        if (rule.getDayOfWeek() != null && request.getDayOfWeek() != null
+                && !rule.getDayOfWeek().equals(request.getDayOfWeek())) {
+            return false;
+        }
+        if (rule.getStartsAt() != null && request.getEndsAt() != null
+                && !rule.getStartsAt().isBefore(request.getEndsAt())) {
+            return false;
+        }
+        if (request.getStartsAt() != null && rule.getEndsAt() != null
+                && !request.getStartsAt().isBefore(rule.getEndsAt())) {
+            return false;
+        }
+        if (rule.getValidUntil() != null && request.getValidFrom() != null
+                && rule.getValidUntil().isBefore(request.getValidFrom())) {
+            return false;
+        }
+        return request.getValidUntil() == null || rule.getValidFrom() == null
+                || !request.getValidUntil().isBefore(rule.getValidFrom());
+    }
+
+    /** Regle strictement identique · elle n'apporte rien et brouille l'arbitrage par priorite. */
+    private boolean isStrictDuplicate(ResourcePricingRule rule, BulkCreateResourcePricingRuleRequest request) {
+        return java.util.Objects.equals(rule.getPrice(), request.getPrice())
+                && java.util.Objects.equals(rule.getDayOfWeek(), request.getDayOfWeek())
+                && java.util.Objects.equals(rule.getStartsAt(), request.getStartsAt())
+                && java.util.Objects.equals(rule.getEndsAt(), request.getEndsAt())
+                && java.util.Objects.equals(rule.getValidFrom(), request.getValidFrom())
+                && java.util.Objects.equals(rule.getValidUntil(), request.getValidUntil());
+    }
+
+    private int orZero(Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    private String asText(java.time.LocalTime time) {
+        return time == null ? null : time.toString();
+    }
 
     @Override
     public void createPricingRule(CreateResourcePricingRuleRequest request) {

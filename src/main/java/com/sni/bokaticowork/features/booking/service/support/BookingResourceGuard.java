@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.features.booking.repository.BookingRepository;
 import com.sni.bokaticowork.features.ressource.enums.ResourceStatus;
 import com.sni.bokaticowork.features.ressource.model.Resource;
+import com.sni.bokaticowork.features.ressource.service.support.ResourceSlotPolicy;
 import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,12 +17,13 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class BookingResourceGuard {
 
-    private static final int SLOT_MINUTES = 30;
 
     private final BookingRepository bookingRepository;
+    private final ResourceSlotPolicy slotPolicy;
 
     public void validateBookable(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt, int quantity) {
         validateRange(startedAt, endedAt);
+        slotPolicy.assertAligned(resource, startedAt, endedAt);
         if (!Boolean.TRUE.equals(resource.getBookingEnabled()) || !Boolean.TRUE.equals(resource.getActive())) {
             throw new ConflictException("booking", "resource is not enabled for booking");
         }
@@ -53,10 +55,11 @@ public class BookingResourceGuard {
         if (!endedAt.isAfter(startedAt)) {
             throw new BadRequestException("Booking end date must be after start date");
         }
-        long minutes = Duration.between(startedAt, endedAt).toMinutes();
-        if (minutes % SLOT_MINUTES != 0 || startedAt.getMinute() % SLOT_MINUTES != 0 || endedAt.getMinute() % SLOT_MINUTES != 0) {
-            throw new BadRequestException("Booking range must be aligned on 30-minute slots");
-        }
+        // L'alignement se verifie par ResourceSlotPolicy, seule source de la duree de creneau.
+        // Cette classe en redefinissait sa propre constante : deux sources de verite pour la
+        // meme regle, qu'il suffisait de faire diverger d'une valeur pour rendre reservable une
+        // plage sans creneau. Le controle dependant de la ressource, il migre vers validateRange
+        // (Resource, ...) ci-dessous.
         if (startedAt.getSecond() != 0 || endedAt.getSecond() != 0 || startedAt.getNano() != 0 || endedAt.getNano() != 0) {
             throw new BadRequestException("Booking range must not contain seconds or fractional seconds");
         }

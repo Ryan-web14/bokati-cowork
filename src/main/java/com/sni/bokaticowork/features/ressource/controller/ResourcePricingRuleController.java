@@ -4,6 +4,9 @@ import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourcePricingRuleRequest;
+import com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse;
+import com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePricingRuleRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.UpdateResourcePricingRuleRequest;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteResponse;
@@ -42,6 +45,26 @@ public class ResourcePricingRuleController {
     public ResponseEntity<Void> create(@Valid @RequestBody CreateResourcePricingRuleRequest request) {
         resourcePricingRuleService.createPricingRule(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    /** Pose la meme regle sur plusieurs ressources · compte rendu par ressource. */
+    @PostMapping("/bulk")
+    public ResponseEntity<BulkResourceOperationResponse> createBulk(
+            @Valid @RequestBody BulkCreateResourcePricingRuleRequest request) {
+        return ResponseEntity.ok(resourcePricingRuleService.createPricingRuleBulk(request));
+    }
+
+    /**
+     * Montre, sans rien ecrire, ce que la regle viendrait concurrencer.
+     *
+     * <p>A appeler avant la creation groupee : poser une grille sur vingt ressources rend l'erreur
+     * aussi triviale que la saisie. Un chevauchement est normal, arbitre par priorite · c'est le
+     * doublon strict qui merite un regard.
+     */
+    @PostMapping("/bulk/preview")
+    public ResponseEntity<PricingRuleConflictPreviewResponse> previewBulk(
+            @Valid @RequestBody BulkCreateResourcePricingRuleRequest request) {
+        return ResponseEntity.ok(resourcePricingRuleService.previewPricingRuleBulk(request));
     }
 
     @GetMapping("/{id}")

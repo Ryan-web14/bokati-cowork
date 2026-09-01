@@ -18,6 +18,16 @@ import java.util.List;
 @Repository
 public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAvailability, Long> {
 
+    /**
+     * Creneaux encore a venir pour une ressource · gouverne le changement de duree de creneau.
+     * Tant qu'il en reste, changer la duree laisserait la ressource avec des creneaux melanges.
+     */
+    long countByResourceAndEndedAtAfter(Resource resource, java.time.LocalDateTime moment);
+
+    /** Creneaux d'une ressource compris dans une plage · sert au compte rendu d'un appel groupe. */
+    long countByResourceAndStartedAtGreaterThanEqualAndEndedAtLessThanEqual(
+            Resource resource, java.time.LocalDateTime from, java.time.LocalDateTime to);
+
     Page<ResourceAvailability> findAllByResource(Resource resource, Pageable pageable);
 
     Page<ResourceAvailability> findAllByEndedAtAfter(LocalDateTime cutoff, Pageable pageable);
