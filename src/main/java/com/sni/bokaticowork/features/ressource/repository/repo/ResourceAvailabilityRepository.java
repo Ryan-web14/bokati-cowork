@@ -24,6 +24,10 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
      */
     long countByResourceAndEndedAtAfter(Resource resource, java.time.LocalDateTime moment);
 
+    /** Creneaux d'une ressource compris dans une plage · sert au compte rendu d'un appel groupe. */
+    long countByResourceAndStartedAtGreaterThanEqualAndEndedAtLessThanEqual(
+            Resource resource, java.time.LocalDateTime from, java.time.LocalDateTime to);
+
     Page<ResourceAvailability> findAllByResource(Resource resource, Pageable pageable);
 
     Page<ResourceAvailability> findAllByEndedAtAfter(LocalDateTime cutoff, Pageable pageable);

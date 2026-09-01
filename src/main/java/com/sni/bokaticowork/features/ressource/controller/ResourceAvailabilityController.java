@@ -4,6 +4,8 @@ import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourceAvailabilityRequest;
+import com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest;
@@ -43,6 +45,19 @@ public class ResourceAvailabilityController {
     public ResponseEntity<Void> create(@Valid @RequestBody CreateResourceAvailabilityRequest request) {
         resourceAvailabilityService.createAvailability(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    /**
+     * Ouvre la meme plage sur plusieurs ressources.
+     *
+     * <p>Rend un compte rendu par ressource plutot qu'un tout-ou-rien : sur vingt ressources il
+     * est normal que deux echouent — chevauchement, plafond d'un mois d'avance — et refuser
+     * l'ensemble obligerait a les retirer une par une puis a relancer.
+     */
+    @PostMapping("/bulk")
+    public ResponseEntity<BulkResourceOperationResponse> createBulk(
+            @Valid @RequestBody BulkCreateResourceAvailabilityRequest request) {
+        return ResponseEntity.ok(resourceAvailabilityService.createAvailabilityBulk(request));
     }
 
     @GetMapping

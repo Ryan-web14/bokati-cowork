@@ -12,6 +12,9 @@ import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailability
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse;
 import com.sni.bokaticowork.features.ressource.enums.ResourceStatus;
 import com.sni.bokaticowork.features.ressource.model.Resource;
+import com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourceAvailabilityRequest;
+import com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse;
+import com.sni.bokaticowork.features.ressource.service.support.ResourceBulkExecutor;
 import com.sni.bokaticowork.features.ressource.service.support.ResourceSlotPolicy;
 import com.sni.bokaticowork.features.ressource.model.ResourceAvailability;
 import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
@@ -49,6 +52,39 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private final ResourceClosureRepository closureRepository;
     private final ResourceService resourceService;
     private final ResourceSlotPolicy slotPolicy;
+    private final ResourceBulkExecutor bulkExecutor;
+
+    /** Borne d'un appel groupe · une plage d'un mois produit deja ~384 creneaux par ressource. */
+    @org.springframework.beans.factory.annotation.Value("${bokati.resource.bulk-max-resources:20}")
+    private int maxBulkResources;
+
+    /**
+     * Ouvre la meme plage sur plusieurs ressources.
+     *
+     * <p>Delegue a {@link #createAvailability} ressource par ressource · toute la validation
+     * existante s'applique donc a l'identique, et rien n'est duplique. La methode n'est
+     * volontairement pas transactionnelle : c'est l'executeur qui ouvre une transaction par
+     * ressource, sans quoi le premier echec annulerait les creneaux deja ecrits.
+     */
+    @Override
+    public BulkResourceOperationResponse createAvailabilityBulk(BulkCreateResourceAvailabilityRequest request) {
+        // Une duree non diviseur de 60 est un defaut de la requete, pas des ressources : la laisser
+        // filtrer dans la boucle rendrait vingt lignes ecartees identiques sous un HTTP 200, alors
+        // que rien de ce qui est demande ne peut aboutir. Refus net, avant toute ecriture.
+        slotPolicy.assertAcceptable(request.getSlotDurationMinutes());
+
+        return bulkExecutor.run(request.getResourceCodes(), maxBulkResources, code -> {
+            createAvailability(request.forResource(code));
+            return countCreated(code, request);
+        });
+    }
+
+    /** Creneaux effectivement ecrits pour cette ressource sur la plage demandee. */
+    private int countCreated(String resourceCode, BulkCreateResourceAvailabilityRequest request) {
+        return (int) availabilityRepository.countByResourceAndStartedAtGreaterThanEqualAndEndedAtLessThanEqual(
+                resourceService.getResourceForService(resourceCode),
+                request.getStartedAt(), request.getEndedAt());
+    }
 
     @Override
     public void createAvailability(CreateResourceAvailabilityRequest request) {
