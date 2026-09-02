@@ -60,6 +60,13 @@ public interface BookingService {
 
     int markOverdueNoShows(int limit);
 
+    /**
+     * Active les reservations pointees d'avance dont l'heure est arrivee.
+     *
+     * @return nombre de reservations passees en cours
+     */
+    int startCheckedInBookings(int limit);
+
     int markOverdueCompleted(int limit);
 
     void recordCsat(String bookingNumber, int score);
