@@ -18,6 +18,7 @@
   /* ── En-tete de marque ── */
   .ct-letterhead { width: 100%; border-collapse: collapse; }
   .ct-letterhead td { vertical-align: top; padding: 0; }
+  .ct-lh-logo { height: 34pt; width: auto; display: block; margin-bottom: 3pt; }
   .ct-lh-name {
     font-family: Helvetica, Arial, sans-serif;
     font-size: 15pt; font-weight: bold; letter-spacing: 2pt;
@@ -58,7 +59,8 @@
 <table th:fragment="letterhead" class="ct-letterhead">
   <tr>
     <td>
-      <div class="ct-lh-name"
+      <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="ct-lh-logo" alt="ELLE A OSE"/>
+      <div class="ct-lh-name" th:if="${logo == null}"
            th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
       <div class="ct-lh-tag">Espace de coworking</div>
     </td>

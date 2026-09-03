@@ -19,6 +19,7 @@ import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.
 import com.sni.bokaticowork.features.contract.model.ContractTemplate;
 import com.sni.bokaticowork.features.contract.repository.ContractTemplateRepository;
 import com.sni.bokaticowork.features.contract.service.support.ContractEmailNotifier;
+import com.sni.bokaticowork.core.utils.BrandLogo;
 import com.sni.bokaticowork.features.contract.service.support.ContractWording;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -49,6 +50,7 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
 
     private final SpringTemplateEngine templateEngine;
     private final ContractWording wording;
+    private final BrandLogo brandLogo;
     private final DocumentService documentService;
     private final MemberService memberService;
     private final CustomerService customerService;
@@ -155,6 +157,7 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         Context context = new Context(appLocale);
         context.setVariable("request", request);
         context.setVariable("generatedAt", LocalDate.now());
+        context.setVariable("logo", brandLogo.base64());
         context.setVariable("signingDate", enrichedVars.get("signingDate"));
         context.setVariable("placeOfSigning", enrichedVars.get("placeOfSigning"));
         context.setVariable("ownerType", request.getOwnerType());
