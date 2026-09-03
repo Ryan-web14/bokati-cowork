@@ -1,8 +1,22 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Contrat de domiciliation · reecrit entierement.
+
+  La version precedente comptait 550 lignes et AUCUNE expression Thymeleaf : ni nom, ni date, ni
+  montant, ni prestation. Le PDF sortait un formulaire vierge, avec des cases a cocher au stylo et
+  des lignes de pointilles. Un contrat remis dans cet etat ne prouve rien de ce qui a ete convenu.
+
+  Tout ce qui est imprime vient desormais du systeme. Une donnee absente fait disparaitre sa ligne
+  au lieu d'imprimer un blanc ou une mention passe-partout.
+
+  Aucune grille ni flexbox : OpenHtmlToPDF 1.0.10 ne les connait pas et les rend en blocs empiles.
+  La version precedente en contenait dix, dont le bloc des deux parties, declare en deux colonnes
+  et sortant donc l'une sous l'autre.
+-->
 <head>
 <meta charset="UTF-8"/>
-<title>Contrat de domiciliation commerciale</title>
+<title th:text="${request.title != null ? request.title : 'Contrat de domiciliation'}">Contrat de domiciliation</title>
 <style>
 @page {
     size: A4;
@@ -20,532 +34,287 @@
 body {
     font-family: "Times New Roman", Times, serif;
     font-size: 10pt;
-    line-height: 1.6;
+    line-height: 1.65;
     color: #111;
     background: #fff;
 }
 
-/* ── EN-TÊTE ── */
-.letterhead {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding-bottom: 10pt;
-    border-bottom: 2pt solid #111;
-    margin-bottom: 14pt;
+/* ── Titre ── */
+.doc-title-block { text-align: center; margin: 16pt 0 4pt; }
+.doc-type {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 7pt; text-transform: uppercase; letter-spacing: 2pt; color: #777;
 }
-.lh-brand-name { font-size: 15pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5pt; }
-.lh-brand-tag  { font-size: 8pt; color: #555; font-style: italic; margin-top: 2pt; }
-.lh-contact    { text-align: right; font-size: 8pt; color: #444; line-height: 1.55; }
-
-/* ── TITRE ── */
-.doc-title-block { text-align: center; margin: 0 0 14pt; }
-.doc-type   { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 2pt; color: #777; margin-bottom: 5pt; }
-.doc-title  { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1pt; }
-.doc-sub    { font-size: 9pt; font-style: italic; color: #444; margin-top: 4pt; }
-.title-rule { border: none; border-top: 1pt solid #888; width: 55%; margin: 8pt auto 0; }
-
-/* ── RÉFÉRENCE ── */
-.ref-bar {
-    border: 0.75pt solid #bbb;
-    padding: 5pt 10pt;
-    margin-bottom: 14pt;
-    display: flex;
-    justify-content: space-between;
-    font-size: 8.5pt;
-    color: #444;
+.doc-title {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 13pt; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 1pt; margin-top: 5pt;
 }
-.ref-field { display: flex; gap: 6pt; align-items: baseline; }
-.ref-label { font-weight: bold; white-space: nowrap; }
-.ref-line  { border-bottom: 1pt solid #999; min-width: 70pt; display: inline-block; }
+.doc-ref { font-size: 8.5pt; color: #555; margin-top: 4pt; }
+.title-rule { border: none; border-top: 0.75pt solid #888; width: 46%; margin: 9pt auto 16pt; }
 
-/* ── PARTIES ── */
-.parties-intro {
-    text-align: center;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    font-size: 9.5pt;
-    padding: 6pt 0;
-    margin: 14pt 0 10pt;
-    border-top: 1pt solid #bbb;
-    border-bottom: 1pt solid #bbb;
+/* ── Parties · deux colonnes en tableau, la grille n'est pas rendue ── */
+.parties { width: 100%; border-collapse: collapse; margin-bottom: 4pt; }
+.parties td { width: 50%; vertical-align: top; padding: 0 8pt 0 0; }
+.parties td + td { padding: 0 0 0 8pt; }
+.pblock { border: 0.75pt solid #bbb; padding: 7pt 9pt; }
+.pblock.left { background: #f7f7f7; }
+.prole {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 7pt; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 1.2pt; color: #666; margin-bottom: 4pt;
 }
+.pname { font-size: 10.5pt; font-weight: bold; line-height: 1.3; }
+.pline { font-size: 8.5pt; color: #333; line-height: 1.55; margin-top: 3pt; }
 
-.parties-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14pt; margin-bottom: 10pt; }
-.party-block  { border: 0.75pt solid #bbb; }
-.party-head   {
-    background: #f0f0f0;
-    border-bottom: 1pt solid #bbb;
-    padding: 5pt 8pt;
-    font-size: 8.5pt;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    color: #333;
-}
-.party-body   { padding: 8pt 10pt; }
+/* ── Conditions ── */
+.terms { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 12pt 0 4pt; }
+.terms td { border: 0.75pt solid #bbb; padding: 4pt 8pt; vertical-align: top; }
+.terms .k { width: 34%; font-weight: bold; background: #f5f5f5; }
 
-/* ── CHAMP DE SAISIE ── */
-.field { margin-bottom: 7pt; }
-.field-label { font-size: 7.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; color: #555; margin-bottom: 2pt; }
-.field-label .req { color: #333; margin-left: 1pt; }
-.field-input {
-    border-bottom: 1pt solid #999;
-    min-height: 16pt;
-    padding: 2pt 2pt 2pt 0;
-    font-size: 9.5pt;
-    width: 100%;
-    display: block;
-}
-.field-input.tall {
-    border: 0.75pt solid #bbb;
-    min-height: 32pt;
-    padding: 4pt 6pt;
-    width: 100%;
-    display: block;
-}
-.field-grid { display: grid; gap: 6pt 12pt; }
-.col-2 { grid-template-columns: 1fr 1fr; }
-
-/* ── CASES À COCHER ── */
-.check-group { display: flex; flex-wrap: wrap; gap: 6pt 14pt; padding: 3pt 0; }
-.check-item  { display: flex; align-items: center; gap: 4pt; font-size: 9pt; }
-.check-box   { border: 1pt solid #777; width: 11pt; height: 11pt; flex-shrink: 0; display: inline-block; }
-
-/* ── ARTICLES ── */
+/* ── Articles ── */
 .article { margin-top: 12pt; }
 .article-heading {
-    font-size: 10pt;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    border-bottom: 1pt solid #bbb;
-    padding-bottom: 3pt;
-    margin-bottom: 7pt;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 9.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.6pt;
+    border-bottom: 0.75pt solid #bbb; padding-bottom: 3pt; margin-bottom: 6pt;
 }
-.article-text { font-size: 9.5pt; text-align: justify; line-height: 1.65; }
-.article-text p { margin-bottom: 5pt; }
-.article-text p:last-child { margin-bottom: 0; }
+.article p { font-size: 9.5pt; text-align: justify; line-height: 1.65; }
+.article p + p { margin-top: 5pt; }
 
-/* ── DURÉE ── */
-.duree-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10pt; margin-top: 8pt; }
+/* Prestations souscrites · une par ligne, aucune case a cocher */
+.services { margin-top: 5pt; }
+.services li { list-style: none; font-size: 9.5pt; line-height: 1.7; padding-left: 12pt; text-indent: -12pt; }
+.services li::before { content: "— "; }
 
-/* ── TABLEAU TARIFS ── */
-.tarif-table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 9pt; }
-.tarif-table th {
-    border: 0.75pt solid #888;
-    padding: 5pt 8pt;
-    background: #f0f0f0;
-    font-weight: bold;
-    text-align: left;
-    text-transform: uppercase;
-    font-size: 8pt;
-    letter-spacing: 0.3pt;
+/* ── Signatures ── */
+.sig-table { width: 100%; border-collapse: collapse; margin-top: 14pt; }
+.sig-cell { width: 50%; vertical-align: top; padding: 0 8pt 0 0; }
+.sig-cell + .sig-cell { padding: 0 0 0 8pt; }
+.sig-inner { border: 0.75pt solid #bbb; padding: 8pt 10pt; min-height: 78pt; }
+.sig-role {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 7pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1.2pt; color: #666;
 }
-.tarif-table th:last-child { text-align: right; }
-.tarif-table td { border: 0.75pt solid #bbb; padding: 5pt 8pt; vertical-align: top; }
-.tarif-table td:last-child { text-align: right; font-weight: bold; }
-.tarif-table tr:nth-child(even) td { background: #f9f9f9; }
-.select-col { width: 22pt; text-align: center !important; }
+.sig-name { font-size: 10pt; font-weight: bold; margin-top: 5pt; }
+.sig-qual { font-size: 8.5pt; color: #444; margin-top: 1pt; }
+.sig-stamp {
+    border-top: 0.75pt solid #ddd; margin-top: 8pt; padding-top: 6pt;
+    font-family: "Courier New", monospace; font-size: 8pt;
+}
+.sig-stamp span {
+    display: block; font-family: Helvetica, Arial, sans-serif;
+    font-size: 6.5pt; text-transform: uppercase; letter-spacing: 1pt; color: #777; margin-top: 2pt;
+}
+.sig-mention { font-size: 7.5pt; color: #888; font-style: italic; margin-top: 6pt; }
 
-/* ── RÉSUMÉ FINANCIER ── */
-.financial-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10pt; margin-top: 10pt; }
-
-/* ── LEGAL NOTICE ── */
 .legal-notice {
-    margin-top: 10pt;
-    padding: 7pt 10pt;
-    border: 0.75pt solid #bbb;
-    border-left: 3pt solid #555;
-    font-size: 8.5pt;
-    color: #333;
-    line-height: 1.65;
-    text-align: justify;
+    margin-top: 10pt; padding: 6pt 9pt; border: 0.75pt solid #bbb;
+    background: #fafafa; font-size: 8pt; line-height: 1.6; color: #333;
 }
-
-/* ── CLÔTURE ── */
-.closing {
-    margin-top: 16pt;
-    padding-top: 8pt;
-    border-top: 1pt solid #bbb;
-    text-align: center;
-    font-size: 9pt;
-    font-style: italic;
-    color: #333;
-}
-
-/* ── SIGNATURES ── */
-.sig-table { width: 100%; border-collapse: collapse; margin-top: 18pt; }
-.sig-cell  { width: 50%; vertical-align: top; padding: 0 0 0 22pt; }
-.sig-cell:first-child { padding: 0 22pt 0 0; border-right: 1pt solid #bbb; }
-
-.sig-role { font-size: 8.5pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; margin-bottom: 2pt; }
-.sig-name { font-size: 9pt; color: #333; margin-bottom: 1pt; }
-.sig-qual { font-size: 8.5pt; font-style: italic; color: #555; margin-bottom: 10pt; }
-.sig-box  { border: 1pt solid #888; height: 56pt; width: 100%; margin-bottom: 5pt; }
-.sig-date    { font-size: 8pt; color: #444; margin-top: 3pt; }
-.sig-mention { font-size: 7.5pt; color: #888; font-style: italic; margin-top: 2pt; }
-
-/* ── RÉSERVÉ ADMINISTRATION ── */
-.admin-box { border: 1pt solid #888; margin-top: 18pt; }
-.admin-head {
-    background: #eee;
-    border-bottom: 1pt solid #888;
-    padding: 5pt 10pt;
-    font-size: 8.5pt;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    color: #333;
-}
-.admin-body { padding: 10pt 12pt; }
-.admin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8pt 12pt; }
-.span-2 { grid-column: span 2; }
-
-/* ── PIED DE PAGE ── */
-.doc-footer {
-    margin-top: 20pt;
-    padding-top: 6pt;
-    border-top: 1pt solid #aaa;
-    font-size: 7.5pt;
-    color: #666;
-    text-align: center;
-}
-
-@media print { body { width: 210mm; } }
 </style>
+<th:block th:replace="~{fragments/contract-brand :: styles}"></th:block>
 </head>
 <body>
 
-<!-- EN-TÊTE -->
-<div class="letterhead">
-  <div>
-    <div class="lh-brand-name">Elle A Osé</div>
-    <div class="lh-brand-tag">Cowork &amp; Studio · Espace de coworking et services aux entreprises</div>
-  </div>
-  <div class="lh-contact">
-    Brazzaville, République du Congo<br/>
-    contact@elleaose.com
-  </div>
-</div>
+<table th:replace="~{fragments/contract-brand :: letterhead}"></table>
+<div class="ct-rule"></div>
 
-<!-- TITRE -->
 <div class="doc-title-block">
   <div class="doc-type">Document contractuel</div>
-  <div class="doc-title">Contrat de domiciliation commerciale</div>
-  <div class="doc-sub">Adresse commerciale, administrative et postale</div>
+  <div class="doc-title">Contrat de domiciliation</div>
+  <div class="doc-ref" th:text="|Réf. ${request.templateCode} · établi le ${signingDate}|">Référence</div>
   <hr class="title-rule"/>
 </div>
 
-<!-- RÉFÉRENCE -->
-<div class="ref-bar">
-  <div class="ref-field">
-    <span class="ref-label">N° contrat :</span>
-    <span class="ref-line">&nbsp;</span>
-  </div>
-  <div class="ref-field">
-    <span class="ref-label">Date de signature :</span>
-    <span>_____ / _____ / _________</span>
-  </div>
-  <div class="ref-field">
-    <span class="ref-label">Réf. client :</span>
-    <span class="ref-line">&nbsp;</span>
-  </div>
-</div>
-
-<!-- PARTIES -->
-<div class="parties-intro">Entre les soussignés :</div>
-
-<div class="parties-grid">
-  <div class="party-block">
-    <div class="party-head">Le Domiciliataire · Prestataire</div>
-    <div class="party-body">
-      <div class="field">
-        <div class="field-label">Dénomination sociale</div>
-        <div class="field-input" style="font-weight:bold;">ELLE A OSÉ</div>
-      </div>
-      <div class="field">
-        <div class="field-label">Adresse</div>
-        <div class="field-input">Brazzaville, République du Congo</div>
-      </div>
-      <div class="field-grid col-2">
-        <div class="field">
-          <div class="field-label">RCCM / Registre</div>
-          <div class="field-input"></div>
-        </div>
-        <div class="field">
-          <div class="field-label">Représentant légal</div>
-          <div class="field-input"></div>
-        </div>
-      </div>
-      <div style="font-size:8pt; font-style:italic; color:#555; margin-top:4pt;">ci-après dénommé « le Domiciliataire »</div>
-    </div>
-  </div>
-
-  <div class="party-block">
-    <div class="party-head">Le Domicilié · Client</div>
-    <div class="party-body">
-      <div class="field">
-        <div class="field-label">Nom / Raison sociale <span class="req">*</span></div>
-        <div class="field-input"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">Adresse personnelle / siège actuel</div>
-        <div class="field-input"></div>
-      </div>
-      <div class="field-grid col-2">
-        <div class="field">
-          <div class="field-label">Forme juridique</div>
-          <div class="field-input"></div>
-        </div>
-        <div class="field">
-          <div class="field-label">N° RCCM / NIF</div>
-          <div class="field-input"></div>
-        </div>
-      </div>
-      <div class="field-grid col-2">
-        <div class="field">
-          <div class="field-label">Téléphone</div>
-          <div class="field-input"></div>
-        </div>
-        <div class="field">
-          <div class="field-label">Email</div>
-          <div class="field-input"></div>
-        </div>
-      </div>
-      <div style="font-size:8pt; font-style:italic; color:#555; margin-top:4pt;">ci-après dénommé « le Domicilié »</div>
-    </div>
-  </div>
-</div>
-
-<!-- PREAMBLE -->
-<div style="text-align:center; font-weight:bold; text-transform:uppercase; letter-spacing:0.5pt; font-size:9.5pt; padding:6pt 0; margin-bottom:12pt; border-top:1pt solid #bbb; border-bottom:1pt solid #bbb;">
-  Il a été convenu et arrêté ce qui suit :
-</div>
-
-<!-- ARTICLE 1 : OBJET -->
-<div class="article">
-  <div class="article-heading">Article 1 · Objet du contrat</div>
-  <div class="article-text">
-    <p>Le présent contrat a pour objet de définir les conditions dans lesquelles <strong>ELLE A OSÉ</strong> (ci-après « le Domiciliataire ») met à la disposition du Domicilié son adresse aux fins d'utilisation comme adresse commerciale, administrative et postale de l'entreprise.</p>
-    <p>Cette domiciliation permet au Domicilié d'élire son siège social ou son adresse commerciale à l'adresse du Domiciliataire, sans occupation permanente des locaux, sauf mention contraire dans les prestations souscrites.</p>
-  </div>
-</div>
-
-<!-- ARTICLE 2 : SERVICES -->
-<div class="article">
-  <div class="article-heading">Article 2 · Prestations incluses</div>
-  <div class="article-text">
-    <p>Le Domiciliataire s'engage à fournir les services cochés ci-après dans les conditions définies au présent contrat :</p>
-  </div>
-  <div style="margin-top:8pt;">
-    <div class="check-group">
-      <label class="check-item"><span class="check-box"></span> Mise à disposition de l'adresse postale</label>
-      <label class="check-item"><span class="check-box"></span> Réception et notification du courrier</label>
-      <label class="check-item"><span class="check-box"></span> Boîte aux lettres nominative</label>
-      <label class="check-item"><span class="check-box"></span> Scan et transfert numérique du courrier</label>
-      <label class="check-item"><span class="check-box"></span> Transfert physique du courrier</label>
-      <label class="check-item"><span class="check-box"></span> Accès aux espaces de travail partagés</label>
-      <label class="check-item"><span class="check-box"></span> Accès à une salle de réunion (selon formule)</label>
-      <label class="check-item"><span class="check-box"></span> Attestation de domiciliation sur demande</label>
-    </div>
-  </div>
-</div>
-
-<!-- ARTICLE 3 : DURÉE -->
-<div class="article">
-  <div class="article-heading">Article 3 · Durée et renouvellement</div>
-  <div class="article-text">
-    <p>Le contrat prend effet à la date de signature et est conclu pour la durée choisie ci-dessous.
-    Il est renouvelable par tacite reconduction sauf dénonciation par l'une des parties adressée par écrit
-    avec un préavis de <strong>trente (30) jours calendaires</strong> avant l'échéance.</p>
-  </div>
-  <div class="duree-grid">
-    <div class="field">
-      <div class="field-label">Date de début <span class="req">*</span></div>
-      <div class="field-input"></div>
-    </div>
-    <div class="field">
-      <div class="field-label">Date de fin <span class="req">*</span></div>
-      <div class="field-input"></div>
-    </div>
-    <div class="field">
-      <div class="field-label">Durée</div>
-      <div class="check-group" style="padding-top:4pt;">
-        <label class="check-item"><span class="check-box"></span> 1 mois</label>
-        <label class="check-item"><span class="check-box"></span> 3 mois</label>
-        <label class="check-item"><span class="check-box"></span> 6 mois</label>
-        <label class="check-item"><span class="check-box"></span> 1 an</label>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ARTICLE 4 : TARIFS -->
-<div class="article">
-  <div class="article-heading">Article 4 · Redevance et modalités de paiement</div>
-  <div class="article-text">
-    <p>Le Domicilié s'engage à régler au Domiciliataire la redevance mensuelle correspondant à la formule souscrite, payable d'avance selon la périodicité choisie. Les tarifs indiqués sont en francs CFA (XAF) hors taxes.</p>
-  </div>
-  <table class="tarif-table">
-    <thead>
-      <tr>
-        <th class="select-col">Choix</th>
-        <th>Formule</th>
-        <th>Prestations incluses</th>
-        <th>Tarif / mois</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="select-col"><span class="check-box" style="margin:auto; display:block;"></span></td>
-        <td><strong>Essentiel</strong></td>
-        <td>Adresse postale · boîte aux lettres · notification courrier</td>
-        <td>_____ XAF</td>
-      </tr>
-      <tr>
-        <td class="select-col"><span class="check-box" style="margin:auto; display:block;"></span></td>
-        <td><strong>Confort</strong></td>
-        <td>Essentiel + scan &amp; transfert numérique · attestation sur demande</td>
-        <td>_____ XAF</td>
-      </tr>
-      <tr>
-        <td class="select-col"><span class="check-box" style="margin:auto; display:block;"></span></td>
-        <td><strong>Premium</strong></td>
-        <td>Confort + accès coworking 8h/mois · 1 salle de réunion/mois (2h)</td>
-        <td>_____ XAF</td>
-      </tr>
-      <tr>
-        <td class="select-col"><span class="check-box" style="margin:auto; display:block;"></span></td>
-        <td><strong>Sur mesure</strong></td>
-        <td>Prestations à définir selon besoins spécifiques</td>
-        <td>Sur devis</td>
-      </tr>
-    </tbody>
-  </table>
-  <div class="financial-grid" style="margin-top:10pt;">
-    <div class="field">
-      <div class="field-label">Formule retenue <span class="req">*</span></div>
-      <div class="field-input"></div>
-    </div>
-    <div class="field">
-      <div class="field-label">Montant mensuel HT (XAF)</div>
-      <div class="field-input"></div>
-    </div>
-    <div class="field">
-      <div class="field-label">Mode de paiement</div>
-      <div class="check-group" style="padding-top:3pt;">
-        <label class="check-item"><span class="check-box"></span> Mobile money</label>
-        <label class="check-item"><span class="check-box"></span> Virement</label>
-        <label class="check-item"><span class="check-box"></span> Espèces</label>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ARTICLE 5 : OBLIGATIONS -->
-<div class="article">
-  <div class="article-heading">Article 5 · Obligations des parties</div>
-  <div class="article-text">
-    <p><strong>5.1 Obligations du Domiciliataire.</strong> Le Domiciliataire s'engage à : mettre à disposition l'adresse convenue pour toute la durée du contrat ; assurer la réception et la conservation du courrier dans des conditions sécurisées ; informer le Domicilié de la réception de tout courrier dans un délai raisonnable ; délivrer toute attestation de domiciliation nécessaire aux démarches administratives ou juridiques du Domicilié.</p>
-    <p><strong>5.2 Obligations du Domicilié.</strong> Le Domicilié s'engage à : régler la redevance aux échéances convenues ; informer le Domiciliataire de toute modification de sa situation juridique dans un délai de <strong>quinze (15) jours</strong> ; ne pas sous-louer ou céder le bénéfice du présent contrat sans accord écrit préalable ; ne pas utiliser l'adresse à des fins illicites ; retirer son courrier dans un délai maximum de <strong>trente (30) jours</strong> après notification.</p>
-  </div>
-</div>
-
-<!-- ARTICLE 6 : RÉSILIATION -->
-<div class="article">
-  <div class="article-heading">Article 6 · Résiliation</div>
-  <div class="article-text">
-    <p>Chacune des parties peut mettre fin au présent contrat par notification écrite avec un préavis de <strong>trente (30) jours calendaires</strong>. En cas de manquement grave (notamment défaut de paiement après mise en demeure restée sans effet pendant quinze (15) jours, ou usage frauduleux de l'adresse), le Domiciliataire se réserve le droit de résilier avec effet immédiat, sans indemnité due au Domicilié.</p>
-    <p>À l'issue du contrat, le Domicilié dispose de <strong>quinze (15) jours</strong> pour retirer ses courriers en instance. Passé ce délai, les courriers pourront être retournés à l'expéditeur ou détruits.</p>
-  </div>
-</div>
-
-<!-- ARTICLE 7 : DISPOSITIONS LÉGALES -->
-<div class="article">
-  <div class="article-heading">Article 7 · Confidentialité, données personnelles et droit applicable</div>
-  <div class="legal-notice">
-    Les parties s'engagent à traiter confidentiellement toutes les informations échangées dans le cadre du présent contrat.
-    Les données personnelles collectées sont traitées conformément à la réglementation en vigueur.
-    <strong>Base légale :</strong> La domiciliation commerciale est régie par les dispositions pertinentes de l'Acte Uniforme OHADA
-    relatif au droit commercial général ainsi que par les législations nationales applicables.
-    Le Domicilié demeure seul responsable de l'exactitude des informations déclarées aux autorités administratives et fiscales.
-    En cas de litige, les parties s'engagent à rechercher une solution amiable avant tout recours judiciaire.
-    À défaut d'accord, le tribunal compétent sera celui du ressort du siège du Domiciliataire.
-    Fait en deux (2) exemplaires originaux, un pour chaque partie.
-  </div>
-</div>
-
-<!-- CLÔTURE -->
-<div class="closing">
-  Fait à __________________, le ____ / ____ / __________
-</div>
-
-<!-- SIGNATURES -->
-<table class="sig-table">
+<!-- PARTIES · en tableau, la version precedente les empilait -->
+<table class="parties">
   <tr>
-    <td class="sig-cell">
-      <div class="sig-role">Pour le Domiciliataire</div>
-      <div class="sig-name">ELLE A OSÉ</div>
-      <div class="sig-qual">Représentant habilité · Signature &amp; cachet</div>
-      <div class="sig-box"></div>
-      <div class="sig-date">Nom : _______________________________________________</div>
-      <div class="sig-date" style="margin-top:4pt;">Date : _____ / _____ / _________</div>
+    <td>
+      <div class="pblock left">
+        <div class="prole">D'une part · le Domiciliataire</div>
+        <div class="pname" th:text="${variables['operatorName']}">ELLE A OSE</div>
+        <div class="pline">
+          <span th:if="${variables['operatorAddress'] != null}" th:text="${variables['operatorAddress']}">Adresse</span>
+          <br th:if="${variables['operatorAddress'] != null}">
+          <span th:if="${variables['operatorRccm'] != null}" th:text="|RCCM ${variables['operatorRccm']}|">RCCM</span>
+        </div>
+      </div>
     </td>
-    <td class="sig-cell">
-      <div class="sig-role">Pour le Domicilié</div>
-      <div class="sig-name">Le Client</div>
-      <div class="sig-qual">Précédé de la mention manuscrite « Lu et approuvé »</div>
-      <div class="sig-box"></div>
-      <div class="sig-date">Nom : _______________________________________________</div>
-      <div class="sig-date" style="margin-top:4pt;">Date : _____ / _____ / _________</div>
+    <td>
+      <div class="pblock">
+        <div class="prole">D'autre part · le Domicilié</div>
+        <div class="pname" th:text="${ownerName}">Le client</div>
+        <div class="pline">
+          <span th:if="${ownerAddress != null}" th:text="${ownerAddress}">Adresse</span>
+          <br th:if="${ownerAddress != null}">
+          <span th:if="${ownerRccm != null}" th:text="|RCCM ${ownerRccm}|">RCCM</span>
+          <br th:if="${ownerRccm != null}">
+          <span th:if="${ownerEmail != null}" th:text="${ownerEmail}">courriel</span>
+          <span th:if="${ownerEmail != null and ownerPhone != null}"> &middot; </span>
+          <span th:if="${ownerPhone != null}" th:text="${ownerPhone}">téléphone</span>
+        </div>
+      </div>
     </td>
   </tr>
 </table>
 
-<!-- RÉSERVÉ ADMINISTRATION -->
-<div class="admin-box">
-  <div class="admin-head">Réservé à l'administration · Ne pas remplir par le client</div>
-  <div class="admin-body">
-    <div class="admin-grid">
-      <div class="field">
-        <div class="field-label">N° contrat attribué</div>
-        <div class="field-input"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">Boîte attribuée</div>
-        <div class="field-input"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">Date d'activation</div>
-        <div class="field-input"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">Traité par</div>
-        <div class="field-input"></div>
-      </div>
-      <div class="field span-2">
-        <div class="field-label">Pièces justificatives reçues</div>
-        <div class="check-group">
-          <label class="check-item"><span class="check-box"></span> Pièce d'identité</label>
-          <label class="check-item"><span class="check-box"></span> RCCM / statuts</label>
-          <label class="check-item"><span class="check-box"></span> Justificatif de domicile</label>
-          <label class="check-item"><span class="check-box"></span> NIF</label>
-        </div>
-      </div>
-      <div class="field span-2">
-        <div class="field-label">Observations</div>
-        <div class="field-input tall"></div>
-      </div>
-    </div>
-  </div>
+<!-- Les appellations sont posees une fois, puis employees seules dans les articles. -->
+<div class="ct-desig">
+  <p><strong th:text="${variables['operatorName']}">ELLE A OSE</strong>, ci-après dénommée
+     <strong>« le Domiciliataire »</strong>, entendue comme la personne morale qui met son adresse
+     à disposition et fournit les prestations décrites à l'article 2.</p>
+  <p><strong th:text="${ownerName}">Le client</strong>, ci-après dénommé
+     <strong>« le Domicilié »</strong>, entendu comme le client qui élit domicile à cette adresse
+     et en tire avantage.</p>
+  <p>Ci-après désignés ensemble <strong>« les Parties »</strong>, il a été convenu ce qui suit.</p>
 </div>
 
-<!-- PIED DE PAGE -->
-<div class="doc-footer">
-  ELLE A OSÉ &nbsp;·&nbsp; Contrat de domiciliation commerciale &nbsp;·&nbsp; Document contractuel · conserver précieusement
+<!-- CONDITIONS · chaque ligne disparait si la donnee manque -->
+<table class="terms">
+  <tr th:if="${variables['domiciliationAddress'] != null or variables['operatorAddress'] != null}">
+    <td class="k">Adresse domiciliée</td>
+    <td th:text="${variables['domiciliationAddress'] != null ? variables['domiciliationAddress'] : variables['operatorAddress']}">Adresse</td>
+  </tr>
+  <tr th:if="${variables['startDate'] != null}">
+    <td class="k">Prise d'effet</td>
+    <td th:text="${variables['startDate']}">Date</td>
+  </tr>
+  <tr th:if="${variables['endDate'] != null}">
+    <td class="k">Échéance</td>
+    <td th:text="${variables['endDate']}">Date</td>
+  </tr>
+  <tr th:if="${variables['monthlyFee'] != null}">
+    <td class="k">Redevance mensuelle</td>
+    <td th:text="${variables['monthlyFee']}">Montant</td>
+  </tr>
+  <tr th:if="${variables['noticeDays'] != null}">
+    <td class="k">Préavis de résiliation</td>
+    <td th:text="|${variables['noticeDays']} jours|">Préavis</td>
+  </tr>
+</table>
+
+<div class="article">
+  <div class="article-heading">Article 1 &middot; Objet du contrat</div>
+  <p>Le présent contrat a pour objet de définir les conditions dans lesquelles le Domiciliataire met
+     à la disposition du Domicilié son adresse aux fins d'utilisation comme adresse commerciale,
+     administrative et postale de l'entreprise.</p>
+  <p>Cette domiciliation permet au Domicilié d'élire son siège social ou son adresse commerciale à
+     l'adresse du Domiciliataire, sans occupation permanente des locaux, sauf mention contraire dans
+     les prestations souscrites.</p>
 </div>
+
+<!-- Prestations reellement souscrites · plus de cases a cocher au stylo -->
+<div class="article" th:if="${variables['includedServices'] != null}">
+  <div class="article-heading">Article 2 &middot; Prestations incluses</div>
+  <p>Le Domiciliataire s'engage à fournir les prestations suivantes, dans les conditions définies au
+     présent contrat :</p>
+  <ul class="services">
+    <li th:each="service : ${#strings.arraySplit(variables['includedServices'], ';')}"
+        th:text="${#strings.trim(service)}">Prestation</li>
+  </ul>
+</div>
+
+<div class="article">
+  <div class="article-heading">Article 3 &middot; Durée et renouvellement</div>
+  <p th:if="${variables['startDate'] != null and variables['endDate'] != null}"
+     th:text="|Le contrat prend effet le ${variables['startDate']} et court jusqu'au ${variables['endDate']}. Il se renouvelle par tacite reconduction pour des périodes de même durée, sauf dénonciation par l'une des parties dans le délai de préavis prévu à l'article 6.|">Durée</p>
+  <p th:unless="${variables['startDate'] != null and variables['endDate'] != null}">
+     Le contrat se renouvelle par tacite reconduction pour des périodes de même durée, sauf
+     dénonciation par l'une des parties dans le délai de préavis prévu à l'article 6.</p>
+</div>
+
+<div class="article">
+  <div class="article-heading">Article 4 &middot; Redevance et modalités de paiement</div>
+  <p th:if="${variables['monthlyFee'] != null}"
+     th:text="|La redevance est fixée à ${variables['monthlyFee']} par mois, payable le premier jour de chaque mois. Tout retard de paiement excédant quinze (15) jours entraîne la suspension des prestations jusqu'à régularisation, sans que le Domicilié puisse prétendre à une réduction de la redevance pour la période suspendue.|">Redevance</p>
+  <p th:unless="${variables['monthlyFee'] != null}">
+     La redevance est payable le premier jour de chaque mois. Tout retard de paiement excédant
+     quinze (15) jours entraîne la suspension des prestations jusqu'à régularisation, sans que le
+     Domicilié puisse prétendre à une réduction de la redevance pour la période suspendue.</p>
+</div>
+
+<div class="article">
+  <div class="article-heading">Article 5 &middot; Obligations des parties</div>
+  <p>Le Domiciliataire tient à la disposition du Domicilié le courrier reçu à son nom et le conserve
+     pendant la durée du contrat. Il délivre sur demande une attestation de domiciliation.</p>
+  <p th:if="${variables['mailRegime'] != null}"
+     th:text="|Régime du courrier convenu : ${variables['mailRegime']}.|">Régime du courrier</p>
+  <p>Le Domicilié s'engage à déclarer cette adresse auprès des organismes compétents, à informer le
+     Domiciliataire de tout changement de forme juridique, de dirigeant ou d'activité, et à relever
+     ou faire relever son courrier. Il ne peut céder le bénéfice du présent contrat à un tiers.</p>
+</div>
+
+<div class="article">
+  <div class="article-heading">Article 6 &middot; Résiliation</div>
+  <p th:if="${variables['noticeDays'] != null}"
+     th:text="|Chaque partie peut résilier le contrat par écrit, moyennant un préavis de ${variables['noticeDays']} jours. Le Domicilié procède alors sans délai au transfert de son siège et cesse toute utilisation de l'adresse.|">Résiliation</p>
+  <p th:unless="${variables['noticeDays'] != null}">
+     Chaque partie peut résilier le contrat par écrit, moyennant le préavis convenu entre elles. Le
+     Domicilié procède alors sans délai au transfert de son siège et cesse toute utilisation de
+     l'adresse.</p>
+  <p>Le Domiciliataire peut résilier de plein droit en cas de non-paiement persistant, d'usage de
+     l'adresse à des fins étrangères à l'activité déclarée, ou de manquement grave aux obligations
+     de l'article 5.</p>
+</div>
+
+<div class="article">
+  <div class="article-heading">Article 7 &middot; Confidentialité, données personnelles et droit applicable</div>
+  <p>Chaque partie s'oblige à la confidentialité sur les informations recueillies à l'occasion du
+     présent contrat. Les données personnelles du Domicilié sont traitées aux seules fins d'exécution
+     du contrat et conservées pendant la durée légale.</p>
+  <p th:text="|Les parties s'efforcent de rechercher une solution amiable avant tout recours judiciaire. À défaut d'accord dans un délai de trente (30) jours à compter de la notification du différend, le litige est soumis à la juridiction compétente de ${placeOfSigning}. Le présent contrat est établi en deux (2) exemplaires originaux, un pour chaque partie.|">Droit applicable</p>
+</div>
+
+<!-- Clauses libres ajoutees a la generation -->
+<div class="article" th:if="${clauses != null and !clauses.isEmpty()}">
+  <div class="article-heading">Article 8 &middot; Clauses particulières</div>
+  <p th:each="clause : ${clauses}" th:text="${clause}">Clause</p>
+</div>
+
+<div class="ct-closing" th:text="|Fait à ${placeOfSigning}, le ${signingDate}.|">Fait à …, le …</div>
+
+<table class="sig-table">
+  <tr>
+    <td class="sig-cell">
+      <div class="sig-inner">
+        <div class="sig-role">Pour le Domiciliataire</div>
+        <div class="sig-name" th:text="${variables['operatorName']}">ELLE A OSE</div>
+        <div class="sig-qual" th:if="${variables['operatorSignatureRole'] != null}"
+             th:text="${variables['operatorSignatureRole']}">Qualité</div>
+        <div class="sig-stamp" th:if="${variables['operatorSignatureName'] != null}">
+          <span th:text="${variables['operatorSignatureName']}">Nom</span>
+          <span th:if="${variables['operatorSignedAt'] != null}"
+                th:text="|Signé électroniquement le ${variables['operatorSignedAt']}|">Signé</span>
+        </div>
+        <div class="sig-mention" th:unless="${variables['operatorSignatureName'] != null}">Signature et cachet</div>
+      </div>
+    </td>
+    <td class="sig-cell">
+      <div class="sig-inner">
+        <div class="sig-role">Pour le Domicilié</div>
+        <div class="sig-name" th:text="${variables['signatoryName'] != null ? variables['signatoryName'] : ownerName}">Nom</div>
+        <div class="sig-qual" th:if="${variables['signatoryRole'] != null}"
+             th:text="${variables['signatoryRole']}">Qualité</div>
+        <div class="sig-stamp" th:if="${variables['beneficiarySignatureName'] != null}">
+          <span th:text="${variables['beneficiarySignatureName']}">Nom</span>
+          <span th:if="${variables['beneficiarySignedAt'] != null}"
+                th:text="|Signé électroniquement le ${variables['beneficiarySignedAt']}|">Signé</span>
+        </div>
+        <div class="sig-mention" th:unless="${variables['beneficiarySignatureName'] != null}">
+          Signature, précédée de la mention manuscrite « Lu et approuvé »</div>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<div class="legal-notice">
+  La domiciliation ne vaut ni bail, ni mise à disposition permanente de locaux. Elle n'autorise pas
+  le Domicilié à recevoir du public à l'adresse domiciliée, sauf stipulation contraire du présent
+  contrat.
+</div>
+
+<div th:replace="~{fragments/contract-brand :: footer}"></div>
 
 </body>
 </html>

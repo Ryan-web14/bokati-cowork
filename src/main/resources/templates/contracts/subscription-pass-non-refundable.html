@@ -30,13 +30,7 @@ body {
 }
 
 /* ── LETTERHEAD ─────────────────────────────────── */
-.letterhead {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 0;
-  padding-bottom: 14pt;
-}
+/* .letterhead retire · remplace par .ct-letterhead, en tableau */
 .lh-left { flex: 1; }
 .lh-logo-name {
   font-size: 15pt;
@@ -98,10 +92,7 @@ body {
   margin-top: 5pt;
 }
 .title-ornament {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10pt;
+  text-align: center;
   margin: 10pt auto 0;
   width: 60%;
 }
@@ -271,9 +262,6 @@ body {
   margin: 8pt 0 6pt 0;
   padding: 0;
   list-style: none;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3pt 20pt;
   font-size: 10pt;
   color: #222;
 }
@@ -388,12 +376,10 @@ body {
 }
 
 /* ── GRILLE PÉRIODE / CONDITIONS ────────────────── */
-.period-grid {
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr;
-  gap: 0 22pt;
-  margin: 8pt 0 10pt;
-}
+/* display:table est compris par le moteur PDF, contrairement a grid. */
+.period-grid { display: table; width: 100%; margin: 8pt 0 10pt; }
+.period-grid > div { display: table-cell; vertical-align: top; padding-right: 16pt; }
+.period-grid > div.period-divider { width: 1px; padding: 0; }
 .period-divider {
   background: #ddd;
   width: 1px;
@@ -407,11 +393,8 @@ body {
   padding-bottom: 5pt;
   border-bottom: 0.5pt solid #e8e8e8;
 }
-.pgitem {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 9pt;
-}
+.pgitem { margin-bottom: 9pt; }
+.pgitem .pglbl, .pgitem .pgval { display: block; }
 .pglbl {
   font-size: 7.5pt;
   text-transform: uppercase;
@@ -442,36 +425,15 @@ body {
   .nr-banner, .legal-notice { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
+<th:block th:replace="~{fragments/contract-brand :: styles}"></th:block>
 </head>
 <body>
 
 <!-- ─────────────────────────────────────────────────
      EN-TÊTE LETTERHEAD
      ───────────────────────────────────────────────── -->
-<div class="letterhead">
-  <div class="lh-left">
-    <div class="lh-logo-name"
-         th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'Elle a Osé'}">
-      Elle a Osé
-    </div>
-    <div class="lh-tagline">Espace de coworking &amp; services aux entreprises</div>
-    <div class="lh-rccm">
-      RCCM&#160;:&#160;<span
-        th:text="${variables != null and variables['operatorRccm'] != null ? variables['operatorRccm'] : 'CG-PNR-01-2017-00472'}">
-        CG-PNR-01-2017-00472
-      </span>
-    </div>
-  </div>
-  <div class="lh-right">
-    <div th:text="${variables != null and variables['operatorAddress'] != null ? variables['operatorAddress'] : '84 bd du Général Charles de Gaulle'}">
-      84 bd du Général Charles de Gaulle
-    </div>
-    <div>Pointe-Noire, République du Congo</div>
-    <div th:if="${business != null and business.email != null}" th:text="${business.email}"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ec8f839b839e879f9c8d8f89ac898080898d839f89c28f8381">[email&#160;protected]</a></div>
-    <div th:if="${business != null and business.phone != null}" th:text="${business.phone}">05 204 2552</div>
-  </div>
-</div>
-<hr class="lh-rule"/>
+<table th:replace="~{fragments/contract-brand :: letterhead}"></table>
+<div class="ct-rule"></div>
 
 <!-- ─────────────────────────────────────────────────
      TITRE DU DOCUMENT
@@ -488,7 +450,7 @@ body {
      RÉFÉRENCE
      ───────────────────────────────────────────────── -->
 <div class="ref-line">
-  Généré le <strong th:text="${generatedAt}">2026-01-01</strong>
+  Établi le <strong th:text="${signingDate}">3 septembre 2026</strong>
   &#160;·&#160;
   Réf.&#160;: <strong th:text="${request.templateCode}">subscription-pass-non-refundable</strong>
 </div>
@@ -573,17 +535,17 @@ body {
       <!-- colonne gauche : PÉRIODE -->
       <div>
         <div class="period-col-title">Période</div>
-        <div class="pgitem">
+        <div class="pgitem" th:if="${variables['effectiveDate'] != null}">
           <span class="pglbl">Date d'effet</span>
-          <span class="pgval" th:text="${request.effectiveDate != null ? request.effectiveDate : 'À préciser'}">À préciser</span>
+          <span class="pgval" th:text="${variables['effectiveDate']}">Date</span>
         </div>
-        <div class="pgitem">
+        <div class="pgitem" th:if="${variables['startDate'] != null}">
           <span class="pglbl">Date de début</span>
-          <span class="pgval" th:text="${request.startDate != null ? request.startDate : 'À préciser'}">À préciser</span>
+          <span class="pgval" th:text="${variables['startDate']}">Date</span>
         </div>
         <div class="pgitem">
           <span class="pglbl">Date de fin / expiration</span>
-          <span class="pgval" th:text="${request.endDate != null ? request.endDate : 'À préciser'}">À préciser</span>
+          <span class="pgval" th:text="${variables['endDate']}">Date</span>
         </div>
       </div>
       <!-- séparateur -->
@@ -591,13 +553,13 @@ body {
       <!-- colonne droite : CONDITIONS -->
       <div>
         <div class="period-col-title">Conditions d'accès</div>
-        <div class="pgitem">
+        <div class="pgitem" th:if="${variables['workspaceType'] != null}">
           <span class="pglbl">Type d'espace</span>
-          <span class="pgval" th:text="${variables != null and variables['workspaceType'] != null ? variables['workspaceType'] : 'À préciser'}">À préciser</span>
+          <span class="pgval" th:text="${variables['workspaceType']}">Valeur</span>
         </div>
-        <div class="pgitem">
+        <div class="pgitem" th:if="${variables['passType'] != null}">
           <span class="pglbl">Type de pass / souscription</span>
-          <span class="pgval" th:text="${variables != null and variables['passType'] != null ? variables['passType'] : 'À préciser'}">À préciser</span>
+          <span class="pgval" th:text="${variables['passType']}">Valeur</span>
         </div>
         <div class="pgitem">
           <span class="pglbl">Horaires d'accès</span>
@@ -787,10 +749,7 @@ body {
 <!-- ─────────────────────────────────────────────────
      CLÔTURE
      ───────────────────────────────────────────────── -->
-<div class="closing"
-     th:text="${'Fait à Pointe-Noire, le ' + (variables != null and variables['clientSignedAt'] != null ? variables['clientSignedAt'] : generatedAt)}">
-  Fait à Pointe-Noire, le ____________
-</div>
+<div th:replace="~{fragments/contract-brand :: closing}"></div>
 
 <!-- ─────────────────────────────────────────────────
      SIGNATURES
@@ -824,8 +783,7 @@ body {
              th:text="${'Date : ' + variables['operatorSignedAt']}">Date</div>
         <div class="sig-date-line"
              th:unless="${variables != null and variables['operatorSignedAt'] != null}">
-          Date&#160;: _______ / _______ / ___________
-        </div>
+</div>
         <div class="sig-mention">Signature et cachet</div>
       </td>
 
@@ -847,7 +805,7 @@ body {
              th:text="${'Date : ' + variables['clientSignedAt']}">Date</div>
         <div class="sig-date-line"
              th:unless="${variables != null and variables['clientSignedAt'] != null}"
-             th:text="${'Date : ' + generatedAt}">Date</div>
+             th:text="${'Date : ' + signingDate}">Date</div>
         <div class="sig-mention">Signature électronique · Lu et approuvé, offre non remboursable</div>
       </td>
     </tr>
@@ -857,14 +815,7 @@ body {
 <!-- ─────────────────────────────────────────────────
      PIED DE PAGE
      ───────────────────────────────────────────────── -->
-<div class="doc-footer">
-  <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSÉ'}">ELLE A OSÉ</span>
-  &#160;·&#160; RCCM&#160;:
-  <span th:text="${variables != null and variables['operatorRccm'] != null ? variables['operatorRccm'] : 'CG-PNR-01-2017-00472'}">CG-PNR-01-2017-00472</span>
-  &#160;·&#160; Souscription / Pass non remboursable &#160;·&#160;
-  Généré le <span th:text="${generatedAt}">2026-01-01</span>
-  &#160;·&#160; Document confidentiel
-</div>
+<div th:replace="~{fragments/contract-brand :: footer}"></div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
 </html>
