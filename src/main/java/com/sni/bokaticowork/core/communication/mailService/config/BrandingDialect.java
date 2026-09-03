@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * Expose {@code #branding} a tous les gabarits.
  *
- * <p>Une reference de bean — {@code ${@emailBranding.logoUrl()}} — ne fonctionne pas ici : les
+ * <p>Une reference de bean · {@code ${@emailBranding.logoUrl()}} · ne fonctionne pas ici : les
  * services d'envoi construisent un {@code org.thymeleaf.context.Context} nu, sans resolveur de
  * beans, et le rendu echoue avec
  * {@code EL1057E: No bean resolver registered in the context}. Constate a l'execution.

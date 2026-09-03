@@ -15,8 +15,8 @@
       <div><dt>Réservation</dt><dd class="mono" th:text="${bookingNumber}">BKG</dd></div>
       <div><dt>Espace</dt><dd th:text="${resourceName}">Espace</dd></div>
       <div><dt>Au nom de</dt><dd th:text="${contactName}">Nom</dd></div>
-      <div><dt>Début</dt><dd th:text="${#temporals.format(startedAt, 'dd/MM/yyyy HH:mm')}">—</dd></div>
-      <div><dt>Fin</dt><dd th:text="${#temporals.format(endedAt, 'dd/MM/yyyy HH:mm')}">—</dd></div>
+      <div><dt>Début</dt><dd th:text="${#temporals.format(startedAt, 'dd/MM/yyyy HH:mm')}"> · </dd></div>
+      <div><dt>Fin</dt><dd th:text="${#temporals.format(endedAt, 'dd/MM/yyyy HH:mm')}"> · </dd></div>
       <div>
         <dt>Statut</dt>
         <dd th:if="${status == 'IN_PROGRESS'}">En cours</dd>

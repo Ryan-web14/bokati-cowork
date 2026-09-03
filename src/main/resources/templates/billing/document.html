@@ -382,7 +382,7 @@
                              th:text="${'-' + fmt.percent(line.discountRate())}">-10 %</div>
                     </th:block>
                     <span class="muted"
-                          th:unless="${line.discountAmount() != null and line.discountAmount().signum() > 0}">—</span>
+                          th:unless="${line.discountAmount() != null and line.discountAmount().signum() > 0}"> · </span>
                 </td>
                 <!-- Brut barre au-dessus du net des qu'une remise s'applique · la deduction se
                      lit sans calcul, et le montant facture reste celui mis en avant. -->

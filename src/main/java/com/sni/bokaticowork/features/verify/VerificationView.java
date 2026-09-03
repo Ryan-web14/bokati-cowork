@@ -3,7 +3,7 @@ package com.sni.bokaticowork.features.verify;
 /**
  * Ce qu'une page de vérification publique a le droit de montrer.
  *
- * <p>La route est ouverte sans jeton et sa clé — le numéro de document — est <b>énumérable</b> :
+ * <p>La route est ouverte sans jeton et sa clé · le numéro de document · est <b>énumérable</b> :
  * {@code INV-MEM-20260830-00000009} désigne sans ambiguïté ses voisins. Tout champ exposé ici
  * l'est donc à quiconque sait compter, pour l'ensemble des clients.
  *

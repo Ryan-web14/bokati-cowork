@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Un ecart de nom sur ce champ n'echoue pas : la propriete inconnue est ignoree, la ligne
  * n'est rattachee a aucun article, et le plancher de prix, le taux de remise maximal, la
- * categorie et l'unite cessent tous de s'appliquer — sans le moindre message. C'est precisement
+ * categorie et l'unite cessent tous de s'appliquer · sans le moindre message. C'est precisement
  * ce qui s'est produit en production, ou une remise de 40 % passait sans declencher le moindre
  * garde-fou.
  *

@@ -22,7 +22,7 @@ public class BillingPaymentReminderWorker {
     /**
      * An invoice stays OVERDUE until it is paid, so the candidate query matches it on every run.
      * These two bounds turn that into a dunning sequence instead of a daily re-send of the
-     * document — attached PDF and all — for as long as the balance is outstanding.
+     * document · attached PDF and all · for as long as the balance is outstanding.
      */
     @Value("${bokati.billing.workers.payment-reminder-cooldown-days:7}")
     private int cooldownDays;

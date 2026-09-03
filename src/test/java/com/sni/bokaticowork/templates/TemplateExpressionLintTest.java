@@ -22,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Un gabarit fautif ne casse donc pas la compilation, ni les tests, ni le demarrage : il casse
  * l'envoi, en production, sur le courriel concerne.
  *
- * <p>Ce controle ne prouve pas qu'un gabarit s'affiche correctement — il n'y a pas de rendu ici.
+ * <p>Ce controle ne prouve pas qu'un gabarit s'affiche correctement · il n'y a pas de rendu ici.
  * Il attrape la faute qui a failli passer : une apostrophe echappee par une contre-oblique dans un
  * litteral d'expression. SpEL ne connait pas {@code \'} ; une apostrophe s'y ecrit {@code ''}. La
  * formulation la plus sure reste d'eviter l'apostrophe droite dans ces textes.

@@ -80,7 +80,7 @@ public class BillingCalculationService {
         // C'est ce qu'attend celui qui l'accorde : « je fais 10 000 de remise » veut dire que le
         // client paie 10 000 de moins, pas 11 890. Deduite du HT, une remise de 10 000 emportait
         // aussi 1 800 de TVA et 90 de centimes : le total baissait de 11 890 sans que personne ne
-        // l'ait demande. Sur un pourcentage l'ecart ne se voyait pas — le calcul est lineaire —
+        // l'ait demande. Sur un pourcentage l'ecart ne se voyait pas · le calcul est lineaire · 
         // ce qui rendait le defaut invisible jusqu'a la premiere remise en valeur.
         BigDecimal grossTotal = money(taxableNet.add(nonTaxableNet).add(vat).add(additionalCent));
         DocumentDiscounts applied = applyDocumentDiscounts(grossTotal, discounts);
@@ -248,7 +248,7 @@ public class BillingCalculationService {
      *
      * <p>Les pourcentages sont <b>additifs</b> : chacun porte sur la meme base, jamais sur le reste
      * apres le precedent. 10 % puis 5 % retirent 15 %, et l'ordre des remises n'a aucune
-     * incidence — une remise en cascade rendrait l'ordre significatif sans que rien a l'ecran ne
+     * incidence · une remise en cascade rendrait l'ordre significatif sans que rien a l'ecran ne
      * dise laquelle s'applique en premier.
      *
      * <p>Au-dela de la base, refus. Le montant etait auparavant ramene en silence a la base :

@@ -18,17 +18,17 @@ import java.util.Locale;
  * <p>Two policies, picked from the data the caller already supplies:
  *
  * <ul>
- *   <li><b>Business</b> — the caller passes a related type <i>and</i> a related code
+ *   <li><b>Business</b> · the caller passes a related type <i>and</i> a related code
  *       (invoice, contract, KYC case…). Those are transactional mails tied to one record,
  *       so the same subject for the same record and recipient ships once per day.</li>
- *   <li><b>Generic</b> — no business reference. Keyed on recipient and subject alone, so the
+ *   <li><b>Generic</b> · no business reference. Keyed on recipient and subject alone, so the
  *       window stays short: it only has to absorb a worker re-firing, not suppress a genuine
  *       second mail hours later.</li>
  * </ul>
  *
  * <p>The key embeds a time bucket so it can be enforced by a unique index. Bucket boundaries
  * would otherwise let a duplicate slip through when two attempts straddle them, so lookups
- * check the previous bucket as well — that turns the discrete bucket into a true sliding window
+ * check the previous bucket as well · that turns the discrete bucket into a true sliding window
  * while keeping the race protection a unique index gives.
  */
 @Slf4j

@@ -37,8 +37,8 @@ import java.util.List;
  * Appose une signature PAdES sur un PDF.
  *
  * <p>C'est le seul mecanisme qui fait qu'Adobe Reader, Foxit ou un navigateur affichent d'eux-memes
- * « ce document a ete modifie depuis sa signature ». Tout le reste — gel, empreinte, page de
- * verification — exige une demarche du destinataire ; celui-ci non.
+ * « ce document a ete modifie depuis sa signature ». Tout le reste · gel, empreinte, page de
+ * verification · exige une demarche du destinataire ; celui-ci non.
  *
  * <p>La signature est apposee <b>avant</b> le gel : ce sont les octets signes qui sont stockes et
  * dont l'empreinte est conservee. Un fichier telecharge verifie donc dans le lecteur PDF <i>et</i>

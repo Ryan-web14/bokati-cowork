@@ -145,8 +145,8 @@ public class BillingDocumentWriter {
     /**
      * Enregistre les remises avec le montant <b>calcule</b>, sans le recalculer.
      *
-     * <p>Il l'etait auparavant ici meme, sur {@code calculation.totalAmount()} — le TTC apres
-     * remise — alors que le calcul travaillait sur le net HT. Une remise de 10 % sur 100 000 HT
+     * <p>Il l'etait auparavant ici meme, sur {@code calculation.totalAmount()} · le TTC apres
+     * remise · alors que le calcul travaillait sur le net HT. Une remise de 10 % sur 100 000 HT
      * s'enregistrait a 10 701 pour 10 000 reellement deduits : le detail contredisait le total,
      * et personne ne pouvait dire lequel des deux faisait foi.
      */
@@ -174,7 +174,7 @@ public class BillingDocumentWriter {
     /**
      * Taux effectivement applique, tire des lignes.
      *
-     * <p>Il etait ecrit {@code BigDecimal.ZERO} en dur — invisible tant qu'aucun document ne
+     * <p>Il etait ecrit {@code BigDecimal.ZERO} en dur · invisible tant qu'aucun document ne
      * l'affichait. La facture annoncait « TVA 0 % » sur une TVA de 16 486.
      *
      * <p>Quand toutes les lignes taxees portent le meme taux, c'est celui-la. Sinon le taux

@@ -221,7 +221,7 @@ public class MemberController {
      * contrats et mouvements restent en base et restent opposables.
      *
      * <p>Avec {@code purge=true}, le membre et toutes ses donnees sont supprimes definitivement
-     * — compte utilisateur, factures, portefeuille, contrats, abonnements, reservations — et les
+     * - compte utilisateur, factures, portefeuille, contrats, abonnements, reservations · et les
      * montants correspondants disparaissent des agregats comptables. C'est irreversible et sans
      * sauvegarde : reserve au retrait de jeux de test restes en production.
      *

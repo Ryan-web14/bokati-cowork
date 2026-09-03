@@ -22,7 +22,7 @@ public interface SubscriptionTimelineEventRepository extends JpaRepository<Subsc
      *
      * <p>Les bornes temporelles sont castees jusque dans leur test de nullite. Un parametre nu
      * compare a NULL n'offre aucun contexte a PostgreSQL, qui echoue des la preparation de la
-     * requete — avant meme qu'une valeur soit liee, donc que la borne soit fournie ou non. Les
+     * requete · avant meme qu'une valeur soit liee, donc que la borne soit fournie ou non. Les
      * filtres textuels y echappent uniquement parce que le pilote declare leur type ; c'est une
      * chance, pas une garantie.
      */

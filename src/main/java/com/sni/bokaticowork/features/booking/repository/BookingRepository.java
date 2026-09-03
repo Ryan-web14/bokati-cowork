@@ -243,8 +243,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
 
     /**
      * <p>CONFIRMED est admis a cote de IN_PROGRESS : une reservation pointee d'avance reste
-     * CONFIRMED jusqu'a son heure, et si le balayage n'a pas tourne d'ici la fin — application
-     * arretee sur la plage, par exemple — elle ne correspondrait sinon ni a cette requete ni a
+     * CONFIRMED jusqu'a son heure, et si le balayage n'a pas tourne d'ici la fin · application
+     * arretee sur la plage, par exemple · elle ne correspondrait sinon ni a cette requete ni a
      * celle des absences, et resterait indefiniment CONFIRMED. Les deux requetes se partagent
      * ainsi exactement les creneaux depasses, selon qu'un pointage a eu lieu ou non.
      */

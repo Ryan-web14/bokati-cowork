@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Creation d'une reservation cote administration.
  *
- * <p>{@code bookingUnit} impose l'unite de facturation la ou la duree en designerait une autre —
+ * <p>{@code bookingUnit} impose l'unite de facturation la ou la duree en designerait une autre · 
  * facturer six heures en demi-journee, par exemple. Le prix n'est pas saisi : il reste lu dans la
  * grille tarifaire de la ressource pour cette unite, si bien qu'un montant facture reste rattache
  * a une regle. Vide, l'unite se deduit de la duree.

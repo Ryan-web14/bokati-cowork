@@ -4,7 +4,7 @@
   Recu de paiement · reecrit sur le systeme de la facture, mais pas comme une facture.
 
   Sa raison d'etre est de prouver qu'une somme a ete recue. Le montant recu passe donc en tete,
-  avant tout le reste — sur une facture, cette place revient au reste a payer. Le corps du document
+  avant tout le reste · sur une facture, cette place revient au reste a payer. Le corps du document
   n'est pas un detail de prestations mais l'imputation : ce que la somme a solde, document par
   document, et ce qui reste du sur chacun.
 
@@ -167,7 +167,7 @@
             <td>
                 <div class="pblock emit">
                     <div class="plabel">Reçu de</div>
-                    <div class="pname" th:text="${receipt.customerName() != null ? receipt.customerName() : '—'}">Client</div>
+                    <div class="pname" th:text="${receipt.customerName() != null ? receipt.customerName() : ' · '}">Client</div>
                     <div class="pline">
                         <span th:if="${receipt.customerCode() != null}">Réf. client <b th:text="${receipt.customerCode()}">CLI</b><br></span>
                         <span th:if="${receipt.customerEmail() != null}" th:text="${receipt.customerEmail()}"></span>
@@ -199,10 +199,10 @@
 
     <table class="meta-bar">
         <tr>
-            <td><div class="mk">Émis le</div><div class="mv" th:text="${fmt.timestamp(receipt.receiptIssuedAt())}">—</div></td>
-            <td th:if="${receipt.paidAt() != null}"><div class="mk">Reçu le</div><div class="mv" th:text="${fmt.timestamp(receipt.paidAt())}">—</div></td>
-            <td th:if="${receipt.receivedBy() != null}"><div class="mk">Encaissé par</div><div class="mv" th:text="${receipt.receivedBy()}">—</div></td>
-            <td th:if="${receipt.purpose() != null}"><div class="mk">Objet</div><div class="mv" th:text="${receipt.purpose()}">—</div></td>
+            <td><div class="mk">Émis le</div><div class="mv" th:text="${fmt.timestamp(receipt.receiptIssuedAt())}"> · </div></td>
+            <td th:if="${receipt.paidAt() != null}"><div class="mk">Reçu le</div><div class="mv" th:text="${fmt.timestamp(receipt.paidAt())}"> · </div></td>
+            <td th:if="${receipt.receivedBy() != null}"><div class="mk">Encaissé par</div><div class="mv" th:text="${receipt.receivedBy()}"> · </div></td>
+            <td th:if="${receipt.purpose() != null}"><div class="mk">Objet</div><div class="mv" th:text="${receipt.purpose()}"> · </div></td>
         </tr>
     </table>
 
@@ -275,7 +275,7 @@
     <div class="legalstrip">
         <b>ELLE A OSE</b> · 84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire · RCCM CG-PNR-01-2017-A11-00472<br>
         <span th:text="|Reçu n° ${receipt.receiptNumber()} émis le ${fmt.timestamp(receipt.receiptIssuedAt())}|">Référence</span>.
-        Document scellé électroniquement — toute altération invalide la signature.
+        Document scellé électroniquement · toute altération invalide la signature.
     </div>
 </div>
 </body>

@@ -88,8 +88,8 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
      *
      * <p>Le gel se declenche au premier acces plutot qu'a la validation : cela evite d'injecter
      * ce service dans {@code BillingDocumentServiceImpl}, qui produirait un cycle puisque ce
-     * service depend deja de lui. Le moment est de surcroit le bon — on fige l'artefact
-     * exactement quand il commence a exister pour quelqu'un — et les documents valides avant
+     * service depend deja de lui. Le moment est de surcroit le bon · on fige l'artefact
+     * exactement quand il commence a exister pour quelqu'un · et les documents valides avant
      * cette version sont couverts sans reprise.
      */
     @Override

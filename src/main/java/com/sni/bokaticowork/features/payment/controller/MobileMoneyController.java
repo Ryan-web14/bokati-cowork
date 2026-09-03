@@ -126,7 +126,7 @@ public class MobileMoneyController {
             if (signatureValid) {
                 callbackProcessor.process(payload);
             } else if (StringUtils.hasText(payload.depositId())) {
-                // The signature could not be verified — e.g. in production the provider does not
+                // The signature could not be verified · e.g. in production the provider does not
                 // send the HMAC header this verifier expects. Rather than silently dropping a real
                 // payment notification, confirm the deposit's authoritative status through PawaPay's
                 // (API-key authenticated) status endpoint before touching any state. A spoofed

@@ -40,8 +40,8 @@ public class ResourceBulkExecutor {
     /**
      * Traite chaque code dans sa propre transaction et rend un compte rendu.
      *
-     * @param operation renvoie le detail a porter au compte rendu — un nombre de creneaux, par
-     *                  exemple — ou {@code null} s'il n'y a rien a preciser
+     * @param operation renvoie le detail a porter au compte rendu · un nombre de creneaux, par
+     *                  exemple · ou {@code null} s'il n'y a rien a preciser
      */
     public BulkResourceOperationResponse run(List<String> resourceCodes,
                                              int maxBatchSize,

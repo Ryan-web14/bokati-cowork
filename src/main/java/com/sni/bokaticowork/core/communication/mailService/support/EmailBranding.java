@@ -13,7 +13,7 @@ import org.thymeleaf.context.Context;
  * publique, que le client de messagerie charge sans jeton.
  *
  * <p>L'adresse etait construite dans deux services distincts, et seize gabarits attendaient une
- * variable {@code logo} que personne ne fournissait — ils retombaient tous sur le nom en texte.
+ * variable {@code logo} que personne ne fournissait · ils retombaient tous sur le nom en texte.
  * Ici, une seule source, posee sur chaque contexte.
  */
 @Component

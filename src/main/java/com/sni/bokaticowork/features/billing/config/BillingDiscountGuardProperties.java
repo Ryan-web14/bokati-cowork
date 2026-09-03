@@ -14,7 +14,7 @@ import java.math.BigDecimal;
  *
  * <ul>
  *   <li><b>Le repli par ligne</b> ({@code defaultMinNetRate}, {@code minLineNetAmount}) borne ce
- *       qu'une ligne peut consentir, meme lorsque le catalogue reste muet — ce qui est le cas de
+ *       qu'une ligne peut consentir, meme lorsque le catalogue reste muet · ce qui est le cas de
  *       toute ligne libre, saisie sans article. C'est le garde-fou de dernier recours : par
  *       defaut, une ligne conserve au moins la moitie de son montant de base.</li>
  *   <li><b>Le seuil global</b> ({@code maxDocumentDiscountRate}, {@code maxDocumentDiscountAmount})

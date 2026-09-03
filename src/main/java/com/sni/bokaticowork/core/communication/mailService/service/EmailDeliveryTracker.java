@@ -44,7 +44,7 @@ public class EmailDeliveryTracker {
     /**
      * Inserts the delivery row. A non-null {@code dedupKey} is protected by a unique index, so a
      * concurrent insert of the same logical email throws {@link org.springframework.dao.DataIntegrityViolationException}
-     * rather than producing a second send — callers treat that as "someone else already queued it".
+     * rather than producing a second send · callers treat that as "someone else already queued it".
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public EmailDeliveryResponse queue(String provider,

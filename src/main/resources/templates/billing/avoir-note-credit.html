@@ -7,7 +7,7 @@
   pied de page : ce sont les deux informations sans lesquelles la piece est inexploitable au
   journal. Ils passent donc en tete, dans le seul encadre du haut.
 
-  Le gabarit precedent n'avait recu qu'un remplacement de couleurs — douze teintes ramenees a une —
+  Le gabarit precedent n'avait recu qu'un remplacement de couleurs · douze teintes ramenees a une · 
   sans que sa structure bouge : le motif restait une ligne parmi d'autres et la facture d'origine
   n'apparaissait qu'a mi-page.
 -->
@@ -201,10 +201,10 @@
 
     <table class="meta-bar">
         <tr>
-            <td><div class="mk">Date d'émission</div><div class="mv" th:text="${fmt.date(document.issueDate())}">—</div></td>
-            <td th:if="${document.originalDocumentNumber() != null}"><div class="mk">Facture corrigée</div><div class="mv mono" th:text="${document.originalDocumentNumber()}">—</div></td>
+            <td><div class="mk">Date d'émission</div><div class="mv" th:text="${fmt.date(document.issueDate())}"> · </div></td>
+            <td th:if="${document.originalDocumentNumber() != null}"><div class="mk">Facture corrigée</div><div class="mv mono" th:text="${document.originalDocumentNumber()}"> · </div></td>
             <td><div class="mk">Devise</div><div class="mv mono" th:text="${document.currency()}">XAF</div></td>
-            <td th:if="${document.salespersonCode() != null}"><div class="mk">Commercial</div><div class="mv" th:text="${document.salespersonCode()}">—</div></td>
+            <td th:if="${document.salespersonCode() != null}"><div class="mk">Commercial</div><div class="mv" th:text="${document.salespersonCode()}"> · </div></td>
         </tr>
     </table>
 
@@ -295,7 +295,7 @@
         <span th:text="|Avoir n° ${document.documentNumber()} émis le ${fmt.date(document.issueDate())}|">Référence</span><span
               th:if="${document.fiscalNumber() != null}" th:text="| sous le numéro de certification ${document.fiscalNumber()}|"></span><span
               th:if="${document.originalDocumentNumber() != null}" th:text="|, en correction de la facture ${document.originalDocumentNumber()}|"></span>.
-        Document scellé électroniquement — toute altération invalide la signature.
+        Document scellé électroniquement · toute altération invalide la signature.
     </div>
 </div>
 </body>

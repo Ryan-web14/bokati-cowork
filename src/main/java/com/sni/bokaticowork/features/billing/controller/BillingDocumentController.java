@@ -77,7 +77,7 @@ public class BillingDocumentController {
      * n'est consomme. Accepte le meme corps que la creation, ce qui permet a l'interface de
      * simuler a chaque saisie puis d'envoyer la meme charge utile pour de bon.
      *
-     * <p>La reponse detaille chaque ligne — brut, remise, taux de remise reellement obtenu, net —
+     * <p>La reponse detaille chaque ligne · brut, remise, taux de remise reellement obtenu, net · 
      * de sorte qu'il n'y ait plus a chercher un montant a la calculatrice ni a creer un brouillon
      * pour connaitre un total.
      */
@@ -152,7 +152,7 @@ public class BillingDocumentController {
     }
 
     /**
-     * Émet le document. C'est ici que les limites de remise bloquent — au brouillon elles se
+     * Émet le document. C'est ici que les limites de remise bloquent · au brouillon elles se
      * contentent d'avertir, de sorte qu'une offre puisse se construire librement.
      *
      * <p>{@code discountOverrideReason} lève le blocage, à condition que l'appelant détienne
@@ -271,7 +271,7 @@ public class BillingDocumentController {
      * Reverse l'avoir au portefeuille du client plutôt que de l'imputer sur une facture.
      *
      * <p>À utiliser quand il n'y a plus rien à imputer : le client n'a pas de facture ouverte,
-     * mais la créance existe et doit lui rester acquise. L'opération est idempotente — un second
+     * mais la créance existe et doit lui rester acquise. L'opération est idempotente · un second
      * appel retrouve l'écriture d'origine au lieu de recréditer.
      */
     @PostMapping("/credit-notes/{creditNoteNumber}/refund-to-wallet")

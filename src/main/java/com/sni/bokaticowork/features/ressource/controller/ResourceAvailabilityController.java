@@ -51,7 +51,7 @@ public class ResourceAvailabilityController {
      * Ouvre la meme plage sur plusieurs ressources.
      *
      * <p>Rend un compte rendu par ressource plutot qu'un tout-ou-rien : sur vingt ressources il
-     * est normal que deux echouent — chevauchement, plafond d'un mois d'avance — et refuser
+     * est normal que deux echouent · chevauchement, plafond d'un mois d'avance · et refuser
      * l'ensemble obligerait a les retirer une par une puis a relancer.
      */
     @PostMapping("/bulk")

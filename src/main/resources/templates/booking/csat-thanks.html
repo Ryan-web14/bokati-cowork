@@ -11,7 +11,7 @@
   <p class="lede">Votre note nous aide à améliorer l'espace. Vous n'avez rien d'autre à faire.</p>
 
   <dl class="rows">
-    <div th:if="${score >= 1 and score <= 5}"><dt>Note donnée</dt><dd th:text="|${score} sur 5|">—</dd></div>
+    <div th:if="${score >= 1 and score <= 5}"><dt>Note donnée</dt><dd th:text="|${score} sur 5|"> · </dd></div>
     <div th:if="${bookingNumber != null}"><dt>Réservation</dt><dd class="mono" th:text="${bookingNumber}">BKG</dd></div>
   </dl>
 
