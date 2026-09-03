@@ -12,7 +12,7 @@
     .wrap-td { padding: 40px 20px; background-color: #e8e4f0; }
     .card { background-color: #0f0720; border-radius: 14px; overflow: hidden; max-width: 600px; width: 100%; }
     .header-td { background-color: #0a0418; padding: 24px 32px 20px; }
-    .stripe { height: 3px; background: linear-gradient(90deg, #c9a84c 0%, #a78bfa 55%, #4c1d95 100%); font-size: 0; line-height: 0; }
+    .stripe { height: 3px; background: #C9A84C; font-size: 0; line-height: 0; }
     .brand { font-size: 15px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     .brand-sub { font-size: 9px; color: rgba(255,255,255,.35); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
     .tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; padding: 5px 14px; border-radius: 100px; white-space: nowrap; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; }
@@ -53,13 +53,16 @@
 </style>
 </head>
 <body>
-<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Mise à jour sur votre dossier.'}">Mise à jour sur votre dossier.</div>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e8e4f0;">
 <tr><td class="wrap-td" align="center">
-<table class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
+<table role="presentation" class="card" cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;">
 
     <tr>
         <td class="header-td">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                     <td valign="middle">
                         <div class="brand">Elle A Osé</div>
@@ -103,7 +106,7 @@
 
             <!-- Lead card -->
             <div class="section-lbl">Lead</div>
-            <table class="lead-card" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <table role="presentation" class="lead-card" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                     <td class="lead-head-td"><span class="lead-number" th:text="${leadNumber}">LDN-000</span></td>
                     <td class="lead-stage-td" th:text="${stage}">NEW</td>
@@ -111,7 +114,7 @@
                 <tr>
                     <td class="lead-body-td" colspan="2">
                         <div class="lead-name" th:text="${fullName}">Nom du lead</div>
-                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
                                 <td th:if="${company}" style="padding:0 8px 8px 0; vertical-align:top; width:50%;">
                                     <span class="meta-lbl">Entreprise</span>
@@ -155,7 +158,7 @@
                 Une prise de contact rapide augmente significativement les chances de conversion.
             </div>
 
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr><td class="cta-wrap-td"><a href="#" class="cta-btn">Voir dans le CRM</a></td></tr>
             </table>
         </td>

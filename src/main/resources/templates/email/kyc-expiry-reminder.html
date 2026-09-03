@@ -12,7 +12,7 @@
     .em-header { background: #110828; padding: 22px 36px; }
     .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
     .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
-    .em-stripe { height: 2px; background: linear-gradient(90deg, #F59E0B 0%, #C9A84C 60%, #8B5CF6 100%); }
+    .em-stripe { height: 2px; background: #C9A84C; }
     .em-body { padding: 44px 40px 40px; }
     .hero { text-align: center; margin-bottom: 36px; }
     .hero-icon { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: rgba(245,158,11,.08); border: 2px solid #F59E0B; margin-bottom: 20px; }
@@ -47,6 +47,9 @@
   </style>
 </head>
 <body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Une pièce justificative arrive à expiration.'}">Une pièce justificative arrive à expiration.</div>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 <div class="wrap">
   <div class="card">
 
@@ -73,7 +76,7 @@
       </div>
 
       <div class="section-lbl">Document concerné</div>
-      <table class="dt">
+      <table role="presentation" class="dt">
         <tr>
           <td class="dt-key">Type de document</td>
           <td class="dt-val" th:text="${documentType}"></td>

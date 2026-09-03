@@ -64,7 +64,7 @@
     }
     .em-stripe {
       height: 2px;
-      background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%);
+      background: #C9A84C;
     }
     .bk-ref-val {
       font-family: "SF Mono", "Fira Code", Consolas, monospace;
@@ -282,6 +282,9 @@
   </style>
 </head>
 <body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre réservation est confirmée.'}">Votre réservation est confirmée.</div>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 <div class="wrap">
   <div class="card">
 
@@ -289,8 +292,8 @@
     <div class="em-header">
       <div class="em-header-inner">
         <div>
-          <div class="em-brand" th:if="${logo == null}">Elle A Osé</div>
-          <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Elle A Osé" style="height:36px; display:block;"/>
+          <div class="em-brand" th:if="${#branding.logoUrl() == null}">Elle A Osé</div>
+          <img th:if="${#branding.logoUrl() != null}" th:src="${#branding.logoUrl()}" alt="Elle A Osé" style="height:36px; display:block;"/>
           <div class="em-brand-sub">Espace de coworking</div>
         </div>
       </div>
@@ -308,7 +311,7 @@
 
       <!-- Récapitulatif -->
       <div class="bk-section-label">Récapitulatif</div>
-      <table class="bk-detail-table">
+      <table role="presentation" class="bk-detail-table">
         <tr>
           <td class="bk-key">Référence</td>
           <td><div class="bk-val bk-ref-val" th:text="${bookingRef}">EAO-2026-0847</div></td>
