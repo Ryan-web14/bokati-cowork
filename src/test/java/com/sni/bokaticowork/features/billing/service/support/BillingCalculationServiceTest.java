@@ -12,7 +12,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -107,5 +110,98 @@ class BillingCalculationServiceTest {
                 BigDecimal.ONE, new BigDecimal(unitPrice),
                 BigDecimal.ZERO, BigDecimal.ZERO, taxable, false,
                 null, null, null, null, null, null, null, null, null);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // La remise globale porte sur le TTC · c'est ce qu'attend celui qui l'accorde.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Test
+    void shouldReduceTheTotalByExactlyTheDiscountGranted() {
+        // Le defaut corrige : une remise de 100 retirait 118,90 au client, parce qu'elle etait
+        // deduite du HT et emportait donc aussi la TVA et les centimes. Personne n'avait demande
+        // cette baisse supplementaire.
+        var result = service.calculate(
+                List.of(line("Prestation", "1000", true)),
+                List.of(new CreateBillingDocumentDiscountRequest(
+                        "GESTE", "Geste commercial", BillingDiscountType.FIXED_AMOUNT, new BigDecimal("100"))));
+
+        var sansRemise = service.calculate(List.of(line("Prestation", "1000", true)), List.of());
+
+        assertThat(sansRemise.totalAmount()).isEqualByComparingTo("1189");
+        assertThat(result.totalAmount()).isEqualByComparingTo("1089");
+        assertThat(sansRemise.totalAmount().subtract(result.totalAmount()))
+                .as("le client paie exactement 100 de moins")
+                .isEqualByComparingTo("100");
+    }
+
+    @Test
+    void shouldKeepTheComponentsAddingUpToTheDiscountedTotal() {
+        // Une facture dont les composantes ne redonnent pas le total ne se ventile pas en
+        // comptabilite · l'ecart d'arrondi est reporte sur la base taxable.
+        var result = service.calculate(
+                List.of(line("Prestation", "1000", true), line("Debours", "500", false)),
+                List.of(new CreateBillingDocumentDiscountRequest(
+                        "GESTE", "Geste", BillingDiscountType.FIXED_AMOUNT, new BigDecimal("333"))));
+
+        BigDecimal somme = result.taxableAmount()
+                .add(result.totalAmount().subtract(result.taxableAmount()).subtract(result.taxAmount()))
+                .add(result.taxAmount());
+        assertThat(somme).isEqualByComparingTo(result.totalAmount());
+        assertThat(result.totalAmount()).isEqualByComparingTo("1356");
+    }
+
+    @Test
+    void shouldApplyEveryPercentageToTheSameBase() {
+        // Additif, non cumulatif : 10 % puis 5 % retirent 15 %, et l'ordre n'a aucune incidence.
+        var result = service.calculate(
+                List.of(line("Prestation", "1000", true)),
+                List.of(new CreateBillingDocumentDiscountRequest("A", "Remise A", BillingDiscountType.PERCENTAGE, new BigDecimal("10")),
+                        new CreateBillingDocumentDiscountRequest("B", "Remise B", BillingDiscountType.PERCENTAGE, new BigDecimal("5"))));
+
+        // 15 % de 1189 = 178.35
+        assertThat(result.totalAmount()).isEqualByComparingTo("1010.6500");
+        assertThat(result.discountAmounts()).hasSize(2);
+        assertThat(result.discountAmounts().get(0)).isEqualByComparingTo("118.9000");
+        assertThat(result.discountAmounts().get(1)).isEqualByComparingTo("59.4500");
+    }
+
+    @Test
+    void shouldRefuseADiscountLargerThanTheDocument() {
+        // Le montant etait ramene en silence a la base : 140 % devenaient 100 %, la facture
+        // ressortait a zero, et le garde-fou d'emission annoncait « 100 % » sans jamais voir la
+        // demande reelle.
+        assertThatThrownBy(() -> service.calculate(
+                List.of(line("Prestation", "1000", true)),
+                List.of(new CreateBillingDocumentDiscountRequest("A", "A", BillingDiscountType.PERCENTAGE, new BigDecimal("80")),
+                        new CreateBillingDocumentDiscountRequest("B", "B", BillingDiscountType.PERCENTAGE, new BigDecimal("60")))))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("dépassent le total")
+                .hasMessageContaining("100 %");
+    }
+
+    @Test
+    void shouldAcceptADiscountOfExactlyTheWholeDocument() {
+        // Cent pour cent reste permis · c'est cent un qui ne l'est pas.
+        var result = service.calculate(
+                List.of(line("Prestation", "1000", true)),
+                List.of(new CreateBillingDocumentDiscountRequest(
+                        "TOTAL", "Offert", BillingDiscountType.PERCENTAGE, new BigDecimal("100"))));
+
+        assertThat(result.totalAmount()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void shouldReportOneAmountPerDiscountSummingToTheTotalGranted() {
+        // Le detail etait recalcule a l'ecriture sur une autre base · 10 701 stockes pour 10 000
+        // deduits. Il vient desormais du calcul lui-meme.
+        var result = service.calculate(
+                List.of(line("Prestation", "1000", true)),
+                List.of(new CreateBillingDocumentDiscountRequest("A", "A", BillingDiscountType.PERCENTAGE, new BigDecimal("10")),
+                        new CreateBillingDocumentDiscountRequest("B", "B", BillingDiscountType.FIXED_AMOUNT, new BigDecimal("50"))));
+
+        BigDecimal somme = result.discountAmounts().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(somme).isEqualByComparingTo("168.9000");
+        assertThat(result.totalAmount()).isEqualByComparingTo("1020.1000");
     }
 }

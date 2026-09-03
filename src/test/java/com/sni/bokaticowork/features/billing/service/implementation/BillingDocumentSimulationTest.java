@@ -54,7 +54,8 @@ class BillingDocumentSimulationTest {
                 new BillingCalculationService.CalculatedDocument(
                         List.of(discounted, plain),
                         new BigDecimal("1500"),   // sous-total
-                        new BigDecimal("250"),    // remise totale · 100 de ligne + 150 de document
+                        new BigDecimal("250"),  // remise totale · 100 de ligne + 150 de document
+                        java.util.List.of(new BigDecimal("150")),
                         new BigDecimal("1250"),
                         new BigDecimal("225"),
                         new BigDecimal("11.25"),
@@ -79,7 +80,9 @@ class BillingDocumentSimulationTest {
         when(calculationService.calculate(any(), any())).thenReturn(
                 new BillingCalculationService.CalculatedDocument(
                         List.of(line("Salle de reunion", "1000", "150")),
-                        new BigDecimal("1000"), new BigDecimal("150"), new BigDecimal("850"),
+                        new BigDecimal("1000"), new BigDecimal("150"),
+                        java.util.List.of(new BigDecimal("150")),
+                        new BigDecimal("850"),
                         new BigDecimal("153"), new BigDecimal("7.65"), new BigDecimal("160.65"),
                         new BigDecimal("1010.65")));
 
@@ -97,8 +100,9 @@ class BillingDocumentSimulationTest {
         when(calculationService.calculate(any(), any())).thenReturn(
                 new BillingCalculationService.CalculatedDocument(
                         List.of(line("Geste commercial", "0", "0")),
+                        BigDecimal.ZERO, BigDecimal.ZERO, java.util.List.of(),
                         BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO,
-                        BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO));
+                        BigDecimal.ZERO, BigDecimal.ZERO));
 
         SimulateBillingDocumentResponse.SimulatedLine simulated = service.simulate(request()).lines().getFirst();
 
@@ -129,7 +133,8 @@ class BillingDocumentSimulationTest {
         when(calculationService.calculate(any(), any())).thenReturn(
                 new BillingCalculationService.CalculatedDocument(
                         List.of(line("Salle", "1000", "0")),
-                        new BigDecimal("1000"), BigDecimal.ZERO, new BigDecimal("1000"),
+                        new BigDecimal("1000"), BigDecimal.ZERO, java.util.List.of(),
+                        new BigDecimal("1000"),
                         new BigDecimal("180"), new BigDecimal("9"), new BigDecimal("189"),
                         new BigDecimal("1189")));
 
@@ -146,7 +151,8 @@ class BillingDocumentSimulationTest {
         when(calculationService.calculate(any(), any())).thenReturn(
                 new BillingCalculationService.CalculatedDocument(
                         List.of(line("Salle", "1000", "0")),
-                        new BigDecimal("1000"), BigDecimal.ZERO, new BigDecimal("1000"),
+                        new BigDecimal("1000"), BigDecimal.ZERO, java.util.List.of(),
+                        new BigDecimal("1000"),
                         new BigDecimal("180"), new BigDecimal("9"), new BigDecimal("189"),
                         new BigDecimal("1189")));
 
