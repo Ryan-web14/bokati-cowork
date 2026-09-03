@@ -1,101 +1,21 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Document introuvable · Bokati Cowork</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; background: #f3f0fa; color: #1a0a2e; font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
-
-        /* ── Topbar ── */
-        .topbar { background: #1a0a2e; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
-        .topbar-brand { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-        .topbar-sub { color: #9b8caa; font-size: 11px; margin-top: 3px; letter-spacing: 0.5px; }
-        .topbar-stripe { height: 3px; background: #c9a84c; border-right: 200px solid #8b5cf6; }
-
-        /* ── Content ── */
-        .content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
-
-        .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 12px rgba(26,10,46,.10); border: 1px solid #e8e0f0; max-width: 480px; width: 100%; overflow: hidden; }
-
-        .card-top { background: #1a0a2e; border-left: 4px solid #c9a84c; padding: 20px 24px; }
-        .card-icon { font-size: 36px; margin-bottom: 10px; }
-        .card-title { font-size: 20px; font-weight: 800; color: #fff; }
-        .card-sub { font-size: 12px; color: #9b8caa; margin-top: 4px; letter-spacing: 0.4px; }
-
-        .card-body { padding: 22px 24px; }
-        .card-message { font-size: 14px; color: #5c4f6e; line-height: 1.7; }
-
-        .ref-block { margin-top: 18px; background: #f3f0fa; border: 1px solid #e8e0f0; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
-        .ref-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #8b5cf6; font-weight: 700; margin-bottom: 4px; }
-        .ref-value { font-size: 14px; font-weight: 700; color: #1a0a2e; font-family: monospace; word-break: break-all; }
-        .ref-badge { background: #fee2e2; color: #991b1b; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
-
-        .tips { margin-top: 18px; border-top: 1px solid #f3f0fa; padding-top: 16px; }
-        .tips-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #8b5cf6; font-weight: 700; margin-bottom: 10px; }
-        .tip { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; font-size: 13px; color: #5c4f6e; line-height: 1.5; }
-        .tip-dot { width: 6px; height: 6px; background: #c9a84c; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
-
-        /* ── Footer ── */
-        .footer { text-align: center; font-size: 11px; color: #9b8caa; padding: 16px; line-height: 1.6; }
-        .footer strong { color: #5c4f6e; }
-    </style>
-</head>
+<head th:insert="~{fragments/page :: pagehead('Référence introuvable · Elle A Osé')}"></head>
 <body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
 
-<div class="topbar">
-    <div>
-        <div class="topbar-brand">Bokati Cowork</div>
-        <div class="topbar-sub">Vérification de document</div>
-    </div>
-</div>
-<div class="topbar-stripe"></div>
+  <p class="state ko">Introuvable</p>
+  <h1>Cette référence n'existe pas</h1>
+  <p class="lede">Aucun document ne porte cette référence. Vérifiez la saisie, ou reprenez le lien depuis le document lui-même.</p>
 
-<div class="content">
-    <div class="card">
-        <div class="card-top">
-            <div class="card-icon">⚠️</div>
-            <div class="card-title">Document introuvable</div>
-            <div class="card-sub">Aucun résultat pour cette référence</div>
-        </div>
-        <div class="card-body">
-            <div class="card-message">
-                Le <strong th:text="${type}">document</strong> demandé n'a pas été trouvé dans notre système.
-                Il est possible qu'il ait été supprimé, archivé, ou que la référence soit incorrecte.
-            </div>
+  <dl class="rows">
+    <div><dt>Type recherché</dt><dd th:text="${type}">Type</dd></div>
+    <div><dt>Référence</dt><dd class="mono" th:text="${ref}">REF</dd></div>
+  </dl>
 
-            <div class="ref-block">
-                <div>
-                    <div class="ref-label">Référence scannée</div>
-                    <div class="ref-value" th:text="${ref}">REF-000000</div>
-                </div>
-                <div class="ref-badge">INTROUVABLE</div>
-            </div>
-
-            <div class="tips">
-                <div class="tips-title">Que faire ?</div>
-                <div class="tip">
-                    <div class="tip-dot"></div>
-                    <span>Vérifiez que le QR code est intact et bien lisible.</span>
-                </div>
-                <div class="tip">
-                    <div class="tip-dot"></div>
-                    <span>Contactez l'émetteur du document pour obtenir un document valide.</span>
-                </div>
-                <div class="tip">
-                    <div class="tip-dot"></div>
-                    <span>Si vous êtes client Bokati, connectez-vous à votre espace pour accéder à vos documents.</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="footer">
-    <strong>Bokati Cowork</strong> · Vérification officielle de documents<br>
-    Si le problème persiste, contactez notre support.
-</div>
-
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
 </body>
 </html>

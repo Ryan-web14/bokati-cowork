@@ -1,106 +1,21 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Merci pour votre avis · Elle A Osé</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; background: #f3f0fa; color: #1a0a2e; font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
-
-        .topbar { background: #1a0a2e; padding: 14px 24px; }
-        .topbar-brand { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-        .topbar-sub { color: #9b8caa; font-size: 11px; margin-top: 3px; letter-spacing: 0.5px; }
-        .topbar-stripe { height: 3px; background: #c9a84c; border-right: 200px solid #8b5cf6; }
-
-        .content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 16px; }
-
-        .card { background: #fff; border-radius: 10px; box-shadow: 0 2px 16px rgba(26,10,46,.12); border: 1px solid #e8e0f0; max-width: 420px; width: 100%; overflow: hidden; text-align: center; }
-
-        .card-top { background: linear-gradient(135deg, #1a0a2e 0%, #2a1548 100%); border-left: 4px solid #c9a84c; padding: 32px 24px 24px; }
-        .icon-wrap { width: 64px; height: 64px; border-radius: 50%; background: rgba(201,168,76,.12); border: 2px solid rgba(201,168,76,.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-        .card-title { font-size: 22px; font-weight: 800; color: #fff; }
-        .card-sub { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 6px; }
-
-        .card-body { padding: 28px 24px 24px; }
-
-        /* Score display */
-        .score-display { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .score-number { font-size: 40px; font-weight: 900; color: #1a0a2e; font-family: monospace; line-height: 1; }
-        .score-bar { display: flex; gap: 4px; }
-        .score-pip { width: 10px; height: 32px; border-radius: 3px; background: #e8e0f0; }
-        .score-pip.active-1 { background: #f87171; }
-        .score-pip.active-2 { background: #fb923c; }
-        .score-pip.active-3 { background: #facc15; }
-        .score-pip.active-4 { background: #4ade80; }
-        .score-pip.active-5 { background: #22c55e; }
-
-        .message { font-size: 14px; color: #5c4f6e; line-height: 1.7; margin-bottom: 20px; }
-        .booking-ref { font-size: 11px; color: #9b8caa; font-family: monospace; letter-spacing: 1px; }
-
-        .footer { text-align: center; font-size: 11px; color: #9b8caa; padding: 16px; line-height: 1.6; }
-        .footer strong { color: #5c4f6e; }
-    </style>
-</head>
+<head th:insert="~{fragments/page :: pagehead('Merci · Elle A Osé')}"></head>
 <body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
 
-<div class="topbar">
-    <div>
-        <div class="topbar-brand">Elle A Osé</div>
-        <div class="topbar-sub">Satisfaction client</div>
-    </div>
-</div>
-<div class="topbar-stripe"></div>
+  <p class="state ok">Enregistré</p>
+  <h1>Merci pour votre retour</h1>
+  <p class="lede">Votre note nous aide à améliorer l'espace. Vous n'avez rien d'autre à faire.</p>
 
-<div class="content">
-    <div class="card">
+  <dl class="rows">
+    <div th:if="${score >= 1 and score <= 5}"><dt>Note donnée</dt><dd th:text="|${score} sur 5|">—</dd></div>
+    <div th:if="${bookingNumber != null}"><dt>Réservation</dt><dd class="mono" th:text="${bookingNumber}">BKG</dd></div>
+  </dl>
 
-        <div class="card-top">
-            <div class="icon-wrap">
-                <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-                    <path d="M6 16c0 5 4 8 9 8s9-3 9-8" stroke="#c9a84c" stroke-width="1.8" stroke-linecap="round"/>
-                    <circle cx="10.5" cy="11.5" r="1.5" fill="#c9a84c"/>
-                    <circle cx="19.5" cy="11.5" r="1.5" fill="#c9a84c"/>
-                    <circle cx="15" cy="15" r="13" stroke="#c9a84c" stroke-width="1.5"/>
-                </svg>
-            </div>
-            <div class="card-title">Merci pour votre avis</div>
-            <div class="card-sub">Votre satisfaction est notre priorité</div>
-        </div>
-
-        <div class="card-body">
-
-            <!-- Affichage du score -->
-            <div class="score-display" th:if="${score >= 1 and score <= 5}">
-                <div class="score-number" th:text="${score}">5</div>
-                <div class="score-bar">
-                    <div th:each="i : ${#numbers.sequence(1, 5)}"
-                         th:classappend="${i <= score} ? ${'active-' + score} : ''"
-                         class="score-pip">
-                    </div>
-                </div>
-            </div>
-
-            <p class="message" th:switch="${score}">
-                <span th:case="5">Excellent ! Nous sommes ravis d'avoir répondu à vos attentes. À très bientôt !</span>
-                <span th:case="4">Super ! Votre retour positif nous encourage à toujours faire mieux.</span>
-                <span th:case="3">Merci. Nous prenons note de votre retour pour continuer à nous améliorer.</span>
-                <span th:case="2">Merci pour votre honnêteté. Nous allons travailler pour faire mieux.</span>
-                <span th:case="1">Nous sommes désolés de ne pas avoir été à la hauteur. Votre avis va nous aider à nous améliorer.</span>
-                <span th:case="*">Votre avis a bien été enregistré. Merci !</span>
-            </p>
-
-            <div class="booking-ref" th:if="${bookingNumber != null}" th:text="${bookingNumber}">BKG-000</div>
-
-        </div>
-
-    </div>
-</div>
-
-<div class="footer">
-    <strong>Elle A Osé</strong> · Espace de coworking<br>
-    05 204 25 52 · coworkspace@elleaose.com
-</div>
-
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
 </body>
 </html>

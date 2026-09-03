@@ -1,120 +1,35 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="noindex, nofollow">
-    <title th:text="|Vérification ${view.reference()}|">Vérification</title>
-    <style>
-        *{ box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f6f4f9; color: #1a0a2e;
-            display: flex; align-items: center; justify-content: center;
-            min-height: 100vh; padding: 20px; line-height: 1.6;
-        }
-        .card {
-            background: #fff; border-radius: 10px; max-width: 420px; width: 100%;
-            box-shadow: 0 2px 16px rgba(26,10,46,.08); overflow: hidden;
-        }
-        .head { padding: 28px 26px 22px; border-bottom: 1px solid #efeaf4; text-align: center; }
-        .seal {
-            width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 14px;
-            background: #e9f6ec; color: #1f7a3d;
-            display: flex; align-items: center; justify-content: center; font-size: 24px;
-        }
-        .verdict { font-size: 17px; font-weight: 800; color: #1f7a3d; }
-        .verdict.cancelled { color: #b0343c; }
-        .seal.cancelled { background: #fdecee; color: #b0343c; }
-        .kind { font-size: 12px; color: #9b8caa; margin-top: 4px; }
-        .body { padding: 20px 26px 24px; }
-        .row { display: flex; justify-content: space-between; gap: 16px; padding: 9px 0; font-size: 13px; }
-        .row + .row { border-top: 1px solid #f4f0f8; }
-        .lbl { color: #7a6b8c; }
-        .val { font-weight: 700; text-align: right; word-break: break-all; }
-        .note {
-            margin-top: 18px; padding: 12px 14px; background: #faf8fc; border-radius: 6px;
-            font-size: 11.5px; color: #7a6b8c; line-height: 1.65;
-        }
-        .foot { padding: 14px 26px 20px; text-align: center; font-size: 11px; color: #b3a7c0; }
-        .compare { margin-top: 18px; padding-top: 16px; border-top: 1px solid #f0eaf4; }
-        .compare-label { display: block; font-size: 12px; font-weight: 700; color: #1a0a2e; }
-        .compare-hint { font-size: 11.5px; color: #7a6b8c; margin: 4px 0 10px; line-height: 1.55; }
-        .compare input[type=file] { display: block; width: 100%; font-size: 11.5px; color: #5c4f6e; }
-        .compare button {
-            margin-top: 10px; width: 100%; padding: 9px 12px; border: none; border-radius: 6px;
-            background: #281332; color: #fff; font-size: 12.5px; font-weight: 700; cursor: pointer;
-        }
-    </style>
-</head>
+<head th:insert="~{fragments/page :: pagehead(|Vérification ${view.reference()} · Elle A Osé|)}"></head>
 <body>
-<div class="card">
-    <div class="head">
-        <div class="seal" th:classappend="${view.statusLabel() == 'Annulé'} ? 'cancelled' : ''"
-             th:text="${view.statusLabel() == 'Annulé'} ? '✕' : '✓'">✓</div>
-        <div class="verdict" th:classappend="${view.statusLabel() == 'Annulé'} ? 'cancelled' : ''"
-             th:text="${view.statusLabel() == 'Annulé'} ? 'Document annulé' : 'Document authentique'">
-            Document authentique
-        </div>
-        <div class="kind" th:text="|${view.documentLabel()} émis par Elle a Osé|">Facture</div>
-    </div>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
 
-    <div class="body">
-        <div class="row">
-            <span class="lbl">Référence</span>
-            <span class="val" th:text="${view.reference()}">INV-000001</span>
-        </div>
-        <div class="row" th:if="${!#strings.isEmpty(view.issueDate())}">
-            <span class="lbl">Date d'émission</span>
-            <span class="val" th:text="${view.issueDate()}">01/01/2026</span>
-        </div>
-        <div class="row">
-            <span class="lbl">Statut</span>
-            <span class="val" th:text="${view.statusLabel()}">Émis</span>
-        </div>
+  <th:block th:if="${view.statusLabel() == 'Annulé'}">
+    <p class="state ko">Document annulé</p>
+    <h1>Ce document a été annulé</h1>
+    <p class="lede">Il a bien été émis par Elle A Osé, mais il ne vaut plus.</p>
+  </th:block>
+  <th:block th:unless="${view.statusLabel() == 'Annulé'}">
+    <p class="state ok">Vérifié</p>
+    <h1>Document authentique</h1>
+    <p class="lede" th:text="|${view.documentLabel()} émis par Elle A Osé. L'empreinte correspond à celle enregistrée à l'émission.|">Description</p>
+  </th:block>
 
-        <!--/*
-            Les champs ci-dessous ne s'affichent que sur presentation du prefixe de signature
-            encode dans le QR code du document · ils confirment un document que l'on tient deja,
-            ils ne servent pas a le reconstituer. Ne rien ajouter ici sans se demander ce que cela
-            revelerait a quelqu'un qui enumere les numeros.
-        */-->
-        <th:block th:if="${view.detailed()}">
-            <div class="row" th:if="${!#strings.isEmpty(view.partyName())}">
-                <span class="lbl">Destinataire</span>
-                <span class="val" th:text="${view.partyName()}">Nom</span>
-            </div>
-            <div class="row" th:if="${!#strings.isEmpty(view.totalAmount())}">
-                <span class="lbl">Montant total</span>
-                <span class="val" th:text="|${view.totalAmount()} ${view.currency()}|">0 XAF</span>
-            </div>
-        </th:block>
+  <dl class="rows">
+    <div><dt>Référence</dt><dd class="mono" th:text="${view.reference()}">REF</dd></div>
+    <div th:if="${!#strings.isEmpty(view.issueDate())}"><dt>Émis le</dt><dd th:text="${view.issueDate()}">Date</dd></div>
+    <div><dt>Statut</dt><dd th:text="${view.statusLabel()}">Statut</dd></div>
+    <!-- Le nom et le montant ne sortent que sur une verification detaillee · la page est
+         publique, et une reference suffit a la consulter. -->
+    <div th:if="${view.detailed() and !#strings.isEmpty(view.partyName())}"><dt>Partie</dt><dd th:text="${view.partyName()}">Nom</dd></div>
+    <div th:if="${view.detailed() and !#strings.isEmpty(view.totalAmount())}"><dt>Montant</dt><dd th:text="|${view.totalAmount()} ${view.currency()}|">Montant</dd></div>
+  </dl>
 
-        <div class="note" th:unless="${view.detailed()}">
-            Cette page confirme qu'un document portant cette référence a bien été émis par notre
-            plateforme. Pour en afficher le détail, scannez le QR code figurant sur le document
-            lui-même.
-        </div>
-        <div class="note" th:if="${view.detailed()}">
-            Ces informations proviennent de nos systèmes. Si elles diffèrent du document que vous
-            détenez, celui-ci a été modifié après son émission.
-        </div>
+  <p class="notice" th:unless="${view.detailed()}">Seules la référence, la date et le statut sont publics. Le détail n'est accessible qu'au titulaire du document.</p>
 
-        <!--/* Comparaison octet par octet · la lecture a l'ecran ne detecte pas un montant
-               retouche dans un PDF, l'empreinte si. */-->
-        <form class="compare" th:action="@{'/verify/doc/' + ${view.reference()} + '/compare'}"
-              method="post" enctype="multipart/form-data">
-            <label class="compare-label" for="file">Vérifier un fichier</label>
-            <div class="compare-hint">
-                Déposez le PDF que vous détenez : nous dirons s'il s'agit exactement de celui que
-                nous avons émis.
-            </div>
-            <input type="file" id="file" name="file" accept="application/pdf" required>
-            <button type="submit">Comparer</button>
-        </form>
-    </div>
-
-    <div class="foot">Vérifié le <span th:text="${generatedAt}">01/01/2026</span></div>
-</div>
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
 </body>
 </html>

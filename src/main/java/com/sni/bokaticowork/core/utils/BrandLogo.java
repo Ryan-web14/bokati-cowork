@@ -20,7 +20,13 @@ import java.util.Base64;
 @Component
 public class BrandLogo {
 
-    private static final String PATH = "/static/images/logo.png";
+    /**
+     * Le fichier d'origine est <b>blanc sur transparent</b> — verifie au pixel : 28 526 points
+     * opaques, tous clairs, aucun sombre. Il etait concu pour le bandeau sombre des documents.
+     * Depuis que ces bandeaux ont cede la place a de l'encre sur blanc, ce logo y est invisible.
+     * Les pieces imprimees prennent donc la silhouette encre, tiree du meme trace.
+     */
+    private static final String PATH = "/static/images/logo-ink.png";
 
     /** {@code null} tant que la lecture n'a pas eu lieu · l'absence de logo est un cas normal. */
     private volatile String cached;

@@ -1,219 +1,36 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="|Réservation ${bookingNumber} · Elle A Osé|">Réservation · Elle A Osé</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #E8E5E0; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #1A0A2E; min-height: 100vh; }
-    .wrap { width: 100%; padding: 48px 16px; background: #E8E5E0; min-height: 100vh; }
-    .card { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 32px 64px rgba(26,10,46,.12); }
-    .em-header { background: #110828; padding: 22px 36px; }
-    .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
-    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
-    .em-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
-    .em-body { padding: 44px 40px 40px; }
-    .doc-title { font-size: 21px; font-weight: 700; color: #1A0A2E; letter-spacing: -.3px; margin-bottom: 6px; }
-    .doc-intro { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 36px; }
-    .doc-intro strong { color: #1A0A2E; font-weight: 700; }
-    .grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start; margin-bottom: 28px; }
-    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; padding-bottom: 10px; border-bottom: 1px solid #EEE9F5; margin-bottom: 0; }
-    .panel { border: 1px solid #EEE9F5; border-radius: 10px; overflow: hidden; margin-top: 12px; }
-    .panel-head { background: #F8F7F5; border-bottom: 1px solid #EEE9F5; padding: 16px 20px; }
-    .space-name { font-size: 16px; font-weight: 700; color: #1A0A2E; }
-    .space-type { font-size: 11px; color: #9B8CAA; font-weight: 600; margin-top: 3px; text-transform: uppercase; letter-spacing: .6px; }
-    .dt { width: 100%; border-collapse: collapse; }
-    .dt tr { border-bottom: 1px solid #EEE9F5; }
-    .dt tr:last-child { border-bottom: none; }
-    .dt td { padding: 12px 20px; vertical-align: middle; }
-    .dt-key { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; width: 110px; }
-    .dt-val { font-size: 13.5px; font-weight: 600; color: #1A0A2E; text-align: right; }
-    .dt-mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1.2px; }
-    .dt-total { background: #1A0A2E; }
-    .dt-total .dt-key { color: rgba(255,255,255,.5); }
-    .dt-total .dt-val { color: #C9A84C; font-size: 15px; }
-    .access-panel { border: 1px solid #EEE9F5; border-radius: 10px; padding: 22px 20px; text-align: center; margin-top: 12px; }
-    .access-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; margin-bottom: 16px; }
-    .access-code { display: inline-block; font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 18px; font-weight: 700; color: #1A0A2E; letter-spacing: 3px; margin-bottom: 14px; }
-    .access-note { font-size: 12px; color: #9B8CAA; line-height: 1.65; }
-    .actions { display: flex; gap: 12px; }
-    .btn-primary { flex: 1; display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; text-align: center; border-radius: 8px; }
-    .btn-checkin { flex: 1; display: block; text-align: center; border: none; background: #110828; color: #fff; font-size: 11.5px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 17px; border-radius: 8px; cursor: pointer; }
-    .btn-checkin:hover { background: #2d1b4e; }
-    .btn-checkin:disabled { opacity: .5; cursor: not-allowed; }
-    .checkin-feedback { margin-top: 12px; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; display: none; }
-    .checkin-ok { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
-    .checkin-err { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
-    .em-footer { background: #F8F7F5; border-top: 1px solid #EAE5F0; padding: 22px 40px; text-align: center; }
-    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #9B8CAA; margin-bottom: 6px; }
-    .em-footer-text { font-size: 11px; color: #C0B4D0; line-height: 1.65; }
-    .em-footer-text a { color: #9B8CAA; text-decoration: none; }
-    @media (max-width: 680px) {
-      .wrap { padding: 0; background: #fff; }
-      .card { border-radius: 0; box-shadow: none; }
-      .em-header { padding: 18px 24px; }
-      .em-body { padding: 28px 20px 32px; }
-      .em-footer { padding: 18px 24px; }
-      .grid { grid-template-columns: 1fr; }
-      .actions { flex-direction: column; }
-      .dt-val { text-align: left; }
-    }
-  </style>
-</head>
+<head th:insert="~{fragments/page :: pagehead(|Réservation ${bookingNumber} · Elle A Osé|)}"></head>
 <body>
-<div class="wrap">
-  <div class="card">
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
 
-    <div class="em-header">
-      <div class="em-brand">Elle A Osé</div>
-      <div class="em-brand-sub">Espace de coworking</div>
-    </div>
-    <div class="em-stripe"></div>
+  <p class="state ok">Confirmée</p>
+  <h1>Réservation confirmée</h1>
+  <p class="lede" th:text="|Au nom de ${recipientName}. Présentez le code ci-dessous à l'accueil, ou scannez-le sur la borne.|">Description</p>
 
-    <div class="em-body">
-      <div class="doc-title">Confirmation de réservation</div>
-      <div class="doc-intro">
-        Bonjour <strong th:text="${recipientName}">client</strong>, voici le récapitulatif complet de votre réservation.
-      </div>
+  <dl class="rows">
+    <div><dt>Réservation</dt><dd class="mono" th:text="${bookingNumber}">BKG</dd></div>
+    <div><dt>Espace</dt><dd th:text="${resourceName}">Espace</dd></div>
+    <div th:if="${resourceType}"><dt>Type</dt><dd th:text="${resourceType}">Type</dd></div>
+    <div><dt>Date</dt><dd th:text="${bookingDate}">Date</dd></div>
+    <div><dt>Horaire</dt><dd th:text="|${startTime} — ${endTime}|">Horaire</dd></div>
+    <div><dt>Durée</dt><dd th:text="${durationLabel}">Durée</dd></div>
+    <div th:if="${quantity}"><dt>Places</dt><dd th:text="${quantity}">1</dd></div>
+    <div th:if="${address}"><dt>Adresse</dt><dd th:text="|${address}, ${city}|">Adresse</dd></div>
+  </dl>
 
-      <div class="grid">
-        <div>
-          <div class="section-lbl">Détails</div>
-          <div class="panel">
-            <div class="panel-head">
-              <div class="space-name" th:text="${resourceName}">Espace</div>
-              <div class="space-type" th:if="${resourceType}" th:text="${resourceType}">Type</div>
-            </div>
-            <table class="dt">
-              <tr>
-                <td class="dt-key">Référence</td>
-                <td class="dt-val dt-mono" th:text="${bookingNumber}">BKG-000</td>
-              </tr>
-              <tr>
-                <td class="dt-key">Date</td>
-                <td class="dt-val" th:text="${bookingDate}"></td>
-              </tr>
-              <tr>
-                <td class="dt-key">Horaires</td>
-                <td class="dt-val"><span th:text="${startTime}"></span> → <span th:text="${endTime}"></span></td>
-              </tr>
-              <tr>
-                <td class="dt-key">Durée</td>
-                <td class="dt-val" th:text="${durationLabel}"></td>
-              </tr>
-              <tr th:if="${quantity}">
-                <td class="dt-key">Quantité</td>
-                <td class="dt-val" th:text="${quantity}">1</td>
-              </tr>
-              <tr>
-                <td class="dt-key">Statut</td>
-                <td class="dt-val" th:text="${status}"></td>
-              </tr>
-              <tr th:if="${address}">
-                <td class="dt-key">Lieu</td>
-                <td class="dt-val"><span th:text="${address}"></span><br><span th:text="${city}" style="font-weight:400; font-size:12px; color:#9B8CAA;"></span></td>
-              </tr>
-              <tr>
-                <td class="dt-key">Base HT</td>
-                <td class="dt-val" th:text="${priceHT}"></td>
-              </tr>
-              <tr th:if="${priceTVA}">
-                <td class="dt-key" th:text="|TVA ${tvaPct}|">TVA</td>
-                <td class="dt-val" th:text="${priceTVA}"></td>
-              </tr>
-              <tr th:if="${priceCentimeAdditionnel}">
-                <td class="dt-key" th:text="|Centime ${centimeAdditionnelPct}|">Centime</td>
-                <td class="dt-val" th:text="${priceCentimeAdditionnel}"></td>
-              </tr>
-              <tr class="dt-total">
-                <td class="dt-key">Total TTC</td>
-                <td class="dt-val" th:text="${priceTTC}"></td>
-              </tr>
-            </table>
-          </div>
-        </div>
+  <p class="state todo" style="margin-top:24px">Montants</p>
+  <dl class="rows">
+    <div><dt>Total HT</dt><dd th:text="${priceHT}">0</dd></div>
+    <div th:if="${priceTVA}"><dt th:text="|TVA ${tvaPct}|">TVA</dt><dd th:text="${priceTVA}">0</dd></div>
+    <div th:if="${priceCentimeAdditionnel}"><dt th:text="|Centime ${centimeAdditionnelPct}|">Centime</dt><dd th:text="${priceCentimeAdditionnel}">0</dd></div>
+    <div><dt>Total TTC</dt><dd th:text="${priceTTC}">0</dd></div>
+  </dl>
 
-        <div>
-          <div class="section-lbl">Accès</div>
-          <div class="access-panel">
-            <div class="access-lbl">Code de vérification</div>
-            <div class="access-code" th:text="${verificationCode}">CHK-0000</div>
-            <div class="access-note">Présentez le QR code de l'email à l'accueil. Si le scan échoue, communiquez ce code.</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <a class="btn-primary" th:href="${pdfUrl ?: '#'}">Télécharger le PDF</a>
-        <button type="button" class="btn-checkin" id="checkinBtn"
-                th:attr="data-token=${checkInToken}, data-url=${selfCheckInUrl}, data-geo=${locationRequired}">
-          S'enregistrer (check-in)
-        </button>
-      </div>
-      <div id="checkinFeedback" class="checkin-feedback"></div>
-    </div>
-
-    <div class="em-footer">
-      <div class="em-footer-brand">Elle A Osé · Espaces de travail</div>
-      <div class="em-footer-text">
-        <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
-      </div>
-    </div>
-
-  </div>
-</div>
-<script>
-(function () {
-  var btn = document.getElementById('checkinBtn');
-  var feedback = document.getElementById('checkinFeedback');
-  if (!btn) return;
-
-  var token = btn.getAttribute('data-token');
-  var url = btn.getAttribute('data-url');
-  var requiresGeo = btn.getAttribute('data-geo') === 'true';
-
-  function showFeedback(ok, msg) {
-    feedback.textContent = msg;
-    feedback.className = 'checkin-feedback ' + (ok ? 'checkin-ok' : 'checkin-err');
-    feedback.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = ok ? 'Check-in effectué ✓' : 'S\'enregistrer (check-in)';
-  }
-
-  function doCheckIn(lat, lng) {
-    var params = new URLSearchParams({ token: token });
-    if (lat != null) { params.append('lat', lat); params.append('lng', lng); }
-    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() })
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (data.success) {
-          showFeedback(true, 'Bienvenue ! Votre check-in a été enregistré pour la réservation ' + data.bookingNumber + '.');
-        } else {
-          var msg = data.message || 'Le check-in a échoué. Présentez-vous à l\'accueil.';
-          if (data.error === 'time_invalid') msg = 'Le check-in n\'est pas encore disponible. Revenez 15 minutes avant votre réservation.';
-          if (data.error === 'location_invalid') msg = 'Vous devez être présent dans l\'espace pour effectuer le check-in.';
-          if (data.error === 'location_required') msg = 'Veuillez autoriser la géolocalisation pour effectuer le check-in.';
-          showFeedback(false, msg);
-        }
-      })
-      .catch(function () { showFeedback(false, 'Erreur réseau. Veuillez réessayer ou contacter l\'accueil.'); });
-  }
-
-  btn.addEventListener('click', function () {
-    btn.disabled = true;
-    btn.textContent = 'Vérification en cours…';
-    feedback.style.display = 'none';
-    if (requiresGeo && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        function (pos) { doCheckIn(pos.coords.latitude, pos.coords.longitude); },
-        function () { showFeedback(false, 'Géolocalisation refusée ou indisponible. Veuillez autoriser l\'accès à votre position.'); }
-      );
-    } else {
-      doCheckIn(null, null);
-    }
-  });
-}());
-</script>
+  <p class="notice">Code de vérification : <strong th:text="${verificationCode}">—</strong></p>
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · 84 Boulevard du Général Charles de Gaulle, Pointe-Noire')}"></div>
+</main>
 </body>
 </html>

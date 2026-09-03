@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Systeme des pages web · une colonne, trois etats, sept composants.
+
+  Ces pages se voient une fois, souvent sur un telephone, apres un lien recu par courriel ou un QR
+  scanne a l'accueil. Elles ont un seul travail : dire ce qui s'est passe, et laisser faire une
+  seule chose s'il y a lieu. D'ou l'absence de navigation, de second niveau et de seconde action.
+
+  Avant : douze pages ecrites separement, seize couleurs de texte sur le seul recu, quatorze
+  degrades sur les pages de reservation, cinq pages n'ayant jamais recu la charte. Chacune avait sa
+  propre idee de ce qu'etait une reussite.
+-->
+<head>
+
+<th:block th:fragment="pagehead(pageTitle)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Ces pages portent une reference dans leur adresse · un recu archive par un moteur devient
+       une fuite. Sept des douze ne l'interdisaient pas. -->
+  <meta name="robots" content="noindex, nofollow">
+  <title th:text="${pageTitle}">Elle A Osé</title>
+  <link rel="icon" type="image/png" href="/images/logo-mark-ink.png">
+  <style>
+    /* ── Jetons ────────────────────────────────────────────────
+       Neutres teintes d'aubergine · un gris pur parait sale a cote de la marque.
+       L'or de la marque, #C9A84C, plafonne a 2,1:1 sur blanc : il ne porte jamais de
+       texte, seulement des filets. La couleur d'attente lisible est --warn, a 5,3:1. */
+    :root {
+      --ink:#17111F; --ink-2:#4A4157; --ink-3:#7A7188;
+      --line:#E7E2EE; --paper:#FFFFFF; --ground:#F8F7FA;
+      --ok:#146A43; --warn:#8A6A16; --bad:#A32A34;
+      --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:48px;
+      --radius:10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      /* Pile systeme · une page d'authentification qui attend une police distante s'affiche en
+         deux temps et fait sortir l'adresse du visiteur vers un tiers. */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px; line-height: 1.6; color: var(--ink); background: var(--ground);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* La page s'ouvre a 12vh du haut, non centree verticalement : un bloc centre se deplace
+       quand le contenu change de longueur, et l'oeil doit le rattraper d'une page a l'autre. */
+    .page { max-width: 27rem; margin: 0 auto; padding: 12vh var(--s-5) var(--s-6); }
+    @media (max-width: 380px) { .page { padding-left: var(--s-4); padding-right: var(--s-4); } }
+
+    .brand { display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-4); }
+    .brand img { width: 22px; height: 22px; display: block; }
+    .brand span { font-size: 11px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
+    .brand-rule { height: 1px; background: var(--line); margin-bottom: var(--s-5); }
+
+    /* L'etat se lit au mot · la couleur ne fait que le confirmer, pour qui la percoit. */
+    .state {
+      font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+      display: inline-block; padding-top: var(--s-2); border-top: 2px solid currentColor;
+      margin-bottom: var(--s-3);
+    }
+    .state.ok { color: var(--ok); }
+    .state.todo { color: var(--warn); }
+    .state.ko { color: var(--bad); }
+
+    h1 {
+      font-size: clamp(22px, 6vw, 30px); font-weight: 700; letter-spacing: -.02em;
+      line-height: 1.2; margin: 0 0 var(--s-2);
+    }
+    .lede { font-size: 15px; color: var(--ink-2); line-height: 1.6; margin: 0 0 var(--s-5); max-width: 42ch; }
+
+    dl.rows { margin: 0; border-top: 1px solid var(--line); }
+    dl.rows > div { display: flex; justify-content: space-between; gap: var(--s-4);
+                    padding: 11px 0; border-bottom: 1px solid var(--line); }
+    dl.rows dt { font-size: 13px; color: var(--ink-3); margin: 0; }
+    dl.rows dd { font-size: 14px; font-weight: 600; margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+    dl.rows dd.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+
+    .field { margin-top: var(--s-4); }
+    .field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: .1em;
+                   text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+    .field input {
+      width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 12px 13px; font: inherit; font-size: 15px; color: var(--ink); background: var(--paper);
+    }
+    .field input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; border-color: var(--ink); }
+
+    .btn {
+      display: block; width: 100%; text-align: center; text-decoration: none;
+      margin-top: var(--s-5); background: var(--ink); color: #fff; border: none;
+      font: inherit; font-size: 14px; font-weight: 600; padding: 15px; border-radius: var(--radius);
+      cursor: pointer;
+    }
+    .btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    /* Un seul bouton par page · deux actions de meme poids font hesiter. */
+    .quiet { display: block; text-align: center; color: var(--ink-3); font-size: 13.5px; margin-top: var(--s-3); }
+    .quiet:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+    .notice { border-left: 2px solid var(--line); padding: 2px 0 2px var(--s-3);
+              margin-top: var(--s-5); font-size: 13px; color: var(--ink-3); line-height: 1.55; }
+
+    .foot { margin-top: var(--s-5); padding-top: var(--s-3); border-top: 1px solid var(--line);
+            font-size: 12px; color: var(--ink-3); }
+
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+    /* Seul le recu se destine a l'impression · le reste de l'interface n'y a pas sa place. */
+    @media print {
+      body { background: #fff; }
+      .page { padding: 0; max-width: none; }
+      .btn, .quiet { display: none; }
+    }
+  </style>
+</th:block>
+
+</head>
+<body>
+
+<div th:fragment="brand" class="brand">
+  <img src="/images/logo-mark-ink.png" alt="" width="22" height="22">
+  <span>Elle A Osé</span>
+</div>
+<div th:fragment="brand-rule" class="brand-rule"></div>
+
+<div th:fragment="foot(text)" class="foot" th:text="${text}">Elle A Osé · Pointe-Noire</div>
+
+</body>
+</html>
