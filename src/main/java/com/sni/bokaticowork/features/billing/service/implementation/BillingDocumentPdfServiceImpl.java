@@ -455,6 +455,18 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             return StringUtils.hasText(currency) ? formatted + " " + currency.trim() : formatted;
         }
 
+        /**
+         * Somme en toutes lettres, pour la mention « arretee a la somme de ».
+         *
+         * <p>Elle manquait : le chiffre seul se rature, la lettre non. L'usage est constant sur les
+         * pieces comptables.
+         */
+        public String inWords(BigDecimal amount) {
+            return amount == null ? EMPTY_VALUE
+                    : com.sni.bokaticowork.features.billing.service.support.FrenchAmountWords
+                        .withCurrency(amount, currency);
+        }
+
         public String amount(BigDecimal amount) {
             if (amount == null) {
                 return EMPTY_VALUE;
