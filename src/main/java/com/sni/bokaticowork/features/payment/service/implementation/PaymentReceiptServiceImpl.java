@@ -363,6 +363,16 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
             return StringUtils.hasText(currency) ? formatted + " " + currency.trim() : formatted;
         }
 
+        /**
+         * Somme en toutes lettres · un recu se presente comme preuve, et le chiffre seul se rature.
+         * Meme regle que la facture, meme classe.
+         */
+        public String inWords(BigDecimal amount) {
+            return amount == null ? "" :
+                    com.sni.bokaticowork.features.billing.service.support.FrenchAmountWords
+                            .withCurrency(amount, currency);
+        }
+
         public String date(LocalDate value) {
             return value == null ? EMPTY_VALUE : DATE_FORMATTER.format(value);
         }
