@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 /**
  * Gère automatiquement le cycle de vie des réservations passées :
  *
+ *  - IN_PROGRESS: réservations pointées d'avance dont l'heure est arrivée
  *  - NO_SHOW  : créneaux dépassés sans check-in ni démarrage admin
  *  - COMPLETED: créneaux dépassés après check-in ou démarrage admin
  *
@@ -25,6 +26,10 @@ public class BookingNoShowWorker {
     @Scheduled(fixedDelayString = "${bokati.booking.lifecycle.worker-delay-ms:${bokati.booking.no-show.worker-delay-ms:60000}}")
     public void processOverdueBookings() {
         try {
+            int started = bookingService.startCheckedInBookings(200);
+            if (started > 0) {
+                log.info("Auto-demarrage : {} réservation(s) pointée(s) d'avance passée(s) en cours", started);
+            }
             int noShows = bookingService.markOverdueNoShows(200);
             if (noShows > 0) {
                 log.info("Auto no-show: {} réservation(s) marquée(s)", noShows);

@@ -379,13 +379,34 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public int startCheckedInBookings(int limit) {
+        int resolvedLimit = Math.max(1, limit);
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> candidates = bookingRepository.findCheckedInAwaitingStart(now, resolvedLimit);
+        int started = 0;
+        for (Booking booking : candidates) {
+            BookingStatus from = booking.getStatus();
+            booking.setStatus(BookingStatus.IN_PROGRESS);
+            bookingRepository.save(booking);
+            writeHistory(booking, from, BookingStatus.IN_PROGRESS, "SYSTEM",
+                    "Reservation demarree automatiquement · pointage effectue et heure atteinte");
+            started++;
+        }
+        return started;
+    }
+
+    @Override
     public int markOverdueCompleted(int limit) {
         int resolvedLimit = Math.max(1, limit);
         LocalDateTime now = LocalDateTime.now();
         List<Booking> candidates = bookingRepository.findOverdueCompletionCandidates(now, resolvedLimit);
         int completed = 0;
         for (Booking booking : candidates) {
-            if (booking.getStatus() == BookingStatus.IN_PROGRESS
+            // CONFIRMED admis a cote de IN_PROGRESS : une reservation pointee d'avance dont le
+            // balayage n'a pas eu le temps de tourner reste CONFIRMED, et resterait sinon coincee
+            // la, ni close ni marquee absente. completeInternal accepte deja les deux statuts.
+            if ((booking.getStatus() == BookingStatus.IN_PROGRESS
+                    || booking.getStatus() == BookingStatus.CONFIRMED)
                     && booking.getEndedAt().isBefore(now)
                     && (booking.getCheckedInAt() != null || booking.getStartedEventAt() != null)) {
                 completeInternal(booking, new BookingStatusChangeRequest("SYSTEM", "Automatic completion: booking ended after check-in", Boolean.FALSE));
@@ -419,9 +440,7 @@ public class BookingServiceImpl implements BookingService {
         }
         assertActivationAllowed(booking, "check in");
         booking.setCheckedInAt(Instant.now());
-        if (booking.getStatus() == BookingStatus.CONFIRMED) {
-            booking.setStatus(BookingStatus.IN_PROGRESS);
-        }
+        startIfHourHasCome(booking);
         booking = bookingRepository.save(booking);
         eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_IN, "Booking checked in", request == null ? null : request.note(), null,
                 emailRequested(request == null ? null : request.sendEmail()));
@@ -450,9 +469,7 @@ public class BookingServiceImpl implements BookingService {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be checked in");
         }
         booking.setCheckedInAt(Instant.now());
-        if (booking.getStatus() == BookingStatus.CONFIRMED) {
-            booking.setStatus(BookingStatus.IN_PROGRESS);
-        }
+        startIfHourHasCome(booking);
         booking = bookingRepository.save(booking);
         eventWriter.write(booking, BookingEventType.BOOKING_CHECKED_IN, "Early check-in by admin",
                 request == null ? null : request.note(), null,
@@ -874,16 +891,41 @@ public class BookingServiceImpl implements BookingService {
         }
     }
 
+    /**
+     * Fenetre de pointage autonome, cadree autour de l'heure de debut.
+     *
+     * <p>Le pointage etait accepte jusqu'a la fin de la reservation. Pointer a la derniere minute
+     * d'un creneau de neuf heures valait alors presence pleine, ce qui vidait la notion de presence
+     * et rendait le marquage automatique en absence pratiquement inoperant.
+     *
+     * <p>L'administration reste hors de cette fenetre : c'est elle qui traite les cas particuliers,
+     * un client arrive en retard ou un incident d'acces.
+     */
     private void assertActivationAllowed(Booking booking, @SuppressWarnings("unused") String action) {
         if (isCurrentUserAdmin()) {
             return;
         }
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime earliestAllowed = booking.getStartedAt().minusMinutes(checkInProperties.getEarlyWindowMinutes());
-        if (now.isBefore(earliestAllowed) || !now.isBefore(booking.getEndedAt())) {
-            throw new ForbiddenException("Le check-in est disponible à partir de "
-                    + checkInProperties.getEarlyWindowMinutes()
-                    + " minutes avant le début de la réservation et jusqu'à l'heure de fin");
+        LocalDateTime earliest = booking.getStartedAt().minusMinutes(checkInProperties.getEarlyWindowMinutes());
+        LocalDateTime latest = booking.getStartedAt().plusMinutes(checkInProperties.getLateWindowMinutes());
+        if (now.isBefore(earliest) || now.isAfter(latest)) {
+            throw new ForbiddenException("Le check-in est possible de "
+                    + checkInProperties.getEarlyWindowMinutes() + " minutes avant a "
+                    + checkInProperties.getLateWindowMinutes()
+                    + " minutes après le début de la réservation. Passé ce délai, adressez-vous à l'accueil.");
+        }
+    }
+
+    /**
+     * Passe en cours si l'heure est arrivee · le pointage seul ne suffit pas.
+     *
+     * <p>Pointer quinze minutes avant l'heure n'ouvre pas la salle pour autant. La reservation
+     * reste CONFIRMED, et {@code startCheckedInBookings} l'active a l'heure dite.
+     */
+    private void startIfHourHasCome(Booking booking) {
+        if (booking.getStatus() == BookingStatus.CONFIRMED
+                && !LocalDateTime.now().isBefore(booking.getStartedAt())) {
+            booking.setStatus(BookingStatus.IN_PROGRESS);
         }
     }
 

@@ -4,6 +4,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.reporting.dto.response.*;
 import com.sni.bokaticowork.features.reporting.service.interfaces.*;
+import com.sni.bokaticowork.core.utils.BrandLogo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
     private final StockValuationReportService stockValuationReportService;
     private final SubscriptionReportService subscriptionReportService;
     private final Locale appLocale;
+    private final BrandLogo brandLogo;
 
     @Override
     public byte[] financialDashboardPdf(LocalDate from, LocalDate to) {
@@ -40,6 +42,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         Context ctx = new Context(appLocale);
         ctx.setVariable("report",      data);
         ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("logo",        brandLogo.base64());
         ctx.setVariable("fmt",         new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/financial-report", ctx));
     }
@@ -50,6 +53,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         Context ctx = new Context(appLocale);
         ctx.setVariable("report",      data);
         ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("logo",        brandLogo.base64());
         ctx.setVariable("fmt",         new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/occupancy-report", ctx));
     }
@@ -60,6 +64,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         Context ctx = new Context(appLocale);
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("logo",        brandLogo.base64());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/activity-report", ctx));
     }
@@ -70,6 +75,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         Context ctx = new Context(appLocale);
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("logo",        brandLogo.base64());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/member-profile-report", ctx));
     }
@@ -80,6 +86,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         Context ctx = new Context(appLocale);
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("logo",        brandLogo.base64());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/debt-recovery-report", ctx));
     }
@@ -90,6 +97,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         Context ctx = new Context(appLocale);
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("logo",        brandLogo.base64());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/resource-utilization-report", ctx));
     }
@@ -100,6 +108,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         Context ctx = new Context(appLocale);
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("logo",        brandLogo.base64());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/stock-valuation-report", ctx));
     }
@@ -110,6 +119,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         Context ctx = new Context(appLocale);
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("logo",        brandLogo.base64());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/subscription-report", ctx));
     }

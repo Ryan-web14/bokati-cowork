@@ -18,7 +18,17 @@ public class BookingCheckInProperties {
     private static final double EARTH_RADIUS_M = 6_371_000.0;
 
     private String scannerKey = "";
+    /** Tolerance avant l'heure · le pointage est accepte, mais n'ouvre pas la salle pour autant. */
     private int earlyWindowMinutes = 15;
+
+    /**
+     * Tolerance apres l'heure de debut.
+     *
+     * <p>Le pointage etait accepte jusqu'a la fin de la reservation, ce qui vidait la notion de
+     * presence : pointer a la derniere minute d'un creneau de neuf heures valait presence pleine,
+     * et rendait le marquage automatique en absence inoperant.
+     */
+    private int lateWindowMinutes = 15;
     private Location location = new Location();
 
     @Getter

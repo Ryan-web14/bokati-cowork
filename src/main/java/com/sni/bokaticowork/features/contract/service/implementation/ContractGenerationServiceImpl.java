@@ -19,6 +19,8 @@ import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.
 import com.sni.bokaticowork.features.contract.model.ContractTemplate;
 import com.sni.bokaticowork.features.contract.repository.ContractTemplateRepository;
 import com.sni.bokaticowork.features.contract.service.support.ContractEmailNotifier;
+import com.sni.bokaticowork.core.utils.BrandLogo;
+import com.sni.bokaticowork.features.contract.service.support.ContractWording;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,8 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
     );
 
     private final SpringTemplateEngine templateEngine;
+    private final ContractWording wording;
+    private final BrandLogo brandLogo;
     private final DocumentService documentService;
     private final MemberService memberService;
     private final CustomerService customerService;
@@ -153,6 +157,9 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         Context context = new Context(appLocale);
         context.setVariable("request", request);
         context.setVariable("generatedAt", LocalDate.now());
+        context.setVariable("logo", brandLogo.base64());
+        context.setVariable("signingDate", enrichedVars.get("signingDate"));
+        context.setVariable("placeOfSigning", enrichedVars.get("placeOfSigning"));
         context.setVariable("ownerType", request.getOwnerType());
         context.setVariable("ownerCode", ownerView.code());
         context.setVariable("ownerName", ownerView.name());
@@ -209,6 +216,13 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         if (request.getVariables() != null) {
             vars.putAll(request.getVariables());
         }
+
+        // Le lieu et la date de signature etaient laisses en blanc dans les gabarits, a completer
+        // a la main. Un contrat remis incomplet laisse croire que sa date reste a negocier, et deux
+        // exemplaires peuvent finir dates differemment.
+        vars.put("placeOfSigning", wording.placeOfSigning(business));
+        vars.put("signingDate", wording.inWords(LocalDate.now()));
+        wording.frenchifyDates(vars, "startDate", "endDate", "effectiveDate");
         return vars;
     }
 

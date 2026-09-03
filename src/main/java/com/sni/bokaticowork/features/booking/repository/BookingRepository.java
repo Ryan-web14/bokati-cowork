@@ -241,15 +241,42 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             """)
     List<Booking> findOverdueNoShowCandidates(@Param("now") LocalDateTime now, @Param("limit") int limit);
 
+    /**
+     * <p>CONFIRMED est admis a cote de IN_PROGRESS : une reservation pointee d'avance reste
+     * CONFIRMED jusqu'a son heure, et si le balayage n'a pas tourne d'ici la fin — application
+     * arretee sur la plage, par exemple — elle ne correspondrait sinon ni a cette requete ni a
+     * celle des absences, et resterait indefiniment CONFIRMED. Les deux requetes se partagent
+     * ainsi exactement les creneaux depasses, selon qu'un pointage a eu lieu ou non.
+     */
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM booking
             WHERE deleted = false
-              AND status = 'IN_PROGRESS'
+              AND status IN ('CONFIRMED', 'IN_PROGRESS')
               AND ended_at < :now
               AND (checked_in_at IS NOT NULL OR started_event_at IS NOT NULL)
             ORDER BY ended_at ASC
             LIMIT :limit
             """)
     List<Booking> findOverdueCompletionCandidates(@Param("now") LocalDateTime now, @Param("limit") int limit);
+
+    /**
+     * Reservations pointees d'avance dont l'heure est arrivee.
+     *
+     * <p>Un pointage quinze minutes avant l'heure n'ouvre pas la salle pour autant : la
+     * reservation reste CONFIRMED et n'entre en cours qu'a l'heure dite. Sans ce rattrapage elle y
+     * resterait, puis serait clôturee sans jamais avoir ete en cours.
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM booking
+            WHERE deleted = false
+              AND status = 'CONFIRMED'
+              AND started_at <= :now
+              AND ended_at > :now
+              AND checked_in_at IS NOT NULL
+            ORDER BY started_at ASC
+            LIMIT :limit
+            """)
+    List<Booking> findCheckedInAwaitingStart(@Param("now") LocalDateTime now, @Param("limit") int limit);
 }

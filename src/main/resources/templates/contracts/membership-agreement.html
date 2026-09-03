@@ -26,14 +26,7 @@ body {
 }
 
 /* ── EN-TÊTE ── */
-.letterhead {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding-bottom: 10pt;
-    border-bottom: 2pt solid #111;
-    margin-bottom: 14pt;
-}
+/* .letterhead retire · remplace par .ct-letterhead, en tableau */
 .lh-brand-name {
     font-size: 15pt;
     font-weight: bold;
@@ -55,12 +48,15 @@ body {
     border: 0.75pt solid #bbb;
     padding: 5pt 10pt;
     margin-bottom: 14pt;
-    display: flex;
-    justify-content: space-between;
+    
+    
     font-size: 8pt;
     color: #444;
     background: #f8f8f8;
 }
+.ref-bar-tbl { width: 100%; border-collapse: collapse; }
+.ref-bar-tbl td { padding: 0; font-size: 8pt; }
+.ref-bar-tbl td.r { text-align: right; }
 
 /* ── PARTIES ── */
 .parties-intro {
@@ -193,15 +189,13 @@ body {
 
 @media print { body { width: 210mm; } }
 </style>
+<th:block th:replace="~{fragments/contract-brand :: styles}"></th:block>
 </head>
 <body>
 
-<!-- EN-TÊTE / LETTERHEAD -->
-<div class="letterhead">
-  <div>
-    <div class="lh-brand-name" th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
-    <div class="lh-brand-tag">Espace de coworking &amp; services aux entreprises</div>
-  </div>
+<!-- EN-TÊTE · fragment commun, en tableau -->
+<table th:replace="~{fragments/contract-brand :: letterhead}"></table>
+<div class="ct-rule"></div>
   <div class="lh-contact">
     <div th:if="${business != null and business.email != null}" th:text="${business.email}">contact@example.com</div>
     <div th:if="${business != null and business.phone != null}" th:text="${business.phone}">+000 000 000 000</div>
@@ -218,10 +212,7 @@ body {
 </div>
 
 <!-- RÉFÉRENCE -->
-<div class="ref-bar">
-  <span>Date de génération&nbsp;: <strong th:text="${generatedAt}">2026-01-01</strong></span>
-  <span>Réf. modèle&nbsp;: <strong th:text="${request.templateCode}">membership-agreement</strong></span>
-</div>
+<div class="ref-bar"><table class="ref-bar-tbl"><tr><td>Date de génération&nbsp;: <strong th:text="${signingDate}">2026-01-01</strong></td><td class="r">Réf. modèle&nbsp;: <strong th:text="${request.templateCode}">membership-agreement</strong></td></tr></table></div>
 
 <!-- ENTRE LES SOUSSIGNÉS -->
 <div class="parties-intro">Entre les soussignés :</div>
@@ -265,15 +256,15 @@ body {
   <table class="data-table">
     <tr>
       <td class="lbl">Date d'effet</td>
-      <td th:text="${request.effectiveDate != null ? request.effectiveDate : ''}"></td>
+      <td th:text="${variables['effectiveDate']}"></td>
     </tr>
     <tr>
       <td class="lbl">Date de début</td>
-      <td th:text="${request.startDate != null ? request.startDate : ''}"></td>
+      <td th:text="${variables['startDate']}"></td>
     </tr>
     <tr>
       <td class="lbl">Date de fin</td>
-      <td th:text="${request.endDate != null ? request.endDate : ''}"></td>
+      <td th:text="${variables['endDate']}"></td>
     </tr>
     <tr>
       <td class="lbl">Signataire</td>
@@ -324,10 +315,8 @@ body {
   </div>
 </div>
 
-<!-- CLÔTURE -->
-<div class="closing">
-  Fait à __________________, le ____ / ____ / __________
-</div>
+<!-- CLÔTURE · lieu et date resolus par le systeme -->
+<div th:replace="~{fragments/contract-brand :: closing}"></div>
 
 <!-- SIGNATURES -->
 <table class="sig-table">
@@ -343,7 +332,7 @@ body {
       <div class="sig-date"
            th:if="${variables != null and variables['operatorSignedAt'] != null}"
            th:text="${'Date : ' + variables['operatorSignedAt']}">Date</div>
-      <div class="sig-date" th:unless="${variables != null and variables['operatorSignedAt'] != null}">Date : _____ / _____ / _________</div>
+      
       <div class="sig-mention">Signature et cachet</div>
     </td>
     <td class="sig-cell">
@@ -351,19 +340,13 @@ body {
       <div class="sig-name" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom</div>
       <div class="sig-qual" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Membre / Représentant'}">Qualité</div>
       <div class="sig-box"></div>
-      <div class="sig-date">Date : _____ / _____ / _________</div>
       <div class="sig-mention">Précédé de la mention manuscrite « Lu et approuvé »</div>
     </td>
   </tr>
 </table>
 
 <!-- PIED DE PAGE -->
-<div class="doc-footer">
-  <span th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</span>
-  &nbsp;·&nbsp; Contrat d'adhésion &nbsp;·&nbsp;
-  Généré le <span th:text="${generatedAt}">2026-01-01</span>
-  &nbsp;·&nbsp; Document confidentiel · conserver précieusement
-</div>
+<div th:replace="~{fragments/contract-brand :: footer}"></div>
 
 </body>
 </html>

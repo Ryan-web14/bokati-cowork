@@ -1,103 +1,43 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="robots" content="noindex, nofollow">
-    <title th:text="|Comparaison ${reference}|">Comparaison</title>
-    <style>
-        *{ box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f6f4f9; color: #1a0a2e;
-            display: flex; align-items: center; justify-content: center;
-            min-height: 100vh; padding: 20px; line-height: 1.6;
-        }
-        .card {
-            background: #fff; border-radius: 10px; max-width: 460px; width: 100%;
-            box-shadow: 0 2px 16px rgba(26,10,46,.08); overflow: hidden;
-        }
-        .head { padding: 28px 26px 22px; border-bottom: 1px solid #efeaf4; text-align: center; }
-        .seal {
-            width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 14px;
-            display: flex; align-items: center; justify-content: center; font-size: 24px;
-            background: #e9f6ec; color: #1f7a3d;
-        }
-        .seal.ko { background: #fdecee; color: #b0343c; }
-        .seal.unknown { background: #f6f2e8; color: #8a5a00; }
-        .verdict { font-size: 17px; font-weight: 800; color: #1f7a3d; }
-        .verdict.ko { color: #b0343c; }
-        .verdict.unknown { color: #8a5a00; }
-        .kind { font-size: 12px; color: #9b8caa; margin-top: 4px; }
-        .body { padding: 20px 26px 24px; }
-        .note {
-            padding: 12px 14px; background: #faf8fc; border-radius: 6px;
-            font-size: 12px; color: #5c4f6e; line-height: 1.65;
-        }
-        .fp { margin-top: 14px; font-size: 10.5px; color: #9b8caa; }
-        .fp code { font-family: "SF Mono", Consolas, monospace; word-break: break-all; color: #7a6b8c; }
-        .fp .lbl { display: block; margin-top: 8px; color: #7a6b8c; font-weight: 600; }
-        .foot { padding: 14px 26px 20px; text-align: center; font-size: 11px; color: #b3a7c0; }
-    </style>
-</head>
+<head th:insert="~{fragments/page :: pagehead(|Comparaison ${reference} · Elle A Osé|)}"></head>
 <body>
-<div class="card">
-    <!--/*
-        Trois issues distinctes, et non deux · dire « different » d'un document jamais scelle
-        serait faux : rien ne permet alors de conclure, et l'annoncer comme un echec ferait
-        soupconner un fichier parfaitement legitime.
-    */-->
-    <div class="head">
-        <th:block th:if="${comparison.sealed() and comparison.match()}">
-            <div class="seal">✓</div>
-            <div class="verdict">Fichier conforme</div>
-        </th:block>
-        <th:block th:if="${comparison.sealed() and !comparison.match()}">
-            <div class="seal ko">✕</div>
-            <div class="verdict ko">Fichier différent</div>
-        </th:block>
-        <th:block th:unless="${comparison.sealed()}">
-            <div class="seal unknown">?</div>
-            <div class="verdict unknown">Comparaison impossible</div>
-        </th:block>
-        <div class="kind" th:text="${reference}">INV-000001</div>
-    </div>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
 
-    <div class="body">
-        <div class="note" th:if="${comparison.sealed() and comparison.match()}">
-            Ce fichier est exactement celui que nous avons émis. Il n'a subi aucune modification.
-        </div>
+  <th:block th:if="${comparison.sealed() and comparison.match()}">
+    <p class="state ok">Conforme</p>
+    <h1>Le fichier correspond</h1>
+    <p class="lede">Son empreinte est identique à celle enregistrée au moment de l'émission. Il n'a pas été modifié depuis.</p>
+  </th:block>
 
-        <div class="note" th:if="${comparison.sealed() and !comparison.match() and !comparison.watermarked()}">
-            Ce fichier ne correspond pas à la version que nous avons émise. Il a été modifié depuis,
-            ou provient d'une autre source. Demandez-nous une copie d'origine.
-        </div>
+  <th:block th:if="${comparison.sealed() and !comparison.match() and comparison.watermarked()}">
+    <p class="state todo">Copie filigranée</p>
+    <h1>Ce fichier est une copie marquée</h1>
+    <p class="lede">L'empreinte diffère parce qu'un filigrane a été apposé après l'émission. Le contenu du document reste celui d'origine.</p>
+  </th:block>
 
-        <!--/* Un document annule est servi avec un filigrane · sa copie telechargee differe donc
-               legitimement de la version canonique, et il serait trompeur de crier a la fraude. */-->
-        <div class="note" th:if="${comparison.sealed() and !comparison.match() and comparison.watermarked()}">
-            Ce document a été <strong>annulé</strong>. Les copies téléchargées depuis son annulation
-            portent une mention « ANNULÉ » et diffèrent donc de la version d'origine : cet écart est
-            normal. En revanche, ce document ne doit plus être considéré comme valide.
-        </div>
+  <th:block th:if="${comparison.sealed() and !comparison.match() and !comparison.watermarked()}">
+    <p class="state ko">Non conforme</p>
+    <h1>Le fichier ne correspond pas</h1>
+    <p class="lede">Son empreinte diffère de celle enregistrée à l'émission. Ce fichier n'est pas celui qui a été émis, ou il a été modifié depuis.</p>
+  </th:block>
 
-        <div class="note" th:unless="${comparison.sealed()}">
-            Ce document n'a pas de version figée de référence — il n'était pas encore validé au
-            moment de son émission. Nous ne pouvons donc ni confirmer ni infirmer que ce fichier
-            est le nôtre.
-        </div>
+  <th:block th:unless="${comparison.sealed()}">
+    <p class="state todo">Non scellé</p>
+    <h1>Ce document n'a pas d'empreinte</h1>
+    <p class="lede">Il a été émis avant la mise en place du scellement. Aucune comparaison n'est possible.</p>
+  </th:block>
 
-        <div class="fp">
-            <span class="lbl">Empreinte du fichier fourni</span>
-            <code th:text="${comparison.provided()}">…</code>
-            <th:block th:if="${comparison.expected() != null}">
-                <span class="lbl">Empreinte de référence</span>
-                <code th:text="${comparison.expected()}">…</code>
-            </th:block>
-        </div>
-    </div>
+  <dl class="rows">
+    <div><dt>Référence</dt><dd class="mono" th:text="${reference}">REF</dd></div>
+    <div><dt>Empreinte fournie</dt><dd class="mono" th:text="${comparison.provided()}">…</dd></div>
+    <div th:if="${comparison.expected() != null}"><dt>Empreinte attendue</dt><dd class="mono" th:text="${comparison.expected()}">…</dd></div>
+    <div><dt>Comparé le</dt><dd th:text="${generatedAt}">Date</dd></div>
+  </dl>
 
-    <div class="foot">Comparé le <span th:text="${generatedAt}">01/01/2026</span> · SHA-256</div>
-</div>
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
 </body>
 </html>

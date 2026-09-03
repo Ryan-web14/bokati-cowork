@@ -28,6 +28,7 @@ import com.sni.bokaticowork.features.payment.model.PaymentAllocation;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository;
 import com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository;
+import com.sni.bokaticowork.core.utils.BrandLogo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -77,6 +78,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final DocumentStorageService documentStorageService;
     private final PdfSignatureService pdfSignatureService;
     private final Locale appLocale;
+    private final BrandLogo brandLogo;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
     private String verifyBaseUrl;
@@ -289,7 +291,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         context.setVariable("fmt", new BillingDocumentTemplateFormatter(document.currency(), objectMapper, appLocale));
         context.setVariable("qrCode", generateQrCode(document));
         context.setVariable("payments", fetchPaymentInfos(document.documentNumber()));
-        context.setVariable("logo", loadLogoBase64());
+        context.setVariable("logo", brandLogo.base64());
         return templateEngine.process("billing/document", context);
     }
 
@@ -300,7 +302,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         context.setVariable("customer", toCustomerView(document));
         context.setVariable("fmt", fmt);
         context.setVariable("generatedAt", LocalDate.now());
-        context.setVariable("logo", loadLogoBase64());
+        context.setVariable("logo", brandLogo.base64());
         return templateEngine.process("billing/avoir-note-credit", context);
     }
 
@@ -339,15 +341,6 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             String label, String description, String quantity, String unitPrice, String total) {}
 
     public record CustomerView(String name, String id, String email) {}
-
-    private String loadLogoBase64() {
-        try (java.io.InputStream is = getClass().getResourceAsStream("/static/images/logo.png")) {
-            if (is == null) return null;
-            return Base64.getEncoder().encodeToString(is.readAllBytes());
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     private List<PaymentInfo> fetchPaymentInfos(String documentNumber) {
         return paymentAllocationRepository.findAllByBillingDocumentNumber(documentNumber)
@@ -453,6 +446,18 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             }
             String formatted = amount(amount);
             return StringUtils.hasText(currency) ? formatted + " " + currency.trim() : formatted;
+        }
+
+        /**
+         * Somme en toutes lettres, pour la mention « arretee a la somme de ».
+         *
+         * <p>Elle manquait : le chiffre seul se rature, la lettre non. L'usage est constant sur les
+         * pieces comptables.
+         */
+        public String inWords(BigDecimal amount) {
+            return amount == null ? EMPTY_VALUE
+                    : com.sni.bokaticowork.features.billing.service.support.FrenchAmountWords
+                        .withCurrency(amount, currency);
         }
 
         public String amount(BigDecimal amount) {

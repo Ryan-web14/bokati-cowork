@@ -12,7 +12,7 @@
     .em-header { background: #110828; padding: 22px 40px; }
     .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
     .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.30); margin-top: 5px; }
-    .em-stripe { height: 3px; background: linear-gradient(90deg, #C9A84C 0%, #10B981 100%); }
+    .em-stripe { height: 3px; background: #C9A84C; }
     .em-body { padding: 40px 40px 36px; }
     .em-title { font-size: 21px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 10px; }
     .em-intro { font-size: 14.5px; color: #5C4F6E; line-height: 1.7; margin-bottom: 12px; }
@@ -44,12 +44,15 @@
   </style>
 </head>
 <body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre remboursement est enregistré.'}">Votre remboursement est enregistré.</div>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 <div class="wrap">
   <div class="sheet">
 
     <div class="em-header">
-      <div class="em-brand" th:if="${logo == null}">Elle A Osé</div>
-      <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Elle A Osé" style="height:36px; display:block;"/>
+      <div class="em-brand" th:if="${#branding.logoUrl() == null}">Elle A Osé</div>
+      <img th:if="${#branding.logoUrl() != null}" th:src="${#branding.logoUrl()}" alt="Elle A Osé" style="height:36px; display:block;"/>
       <div class="em-brand-sub">Facturation</div>
     </div>
     <div class="em-stripe"></div>
@@ -63,7 +66,7 @@
       </div>
 
       <div class="section-lbl">Détails du remboursement</div>
-      <table class="rows">
+      <table role="presentation" class="rows">
         <tr>
           <td class="r-key">Référence transaction</td>
           <td class="r-val mono" th:text="${transactionNumber}">TXN-000</td>

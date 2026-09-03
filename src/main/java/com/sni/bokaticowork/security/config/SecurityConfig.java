@@ -103,6 +103,10 @@ public class SecurityConfig {
                                 ApiPath.V1 + "/countries"
 
                         ).permitAll();
+                        // Le logo de marque part dans chaque courriel sous forme d'URL · une image
+                        // protegee revient en 401 et le destinataire voit une image cassee. Les
+                        // clients de messagerie chargent l'image sans jeton, par construction.
+                        auth.requestMatchers(HttpMethod.GET, "/images/**").permitAll();
                         auth.requestMatchers("/ws/**").permitAll();
                         auth.requestMatchers("/actuator/health", "/actuator/info").permitAll();
                         auth.requestMatchers(ApiPath.V1 + "/client/**").access(clientPortalAuthorizationManager);

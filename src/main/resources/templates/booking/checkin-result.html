@@ -1,157 +1,39 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title th:text="${success} ? 'Check-in confirmé · Elle A Osé' : 'QR code invalide · Elle A Osé'">Check-in · Elle A Osé</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { min-height: 100vh; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; background: #E8E5E0; color: #1A0A2E; }
-    .topbar { background: #110828; padding: 18px 32px; }
-    .topbar-stripe { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #8B5CF6 100%); }
-    .topbar-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
-    .topbar-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.28); margin-top: 5px; }
-    .content { min-height: calc(100vh - 80px); display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
-    .card { width: 100%; max-width: 520px; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 2px rgba(26,10,46,.05), 0 8px 24px rgba(26,10,46,.10), 0 32px 64px rgba(26,10,46,.12); }
-    .card-top-success { padding: 32px 32px 26px; background: linear-gradient(135deg, #052e16 0%, #166534 65%, #15803d 100%); }
-    .card-top-error { padding: 32px 32px 26px; background: linear-gradient(135deg, #110828 0%, #3b0a1f 55%, #7f1d1d 100%); }
-    .card-top-stripe-success { height: 2px; background: linear-gradient(90deg, #C9A84C 0%, #10B981 100%); }
-    .card-top-stripe-error { height: 2px; background: linear-gradient(90deg, #EF4444 0%, #C9A84C 100%); }
-    .card-title { color: #fff; font-size: 26px; font-weight: 700; letter-spacing: -.4px; line-height: 1.1; }
-    .card-sub { color: rgba(255,255,255,.6); font-size: 12px; letter-spacing: .8px; text-transform: uppercase; margin-top: 8px; }
-    .card-body { padding: 28px 32px 32px; }
-    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; padding-bottom: 10px; border-bottom: 1px solid #EEE9F5; margin-bottom: 0; }
-    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-    .info-table tr { border-bottom: 1px solid #EEE9F5; }
-    .info-table tr:first-child { border-top: 1px solid #EEE9F5; }
-    .info-table td { padding: 13px 0; vertical-align: middle; }
-    .lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; width: 110px; }
-    .val { font-size: 13.5px; font-weight: 600; color: #1A0A2E; text-align: right; }
-    .val-mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1.2px; }
-    .status-pill { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 4px 12px; border-radius: 100px; }
-    .pill-progress { background: #DCFCE7; color: #166534; }
-    .pill-confirmed { background: #DBEAFE; color: #1D4ED8; }
-    .pill-other { background: #EDE9FE; color: #5B21B6; }
-    .welcome-box { display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: #ECFDF5; border: 1px solid #BBF7D0; border-radius: 10px; }
-    .welcome-text { font-size: 13.5px; font-weight: 600; color: #166534; line-height: 1.5; }
-    .error-msg { font-size: 14px; color: #5C4F6E; line-height: 1.75; margin-bottom: 24px; }
-    .ref-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-top: 1px solid #EEE9F5; border-bottom: 1px solid #EEE9F5; margin-bottom: 24px; }
-    .ref-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #B0A0C0; }
-    .ref-value { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 14px; font-weight: 700; color: #1A0A2E; letter-spacing: 1.5px; }
-    .tips { padding-top: 20px; border-top: 1px solid #EEE9F5; }
-    .tips-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #B0A0C0; margin-bottom: 14px; }
-    .tip { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; font-size: 13px; color: #5C4F6E; line-height: 1.6; }
-    .tip-dot { flex-shrink: 0; width: 5px; height: 5px; margin-top: 8px; border-radius: 50%; background: #C9A84C; }
-    .page-footer { text-align: center; padding: 16px; font-size: 11px; color: #B0A0C0; }
-    .page-footer a { color: #9B8CAA; text-decoration: none; }
-    @media (max-width: 540px) {
-      .topbar { padding: 16px 20px; }
-      .content { padding: 24px 0; align-items: flex-start; }
-      .card { border-radius: 0; box-shadow: none; }
-      .card-top-success, .card-top-error { padding: 26px 22px 22px; }
-      .card-title { font-size: 22px; }
-      .card-body { padding: 22px 20px 28px; }
-      .val { text-align: left; }
-    }
-  </style>
-</head>
+<head th:insert="~{fragments/page :: pagehead(${success} ? 'Pointage confirmé · Elle A Osé' : 'Code invalide · Elle A Osé')}"></head>
 <body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
 
-<div class="topbar">
-  <div class="topbar-brand">Elle A Osé</div>
-  <div class="topbar-sub">Check-in réservation</div>
-</div>
-<div class="topbar-stripe"></div>
+  <th:block th:if="${success}">
+    <p class="state ok">Enregistré</p>
+    <h1>Vous êtes enregistré</h1>
+    <p class="lede">Votre arrivée est prise en compte. Bon travail.</p>
 
-<div class="content">
-  <div class="card">
-
-    <!-- Success -->
-    <div th:if="${success}">
-      <div class="card-top-success">
-        <div class="card-title">Check-in confirmé</div>
-        <div class="card-sub">Enregistrement effectué avec succès</div>
+    <dl class="rows">
+      <div><dt>Réservation</dt><dd class="mono" th:text="${bookingNumber}">BKG</dd></div>
+      <div><dt>Espace</dt><dd th:text="${resourceName}">Espace</dd></div>
+      <div><dt>Au nom de</dt><dd th:text="${contactName}">Nom</dd></div>
+      <div><dt>Début</dt><dd th:text="${#temporals.format(startedAt, 'dd/MM/yyyy HH:mm')}">—</dd></div>
+      <div><dt>Fin</dt><dd th:text="${#temporals.format(endedAt, 'dd/MM/yyyy HH:mm')}">—</dd></div>
+      <div>
+        <dt>Statut</dt>
+        <dd th:if="${status == 'IN_PROGRESS'}">En cours</dd>
+        <dd th:if="${status == 'CONFIRMED'}">Confirmée · démarre à l'heure prévue</dd>
+        <dd th:if="${status != 'IN_PROGRESS' and status != 'CONFIRMED'}" th:text="${status}">Statut</dd>
       </div>
-      <div class="card-top-stripe-success"></div>
-      <div class="card-body">
+    </dl>
+  </th:block>
 
-        <div class="section-lbl">Votre réservation</div>
-        <table class="info-table">
-          <tr>
-            <td class="lbl">Référence</td>
-            <td class="val val-mono" th:text="${bookingNumber}">BKG-000</td>
-          </tr>
-          <tr>
-            <td class="lbl">Espace</td>
-            <td class="val" th:text="${resourceName}"></td>
-          </tr>
-          <tr>
-            <td class="lbl">Client</td>
-            <td class="val" th:text="${contactName}"></td>
-          </tr>
-          <tr>
-            <td class="lbl">Début</td>
-            <td class="val" th:text="${#temporals.format(startedAt, 'dd/MM/yyyy HH:mm')}"></td>
-          </tr>
-          <tr>
-            <td class="lbl">Fin</td>
-            <td class="val" th:text="${#temporals.format(endedAt, 'dd/MM/yyyy HH:mm')}"></td>
-          </tr>
-          <tr>
-            <td class="lbl">Statut</td>
-            <td class="val">
-              <span th:if="${status == 'IN_PROGRESS'}" class="status-pill pill-progress">En cours</span>
-              <span th:if="${status == 'CONFIRMED'}" class="status-pill pill-confirmed">Confirmé</span>
-              <span th:if="${status != 'IN_PROGRESS' and status != 'CONFIRMED'}" class="status-pill pill-other" th:text="${status}"></span>
-            </td>
-          </tr>
-        </table>
+  <th:block th:unless="${success}">
+    <p class="state ko">Code invalide</p>
+    <h1>Ce code ne permet pas le pointage</h1>
+    <!-- On ne dit pas seulement que c'est refuse · on dit quoi faire ensuite. -->
+    <p class="lede">Il est peut-être expiré, déjà utilisé, ou hors de la fenêtre de pointage. Présentez-vous à l'accueil, qui pourra vous enregistrer.</p>
+  </th:block>
 
-        <div class="welcome-box">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" flex-shrink="0">
-            <path d="M11 2a5 5 0 100 10A5 5 0 0011 2zM4 20c0-3.9 3.1-7 7-7h.1c3.8.1 6.9 3.2 6.9 7" stroke="#166534" stroke-width="1.7" stroke-linecap="round"/>
-            <path d="M16 9l1.5 1.5L20 8" stroke="#22c55e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <div class="welcome-text">Bienvenue ! Votre accès est validé pour ce créneau.</div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Error -->
-    <div th:unless="${success}">
-      <div class="card-top-error">
-        <div class="card-title">QR code invalide</div>
-        <div class="card-sub">Ce lien n'a pas pu être traité</div>
-      </div>
-      <div class="card-top-stripe-error"></div>
-      <div class="card-body">
-
-        <div class="error-msg">
-          Ce QR code est invalide, a déjà été utilisé, ou la réservation associée n'est plus éligible au check-in. Présentez votre numéro de réservation à l'accueil.
-        </div>
-
-        <div class="ref-row" th:if="${token != null and !#strings.isEmpty(token)}">
-          <span class="ref-label">Référence scannée</span>
-          <span class="ref-value" th:text="${token}"></span>
-        </div>
-
-        <div class="tips">
-          <div class="tips-title">Que faire ?</div>
-          <div class="tip"><div class="tip-dot"></div><span>Vérifiez que le QR code est intact et lisible dans l'email de confirmation.</span></div>
-          <div class="tip"><div class="tip-dot"></div><span>Communiquez votre numéro de réservation à l'accueil pour un check-in manuel.</span></div>
-          <div class="tip"><div class="tip-dot"></div><span>Contactez-nous au <strong>05 204 25 52</strong> si le problème persiste.</span></div>
-        </div>
-
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<div class="page-footer">
-  <strong>Elle A Osé</strong> · <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
-</div>
-
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
 </body>
 </html>

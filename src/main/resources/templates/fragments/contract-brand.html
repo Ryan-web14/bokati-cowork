@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Elements de marque communs aux contrats · en-tete, cloture, pied.
+
+  Traitement sobre : l'identite tient a l'en-tete, au pied et au filet or ; le corps juridique
+  reste noir sur blanc. Un document contractuel tres mis en page affaiblit la perception de son
+  caractere engageant.
+
+  Tout est en tableaux et en blocs. OpenHtmlToPDF 1.0.10 ne connait ni flexbox, ni grid, ni les
+  variables CSS : une mise en page qui les emploie retombe en blocs empiles, sans le moindre
+  avertissement. Les contrats en contenaient de deux a dix occurrences chacun.
+-->
+<body>
+
+<th:block th:fragment="styles">
+<style>
+  /* ── En-tete de marque ── */
+  .ct-letterhead { width: 100%; border-collapse: collapse; }
+  .ct-letterhead td { vertical-align: top; padding: 0; }
+  .ct-lh-logo { height: 34pt; width: auto; display: block; margin-bottom: 3pt; }
+  .ct-lh-name {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 15pt; font-weight: bold; letter-spacing: 2pt;
+    text-transform: uppercase; line-height: 1.15;
+  }
+  .ct-lh-tag {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 7pt; letter-spacing: 1.4pt; text-transform: uppercase;
+    color: #555; margin-top: 3pt;
+  }
+  .ct-lh-right { text-align: right; font-size: 7.5pt; color: #444; line-height: 1.6; }
+  .ct-lh-right strong { color: #111; }
+  .ct-rule { height: 1.5pt; background: #c9a84c; margin: 9pt 0 0; font-size: 0; line-height: 0; }
+
+  /* ── Designation des parties ── */
+  .ct-desig {
+    border-left: 1.5pt solid #111; padding: 1pt 0 1pt 10pt; margin: 10pt 0 12pt;
+    font-size: 9pt; line-height: 1.7;
+  }
+  .ct-desig p { margin: 0; }
+  .ct-desig p + p { margin-top: 4pt; }
+
+  /* ── Cloture ── */
+  .ct-closing { margin-top: 16pt; font-size: 9.5pt; }
+
+  /* ── Pied de page ── */
+  .ct-footer {
+    margin-top: 18pt; padding-top: 6pt; border-top: 0.75pt solid #aaa;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 7pt; color: #666; line-height: 1.7; text-align: center;
+  }
+  .ct-footer strong { color: #333; }
+</style>
+</th:block>
+
+
+<!-- En-tete · nom a gauche, coordonnees a droite, filet or dessous. -->
+<table th:fragment="letterhead" class="ct-letterhead">
+  <tr>
+    <td>
+      <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="ct-lh-logo" alt="ELLE A OSE"/>
+      <div class="ct-lh-name" th:if="${logo == null}"
+           th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</div>
+      <div class="ct-lh-tag">Espace de coworking</div>
+    </td>
+    <td class="ct-lh-right">
+      <span th:if="${variables != null and variables['operatorAddress'] != null}"
+            th:text="${variables['operatorAddress']}">Adresse</span><br th:if="${variables != null and variables['operatorAddress'] != null}">
+      <span th:if="${variables != null and variables['operatorRccm'] != null}">RCCM <strong th:text="${variables['operatorRccm']}">RCCM</strong><br></span>
+      <span th:if="${business != null and business.email != null}" th:text="${business.email}">courriel</span>
+      <span th:if="${business != null and business.email != null and business.phone != null}"> &middot; </span>
+      <span th:if="${business != null and business.phone != null}" th:text="${business.phone}">telephone</span>
+    </td>
+  </tr>
+</table>
+
+
+<!--
+  Cloture · lieu et date resolus par le systeme.
+
+  Ces gabarits portaient « Fait a __________, le ____ / ____ / ________ » en dur, jamais rempli.
+  Un contrat remis avec des blancs laisse croire que sa date reste a negocier, et deux exemplaires
+  peuvent finir dates differemment.
+-->
+<div th:fragment="closing" class="ct-closing"
+     th:text="|Fait à ${placeOfSigning}, le ${signingDate}.|">Fait à …, le …</div>
+
+
+<div th:fragment="footer" class="ct-footer">
+  <strong th:text="${variables != null and variables['operatorName'] != null ? variables['operatorName'] : 'ELLE A OSE'}">ELLE A OSE</strong>
+  <span th:if="${variables != null and variables['operatorAddress'] != null}"
+        th:text="| · ${variables['operatorAddress']}|"></span>
+  <span th:if="${variables != null and variables['operatorRccm'] != null}"
+        th:text="| · RCCM ${variables['operatorRccm']}|"></span><br>
+  <span th:text="|Réf. ${request.templateCode} · établi le ${signingDate} · document scellé électroniquement.|">Références</span>
+</div>
+
+</body>
+</html>
