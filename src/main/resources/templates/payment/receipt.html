@@ -11,79 +11,80 @@
                 content: "Page " counter(page) " sur " counter(pages);
                 font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
                 font-size: 8px;
-                color: #9b8caa;
+                color: #1f1430;
             }
         }
         * { box-sizing: border-box; }
         body {
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            color: #1a0a2e;
+            color: #1f1430;
             font-size: 10.5px;
             line-height: 1.6;
             margin: 0;
             background: #ffffff;
         }
         h1, h2, h3, p { margin: 0; }
-        .doc-header { background: #1a0a2e; padding: 18px 26px 14px; }
+        .doc-header { background: #f4f1f7; padding: 18px 26px 14px; }
         .header-table { width: 100%; border-collapse: collapse; }
         .header-table td { border: none; padding: 0; vertical-align: middle; }
         .brand-block img { height: 42px; width: auto; display: block; }
-        .brand-text-name { font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: 3px; text-transform: uppercase; }
-        .brand-text-sub { font-size: 7px; color: #9b8caa; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
+        .brand-text-name { font-size: 18px; font-weight: 700; color: #1f1430; letter-spacing: 3px; text-transform: uppercase; }
+        .brand-id { font-size: 7px; color: #1f1430; line-height: 1.6; margin-top: 4px; opacity: .82; }
+        .brand-text-sub { font-size: 7px; color: #1f1430; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
         .doc-meta { text-align: right; }
-        .doc-meta .doc-label { font-size: 8px; color: #9b8caa; text-transform: uppercase; letter-spacing: 1.2px; }
-        .doc-meta .doc-number { font-size: 16px; font-weight: 700; color: #ffffff; margin-top: 3px; letter-spacing: 0.5px; }
-        .doc-meta .doc-issued { font-size: 9px; color: #c9a84c; margin-top: 4px; }
-        .header-stripe { height: 3px; background: #c9a84c; border-right: 220px solid #8b5cf6; }
-        .ribbon { background: #fffdf7; border-bottom: 1px solid #e8e0f0; padding: 6px 26px; font-size: 9px; color: #5c4f6e; }
-        .method-badge { display: inline-block; padding: 2px 10px; background: #f7e6b0; color: #7c5600; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-radius: 2px; margin-right: 10px; }
+        .doc-meta .doc-label { font-size: 8px; color: #1f1430; text-transform: uppercase; letter-spacing: 1.2px; }
+        .doc-meta .doc-number { font-size: 16px; font-weight: 700; color: #1f1430; margin-top: 3px; letter-spacing: 0.5px; }
+        .doc-meta .doc-issued { font-size: 9px; color: #1f1430; margin-top: 4px; }
+        .header-stripe { height: 2px; background: #c9a84c; }
+        .ribbon { background: #fffdf7; border-bottom: 1px solid #e8e0f0; padding: 6px 26px; font-size: 9px; color: #1f1430; }
+        .method-badge { display: inline-block; padding: 2px 10px; background: #f7e6b0; color: #1f1430; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-radius: 2px; margin-right: 10px; }
         .content { padding: 18px 26px 0; }
-        .section-label { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; color: #8b5cf6; margin: 18px 0 10px; border-bottom: 1px solid #e8e0f0; padding-bottom: 5px; }
+        .section-label { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; color: #1f1430; margin: 18px 0 10px; border-bottom: 1px solid #e8e0f0; padding-bottom: 5px; }
         .section-label span { display: inline-block; border-left: 16px solid #c9a84c; padding-left: 8px; }
         .info-grid { width: 100%; border-collapse: collapse; margin-bottom: 0; }
         .info-grid td { vertical-align: top; padding: 0; border: none; }
         .info-card { border: 1px solid #e8e0f0; border-radius: 3px; overflow: hidden; }
-        .info-card-head { background: #1a0a2e; border-left: 3px solid #c9a84c; color: #ffffff; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding: 5px 12px; }
+        .info-card-head { background: #f4f1f7; border-left: 3px solid #c9a84c; color: #1f1430; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding: 5px 12px; }
         .info-card-body { background: #ffffff; padding: 10px 12px; }
-        .info-primary { font-size: 12px; font-weight: 700; color: #1a0a2e; margin-bottom: 3px; }
-        .info-detail { font-size: 9.5px; color: #5c4f6e; line-height: 1.65; }
+        .info-primary { font-size: 12px; font-weight: 700; color: #1f1430; margin-bottom: 3px; }
+        .info-detail { font-size: 9.5px; color: #1f1430; line-height: 1.65; }
         .ref-table { width: 100%; border-collapse: collapse; }
         .ref-table td { padding: 3px 0; border: none; font-size: 9.5px; border-bottom: 1px solid #e8e0f0; }
         .ref-table tr:last-child td { border-bottom: none; }
-        .ref-table .lbl { color: #5c4f6e; width: 50%; }
-        .ref-table .val { font-weight: 700; color: #1a0a2e; text-align: right; }
+        .ref-table .lbl { color: #1f1430; width: 50%; }
+        .ref-table .val { font-weight: 700; color: #1f1430; text-align: right; }
         .payment-card { border: 1px solid #e8e0f0; border-radius: 3px; overflow: hidden; margin-bottom: 0; }
-        .payment-card-head { background: #1a0a2e; border-left: 3px solid #c9a84c; color: #ffffff; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding: 5px 12px; }
+        .payment-card-head { background: #f4f1f7; border-left: 3px solid #c9a84c; color: #1f1430; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding: 5px 12px; }
         .payment-card-body { background: #fffdf7; padding: 10px 12px; }
         .payment-grid { width: 100%; border-collapse: collapse; }
         .payment-grid td { border: none; vertical-align: top; padding: 0 12px 0 0; }
         .payment-grid td:last-child { padding-right: 0; }
-        .pay-label { font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #9b8caa; margin-bottom: 3px; }
-        .pay-value { font-weight: 700; color: #1a0a2e; font-size: 11px; }
+        .pay-label { font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #1f1430; margin-bottom: 3px; }
+        .pay-value { font-weight: 700; color: #1f1430; font-size: 11px; }
         .alloc-table { width: 100%; border-collapse: collapse; font-size: 10px; }
-        .alloc-table thead th { background: #2a1548; color: #ffffff; padding: 7px 9px; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: none; }
-        .alloc-table thead th.col-total { background: #c9a84c; color: #1a0a2e; }
+        .alloc-table thead th { background: #2a1548; color: #1f1430; padding: 7px 9px; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: none; }
+        .alloc-table thead th.col-total { background: #c9a84c; color: #1f1430; }
         .alloc-table tbody td { padding: 7px 9px; border-bottom: 1px solid #e8e0f0; vertical-align: top; }
         .alloc-table tbody tr:nth-child(even) td { background: #fffdf7; }
         .alloc-table tbody tr:last-child td { border-bottom: 2px solid #1a0a2e; }
-        .alloc-table tbody td.col-total { font-weight: 700; color: #7c5600; background: #fff8e6; }
+        .alloc-table tbody td.col-total { font-weight: 700; color: #1f1430; background: #fff8e6; }
         .alloc-table tbody tr:nth-child(even) td.col-total { background: #f7e6b0; }
-        .empty-alloc { background: #fffdf7; border: 1px solid #e8e0f0; border-radius: 3px; padding: 12px 14px; font-size: 10px; color: #5c4f6e; }
+        .empty-alloc { background: #fffdf7; border: 1px solid #e8e0f0; border-radius: 3px; padding: 12px 14px; font-size: 10px; color: #1f1430; }
         .totals-wrap { width: 100%; margin-top: 14px; text-align: right; }
         .totals { width: 300px; margin-left: auto; border: 1px solid #e8e0f0; border-radius: 3px; overflow: hidden; font-size: 10px; border-collapse: collapse; }
         .totals td { padding: 6px 12px; border-top: 1px solid #e8e0f0; }
         .totals tr:first-child td { border-top: none; }
-        .totals .lbl { color: #5c4f6e; text-align: left; }
+        .totals .lbl { color: #1f1430; text-align: left; }
         .totals .val { text-align: right; font-weight: 700; }
-        .totals .status-row td { background: #1a0a2e; color: #ffffff; font-size: 12px; font-weight: 700; padding: 10px 12px; }
-        .totals .status-row td.val { color: #c9a84c; }
+        .totals .status-row td { background: #f4f1f7; color: #1f1430; font-size: 12px; font-weight: 700; padding: 10px 12px; }
+        .totals .status-row td.val { color: #1f1430; }
         .qr-block { text-align: center; }
-        .qr-label { font-size: 6.5px; color: #9b8caa; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px; }
+        .qr-label { font-size: 6.5px; color: #1f1430; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px; }
         .r { text-align: right; }
-        .muted { color: #5c4f6e; }
-        .doc-type-muted { font-size: 8.5px; color: #9b8caa; margin-top: 1px; }
-        .doc-footer { margin-top: 24px; padding: 10px 26px; border-top: 1px solid #e8e0f0; font-size: 8px; color: #9b8caa; text-align: center; }
-        .doc-footer .made-by { font-size: 6.5px; color: #d6d0df; margin-top: 2px; }
+        .muted { color: #1f1430; }
+        .doc-type-muted { font-size: 8.5px; color: #1f1430; margin-top: 1px; }
+        .doc-footer { margin-top: 24px; padding: 10px 26px; border-top: 1px solid #e8e0f0; font-size: 8px; color: #1f1430; text-align: center; }
+        .doc-footer .made-by { font-size: 6.5px; color: #1f1430; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -92,10 +93,10 @@
         <tr>
             <td class="brand-block">
                 <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Logo"/>
-                <div th:if="${logo == null}">
-                    <div class="brand-text-name">Elle A Ose</div>
-                    <div class="brand-text-sub">Cowork &amp; Studio</div>
-                </div>
+                <div class="brand-text-name" th:if="${logo == null}">ELLE A OSE</div>
+                <div class="brand-text-sub">Espace de coworking</div>
+                <div class="brand-id">84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire<br>
+                    RCCM CG-PNR-01-2017-A11-00472</div>
             </td>
             <td class="doc-meta">
                 <div class="doc-label">Recu de paiement</div>

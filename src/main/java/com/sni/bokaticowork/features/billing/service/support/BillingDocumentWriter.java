@@ -54,7 +54,7 @@ public class BillingDocumentWriter {
             line.setDocument(saved);
             lineRepository.save(line);
         });
-        saveDiscounts(saved, discounts, calculation.totalAmount());
+        saveDiscounts(saved, discounts, calculation.discountAmounts());
         saveTaxes(saved, calculation);
         saveClauses(saved, clauses);
         if (advance != null) {
@@ -142,14 +142,24 @@ public class BillingDocumentWriter {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private void saveDiscounts(BillingDocument document, List<CreateBillingDocumentDiscountRequest> discounts, BigDecimal baseAmount) {
+    /**
+     * Enregistre les remises avec le montant <b>calcule</b>, sans le recalculer.
+     *
+     * <p>Il l'etait auparavant ici meme, sur {@code calculation.totalAmount()} — le TTC apres
+     * remise — alors que le calcul travaillait sur le net HT. Une remise de 10 % sur 100 000 HT
+     * s'enregistrait a 10 701 pour 10 000 reellement deduits : le detail contredisait le total,
+     * et personne ne pouvait dire lequel des deux faisait foi.
+     */
+    private void saveDiscounts(BillingDocument document, List<CreateBillingDocumentDiscountRequest> discounts,
+                               List<BigDecimal> computedAmounts) {
         if (discounts == null || discounts.isEmpty()) {
             return;
         }
+        int index = 0;
         for (CreateBillingDocumentDiscountRequest request : discounts) {
-            BigDecimal amount = request.discountType() == BillingDiscountType.PERCENTAGE
-                    ? baseAmount.multiply(request.value()).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
-                    : request.value();
+            BigDecimal amount = computedAmounts != null && index < computedAmounts.size()
+                    ? computedAmounts.get(index) : BigDecimal.ZERO;
+            index++;
             discountRepository.save(BillingDocumentDiscount.builder()
                     .document(document)
                     .discountCode(request.discountCode())
@@ -161,13 +171,43 @@ public class BillingDocumentWriter {
         }
     }
 
+    /**
+     * Taux effectivement applique, tire des lignes.
+     *
+     * <p>Il etait ecrit {@code BigDecimal.ZERO} en dur — invisible tant qu'aucun document ne
+     * l'affichait. La facture annoncait « TVA 0 % » sur une TVA de 16 486.
+     *
+     * <p>Quand toutes les lignes taxees portent le meme taux, c'est celui-la. Sinon le taux
+     * effectif, deduit des montants : il reste exact, la ou un taux choisi au hasard parmi
+     * plusieurs serait faux.
+     */
+    private BigDecimal effectiveRate(List<BillingDocumentLine> lines,
+                                     java.util.function.Function<BillingDocumentLine, BigDecimal> rateOf,
+                                     BigDecimal base, BigDecimal amount) {
+        java.util.Set<BigDecimal> rates = lines.stream()
+                .filter(l -> Boolean.TRUE.equals(l.getTaxable()))
+                .map(rateOf)
+                .filter(java.util.Objects::nonNull)
+                .filter(r -> r.signum() > 0)
+                .map(r -> r.stripTrailingZeros())
+                .collect(java.util.stream.Collectors.toSet());
+        if (rates.size() == 1) {
+            return rates.iterator().next().setScale(4, RoundingMode.HALF_UP);
+        }
+        if (base == null || base.signum() == 0) {
+            return BigDecimal.ZERO;
+        }
+        return amount.multiply(BigDecimal.valueOf(100)).divide(base, 4, RoundingMode.HALF_UP);
+    }
+
     private void saveTaxes(BillingDocument document, BillingCalculationService.CalculatedDocument calculation) {
         if (calculation.vatAmount().signum() > 0) {
             taxRepository.save(BillingDocumentTax.builder()
                     .document(document)
                     .taxCode("VAT")
                     .taxName("TVA")
-                    .rate(BigDecimal.ZERO)
+                    .rate(effectiveRate(calculation.lines(), BillingDocumentLine::getVatRate,
+                            calculation.taxableAmount(), calculation.vatAmount()))
                     .taxableAmount(calculation.taxableAmount())
                     .taxAmount(calculation.vatAmount())
                     .build());
@@ -177,7 +217,8 @@ public class BillingDocumentWriter {
                     .document(document)
                     .taxCode("ADDITIONAL_CENT")
                     .taxName("Centime additionnel")
-                    .rate(BigDecimal.ZERO)
+                    .rate(effectiveRate(calculation.lines(), BillingDocumentLine::getAdditionalCentRate,
+                            calculation.vatAmount(), calculation.additionalCentAmount()))
                     .taxableAmount(calculation.vatAmount())
                     .taxAmount(calculation.additionalCentAmount())
                     .build());

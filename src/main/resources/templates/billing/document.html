@@ -419,10 +419,28 @@
                 <table class="summary">
                     <tr><td class="lbl">Total brut HT</td><td class="val num" th:text="${fmt.money(document.subtotalAmount())}">0</td></tr>
                     <tr th:if="${document.discountAmount() != null and document.discountAmount().signum() > 0}"><td class="lbl">Remises</td><td class="val num" th:text="${'-' + fmt.money(document.discountAmount())}">0</td></tr>
+                    <!-- Detail des remises de document · le montant accorde est exprime en TTC,
+                         c'est ce dont la facture du client baisse. La ligne « Remises » ci-dessus
+                         porte, elle, la reduction d'assiette en HT. -->
+                    <tr th:each="rem : ${document.discounts()}">
+                        <td class="lbl" style="padding-left:10px; font-size:8.4px;"
+                            th:text="${rem.description() != null ? rem.description() : rem.discountCode()}">Remise</td>
+                        <td class="val num" style="font-size:8.4px;"
+                            th:text="${(rem.discountType()?.name() == 'PERCENTAGE' ? fmt.percent(rem.value()) + ' · ' : '') + '-' + fmt.money(rem.amount()) + ' TTC'}">0</td>
+                    </tr>
                     <tr th:if="${document.optionsTotal() != null and document.optionsTotal().signum() > 0}"><td class="lbl">Dont options non retenues</td><td class="val num" th:text="${fmt.money(document.optionsTotal())}">0</td></tr>
                     <tr><td class="lbl">Base taxable</td><td class="val num" th:text="${fmt.money(document.taxableAmount())}">0</td></tr>
-                    <tr><td class="lbl">TVA</td><td class="val num" th:text="${fmt.money(document.vatAmount())}">0</td></tr>
-                    <tr th:if="${document.additionalCentAmount() != null and document.additionalCentAmount().signum() > 0}"><td class="lbl">Centimes additionnels</td><td class="val num" th:text="${fmt.money(document.additionalCentAmount())}">0</td></tr>
+                    <!-- Un taux par ligne de taxe · quand plusieurs coexistent, chacune se lit
+                         separement et la facture se ventile sans revenir au detail des lignes. -->
+                    <tr th:each="tax : ${document.taxes()}">
+                        <td class="lbl" th:text="${(tax.taxName() != null ? tax.taxName() : 'TVA') + ' ' + fmt.percent(tax.rate())}">TVA 18 %</td>
+                        <td class="val num" th:text="${fmt.money(tax.taxAmount())}">0</td>
+                    </tr>
+                    <!-- Repli quand le document ne porte pas le detail par taux. -->
+                    <th:block th:if="${document.taxes() == null or #lists.isEmpty(document.taxes())}">
+                        <tr><td class="lbl">TVA</td><td class="val num" th:text="${fmt.money(document.vatAmount())}">0</td></tr>
+                        <tr th:if="${document.additionalCentAmount() != null and document.additionalCentAmount().signum() > 0}"><td class="lbl">Centimes additionnels</td><td class="val num" th:text="${fmt.money(document.additionalCentAmount())}">0</td></tr>
+                    </th:block>
                     <tr class="total-row"><td>TOTAL TTC</td><td class="r num" th:text="${fmt.money(document.totalAmount())}">0</td></tr>
                     <tr th:if="${document.advance() != null and document.advance().status() != null and document.advance().status().name() == 'PAID'}">
                         <td class="lbl" style="color:#1f1430;">
@@ -443,28 +461,6 @@
             </td>
         </tr>
     </table>
-
-    <!-- RÉCAPITULATIF DE TVA · sans lui, une facture melant du 18 % et de l'exonere n'affiche
-         qu'un total, et ne se ventile pas en comptabilite. -->
-    <div th:if="${document.taxes() != null and not #lists.isEmpty(document.taxes())}" style="margin-top:8px;">
-        <div class="section-label">Récapitulatif de TVA</div>
-        <table class="lines">
-            <thead>
-                <tr>
-                    <th style="width:46%;">Taux</th>
-                    <th class="r" style="width:27%;">Base taxable</th>
-                    <th class="r" style="width:27%;">Montant</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="tax : ${document.taxes()}">
-                    <td th:text="${tax.taxName() != null ? tax.taxName() + ' · ' + fmt.percent(tax.rate()) : fmt.percent(tax.rate())}">TVA · 18 %</td>
-                    <td class="r num" th:text="${fmt.amount(tax.taxableAmount())}">0</td>
-                    <td class="r num col-amt" th:text="${fmt.amount(tax.taxAmount())}">0</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
 
     <!-- MONTANT EN TOUTES LETTRES · le chiffre seul se rature, la lettre non. -->
     <div style="margin-top:10px; border:1px solid #1f1430; padding:7px 10px;">
