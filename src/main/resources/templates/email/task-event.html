@@ -114,6 +114,9 @@
                 <tr>
                     <td class="task-body-td" colspan="2">
                         <div class="task-title" th:text="${title}">Titre de la tâche</div>
+                        <div th:if="${description}" class="task-desc"
+                             style="font-size:13px; color:#5C4F6E; line-height:1.6; margin:6px 0 12px;"
+                             th:text="${description}">Description</div>
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                             <tr>
                                 <td th:if="${priority}" style="padding:0 8px 8px 0; vertical-align:top; width:50%;">

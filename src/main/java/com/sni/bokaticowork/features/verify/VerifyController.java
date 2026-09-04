@@ -24,7 +24,7 @@ import java.util.Locale;
 /**
  * Vérification publique d'un document émis par la plateforme.
  *
- * <p>Cette page répond à une question — « ce document est-il bien sorti de chez nous ? » — et à
+ * <p>Cette page répond à une question · « ce document est-il bien sorti de chez nous ? » · et à
  * rien d'autre. Elle exposait auparavant le document complet, lignes, coordonnées du client et
  * paiements compris, sur une clé énumérable et sans jeton : une boucle sur les numéros suffisait
  * à lire la facturation de tous les clients.
@@ -76,7 +76,7 @@ public class VerifyController {
      *
      * <p>C'est l'outil qui tranche un litige : le client presente le PDF qu'il detient, la page
      * dit s'il s'agit bien de celui qui a ete emis. Aucune donnee du document n'est revelee au
-     * passage — la reponse se limite a « conforme » ou « different ».
+     * passage · la reponse se limite a « conforme » ou « different ».
      */
     @PostMapping("/doc/{documentNumber}/compare")
     public String compareDocument(@PathVariable String documentNumber,

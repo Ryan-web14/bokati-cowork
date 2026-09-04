@@ -26,7 +26,7 @@ import java.util.Optional;
  * <h2>Deux temps distincts</h2>
  * {@link #evaluate} constate et n'interrompt rien : c'est ce qui permet a un commercial de
  * construire son offre librement et de voir en direct ce qui coince. {@link #enforce} refuse, et
- * n'est appele qu'a l'emission — le moment ou le document engage.
+ * n'est appele qu'a l'emission · le moment ou le document engage.
  *
  * <h2>Le contournement</h2>
  * Il passe par la permission {@code BILLING:DISCOUNT_OVERRIDE}, pas par un role code en dur. Un

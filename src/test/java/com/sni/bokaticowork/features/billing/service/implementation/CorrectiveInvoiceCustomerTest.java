@@ -48,7 +48,7 @@ class CorrectiveInvoiceCustomerTest {
     @Test
     void shouldInheritTheCustomerFromTheInvoiceBeingCorrected() {
         // Regression : la rectificative echouait sur « Customer name is required when customer
-        // cannot be resolved » alors que le client est parfaitement determine — c'est celui de
+        // cannot be resolved » alors que le client est parfaitement determine · c'est celui de
         // la facture corrigee.
         originalExists(invoice());
         ArgumentCaptor<CreateBillingDocumentRequest> captured = captureCreate();

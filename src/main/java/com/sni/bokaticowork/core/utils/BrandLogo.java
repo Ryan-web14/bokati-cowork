@@ -9,7 +9,7 @@ import java.util.Base64;
 /**
  * Logo de l'exploitant, encode pour etre embarque dans un PDF.
  *
- * <p>Le chargement etait ecrit deux fois — facture et recu de paiement — et absent des rapports
+ * <p>Le chargement etait ecrit deux fois · facture et recu de paiement · et absent des rapports
  * comme des contrats, qui sortaient donc sans logo. Un composant unique evite que la troisieme
  * copie diverge, et rend le logo disponible partout.
  *
@@ -21,7 +21,7 @@ import java.util.Base64;
 public class BrandLogo {
 
     /**
-     * Le fichier d'origine est <b>blanc sur transparent</b> — verifie au pixel : 28 526 points
+     * Le fichier d'origine est <b>blanc sur transparent</b> · verifie au pixel : 28 526 points
      * opaques, tous clairs, aucun sombre. Il etait concu pour le bandeau sombre des documents.
      * Depuis que ces bandeaux ont cede la place a de l'encre sur blanc, ce logo y est invisible.
      * Les pieces imprimees prennent donc la silhouette encre, tiree du meme trace.

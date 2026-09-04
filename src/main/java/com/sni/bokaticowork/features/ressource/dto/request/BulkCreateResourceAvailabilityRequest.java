@@ -14,8 +14,8 @@ import java.util.List;
 /**
  * Ouverture d'une meme plage de disponibilite sur plusieurs ressources.
  *
- * <p>Chaque ressource est traitee independamment : celles qui echouent — chevauchement avec des
- * creneaux existants, plafond d'un mois d'avance, fermeture active — figurent au compte rendu avec
+ * <p>Chaque ressource est traitee independamment : celles qui echouent · chevauchement avec des
+ * creneaux existants, plafond d'un mois d'avance, fermeture active · figurent au compte rendu avec
  * leur motif, sans empecher les autres d'aboutir.
  */
 @AllArgsConstructor

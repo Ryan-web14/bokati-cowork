@@ -21,7 +21,7 @@ import java.util.Map;
 public class BookingPricingCalculator {
 
     /**
-     * Une demi-journee vaut 5 heures, une journee 10 — de 08h00 a 18h00.
+     * Une demi-journee vaut 5 heures, une journee 10 · de 08h00 a 18h00.
      *
      * <p>La journee valait 480 minutes, soit 8 heures : une reservation de 8h etait facturee au
      * tarif journalier alors qu'il reste deux heures ouvrables devant elle.
@@ -71,7 +71,7 @@ public class BookingPricingCalculator {
      * Nombre d'unites facturees.
      *
      * <p>Un forfait impose reste <b>un</b> forfait, quelle que soit la duree : demander la
-     * demi-journee sur six heures facture une demi-journee. C'est le sens meme du geste — sans
+     * demi-journee sur six heures facture une demi-journee. C'est le sens meme du geste · sans
      * cela, l'arrondi au superieur en compterait deux, et imposer le forfait couterait plus cher
      * que de laisser le calcul automatique, ce qui viderait l'override de son objet.
      *

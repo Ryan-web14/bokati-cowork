@@ -23,8 +23,8 @@ public class ValidationUtils {
 
     /**
      * Validates a free-text field (e.g. a description). Accepts a much broader set of
-     * characters than {@link #validateString(String)} — hyphens, slashes, exclamation
-     * marks and other common punctuation/symbols — while still rejecting empty input
+     * characters than {@link #validateString(String)} · hyphens, slashes, exclamation
+     * marks and other common punctuation/symbols · while still rejecting empty input
      * and control characters.
      */
     public static boolean validateDescription(String str){

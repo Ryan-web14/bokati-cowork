@@ -1,268 +1,281 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Recu de paiement · reecrit sur le systeme de la facture, mais pas comme une facture.
+
+  Sa raison d'etre est de prouver qu'une somme a ete recue. Le montant recu passe donc en tete,
+  avant tout le reste · sur une facture, cette place revient au reste a payer. Le corps du document
+  n'est pas un detail de prestations mais l'imputation : ce que la somme a solde, document par
+  document, et ce qui reste du sur chacun.
+
+  Un recu ne reclame rien : ni echeance, ni conditions de paiement, ni penalites, ni escompte.
+
+  Le gabarit precedent ouvrait sur ses references de transaction et portait un faux degrade,
+  simule par une bordure violette de 220 px greffee sur son filet.
+-->
 <head>
-    <meta charset="UTF-8">
-    <title th:text="|Recu ${receipt.receiptNumber()}|">Recu paiement</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 0 0 16mm 0;
-            @bottom-center {
-                content: "Page " counter(page) " sur " counter(pages);
-                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-                font-size: 8px;
-                color: #1f1430;
-            }
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+<meta charset="UTF-8">
+<title th:text="|Reçu ${receipt.receiptNumber()}|">Reçu</title>
+<style>
+    @page {
+        size: A4;
+        margin: 0;
+        @bottom-center {
+            content: "Page " counter(page) " sur " counter(pages);
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 7.6px;
             color: #1f1430;
-            font-size: 10.5px;
-            line-height: 1.6;
-            margin: 0;
-            background: #ffffff;
         }
-        h1, h2, h3, p { margin: 0; }
-        .doc-header { background: #f4f1f7; padding: 18px 26px 14px; }
-        .header-table { width: 100%; border-collapse: collapse; }
-        .header-table td { border: none; padding: 0; vertical-align: middle; }
-        .brand-block img { height: 42px; width: auto; display: block; }
-        .brand-text-name { font-size: 18px; font-weight: 700; color: #1f1430; letter-spacing: 3px; text-transform: uppercase; }
-        .brand-id { font-size: 7px; color: #1f1430; line-height: 1.6; margin-top: 4px; opacity: .82; }
-        .brand-text-sub { font-size: 7px; color: #1f1430; letter-spacing: 2px; text-transform: uppercase; margin-top: 3px; }
-        .doc-meta { text-align: right; }
-        .doc-meta .doc-label { font-size: 8px; color: #1f1430; text-transform: uppercase; letter-spacing: 1.2px; }
-        .doc-meta .doc-number { font-size: 16px; font-weight: 700; color: #1f1430; margin-top: 3px; letter-spacing: 0.5px; }
-        .doc-meta .doc-issued { font-size: 9px; color: #1f1430; margin-top: 4px; }
-        .header-stripe { height: 2px; background: #c9a84c; }
-        .ribbon { background: #fffdf7; border-bottom: 1px solid #e8e0f0; padding: 6px 26px; font-size: 9px; color: #1f1430; }
-        .method-badge { display: inline-block; padding: 2px 10px; background: #f7e6b0; color: #1f1430; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-radius: 2px; margin-right: 10px; }
-        .content { padding: 18px 26px 0; }
-        .section-label { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.6px; color: #1f1430; margin: 18px 0 10px; border-bottom: 1px solid #e8e0f0; padding-bottom: 5px; }
-        .section-label span { display: inline-block; border-left: 16px solid #c9a84c; padding-left: 8px; }
-        .info-grid { width: 100%; border-collapse: collapse; margin-bottom: 0; }
-        .info-grid td { vertical-align: top; padding: 0; border: none; }
-        .info-card { border: 1px solid #e8e0f0; border-radius: 3px; overflow: hidden; }
-        .info-card-head { background: #f4f1f7; border-left: 3px solid #c9a84c; color: #1f1430; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding: 5px 12px; }
-        .info-card-body { background: #ffffff; padding: 10px 12px; }
-        .info-primary { font-size: 12px; font-weight: 700; color: #1f1430; margin-bottom: 3px; }
-        .info-detail { font-size: 9.5px; color: #1f1430; line-height: 1.65; }
-        .ref-table { width: 100%; border-collapse: collapse; }
-        .ref-table td { padding: 3px 0; border: none; font-size: 9.5px; border-bottom: 1px solid #e8e0f0; }
-        .ref-table tr:last-child td { border-bottom: none; }
-        .ref-table .lbl { color: #1f1430; width: 50%; }
-        .ref-table .val { font-weight: 700; color: #1f1430; text-align: right; }
-        .payment-card { border: 1px solid #e8e0f0; border-radius: 3px; overflow: hidden; margin-bottom: 0; }
-        .payment-card-head { background: #f4f1f7; border-left: 3px solid #c9a84c; color: #1f1430; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding: 5px 12px; }
-        .payment-card-body { background: #fffdf7; padding: 10px 12px; }
-        .payment-grid { width: 100%; border-collapse: collapse; }
-        .payment-grid td { border: none; vertical-align: top; padding: 0 12px 0 0; }
-        .payment-grid td:last-child { padding-right: 0; }
-        .pay-label { font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.6px; color: #1f1430; margin-bottom: 3px; }
-        .pay-value { font-weight: 700; color: #1f1430; font-size: 11px; }
-        .alloc-table { width: 100%; border-collapse: collapse; font-size: 10px; }
-        .alloc-table thead th { background: #2a1548; color: #1f1430; padding: 7px 9px; font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border: none; }
-        .alloc-table thead th.col-total { background: #c9a84c; color: #1f1430; }
-        .alloc-table tbody td { padding: 7px 9px; border-bottom: 1px solid #e8e0f0; vertical-align: top; }
-        .alloc-table tbody tr:nth-child(even) td { background: #fffdf7; }
-        .alloc-table tbody tr:last-child td { border-bottom: 2px solid #1a0a2e; }
-        .alloc-table tbody td.col-total { font-weight: 700; color: #1f1430; background: #fff8e6; }
-        .alloc-table tbody tr:nth-child(even) td.col-total { background: #f7e6b0; }
-        .empty-alloc { background: #fffdf7; border: 1px solid #e8e0f0; border-radius: 3px; padding: 12px 14px; font-size: 10px; color: #1f1430; }
-        .totals-wrap { width: 100%; margin-top: 14px; text-align: right; }
-        .totals { width: 300px; margin-left: auto; border: 1px solid #e8e0f0; border-radius: 3px; overflow: hidden; font-size: 10px; border-collapse: collapse; }
-        .totals td { padding: 6px 12px; border-top: 1px solid #e8e0f0; }
-        .totals tr:first-child td { border-top: none; }
-        .totals .lbl { color: #1f1430; text-align: left; }
-        .totals .val { text-align: right; font-weight: 700; }
-        .totals .status-row td { background: #f4f1f7; color: #1f1430; font-size: 12px; font-weight: 700; padding: 10px 12px; }
-        .totals .status-row td.val { color: #1f1430; }
-        .qr-block { text-align: center; }
-        .qr-label { font-size: 6.5px; color: #1f1430; letter-spacing: 0.8px; text-transform: uppercase; margin-top: 4px; }
-        .r { text-align: right; }
-        .muted { color: #1f1430; }
-        .doc-type-muted { font-size: 8.5px; color: #1f1430; margin-top: 1px; }
-        .doc-footer { margin-top: 24px; padding: 10px 26px; border-top: 1px solid #e8e0f0; font-size: 8px; color: #1f1430; text-align: center; }
-        .doc-footer .made-by { font-size: 6.5px; color: #1f1430; margin-top: 2px; }
-    </style>
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+        font-family: Helvetica, Arial, sans-serif;
+        color: #1f1430;
+        font-size: 9.8px;
+        line-height: 1.34;
+        background: #ffffff;
+    }
+    .content { padding: 18px 16px 0; }
+
+    .lh { width: 100%; border-collapse: collapse; }
+    .lh td { vertical-align: top; padding: 0; border: none; }
+    .lh-logo { height: 34px; width: auto; display: block; margin-bottom: 4px; }
+    .lh-name { font-size: 19px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; line-height: 1.1; }
+    .lh-tag { font-size: 7.4px; letter-spacing: 1.6px; text-transform: uppercase; margin-top: 4px; opacity: .68; }
+    .lh-id { font-size: 7.6px; line-height: 1.7; margin-top: 7px; opacity: .8; }
+    .lh-id b { font-weight: 700; }
+    .lh-right { text-align: right; }
+    .doc-kind {
+        display: inline-block; border: 1.2px solid #1f1430;
+        font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+        padding: 5px 13px 4px;
+    }
+    .doc-no { font-size: 13.5px; font-weight: 700; font-family: "Courier New", monospace; margin-top: 7px; letter-spacing: 1px; }
+    .doc-cert { font-size: 7.4px; font-family: "Courier New", monospace; margin-top: 3px; opacity: .74; }
+    .mark { display: inline-block; font-size: 7.4px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; margin-top: 6px; opacity: .74; }
+    .rule-gold { height: 2px; background: #c9a84c; margin: 11px 0 15px; }
+
+    /* Le chiffre que le porteur du recu vient verifier · seul encadre de la piece. */
+    .hero { border: 1.2px solid #1f1430; padding: 10px 13px; margin-bottom: 15px; }
+    .hero-l { font-size: 7px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: .6; margin-bottom: 3px; }
+    .hero-v { font-size: 21px; font-weight: 700; letter-spacing: -.4px; line-height: 1.1; }
+    .hero-w { font-size: 9px; line-height: 1.5; margin-top: 5px; opacity: .84; }
+
+    .parties { width: 100%; border-collapse: collapse; margin-bottom: 13px; }
+    .parties td { vertical-align: top; width: 50%; padding: 0 7px 0 0; border: none; }
+    .parties td + td { padding: 0 0 0 7px; }
+    .pblock { border: .75px solid #d9d2e0; padding: 9px 11px; }
+    .pblock.emit { background: #f4f1f7; }
+    .plabel { font-size: 7px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: .6; margin-bottom: 5px; }
+    .pname { font-size: 11.3px; font-weight: 700; line-height: 1.3; }
+    .pline { font-size: 8.4px; line-height: 1.6; margin-top: 3px; opacity: .84; }
+    .pline b { font-weight: 700; opacity: 1; }
+
+    .meta-bar { width: 100%; border-collapse: collapse; margin-bottom: 13px; border-bottom: .75px solid #d9d2e0; }
+    .meta-bar td { padding: 0 20px 8px 0; border: none; }
+    .meta-bar td:last-child { padding-right: 0; }
+    .mk { font-size: 7px; letter-spacing: 1.2px; text-transform: uppercase; opacity: .58; }
+    .mv { font-size: 9.4px; font-weight: 700; margin-top: 1px; }
+    .mv.mono { font-family: "Courier New", monospace; font-size: 9px; }
+
+    .sec-t { font-size: 7px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; opacity: .58; margin-bottom: 5px; }
+
+    .lines { width: 100%; border-collapse: collapse; font-size: 9.2px; }
+    .lines thead th {
+        background: #f4f1f7; font-size: 7.4px; font-weight: 700;
+        letter-spacing: 1px; text-transform: uppercase; padding: 7px 8px; text-align: right;
+        border-top: 1.2px solid #1f1430; border-bottom: 1.2px solid #1f1430;
+    }
+    .lines thead th.l { text-align: left; }
+    .lines tbody td { padding: 7px 8px; border-bottom: .75px solid #d9d2e0; text-align: right; vertical-align: top; }
+    .lines tbody td.l { text-align: left; }
+    .line-name { font-weight: 700; }
+    .line-sub { font-size: 8.2px; margin-top: 2px; opacity: .72; }
+    .line-cat {
+        display: inline-block; white-space: nowrap; font-size: 7.2px; font-weight: 700;
+        letter-spacing: .4px; text-transform: uppercase; border: .75px solid #d9d2e0;
+        padding: 1px 4px; margin-right: 4px; opacity: .78;
+    }
+    .num { white-space: nowrap; font-family: "Courier New", monospace; }
+    .net { font-weight: 700; }
+
+    .foot { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    .foot td { border: none; vertical-align: top; }
+    .foot-left { width: 54%; padding-right: 16px; }
+    .foot-right { width: 46%; }
+    .box { margin-bottom: 14px; }
+    .box p { margin: 0; font-size: 8.6px; line-height: 1.6; opacity: .86; }
+
+    .tot { width: 100%; border-collapse: collapse; }
+    .tot td { padding: 5px 0; font-size: 9.2px; border: none; }
+    .tot td:first-child { opacity: .8; }
+    .tot td:last-child { text-align: right; font-family: "Courier New", monospace; font-weight: 700; }
+    .tot tr.grand td {
+        border-top: 1.5px solid #1f1430; padding-top: 9px; font-size: 11px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: .8px; opacity: 1;
+    }
+    .tot tr.grand td:last-child { font-size: 14px; text-transform: none; letter-spacing: 0; }
+
+    .qr-box { text-align: center; margin-top: 4px; }
+    .qr-box img { width: 108px; height: 108px; display: block; margin: 0 auto; }
+    .qr-l { font-size: 7px; letter-spacing: 1.1px; text-transform: uppercase; margin-top: 4px; opacity: .6; }
+
+    .legalstrip { margin-top: 14px; padding-top: 9px; border-top: .75px solid #d9d2e0; font-size: 7px; line-height: 1.75; opacity: .74; }
+    .legalstrip b { font-weight: 700; opacity: 1; }
+</style>
 </head>
 <body>
-<div class="doc-header">
-    <table class="header-table">
-        <tr>
-            <td class="brand-block">
-                <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" alt="Logo"/>
-                <div class="brand-text-name" th:if="${logo == null}">ELLE A OSE</div>
-                <div class="brand-text-sub">Espace de coworking</div>
-                <div class="brand-id">84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire<br>
-                    RCCM CG-PNR-01-2017-A11-00472</div>
-            </td>
-            <td class="doc-meta">
-                <div class="doc-label">Recu de paiement</div>
-                <div class="doc-number" th:text="${receipt.receiptNumber()}">REC-2026-000001</div>
-                <div class="doc-issued" th:text="|Emis le ${fmt.timestamp(receipt.receiptIssuedAt())}|"></div>
-            </td>
-        </tr>
-    </table>
-</div>
-<div class="header-stripe"></div>
-
-<div class="ribbon">
-    <span class="method-badge" th:text="${receipt.paymentMethod()}">CASH</span>
-    <span>Transaction <strong th:text="${receipt.transactionNumber()}">TXN-000</strong></span>
-</div>
-
 <div class="content">
-    <div class="section-label"><span>Informations</span></div>
-    <table class="info-grid">
+
+    <table class="lh">
         <tr>
-            <td style="width:52%; padding-right:10px;">
-                <div class="info-card">
-                    <div class="info-card-head" th:text="${fmt.partyLabel(receipt.customerType())}">Client</div>
-                    <div class="info-card-body">
-                        <div class="info-primary" th:text="${receipt.customerName() != null ? receipt.customerName() : '-'}">Nom</div>
-                        <div class="info-detail">
-                            <span th:if="${receipt.customerCode() != null}" th:text="${receipt.customerCode()}"></span><br th:if="${receipt.customerCode() != null}">
-                            <span th:if="${receipt.customerEmail() != null}" th:text="${receipt.customerEmail()}"></span><br th:if="${receipt.customerEmail() != null}">
-                            <span th:if="${receipt.customerPhone() != null}" th:text="${receipt.customerPhone()}"></span><br th:if="${receipt.customerPhone() != null}">
-                            <span th:each="line : ${fmt.addressLines(receipt.billingAddressJson())}" th:text="${line}"></span>
-                        </div>
-                    </div>
+            <td>
+                <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="lh-logo" alt="ELLE A OSE"/>
+                <div class="lh-name" th:if="${logo == null}">ELLE A OSE</div>
+                <div class="lh-tag">Espace de coworking</div>
+                <div class="lh-id">
+                    84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire<br>
+                    RCCM <b>CG-PNR-01-2017-A11-00472</b><br>
+                    coworkspace@elleaose.com · 05 204 2552
                 </div>
             </td>
-            <td style="width:48%;">
-                <div class="info-card">
-                    <div class="info-card-head">References</div>
-                    <div class="info-card-body">
-                        <table class="ref-table">
-                            <tr>
-                                <td class="lbl">Transaction</td>
-                                <td class="val" th:text="${receipt.transactionNumber()}">TXN-000</td>
-                            </tr>
-                            <tr>
-                                <td class="lbl">Intent</td>
-                                <td class="val" th:text="${receipt.intentNumber()}">INT-000</td>
-                            </tr>
-                            <tr th:if="${receipt.providerReference() != null}">
-                                <td class="lbl">Ref. externe</td>
-                                <td class="val" th:text="${receipt.providerReference()}">-</td>
-                            </tr>
-                            <tr th:if="${receipt.sourceType() != null}">
-                                <td class="lbl">Source</td>
-                                <td class="val" th:text="${receipt.sourceCode() != null ? receipt.sourceType() + ' / ' + receipt.sourceCode() : receipt.sourceType()}">-</td>
-                            </tr>
-                            <tr th:if="${receipt.purpose() != null}">
-                                <td class="lbl">Objet</td>
-                                <td class="val" th:text="${receipt.purpose()}">-</td>
-                            </tr>
-                            <tr>
-                                <td class="lbl">Paye le</td>
-                                <td class="val" th:text="${fmt.timestamp(receipt.paidAt())}">-</td>
-                            </tr>
-                            <tr th:if="${receipt.receivedBy() != null}">
-                                <td class="lbl">Encaisse par</td>
-                                <td class="val" th:text="${receipt.receivedBy()}">-</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
+            <td class="lh-right">
+                <span class="doc-kind">Reçu</span>
+                <div class="doc-no" th:text="${receipt.receiptNumber()}">REC-000001</div>
+                <div class="doc-cert" th:if="${receipt.transactionNumber() != null}"
+                     th:text="|Transaction ${receipt.transactionNumber()}|">Transaction</div>
+                <div><span class="mark" th:text="${receipt.transactionStatus()}">Encaissé</span></div>
             </td>
         </tr>
     </table>
+    <div class="rule-gold"></div>
 
-    <div class="section-label"><span>Mode de paiement</span></div>
-    <div class="payment-card">
-        <div class="payment-card-head">Details du reglement</div>
-        <div class="payment-card-body">
-            <table class="payment-grid">
-                <tr>
-                    <td>
-                        <div class="pay-label">Methode</div>
-                        <div class="pay-value" th:text="${receipt.paymentMethod()}">CASH</div>
-                    </td>
-                    <td th:if="${receipt.paymentMethod()?.name() == 'MOBILE_MONEY' and receipt.depositId() != null}">
-                        <div class="pay-label">Deposit ID</div>
-                        <div class="pay-value" style="font-size:10px;" th:text="${receipt.depositId()}">-</div>
-                    </td>
-                    <td th:if="${receipt.paymentMethod()?.name() == 'MOBILE_MONEY' and receipt.payerPhone() != null}">
-                        <div class="pay-label">Numero payeur</div>
-                        <div class="pay-value" th:text="${receipt.payerPhone()}">-</div>
-                    </td>
-                    <td th:if="${receipt.providerReference() != null and receipt.paymentMethod()?.name() != 'MOBILE_MONEY'}">
-                        <div class="pay-label">Reference</div>
-                        <div class="pay-value" style="font-size:10px; word-break:break-all;" th:text="${receipt.providerReference()}">-</div>
-                    </td>
-                    <td th:if="${qrCode != null}" style="text-align:right; vertical-align:middle;">
-                        <div class="qr-block" style="display:inline-block;">
-                            <img th:src="@{'data:image/png;base64,' + ${qrCode}}" style="width:110px; height:110px; display:block;" alt="QR Code"/>
-                            <div class="qr-label">Verification</div>
-                        </div>
-                    </td>
-                </tr>
-            </table>
+    <!-- MONTANT REÇU · l'information que le porteur du recu vient verifier. -->
+    <div class="hero">
+        <div class="hero-l">Montant reçu</div>
+        <div class="hero-v" th:text="${fmt.money(receipt.paidAmount())}">0</div>
+        <div class="hero-w">
+            <span th:text="${fmt.inWords(receipt.paidAmount())}">Somme en lettres</span><span
+                  th:if="${receipt.paidAt() != null}" th:text="|, le ${fmt.timestamp(receipt.paidAt())}|"></span>.
         </div>
     </div>
 
-    <div class="section-label"><span>Affectation du paiement</span></div>
-    <div th:if="${#lists.isEmpty(receipt.allocations())}" class="empty-alloc">
-        Ce paiement n'etait rattache a aucune facture au moment de l'encaissement.
-        <span th:if="${receipt.advanceAmount() != null and receipt.advanceAmount().signum() > 0}">
-            &nbsp;-&nbsp;Montant disponible comme avance / credit wallet : <strong th:text="${fmt.money(receipt.advanceAmount())}">0</strong>
-        </span>
-    </div>
-
-    <table th:if="${!#lists.isEmpty(receipt.allocations())}" class="alloc-table">
-        <thead>
+    <table class="parties">
         <tr>
-            <th>Document</th>
-            <th>Objet</th>
-            <th class="r">Montant doc.</th>
-            <th class="r">Affecte</th>
-            <th class="r col-total">Reste du</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="allocation : ${receipt.allocations()}">
             <td>
-                <div style="font-weight:700;" th:text="${allocation.documentNumber()}">INV-001</div>
-                <div class="doc-type-muted" th:text="${allocation.documentType()}">INVOICE</div>
+                <div class="pblock emit">
+                    <div class="plabel">Reçu de</div>
+                    <div class="pname" th:text="${receipt.customerName() != null ? receipt.customerName() : ' · '}">Client</div>
+                    <div class="pline">
+                        <span th:if="${receipt.customerCode() != null}">Réf. client <b th:text="${receipt.customerCode()}">CLI</b><br></span>
+                        <span th:if="${receipt.customerEmail() != null}" th:text="${receipt.customerEmail()}"></span>
+                        <span th:if="${receipt.customerEmail() != null and receipt.customerPhone() != null}"> · </span>
+                        <span th:if="${receipt.customerPhone() != null}" th:text="${receipt.customerPhone()}"></span>
+                        <br th:if="${receipt.customerEmail() != null or receipt.customerPhone() != null}">
+                        <span th:each="line : ${fmt.addressLines(receipt.billingAddressJson())}"><span th:text="${line}"></span><br></span>
+                    </div>
+                </div>
             </td>
-            <td th:text="${allocation.title() != null ? allocation.title() : '-'}">Objet</td>
-            <td class="r" th:text="${fmt.money(allocation.documentTotalAmount())}">0</td>
-            <td class="r" th:text="${fmt.money(allocation.allocatedAmount())}">0</td>
-            <td class="r col-total" th:text="${fmt.money(allocation.remainingBalanceDue())}">0</td>
+            <td>
+                <!-- Le moyen de reglement occupe la place de l'emetteur · c'est l'information
+                     de rapprochement bancaire, celle qu'on vient chercher sur un recu. -->
+                <div class="pblock">
+                    <div class="plabel">Moyen de règlement</div>
+                    <div class="pname" th:text="${receipt.paymentMethod()}">Moyen</div>
+                    <div class="pline">
+                        <span th:if="${receipt.paymentMethod()?.name() == 'MOBILE_MONEY' and receipt.depositId() != null}">
+                            Dépôt <b th:text="${receipt.depositId()}">ID</b><br></span>
+                        <span th:if="${receipt.payerPhone() != null}">Payeur <b th:text="${receipt.payerPhone()}">Tél.</b><br></span>
+                        <span th:if="${receipt.intentNumber() != null}" th:text="|Intention ${receipt.intentNumber()}|"></span>
+                        <span th:if="${receipt.intentNumber() != null and receipt.transactionStatus() != null}"> · </span>
+                        <span th:if="${receipt.transactionStatus() != null}" th:text="|statut ${receipt.transactionStatus()}|"></span>
+                    </div>
+                </div>
+            </td>
         </tr>
-        </tbody>
     </table>
 
-    <div class="totals-wrap">
-        <table class="totals">
-            <tr>
-                <td class="lbl">Montant paye</td>
-                <td class="val" th:text="${fmt.money(receipt.paidAmount())}">0</td>
-            </tr>
-            <tr>
-                <td class="lbl">Montant affecte</td>
-                <td class="val" th:text="${fmt.money(receipt.allocatedAmount())}">0</td>
-            </tr>
-            <tr th:if="${receipt.advanceAmount() != null and receipt.advanceAmount().signum() > 0}">
-                <td class="lbl">Avance / credit wallet</td>
-                <td class="val" th:text="${fmt.money(receipt.advanceAmount())}">0</td>
-            </tr>
-            <tr class="status-row">
-                <td>Statut</td>
-                <td class="val" th:text="${receipt.transactionStatus()}">SUCCEEDED</td>
-            </tr>
+    <table class="meta-bar">
+        <tr>
+            <td><div class="mk">Émis le</div><div class="mv" th:text="${fmt.timestamp(receipt.receiptIssuedAt())}"> · </div></td>
+            <td th:if="${receipt.paidAt() != null}"><div class="mk">Reçu le</div><div class="mv" th:text="${fmt.timestamp(receipt.paidAt())}"> · </div></td>
+            <td th:if="${receipt.receivedBy() != null}"><div class="mk">Encaissé par</div><div class="mv" th:text="${receipt.receivedBy()}"> · </div></td>
+            <td th:if="${receipt.purpose() != null}"><div class="mk">Objet</div><div class="mv" th:text="${receipt.purpose()}"> · </div></td>
+        </tr>
+    </table>
+
+    <!-- IMPUTATION · le coeur du recu. Sans elle, le client ignore ce que sa somme a solde. -->
+    <div th:if="${!#lists.isEmpty(receipt.allocations())}">
+        <div class="sec-t">Imputation du règlement</div>
+        <table class="lines">
+            <thead>
+                <tr>
+                    <th class="l" style="width:40%">Document réglé</th>
+                    <th style="width:20%">Total du document</th>
+                    <th style="width:20%">Imputé</th>
+                    <th style="width:20%">Reste dû après</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="allocation : ${receipt.allocations()}">
+                    <td class="l">
+                        <div class="line-name" th:text="${allocation.documentNumber()}">DOC</div>
+                        <div class="line-sub">
+                            <span class="line-cat" th:if="${allocation.documentType() != null}" th:text="${allocation.documentType()}">Type</span>
+                            <span th:text="${allocation.title() != null ? allocation.title() : ''}"></span>
+                        </div>
+                    </td>
+                    <td class="num" th:text="${fmt.money(allocation.documentTotalAmount())}">0</td>
+                    <td class="num net" th:text="${fmt.money(allocation.allocatedAmount())}">0</td>
+                    <td class="num" th:text="${fmt.money(allocation.remainingBalanceDue())}">0</td>
+                </tr>
+            </tbody>
         </table>
     </div>
 
-    <div class="doc-footer">
-        Elle A Ose &nbsp;|&nbsp;
-        <span th:text="${receipt.receiptNumber()}">REC-2026-000001</span> &nbsp;|&nbsp;
-        Document genere le <span th:text="${fmt.date(generatedAt)}">2026-05-01</span> &nbsp;|&nbsp;
-        Document edite electroniquement, valable sans signature manuscrite.
-        <div class="made-by">Made by SNI</div>
+    <div th:if="${#lists.isEmpty(receipt.allocations())}">
+        <div class="sec-t">Imputation du règlement</div>
+        <p style="font-size:8.6px; opacity:.86; margin:0;">
+            Ce règlement n'est imputé sur aucun document à ce jour. Il reste au crédit du compte
+            client et s'imputera sur les prochaines factures.
+        </p>
+    </div>
+
+    <table class="foot">
+        <tr>
+            <td class="foot-left">
+                <div class="box">
+                    <div class="sec-t">Portée de ce reçu</div>
+                    <!-- Sans cette phrase, un recu partiel se presente comme un solde de tout compte. -->
+                    <p>Le présent reçu vaut quittance à concurrence du montant reçu et pour les seuls
+                       documents imputés ci-dessus. Il ne préjuge pas des sommes restant dues sur les
+                       autres pièces du compte.</p>
+                </div>
+                <div class="box" th:if="${qrCode != null}">
+                    <div class="sec-t">Vérification</div>
+                    <div class="qr-box">
+                        <img th:src="@{'data:image/png;base64,' + ${qrCode}}" alt="Vérification"/>
+                        <div class="qr-l">Empreinte vérifiable en ligne</div>
+                    </div>
+                </div>
+            </td>
+            <td class="foot-right">
+                <table class="tot">
+                    <tr><td>Total imputé</td><td th:text="${fmt.money(receipt.allocatedAmount())}">0</td></tr>
+                    <tr th:if="${receipt.advanceAmount() != null and receipt.advanceAmount().signum() > 0}">
+                        <td>Dont acompte</td><td th:text="${fmt.money(receipt.advanceAmount())}">0</td></tr>
+                    <tr class="grand"><td>Montant reçu</td><td th:text="${fmt.money(receipt.paidAmount())}">0</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <div class="legalstrip">
+        <b>ELLE A OSE</b> · 84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire · RCCM CG-PNR-01-2017-A11-00472<br>
+        <span th:text="|Reçu n° ${receipt.receiptNumber()} émis le ${fmt.timestamp(receipt.receiptIssuedAt())}|">Référence</span>.
+        Document scellé électroniquement · toute altération invalide la signature.
     </div>
 </div>
 </body>

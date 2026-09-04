@@ -12,10 +12,10 @@ import java.util.List;
  *
  * <p>Volontairement plus permissive que {@link CreateBillingDocumentRequest} : simuler n'engage
  * rien et ne cree aucun document, donc exiger un type de document, une devise ou un destinataire
- * n'a pas de sens. Seules les lignes comptent — ce sont elles qui portent le calcul.
+ * n'a pas de sens. Seules les lignes comptent · ce sont elles qui portent le calcul.
  *
  * <p>L'interface peut continuer d'envoyer la charge utile complete de la creation : c'est le seul
- * point d'entree ou les proprietes inconnues restent ignorees, et c'est delibere — l'API refuse
+ * point d'entree ou les proprietes inconnues restent ignorees, et c'est delibere · l'API refuse
  * partout ailleurs, mais imposer ici de retirer les champs du document empecherait justement le
  * parcours prevu, simuler a chaque saisie puis envoyer la meme charge utile pour de bon.
  *

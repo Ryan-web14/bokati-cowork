@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  * <p>La duree appartient a la <b>ressource</b>, jamais a une disponibilite prise isolement. Le
  * moteur compose une fenetre reservable a partir de creneaux contigus
  * ({@code requiredSlots = duree / dureeDeCreneau}) : des creneaux de durees differentes sur une
- * meme ressource fausseraient ce decompte, et silencieusement — on renverrait des fenetres de la
+ * meme ressource fausseraient ce decompte, et silencieusement · on renverrait des fenetres de la
  * mauvaise longueur, pas une erreur.
  */
 @Component

@@ -131,6 +131,8 @@
            douce, et une vraie espace pour que "2 h" ne se lise pas "2h". */
         .line-unit { color: #1f1430; font-weight: 400; }
         .line-discount { color: #1f1430; font-weight: 700; }
+        /* Mention secondaire d'une remise : le montant accorde en TTC, sous le libelle. */
+        .disc-note { font-size: 7.6px; color: #6B6478; font-weight: 400; margin-top: 1px; }
         .line-discount-rate { font-size: 8px; color: #1f1430; margin-top: 1px; }
         /* Montant brut barre au-dessus du net · le client voit la remise s'appliquer sans avoir
            a la recalculer. */
@@ -382,7 +384,7 @@
                              th:text="${'-' + fmt.percent(line.discountRate())}">-10 %</div>
                     </th:block>
                     <span class="muted"
-                          th:unless="${line.discountAmount() != null and line.discountAmount().signum() > 0}">—</span>
+                          th:unless="${line.discountAmount() != null and line.discountAmount().signum() > 0}"> · </span>
                 </td>
                 <!-- Brut barre au-dessus du net des qu'une remise s'applique · la deduction se
                      lit sans calcul, et le montant facture reste celui mis en avant. -->
@@ -418,16 +420,26 @@
             <td style="width:58%;">
                 <table class="summary">
                     <tr><td class="lbl">Total brut HT</td><td class="val num" th:text="${fmt.money(document.subtotalAmount())}">0</td></tr>
-                    <tr th:if="${document.discountAmount() != null and document.discountAmount().signum() > 0}"><td class="lbl">Remises</td><td class="val num" th:text="${'-' + fmt.money(document.discountAmount())}">0</td></tr>
-                    <!-- Detail des remises de document · le montant accorde est exprime en TTC,
-                         c'est ce dont la facture du client baisse. La ligne « Remises » ci-dessus
-                         porte, elle, la reduction d'assiette en HT. -->
+                    <!-- Une remise, une ligne. La colonne se lit en HT jusqu'a la base taxable :
+                         c'est donc la part hors taxes qui se deduit ici, le montant accorde au
+                         client restant lisible en dessous. Les afficher tous les deux en ligne
+                         pleine donnait a lire deux remises la ou il n'y en a qu'une. -->
                     <tr th:each="rem : ${document.discounts()}">
-                        <td class="lbl" style="padding-left:10px; font-size:8.4px;"
-                            th:text="${rem.description() != null ? rem.description() : rem.discountCode()}">Remise</td>
-                        <td class="val num" style="font-size:8.4px;"
-                            th:text="${(rem.discountType()?.name() == 'PERCENTAGE' ? fmt.percent(rem.value()) + ' · ' : '') + '-' + fmt.money(rem.amount()) + ' TTC'}">0</td>
+                        <td class="lbl">
+                            <span th:text="${rem.description() != null ? rem.description() : rem.discountCode()}">Remise</span>
+                            <span class="disc-note"
+                                  th:if="${rem.discountType()?.name() == 'PERCENTAGE'}"
+                                  th:text="${fmt.percent(rem.value())}">10 %</span>
+                            <div class="disc-note"
+                                 th:if="${rem.baseAmount() != null and rem.amount() != null
+                                          and rem.baseAmount().compareTo(rem.amount()) != 0}"
+                                 th:text="${fmt.money(rem.amount()) + ' accordés sur le TTC'}">0</div>
+                        </td>
+                        <td class="val num" th:text="${'-' + fmt.money(rem.baseAmount() != null ? rem.baseAmount() : rem.amount())}">0</td>
                     </tr>
+                    <!-- Repli quand la reduction d'assiette ne se rattache a aucune remise detaillee. -->
+                    <tr th:if="${document.discountAmount() != null and document.discountAmount().signum() > 0
+                                 and (document.discounts() == null or #lists.isEmpty(document.discounts()))}"><td class="lbl">Remises</td><td class="val num" th:text="${'-' + fmt.money(document.discountAmount())}">0</td></tr>
                     <tr th:if="${document.optionsTotal() != null and document.optionsTotal().signum() > 0}"><td class="lbl">Dont options non retenues</td><td class="val num" th:text="${fmt.money(document.optionsTotal())}">0</td></tr>
                     <tr><td class="lbl">Base taxable</td><td class="val num" th:text="${fmt.money(document.taxableAmount())}">0</td></tr>
                     <!-- Un taux par ligne de taxe · quand plusieurs coexistent, chacune se lit

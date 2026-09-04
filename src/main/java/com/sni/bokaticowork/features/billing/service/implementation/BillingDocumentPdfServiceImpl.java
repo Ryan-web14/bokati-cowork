@@ -88,8 +88,8 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
      *
      * <p>Le gel se declenche au premier acces plutot qu'a la validation : cela evite d'injecter
      * ce service dans {@code BillingDocumentServiceImpl}, qui produirait un cycle puisque ce
-     * service depend deja de lui. Le moment est de surcroit le bon — on fige l'artefact
-     * exactement quand il commence a exister pour quelqu'un — et les documents valides avant
+     * service depend deja de lui. Le moment est de surcroit le bon · on fige l'artefact
+     * exactement quand il commence a exister pour quelqu'un · et les documents valides avant
      * cette version sont couverts sans reprise.
      */
     @Override
@@ -300,10 +300,30 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         Context context = new Context(appLocale);
         context.setVariable("creditNote", toCreditNoteView(document, fmt));
         context.setVariable("customer", toCustomerView(document));
+        // L'avoir ne disposait que d'une vue reduite : ni identite du vendeur, ni numero de
+        // certification, ni taux de taxe. Il recoit desormais le document complet, comme la
+        // facture, et rend donc la meme information.
+        context.setVariable("document", document);
         context.setVariable("fmt", fmt);
         context.setVariable("generatedAt", LocalDate.now());
         context.setVariable("logo", brandLogo.base64());
+        // Effet chiffre de l'avoir · sans ce report, le client refait la soustraction pour
+        // savoir ce qu'il doit encore sur la facture corrigee.
+        context.setVariable("origin", loadOrigin(document.originalDocumentNumber()));
         return templateEngine.process("billing/avoir-note-credit", context);
+    }
+
+    /** Facture corrigee, ou {@code null} si l'avoir n'en nomme aucune ou qu'elle a disparu. */
+    private BillingDocumentResponse loadOrigin(String originalDocumentNumber) {
+        if (!StringUtils.hasText(originalDocumentNumber)) {
+            return null;
+        }
+        try {
+            return billingDocumentService.get(originalDocumentNumber);
+        } catch (RuntimeException ex) {
+            log.warn("Avoir · facture d'origine {} introuvable : {}", originalDocumentNumber, ex.getMessage());
+            return null;
+        }
     }
 
     private CreditNoteView toCreditNoteView(BillingDocumentResponse doc, BillingDocumentTemplateFormatter fmt) {

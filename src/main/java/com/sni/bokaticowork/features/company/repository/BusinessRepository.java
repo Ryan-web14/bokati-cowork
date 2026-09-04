@@ -16,6 +16,15 @@ import java.util.Optional;
 public interface BusinessRepository extends JpaRepository<BusinessEntity, Long>, JpaSpecificationExecutor<BusinessEntity> {
 
     Optional<BusinessEntity> findByCode(String code);
+
+    /**
+     * Entites exploitantes actives.
+     *
+     * <p>Sert a resoudre l'exploitant quand l'appelant ne le precise pas : la plateforme en compte
+     * une seule en exploitation, et l'exiger a chaque appel rendait la generation de contrat
+     * cassante sans rien apporter.
+     */
+    List<BusinessEntity> findAllByDeletedFalse();
     Optional<BusinessEntity> findByNiuNumber(String niuNumber);
     Optional<BusinessEntity> findByRccmNumber(String rccmNumber);
     Optional<BusinessEntity> findByNameIgnoreCase(String name);

@@ -47,7 +47,7 @@ public class EmailConsumer {
             deliveryLog = deliveryTracker.getEntity(message.emailNumber());
         } catch (ResourceNotFoundException ex) {
             // Nothing to track the send against. Nacking would loop the message through the DLQ
-            // forever, so drop it here instead — an untracked send is worse than a lost one.
+            // forever, so drop it here instead · an untracked send is worse than a lost one.
             log.error("No delivery log for email {} · dropping message to {}",
                     message.emailNumber(), message.to());
             return;

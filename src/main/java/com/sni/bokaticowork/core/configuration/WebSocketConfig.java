@@ -33,7 +33,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     /**
      * When set (e.g. CLOUDAMQP_URL: amqps://user:pass@host/vhost), the STOMP relay host,
-     * credentials, virtual host and TLS flag are derived from it — the single source of truth
+     * credentials, virtual host and TLS flag are derived from it · the single source of truth
      * shared with the AMQP connection. Only the STOMP port is kept separate. Leave empty to use
      * the explicit relay-* properties below.
      */
@@ -97,7 +97,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     /**
      * Derives the STOMP relay host, credentials, virtual host and TLS flag from {@link #brokerUrl}
      * (typically CLOUDAMQP_URL) so the relay uses the exact same broker/vhost as the working AMQP
-     * connection. On CloudAMQP shared plans the vhost equals the username — carrying it from the URL
+     * connection. On CloudAMQP shared plans the vhost equals the username · carrying it from the URL
      * avoids the common mistake of defaulting the vhost to "/". The STOMP port is left untouched.
      */
     private void applyBrokerUrlIfPresent() {

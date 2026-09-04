@@ -15,7 +15,7 @@ import java.math.RoundingMode;
  *       {@code quatre-vingt mille} le perdent ;</li>
  *   <li>{@code deux cents} prend un s seul, {@code deux cent un} et {@code deux cent mille}
  *       le perdent ;</li>
- *   <li>{@code mille} est invariable — jamais {@code deux milles} ;</li>
+ *   <li>{@code mille} est invariable · jamais {@code deux milles} ;</li>
  *   <li>{@code vingt et un} porte un « et », mais {@code quatre-vingt-un} n'en porte pas ;</li>
  *   <li>{@code soixante et onze} et {@code quatre-vingt-onze} se comptent sur la dizaine
  *       precedente, 60 et 80.</li>

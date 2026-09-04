@@ -6,7 +6,7 @@ import java.util.List;
  * Compte rendu d'une operation appliquee a plusieurs ressources.
  *
  * <p>Volontairement un compte rendu, et non un tout-ou-rien. Chaque ressource a ses propres
- * contraintes — plafond d'un mois d'avance, chevauchement avec l'existant, capacite, politique de
+ * contraintes · plafond d'un mois d'avance, chevauchement avec l'existant, capacite, politique de
  * reservation. Sur vingt ressources, il est normal que deux echouent. Refuser l'ensemble pour deux
  * echecs obligerait a retirer les fautives une par une et a relancer, ce qui est exactement le
  * travail que l'appel groupe doit epargner.

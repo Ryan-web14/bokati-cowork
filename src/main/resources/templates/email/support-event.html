@@ -146,6 +146,10 @@
       <div th:case="*">
         <p>Bonjour <strong th:text="${contactName ?: 'client'}">client</strong>,</p>
         <p>Votre ticket <strong th:text="${ticketNumber}">TCK-000</strong> a &#233;t&#233; mis &#224; jour.</p>
+        <p th:if="${ticketStatus}">
+          Statut actuel&#8202;: <strong th:text="${ticketStatus}">statut</strong><span
+              th:if="${createdAt}" th:text="| &#183; ouvert le ${createdAt}|"></span>.
+        </p>
       </div>
 
       <!-- Bloc CSAT : résolution et demande d'avis uniquement -->

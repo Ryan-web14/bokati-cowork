@@ -35,7 +35,7 @@ public class CreateResourceAvailabilityRequest {
      * <p>A savoir : la valeur est ensuite <b>plafonnee</b> par
      * {@code ResourceAvailabilityServiceImpl.resolveCapacity} a la limite de reservations
      * simultanees de la ressource. Demander 16 sur une ressource qui en admet 15 donne donc 15,
-     * et ce plafonnement est silencieux — ce n'est pas l'alias qui manque alors, c'est la regle
+     * et ce plafonnement est silencieux · ce n'est pas l'alias qui manque alors, c'est la regle
      * qui s'applique.
      */
     @JsonAlias("totalCapacity")

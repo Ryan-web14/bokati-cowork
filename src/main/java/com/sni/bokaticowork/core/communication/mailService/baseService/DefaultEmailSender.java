@@ -152,7 +152,7 @@ public class DefaultEmailSender {
     }
 
     /**
-     * Re-ships an existing delivery. Deliberately bypasses deduplication — an operator asking for a
+     * Re-ships an existing delivery. Deliberately bypasses deduplication · an operator asking for a
      * resend has already decided the first attempt did not land. Delivered mail is refused instead,
      * so the endpoint cannot be used to double-send.
      */

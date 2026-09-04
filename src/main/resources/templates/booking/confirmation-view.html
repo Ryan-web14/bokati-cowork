@@ -15,7 +15,7 @@
     <div><dt>Espace</dt><dd th:text="${resourceName}">Espace</dd></div>
     <div th:if="${resourceType}"><dt>Type</dt><dd th:text="${resourceType}">Type</dd></div>
     <div><dt>Date</dt><dd th:text="${bookingDate}">Date</dd></div>
-    <div><dt>Horaire</dt><dd th:text="|${startTime} — ${endTime}|">Horaire</dd></div>
+    <div><dt>Horaire</dt><dd th:text="|${startTime} · ${endTime}|">Horaire</dd></div>
     <div><dt>Durée</dt><dd th:text="${durationLabel}">Durée</dd></div>
     <div th:if="${quantity}"><dt>Places</dt><dd th:text="${quantity}">1</dd></div>
     <div th:if="${address}"><dt>Adresse</dt><dd th:text="|${address}, ${city}|">Adresse</dd></div>
@@ -29,7 +29,7 @@
     <div><dt>Total TTC</dt><dd th:text="${priceTTC}">0</dd></div>
   </dl>
 
-  <p class="notice">Code de vérification : <strong th:text="${verificationCode}">—</strong></p>
+  <p class="notice">Code de vérification : <strong th:text="${verificationCode}"> · </strong></p>
   <div th:replace="~{fragments/page :: foot('Elle A Osé · 84 Boulevard du Général Charles de Gaulle, Pointe-Noire')}"></div>
 </main>
 </body>

@@ -77,7 +77,7 @@ public class EmailDeliveryLog {
 
     /**
      * Hash of the logical email (recipient, subject, business reference) plus a time bucket.
-     * Null disables deduplication for this row — used by admin-triggered resends, which must
+     * Null disables deduplication for this row · used by admin-triggered resends, which must
      * always ship. Backed by a partial unique index, so a concurrent insert of the same
      * logical email fails instead of producing a second send.
      */

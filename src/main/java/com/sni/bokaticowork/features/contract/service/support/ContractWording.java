@@ -40,7 +40,7 @@ public class ContractWording {
     public String placeOfSigning(BusinessEntity business) {
         if (business == null) {
             throw new BadRequestException("Le lieu de signature du contrat est inconnu : aucune"
-                    + " entite exploitante n'est rattachee a la demande. Indiquez businessCode —"
+                    + " entite exploitante n'est rattachee a la demande. Indiquez businessCode · "
                     + " le lieu determine la juridiction competente et ne peut etre laisse vide.");
         }
         String city = business.getAddress() == null ? null : business.getAddress().getCity();
@@ -48,7 +48,7 @@ public class ContractWording {
             String name = StringUtils.hasText(business.getName()) ? business.getName() : business.getCode();
             throw new BadRequestException("Le lieu de signature du contrat est inconnu : "
                     + name + " n'a pas de ville dans son adresse. Renseignez-la avant de generer"
-                    + " le contrat — elle determine la juridiction competente et ne peut etre laissee vide.");
+                    + " le contrat · elle determine la juridiction competente et ne peut etre laissee vide.");
         }
         return city.trim();
     }

@@ -27,7 +27,7 @@ import java.util.Set;
  * <p>Concu pour retirer d'une base de production des jeux de donnees de test qui y sont restes.
  * Ce n'est pas une desactivation : les lignes sont reellement supprimees, ce qui retire du meme
  * coup les montants des agregats comptables, tous derives de {@code billing_document},
- * {@code payment_transaction}, {@code booking} et {@code subscription} — il n'existe pas de grand
+ * {@code payment_transaction}, {@code booking} et {@code subscription} · il n'existe pas de grand
  * livre separe a rectifier.
  *
  * <h2>Comment les donnees liees sont trouvees</h2>
