@@ -32,8 +32,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 
 @Component
 public abstract class BillingDocumentMapperDecorator implements BillingDocumentMapper {
@@ -126,7 +128,7 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 document.getBankDetailsJson(),
                 document.getMetadataJson(),
                 allLines.stream().map(this::toLineResponse).toList(),
-                discountRepository.findAllByDocumentOrderByIdAsc(document).stream().map(this::toDiscountResponse).toList(),
+                toDiscountResponses(discountRepository.findAllByDocumentOrderByIdAsc(document), document.getDiscountAmount()),
                 taxRepository.findAllByDocumentOrderByIdAsc(document).stream().map(this::toTaxResponse).toList(),
                 clauseRepository.findAllByDocumentOrderByDisplayOrderAscIdAsc(document).stream().map(this::toClauseResponse).toList(),
                 advanceRepository.findByDocument(document).map(this::toAdvanceResponse).orElse(null),
@@ -252,13 +254,57 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
 
     @Override
     public BillingDocumentDiscountResponse toDiscountResponse(BillingDocumentDiscount discount) {
+        return toDiscountResponse(discount, discount.getAmount());
+    }
+
+    private BillingDocumentDiscountResponse toDiscountResponse(BillingDocumentDiscount discount,
+                                                               BigDecimal baseAmount) {
         return new BillingDocumentDiscountResponse(
                 discount.getDiscountCode(),
                 discount.getDescription(),
                 discount.getDiscountType(),
                 discount.getValue(),
-                discount.getAmount()
+                discount.getAmount(),
+                baseAmount
         );
+    }
+
+    /**
+     * Repartit la reduction d'assiette du document entre ses remises.
+     *
+     * <p>Chaque remise est accordee sur le TTC ; le document, lui, ne retient que la reduction
+     * totale en hors taxes. La part de chacune se deduit au prorata de son montant, la derniere
+     * absorbant l'ecart d'arrondi pour que la somme des parts retombe exactement sur la reduction
+     * portee par le document. Sans quoi la colonne des totaux ne boucle plus au franc pres.
+     */
+    private List<BillingDocumentDiscountResponse> toDiscountResponses(List<BillingDocumentDiscount> discounts,
+                                                                      BigDecimal documentDiscount) {
+        if (discounts == null || discounts.isEmpty()) {
+            return List.of();
+        }
+        BigDecimal granted = discounts.stream()
+                .map(d -> d.getAmount() == null ? BigDecimal.ZERO : d.getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (documentDiscount == null || documentDiscount.signum() <= 0 || granted.signum() <= 0) {
+            return discounts.stream().map(this::toDiscountResponse).toList();
+        }
+
+        List<BillingDocumentDiscountResponse> responses = new ArrayList<>(discounts.size());
+        BigDecimal allocated = BigDecimal.ZERO;
+        for (int i = 0; i < discounts.size(); i++) {
+            BillingDocumentDiscount discount = discounts.get(i);
+            BigDecimal share;
+            if (i == discounts.size() - 1) {
+                share = documentDiscount.subtract(allocated);
+            } else {
+                BigDecimal amount = discount.getAmount() == null ? BigDecimal.ZERO : discount.getAmount();
+                share = documentDiscount.multiply(amount)
+                        .divide(granted, 2, RoundingMode.HALF_UP);
+                allocated = allocated.add(share);
+            }
+            responses.add(toDiscountResponse(discount, share));
+        }
+        return responses;
     }
 
     @Override

@@ -92,6 +92,7 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.function.Supplier;
 import java.util.Arrays;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -1725,22 +1726,36 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         return get(corrective.documentNumber());
     }
 
+    /** Rend {@code null} une valeur absente ou reduite a des espaces, pour que le gabarit masque la ligne. */
+    private String emptyToNull(String value) {
+        String trimmed = trim(value);
+        return StringUtils.hasText(trimmed) ? trimmed : null;
+    }
+
+    /** Reprend la valeur transmise, ou en tire une de la serie dediee quand rien n'est fourni. */
+    private String valueOrGenerated(String value, Supplier<String> generator) {
+        String trimmed = emptyToNull(value);
+        return trimmed != null ? trimmed : generator.get();
+    }
+
     private BillingDocument buildDocument(CreateBillingDocumentRequest request,
                                           BillingCustomerSnapshotResolver.CustomerSnapshot customer,
                                           BillingCalculationService.CalculatedDocument calculation) {
         String documentNumber = numberingSupport.nextDocumentNumber(request.documentType(), customer.customerType());
-        String customerReference = StringUtils.hasText(trim(request.customerReference()))
-                ? trim(request.customerReference())
-                : "REF-" + documentNumber;
-        String poNumber = StringUtils.hasText(trim(request.poNumber()))
-                ? trim(request.poNumber())
-                : "BC-" + documentNumber;
-        String projectCode = StringUtils.hasText(trim(request.projectCode()))
-                ? trim(request.projectCode())
-                : "PRJ-" + documentNumber;
-        String salespersonCode = StringUtils.hasText(trim(request.salespersonCode()))
-                ? trim(request.salespersonCode())
-                : "SYSTEM";
+        // Bon de commande, affaire et reference client etaient derives du numero de document en le
+        // prefixant : « BC-INV-MAN-20260904-00000018 ». Trois champs qui ne portaient donc rien,
+        // redisaient un numero deja imprime deux fois sur la page, et ne se distinguaient pas entre
+        // eux. Chacun tire desormais sa propre serie. Le lien avec la facture reste lisible sans etre
+        // recopie dans le numero : la ligne du document range la reference a cote de son propre numero.
+        String customerReference = valueOrGenerated(request.customerReference(),
+                numberingSupport::nextCustomerReference);
+        String poNumber = valueOrGenerated(request.poNumber(),
+                numberingSupport::nextPurchaseOrderNumber);
+        String projectCode = valueOrGenerated(request.projectCode(),
+                numberingSupport::nextProjectCode);
+        // Le commercial reste vide quand personne n'est rattache. « SYSTEM » s'imprimait tel quel
+        // sur la facture du client, en face du libelle « Commercial ».
+        String salespersonCode = emptyToNull(request.salespersonCode());
         return BillingDocument.builder()
                 .documentNumber(documentNumber)
                 .documentType(request.documentType())

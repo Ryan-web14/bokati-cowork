@@ -35,4 +35,25 @@ public class BillingNumberingSupport {
         long seq = CodeComposer.extractSeq(sequenceGenerator.next(seqCode));
         return CodeComposer.withDay(prefix, ctx, LocalDate.now(), seq);
     }
+
+    /**
+     * Bon de commande rattache au document.
+     *
+     * <p>Serie annuelle propre · « BC-2026-000137 ». Ces trois references etaient auparavant
+     * derivees du numero de document en le prefixant, si bien qu'elles n'apportaient rien : elles
+     * redisaient un numero deja imprime, et se ressemblaient toutes les trois.
+     */
+    public String nextPurchaseOrderNumber() {
+        return sequenceGenerator.next("billing_purchase_order");
+    }
+
+    /** Affaire rattachee au document · serie annuelle plus courte, « AFF-2026-00042 ». */
+    public String nextProjectCode() {
+        return sequenceGenerator.next("billing_project");
+    }
+
+    /** Reference client du document · serie mensuelle, « REF-202609-000318 ». */
+    public String nextCustomerReference() {
+        return sequenceGenerator.next("billing_customer_reference");
+    }
 }
