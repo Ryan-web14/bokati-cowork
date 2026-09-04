@@ -135,6 +135,12 @@
                                     <span class="meta-val" th:text="${interest}"></span>
                                 </td>
                             </tr>
+                            <tr>
+                                <td th:if="${source}" style="padding:8px 8px 0 0; vertical-align:top; width:50%;">
+                                    <span class="meta-lbl">Origine</span>
+                                    <span class="meta-val" th:text="${source}"></span>
+                                </td>
+                            </tr>
                             <tr th:if="${estimatedAmount}">
                                 <td colspan="2" style="padding-top:8px; vertical-align:top;">
                                     <span class="meta-lbl">Montant estimé</span>

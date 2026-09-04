@@ -15,6 +15,8 @@ import com.sni.bokaticowork.features.subscription.subscription.model.BillableIte
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -74,7 +76,7 @@ public class BookingBillableBridge {
         // Notification after all business logic
         if (issued != null && StringUtils.hasText(booking.getContactEmail())) {
             try {
-                billingEmailService.sendDocumentAsync(issued.documentNumber());
+                dispatchInvoiceEmail(issued.documentNumber());
             } catch (Exception ex) {
                 log.warn("Failed to send billing document email for booking {} · billing already completed",
                         booking.getBookingNumber(), ex);
@@ -117,6 +119,27 @@ public class BookingBillableBridge {
                     .append(booking.getTotalAmount().stripTrailingZeros().toPlainString())
                     .append(" ").append(booking.getCurrency());
         }
+    }
+
+    /**
+     * Poste l'envoi de la facture apres le commit.
+     *
+     * <p>L'appel partait directement sur un fil {@code @Async}, depuis l'interieur de la transaction
+     * qui venait tout juste de creer la facture. Le fil la cherchait donc avant le commit et ne la
+     * trouvait pas : l'envoi echouait sur « Billing document not found », le client ne recevait
+     * jamais sa facture, et il n'en restait qu'un avertissement dans les journaux.
+     */
+    private void dispatchInvoiceEmail(String documentNumber) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            billingEmailService.sendDocumentAsync(documentNumber);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                billingEmailService.sendDocumentAsync(documentNumber);
+            }
+        });
     }
 
     private String buildInvoiceTitle(Booking booking) {

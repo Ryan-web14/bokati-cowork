@@ -108,7 +108,7 @@ bokati:
       # de lui-même qu'un document a été modifié, sans démarche du destinataire.
       #
       # Avec un certificat auto-signé, le lecteur affiche « signature valide, émetteur non
-      # vérifié » — bandeau jaune plutôt que vert. L'essentiel est acquis pour autant : le
+      # vérifié » · bandeau jaune plutôt que vert. L'essentiel est acquis pour autant : le
       # bandeau change dès qu'un octet bouge. Passer à une autorité reconnue ne changera pas une
       # ligne de code, seulement la source du keystore.
       #

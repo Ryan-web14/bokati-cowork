@@ -79,6 +79,14 @@
           <td class="r-key">Statut</td>
           <td class="r-val" th:text="${status}">statut</td>
         </tr>
+        <tr th:if="${reason}">
+          <td class="r-key">Motif</td>
+          <td class="r-val" th:text="${reason}">motif</td>
+        </tr>
+        <tr th:if="${processedAt}">
+          <td class="r-key">Traité le</td>
+          <td class="r-val" th:text="${processedAt}">date</td>
+        </tr>
         <tr th:if="${paymentMethod}">
           <td class="r-key">Mode de paiement</td>
           <td class="r-val" th:text="${paymentMethod}">moyen</td>
@@ -89,7 +97,7 @@
         </tr>
         <tr th:if="${sourceCode}">
           <td class="r-key">Code source</td>
-          <td class="r-val mono" th:text="${sourceCode}">SRC</td>
+          <td class="r-val mono" th:text="${sourceType != null ? sourceType + ' ' + sourceCode : sourceCode}">SRC</td>
         </tr>
         <tr class="amt-row">
           <td class="amt-key">Montant remboursé</td>
