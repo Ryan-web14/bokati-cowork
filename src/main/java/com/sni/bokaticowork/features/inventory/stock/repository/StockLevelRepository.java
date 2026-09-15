@@ -21,7 +21,14 @@ public interface StockLevelRepository extends JpaRepository<StockLevel, Long> {
     Optional<StockLevel> findByItemAndLocationForUpdate(@Param("item") InventoryItem item,
                                                         @Param("location") InventoryLocation location);
 
-    Optional<StockLevel> findByItemAndLocation(InventoryItem item, InventoryLocation location);
+    /**
+     * Lecture seule. Toute ecriture sur un niveau de stock doit passer par
+     * {@link #findByItemAndLocationForUpdate(InventoryItem, InventoryLocation)}, sans quoi deux
+     * operations concurrentes sur le meme couple article et emplacement peuvent produire un stock faux.
+     */
+    @Query("SELECT level FROM StockLevel level WHERE level.item = :item AND level.location = :location")
+    Optional<StockLevel> findByItemAndLocationReadOnly(@Param("item") InventoryItem item,
+                                                       @Param("location") InventoryLocation location);
 
     List<StockLevel> findAllByLocation(InventoryLocation location);
 
@@ -60,4 +67,77 @@ public interface StockLevelRepository extends JpaRepository<StockLevel, Long> {
             FROM StockLevel level
             """)
     Long totalStockValue();
+
+    /**
+     * Compare le stock enregistre au stock recalcule depuis le journal de mouvements, et ne renvoie
+     * que les couples article et emplacement divergents.
+     *
+     * <p>Un mouvement contre-passe reste dans la somme : la contre-passation cree un mouvement
+     * compensatoire distinct, exclure l'original reviendrait a compter la correction deux fois.</p>
+     *
+     * <p>Colonnes renvoyees, dans l'ordre : itemCode, itemName, locationCode, locationName,
+     * recordedQuantity, expectedQuantity, difference, lastMovementAt.</p>
+     */
+    @Query(value = """
+            WITH movement_delta AS (
+                SELECT movement.item_id, movement.location_to_id AS location_id, movement.quantity AS delta
+                FROM stock_movement movement
+                WHERE movement.movement_type IN ('IN', 'ADJUSTMENT_IN', 'TRANSFER')
+                  AND movement.location_to_id IS NOT NULL
+                UNION ALL
+                SELECT movement.item_id, movement.location_from_id AS location_id, -movement.quantity AS delta
+                FROM stock_movement movement
+                WHERE movement.movement_type IN ('OUT', 'ADJUSTMENT_OUT', 'TRANSFER')
+                  AND movement.location_from_id IS NOT NULL
+            ),
+            expected AS (
+                SELECT item_id, location_id, SUM(delta) AS expected_quantity
+                FROM movement_delta
+                GROUP BY item_id, location_id
+            )
+            SELECT
+                item.item_code,
+                item.name,
+                location.location_code,
+                location.name,
+                COALESCE(level.quantity_on_hand, 0),
+                COALESCE(expected.expected_quantity, 0),
+                COALESCE(level.quantity_on_hand, 0) - COALESCE(expected.expected_quantity, 0),
+                level.last_movement_at
+            FROM expected
+            FULL OUTER JOIN stock_level level
+                ON level.item_id = expected.item_id
+               AND level.location_id = expected.location_id
+            JOIN inventory_item item
+                ON item.id = COALESCE(level.item_id, expected.item_id)
+            JOIN inventory_location location
+                ON location.id = COALESCE(level.location_id, expected.location_id)
+            WHERE COALESCE(level.quantity_on_hand, 0) <> COALESCE(expected.expected_quantity, 0)
+              AND (CAST(:itemCode AS varchar) IS NULL OR item.item_code = :itemCode)
+              AND (CAST(:locationCode AS varchar) IS NULL OR location.location_code = :locationCode)
+            ORDER BY ABS(COALESCE(level.quantity_on_hand, 0) - COALESCE(expected.expected_quantity, 0)) DESC,
+                     item.item_code ASC
+            """, nativeQuery = true)
+    List<Object[]> findReconciliationDivergences(@Param("itemCode") String itemCode,
+                                                 @Param("locationCode") String locationCode);
+
+    /**
+     * Nombre de couples article et emplacement examines par la reconciliation, qu'ils divergent ou non.
+     */
+    @Query(value = """
+            WITH movement_pairs AS (
+                SELECT DISTINCT movement.item_id, movement.location_to_id AS location_id
+                FROM stock_movement movement
+                WHERE movement.location_to_id IS NOT NULL
+                UNION
+                SELECT DISTINCT movement.item_id, movement.location_from_id AS location_id
+                FROM stock_movement movement
+                WHERE movement.location_from_id IS NOT NULL
+                UNION
+                SELECT level.item_id, level.location_id
+                FROM stock_level level
+            )
+            SELECT COUNT(*) FROM movement_pairs
+            """, nativeQuery = true)
+    long countReconciliationPairs();
 }

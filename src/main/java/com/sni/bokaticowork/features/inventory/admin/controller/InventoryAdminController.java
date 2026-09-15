@@ -6,6 +6,9 @@ import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelBatchRequ
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryAnomalyReportResponse;
+import com.sni.bokaticowork.features.inventory.admin.dto.InventoryOverrideReportResponse;
+import com.sni.bokaticowork.features.inventory.stock.dto.response.StockReconciliationReportResponse;
+import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockReconciliationService;
 import com.sni.bokaticowork.features.inventory.admin.service.InventoryAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +27,7 @@ import java.util.List;
 public class InventoryAdminController {
 
     private final InventoryAdminService service;
+    private final StockReconciliationService reconciliationService;
 
     @GetMapping("/dashboard")
     public ResponseEntity<InventoryDashboardResponse> dashboard() {
@@ -73,6 +77,42 @@ public class InventoryAdminController {
     @GetMapping("/reports/anomalies")
     public ResponseEntity<InventoryAnomalyReportResponse> anomalyReport() {
         return ResponseEntity.ok(service.anomalyReport());
+    }
+
+    @GetMapping("/reports/overrides")
+    public ResponseEntity<InventoryOverrideReportResponse> overrideReport(@RequestParam(required = false) String referenceType,
+                                                                          @RequestParam(required = false) String fromDate,
+                                                                          @RequestParam(required = false) String toDate) {
+        return ResponseEntity.ok(service.overrideReport(referenceType, parseStart(fromDate), parseEnd(toDate)));
+    }
+
+    @GetMapping("/reports/overrides.csv")
+    public ResponseEntity<String> overrideReportCsv(@RequestParam(required = false) String referenceType,
+                                                    @RequestParam(required = false) String fromDate,
+                                                    @RequestParam(required = false) String toDate) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=inventory-overrides.csv")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(service.overrideReportCsv(referenceType, parseStart(fromDate), parseEnd(toDate)));
+    }
+
+    /**
+     * Compare les niveaux de stock a la somme des mouvements. Aucun niveau n'est modifie :
+     * une divergence est un defaut a analyser, pas une valeur a ecraser.
+     */
+    @GetMapping("/reconciliation")
+    public ResponseEntity<StockReconciliationReportResponse> reconciliation(@RequestParam(required = false) String itemCode,
+                                                                            @RequestParam(required = false) String locationCode) {
+        return ResponseEntity.ok(reconciliationService.reconcile(itemCode, locationCode));
+    }
+
+    @GetMapping("/reconciliation.csv")
+    public ResponseEntity<String> reconciliationCsv(@RequestParam(required = false) String itemCode,
+                                                    @RequestParam(required = false) String locationCode) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=inventory-reconciliation.csv")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .body(reconciliationService.reconcileCsv(itemCode, locationCode));
     }
 
     private Instant parseStart(String value) {

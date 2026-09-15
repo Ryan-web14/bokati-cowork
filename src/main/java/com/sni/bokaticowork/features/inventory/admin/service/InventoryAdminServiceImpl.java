@@ -7,6 +7,7 @@ import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelBatchRequ
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryAnomalyReportResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
+import com.sni.bokaticowork.features.inventory.admin.dto.InventoryOverrideReportResponse;
 import com.sni.bokaticowork.features.inventory.admin.service.support.InventoryMovementReportPdfRenderer;
 import com.sni.bokaticowork.features.inventory.asset.model.Asset;
 import com.sni.bokaticowork.features.inventory.asset.repository.AssetRepository;
@@ -23,6 +24,7 @@ import com.sni.bokaticowork.features.inventory.stock.repository.StockLevelReposi
 import com.sni.bokaticowork.features.inventory.stock.repository.StockLotRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementRepository;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.control.repository.InventoryCountItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,9 @@ import java.util.Locale;
 @Service
 @RequiredArgsConstructor
 public class InventoryAdminServiceImpl implements InventoryAdminService {
+
+    /** Les validations d'inventaire forcent le niveau par construction : ce sont des forcages legitimes. */
+    private static final String INVENTORY_COUNT_REFERENCE = StockReferenceType.INVENTORY_COUNT.name();
 
     private final InventoryAlertRepository alertRepository;
     private final StockLotRepository lotRepository;
@@ -405,5 +410,130 @@ public class InventoryAdminServiceImpl implements InventoryAdminService {
 
     private String nullSafe(String value) {
         return value == null ? "ALL" : value;
+    }
+
+    @Override
+    public InventoryOverrideReportResponse overrideReport(String referenceType, Instant fromDate, Instant toDate) {
+        String normalizedReferenceType = normalizeOptional(referenceType);
+
+        List<InventoryOverrideReportResponse.Line> lines =
+                movementRepository.findOverrideMovements(normalizedReferenceType, fromDate, toDate)
+                        .stream()
+                        .map(this::toOverrideLine)
+                        .toList();
+
+        List<InventoryOverrideReportResponse.Breakdown> breakdown =
+                movementRepository.findOverrideBreakdown(fromDate, toDate)
+                        .stream()
+                        .map(row -> InventoryOverrideReportResponse.Breakdown.builder()
+                                .referenceType(asText(row[0]))
+                                .performedBy(asText(row[1]))
+                                .count(asLong(row[2]))
+                                .build())
+                        .toList();
+
+        long total = breakdown.stream().mapToLong(InventoryOverrideReportResponse.Breakdown::getCount).sum();
+        long manual = breakdown.stream()
+                .filter(entry -> !INVENTORY_COUNT_REFERENCE.equals(entry.getReferenceType()))
+                .mapToLong(InventoryOverrideReportResponse.Breakdown::getCount)
+                .sum();
+
+        return InventoryOverrideReportResponse.builder()
+                .generatedAt(Instant.now())
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .referenceTypeFilter(normalizedReferenceType)
+                .totalOverrides(total)
+                .manualOverrides(manual)
+                .breakdown(breakdown)
+                .lines(lines)
+                .build();
+    }
+
+    @Override
+    public String overrideReportCsv(String referenceType, Instant fromDate, Instant toDate) {
+        InventoryOverrideReportResponse report = overrideReport(referenceType, fromDate, toDate);
+        StringBuilder csv = new StringBuilder();
+
+        csv.append("Derogations de stock negatif\n");
+        csv.append("Genere le:,").append(report.getGeneratedAt()).append('\n');
+        csv.append("Total:,").append(report.getTotalOverrides()).append('\n');
+        csv.append("Dont hors validation d'inventaire:,").append(report.getManualOverrides()).append('\n');
+        csv.append('\n');
+
+        csv.append("REPARTITION\n");
+        csv.append("Type de reference,Auteur,Nombre\n");
+        for (InventoryOverrideReportResponse.Breakdown entry : report.getBreakdown()) {
+            csv.append(escapeCsv(entry.getReferenceType())).append(',')
+                    .append(escapeCsv(entry.getPerformedBy())).append(',')
+                    .append(entry.getCount()).append('\n');
+        }
+        csv.append('\n');
+
+        csv.append("DETAIL\n");
+        csv.append("Mouvement,Type,Article,Libelle,Emplacement,Quantite,Type reference,Reference,Motif code,Motif,Auteur,Date\n");
+        for (InventoryOverrideReportResponse.Line line : report.getLines()) {
+            csv.append(escapeCsv(line.getMovementCode())).append(',')
+                    .append(escapeCsv(line.getMovementType())).append(',')
+                    .append(escapeCsv(line.getItemCode())).append(',')
+                    .append(escapeCsv(line.getItemName())).append(',')
+                    .append(escapeCsv(line.getLocationCode())).append(',')
+                    .append(line.getQuantity()).append(',')
+                    .append(escapeCsv(line.getReferenceType())).append(',')
+                    .append(escapeCsv(line.getReferenceCode())).append(',')
+                    .append(escapeCsv(line.getReasonCode())).append(',')
+                    .append(escapeCsv(line.getReason())).append(',')
+                    .append(escapeCsv(line.getPerformedBy())).append(',')
+                    .append(line.getPerformedAt() == null ? "" : line.getPerformedAt()).append('\n');
+        }
+        return csv.toString();
+    }
+
+    private InventoryOverrideReportResponse.Line toOverrideLine(Object[] row) {
+        return InventoryOverrideReportResponse.Line.builder()
+                .movementCode(asText(row[0]))
+                .movementType(asText(row[1]))
+                .itemCode(asText(row[2]))
+                .itemName(asText(row[3]))
+                .locationCode(asText(row[4]))
+                .quantity(asDecimal(row[5]))
+                .referenceType(asText(row[6]))
+                .referenceCode(asText(row[7]))
+                .reasonCode(asText(row[8]))
+                .reason(asText(row[9]))
+                .performedBy(asText(row[10]))
+                .performedAt(asInstant(row[11]))
+                .build();
+    }
+
+    private String asText(Object value) {
+        return value == null ? null : value.toString();
+    }
+
+    private long asLong(Object value) {
+        return value instanceof Number number ? number.longValue() : 0L;
+    }
+
+    private BigDecimal asDecimal(Object value) {
+        if (value == null) {
+            return BigDecimal.ZERO;
+        }
+        return value instanceof BigDecimal decimal ? decimal : new BigDecimal(value.toString());
+    }
+
+    private Instant asInstant(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Instant instant) {
+            return instant;
+        }
+        if (value instanceof java.sql.Timestamp timestamp) {
+            return timestamp.toInstant();
+        }
+        if (value instanceof java.time.OffsetDateTime offsetDateTime) {
+            return offsetDateTime.toInstant();
+        }
+        return null;
     }
 }

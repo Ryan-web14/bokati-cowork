@@ -22,6 +22,7 @@ import java.util.Map;
 public class IdempotencyAspect {
 
     private final IdempotencyService idempotencyService;
+    private final IdempotencyRequirementPolicy requirementPolicy;
 
     @Around("@annotation(idempotent)")
     public Object around(ProceedingJoinPoint pjp, Idempotent idempotent) throws Throwable {
@@ -31,7 +32,8 @@ public class IdempotencyAspect {
         }
 
         String idempotencyKey = request.getHeader(idempotent.keyHeader());
-        if ((idempotencyKey == null || idempotencyKey.isBlank()) && idempotent.required()) {
+        boolean keyRequired = idempotent.required() || requirementPolicy.isRequired(idempotent.operation());
+        if ((idempotencyKey == null || idempotencyKey.isBlank()) && keyRequired) {
             throw new BadRequestException("Missing required header: " + idempotent.keyHeader());
         }
         if (idempotencyKey == null || idempotencyKey.isBlank()) {

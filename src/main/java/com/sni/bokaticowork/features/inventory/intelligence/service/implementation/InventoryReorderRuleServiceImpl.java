@@ -100,7 +100,7 @@ public class InventoryReorderRuleServiceImpl implements InventoryReorderRuleServ
 
     private List<ReorderSuggestionResponse> suggestionsForRule(InventoryReorderRule rule) {
         if (rule.getLocation() != null) {
-            return stockLevelRepository.findByItemAndLocation(rule.getItem(), rule.getLocation())
+            return stockLevelRepository.findByItemAndLocationReadOnly(rule.getItem(), rule.getLocation())
                     .map(level -> level.getQuantityAvailable().compareTo(rule.getMinQuantity()) <= 0
                             ? List.of(toSuggestion(rule, level))
                             : List.<ReorderSuggestionResponse>of())

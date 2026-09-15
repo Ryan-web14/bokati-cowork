@@ -168,3 +168,21 @@ bokati:
     booking-cleanup-default-assignee: ${TASK_BOOKING_CLEANUP_DEFAULT_ASSIGNEE:}
     inventory-reorder-due-hours: ${TASK_INVENTORY_REORDER_DUE_HOURS:24}
     inventory-default-assignee: ${TASK_INVENTORY_DEFAULT_ASSIGNEE:}
+
+inventory:
+  worker:
+    # Cadences du worker inventaire. Les valeurs par defaut sont portees par les annotations
+    # @Scheduled ; elles sont reprises ici pour rester pilotables par variable d'environnement.
+    reservation-cron:    ${INVENTORY_RESERVATION_CRON:0 */30 * * * *}
+    expiry-cron:         ${INVENTORY_EXPIRY_CRON:0 0 */2 * * *}
+    slow-moving-cron:    ${INVENTORY_SLOW_MOVING_CRON:0 0 */6 * * *}
+    asset-cron:          ${INVENTORY_ASSET_CRON:0 0 */3 * * *}
+    # Reconciliation des niveaux de stock avec le journal de mouvements, chaque lundi a 3h.
+    reconciliation-cron: ${INVENTORY_RECONCILIATION_CRON:0 0 3 * * MON}
+
+idempotency:
+  # Operations pour lesquelles l'en-tete Idempotency-Key devient obligatoire, meme si
+  # l'annotation @Idempotent les declare en required = false. Vide par defaut : activer
+  # operation par operation, apres avoir prevenu les clients de l'API.
+  # Exemple : INVENTORY_STOCK_IN,INVENTORY_STOCK_OUT,INVENTORY_STOCK_TRANSFER,INVENTORY_STOCK_ADJUST
+  required-operations: ${IDEMPOTENCY_REQUIRED_OPERATIONS:}
