@@ -167,8 +167,10 @@ GET /inventory/reference/enums/groups          GET /inventory/reference/data
 2. **L'immuabilité applicative n'a pas été doublée d'un garde-fou dans le code.** Le trigger de base
    est la garantie, et aucun chemin applicatif ne modifie un mouvement hors contre-passation. Ajouter
    un `@PreUpdate` aurait dupliqué la règle sans la renforcer.
-3. **Les tests de charge et les tests d'immuabilité restent manuels**, faute de harnais
-   d'intégration avec base réelle. C'est le point 7 de la section 15, toujours ouvert.
+3. ~~Les tests de charge et les tests d'immuabilité restent manuels.~~ **Résolu** avant le lot 2 :
+   le socle Testcontainers (`PostgresIntegrationTestBase`) automatise les trois contrôles qui
+   restaient manuels, via `StockMovementImmutabilityIT`, `StockReconciliationQueryIT` et
+   `StockLevelConcurrencyIT`.
 4. **Aucune réparation automatique des divergences n'a été implémentée**, délibérément : une
    divergence signale un défaut à analyser, l'écraser en silence ferait disparaître le symptôme sans
    traiter la cause. La correction passe par un ajustement explicite et tracé.
@@ -354,6 +356,25 @@ GET    /inventory/scan/{code}
 
 **Objectif.** Passer d'un CMUP implicite à une valorisation paramétrable, auditable et rattachable à
 la comptabilité. C'est le lot le plus sensible du plan : il touche le cœur des mouvements.
+
+### Règle de non-régression, décidée
+
+CMUP et FIFO coexistent, choisis par article ou par catégorie, **sans rien changer au comportement
+actuel**. Concrètement :
+
+- `valuationMethod` vaut `WEIGHTED_AVERAGE` par défaut partout, y compris sur l'existant.
+- Les couches de coût n'existent que pour les articles en FIFO. Un article en CMUP ne crée aucune
+  couche, ne consomme aucune couche, et ne prend aucun verrou supplémentaire.
+- `StockLevel.averageCost` continue d'être alimenté dans les deux méthodes. Le tableau de bord,
+  `totalStockValue` et les états existants ne bougent pas.
+- Les contrats d'API existants sont inchangés ; tout ce qui est ajouté l'est en plus.
+- Passer un article au FIFO est une opération explicite, `PATCH /inventory/items/{code}/valuation-method`,
+  qui amorce une couche initiale par emplacement depuis la quantité et le coût moyen courants, et
+  journalise le changement. C'est ce qu'impose de toute façon le principe de permanence des méthodes.
+
+Limite assumée : pour un article passé au FIFO en cours de route, le coût d'origine des entrées
+antérieures n'existe pas. Le FIFO est exact à partir de la date de bascule, approximé avant. Ce
+compromis est standard lors d'un changement de méthode.
 
 ### Contenu
 
@@ -856,11 +877,25 @@ Ces chiffres sont des ordres de grandeur destinés à arbitrer entre lots, pas u
 
 Ces décisions changent le contenu des lots. Elles relèvent du métier, pas de la technique.
 
-1. **Méthode de valorisation cible.** Le CMUP suffit-il, ou le FIFO est-il exigé par la comptabilité
-   ou par la nature des articles ? Si le CMUP suffit, le lot 2 se réduit de moitié : périodes,
-   snapshots et écritures restent, les couches de coût disparaissent.
-2. **Intégration comptable.** Le module produit-il des écritures exportées vers un logiciel externe,
-   ou seulement des états de valorisation ? Le format attendu conditionne le lot 2.
+### Tranchées
+
+1. **Méthode de valorisation cible. → CMUP et FIFO, les deux, paramétrables par article.**
+   Avec une contrainte explicite : ne rien casser pour l'usage actuel du stock. Les couches de coût
+   n'existent donc que pour les articles déclarés en FIFO. Un article en CMUP se comporte exactement
+   comme aujourd'hui, sans écriture ni verrou supplémentaire. Le passage d'un article au FIFO est une
+   opération explicite qui amorce une couche initiale depuis le stock courant, tracée et datée,
+   comme l'impose le principe de permanence des méthodes. `averageCost` reste alimenté dans les deux
+   méthodes, pour que le tableau de bord et `totalStockValue` ne bougent pas.
+2. **Intégration comptable. → Écritures plus export générique.**
+   `StockJournalEntry` généré à chaque mouvement valorisé, avec compte de stock et contrepartie, plus
+   un export CSV neutre. Aucun format d'éditeur ciblé tant qu'aucun n'est nommé.
+7. **Couverture de tests. → Testcontainers, livré avant le lot 2.**
+   Socle `PostgresIntegrationTestBase`, plus trois classes couvrant l'immuabilité, la requête de
+   réconciliation et la concurrence. `./mvnw test` exécute tout et exige Docker ;
+   `./mvnw test -DexcludedGroups=integration` garde une boucle rapide sans Docker.
+
+### Encore ouvertes
+
 3. **Multi-devise.** Y a-t-il réellement des achats en devise ? Si non, le lot 5 s'allège nettement.
 4. **Périmètre entrepôt.** Le lot 6 vise un entrepôt piloté par emplacements fins et par tâches.
    Si l'organisation réelle ne compte que quelques dépôts sans zonage, il peut être réduit aux
@@ -870,8 +905,13 @@ Ces décisions changent le contenu des lots. Elles relèvent du métier, pas de 
    BTP, qui en aura besoin de toute façon ?
 6. **Rupture d'API.** Passer les endpoints de mouvement en idempotence obligatoire casse les clients
    qui n'envoient pas de clé. Quand, et avec quel préavis ?
-7. **Couverture de tests.** Deux classes de test sur le module aujourd'hui. Un effort de rattrapage
-   est-il financé avant le lot 2, ou accepte-t-on le risque de régression sur la valorisation ?
+8. **Chaîne de migrations de développement.** `db/migration` ne rejoue pas sur une base vierge :
+   six fichiers échouent, un nouveau poste ne peut donc pas créer sa base à partir de ces
+   migrations. `db/migration-prod` rejoue intégralement. Corriger les six fichiers changerait leur
+   empreinte et casserait `validate-on-migrate` sur les environnements en place. La correction passe
+   par des migrations d'alignement supplémentaires côté dev, sur le modèle de ce qui existe déjà
+   côté prod. Chantier à part entière, à arbitrer. Détail dans
+   [`../backend/inventory-lot0-verification.md`](../backend/inventory-lot0-verification.md).
 
 ---
 
@@ -880,7 +920,8 @@ Ces décisions changent le contenu des lots. Elles relèvent du métier, pas de 
 | Risque | Impact | Réduction |
 |---|---|---|
 | Régression sur la valorisation au lot 2 | fausse la valeur du stock et la comptabilité | tests d'intégration avant refonte, double calcul en parallèle pendant une période, réconciliation du lot 0 en filet |
-| Couverture de tests très faible sur le module | toute modification du cœur est risquée | rattrapage ciblé sur `StockServiceImpl` avant le lot 2, non négociable |
+| Couverture de tests très faible sur le module | toute modification du cœur est risquée | socle Testcontainers livré avant le lot 2 : immuabilité, réconciliation et concurrence désormais automatisées |
+| La chaîne de migrations dev ne rejoue pas sur une base vierge | un nouvel environnement n'est pas créable depuis les migrations | tests branchés sur `db/migration-prod`, qui rejoue ; correction de la chaîne dev à arbitrer (point 8) |
 | Transfert en FIFO qui doit transporter les couches | corruption silencieuse du coût | traiter ce cas en premier dans le lot 2, avec jeu de tests dédié |
 | Elasticsearch à construire de zéro | charge sous-estimée au lot 9 | démarrer tôt en parallèle, garder JPA en repli permanent |
 | Double dossier Flyway | une migration oubliée en prod bloque le déploiement | contrôle automatisé en intégration continue comparant les deux dossiers |

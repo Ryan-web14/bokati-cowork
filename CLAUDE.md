@@ -11,8 +11,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Run application
 ./mvnw spring-boot:run
 
-# Run all tests
+# Run all tests (integration tests included, requires a running Docker daemon)
 ./mvnw test
+
+# Run only unit tests, no Docker needed
+./mvnw test -DexcludedGroups=integration
 
 # Run a single test class
 ./mvnw test -Dtest=CustomerServiceImplTest

@@ -1,13 +1,48 @@
 # Lot 0 · Procédure de vérification
 
-Ce qui est livré dans le lot 0 se vérifie à deux niveaux. Les règles applicatives sont couvertes par
-des tests unitaires Mockito, exécutés par `./mvnw test`. Les deux garanties qui vivent dans la base
-de données, immuabilité et concurrence, ne sont pas couvrables par le harnais de test actuel : le
-projet n'a ni Testcontainers ni base en mémoire. Elles se vérifient donc à la main, une fois, contre
-la base de développement, avec les requêtes ci-dessous.
+> **Mise à jour.** Les contrôles 1, 2.1, 2.2 et 3 de ce document sont désormais **automatisés** par
+> les tests d'intégration Testcontainers ajoutés avant le lot 2 :
+> `StockMovementImmutabilityIT`, `StockReconciliationQueryIT` et `StockLevelConcurrencyIT`.
+> Ils tournent avec `./mvnw test` et exigent un démon Docker joignable.
+> Les sections ci-dessous restent utiles comme procédure de recette sur un environnement réel,
+> et pour les points 4, 5 et 6 qui passent par l'API et non par la base.
 
-Cette lacune est le point 7 de la section « Points à trancher » du plan d'implémentation : tant qu'un
-harnais d'intégration n'est pas financé, ces contrôles restent manuels.
+## Avertissement sur les migrations de développement
+
+En montant le socle d'intégration, un défaut préexistant est apparu : **la chaîne de migrations du
+dossier `db/migration` ne rejoue pas sur une base vierge**. Six fichiers échouent, parce qu'ils
+s'appuient sur des colonnes créées à l'époque par la génération automatique de schéma et jamais
+reprises en migration.
+
+| Migration | Erreur sur une base vierge |
+|---|---|
+| `V6__basic_search_engine.sql` | `column "email" does not exist` (la table `customer` de V3 porte `billing_email`) |
+| `V8__seed_roles_permissions.sql` | `column "role" of relation "role_permission" does not exist` |
+| `V21__upgrade_resource_availability_slots.sql` | `column "started_at" does not exist` |
+| `V79__enhance_member_search.sql` | `column m.deleted does not exist` |
+| `V87__roadmap_modules_security_resource_support.sql` | `null value in column "id" of relation "permission"` |
+| `V152__add_portal_activated_at_to_member.sql` | `column "member_status" does not exist` |
+
+Le dossier `db/migration-prod`, lui, **rejoue intégralement sans erreur** (211 fichiers, zéro échec),
+grâce aux migrations d'alignement qu'il contient en plus (`V104` à `V110`, `V183`, et les autres).
+
+Conséquences :
+
+1. Les tests d'intégration sont branchés sur `db/migration-prod`, seule chaîne capable de
+   reconstruire un schéma complet.
+2. **Un nouveau poste de développement ne peut pas créer sa base à partir des migrations dev.** Le
+   défaut ne s'est jamais vu parce que les deux environnements existants ont été amorcés depuis un
+   schéma préexistant, puis baselinés (`baseline-on-migrate: true`).
+3. Corriger les six fichiers changerait leur empreinte et ferait échouer `validate-on-migrate` sur
+   les environnements en place. La correction propre passe par des migrations d'alignement
+   supplémentaires côté dev, sur le modèle de ce qui a été fait côté prod, ou par un `flyway repair`
+   maîtrisé. C'est un chantier à part entière, à arbitrer.
+
+## Portée de ce document
+
+Les règles applicatives sont couvertes par des tests unitaires Mockito. Les garanties portées par la
+base sont désormais couvertes par les tests d'intégration. Ce document conserve la procédure manuelle
+équivalente, utile pour valider un environnement réel avant une mise en production.
 
 ## Prérequis
 
