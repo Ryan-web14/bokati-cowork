@@ -80,6 +80,7 @@ public class  StockServiceImpl implements StockService {
     @Override
     public StockMovementResponse receive(StockInRequest request) {
         InventoryItem item = itemLookupService.findByItemCodeOrThrow(request.getItemCode());
+        ensureLifecycleAllowsReceipt(item);
         InventoryLocation location = locationService.findByLocationCodeOrThrow(request.getLocationCode());
         StockLevel level = getOrCreateLevelForUpdate(item, location);
 
@@ -103,6 +104,7 @@ public class  StockServiceImpl implements StockService {
     @Override
     public StockMovementResponse issue(StockOutRequest request) {
         InventoryItem item = itemLookupService.findByItemCodeOrThrow(request.getItemCode());
+        ensureLifecycleAllowsIssue(item);
         InventoryLocation location = locationService.findByLocationCodeOrThrow(request.getLocationCode());
         StockLevel level = getOrCreateLevelForUpdate(item, location);
 
@@ -131,6 +133,7 @@ public class  StockServiceImpl implements StockService {
             throw new BadRequestException("Transfer source and destination must be different");
         }
         InventoryItem item = itemLookupService.findByItemCodeOrThrow(request.getItemCode());
+        ensureLifecycleAllowsIssue(item);
         InventoryLocation from = locationService.findByLocationCodeOrThrow(request.getFromLocationCode());
         InventoryLocation to = locationService.findByLocationCodeOrThrow(request.getToLocationCode());
         StockLevel fromLevel = getOrCreateLevelForUpdate(item, from);
@@ -348,6 +351,26 @@ public class  StockServiceImpl implements StockService {
         return movementRepository.search(normalizeOptionalCode(itemCode), normalizeOptionalCode(locationCode),
                 movementType == null ? null : movementType.name(), referenceType == null ? null : referenceType.name(),
                 normalizeOptionalCode(referenceCode), fromDate, toDate, unsortedPage(pageable)).map(mapper::toMovementResponse);
+    }
+
+    /**
+     * Refuse une entree en stock sur un article qui ne se reapprovisionne plus.
+     *
+     * <p>L'ajustement reste autorise quel que soit le statut : c'est le seul chemin de correction,
+     * le bloquer rendrait un stock errone impossible a remettre d'aplomb.</p>
+     */
+    private void ensureLifecycleAllowsReceipt(InventoryItem item) {
+        if (!item.canReceiveStock()) {
+            throw new BadRequestException("Item " + item.getItemCode() + " is in lifecycle status "
+                    + item.getLifecycleStatus() + " and cannot receive stock");
+        }
+    }
+
+    private void ensureLifecycleAllowsIssue(InventoryItem item) {
+        if (!item.canIssueStock()) {
+            throw new BadRequestException("Item " + item.getItemCode() + " is in lifecycle status "
+                    + item.getLifecycleStatus() + " and cannot be issued or transferred");
+        }
     }
 
     private StockLevel getOrCreateLevelForUpdate(InventoryItem item, InventoryLocation location) {

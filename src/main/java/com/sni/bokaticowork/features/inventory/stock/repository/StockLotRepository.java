@@ -19,6 +19,8 @@ import java.util.Optional;
 public interface StockLotRepository extends JpaRepository<StockLot, Long> {
     Optional<StockLot> findByItemAndLocationAndLotNumber(InventoryItem item, InventoryLocation location, String lotNumber);
 
+    List<StockLot> findAllByLotNumberAndActiveTrue(String lotNumber);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT lot FROM StockLot lot

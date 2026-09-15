@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.inventory.catalog.mapper.decorator;
 
 import com.sni.bokaticowork.features.inventory.catalog.dto.request.InventoryItemRequest;
+import com.sni.bokaticowork.features.inventory.catalog.enums.ItemLifecycleStatus;
 import com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryItemResponse;
 import com.sni.bokaticowork.features.inventory.catalog.mapper.interfaces.InventoryItemMapper;
 import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItem;
@@ -42,6 +43,9 @@ public abstract class InventoryItemMapperDecorator implements InventoryItemMappe
             response.setUnitCode(entity.getUnit().getCode());
             response.setUnitName(entity.getUnit().getName());
         }
+        if (entity.getTemplate() != null) {
+            response.setTemplateCode(entity.getTemplate().getTemplateCode());
+        }
         return response;
     }
 
@@ -51,6 +55,11 @@ public abstract class InventoryItemMapperDecorator implements InventoryItemMappe
         if (entity.getRequiresExpiryDate() == null) entity.setRequiresExpiryDate(Boolean.FALSE);
         if (entity.getRequiresLotNumber() == null) entity.setRequiresLotNumber(Boolean.FALSE);
         if (entity.getRequiresSerialNumber() == null) entity.setRequiresSerialNumber(Boolean.FALSE);
-        if (entity.getActive() == null) entity.setActive(Boolean.TRUE);
+        if (entity.getStackable() == null) entity.setStackable(Boolean.TRUE);
+        // Le cycle de vie est resolu par le service, qui seul sait arbitrer entre le statut recu et
+        // le booleen active historique. Le mapper se contente de ne pas laisser de trou.
+        if (entity.getLifecycleStatus() == null && entity.getActive() == null) {
+            entity.setLifecycleStatus(ItemLifecycleStatus.ACTIVE);
+        }
     }
 }

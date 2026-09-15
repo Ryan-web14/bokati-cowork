@@ -52,6 +52,29 @@ final class InventoryReferenceLabels {
         put("InventoryUnitType.PACK", "Paquet");
         put("InventoryUnitType.METER", "Metre");
 
+        put("ItemLifecycleStatus.DRAFT", "Brouillon");
+        put("ItemLifecycleStatus.NEW", "Nouveau");
+        put("ItemLifecycleStatus.ACTIVE", "Actif");
+        put("ItemLifecycleStatus.PHASE_OUT", "Fin de serie");
+        put("ItemLifecycleStatus.OBSOLETE", "Obsolete");
+        put("ItemLifecycleStatus.BLOCKED", "Bloque");
+
+        put("InventoryBarcodeType.EAN13", "EAN 13");
+        put("InventoryBarcodeType.EAN8", "EAN 8");
+        put("InventoryBarcodeType.UPC", "UPC");
+        put("InventoryBarcodeType.CODE128", "Code 128");
+        put("InventoryBarcodeType.QR", "QR code");
+        put("InventoryBarcodeType.INTERNAL", "Code interne");
+        put("InventoryBarcodeType.SUPPLIER", "Code fournisseur");
+
+        put("InventoryPackagingLevel.EACH", "Unite");
+        put("InventoryPackagingLevel.INNER", "Sous-conditionnement");
+        put("InventoryPackagingLevel.CASE", "Carton");
+        put("InventoryPackagingLevel.PALLET", "Palette");
+
+        put("InventoryPriceType.DEFAULT_COST", "Cout d'achat par defaut");
+        put("InventoryPriceType.SALE_PRICE", "Prix de vente");
+
         // Emplacements et stock
         put("InventoryLocationType.SITE", "Site");
         put("InventoryLocationType.WAREHOUSE", "Entrepot");

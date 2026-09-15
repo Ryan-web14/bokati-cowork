@@ -4,7 +4,19 @@ import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.features.inventory.catalog.dto.request.InventoryItemLifecycleRequest;
 import com.sni.bokaticowork.features.inventory.catalog.dto.request.InventoryItemRequest;
+import com.sni.bokaticowork.features.inventory.catalog.dto.request.InventoryItemRevisionRequest;
+import com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryItemPriceHistoryResponse;
+import com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryItemRevisionHistoryResponse;
+import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryPriceType;
+import com.sni.bokaticowork.features.inventory.catalog.enums.ItemLifecycleStatus;
+import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItemPriceHistory;
+import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItemRevisionHistory;
+import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItemTemplate;
+import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemPriceHistoryRepository;
+import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemRevisionHistoryRepository;
+import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemTemplateRepository;
 import com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryItemResponse;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryItemType;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryTrackingType;
@@ -28,6 +40,7 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 
 @Service
@@ -43,6 +56,9 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
     private final InventoryUnitService unitService;
     private final InventoryItemMapper mapper;
     private final SequenceGeneratorFacade sequenceGenerator;
+    private final InventoryItemPriceHistoryRepository priceHistoryRepository;
+    private final InventoryItemRevisionHistoryRepository revisionHistoryRepository;
+    private final InventoryItemTemplateRepository templateRepository;
 
     @Override
     public InventoryItemResponse create(InventoryItemRequest request) {
@@ -53,18 +69,98 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
         validateUniqueBusinessCodes(entity);
         refreshSearchText(entity);
         repository.save(entity);
+        recordInitialPrices(entity);
+        recordInitialRevision(entity);
         return mapper.toResponse(entity);
     }
 
     @Override
     public InventoryItemResponse update(String itemCode, InventoryItemRequest request) {
         InventoryItem entity = findByItemCodeOrThrow(itemCode);
+        Long previousDefaultCost = entity.getDefaultCost();
+        Long previousSalePrice = entity.getSalePrice();
+
         apply(entity, request);
         assignGeneratedCodes(entity, false);
         validateUniqueBusinessCodes(entity);
         refreshSearchText(entity);
         repository.save(entity);
+
+        recordPriceChange(entity, InventoryPriceType.DEFAULT_COST, previousDefaultCost, entity.getDefaultCost());
+        recordPriceChange(entity, InventoryPriceType.SALE_PRICE, previousSalePrice, entity.getSalePrice());
         return mapper.toResponse(entity);
+    }
+
+    @Override
+    public InventoryItemResponse createVariant(InventoryItemRequest request, String templateCode, String variantSignature) {
+        InventoryItemTemplate template = templateRepository.findByTemplateCode(normalizeCode(templateCode))
+                .orElseThrow(() -> new ResourceNotFoundException("Inventory item template not found"));
+
+        InventoryItem entity = mapper.toEntity(request);
+        apply(entity, request);
+        entity.setTemplate(template);
+        entity.setVariantSignature(variantSignature);
+        assignGeneratedCodes(entity, true);
+        assertUniqueCreate(entity.getItemCode(), request);
+        validateUniqueBusinessCodes(entity);
+        refreshSearchText(entity);
+        repository.save(entity);
+        recordInitialPrices(entity);
+        return mapper.toResponse(entity);
+    }
+
+    @Override
+    public InventoryItemResponse changeLifecycle(String itemCode, InventoryItemLifecycleRequest request) {
+        InventoryItem entity = findByItemCodeOrThrow(itemCode);
+        if (request.getLifecycleStatus() == null) {
+            throw new BadRequestException("Lifecycle status is required");
+        }
+        entity.setLifecycleStatus(request.getLifecycleStatus());
+        return mapper.toResponse(repository.save(entity));
+    }
+
+    @Override
+    public InventoryItemResponse changeRevision(String itemCode, InventoryItemRevisionRequest request) {
+        InventoryItem entity = findByItemCodeOrThrow(itemCode);
+        String newRevision = trimToNull(request.getRevision());
+        if (newRevision == null) {
+            throw new BadRequestException("Revision is required");
+        }
+        if (newRevision.equals(entity.getRevision())) {
+            throw new BadRequestException("Item is already on revision " + newRevision);
+        }
+
+        String previousRevision = entity.getRevision();
+        entity.setRevision(newRevision);
+        repository.save(entity);
+
+        revisionHistoryRepository.save(InventoryItemRevisionHistory.builder()
+                .item(entity)
+                .previousRevision(previousRevision)
+                .newRevision(newRevision)
+                .changedBy(trimToNull(request.getChangedBy()))
+                .reason(trimToNull(request.getReason()))
+                .documentCode(trimToNull(request.getDocumentCode()))
+                .build());
+
+        return mapper.toResponse(entity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<InventoryItemPriceHistoryResponse> priceHistory(String itemCode, Pageable pageable) {
+        InventoryItem entity = findByItemCodeOrThrow(itemCode);
+        return priceHistoryRepository.findAllByItemOrderByChangedAtDesc(entity, pageable)
+                .map(this::toPriceHistoryResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InventoryItemRevisionHistoryResponse> revisionHistory(String itemCode) {
+        InventoryItem entity = findByItemCodeOrThrow(itemCode);
+        return revisionHistoryRepository.findAllByItemOrderByChangedAtDesc(entity).stream()
+                .map(this::toRevisionHistoryResponse)
+                .toList();
     }
 
     @Override
@@ -85,14 +181,14 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
     @Override
     public InventoryItemResponse activate(String itemCode) {
         InventoryItem entity = findByItemCodeOrThrow(itemCode);
-        entity.setActive(Boolean.TRUE);
+        entity.setLifecycleStatus(ItemLifecycleStatus.ACTIVE);
         return mapper.toResponse(repository.save(entity));
     }
 
     @Override
     public InventoryItemResponse deactivate(String itemCode) {
         InventoryItem entity = findByItemCodeOrThrow(itemCode);
-        entity.setActive(Boolean.FALSE);
+        entity.setLifecycleStatus(ItemLifecycleStatus.OBSOLETE);
         return mapper.toResponse(repository.save(entity));
     }
 
@@ -128,7 +224,92 @@ public class InventoryItemServiceImpl implements InventoryItemService, Inventory
         entity.setRequiresExpiryDate(defaultBoolean(request.getRequiresExpiryDate(), false));
         entity.setRequiresLotNumber(defaultBoolean(request.getRequiresLotNumber(), false));
         entity.setRequiresSerialNumber(defaultBoolean(request.getRequiresSerialNumber(), request.getItemType() == InventoryItemType.ASSET));
-        entity.setActive(defaultBoolean(request.getActive(), true));
+        entity.setRevision(trimToNull(request.getRevision()) != null ? trimToNull(request.getRevision()) : entity.getRevision());
+        entity.setWeightKg(request.getWeightKg());
+        entity.setVolumeM3(request.getVolumeM3());
+        entity.setLengthMm(request.getLengthMm());
+        entity.setWidthMm(request.getWidthMm());
+        entity.setHeightMm(request.getHeightMm());
+        entity.setStackable(defaultBoolean(request.getStackable(), true));
+        entity.setLifecycleStatus(resolveLifecycle(entity, request));
+    }
+
+    /**
+     * Arbitre entre le statut envoye et le booleen active historique.
+     *
+     * <p>Le statut, plus expressif, l'emporte. Le booleen n'est traduit que lorsque le client n'a pas
+     * envoye de statut, sans quoi un client ancien remettrait a plat une decision de fin de serie.</p>
+     */
+    private ItemLifecycleStatus resolveLifecycle(InventoryItem entity, InventoryItemRequest request) {
+        if (request.getLifecycleStatus() != null) {
+            return request.getLifecycleStatus();
+        }
+        if (request.getActive() != null) {
+            return ItemLifecycleStatus.fromActiveFlag(request.getActive());
+        }
+        return entity.getLifecycleStatus() == null ? ItemLifecycleStatus.ACTIVE : entity.getLifecycleStatus();
+    }
+
+    private void recordInitialPrices(InventoryItem entity) {
+        recordPriceChange(entity, InventoryPriceType.DEFAULT_COST, null, entity.getDefaultCost());
+        recordPriceChange(entity, InventoryPriceType.SALE_PRICE, null, entity.getSalePrice());
+    }
+
+    private void recordInitialRevision(InventoryItem entity) {
+        if (entity.getRevision() == null) {
+            return;
+        }
+        revisionHistoryRepository.save(InventoryItemRevisionHistory.builder()
+                .item(entity)
+                .newRevision(entity.getRevision())
+                .reason("Revision initiale")
+                .build());
+    }
+
+    /**
+     * Journalise un changement de prix. Ne fait rien quand la valeur n'a pas bouge, pour ne pas
+     * noyer l'historique sous des lignes sans information.
+     */
+    private void recordPriceChange(InventoryItem entity, InventoryPriceType priceType, Long previous, Long current) {
+        if (java.util.Objects.equals(previous, current)) {
+            return;
+        }
+        priceHistoryRepository.save(InventoryItemPriceHistory.builder()
+                .item(entity)
+                .priceType(priceType)
+                .previousValue(previous)
+                .newValue(current)
+                .build());
+    }
+
+    private InventoryItemPriceHistoryResponse toPriceHistoryResponse(InventoryItemPriceHistory entity) {
+        Long delta = entity.getPreviousValue() == null || entity.getNewValue() == null
+                ? null
+                : entity.getNewValue() - entity.getPreviousValue();
+        return InventoryItemPriceHistoryResponse.builder()
+                .id(entity.getId())
+                .itemCode(entity.getItem().getItemCode())
+                .priceType(entity.getPriceType())
+                .previousValue(entity.getPreviousValue())
+                .newValue(entity.getNewValue())
+                .delta(delta)
+                .changedBy(entity.getChangedBy())
+                .reason(entity.getReason())
+                .changedAt(entity.getChangedAt())
+                .build();
+    }
+
+    private InventoryItemRevisionHistoryResponse toRevisionHistoryResponse(InventoryItemRevisionHistory entity) {
+        return InventoryItemRevisionHistoryResponse.builder()
+                .id(entity.getId())
+                .itemCode(entity.getItem().getItemCode())
+                .previousRevision(entity.getPreviousRevision())
+                .newRevision(entity.getNewRevision())
+                .changedBy(entity.getChangedBy())
+                .reason(entity.getReason())
+                .documentCode(entity.getDocumentCode())
+                .changedAt(entity.getChangedAt())
+                .build();
     }
 
     private void assertUniqueCreate(String itemCode, InventoryItemRequest request) {

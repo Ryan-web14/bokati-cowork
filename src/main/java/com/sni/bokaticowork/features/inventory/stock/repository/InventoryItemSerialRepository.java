@@ -15,6 +15,8 @@ public interface InventoryItemSerialRepository extends JpaRepository<InventoryIt
 
     boolean existsByItemAndSerialNumber(InventoryItem item, String serialNumber);
 
+    List<InventoryItemSerial> findAllBySerialNumber(String serialNumber);
+
     Optional<InventoryItemSerial> findByItemAndSerialNumberAndStatus(InventoryItem item, String serialNumber,
                                                                      InventorySerialStatus status);
 

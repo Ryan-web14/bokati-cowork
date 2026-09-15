@@ -217,8 +217,73 @@ migration : inventory_movement_immutability
 
 ## 5. Lot 1 · Référentiel article et identification
 
+> **État : livré.** Migrations `V217` (dev) et `V213` (prod).
+
 **Objectif.** Donner au catalogue la profondeur attendue d'un référentiel, et rendre tout objet
 identifiable par scan. C'est le socle de la mobilité et des lots 4 et 6.
+
+### Ce qui a été livré
+
+| Élément | Emplacement |
+|---|---|
+| Cycle de vie article | `ItemLifecycleStatus`, `InventoryItem.lifecycleStatus`, garde-fous dans `StockServiceImpl` |
+| Codes-barres multiples | `InventoryBarcode`, `InventoryBarcodeType`, `InventoryIdentificationService` |
+| Conditionnements | `InventoryPackaging`, `InventoryPackagingLevel` |
+| Caractéristiques physiques | `weightKg`, `volumeM3`, `lengthMm`, `widthMm`, `heightMm`, `stackable` sur `InventoryItem` |
+| Substituts et traductions | `InventoryItemSubstitute`, `InventoryItemTranslation`, `InventoryItemRelationService` |
+| Historiques | `InventoryItemPriceHistory`, `InventoryItemRevisionHistory`, alimentés automatiquement |
+| Variantes | `InventoryItemTemplate`, `InventoryVariantAxis`, `InventoryVariantValue`, `InventoryItemTemplateService` |
+| Scan unifié | `InventoryScanService`, résout 7 natures d'objet |
+| Référentiel | 4 nouveaux groupes d'énumérations exposés sous `/inventory/reference/enums` |
+| Tests | `ItemLifecycleStatusTest`, `InventoryIdentificationServiceImplTest`, `InventoryItemTemplateServiceImplTest` |
+
+Endpoints ajoutés :
+
+```text
+PATCH  /inventory/items/{itemCode}/lifecycle | /revision
+GET    /inventory/items/{itemCode}/price-history | /revision-history
+POST   /inventory/items/{itemCode}/barcodes          GET .../barcodes
+PATCH  /inventory/items/barcodes/{id}/primary        DELETE /inventory/items/barcodes/{id}
+POST   /inventory/items/{itemCode}/packagings        GET .../packagings
+DELETE /inventory/items/packagings/{id}
+POST   /inventory/items/{itemCode}/substitutes       GET .../substitutes
+DELETE /inventory/items/substitutes/{id}
+PUT    /inventory/items/{itemCode}/translations      GET .../translations
+DELETE /inventory/items/translations/{id}
+POST   /inventory/item-templates                     PUT /inventory/item-templates/{code}
+GET    /inventory/item-templates                     GET /inventory/item-templates/{code}
+POST   /inventory/item-templates/{code}/variants     génération, avec dryRun
+GET    /inventory/scan/{code}
+```
+
+### Décisions de conception
+
+1. **Le statut de cycle de vie est la seule source de vérité**, le booléen `active` en est dérivé.
+   Laisser les deux s'écrire mutuellement produisait un conflit : passer un article en `PHASE_OUT`
+   sans toucher au booléen le faisait aussitôt retomber en `OBSOLETE`. La traduction d'un `active`
+   reçu se fait une seule fois, dans le service.
+2. **`PHASE_OUT` bloque les entrées mais pas les sorties.** C'est tout l'intérêt du statut : écouler
+   le stock restant sans racheter. Les gardes sont posés dans `StockServiceImpl.receive`, `issue` et
+   `transfer`.
+3. **L'ajustement reste autorisé quel que soit le statut.** C'est le seul chemin de correction ;
+   le bloquer rendrait un stock erroné impossible à remettre d'aplomb.
+4. **Une variante est un `InventoryItem` à part entière**, rattaché au modèle par `template_id` et
+   `variant_signature`. Le stock n'a donc rien à savoir des variantes, et rien n'a été touché côté
+   mouvements.
+5. **La génération est rejouable** : les combinaisons déjà créées sont sautées, ce qui permet
+   d'ajouter une valeur d'axe et de relancer. Un garde-fou à 500 combinaisons évite qu'une erreur de
+   saisie crée des centaines d'articles.
+6. **Modifier les axes d'un modèle ne touche pas aux variantes déjà générées.** Supprimer des
+   articles porteurs de stock parce qu'une valeur d'axe disparaît serait destructeur.
+7. **Le scan ne renvoie jamais d'erreur sur un code inconnu.** Il le signale et propose de le
+   rattacher à un article ou d'en créer un, ce qui est le comportement attendu sur le terrain.
+
+### Reste ouvert
+
+- La recherche article (`searchText`, index trigram de V70 et V71) n'intègre pas encore les
+  codes-barres : un scan d'EAN passe par `/inventory/scan`, pas par `/inventory/items?q=`. À traiter
+  avec la recherche unifiée du lot 9.
+- L'import d'articles n'accepte pas encore codes-barres et conditionnements en colonnes.
 
 ### Contenu
 

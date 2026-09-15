@@ -7,6 +7,9 @@ import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryItemType;
 import com.sni.bokaticowork.features.inventory.catalog.mapper.interfaces.InventoryItemMapper;
 import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItem;
 import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemRepository;
+import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemPriceHistoryRepository;
+import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemRevisionHistoryRepository;
+import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemTemplateRepository;
 import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.InventoryCategoryService;
 import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.InventoryUnitService;
 import org.junit.jupiter.api.Test;
@@ -38,11 +41,18 @@ class InventoryItemServiceImplTest {
     private InventoryItemMapper mapper;
     @Mock
     private SequenceGeneratorFacade sequenceGenerator;
+    @Mock
+    private InventoryItemPriceHistoryRepository priceHistoryRepository;
+    @Mock
+    private InventoryItemRevisionHistoryRepository revisionHistoryRepository;
+    @Mock
+    private InventoryItemTemplateRepository templateRepository;
 
     @Test
     void shouldGenerateItemCodeWhenCreatingInventoryItem() {
         InventoryItemServiceImpl service = new InventoryItemServiceImpl(
-                repository, categoryService, unitService, mapper, sequenceGenerator
+                repository, categoryService, unitService, mapper, sequenceGenerator,
+                priceHistoryRepository, revisionHistoryRepository, templateRepository
         );
         InventoryItemRequest request = new InventoryItemRequest();
         request.setName("Chair");

@@ -7,7 +7,11 @@ import com.sni.bokaticowork.features.inventory.asset.enums.AssetCondition;
 import com.sni.bokaticowork.features.inventory.asset.enums.AssetMaintenanceStatus;
 import com.sni.bokaticowork.features.inventory.asset.enums.AssetMaintenanceType;
 import com.sni.bokaticowork.features.inventory.asset.enums.AssetStatus;
+import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryBarcodeType;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryItemType;
+import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryPackagingLevel;
+import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryPriceType;
+import com.sni.bokaticowork.features.inventory.catalog.enums.ItemLifecycleStatus;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryTrackingType;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryUnitType;
 import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryCategoryRepository;
@@ -67,6 +71,10 @@ public class InventoryReferenceServiceImpl implements InventoryReferenceService 
         groups.put("itemTypes", InventoryItemType.class);
         groups.put("trackingTypes", InventoryTrackingType.class);
         groups.put("unitTypes", InventoryUnitType.class);
+        groups.put("lifecycleStatuses", ItemLifecycleStatus.class);
+        groups.put("barcodeTypes", InventoryBarcodeType.class);
+        groups.put("packagingLevels", InventoryPackagingLevel.class);
+        groups.put("priceTypes", InventoryPriceType.class);
 
         groups.put("locationTypes", InventoryLocationType.class);
         groups.put("movementTypes", StockMovementType.class);

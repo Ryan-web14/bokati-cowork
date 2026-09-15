@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.inventory.catalog.repository;
 
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryItemType;
 import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItem;
+import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItemTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,6 +25,23 @@ public interface InventoryItemRepository extends JpaRepository<InventoryItem, Lo
     boolean existsByIdentificationCode(String identificationCode);
 
     Optional<InventoryItem> findByItemCode(String itemCode);
+
+    Optional<InventoryItem> findByTemplateAndVariantSignature(InventoryItemTemplate template, String variantSignature);
+
+    long countByTemplate(InventoryItemTemplate template);
+
+    /**
+     * Retrouve un article par n importe lequel de ses codes metier. Utilise par la resolution de scan.
+     */
+    @Query("""
+            SELECT item FROM InventoryItem item
+            WHERE item.itemCode = :code
+               OR item.psku = :code
+               OR item.shortCode = :code
+               OR item.displayCode = :code
+               OR item.identificationCode = :code
+            """)
+    Optional<InventoryItem> findByAnyCode(@Param("code") String code);
 
     @Query("""
             SELECT COUNT(item) > 0 FROM InventoryItem item
