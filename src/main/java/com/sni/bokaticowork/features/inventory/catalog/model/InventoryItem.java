@@ -4,6 +4,7 @@ import com.sni.bokaticowork.core.annotation.IdGeneration;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryItemType;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryTrackingType;
 import com.sni.bokaticowork.features.inventory.catalog.enums.ItemLifecycleStatus;
+import com.sni.bokaticowork.features.inventory.stock.enums.ValuationMethod;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -106,6 +107,20 @@ public class InventoryItem {
     @Column(name = "active", nullable = false)
     private Boolean active = Boolean.TRUE;
 
+    /**
+     * Methode de valorisation propre a cet article.
+     *
+     * <p>Null signifie : suivre la categorie, et a defaut le cout moyen pondere. Un article
+     * existant, qui ne declare rien, conserve donc exactement son comportement d'avant.</p>
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "valuation_method", length = 30)
+    private ValuationMethod valuationMethod;
+
+    /** Date de bascule vers le FIFO. Avant elle, le cout d'origine des entrees n'existe pas. */
+    @Column(name = "valuation_method_since")
+    private Instant valuationMethodSince;
+
     /** Revision courante de la specification technique. */
     @Column(name = "revision", length = 40)
     private String revision;
@@ -195,5 +210,27 @@ public class InventoryItem {
     /** Vrai si l'article peut encore sortir du stock. */
     public boolean canIssueStock() {
         return lifecycleStatus != null && lifecycleStatus.isIssuable();
+    }
+
+    /**
+     * Methode de valorisation reellement appliquee : celle de l'article, sinon celle de sa
+     * categorie, sinon le cout moyen pondere.
+     *
+     * <p>Le repli sur le cout moyen garantit qu'un article qui n'a jamais rien declare se comporte
+     * exactement comme avant l'introduction du FIFO.</p>
+     */
+    public ValuationMethod effectiveValuationMethod() {
+        if (valuationMethod != null) {
+            return valuationMethod;
+        }
+        if (category != null && category.getValuationMethod() != null) {
+            return category.getValuationMethod();
+        }
+        return ValuationMethod.WEIGHTED_AVERAGE;
+    }
+
+    /** Vrai lorsque l'article s'appuie sur des couches de cout. */
+    public boolean usesCostLayers() {
+        return effectiveValuationMethod().isLayered();
     }
 }

@@ -43,6 +43,7 @@ import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementRep
 import com.sni.bokaticowork.features.inventory.stock.repository.StockReservationRepository;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.InventoryLocationService;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockService;
+import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockValuationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -76,6 +77,7 @@ public class  StockServiceImpl implements StockService {
     private final StockMapper mapper;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final InventoryAutomationService automationService;
+    private final StockValuationService valuationService;
 
     @Override
     public StockMovementResponse receive(StockInRequest request) {
@@ -86,14 +88,16 @@ public class  StockServiceImpl implements StockService {
 
         BigDecimal previousQuantity = level.getQuantityOnHand();
         level.setQuantityOnHand(previousQuantity.add(request.getQuantity()));
-        level.setAverageCost(calculateAverageCost(previousQuantity, level.getAverageCost(), request.getQuantity(), request.getUnitCost()));
         level.setLastMovementAt(Instant.now());
         level.recalculateAvailable();
+        String movementCode = generateMovementCode(StockMovementType.IN);
+        Long effectiveUnitCost = valuationService.recordEntry(item, location, level, previousQuantity,
+                request.getQuantity(), request.getUnitCost(), movementCode, request.getLotNumber());
         stockLevelRepository.save(level);
         receiveLotIfNeeded(item, location, request);
 
-        StockMovement movement = saveMovement(item, null, location, StockMovementType.IN, request.getQuantity(),
-                request.getUnitCost(), request.getReferenceType(), request.getReferenceCode(), null, request.getReason(),
+        StockMovement movement = saveMovement(movementCode, item, null, location, StockMovementType.IN, request.getQuantity(),
+                effectiveUnitCost, request.getReferenceType(), request.getReferenceCode(), null, request.getReason(),
                 false, request.getPerformedBy());
         createAssetsFromReceiptIfNeeded(item, location, request);
         receiveSerialNumbersIfNeeded(item, location, request);
@@ -119,8 +123,12 @@ public class  StockServiceImpl implements StockService {
         stockLevelRepository.save(level);
 
         issueSerialNumbersIfNeeded(item, location, request.getSerialNumbers());
+        // Les sorties n'etaient pas valorisees avant le lot 2 : leur cout unitaire etait toujours nul,
+        // ce qui vidait de sens la colonne valeur des rapports de mouvements.
+        Long exitUnitCost = valuationService.recordExit(item, location, level, request.getQuantity(), override);
+        stockLevelRepository.save(level);
         StockMovement movement = saveMovement(item, location, null, StockMovementType.OUT, request.getQuantity(),
-                null, request.getReferenceType(), request.getReferenceCode(), request.getReasonCode(),
+                exitUnitCost, request.getReferenceType(), request.getReferenceCode(), request.getReasonCode(),
                 request.getReasonDetails(), override, request.getPerformedBy());
         saveMovementLots(movement, consumedLots);
         automationService.afterStockMovement(movement, level);
@@ -147,15 +155,18 @@ public class  StockServiceImpl implements StockService {
         fromLevel.setLastMovementAt(Instant.now());
         fromLevel.recalculateAvailable();
         toLevel.setQuantityOnHand(toLevel.getQuantityOnHand().add(request.getQuantity()));
-        toLevel.setAverageCost(fromLevel.getAverageCost());
         toLevel.setLastMovementAt(Instant.now());
         toLevel.recalculateAvailable();
+
+        String movementCode = generateMovementCode(StockMovementType.TRANSFER);
+        Long transferUnitCost = valuationService.recordTransfer(item, from, to, fromLevel, toLevel,
+                request.getQuantity(), movementCode, override);
         stockLevelRepository.save(fromLevel);
         stockLevelRepository.save(toLevel);
 
         transferSerialNumbersIfNeeded(item, from, to, request.getSerialNumbers());
-        StockMovement movement = saveMovement(item, from, to, StockMovementType.TRANSFER, request.getQuantity(),
-                fromLevel.getAverageCost(), request.getReferenceType(), request.getReferenceCode(),
+        StockMovement movement = saveMovement(movementCode, item, from, to, StockMovementType.TRANSFER, request.getQuantity(),
+                transferUnitCost, request.getReferenceType(), request.getReferenceCode(),
                 request.getReasonCode(), request.getReasonDetails(), override, request.getPerformedBy());
         saveMovementLots(movement, consumedLots);
         automationService.afterStockMovement(movement, fromLevel, toLevel);
@@ -180,10 +191,14 @@ public class  StockServiceImpl implements StockService {
             level.setQuantityOnHand(level.getQuantityOnHand().add(request.getQuantityDelta()));
             level.setLastMovementAt(Instant.now());
             level.recalculateAvailable();
+            // Les couches sont consommees dans tous les cas, sinon elles divergeraient de la
+            // quantite en stock. Un cout impose ne sert qu'a valoriser le mouvement.
+            Long computedOutCost = valuationService.recordExit(item, location, level, absQuantity, true);
+            Long adjustmentOutCost = request.getUnitCost() != null ? request.getUnitCost() : computedOutCost;
             stockLevelRepository.save(level);
 
             StockMovement movement = saveMovement(item, location, null, StockMovementType.ADJUSTMENT_OUT,
-                    absQuantity, request.getUnitCost(), defaultReferenceType(request.getReferenceType()),
+                    absQuantity, adjustmentOutCost, defaultReferenceType(request.getReferenceType()),
                     request.getReferenceCode(), request.getReasonCode(), request.getReasonDetails(), override, request.getPerformedBy());
             saveMovementLots(movement, consumedLots);
             automationService.afterStockMovement(movement, level);
@@ -191,17 +206,18 @@ public class  StockServiceImpl implements StockService {
         } else {
             receiveAdjustmentLotIfProvided(item, location, request, absQuantity);
         }
-        level.setQuantityOnHand(level.getQuantityOnHand().add(request.getQuantityDelta()));
-        if (positive) {
-            level.setAverageCost(calculateAverageCost(level.getQuantityOnHand().subtract(absQuantity),
-                    level.getAverageCost(), absQuantity, request.getUnitCost()));
-        }
+        BigDecimal quantityBeforeAdjustment = level.getQuantityOnHand();
+        level.setQuantityOnHand(quantityBeforeAdjustment.add(request.getQuantityDelta()));
         level.setLastMovementAt(Instant.now());
         level.recalculateAvailable();
+
+        String adjustmentCode = generateMovementCode(StockMovementType.ADJUSTMENT_IN);
+        Long adjustmentInCost = valuationService.recordEntry(item, location, level, quantityBeforeAdjustment,
+                absQuantity, request.getUnitCost(), adjustmentCode, request.getLotNumber());
         stockLevelRepository.save(level);
 
-        StockMovement movement = saveMovement(item, null, location, StockMovementType.ADJUSTMENT_IN,
-                absQuantity, request.getUnitCost(), defaultReferenceType(request.getReferenceType()),
+        StockMovement movement = saveMovement(adjustmentCode, item, null, location, StockMovementType.ADJUSTMENT_IN,
+                absQuantity, adjustmentInCost, defaultReferenceType(request.getReferenceType()),
                 request.getReferenceCode(), null, request.getReasonDetails(), override, request.getPerformedBy());
         automationService.afterStockMovement(movement, level);
         return mapper.toMovementResponse(movement);
@@ -737,28 +753,27 @@ public class  StockServiceImpl implements StockService {
         reservationRepository.save(reservation);
     }
 
-    private Long calculateAverageCost(BigDecimal oldQuantity, Long oldCost, BigDecimal inQuantity, Long inCost) {
-        if (inCost == null) {
-            return oldCost;
-        }
-        BigDecimal safeOldQuantity = oldQuantity == null ? BigDecimal.ZERO : oldQuantity;
-        BigDecimal safeOldCost = oldCost == null ? BigDecimal.ZERO : BigDecimal.valueOf(oldCost);
-        BigDecimal totalQuantity = safeOldQuantity.add(inQuantity);
-        if (totalQuantity.compareTo(BigDecimal.ZERO) <= 0) {
-            return inCost;
-        }
-        BigDecimal oldValue = safeOldQuantity.multiply(safeOldCost);
-        BigDecimal inValue = inQuantity.multiply(BigDecimal.valueOf(inCost));
-        return oldValue.add(inValue).divide(totalQuantity, 0, java.math.RoundingMode.HALF_UP).longValue();
-    }
-
     private StockMovement saveMovement(InventoryItem item, InventoryLocation from, InventoryLocation to,
                                        StockMovementType movementType, BigDecimal quantity, Long unitCost,
                                        StockReferenceType referenceType, String referenceCode,
                                        StockOutReasonCode reasonCode, String reason,
                                        boolean override, String performedBy) {
+        return saveMovement(generateMovementCode(movementType), item, from, to, movementType, quantity, unitCost,
+                referenceType, referenceCode, reasonCode, reason, override, performedBy);
+    }
+
+    /**
+     * Variante avec code impose, utilisee lorsque le code doit etre connu avant l'enregistrement,
+     * par exemple pour rattacher une couche de cout au mouvement qui la cree.
+     */
+    private StockMovement saveMovement(String movementCode,
+                                       InventoryItem item, InventoryLocation from, InventoryLocation to,
+                                       StockMovementType movementType, BigDecimal quantity, Long unitCost,
+                                       StockReferenceType referenceType, String referenceCode,
+                                       StockOutReasonCode reasonCode, String reason,
+                                       boolean override, String performedBy) {
         StockMovement movement = StockMovement.builder()
-                .movementCode(generateMovementCode(movementType))
+                .movementCode(movementCode)
                 .item(item)
                 .locationFrom(from)
                 .locationTo(to)
