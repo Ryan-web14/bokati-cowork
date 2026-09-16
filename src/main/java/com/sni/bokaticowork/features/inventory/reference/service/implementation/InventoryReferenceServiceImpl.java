@@ -33,6 +33,9 @@ import com.sni.bokaticowork.features.inventory.reference.dto.InventoryOptionResp
 import com.sni.bokaticowork.features.inventory.reference.service.interfaces.InventoryReferenceService;
 import com.sni.bokaticowork.features.inventory.stock.enums.InventoryLocationType;
 import com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus;
+import com.sni.bokaticowork.features.inventory.stock.enums.InventoryPeriodStatus;
+import com.sni.bokaticowork.features.inventory.stock.enums.StockJournalDirection;
+import com.sni.bokaticowork.features.inventory.stock.enums.ValuationMethod;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockOutReasonCode;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockOwnershipType;
@@ -84,6 +87,9 @@ public class InventoryReferenceServiceImpl implements InventoryReferenceService 
         groups.put("reservationStatuses", StockReservationStatus.class);
         groups.put("transferStatuses", StockTransferWorkflowStatus.class);
         groups.put("serialStatuses", InventorySerialStatus.class);
+        groups.put("valuationMethods", ValuationMethod.class);
+        groups.put("periodStatuses", InventoryPeriodStatus.class);
+        groups.put("journalDirections", StockJournalDirection.class);
 
         groups.put("assetStatuses", AssetStatus.class);
         groups.put("assetConditions", AssetCondition.class);

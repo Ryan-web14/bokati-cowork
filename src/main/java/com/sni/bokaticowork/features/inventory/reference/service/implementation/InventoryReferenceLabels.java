@@ -130,6 +130,16 @@ final class InventoryReferenceLabels {
         put("InventorySerialStatus.LOST", "Perdu");
         put("InventorySerialStatus.DAMAGED", "Endommage");
 
+        put("ValuationMethod.WEIGHTED_AVERAGE", "Cout moyen pondere");
+        put("ValuationMethod.FIFO", "Premier entre, premier sorti");
+
+        put("InventoryPeriodStatus.OPEN", "Ouverte");
+        put("InventoryPeriodStatus.CLOSING", "Cloture en cours");
+        put("InventoryPeriodStatus.CLOSED", "Close");
+
+        put("StockJournalDirection.DEBIT", "Debit");
+        put("StockJournalDirection.CREDIT", "Credit");
+
         // Equipements
         put("AssetStatus.AVAILABLE", "Disponible");
         put("AssetStatus.RESERVED", "Reserve");

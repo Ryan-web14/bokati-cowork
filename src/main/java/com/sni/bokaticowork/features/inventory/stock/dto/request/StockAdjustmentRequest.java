@@ -29,6 +29,12 @@ public class StockAdjustmentRequest {
 
     private StockOutReasonCode reasonCode;
 
+    /** Motif d ajustement codifie, choisi dans le referentiel des motifs. */
+    private String adjustmentReasonCode;
+
+    /** Auteur du visa, exige au-dela du seuil d approbation. */
+    private String approvedBy;
+
     private StockReferenceType referenceType;
 
     private String referenceCode;

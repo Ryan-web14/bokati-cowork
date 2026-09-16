@@ -64,6 +64,10 @@ public class StockMovement {
     @Column(name = "reason_code", length = 40)
     private StockOutReasonCode reasonCode;
 
+    /** Motif d ajustement codifie, qui porte le compte de contrepartie comptable. */
+    @Column(name = "adjustment_reason_code", length = 40)
+    private String adjustmentReasonCode;
+
     @Column(name = "reason", columnDefinition = "TEXT")
     private String reason;
 

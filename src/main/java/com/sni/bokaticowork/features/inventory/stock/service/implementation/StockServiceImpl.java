@@ -41,9 +41,13 @@ import com.sni.bokaticowork.features.inventory.stock.repository.StockLotReposito
 import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementLotRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockReservationRepository;
+import com.sni.bokaticowork.features.inventory.stock.repository.AdjustmentReasonRepository;
+import com.sni.bokaticowork.features.inventory.stock.repository.InventoryAdjustmentApprovalRuleRepository;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.InventoryLocationService;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockService;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockValuationService;
+import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockAccountingService;
+import com.sni.bokaticowork.features.inventory.stock.service.interfaces.InventoryPeriodService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -78,11 +82,16 @@ public class  StockServiceImpl implements StockService {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final InventoryAutomationService automationService;
     private final StockValuationService valuationService;
+    private final StockAccountingService accountingService;
+    private final InventoryPeriodService periodService;
+    private final AdjustmentReasonRepository adjustmentReasonRepository;
+    private final InventoryAdjustmentApprovalRuleRepository adjustmentApprovalRuleRepository;
 
     @Override
     public StockMovementResponse receive(StockInRequest request) {
         InventoryItem item = itemLookupService.findByItemCodeOrThrow(request.getItemCode());
         ensureLifecycleAllowsReceipt(item);
+        ensurePeriodAcceptsMovement();
         InventoryLocation location = locationService.findByLocationCodeOrThrow(request.getLocationCode());
         StockLevel level = getOrCreateLevelForUpdate(item, location);
 
@@ -109,6 +118,7 @@ public class  StockServiceImpl implements StockService {
     public StockMovementResponse issue(StockOutRequest request) {
         InventoryItem item = itemLookupService.findByItemCodeOrThrow(request.getItemCode());
         ensureLifecycleAllowsIssue(item);
+        ensurePeriodAcceptsMovement();
         InventoryLocation location = locationService.findByLocationCodeOrThrow(request.getLocationCode());
         StockLevel level = getOrCreateLevelForUpdate(item, location);
 
@@ -142,6 +152,7 @@ public class  StockServiceImpl implements StockService {
         }
         InventoryItem item = itemLookupService.findByItemCodeOrThrow(request.getItemCode());
         ensureLifecycleAllowsIssue(item);
+        ensurePeriodAcceptsMovement();
         InventoryLocation from = locationService.findByLocationCodeOrThrow(request.getFromLocationCode());
         InventoryLocation to = locationService.findByLocationCodeOrThrow(request.getToLocationCode());
         StockLevel fromLevel = getOrCreateLevelForUpdate(item, from);
@@ -178,12 +189,16 @@ public class  StockServiceImpl implements StockService {
         if (request.getQuantityDelta().compareTo(BigDecimal.ZERO) == 0) {
             throw new BadRequestException("Adjustment quantity delta cannot be zero");
         }
+        ensurePeriodAcceptsMovement();
         InventoryItem item = itemLookupService.findByItemCodeOrThrow(request.getItemCode());
         InventoryLocation location = locationService.findByLocationCodeOrThrow(request.getLocationCode());
         StockLevel level = getOrCreateLevelForUpdate(item, location);
         boolean positive = request.getQuantityDelta().compareTo(BigDecimal.ZERO) > 0;
         BigDecimal absQuantity = request.getQuantityDelta().abs();
         boolean override = Boolean.TRUE.equals(request.getAllowNegativeOverride());
+
+        String adjustmentReasonCode = validateAdjustmentReason(request.getAdjustmentReasonCode(), positive);
+        ensureAdjustmentApproved(item, level, absQuantity, request.getUnitCost(), request.getApprovedBy());
 
         if (!positive) {
             ensureCanDecrease(item, level, absQuantity, override);
@@ -197,9 +212,10 @@ public class  StockServiceImpl implements StockService {
             Long adjustmentOutCost = request.getUnitCost() != null ? request.getUnitCost() : computedOutCost;
             stockLevelRepository.save(level);
 
-            StockMovement movement = saveMovement(item, location, null, StockMovementType.ADJUSTMENT_OUT,
-                    absQuantity, adjustmentOutCost, defaultReferenceType(request.getReferenceType()),
-                    request.getReferenceCode(), request.getReasonCode(), request.getReasonDetails(), override, request.getPerformedBy());
+            StockMovement movement = saveMovement(generateMovementCode(StockMovementType.ADJUSTMENT_OUT), item, location, null,
+                    StockMovementType.ADJUSTMENT_OUT, absQuantity, adjustmentOutCost, defaultReferenceType(request.getReferenceType()),
+                    request.getReferenceCode(), request.getReasonCode(), request.getReasonDetails(), override,
+                    request.getPerformedBy(), adjustmentReasonCode);
             saveMovementLots(movement, consumedLots);
             automationService.afterStockMovement(movement, level);
             return mapper.toMovementResponse(movement);
@@ -218,7 +234,8 @@ public class  StockServiceImpl implements StockService {
 
         StockMovement movement = saveMovement(adjustmentCode, item, null, location, StockMovementType.ADJUSTMENT_IN,
                 absQuantity, adjustmentInCost, defaultReferenceType(request.getReferenceType()),
-                request.getReferenceCode(), null, request.getReasonDetails(), override, request.getPerformedBy());
+                request.getReferenceCode(), null, request.getReasonDetails(), override,
+                request.getPerformedBy(), adjustmentReasonCode);
         automationService.afterStockMovement(movement, level);
         return mapper.toMovementResponse(movement);
     }
@@ -375,6 +392,66 @@ public class  StockServiceImpl implements StockService {
      * <p>L'ajustement reste autorise quel que soit le statut : c'est le seul chemin de correction,
      * le bloquer rendrait un stock errone impossible a remettre d'aplomb.</p>
      */
+    /**
+     * Refuse un mouvement date dans une periode close.
+     *
+     * <p>Sans effet tant qu aucune periode n est declaree : une entreprise qui ne tient pas de
+     * periodes comptables continue de fonctionner sans contrainte.</p>
+     */
+    private void ensurePeriodAcceptsMovement() {
+        periodService.assertMovementAllowed(LocalDate.now(java.time.ZoneOffset.UTC));
+    }
+
+    /**
+     * Valide le motif d'ajustement codifie, s'il est fourni.
+     *
+     * <p>Le motif reste facultatif pour ne pas casser les appelants existants, mais il est verifie
+     * des qu'il est present : un code inconnu ou inadapte au sens de l'ajustement produirait une
+     * ecriture comptable fausse.</p>
+     */
+    private String validateAdjustmentReason(String reasonCode, boolean positive) {
+        if (!StringUtils.hasText(reasonCode)) {
+            return null;
+        }
+        String normalized = reasonCode.trim().toUpperCase(Locale.ROOT);
+        var reason = adjustmentReasonRepository.findByReasonCode(normalized)
+                .orElseThrow(() -> new BadRequestException("Unknown adjustment reason: " + normalized));
+        if (!Boolean.TRUE.equals(reason.getActive())) {
+            throw new BadRequestException("Adjustment reason is inactive: " + normalized);
+        }
+        if (!reason.appliesTo(positive)) {
+            throw new BadRequestException("Adjustment reason " + normalized + " does not apply to a "
+                    + (positive ? "positive" : "negative") + " adjustment");
+        }
+        return normalized;
+    }
+
+    /**
+     * Exige un visa au-dela du seuil configure.
+     *
+     * <p>Le controle porte sur la valeur de l'ecart, pas sur la quantite : cent vis et cent moteurs
+     * n'engagent pas la meme responsabilite. Sans regle declaree, aucun visa n'est demande.</p>
+     */
+    private void ensureAdjustmentApproved(InventoryItem item, StockLevel level,
+                                          BigDecimal quantity, Long requestedUnitCost, String approvedBy) {
+        Long unitCost = requestedUnitCost != null ? requestedUnitCost
+                : level.getAverageCost() != null ? level.getAverageCost() : item.getDefaultCost();
+        if (unitCost == null) {
+            return;
+        }
+
+        long amount = Math.abs(quantity.multiply(BigDecimal.valueOf(unitCost)).longValue());
+        adjustmentApprovalRuleRepository.findAllByActiveTrueOrderByMinAmountAsc().stream()
+                .filter(rule -> rule.covers(amount))
+                .findFirst()
+                .ifPresent(rule -> {
+                    if (!StringUtils.hasText(approvedBy)) {
+                        throw new BadRequestException("Adjustment of " + amount
+                                + " requires a " + rule.getApprovalLevel() + " approval. Provide approvedBy.");
+                    }
+                });
+    }
+
     private void ensureLifecycleAllowsReceipt(InventoryItem item) {
         if (!item.canReceiveStock()) {
             throw new BadRequestException("Item " + item.getItemCode() + " is in lifecycle status "
@@ -759,7 +836,7 @@ public class  StockServiceImpl implements StockService {
                                        StockOutReasonCode reasonCode, String reason,
                                        boolean override, String performedBy) {
         return saveMovement(generateMovementCode(movementType), item, from, to, movementType, quantity, unitCost,
-                referenceType, referenceCode, reasonCode, reason, override, performedBy);
+                referenceType, referenceCode, reasonCode, reason, override, performedBy, null);
     }
 
     /**
@@ -772,6 +849,16 @@ public class  StockServiceImpl implements StockService {
                                        StockReferenceType referenceType, String referenceCode,
                                        StockOutReasonCode reasonCode, String reason,
                                        boolean override, String performedBy) {
+        return saveMovement(movementCode, item, from, to, movementType, quantity, unitCost, referenceType,
+                referenceCode, reasonCode, reason, override, performedBy, null);
+    }
+
+    private StockMovement saveMovement(String movementCode,
+                                       InventoryItem item, InventoryLocation from, InventoryLocation to,
+                                       StockMovementType movementType, BigDecimal quantity, Long unitCost,
+                                       StockReferenceType referenceType, String referenceCode,
+                                       StockOutReasonCode reasonCode, String reason,
+                                       boolean override, String performedBy, String adjustmentReasonCode) {
         StockMovement movement = StockMovement.builder()
                 .movementCode(movementCode)
                 .item(item)
@@ -783,12 +870,17 @@ public class  StockServiceImpl implements StockService {
                 .referenceType(referenceType)
                 .referenceCode(normalizeOptionalCode(referenceCode))
                 .reasonCode(reasonCode)
+                .adjustmentReasonCode(adjustmentReasonCode)
                 .reason(trimToNull(reason))
                 .allowNegativeOverride(override)
                 .performedBy(trimToNull(performedBy))
                 .performedAt(Instant.now())
                 .build();
-        return movementRepository.save(movement);
+        StockMovement saved = movementRepository.save(movement);
+        // Point unique de generation des ecritures : tout mouvement valorise en produit une,
+        // sans qu'aucun appelant n'ait a y penser.
+        accountingService.recordMovement(saved);
+        return saved;
     }
 
     private String generateMovementCode(StockMovementType type) {

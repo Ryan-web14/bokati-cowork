@@ -354,8 +354,72 @@ GET    /inventory/scan/{code}
 
 ## 6. Lot 2 · Valorisation et comptabilité matière
 
+> **État : livré.** Migrations `V218` (dev) et `V214` (prod).
+
 **Objectif.** Passer d'un CMUP implicite à une valorisation paramétrable, auditable et rattachable à
 la comptabilité. C'est le lot le plus sensible du plan : il touche le cœur des mouvements.
+
+### Ce qui a été livré
+
+| Élément | Emplacement |
+|---|---|
+| Méthode paramétrable | `ValuationMethod`, `valuationMethod` sur `InventoryItem` et `InventoryCategory`, `effectiveValuationMethod()` |
+| Couches de coût | `StockCostLayer`, `StockCostLayerRepository`, consommation verrouillée en `PESSIMISTIC_WRITE` |
+| Moteur de valorisation | `StockValuationService`, entrée, sortie, transfert, bascule de méthode |
+| Périodes comptables | `InventoryPeriod`, `InventoryPeriodService`, blocage des mouvements datés dans une période close |
+| Photos de valorisation | `StockValuationSnapshot`, prise automatique à la clôture |
+| Écritures de stock | `StockJournalEntry`, `StockAccountingService`, export CSV équilibré |
+| Motifs d'ajustement | `AdjustmentReason` avec compte de contrepartie, six motifs SYSCOHADA amorcés |
+| Seuils d'approbation | `InventoryAdjustmentApprovalRule`, visa exigé au-delà du seuil |
+| Bascule de méthode | `PATCH /inventory/items/{code}/valuation-method`, amorce les couches |
+| Référentiel | 3 nouveaux groupes d'énumérations |
+| Tests | `StockValuationServiceIT` (9 cas sur PostgreSQL réel), `StockAccountingServiceTest` (9 cas) |
+
+Endpoints ajoutés :
+
+```text
+POST   /inventory/accounting/periods              GET /inventory/accounting/periods
+GET    /inventory/accounting/periods/{code}
+PATCH  /inventory/accounting/periods/{code}/close | /reopen
+POST   /inventory/accounting/snapshots            GET /inventory/accounting/snapshots
+GET    /inventory/accounting/journal              GET /inventory/accounting/journal.csv
+POST   /inventory/accounting/adjustment-reasons   GET .../adjustment-reasons
+POST   /inventory/accounting/adjustment-approval-rules   GET .../adjustment-approval-rules
+PATCH  /inventory/items/{itemCode}/valuation-method
+```
+
+### Décisions de conception
+
+1. **Les couches n'existent que pour les articles en FIFO.** Un article en CMUP ne crée aucune
+   couche, n'en consomme aucune, ne prend aucun verrou de plus. C'est ce qui rend le lot non cassant.
+2. **`averageCost` reste alimenté dans les deux méthodes**, recalé sur la valeur réelle des couches
+   en FIFO. Le tableau de bord et `totalStockValue`, tous deux basés dessus, restent justes.
+3. **Le prélèvement par couche est rendu explicitement**, pas déduit de la quantité restante : une
+   couche déjà partiellement consommée aurait fait transférer bien plus que demandé. Ce défaut a été
+   pris au vol et il est couvert par un test.
+4. **Un transfert transporte les couches avec leur date d'origine.** Déplacer du stock ne doit pas le
+   rajeunir, sinon l'ancienneté du stock devient une mesure du dernier déménagement.
+5. **Un transfert ne produit aucune écriture comptable** : la valeur du patrimoine ne change pas.
+6. **Les sorties sont désormais valorisées.** Elles portaient jusqu'ici un coût unitaire toujours
+   nul, ce qui vidait de sens la colonne valeur des rapports de mouvements. C'est un changement de
+   comportement en restitution, délibéré et correctif.
+7. **Le motif d'ajustement reste facultatif** pour ne pas casser les appelants existants, mais il est
+   vérifié dès qu'il est fourni : code inconnu, inactif, ou inadapté au sens de l'ajustement sont
+   refusés.
+8. **Le seuil d'approbation porte sur la valeur, pas sur la quantité.** Cent vis et cent moteurs
+   n'engagent pas la même responsabilité.
+9. **Les périodes ne contraignent rien tant qu'aucune n'est déclarée.** Une entreprise qui ne tient
+   pas de périodes comptables continue de fonctionner comme avant.
+
+### Reste ouvert
+
+- **Provision pour dépréciation** : non livrée. L'ancienneté des couches est calculée et stockée dans
+  les snapshots (`oldestLayerAgeDays`), la base est donc posée, mais aucun taux de provision n'est
+  appliqué. À traiter avec les indicateurs du lot 9.
+- **Antériorité du FIFO** : un article basculé en cours de route n'a pas l'historique de coût de ses
+  entrées antérieures. La couche d'amorçage porte le coût moyen du moment et est marquée `seeded`.
+- **Contrôle d'équilibre comptable** : l'export CSV totalise débit et crédit, mais aucun contrôle
+  automatique ne refuse un journal déséquilibré. À ajouter si un cabinet l'exige.
 
 ### Règle de non-régression, décidée
 

@@ -18,6 +18,8 @@ import com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryIte
 import com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryPackagingResponse;
 import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.InventoryIdentificationService;
 import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.InventoryItemRelationService;
+import com.sni.bokaticowork.features.inventory.stock.dto.request.ItemValuationMethodRequest;
+import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockValuationSettingsService;
 import com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryItemResponse;
 import com.sni.bokaticowork.features.inventory.catalog.enums.InventoryItemType;
 import com.sni.bokaticowork.features.inventory.catalog.service.interfaces.InventoryItemService;
@@ -41,6 +43,7 @@ public class InventoryItemController {
     private final InventoryItemService service;
     private final InventoryIdentificationService identificationService;
     private final InventoryItemRelationService relationService;
+    private final StockValuationSettingsService valuationSettingsService;
 
     @PostMapping
     @Audited(module = "INVENTORY", action = "CREATE_ITEM", ressource = "inventory_item")
@@ -106,6 +109,18 @@ public class InventoryItemController {
     public ResponseEntity<InventoryItemResponse> changeLifecycle(@PathVariable String itemCode,
                                                                  @Valid @RequestBody InventoryItemLifecycleRequest request) {
         return ResponseEntity.ok(service.changeLifecycle(itemCode, request));
+    }
+
+    /**
+     * Change la methode de valorisation de l article et amorce les couches de cout si besoin.
+     * Renvoie le nombre de couches amorcees.
+     */
+    @PatchMapping("/{itemCode}/valuation-method")
+    @Audited(module = "INVENTORY", action = "CHANGE_VALUATION_METHOD", ressource = "inventory_item")
+    @Idempotent(operation = "INVENTORY_ITEM_VALUATION_METHOD", required = false)
+    public ResponseEntity<Integer> changeValuationMethod(@PathVariable String itemCode,
+                                                        @Valid @RequestBody ItemValuationMethodRequest request) {
+        return ResponseEntity.ok(valuationSettingsService.changeItemValuationMethod(itemCode, request));
     }
 
     @PatchMapping("/{itemCode}/revision")
