@@ -28,6 +28,8 @@ import com.sni.bokaticowork.features.inventory.stock.repository.StockLevelReposi
 import com.sni.bokaticowork.features.inventory.stock.repository.StockLotRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockMovementRepository;
 import com.sni.bokaticowork.features.inventory.stock.repository.StockReservationRepository;
+import com.sni.bokaticowork.features.inventory.stock.dto.response.StockReconciliationReportResponse;
+import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockReconciliationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -64,6 +66,7 @@ public class InventoryDailyWorker {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final OutboxService outboxService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final StockReconciliationService reconciliationService;
 
     /**
      * Expire les réservations périmées toutes les 30 minutes.
@@ -108,6 +111,39 @@ public class InventoryDailyWorker {
         int returnReminders = detectReturnDueSoon();
         log.info("Inventory asset worker: warrantySoon={}, maintenanceDue={}, overdueReturns={}, returnDueSoon={}",
                 warranties, maintenance, overdueReturns, returnReminders);
+    }
+
+    /**
+     * Reconcilie les niveaux de stock avec le journal de mouvements, par defaut chaque lundi a 3h.
+     *
+     * <p>Une divergence n'est jamais corrigee automatiquement : le niveau de stock est un agregat,
+     * l'ecart signale un defaut de code ou une ecriture hors circuit, qui doit etre analyse.</p>
+     */
+    @Scheduled(cron = "${inventory.worker.reconciliation-cron:0 0 3 * * MON}")
+    @Transactional
+    public void runStockReconciliationCheck() {
+        StockReconciliationReportResponse report = reconciliationService.reconcile(null, null);
+        if (report.isConsistent()) {
+            log.info("Inventory reconciliation worker: pairsChecked={}, divergences=0", report.getPairsChecked());
+            return;
+        }
+
+        log.warn("Inventory reconciliation worker: pairsChecked={}, divergences={}, absoluteGap={}",
+                report.getPairsChecked(), report.getDivergenceCount(), report.getTotalAbsoluteDifference());
+
+        if (alertRepository.findFirstByAlertTypeAndStatusOrderByCreatedAtDesc(
+                InventoryAlertType.STOCK_LEVEL_DIVERGENCE, InventoryAlertStatus.OPEN).isPresent()) {
+            return;
+        }
+
+        InventoryAlert alert = baseAlert(InventoryAlertType.STOCK_LEVEL_DIVERGENCE,
+                "Niveaux de stock divergents du journal de mouvements : " + report.getDivergenceCount()
+                        + " couple(s) article et emplacement sur " + report.getPairsChecked()
+                        + " · ecart absolu cumule: " + report.getTotalAbsoluteDifference()
+                        + " · detail via /inventory/admin/reconciliation");
+        alert.setCurrentQuantity(report.getTotalAbsoluteDifference());
+        alert.setThresholdQuantity(BigDecimal.ZERO);
+        saveAndPublish(alert);
     }
 
     private int detectExpirySoon() {
@@ -159,7 +195,7 @@ public class InventoryDailyWorker {
         List<InventoryReorderRule> activeRules = reorderRuleRepository.findAllActiveRules();
         for (InventoryReorderRule rule : activeRules) {
             List<StockLevel> levels = rule.getLocation() != null
-                    ? stockLevelRepository.findByItemAndLocation(rule.getItem(), rule.getLocation())
+                    ? stockLevelRepository.findByItemAndLocationReadOnly(rule.getItem(), rule.getLocation())
                             .map(List::of).orElse(List.of())
                     : stockLevelRepository.findAllByItemIdOrderByQuantityAvailableAsc(rule.getItem().getId());
             for (StockLevel level : levels) {

@@ -4,6 +4,8 @@ import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.booking.dto.response.BookingResponse;
+import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingService;
 import com.sni.bokaticowork.features.contract.enums.ContractStatus;
 import com.sni.bokaticowork.features.contract.model.Contract;
@@ -189,5 +191,41 @@ class PaymentTransactionWorkflowProcessorTest {
         verify(billingDocumentService).cancelAndArchive(eq("INV-003"), argThat(reason -> reason.contains("TXN-003")));
         verify(bookingService).systemCancel(eq("BKG-003"), argThat(reason -> reason.contains("TXN-003")));
         verify(subscriptionService, never()).cancel(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
+    }
+
+    /**
+     * Une reservation reglee au portefeuille est confirmee des le blocage des fonds. Son debit
+     * arrive une minute plus tard, sur une reservation deja confirmee : il ne doit pas
+     * tenter de la confirmer une seconde fois, sans quoi chaque reglement au portefeuille
+     * produirait un conflit de statut et un avertissement, pour un enchainement parfaitement
+     * normal.
+     */
+    @Test
+    void shouldNotReconfirmABookingAlreadyConfirmedWhenItsWalletHoldIsDebited() {
+        PaymentIntent intent = PaymentIntent.builder()
+                .intentNumber("INT-004")
+                .sourceType("BILLING_DOCUMENT")
+                .sourceCode("INV-004")
+                .status(PaymentIntentStatus.SUCCEEDED)
+                .build();
+        PaymentTransaction transaction = PaymentTransaction.builder()
+                .transactionNumber("TXN-004")
+                .paymentIntent(intent)
+                .paymentMethod(PaymentMethod.WALLET)
+                .amount(new BigDecimal("25000.0000"))
+                .status(PaymentTransactionStatus.SUCCEEDED)
+                .paidAt(Instant.parse("2026-04-27T12:00:00Z"))
+                .build();
+        BookingResponse confirmed = org.mockito.Mockito.mock(BookingResponse.class);
+        when(confirmed.status()).thenReturn(BookingStatus.CONFIRMED);
+
+        when(transactionRepository.findByTransactionNumber("TXN-004")).thenReturn(Optional.of(transaction));
+        when(contextResolver.resolveSource("BILLING_DOCUMENT", "INV-004"))
+                .thenReturn(new TransactionContextResolver.SourceView("BOOKING", "BKG-004", "Reservation BKG-004", true));
+        when(bookingService.get("BKG-004")).thenReturn(confirmed);
+
+        processor.process(new PaymentTransactionWorkflowEvent("TXN-004", PaymentTransactionStatus.SUCCEEDED));
+
+        verify(bookingService, never()).confirm(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
     }
 }

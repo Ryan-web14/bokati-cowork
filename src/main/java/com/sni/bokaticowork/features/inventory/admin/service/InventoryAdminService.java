@@ -5,6 +5,7 @@ import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelBatchRequ
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryAnomalyReportResponse;
+import com.sni.bokaticowork.features.inventory.admin.dto.InventoryOverrideReportResponse;
 
 import java.time.Instant;
 
@@ -22,4 +23,11 @@ public interface InventoryAdminService {
     byte[] movementReportPdf(String itemCode, String locationCode, Instant fromDate, Instant toDate);
 
     InventoryAnomalyReportResponse anomalyReport();
+
+    /**
+     * Detail des mouvements passes en forcage de stock negatif, avec ventilation par origine.
+     */
+    InventoryOverrideReportResponse overrideReport(String referenceType, Instant fromDate, Instant toDate);
+
+    String overrideReportCsv(String referenceType, Instant fromDate, Instant toDate);
 }

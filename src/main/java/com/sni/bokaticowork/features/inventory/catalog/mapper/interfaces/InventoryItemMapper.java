@@ -15,6 +15,7 @@ public interface InventoryItemMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "unit", ignore = true)
     @Mapping(target = "searchText", ignore = true)
+    @Mapping(target = "template", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     InventoryItem toEntity(InventoryItemRequest request);
@@ -25,6 +26,7 @@ public interface InventoryItemMapper {
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "unit", ignore = true)
     @Mapping(target = "searchText", ignore = true)
+    @Mapping(target = "template", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(@MappingTarget InventoryItem entity, InventoryItemRequest request);

@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.inventory.catalog.model;
 
 import com.sni.bokaticowork.core.annotation.IdGeneration;
+import com.sni.bokaticowork.features.inventory.stock.enums.ValuationMethod;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,6 +33,15 @@ public class InventoryCategory {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_category_id")
     private InventoryCategory parentCategory;
+
+    /**
+     * Methode de valorisation par defaut des articles de cette categorie.
+     *
+     * <p>Null signifie cout moyen pondere. Un article peut la surcharger.</p>
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "valuation_method", length = 30)
+    private ValuationMethod valuationMethod;
 
     @Builder.Default
     @Column(name = "active", nullable = false)

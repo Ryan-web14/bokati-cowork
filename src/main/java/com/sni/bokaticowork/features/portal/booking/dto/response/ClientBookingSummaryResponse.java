@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.portal.booking.dto.response;
 
 import com.sni.bokaticowork.features.booking.enums.BookingPaymentMode;
+import com.sni.bokaticowork.features.booking.enums.BookingPaymentStatus;
 import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
 import lombok.Builder;
@@ -26,6 +27,8 @@ public class ClientBookingSummaryResponse {
     private Integer quantity;
     private ResourceBookingUnit bookingUnit;
     private BookingPaymentMode paymentMode;
+    private BookingPaymentStatus paymentStatus;
+    private String paymentStatusLabel;
     private BigDecimal totalAmount;
     private String currency;
     private Instant confirmedAt;

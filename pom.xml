@@ -317,6 +317,26 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!--
+			Tests d'integration sur un PostgreSQL reel. Indispensable pour couvrir ce qu'un test
+			unitaire ne peut pas voir : les triggers d'immuabilite, les requetes natives et le
+			comportement sous concurrence. Les versions sont pilotees par le parent Spring Boot.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -332,6 +352,27 @@
 
 	<build>
 		<plugins>
+			<!--
+				Surefire n'execute par defaut que *Test, Test* et *Tests. Les tests d'integration
+				sont nommes *IT : on les ajoute explicitement pour que ./mvnw test couvre aussi les
+				garanties portees par la base (declencheurs, requetes natives, concurrence).
+
+				Ils exigent un demon Docker. Pour une boucle rapide sans Docker :
+				./mvnw test -DexcludedGroups=integration
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/Test*.java</include>
+						<include>**/*Tests.java</include>
+						<include>**/*TestCase.java</include>
+						<include>**/*IT.java</include>
+					</includes>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

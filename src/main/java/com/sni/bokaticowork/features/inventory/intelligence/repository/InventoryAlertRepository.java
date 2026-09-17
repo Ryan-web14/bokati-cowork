@@ -22,6 +22,11 @@ public interface InventoryAlertRepository extends JpaRepository<InventoryAlert, 
             InventoryAlertStatus status
     );
 
+    Optional<InventoryAlert> findFirstByAlertTypeAndStatusOrderByCreatedAtDesc(
+            InventoryAlertType alertType,
+            InventoryAlertStatus status
+    );
+
     Optional<InventoryAlert> findFirstByAlertTypeAndAssetCodeAndStatusOrderByCreatedAtDesc(
             InventoryAlertType alertType,
             String assetCode,

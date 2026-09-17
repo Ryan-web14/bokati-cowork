@@ -4,6 +4,7 @@ import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.enums.ResourceStatus;
+import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse;
 import com.sni.bokaticowork.features.ressource.model.Resource;
 import com.sni.bokaticowork.features.ressource.model.ResourceAvailability;
 import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
@@ -32,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -304,6 +306,86 @@ class ResourceAvailabilityServiceImplTest {
         assertEquals(false, expiredSlot.getActive());
         assertEquals(1, page.getData().size());
         assertEquals(99L, page.getData().getFirst().getId());
+    }
+
+    /**
+     * Le preavis de la politique est le seul arbitre du jour meme.
+     *
+     * <p>Aucune reservation n'etait possible le jour meme, et aucune disponibilite du jour ne
+     * s'affichait. La cause n'est pas une regle de date cachee mais la valeur semee de la
+     * « Politique Standard », appliquee par defaut a la majorite des espaces : 1440 minutes de
+     * preavis, soit vingt-quatre heures, ce qui exclut mecaniquement toute la journee en cours.</p>
+     *
+     * <p>Une recherche que la politique n'autorise pas rend une liste vide, jamais une erreur.
+     * Elle repondait 409, ce qui est indiscernable d'une panne cote client alors qu'il n'y a
+     * simplement aucune place. L'ecriture, elle, continue de refuser.</p>
+     */
+    @Test
+    void offersTodaySlotsAsSoonAsThePolicyNoticeAllowsThem() {
+        LocalDateTime inTwoHours = nextWholeHour().plusHours(2);
+
+        var windows = searchWindows(noticeMinutes(60), inTwoHours);
+
+        assertEquals(1, windows.size());
+        assertEquals(inTwoHours, windows.getFirst().getStartedAt());
+    }
+
+    @Test
+    void returnsNothingRatherThanFailingWhenThePolicyDemandsAFullDayOfNotice() {
+        LocalDateTime inTwoHours = nextWholeHour().plusHours(2);
+
+        assertTrue(searchWindows(noticeMinutes(1440), inTwoHours).isEmpty());
+    }
+
+    /**
+     * La contrepartie : reserver hors politique reste une erreur. Une recherche qui ne rend rien
+     * et une reservation qui passe quand meme seraient bien pires que le 409 d'origine.
+     */
+    @Test
+    void stillRefusesToReserveOutsideTheBookingNotice() {
+        LocalDateTime inTwoHours = nextWholeHour().plusHours(2);
+        Resource resource = noticeMinutes(1440);
+        when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(resource);
+        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class), any(Limit.class))).thenReturn(List.of());
+
+        assertThrows(ConflictException.class, () -> service.reserve(ReserveResourceAvailabilityRequest.builder()
+                .resourceCode(RESOURCE_CODE)
+                .startedAt(inTwoHours)
+                .endedAt(inTwoHours.plusMinutes(30))
+                .quantity(1)
+                .build()));
+    }
+
+    private List<ResourceAvailabilityWindowResponse> searchWindows(Resource resource, LocalDateTime slotStart) {
+        ResourceAvailability slot = ResourceAvailability.builder()
+                .resource(resource)
+                .startedAt(slotStart)
+                .endedAt(slotStart.plusMinutes(30))
+                .slotDurationMinutes(30)
+                .totalCapacity(4)
+                .remainingCapacity(4)
+                .available(true)
+                .active(true)
+                .build();
+
+        when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(resource);
+        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class), any(Limit.class))).thenReturn(List.of());
+        // Volontairement laxiste : le cas du refus sort avant d'atteindre la lecture des creneaux.
+        org.mockito.Mockito.lenient()
+                .when(availabilityRepository.findCandidateSlots(eq(resource), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(slot));
+
+        return service.findRemainingWindows(RESOURCE_CODE, slotStart, slotStart.plusMinutes(30), 30, 1);
+    }
+
+    private LocalDateTime nextWholeHour() {
+        return LocalDateTime.now().withMinute(0).withSecond(0).withNano(0).plusHours(1);
+    }
+
+    private Resource noticeMinutes(int minBookingNoticeMinutes) {
+        Resource resource = bookableResourceWithPolicy(240);
+        resource.getResourcePolicy().setMinBookingNoticeMinutes(minBookingNoticeMinutes);
+        return resource;
     }
 
     private Resource bookableResourceWithPolicy(int maxBookingDurationMinutes) {

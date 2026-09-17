@@ -223,6 +223,60 @@ public interface StockMovementRepository extends JpaRepository<StockMovement, Lo
 
     long countByAllowNegativeOverrideTrue();
 
+    /**
+     * Detail des mouvements passes en forcage de stock negatif, du plus recent au plus ancien.
+     *
+     * <p>Colonnes renvoyees : movementCode, movementType, itemCode, itemName, locationCode,
+     * quantity, referenceType, referenceCode, reasonCode, reason, performedBy, performedAt.</p>
+     */
+    @Query(value = """
+            SELECT
+                movement.movement_code,
+                movement.movement_type,
+                item.item_code,
+                item.name,
+                COALESCE(location_from.location_code, location_to.location_code),
+                movement.quantity,
+                movement.reference_type,
+                movement.reference_code,
+                movement.reason_code,
+                movement.reason,
+                movement.performed_by,
+                movement.performed_at
+            FROM stock_movement movement
+            JOIN inventory_item item ON item.id = movement.item_id
+            LEFT JOIN inventory_location location_from ON location_from.id = movement.location_from_id
+            LEFT JOIN inventory_location location_to ON location_to.id = movement.location_to_id
+            WHERE movement.allow_negative_override = TRUE
+              AND (CAST(:referenceType AS varchar) IS NULL OR movement.reference_type = :referenceType)
+              AND (CAST(:fromDate AS timestamp with time zone) IS NULL OR movement.performed_at >= CAST(:fromDate AS timestamp with time zone))
+              AND (CAST(:toDate AS timestamp with time zone) IS NULL OR movement.performed_at <= CAST(:toDate AS timestamp with time zone))
+            ORDER BY movement.performed_at DESC
+            """, nativeQuery = true)
+    List<Object[]> findOverrideMovements(@Param("referenceType") String referenceType,
+                                         @Param("fromDate") Instant fromDate,
+                                         @Param("toDate") Instant toDate);
+
+    /**
+     * Repartition des forcages par type de reference et par auteur.
+     *
+     * <p>Colonnes renvoyees : referenceType, performedBy, count.</p>
+     */
+    @Query(value = """
+            SELECT
+                COALESCE(movement.reference_type, 'UNSPECIFIED'),
+                COALESCE(movement.performed_by, 'UNSPECIFIED'),
+                COUNT(*)
+            FROM stock_movement movement
+            WHERE movement.allow_negative_override = TRUE
+              AND (CAST(:fromDate AS timestamp with time zone) IS NULL OR movement.performed_at >= CAST(:fromDate AS timestamp with time zone))
+              AND (CAST(:toDate AS timestamp with time zone) IS NULL OR movement.performed_at <= CAST(:toDate AS timestamp with time zone))
+            GROUP BY COALESCE(movement.reference_type, 'UNSPECIFIED'), COALESCE(movement.performed_by, 'UNSPECIFIED')
+            ORDER BY COUNT(*) DESC
+            """, nativeQuery = true)
+    List<Object[]> findOverrideBreakdown(@Param("fromDate") Instant fromDate,
+                                         @Param("toDate") Instant toDate);
+
     long countByMovementTypeInAndQuantityGreaterThan(java.util.Collection<StockMovementType> movementTypes, BigDecimal quantity);
 
     @Query(value = """

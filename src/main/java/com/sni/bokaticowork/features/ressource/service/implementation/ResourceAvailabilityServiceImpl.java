@@ -164,7 +164,12 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
         int normalizedDuration = normalizeDurationMinutes(resource, durationMinutes);
         validateSearchWindow(startedAt, endedAt, normalizedDuration);
-        assertPolicyAllowsWindow(resource, startedAt, startedAt.plusMinutes(normalizedDuration));
+        // Une recherche que la politique n'autorise pas ne rend pas d'erreur : elle ne rend rien.
+        // Demander les creneaux du jour sur une ressource a preavis long repondait 409, ce qui est
+        // indiscernable d'une panne cote client alors qu'il n'y a simplement aucune place.
+        if (policyViolation(resource, startedAt, startedAt.plusMinutes(normalizedDuration)) != null) {
+            return List.of();
+        }
 
         List<ResourceAvailability> slots = availabilityRepository.findCandidateSlots(resource, startedAt, endedAt).stream()
                 .sorted(Comparator.comparing(ResourceAvailability::getStartedAt))
@@ -269,23 +274,40 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
     }
 
-    private void assertPolicyAllowsWindow(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+    /**
+     * Refuse la plage demandee, en expliquant pourquoi.
+     *
+     * <p>Reserver et chercher n'appellent pas le meme jugement sur la meme reponse. Reserver hors
+     * politique est une erreur, et doit le rester. Chercher hors politique n'en est pas une : le
+     * client demande ce qui est disponible, la reponse est qu'il n'y a rien. D'ou une regle unique
+     * et deux facons de s'en servir · {@link #assertPolicyAllowsWindow} pour l'ecriture,
+     * {@link #policyViolation} directement pour la lecture.</p>
+     *
+     * @return le motif du refus, ou {@code null} si la plage est acceptable
+     */
+    private String policyViolation(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
         ResourcePolicy policy = resource.getResourcePolicy();
         if (policy == null) {
-            return;
+            return null;
         }
 
         int requestedMinutes = Math.toIntExact(Duration.between(startedAt, endedAt).toMinutes());
         if (requestedMinutes < policy.getMinBookingDurationMinutes()) {
-            throw new ConflictException("resource availability", "the requested duration is below the policy minimum");
+            return "the requested duration is below the policy minimum";
         }
         if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
-            throw new ConflictException("resource availability", "the requested duration exceeds the policy maximum");
+            return "the requested duration exceeds the policy maximum";
         }
+        if (startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
+            return "the requested start time violates the minimum booking notice";
+        }
+        return null;
+    }
 
-        LocalDateTime earliestAllowedStart = LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes());
-        if (startedAt.isBefore(earliestAllowedStart)) {
-            throw new ConflictException("resource availability", "the requested start time violates the minimum booking notice");
+    private void assertPolicyAllowsWindow(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        String violation = policyViolation(resource, startedAt, endedAt);
+        if (violation != null) {
+            throw new ConflictException("resource availability", violation);
         }
     }
 

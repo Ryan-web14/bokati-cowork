@@ -13,6 +13,14 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface InventoryCountRepository extends JpaRepository<InventoryCount, Long> {
+
+    /**
+     * Inventaires non encore valides sur une plage, utilise pour refuser la cloture d une periode
+     * dont les ecarts ne sont pas leves.
+     */
+    long countByStatusInAndCreatedAtBetween(java.util.Collection<InventoryCountStatus> statuses,
+                                            java.time.Instant from,
+                                            java.time.Instant to);
     boolean existsByCountCode(String countCode);
 
     Optional<InventoryCount> findByCountCode(String countCode);

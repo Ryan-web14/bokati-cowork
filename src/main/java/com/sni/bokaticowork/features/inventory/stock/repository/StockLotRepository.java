@@ -19,6 +19,30 @@ import java.util.Optional;
 public interface StockLotRepository extends JpaRepository<StockLot, Long> {
     Optional<StockLot> findByItemAndLocationAndLotNumber(InventoryItem item, InventoryLocation location, String lotNumber);
 
+    List<StockLot> findAllByLotNumberAndActiveTrue(String lotNumber);
+
+    /** Lots immobilises, en quarantaine ou bloques, filtres facultativement par article et emplacement. */
+    @Query("""
+            SELECT lot FROM StockLot lot
+            WHERE (lot.quarantined = TRUE OR lot.blocked = TRUE)
+              AND lot.remainingQuantity > 0
+              AND (:itemCode IS NULL OR lot.item.itemCode = :itemCode)
+              AND (:locationCode IS NULL OR lot.location.locationCode = :locationCode)
+            ORDER BY lot.receivedAt ASC
+            """)
+    List<StockLot> findImmobilised(@Param("itemCode") String itemCode,
+                                   @Param("locationCode") String locationCode);
+
+    /** Quantite totale immobilisee sur un couple article et emplacement. */
+    @Query("""
+            SELECT COALESCE(SUM(lot.remainingQuantity), 0) FROM StockLot lot
+            WHERE lot.item = :item
+              AND lot.location = :location
+              AND (lot.quarantined = TRUE OR lot.blocked = TRUE)
+            """)
+    java.math.BigDecimal sumImmobilisedQuantity(@Param("item") InventoryItem item,
+                                                @Param("location") InventoryLocation location);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT lot FROM StockLot lot
@@ -27,6 +51,7 @@ public interface StockLotRepository extends JpaRepository<StockLot, Long> {
               AND lot.remainingQuantity > 0
               AND lot.active = true
               AND lot.quarantined = false
+              AND lot.blocked = false
             ORDER BY CASE WHEN lot.expiryDate IS NULL THEN 1 ELSE 0 END ASC, lot.expiryDate ASC, lot.receivedAt ASC
             """)
     List<StockLot> findConsumableLotsForUpdate(@Param("item") InventoryItem item, @Param("location") InventoryLocation location);

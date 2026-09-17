@@ -29,7 +29,7 @@ public class BookingPaymentContextResolver {
     public BookingPaymentContext resolve(BookingPaymentMode paymentMode,
                                          BookingIdentityResolver.ResolvedBookingIdentity identity,
                                          Resource resource) {
-        if (paymentMode == null || paymentMode == BookingPaymentMode.DIRECT) {
+        if (paymentMode == null || paymentMode.isPayable()) {
             return BookingPaymentContext.direct();
         }
         if (identity.transientOwner()) {

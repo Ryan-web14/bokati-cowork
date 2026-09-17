@@ -22,6 +22,10 @@ public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecific
 
     boolean existsByAssetTag(String assetTag);
 
+    Optional<Asset> findFirstBySerialNumber(String serialNumber);
+
+    Optional<Asset> findFirstByAssetTag(String assetTag);
+
     Optional<Asset> findByAssetCode(String assetCode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

@@ -93,6 +93,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingPolicyEnforcer policyEnforcer;
     private final BookingBillableBridge billableBridge;
     private final BookingCancellationRefundSupport cancellationRefundSupport;
+    private final BookingWalletSettlementSupport walletSettlement;
     private final BookingVirtualMeetingSupport virtualMeetingSupport;
     private final TaskManagementService taskManagementService;
     private final BookingCheckInProperties checkInProperties;
@@ -155,11 +156,10 @@ public class BookingServiceImpl implements BookingService {
         booking.setCurrency(price.currency());
         booking.setApprovalRequired(effectivePolicy.approvalRequired());
         booking.setVirtualMeetingUrl(virtualMeetingSupport.meetingUrl(resource, booking.getBookingNumber()));
-        boolean requiresPayment = request.paymentMode() == BookingPaymentMode.DIRECT
-                || request.paymentMode() == BookingPaymentMode.WALLET;
+        boolean awaitsPayment = request.paymentMode() != null && request.paymentMode().awaitsPayment();
         if (effectivePolicy.approvalRequired()) {
             booking.setStatus(BookingStatus.PENDING_APPROVAL);
-        } else if (requiresPayment) {
+        } else if (awaitsPayment) {
             booking.setStatus(BookingStatus.PENDING_PAYMENT);
         }
         booking = bookingRepository.save(booking);
@@ -172,7 +172,7 @@ public class BookingServiceImpl implements BookingService {
         if (effectivePolicy.approvalRequired()) {
             writeHistory(booking, BookingStatus.DRAFT, BookingStatus.PENDING_APPROVAL, null, "Approval required");
             eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking pending approval", "Booking requires approval", null);
-        } else if (requiresPayment) {
+        } else if (awaitsPayment) {
             writeHistory(booking, BookingStatus.DRAFT, BookingStatus.PENDING_PAYMENT, null, "Awaiting payment");
             eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking pending payment", "Booking awaiting payment before confirmation", null);
             booking.setBillableNumber(billableBridge.ensureBillableItem(booking));
@@ -286,9 +286,8 @@ public class BookingServiceImpl implements BookingService {
         requireStatus(booking, BookingStatus.PENDING_APPROVAL);
         booking.setApprovedBy(request == null ? null : trim(request.actor()));
         booking.setApprovedAt(Instant.now());
-        boolean requiresPayment = booking.getPaymentMode() == BookingPaymentMode.DIRECT
-                || booking.getPaymentMode() == BookingPaymentMode.WALLET;
-        if (requiresPayment) {
+        boolean awaitsPayment = booking.getPaymentMode().awaitsPayment();
+        if (awaitsPayment) {
             booking.setStatus(BookingStatus.PENDING_PAYMENT);
             booking = bookingRepository.save(booking);
             writeHistory(booking, BookingStatus.PENDING_APPROVAL, BookingStatus.PENDING_PAYMENT, booking.getApprovedBy(), request == null ? "Approved · awaiting payment" : reason(request.reason(), "Approved · awaiting payment"));
@@ -316,6 +315,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setRejectedAt(Instant.now());
         booking.setRejectionReason(request == null ? "Rejected" : reason(request.reason(), "Rejected"));
         booking = bookingRepository.save(booking);
+        walletSettlement.release(booking, "reservation refusee");
         writeHistory(booking, from, BookingStatus.REJECTED, booking.getRejectedBy(), booking.getRejectionReason());
         eventWriter.write(booking, BookingEventType.BOOKING_REJECTED, "Booking rejected", booking.getRejectionReason(), null,
                 emailRequested(request == null ? null : request.sendEmail()));
@@ -607,10 +607,11 @@ public class BookingServiceImpl implements BookingService {
             reserveResource(booking);
             eventWriter.write(booking, BookingEventType.RESOURCE_RESERVED, "Resource reserved", "Booking resource availability was reserved", null);
         }
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
+        if (booking.getPaymentMode().usesEntitlement()) {
             entitlementBridge.reserve(booking);
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_RESERVED, "Entitlement reserved", "Booking entitlement was reserved", null);
         }
+        holdWalletFunds(booking);
         booking.setBillableNumber(billableBridge.ensureBillableItem(booking));
         BookingStatus from = booking.getStatus();
         booking.setStatus(BookingStatus.CONFIRMED);
@@ -638,11 +639,12 @@ public class BookingServiceImpl implements BookingService {
         if (wasActive) {
             releaseResource(booking);
             eventWriter.write(booking, BookingEventType.RESOURCE_RELEASED, "Resource released", "Booking resource availability was released", null);
-            if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
+            if (booking.getPaymentMode().usesEntitlement()) {
                 entitlementBridge.release(booking);
                 eventWriter.write(booking, BookingEventType.ENTITLEMENT_RELEASED, "Entitlement released", "Booking entitlement reservation was released", null);
             }
         }
+        walletSettlement.release(booking, "reservation annulee");
         BookingStatus from = booking.getStatus();
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancellationReason(reason(request, "Booking cancelled"));
@@ -652,12 +654,12 @@ public class BookingServiceImpl implements BookingService {
         eventWriter.write(booking, BookingEventType.BOOKING_CANCELLED, "Booking cancelled", booking.getCancellationReason(), null,
                 emailRequested(request));
         notifyIfRequested(booking, BookingEventType.BOOKING_CANCELLED, request);
-        if (wasActive) {
-            try {
-                cancellationRefundSupport.processAutomaticCreditNote(booking);
-            } catch (Exception ex) {
-                log.warn("Failed to process automatic cancellation credit note for booking {}", booking.getBookingNumber(), ex);
-            }
+        // Y compris lorsque la reservation n'avait rien engage : sa facture etait deja emise et
+        // devait disparaitre avec elle.
+        try {
+            cancellationRefundSupport.processCancellation(booking, wasActive);
+        } catch (Exception ex) {
+            log.warn("Failed to settle billing for cancelled booking {}", booking.getBookingNumber(), ex);
         }
         return booking;
     }
@@ -666,7 +668,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
         }
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
+        if (booking.getPaymentMode().usesEntitlement()) {
             entitlementBridge.consume(booking);
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "No-show entitlement was consumed", null);
         }
@@ -685,7 +687,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be completed");
         }
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && booking.getPaymentMode() != BookingPaymentMode.WALLET) {
+        if (booking.getPaymentMode().usesEntitlement()) {
             entitlementBridge.consume(booking);
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "Booking entitlement was consumed", null);
             eventWriter.write(booking, BookingEventType.USAGE_RECORDED, "Usage recorded", "Booking usage was recorded", null);
@@ -848,7 +850,7 @@ public class BookingServiceImpl implements BookingService {
                 .amount(price.amount())
                 .currency(price.currency())
                 .build());
-        if (booking.getPaymentMode() != BookingPaymentMode.DIRECT && StringUtils.hasText(booking.getEntitlementCode())) {
+        if (booking.getPaymentMode().usesEntitlement() && StringUtils.hasText(booking.getEntitlementCode())) {
             // Meme source que le debit reel · la ligne annonce ce qui est retire au droit, dans
             // l'unite de celui-ci, et non dans celle de la reservation.
             BookingEntitlementBridge.Charge charge = entitlementBridge.charge(booking);
@@ -877,10 +879,23 @@ public class BookingServiceImpl implements BookingService {
         });
     }
 
+    /**
+     * Applique la politique d'annulation de la ressource.
+     *
+     * <p>Elle ne s'applique jamais a une reservation qui n'engage encore rien. C'etait le cas des
+     * brouillons et des reservations en attente de paiement, et c'est desormais aussi celui d'une
+     * reservation au portefeuille dont les fonds sont bloques sans etre debites : elle est confirmee
+     * des la premiere seconde, mais son annulation ne coute rien a personne tant que le debit n'a
+     * pas eu lieu. Sans cette exemption, une ressource au preavis serre deviendrait ininterrompable
+     * une minute apres la reservation, alors meme que l'argent n'a pas bouge.</p>
+     */
     private void assertCancellationAllowed(Booking booking) {
         ResourcePolicy policy = booking.getResource().getResourcePolicy();
         if (policy == null || booking.getStatus() == BookingStatus.DRAFT
                 || booking.getStatus() == BookingStatus.PENDING_PAYMENT) {
+            return;
+        }
+        if (booking.getPaymentMode().isPrepaid() && walletSettlement.hasPendingHold(booking)) {
             return;
         }
         if (!Boolean.TRUE.equals(policy.getAllowCancellation())) {
@@ -944,6 +959,20 @@ public class BookingServiceImpl implements BookingService {
                 && booking.getEndedAt().isBefore(now)
                 && booking.getCheckedInAt() == null
                 && booking.getStartedEventAt() == null;
+    }
+
+    /**
+     * Saisit les fonds d'une reservation reglee au portefeuille, au moment ou elle est confirmee.
+     *
+     * <p>Le blocage vaut verification de solde et vaut paiement : il echoue, la confirmation
+     * echoue avec lui et rien n'est annonce au client. Il reussit, le montant est acquis et la
+     * reservation est aussi ferme qu'une reservation deja reglee · le debit comptable suivra en
+     * arriere-plan. Sans effet pour tout autre mode de reglement.</p>
+     */
+    private void holdWalletFunds(Booking booking) {
+        if (booking.getPaymentMode() == BookingPaymentMode.WALLET) {
+            walletSettlement.hold(booking);
+        }
     }
 
     private Booking getForService(String bookingNumber) {

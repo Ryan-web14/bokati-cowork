@@ -89,7 +89,7 @@ public class InventoryCountServiceImpl implements InventoryCountService {
                 .orElseGet(() -> InventoryCountItem.builder()
                         .inventoryCount(count)
                         .item(item)
-                        .expectedQuantity(stockLevelRepository.findByItemAndLocation(item, count.getLocation())
+                        .expectedQuantity(stockLevelRepository.findByItemAndLocationReadOnly(item, count.getLocation())
                                 .map(StockLevel::getQuantityOnHand)
                                 .orElse(BigDecimal.ZERO))
                         .build());

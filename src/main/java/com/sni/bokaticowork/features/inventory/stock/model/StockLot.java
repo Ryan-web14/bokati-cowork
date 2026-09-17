@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.inventory.stock.model;
 
 import com.sni.bokaticowork.core.annotation.IdGeneration;
 import com.sni.bokaticowork.features.inventory.catalog.model.InventoryItem;
+import com.sni.bokaticowork.features.inventory.stock.enums.LotBlockReasonType;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockOwnershipType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -56,6 +57,40 @@ public class StockLot {
 
     @Column(name = "quarantine_reason", columnDefinition = "TEXT")
     private String quarantineReason;
+
+    @Column(name = "quarantined_at")
+    private java.time.Instant quarantinedAt;
+
+    @Column(name = "quarantined_by", length = 120)
+    private String quarantinedBy;
+
+    /**
+     * Blocage administratif, distinct de la quarantaine : celle-ci attend une decision qualite,
+     * celui-la resulte d une decision de gestion. Les deux rendent le lot indisponible.
+     */
+    @Builder.Default
+    @Column(name = "blocked", nullable = false)
+    private Boolean blocked = Boolean.FALSE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "block_reason_type", length = 40)
+    private LotBlockReasonType blockReasonType;
+
+    @Column(name = "block_reason", columnDefinition = "TEXT")
+    private String blockReason;
+
+    @Column(name = "blocked_at")
+    private java.time.Instant blockedAt;
+
+    @Column(name = "blocked_by", length = 120)
+    private String blockedBy;
+
+    /** Auteur de la levee de quarantaine, distinct de celui qui la demande. */
+    @Column(name = "release_approved_by", length = 120)
+    private String releaseApprovedBy;
+
+    @Column(name = "released_at")
+    private java.time.Instant releasedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ownership_type", length = 40)

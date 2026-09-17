@@ -31,6 +31,7 @@ public class StockLotServiceImpl implements StockLotService {
     private final StockLotRepository repository;
     private final InventoryItemLookupService itemLookupService;
     private final InventoryLocationService locationService;
+    private final com.sni.bokaticowork.features.inventory.stock.mapper.decorator.StockLotResponseFactory lotResponseFactory;
 
     @Override
     public Page<StockLotResponse> search(String itemCode, String locationCode, String lotNumber,
@@ -83,22 +84,7 @@ public class StockLotServiceImpl implements StockLotService {
     }
 
     private StockLotResponse toResponse(StockLot lot) {
-        return StockLotResponse.builder()
-                .itemCode(lot.getItem().getItemCode())
-                .itemName(lot.getItem().getName())
-                .locationCode(lot.getLocation().getLocationCode())
-                .locationName(lot.getLocation().getName())
-                .lotNumber(lot.getLotNumber())
-                .expiryDate(lot.getExpiryDate())
-                .receivedAt(lot.getReceivedAt())
-                .initialQuantity(lot.getInitialQuantity())
-                .remainingQuantity(lot.getRemainingQuantity())
-                .quarantined(lot.getQuarantined())
-                .quarantineReason(lot.getQuarantineReason())
-                .ownershipType(lot.getOwnershipType())
-                .ownerCode(lot.getOwnerCode())
-                .active(lot.getActive())
-                .build();
+        return lotResponseFactory.toResponse(lot);
     }
 
     private String normalizeCode(String value) {
