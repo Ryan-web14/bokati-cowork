@@ -28,6 +28,18 @@ hypothèses de travail : elles conditionnent le modèle.
 4. **Toute domiciliation génère un contrat enregistré et timbré** auprès de l'administration
    publique. L'enregistrement est une étape bloquante, pas une formalité annexe.
 
+Quatre exigences fonctionnelles s'y ajoutent, intégrées aux parties 2 et 5.
+
+5. **Les coupons s'utilisent côté client, avant le paiement.** Le client voit ceux dont il dispose,
+   en saisit ou en choisit un, et le panier se recalcule sous ses yeux. Le coupon n'est consommé
+   qu'au paiement, pas à la saisie.
+6. **Les promotions s'appliquent automatiquement** sur les plans, pass, services, ressources et
+   articles tant qu'elles sont valides, et **les prix promotionnels s'affichent côté client**, prix
+   barré compris.
+7. **Une promotion peut viser des clients nommés**, un par un, sans passer par un segment artificiel.
+8. **Un abonnement peut être dérivé pour un abonné précis**, avec son prix et ses avantages propres,
+   sans créer un plan de catalogue par client.
+
 ---
 
 # Partie 1 · État des lieux
@@ -296,8 +308,15 @@ PromotionReward
                   FREE_ENTITLEMENT, WAIVE_SETUP_FEE, WALLET_CREDIT, FREE_ADDON,
                   UPGRADE_TIER, EXTRA_ENTITLEMENT_UNITS
 
-  targetScope     WHOLE_ORDER | LINE | PLAN | ADDON | PASS | ENTITLEMENT
+  targetScope     WHOLE_ORDER | LINE | PLAN | ADDON | PASS | ENTITLEMENT |
+                  SERVICE | RESOURCE | INVENTORY_ITEM | CATEGORY
 ```
+
+`targetScope` couvre délibérément plusieurs modules. Une promotion doit pouvoir porter sur un plan
+d'abonnement, un pass, un service, **une ressource réservable** ou **un article vendu au comptoir**.
+Le moteur ne doit donc rien savoir du module d'origine : il manipule un objet tarifable désigné par
+un couple portée et code, et chaque module déclare ce qu'il expose. C'est ce qui évite d'écrire trois
+moteurs de promotion.
 
 Séparer conditions et récompenses permet la promotion « achetez un pass journée, le second est
 offert » sans ajouter de type d'énumération à chaque nouvelle idée commerciale.
@@ -375,7 +394,167 @@ Referral
 Le parrainage crédite typiquement un portefeuille : c'est le point de jonction avec la partie 3, via
 `WalletEntryType.PROMOTIONAL_CREDIT` qui existe déjà.
 
-## 2.3 Le moteur de tarification
+### Ciblage nominatif, au cas par cas
+
+Les conditions de la section précédente décrivent des populations : les nouveaux, les mensuels, ceux
+d'un segment. Il faut aussi pouvoir désigner **des personnes précises**, une par une, sans inventer
+un segment artificiel pour chaque geste commercial.
+
+```text
+PromotionAudience
+  promotion
+  audienceType     ALL | SEGMENT | SUBSCRIBER_LIST | BUSINESS_ENTITY | PLAN | COHORT
+  segmentCode              pour SEGMENT
+  planCode                 pour PLAN
+  cohortRule               pour COHORT, par exemple inscrits entre deux dates
+
+PromotionBeneficiary
+  promotion
+  subscriberType, subscriberCode
+  addedBy, addedAt, addedReason
+  notifiedAt, notificationChannel
+  redeemedAt
+  revokedAt, revokedBy
+```
+
+Trois usages que cela débloque, tous courants :
+
+1. **Le geste commercial.** Un client mécontent reçoit trente pour cent sur son prochain mois. La
+   promotion existe, elle ne vise que lui, elle expire, et la trace reste.
+2. **La liste d'invités.** Un partenariat donne droit à un tarif préférentiel à quarante personnes
+   nommées. On importe la liste, on notifie, on suit le taux d'utilisation.
+3. **La relance ciblée.** Les abonnés partis dans les six derniers mois reçoivent une offre de retour.
+
+Points de conception :
+
+- **Import de masse d'une liste de bénéficiaires**, par fichier, avec rapport ligne à ligne sur le
+  modèle de l'import du module inventaire : lignes acceptées, lignes rejetées et pourquoi.
+- **Un bénéficiaire peut être retiré** avant utilisation, ce qui est la seule façon d'annuler un
+  geste accordé par erreur.
+- **La notification est tracée** : savoir qui a été prévenu, quand et par quel canal, faute de quoi
+  un client réclamera une offre qu'il n'a jamais reçue.
+- Une promotion nominative **n'apparaît qu'à ses bénéficiaires**. Elle ne doit fuiter ni dans le
+  catalogue public, ni dans une réponse d'API consultée par un autre client.
+
+## 2.3 Application automatique et affichage des prix promotionnels
+
+Une promotion qui n'est visible qu'au moment de payer ne vend rien. Ce qui déclenche l'achat, c'est
+le prix barré vu au moment de choisir.
+
+### Le moteur doit savoir tarifer une liste, pas seulement un panier
+
+```text
+PricingEngine.priceCatalogue(PricingContext, List<PriceableRef>) -> List<EffectivePrice>
+
+PriceableRef
+  scope     PLAN | PASS | SERVICE | ADDON | RESOURCE | INVENTORY_ITEM
+  code
+  quantity, billingCycle, dates    selon la portee
+
+EffectivePrice
+  scope, code
+  listPrice                prix catalogue, celui qui sera barre
+  effectivePrice           prix a payer
+  savingsAmount, savingsPercent
+  priceSource              CATALOGUE | PRICE_LIST | PROMOTION | OVERRIDE
+  promotionCode, promotionLabel      libelle a afficher, par exemple moins vingt pour cent
+  validUntil               pour afficher une echeance et creer l urgence
+  requiresCoupon           vrai si le prix suppose la saisie d un code
+  conditionsSummary        ce qu il faut remplir, en une phrase lisible
+```
+
+Le champ `priceSource` est ce qui permet au front d'afficher honnêtement : un tarif négocié n'est pas
+une promotion et ne doit pas s'afficher comme une réduction exceptionnelle.
+
+### Où cela s'applique
+
+Toute liste de prix vue par un client doit passer par ce calcul, jamais afficher le prix catalogue
+brut : la grille des plans, le catalogue des pass, les services optionnels, les ressources
+réservables, les articles vendus au comptoir.
+
+### Performance et fraîcheur
+
+Calculer les promotions applicables à chaque affichage de catalogue, pour chaque visiteur, est
+coûteux. Trois mesures :
+
+1. **Mise en cache par profil**, pas par personne : le couple segment, type d'abonné et canal suffit
+   dans la grande majorité des cas. Les promotions nominatives, elles, ne se cachent pas.
+2. **Invalidation sur événement** : activation, suspension, épuisement de budget ou fin de campagne
+   vident le cache concerné. L'outbox est le bon véhicule.
+3. **Pré-calcul nocturne** des prix effectifs du catalogue public, rafraîchi à chaque changement de
+   campagne.
+
+### Le prix affiché engage
+
+Si un prix promotionnel est affiché, il doit être honoré jusqu'à la fin du parcours d'achat. Deux
+garde-fous : le prix effectif est **figé dans le panier** avec sa date d'expiration, et le moteur
+**revérifie à la validation**. Si la promotion a expiré entre-temps, le client doit être prévenu
+explicitement plutôt que de voir un montant changer en silence.
+
+## 2.4 Parcours client : coupons disponibles et application avant paiement
+
+### Ce que le client doit voir
+
+```text
+GET /client/promotions/available
+```
+
+La liste de ce à quoi il a droit maintenant : promotions automatiques déjà appliquées, promotions
+nominatives qui lui sont réservées, coupons qui lui ont été attribués, coupons publics en cours. Pour
+chacun : le libellé, l'économie, la date de fin, et ce qu'il faut faire pour en bénéficier.
+
+```text
+ClientPromotionView
+  kind            AUTOMATIC | NOMINATIVE | COUPON_ASSIGNED | COUPON_PUBLIC
+  code            null pour une promotion automatique
+  label, description
+  estimatedSaving sur le panier courant, ou sur son abonnement
+  validUntil
+  status          APPLICABLE | ALREADY_APPLIED | NOT_ELIGIBLE | EXPIRED | EXHAUSTED
+  ineligibilityReason   lisible, pas un code technique
+```
+
+Afficher aussi ce à quoi il **n'a pas** droit, avec la raison, est un choix délibéré : un client qui
+comprend pourquoi son code est refusé n'écrit pas au support.
+
+### Appliquer un coupon avant de payer
+
+```text
+POST /client/cart/coupons        saisie d un code, renvoie le panier recalcule
+DELETE /client/cart/coupons/{code}
+POST /client/cart/preview        recalcul complet sans engagement
+```
+
+Le parcours attendu :
+
+1. Le client saisit un code, ou choisit un coupon dans sa liste.
+2. Le moteur **valide sans consommer** : le code existe-t-il, est-il actif, lui est-il destiné,
+   le panier remplit-il les conditions, le budget est-il épuisé.
+3. Le panier est recalculé et **le détail est montré** : quelle règle a joué, sur quelle ligne, pour
+   quel montant.
+4. En cas de refus, le message dit **pourquoi**, en français, pas un code d'erreur.
+5. Le coupon n'est **réellement consommé qu'au paiement**, pas à la saisie.
+
+Ce point cinq est essentiel. Un coupon à usage unique consommé dès la saisie serait perdu si le
+client abandonne son panier. La réservation temporaire est la bonne mécanique :
+
+```text
+CouponReservation
+  coupon, cartReference, subscriberCode
+  reservedAt, expiresAt        courte, le temps du parcours de paiement
+  status      HELD | CONSUMED | RELEASED | EXPIRED
+```
+
+C'est exactement le mécanisme de retenue déjà utilisé pour le stock et pour le portefeuille : on
+réserve, puis on capture ou on libère. Un travailleur de fond libère les réservations expirées.
+
+### Cumul visible
+
+Quand plusieurs promotions s'appliquent, le client doit voir le détail ligne par ligne plutôt qu'un
+montant global. Et quand un coupon saisi est **moins avantageux** qu'une promotion automatique déjà
+active et non cumulable, le système doit retenir le meilleur pour le client et le dire.
+
+## 2.5 Le moteur de tarification
 
 C'est la pièce manquante. Sans elle, tout ce qui précède reste déclaratif.
 
@@ -404,10 +583,16 @@ L'ordre change le montant final. Le figer et le documenter évite des écarts in
 1. **Prix catalogue** : le tarif de la version de plan en vigueur.
 2. **Grille tarifaire** : si une grille s'applique, elle remplace le prix catalogue. Ce n'est pas une
    remise, cela ne se voit pas comme telle sur la facture.
-3. **Promotions automatiques**, par priorité croissante.
-4. **Coupons saisis**, par priorité croissante.
-5. **Plafonnement** : application de `maxDiscountAmount` et du budget restant.
-6. **Arrondi** : à l'entier XAF, une seule fois, à la fin.
+3. **Conditions propres à l'abonnement** : si l'abonné bénéficie d'un abonnement dérivé, décrit en
+   partie 5, son prix négocié remplace tout ce qui précède. C'est un terme de contrat, pas une
+   promotion.
+4. **Promotions automatiques**, par priorité croissante.
+5. **Coupons saisis**, par priorité croissante.
+6. **Plafonnement** : application de `maxDiscountAmount` et du budget restant.
+7. **Arrondi** : à l'entier XAF, une seule fois, à la fin.
+
+Un abonnement dérivé peut porter `promotionsAllowed = false` : un prix déjà négocié n'a pas vocation
+à recevoir une remise supplémentaire. L'évaluation s'arrête alors après l'étape 3.
 
 Règles de cumul : une promotion `exclusive` qui s'applique arrête l'évaluation des suivantes. Une
 promotion non `stackable` ne s'ajoute pas à une autre déjà retenue. En cas d'égalité de priorité, la
@@ -423,7 +608,7 @@ Le même moteur, sans effet de bord, renvoyant le détail des règles appliquée
 avec leur motif. Indispensable pour trois usages : l'affichage du panier côté client, l'aide à la
 vente côté commercial, et le test d'une campagne avant son lancement.
 
-## 2.4 Application et traçabilité
+## 2.6 Application et traçabilité
 
 Une remise calculée doit laisser une trace exploitable.
 
@@ -451,7 +636,7 @@ contrainte qui interdit un `discountCode` inconnu lorsque la source est une prom
 - Le **contrôle** : une remise manuelle hors promotion doit être justifiée et visée, exactement comme
   un forçage de stock l'est déjà dans le module inventaire.
 
-## 2.5 Garde-fous
+## 2.7 Garde-fous
 
 1. **Approbation des campagnes** au-delà d'un seuil de budget ou d'un taux de remise, sur le modèle
    des règles d'approbation déjà en place pour les achats et les ajustements de stock.
@@ -464,7 +649,7 @@ contrainte qui interdit un `discountCode` inconnu lorsque la source est une prom
 5. **Aucune remise ne descend le total sous zéro**, le reliquat devant devenir un crédit explicite et
    non une facture négative.
 
-## 2.6 Endpoints
+## 2.8 Endpoints
 
 ```text
 POST   /promotions                             PUT    /promotions/{code}
@@ -473,11 +658,26 @@ POST   /promotions/{code}/conditions           POST   /promotions/{code}/rewards
 GET    /promotions                             GET    /promotions/{code}
 GET    /promotions/{code}/performance          cout, utilisations, taux de conversion
 
+POST   /promotions/{code}/beneficiaries         ajout nominatif, un ou plusieurs
+POST   /promotions/{code}/beneficiaries/import  import de liste par fichier
+DELETE /promotions/{code}/beneficiaries/{subscriberCode}
+GET    /promotions/{code}/beneficiaries         avec taux d utilisation
+POST   /promotions/{code}/notify                notification des beneficiaires
+
 POST   /coupons/batches                        generation de lot
 GET    /coupons/batches/{batchCode}            suivi du lot
 POST   /coupons                                coupon unitaire ou nominatif
 PATCH  /coupons/{code}/revoke
 GET    /coupons/{code}/validate                verification sans consommation
+
+GET    /catalogue/prices                       prix effectifs d une liste d objets tarifables
+GET    /catalogue/prices/{scope}/{code}        prix effectif d un seul
+
+GET    /client/promotions/available            ce a quoi l abonne a droit aujourd hui
+GET    /client/coupons                         ses coupons, utilises et disponibles
+POST   /client/cart/preview                    recalcul complet sans engagement
+POST   /client/cart/coupons                    saisie d un code, panier recalcule
+DELETE /client/cart/coupons/{code}
 
 POST   /price-lists                            POST /price-lists/{code}/entries
 GET    /price-lists                            GET  /price-lists/resolve
@@ -1152,7 +1352,116 @@ consommation, `usage` et `overage`, qui existent déjà.
 Le point commun : chacun consomme un droit, occupe une ressource, ou produit un acte facturable. Les
 trois mécaniques existent déjà. Ce qui manque est la couche de service qui les relie à un abonnement.
 
-## 5.4 Améliorations du module abonnement
+## 5.4 Abonnements dérivés : un prix et des avantages propres, sans multiplier les plans
+
+### Le problème
+
+Aujourd'hui un `Subscription` pointe vers une `PlanVersion` partagée par tous ceux qui ont souscrit ce
+plan. Pour accorder à un client un prix différent ou des avantages différents, il n'y a qu'une
+issue : créer un plan dédié. Multiplié par chaque négociation, cela produit un catalogue illisible où
+mille plans existent pour mille clients, et où plus personne ne sait quel est le tarif de référence.
+
+### La solution : dériver la version de plan, pas le plan
+
+Plutôt qu'une table d'exceptions posée à côté du modèle, **on réutilise la mécanique de version de
+plan qui existe déjà**, en créant une version privée rattachée à un seul abonnement.
+
+```text
+PlanVersion, colonnes ajoutees
+  scope              CATALOGUE | SUBSCRIPTION
+  ownerSubscriptionId    renseigne seulement si scope vaut SUBSCRIPTION
+  derivedFromVersionId   version de catalogue dont celle-ci descend
+```
+
+L'intérêt de ce choix est qu'il ne demande **aucune modification des moteurs existants**. La
+facturation, les droits, le calcul de période, tout lit déjà une `PlanVersion` : une version privée
+se comporte exactement comme une version publique. Ce qui change tient en une ligne : les versions de
+portée `SUBSCRIPTION` sont exclues des listes de catalogue.
+
+```text
+PlanDerivation
+  derivationCode
+  subscription
+  sourcePlanVersion, derivedPlanVersion
+  status          DRAFT, PENDING_APPROVAL, ACTIVE, SUPERSEDED, EXPIRED, REJECTED
+  reason          NEGOTIATION | GOODWILL | PARTNERSHIP | PILOT | GRANDFATHERING |
+                  LOYALTY | CORRECTION
+  reasonDetails
+  effectiveFrom, effectiveTo
+  renewalBehaviour   KEEP | REVERT_TO_CATALOGUE | REVERT_AFTER_PERIODS
+  revertAfterPeriods
+  promotionsAllowed  faux par defaut sur un prix negocie
+  requestedBy, approvedBy, approvedAt, rejectionReason
+  supersedesDerivationId
+```
+
+```text
+PlanDerivationDelta
+  derivation
+  deltaType    PRICE | ENTITLEMENT | BILLING_CYCLE | COMMITMENT | NOTICE_PERIOD |
+               TRIAL | SETUP_FEE | PAYMENT_TERMS | ADDON_INCLUDED
+  targetCode
+  catalogueValue, derivedValue
+  impactAmount        ecart chiffre sur une periode, positif si concession
+```
+
+Le delta est ce qui rend l'ensemble pilotable. Sans lui, on sait qu'un client a un traitement
+particulier, mais personne ne peut dire **ce qui a été concédé ni combien cela coûte**. Avec lui, on
+produit la liste des concessions par commercial, par période, par montant.
+
+### Les règles qui évitent la dérive
+
+1. **La dérivation garde le lien vers sa source.** Quand le plan de catalogue évolue, on peut afficher
+   l'écart et décider. Sans ce lien, les abonnements dérivés deviennent des orphelins que plus
+   personne n'ose toucher.
+2. **Elle est versionnée, jamais modifiée.** Un prix négocié en janvier puis renégocié en juin laisse
+   deux traces chaînées par `supersedesDerivationId`. La question « quel prix appliquions-nous en
+   mars » doit toujours avoir une réponse.
+3. **Elle est datée et peut expirer.** Un tarif de lancement sur six mois est une dérivation avec une
+   `effectiveTo`, pas une promesse orale que personne ne retrouve.
+4. **Son comportement au renouvellement est explicite.** `renewalBehaviour` évite le cas classique du
+   geste commercial ponctuel qui devient un tarif à vie parce que personne n'a pensé à l'échéance.
+5. **Elle est approuvée au-delà d'un seuil.** En réutilisant le modèle de règles d'approbation déjà
+   en place pour les achats et les ajustements de stock : un rabais au-delà d'un pourcentage, ou un
+   prix sous un plancher, exige un visa.
+6. **Un prix plancher est opposable.** `PlanVersion` de catalogue peut porter un `floorPrice` en
+   dessous duquel aucune dérivation n'est acceptée, même approuvée.
+
+### Ce que cela permet au-delà de la négociation
+
+- **Protection tarifaire lors d'une hausse.** Le catalogue augmente, les abonnés en cours conservent
+  leur tarif : une dérivation de motif `GRANDFATHERING` est générée en masse, datée, et l'on sait
+  exactement combien la protection coûte.
+- **Pilotes et bêtas.** Un groupe d'abonnés teste un plan enrichi sans que ce plan existe au
+  catalogue.
+- **Partenariats.** Les membres d'une organisation partenaire reçoivent une dérivation commune,
+  créée en lot depuis un modèle.
+- **Correction d'erreur.** Une souscription au mauvais tarif se corrige par une dérivation datée
+  plutôt que par une modification silencieuse de l'historique.
+
+### Dérivation contre grille tarifaire, quand utiliser quoi
+
+| Situation | Outil |
+|---|---|
+| Un tarif applicable à une population, stable dans le temps | Grille tarifaire, partie 2 |
+| Un traitement propre à un abonné, négocié, daté | Abonnement dérivé |
+| Une réduction temporaire et promotionnelle | Promotion ou coupon |
+
+La confusion entre ces trois outils est le principal risque de ce chantier. La règle de partage :
+**si cela vaut pour plusieurs personnes et se renouvelle, c'est une grille ; si cela vaut pour une
+personne et résulte d'une négociation, c'est une dérivation ; si cela a une fin annoncée et un but
+commercial, c'est une promotion.**
+
+### Création en lot
+
+```text
+POST /subscriptions/derivations/bulk
+```
+
+Appliquer une même dérivation à une liste d'abonnements, avec simulation préalable du coût total
+avant exécution. C'est ce qui rend la protection tarifaire et les partenariats praticables.
+
+## 5.5 Améliorations du module abonnement
 
 ### Engagement et résiliation
 
@@ -1201,6 +1510,64 @@ lorsqu'un préavis court.
 10. **Indicateurs** : taux d'attrition, revenu récurrent mensuel, valeur vie client, taux
     d'occupation, revenu par poste. Le sous-module `metrics` existe et mérite d'être complété.
 
+### Réglage fin, propositions complémentaires
+
+Ces fonctionnalités vont dans le même sens que l'abonnement dérivé : permettre le cas particulier
+sans casser le modèle général.
+
+**Sur la structure de l'offre**
+
+1. **Lots.** Un plan plus des services à un prix de paquet, inférieur à la somme des parties.
+   `SubscriptionService` le permet, il manque la notion de prix de lot et la règle de ce qui arrive
+   quand on retire un composant.
+2. **Dépendances et exclusions entre options.** Une option qui en exige une autre, deux options
+   incompatibles. Aujourd'hui rien n'empêche une combinaison absurde.
+3. **Paliers de volume par abonnement.** Le prix au poste décroît au-delà d'un seuil, calculé à
+   chaque facturation selon le nombre de sièges réellement occupés. Le sous-module `seat` fournit le
+   compteur, il manque la grille de paliers.
+4. **Modèles d'abonnement pour la vente.** Une configuration type, prête à proposer, qui pré-remplit
+   plan, options, engagement et conditions. Cela réduit les dérivations créées par facilité.
+
+**Sur le temps et les échéances**
+
+5. **Changements planifiés.** Programmer aujourd'hui un changement de plan qui prendra effet à la
+   prochaine échéance, plutôt que de devoir y penser le jour dit.
+6. **Alignement des dates.** Quand une entreprise a plusieurs abonnements, les faire converger vers
+   une même date d'échéance, avec une période de raccordement facturée au prorata. Sans cela, une
+   société reçoit cinq factures à cinq dates différentes.
+7. **Gel encadré.** Le gel existe, ses limites non : nombre de gels par an, durée maximale, préavis,
+   et ce qui est facturé pendant. Un gel sans bornes est un moyen de ne plus payer sans résilier.
+8. **Politique de prorata explicite et paramétrable** : au jour, au mois entamé, ou aucun. Le même
+   choix doit valoir pour l'entrée, la sortie et le changement de plan, sinon les trois divergent.
+
+**Sur l'argent**
+
+9. **Régularisation d'engagement de volume.** Un client s'engage sur un volume annuel et paie au fil
+   de l'eau ; en fin de période, l'écart entre l'engagement et le consommé est facturé. Le
+   sous-module `usage` fournit la mesure.
+10. **Avoirs de service.** Un manquement donne droit à un avoir automatique, calculé selon une règle
+    plutôt que négocié au cas par cas. C'est ce qui évite qu'un incident se règle par une dérivation
+    permanente.
+11. **Conditions de paiement propres au client** : délai, mode, jour de prélèvement. Aujourd'hui ces
+    conditions sont implicites.
+12. **Politique de relance par segment.** Un grand compte et un particulier ne se relancent pas au
+    même rythme ni sur le même ton.
+13. **Produits constatés d'avance.** Un abonnement annuel encaissé en janvier n'est pas un produit de
+    janvier. La ventilation mensuelle du produit rejoint la logique d'avance client décrite en
+    partie 3, et le module billing a déjà les périodes comptables pour la porter.
+
+**Sur la relation**
+
+14. **Hiérarchie d'abonnements.** Un abonnement parent porté par une entreprise, des abonnements
+    enfants portés par ses collaborateurs, une facturation consolidée et des droits partagés. Le
+    modèle de sièges couvre une partie du besoin, pas la facturation consolidée.
+15. **Reconquête.** Un abonnement résilié depuis peu, une offre de retour, un suivi du taux de
+    reconquête. Cela relie directement au ciblage nominatif de la partie 2.
+16. **Historique lisible par le client.** La frise existe côté interne, le client devrait voir la
+    sienne : souscriptions, changements, gels, factures, avantages accordés.
+17. **Approbation des conditions non standard.** Toute dérivation, tout avoir, toute remise manuelle
+    au-delà d'un seuil passe par un visa, avec la même mécanique que les autres modules.
+
 ---
 
 # Partie 6 · Implications techniques et feuille de route
@@ -1209,10 +1576,10 @@ lorsqu'un préavis court.
 
 | Domaine | Entités |
 |---|---|
-| Tarification | `PromotionCondition`, `PromotionReward`, `Coupon`, `CouponBatch`, `PriceList`, `PriceListEntry`, `ReferralProgram`, `ReferralLink`, `Referral`, `AppliedDiscount` |
+| Tarification | `PromotionCondition`, `PromotionReward`, `PromotionAudience`, `PromotionBeneficiary`, `Coupon`, `CouponBatch`, `CouponReservation`, `PriceList`, `PriceListEntry`, `ReferralProgram`, `ReferralLink`, `Referral`, `AppliedDiscount` |
 | Portefeuille | `WalletCredential`, `WalletTransactionConfirmation`, `WalletTransfer`, `WalletMerchantPayment`, `WalletLimitPolicy`, `WalletLimitUsage`, `WalletRiskFlag`, `WalletStatement`, `WalletTreasuryReconciliation` |
 | Pass | `PassUsage`, `PassValidityRule`, `PassTransfer`, `PassBeneficiary`, `PassCredential` |
-| Abonnement | `ServiceDefinition`, `SubscriptionService`, `DomiciliationContract`, `DomiciliationRegistration`, `MailItem`, `SubscriptionCommitment`, `SubscriptionTermination` |
+| Abonnement | `ServiceDefinition`, `SubscriptionService`, `DomiciliationContract`, `DomiciliationRegistration`, `MailItem`, `SubscriptionCommitment`, `SubscriptionTermination`, `PlanDerivation`, `PlanDerivationDelta` |
 
 ## 6.2 Extensions d'entités existantes
 
@@ -1224,8 +1591,9 @@ Promotion              + promotionType, stackable, exclusive, priority,
 BillingDocumentDiscount + sourceType, sourceCode
 WalletLedgerEntry      + previousHash, currentHash
 WalletAccount          + limitPolicyCode, lastActivityAt, dormantSince
+PlanVersion            + scope, ownerSubscriptionId, derivedFromVersionId, floorPrice
 Pass                   + rien, le modele suffit
-Subscription           + commitmentId, terminationId
+Subscription           + commitmentId, terminationId, activeDerivationId
 SubscriptionStatus     + PENDING_DOCUMENTS, GRACE_PERIOD, PENDING_TERMINATION
 PromotionStatus        + SCHEDULED, EXHAUSTED
 WalletEntryType        + TRANSFER_IN, TRANSFER_OUT, MERCHANT_PAYMENT, FEE,
@@ -1263,11 +1631,19 @@ Les invariants posés pendant les lots inventaire s'appliquent tels quels :
 
 L'ordre suit les dépendances et la valeur.
 
-### Lot A · Moteur de tarification (15 à 20 j)
+### Lot A · Moteur de tarification (18 à 24 j)
 
-Conditions, récompenses, coupons, grilles tarifaires, moteur d'évaluation, simulation, branchement
-sur la facturation et sur les abonnements. **C'est le lot qui débloque le plus de valeur immédiate**,
-parce qu'il rend enfin opérant un module qui existe sans effet.
+Conditions, récompenses, ciblage nominatif, coupons avec réservation, grilles tarifaires, moteur
+d'évaluation, simulation, branchement sur la facturation et sur les abonnements. **C'est le lot qui
+débloque le plus de valeur immédiate**, parce qu'il rend enfin opérant un module qui existe sans
+effet.
+
+### Lot A bis · Prix promotionnels côté client (10 à 14 j)
+
+Tarification en lot du catalogue, affichage des prix effectifs sur les plans, pass, services,
+ressources et articles, mise en cache et invalidation, parcours client de saisie et d'application de
+coupon avant paiement, liste des promotions disponibles. Dépend du lot A. **C'est ce lot qui rend les
+promotions visibles, donc vendeuses** : sans lui, le lot A reste un moteur que personne ne voit.
 
 ### Lot B · Portefeuille, socle de confiance (18 à 24 j)
 
@@ -1295,17 +1671,32 @@ matérialisation QR, alertes. Dépend du lot A pour la vente de pass en libre-se
 Définitions de service, services souscrits, contrat de domiciliation, registre des adresses,
 attestation, gestion du courrier avec preuve de remise.
 
-### Lot G · Cycle de vie des abonnements (12 à 16 j)
+### Lot G · Abonnements dérivés (12 à 16 j)
+
+Dérivation de version de plan scopée à un abonnement, delta chiffré, approbation au-delà d'un seuil,
+prix plancher, comportement au renouvellement, création en lot, et protection tarifaire lors d'une
+hausse de catalogue. Dépend du lot A pour l'ordre d'évaluation. **C'est le lot qui évite le
+catalogue à mille plans**, et plus il arrive tard, plus le désordre à rattraper sera grand.
+
+### Lot H · Cycle de vie des abonnements (12 à 16 j)
 
 Engagement, résiliation avec préavis et liste de sortie, nouveaux statuts, devis, prélèvement
-automatique, politique de gel, prorata explicité.
+automatique, politique de gel encadrée, prorata explicité, changements planifiés, alignement des
+dates.
 
-### Lot H · Libre-service et pilotage (12 à 16 j)
+### Lot I · Libre-service et pilotage (12 à 16 j)
 
 Portail client en écriture, indicateurs d'attrition et de revenu récurrent, relances d'impayé
-paramétrées.
+paramétrées, historique lisible par le client.
 
-**Volume total** : de l'ordre de 115 à 155 jours-développeur.
+**Volume total** : de l'ordre de 137 à 185 jours-développeur.
+
+### Un ordre resserré, si l'on veut de la valeur vite
+
+Les lots A, A bis et G forment un ensemble cohérent qui se tient seul et produit un effet visible en
+huit à dix semaines : les promotions s'appliquent enfin, le client les voit et les utilise, et la
+force de vente peut négocier sans polluer le catalogue. Les lots portefeuille peuvent suivre sans
+dépendance bloquante.
 
 ## 6.6 Décisions à trancher avant de démarrer
 
@@ -1345,6 +1736,17 @@ paramétrées.
     résiliée en cours d'année est particulier, puisque le client perd la qualité fiscale de son
     adresse et que le contrat enregistré doit cesser de produire effet.
 13. **Niveau KYC exigé** pour ouvrir un portefeuille, pour transférer, pour dépasser un seuil.
+14. **Seuil d'approbation d'une dérivation.** À partir de quel pourcentage de rabais, ou de quel écart
+    en valeur, un visa devient-il obligatoire ? Et qui vise.
+15. **Prix plancher.** Existe-t-il, par plan, un tarif sous lequel on ne descend jamais, même
+    approuvé ?
+16. **Comportement par défaut au renouvellement d'une dérivation.** Conserver ou revenir au
+    catalogue ? Le défaut retenu déterminera le sort de la majorité des gestes commerciaux, puisque
+    personne ne le renseignera explicitement.
+17. **Un prix négocié accepte-t-il une promotion par-dessus ?** `promotionsAllowed` est proposé à
+    faux par défaut, à confirmer.
+18. **Durée de réservation d'un coupon** pendant le parcours de paiement.
+19. **Affichage des offres non éligibles** au client, avec leur motif, ou masquage complet ?
 
 ## 6.7 Risques
 
@@ -1352,7 +1754,12 @@ paramétrées.
 |---|---|---|
 | Moteur de tarification appliqué en double sur une facture rééditée | Remise comptée deux fois | Idempotence par document, `AppliedDiscount` unique par couple document et règle |
 | Transfert rejoué après coupure réseau | Double débit | Clé d'idempotence obligatoire sur les opérations de portefeuille, déjà supportée par le socle |
-| Course sur un coupon à usage unique | Code consommé deux fois | Verrouillage pessimiste du coupon pendant l'évaluation |
+| Course sur un coupon à usage unique | Code consommé deux fois | Réservation temporaire pendant le parcours, puis capture ou libération, comme pour le stock et le portefeuille |
+| Prix promotionnel affiché puis non honoré | Litige client, perte de confiance | Prix figé dans le panier avec son échéance, revérification à la validation, message explicite si la promotion a expiré |
+| Promotion nominative visible d'un autre client | Fuite commerciale, demandes d'alignement | Filtrage par bénéficiaire dès la requête, jamais dans la réponse |
+| Dérivations créées par facilité plutôt que par nécessité | Retour au catalogue à mille plans, sous une autre forme | Approbation au-delà d'un seuil, prix plancher opposable, modèles d'abonnement pour couvrir les cas courants, revue périodique des dérivations actives |
+| Geste commercial ponctuel devenu tarif à vie | Érosion silencieuse du revenu | `renewalBehaviour` obligatoire, `effectiveTo` par défaut renseignée, alerte avant échéance |
+| Confusion entre grille, dérivation et promotion | Trois outils utilisés au hasard, tarification inexplicable | Règle de partage écrite en 5.4, et `priceSource` restitué dans chaque prix effectif |
 | Course sur un budget de campagne | Dépassement d'enveloppe | Compteur verrouillé, mis à jour dans la transaction |
 | Code PIN faible ou fuité | Compromission de compte | Refus des codes triviaux, verrouillage progressif, notification de chaque opération |
 | Solde de portefeuille sans contrepartie en trésorerie | Incapacité à honorer les prestations déjà payées | `WalletTreasuryReconciliation` obligatoire dès le lot D, avec alerte sur le ratio de couverture |
