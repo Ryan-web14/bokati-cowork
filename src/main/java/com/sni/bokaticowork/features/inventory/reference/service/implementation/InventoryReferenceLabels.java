@@ -140,6 +140,50 @@ final class InventoryReferenceLabels {
         put("StockJournalDirection.DEBIT", "Debit");
         put("StockJournalDirection.CREDIT", "Credit");
 
+        put("LotBlockReasonType.PENDING_INSPECTION", "En attente de controle");
+        put("LotBlockReasonType.FAILED_INSPECTION", "Controle non conforme");
+        put("LotBlockReasonType.SUPPLIER_DISPUTE", "Litige fournisseur");
+        put("LotBlockReasonType.RECALL", "Rappel produit");
+        put("LotBlockReasonType.EXPIRY", "Peremption");
+        put("LotBlockReasonType.ADMINISTRATIVE", "Decision administrative");
+
+        put("LotGenealogyRelation.TRANSFORMATION", "Transformation");
+        put("LotGenealogyRelation.REPACKAGING", "Reconditionnement");
+        put("LotGenealogyRelation.MERGE", "Fusion de lots");
+        put("LotGenealogyRelation.SPLIT", "Scission de lot");
+        put("LotGenealogyRelation.TRANSFER", "Transfert");
+        put("LotGenealogyRelation.CORRECTION", "Correction de rattachement");
+
+        put("QualityControlStage.ON_RECEIPT", "A la reception");
+        put("QualityControlStage.IN_STORAGE", "En stockage");
+        put("QualityControlStage.BEFORE_ISSUE", "Avant sortie");
+        put("QualityControlStage.ON_DEMAND", "Sur demande");
+
+        put("QualitySamplingMode.FULL", "Controle total");
+        put("QualitySamplingMode.FIXED_QUANTITY", "Quantite fixe");
+        put("QualitySamplingMode.PERCENTAGE", "Pourcentage du lot");
+
+        put("QualityDecision.ACCEPTED", "Accepte");
+        put("QualityDecision.REJECTED", "Refuse");
+        put("QualityDecision.QUARANTINED", "Mis en quarantaine");
+        put("QualityDecision.ACCEPTED_BY_DEROGATION", "Accepte par derogation");
+
+        put("NonConformanceSeverity.MINOR", "Mineure");
+        put("NonConformanceSeverity.MAJOR", "Majeure");
+        put("NonConformanceSeverity.CRITICAL", "Critique");
+
+        put("NonConformanceDisposition.USE_AS_IS", "Accepte en l'etat");
+        put("NonConformanceDisposition.REWORK", "Reprise");
+        put("NonConformanceDisposition.RETURN_TO_SUPPLIER", "Retour fournisseur");
+        put("NonConformanceDisposition.SCRAP", "Mise au rebut");
+        put("NonConformanceDisposition.DOWNGRADE", "Declassement");
+        put("NonConformanceDisposition.PENDING", "En attente de decision");
+
+        put("ProductRecallStatus.DRAFT", "Brouillon");
+        put("ProductRecallStatus.ACTIVE", "En cours");
+        put("ProductRecallStatus.CLOSED", "Clos");
+        put("ProductRecallStatus.CANCELLED", "Annule");
+
         // Equipements
         put("AssetStatus.AVAILABLE", "Disponible");
         put("AssetStatus.RESERVED", "Reserve");

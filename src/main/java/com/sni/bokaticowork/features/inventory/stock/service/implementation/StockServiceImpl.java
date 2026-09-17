@@ -48,6 +48,7 @@ import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockSer
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockValuationService;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockAccountingService;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.InventoryPeriodService;
+import com.sni.bokaticowork.features.inventory.stock.service.interfaces.QualityControlService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -86,6 +87,7 @@ public class  StockServiceImpl implements StockService {
     private final InventoryPeriodService periodService;
     private final AdjustmentReasonRepository adjustmentReasonRepository;
     private final InventoryAdjustmentApprovalRuleRepository adjustmentApprovalRuleRepository;
+    private final QualityControlService qualityControlService;
 
     @Override
     public StockMovementResponse receive(StockInRequest request) {
@@ -491,8 +493,15 @@ public class  StockServiceImpl implements StockService {
             return;
         }
         validateLotInput(item, request.getLotNumber(), request.getExpiryDate());
-        upsertLot(item, location, normalizeOptionalCode(request.getLotNumber()), request.getExpiryDate(), request.getQuantity(),
-                Boolean.TRUE.equals(request.getQuarantined()), request.getQuarantineReason(), request.getOwnershipType(), request.getOwnerCode());
+        StockLot lot = upsertLot(item, location, normalizeOptionalCode(request.getLotNumber()), request.getExpiryDate(),
+                request.getQuantity(), Boolean.TRUE.equals(request.getQuarantined()), request.getQuarantineReason(),
+                request.getOwnershipType(), request.getOwnerCode());
+
+        // Un plan de controle a la reception peut immobiliser le lot avant toute utilisation.
+        // Sans plan declare, rien ne se passe et la marchandise reste disponible comme avant.
+        if (lot != null) {
+            qualityControlService.applyReceiptPlan(lot);
+        }
     }
 
     private void receiveAdjustmentLotIfProvided(InventoryItem item, InventoryLocation location,

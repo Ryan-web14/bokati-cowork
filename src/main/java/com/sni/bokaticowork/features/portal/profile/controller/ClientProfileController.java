@@ -11,12 +11,7 @@ import com.sni.bokaticowork.features.portal.profile.service.ClientProfileService
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(ApiPath.V1 + "/client")
@@ -33,7 +28,7 @@ public class ClientProfileController {
         return ResponseEntity.ok(clientProfileService.getProfile(member));
     }
 
-    @PatchMapping("/profile")
+    @PutMapping("/profile")
     public ResponseEntity<ClientProfileResponse> updateProfile(
             @Valid @RequestBody ClientUpdateProfileRequest request) {
         Member member = clientContextService.getAuthenticatedMember();

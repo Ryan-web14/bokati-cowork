@@ -503,8 +503,74 @@ GET   /inventory/accounting/journal-entries       export comptable
 
 ## 7. Lot 3 · Traçabilité et qualité
 
+> **État : livré.** Migrations `V219` et `V220` (dev), `V215` et `V216` (prod).
+
 **Objectif.** Exploiter `StockLot.quarantined`, qui existe sans processus, et rendre la traçabilité
 consultable dans les deux sens.
+
+### Ce qui a été livré
+
+| Élément | Emplacement |
+|---|---|
+| Quantité immobilisée | `StockLevel.quantityQuarantined`, retranchée du disponible |
+| Quarantaine et blocage | `StockQuarantineService`, `LotBlockReasonType`, levée à double regard |
+| Généalogie | `StockLotGenealogy`, `LotGenealogyRelation` |
+| Traçabilité | `StockTraceabilityService`, amont, aval, positions et filiation en un appel |
+| Plans de contrôle | `QualityControlPlan`, `QualityCriterion`, portée article ou catégorie |
+| Inspections | `QualityInspection`, `QualityInspectionResult`, décision automatique |
+| Non-conformités | `NonConformance`, ouverte automatiquement en cas d'échec |
+| Rappels produit | `ProductRecall`, `ProductRecallService`, gel des lots et liste des détenteurs |
+| Référentiel | 8 nouveaux groupes d'énumérations |
+| Tests | `StockQuarantineServiceIT` (7 cas), `QualityControlServiceIT` (9 cas) |
+
+Endpoints ajoutés :
+
+```text
+GET    /inventory/traceability/{lotNumber}
+PATCH  /inventory/stock/lots/{lotId}/quarantine | /release | /block | /unblock
+GET    /inventory/stock/lots/immobilised
+POST   /inventory/quality/plans                  GET /inventory/quality/plans
+POST   /inventory/quality/lots/{lotId}/inspections
+GET    /inventory/quality/lots/{lotId}/inspections
+POST   /inventory/quality/non-conformances       GET .../non-conformances
+PATCH  /inventory/quality/non-conformances/{code}/close
+POST   /inventory/quality/recalls                GET .../recalls
+PATCH  /inventory/quality/recalls/{code}/launch | /recovery | /close | /cancel
+```
+
+### Décisions de conception
+
+1. **Le disponible retranche désormais le stock immobilisé.** La consommation de lots écartait déjà
+   les lots en quarantaine, mais le contrôle de suffisance portait sur `quantityAvailable` qui les
+   comptait encore : une sortie pouvait passer le contrôle puis échouer faute de lot consommable.
+   Aucun lot n'étant immobilisé après la migration, le disponible reste celui d'avant.
+2. **Quarantaine et blocage sont deux mécanismes distincts.** La quarantaine attend une décision
+   qualité et sa levée exige un approbateur différent du demandeur. Le blocage est une décision de
+   gestion, levée par qui l'a posée.
+3. **Un critère non bloquant en échec ne condamne pas le lot.** Il se note, ce qui permet de
+   consigner une observation sans immobiliser de la marchandise utilisable.
+4. **Une dérogation exige un auteur et un motif.** Sans les deux, elle est refusée : une dérogation
+   anonyme n'engage personne et ne vaut rien.
+5. **Une dérogation ouvre quand même une non-conformité.** L'écart a été constaté, il est seulement
+   accepté.
+6. **Une mesure hors plan est conservée mais non bloquante.** Elle documente une observation sans
+   faire échouer le contrôle.
+7. **Sans plan déclaré, rien ne change.** Aucune mise en quarantaine automatique, les réceptions se
+   comportent exactement comme avant.
+8. **Annuler un rappel libère les lots qu'il avait gelés**, sinon du stock resterait immobilisé sans
+   motif lisible.
+
+### Reste ouvert
+
+- **Alimentation automatique de la généalogie** : la table et les endpoints de lecture existent, mais
+  aucun flux ne crée de lien parent-enfant. Il n'y a pas encore d'opération de transformation ni de
+  reconditionnement dans le module, elles viennent avec les nomenclatures du lot 6.
+- **Notification des détenteurs lors d'un rappel** : la liste est calculée, l'envoi reste à brancher
+  sur `features/notification`.
+- **`GoodsReceiptLine.qualityAccepted`** n'est pas encore rattaché à une inspection. À traiter avec
+  les réceptions du lot 5.
+- **Échantillonnage** : le mode et son paramètre sont stockés mais aucun calcul de taille
+  d'échantillon n'est fait, la quantité contrôlée étant déclarée par l'inspecteur.
 
 ### Contenu
 

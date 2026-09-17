@@ -34,6 +34,14 @@ import com.sni.bokaticowork.features.inventory.reference.service.interfaces.Inve
 import com.sni.bokaticowork.features.inventory.stock.enums.InventoryLocationType;
 import com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus;
 import com.sni.bokaticowork.features.inventory.stock.enums.InventoryPeriodStatus;
+import com.sni.bokaticowork.features.inventory.stock.enums.LotBlockReasonType;
+import com.sni.bokaticowork.features.inventory.stock.enums.LotGenealogyRelation;
+import com.sni.bokaticowork.features.inventory.stock.enums.NonConformanceDisposition;
+import com.sni.bokaticowork.features.inventory.stock.enums.NonConformanceSeverity;
+import com.sni.bokaticowork.features.inventory.stock.enums.ProductRecallStatus;
+import com.sni.bokaticowork.features.inventory.stock.enums.QualityControlStage;
+import com.sni.bokaticowork.features.inventory.stock.enums.QualityDecision;
+import com.sni.bokaticowork.features.inventory.stock.enums.QualitySamplingMode;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockJournalDirection;
 import com.sni.bokaticowork.features.inventory.stock.enums.ValuationMethod;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockMovementType;
@@ -90,6 +98,14 @@ public class InventoryReferenceServiceImpl implements InventoryReferenceService 
         groups.put("valuationMethods", ValuationMethod.class);
         groups.put("periodStatuses", InventoryPeriodStatus.class);
         groups.put("journalDirections", StockJournalDirection.class);
+        groups.put("lotBlockReasonTypes", LotBlockReasonType.class);
+        groups.put("lotGenealogyRelations", LotGenealogyRelation.class);
+        groups.put("qualityControlStages", QualityControlStage.class);
+        groups.put("qualitySamplingModes", QualitySamplingMode.class);
+        groups.put("qualityDecisions", QualityDecision.class);
+        groups.put("nonConformanceSeverities", NonConformanceSeverity.class);
+        groups.put("nonConformanceDispositions", NonConformanceDisposition.class);
+        groups.put("productRecallStatuses", ProductRecallStatus.class);
 
         groups.put("assetStatuses", AssetStatus.class);
         groups.put("assetConditions", AssetCondition.class);
