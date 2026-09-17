@@ -6,6 +6,7 @@ import com.sni.bokaticowork.features.booking.dto.request.CreateBookingRequest;
 import com.sni.bokaticowork.features.booking.dto.response.*;
 import com.sni.bokaticowork.features.booking.enums.BookingParticipantRole;
 import com.sni.bokaticowork.features.booking.enums.BookingParticipantStatus;
+import com.sni.bokaticowork.features.booking.enums.BookingPaymentStatus;
 import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.booking.mapper.interfaces.BookingMapper;
 import com.sni.bokaticowork.features.booking.model.*;
@@ -72,6 +73,8 @@ public abstract class BookingMapperDecorator implements BookingMapper {
         List<BookingParticipantResponse> participants = booking.getId() == null
                 ? List.of()
                 : participantRepository.findByBookingId(booking.getId()).stream().map(this::toResponse).toList();
+        BookingPaymentStatus paymentStatus = BookingPaymentStatus.of(
+                booking.getPaymentMode(), booking.getStatus(), booking.getConfirmedAt());
         return new BookingResponse(
                 booking.getBookingNumber(),
                 booking.getResource().getCode(),
@@ -90,6 +93,8 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getQuantity(),
                 booking.getBookingUnit(),
                 booking.getPaymentMode(),
+                paymentStatus,
+                paymentStatus.getLabel(),
                 booking.getSubscriptionNumber(),
                 booking.getPassNumber(),
                 booking.getEntitlementCode(),

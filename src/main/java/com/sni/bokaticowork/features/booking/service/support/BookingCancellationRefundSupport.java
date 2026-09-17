@@ -51,8 +51,23 @@ public class BookingCancellationRefundSupport {
     private final PaymentService paymentService;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Solde la facture d'une reservation annulee, selon que de l'argent a ete encaisse ou non.
+     *
+     * <p>Rien n'a ete percu : la facture est annulee et archivee. Elle ne vaut plus rien, et la
+     * laisser vivante revenait a reclamer le prix d'une reservation qui n'existe plus · c'est ce
+     * que le systeme faisait, silencieusement, pour toute reservation annulee avant paiement.</p>
+     *
+     * <p>De l'argent a ete percu : la facture ne s'annule plus, elle se corrige. La politique
+     * d'annulation dit quelle part revient au client, un avoir la constate, et le remboursement
+     * suit le chemin du paiement d'origine · un reglement au portefeuille y retourne.</p>
+     *
+     * @param wasActive la reservation occupait-elle reellement son creneau. La politique
+     *                  d'annulation ne s'applique qu'a ce cas ; une reservation qui n'avait rien
+     *                  engage ne donne lieu a aucun calcul de penalite.
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void processAutomaticCreditNote(Booking booking) {
+    public void processCancellation(Booking booking, boolean wasActive) {
         if (!org.springframework.util.StringUtils.hasText(booking.getBillableNumber())) {
             return;
         }
@@ -64,6 +79,11 @@ public class BookingCancellationRefundSupport {
         }
         BigDecimal paidAmount = invoice.getPaidAmount();
         if (paidAmount == null || paidAmount.signum() <= 0) {
+            billingDocumentService.cancelAndArchive(invoice.getDocumentNumber(),
+                    "Annulation reservation " + booking.getBookingNumber() + " · aucun reglement encaisse");
+            return;
+        }
+        if (!wasActive) {
             return;
         }
 

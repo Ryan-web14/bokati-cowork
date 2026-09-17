@@ -55,6 +55,24 @@ public interface WalletHoldRepository extends JpaRepository<WalletHold, Long> {
                                                                @Param("sourceType") String sourceType,
                                                                @Param("sourceCode") String sourceCode);
 
+    /**
+     * Blocages arrives a echeance de reglement : actifs, poses par une source donnee, et assez
+     * anciens pour etre encaisses. Le tri par anciennete garantit qu'un lot partiel traite
+     * toujours les plus anciens d'abord.
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM wallet_hold
+            WHERE status = 'ACTIVE'
+              AND source_type = CAST(:sourceType AS VARCHAR)
+              AND created_at <= :createdBefore
+            ORDER BY created_at
+            LIMIT :limit
+            """)
+    List<WalletHold> findDueForSettlement(@Param("sourceType") String sourceType,
+                                          @Param("createdBefore") Instant createdBefore,
+                                          @Param("limit") int limit);
+
     @Modifying
     @Query(nativeQuery = true, value = """
             UPDATE wallet_hold

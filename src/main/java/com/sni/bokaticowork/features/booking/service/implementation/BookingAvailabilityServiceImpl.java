@@ -68,7 +68,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
 
         // Step 3: validate payment context only AFTER confirming the slot is available
         // so that a missing subscription does not produce the same response as a slot conflict
-        if (request.paymentMode() != null && request.paymentMode() != BookingPaymentMode.DIRECT) {
+        if (request.paymentMode() != null && request.paymentMode().usesEntitlement()) {
             try {
                 var identity = identityResolver.resolve(request.identityLookup());
                 paymentContextResolver.resolve(request.paymentMode(), identity, resource);

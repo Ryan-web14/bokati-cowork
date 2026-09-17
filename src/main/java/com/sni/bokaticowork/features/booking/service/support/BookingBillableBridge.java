@@ -41,11 +41,11 @@ public class BookingBillableBridge {
         }
 
         BookingPaymentMode mode = booking.getPaymentMode();
-        boolean isDirect = mode == null || mode == BookingPaymentMode.DIRECT;
+        boolean payable = mode == null || mode.isPayable();
 
-        BigDecimal amount = isDirect ? booking.getTotalAmount() : BigDecimal.ZERO;
+        BigDecimal amount = payable ? booking.getTotalAmount() : BigDecimal.ZERO;
         String description = buildDescription(booking);
-        String metadataJson = isDirect ? booking.getMetadataJson() : buildPaymentMetadata(booking);
+        String metadataJson = payable ? booking.getMetadataJson() : buildPaymentMetadata(booking);
 
         BillableItem item = billableItemRepository.save(BillableItem.builder()
                 .billableNumber(sequenceGenerator.next("billable_item"))

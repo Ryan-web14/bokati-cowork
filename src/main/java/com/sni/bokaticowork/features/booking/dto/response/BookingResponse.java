@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.booking.dto.response;
 
 import com.sni.bokaticowork.features.booking.enums.BookingPaymentMode;
+import com.sni.bokaticowork.features.booking.enums.BookingPaymentStatus;
 import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
@@ -28,6 +29,8 @@ public record BookingResponse(
         Integer quantity,
         ResourceBookingUnit bookingUnit,
         BookingPaymentMode paymentMode,
+        BookingPaymentStatus paymentStatus,
+        String paymentStatusLabel,
         String subscriptionNumber,
         String passNumber,
         String entitlementCode,

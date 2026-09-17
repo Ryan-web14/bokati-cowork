@@ -77,6 +77,21 @@ bokati:
       # lecture seule, reste accessible dans les deux cas.
       enabled: ${MEMBER_PURGE_ENABLED:true}
       max-batch-size: ${MEMBER_PURGE_MAX_BATCH_SIZE:25}
+  booking:
+    wallet:
+      # Reservation reglee au portefeuille : les fonds sont bloques a la confirmation, ce qui vaut
+      # paiement · la reservation est confirmee immediatement. Le debit comptable suit en
+      # arriere-plan une fois ce delai ecoule. L'intervalle est la fenetre de retractation · une
+      # annulation pendant ce laps rend les fonds sans qu'aucune ecriture comptable n'ait eu lieu,
+      # donc sans avoir ni remboursement.
+      settlement-delay-minutes: ${BOOKING_WALLET_SETTLEMENT_DELAY_MINUTES:1}
+      # Marge de securite portee par le blocage lui-meme, au-dela du delai de reglement. Elle ne
+      # sert jamais en fonctionnement normal : elle garantit qu'un blocage orphelin finira par
+      # etre rendu au client meme si plus aucun traitement ne le reclame.
+      hold-grace-minutes: ${BOOKING_WALLET_HOLD_GRACE_MINUTES:60}
+      # Cadence de l'encaissement. Elle borne la derive du delai ci-dessus : un debit tombe entre
+      # 1 min et 1 min 15.
+      worker-delay-ms: ${BOOKING_WALLET_WORKER_DELAY_MS:15000}
   websocket:
     use-stomp-relay: ${BOKATI_WEBSOCKET_USE_STOMP_RELAY:false}
     stomp:

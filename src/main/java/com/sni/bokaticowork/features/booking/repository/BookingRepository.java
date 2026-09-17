@@ -30,6 +30,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             """)
     Optional<Booking> findPublicByBookingNumberWithResource(@Param("bookingNumber") String bookingNumber);
 
+    /** Reservation portant cet element facturable, pour remonter d'une facture vers sa reservation. */
+    @Query(nativeQuery = true, value = "SELECT * FROM booking WHERE billable_number = :billableNumber AND deleted = false")
+    Optional<Booking> findByBillableNumber(@Param("billableNumber") String billableNumber);
+
     @Query(nativeQuery = true, value = "SELECT * FROM booking WHERE idempotency_key = :idempotencyKey AND deleted = false")
     Optional<Booking> findByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
 

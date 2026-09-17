@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.support;
 
 import com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest;
+import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingService;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
@@ -178,6 +179,15 @@ public class PaymentTransactionWorkflowProcessor {
     private void confirmBookingIfFullyPaid(PaymentTransaction transaction, String bookingNumber) {
         if (transaction.getPaymentIntent().getStatus() != PaymentIntentStatus.SUCCEEDED) {
             log.debug("Booking {} payment partially received · awaiting full settlement before auto-confirm", bookingNumber);
+            return;
+        }
+        // Une reservation reglee au portefeuille est confirmee des le blocage des fonds : son debit
+        // arrive donc sur une reservation deja confirmee, voire deja terminee. Sans ce garde-fou,
+        // chacun de ces debits produirait un avertissement pour un conflit de statut attendu.
+        BookingStatus status = bookingService.get(bookingNumber).status();
+        if (status != BookingStatus.DRAFT && status != BookingStatus.PENDING_PAYMENT) {
+            log.debug("Booking {} already past confirmation ({}) · payment {} recorded without status change",
+                    bookingNumber, status, transaction.getTransactionNumber());
             return;
         }
         try {
