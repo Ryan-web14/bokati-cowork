@@ -23,6 +23,9 @@ import com.sni.bokaticowork.features.subscription.repository.SubscriptionReposit
 
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionBillingSupport;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionEventWriter;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.enums.DiscountDocumentType;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.enums.TargetScope;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.service.SubscriptionPricingBridge;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.PlanPriceAmountCalculator;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriberKycLevelGuard;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionOwnerResolver;
@@ -64,6 +67,7 @@ public class SubscriptionCreationOperator {
     private final WalletHoldService walletHoldService;
     private final PlanPriceAmountCalculator priceCalculator;
     private final SubscriberKycLevelGuard kycGuard;
+    private final SubscriptionPricingBridge pricingBridge;
 
     public Subscription create(CreateSubscriptionRequest request) {
         PlanVersion planVersion = planResolver.resolvePlanVersion(request.planCode(), request.planVersionId());
@@ -80,8 +84,18 @@ public class SubscriptionCreationOperator {
 
         LocalDate startDate = request.startDate();
         String subscriptionNumber = codeFactory.nextSubscriptionNumber(request.subscriberType(), planVersion, price.getBillingCycle(), startDate);
+
+        // La remise s'applique avant la taxe : celle-ci porte sur ce que le client paie reellement,
+        // pas sur un tarif catalogue qu'il ne paie jamais.
+        SubscriptionPricingBridge.PricedSubscription priced = pricingBridge.price(
+                request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
+                planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
+                price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
+                price.getCurrency(), price.getAmount(), price.getSetupFee(),
+                request.couponCodesOrEmpty(), true);
+
         PlanPriceAmountCalculator.Amounts priceAmounts = priceCalculator.compute(
-                price.getAmount(), price.getSetupFee(), price.getDepositAmount(), price.getTaxIncluded());
+                priced.recurringAmount(), priced.setupFee(), price.getDepositAmount(), price.getTaxIncluded());
 
         Subscription subscription = Subscription.builder()
                 .subscriptionNumber(subscriptionNumber)
@@ -121,7 +135,13 @@ public class SubscriptionCreationOperator {
         eventWriter.writeEvent(saved, SubscriptionEventType.SUBSCRIPTION_CREATED, null);
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
-        billingSupport.createSubscriptionSetupItems(saved, price);
+        billingSupport.createSubscriptionSetupItems(saved, priced.recurringAmount(), priced.setupFee(),
+                price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount());
+        pricingBridge.confirm(priced, request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
+                planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
+                price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
+                price.getCurrency(), request.couponCodesOrEmpty(),
+                DiscountDocumentType.SUBSCRIPTION, saved.getSubscriptionNumber(), "SYSTEM");
 
         if (saved.getTotalAmount().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
             lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");

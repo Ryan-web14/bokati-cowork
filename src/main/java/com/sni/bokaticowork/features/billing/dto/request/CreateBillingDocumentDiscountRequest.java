@@ -10,6 +10,15 @@ public record CreateBillingDocumentDiscountRequest(
         String discountCode,
         @NotBlank String description,
         @NotNull BillingDiscountType discountType,
-        @NotNull BigDecimal value
+        @NotNull BigDecimal value,
+        /** Origine de la remise. Nulle pour une remise saisie a la main. */
+        String sourceType,
+        String sourceCode
 ) {
+
+    /** Remise saisie a la main, sans campagne derriere elle. */
+    public CreateBillingDocumentDiscountRequest(String discountCode, String description,
+                                                BillingDiscountType discountType, BigDecimal value) {
+        this(discountCode, description, discountType, value, null, null);
+    }
 }

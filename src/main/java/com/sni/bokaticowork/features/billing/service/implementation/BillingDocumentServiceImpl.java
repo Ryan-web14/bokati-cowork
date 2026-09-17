@@ -1742,15 +1742,19 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                                           BillingCustomerSnapshotResolver.CustomerSnapshot customer,
                                           BillingCalculationService.CalculatedDocument calculation) {
         String documentNumber = numberingSupport.nextDocumentNumber(request.documentType(), customer.customerType());
-        // Bon de commande, affaire et reference client etaient derives du numero de document en le
-        // prefixant : « BC-INV-MAN-20260904-00000018 ». Trois champs qui ne portaient donc rien,
-        // redisaient un numero deja imprime deux fois sur la page, et ne se distinguaient pas entre
-        // eux. Chacun tire desormais sa propre serie. Le lien avec la facture reste lisible sans etre
-        // recopie dans le numero : la ligne du document range la reference a cote de son propre numero.
-        String customerReference = valueOrGenerated(request.customerReference(),
-                numberingSupport::nextCustomerReference);
-        String poNumber = valueOrGenerated(request.poNumber(),
-                numberingSupport::nextPurchaseOrderNumber);
+        // Le bon de commande et la reference client sont des documents du client vers nous : le
+        // premier est la commande qu'il nous passe, la seconde la reference sous laquelle il range
+        // notre facture. Les generer reviendrait a affirmer sur chaque facture une commande qu'il
+        // n'a jamais passee, et a entrer en conflit le jour ou il en transmet une vraie. Faute de
+        // valeur fournie, la ligne ne figure pas : le gabarit la masque quand le champ est vide.
+        //
+        // L'affaire est notre reference a nous, elle tire donc sa propre serie annuelle. Elle etait,
+        // comme les deux autres, remplie en prefixant le numero de document
+        // (« PRJ-INV-MAN-20260904-00000018 ») : elle redisait un numero deja imprime deux fois sur
+        // la page. Le lien avec la facture n'a pas a etre recopie dans le numero, la ligne du
+        // document rangeant l'affaire a cote de son propre numero.
+        String customerReference = emptyToNull(request.customerReference());
+        String poNumber = emptyToNull(request.poNumber());
         String projectCode = valueOrGenerated(request.projectCode(),
                 numberingSupport::nextProjectCode);
         // Le commercial reste vide quand personne n'est rattache. « SYSTEM » s'imprimait tel quel

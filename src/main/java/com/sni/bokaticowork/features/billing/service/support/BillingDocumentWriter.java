@@ -167,6 +167,8 @@ public class BillingDocumentWriter {
                     .discountType(request.discountType())
                     .value(request.value())
                     .amount(amount)
+                    .sourceType(request.sourceType())
+                    .sourceCode(request.sourceCode())
                     .build());
         }
     }
