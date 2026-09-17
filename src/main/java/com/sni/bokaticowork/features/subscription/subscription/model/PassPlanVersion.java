@@ -62,6 +62,16 @@ public class PassPlanVersion {
     @Builder.Default
     private Integer requiredKycLevel = 1;
 
+    /** Le pass vendu depuis ce plan peut-il changer de titulaire. */
+    @Column(name = "transferable", nullable = false)
+    @Builder.Default
+    private Boolean transferable = Boolean.FALSE;
+
+    /** Le pass vendu depuis ce plan peut-il servir a plusieurs beneficiaires. */
+    @Column(name = "shareable", nullable = false)
+    @Builder.Default
+    private Boolean shareable = Boolean.FALSE;
+
     @Column(name = "effective_from")
     private LocalDate effectiveFrom;
 

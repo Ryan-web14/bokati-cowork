@@ -17,6 +17,9 @@ public interface PassRepository extends JpaRepository<Pass, Long>, JpaSpecificat
     @Query(nativeQuery = true, value = "SELECT * FROM subscription_pass WHERE pass_number = :passNumber")
     Optional<Pass> findByPassNumber(@Param("passNumber") String passNumber);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription_pass WHERE idempotency_key = :idempotencyKey")
+    Optional<Pass> findByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM subscription_pass
