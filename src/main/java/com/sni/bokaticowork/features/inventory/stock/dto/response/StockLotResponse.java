@@ -21,6 +21,14 @@ public class StockLotResponse {
     private BigDecimal initialQuantity;
     private BigDecimal remainingQuantity;
     private Boolean quarantined;
+
+    private String quarantineReasonType;
+
+    private Boolean blocked;
+
+    private String blockReasonType;
+
+    private String blockReason;
     private String quarantineReason;
     private StockOwnershipType ownershipType;
     private String ownerCode;

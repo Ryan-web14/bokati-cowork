@@ -74,9 +74,27 @@ public class StockLevel {
         recalculateAvailable();
     }
 
+    /**
+     * Quantite immobilisee par une quarantaine ou un blocage de lot.
+     *
+     * <p>Reste a zero tant qu aucun lot n est immobilise, ce qui laisse le calcul du disponible
+     * inchange pour tout l existant.</p>
+     */
+    @Builder.Default
+    @Column(name = "quantity_quarantined", nullable = false, precision = 19, scale = 4)
+    private BigDecimal quantityQuarantined = BigDecimal.ZERO;
+
+    /**
+     * Le disponible retranche desormais le stock immobilise.
+     *
+     * <p>La consommation de lots ecartait deja les lots en quarantaine, mais le controle de
+     * suffisance portait sur ce disponible : une sortie pouvait passer le controle puis echouer
+     * faute de lot consommable. Les deux vues sont maintenant coherentes.</p>
+     */
     public void recalculateAvailable() {
         if (quantityOnHand == null) quantityOnHand = BigDecimal.ZERO;
         if (quantityReserved == null) quantityReserved = BigDecimal.ZERO;
-        quantityAvailable = quantityOnHand.subtract(quantityReserved);
+        if (quantityQuarantined == null) quantityQuarantined = BigDecimal.ZERO;
+        quantityAvailable = quantityOnHand.subtract(quantityReserved).subtract(quantityQuarantined);
     }
 }
