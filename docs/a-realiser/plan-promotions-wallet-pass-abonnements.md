@@ -14,6 +14,20 @@
 - **Base HTTP** : `/sni/api/v1`
 - **Montants** : entiers XAF, conformément à la convention du projet
 
+## Cadre acté
+
+Quatre décisions métier ont été prises et sont intégrées au document. Elles ne sont pas des
+hypothèses de travail : elles conditionnent le modèle.
+
+1. **Le portefeuille détient des avances clients, pas de la monnaie électronique**, tout en visant le
+   niveau d'exigence d'un opérateur de mobile money. Quatre exclusions fermes en découlent,
+   détaillées en 3.1 et rappelées en 3.8.
+2. **La domiciliation se facture au mois, au trimestre ou à l'année.**
+3. **L'adresse n'est fiscale que si l'abonnement est pris pour un an.** La qualité fiscale est
+   déduite de l'engagement, jamais saisie, et se perd si l'engagement se raccourcit.
+4. **Toute domiciliation génère un contrat enregistré et timbré** auprès de l'administration
+   publique. L'enregistrement est une étape bloquante, pas une formalité annexe.
+
 ---
 
 # Partie 1 · État des lieux
@@ -190,14 +204,19 @@ frise chronologique, indicateurs, notifications : tout cela existe déjà.
 plan de domiciliation n'est pas un plan d'accès à un espace : il porte des obligations que le modèle
 actuel ne sait pas exprimer.
 
-- Une **adresse commerciale attribuée**, qui doit être unique, suivie, et mentionnée sur des
-  documents officiels.
-- Une **attestation de domiciliation** à produire, avec sa validité et son renouvellement.
+- Une **adresse commerciale attribuée**, unique, suivie, et dont la **qualité fiscale dépend de la
+  durée d'engagement** : seul un abonnement annuel y donne droit.
+- Un **contrat écrit, enregistré et timbré** auprès de l'administration publique, sans lequel la
+  domiciliation n'est pas opposable.
+- Une **attestation de domiciliation** à produire, dont la portée, commerciale ou fiscale, découle de
+  l'engagement souscrit.
 - Du **courrier** qui arrive, qu'il faut enregistrer, notifier, numériser, faire suivre ou remettre.
-- Des **obligations réglementaires** : contrat de domiciliation écrit, vérification d'identité du
-  domicilié, tenue d'un registre, conservation des pièces.
+- La **vérification d'identité** du représentant légal, la tenue d'un registre, la conservation des
+  pièces.
 
-Rien de tout cela n'a de place dans `Subscription` aujourd'hui.
+Rien de tout cela n'a de place dans `Subscription` aujourd'hui. Et surtout, aucune de ces règles n'est
+exprimable dans le modèle actuel : la durée d'engagement n'y conditionne rien, et le contrat n'y est
+qu'un code de référence libre.
 
 ---
 
@@ -473,7 +492,55 @@ GET    /pricing/applicable                     ce a quoi un abonne a droit aujou
 
 # Partie 3 · Portefeuille électronique
 
-## 3.1 Ce qu'il faut entendre par fiable et conforme
+## 3.1 Nature juridique : une avance client, pas de la monnaie électronique
+
+**Décision actée.** Le portefeuille ne constitue pas une émission de monnaie électronique. Ce qu'il
+enregistre est une **avance versée par le client**, donc une dette de l'entreprise envers lui,
+utilisable pour payer ses prestations. Le niveau d'exigence visé est en revanche celui d'un
+opérateur de mobile money : même rigueur, même traçabilité, même confort d'usage.
+
+Cette distinction n'est pas cosmétique. Elle est confortable juridiquement, mais elle **n'est pas
+acquise une fois pour toutes** : certaines fonctionnalités, si elles sont ouvertes sans garde-fou,
+feraient basculer le portefeuille du côté du service de paiement. Trois règles de frontière
+préservent la qualification d'avance client.
+
+### Règle 1 · Pas de retrait en espèces
+
+Un solde qui peut ressortir en cash n'est plus une avance sur prestation, c'est un dépôt. Le
+portefeuille ne doit donc **pas proposer de retrait**. `WalletLimitPolicy.withdrawalAllowed` reste à
+`false` par défaut et n'est levé que pour un cas : la clôture du compte, avec remboursement **vers la
+source d'origine** et non en espèces.
+
+C'est la règle la plus structurante, et la plus tentante à contourner. Il faut la tenir.
+
+### Règle 2 · Le solde ne sert qu'à payer l'entreprise
+
+Un portefeuille dont on peut payer des tiers est un instrument de paiement. Ici, les débits possibles
+se limitent aux prestations de l'entreprise : abonnements, pass, services, factures. Le catalogue des
+types d'écriture doit refléter cette clôture, et aucun bénéficiaire externe ne doit pouvoir être
+désigné.
+
+### Règle 3 · Le transfert entre abonnés reste encadré
+
+C'est le point le plus délicat, traité en détail en 3.4. Transférer une avance d'un client à un autre
+est juridiquement une **cession de créance entre deux clients**, ce qui reste admissible tant que
+l'opération demeure occasionnelle, plafonnée, sans frais lucratifs, et sans possibilité de sortie en
+espèces au bout de la chaîne. Ouvert sans limite, le mécanisme deviendrait un service de transfert de
+fonds.
+
+### Ce que cela implique au bilan
+
+Le solde des portefeuilles est une **dette d'exploitation**, à inscrire au passif sur un compte
+d'avances et acomptes reçus des clients, à faire confirmer par votre comptable pour le numéro de
+compte exact dans votre plan SYSCOHADA. Ce n'est ni du produit, ni de la trésorerie disponible
+librement : l'encaissement initial est un produit constaté d'avance, le produit n'étant acquis qu'à
+la consommation de la prestation.
+
+Conséquence opérationnelle directe : **le total des portefeuilles doit être adossé à de la trésorerie
+réellement disponible**. L'état de rapprochement décrit en 3.7 n'est pas un confort, c'est la
+contrepartie de cette liberté juridique.
+
+## 3.2 Ce qu'il faut entendre par fiable
 
 Trois exigences, de nature différente.
 
@@ -484,12 +551,11 @@ contrôle de réconciliation.
 **Non-répudiation** : le titulaire ne peut pas nier avoir ordonné une opération. Cela suppose un
 secret que lui seul détient, et une trace de son usage. C'est ce que le code PIN apporte.
 
-**Conformité** : la capacité à démontrer, devant un tiers, qui détient quoi, d'où vient l'argent, et
-que les plafonds ont été respectés. Le cadre réglementaire précis applicable à votre activité reste
-à confirmer avec votre conseil : ce document décrit les mécanismes usuels sans préjuger de ce qui
-vous est juridiquement imposé.
+**Démontrabilité** : la capacité d'établir, devant un client en litige ou un vérificateur, qui
+détient quoi, d'où vient chaque mouvement, et que les plafonds ont été respectés. L'exigence est la
+même que pour un opérateur de mobile money, même si l'obligation juridique, elle, ne l'est pas.
 
-## 3.2 Code PIN et confirmation des opérations
+## 3.3 Code PIN et confirmation des opérations
 
 ```text
 WalletCredential
@@ -536,7 +602,7 @@ de mille et exécuter un transfert de cent mille. L'empreinte lie la confirmatio
 Le niveau d'exigence doit dépendre du montant et du type : un paiement de facture interne peut se
 contenter du PIN, un transfert vers un tiers mérite un second canal au-delà d'un seuil.
 
-## 3.3 Transfert entre abonnés
+## 3.4 Transfert entre abonnés
 
 ```text
 WalletTransfer
@@ -569,7 +635,29 @@ Option à trancher : le destinataire doit-il accepter ? Un transfert à acceptat
 l'erreur de destinataire mais complique le parcours. Recommandation : non par défaut, avec une
 fenêtre d'annulation courte côté émetteur tant que le destinataire n'a pas utilisé les fonds.
 
-## 3.4 Initiation de paiement vers l'entreprise
+### Garde-fous imposés par la qualification d'avance client
+
+Le transfert est la fonctionnalité qui approche le plus la frontière décrite en 3.1. Cinq contraintes
+la maintiennent du bon côté, et elles doivent être posées dès la conception plutôt qu'ajoutées après
+coup.
+
+1. **Entre abonnés seulement.** L'émetteur et le destinataire doivent tous deux être clients actifs.
+   Pas de transfert vers un portefeuille fermé, suspendu, ou vers un tiers non client.
+2. **Plafonné, et le plafond compte.** Montant par opération, nombre d'opérations par mois, volume
+   cumulé. `WalletLimitPolicy` porte déjà ces bornes : c'est ici qu'elles servent le plus.
+3. **Sans frais lucratifs.** Un frais proportionnel qui rapporte transforme le service en activité de
+   transfert. Si un frais est appliqué, il doit couvrir un coût réel et rester forfaitaire.
+4. **Sans sortie en espèces au bout de la chaîne.** Le destinataire hérite d'une avance, soumise aux
+   mêmes règles : elle ne peut que payer l'entreprise.
+5. **Motif conservé.** Le libellé saisi par l'émetteur, la date et les deux identités restent
+   attachés à l'opération. Un transfert anonyme n'a pas sa place ici.
+
+Un seuil d'alerte doit remonter dans le centre de contrôle quand un portefeuille devient un point de
+passage : beaucoup d'entrées, beaucoup de sorties, peu de consommation réelle. C'est le signal que
+l'usage dérive de ce que l'avance client est censée être, et `WalletRiskFlag.RAPID_IN_OUT` est fait
+pour cela.
+
+## 3.5 Initiation de paiement vers l'entreprise
 
 Le cas d'usage : un abonné paie une prestation depuis son portefeuille, sans passer par une facture
 préexistante.
@@ -591,7 +679,7 @@ facture ou reçu en face, l'encaissement est un flux sans justification, ce que 
 sait déjà éviter pour les autres moyens de paiement. Le paiement déclenche donc l'émission d'un
 document, en réutilisant la chaîne existante.
 
-## 3.5 Limites, plafonds et niveaux
+## 3.6 Limites, plafonds et niveaux
 
 ```text
 WalletLimitPolicy
@@ -617,7 +705,7 @@ plafonner bas ; la vérification débloque des paliers.
 Le compteur d'usage est tenu en base, pas recalculé à la volée : sous concurrence, deux opérations
 simultanées ne doivent pas franchir ensemble un plafond que chacune respecte seule.
 
-## 3.6 Intégrité et conformité
+## 3.7 Intégrité et conformité
 
 ### Immuabilité du journal
 
@@ -643,12 +731,31 @@ Un contrôle qui vérifie, pour chaque portefeuille, que `ledgerBalance` égale 
 écritures, et que `availableBalance` égale `ledgerBalance` moins `heldBalance`. Même logique que la
 réconciliation de stock du lot 0 : une divergence signale un défaut, jamais une valeur à écraser.
 
-### Compte de contrepartie
+### Compte de contrepartie et adossement en trésorerie
 
-Un portefeuille crédité est une dette de l'entreprise envers son titulaire. La somme des soldes doit
-correspondre à un compte de contrepartie au passif, et idéalement à des fonds réellement disponibles.
-Un état de rapprochement entre le total des portefeuilles et la trésorerie est le contrôle qui
-manque le plus à une exploitation sérieuse.
+Un portefeuille crédité est une dette de l'entreprise envers son titulaire, inscrite au passif sur un
+compte d'avances et acomptes reçus des clients. La somme des soldes doit correspondre à ce compte.
+
+**L'état de rapprochement entre le total des portefeuilles et la trésorerie disponible n'est pas
+optionnel.** C'est la contrepartie directe du choix de ne pas être émetteur de monnaie électronique :
+aucune autorité ne vous impose de cantonner les fonds, donc c'est à vous de vérifier que vous pouvez
+honorer les prestations déjà payées. Un écart persistant entre l'encours des portefeuilles et la
+trésorerie signifie que des avances clients ont financé autre chose que ce pour quoi elles ont été
+versées.
+
+```text
+WalletTreasuryReconciliation
+  reconciliationDate
+  totalWalletBalance          somme des soldes comptables
+  ledgerAccountBalance        solde du compte d avances au passif
+  availableCash               tresorerie reellement disponible
+  coverageRatio               availableCash rapporte a totalWalletBalance
+  variance, varianceExplained, explainedBy
+  status                      BALANCED | VARIANCE | UNDER_REVIEW
+```
+
+Un ratio de couverture inférieur à un seuil défini doit alerter la direction, pas seulement figurer
+dans un rapport.
 
 ### Surveillance
 
@@ -671,7 +778,7 @@ Un portefeuille sans mouvement pendant une longue période, et un portefeuille d
 posent la même question : que devient le solde. Il faut une politique écrite, des relances, et une
 procédure de clôture avec restitution. Le champ `closedAt` existe, la procédure non.
 
-## 3.7 Autres fonctionnalités à prévoir
+## 3.8 Autres fonctionnalités à prévoir
 
 1. **Rechargement par mobile money en autonomie.** L'intégration PawaPay existe déjà pour les
    paiements. La brancher sur le portefeuille permet à l'abonné de se recharger seul, ce qui supprime
@@ -686,11 +793,29 @@ procédure de clôture avec restitution. Le champ `closedAt` existe, la procédu
    consomment dans une limite. Le modèle de sièges du module abonnement offre un précédent.
 6. **Cashback et crédits promotionnels** : les types d'écriture existent déjà, il ne manque que le
    déclencheur, qui viendra du moteur de la partie 2.
-7. **Remboursement vers la source**, avec traçabilité du sens de retour.
+7. **Remboursement vers la source**, avec traçabilité du sens de retour. C'est le seul mode de sortie
+   admis : ce qui est entré par mobile money repart par mobile money, sur le même numéro. Jamais
+   d'espèces, jamais vers un tiers, jamais vers un autre instrument que celui d'origine.
 8. **Export comptable** des mouvements de portefeuille, sur le modèle de l'export des écritures de
-   stock.
+   stock, avec la ventilation entre avance reçue et produit acquis à la consommation.
+9. **Péremption des crédits promotionnels.** Un crédit offert n'est pas une avance versée par le
+   client : il peut porter une date limite, contrairement au solde payé. Les deux doivent donc être
+   distingués dans le solde, faute de quoi une expiration mordrait sur l'argent du client.
 
-## 3.8 Centre de contrôle administrateur
+### Ce qui est délibérément exclu
+
+| Fonctionnalité | Pourquoi elle est écartée |
+|---|---|
+| Retrait en espèces | Ferait du solde un dépôt, et non une avance sur prestation |
+| Paiement vers un tiers hors entreprise | Ferait du portefeuille un instrument de paiement |
+| Rémunération du solde | Rapprocherait le compte d'un produit d'épargne |
+| Transfert sans plafond ni traçabilité | Basculerait vers un service de transfert de fonds |
+
+Ces quatre exclusions sont ce qui permet de tenir le reste. Elles méritent d'être rappelées en tête
+de tout cahier des charges dérivé de ce document, parce que chacune sera demandée un jour par
+quelqu'un qui ne connaît pas la raison du refus.
+
+## 3.9 Centre de contrôle administrateur
 
 Un écran unique, avec les droits qui vont avec.
 
@@ -864,6 +989,32 @@ Un abonnement devient alors un contenant : il porte un plan, et un ou plusieurs 
 
 Le service qui demande le plus de mécanique propre.
 
+### Trois règles métier actées, qui structurent le modèle
+
+**1. Trois rythmes de facturation : mensuel, trimestriel, annuel.** `BillingCycle` porte déjà
+`MONTHLY`, `QUARTERLY` et `YEARLY`, aucune extension n'est nécessaire de ce côté.
+
+**2. L'adresse n'est fiscale que si l'abonnement est pris pour un an.** C'est une règle de gestion
+forte, pas une option de configuration. Elle a trois conséquences directes :
+
+- une souscription mensuelle ou trimestrielle donne une **adresse commerciale seulement** ;
+- l'attestation utilisable auprès de l'administration fiscale ne peut être émise que sur un contrat
+  annuel, et le système doit **refuser de la produire** autrement ;
+- un client qui passe d'annuel à mensuel **perd la qualité fiscale de son adresse**. Ce n'est pas un
+  détail administratif : c'est un changement qui doit déclencher une notification, la révocation de
+  l'attestation en cours, et probablement une information de l'administration.
+
+Le champ ne peut donc pas être un simple booléen saisi à la main. Il se **déduit** de l'engagement,
+et toute modification de l'engagement le recalcule.
+
+**3. Le contrat de domiciliation est obligatoire, enregistré et timbré.** Une domiciliation sans
+contrat enregistré auprès de l'administration publique n'existe pas. Le contrat n'est donc pas une
+pièce jointe facultative : c'est une **étape bloquante du cycle de vie**. Tant qu'il n'est pas
+enregistré et timbré, la domiciliation ne peut pas être pleinement opposable, et l'attestation ne
+doit pas être délivrée.
+
+### Modèle
+
 ```text
 DomiciliationContract
   contractNumber, subscription, subscriptionService
@@ -871,31 +1022,93 @@ DomiciliationContract
   legalName, legalForm, registrationNumber, taxNumber
   assignedAddressId              adresse commerciale attribuee
   suiteNumber                    complement distinctif, boite ou bureau
-  status        DRAFT, PENDING_DOCUMENTS, ACTIVE, SUSPENDED, TERMINATED, EXPIRED
+
+  -- Engagement et qualite de l adresse
+  billingCycle                   MONTHLY | QUARTERLY | YEARLY
+  commitmentMonths
+  fiscalAddressEligible          derive : vrai seulement si engagement de douze mois
+  fiscalAddressGrantedAt, fiscalAddressRevokedAt, fiscalAddressRevocationReason
+
+  status        DRAFT, PENDING_DOCUMENTS, PENDING_SIGNATURE, PENDING_REGISTRATION,
+                ACTIVE, SUSPENDED, TERMINATED, EXPIRED
   startDate, endDate, noticePeriodDays
   legalRepresentativeCode
+
   contractDocumentCode           contrat signe, via features/document
   certificateDocumentCode        attestation de domiciliation
-  certificateValidUntil
+  certificateValidUntil, certificateScope   COMMERCIAL | FISCAL
+
   mailForwardingMode  HOLD | FORWARD | SCAN_AND_FORWARD | SCAN_ONLY
   forwardingAddressId, forwardingFrequency
   terminatedAt, terminationReason
 ```
 
-### Obligations à tenir
+```text
+DomiciliationRegistration
+  domiciliationContract
+  status              PENDING, SUBMITTED, REGISTERED, REJECTED
+  submittedAt, submittedBy
+  administrationOffice          service aupres duquel l enregistrement est fait
+  registrationNumber            reference delivree par l administration
+  registrationDate
+  stampDutyAmount               droit de timbre acquitte
+  registrationFeeAmount         droits d enregistrement
+  totalDutyAmount
+  paidBy             COMPANY | CLIENT
+  rebilled, rebilledDocumentCode
+  receiptDocumentCode           quittance ou recu de l administration
+  registeredDocumentCode        exemplaire enregistre et timbre, numerise
+  expiresAt                     si l enregistrement a une duree de validite
+  rejectionReason
+```
+
+Séparer l'enregistrement du contrat est délibéré : c'est une **démarche externe**, avec son propre
+délai, son propre coût et sa propre possibilité d'échec. La mêler au contrat rendrait impossible de
+suivre ce qui est en attente auprès de l'administration.
+
+### Cycle de vie, avec ses points de blocage
+
+```text
+DRAFT
+  -> PENDING_DOCUMENTS      pieces du representant legal manquantes
+  -> PENDING_SIGNATURE      contrat genere, en attente de signature
+  -> PENDING_REGISTRATION   contrat signe, en attente d enregistrement et de timbre
+  -> ACTIVE                 enregistrement obtenu
+```
+
+Trois verrous, chacun avec un message explicite :
+
+1. **Pas d'activation sans pièces d'identité vérifiées** du représentant légal, via le module KYC
+   existant.
+2. **Pas d'activation sans enregistrement obtenu.** Le statut `PENDING_REGISTRATION` doit être
+   visible dans un tableau de suivi : c'est là que les dossiers s'enlisent.
+3. **Pas d'attestation fiscale sans engagement annuel.** Le système refuse la génération, avec un
+   message qui explique la règle plutôt qu'une erreur technique.
+
+### Coût de l'enregistrement
+
+Les droits de timbre et d'enregistrement sont un débours. Trois questions à trancher, que le modèle
+laisse ouvertes par construction avec `paidBy` et `rebilled` :
+
+- l'entreprise les avance-t-elle puis les refacture, ou le client les règle-t-il directement ?
+- sont-ils inclus dans le tarif annoncé, ou facturés en sus ?
+- que se passe-t-il si l'enregistrement échoue après paiement ?
+
+### Autres obligations à tenir
 
 1. **Adresse unique et suivie.** Deux sociétés peuvent partager une adresse, mais le complément
-   distinctif doit permettre de les séparer. Un registre des adresses attribuées est nécessaire.
-2. **Vérification d'identité** du représentant légal, via le module KYC existant, avant activation.
-3. **Attestation de domiciliation** générée, datée, avec sa validité et son renouvellement, produite
-   par la chaîne PDF du module billing.
-4. **Registre des domiciliés**, exportable, avec entrées et sorties datées.
-5. **Conservation des pièces** pendant une durée à définir, le module document sachant déjà le faire.
-6. **Notification de fin** au domicilié et, le cas échéant, aux autorités concernées.
+   distinctif doit permettre de les séparer. Un registre des adresses attribuées est nécessaire, avec
+   la mention de celles qui portent une qualité fiscale.
+2. **Registre des domiciliés**, exportable, avec entrées et sorties datées, et pour chacun la
+   référence d'enregistrement du contrat.
+3. **Renouvellement de l'attestation** avant échéance, avec relance automatique.
+4. **Conservation des pièces**, le module document sachant déjà le faire.
+5. **Notification de fin** au domicilié et, le cas échéant, à l'administration, puisque le contrat
+   qu'elle a enregistré cesse de produire effet.
 
-Le cadre réglementaire exact applicable au Congo reste à confirmer avec votre conseil juridique. La
-mécanique ci-dessus couvre les obligations usuelles ; les durées et les destinataires des
-notifications devront être paramétrables plutôt que codés en dur.
+Restent à confirmer avec votre conseil, parce qu'ils conditionnent des durées et des destinataires
+que le modèle rend paramétrables plutôt que codés en dur : la durée de conservation des pièces, la
+validité d'une attestation, et l'obligation ou non d'informer l'administration à la résiliation.
 
 ### Gestion du courrier
 
@@ -997,9 +1210,9 @@ lorsqu'un préavis court.
 | Domaine | Entités |
 |---|---|
 | Tarification | `PromotionCondition`, `PromotionReward`, `Coupon`, `CouponBatch`, `PriceList`, `PriceListEntry`, `ReferralProgram`, `ReferralLink`, `Referral`, `AppliedDiscount` |
-| Portefeuille | `WalletCredential`, `WalletTransactionConfirmation`, `WalletTransfer`, `WalletMerchantPayment`, `WalletLimitPolicy`, `WalletLimitUsage`, `WalletRiskFlag`, `WalletStatement` |
+| Portefeuille | `WalletCredential`, `WalletTransactionConfirmation`, `WalletTransfer`, `WalletMerchantPayment`, `WalletLimitPolicy`, `WalletLimitUsage`, `WalletRiskFlag`, `WalletStatement`, `WalletTreasuryReconciliation` |
 | Pass | `PassUsage`, `PassValidityRule`, `PassTransfer`, `PassBeneficiary`, `PassCredential` |
-| Abonnement | `ServiceDefinition`, `SubscriptionService`, `DomiciliationContract`, `MailItem`, `SubscriptionCommitment`, `SubscriptionTermination` |
+| Abonnement | `ServiceDefinition`, `SubscriptionService`, `DomiciliationContract`, `DomiciliationRegistration`, `MailItem`, `SubscriptionCommitment`, `SubscriptionTermination` |
 
 ## 6.2 Extensions d'entités existantes
 
@@ -1096,18 +1309,42 @@ paramétrées.
 
 ## 6.6 Décisions à trancher avant de démarrer
 
-1. **Cadre réglementaire du portefeuille.** Émettez-vous de la monnaie électronique au sens
-   réglementaire, ou tenez-vous un simple compte d'avances client ? La réponse change les obligations
-   et doit venir de votre conseil, pas d'une hypothèse technique.
-2. **Obligations de la domiciliation au Congo.** Durée de conservation, registre, déclarations. À
-   confirmer avant de figer le modèle.
-3. **Transfert entre abonnés : avec ou sans acceptation du destinataire ?**
-4. **Frais de transfert :** gratuits, forfaitaires, ou proportionnels ?
-5. **Cumul des promotions :** par défaut cumulables ou exclusives ? Le choix inverse celui de la
-   règle par défaut sur toutes les campagnes existantes.
-6. **Prorata au changement de plan :** au jour, au mois entamé, ou sans prorata ?
-7. **Pénalité de résiliation anticipée :** formule et plafond.
-8. **Niveau KYC exigé** pour ouvrir un portefeuille, pour transférer, pour dépasser un seuil.
+### Tranchées
+
+1. **Nature du portefeuille. → Avance client, pas de monnaie électronique**, gérée avec le niveau
+   d'exigence d'un opérateur de mobile money. Conséquences fermes : pas de retrait en espèces, solde
+   utilisable uniquement pour payer l'entreprise, transferts entre abonnés encadrés et plafonnés,
+   remboursement uniquement vers la source d'origine. Détail en 3.1.
+2. **Domiciliation : rythmes de facturation. → Mensuel, trimestriel ou annuel**, les trois valeurs
+   existant déjà dans `BillingCycle`.
+3. **Domiciliation : qualité fiscale de l'adresse. → Réservée à l'engagement annuel.**
+   `fiscalAddressEligible` est déduit de l'engagement, jamais saisi. Le passage à un rythme plus
+   court révoque la qualité fiscale et l'attestation correspondante.
+4. **Domiciliation : contrat obligatoire, enregistré et timbré** auprès de l'administration publique.
+   `PENDING_REGISTRATION` devient une étape bloquante du cycle de vie, et l'attestation n'est
+   délivrable qu'une fois l'enregistrement obtenu.
+
+### Encore ouvertes
+
+5. **Domiciliation, points résiduels.** Durée de conservation des pièces, durée de validité d'une
+   attestation, obligation ou non d'informer l'administration à la résiliation. Le modèle les rend
+   paramétrables, mais les valeurs doivent venir de votre conseil.
+6. **Coût de l'enregistrement.** Avancé par l'entreprise puis refacturé, ou réglé directement par le
+   client ? Inclus dans le tarif annoncé ou facturé en sus ? Que devient-il si l'enregistrement
+   échoue après paiement ?
+7. **Transfert entre abonnés : avec ou sans acceptation du destinataire ?**
+8. **Frais de transfert.** La qualification d'avance client impose qu'ils restent forfaitaires et
+   couvrent un coût réel, jamais proportionnels et lucratifs. Reste à décider s'il y en a.
+9. **Plafonds de transfert.** Montant par opération, nombre par mois, volume cumulé. Ce sont eux qui
+   maintiennent le transfert du bon côté de la frontière décrite en 3.1 : les fixer bas au départ,
+   quitte à les relever ensuite.
+10. **Cumul des promotions :** par défaut cumulables ou exclusives ? Le choix inverse celui de la
+    règle par défaut sur toutes les campagnes existantes.
+11. **Prorata au changement de plan :** au jour, au mois entamé, ou sans prorata ?
+12. **Pénalité de résiliation anticipée :** formule et plafond. Le cas de la domiciliation annuelle
+    résiliée en cours d'année est particulier, puisque le client perd la qualité fiscale de son
+    adresse et que le contrat enregistré doit cesser de produire effet.
+13. **Niveau KYC exigé** pour ouvrir un portefeuille, pour transférer, pour dépasser un seuil.
 
 ## 6.7 Risques
 
@@ -1118,6 +1355,10 @@ paramétrées.
 | Course sur un coupon à usage unique | Code consommé deux fois | Verrouillage pessimiste du coupon pendant l'évaluation |
 | Course sur un budget de campagne | Dépassement d'enveloppe | Compteur verrouillé, mis à jour dans la transaction |
 | Code PIN faible ou fuité | Compromission de compte | Refus des codes triviaux, verrouillage progressif, notification de chaque opération |
-| Solde de portefeuille sans contrepartie en trésorerie | Incapacité à honorer les retraits | État de rapprochement obligatoire, dès le lot D |
+| Solde de portefeuille sans contrepartie en trésorerie | Incapacité à honorer les prestations déjà payées | `WalletTreasuryReconciliation` obligatoire dès le lot D, avec alerte sur le ratio de couverture |
+| Dérive du portefeuille vers un service de paiement | Requalification juridique, obligations non prévues | Les quatre exclusions de 3.8 tenues fermement, plafonds de transfert bas, alerte sur les portefeuilles de transit |
+| Attestation fiscale délivrée sur un engagement non annuel | Document sans valeur, responsabilité engagée | `fiscalAddressEligible` déduit de l'engagement, jamais saisi, et refus de génération explicite |
+| Domiciliation activée sans contrat enregistré | Contrat inopposable, activité irrégulière | `PENDING_REGISTRATION` bloquant, tableau de suivi des dossiers en attente |
+| Passage d'un client de l'annuel au mensuel | Perte silencieuse de la qualité fiscale de son adresse | Révocation automatique de l'attestation, notification du client, trace datée |
 | Courrier recommandé perdu ou remis à la mauvaise personne | Responsabilité engagée | Remise contre signature et pièce d'identité, notification immédiate |
 | Modèle de service trop rigide | Chaque nouveau service demande du développement | `ServiceDefinition` paramétrable, métadonnées par service plutôt qu'une entité par métier |
