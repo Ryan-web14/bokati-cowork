@@ -65,6 +65,7 @@ public class SubscriptionLifecycleOperator {
     private final BillingDocumentRepository billingDocumentRepository;
     private final KycCaseRepository kycCaseRepository;
     private final OutboxService outboxService;
+    private final @Lazy com.sni.bokaticowork.features.subscription.derivation.service.PlanDerivationService derivationService;
 
 
     public void activate(Subscription subscription, String reason, String actor) {
@@ -246,6 +247,9 @@ public class SubscriptionLifecycleOperator {
     }
 
     private void renewActive(Subscription subscription) {
+        // Une derivation echue, ou qui a dit « retour au catalogue », rend l'abonnement au catalogue
+        // ici · avant de chiffrer la periode, et sans que personne n'ait a s'en souvenir.
+        derivationService.beforeRenewal(subscription);
         LocalDate previousPeriodStart = subscription.getCurrentPeriodStart();
         LocalDate previousPeriodEnd   = subscription.getCurrentPeriodEnd();
 

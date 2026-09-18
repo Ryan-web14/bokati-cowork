@@ -12,13 +12,15 @@ import java.util.Optional;
 @Repository
 public interface PlanVersionRepository extends JpaRepository<PlanVersion, Long> {
 
-    @Query(nativeQuery = true, value = "SELECT * FROM subscription_plan_version WHERE plan_id = :planId ORDER BY version_number DESC")
+    // Les versions privees (scope SUBSCRIPTION) n'apparaissent jamais au catalogue · c'est la seule
+    // ligne qui change pour tout le module, et c'est voulu : le reste les lit comme les autres.
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription_plan_version WHERE plan_id = :planId AND scope = 'CATALOGUE' ORDER BY version_number DESC")
     List<PlanVersion> findAllByPlanOrderByVersionNumberDesc(@Param("planId") Long planId);
 
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM subscription_plan_version
-            WHERE plan_id = :planId AND status = :status
+            WHERE plan_id = :planId AND status = :status AND scope = 'CATALOGUE'
             ORDER BY version_number DESC
             LIMIT 1
             """)
@@ -26,4 +28,8 @@ public interface PlanVersionRepository extends JpaRepository<PlanVersion, Long> 
 
     @Query(nativeQuery = true, value = "SELECT COALESCE(MAX(version_number), 0) FROM subscription_plan_version WHERE plan_id = :planId")
     Integer maxVersionNumber(@Param("planId") Long planId);
+
+    /** Les versions privees d'un abonnement · pour retrouver ce qu'on lui a fait. */
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription_plan_version WHERE owner_subscription_id = :subscriptionId ORDER BY version_number DESC")
+    List<PlanVersion> findPrivateVersions(@Param("subscriptionId") Long subscriptionId);
 }

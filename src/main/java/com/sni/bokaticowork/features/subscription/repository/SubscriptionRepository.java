@@ -98,6 +98,15 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
     List<Subscription> findAllByContractCode(String contractCode);
 
+    /** Les abonnements en cours sur une version de plan · ceux qu'une hausse de catalogue toucherait. */
+    @Query(nativeQuery = true, value = """
+            SELECT * FROM subscription
+            WHERE plan_version_id = :planVersionId
+              AND status IN ('ACTIVE', 'TRIALING', 'PAST_DUE', 'PAUSED', 'PENDING_ACTIVATION')
+            ORDER BY subscription_number
+            """)
+    List<Subscription> findAllOpenOnPlanVersion(@Param("planVersionId") Long planVersionId);
+
     @Query(nativeQuery = true, value = """
             SELECT id
             FROM subscription
