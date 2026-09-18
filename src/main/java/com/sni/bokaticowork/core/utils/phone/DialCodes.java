@@ -55,6 +55,24 @@ public final class DialCodes {
     private DialCodes() {
     }
 
+    /**
+     * L'indicatif d'un numero qui porte deja son plus · le plus long connu en tete, sans condition
+     * de longueur : ici il n'y a rien a deviner, seulement a decouper.
+     *
+     * @param digits chiffres seuls, apres le plus
+     */
+    public static Optional<String> ofInternational(String digits) {
+        if (digits == null || digits.isEmpty()) {
+            return Optional.empty();
+        }
+        for (int length = 3; length >= 1; length--) {
+            if (digits.length() > length && CODES.contains(digits.substring(0, length))) {
+                return Optional.of(digits.substring(0, length));
+            }
+        }
+        return Optional.empty();
+    }
+
     public static boolean isKnown(String dialCode) {
         return dialCode != null && CODES.contains(dialCode.replaceAll("[^0-9]", ""));
     }

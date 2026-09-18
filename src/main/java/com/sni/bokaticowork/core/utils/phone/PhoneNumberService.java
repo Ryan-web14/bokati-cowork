@@ -63,9 +63,7 @@ public class PhoneNumberService {
         if (PhoneNumbers.isInternational(raw)) {
             // Avec ou sans plus, le numero dit lui-meme d'ou il vient · le pays fourni n'a rien a
             // ajouter, et ne doit surtout pas s'ajouter devant.
-            return PhoneNumbers.toE164(raw, null, false)
-                    .orElseThrow(() -> new BadRequestException("Le numéro de téléphone « " + raw.trim()
-                            + " » n'a pas une longueur valable"));
+            return resolveInternational(raw);
         }
         DialPlan plan = planFor(country);
         return PhoneNumbers.toE164(raw, plan.dialCode(), plan.keepTrunkZero())
@@ -89,7 +87,11 @@ public class PhoneNumberService {
             return raw;
         }
         if (PhoneNumbers.isInternational(raw)) {
-            return PhoneNumbers.toE164(raw, null, false).orElse(PhoneNumbers.clean(raw));
+            try {
+                return resolveInternational(raw);
+            } catch (BadRequestException ex) {
+                return PhoneNumbers.clean(raw);
+            }
         }
         DialPlan plan = planForOrNull(null);
         return plan == null
@@ -98,6 +100,33 @@ public class PhoneNumberService {
     }
 
     // -----------------------------------------------------------------------------------------
+
+    /**
+     * Un numero qui porte son indicatif · on le decoupe, et on remet la partie nationale en forme.
+     *
+     * <p>Le cas frequent est le zero en trop : {@code +33 06 41 53 45 35}, tape par quelqu'un qui a
+     * ajoute l'indicatif devant le numero tel qu'il le compose chez lui. En France ce zero est un
+     * prefixe d'acces et tombe · {@code +33641534535}. Au Congo il fait partie du numero et reste ·
+     * {@code +242 062563615} est deja juste. Le pays se lit dans l'indicatif, jamais dans le champ
+     * pays de la demande, qui peut dire autre chose.</p>
+     *
+     * <p>Un indicatif qui n'existe pas est refuse : {@code +999…} n'est un numero nulle part, et le
+     * garder ferait une ligne qu'on ne pourra jamais joindre.</p>
+     */
+    private String resolveInternational(String raw) {
+        String digits = PhoneNumbers.clean(raw).replaceFirst("^\\+", "");
+        String dialCode = DialCodes.ofInternational(digits)
+                .orElseThrow(() -> new BadRequestException("Le numéro de téléphone « " + raw.trim()
+                        + " » commence par un indicatif qui n'existe pas"));
+        String national = digits.substring(dialCode.length());
+        String iso = isoForDial("+" + dialCode);
+        if (!keepsTrunkZero(iso)) {
+            national = national.replaceFirst("^0+", "");
+        }
+        return PhoneNumbers.toE164("+" + dialCode + national, null, false)
+                .orElseThrow(() -> new BadRequestException("Le numéro de téléphone « " + raw.trim()
+                        + " » n'a pas une longueur valable pour l'indicatif +" + dialCode));
+    }
 
     private DialPlan planFor(String country) {
         DialPlan plan = planForOrNull(country);

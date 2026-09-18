@@ -86,6 +86,28 @@ class PhoneNumberServiceTest {
     }
 
     @Test
+    void avecLePlusLeZeroEnTropTombeLaOuCEstUnPrefixe() {
+        // +33 puis 06… : l'indicatif a été ajouté devant le numéro tel qu'on le compose en France.
+        assertEquals("+33641534535", service.normalize("+33 06 41 53 45 35", null));
+        assertEquals("+33641534535", service.normalize("+33 06 41 53 45 35", "CG"),
+                "Le pays se lit dans l'indicatif, pas dans le champ pays de la demande");
+        assertEquals("+33641534535", service.normalize("0033 06 41 53 45 35", null));
+    }
+
+    @Test
+    void avecLePlusLeZeroResteLaOuIlFaitPartieDuNumero() {
+        assertEquals("+242062563615", service.normalize("+242 062563615", null));
+        assertEquals("+242062563615", service.normalize("+242 06 25 63 615", "FR"));
+    }
+
+    @Test
+    void unIndicatifInexistantEstRefuse() {
+        BadRequestException thrown = assertThrows(BadRequestException.class,
+                () -> service.normalize("+999 123 456 789", null));
+        assertTrue(thrown.getMessage().contains("indicatif"));
+    }
+
+    @Test
     void leDoubleZeroVautLePlus() {
         assertEquals("+33612345678", service.normalize("0033 6 12 34 56 78", null));
     }
