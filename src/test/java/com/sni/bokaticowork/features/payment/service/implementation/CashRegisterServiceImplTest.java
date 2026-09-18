@@ -77,6 +77,8 @@ class CashRegisterServiceImplTest {
                     value.getDeviceCode(),
                     value.getActive(),
                     value.getCashControlEnabled(),
+                    value.getSystemManaged(),
+                    value.getRestrictedToMethod(),
                     value.getMaxCashAmount(),
                     value.getManagerEmail(),
                     value.getCreatedAt(),

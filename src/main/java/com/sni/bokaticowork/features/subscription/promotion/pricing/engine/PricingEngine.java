@@ -119,6 +119,101 @@ public class PricingEngine {
     }
 
     // -----------------------------------------------------------------------------------------
+    // Tarification d'une liste
+    // -----------------------------------------------------------------------------------------
+
+    /**
+     * Tarife une liste d'objets, un par un.
+     *
+     * <p>Toute liste de prix vue par un client doit passer par ici plutot que d'afficher le tarif
+     * catalogue brut · la grille des plans, le catalogue des pass, les services, les ressources
+     * reservables, les articles du comptoir. Une promotion visible seulement au moment de payer ne
+     * vend rien.</p>
+     *
+     * <p>Chaque objet est tarife <b>seul</b>, et c'est volontaire : une promotion portant sur
+     * l'ensemble d'une commande n'a pas de sens dans une vitrine, ou le client n'a encore rien
+     * choisi. Lui annoncer une reduction qui suppose un panier qu'il n'a pas serait mensonger.</p>
+     *
+     * <p>Les campagnes ne sont lues qu'une fois pour toute la liste. Les relire par objet ferait
+     * autant d'aller-retours que d'articles affiches, a chaque visite de chaque visiteur.</p>
+     */
+    @Transactional(readOnly = true)
+    public List<EffectivePrice> priceCatalogue(PricingContext context, List<PriceableRef> refs) {
+        if (refs == null || refs.isEmpty()) {
+            return List.of();
+        }
+        return refs.stream().map(ref -> priceOne(context, ref)).toList();
+    }
+
+    private EffectivePrice priceOne(PricingContext context, PriceableRef ref) {
+        BigDecimal listPrice = round(ref.listPriceOrZero()
+                .multiply(BigDecimal.valueOf(ref.quantityOrOne()))
+                .add(ref.setupFee() == null ? BigDecimal.ZERO : ref.setupFee()));
+
+        PricingContext single = context.withLines(List.of(new PricingContext.PricingLine(
+                ref.code(), ref.scope(), ref.code(), ref.categoryCode(), ref.label(),
+                ref.quantityOrOne(), ref.listPriceOrZero(), ref.setupFee())));
+
+        PricingResult result = evaluate(single);
+        BigDecimal effectivePrice = result.finalTotal();
+        BigDecimal savings = listPrice.subtract(effectivePrice).max(BigDecimal.ZERO);
+
+        return new EffectivePrice(
+                ref.scope(),
+                ref.code(),
+                ref.label(),
+                listPrice,
+                effectivePrice,
+                savings,
+                percentOf(savings, listPrice),
+                sourceOf(result),
+                promotionCode(result),
+                promotionLabel(result),
+                null,
+                false,
+                null,
+                result.currency());
+    }
+
+    /**
+     * D'ou vient le prix affiche.
+     *
+     * <p>Une grille l'emporte dans l'affichage meme si une promotion s'y ajoute : c'est elle qui a
+     * remplace le tarif, la promotion n'ayant fait que le reduire ensuite. Annoncer « promotion »
+     * sur un tarif partenaire donnerait a croire a une offre temporaire la ou il y a un contrat.</p>
+     */
+    private EffectivePrice.PriceSource sourceOf(PricingResult result) {
+        if (!result.priceOverrides().isEmpty()) {
+            return EffectivePrice.PriceSource.PRICE_LIST;
+        }
+        return result.appliedRules().isEmpty()
+                ? EffectivePrice.PriceSource.CATALOGUE
+                : EffectivePrice.PriceSource.PROMOTION;
+    }
+
+    private String promotionCode(PricingResult result) {
+        if (!result.appliedRules().isEmpty()) {
+            return result.appliedRules().getFirst().sourceCode();
+        }
+        return result.priceOverrides().isEmpty() ? null : result.priceOverrides().getFirst().priceListCode();
+    }
+
+    private String promotionLabel(PricingResult result) {
+        if (!result.appliedRules().isEmpty()) {
+            return result.appliedRules().getFirst().sourceName();
+        }
+        return result.priceOverrides().isEmpty() ? null : result.priceOverrides().getFirst().priceListName();
+    }
+
+    /** Economie en pourcentage, arrondie a l'entier · un « moins 19,7 % » n'accroche personne. */
+    private BigDecimal percentOf(BigDecimal savings, BigDecimal listPrice) {
+        if (listPrice == null || listPrice.signum() <= 0 || savings.signum() <= 0) {
+            return BigDecimal.ZERO;
+        }
+        return savings.multiply(HUNDRED).divide(listPrice, 0, RoundingMode.HALF_UP);
+    }
+
+    // -----------------------------------------------------------------------------------------
     // Etape 4 · promotions automatiques
     // -----------------------------------------------------------------------------------------
 

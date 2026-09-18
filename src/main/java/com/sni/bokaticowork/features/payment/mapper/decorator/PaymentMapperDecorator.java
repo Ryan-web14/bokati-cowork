@@ -132,6 +132,8 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
     public WalletLedgerEntryResponse toLedgerEntryResponse(WalletLedgerEntry entry) {
         return new WalletLedgerEntryResponse(
                 entry.getEntryNumber(),
+                entry.getTransactionNumber(),
+                entry.getTransactionUuid(),
                 entry.getWallet().getWalletNumber(),
                 entry.getDirection(),
                 entry.getAmount(),
@@ -156,6 +158,8 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 cashRegister.getDeviceCode(),
                 cashRegister.getActive(),
                 cashRegister.getCashControlEnabled(),
+                cashRegister.getSystemManaged(),
+                cashRegister.getRestrictedToMethod(),
                 cashRegister.getMaxCashAmount(),
                 cashRegister.getManagerEmail(),
                 cashRegister.getCreatedAt(),

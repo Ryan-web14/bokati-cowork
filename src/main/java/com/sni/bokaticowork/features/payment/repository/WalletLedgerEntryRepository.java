@@ -32,4 +32,61 @@ public interface WalletLedgerEntryRepository extends JpaRepository<WalletLedgerE
               AND entry_type NOT IN ('HOLD', 'HOLD_RELEASE')
             """)
     BigDecimal sumLedgerImpact(@Param("walletId") Long walletId);
+
+    // ---------------------------------------------------------------------------------------
+    // Consommation des plafonds
+    // ---------------------------------------------------------------------------------------
+
+    /**
+     * Montant deja engage sur une periode, pour un type d'ecriture donne.
+     *
+     * <p>Seul le type demande est somme. Une contre-passation porte le type {@code REVERSAL} et ne
+     * vient donc pas s'en retrancher : un transfert annule pese sur le plafond du jour ou il a ete
+     * emis. C'est volontaire · emettre puis annuler en boucle ne doit pas servir a se fabriquer un
+     * plafond sans fin.</p>
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT COALESCE(SUM(amount), 0)
+            FROM wallet_ledger_entry
+            WHERE wallet_id = :walletId
+              AND entry_type = CAST(:entryType AS VARCHAR)
+              AND created_at >= :from
+            """)
+    java.math.BigDecimal sumSince(@Param("walletId") Long walletId,
+                                  @Param("entryType") String entryType,
+                                  @Param("from") java.time.Instant from);
+
+    /**
+     * Empreinte de la derniere ecriture du portefeuille · maillon auquel la suivante s'accroche.
+     *
+     * <p>Interrogee sous le verrou exclusif deja pose sur {@code wallet_account}, donc jamais en
+     * concurrence : deux ecritures du meme portefeuille ne peuvent pas lire le meme maillon.</p>
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT current_hash
+            FROM wallet_ledger_entry
+            WHERE wallet_id = :walletId
+            ORDER BY id DESC
+            LIMIT 1
+            """)
+    Optional<String> findLastHash(@Param("walletId") Long walletId);
+
+    /** Le journal d'un portefeuille dans l'ordre ou il a ete ecrit · l'ordre de verification. */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM wallet_ledger_entry
+            WHERE wallet_id = :walletId
+            ORDER BY id ASC
+            """)
+    java.util.List<WalletLedgerEntry> findChain(@Param("walletId") Long walletId);
+
+    /** Nombre d'operations sortantes sur la periode · un plafond en nombre, pas en montant. */
+    @Query(nativeQuery = true, value = """
+            SELECT COUNT(*)
+            FROM wallet_ledger_entry
+            WHERE wallet_id = :walletId
+              AND direction = 'DEBIT'
+              AND created_at >= :from
+            """)
+    long countDebitsSince(@Param("walletId") Long walletId, @Param("from") java.time.Instant from);
 }

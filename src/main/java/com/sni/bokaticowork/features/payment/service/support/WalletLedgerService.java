@@ -3,6 +3,8 @@ package com.sni.bokaticowork.features.payment.service.support;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.generator.uuid.TimeOrderedUuid;
+import com.sni.bokaticowork.features.payment.integrity.service.WalletLedgerChain;
 import com.sni.bokaticowork.features.payment.enums.WalletEntryDirection;
 import com.sni.bokaticowork.features.payment.enums.WalletEntryType;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
@@ -20,6 +22,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
@@ -148,7 +151,11 @@ public class WalletLedgerService {
                 .reference(trim(reference))
                 .createdBy(trim(createdBy))
                 .idempotencyKey(key)
+                .transactionUuid(TimeOrderedUuid.next())
+                .transactionNumber(sequenceGenerator.next("wallet_transaction"))
+                .createdAt(Instant.now())
                 .build();
+        chain(entry, saved.getId());
         try {
             return ledgerRepository.saveAndFlush(entry);
         } catch (DataIntegrityViolationException ex) {
@@ -156,6 +163,20 @@ public class WalletLedgerService {
             // La mutation de solde de cette transaction sera annulee par le rollback.
             return findReplay(key).orElseThrow(() -> ex);
         }
+    }
+
+    /**
+     * Accroche l'ecriture au dernier maillon du portefeuille.
+     *
+     * <p>Le calcul a lieu ici et nulle part ailleurs, sous le verrou exclusif deja pose sur
+     * {@code wallet_account}. C'est ce verrou qui fait la chaine : sans lui, deux ecritures
+     * concurrentes liraient le meme maillon precedent et se declareraient toutes deux legitimes
+     * derriere lui · la chaine se dedoublerait sans que rien ne paraisse rompu.</p>
+     */
+    private void chain(WalletLedgerEntry entry, Long walletId) {
+        String previous = ledgerRepository.findLastHash(walletId).orElse(WalletLedgerChain.GENESIS);
+        entry.setPreviousHash(previous);
+        entry.setCurrentHash(WalletLedgerChain.hash(entry, previous));
     }
 
     /**

@@ -76,6 +76,32 @@ public class WalletLedgerEntry {
     @Column(name = "idempotency_key", length = 180)
     private String idempotencyKey;
 
+    /**
+     * Identifiant technique de la transaction · version 7, donc horodate et croissant.
+     *
+     * <p>Distinct de la cle d'idempotence, qui appartient a l'appelant et peut etre nulle. Celui-ci
+     * appartient a l'ecriture et ne l'est jamais.</p>
+     */
+    @Column(name = "transaction_uuid", unique = true)
+    private java.util.UUID transactionUuid;
+
+    /** Reference lisible, prononcable au telephone · ne sert jamais de clef etrangere. */
+    @Column(name = "transaction_number", unique = true, length = 100)
+    private String transactionNumber;
+
+    @Column(name = "previous_hash", length = 128)
+    private String previousHash;
+
+    /**
+     * Empreinte de cette ecriture et de celle qui la precede.
+     *
+     * <p>Modifier une ecriture passee sans rompre la chaine supposerait de recalculer toutes les
+     * suivantes · le declencheur d'immuabilite l'interdit deja, le chainage le rend detectable
+     * meme si quelqu'un desactivait ce declencheur.</p>
+     */
+    @Column(name = "current_hash", length = 128)
+    private String currentHash;
+
     @Column(name = "created_by", length = 120)
     private String createdBy;
 
@@ -84,6 +110,10 @@ public class WalletLedgerEntry {
 
     @PrePersist
     public void prePersist() {
-        createdAt = Instant.now();
+        // Pose seulement si l'appelant ne l'a pas fixe : l'instant entre dans l'empreinte, qui est
+        // calculee avant la persistance · l'ecraser ici invaliderait le chainage des sa creation.
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
 }

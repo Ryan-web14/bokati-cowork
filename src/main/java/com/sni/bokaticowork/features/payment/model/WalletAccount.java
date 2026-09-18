@@ -70,6 +70,38 @@ public class WalletAccount {
     @Column(name = "version", nullable = false)
     private Long version;
 
+    /**
+     * Politique de plafonds nommee · derogation accordee a un titulaire precis.
+     *
+     * <p>Nulle dans le cas general : le portefeuille releve alors du palier correspondant a son
+     * niveau de verification. La renseigner permet d'ouvrir les plafonds d'un client sans toucher
+     * aux paliers, donc sans les ouvrir a tout le monde.</p>
+     */
+    @Column(name = "limit_policy_code", length = 100)
+    private String limitPolicyCode;
+
+    @Column(name = "last_activity_at")
+    private Instant lastActivityAt;
+
+    @Column(name = "dormant_since")
+    private Instant dormantSince;
+
+    /** Gel decide par l'etablissement · le titulaire ne peut pas le lever lui-meme. */
+    @Column(name = "frozen_at")
+    private Instant frozenAt;
+
+    @Column(name = "frozen_reason", length = 255)
+    private String frozenReason;
+
+    /**
+     * Verrouillage decide par le titulaire · lui seul le pose et lui seul le leve.
+     *
+     * <p>Distinct du gel : quelqu'un qui perd son telephone doit pouvoir fermer son portefeuille
+     * a la minute, sans passer par un guichet, et le rouvrir de meme une fois rassure.</p>
+     */
+    @Column(name = "locked_by_owner_at")
+    private Instant lockedByOwnerAt;
+
     @Column(name = "opened_at", nullable = false)
     private Instant openedAt;
 
