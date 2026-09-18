@@ -74,6 +74,23 @@ public class Users {
     @Column(name = "pending_email", length = 250)
     private String pendingEmail;
 
+    /**
+     * Quand l'adresse a ete verifiee · nul tant qu'elle ne l'est pas.
+     *
+     * <p>Un fait date, pas une deduction. L'espace client en deduisait autrefois l'etat depuis le
+     * verrouillage du compte, ce qui etait vrai pour tout le monde des l'inscription.</p>
+     */
+    @Column(name = "email_verified_at")
+    private java.time.Instant emailVerifiedAt;
+
+    /** OTT_VERIFICATION si le titulaire a saisi son code · sinon l'administrateur qui s'en est porte garant. */
+    @Column(name = "email_verified_by", length = 120)
+    private String emailVerifiedBy;
+
+    public boolean emailVerified() {
+        return emailVerifiedAt != null;
+    }
+
     @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude

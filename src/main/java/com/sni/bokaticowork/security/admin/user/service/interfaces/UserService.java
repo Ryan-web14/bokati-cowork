@@ -31,6 +31,13 @@ public interface UserService {
     void deleteUser(Long id);
 
     void activateUser(String email);
+
+    /**
+     * Marque l'adresse verifiee, une fois · un second appel ne change ni la date ni l'auteur.
+     *
+     * @param verifiedBy OTT_VERIFICATION, ou l'identifiant de l'administrateur qui active sans code
+     */
+    void markEmailVerified(String email, String verifiedBy);
     void deactivateUser(String email);
     boolean userExists(String email);
     boolean isUserActive(String email);

@@ -178,6 +178,20 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
+    public void markEmailVerified(String email, String verifiedBy) {
+        Users user = userRepo.findByEmail(email).orElseThrow(
+                () -> new ResourceNotFoundException("User with email " + email + " not found"));
+        if (user.getEmailVerifiedAt() != null) {
+            // Deja verifiee · la premiere preuve reste la bonne, on ne la reecrit pas.
+            return;
+        }
+        user.setEmailVerifiedAt(java.time.Instant.now());
+        user.setEmailVerifiedBy(verifiedBy == null || verifiedBy.isBlank() ? "SYSTEM" : verifiedBy.trim());
+        userRepo.save(user);
+    }
+
+    @Override
     public void deactivateUser(String email){
         if(!userRepo.existsByEmail(email)){
             throw new ResourceNotFoundException("User with email " + email + " not found");

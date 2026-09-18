@@ -23,7 +23,7 @@ public class ClientOnboardingService {
 
     @Transactional(readOnly = true)
     public OnboardingStatusResponse getOnboardingStatus(Member member) {
-        boolean emailVerified = !Boolean.TRUE.equals(member.getUser().getIsAccountLocked());
+        boolean emailVerified = member.getUser() != null && member.getUser().emailVerified();
 
         Optional<KycCase> kycCaseOpt = kycCaseRepository
                 .findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(DocumentOwnerType.MEMBER, member.getId());
