@@ -53,7 +53,7 @@ public class PawapayDepositService {
                                          InitiateMobileMoneyDepositRequest request) {
         String depositId = UUID.randomUUID().toString();
         String provider = request.correspondent().providerCode();
-        String phoneNumber = normalizePhone(request.phoneNumber());
+        String phoneNumber = msisdn(request);
         String clientReferenceId = transaction.getTransactionNumber();
         String customerMessage = customerMessage(intent);
         String callbackUrl = properties.getCallbackBaseUrl()
@@ -289,8 +289,24 @@ public class PawapayDepositService {
         }
     }
 
+    /**
+     * Le MSISDN attendu par l'operateur : indicatif puis numero, chiffres seuls.
+     *
+     * <p>Un abonne tape son numero comme il le compose · avec ou sans indicatif, avec des espaces
+     * ou un plus. L'operateur choisi dit dans quel pays on est, et c'est lui qui complete
+     * l'indicatif quand il manque. Sans cela un « 06 123 45 67 » partait tel quel et l'operateur le
+     * refusait, ou pire, le lisait dans un autre pays.</p>
+     */
+    private String msisdn(InitiateMobileMoneyDepositRequest request) {
+        String dialCode = request.correspondent() == null ? null : request.correspondent().dialCode();
+        boolean keepZero = request.correspondent() != null && request.correspondent().keepsTrunkZero();
+        return com.sni.bokaticowork.core.utils.phone.PhoneNumbers.toE164(request.phoneNumber(), dialCode, keepZero)
+                .map(e164 -> e164.substring(1))
+                .orElseGet(() -> normalizePhone(request.phoneNumber()));
+    }
+
     private String normalizePhone(String phone) {
-        return phone == null ? null : phone.replaceAll("[^\\d]", "");
+        return phone == null ? null : phone.replaceAll("[^0-9]", "");
     }
 
     private String clean(String value) {

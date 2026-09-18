@@ -5,7 +5,6 @@ import java.util.regex.Pattern;
 public class ValidationUtils {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$");
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^0[456][0-9]{7}$");
     private static final Pattern NIU_PATTERN = Pattern.compile("^[PE][0-9]{15}$");
 
     // Free-text fields such as descriptions: allow any letter, digit, punctuation,
@@ -34,12 +33,14 @@ public class ValidationUtils {
         return DESCRIPTION_PATTERN.matcher(str).matches();
     }
 
+    /**
+     * Le numero a-t-il une forme lisible · nationale ou internationale, espaces et plus compris.
+     *
+     * <p>Ne juge que la forme. L'indicatif manquant est complete ailleurs, par
+     * {@link com.sni.bokaticowork.core.utils.phone.PhoneNumberService}, qui connait les pays.</p>
+     */
     public static boolean validatePhoneNumber(String str){
-        if(str == null || str.isEmpty()){
-            return false;
-        }
-        String cleanPhone = str.replaceAll("\\s+", "");
-        return PHONE_PATTERN.matcher(cleanPhone).matches();
+        return com.sni.bokaticowork.core.utils.phone.PhoneNumbers.looksValid(str);
     }
 
     public static boolean validateEmail(String str){

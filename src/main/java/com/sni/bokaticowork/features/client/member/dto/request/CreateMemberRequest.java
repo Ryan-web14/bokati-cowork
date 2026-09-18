@@ -39,6 +39,13 @@ public class CreateMemberRequest {
     @Size(max = 30)
     private String phone;
 
+    /**
+     * Pays du numero, quand celui-ci ne porte pas son indicatif · code ISO (CG, FR) ou indicatif
+     * (+242). Ignore si le numero commence par un plus. Absent, le pays de l'etablissement.
+     */
+    @Size(max = 10)
+    private String phoneCountry;
+
     @Size(max = 30)
     private String whatsappPhone;
 

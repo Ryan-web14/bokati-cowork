@@ -36,6 +36,7 @@ public class WalletCounterpartyResolver {
     private final WalletService walletService;
     private final MemberRepository memberRepository;
     private final TransactionContextResolver contextResolver;
+    private final com.sni.bokaticowork.core.utils.phone.PhoneNumberService phoneNumberService;
 
     /** Ce qu'on montre a l'emetteur avant qu'il ne confirme · assez pour reconnaitre, pas pour decouvrir. */
     public record Counterparty(WalletAccount wallet, String displayName) {
@@ -54,7 +55,7 @@ public class WalletCounterpartyResolver {
 
         Optional<Member> member = value.contains("@")
                 ? memberRepository.findByEmailIgnoreCaseAndDeletedFalse(value)
-                : memberRepository.findByPhoneAndDeletedFalse(normalizePhone(value));
+                : memberRepository.findByPhoneAndDeletedFalse(phoneNumberService.normalizeForLookup(value));
         Member found = member.orElseThrow(() -> new ResourceNotFoundException(
                 "Aucun abonné ne correspond à « " + value + " »"));
 
@@ -79,7 +80,4 @@ public class WalletCounterpartyResolver {
         return new Counterparty(wallet, name);
     }
 
-    private String normalizePhone(String value) {
-        return value.replaceAll("[\\s.-]", "");
-    }
 }

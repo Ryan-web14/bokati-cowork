@@ -34,5 +34,11 @@ public class CustomerRequest {
     private String phone;
     private String whatsappPhone;
 
+    /**
+     * Pays du numero, quand celui-ci ne porte pas son indicatif · code ISO (CG, FR) ou indicatif
+     * (+242). Ignore si le numero commence par un plus. Absent, le pays de l'etablissement.
+     */
+    private String phoneCountry;
+
 
 }
