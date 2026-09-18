@@ -290,6 +290,8 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
         return LoginResponse.builder()
                 .accessToken(tokens.getAccessToken())
                 .refreshToken(tokens.getRefreshToken())
+                .emailVerified(principal.getUser().emailVerified())
+                .roles(principal.getAuthorities().stream().map(Object::toString).sorted().toList())
                 .build();
     }
 

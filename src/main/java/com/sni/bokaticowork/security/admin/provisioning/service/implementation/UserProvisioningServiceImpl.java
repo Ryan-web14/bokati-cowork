@@ -68,6 +68,9 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
         Member member = memberService.getByEmailForService(email);
         roleUserService.addRoleToUser(member.getUser().getId(), MEMBER_ROLE, normalizeAssigner(assignedBy));
         userService.activateUser(email);
+        // Activer sans attendre le code, c'est se porter garant de l'adresse · on le note sous le
+        // nom de celui qui l'a fait, pour que la verification ait toujours un auteur.
+        userService.markEmailVerified(email, normalizeAssigner(assignedBy));
         memberService.ChangeStatus(member.getMemberId(), new UpdateStatusRequest(MemberStatus.ACTIVE.name()));
         return memberService.getByMemberId(member.getMemberId());
     }
@@ -81,6 +84,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
             } else {
                 roleUserService.addRoleToUser(member.getUser().getId(), MEMBER_ROLE, normalizeAssigner(assignedBy));
             }
+            userService.markEmailVerified(email, normalizeAssigner(assignedBy));
         } catch (ResourceNotFoundException ignored) {
             // Non-member users can still authenticate through OTT without portal provisioning.
         }

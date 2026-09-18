@@ -82,6 +82,7 @@ public class MemberServiceImpl  implements MemberService {
     private final SpringTemplateEngine emailTemplateEngine;
     private final PasswordResetService passwordResetService;
     private final com.sni.bokaticowork.core.utils.phone.PhoneNumberService phoneNumberService;
+    private final com.sni.bokaticowork.security.admin.role.service.interfaces.RoleUserService roleUserService;
 
     @Value("${app.verify-base-url:}")
     private String publicBaseUrl;
@@ -245,6 +246,7 @@ public class MemberServiceImpl  implements MemberService {
             }
             Customer cus = member.getCustomer();
             cus.setStatus(CustomerStatus.ACTIVE);
+            openPortalAccount(member, "ADMIN_ACTIVATION");
         } else if (member.getStatus() == MemberStatus.INACTIVE || member.getStatus() == MemberStatus.SUSPENDED) {
             member.setPortalAccess(false);
             Customer cus = member.getCustomer();
@@ -362,11 +364,29 @@ public class MemberServiceImpl  implements MemberService {
         return memberMapper.toResponse(member);
     }
 
+    /**
+     * Ce qu'un membre ACTIVE doit avoir pour que l'espace client l'accepte.
+     *
+     * <p>Le statut du membre ne suffit pas : le jeton porte les roles de l'utilisateur, et l'espace
+     * client exige ROLE_MEMBER. Un membre active par un administrateur sans passer par le code de
+     * verification restait sans role, et l'espace client lui repondait 403 a la premiere page.
+     * Activer, c'est donner le role, ouvrir le compte, et se porter garant de l'adresse.</p>
+     */
+    private void openPortalAccount(Member member, String actor) {
+        if (member.getUser() == null) {
+            return;
+        }
+        roleUserService.addRoleToUser(member.getUser().getId(), "MEMBER", actor);
+        userService.activateUser(member.getUser().getEmail());
+        userService.markEmailVerified(member.getUser().getEmail(), actor);
+    }
+
     @Override
     public void enablePortalAccess(String memberId) {
 
         Member member = getByMemberIdForService(memberId);
         member.setPortalAccess(true);
+        openPortalAccount(member, "ADMIN_ACTIVATION");
         if (member.getPortalActivatedAt() == null) {
             java.time.Instant now = java.time.Instant.now();
             member.setPortalActivatedAt(now);
