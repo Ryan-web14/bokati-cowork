@@ -66,10 +66,22 @@ public class SubscriptionLifecycleOperator {
     private final KycCaseRepository kycCaseRepository;
     private final OutboxService outboxService;
     private final @Lazy com.sni.bokaticowork.features.subscription.derivation.service.PlanDerivationService derivationService;
+    private final @Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionFreezeService freezeService;
+    private final @Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionDirectDebitService directDebitService;
 
 
     public void activate(Subscription subscription, String reason, String actor) {
         if (subscription.getStatus() == SubscriptionStatus.ACTIVE) {
+            return;
+        }
+        // Des pieces manquent · l'abonnement attend, il n'est pas active avec un avertissement
+        if (!kycCompliant(subscription)) {
+            if (subscription.getStatus() != SubscriptionStatus.PENDING_DOCUMENTS) {
+                statusManager.changeStatus(subscription, SubscriptionStatus.PENDING_DOCUMENTS,
+                        "Pièces KYC manquantes pour le niveau exigé par le plan", actor);
+                subscriptionRepository.save(subscription);
+                eventWriter.writeEvent(subscription, SubscriptionEventType.DOCUMENTS_PENDING, null);
+            }
             return;
         }
         statusManager.changeStatus(subscription, SubscriptionStatus.ACTIVE, reason, actor);
@@ -81,7 +93,6 @@ public class SubscriptionLifecycleOperator {
         }
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED, null);
         notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
-        checkKycCompliance(subscription);
 
         try {
             emailNotifier.notify(subscription, SubscriptionEventType.SUBSCRIPTION_ACTIVATED);
@@ -101,8 +112,9 @@ public class SubscriptionLifecycleOperator {
     }
 
     public Subscription suspend(Subscription subscription, SubscriptionStatusChangeRequest request) {
-        if (subscription.getStatus() != SubscriptionStatus.ACTIVE && subscription.getStatus() != SubscriptionStatus.PAST_DUE) {
-            throw new ConflictException("subscription", "only ACTIVE or PAST_DUE subscriptions can be suspended");
+        if (subscription.getStatus() != SubscriptionStatus.ACTIVE && subscription.getStatus() != SubscriptionStatus.PAST_DUE
+                && subscription.getStatus() != SubscriptionStatus.GRACE_PERIOD) {
+            throw new ConflictException("subscription", "only ACTIVE, PAST_DUE or GRACE_PERIOD subscriptions can be suspended");
         }
         statusManager.changeStatus(subscription, SubscriptionStatus.SUSPENDED, reason(request, "Suspension"), actor(request));
         subscription.setSuspendedAt(Instant.now());
@@ -122,6 +134,8 @@ public class SubscriptionLifecycleOperator {
             throw new ConflictException("subscription", "only ACTIVE subscriptions can be paused");
         }
         LocalDate pauseUntil = resolvePauseUntil(request);
+        // Le gel est encadre · quota annuel, duree maximale, part facturee · c'est la politique qui decide
+        freezeService.start(subscription, pauseUntil, pauseReason(request, null), pauseActor(request));
         statusManager.changeStatus(subscription, SubscriptionStatus.PAUSED, pauseReason(request, "Subscription paused"), pauseActor(request));
         subscription.setPausedAt(Instant.now());
         subscription.setPauseUntil(pauseUntil);
@@ -145,6 +159,7 @@ public class SubscriptionLifecycleOperator {
             }
         }
         subscription.setPauseUntil(null);
+        freezeService.end(subscription, LocalDate.now());
         statusManager.changeStatus(subscription, SubscriptionStatus.ACTIVE, reason(request, "Subscription resumed"), actor(request));
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.ACTIVE);
         return subscriptionRepository.save(subscription);
@@ -261,8 +276,12 @@ public class SubscriptionLifecycleOperator {
         subscription.setCurrentPeriodEnd(newEnd);
         subscription.setNextBillingDate(nextBilling);
         java.math.BigDecimal recurringAmount = subscription.getSubtotalAmount().add(subscription.getTaxAmount());
-        billingSupport.createBillableItem(subscription, "SUBSCRIPTION_RENEWAL", "Subscription renewal", recurringAmount);
+        var invoice = billingSupport.createBillableItem(subscription, "SUBSCRIPTION_RENEWAL", "Subscription renewal", recurringAmount);
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.ACTIVE);
+        if (invoice != null) {
+            // Avec un mandat, l'echeance est prelevee une fois la facture validee en base · jamais avant
+            directDebitService.collectAfterCommit(subscription.getId(), invoice.documentNumber());
+        }
         subscriptionRepository.save(subscription);
         entitlementService.grantForSubscription(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED, null);
@@ -343,16 +362,17 @@ public class SubscriptionLifecycleOperator {
         }
     }
 
-    private void checkKycCompliance(Subscription subscription) {
+    /** Le niveau KYC exige par le plan est-il atteint · le drapeau est pose, l'avertissement publie. */
+    private boolean kycCompliant(Subscription subscription) {
         try {
-            if (subscription.getPlanVersion() == null || subscription.getPlanVersion().getPlan() == null) return;
+            if (subscription.getPlanVersion() == null || subscription.getPlanVersion().getPlan() == null) return true;
             SubscriptionPlan plan = subscription.getPlanVersion().getPlan();
             Integer requiredLevel = plan.getRequiredKycLevel();
-            if (requiredLevel == null || requiredLevel <= 1) return;
+            if (requiredLevel == null || requiredLevel <= 1) return true;
 
             DocumentOwnerType ownerType = mapSubscriberType(subscription.getSubscriberType());
             Long ownerId = resolveOwnerId(subscription);
-            if (ownerType == null || ownerId == null) return;
+            if (ownerType == null || ownerId == null) return true;
 
             int currentLevel = kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(ownerType, ownerId)
                     .filter(kycCase -> kycCase.getStatus() == KycCaseStatus.APPROVED)
@@ -364,7 +384,7 @@ public class SubscriptionLifecycleOperator {
             subscriptionRepository.save(subscription);
 
             if (!compliant) {
-                log.warn("Subscription {} activated with insufficient KYC level (has={}, required={})",
+                log.warn("Subscription {} waits for documents (has KYC level {}, required {})",
                         subscription.getSubscriptionNumber(), currentLevel, requiredLevel);
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("subscriptionNumber", subscription.getSubscriptionNumber());
@@ -375,9 +395,11 @@ public class SubscriptionLifecycleOperator {
                 outboxService.publish("KYC_COMPLIANCE_WARNING", "NOTIFICATION",
                         subscription.getSubscriptionNumber(), payload);
             }
+            return compliant;
         } catch (Exception ex) {
             log.warn("KYC compliance check failed for subscription {}: {}",
                     subscription.getSubscriptionNumber(), ex.getMessage());
+            return true;
         }
     }
 

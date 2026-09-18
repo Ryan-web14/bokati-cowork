@@ -54,6 +54,7 @@ public class PaymentTransactionWorkflowProcessor {
     private final CashRegisterService cashRegisterService;
     private final com.sni.bokaticowork.features.subscription.subscription.service.support.pass.PassRenewalOperator passRenewalOperator;
     private final com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionGraceService graceService;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -147,6 +148,11 @@ public class PaymentTransactionWorkflowProcessor {
     private void handleSucceededTransaction(PaymentTransaction transaction, TransactionContextResolver.SourceView source) {
         if ("SUBSCRIPTION".equalsIgnoreCase(source.type())) {
             Subscription subscription = subscriptionService.getForService(source.code());
+            if (subscription.getStatus() == SubscriptionStatus.GRACE_PERIOD) {
+                // Un paiement pendant la tolerance rend les droits sans intervention
+                graceService.exit(subscription, "Paiement " + transaction.getTransactionNumber());
+                return;
+            }
             if (subscription.getStatus() != SubscriptionStatus.PENDING_ACTIVATION) {
                 return;
             }

@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.subscription.subscription.service.support;
 
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.service.support.BillableItemInvoiceSupport;
 import com.sni.bokaticowork.features.subscription.subscription.dto.response.BillingScheduleResponse;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillableItemStatus;
@@ -109,13 +110,20 @@ public class SubscriptionBillingSupport {
         return (value == null ? BigDecimal.ZERO : value).setScale(4, RoundingMode.HALF_UP);
     }
 
-    public void createBillableItem(Subscription subscription, String sourceType, String description) {
-        createBillableItem(subscription, sourceType, description, subscription.getTotalAmount());
+    public BillingDocumentResponse createBillableItem(Subscription subscription, String sourceType, String description) {
+        return createBillableItem(subscription, sourceType, description, subscription.getTotalAmount());
     }
 
-    public void createBillableItem(Subscription subscription, String sourceType, String description, java.math.BigDecimal amount) {
+    /** Un element facturable sur la periode courante, facture aussitot · rend la facture, nulle si rien a facturer. */
+    public BillingDocumentResponse createBillableItem(Subscription subscription, String sourceType, String description, java.math.BigDecimal amount) {
+        return createBillableItem(subscription, sourceType, description, amount,
+                subscription.getCurrentPeriodStart(), subscription.getCurrentPeriodEnd());
+    }
+
+    public BillingDocumentResponse createBillableItem(Subscription subscription, String sourceType, String description, java.math.BigDecimal amount,
+                                                      java.time.LocalDate periodStart, java.time.LocalDate periodEnd) {
         if (amount == null || amount.signum() <= 0) {
-            return;
+            return null;
         }
         BillableItem item = billableItemRepository.save(BillableItem.builder()
                 .billableNumber(sequenceGenerator.next("billable_item"))
@@ -126,16 +134,41 @@ public class SubscriptionBillingSupport {
                 .description(description + " - " + subscription.getPlanVersion().getName())
                 .amount(amount)
                 .currency(subscription.getCurrency())
-                .billingPeriodStart(subscription.getCurrentPeriodStart())
-                .billingPeriodEnd(subscription.getCurrentPeriodEnd())
+                .billingPeriodStart(periodStart)
+                .billingPeriodEnd(periodEnd)
                 .status(BillableItemStatus.PENDING)
                 .build());
-        billableItemInvoiceSupport.ensureInvoiced(
+        BillingDocumentResponse invoice = billableItemInvoiceSupport.ensureInvoiced(
                 item,
                 "Facture abonnement " + subscription.getSubscriptionNumber(),
                 description + " - " + subscription.getPlanVersion().getName()
         );
         eventWriter.writeEvent(subscription, SubscriptionEventType.BILLING_SCHEDULED, null);
+        return invoice;
+    }
+
+    /** Un element facturable hors periode courante (frais de rupture, jours de raccordement) · rend son numero. */
+    public String createStandaloneBillableItem(Subscription subscription, String sourceType, String description, java.math.BigDecimal amount,
+                                               java.time.LocalDate periodStart, java.time.LocalDate periodEnd) {
+        if (amount == null || amount.signum() <= 0) {
+            return null;
+        }
+        BillableItem item = billableItemRepository.save(BillableItem.builder()
+                .billableNumber(sequenceGenerator.next("billable_item"))
+                .sourceType(sourceType)
+                .sourceId(subscription.getSubscriptionNumber())
+                .subscriberType(subscription.getSubscriberType())
+                .subscriberCode(subscription.getSubscriberCode())
+                .description(description)
+                .amount(amount.setScale(4, RoundingMode.HALF_UP))
+                .currency(subscription.getCurrency())
+                .billingPeriodStart(periodStart)
+                .billingPeriodEnd(periodEnd)
+                .status(BillableItemStatus.PENDING)
+                .build());
+        billableItemInvoiceSupport.ensureInvoiced(item, "Facture abonnement " + subscription.getSubscriptionNumber(), description);
+        eventWriter.writeEvent(subscription, SubscriptionEventType.BILLING_SCHEDULED, null);
+        return item.getBillableNumber();
     }
 
     public void upsertBillingSchedule(Subscription subscription, BillingScheduleStatus status) {
