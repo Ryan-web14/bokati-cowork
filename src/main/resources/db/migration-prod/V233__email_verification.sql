@@ -34,7 +34,7 @@ SET email_verified_at = COALESCE(m.portal_activated_at, now()),
     email_verified_by = 'ADMIN_ACTIVATION'
 FROM member m
 WHERE m.user_id = u.id
-  AND m.status = 'ACTIVE'
+  AND m.member_status = 'ACTIVE'
   AND m.deleted = FALSE
   AND u.email_verified_at IS NULL;
 
