@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Contrat de domiciliation ' + ${contractNumber}">Contrat de domiciliation</title>
+    <style>
+        @page { size: A4; margin: 32px 34px; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #2b2030; font-size: 10.5px; line-height: 1.5; }
+        .header { border-bottom: 2px solid #d9a21b; padding-bottom: 10px; margin-bottom: 16px; }
+        .brand { font-size: 17px; font-weight: 700; color: #281332; letter-spacing: 2px; text-transform: uppercase; }
+        .doc-type { font-size: 16px; font-weight: 700; color: #281332; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 10px; }
+        .doc-number { color: #d9a21b; font-weight: 700; font-family: "Courier New", monospace; }
+        h2 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #fff; background: #281332; padding: 5px 10px; margin: 16px 0 8px; }
+        table.info { width: 100%; border-collapse: collapse; }
+        table.info td { padding: 3px 8px; border-bottom: 1px solid #efe9f2; vertical-align: top; }
+        table.info td.label { color: #6f6478; width: 38%; font-weight: 600; }
+        p.clause { margin: 6px 0; text-align: justify; }
+        .signatures { width: 100%; border-collapse: collapse; margin-top: 36px; }
+        .signatures td { width: 50%; padding-top: 40px; border-top: 1px solid #2b2030; font-size: 9px; color: #6f6478; text-align: center; }
+        .footer { margin-top: 20px; font-size: 7.6px; color: #9b8caa; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="brand">Bokati Cowork</div>
+    <div class="doc-type">Contrat de domiciliation</div>
+    <div class="doc-number" th:text="${contractNumber}">DOM-2026-00001</div>
+</div>
+
+<h2>Le domicilié</h2>
+<table class="info">
+    <tr><td class="label">Dénomination</td><td th:text="${legalName}">…</td></tr>
+    <tr th:if="${legalForm != null}"><td class="label">Forme juridique</td><td th:text="${legalForm}">…</td></tr>
+    <tr th:if="${registrationNumber != null}"><td class="label">RCCM</td><td th:text="${registrationNumber}">…</td></tr>
+    <tr th:if="${taxNumber != null}"><td class="label">NIU</td><td th:text="${taxNumber}">…</td></tr>
+    <tr th:if="${legalRepresentativeName != null}"><td class="label">Représentant légal</td><td th:text="${legalRepresentativeName}">…</td></tr>
+</table>
+
+<h2>L'adresse attribuée</h2>
+<table class="info">
+    <tr><td class="label">Adresse</td><td th:text="${addressLine}">…</td></tr>
+    <tr th:if="${suiteNumber != null}"><td class="label">Complément distinctif</td><td th:text="${suiteNumber}">…</td></tr>
+    <tr><td class="label">Qualité de l'adresse</td>
+        <td th:text="${fiscalEligible} ? 'Adresse commerciale et fiscale · engagement de douze mois' : 'Adresse commerciale seulement'">…</td></tr>
+</table>
+
+<h2>Durée et conditions</h2>
+<table class="info">
+    <tr><td class="label">Prise d'effet</td><td th:text="${startDate}">…</td></tr>
+    <tr th:if="${endDate != ''}"><td class="label">Échéance</td><td th:text="${endDate}">…</td></tr>
+    <tr><td class="label">Engagement</td><td th:text="${commitmentMonths} + ' mois'">…</td></tr>
+    <tr><td class="label">Facturation</td><td th:text="${billingCycle}">…</td></tr>
+    <tr><td class="label">Préavis de résiliation</td><td th:text="${noticePeriodDays} + ' jours'">…</td></tr>
+    <tr><td class="label">Courrier</td><td th:text="${mailMode}">…</td></tr>
+</table>
+
+<h2>Clauses</h2>
+<p class="clause">1. Le domiciliataire met à disposition du domicilié l'adresse ci-dessus pour y établir son siège, et reçoit en son nom le courrier qui lui est adressé.</p>
+<p class="clause">2. L'adresse ne vaut siège fiscal que sous engagement de douze mois. Un engagement plus court, ou raccourci en cours de contrat, retire cette qualité et emporte la révocation de toute attestation fiscale en cours.</p>
+<p class="clause">3. Le présent contrat n'est pleinement opposable qu'une fois enregistré et timbré auprès de l'administration compétente. Aucune attestation n'est délivrée avant cet enregistrement.</p>
+<p class="clause">4. Le domicilié tient à jour ses pièces d'identité et celles de son représentant légal, et informe le domiciliataire de tout changement de forme, de dénomination ou de représentant.</p>
+<p class="clause">5. Le courrier simple est conservé et remis ; le recommandé et les actes sont notifiés sans délai et remis contre identité et signature. La numérisation, la réexpédition et la garde prolongée sont facturées à l'acte.</p>
+<p class="clause">6. Chaque partie peut résilier moyennant le préavis indiqué. La fin du contrat est notifiée au domicilié et, le cas échéant, à l'administration qui l'a enregistré.</p>
+
+<table class="signatures">
+    <tr>
+        <td>Le domiciliataire</td>
+        <td>Le domicilié</td>
+    </tr>
+</table>
+
+<div class="footer" th:text="'Établi le ' + ${issuedAt} + ' · ' + ${contractNumber}">…</div>
+</body>
+</html>
