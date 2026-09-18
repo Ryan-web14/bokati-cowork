@@ -60,9 +60,16 @@ public final class PhoneNumbers {
         return cleaned.length() >= 6 && cleaned.length() <= 14;
     }
 
-    /** Deja en forme internationale · rien a deviner. */
+    /**
+     * Deja en forme internationale · rien a deviner.
+     *
+     * <p>Avec un plus, ou sans : {@code 33 6 41 53 45 35} est un numero francais que son auteur a
+     * tape sans le plus que son clavier ne proposait pas. Dix chiffres ou plus, pas de zero de
+     * tete, un indicatif connu devant · c'est international, voir {@link DialCodes#leading}.</p>
+     */
     public static boolean isInternational(String raw) {
-        return clean(raw).startsWith("+");
+        String cleaned = clean(raw);
+        return cleaned.startsWith("+") || DialCodes.leading(cleaned).isPresent();
     }
 
     /**
@@ -85,16 +92,15 @@ public final class PhoneNumbers {
         String candidate;
         if (cleaned.startsWith("+")) {
             candidate = cleaned;
+        } else if (DialCodes.leading(cleaned).isPresent()) {
+            candidate = "+" + cleaned;
         } else {
             String code = dialCode == null ? "" : dialCode.replaceAll("[^0-9]", "");
             if (code.isEmpty()) {
                 return Optional.empty();
             }
             String national = keepTrunkZero ? cleaned : cleaned.replaceFirst("^0+", "");
-            // Le numero portait deja l'indicatif, sans le plus · « 242 06... » se voit assez souvent.
-            candidate = national.startsWith(code) && national.length() > code.length() + 5
-                    ? "+" + national
-                    : "+" + code + national;
+            candidate = "+" + code + national;
         }
         return E164.matcher(candidate).matches() ? Optional.of(candidate) : Optional.empty();
     }

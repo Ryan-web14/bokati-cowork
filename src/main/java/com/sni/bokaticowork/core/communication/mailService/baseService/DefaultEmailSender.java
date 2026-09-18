@@ -191,6 +191,26 @@ public class DefaultEmailSender {
         rabbitPublisher.publishEmail(message);
     }
 
+    /**
+     * Redepose dans la file un courriel enregistre mais jamais pris par le broker.
+     *
+     * <p>Les pieces jointes ne sont pas conservees au journal · un courriel avec piece jointe
+     * redepose part sans elle, comme lors d'un renvoi manuel. C'est connu et accepte : le
+     * destinataire a le texte et une reference, il peut demander la piece.</p>
+     *
+     * @return {@code true} si le broker a pris le message cette fois
+     */
+    public boolean republish(EmailDeliveryLog log) {
+        EmailRabbitMessage message = new EmailRabbitMessage(
+                log.getEmailNumber(), log.getRecipientEmail(), log.getFromEmail(), log.getSubject(), log.getBodyContent(),
+                EmailPriority.NORMAL,
+                null, null, null, null, null,
+                null, null, null, null,
+                0, Instant.now()
+        );
+        return rabbitPublisher.publishEmail(message);
+    }
+
     // ─────────────── Blocking methods · used by EmailConsumer only ─────────────
 
     /**

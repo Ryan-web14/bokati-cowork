@@ -61,6 +61,8 @@ public class PhoneNumberService {
                     + " attendu : chiffres, avec ou sans indicatif, espaces et + acceptés");
         }
         if (PhoneNumbers.isInternational(raw)) {
+            // Avec ou sans plus, le numero dit lui-meme d'ou il vient · le pays fourni n'a rien a
+            // ajouter, et ne doit surtout pas s'ajouter devant.
             return PhoneNumbers.toE164(raw, null, false)
                     .orElseThrow(() -> new BadRequestException("Le numéro de téléphone « " + raw.trim()
                             + " » n'a pas une longueur valable"));

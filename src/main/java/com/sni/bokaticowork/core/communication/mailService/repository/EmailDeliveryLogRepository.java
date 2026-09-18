@@ -11,5 +11,13 @@ public interface EmailDeliveryLogRepository extends JpaRepository<EmailDeliveryL
 
     Optional<EmailDeliveryLog> findByEmailNumber(String emailNumber);
 
+    /**
+     * Courriels enregistres mais jamais pris par un consommateur · un consommateur qui prend un
+     * courriel le passe SENDING aussitot, donc un QUEUED qui vieillit n'est jamais arrive au broker.
+     */
+    java.util.List<EmailDeliveryLog> findTop50ByStatusAndCreatedAtBeforeOrderByCreatedAtAsc(
+            com.sni.bokaticowork.core.communication.mailService.enums.EmailDeliveryStatus status,
+            java.time.Instant before);
+
     Optional<EmailDeliveryLog> findFirstByDedupKeyInOrderByCreatedAtDesc(Collection<String> dedupKeys);
 }

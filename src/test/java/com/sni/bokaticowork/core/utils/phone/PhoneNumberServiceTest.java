@@ -107,6 +107,24 @@ class PhoneNumberServiceTest {
     @Test
     void lIndicatifDejaTapeSansLePlusNEstPasDouble() {
         assertEquals("+242061234567", service.normalize("242 06 123 45 67", null));
+        assertEquals("+242061234567", service.normalize("242 06 123 45 67", "CG"));
+    }
+
+    @Test
+    void unIndicatifEtrangerTapeSansLePlusEstReconnuMemeAvecUnPaysDonne() {
+        // Le titulaire est au Congo, son WhatsApp est en France, et son clavier n'a pas de plus.
+        assertEquals("+33641534535", service.normalize("33641534535", "CG"));
+        assertEquals("+33641534535", service.normalize("33 6 41 53 45 35", null));
+        assertEquals("+33641534535", service.normalizeForLookup("33641534535"));
+    }
+
+    @Test
+    void unNumeroNationalCourtNEstJamaisLuCommeInternational() {
+        // Neuf chiffres, ou un zero de tete · c'est un numero d'ici, quel que soit son debut.
+        assertEquals("+242061234567", service.normalize("061234567", null));
+        assertEquals("+221771234567", service.normalize("77 123 45 67", "+221"),
+                "77… n'est pas la Russie : neuf chiffres, c'est un numéro national sénégalais");
+        assertEquals("+237699001122", service.normalize("699 00 11 22", "CM"));
     }
 
     @Test
