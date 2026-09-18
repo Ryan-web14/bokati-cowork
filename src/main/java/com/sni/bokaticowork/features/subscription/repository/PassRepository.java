@@ -17,6 +17,66 @@ public interface PassRepository extends JpaRepository<Pass, Long>, JpaSpecificat
     @Query(nativeQuery = true, value = "SELECT * FROM subscription_pass WHERE pass_number = :passNumber")
     Optional<Pass> findByPassNumber(@Param("passNumber") String passNumber);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription_pass WHERE idempotency_key = :idempotencyKey")
+    Optional<Pass> findByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
+
+    // ---------------------------------------------------------------------------------------
+    // Detection des alertes
+    // ---------------------------------------------------------------------------------------
+
+    /** Pass utilisables dont l'echeance tombe dans la fenetre. */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM subscription_pass
+            WHERE status IN ('ACTIVE', 'PARTIALLY_USED')
+              AND valid_until IS NOT NULL
+              AND valid_until > :now
+              AND valid_until <= :until
+            ORDER BY valid_until
+            LIMIT :limit
+            """)
+    List<Pass> findExpiringSoon(@Param("now") Instant now,
+                                @Param("until") Instant until,
+                                @Param("limit") int limit);
+
+    /**
+     * Pass dont le solde restant tombe sous le seuil, sans etre nul.
+     *
+     * <p>Un pass a zero n'est pas une alerte de solde bas · il est consomme, et son statut le dit
+     * deja. Prevenir la est trop tard, ce qui est exactement le defaut qu'on corrige.</p>
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM subscription_pass
+            WHERE status IN ('ACTIVE', 'PARTIALLY_USED')
+              AND max_uses IS NOT NULL
+              AND max_uses > 0
+              AND (max_uses - COALESCE(used_count, 0)) > 0
+              AND (max_uses - COALESCE(used_count, 0))::numeric / max_uses <= :ratio
+              AND (valid_until IS NULL OR valid_until > :now)
+            ORDER BY (max_uses - COALESCE(used_count, 0))
+            LIMIT :limit
+            """)
+    List<Pass> findLowBalance(@Param("ratio") java.math.BigDecimal ratio,
+                              @Param("now") Instant now,
+                              @Param("limit") int limit);
+
+    /** Pass actifs, acquis depuis un moment, et jamais utilises. */
+    @Query(nativeQuery = true, value = """
+            SELECT p.*
+            FROM subscription_pass p
+            WHERE p.status = 'ACTIVE'
+              AND COALESCE(p.used_count, 0) = 0
+              AND p.valid_from IS NOT NULL
+              AND p.valid_from <= :since
+              AND (p.valid_until IS NULL OR p.valid_until > :now)
+            ORDER BY p.valid_from
+            LIMIT :limit
+            """)
+    List<Pass> findUnused(@Param("since") Instant since,
+                          @Param("now") Instant now,
+                          @Param("limit") int limit);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM subscription_pass

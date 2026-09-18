@@ -22,6 +22,7 @@ public record CreatePassRequest(
         Boolean shareable,
         Integer maxUses,
         String metadataJson,
+        String idempotencyKey,
         @Valid List<PassEntitlementRequest> entitlements
 ) {
 }

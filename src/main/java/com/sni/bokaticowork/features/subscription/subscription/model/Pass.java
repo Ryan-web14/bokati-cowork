@@ -45,6 +45,9 @@ public class Pass {
     @Column(name = "pass_number", nullable = false, unique = true, length = 100)
     private String passNumber;
 
+    @Column(name = "idempotency_key", unique = true, length = 180)
+    private String idempotencyKey;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "pass_type", nullable = false, length = 60)
     private PassType passType;

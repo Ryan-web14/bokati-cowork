@@ -174,6 +174,7 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                 .email(request.getEmail())
                 .password(request.getPassword())
                 .phone(request.getPhone())
+                .phoneCountry(request.getPhoneCountry())
                 .whatsappPhone(request.getWhatsappPhone())
                 .customerType("PERSON")
                 .address(request.getAddress())

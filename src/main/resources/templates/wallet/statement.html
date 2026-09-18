@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Relevé · ' + ${walletNumber}">Relevé de portefeuille</title>
+    <style>
+        @page { size: A4; margin: 28px 30px; }
+        * { box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #2b2030; font-size: 9.5px; line-height: 1.4; }
+        .header { border-bottom: 2px solid #d9a21b; padding-bottom: 10px; margin-bottom: 14px; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { border: none; padding: 0; vertical-align: top; }
+        .brand { font-size: 17px; font-weight: 700; color: #281332; letter-spacing: 2px; text-transform: uppercase; }
+        .brand-sub { font-size: 8px; color: #6f6478; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+        .doc-type { font-size: 18px; font-weight: 700; color: #281332; text-align: right; text-transform: uppercase; letter-spacing: 1.5px; }
+        .doc-number { font-size: 10px; color: #d9a21b; text-align: right; font-weight: 700; font-family: "Courier New", monospace; margin-top: 3px; }
+        .section-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #fff; background: #281332; padding: 5px 10px; margin: 12px 0 8px; }
+        table.info { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+        table.info td { padding: 3px 10px; border-bottom: 1px solid #efe9f2; vertical-align: top; }
+        table.info td.label { color: #6f6478; width: 38%; font-weight: 600; }
+        table.info td.value { font-weight: 600; }
+        .totals { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .totals td { width: 25%; padding: 8px; text-align: center; border: 1px solid #efe9f2; background: #fbfafc; }
+        .totals .label { font-size: 7.5px; color: #6f6478; text-transform: uppercase; letter-spacing: 1px; }
+        .totals .value { font-size: 14px; font-weight: 700; color: #281332; margin-top: 3px; }
+        table.lines { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        table.lines th { background: #efe9f2; color: #281332; font-size: 8px; text-transform: uppercase; letter-spacing: 0.6px; padding: 5px 6px; text-align: left; }
+        table.lines td { padding: 4px 6px; border-bottom: 1px solid #efe9f2; vertical-align: top; }
+        table.lines td.num, table.lines th.num { text-align: right; font-family: "Courier New", monospace; white-space: nowrap; }
+        .credit { color: #1d7a46; }
+        .debit { color: #b3261e; }
+        .mono { font-family: "Courier New", monospace; font-size: 8.5px; }
+        .footer { margin-top: 20px; font-size: 7.6px; color: #9b8caa; text-align: center; }
+        .seal { margin-top: 10px; font-size: 7.6px; color: #6f6478; font-family: "Courier New", monospace; word-break: break-all; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <table class="header-table">
+        <tr>
+            <td>
+                <div class="brand">Bokati Cowork</div>
+                <div class="brand-sub">Portefeuille client</div>
+            </td>
+            <td>
+                <div class="doc-type">Relevé de compte</div>
+                <div class="doc-number" th:text="${walletNumber}">WAL-000001</div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section-title">Titulaire et période</div>
+<table class="info">
+    <tr><td class="label">Titulaire</td><td class="value" th:text="${holderName}">Nom</td></tr>
+    <tr><td class="label">Période</td><td class="value" th:text="${periodLabel}">du … au …</td></tr>
+    <tr><td class="label">Devise</td><td class="value" th:text="${currency}">XAF</td></tr>
+    <tr><td class="label">Édité le</td><td class="value" th:text="${issuedAt}">date</td></tr>
+</table>
+
+<table class="totals">
+    <tr>
+        <td><div class="label">Solde d'ouverture</div><div class="value" th:text="${openingBalance}">0</div></td>
+        <td><div class="label">Total crédits</div><div class="value credit" th:text="${totalCredits}">0</div></td>
+        <td><div class="label">Total débits</div><div class="value debit" th:text="${totalDebits}">0</div></td>
+        <td><div class="label">Solde de clôture</div><div class="value" th:text="${closingBalance}">0</div></td>
+    </tr>
+</table>
+
+<div class="section-title">Opérations</div>
+<table class="lines">
+    <thead>
+    <tr>
+        <th>Date</th>
+        <th>Référence</th>
+        <th>Nature</th>
+        <th>Libellé</th>
+        <th class="num">Crédit</th>
+        <th class="num">Débit</th>
+        <th class="num">Solde</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="line : ${lines}">
+        <td th:text="${line.date}">date</td>
+        <td class="mono" th:text="${line.reference}">WTX</td>
+        <td th:text="${line.nature}">nature</td>
+        <td th:text="${line.label}">libellé</td>
+        <td class="num credit" th:text="${line.credit}"></td>
+        <td class="num debit" th:text="${line.debit}"></td>
+        <td class="num" th:text="${line.balance}">0</td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(lines)}">
+        <td colspan="7" style="text-align:center;color:#9b8caa;padding:14px;">Aucune opération sur la période</td>
+    </tr>
+    </tbody>
+</table>
+
+<div class="seal" th:if="${lastHash != null}">
+    Empreinte de la dernière écriture · <span th:text="${lastHash}">hash</span>
+</div>
+
+<div class="footer">
+    Ce relevé reproduit le journal du portefeuille tel qu'il est tenu par l'établissement.
+    Chaque écriture y est chaînée à la précédente · toute modification ultérieure serait détectable.
+</div>
+</body>
+</html>

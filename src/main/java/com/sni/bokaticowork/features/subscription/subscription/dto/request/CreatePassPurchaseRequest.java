@@ -11,5 +11,6 @@ public record CreatePassPurchaseRequest(
         String currency,
         String validFrom,
         Boolean autoRenew,
-        String metadataJson
+        String metadataJson,
+        String idempotencyKey
 ) {}

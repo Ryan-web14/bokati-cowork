@@ -57,6 +57,8 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 cashRegister.getDeviceCode(),
                 cashRegister.getActive(),
                 cashRegister.getCashControlEnabled(),
+                cashRegister.getSystemManaged(),
+                cashRegister.getRestrictedToMethod(),
                 cashRegister.getMaxCashAmount(),
                 cashRegister.getManagerEmail(),
                 cashRegister.getCreatedAt(),

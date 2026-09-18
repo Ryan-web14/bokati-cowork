@@ -12,6 +12,9 @@ import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
+import com.sni.bokaticowork.features.payment.security.service.WalletMerchantPaymentGuard;
+import com.sni.bokaticowork.features.payment.security.enums.WalletOperationType;
+
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
@@ -43,6 +46,7 @@ public class ClientBillingService {
     private final BillingDocumentPdfService billingDocumentPdfService;
     private final PaymentService paymentService;
     private final WalletService walletService;
+    private final WalletMerchantPaymentGuard merchantPaymentGuard;
     private final PaymentReceiptService paymentReceiptService;
 
     @Transactional(readOnly = true)
@@ -108,10 +112,12 @@ public class ClientBillingService {
     }
 
     @Transactional
-    public PaymentTransactionResponse payWithWallet(Member member, String documentNumber) {
+    public PaymentTransactionResponse payWithWallet(Member member, String documentNumber, String pin) {
         BillingDocumentResponse invoice = billingDocumentService.get(documentNumber);
         verifyOwnership(member, invoice);
         WalletResponse wallet = walletService.getOrCreate(OWNER_TYPE, member.getMemberId(), invoice.currency());
+        merchantPaymentGuard.assertAllowed(walletService.serviceWallet(wallet.walletNumber()),
+                WalletOperationType.MERCHANT_PAYMENT, invoice.balanceDue(), pin);
         PaymentIntentResponse intent = paymentService.createIntentFromBillingDocument(
                 new CreatePaymentIntentFromBillingDocumentRequest(documentNumber, null, null, null, null)
         );

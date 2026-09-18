@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 public record ClientPurchasePassRequest(
         @NotBlank String planCode,
         @NotNull PassType passType,
-        @NotBlank String name
+        @NotBlank String name,
+        /** Cle facultative · un second envoi de la meme demande rend le pass deja achete. */
+        String idempotencyKey
 ) {
 }

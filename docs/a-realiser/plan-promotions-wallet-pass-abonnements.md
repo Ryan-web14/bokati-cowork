@@ -1,4 +1,4 @@
-# Promotions, portefeuille, pass et abonnements · état des lieux et conception
+    # Promotions, portefeuille, pass et abonnements · état des lieux et conception
 
 > Document de référence pour quatre chantiers liés : la tarification promotionnelle, le portefeuille
 > électronique, l'opérationnalisation des pass, et l'élargissement des abonnements aux services de
@@ -757,6 +757,43 @@ même que pour un opérateur de mobile money, même si l'obligation juridique, e
 
 ## 3.3 Code PIN et confirmation des opérations
 
+### Obligatoire ou non, selon ce que l'on fait
+
+Le code n'est pas imposé à tous. L'exiger pour consulter un solde ou pour régler une facture déjà
+connue ajoute une friction que rien ne justifie, et pousse surtout les titulaires vers des codes
+triviaux notés quelque part. Il est donc **facultatif par défaut et activable par configuration**,
+au niveau de l'établissement comme au niveau d'un portefeuille particulier.
+
+Une exception, et elle n'en souffre aucune : **dès qu'un transfert vers un autre abonné est tenté,
+le code devient obligatoire**. Un transfert est la seule opération qui fait sortir de l'argent vers
+quelqu'un d'autre, sans facture en face, et qu'aucune annulation de prestation ne rattrapera. C'est
+aussi, pour cette raison exacte, celle qui intéresse un compte volé.
+
+Si le titulaire n'a pas encore de code, l'opération n'est pas refusée : elle est **suspendue le temps
+qu'il en crée un**, dans le même parcours, puis reprend là où elle s'était arrêtée. Refuser
+sèchement conduirait le client à croire que le transfert a échoué, et à le rejouer.
+
+```text
+WalletSecurityPolicy
+  scope                 GLOBAL | OWNER_TYPE | WALLET
+  scopeCode             portee de la regle quand elle n'est pas globale
+  pinRequirement        DISABLED | OPTIONAL | REQUIRED
+  pinRequiredOperations operations exigeant le code quel que soit le reglage ci-dessus
+  pinLength             longueur imposee, 4 a 6
+  pinExpiryDays         nul si le code n'expire pas
+  maxFailedAttempts, lockoutMinutes, lockoutEscalation
+  otpThresholdAmount    montant au-dela duquel un second canal s'ajoute au code
+  effectiveFrom, effectiveTo
+```
+
+La résolution se fait du plus précis au plus général : le réglage d'un portefeuille l'emporte sur
+celui d'un type de titulaire, qui l'emporte sur le réglage global.
+
+`pinRequiredOperations` est le point de vigilance. C'est une liste modifiable dont un élément ne l'est
+pas : `TRANSFER` y est posé en dur, et l'API de configuration doit **refuser de l'en retirer**. Sans
+ce refus explicite, la règle ne tient plus que par la discipline de celui qui règle le système, ce qui
+n'est pas une garantie mais une espérance.
+
 ```text
 WalletCredential
   wallet
@@ -826,7 +863,8 @@ Mécanique :
    le plus efficace contre l'erreur de saisie.
 2. Le montant est **retenu** sur le portefeuille source, en réutilisant `WalletHold` qui existe déjà,
    pas débité immédiatement.
-3. L'émetteur confirme par PIN.
+3. L'émetteur confirme **par code PIN, obligatoirement**. C'est la seule opération du
+   portefeuille où le code ne peut pas être désactivé par configuration, voir 3.3.
 4. La retenue est capturée, le destinataire crédité, dans **une seule transaction** : les deux
    écritures existent ou aucune.
 5. Les deux parties sont notifiées.
@@ -1002,6 +1040,41 @@ procédure de clôture avec restitution. Le champ `closedAt` existe, la procédu
    client : il peut porter une date limite, contrairement au solde payé. Les deux doivent donc être
    distingués dans le solde, faute de quoi une expiration mordrait sur l'argent du client.
 
+10. **Bénéficiaires enregistrés.** Un destinataire de transfert utilisé plusieurs fois se range dans
+    un carnet, vérifié une fois puis réutilisé. Cela réduit l'erreur de saisie, qui est la première
+    cause de transfert contesté, et donne un signal de conformité utile : un transfert vers un
+    inconnu ne se traite pas comme un transfert vers un bénéficiaire connu depuis six mois.
+11. **Demande de paiement entre abonnés.** L'inverse du transfert : A demande à B, B accepte ou
+    refuse. Rien ne bouge sans l'accord du payeur, ce qui évite d'avoir à autoriser un prélèvement
+    entre particuliers.
+12. **Transfert programmé et récurrent**, pour une société qui dote ses collaborateurs chaque mois.
+    À plafonner et à suspendre automatiquement si le portefeuille source passe sous un seuil, faute
+    de quoi l'échec se répète en silence.
+13. **Alertes de solde bas**, au seuil choisi par le titulaire, avec proposition de rechargement dans
+    le même message.
+14. **Rechargement par un tiers.** Un parent, un employeur. Le crédit porte l'identité de celui qui
+    l'a versé, sans quoi une demande de remboursement devient insoluble.
+15. **Blocage temporaire à l'initiative du titulaire**, en un geste, depuis son espace. C'est ce
+    qu'il cherchera en premier s'il perd son téléphone, et ne pas le trouver le poussera vers le
+    support à un moment où chaque minute compte.
+16. **Journal des appareils et des sessions**, consultable par le titulaire, avec révocation à
+    distance. C'est aussi la source du signal de conformité sur l'appareil partagé.
+17. **Reçu par opération**, généré et horodaté, récupérable en PDF. Le relevé du point 2 dit le
+    mouvement, le reçu prouve l'opération.
+18. **Contestation d'une opération** par le titulaire, qui ouvre un dossier au sens de 3.12, avec
+    délai de traitement et décision motivée. Sans ce chemin, la contestation arrive par courriel et
+    ne se compte nulle part.
+19. **Frais paramétrables**, y compris nuls, mais modélisés dès le départ. Ajouter des frais plus
+    tard à un modèle qui n'en prévoit aucun oblige à reprendre chaque écriture. Rappel de la règle
+    de 3.1 : un transfert entre abonnés ne peut pas porter de frais lucratifs.
+20. **Simulation avant opération.** Montant débité, frais, solde restant, plafond consommé, affichés
+    avant confirmation. C'est le pendant de la simulation de remise du moteur de tarification.
+21. **Motif d'opération normalisé**, choisi dans une liste rendue par le serveur plutôt que saisi
+    librement. Un motif exploitable alimente la surveillance ; un texte libre ne sert à personne.
+22. **Portefeuille en devise unique, assumé.** Le modèle porte une devise et il faut s'y tenir : pas
+    de conversion implicite, et un refus explicite si la devise d'une opération diffère de celle du
+    portefeuille. Une conversion silencieuse est une perte pour quelqu'un.
+
 ### Ce qui est délibérément exclu
 
 | Fonctionnalité | Pourquoi elle est écartée |
@@ -1043,6 +1116,200 @@ WALLET_REVIEW_FLAG   traiter un signalement
 Deux principes : **aucune action administrative sans motif saisi**, et **séparation des rôles** sur
 les opérations sensibles, un débit important exigeant un second visa comme les ajustements de stock
 au-delà d'un seuil.
+
+---
+
+## 3.10 Identité des transactions
+
+Une opération de portefeuille doit porter un identifiant **propre à elle, unique, et attribué une
+seule fois**. Deux formes sont admises, et aucune autre.
+
+**UUID version 7.** Tiré au hasard, mais préfixé d'un horodatage, donc naturellement croissant. C'est
+ce qui le distingue de l'UUID v4 : un index sur une colonne v4 se fragmente, un index sur une colonne
+v7 non. Il n'a besoin d'aucune coordination, ce qui le rend indifférent au nombre d'instances qui
+écrivent.
+
+**Numéro de série dédié.** Composé par le moteur de séquence déjà en place, avec un préfixe qui dit
+la nature de l'opération, `WTX` pour un mouvement, `WTR` pour un transfert. Lisible, prononçable au
+téléphone, utilisable dans un échange avec le client. Sa contrepartie est qu'il se coordonne, donc il
+se lit en base.
+
+Le choix n'est pas à faire une fois pour toutes : **les deux coexistent sur la même écriture**. Un
+identifiant technique v7, immuable, qui sert de clé et de référence entre systèmes ; un numéro de
+série, lisible, qui sert au support et au client. Le premier ne s'affiche jamais, le second ne
+s'utilise jamais comme clé étrangère.
+
+```text
+WalletLedgerEntry  + transactionUuid   UUID v7, unique, immuable, jamais reutilise
+                   + transactionNumber numero de serie lisible, unique
+```
+
+Trois interdits qui donnent son sens à la règle :
+
+- **Jamais l'identifiant technique de la ligne.** Un `id` auto-incrémenté exposé révèle le volume
+  d'activité et se devine, donc se sonde.
+- **Jamais un identifiant dérivé d'autre chose.** Reprendre le numéro d'intention de paiement en le
+  préfixant produit un identifiant qui ne dit rien de plus que ce qui est déjà imprimé à côté, et qui
+  entre en collision le jour où deux écritures partagent la même source. Le module facturation vient
+  de corriger exactement cette erreur sur le bon de commande et la référence client.
+- **Jamais de réutilisation.** Une écriture contre-passée garde son identifiant ; la contre-passation
+  en reçoit un nouveau, et pointe vers le premier.
+
+L'identifiant est attribué **avant** l'écriture au grand livre, parce qu'il sert aussi de clé
+d'idempotence. C'est déjà la mécanique retenue pour `WalletHold`, dont le numéro est généré avant
+l'appel au grand livre pour cette raison précise.
+
+## 3.11 Caisse dédiée aux mouvements de portefeuille
+
+### Ce qui existe déjà
+
+Une caisse automatique par moyen de paiement existe et fonctionne.
+`CashRegisterServiceImpl.recordAutomaticPayment` crée à la demande la caisse `CSR-AUTO-WALLET`, y
+ouvre une session, et y enregistre chaque transaction de portefeuille réussie. La session se clôture
+et se rouvre toute seule au-delà d'un plafond. Le garde-fou contre le double enregistrement est là
+également, par le numéro de transaction.
+
+Il ne s'agit donc pas de créer ce qui existe, mais de **fermer ce qui reste ouvert**.
+
+### Ce qui manque : l'exclusivité
+
+Rien n'empêche aujourd'hui qu'un mouvement manuel soit enregistré sur la caisse du portefeuille.
+`createMovement`, `createEntryVoucher`, `createExitVoucher` et `openSession` prennent un numéro de
+session sans jamais regarder à quelle caisse il appartient. Un caissier peut donc saisir un
+encaissement en espèces sur `CSR-AUTO-WALLET`, et la caisse cesse alors de dire ce qu'elle prétend
+dire.
+
+C'est précisément ce qui la rend inutilisable comme preuve. Une caisse dédiée n'a de valeur que si
+son solde est **reproductible depuis une autre source** : si elle ne contient que des mouvements de
+portefeuille, son total doit égaler, à la période près, la somme des débits du grand livre des
+portefeuilles. Toute autre écriture casse cette égalité et supprime la seule vérification qui compte.
+
+```text
+CashRegister  + registerKind        MANUAL | AUTOMATIC
+              + restrictedToMethod  moyen de paiement unique admis, nul si aucune restriction
+              + systemManaged       vrai si la caisse appartient au systeme
+```
+
+Trois règles à poser :
+
+1. **Une caisse restreinte n'accepte que son moyen.** Tout mouvement dont le moyen diffère est
+   refusé, à l'enregistrement automatique comme à la saisie manuelle.
+2. **Une caisse gérée par le système n'accepte aucune saisie manuelle.** Ni mouvement, ni bon
+   d'entrée ou de sortie, ni ouverture ou clôture de session à la main. Le système l'ouvre, le
+   système la ferme.
+3. **Le rapprochement devient un contrôle, pas un rapport.** Un écart entre le total de
+   `CSR-AUTO-WALLET` et le grand livre des portefeuilles sur la même période est une anomalie qui
+   alerte, au même titre qu'un écart de trésorerie.
+
+La même logique vaut pour `CSR-AUTO-MOBILE-MONEY`, qui souffre exactement du même défaut.
+
+## 3.12 Module de conformité et de surveillance
+
+La section 3.7 pose des briques, signalements et réconciliation. Ce qui suit en fait un module, avec
+ce que cela suppose : une place où l'on regarde, des règles qui tournent sans qu'on les lance, des
+dossiers qui se ferment, et une trace de ce qui a été décidé.
+
+### Le principe qui gouverne le reste
+
+**Détecter n'est pas surveiller.** Un signalement qui n'ouvre pas un dossier, qu'aucune personne
+nommée ne doit traiter, et dont la clôture n'est pas datée, ne protège de rien. Il documente
+seulement, après coup, que le système savait. C'est la pire des situations : la connaissance sans
+l'action.
+
+### Ce qui se surveille
+
+```text
+ComplianceRule
+  ruleCode, name, category
+  category        VELOCITY | AMOUNT | PATTERN | COUNTERPARTY | IDENTITY | GEOGRAPHY
+  expression      parametres de la regle, pas du code
+  severity        INFO | LOW | MEDIUM | HIGH | CRITICAL
+  action          FLAG | REQUIRE_REVIEW | BLOCK_OPERATION | FREEZE_WALLET
+  threshold, windowMinutes
+  active, effectiveFrom, effectiveTo
+  createdBy, approvedBy
+```
+
+Les règles sont **des données, pas du code**. Un seuil qui se change par déploiement ne se change
+jamais.
+
+Familles à couvrir, au-delà des `flagType` déjà listés en 3.7 :
+
+| Famille | Ce qu'elle cherche |
+|---|---|
+| Vélocité | Trop d'opérations, ou un montant cumulé trop élevé, sur une fenêtre courte |
+| Fractionnement | Une suite de montants juste sous un seuil, ce que tout seuil finit par produire |
+| Aller-retour | Rechargement puis transfert immédiat, le portefeuille servant de tuyau et non de réserve |
+| Contreparties | Un émetteur qui arrose, ou un destinataire qui collecte depuis beaucoup de sources |
+| Circularité | A vers B vers C vers A, qui ne sert qu'à brouiller l'origine |
+| Réveil | Un compte dormant redevenu actif avec un montant sans rapport avec son histoire |
+| Identité | Opération dont le montant dépasse ce que le niveau de vérification du titulaire autorise |
+| Appareil | Un même appareil pilotant des portefeuilles sans lien entre eux |
+
+### Le dossier, pas seulement l'alerte
+
+```text
+ComplianceCase
+  caseNumber, subjectType, subjectCode
+  triggeredByFlags     signalements a l'origine du dossier
+  status               OPEN, IN_REVIEW, ESCALATED, CLOSED_CLEARED,
+                       CLOSED_CONFIRMED, CLOSED_REPORTED
+  priority, assignedTo, assignedAt
+  dueAt                delai de traitement, tenu et mesure
+  findings, decision, decisionRationale
+  decidedBy, decidedAt
+  attachments
+```
+
+Un dossier a un responsable, une échéance et une décision motivée. Une décision sans motif écrit
+n'est pas une décision, c'est un classement.
+
+### Vérification de l'identité, reliée aux plafonds
+
+Le module KYC existe. Il n'est relié ni aux plafonds ni aux opérations. Le lien à établir tient en
+une phrase : **le niveau de vérification détermine ce qui est permis**, et une opération qui dépasse
+ce que ce niveau autorise ne se refuse pas sèchement, elle **déclenche une demande de pièces**. Le
+client comprend alors ce qu'on attend de lui, au lieu de buter sur un mur.
+
+Prévoir aussi la **revérification périodique** des dossiers les plus exposés, et le recontrôle après
+un changement significatif, un changement de numéro de téléphone par exemple.
+
+### Personnes exposées et listes
+
+Contrôle à l'entrée en relation puis à intervalle régulier, sur les listes applicables. Le point
+technique qui compte n'est pas le contrôle mais **la conservation de sa preuve** : quelle liste,
+quelle version, quelle date, quel résultat. Un contrôle dont on ne peut pas montrer qu'il a eu lieu
+n'a, en pratique, pas eu lieu.
+
+### Piste d'audit et conservation
+
+```text
+ComplianceAuditEntry
+  entryUuid, occurredAt, actor, actorRole
+  action, subjectType, subjectCode
+  beforeState, afterState
+  rationale
+  previousHash, currentHash
+```
+
+Chaînée comme le grand livre des portefeuilles, et **conservée dix ans**. La durée n'est pas
+négociable et doit être posée dès la conception : une purge écrite trop tôt est irréversible.
+
+### Déclaration et coopération
+
+Il faut la **capacité d'exporter un dossier complet** dans un format lisible par un tiers, avec son
+historique, ses pièces et ses décisions. Elle n'a pas besoin d'être automatisée, mais elle doit
+exister avant qu'on la demande, parce que le jour où on la demande, le délai est court.
+
+Prévoir également le **gel d'un portefeuille sur instruction**, distinct d'une suspension
+commerciale, avec sa trace propre et sa levée tracée.
+
+### Où cela se pilote
+
+Le centre de contrôle de 3.9 gagne un onglet dédié : dossiers ouverts par ancienneté et par priorité,
+dossiers hors délai, règles les plus déclenchantes, taux de faux positifs par règle. Cette dernière
+mesure est celle qui garde le module vivant : **une règle qui ne produit que du bruit finit par être
+ignorée**, et son bruit couvre alors les signaux qui comptaient.
 
 ---
 
@@ -1152,6 +1419,102 @@ doit être présentable, donc imprimable et affichable en PDF ou dans un portefe
    l'infrastructure de notification déjà en place.
 6. **Vente de pass en libre-service** depuis le portail client, payée depuis le portefeuille, ce qui
    relie les parties 2, 3 et 4.
+
+---
+
+## 4.7 Création d'un pass, comparée à celle d'un abonnement
+
+Vérification faite dans le code. La réponse courte : **non, ce n'est pas pareil, et les deux chemins
+de création d'un pass ne se ressemblent même pas entre eux.**
+
+### Deux chemins, deux comportements
+
+`PassServiceImpl` expose deux créations, qui délèguent toutes deux à `PassCreationOperator`.
+
+`createFromPlan`, la vente d'un pass depuis un plan, suit bien le modèle de
+`SubscriptionCreationOperator.create` : résolution de la version de plan et du prix, résolution du
+titulaire, calcul de la taxe, retenue de caution, facturation, historique, événement, courriel,
+activation. La parenté est nette.
+
+`create`, la création manuelle, ne suit rien. Elle force le statut à `ACTIVE`, sans prix, sans taxe,
+sans facture, sans historique, sans événement, sans courriel et sans retenue. Un pass créé par cette
+voie est actif immédiatement et **n'a laissé aucune trace de sa création** ailleurs que dans une
+ligne `PassTransaction` de type `ISSUED`.
+
+Un même objet métier, deux naissances qui ne racontent pas la même histoire. C'est la première chose
+à corriger, avant même de combler les écarts avec l'abonnement.
+
+### Les écarts avec l'abonnement, un par un
+
+| Ce que fait l'abonnement | Le pass | Conséquence |
+|---|---|---|
+| `validateRequiredKycLevel` avant création | Aucune vérification, sur aucun des deux chemins | Un pass se vend sans le niveau de vérification que son plan exige |
+| Refuse un doublon sur le même plan | Aucun contrôle | Un double clic achète deux pass |
+| Crée un `SubscriptionItem` détaillant la vente | Aucune ligne équivalente | Le détail de ce qui a été vendu n'existe que dans la facture |
+| Historique et événement écrits **avant** la branche d'activation | Écrits **après**, et la branche gratuite sort avant | Un pass gratuit n'a ni historique, ni événement, ni courriel |
+| Échéancier de facturation posé | Aucun | Correct, un pass n'est pas récurrent, mais `autoRenew` et `PassRenewalWorker` existent pourtant |
+| Contrat demandé à l'activation | Idem, par `PassLifecycleOperator.activate` | Aucun écart · voir la correction ci-dessous |
+
+Le cas du pass gratuit mérite d'être lu deux fois, parce qu'il n'est pas théorique :
+
+```text
+if (amounts.total().signum() > 0) { billingSupport.createAndInvoice(pass); }
+else { lifecycleOperator.activate(...); return pass; }   <- sortie ici
+
+eventWriter.writeHistory(...);      <- jamais atteint pour un pass gratuit
+eventWriter.writeEvent(...);
+emailNotifier.notifyCreated(pass);
+```
+
+Un pass offert est donc activé sans que rien ne le relate et sans que son bénéficiaire en soit
+averti. L'abonnement, lui, écrit son historique avant de tester l'activation, et le cas gratuit y est
+traité comme les autres.
+
+### Un écart qui touche à la fonctionnalité, pas seulement à la cohérence
+
+`createFromPlan` force `transferable(FALSE)` et `shareable(FALSE)` sans jamais consulter le plan.
+Deux attributs dont la partie 4.4 propose enfin de faire quelque chose sont donc **écrasés à
+l'achat**. Quel que soit le travail fait sur le transfert et le partage, aucun pass vendu ne pourra
+en bénéficier tant que cette ligne est là.
+
+### Ce qu'il faut faire
+
+1. **Un seul chemin de création.** `create` devient un cas particulier de `createFromPlan`, sans
+   plan et à montant nul, et non une seconde implémentation. Tant qu'il y en a deux, elles
+   divergeront à nouveau.
+2. **Sortir l'historique et l'événement de la branche de prix.** Ils s'écrivent avant, comme pour
+   l'abonnement. Un pass gratuit est un pass.
+3. **Vérifier le niveau KYC** comme le fait l'abonnement, sur les deux chemins.
+4. **Rendre la création idempotente**, par clé d'idempotence comme le reste du système, plutôt que
+   par un contrôle de doublon qui n'aurait pas de sens ici puisque plusieurs pass identiques sont
+   légitimes.
+5. **Lire `transferable` et `shareable` depuis le plan**, et les exposer sur `PassPlanVersion` s'ils
+   n'y figurent pas.
+6. **Le contrat n'est pas un écart**, contrairement à ce que ce document affirmait avant
+   vérification dans le code. `PassLifecycleOperator.activate` publie la demande de génération dès
+   que le pass n'a pas encore de contrat, donc le pass vendu obtient le sien au moment où son
+   paiement l'active. Ce qu'il fallait corriger était ailleurs : `create` posait `ACTIVE` à la main
+   **sans passer par l'activation**, et publiait donc la demande lui-même, en doublon de ce que
+   l'activation aurait fait. En routant `create` vers `activate`, la publication redondante
+   disparaît d'elle-même.
+7. **Factoriser le calcul de taxe.** `calculateAmounts` et `calculatePriceAmounts` sont le même
+   algorithme écrit deux fois, avec les mêmes fonctions utilitaires recopiées. Un taux qui change
+   d'un côté et pas de l'autre est une question de temps.
+
+Les points 1, 2 et 3 sont des correctifs et devraient précéder le lot E. Les points 4 à 7 s'y
+intègrent naturellement.
+
+### Sur le point 1, ce qui a été fait et pourquoi pas autrement
+
+Fondre littéralement `create` dans `createFromPlan` n'est pas possible : l'émission manuelle n'a pas
+de `PassPlanVersion`, ses droits viennent de la demande et non d'un plan, et elle n'a pas de prix.
+Les forcer dans la même signature aurait produit une méthode à deux modes, c'est-à-dire le même
+problème sous un autre nom.
+
+Ce qui comptait était que **le cycle de vie se décide en un seul endroit**, et c'est obtenu : les
+deux voies écrivent leur trace de création avant toute branche de prix, puis remettent la suite à
+`PassLifecycleOperator.activate`, seul endroit qui pose `ACTIVE`, accorde les droits, planifie le
+renouvellement et demande le contrat. Il reste deux entrées, il n'y a plus qu'une fin.
 
 ---
 
@@ -1577,7 +1940,8 @@ sans casser le modèle général.
 | Domaine | Entités |
 |---|---|
 | Tarification | `PromotionCondition`, `PromotionReward`, `PromotionAudience`, `PromotionBeneficiary`, `Coupon`, `CouponBatch`, `CouponReservation`, `PriceList`, `PriceListEntry`, `ReferralProgram`, `ReferralLink`, `Referral`, `AppliedDiscount` |
-| Portefeuille | `WalletCredential`, `WalletTransactionConfirmation`, `WalletTransfer`, `WalletMerchantPayment`, `WalletLimitPolicy`, `WalletLimitUsage`, `WalletRiskFlag`, `WalletStatement`, `WalletTreasuryReconciliation` |
+| Portefeuille | `WalletCredential`, `WalletSecurityPolicy`, `WalletTransactionConfirmation`, `WalletTransfer`, `WalletMerchantPayment`, `WalletLimitPolicy`, `WalletLimitUsage`, `WalletRiskFlag`, `WalletStatement`, `WalletTreasuryReconciliation`, `WalletBeneficiary`, `WalletPaymentRequest`, `WalletDevice`, `WalletDispute` |
+| Conformité | `ComplianceRule`, `ComplianceCase`, `ComplianceAuditEntry`, `ComplianceScreeningResult` |
 | Pass | `PassUsage`, `PassValidityRule`, `PassTransfer`, `PassBeneficiary`, `PassCredential` |
 | Abonnement | `ServiceDefinition`, `SubscriptionService`, `DomiciliationContract`, `DomiciliationRegistration`, `MailItem`, `SubscriptionCommitment`, `SubscriptionTermination`, `PlanDerivation`, `PlanDerivationDelta` |
 
@@ -1590,9 +1954,13 @@ Promotion              + promotionType, stackable, exclusive, priority,
                          counterpartAccount, approvedBy, approvedAt
 BillingDocumentDiscount + sourceType, sourceCode
 WalletLedgerEntry      + previousHash, currentHash
-WalletAccount          + limitPolicyCode, lastActivityAt, dormantSince
+WalletAccount          + limitPolicyCode, lastActivityAt, dormantSince,
+                         frozenAt, frozenReason, lockedByOwnerAt
+WalletLedgerEntry      + transactionUuid, transactionNumber
+CashRegister           + registerKind, restrictedToMethod, systemManaged
 PlanVersion            + scope, ownerSubscriptionId, derivedFromVersionId, floorPrice
-Pass                   + rien, le modele suffit
+Pass                   + rien, le modele suffit · c'est sa creation qu'il faut unifier, voir 4.7
+PassPlanVersion        + transferable, shareable, lus a l'achat au lieu d'etre forces a faux
 Subscription           + commitmentId, terminationId, activeDerivationId
 SubscriptionStatus     + PENDING_DOCUMENTS, GRACE_PERIOD, PENDING_TERMINATION
 PromotionStatus        + SCHEDULED, EXHAUSTED
@@ -1645,21 +2013,48 @@ ressources et articles, mise en cache et invalidation, parcours client de saisie
 coupon avant paiement, liste des promotions disponibles. Dépend du lot A. **C'est ce lot qui rend les
 promotions visibles, donc vendeuses** : sans lui, le lot A reste un moteur que personne ne voit.
 
-### Lot B · Portefeuille, socle de confiance (18 à 24 j)
+### Lot B · Portefeuille, socle de confiance (22 à 28 j)
 
-Code PIN, confirmation d'opération, immuabilité et chaînage du journal, réconciliation, limites et
-plafonds liés au KYC. Prérequis de tout le reste du portefeuille : sans secret ni plafond, ouvrir le
-portefeuille à l'initiative du client serait imprudent.
+Code PIN facultatif mais configurable, et obligatoire au transfert. Confirmation d'opération liée par
+empreinte. Identité des transactions, UUID v7 et numéro lisible. Immuabilité et chaînage du journal,
+réconciliation, limites et plafonds liés au KYC. Exclusivité de la caisse automatique du
+portefeuille, qui accepte aujourd'hui n'importe quelle saisie manuelle.
 
-### Lot C · Portefeuille, usages (15 à 20 j)
+Prérequis de tout le reste du portefeuille : sans secret, sans identifiant propre et sans plafond,
+ouvrir le portefeuille à l'initiative du client serait imprudent.
+
+### Lot C · Portefeuille, usages (20 à 26 j)
 
 Transfert entre abonnés, paiement vers l'entreprise, rechargement mobile money en autonomie, relevé
-PDF, notifications. Dépend du lot B.
+PDF, reçus, notifications. Bénéficiaires enregistrés, demande de paiement entre abonnés, alertes de
+solde, blocage à l'initiative du titulaire, journal des appareils, simulation avant opération.
+Dépend du lot B.
 
 ### Lot D · Centre de contrôle portefeuille (10 à 14 j)
 
 Tableau de bord, actions administratives tracées, signalements et leur revue, export comptable,
 rapprochement avec la trésorerie.
+
+### Lot D bis · Conformité et surveillance (18 à 24 j)
+
+Règles de détection paramétrables, dossiers avec responsable, échéance et décision motivée. Lien
+entre niveau de vérification et plafonds, avec demande de pièces plutôt que refus sec. Contrôle des
+listes et conservation de sa preuve. Piste d'audit chaînée, conservée dix ans. Gel sur instruction,
+export d'un dossier complet, mesure des faux positifs par règle.
+
+Dépend du lot B pour le journal chaîné et du lot C pour les transferts, qui sont la matière
+principale de la surveillance. Ce lot peut se mener en parallèle du lot D, il en partage seulement
+l'écran.
+
+### Lot E0 · Correctifs de création des pass · livré
+
+Fin de création unifiée, historique et événement sortis de la branche de prix, vérification du
+niveau KYC enfin appliquée, idempotence, lecture de `transferable` et `shareable` depuis le plan,
+calcul de taxe factorisé entre pass et abonnement. Détail et correction en 4.7.
+
+Migrations `V222` et `V218`. Nouveaux composants partagés `PlanPriceAmountCalculator` et
+`SubscriberKycLevelGuard`, ce dernier reprenant le contrôle qui n'existait qu'en méthode privée de
+l'opérateur d'abonnement.
 
 ### Lot E · Opérationnalisation des pass (15 à 20 j)
 
@@ -1689,7 +2084,13 @@ dates.
 Portail client en écriture, indicateurs d'attrition et de revenu récurrent, relances d'impayé
 paramétrées, historique lisible par le client.
 
-**Volume total** : de l'ordre de 137 à 185 jours-développeur.
+**Volume total** : de l'ordre de 168 à 225 jours-développeur, répartis sur douze lots.
+
+L'écart avec l'estimation précédente, 137 à 185 jours, tient à quatre choses : le socle du
+portefeuille absorbe l'identité des transactions et l'exclusivité de la caisse, les usages
+absorbent une dizaine de fonctionnalités complémentaires, la conformité devient un lot à part
+entière au lieu d'une section, et les correctifs de création des pass s'ajoutent en amont du
+lot E.
 
 ### Un ordre resserré, si l'on veut de la valeur vite
 

@@ -81,6 +81,7 @@ public class MemberServiceImpl  implements MemberService {
     private final DefaultEmailSender emailSender;
     private final SpringTemplateEngine emailTemplateEngine;
     private final PasswordResetService passwordResetService;
+    private final com.sni.bokaticowork.core.utils.phone.PhoneNumberService phoneNumberService;
 
     @Value("${app.verify-base-url:}")
     private String publicBaseUrl;
@@ -513,10 +514,10 @@ public class MemberServiceImpl  implements MemberService {
         request.setCompanyName(normalizeWhitespace(request.getCompanyName()));
         request.setEmail(normalizeEmail(request.getEmail()));
         request.setBillingEmail(normalizeOptionalEmail(request.getBillingEmail()));
-        request.setPhone(normalizePhone(request.getPhone()));
+        request.setPhone(normalizePhone(request.getPhone(), request.getPhoneCountry()));
 
         if (StringUtils.hasText(request.getWhatsappPhone())) {
-            request.setWhatsappPhone(normalizePhone(request.getWhatsappPhone()));
+            request.setWhatsappPhone(normalizePhone(request.getWhatsappPhone(), request.getPhoneCountry()));
         }
     }
 
@@ -593,8 +594,17 @@ public class MemberServiceImpl  implements MemberService {
         return StringUtils.hasText(value) ? normalizeEmail(value) : null;
     }
 
-    private String normalizePhone(String value) {
-        return value == null ? null : value.replaceAll("\\s+", "");
+    /**
+     * Forme internationale · le pays complete l'indicatif s'il manque.
+     *
+     * <p>Un numero illisible passe ici tel quel, nettoye : c'est la validation qui le refusera,
+     * avec le message qui va avec, plutot qu'une exception au milieu d'une normalisation.</p>
+     */
+    private String normalizePhone(String value, String country) {
+        if (!StringUtils.hasText(value) || !ValidationUtils.validatePhoneNumber(value)) {
+            return value == null ? null : value.replaceAll("\\s+", "");
+        }
+        return phoneNumberService.normalize(value, country);
     }
 
     private void normalizeUpdateRequest(UpdateMemberRequest request) {
@@ -605,8 +615,8 @@ public class MemberServiceImpl  implements MemberService {
         request.setFirstname(normalizeWhitespace(request.getFirstname()));
         request.setLastname(normalizeWhitespace(request.getLastname()));
         request.setEmail(normalizeOptionalEmail(request.getEmail()));
-        request.setPhone(normalizePhone(request.getPhone()));
-        request.setWhatsappPhone(normalizePhone(request.getWhatsappPhone()));
+        request.setPhone(normalizePhone(request.getPhone(), request.getPhoneCountry()));
+        request.setWhatsappPhone(normalizePhone(request.getWhatsappPhone(), request.getPhoneCountry()));
     }
 
     private void validateUpdateRequest(Member member, UpdateMemberRequest request) {
@@ -751,6 +761,7 @@ public class MemberServiceImpl  implements MemberService {
                 .billingEmail(request.getBillingEmail())
                 .address(request.getAddress())
                 .phone(request.getPhone())
+                .phoneCountry(request.getPhoneCountry())
                 .whatsappPhone(request.getWhatsappPhone())
                 .build();
 

@@ -3,12 +3,16 @@ package com.sni.bokaticowork.features.portal.subscription.service;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
+import com.sni.bokaticowork.features.payment.security.service.WalletMerchantPaymentGuard;
+import com.sni.bokaticowork.features.payment.security.enums.WalletOperationType;
+
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
@@ -38,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -52,6 +57,7 @@ public class ClientSubscriptionService {
     private final BillingDocumentService billingDocumentService;
     private final PaymentService paymentService;
     private final WalletService walletService;
+    private final WalletMerchantPaymentGuard merchantPaymentGuard;
 
 
     @Transactional(readOnly = true)
@@ -162,11 +168,13 @@ public class ClientSubscriptionService {
     }
 
     @Transactional
-    public PaymentTransactionResponse paySubscriptionWithWallet(Member member, String subscriptionNumber) {
+    public PaymentTransactionResponse paySubscriptionWithWallet(Member member, String subscriptionNumber, String pin) {
         SubscriptionResponse sub = subscriptionService.get(subscriptionNumber);
         verifySubscriptionOwnership(member, sub);
         BillingDocumentResponse invoice = findPayableInvoice("SUBSCRIPTION", subscriptionNumber, sub.currency());
         WalletResponse wallet = walletService.getOrCreate(MEMBER.name(), member.getMemberId(), sub.currency());
+        merchantPaymentGuard.assertAllowed(walletService.serviceWallet(wallet.walletNumber()),
+                WalletOperationType.BILL_PAYMENT, invoice.balanceDue(), pin);
         PaymentIntentResponse intent = paymentService.createIntentFromBillingDocument(
                 new CreatePaymentIntentFromBillingDocumentRequest(invoice.documentNumber(), null, null, null, null)
         );
@@ -198,12 +206,14 @@ public class ClientSubscriptionService {
     }
 
     @Transactional
-    public PaymentTransactionResponse payPassWithWallet(Member member, String passNumber) {
+    public PaymentTransactionResponse payPassWithWallet(Member member, String passNumber, String pin) {
         PassResponse pass = passService.get(passNumber);
         verifyPassOwnership(member, pass);
         BillingDocumentResponse invoice = findPayableInvoice("PASS", passNumber, null);
         String currency = invoice.currency();
         WalletResponse wallet = walletService.getOrCreate(MEMBER.name(), member.getMemberId(), currency);
+        merchantPaymentGuard.assertAllowed(walletService.serviceWallet(wallet.walletNumber()),
+                WalletOperationType.BILL_PAYMENT, invoice.balanceDue(), pin);
         PaymentIntentResponse intent = paymentService.createIntentFromBillingDocument(
                 new CreatePaymentIntentFromBillingDocumentRequest(invoice.documentNumber(), null, null, null, null)
         );
@@ -215,16 +225,61 @@ public class ClientSubscriptionService {
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
+    /**
+     * Nombre de factures examinees avant de renoncer. Un abonnement en produit plusieurs des sa
+     * creation · le loyer, les frais d'entree, la caution. Sur plusieurs periodes, elles
+     * s'accumulent.
+     */
+    private static final int INVOICE_LOOKUP_PAGE = 100;
+
+    /**
+     * Premiere facture restant a payer, la plus ancienne d'abord.
+     *
+     * <p>Deux defauts se combinaient ici, et le second masquait le premier.</p>
+     *
+     * <p>La recherche ne demandait <b>qu'une seule</b> facture, puis filtrait en memoire celles dont
+     * le solde est non nul. Comme la requete rend les plus recentes d'abord, il suffisait que la
+     * derniere emise soit deja reglee pour que le filtre vide la liste et que l'appel reponde
+     * « aucune facture a payer », alors qu'une facture impayee attendait juste derriere. C'est
+     * exactement ce qui arrive a un abonnement, qui emet des sa creation une facture de loyer, une
+     * de frais d'entree et une de caution : regler la derniere rendait les autres inaccessibles.</p>
+     *
+     * <p>Et l'ordre etait le mauvais. On solde une dette en commencant par la plus ancienne · payer
+     * la plus recente en premier laisse vieillir celle qui deviendra exigible la premiere.</p>
+     */
     private BillingDocumentResponse findPayableInvoice(String sourceType, String sourceCode, String currency) {
-        PaginatedResponse<BillingDocumentResponse> invoices = billingDocumentService.list(
-                BillingDocumentType.INVOICE, null, null, null,
-                sourceType, sourceCode, null, null, null,
-                Pageable.ofSize(1)
-        );
-        return invoices.getData().stream()
-                .filter(d -> d.balanceDue() != null && d.balanceDue().compareTo(BigDecimal.ZERO) > 0)
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("No payable invoice found"));
+        List<BillingDocumentResponse> payable = billingDocumentService.list(
+                        BillingDocumentType.INVOICE, null, null, null,
+                        sourceType, sourceCode, null, null, null,
+                        Pageable.ofSize(INVOICE_LOOKUP_PAGE))
+                .getData().stream()
+                .filter(this::isPayable)
+                .filter(document -> matchesCurrency(document, currency))
+                .sorted(Comparator.comparing(BillingDocumentResponse::issueDate,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+
+        if (payable.isEmpty()) {
+            throw new ResourceNotFoundException("Aucune facture à payer pour " + sourceCode);
+        }
+        return payable.getFirst();
+    }
+
+    private boolean isPayable(BillingDocumentResponse document) {
+        return document.balanceDue() != null
+                && document.balanceDue().compareTo(BigDecimal.ZERO) > 0
+                && document.status() != BillingDocumentStatus.CANCELLED
+                && document.status() != BillingDocumentStatus.DRAFT;
+    }
+
+    /**
+     * Une facture dans une autre devise que celle attendue n'est pas payable ici · le portefeuille
+     * est mono-devise, et une conversion silencieuse est une perte pour quelqu'un.
+     */
+    private boolean matchesCurrency(BillingDocumentResponse document, String currency) {
+        return currency == null
+                || document.currency() == null
+                || currency.equalsIgnoreCase(document.currency());
     }
 
     private void verifySubscriptionOwnership(Member member, SubscriptionResponse sub) {

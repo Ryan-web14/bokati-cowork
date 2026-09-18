@@ -34,9 +34,22 @@ public class SubscriptionBillingSupport {
     private final BillableItemInvoiceSupport billableItemInvoiceSupport;
 
     public void createSubscriptionSetupItems(Subscription subscription, PlanPrice price) {
-        BigDecimal recurringRaw  = safe(price.getAmount());
-        BigDecimal setupFeeRaw   = safe(price.getSetupFee());
-        BigDecimal depositRaw    = safe(price.getDepositAmount());
+        createSubscriptionSetupItems(subscription, safe(price.getAmount()),
+                safe(price.getSetupFee()), safe(price.getDepositAmount()));
+    }
+
+    /**
+     * Ventile en montants effectifs plutot qu'en tarif catalogue.
+     *
+     * <p>La repartition entre recurrent et frais d'entree se fait au prorata du total facturable.
+     * Une remise generale se reporte donc d'elle-meme sur les deux lignes. Une dispense de frais
+     * d'entree, elle, ne doit toucher que la seconde · d'ou le besoin de recevoir les montants deja
+     * reduits, et non le tarif du catalogue.</p>
+     */
+    public void createSubscriptionSetupItems(Subscription subscription,
+                                             BigDecimal recurringRaw,
+                                             BigDecimal setupFeeRaw,
+                                             BigDecimal depositRaw) {
         BigDecimal taxableBase   = recurringRaw.add(setupFeeRaw);
         BigDecimal totalAmount   = safe(subscription.getTotalAmount());
         BigDecimal chargeableTotal = totalAmount.subtract(depositRaw);

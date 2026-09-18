@@ -36,10 +36,19 @@ public class RegisterMemberRequest {
     @Size(min = 8, max = 45, message = "Password must be between 8 and 45 characters")
     private String password;
 
+    // Toutes les formes que les gens tapent : +, 00, espaces, points, tirets, parentheses.
+    // La mise en forme internationale se fait ensuite, avec le pays si l'indicatif manque.
     @NotBlank
     @Size(max = 30)
-    @Pattern(regexp = "^\\+?[0-9]{8,15}$", message = "Invalid phone number format")
+    @Pattern(regexp = "^[+0-9()\\s.\\-]{6,30}$", message = "Invalid phone number format")
     private String phone;
+
+    /**
+     * Pays du numero, quand celui-ci ne porte pas son indicatif · code ISO (CG, FR) ou indicatif
+     * (+242). Ignore si le numero commence par un plus. Absent, le pays de l'etablissement.
+     */
+    @Size(max = 10)
+    private String phoneCountry;
 
     @Size(max = 30)
     private String whatsappPhone;

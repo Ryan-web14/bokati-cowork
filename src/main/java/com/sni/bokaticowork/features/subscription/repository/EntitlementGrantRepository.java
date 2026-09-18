@@ -133,6 +133,45 @@ public interface EntitlementGrantRepository extends JpaRepository<EntitlementGra
                                                                       @Param("resourceGroupCode") String resourceGroupCode,
                                                                       @Param("now") Instant now);
 
+    /**
+     * Meme recherche, sans la condition de solde.
+     *
+     * <p>Un droit epuise reste un droit : l'abonne y a bien acces, il l'a simplement consomme. La
+     * distinction compte parce qu'elle decide entre deux reponses tres differentes · « votre
+     * abonnement ne couvre pas cette salle », qui est un refus definitif, et « vous avez epuise vos
+     * cinq heures », qui ouvre le depassement si la politique du plan l'autorise.</p>
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT eg.*
+            FROM entitlement_grant eg
+            JOIN entitlement_definition ed ON ed.id = eg.entitlement_definition_id
+            LEFT JOIN resource_type rt ON rt.id = ed.resource_type_id
+            LEFT JOIN resource_group rg ON rg.id = ed.resource_group_id
+            WHERE eg.owner_type = :ownerType
+              AND eg.owner_code = :ownerCode
+              AND eg.subscription_id = :subscriptionId
+              AND eg.status IN ('ACTIVE', 'DEPLETED')
+              AND eg.valid_from <= :now
+              AND (eg.valid_until IS NULL OR eg.valid_until >= :now)
+              AND ed.active = true
+              AND ed.deleted = false
+              AND (ed.resource_type_id IS NULL OR rt.code = :resourceTypeCode)
+              AND (ed.resource_group_id IS NULL OR rg.code = :resourceGroupCode)
+            ORDER BY
+              CASE WHEN ed.resource_group_id IS NULL THEN 0 ELSE 2 END DESC,
+              CASE WHEN ed.resource_type_id IS NULL THEN 0 ELSE 1 END DESC,
+              eg.priority ASC,
+              eg.valid_until ASC NULLS LAST,
+              eg.created_at ASC
+            LIMIT 1
+            """)
+    Optional<EntitlementGrant> findSubscriptionGrantIgnoringBalance(@Param("ownerType") String ownerType,
+                                                                      @Param("ownerCode") String ownerCode,
+                                                                      @Param("subscriptionId") Long subscriptionId,
+                                                                      @Param("resourceTypeCode") String resourceTypeCode,
+                                                                      @Param("resourceGroupCode") String resourceGroupCode,
+                                                                      @Param("now") Instant now);
+
     @Query(nativeQuery = true, value = """
             SELECT eg.*
             FROM entitlement_grant eg

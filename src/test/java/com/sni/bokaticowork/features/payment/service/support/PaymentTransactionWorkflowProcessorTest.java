@@ -69,6 +69,9 @@ class PaymentTransactionWorkflowProcessorTest {
     @Mock
     private RefundEmailNotifier refundEmailNotifier;
 
+    @Mock
+    private com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
+
     @InjectMocks
     private PaymentTransactionWorkflowProcessor processor;
 

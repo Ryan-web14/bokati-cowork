@@ -62,7 +62,7 @@ public class BookingPricingCalculator {
         ResourceBookingUnit unit = rule == null ? ResourceBookingUnit.HOUR : rule.getResourceBookingUnit();
         BigDecimal unitPrice = BigDecimal.valueOf(rule == null || rule.getPrice() == null ? 0 : rule.getPrice());
         BigDecimal units = unitCount(unit, startedAt, endedAt, forcedUnit != null)
-                .multiply(BigDecimal.valueOf(quantity));
+                .multiply(BigDecimal.valueOf(billableQuantity(resource, quantity)));
         BigDecimal amount = unitPrice.multiply(units).setScale(4, RoundingMode.HALF_UP);
         return new Price(unit, unitPrice, units, amount, "XAF");
     }
@@ -175,6 +175,17 @@ public class BookingPricingCalculator {
 
     private BigDecimal ceil(long minutes, long denominator) {
         return BigDecimal.valueOf((long) Math.ceil((double) minutes / denominator)).setScale(4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Quantite qui multiplie le prix.
+     *
+     * <p>On loue une salle, pas un siege. Multiplier par le nombre de participants facturait cent
+     * vingt mille francs une salle a vingt mille pour six personnes · la quantite n'y est
+     * qu'indicative, et le tarif est celui de la piece.</p>
+     */
+    private int billableQuantity(Resource resource, int quantity) {
+        return resource != null && resource.isWholeResourceBooking() ? 1 : quantity;
     }
 
     public record Price(ResourceBookingUnit unit, BigDecimal unitPrice, BigDecimal quantity, BigDecimal amount, String currency) {

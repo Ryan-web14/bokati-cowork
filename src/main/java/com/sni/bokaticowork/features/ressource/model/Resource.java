@@ -110,6 +110,18 @@ public class Resource {
      * If the resource type declares a bookableSlots constraint (e.g. 1 for meeting rooms),
      * that value takes precedence over the person-capacity of the resource.
      */
+    /**
+     * La location occupe-t-elle toute la ressource. Voir {@code ResourceType.wholeResourceBooking}.
+     */
+    public boolean isWholeResourceBooking() {
+        return resourceType != null && Boolean.TRUE.equals(resourceType.getWholeResourceBooking());
+    }
+
+    /** Nombre de personnes que la ressource peut accueillir, quelle que soit sa facon de se louer. */
+    public int resolveSeatingCapacity() {
+        return capacity != null ? capacity : resolveBookableSlots();
+    }
+
     public int resolveBookableSlots() {
         if (resourceType != null && resourceType.getBookableSlots() != null) {
             return resourceType.getBookableSlots();

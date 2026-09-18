@@ -107,6 +107,7 @@ public class ClientCatalogService {
                 false,
                 null,
                 null,
+                request.idempotencyKey(),
                 null
         );
         return passService.create(createRequest);

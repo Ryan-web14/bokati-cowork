@@ -27,6 +27,7 @@ import static java.math.BigDecimal.ONE;
 public class BillingAutoInvoiceService {
 
     private static final String BILLING_DOCUMENT_SOURCE = "BILLING_DOCUMENT";
+    private static final String WALLET_TOPUP_SOURCE = "WALLET_TOPUP";
     private static final String MULTI_BILLING_DOCUMENT_SOURCE = "MULTI_BILLING_DOCUMENT";
     private static final String PAYMENT_INTENT_SOURCE = "PAYMENT_INTENT";
 
@@ -73,7 +74,11 @@ public class BillingAutoInvoiceService {
     public boolean shouldAutoInvoice(PaymentIntent intent) {
         return intent != null
                 && !BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(intent.getSourceType())
-                && !MULTI_BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(intent.getSourceType());
+                && !MULTI_BILLING_DOCUMENT_SOURCE.equalsIgnoreCase(intent.getSourceType())
+                // Un rechargement de portefeuille n'est pas une vente : l'argent recu est une dette
+                // envers le titulaire, pas un chiffre d'affaires. Le facturer creerait un revenu
+                // fictif et une TVA sur rien.
+                && !WALLET_TOPUP_SOURCE.equalsIgnoreCase(intent.getSourceType());
     }
 
     private BillingDocument createInvoice(BillingAutoInvoiceRequest request) {

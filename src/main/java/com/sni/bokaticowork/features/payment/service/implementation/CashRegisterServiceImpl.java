@@ -134,6 +134,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (!Boolean.TRUE.equals(register.getActive())) {
             throw new BadRequestException("Cash register is inactive");
         }
+        assertManualEntryAllowed(register);
         sessionRepository.findBlockingSessionByCashRegisterId(register.getId())
                 .ifPresent(session -> {
                     throw new BadRequestException("Cash register already has an active session");
@@ -174,6 +175,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Override
     public CashSessionResponse closeSession(String sessionNumber, CloseCashSessionRequest request) {
         CashSession session = requireOpenSession(sessionNumber);
+        // Une caisse automatique se clot sur son seuil, pas sur un comptage · il n'y a pas d'especes
+        // a compter, et un ecart declare a la main y serait un ecart invente.
+        assertManualEntryAllowed(session.getCashRegister());
         BigDecimal countedAmount = request.countedClosingAmount() != null ? request.countedClosingAmount() : request.closingAmount();
         if (countedAmount == null) {
             throw new BadRequestException("Counted closing amount is required");
@@ -470,6 +474,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Override
     public void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy) {
         CashSession session = requireOpenSession(sessionNumber);
+        assertManualEntryAllowed(session.getCashRegister());
         validatePositive(amount);
         saveMovement(session, CashMovementType.PAYMENT, amount, CashDocumentType.RECEIPT, trim(referenceCode), "PAYMENT",
                 "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, trim(createdBy), null);
@@ -492,6 +497,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
         BigDecimal amount = money(transaction.getAmount());
         CashRegister register = automaticRegister(transaction.getPaymentMethod());
+        assertMethodAllowed(register, transaction.getPaymentMethod());
         CashSession session = automaticSession(register, transaction.getPaymentMethod(), amount);
         PaymentIntent intent = transaction.getPaymentIntent();
         String methodLabel = paymentMethodLabel(transaction.getPaymentMethod());
@@ -514,11 +520,28 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         String registerCode = automaticRegisterCode(method);
         return registerRepository.findByRegisterCode(registerCode)
                 .map(register -> {
+                    // Une caisse automatique creee avant cette regle n'en porte pas encore la
+                    // marque · on la lui pose au premier passage plutot que par une migration,
+                    // pour que la verite soit celle du code qui la cree.
+                    boolean changed = false;
                     if (!Boolean.TRUE.equals(register.getActive())) {
                         register.setActive(true);
-                        return registerRepository.save(register);
+                        changed = true;
                     }
-                    return register;
+                    if (!Boolean.TRUE.equals(register.getSystemManaged())) {
+                        register.setSystemManaged(true);
+                        changed = true;
+                    }
+                    // La restriction n'est posee que si elle manque. La recrire quand elle differe
+                    // effacerait le garde au moment meme ou il aurait quelque chose a dire : une
+                    // caisse restreinte au portefeuille que l'on retrouve sous le code du mobile
+                    // money est une configuration cassee, pas une configuration a rattraper en
+                    // silence · assertMethodAllowed doit pouvoir le refuser.
+                    if (register.getRestrictedToMethod() == null && exclusiveMethod(method) != null) {
+                        register.setRestrictedToMethod(exclusiveMethod(method));
+                        changed = true;
+                    }
+                    return changed ? registerRepository.save(register) : register;
                 })
                 .orElseGet(() -> registerRepository.save(CashRegister.builder()
                         .registerCode(registerCode)
@@ -528,6 +551,8 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         .deviceCode(automaticDeviceCode(method))
                         .active(true)
                         .cashControlEnabled(true)
+                        .systemManaged(true)
+                        .restrictedToMethod(exclusiveMethod(method))
                         .maxCashAmount(autoLimit())
                         .build()));
     }
@@ -572,6 +597,50 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         return autoSessionLimit == null || autoSessionLimit.signum() <= 0
                 ? DEFAULT_AUTO_SESSION_LIMIT.setScale(4, RoundingMode.HALF_UP)
                 : money(autoSessionLimit);
+    }
+
+    /**
+     * Moyen de paiement exclusif d'une caisse automatique.
+     *
+     * <p>La caisse generique n'en a pas : elle recueille ce qui ne releve d'aucune caisse dediee, et
+     * lui imposer un moyen unique la rendrait inutilisable des qu'un troisieme moyen apparaitrait.</p>
+     */
+    private PaymentMethod exclusiveMethod(PaymentMethod method) {
+        return switch (method) {
+            case WALLET, MOBILE_MONEY -> method;
+            default -> null;
+        };
+    }
+
+    /**
+     * Refuse toute saisie humaine sur une caisse tenue par le systeme.
+     *
+     * <p>Le message nomme la caisse et dit ou aller : un caissier qui tombe la-dessus s'est trompe
+     * de caisse, il n'a pas besoin d'un refus, il a besoin de savoir laquelle prendre.</p>
+     */
+    private void assertManualEntryAllowed(CashRegister register) {
+        if (Boolean.TRUE.equals(register.getSystemManaged())) {
+            throw new BadRequestException("La caisse " + register.getRegisterCode()
+                    + " est tenue automatiquement par le systeme · aucune saisie manuelle n'y est acceptee,"
+                    + " utilisez une caisse ordinaire");
+        }
+    }
+
+    /**
+     * Refuse un moyen de paiement etranger a la caisse.
+     *
+     * <p>Sans cette regle, un paiement en especes atterrirait sur la caisse des portefeuilles et son
+     * total cesserait d'etre celui des portefeuilles · le rapprochement avec le grand livre du
+     * portefeuille, qui est la seule verification serieuse de cette caisse, ne voudrait plus rien
+     * dire.</p>
+     */
+    private void assertMethodAllowed(CashRegister register, PaymentMethod method) {
+        PaymentMethod restricted = register.getRestrictedToMethod();
+        if (restricted != null && restricted != method) {
+            throw new BadRequestException("La caisse " + register.getRegisterCode()
+                    + " n'accepte que les paiements " + paymentMethodLabel(restricted)
+                    + " · un paiement " + paymentMethodLabel(method) + " n'y a pas sa place");
+        }
     }
 
     private String automaticRegisterCode(PaymentMethod method) {
@@ -655,6 +724,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                                             String createdBy,
                                             String metadataJson) {
         validatePositive(amount);
+        // Toute saisie humaine passe ici · le controle y tient donc en un seul point, plutot que
+        // repete a chaque point d'entree ou l'un d'eux finirait par l'oublier.
+        assertManualEntryAllowed(session.getCashRegister());
         if (!StringUtils.hasText(createdBy)) {
             throw new BadRequestException("Created by is required for manual cash movement");
         }

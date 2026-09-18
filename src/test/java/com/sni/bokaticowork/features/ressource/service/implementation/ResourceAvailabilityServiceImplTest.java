@@ -2,9 +2,10 @@ package com.sni.bokaticowork.features.ressource.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.features.ressource.dto.request.CreateResourceAvailabilityRequest;
-import com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.enums.ResourceStatus;
 import com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse;
+import com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest;
+import com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest;
 import com.sni.bokaticowork.features.ressource.model.Resource;
 import com.sni.bokaticowork.features.ressource.model.ResourceAvailability;
 import com.sni.bokaticowork.features.ressource.model.ResourcePolicy;
@@ -380,6 +381,128 @@ class ResourceAvailabilityServiceImplTest {
 
     private LocalDateTime nextWholeHour() {
         return LocalDateTime.now().withMinute(0).withSecond(0).withNano(0).plusHours(1);
+    }
+
+    // -------------------------------------------------------------------------------------
+    // Ressource louée en entier
+    // -------------------------------------------------------------------------------------
+
+    /**
+     * Une salle se loue entière. Ne retirer que la quantité demandée laissait des places libres sur
+     * une pièce déjà louée : une personne sur une salle de douze en laissait onze, et un second
+     * client pouvait réserver le même créneau et s'y présenter.
+     */
+    @Test
+    void takesTheWholeSlotWhenTheResourceIsRentedAsAWhole() {
+        Resource room = wholeResource(12);
+        ResourceAvailability slot = slotOf(room, 12, 12);
+        givenReservableSlot(room, slot);
+
+        service.reserve(ReserveResourceAvailabilityRequest.builder()
+                .resourceCode(RESOURCE_CODE)
+                .startedAt(slot.getStartedAt())
+                .endedAt(slot.getEndedAt())
+                .quantity(1)
+                .build());
+
+        assertEquals(0, slot.getRemainingCapacity());
+        assertFalse(slot.getAvailable());
+    }
+
+    @Test
+    void stillTakesOnlyWhatIsAskedOnASharedResource() {
+        Resource openSpace = sharedResource(12);
+        ResourceAvailability slot = slotOf(openSpace, 12, 12);
+        givenReservableSlot(openSpace, slot);
+
+        service.reserve(ReserveResourceAvailabilityRequest.builder()
+                .resourceCode(RESOURCE_CODE)
+                .startedAt(slot.getStartedAt())
+                .endedAt(slot.getEndedAt())
+                .quantity(3)
+                .build());
+
+        assertEquals(9, slot.getRemainingCapacity());
+        assertTrue(slot.getAvailable());
+    }
+
+    /** Ce qui a été pris en entier se rend en entier. */
+    @Test
+    void givesTheWholeSlotBackOnRelease() {
+        Resource room = wholeResource(12);
+        ResourceAvailability slot = slotOf(room, 12, 0);
+        slot.setAvailable(false);
+        givenReservableSlot(room, slot);
+
+        service.release(ReleaseResourceAvailabilityRequest.builder()
+                .resourceCode(RESOURCE_CODE)
+                .startedAt(slot.getStartedAt())
+                .endedAt(slot.getEndedAt())
+                .quantity(1)
+                .build());
+
+        assertEquals(12, slot.getRemainingCapacity());
+        assertTrue(slot.getAvailable());
+    }
+
+    /**
+     * Tout ou rien : louer une salle dont quelqu'un occupe déjà une partie n'a pas de sens quand on
+     * loue la pièce.
+     */
+    @Test
+    void refusesAPartiallyTakenSlotForAWholeResource() {
+        Resource room = wholeResource(12);
+        ResourceAvailability slot = slotOf(room, 12, 6);
+        givenReservableSlot(room, slot);
+
+        assertThrows(ConflictException.class, () -> service.reserve(ReserveResourceAvailabilityRequest.builder()
+                .resourceCode(RESOURCE_CODE)
+                .startedAt(slot.getStartedAt())
+                .endedAt(slot.getEndedAt())
+                .quantity(1)
+                .build()));
+    }
+
+    private void givenReservableSlot(Resource resource, ResourceAvailability slot) {
+        when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(resource);
+        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class), any(Limit.class))).thenReturn(List.of());
+        when(availabilityRepository.lockAllSlotsInRange(eq(resource), any(), any())).thenReturn(List.of(slot));
+        // Laxiste : la liberation ne consulte pas les fermetures, seule la reservation le fait.
+        org.mockito.Mockito.lenient()
+                .when(closureRepository.existsActiveOverlap(eq(resource), any(), any())).thenReturn(false);
+    }
+
+    private ResourceAvailability slotOf(Resource resource, int totalCapacity, int remainingCapacity) {
+        LocalDateTime start = LocalDateTime.now().plusDays(2).withHour(10)
+                .withMinute(0).withSecond(0).withNano(0);
+        return ResourceAvailability.builder()
+                .resource(resource)
+                .startedAt(start)
+                .endedAt(start.plusMinutes(30))
+                .slotDurationMinutes(30)
+                .totalCapacity(totalCapacity)
+                .remainingCapacity(remainingCapacity)
+                .available(true)
+                .active(true)
+                .build();
+    }
+
+    private Resource wholeResource(int seats) {
+        Resource resource = bookableResourceWithPolicy(480);
+        resource.setCapacity(seats);
+        resource.setResourceType(com.sni.bokaticowork.features.ressource.model.ResourceType.builder()
+                .code("RTY-00001").name("Salle de reunion")
+                .bookableSlots(1).wholeResourceBooking(Boolean.TRUE).build());
+        return resource;
+    }
+
+    private Resource sharedResource(int seats) {
+        Resource resource = bookableResourceWithPolicy(480);
+        resource.setCapacity(seats);
+        resource.setResourceType(com.sni.bokaticowork.features.ressource.model.ResourceType.builder()
+                .code("RTY-00003").name("Poste Open Space")
+                .wholeResourceBooking(Boolean.FALSE).build());
+        return resource;
     }
 
     private Resource noticeMinutes(int minBookingNoticeMinutes) {

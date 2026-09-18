@@ -88,6 +88,21 @@ class MemberServiceImplTest {
     @Mock
     private PasswordResetService passwordResetService;
 
+    @Mock
+    private com.sni.bokaticowork.core.utils.phone.PhoneNumberService phoneNumberService;
+
+    @org.junit.jupiter.api.BeforeEach
+    void stubPhoneNumbers() {
+        // Le vrai service met en forme internationale avec le pays de l'etablissement · ici on fait
+        // de meme, sans base : le test ne porte pas sur les numeros.
+        org.mockito.Mockito.lenient().when(phoneNumberService.normalize(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> com.sni.bokaticowork.core.utils.phone.PhoneNumbers
+                        .toE164(invocation.getArgument(0), "+242", true).orElse(invocation.getArgument(0)));
+        org.mockito.Mockito.lenient().when(phoneNumberService.normalizeOptional(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> invocation.getArgument(0) == null ? null : com.sni.bokaticowork.core.utils.phone.PhoneNumbers
+                        .toE164(invocation.getArgument(0), "+242", true).orElse(invocation.getArgument(0)));
+    }
+
     @InjectMocks
     private MemberServiceImpl memberService;
 
@@ -109,7 +124,7 @@ class MemberServiceImplTest {
         MemberResponse response = MemberResponse.builder().memberId("MBR-202604-00000001").email("jane@example.com").build();
 
         when(memberRepo.existsByEmailIgnoreCaseAndDeletedFalse("jane@example.com")).thenReturn(false);
-        when(memberRepo.existsByPhoneAndDeletedFalse("060000000")).thenReturn(false);
+        when(memberRepo.existsByPhoneAndDeletedFalse("+242060000000")).thenReturn(false);
         when(userRepo.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
         when(customerService.getCustomerForService("CUS-0001")).thenReturn(customer);
         when(memberMapper.toEntity(request)).thenReturn(member);
@@ -198,7 +213,7 @@ class MemberServiceImplTest {
         MemberResponse response = MemberResponse.builder().memberId("MEM-0001").email("jane@example.com").build();
 
         when(memberRepo.existsByEmailIgnoreCaseAndDeletedFalse("jane@example.com")).thenReturn(false);
-        when(memberRepo.existsByPhoneAndDeletedFalse("060000000")).thenReturn(false);
+        when(memberRepo.existsByPhoneAndDeletedFalse("+242060000000")).thenReturn(false);
         when(userRepo.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
         when(customerService.createCustomerForMember(any())).thenReturn(customer);
         when(memberMapper.toEntity(request)).thenReturn(member);
@@ -234,7 +249,7 @@ class MemberServiceImplTest {
         MemberResponse response = MemberResponse.builder().memberId("MEM-0001").email("jane@example.com").build();
 
         when(memberRepo.existsByEmailIgnoreCaseAndDeletedFalse("jane@example.com")).thenReturn(false);
-        when(memberRepo.existsByPhoneAndDeletedFalse("060000000")).thenReturn(false);
+        when(memberRepo.existsByPhoneAndDeletedFalse("+242060000000")).thenReturn(false);
         when(userRepo.existsByEmailIgnoreCase("jane@example.com")).thenReturn(false);
         when(customerService.createCustomerForMember(any())).thenReturn(customer);
         when(memberMapper.toEntity(request)).thenReturn(member);

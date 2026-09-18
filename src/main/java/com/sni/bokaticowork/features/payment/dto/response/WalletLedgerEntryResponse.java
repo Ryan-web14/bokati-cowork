@@ -8,6 +8,10 @@ import java.time.Instant;
 
 public record WalletLedgerEntryResponse(
         String entryNumber,
+        /** Reference lisible de la transaction · celle qu'un client cite au telephone. */
+        String transactionNumber,
+        /** Identifiant technique · celui qu'un systeme tiers rapproche. */
+        java.util.UUID transactionUuid,
         String walletNumber,
         WalletEntryDirection direction,
         BigDecimal amount,

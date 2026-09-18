@@ -62,6 +62,8 @@ class BookingWalletPaymentModeTest {
     private SubscriptionRepository subscriptionRepository;
     @Mock
     private EntitlementGrantRepository grantRepository;
+    @Mock
+    private BookingOverageGuard overageGuard;
 
     @InjectMocks
     private BookingBillableBridge billableBridge;
@@ -99,7 +101,7 @@ class BookingWalletPaymentModeTest {
     @Test
     void walletBookingResolvesToADirectContextWithoutLookingForAnEntitlement() {
         BookingPaymentContextResolver resolver =
-                new BookingPaymentContextResolver(subscriptionRepository, grantRepository, null);
+                new BookingPaymentContextResolver(subscriptionRepository, grantRepository, null, overageGuard);
 
         BookingPaymentContextResolver.BookingPaymentContext context =
                 resolver.resolve(BookingPaymentMode.WALLET, null, null);

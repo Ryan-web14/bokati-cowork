@@ -51,4 +51,17 @@ public class BillingDocumentDiscount {
 
     @Column(name = "amount", nullable = false, precision = 19, scale = 4)
     private BigDecimal amount;
+
+    /**
+     * D'ou vient cette remise · PROMOTION, COUPON, PRICE_LIST, REFERRAL ou MANUAL.
+     *
+     * <p>{@code discountCode} etait un texte libre sans clef vers quoi que ce soit. On pouvait donc
+     * lire une remise sur une facture sans jamais pouvoir dire quelle campagne l'avait produite, ce
+     * qui rendait le cout des promotions incalculable autrement qu'a la main.</p>
+     */
+    @Column(name = "source_type", length = 40)
+    private String sourceType;
+
+    @Column(name = "source_code", length = 120)
+    private String sourceCode;
 }

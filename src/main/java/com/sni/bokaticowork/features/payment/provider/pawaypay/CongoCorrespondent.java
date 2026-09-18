@@ -55,4 +55,26 @@ public enum CongoCorrespondent {
     public boolean selectable() {
         return providerCode == null;
     }
+
+    /**
+     * Indicatif du pays de l'operateur · ce que le MSISDN doit porter en tete.
+     *
+     * <p>L'operateur sait dans quel pays il est ; l'abonne, lui, tape souvent son numero tel qu'il
+     * le compose localement. C'est ici qu'on complete.</p>
+     */
+    public String dialCode() {
+        return switch (countryCode) {
+            case "COG" -> "+242";
+            case "COD" -> "+243";
+            case "CIV" -> "+225";
+            case "SEN" -> "+221";
+            case "GAB" -> "+241";
+            default -> null;
+        };
+    }
+
+    /** Pays ou le zero de tete fait partie du numero et se garde en forme internationale. */
+    public boolean keepsTrunkZero() {
+        return "COG".equals(countryCode) || "CIV".equals(countryCode) || "GAB".equals(countryCode);
+    }
 }

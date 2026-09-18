@@ -70,6 +70,73 @@ public class WalletAccount {
     @Column(name = "version", nullable = false)
     private Long version;
 
+    /**
+     * Politique de plafonds nommee · derogation accordee a un titulaire precis.
+     *
+     * <p>Nulle dans le cas general : le portefeuille releve alors du palier correspondant a son
+     * niveau de verification. La renseigner permet d'ouvrir les plafonds d'un client sans toucher
+     * aux paliers, donc sans les ouvrir a tout le monde.</p>
+     */
+    @Column(name = "limit_policy_code", length = 100)
+    private String limitPolicyCode;
+
+    /** Fin de la derogation · au-dela, le portefeuille retombe sur son palier. Nulle si sans terme. */
+    @Column(name = "limit_policy_until")
+    private Instant limitPolicyUntil;
+
+    @Column(name = "last_activity_at")
+    private Instant lastActivityAt;
+
+    @Column(name = "dormant_since")
+    private Instant dormantSince;
+
+    /** Gel decide par l'etablissement · le titulaire ne peut pas le lever lui-meme. */
+    @Column(name = "frozen_at")
+    private Instant frozenAt;
+
+    @Column(name = "frozen_reason", length = 255)
+    private String frozenReason;
+
+    /**
+     * Verrouillage decide par le titulaire · lui seul le pose et lui seul le leve.
+     *
+     * <p>Distinct du gel : quelqu'un qui perd son telephone doit pouvoir fermer son portefeuille
+     * a la minute, sans passer par un guichet, et le rouvrir de meme une fois rassure.</p>
+     */
+    @Column(name = "locked_by_owner_at")
+    private Instant lockedByOwnerAt;
+
+    /** Seuil sous lequel le titulaire veut etre prevenu · nul s'il ne veut pas l'etre. */
+    @Column(name = "low_balance_threshold", precision = 19, scale = 4)
+    private BigDecimal lowBalanceThreshold;
+
+    /**
+     * Date de la derniere alerte de solde bas · nulle tant que le solde est au-dessus du seuil.
+     *
+     * <p>L'alerte part une fois et se rearme quand le solde repasse au-dessus. Sans cette date, un
+     * titulaire a 500 F recevrait un courriel par cafe.</p>
+     */
+    @Column(name = "low_balance_alerted_at")
+    private Instant lowBalanceAlertedAt;
+
+    @Column(name = "notify_on_credit", nullable = false)
+    @Builder.Default
+    private Boolean notifyOnCredit = Boolean.TRUE;
+
+    @Column(name = "notify_on_debit", nullable = false)
+    @Builder.Default
+    private Boolean notifyOnDebit = Boolean.TRUE;
+
+    /** Le titulaire peut-il depenser · ni gele par l'etablissement, ni verrouille par lui-meme, ni ferme. */
+    public boolean spendable() {
+        return status == WalletStatus.ACTIVE && frozenAt == null && lockedByOwnerAt == null;
+    }
+
+    /** Peut-il recevoir · un portefeuille verrouille par son titulaire recoit encore, un gele non. */
+    public boolean receivable() {
+        return status == WalletStatus.ACTIVE && frozenAt == null;
+    }
+
     @Column(name = "opened_at", nullable = false)
     private Instant openedAt;
 

@@ -57,6 +57,7 @@ public class CustomerServiceImpl implements CustomerService {
     private final KycAutomationService kycAutomationService;
     private final DefaultEmailSender emailSender;
     private final SpringTemplateEngine emailTemplateEngine;
+    private final com.sni.bokaticowork.core.utils.phone.PhoneNumberService phoneNumberService;
 
     @Value("${app.verify-base-url:}")
     private String publicBaseUrl;
@@ -78,16 +79,18 @@ public class CustomerServiceImpl implements CustomerService {
         var validationErrors = validateCustomer(request);
 
         if(!validationErrors.isEmpty()){
-            log.debug("Invalid customer request");
-            throw new IllegalArgumentException("Invalid customer request");
+            // Le detail est renvoye : un refus qui ne dit pas quel champ est en cause oblige a
+            // deviner, et ce que l'on devine mal, on le renvoie tel quel.
+            throw new BadRequestException(String.join(", ", validationErrors));
         }
+        normalizePhones(request);
 
         if (StringUtils.hasText(request.getEmail())
                 && Boolean.TRUE.equals(customerRepo.existsByEmailAndDeletedFalse(request.getEmail().trim().toLowerCase(Locale.ROOT)))) {
             throw new ResourceAlreadyExistException("A customer with this email already exists");
         }
         if (StringUtils.hasText(request.getPhone())) {
-            Optional<Customer> byPhone = customerRepo.findByPhoneAndDeletedFalse(request.getPhone().replaceAll("\\s+", ""));
+            Optional<Customer> byPhone = customerRepo.findByPhoneAndDeletedFalse(request.getPhone());
             if (byPhone.isPresent()) {
                 throw new ResourceAlreadyExistException("A customer with this phone number already exists");
             }
@@ -119,9 +122,9 @@ public class CustomerServiceImpl implements CustomerService {
         var validationErrors = validateCustomer(request);
 
         if(!validationErrors.isEmpty()){
-            log.debug("Invalid customer request");
-            throw new IllegalArgumentException("Invalid customer request");
+            throw new BadRequestException(String.join(", ", validationErrors));
         }
+        normalizePhones(request);
 
         Customer obj = customerRepo.findByCustomerId(customerId)
                 .orElseThrow(()-> new ResourceNotFoundException("Customer with id " + customerId + " not found"));
@@ -263,6 +266,12 @@ public class CustomerServiceImpl implements CustomerService {
         Page<CustomerSummaryresponse> customers = customerRepo.findAll(page).map(customerMapper::toSummary);
         return new PaginatedResponse<>(customers);
 
+    }
+
+    /** Forme internationale, avec le pays fourni ou celui de l'etablissement si l'indicatif manque. */
+    private void normalizePhones(CustomerRequest request) {
+        request.setPhone(phoneNumberService.normalize(request.getPhone(), request.getPhoneCountry()));
+        request.setWhatsappPhone(phoneNumberService.normalizeOptional(request.getWhatsappPhone(), request.getPhoneCountry()));
     }
 
     private List<String> validateCustomer(CustomerRequest request) {

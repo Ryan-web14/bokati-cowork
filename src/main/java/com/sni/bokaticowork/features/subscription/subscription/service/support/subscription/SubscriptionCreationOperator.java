@@ -23,6 +23,11 @@ import com.sni.bokaticowork.features.subscription.repository.SubscriptionReposit
 
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionBillingSupport;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionEventWriter;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.enums.DiscountDocumentType;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.enums.TargetScope;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.service.SubscriptionPricingBridge;
+import com.sni.bokaticowork.features.subscription.subscription.service.support.PlanPriceAmountCalculator;
+import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriberKycLevelGuard;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionOwnerResolver;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPeriodCalculator;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPlanResolver;
@@ -60,12 +65,16 @@ public class SubscriptionCreationOperator {
     private final MemberInAppNotifier memberInAppNotifier;
     private final WalletService walletService;
     private final WalletHoldService walletHoldService;
+    private final PlanPriceAmountCalculator priceCalculator;
+    private final SubscriberKycLevelGuard kycGuard;
+    private final SubscriptionPricingBridge pricingBridge;
 
     public Subscription create(CreateSubscriptionRequest request) {
         PlanVersion planVersion = planResolver.resolvePlanVersion(request.planCode(), request.planVersionId());
         PlanPrice price = planResolver.resolvePrice(planVersion, request.billingCycle());
         SubscriptionOwnerResolver.Owner owner = ownerResolver.resolve(request.subscriberType(), request.subscriberCode());
-        validateRequiredKycLevel(planVersion, owner);
+        kycGuard.require(planVersion.getPlan() == null ? null : planVersion.getPlan().getRequiredKycLevel(),
+                owner, "plan");
 
         var existingSuscritpion = subscriptionRepository.findBySuscriberCodeAndPlanVersion(request.subscriberCode(), planVersion.getId());
 
@@ -75,7 +84,18 @@ public class SubscriptionCreationOperator {
 
         LocalDate startDate = request.startDate();
         String subscriptionNumber = codeFactory.nextSubscriptionNumber(request.subscriberType(), planVersion, price.getBillingCycle(), startDate);
-        PriceAmounts priceAmounts = calculatePriceAmounts(price);
+
+        // La remise s'applique avant la taxe : celle-ci porte sur ce que le client paie reellement,
+        // pas sur un tarif catalogue qu'il ne paie jamais.
+        SubscriptionPricingBridge.PricedSubscription priced = pricingBridge.price(
+                request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
+                planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
+                price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
+                price.getCurrency(), price.getAmount(), price.getSetupFee(),
+                request.couponCodesOrEmpty(), true);
+
+        PlanPriceAmountCalculator.Amounts priceAmounts = priceCalculator.compute(
+                priced.recurringAmount(), priced.setupFee(), price.getDepositAmount(), price.getTaxIncluded());
 
         Subscription subscription = Subscription.builder()
                 .subscriptionNumber(subscriptionNumber)
@@ -93,9 +113,9 @@ public class SubscriptionCreationOperator {
                 .autoRenew(request.autoRenew() == null || request.autoRenew())
                 .billingCycle(price.getBillingCycle())
                 .currency(price.getCurrency())
-                .subtotalAmount(priceAmounts.subtotalAmount())
-                .taxAmount(priceAmounts.taxAmount())
-                .totalAmount(priceAmounts.totalAmount())
+                .subtotalAmount(priceAmounts.subtotal())
+                .taxAmount(priceAmounts.tax())
+                .totalAmount(priceAmounts.total())
                 .metadataJson(trim(request.metadataJson()))
                 .build();
 
@@ -115,7 +135,13 @@ public class SubscriptionCreationOperator {
         eventWriter.writeEvent(saved, SubscriptionEventType.SUBSCRIPTION_CREATED, null);
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
-        billingSupport.createSubscriptionSetupItems(saved, price);
+        billingSupport.createSubscriptionSetupItems(saved, priced.recurringAmount(), priced.setupFee(),
+                price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount());
+        pricingBridge.confirm(priced, request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
+                planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
+                price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
+                price.getCurrency(), request.couponCodesOrEmpty(),
+                DiscountDocumentType.SUBSCRIPTION, saved.getSubscriptionNumber(), "SYSTEM");
 
         if (saved.getTotalAmount().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
             lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");
@@ -141,97 +167,6 @@ public class SubscriptionCreationOperator {
 
     private String trim(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
-    }
-
-    private PriceAmounts calculatePriceAmounts(PlanPrice price) {
-        BigDecimal recurringAmount = money(nonNegative(price.getAmount()));
-        BigDecimal setupFee = money(nonNegative(price.getSetupFee()));
-        BigDecimal depositAmount = money(nonNegative(price.getDepositAmount()));
-        BigDecimal taxableCharge = money(recurringAmount.add(setupFee));
-        BillingTaxRuleResolver.TaxProfile taxProfile = taxRuleResolver.defaultTaxProfile();
-        if (Boolean.TRUE.equals(price.getTaxIncluded())) {
-            BigDecimal subtotal = money(taxableCharge.divide(taxFactor(taxProfile.vatRate(), taxProfile.additionalCentRate()), 8, RoundingMode.HALF_UP));
-            BigDecimal tax = money(taxableCharge.subtract(subtotal));
-            return new PriceAmounts(subtotal, tax, money(taxableCharge.add(depositAmount)));
-        }
-        BigDecimal vatAmount = percentage(taxableCharge, taxProfile.vatRate());
-        BigDecimal additionalCentAmount = percentage(vatAmount, taxProfile.additionalCentRate());
-        BigDecimal tax = money(vatAmount.add(additionalCentAmount));
-        return new PriceAmounts(taxableCharge, tax, money(taxableCharge.add(tax).add(depositAmount)));
-    }
-
-    private BigDecimal percentage(BigDecimal amount, BigDecimal rate) {
-        if (rate == null || rate.signum() == 0) {
-            return BigDecimal.ZERO;
-        }
-        if (rate.signum() < 0) {
-            throw new BadRequestException("Percentage rate cannot be negative");
-        }
-        return money(amount.multiply(rate).divide(HUNDRED, 4, RoundingMode.HALF_UP));
-    }
-
-    private BigDecimal taxFactor(BigDecimal vatRate, BigDecimal additionalCentRate) {
-        BigDecimal vatFactor = rateFactor(vatRate);
-        BigDecimal additionalCentFactor = rateFactor(additionalCentRate);
-        return BigDecimal.ONE.add(vatFactor).add(vatFactor.multiply(additionalCentFactor));
-    }
-
-    private BigDecimal rateFactor(BigDecimal rate) {
-        if (rate == null || rate.signum() == 0) {
-            return BigDecimal.ZERO;
-        }
-        if (rate.signum() < 0) {
-            throw new BadRequestException("Percentage rate cannot be negative");
-        }
-        return rate.divide(HUNDRED, 8, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal nonNegative(BigDecimal value) {
-        BigDecimal candidate = value == null ? BigDecimal.ZERO : value;
-        if (candidate.signum() < 0) {
-            throw new BadRequestException("Plan price amounts cannot be negative");
-        }
-        return candidate;
-    }
-
-    private BigDecimal money(BigDecimal value) {
-        return (value == null ? BigDecimal.ZERO : value).setScale(4, RoundingMode.HALF_UP);
-    }
-
-    private void validateRequiredKycLevel(PlanVersion planVersion, SubscriptionOwnerResolver.Owner owner) {
-        Integer requiredLevel = planVersion.getPlan() == null ? null : planVersion.getPlan().getRequiredKycLevel();
-        if (requiredLevel == null || requiredLevel <= 1) {
-            return;
-        }
-        OwnerKyc ownerKyc = resolveOwnerKyc(owner);
-        int currentLevel = kycCaseRepository.findFirstByOwnerTypeAndOwnerIdOrderByStartedAtDesc(ownerKyc.ownerType(), ownerKyc.ownerId())
-                .filter(kycCase -> kycCase.getStatus() == KycCaseStatus.APPROVED)
-                .map(kycCase -> kycCase.getKycLevel() == null ? 1 : kycCase.getKycLevel())
-                .orElse(1);
-        if (currentLevel < requiredLevel) {
-            throw new BadRequestException("KYC level " + requiredLevel + " required for this plan");
-        }
-    }
-
-    private OwnerKyc resolveOwnerKyc(SubscriptionOwnerResolver.Owner owner) {
-        if (owner.member() != null) {
-            return new OwnerKyc(DocumentOwnerType.MEMBER, owner.member().getId());
-        }
-        if (owner.customer() != null) {
-            return new OwnerKyc(DocumentOwnerType.CUSTOMER, owner.customer().getId());
-        }
-        if (owner.businessEntity() != null) {
-            return new OwnerKyc(DocumentOwnerType.BUSINESS, owner.businessEntity().getId());
-        }
-        throw new BadRequestException("KYC owner could not be resolved for subscription");
-    }
-
-    private record OwnerKyc(DocumentOwnerType ownerType, Long ownerId) {
-    }
-
-    private record PriceAmounts(BigDecimal subtotalAmount,
-                                BigDecimal taxAmount,
-                                BigDecimal totalAmount) {
     }
 
     private void notifyInApp(Subscription subscription, SubscriptionEventType eventType) {
