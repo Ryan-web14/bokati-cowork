@@ -11,6 +11,7 @@ import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.model.WalletLedgerEntry;
 import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
 import com.sni.bokaticowork.features.payment.repository.WalletLedgerEntryRepository;
+import com.sni.bokaticowork.features.payment.transfer.service.WalletBalanceWatch;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import jakarta.persistence.PersistenceContext;
@@ -49,6 +50,7 @@ public class WalletLedgerService {
     private final WalletAccountRepository walletRepository;
     private final WalletLedgerEntryRepository ledgerRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
+    private final WalletBalanceWatch balanceWatch;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -136,6 +138,11 @@ public class WalletLedgerService {
         WalletAccount locked = lock(wallet);
         BigDecimal normalized = money(amount);
         mutation.apply(locked, normalized);
+        locked.setLastActivityAt(Instant.now());
+        locked.setDormantSince(null);
+        // L'alerte de solde bas se decide ici, sous le verrou, sur le solde reellement obtenu :
+        // ailleurs, elle lirait un solde deja depasse par l'ecriture suivante.
+        balanceWatch.afterBalanceChange(locked);
         WalletAccount saved = walletRepository.save(locked);
 
         WalletLedgerEntry entry = WalletLedgerEntry.builder()

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.portal.subscription.controller;
 
+import com.sni.bokaticowork.features.portal.wallet.dto.ClientWalletPinRequest;
+
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.client.member.model.Member;
@@ -61,9 +63,12 @@ public class ClientPassController {
     }
 
     @PostMapping(ApiPath.V1 + "/client/passes/{passNumber}/pay/wallet")
-    public ResponseEntity<PaymentTransactionResponse> payWithWallet(@PathVariable String passNumber) {
+    public ResponseEntity<PaymentTransactionResponse> payWithWallet(
+            @PathVariable String passNumber,
+            @RequestBody(required = false) ClientWalletPinRequest body) {
         Member member = clientContextService.getAuthenticatedMember();
-        return ResponseEntity.ok(clientSubscriptionService.payPassWithWallet(member, passNumber));
+        return ResponseEntity.ok(clientSubscriptionService.payPassWithWallet(member, passNumber,
+                body == null ? null : body.pin()));
     }
 
     @GetMapping(ApiPath.V1 + "/client/entitlements/balances")

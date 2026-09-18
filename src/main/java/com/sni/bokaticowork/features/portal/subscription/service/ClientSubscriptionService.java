@@ -10,6 +10,9 @@ import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
+import com.sni.bokaticowork.features.payment.security.service.WalletMerchantPaymentGuard;
+import com.sni.bokaticowork.features.payment.security.enums.WalletOperationType;
+
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
@@ -54,6 +57,7 @@ public class ClientSubscriptionService {
     private final BillingDocumentService billingDocumentService;
     private final PaymentService paymentService;
     private final WalletService walletService;
+    private final WalletMerchantPaymentGuard merchantPaymentGuard;
 
 
     @Transactional(readOnly = true)
@@ -164,11 +168,13 @@ public class ClientSubscriptionService {
     }
 
     @Transactional
-    public PaymentTransactionResponse paySubscriptionWithWallet(Member member, String subscriptionNumber) {
+    public PaymentTransactionResponse paySubscriptionWithWallet(Member member, String subscriptionNumber, String pin) {
         SubscriptionResponse sub = subscriptionService.get(subscriptionNumber);
         verifySubscriptionOwnership(member, sub);
         BillingDocumentResponse invoice = findPayableInvoice("SUBSCRIPTION", subscriptionNumber, sub.currency());
         WalletResponse wallet = walletService.getOrCreate(MEMBER.name(), member.getMemberId(), sub.currency());
+        merchantPaymentGuard.assertAllowed(walletService.serviceWallet(wallet.walletNumber()),
+                WalletOperationType.BILL_PAYMENT, invoice.balanceDue(), pin);
         PaymentIntentResponse intent = paymentService.createIntentFromBillingDocument(
                 new CreatePaymentIntentFromBillingDocumentRequest(invoice.documentNumber(), null, null, null, null)
         );
@@ -200,12 +206,14 @@ public class ClientSubscriptionService {
     }
 
     @Transactional
-    public PaymentTransactionResponse payPassWithWallet(Member member, String passNumber) {
+    public PaymentTransactionResponse payPassWithWallet(Member member, String passNumber, String pin) {
         PassResponse pass = passService.get(passNumber);
         verifyPassOwnership(member, pass);
         BillingDocumentResponse invoice = findPayableInvoice("PASS", passNumber, null);
         String currency = invoice.currency();
         WalletResponse wallet = walletService.getOrCreate(MEMBER.name(), member.getMemberId(), currency);
+        merchantPaymentGuard.assertAllowed(walletService.serviceWallet(wallet.walletNumber()),
+                WalletOperationType.BILL_PAYMENT, invoice.balanceDue(), pin);
         PaymentIntentResponse intent = paymentService.createIntentFromBillingDocument(
                 new CreatePaymentIntentFromBillingDocumentRequest(invoice.documentNumber(), null, null, null, null)
         );

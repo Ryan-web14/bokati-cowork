@@ -49,7 +49,7 @@ class ClientSubscriptionServiceInvoiceLookupTest {
     private ClientSubscriptionService service;
 
     private BillingDocumentResponse find(String currency) {
-        service = new ClientSubscriptionService(null, null, null, billingDocumentService, null, null);
+        service = new ClientSubscriptionService(null, null, null, billingDocumentService, null, null, null);
         return ReflectionTestUtils.invokeMethod(service, "findPayableInvoice",
                 "SUBSCRIPTION", "SUB-0001", currency);
     }

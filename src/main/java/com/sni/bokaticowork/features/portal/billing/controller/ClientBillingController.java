@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.portal.billing.controller;
 
+import com.sni.bokaticowork.features.portal.wallet.dto.ClientWalletPinRequest;
+
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
@@ -88,9 +90,12 @@ public class ClientBillingController {
     }
 
     @PostMapping("/invoices/{documentNumber}/pay/wallet")
-    public ResponseEntity<PaymentTransactionResponse> payWithWallet(@PathVariable String documentNumber) {
+    public ResponseEntity<PaymentTransactionResponse> payWithWallet(
+            @PathVariable String documentNumber,
+            @RequestBody(required = false) ClientWalletPinRequest body) {
         Member member = clientContextService.getAuthenticatedMember();
-        return ResponseEntity.ok(clientBillingService.payWithWallet(member, documentNumber));
+        return ResponseEntity.ok(clientBillingService.payWithWallet(member, documentNumber,
+                body == null ? null : body.pin()));
     }
 
     @GetMapping("/payments")

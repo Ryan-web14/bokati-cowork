@@ -37,8 +37,11 @@ class WalletLedgerServiceTest {
     private final SequenceGeneratorFacade sequenceGenerator = mock(SequenceGeneratorFacade.class);
     private final EntityManager entityManager = mock(EntityManager.class);
 
+    private final com.sni.bokaticowork.features.payment.transfer.service.WalletBalanceWatch balanceWatch =
+            mock(com.sni.bokaticowork.features.payment.transfer.service.WalletBalanceWatch.class);
+
     private final WalletLedgerService service =
-            new WalletLedgerService(walletRepository, ledgerRepository, sequenceGenerator);
+            new WalletLedgerService(walletRepository, ledgerRepository, sequenceGenerator, balanceWatch);
 
     private WalletAccount wallet;
 

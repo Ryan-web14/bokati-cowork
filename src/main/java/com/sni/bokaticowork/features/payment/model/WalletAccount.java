@@ -102,6 +102,37 @@ public class WalletAccount {
     @Column(name = "locked_by_owner_at")
     private Instant lockedByOwnerAt;
 
+    /** Seuil sous lequel le titulaire veut etre prevenu · nul s'il ne veut pas l'etre. */
+    @Column(name = "low_balance_threshold", precision = 19, scale = 4)
+    private BigDecimal lowBalanceThreshold;
+
+    /**
+     * Date de la derniere alerte de solde bas · nulle tant que le solde est au-dessus du seuil.
+     *
+     * <p>L'alerte part une fois et se rearme quand le solde repasse au-dessus. Sans cette date, un
+     * titulaire a 500 F recevrait un courriel par cafe.</p>
+     */
+    @Column(name = "low_balance_alerted_at")
+    private Instant lowBalanceAlertedAt;
+
+    @Column(name = "notify_on_credit", nullable = false)
+    @Builder.Default
+    private Boolean notifyOnCredit = Boolean.TRUE;
+
+    @Column(name = "notify_on_debit", nullable = false)
+    @Builder.Default
+    private Boolean notifyOnDebit = Boolean.TRUE;
+
+    /** Le titulaire peut-il depenser · ni gele par l'etablissement, ni verrouille par lui-meme, ni ferme. */
+    public boolean spendable() {
+        return status == WalletStatus.ACTIVE && frozenAt == null && lockedByOwnerAt == null;
+    }
+
+    /** Peut-il recevoir · un portefeuille verrouille par son titulaire recoit encore, un gele non. */
+    public boolean receivable() {
+        return status == WalletStatus.ACTIVE && frozenAt == null;
+    }
+
     @Column(name = "opened_at", nullable = false)
     private Instant openedAt;
 

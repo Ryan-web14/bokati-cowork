@@ -18,6 +18,32 @@ public interface WalletLedgerEntryRepository extends JpaRepository<WalletLedgerE
 
     Optional<WalletLedgerEntry> findByIdempotencyKey(String idempotencyKey);
 
+    Optional<WalletLedgerEntry> findByTransactionNumber(String transactionNumber);
+
+    /** Les ecritures d'une periode, dans l'ordre d'ecriture · celui d'un releve. */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM wallet_ledger_entry
+            WHERE wallet_id = :walletId
+              AND created_at >= :from
+              AND created_at < :to
+            ORDER BY id ASC
+            """)
+    java.util.List<WalletLedgerEntry> findBetween(@Param("walletId") Long walletId,
+                                                  @Param("from") java.time.Instant from,
+                                                  @Param("to") java.time.Instant to);
+
+    /** Solde comptable a un instant · celui de la derniere ecriture anterieure, ou zero. */
+    @Query(nativeQuery = true, value = """
+            SELECT balance_after
+            FROM wallet_ledger_entry
+            WHERE wallet_id = :walletId
+              AND created_at < :before
+            ORDER BY id DESC
+            LIMIT 1
+            """)
+    Optional<BigDecimal> findBalanceBefore(@Param("walletId") Long walletId, @Param("before") java.time.Instant before);
+
     /**
      * Somme signee des ecritures qui deplacent reellement le solde comptable.
      * <p>

@@ -6,6 +6,8 @@ public enum WalletEntryType {
     TOPUP,
     TRANSFER_IN,
     TRANSFER_OUT,
+    /** Frais preleves sur l'emetteur d'un transfert · une ecriture a part, jamais fondue dans le montant. */
+    TRANSFER_FEE,
     ADMIN_DEBIT,
     PAYMENT,
     REFUND,

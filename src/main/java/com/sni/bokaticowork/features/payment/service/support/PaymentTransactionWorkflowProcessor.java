@@ -53,6 +53,7 @@ public class PaymentTransactionWorkflowProcessor {
     private final BillingEmailService billingEmailService;
     private final CashRegisterService cashRegisterService;
     private final com.sni.bokaticowork.features.subscription.subscription.service.support.pass.PassRenewalOperator passRenewalOperator;
+    private final com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -66,6 +67,10 @@ public class PaymentTransactionWorkflowProcessor {
         PaymentIntent intent = transaction.getPaymentIntent();
         if (event.status() == PaymentTransactionStatus.SUCCEEDED) {
             // Business logic first · in order of dependency
+            // Un rechargement de portefeuille se regle ici et non dans le rappel de l'operateur :
+            // ce flux est rejoue par la boite de sortie en cas d'echec, le rappel ne l'est pas.
+            // L'ecriture est idempotente, un rejeu ne credite pas deux fois.
+            walletTopUpService.settle(transaction);
             recordAutomaticCashSession(transaction);
             validatePaidBillingDocuments(transaction);
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
