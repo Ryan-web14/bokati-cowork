@@ -78,7 +78,7 @@ class WalletTopUpServiceTest {
     @Test
     void lesPlafondsSontVerifiesAvantDEngagerLOperateur() {
         Mockito.doThrow(new ConflictException("wallet", "Plafond par rechargement atteint"))
-                .when(limitService).assertAllowed(any());
+                .when(limitService).assertAllowed(any(), any());
 
         assertThrows(ConflictException.class, () -> service.initiate(wallet,
                 new WalletTopUpService.TopUpOrder(new BigDecimal("1000000"), "+242060000000", CongoCorrespondent.MTN_MOMO_COG), "MBR-1"));

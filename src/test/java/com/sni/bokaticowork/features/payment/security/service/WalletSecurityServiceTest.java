@@ -52,6 +52,9 @@ class WalletSecurityServiceTest {
     @Mock private WalletSecurityPolicyRepository policyRepository;
     @Mock private WalletCredentialRepository credentialRepository;
 
+    @Mock
+    private com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService flagService;
+
     @InjectMocks
     private WalletSecurityService service;
 

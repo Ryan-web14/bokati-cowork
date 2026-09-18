@@ -4,6 +4,8 @@ import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.features.payment.enums.WalletEntryType;
 import com.sni.bokaticowork.features.payment.limit.model.WalletLimitPolicy;
 import com.sni.bokaticowork.features.payment.limit.repository.WalletLimitPolicyRepository;
+import com.sni.bokaticowork.features.payment.control.model.WalletRiskFlag;
+import com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.repository.WalletLedgerEntryRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class WalletLimitService {
 
     private final WalletLimitPolicyRepository policyRepository;
     private final WalletLedgerEntryRepository ledgerRepository;
+    private final WalletRiskFlagService flagService;
 
     /**
      * Verdict d'un controle de plafond.
@@ -59,7 +62,11 @@ public class WalletLimitService {
      */
     @Transactional(readOnly = true)
     public Optional<WalletLimitPolicy> policyFor(WalletAccount wallet, int kycLevel) {
-        if (StringUtils.hasText(wallet.getLimitPolicyCode())) {
+        boolean derogationActive = StringUtils.hasText(wallet.getLimitPolicyCode())
+                && (wallet.getLimitPolicyUntil() == null || Instant.now().isBefore(wallet.getLimitPolicyUntil()));
+        if (derogationActive) {
+            // Une derogation echue n'est pas effacee, elle cesse de compter : la trace de ce qui a
+            // ete accorde, et jusqu'a quand, reste lisible sur le compte.
             Optional<WalletLimitPolicy> named = policyRepository.findByCode(wallet.getLimitPolicyCode());
             if (named.isPresent()) {
                 return named;
@@ -271,6 +278,21 @@ public class WalletLimitService {
 
     private String format(BigDecimal amount) {
         return amount.stripTrailingZeros().toPlainString();
+    }
+
+    /**
+     * Leve l'exception correspondant a un refus, et le signale.
+     *
+     * <p>Une tentative au-dela du plafond n'est pas une faute · le titulaire ne connait pas
+     * forcement ses limites. Mais plusieurs tentatives rapprochees, elles, dessinent quelqu'un qui
+     * cherche la limite, et la revue doit pouvoir le voir.</p>
+     */
+    public void assertAllowed(WalletAccount wallet, LimitVerdict verdict) {
+        if (!verdict.allowed() && wallet != null) {
+            flagService.raise(wallet, WalletRiskFlag.Type.LIMIT_BREACH_ATTEMPT, WalletRiskFlag.Severity.LOW,
+                    verdict.reason(), null);
+        }
+        assertAllowed(verdict);
     }
 
     /** Leve l'exception correspondant a un refus · les appelants ne redigent pas le message. */

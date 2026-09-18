@@ -106,6 +106,29 @@ public interface WalletLedgerEntryRepository extends JpaRepository<WalletLedgerE
             """)
     java.util.List<WalletLedgerEntry> findChain(@Param("walletId") Long walletId);
 
+    // ---------------------------------------------------------------------------------------
+    // Centre de controle
+    // ---------------------------------------------------------------------------------------
+
+    /** Volume par nature et sens sur une periode · la matiere du tableau de bord. */
+    @Query(nativeQuery = true, value = """
+            SELECT entry_type, direction, COUNT(*), COALESCE(SUM(amount), 0)
+            FROM wallet_ledger_entry
+            WHERE created_at >= :from AND created_at < :to
+            GROUP BY entry_type, direction
+            ORDER BY entry_type, direction
+            """)
+    java.util.List<Object[]> volumeBetween(@Param("from") java.time.Instant from, @Param("to") java.time.Instant to);
+
+    /** Toutes les ecritures d'une periode, tous portefeuilles · l'export comptable. */
+    @Query(nativeQuery = true, value = """
+            SELECT e.*
+            FROM wallet_ledger_entry e
+            WHERE e.created_at >= :from AND e.created_at < :to
+            ORDER BY e.id ASC
+            """)
+    java.util.List<WalletLedgerEntry> findAllBetween(@Param("from") java.time.Instant from, @Param("to") java.time.Instant to);
+
     /** Nombre d'operations sortantes sur la periode · un plafond en nombre, pas en montant. */
     @Query(nativeQuery = true, value = """
             SELECT COUNT(*)

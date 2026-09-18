@@ -80,6 +80,10 @@ public class WalletAccount {
     @Column(name = "limit_policy_code", length = 100)
     private String limitPolicyCode;
 
+    /** Fin de la derogation · au-dela, le portefeuille retombe sur son palier. Nulle si sans terme. */
+    @Column(name = "limit_policy_until")
+    private Instant limitPolicyUntil;
+
     @Column(name = "last_activity_at")
     private Instant lastActivityAt;
 

@@ -2,6 +2,8 @@ package com.sni.bokaticowork.features.payment.security.service;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
+import com.sni.bokaticowork.features.payment.control.model.WalletRiskFlag;
+import com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.security.enums.PinRequirement;
 import com.sni.bokaticowork.features.payment.security.enums.WalletOperationType;
@@ -45,6 +47,7 @@ public class WalletSecurityService {
 
     private final WalletSecurityPolicyRepository policyRepository;
     private final WalletCredentialRepository credentialRepository;
+    private final WalletRiskFlagService flagService;
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     /**
@@ -205,6 +208,10 @@ public class WalletSecurityService {
             credential.setFailedAttempts(0);
             log.warn("Portefeuille {} · code secret bloque apres {} echecs, episode {}",
                     wallet.getWalletNumber(), attempts, episodes);
+            // Un blocage est un fait de securite, pas seulement un desagrement : quelqu'un essaie.
+            flagService.raise(wallet, WalletRiskFlag.Type.FAILED_PIN_BURST,
+                    episodes > 1 ? WalletRiskFlag.Severity.HIGH : WalletRiskFlag.Severity.MEDIUM,
+                    attempts + " codes faux · episode de blocage " + episodes, null);
         }
         credentialRepository.save(credential);
     }

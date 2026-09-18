@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.features.payment.transfer.service;
 
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.features.payment.control.model.WalletRiskFlag;
+import com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.transfer.model.WalletDevice;
 import com.sni.bokaticowork.features.payment.transfer.repository.WalletDeviceRepository;
@@ -27,6 +29,7 @@ public class WalletDeviceService {
 
     private final WalletDeviceRepository deviceRepository;
     private final WalletNotifier notifier;
+    private final WalletRiskFlagService flagService;
 
     /** Ce que le journal sait de l'appareil qui opere. */
     public record DeviceVerdict(boolean known, boolean revoked, boolean firstUse, int useCount) {
@@ -73,6 +76,9 @@ public class WalletDeviceService {
             notifier.securityEvent(wallet, "WALLET_REVOKED_DEVICE_USED",
                     "Un appareil révoqué a tenté d'opérer sur votre portefeuille",
                     Map.of("deviceId", deviceId.trim(), "ipAddress", ipAddress == null ? "" : ipAddress));
+            flagService.raise(wallet, WalletRiskFlag.Type.REVOKED_DEVICE_USED, WalletRiskFlag.Severity.HIGH,
+                    "Appareil " + deviceId.trim() + " revoque le " + device.getRevokedAt() + ", depuis " + ipAddress,
+                    deviceId.trim());
         }
         return new DeviceVerdict(true, device.revoked(), false, device.getUseCount());
     }

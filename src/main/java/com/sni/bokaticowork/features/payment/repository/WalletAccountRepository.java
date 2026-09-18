@@ -48,6 +48,52 @@ public interface WalletAccountRepository extends JpaRepository<WalletAccount, Lo
                                                    @Param("ownerCode") String ownerCode,
                                                    @Param("currency") String currency);
 
+    // ---------------------------------------------------------------------------------------
+    // Centre de controle
+    // ---------------------------------------------------------------------------------------
+
+    /** Encours, retenues et nombre de portefeuilles ouverts, par devise. */
+    @Query(nativeQuery = true, value = """
+            SELECT COALESCE(SUM(ledger_balance), 0), COALESCE(SUM(held_balance), 0), COUNT(*)
+            FROM wallet_account
+            WHERE status <> 'CLOSED' AND currency = :currency
+            """)
+    Object[] aggregateOpen(@Param("currency") String currency);
+
+    @Query(nativeQuery = true, value = """
+            SELECT status, COUNT(*)
+            FROM wallet_account
+            GROUP BY status
+            """)
+    java.util.List<Object[]> countByStatus();
+
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM wallet_account WHERE frozen_at IS NOT NULL")
+    long countFrozen();
+
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM wallet_account WHERE locked_by_owner_at IS NOT NULL")
+    long countLockedByOwner();
+
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM wallet_account WHERE dormant_since IS NOT NULL")
+    long countDormant();
+
+    @Query(nativeQuery = true, value = "SELECT COUNT(*) FROM wallet_account WHERE ledger_balance < 0 OR available_balance < 0")
+    long countNegative();
+
+    /**
+     * Portefeuilles sans mouvement depuis la date, pas encore marques dormants.
+     *
+     * <p>Un portefeuille sans aucune activite enregistree est juge sur sa date d'ouverture · un
+     * compte ouvert et jamais utilise dort aussi.</p>
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT id
+            FROM wallet_account
+            WHERE status <> 'CLOSED'
+              AND dormant_since IS NULL
+              AND COALESCE(last_activity_at, opened_at) < :before
+            """)
+    java.util.List<Long> findDormantCandidates(@Param("before") java.time.Instant before);
+
     @Query(value = """
             SELECT *
             FROM wallet_account

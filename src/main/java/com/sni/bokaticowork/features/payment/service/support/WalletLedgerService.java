@@ -139,9 +139,9 @@ public class WalletLedgerService {
         BigDecimal normalized = money(amount);
         mutation.apply(locked, normalized);
         locked.setLastActivityAt(Instant.now());
-        locked.setDormantSince(null);
-        // L'alerte de solde bas se decide ici, sous le verrou, sur le solde reellement obtenu :
-        // ailleurs, elle lirait un solde deja depasse par l'ecriture suivante.
+        // L'alerte de solde bas et le reveil d'un compte dormant se decident ici, sous le verrou,
+        // sur le solde reellement obtenu : ailleurs, ils liraient un solde deja depasse par
+        // l'ecriture suivante.
         balanceWatch.afterBalanceChange(locked);
         WalletAccount saved = walletRepository.save(locked);
 

@@ -8,6 +8,8 @@ import com.sni.bokaticowork.core.generator.uuid.TimeOrderedUuid;
 import com.sni.bokaticowork.features.payment.enums.WalletEntryType;
 import com.sni.bokaticowork.features.payment.limit.service.WalletKycLevelResolver;
 import com.sni.bokaticowork.features.payment.limit.service.WalletLimitService;
+import com.sni.bokaticowork.features.payment.control.model.WalletRiskFlag;
+import com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.model.WalletLedgerEntry;
 import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
@@ -70,7 +72,12 @@ public class WalletTransferService {
     private final WalletCounterpartyResolver counterpartyResolver;
     private final WalletDeviceService deviceService;
     private final WalletNotifier notifier;
+    private final WalletRiskFlagService flagService;
     private final SequenceGeneratorFacade sequenceGenerator;
+
+    /** Au-dela, un transfert depuis un appareil jamais vu est signale. */
+    @Value("${bokati.wallet.risk.large-transfer-amount:100000}")
+    private BigDecimal largeTransferAmount;
 
     /** Taux de frais preleve sur l'emetteur · zero par defaut, l'etablissement decide. */
     @Value("${bokati.wallet.transfer.fee-rate:0}")
@@ -201,7 +208,7 @@ public class WalletTransferService {
         WalletAccount target = counterparty.wallet();
 
         assertTransferable(source, target, amount);
-        limitService.assertAllowed(limitService.checkTransfer(source, kycLevelResolver.levelOf(source), amount));
+        limitService.assertAllowed(source, limitService.checkTransfer(source, kycLevelResolver.levelOf(source), amount));
         BigDecimal fee = fee(amount);
         if (source.getAvailableBalance().compareTo(amount.add(fee)) < 0) {
             throw new ConflictException("wallet", "solde disponible insuffisant");
@@ -212,7 +219,13 @@ public class WalletTransferService {
             request = openPaymentRequest(order.paymentRequestNumber(), source, target, amount);
         }
 
-        deviceService.touch(source, deviceId, ipAddress);
+        WalletDeviceService.DeviceVerdict device = deviceService.touch(source, deviceId, ipAddress);
+        if (device.firstUse() && largeTransferAmount != null && amount.compareTo(largeTransferAmount) >= 0) {
+            // Le signal le plus simple et le plus fiable : un appareil jamais vu, un gros montant.
+            flagService.raise(source, WalletRiskFlag.Type.NEW_DEVICE_LARGE_TRANSFER, WalletRiskFlag.Severity.HIGH,
+                    plain(amount) + " " + source.getCurrency() + " vers " + target.getWalletNumber()
+                            + " depuis l'appareil " + deviceId, deviceId);
+        }
 
         WalletTransactionConfirmation confirmation = confirmationService.request(source,
                 new WalletConfirmationService.OperationToConfirm(WalletOperationType.TRANSFER, amount,
@@ -302,6 +315,8 @@ public class WalletTransferService {
         WalletAccount target = targetId.equals(first) ? firstLocked : secondLocked;
 
         assertTransferable(source, target, transfer.getAmount());
+        // Sans signalement ici : les deux comptes sont verrouilles, et l'initiation a deja signale
+        // une tentative au-dela du plafond s'il y en avait une.
         limitService.assertAllowed(limitService.checkTransfer(source,
                 kycLevelResolver.levelOf(source), transfer.getAmount()));
 
@@ -514,6 +529,11 @@ public class WalletTransferService {
         this.feeMin = min;
         this.feeMax = max;
         this.feeWalletNumber = walletNumber;
+    }
+
+    /** Expose pour les tests. */
+    void configureRisk(BigDecimal largeTransferAmount) {
+        this.largeTransferAmount = largeTransferAmount;
     }
 
     /** Utile aux services voisins qui doivent lister les enregistres. */

@@ -76,7 +76,7 @@ public class WalletTopUpService {
             throw new ConflictException("wallet", "ce portefeuille ne peut pas recevoir pour le moment");
         }
         BigDecimal amount = order.amount().setScale(4, RoundingMode.HALF_UP);
-        limitService.assertAllowed(limitService.checkTopUp(wallet, kycLevelResolver.levelOf(wallet), amount));
+        limitService.assertAllowed(wallet, limitService.checkTopUp(wallet, kycLevelResolver.levelOf(wallet), amount));
 
         PaymentIntentResponse intent = paymentService.createIntent(new CreatePaymentIntentRequest(
                 wallet.getOwnerType(),

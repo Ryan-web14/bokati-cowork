@@ -47,14 +47,19 @@ public class WalletOwnerControlService {
 
     @Transactional
     public WalletAccount unlock(WalletAccount wallet, String pin, String ipAddress, String deviceId) {
-        WalletAccount managed = walletRepository.findByIdForUpdate(wallet.getId()).orElseThrow();
-        if (managed.getLockedByOwnerAt() == null) {
-            return managed;
+        if (wallet.getLockedByOwnerAt() == null) {
+            return wallet;
         }
         // Le code est exige des qu'il existe. Un titulaire sans code a accepte ce niveau de
         // protection · on ne lui invente pas une exigence qu'il ne peut pas satisfaire.
-        if (credentialRepository.findByWalletId(managed.getId()).isPresent()) {
-            securityService.verifyPin(managed, pin);
+        // Verifie avant le verrou : un blocage pour codes faux leve un signalement, et ce
+        // signalement ne peut pas s'inserer tant que le compte est verrouille en exclusif.
+        if (credentialRepository.findByWalletId(wallet.getId()).isPresent()) {
+            securityService.verifyPin(wallet, pin);
+        }
+        WalletAccount managed = walletRepository.findByIdForUpdate(wallet.getId()).orElseThrow();
+        if (managed.getLockedByOwnerAt() == null) {
+            return managed;
         }
         managed.setLockedByOwnerAt(null);
         walletRepository.save(managed);

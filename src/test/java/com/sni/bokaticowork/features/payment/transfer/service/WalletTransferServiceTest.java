@@ -75,6 +75,7 @@ class WalletTransferServiceTest {
     @Mock private WalletCounterpartyResolver counterpartyResolver;
     @Mock private WalletDeviceService deviceService;
     @Mock private WalletNotifier notifier;
+    @Mock private com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService flagService;
     @Mock private SequenceGeneratorFacade sequenceGenerator;
 
     @InjectMocks
@@ -110,7 +111,10 @@ class WalletTransferServiceTest {
         when(ledgerService.credit(any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(invocation -> WalletLedgerEntry.builder().entryNumber("WLE-C").build());
         when(deviceService.list(any())).thenReturn(List.of());
+        when(deviceService.touch(any(), any(), any()))
+                .thenReturn(new WalletDeviceService.DeviceVerdict(true, false, false, 3));
         service.configureFees(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO, "");
+        service.configureRisk(new BigDecimal("100000"));
     }
 
     private WalletAccount wallet(Long id, String number, String owner, String balance) {
@@ -230,12 +234,39 @@ class WalletTransferServiceTest {
         when(limitService.checkTransfer(any(), anyInt(), any()))
                 .thenReturn(new WalletLimitService.LimitVerdict(false, "Plafond par transfert atteint · 50000 XAF", null));
         Mockito.doThrow(new ConflictException("wallet", "Plafond par transfert atteint · 50000 XAF"))
-                .when(limitService).assertAllowed(any());
+                .when(limitService).assertAllowed(any(), any());
 
         ConflictException thrown = assertThrows(ConflictException.class,
                 () -> service.initiate(alice, order("10000"), "MBR-A", null, null));
 
         assertTrue(thrown.getMessage().contains("50000"));
+    }
+
+    @Test
+    void unGrosMontantDepuisUnAppareilJamaisVuEstSignaleMaisPasBloque() {
+        // Le signal le plus simple et le plus fiable. Il ne bloque pas : un titulaire qui change de
+        // téléphone n'est pas un voleur, mais la revue doit pouvoir regarder.
+        when(deviceService.touch(any(), any(), any()))
+                .thenReturn(new WalletDeviceService.DeviceVerdict(false, false, true, 1));
+        alice.setAvailableBalance(new BigDecimal("500000"));
+
+        WalletTransferService.InitiatedTransfer initiated =
+                service.initiate(alice, order("150000"), "MBR-A", "1.2.3.4", "phone-new");
+
+        assertEquals(WalletTransferStatus.PENDING_CONFIRMATION, initiated.transfer().getStatus());
+        verify(flagService).raise(eq(alice),
+                eq(com.sni.bokaticowork.features.payment.control.model.WalletRiskFlag.Type.NEW_DEVICE_LARGE_TRANSFER),
+                any(), any(), eq("phone-new"));
+    }
+
+    @Test
+    void unPetitMontantDepuisUnAppareilJamaisVuNEstPasSignale() {
+        when(deviceService.touch(any(), any(), any()))
+                .thenReturn(new WalletDeviceService.DeviceVerdict(false, false, true, 1));
+
+        service.initiate(alice, order("5000"), "MBR-A", "1.2.3.4", "phone-new");
+
+        verify(flagService, never()).raise(any(), any(), any(), any(), any());
     }
 
     // ---------------------------------------------------------------------------------------

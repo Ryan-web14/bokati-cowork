@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.transfer.service;
 
+import com.sni.bokaticowork.features.payment.control.model.WalletRiskFlag;
+import com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,8 +24,10 @@ import java.time.Instant;
 public class WalletBalanceWatch {
 
     private final WalletNotifier notifier;
+    private final WalletRiskFlagService flagService;
 
     public void afterBalanceChange(WalletAccount wallet) {
+        wakeIfDormant(wallet);
         BigDecimal threshold = wallet.getLowBalanceThreshold();
         if (threshold == null || wallet.getAvailableBalance() == null) {
             return;
@@ -36,5 +40,23 @@ public class WalletBalanceWatch {
             // Le solde est remonte · la prochaine descente meritera une nouvelle alerte.
             wallet.setLowBalanceAlertedAt(null);
         }
+    }
+
+    /**
+     * Un portefeuille dormant qui bouge se reveille, et cela se signale.
+     *
+     * <p>Ce n'est pas suspect en soi · un titulaire revient. Mais un compte oublie est aussi le
+     * compte ideal pour qui l'a trouve, et la revue doit pouvoir le regarder avant que le solde ne
+     * soit parti.</p>
+     */
+    private void wakeIfDormant(WalletAccount wallet) {
+        if (wallet.getDormantSince() == null) {
+            return;
+        }
+        // Apres commit : on est ici sous le verrou exclusif du compte, et l'insertion du
+        // signalement en aurait besoin d'une cle partagee · les deux s'attendraient.
+        flagService.raiseAfterCommit(wallet, WalletRiskFlag.Type.DORMANT_REACTIVATION, WalletRiskFlag.Severity.MEDIUM,
+                "Sans mouvement depuis le " + wallet.getDormantSince(), null);
+        wallet.setDormantSince(null);
     }
 }

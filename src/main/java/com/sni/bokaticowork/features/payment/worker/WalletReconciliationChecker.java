@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.worker;
 
+import com.sni.bokaticowork.features.payment.control.model.WalletRiskFlag;
+import com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
 import com.sni.bokaticowork.features.payment.repository.WalletLedgerEntryRepository;
@@ -25,6 +27,7 @@ public class WalletReconciliationChecker {
 
     private final WalletAccountRepository walletRepository;
     private final WalletLedgerEntryRepository ledgerRepository;
+    private final WalletRiskFlagService flagService;
 
     /**
      * @return {@code true} si le compte est coherent sur les deux controles
@@ -54,6 +57,21 @@ public class WalletReconciliationChecker {
                     wallet.getWalletNumber(), wallet.getLedgerBalance(), fromLedger,
                     wallet.getLedgerBalance().subtract(fromLedger));
             consistent = false;
+        }
+
+        // Un ecart ne se corrige pas, il se signale : le signalement ouvre une revue humaine, et
+        // c'est elle qui decidera. Ecraser un solde pour faire taire un ecart effacerait la seule
+        // trace de ce qui a mal tourne.
+        if (!consistent) {
+            flagService.raise(wallet, WalletRiskFlag.Type.INTEGRITY_BREAK, WalletRiskFlag.Severity.CRITICAL,
+                    "Solde comptable " + wallet.getLedgerBalance() + " · somme des ecritures " + fromLedger
+                            + " · disponible " + wallet.getAvailableBalance() + " + bloque " + wallet.getHeldBalance(),
+                    wallet.getWalletNumber());
+        }
+        if (wallet.getLedgerBalance().signum() < 0 || wallet.getAvailableBalance().signum() < 0) {
+            flagService.raise(wallet, WalletRiskFlag.Type.NEGATIVE_BALANCE, WalletRiskFlag.Severity.CRITICAL,
+                    "Solde negatif · comptable " + wallet.getLedgerBalance() + ", disponible " + wallet.getAvailableBalance(),
+                    wallet.getWalletNumber());
         }
         return consistent;
     }
