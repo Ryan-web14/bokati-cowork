@@ -29,7 +29,7 @@ public class WalletRiskFlag {
     public enum Type {
         UNUSUAL_VOLUME, RAPID_IN_OUT, STRUCTURING, MANY_COUNTERPARTIES, DORMANT_REACTIVATION,
         FAILED_PIN_BURST, LIMIT_BREACH_ATTEMPT, NEGATIVE_BALANCE, INTEGRITY_BREAK,
-        REVOKED_DEVICE_USED, NEW_DEVICE_LARGE_TRANSFER
+        REVOKED_DEVICE_USED, NEW_DEVICE_LARGE_TRANSFER, LIST_MATCH, IDENTITY_REVIEW_DUE, PHONE_CHANGED
     }
 
     public enum Severity {
@@ -87,6 +87,14 @@ public class WalletRiskFlag {
 
     @Column(name = "resolution", length = 1000)
     private String resolution;
+
+    /** La regle qui l'a leve · nulle pour les signalements que le systeme leve sans regle. */
+    @Column(name = "rule_code", length = 60)
+    private String ruleCode;
+
+    /** Le dossier qui l'a pris · nul tant qu'aucun dossier ne l'a repris. */
+    @Column(name = "case_number", length = 100)
+    private String caseNumber;
 
     public boolean open() {
         return status == Status.OPEN || status == Status.UNDER_REVIEW;

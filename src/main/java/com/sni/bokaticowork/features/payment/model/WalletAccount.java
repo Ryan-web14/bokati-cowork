@@ -106,6 +106,13 @@ public class WalletAccount {
     @Column(name = "locked_by_owner_at")
     private Instant lockedByOwnerAt;
 
+    /** Prochaine reverification d'identite · les dossiers les plus exposes se recontrolent. */
+    @Column(name = "identity_review_due_at")
+    private Instant identityReviewDueAt;
+
+    @Column(name = "identity_reviewed_at")
+    private Instant identityReviewedAt;
+
     /** Seuil sous lequel le titulaire veut etre prevenu · nul s'il ne veut pas l'etre. */
     @Column(name = "low_balance_threshold", precision = 19, scale = 4)
     private BigDecimal lowBalanceThreshold;

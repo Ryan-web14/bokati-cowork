@@ -32,6 +32,30 @@ public interface WalletTransferRepository extends JpaRepository<WalletTransfer, 
             """)
     List<WalletTransfer> findExpired(@Param("status") WalletTransferStatus status, @Param("now") Instant now);
 
+    // ---------------------------------------------------------------------------------------
+    // Surveillance
+    // ---------------------------------------------------------------------------------------
+
+    /** Transferts aboutis emis par un portefeuille depuis un instant · pour les detecteurs. */
+    @Query("""
+            SELECT t FROM WalletTransfer t
+            WHERE t.sourceWallet.id = :walletId
+              AND t.status = com.sni.bokaticowork.features.payment.transfer.model.WalletTransferStatus.COMPLETED
+              AND t.completedAt >= :from
+            ORDER BY t.completedAt ASC
+            """)
+    List<WalletTransfer> findCompletedFromSince(@Param("walletId") Long walletId, @Param("from") Instant from);
+
+    /** Transferts aboutis recus par un portefeuille depuis un instant. */
+    @Query("""
+            SELECT t FROM WalletTransfer t
+            WHERE t.targetWallet.id = :walletId
+              AND t.status = com.sni.bokaticowork.features.payment.transfer.model.WalletTransferStatus.COMPLETED
+              AND t.completedAt >= :from
+            ORDER BY t.completedAt ASC
+            """)
+    List<WalletTransfer> findCompletedToSince(@Param("walletId") Long walletId, @Param("from") Instant from);
+
     /** Combien de transferts un emetteur a deja faits vers un destinataire · nul ou zero, c'est un inconnu. */
     @Query("""
             SELECT COUNT(t) FROM WalletTransfer t

@@ -26,4 +26,18 @@ public interface WalletRiskFlagRepository extends JpaRepository<WalletRiskFlag, 
     Page<WalletRiskFlag> findByWallet_IdOrderByDetectedAtDesc(Long walletId, Pageable pageable);
 
     long countByStatusIn(Collection<WalletRiskFlag.Status> statuses);
+
+    long countByWallet_IdAndFlagTypeAndDetectedAtAfter(Long walletId, WalletRiskFlag.Type type, java.time.Instant after);
+
+    Optional<WalletRiskFlag> findFirstByWallet_IdAndFlagTypeOrderByDetectedAtDesc(Long walletId, WalletRiskFlag.Type type);
+
+    /** Les regles qui declenchent le plus · pour le tableau de bord de la surveillance. */
+    @org.springframework.data.jpa.repository.Query(nativeQuery = true, value = """
+            SELECT rule_code, COUNT(*)
+            FROM wallet_risk_flag
+            WHERE rule_code IS NOT NULL AND detected_at >= :since
+            GROUP BY rule_code
+            ORDER BY COUNT(*) DESC
+            """)
+    java.util.List<Object[]> countByRuleSince(@org.springframework.data.repository.query.Param("since") java.time.Instant since);
 }

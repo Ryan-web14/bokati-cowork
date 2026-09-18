@@ -53,6 +53,8 @@ public class WalletTopUpService {
     private final WalletLimitService limitService;
     private final WalletKycLevelResolver kycLevelResolver;
     private final WalletNotifier notifier;
+    private final com.sni.bokaticowork.features.payment.compliance.service.ComplianceRuleEngine ruleEngine;
+    private final com.sni.bokaticowork.features.payment.compliance.service.IdentityUpgradeService identityUpgrade;
 
     public record TopUpOrder(BigDecimal amount, String phoneNumber, CongoCorrespondent correspondent) {
     }
@@ -76,7 +78,8 @@ public class WalletTopUpService {
             throw new ConflictException("wallet", "ce portefeuille ne peut pas recevoir pour le moment");
         }
         BigDecimal amount = order.amount().setScale(4, RoundingMode.HALF_UP);
-        limitService.assertAllowed(wallet, limitService.checkTopUp(wallet, kycLevelResolver.levelOf(wallet), amount));
+        limitService.assertAllowed(wallet, identityUpgrade.enrich(wallet,
+                limitService.checkTopUp(wallet, kycLevelResolver.levelOf(wallet), amount)));
 
         PaymentIntentResponse intent = paymentService.createIntent(new CreatePaymentIntentRequest(
                 wallet.getOwnerType(),
@@ -124,6 +127,7 @@ public class WalletTopUpService {
 
         WalletAccount fresh = walletRepository.findById(wallet.getId()).orElse(wallet);
         notifier.topUpCompleted(fresh, transaction.getAmount(), transaction.getTransactionNumber());
+        ruleEngine.evaluateAfterCommit(wallet.getId(), null);
         log.info("Rechargement {} · {} {} sur {}", transaction.getTransactionNumber(),
                 transaction.getAmount().stripTrailingZeros().toPlainString(), fresh.getCurrency(), fresh.getWalletNumber());
     }

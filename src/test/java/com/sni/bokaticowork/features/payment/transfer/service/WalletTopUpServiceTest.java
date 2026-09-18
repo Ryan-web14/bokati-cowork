@@ -56,6 +56,10 @@ class WalletTopUpServiceTest {
     @Mock private WalletKycLevelResolver kycLevelResolver;
     @Mock private WalletNotifier notifier;
 
+    @Mock private com.sni.bokaticowork.features.payment.compliance.service.ComplianceRuleEngine ruleEngine;
+
+    @Mock private com.sni.bokaticowork.features.payment.compliance.service.IdentityUpgradeService identityUpgrade;
+
     @InjectMocks
     private WalletTopUpService service;
 
@@ -63,6 +67,8 @@ class WalletTopUpServiceTest {
 
     @BeforeEach
     void setUp() {
+        when(identityUpgrade.enrich(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
+        when(identityUpgrade.whatIsMissing(any())).thenReturn(Optional.empty());
         wallet = WalletAccount.builder()
                 .id(1L).walletNumber("WAL-1").ownerType("MEMBER").ownerCode("MBR-1").currency("XAF")
                 .status(WalletStatus.ACTIVE)

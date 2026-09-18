@@ -83,6 +83,7 @@ public class MemberServiceImpl  implements MemberService {
     private final PasswordResetService passwordResetService;
     private final com.sni.bokaticowork.core.utils.phone.PhoneNumberService phoneNumberService;
     private final com.sni.bokaticowork.security.admin.role.service.interfaces.RoleUserService roleUserService;
+    private final com.sni.bokaticowork.features.payment.compliance.service.ComplianceSignals complianceSignals;
 
     @Value("${app.verify-base-url:}")
     private String publicBaseUrl;
@@ -145,6 +146,8 @@ public class MemberServiceImpl  implements MemberService {
             memberRepo.save(member);
             createProfileIfMissing(member, request, customer);
             kycAutomationService.initializeMemberKyc(member.getMemberId());
+            // Controle des listes a l'entree en relation · apres commit, jamais en travers.
+            complianceSignals.memberRegistered(member);
             sendMemberCreatedEmailAfterCommit(member, createdByAdmin);
             if (createdByAdmin) {
                 sendPasswordSetupLinkAfterCommit(user);
@@ -177,10 +180,15 @@ public class MemberServiceImpl  implements MemberService {
 
         normalizeUpdateRequest(request);
         validateUpdateRequest(member, request);
+        String previousPhone = member.getPhone();
         member = memberMapper.updateEntity(member, request);
         syncUserEmail(member, request);
         syncUserName(member, request);
         memberRepo.save(member);
+        if (StringUtils.hasText(request.getPhone()) && previousPhone != null && !previousPhone.equals(member.getPhone())) {
+            // Un numero qui change est un moyen de connexion qui change · la conformite le sait.
+            complianceSignals.memberPhoneChanged(member, previousPhone, member.getPhone(), "MEMBER_UPDATE");
+        }
     }
 
     @Override

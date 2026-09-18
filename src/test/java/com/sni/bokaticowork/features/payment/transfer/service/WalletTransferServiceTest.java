@@ -78,6 +78,10 @@ class WalletTransferServiceTest {
     @Mock private com.sni.bokaticowork.features.payment.control.service.WalletRiskFlagService flagService;
     @Mock private SequenceGeneratorFacade sequenceGenerator;
 
+    @Mock private com.sni.bokaticowork.features.payment.compliance.service.ComplianceRuleEngine ruleEngine;
+
+    @Mock private com.sni.bokaticowork.features.payment.compliance.service.IdentityUpgradeService identityUpgrade;
+
     @InjectMocks
     private WalletTransferService service;
 
@@ -86,6 +90,8 @@ class WalletTransferServiceTest {
 
     @BeforeEach
     void setUp() {
+        when(identityUpgrade.enrich(any(), any())).thenAnswer(invocation -> invocation.getArgument(1));
+        when(identityUpgrade.whatIsMissing(any())).thenReturn(Optional.empty());
         alice = wallet(1L, "WAL-ALICE", "MBR-A", "50000");
         bob = wallet(2L, "WAL-BOB", "MBR-B", "1000");
 

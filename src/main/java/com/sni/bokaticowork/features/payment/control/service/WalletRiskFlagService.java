@@ -60,11 +60,29 @@ public class WalletRiskFlagService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<WalletRiskFlag> raise(WalletAccount wallet, WalletRiskFlag.Type type,
                                           WalletRiskFlag.Severity severity, String details, String reference) {
+        return raiseForRule(wallet, type, severity, details, reference, null).map(RaiseResult::flag);
+    }
+
+    /** Ce que {@link #raiseForRule} a fait · le signalement, et s'il vient d'etre cree ou existait deja. */
+    public record RaiseResult(WalletRiskFlag flag, boolean created) {
+    }
+
+    /**
+     * Comme {@link #raise}, en nommant la regle qui parle.
+     *
+     * <p>Un signalement deja ouvert pour le meme type n'est pas double, mais on dit qu'il existait :
+     * une regle qui redetecte la meme situation a chaque operation n'a pas « touche » une seconde
+     * fois, et ses compteurs ne doivent pas le croire.</p>
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Optional<RaiseResult> raiseForRule(WalletAccount wallet, WalletRiskFlag.Type type,
+                                              WalletRiskFlag.Severity severity, String details, String reference,
+                                              String ruleCode) {
         try {
             Optional<WalletRiskFlag> existing = flagRepository
                     .findFirstByWallet_IdAndFlagTypeAndStatus(wallet.getId(), type, WalletRiskFlag.Status.OPEN);
             if (existing.isPresent()) {
-                return existing;
+                return Optional.of(new RaiseResult(existing.get(), false));
             }
             WalletRiskFlag flag = flagRepository.save(WalletRiskFlag.builder()
                     .flagNumber(sequenceGenerator.next("wallet_risk_flag"))
@@ -74,10 +92,11 @@ public class WalletRiskFlagService {
                     .status(WalletRiskFlag.Status.OPEN)
                     .details(truncate(details, 1000))
                     .reference(truncate(reference, 180))
-                    .detectedBy("SYSTEM")
+                    .ruleCode(ruleCode)
+                    .detectedBy(ruleCode == null ? "SYSTEM" : "RULE:" + ruleCode)
                     .build());
             log.warn("Portefeuille {} · signalement {} ({}) : {}", wallet.getWalletNumber(), type, severity, details);
-            return Optional.of(flag);
+            return Optional.of(new RaiseResult(flag, true));
         } catch (DataIntegrityViolationException ex) {
             // Une detection concurrente a gagne · le signalement existe, c'est ce qu'on voulait.
             return Optional.empty();
