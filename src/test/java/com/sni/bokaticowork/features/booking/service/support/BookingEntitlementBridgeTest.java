@@ -30,6 +30,8 @@ class BookingEntitlementBridgeTest {
     @Mock private EntitlementService entitlementService;
     @Mock private UsageRecordService usageRecordService;
     @Mock private EntitlementDefinitionRepository definitionRepository;
+    @Mock private com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository subscriptionRepository;
+    @Mock private BookingOverageGuard overageGuard;
 
     @Test
     void shouldDebitHoursForAnHourlyEntitlementWhateverTheBookingUnit() {
@@ -99,7 +101,7 @@ class BookingEntitlementBridgeTest {
     @Test
     void shouldRefuseAnUnknownEntitlementCode() {
         BookingEntitlementBridge bridge =
-                new BookingEntitlementBridge(entitlementService, usageRecordService, definitionRepository);
+                new BookingEntitlementBridge(entitlementService, usageRecordService, definitionRepository, subscriptionRepository, overageGuard);
         lenient().when(definitionRepository.findByCodeIgnoreCase("ENT-ABSENT")).thenReturn(Optional.empty());
 
         Booking booking = Booking.builder()
@@ -114,7 +116,7 @@ class BookingEntitlementBridgeTest {
     private BookingEntitlementBridge.Charge charge(EntitlementUnit unit, int minutes,
                                                    ResourceBookingUnit bookingUnit, int places) {
         BookingEntitlementBridge bridge =
-                new BookingEntitlementBridge(entitlementService, usageRecordService, definitionRepository);
+                new BookingEntitlementBridge(entitlementService, usageRecordService, definitionRepository, subscriptionRepository, overageGuard);
         lenient().when(definitionRepository.findByCodeIgnoreCase("ENT-TEST"))
                 .thenReturn(Optional.of(EntitlementDefinition.builder()
                         .code("ENT-TEST").unit(unit).build()));

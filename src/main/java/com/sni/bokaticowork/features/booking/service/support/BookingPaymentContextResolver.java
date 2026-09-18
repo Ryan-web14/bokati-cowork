@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.subscription.subscription.model.Entitlement
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.EntitlementService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class BookingPaymentContextResolver {
@@ -25,6 +27,7 @@ public class BookingPaymentContextResolver {
     private final SubscriptionRepository subscriptionRepository;
     private final EntitlementGrantRepository grantRepository;
     private final @Lazy EntitlementService entitlementService;
+    private final BookingOverageGuard overageGuard;
 
     public BookingPaymentContext resolve(BookingPaymentMode paymentMode,
                                          BookingIdentityResolver.ResolvedBookingIdentity identity,
@@ -57,6 +60,24 @@ public class BookingPaymentContextResolver {
                     );
                 }
             }
+
+            // Aucun droit disponible ne veut pas dire aucun droit. Un abonne qui a consomme ses
+            // cinq heures de salle y a bien acces · il les a epuisees. Si le plan autorise le
+            // depassement, la reservation passe et les heures supplementaires seront facturees.
+            for (Subscription subscription : subscriptions) {
+                Optional<EntitlementGrant> exhausted = grantRepository.findSubscriptionGrantIgnoringBalance(
+                        ownerType, ownerCode, subscription.getId(), resourceTypeCode, resourceGroupCode, now);
+                if (exhausted.isEmpty()) {
+                    continue;
+                }
+                String entitlementCode = exhausted.get().getEntitlementDefinition().getCode();
+                if (overageGuard.allows(subscription.getPlanVersion(), entitlementCode)) {
+                    log.info("Abonnement {} · droit {} epuise, la reservation passe en depassement",
+                            subscription.getSubscriptionNumber(), entitlementCode);
+                    return new BookingPaymentContext(subscription.getSubscriptionNumber(), null, entitlementCode);
+                }
+            }
+
             throw new ResourceNotFoundException(
                     "No active subscription with a matching entitlement found for resource type="
                     + (resourceTypeCode == null ? "none" : resourceTypeCode)

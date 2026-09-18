@@ -33,7 +33,15 @@ public class BookingResourceGuard {
         if (quantity < 1) {
             throw new BadRequestException("Booking quantity must be greater than zero");
         }
-        if (quantity > resource.resolveBookableSlots()) {
+        // Une salle se loue entiere : la quantite y designe des participants, pas des places
+        // consommees. La comparer au nombre de reservations simultanees admises, qui vaut un pour
+        // une salle, refusait toute reservation de plus d'une personne.
+        if (resource.isWholeResourceBooking()) {
+            if (quantity > resource.resolveSeatingCapacity()) {
+                throw new ConflictException("booking",
+                        "requested attendees exceed the resource seating capacity");
+            }
+        } else if (quantity > resource.resolveBookableSlots()) {
             throw new ConflictException("booking", "requested quantity exceeds resource bookable slots");
         }
         validatePolicy(resource.getResourcePolicy(), startedAt, endedAt);

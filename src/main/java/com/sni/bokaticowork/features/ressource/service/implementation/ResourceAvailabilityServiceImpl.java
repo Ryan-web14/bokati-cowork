@@ -186,7 +186,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             if (!respectsBookingNotice(resource, candidate.getFirst().getStartedAt())) {
                 continue;
             }
-            if (!allReservable(candidate, normalizedQuantity)) {
+            if (!allReservable(candidate, normalizedQuantity, resource)) {
                 continue;
             }
 
@@ -228,12 +228,18 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, request.getStartedAt(), request.getEndedAt());
         assertExactRequestedCoverage(slots, request.getStartedAt(), request.getEndedAt());
 
-        if (!allReservable(slots, request.getQuantity())) {
+        if (!allReservable(slots, request.getQuantity(), resource)) {
             throw new ConflictException("resource reservation", "insufficient remaining availability for the requested range");
         }
 
         for (ResourceAvailability slot : slots) {
-            slot.setRemainingCapacity(slot.getRemainingCapacity() - request.getQuantity());
+            // Une salle se loue entiere : elle prend tout le creneau, quel que soit le nombre de
+            // participants annonce. Ne retirer que la quantite demandee laissait des places libres
+            // sur une piece deja louee, et un second client pouvait s'y presenter.
+            int consumed = resource.isWholeResourceBooking()
+                    ? slot.getRemainingCapacity()
+                    : request.getQuantity();
+            slot.setRemainingCapacity(slot.getRemainingCapacity() - consumed);
             slot.setAvailable(slot.getRemainingCapacity() > 0);
         }
 
@@ -254,7 +260,10 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         assertExactRequestedCoverage(slots, request.getStartedAt(), request.getEndedAt());
 
         for (ResourceAvailability slot : slots) {
-            int restored = Math.min(slot.getTotalCapacity(), slot.getRemainingCapacity() + request.getQuantity());
+            // Symetrique de la reservation : ce qui a ete pris en entier se rend en entier.
+            int restored = resource.isWholeResourceBooking()
+                    ? slot.getTotalCapacity()
+                    : Math.min(slot.getTotalCapacity(), slot.getRemainingCapacity() + request.getQuantity());
             slot.setRemainingCapacity(restored);
             slot.setAvailable(restored > 0);
         }
@@ -413,12 +422,22 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         return true;
     }
 
-    private boolean allReservable(List<ResourceAvailability> slots, int quantity) {
+    /**
+     * Le creneau peut-il accueillir la demande.
+     *
+     * <p>Pour une ressource louee en entier, c'est tout ou rien : la piece doit etre entierement
+     * libre. Accepter un creneau partiellement pris reviendrait a louer une salle dont quelqu'un
+     * occupe deja une partie, ce qui n'a pas de sens quand on loue la piece.</p>
+     */
+    private boolean allReservable(List<ResourceAvailability> slots, int quantity, Resource resource) {
+        boolean whole = resource != null && resource.isWholeResourceBooking();
         return slots.stream().allMatch(slot ->
                 Boolean.TRUE.equals(slot.getActive())
                         && Boolean.TRUE.equals(slot.getAvailable())
                         && slot.getRemainingCapacity() != null
-                        && slot.getRemainingCapacity() >= quantity
+                        && (whole
+                        ? slot.getRemainingCapacity().equals(slot.getTotalCapacity())
+                        : slot.getRemainingCapacity() >= quantity)
         );
     }
 

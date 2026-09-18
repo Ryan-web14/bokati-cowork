@@ -44,6 +44,20 @@ public class ResourceType {
     @Column(name = "bookable_slots")
     private Integer bookableSlots;
 
+    /**
+     * La location occupe-t-elle la ressource entiere.
+     *
+     * <p>Vrai pour une salle, un bureau, une cabine · on loue la piece. La quantite d'une
+     * reservation y designe alors le nombre de participants, elle ne consomme aucune place et ne
+     * multiplie pas le prix.</p>
+     *
+     * <p>Faux pour un open space, un parking, un casier · on y prend des places, une a la fois, et
+     * la quantite garde tout son sens.</p>
+     */
+    @Column(name = "whole_resource_booking", nullable = false)
+    @Builder.Default
+    private Boolean wholeResourceBooking = Boolean.FALSE;
+
     @Column(name = "created_at")
     private Instant createdAt;
 
