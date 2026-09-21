@@ -124,11 +124,11 @@ bokati:
   # Destinataires internes des courriels d'alerte · a defaut, le manager support
   billing:
     dunning:
-      # La personne qui reprend un impaye a la main quand les relances automatiques sont epuisees
+      # Qui reprend un impaye a la main quand les relances automatiques sont epuisees · une ou plusieurs adresses, separees par des virgules
       handover-email: ${DUNNING_HANDOVER_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}
   wallet:
     treasury:
-      # Qui est prevenu quand la tresorerie ne couvre plus l'encours des portefeuilles clients
+      # Qui est prevenu quand la tresorerie ne couvre plus l'encours des portefeuilles · une ou plusieurs adresses, separees par des virgules
       alert-email: ${WALLET_TREASURY_ALERT_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}
   domiciliation:
     # L'administration fiscale · adresse externe, sans repli : vide tant qu'elle n'est pas confirmee

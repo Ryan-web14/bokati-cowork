@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.billing.dunning.service;
 
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
+import com.sni.bokaticowork.core.utils.mail.Recipients;
 import com.sni.bokaticowork.features.billing.dunning.model.DunningNotice;
 import com.sni.bokaticowork.features.billing.dunning.model.DunningPolicy;
 import com.sni.bokaticowork.features.billing.dunning.model.DunningStep;
@@ -30,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -123,16 +125,20 @@ public class DunningRunner {
                     }
                 }
                 case HANDOVER -> {
-                    if (!StringUtils.hasText(handoverEmail)) {
+                    List<String> recipients = Recipients.split(handoverEmail);
+                    if (recipients.isEmpty()) {
                         outcome = DunningNotice.Outcome.SKIPPED;
                         detail = "bokati.billing.dunning.handover-email non renseigné";
                     } else {
-                        Map<String, Object> payload = new HashMap<>(vars);
-                        payload.put("adminEmail", handoverEmail);
-                        payload.put("subject", render(step.getSubjectTemplate(), vars));
-                        payload.put("message", render(step.getMessageTemplate(), vars));
-                        payload.put("templateCode", "billing_dunning_handover");
-                        outboxService.publish("BILLING_DUNNING_HANDOVER", "BILLING_DOCUMENT", document.getDocumentNumber(), payload);
+                        // Une adresse ou plusieurs · un courriel par personne qui reprend le dossier
+                        for (String recipient : recipients) {
+                            Map<String, Object> payload = new HashMap<>(vars);
+                            payload.put("adminEmail", recipient);
+                            payload.put("subject", render(step.getSubjectTemplate(), vars));
+                            payload.put("message", render(step.getMessageTemplate(), vars));
+                            payload.put("templateCode", "BILLING_DUNNING_HANDOVER");
+                            outboxService.publish("BILLING_DUNNING_HANDOVER", "BILLING_DOCUMENT", document.getDocumentNumber() + ":" + recipient, payload);
+                        }
                     }
                 }
             }

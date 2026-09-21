@@ -90,7 +90,18 @@ class WalletTreasuryReconciliationServiceTest {
 
         assertEquals(WalletTreasuryReconciliation.Status.UNDER_REVIEW, result.getStatus());
         assertEquals(0, result.getCoverageRatio().compareTo(new BigDecimal("0.6")));
-        verify(outboxService).publish(eq("WALLET_TREASURY_COVERAGE_ALERT"), eq("WALLET"), eq("WTS-202609-000001"), any());
+        verify(outboxService).publish(eq("WALLET_TREASURY_COVERAGE_ALERT"), eq("WALLET"), eq("WTS-202609-000001:direction@example.test"), any());
+    }
+
+    @Test
+    void plusieursAdressesRecoiventChacuneLeurCourriel() {
+        ReflectionTestUtils.setField(service, "alertEmail", "direction@example.test, finance@example.test;direction@example.test");
+
+        service.reconcile(inputs("1000000", "600000", null), "cfo");
+
+        verify(outboxService).publish(eq("WALLET_TREASURY_COVERAGE_ALERT"), eq("WALLET"), eq("WTS-202609-000001:direction@example.test"), any());
+        verify(outboxService).publish(eq("WALLET_TREASURY_COVERAGE_ALERT"), eq("WALLET"), eq("WTS-202609-000001:finance@example.test"), any());
+        verify(outboxService, org.mockito.Mockito.times(2)).publish(any(), any(), any(), any());
     }
 
     @Test

@@ -40,6 +40,9 @@ charge utile réellement émise.
 | `BILLING_DUNNING_REMINDER`, `_FORMAL_NOTICE`, `_GRACE_PERIOD`, `_SUSPEND` | `billing-dunning` (bascule) | `message` (rendu depuis le palier), `documentNumber`, `balanceDue`, `dueDate`, `daysOverdue` |
 | `BILLING_DUNNING_HANDOVER` (admin) | `billing-dunning-handover` | `message`, `customerName`, `customerCode`, `balanceDue`, `daysOverdue` |
 
+`bokati.wallet.treasury.alert-email` et `bokati.billing.dunning.handover-email` acceptent plusieurs
+adresses séparées par des virgules ou des points-virgules · un courriel part par adresse.
+
 Le sujet porté par la charge utile prime sur celui de la table ; celui de la table sert quand
 le service n'en met pas. `recipientName`, `eventType`, `subject`, `aggregateId` sont toujours
 disponibles au gabarit. Les alertes de pass (`EXPIRING`, `LOW_BALANCE`, `UNUSED`) passent par le

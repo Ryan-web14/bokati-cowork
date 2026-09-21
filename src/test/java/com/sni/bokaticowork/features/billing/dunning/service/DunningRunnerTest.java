@@ -194,10 +194,11 @@ class DunningRunnerTest {
         assertEquals(DunningNotice.Outcome.SKIPPED, notice.getOutcome());
         assertTrue(notice.getDetail().contains("handover-email"));
 
-        ReflectionTestUtils.setField(runner, "handoverEmail", "compta@example.com");
+        ReflectionTestUtils.setField(runner, "handoverEmail", "compta@example.com, direction@example.com");
         notice = runner.execute(invoice, handover);
         assertEquals(DunningNotice.Outcome.SENT, notice.getOutcome());
-        verify(outboxService).publish(eq("BILLING_DUNNING_HANDOVER"), eq("BILLING_DOCUMENT"), eq("INV-1"), any());
+        verify(outboxService).publish(eq("BILLING_DUNNING_HANDOVER"), eq("BILLING_DOCUMENT"), eq("INV-1:compta@example.com"), any());
+        verify(outboxService).publish(eq("BILLING_DUNNING_HANDOVER"), eq("BILLING_DOCUMENT"), eq("INV-1:direction@example.com"), any());
     }
 
     @Test
