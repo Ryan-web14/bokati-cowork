@@ -248,6 +248,8 @@ public class NotificationDispatchSupport {
         variables.putIfAbsent("recipientName", defaultText(message.getRecipientName(), "client"));
         variables.putIfAbsent("eventType", message.getEventType());
         variables.putIfAbsent("subject", message.getSubject());
+        variables.putIfAbsent("aggregateId", message.getAggregateId());
+        variables.putIfAbsent("aggregateType", message.getAggregateType());
 
         String html = renderBody(message, variables);
         EmailPriority priority = EmailPriority.fromEventType(message.getEventType());

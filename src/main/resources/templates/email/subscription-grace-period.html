@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Échéance impayée')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Une échéance de votre abonnement est impayée.'}">Une échéance de votre abonnement est impayée.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Échéance impayée</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, une échéance de votre abonnement <strong th:text="${subscriptionNumber}">abonnement</strong> est impayée. Vos accès restent ouverts pendant <strong th:text="${daysBeforeSuspension}">quelques</strong> jours, le temps de régulariser.
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Abonnement</td>
+          <td class="r-val mono" th:text="${subscriptionNumber}">Abonnement</td>
+        </tr>
+        <tr>
+          <td class="r-key">Jours avant suspension</td>
+          <td class="r-val" th:text="${daysBeforeSuspension}">Jours avant suspension</td>
+        </tr>
+      </table>
+      <div class="em-note warn">Réglez votre facture depuis votre espace client (portefeuille ou mobile money) : votre abonnement redevient actif immédiatement.</div>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Régler ma facture</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

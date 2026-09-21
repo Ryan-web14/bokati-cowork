@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Solde bas')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre solde est passé sous le seuil que vous avez fixé.'}">Votre solde est passé sous le seuil que vous avez fixé.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Solde bas</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, le solde de votre portefeuille est passé sous le seuil que vous avez fixé.
+      </div>
+      <div class="amount"><span th:text="${amount}">0</span> <small th:text="${currency}">XAF</small></div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr th:if="${threshold}">
+          <td class="r-key">Seuil d'alerte</td>
+          <td class="r-val" th:text="${threshold}">Seuil d'alerte</td>
+        </tr>
+        <tr>
+          <td class="r-key">Portefeuille</td>
+          <td class="r-val mono" th:text="${walletNumber}">Portefeuille</td>
+        </tr>
+        <tr th:if="${availableBalance}">
+          <td class="r-key">Solde disponible</td>
+          <td class="r-val" th:text="${availableBalance}">Solde disponible</td>
+        </tr>
+      </table>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Recharger mon portefeuille</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

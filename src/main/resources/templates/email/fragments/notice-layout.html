@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<!--
+  Gabarit commun des courriels des lots portefeuille, domiciliation, abonnements et relances.
+  Trois fragments : head (styles), header (marque), footer (contact). Chaque courriel garde son
+  corps a lui · c'est le corps qui dit quelque chose, la mise en page est la meme partout.
+-->
+<head th:fragment="head(title)">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title} + ' · Elle A Osé'">Elle A Osé</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #F4F2EF; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #2A2135; }
+    .wrap { width: 100%; padding: 40px 16px; background: #F4F2EF; }
+    .sheet { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid #ECE7F2; }
+    .em-header { background: #110828; padding: 22px 40px; }
+    .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
+    .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.30); margin-top: 5px; }
+    .em-stripe { height: 3px; background: #C9A84C; }
+    .em-stripe.warn { background: #D97706; }
+    .em-stripe.alert { background: #B91C1C; }
+    .em-body { padding: 40px 40px 36px; }
+    .em-title { font-size: 21px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 10px; }
+    .em-intro { font-size: 14.5px; color: #5C4F6E; line-height: 1.7; margin-bottom: 12px; }
+    .em-intro strong { color: #1A0A2E; font-weight: 700; }
+    .em-note { font-size: 13.5px; color: #5C4F6E; line-height: 1.7; margin-top: 18px; padding: 14px 16px; background: #FAF9F7; border-left: 3px solid #C9A84C; border-radius: 6px; }
+    .em-note.warn { border-left-color: #D97706; background: #FFF7ED; }
+    .em-note.alert { border-left-color: #B91C1C; background: #FEF2F2; }
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #A99BBC; margin: 30px 0 6px; }
+    .rows { width: 100%; border-collapse: collapse; }
+    .rows tr { border-bottom: 1px solid #F0ECF6; }
+    .rows tr:last-child { border-bottom: none; }
+    .rows td { padding: 12px 0; vertical-align: top; }
+    .r-key { font-size: 13px; color: #8A7C9C; width: 50%; }
+    .r-val { font-size: 14px; font-weight: 600; color: #1A0A2E; text-align: right; line-height: 1.4; }
+    .mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1px; }
+    .amount { font-size: 26px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.5px; margin: 6px 0 2px; }
+    .amount small { font-size: 13px; font-weight: 600; color: #8A7C9C; letter-spacing: 0; }
+    .cta { display: inline-block; margin-top: 22px; padding: 12px 22px; background: #110828; color: #fff !important; text-decoration: none; border-radius: 8px; font-size: 13px; font-weight: 700; letter-spacing: .5px; }
+    .em-legal { font-size: 12px; color: #A99BBC; line-height: 1.65; margin-top: 28px; padding-top: 22px; border-top: 1px solid #F0ECF6; }
+    .em-legal a { color: #8A7C9C; text-decoration: underline; }
+    .em-footer { background: #FAF9F7; border-top: 1px solid #EEEAF3; padding: 22px 40px; text-align: center; }
+    .em-footer-brand { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #A99BBC; margin-bottom: 6px; }
+    .em-footer-text { font-size: 11px; color: #B9AEC8; line-height: 1.65; }
+    .em-footer-text a { color: #8A7C9C; text-decoration: none; }
+    @media (max-width: 480px) {
+      .wrap { padding: 0; background: #fff; }
+      .sheet { border-radius: 0; border: none; max-width: 100%; }
+      .em-header { padding: 18px 24px; }
+      .em-body { padding: 30px 22px 28px; }
+      .em-footer { padding: 18px 24px; }
+    }
+  </style>
+</head>
+<body>
+<div th:fragment="header(tone)">
+  <div class="em-header">
+    <div class="em-brand" th:if="${#branding.logoUrl() == null}">Elle A Osé</div>
+    <img th:if="${#branding.logoUrl() != null}" th:src="${#branding.logoUrl()}" alt="Elle A Osé" style="height:36px; display:block;"/>
+    <div class="em-brand-sub">Espace de coworking</div>
+  </div>
+  <div class="em-stripe" th:classappend="${tone}"></div>
+</div>
+
+<div th:fragment="footer" class="em-footer">
+  <div class="em-footer-brand">Elle A Osé · Espace de coworking</div>
+  <div class="em-footer-text">
+    <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a> · <a href="tel:052042552">05 204 2552</a>
+  </div>
+</div>
+
+<div th:fragment="legal" class="em-legal">
+  Une question ? Notre équipe répond à <a href="mailto:coworkspace@elleaose.com">coworkspace@elleaose.com</a>.
+  Ce message est envoyé automatiquement · il n'est pas nécessaire d'y répondre.
+</div>
+</body>
+</html>

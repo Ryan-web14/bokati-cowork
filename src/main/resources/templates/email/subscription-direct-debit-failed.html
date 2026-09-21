@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Prélèvement impossible')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Le prélèvement de votre échéance a échoué.'}">Le prélèvement de votre échéance a échoué.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Prélèvement impossible</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, le prélèvement de votre échéance sur votre portefeuille n'a pas pu être effectué.
+      </div>
+      <div class="amount"><span th:text="${amount}">0</span> <small th:text="${currency}">XAF</small></div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Abonnement</td>
+          <td class="r-val mono" th:text="${subscriptionNumber}">Abonnement</td>
+        </tr>
+        <tr>
+          <td class="r-key">Facture</td>
+          <td class="r-val mono" th:text="${invoiceNumber}">Facture</td>
+        </tr>
+        <tr>
+          <td class="r-key">Motif</td>
+          <td class="r-val" th:text="${status}">Motif</td>
+        </tr>
+      </table>
+      <div class="em-note warn"><span th:if="${mandateSuspended == 'true'}">Après trois échecs, votre mandat de prélèvement est suspendu : rechargez votre portefeuille puis réactivez-le depuis votre espace client. </span>Vous pouvez aussi régler la facture directement.</div>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Régler ma facture</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

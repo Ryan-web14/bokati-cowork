@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Votre courrier')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Du courrier vous concerne.'}">Du courrier vous concerne.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Votre courrier</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, <span th:switch="${eventType}">
+          <span th:case="'MAIL_RECEIVED'">nous avons reçu du courrier pour vous. Il vous attend à l'accueil.</span>
+          <span th:case="'MAIL_SCANNED'">votre courrier a été numérisé et est consultable dans votre espace client.</span>
+          <span th:case="'MAIL_FORWARDED'">votre courrier a été réexpédié à l'adresse convenue.</span>
+          <span th:case="'MAIL_STORAGE_OVERDUE'">du courrier vous attend depuis plusieurs jours. Au-delà du délai de garde, sa conservation est facturée.</span>
+          <span th:case="*" th:text="${subject}">du courrier vous concerne.</span>
+        </span>
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${itemNumber}">Référence</td>
+        </tr>
+        <tr>
+          <td class="r-key">Type</td>
+          <td class="r-val" th:text="${mailType}">Type</td>
+        </tr>
+        <tr th:if="${senderName}">
+          <td class="r-key">Expéditeur</td>
+          <td class="r-val" th:text="${senderName}">Expéditeur</td>
+        </tr>
+        <tr th:if="${trackingNumber}">
+          <td class="r-key">Suivi</td>
+          <td class="r-val mono" th:text="${trackingNumber}">Suivi</td>
+        </tr>
+        <tr>
+          <td class="r-key">Contrat</td>
+          <td class="r-val mono" th:text="${contractNumber}">Contrat</td>
+        </tr>
+      </table>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Voir mon courrier</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

@@ -151,9 +151,6 @@ contrainte sur `subscription.status` · les nouveaux statuts n'ont pas demandé 
 
 ## Ce qui reste ouvert
 
-- Les gabarits d'e-mail des nouveaux événements (`SUBSCRIPTION_TERMINATION_*`,
-  `SUBSCRIPTION_GRACE_PERIOD`, `SUBSCRIPTION_DIRECT_DEBIT_FAILED`, `SUBSCRIPTION_QUOTE_SENT`)
-  restent à créer côté notification, comme pour les lots précédents.
 - `DunningService.scheduleForFailedIntent` n'est appelé nulle part · la relance mobile money reste
   à brancher sur l'échec de dépôt PawaPay. La tolérance ne dépend pas d'elle.
 - Le retrait d'un préavis après facturation demande un avoir manuel · `createCreditNote` existe.

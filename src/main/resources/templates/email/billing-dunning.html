@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Facture en attente')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Une facture reste en attente de règlement.'}">Une facture reste en attente de règlement.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Facture en attente</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, <span th:text="${message}">votre facture reste en attente de règlement.</span>
+      </div>
+      <div class="amount"><span th:text="${balanceDue}">0</span> <small th:text="${currency}">XAF</small></div>
+      <div class="section-lbl">Facture</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${documentNumber}">Référence</td>
+        </tr>
+        <tr th:if="${dueDate}">
+          <td class="r-key">Échéance</td>
+          <td class="r-val" th:text="${dueDate}">Échéance</td>
+        </tr>
+        <tr>
+          <td class="r-key">Jours de retard</td>
+          <td class="r-val" th:text="${daysOverdue}">Jours de retard</td>
+        </tr>
+        <tr th:if="${subscriptionNumber != null and subscriptionNumber != ''}">
+          <td class="r-key">Abonnement</td>
+          <td class="r-val mono" th:text="${subscriptionNumber}">Abonnement</td>
+        </tr>
+      </table>
+      <div class="em-note warn"><span th:switch="${eventType}"><span th:case="'BILLING_DUNNING_FORMAL_NOTICE'">Ce message vaut mise en demeure. </span><span th:case="'BILLING_DUNNING_SUSPEND'">Votre abonnement est suspendu pour impayé. Il sera rétabli dès réception du règlement. </span><span th:case="*"></span></span>Si le règlement a déjà été effectué, merci de ne pas tenir compte de ce message.</div>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Régler ma facture</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

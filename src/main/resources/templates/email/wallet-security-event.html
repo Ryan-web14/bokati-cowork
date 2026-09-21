@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Sécurité de votre portefeuille')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Une opération de sécurité a eu lieu sur votre portefeuille.'}">Une opération de sécurité a eu lieu sur votre portefeuille.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('alert')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Sécurité de votre portefeuille</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, <span th:switch="${eventType}">
+          <span th:case="'WALLET_NEW_DEVICE'">un nouvel appareil vient d'être utilisé sur votre portefeuille.</span>
+          <span th:case="'WALLET_REVOKED_DEVICE_USED'">un appareil que vous aviez révoqué a tenté d'opérer sur votre portefeuille. L'opération a été refusée.</span>
+          <span th:case="'WALLET_LOCKED_BY_OWNER'">votre portefeuille a été verrouillé. Aucune sortie n'est possible tant qu'il le reste.</span>
+          <span th:case="'WALLET_UNLOCKED_BY_OWNER'">votre portefeuille a été déverrouillé.</span>
+          <span th:case="*" th:text="${subject}">une opération de sécurité a eu lieu.</span>
+        </span>
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr th:if="${deviceId}">
+          <td class="r-key">Appareil</td>
+          <td class="r-val mono" th:text="${deviceId}">Appareil</td>
+        </tr>
+        <tr th:if="${ipAddress}">
+          <td class="r-key">Adresse IP</td>
+          <td class="r-val mono" th:text="${ipAddress}">Adresse IP</td>
+        </tr>
+        <tr>
+          <td class="r-key">Portefeuille</td>
+          <td class="r-val mono" th:text="${walletNumber}">Portefeuille</td>
+        </tr>
+      </table>
+      <div class="em-note alert"><strong>Ce n'est pas vous ?</strong> Verrouillez votre portefeuille depuis votre espace client, changez votre code secret et prévenez-nous.</div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

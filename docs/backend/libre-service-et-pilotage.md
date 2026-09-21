@@ -99,7 +99,6 @@ DDL pour le portail ni les indicateurs.
 
 ## Ce qui reste ouvert
 
-- Gabarits d'e-mail `BILLING_DUNNING_*` et `SUBSCRIPTION_QUOTE_SENT` côté notification.
 - Le gel planifié depuis le portail (avec préavis) demanderait une pause à date · non fait, le
   support gèle.
 - Les indicateurs sont calculés à la demande ; s'ils sont consultés souvent, une vue matérialisée
