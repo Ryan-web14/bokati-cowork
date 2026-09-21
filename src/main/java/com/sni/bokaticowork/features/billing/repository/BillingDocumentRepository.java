@@ -309,4 +309,18 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
             ORDER BY validated_at ASC
             """)
     List<BillingDocument> findAllValidatedOrderByValidatedAt(@Param("type") String type);
+
+    /** Les factures echues avec un solde · ce que la relance parametree parcourt chaque jour. */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM billing_document
+            WHERE document_type IN ('INVOICE', 'PROFORMA_INVOICE')
+              AND status IN ('ISSUED', 'SENT', 'PARTIALLY_PAID', 'OVERDUE')
+              AND balance_due > 0
+              AND due_date IS NOT NULL
+              AND due_date < CURRENT_DATE
+            ORDER BY due_date ASC
+            LIMIT :limit
+            """)
+    List<BillingDocument> findOverdueWithBalance(@Param("limit") int limit);
 }

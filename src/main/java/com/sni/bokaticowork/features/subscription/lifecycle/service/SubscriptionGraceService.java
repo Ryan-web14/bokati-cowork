@@ -135,7 +135,7 @@ public class SubscriptionGraceService {
         outboxService.publish(eventType, "SUBSCRIPTION", subscription.getSubscriptionNumber(), payload);
     }
 
-    static String recipientEmail(Subscription subscription) {
+    public static String recipientEmail(Subscription subscription) {
         if (subscription.getMember() != null) return subscription.getMember().getEmail();
         if (subscription.getCustomer() != null) {
             return StringUtils.hasText(subscription.getCustomer().getBillingEmail())

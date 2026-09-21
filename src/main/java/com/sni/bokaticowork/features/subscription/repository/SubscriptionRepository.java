@@ -135,6 +135,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
             """)
     List<Subscription> findOpenBySubscriber(@Param("subscriberType") String subscriberType, @Param("subscriberCode") String subscriberCode);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscriber_type = :subscriberType AND subscriber_code = :subscriberCode ORDER BY created_at DESC")
+    List<Subscription> findAllBySubscriber(@Param("subscriberType") String subscriberType, @Param("subscriberCode") String subscriberCode);
+
     @Query(nativeQuery = true, value = """
             SELECT id
             FROM subscription
