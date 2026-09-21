@@ -38,6 +38,7 @@ public class DiscountApplicationService {
     private final PromotionRepository promotionRepository;
     private final AppliedDiscountRepository appliedDiscountRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
+    private final com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.service.CouponService couponService;
 
     /**
      * Evalue puis enregistre les remises sur le document designe.
@@ -60,6 +61,10 @@ public class DiscountApplicationService {
             record(rule, context, documentType, documentCode, appliedBy);
             if (rule.sourceType() == DiscountSourceType.PROMOTION) {
                 consume(rule.sourceCode(), rule.discountAmount());
+            } else if (rule.sourceType() == DiscountSourceType.COUPON) {
+                // Le code est consomme ici, pas a la retenue · un panier abandonne ne le perd pas
+                couponService.consume(rule.sourceCode(), context.subscriberType(), context.subscriberCode(),
+                        rule.discountAmount(), context.currency(), documentCode, appliedBy);
             }
         }
         return result;

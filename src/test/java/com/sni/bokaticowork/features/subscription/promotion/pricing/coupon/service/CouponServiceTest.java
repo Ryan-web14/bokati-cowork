@@ -205,6 +205,34 @@ class CouponServiceTest {
     }
 
     @Test
+    void consumingAppliedCodeCapturesTheHeldReservationOrReservesAndCapturesAtOnce() {
+        Coupon single = coupon(CouponKind.SINGLE_USE);
+        single.setReservedCount(1);
+        CouponReservation held = reservation(single);
+        when(couponRepository.findByCode("PROMO1")).thenReturn(Optional.of(single));
+        when(couponRepository.findByCodeForUpdate("PROMO1")).thenReturn(Optional.of(single));
+        when(reservationRepository.findActiveForSubscriber(any(), anyString(), anyString())).thenReturn(List.of(held));
+        when(reservationRepository.findActiveByCart("CART-1")).thenReturn(List.of(held));
+
+        service.consume("PROMO1", "MEMBER", "MBR-1", java.math.BigDecimal.TEN, "XAF", "SUB-1", "SYSTEM");
+
+        assertEquals(CouponReservationStatus.CAPTURED, held.getStatus());
+        assertEquals(CouponStatus.USED, single.getStatus());
+
+        // Sans retenue prealable · le code est retenu sous la reference du document puis capture
+        Coupon other = coupon(CouponKind.SINGLE_USE);
+        when(couponRepository.findByCode("PROMO1")).thenReturn(Optional.of(other));
+        when(couponRepository.findByCodeForUpdate("PROMO1")).thenReturn(Optional.of(other));
+        when(reservationRepository.findActiveForSubscriber(any(), anyString(), anyString())).thenReturn(List.of());
+        when(reservationRepository.findActiveByCart("SUB-2")).thenAnswer(inv -> List.of(reservation(other)));
+
+        service.consume("PROMO1", "MEMBER", "MBR-1", java.math.BigDecimal.TEN, "XAF", "SUB-2", "SYSTEM");
+
+        assertEquals(1, other.getRedemptionCount());
+        assertEquals(CouponStatus.USED, other.getStatus());
+    }
+
+    @Test
     void givesTheCodeBackWhenTheCartIsAbandoned() {
         Coupon single = coupon(CouponKind.SINGLE_USE);
         single.setReservedCount(1);

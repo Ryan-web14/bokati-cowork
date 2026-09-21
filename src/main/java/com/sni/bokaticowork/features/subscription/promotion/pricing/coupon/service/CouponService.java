@@ -198,6 +198,27 @@ public class CouponService {
         return reservations;
     }
 
+    /**
+     * Consomme un code au moment ou la remise est appliquee a un document.
+     *
+     * <p>Si l'abonne avait retenu le code dans un panier, c'est cette retenue qui est capturee ·
+     * sinon le code est retenu et capture dans le meme geste, sous la reference du document. Sans
+     * cela, un code a usage unique applique a une souscription resterait utilisable.</p>
+     */
+    @Transactional
+    public void consume(String code, String subscriberType, String subscriberCode, BigDecimal discountAmount,
+                        String currency, String documentReference, String actor) {
+        Coupon coupon = find(code).orElse(null);
+        if (coupon == null) {
+            return;
+        }
+        List<CouponReservation> held = reservationRepository.findActiveForSubscriber(coupon.getId(), subscriberType, subscriberCode);
+        String cartReference = held.isEmpty()
+                ? reserve(code, documentReference, subscriberType, subscriberCode, discountAmount, currency, actor).getCartReference()
+                : held.getFirst().getCartReference();
+        capture(cartReference);
+    }
+
     /** Rend les codes retenus par un panier abandonné ou modifié. */
     @Transactional
     public int release(String cartReference, String reason) {

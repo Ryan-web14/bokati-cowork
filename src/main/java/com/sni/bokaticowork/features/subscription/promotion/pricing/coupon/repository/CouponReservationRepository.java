@@ -30,6 +30,19 @@ public interface CouponReservationRepository extends JpaRepository<CouponReserva
     Optional<CouponReservation> findActiveFor(@Param("couponId") Long couponId,
                                               @Param("cartReference") String cartReference);
 
+    /** La retenue active d'un abonne sur un code, quel que soit le panier · celle qu'on capture a la souscription. */
+    @Query("""
+            SELECT r FROM CouponReservation r
+            WHERE r.coupon.id = :couponId
+              AND r.subscriberType = :subscriberType
+              AND r.subscriberCode = :subscriberCode
+              AND r.status = com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.enums.CouponReservationStatus.RESERVED
+            ORDER BY r.reservedAt DESC
+            """)
+    List<CouponReservation> findActiveForSubscriber(@Param("couponId") Long couponId,
+                                                    @Param("subscriberType") String subscriberType,
+                                                    @Param("subscriberCode") String subscriberCode);
+
     /** Retenues arrivees a echeance · un panier abandonne ne doit pas immobiliser un code. */
     @Query("""
             SELECT r FROM CouponReservation r
