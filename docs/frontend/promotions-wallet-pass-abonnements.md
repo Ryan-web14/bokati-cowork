@@ -253,13 +253,15 @@ le backend reconnaît la forme. Le destinataire retrouvé est rendu par un simpl
 confirmation (pas un secret). Le transfert reste `PENDING_CONFIRMATION` jusqu'au `confirm` avec le
 PIN, dans le délai `confirmationExpiresAt` ; au-delà il est annulé.
 
-`TransferView` : `{ transferNumber, transferUuid, direction (OUT|IN), counterpartyWallet, amount, feeAmount, totalDebit, currency, status, message, paymentRequestNumber, failureReason, expiresAt, completedAt, createdAt }` ·
+`TransferView` : `{ transferNumber, transferUuid, direction (OUT|IN), counterpartyWallet, counterpartyName, amount, feeAmount, totalDebit, currency, status, message, paymentRequestNumber, failureReason, expiresAt, completedAt, createdAt }` ·
+`counterpartyName` est le nom d'affichage de l'autre partie (son numéro de portefeuille à défaut) · à montrer plutôt que le numéro. Même champ sur `PaymentRequestView`, et `name` sur `BeneficiaryView` à côté de l'`alias` choisi par le titulaire.
+
 `status` : `PENDING_CONFIRMATION`, `COMPLETED`, `FAILED`, `CANCELLED`.
 
 ### 2.4 Bénéficiaires, demandes de paiement, rechargement
 
 ```
-GET    /beneficiaries                         → [{ id, alias, walletNumber, transferCount, lastUsedAt, createdAt }]
+GET    /beneficiaries                         → [{ id, alias, walletNumber, name, transferCount, lastUsedAt, createdAt }]
 POST   /beneficiaries   { counterparty, alias }
 DELETE /beneficiaries/{id}
 
@@ -270,7 +272,7 @@ POST /payment-requests/{n}/cancel                   (le demandeur retire)
 ```
 
 Payer une demande reçue = initier un transfert avec `paymentRequestNumber` renseigné ; la
-demande passe `PAID`. `PaymentRequestView` : `{ requestNumber, direction, counterpartyWallet, amount, currency, reason, status (PENDING|PAID|DECLINED|CANCELLED|EXPIRED), transferNumber, expiresAt, resolvedAt, createdAt }`.
+demande passe `PAID`. `PaymentRequestView` : `{ requestNumber, direction, counterpartyWallet, counterpartyName, amount, currency, reason, status (PENDING|PAID|DECLINED|CANCELLED|EXPIRED), transferNumber, expiresAt, resolvedAt, createdAt }`.
 
 `POST /top-ups` `{ amount, phoneNumber, correspondent }` lance un dépôt mobile money (PawaPay,
 `correspondent` = opérateur : `MTN_MOMO_COG`, `AIRTEL_COG`, …) et renvoie le
