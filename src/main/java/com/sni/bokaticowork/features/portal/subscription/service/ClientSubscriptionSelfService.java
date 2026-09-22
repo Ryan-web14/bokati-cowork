@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Le portail en ecriture · changer, geler, resilier, prelever, accepter un devis, sans guichet.
@@ -191,11 +192,16 @@ public class ClientSubscriptionSelfService {
         return directDebitService.revoke(current.getMandateCode(), "Révoqué depuis l'espace client", member.getMemberId());
     }
 
+    /**
+     * Le mandat de cet abonnement, s'il y en a un.
+     *
+     * <p>Ne pas avoir donne de mandat est un etat normal, pas une erreur : l'ecran doit pouvoir
+     * demander « ou en est mon prelevement » et afficher « aucun mandat · en donner un » sans avoir
+     * a traiter un 404.</p>
+     */
     @Transactional(readOnly = true)
-    public SubscriptionDebitMandate mandate(Member member, String subscriptionNumber) {
-        Subscription subscription = own(member, subscriptionNumber);
-        return directDebitService.currentOf(subscription)
-                .orElseThrow(() -> new ResourceNotFoundException("Aucun mandat de prélèvement sur cet abonnement"));
+    public Optional<SubscriptionDebitMandate> mandate(Member member, String subscriptionNumber) {
+        return directDebitService.currentOf(own(member, subscriptionNumber));
     }
 
     // ---- Devis ------------------------------------------------------------------------------------

@@ -62,8 +62,10 @@ public class ClientPricingController {
      */
     @PostMapping("/catalogue/prices")
     public ResponseEntity<List<EffectivePrice>> cataloguePrices(@Valid @RequestBody CatalogueRequest request) {
+        PricingSimulationRequest context = forMember(request.context());
         return ResponseEntity.ok(pricingEngine.priceCatalogue(
-                simulationService.toContext(forMember(request.context())), request.items()));
+                simulationService.toContext(context),
+                requestResolver.resolveItems(request.items(), context.billingCycle())));
     }
 
     /**

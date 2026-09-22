@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.subscription.promotion.pricing.service;
 
 import com.sni.bokaticowork.features.subscription.promotion.pricing.dto.PricingSimulationRequest;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.engine.PriceableRef;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.enums.TargetScope;
 import com.sni.bokaticowork.features.subscription.repository.PassPlanPriceRepository;
 import com.sni.bokaticowork.features.subscription.repository.PassPlanRepository;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -66,6 +68,78 @@ public class PricingRequestResolver {
                 request.kycLevel(), request.tenureMonths(), request.firstPurchase(), request.lines(),
                 request.billingCycle(), request.channel(), request.paymentMethod(), request.locationCode(),
                 currency, request.couponCodes(), request.evaluationDate(), request.promotionsAllowed());
+    }
+
+    /**
+     * Les objets regardes, completes par le catalogue.
+     *
+     * <p>Demander « combien coutent ces plans » ne devrait pas obliger a donner leur prix : c'est
+     * la question meme. Le libelle, le prix affiche et les frais d'entree manquants sont donc lus
+     * dans le catalogue · ce qui est fourni n'est jamais ecrase, pour que le guichet puisse
+     * toujours simuler un prix qui n'existe pas encore.</p>
+     */
+    @Transactional(readOnly = true)
+    public List<PriceableRef> resolveItems(List<PriceableRef> items, String billingCycle) {
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+        return items.stream().map(item -> resolveItem(item, billingCycle)).toList();
+    }
+
+    private PriceableRef resolveItem(PriceableRef item, String billingCycle) {
+        boolean complete = item.listPrice() != null && StringUtils.hasText(item.label());
+        if (complete || !StringUtils.hasText(item.code())) {
+            return item;
+        }
+        String cycle = StringUtils.hasText(item.billingCycle()) ? item.billingCycle() : billingCycle;
+        return switch (item.scope() == null ? TargetScope.LINE : item.scope()) {
+            case PLAN -> planItem(item, cycle);
+            case PASS -> passItem(item);
+            default -> item;
+        };
+    }
+
+    private PriceableRef planItem(PriceableRef item, String billingCycle) {
+        try {
+            PlanVersion version = planResolver.resolvePlanVersion(item.code(), null);
+            PlanPrice price = planResolver.resolvePrice(version, cycle(billingCycle));
+            return new PriceableRef(
+                    item.scope(), item.code(), item.categoryCode(),
+                    StringUtils.hasText(item.label()) ? item.label() : version.getName(),
+                    item.quantity(),
+                    item.listPrice() != null ? item.listPrice() : price.getAmount(),
+                    item.setupFee() != null ? item.setupFee() : price.getSetupFee(),
+                    StringUtils.hasText(item.billingCycle()) ? item.billingCycle()
+                            : price.getBillingCycle() == null ? billingCycle : price.getBillingCycle().name());
+        } catch (RuntimeException ex) {
+            log.debug("Plan {} non tarife au catalogue · {}", item.code(), ex.getMessage());
+            return item;
+        }
+    }
+
+    private PriceableRef passItem(PriceableRef item) {
+        try {
+            PassPlan plan = passPlanRepository.findByCode(item.code()).orElse(null);
+            if (plan == null) {
+                return item;
+            }
+            PassPlanVersion version = passPlanVersionRepository
+                    .findFirstByPlanAndStatusOrderByVersionNumberDesc(plan, PlanStatus.ACTIVE).orElse(null);
+            if (version == null) {
+                return item;
+            }
+            PassPlanPrice price = passPlanPriceRepository.findAllByPassVersion(version).stream().findFirst().orElse(null);
+            return new PriceableRef(
+                    item.scope(), item.code(), item.categoryCode(),
+                    StringUtils.hasText(item.label()) ? item.label() : plan.getName(),
+                    item.quantity(),
+                    item.listPrice() != null ? item.listPrice() : price == null ? null : price.getAmount(),
+                    item.setupFee(),
+                    item.billingCycle());
+        } catch (RuntimeException ex) {
+            log.debug("Pass {} non tarife au catalogue · {}", item.code(), ex.getMessage());
+            return item;
+        }
     }
 
     /**

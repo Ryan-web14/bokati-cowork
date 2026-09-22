@@ -76,6 +76,17 @@ public class ClientSubscriptionSelfServiceController {
         }
     }
 
+    /**
+     * L'etat du prelevement · avec ou sans mandat.
+     *
+     * <p>{@code hasMandate} faux n'est pas une anomalie : c'est un abonne qui paie a la main.</p>
+     */
+    public record MandateStatusView(boolean hasMandate, MandateView mandate) {
+        static MandateStatusView of(SubscriptionDebitMandate m) {
+            return m == null ? new MandateStatusView(false, null) : new MandateStatusView(true, MandateView.of(m));
+        }
+    }
+
     public record QuoteView(String quoteNumber, SubscriptionQuote.Status status, String planCode, String planName, String billingCycle,
                             String currency, BigDecimal cataloguePrice, BigDecimal quotedPrice, BigDecimal setupFee, Integer commitmentMonths,
                             Integer trialDays, LocalDate startDate, LocalDate validUntil, String notes, String convertedSubscriptionNumber) {
@@ -151,8 +162,8 @@ public class ClientSubscriptionSelfServiceController {
     // ---- Prelevement ---------------------------------------------------------------------------
 
     @GetMapping("/subscriptions/{subscriptionNumber}/debit-mandate")
-    public ResponseEntity<MandateView> mandate(@PathVariable String subscriptionNumber) {
-        return ResponseEntity.ok(MandateView.of(selfService.mandate(member(), subscriptionNumber)));
+    public ResponseEntity<MandateStatusView> mandate(@PathVariable String subscriptionNumber) {
+        return ResponseEntity.ok(MandateStatusView.of(selfService.mandate(member(), subscriptionNumber).orElse(null)));
     }
 
     @PostMapping("/subscriptions/{subscriptionNumber}/debit-mandate")

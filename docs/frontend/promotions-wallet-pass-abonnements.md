@@ -136,8 +136,10 @@ erreur.
 | `GET` | `/promotions/{code}/beneficiaries/usage` | staff | Utilisation de la promotion nominative |
 
 **`/client/catalogue/prices`** prend `{ context: PricingSimulationRequest, items: [PriceableRef] }`
-avec `PriceableRef = { scope, code, categoryCode, label, quantity, listPrice, setupFee, billingCycle }`
-et renvoie une liste d'`EffectivePrice` :
+avec `PriceableRef = { scope, code, categoryCode, label, quantity, listPrice, setupFee, billingCycle }`.
+Pour une ligne `PLAN` ou `PASS`, **seuls `scope` et `code` sont nécessaires** : `label`, `listPrice`,
+`setupFee` et `billingCycle` sont lus dans le catalogue quand ils manquent, et `quantity` vaut 1 par
+défaut. Ce qui est fourni n'est jamais écrasé. Réponse, une liste d'`EffectivePrice` :
 
 ```json
 { "scope": "PLAN", "code": "FLEX", "label": "Flex mensuel", "listPrice": 100000, "effectivePrice": 90000,
@@ -285,7 +287,7 @@ GET  /devices                                → [{ id, deviceId, label, firstSe
 PATCH /devices/{id}     { label, trusted }
 POST /devices/{id}/revoke
 GET  /statement?from=&to=                    → PDF (relevé)
-GET  /ledger/{transactionNumber}/receipt     → PDF (reçu d'une écriture)
+GET  /ledger/{reference}/receipt             → PDF (reçu d'une écriture) · `reference` = son numéro d'écriture (`WLE-…`) ou de transaction (`WTX-…`)
 ```
 
 `frozen` (gel par l'administration ou la conformité) n'est pas `lockedByOwner` : le premier ne se
@@ -727,10 +729,13 @@ courrier…).
 ### 8.4 Prélèvement
 
 ```
-GET    /subscriptions/{n}/debit-mandate     → { mandateCode, walletNumber, status, consentGivenAt, maxAmountPerDebit, lastDebitAt }  (404 sans mandat)
+GET    /subscriptions/{n}/debit-mandate     → { hasMandate, mandate: { mandateCode, walletNumber, status, consentGivenAt, maxAmountPerDebit, lastDebitAt } | null }
 POST   /subscriptions/{n}/debit-mandate     { walletNumber, maxAmountPerDebit? }
 DELETE /subscriptions/{n}/debit-mandate
 ```
+
+Ne pas avoir de mandat est un état normal : la lecture répond `200` avec `hasMandate: false`,
+jamais `404`.
 
 Le consentement est celui du membre (canal `PORTAL`). Afficher clairement ce que le mandat
 autorise : chaque échéance sera prélevée sur ce portefeuille, dans la limite du plafond.

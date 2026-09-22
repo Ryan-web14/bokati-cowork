@@ -16,14 +16,15 @@ public record PriceableRef(
         String code,
         String categoryCode,
         String label,
-        int quantity,
+        /** Facultative · un catalogue qu'on regarde parle d'unites, pas de quantites. Un par defaut. */
+        Integer quantity,
         BigDecimal listPrice,
         BigDecimal setupFee,
         String billingCycle
 ) {
 
     public int quantityOrOne() {
-        return quantity <= 0 ? 1 : quantity;
+        return quantity == null || quantity <= 0 ? 1 : quantity;
     }
 
     public BigDecimal listPriceOrZero() {
