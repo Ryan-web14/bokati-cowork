@@ -82,8 +82,12 @@ Corps commun à la simulation, aux prix catalogue, à l'aperçu panier et aux co
 }
 ```
 
-Côté espace client, `subscriberType`/`subscriberCode` sont remplacés par le membre authentifié ·
-les envoyer est inutile. `lines[].reference` est votre identifiant de ligne, rendu tel quel dans
+`currency` est **facultative** : sans elle, le serveur prend la devise du premier objet tarifé
+reconnu (plan ou pass), sinon la devise de l'établissement (`bokati.billing.default-currency`,
+`XAF`). La renseigner prime toujours.
+
+Côté espace client, `subscriberType`/`subscriberCode` sont **imposés par la session** · les envoyer
+est inutile, et un code qui n'est pas le vôtre est ignoré. `lines[].reference` est votre identifiant de ligne, rendu tel quel dans
 les résultats. `promotionsAllowed=false` est renseigné par le backend quand l'abonnement porte une
 dérivation qui interdit le cumul (section 6).
 

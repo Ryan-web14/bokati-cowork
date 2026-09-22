@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PricingController {
 
     private final PricingSimulationService simulationService;
+    private final com.sni.bokaticowork.features.subscription.promotion.pricing.service.PricingRequestResolver requestResolver;
 
     /**
      * Simule un panier sans aucun effet de bord. Aucun budget n'est consomme, aucun coupon n'est
@@ -25,6 +26,6 @@ public class PricingController {
      */
     @PostMapping("/simulate")
     public ResponseEntity<PricingSimulationResponse> simulate(@Valid @RequestBody PricingSimulationRequest request) {
-        return ResponseEntity.ok(simulationService.simulate(request));
+        return ResponseEntity.ok(simulationService.simulate(requestResolver.resolve(request)));
     }
 }

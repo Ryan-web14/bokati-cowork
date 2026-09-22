@@ -2,7 +2,6 @@ package com.sni.bokaticowork.features.subscription.promotion.pricing.dto;
 
 import com.sni.bokaticowork.features.subscription.promotion.pricing.enums.TargetScope;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -29,7 +28,11 @@ public record PricingSimulationRequest(
         String channel,
         String paymentMethod,
         String locationCode,
-        @NotBlank String currency,
+        /**
+         * Facultative · deduite du catalogue de la premiere ligne tarifee, sinon de la devise par
+         * defaut de l'etablissement. La renseigner prime sur toute deduction.
+         */
+        String currency,
         List<String> couponCodes,
         /** Date d'evaluation, pour tester une campagne a venir sans attendre son ouverture. */
         Instant evaluationDate,
