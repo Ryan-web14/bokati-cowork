@@ -113,6 +113,39 @@ public class PawapayDeposit {
     @Column(name = "failed_at")
     private Instant failedAt;
 
+    /** Prochaine verification aupres de l'operateur · nulle quand il n'y a plus rien a attendre. */
+    @Column(name = "next_status_check_at")
+    private Instant nextStatusCheckAt;
+
+    /** Pose quand on a cesse d'attendre sans reponse definitive · le depot est a rapprocher a la main. */
+    @Column(name = "unresolved_at")
+    private Instant unresolvedAt;
+
+    /** Le code d'echec de l'operateur, tel quel · ce qui permet de compter par cause. */
+    @Column(name = "failure_code", length = 80)
+    private String failureCode;
+
+    /** Ce qu'on dit au client, en francais, deduit du code. */
+    @Column(name = "user_message", length = 300)
+    private String userMessage;
+
+    /** Le client peut-il retenter avec le meme numero · faux pour un numero inconnu ou un plafond. */
+    @Column(name = "retryable")
+    private Boolean retryable;
+
+    @Column(name = "provider_transaction_id", length = 120)
+    private String providerTransactionId;
+
+    @Builder.Default
+    @Column(name = "initiation_attempts", nullable = false)
+    private int initiationAttempts = 0;
+
+    /** Le depot attend encore une reponse definitive de l'operateur. */
+    public boolean pending() {
+        return "PROCESSING".equals(status) || "SUBMITTED_UNCONFIRMED".equals(status)
+                || "CREATED".equals(status) || "ACCEPTED".equals(status);
+    }
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

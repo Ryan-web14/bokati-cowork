@@ -15,6 +15,7 @@ import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyInitiationRequest;
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyInitiationResponse;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.CongoCorrespondent;
+import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayFailureCodes;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayDepositProvider;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayProperties;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayCallbackPayload;
@@ -102,18 +103,40 @@ public class PawapayDepositService {
         );
     }
 
+    /**
+     * Ce que l'operateur a repondu a l'initiation · et quand on le relira.
+     *
+     * <p>Sans reponse ({@code UNKNOWN}), le depot n'est pas en echec : il est
+     * {@code SUBMITTED_UNCONFIRMED} et sera relu dans une minute. Un refus explicite porte le code
+     * de l'operateur, la phrase qu'on dit au client, et s'il peut reessayer.</p>
+     */
     public PawapayDeposit markInitiationResult(String depositId, MobileMoneyInitiationResponse response) {
         PawapayDeposit deposit = serviceByDepositId(depositId);
-        deposit.setStatus(response.status());
+        deposit.setInitiationAttempts(deposit.getInitiationAttempts() + 1);
         deposit.setProviderMessage(response.message());
         Map<String, Object> providerResponse = new LinkedHashMap<>();
         providerResponse.put("providerReference", response.providerReference());
         providerResponse.put("status", response.status());
         providerResponse.put("message", response.message());
         deposit.setProviderResponseJson(writeJson(providerResponse));
+
         if ("FAILED".equals(response.status())) {
+            PawapayFailureCodes.Explanation explanation = PawapayFailureCodes.explain(response.failureReason());
+            deposit.setStatus("FAILED");
+            deposit.setFailureCode(explanation.code());
             deposit.setFailureReason(response.message());
+            deposit.setUserMessage(explanation.userMessage());
+            deposit.setRetryable(explanation.retryable());
             deposit.setFailedAt(Instant.now());
+            deposit.setNextStatusCheckAt(null);
+        } else if (response.unknown()) {
+            deposit.setStatus("SUBMITTED_UNCONFIRMED");
+            deposit.setUserMessage("Nous confirmons votre paiement auprès de l'opérateur. Ne payez pas une seconde fois.");
+            deposit.setNextStatusCheckAt(Instant.now().plusSeconds(60));
+        } else {
+            deposit.setStatus("PROCESSING");
+            deposit.setUserMessage("Validez la demande reçue sur votre téléphone avec votre code secret.");
+            deposit.setNextStatusCheckAt(Instant.now().plusSeconds(60));
         }
         return repository.save(deposit);
     }

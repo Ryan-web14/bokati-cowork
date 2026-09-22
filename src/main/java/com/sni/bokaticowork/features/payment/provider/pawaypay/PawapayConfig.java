@@ -11,7 +11,7 @@ public class PawapayConfig {
 
     @Bean
     @ConditionalOnProperty(name = "bokati.payment.pawaypay.enabled", havingValue = "true")
-    public PawapayClient pawapayClient(PawapayProperties properties) {
-        return new PawapayClient(properties);
+    public PawapayClient pawapayClient(PawapayProperties properties, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
+        return new PawapayClient(properties, objectMapper);
     }
 }

@@ -347,7 +347,10 @@ public class PaymentServiceImpl implements PaymentService {
         MobileMoneyInitiationResponse response = mobileMoneyProvider.initiate(providerRequest);
         deposit = pawapayDepositService.markInitiationResult(deposit.getDepositId(), response);
 
-        if ("PROCESSING".equals(response.status())) {
+        if ("PROCESSING".equals(response.status()) || response.unknown()) {
+            // UNKNOWN · l'operateur n'a pas repondu, la demande est peut-etre partie. La transaction
+            // reste PROCESSING et c'est la relecture de statut qui tranchera : declarer un echec ici
+            // pousserait le client a repayer une demande qu'il va recevoir sur son telephone.
             transaction.setProviderReference(response.providerReference());
             transactionRepository.save(transaction);
             return pawapayDepositService.toResponse(deposit);
@@ -918,7 +921,8 @@ public class PaymentServiceImpl implements PaymentService {
                 original.getProviderReference(), amount, request.reason(), original.getCurrency()
         ));
 
-        if ("PROCESSING".equals(response.status())) {
+        if ("PROCESSING".equals(response.status()) || "UNKNOWN".equals(response.status())) {
+            // Meme regle que pour un depot · sans reponse, le remboursement reste en cours.
             refund.setProviderReference(response.refundReference());
             transactionRepository.save(refund);
             return mapper.toTransactionResponse(refund);
