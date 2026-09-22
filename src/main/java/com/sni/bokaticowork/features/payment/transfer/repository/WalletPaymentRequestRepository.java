@@ -4,6 +4,7 @@ import com.sni.bokaticowork.features.payment.transfer.model.WalletPaymentRequest
 import com.sni.bokaticowork.features.payment.transfer.model.WalletPaymentRequestStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @Repository
 public interface WalletPaymentRequestRepository extends JpaRepository<WalletPaymentRequest, Long> {
 
+    @EntityGraph(attributePaths = {"requesterWallet", "payerWallet"})
     Optional<WalletPaymentRequest> findByRequestNumber(String requestNumber);
 
     /** Demandes ou ce portefeuille est demandeur ou payeur. */
@@ -24,6 +26,7 @@ public interface WalletPaymentRequestRepository extends JpaRepository<WalletPaym
             WHERE r.requesterWallet.id = :walletId OR r.payerWallet.id = :walletId
             ORDER BY r.createdAt DESC
             """)
+    @EntityGraph(attributePaths = {"requesterWallet", "payerWallet"})
     Page<WalletPaymentRequest> findInvolving(@Param("walletId") Long walletId, Pageable pageable);
 
     @Query("""

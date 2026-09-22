@@ -243,11 +243,17 @@ public class WalletTransferService {
                         source.getCurrency(), target.getWalletNumber(), counterparty.displayName()),
                 ipAddress, deviceId);
 
+        // Les deux portefeuilles sont relus dans cette transaction · le titulaire les a choisis
+        // avant elle, et une instance detachee laisse derriere elle une association que la reponse
+        // ne peut plus lire une fois la session fermee.
+        WalletAccount managedSource = managed(source);
+        WalletAccount managedTarget = managed(target);
+
         WalletTransfer transfer = transferRepository.save(WalletTransfer.builder()
                 .transferNumber(sequenceGenerator.next("wallet_transfer"))
                 .transferUuid(TimeOrderedUuid.next())
-                .sourceWallet(source)
-                .targetWallet(target)
+                .sourceWallet(managedSource)
+                .targetWallet(managedTarget)
                 .amount(amount)
                 .feeAmount(fee)
                 .currency(source.getCurrency())
@@ -261,6 +267,13 @@ public class WalletTransferService {
                 .expiresAt(Instant.now().plus(Duration.ofMinutes(confirmationValidityMinutes)))
                 .build());
         return new InitiatedTransfer(transfer, confirmation);
+    }
+
+    /** Le portefeuille tel que cette transaction le connait · jamais l'exemplaire venu d'avant. */
+    private WalletAccount managed(WalletAccount wallet) {
+        return wallet == null || wallet.getId() == null
+                ? wallet
+                : walletRepository.findById(wallet.getId()).orElse(wallet);
     }
 
     // -----------------------------------------------------------------------------------------

@@ -4,6 +4,7 @@ import com.sni.bokaticowork.features.payment.transfer.model.WalletTransfer;
 import com.sni.bokaticowork.features.payment.transfer.model.WalletTransferStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,9 +17,18 @@ import java.util.Optional;
 @Repository
 public interface WalletTransferRepository extends JpaRepository<WalletTransfer, Long> {
 
+    /**
+     * Un transfert et les deux portefeuilles qu'il relie.
+     *
+     * <p>La vue rendue au titulaire nomme le portefeuille d'en face · sans ce chargement, elle le
+     * demande a une session deja fermee et le client recoit une erreur interne la ou il attend son
+     * recapitulatif.</p>
+     */
+    @EntityGraph(attributePaths = {"sourceWallet", "targetWallet"})
     Optional<WalletTransfer> findByTransferNumber(String transferNumber);
 
     /** Les transferts ou ce portefeuille est d'un cote ou de l'autre, les plus recents d'abord. */
+    @EntityGraph(attributePaths = {"sourceWallet", "targetWallet"})
     @Query("""
             SELECT t FROM WalletTransfer t
             WHERE t.sourceWallet.id = :walletId OR t.targetWallet.id = :walletId
