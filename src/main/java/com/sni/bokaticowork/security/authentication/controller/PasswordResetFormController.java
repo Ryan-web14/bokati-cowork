@@ -61,9 +61,17 @@ public class PasswordResetFormController {
         return "auth/password-reset-form";
     }
 
+    /**
+     * Soumission du formulaire de reinitialisation.
+     *
+     * <p>Le champ du mot de passe est accepte sous ses deux noms : {@code password}, celui que la
+     * page envoie, et {@code newPassword}, celui de l'API JSON. Le formulaire postait le premier
+     * quand le controleur exigeait le second · aucune reinitialisation ne pouvait aboutir.</p>
+     */
     @PostMapping("/form")
     public String processForm(@RequestParam String token,
-                              @RequestParam String newPassword,
+                              @RequestParam(name = "newPassword", required = false) String newPasswordParam,
+                              @RequestParam(name = "password", required = false) String passwordParam,
                               @RequestParam String confirmPassword,
                               @RequestParam(name = CSRF_FIELD, required = false) String csrfField,
                               HttpServletRequest request,
@@ -80,6 +88,11 @@ public class PasswordResetFormController {
         if (!StringUtils.hasText(token)) {
             model.addAttribute("reason", "Jeton manquant. Veuillez utiliser le lien reçu par email.");
             return "auth/password-reset-error";
+        }
+
+        String newPassword = StringUtils.hasText(newPasswordParam) ? newPasswordParam : passwordParam;
+        if (!StringUtils.hasText(newPassword)) {
+            return renderFormWithError(model, request, response, token, "Saisissez un mot de passe.");
         }
 
         String policyViolation = passwordPolicyValidator.validate(newPassword).orElse(null);

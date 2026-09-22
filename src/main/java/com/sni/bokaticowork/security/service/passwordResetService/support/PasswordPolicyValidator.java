@@ -17,12 +17,19 @@ import java.util.Set;
 @Component
 public class PasswordPolicyValidator {
 
-    public static final int MIN_LENGTH = 8;
+    /**
+     * Six caracteres · le minimum demande par l'etablissement.
+     *
+     * <p>La longueur n'est pas la seule garde : il faut aussi une lettre, un chiffre, et un
+     * mot de passe qui ne figure pas parmi les plus courants. Un « 123456 » reste refuse.</p>
+     */
+    public static final int MIN_LENGTH = 6;
 
     // Lowercased, exact-match blocklist of the most common weak passwords.
     private static final Set<String> COMMON_PASSWORDS = Set.of(
             "password", "motdepasse", "12345678", "123456789", "1234567890",
             "azertyui", "azertyuiop", "qwertyui", "qwerty123", "00000000",
+            "123456", "1234567", "azerty", "qwerty", "motdep", "000000", "111111", "abc123", "admin1",
             "11111111", "abcd1234", "password1", "iloveyou", "admin123"
     );
 
