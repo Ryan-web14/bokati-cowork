@@ -3,7 +3,9 @@ package com.sni.bokaticowork.features.payment.transfer.service;
 import com.sni.bokaticowork.features.payment.enums.WalletStatus;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
+import com.sni.bokaticowork.features.payment.transfer.dto.WalletUsageDtos.BeneficiaryView;
 import com.sni.bokaticowork.features.payment.transfer.dto.WalletUsageDtos.TransferView;
+import com.sni.bokaticowork.features.payment.transfer.model.WalletBeneficiary;
 import com.sni.bokaticowork.features.payment.transfer.model.WalletTransfer;
 import com.sni.bokaticowork.features.payment.transfer.model.WalletTransferStatus;
 import com.sni.bokaticowork.features.payment.transfer.repository.WalletTransferRepository;
@@ -32,6 +34,7 @@ class WalletTransferViewIntegrationTest extends PostgresIntegrationTestBase {
 
     @Autowired private WalletAccountRepository walletRepository;
     @Autowired private WalletTransferRepository transferRepository;
+    @Autowired private com.sni.bokaticowork.features.payment.transfer.repository.WalletBeneficiaryRepository beneficiaryRepository;
 
     private WalletAccount source;
     private WalletAccount target;
@@ -75,6 +78,20 @@ class WalletTransferViewIntegrationTest extends PostgresIntegrationTestBase {
         TransferView received = TransferView.of(reloaded, target.getId());
         assertThat(received.direction()).isEqualTo("IN");
         assertThat(received.counterpartyWallet()).isEqualTo("WLT-TEST-SRC");
+    }
+
+    @Test
+    void theBeneficiaryListNamesItsWalletOutsideAnySession() {
+        beneficiaryRepository.save(WalletBeneficiary.builder()
+                .ownerWallet(source).beneficiaryWallet(target).alias("Awa").build());
+
+        var beneficiaries = beneficiaryRepository.findByOwnerWallet_IdOrderByAliasAsc(source.getId());
+
+        assertThatCode(() -> beneficiaries.forEach(b -> {
+            BeneficiaryView view = BeneficiaryView.of(b);
+            assertThat(view.walletNumber()).isEqualTo("WLT-TEST-TGT");
+            assertThat(view.alias()).isEqualTo("Awa");
+        })).doesNotThrowAnyException();
     }
 
     @Test

@@ -23,6 +23,7 @@ import java.util.List;
 public class WalletBeneficiaryService {
 
     private final WalletBeneficiaryRepository beneficiaryRepository;
+    private final com.sni.bokaticowork.features.payment.repository.WalletAccountRepository walletRepository;
     private final WalletCounterpartyResolver counterpartyResolver;
 
     @Transactional(readOnly = true)
@@ -48,10 +49,19 @@ public class WalletBeneficiaryService {
                     return beneficiaryRepository.save(existing);
                 })
                 .orElseGet(() -> beneficiaryRepository.save(WalletBeneficiary.builder()
-                        .ownerWallet(owner)
-                        .beneficiaryWallet(target)
+                        // Relus ici · la vue rendue nomme le portefeuille du destinataire, et une
+                        // instance venue d'avant la session ne se laisse plus lire apres elle.
+                        .ownerWallet(managed(owner))
+                        .beneficiaryWallet(managed(target))
                         .alias(alias.trim())
                         .build()));
+    }
+
+    /** Le portefeuille tel que cette transaction le connait · jamais l'exemplaire venu d'avant. */
+    private WalletAccount managed(WalletAccount wallet) {
+        return wallet == null || wallet.getId() == null
+                ? wallet
+                : walletRepository.findById(wallet.getId()).orElse(wallet);
     }
 
     @Transactional
