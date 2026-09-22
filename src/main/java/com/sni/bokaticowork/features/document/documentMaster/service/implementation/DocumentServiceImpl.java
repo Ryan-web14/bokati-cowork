@@ -218,13 +218,21 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse approve(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
-        assertReviewable(document);
+        assertReviewable(document, DocumentStatus.APPROVED);
+        boolean liftsRejection = document.getStatus() == DocumentStatus.REJECTED;
         document.setStatus(DocumentStatus.APPROVED);
         documentRepository.save(document);
         saveReview(document, request, DocumentReviewStatus.APPROVED);
         syncKycDocumentStatus(document, KycDocumentVerificationStatus.VERIFIED);
         kycAutomationService.syncFromDocumentReview(document);
         publishDocumentEvent("DOCUMENT_APPROVED", document, request.getReviewedBy());
+        if (liftsRejection) {
+            // Le refus avait pu annuler contrat, abonnement ou pass · rien ne les retablit tout
+            // seul, et personne ne doit le croire. L'evenement nomme ce qui reste a reprendre.
+            log.warn("Piece {} approuvee apres refus · les annulations en cascade du refus ne sont pas revenues",
+                    document.getCode());
+            publishDocumentEvent("DOCUMENT_REJECTION_LIFTED", document, request.getReviewedBy());
+        }
         if (Boolean.TRUE.equals(document.getDocumentType().getRequiresSignature())) {
             createPendingSignature(document);
             publishDocumentEvent("DOCUMENT_SIGNATURE_REQUIRED", document, request.getReviewedBy());
@@ -235,7 +243,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse reject(String documentCode, DocumentReviewDecisionRequest request) {
         Document document = serviceDocument(documentCode);
-        assertReviewable(document);
+        assertReviewable(document, DocumentStatus.REJECTED);
         document.setStatus(DocumentStatus.REJECTED);
         documentRepository.save(document);
         saveReview(document, request, DocumentReviewStatus.REJECTED);
@@ -249,7 +257,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse requestCorrection(String documentCode, DocumentCorrectionRequest request) {
         Document document = serviceDocument(documentCode);
-        assertReviewable(document);
+        assertReviewable(document, DocumentStatus.NEEDS_CORRECTION);
 
         Instant deadline = Instant.now().plus(
                 java.time.Duration.ofDays(request.getDeadlineDays() == null ? 7 : request.getDeadlineDays()));
@@ -341,15 +349,31 @@ public class DocumentServiceImpl implements DocumentService {
         return getByCode(documentCode);
     }
 
-    private void assertReviewable(Document document) {
+    /**
+     * Une piece peut-elle recevoir cette decision de revue ?
+     *
+     * <p>Un refus n'est pas definitif : il vient d'une personne, et une personne se trompe · un
+     * agent doit pouvoir approuver une piece qu'un collegue a refusee a tort, sans obliger le
+     * client a la redeposer. Ce qui a ete annule en cascade par le refus n'est pas ressuscite
+     * pour autant · l'approbation le dit et l'evenement le porte.</p>
+     *
+     * <p>Restent hors de portee : une piece approuvee, signee, expiree, archivee ou remplacee.
+     * Revenir sur celles-la n'est pas une correction de revue, c'est une autre decision.</p>
+     */
+    private void assertReviewable(Document document, DocumentStatus decision) {
         DocumentStatus status = document.getStatus();
         if (status == DocumentStatus.PENDING_REVIEW
                 || status == DocumentStatus.UPLOADED
                 || status == DocumentStatus.NEEDS_CORRECTION) {
             return;
         }
-        throw new BadRequestException(
-                "Document " + document.getCode() + " cannot be reviewed in its current status: " + status);
+        if (status == DocumentStatus.REJECTED && decision != DocumentStatus.REJECTED) {
+            return;
+        }
+        String allowed = status == DocumentStatus.REJECTED
+                ? "Cette pièce est déjà refusée · elle peut être approuvée ou renvoyée en correction, pas refusée une seconde fois."
+                : "Une pièce " + status + " ne se revoit plus · le client doit en déposer une nouvelle.";
+        throw new BadRequestException("Document " + document.getCode() + " · " + allowed);
     }
 
     @Override
