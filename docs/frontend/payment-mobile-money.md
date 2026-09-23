@@ -337,6 +337,19 @@ statut chez l'operateur et met a jour le depot si celui-ci a fini par repondre.
 Le journal `/callbacks` montre chaque rappel recu et ce qui en a ete fait (`PROCESSED`, `DEFERRED`,
 `IGNORED`, `FAILED`), avec le detail. C'est ce qui permet d'expliquer un paiement manquant.
 
+### 7.3 Ce que le client recoit par courriel
+
+Le backend envoie deux courriels que le frontend n'a pas a reproduire, mais dont il doit tenir
+compte dans ses ecrans :
+
+| Quand | Courriel | Consequence pour vos ecrans |
+|---|---|---|
+| `phase` passe a `FAILED` (echec asynchrone) | Raison en francais + conduite a tenir | Inutile d'afficher une banniere « nous vous avons envoye un mail » : dites simplement ce que `userMessage` contient |
+| `phase` passe a `UNRESOLVED` | « Ne payez pas une seconde fois » | **Desactivez le bouton de paiement de cette facture** tant que `phase` vaut `UNRESOLVED` · c'est exactement ce que le courriel demande au client |
+
+Un echec **synchrone** (l'operateur refuse dans la seconde, pendant l'appel d'initiation) ne
+declenche aucun courriel : le client est devant son ecran, la reponse HTTP suffit.
+
 ## 8. Endpoint de test
 
 ```http

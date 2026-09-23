@@ -4,6 +4,7 @@ import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.Seq
 import com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus;
 import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
 import com.sni.bokaticowork.features.payment.model.PaymentIntent;
+import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayCallbackPayload;
 import com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository;
@@ -33,6 +34,8 @@ public class PawapayCallbackProcessor {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final PawapayDepositService depositService;
     private final PawapayDepositRepository depositRepository;
+    private final MobileMoneyClientNotifier clientNotifier;
+    private final com.sni.bokaticowork.features.payment.service.support.SelfServicePaymentNotifier selfServiceNotifier;
 
     public void process(PawapayCallbackPayload payload) {
         String depositId = payload.depositId();
@@ -144,6 +147,9 @@ public class PawapayCallbackProcessor {
                     transaction.getTransactionNumber(),
                     java.util.Map.of("transactionNumber", transaction.getTransactionNumber(), "status", PaymentTransactionStatus.SUCCEEDED.name())
             );
+            // Le client a paye depuis son espace, seul · c'est ici, a la confirmation de
+            // l'operateur, que la caisse peut l'apprendre. Le canal a ete retenu a l'initiation.
+            selfServiceNotifier.paymentSettled(transaction);
         }
 
         reconcileIntent(transaction);
@@ -178,7 +184,13 @@ public class PawapayCallbackProcessor {
         transaction.setStatus(PaymentTransactionStatus.FAILED);
         transaction.setFailureReason(reason);
         transactionRepository.save(transaction);
-        depositService.markFailed(transaction.getProviderReference(), payload, reason);
+        PawapayDeposit deposit = depositService.markFailed(transaction.getProviderReference(), payload, reason);
+
+        // Le refus arrive souvent plusieurs minutes apres que le client a ferme sa page · sans ce
+        // message il voyait sa facture rester ouverte sans jamais savoir pourquoi.
+        if (deposit != null) {
+            clientNotifier.depositFailed(deposit);
+        }
 
         reconcileIntent(transaction);
 

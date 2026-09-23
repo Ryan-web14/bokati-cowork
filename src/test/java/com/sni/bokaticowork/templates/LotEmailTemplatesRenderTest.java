@@ -35,7 +35,8 @@ class LotEmailTemplatesRenderTest {
             "domiciliation-activated", "domiciliation-registration-rejected", "domiciliation-certificate-issued",
             "domiciliation-certificate-expiring", "domiciliation-fiscal-lost", "domiciliation-terminated", "domiciliation-administration-notice",
             "mail-item-event", "subscription-grace-period", "subscription-termination", "subscription-direct-debit-failed",
-            "subscription-quote-sent", "billing-dunning", "billing-dunning-handover", "mobile-money-deposit-unresolved"
+            "subscription-quote-sent", "billing-dunning", "billing-dunning-handover", "mobile-money-deposit-unresolved",
+            "mobile-money-deposit-failed", "mobile-money-deposit-pending-review", "self-service-payment-received"
     })
     void everyTemplateRendersWithAnEmptyModel(String template) {
         String html = render(template, Map.of());
@@ -107,10 +108,42 @@ class LotEmailTemplatesRenderTest {
                 .contains("+242061234567").contains("5000").contains("24");
     }
 
-    private static Map<String, Object> model(String... kv) {
+    @Test
+    void theFailedDepositNoticeGivesTheReasonAndTheNextStep() {
+        String retryable = render("mobile-money-deposit-failed", model("recipientName", "Joël",
+                "amount", "5000", "currency", "XAF", "provider", "MTN Mobile Money Congo",
+                "phoneNumber", "+242061234567", "transactionNumber", "TRX-1",
+                "userMessage", "Le solde de votre compte mobile money est insuffisant.", "retryable", true));
+        assertThat(retryable).contains("Joël").contains("5000").contains("MTN Mobile Money Congo")
+                .contains("insuffisant").contains("Reprenez le paiement");
+
+        String notRetryable = render("mobile-money-deposit-failed", model("amount", "5000", "currency", "XAF",
+                "userMessage", "Ce numéro n'est pas un compte mobile money actif.", "retryable", false));
+        assertThat(notRetryable).contains("Utilisez un autre numéro");
+    }
+
+    @Test
+    void thePendingReviewNoticeTellsTheClientNotToPayTwice() {
+        String html = render("mobile-money-deposit-pending-review", model("recipientName", "Joël",
+                "amount", "5000", "currency", "XAF", "provider", "Airtel Money Congo", "transactionNumber", "TRX-1"));
+        assertThat(html).contains("Joël").contains("une seconde fois").contains("Airtel Money Congo");
+    }
+
+    @Test
+    void theSelfServicePaymentNoticeNamesTheClientAndTheAmount() {
+        String html = render("self-service-payment-received", model("recipientName", "l'équipe",
+                "customerName", "SARL Mboté", "customerCode", "BIZ-1", "amount", "25000", "currency", "XAF",
+                "paymentMethod", "Mobile money", "transactionNumber", "TRX-1", "receiptNumber", "REC-1",
+                "purpose", "Facture INV-1"));
+        assertThat(html).contains("SARL Mboté").contains("25000").contains("TRX-1").contains("REC-1")
+                .contains("Facture INV-1").contains("rien à valider");
+    }
+
+    /** Les valeurs ne sont pas toutes des chaines · un drapeau se rend differemment d'un texte. */
+    private static Map<String, Object> model(Object... kv) {
         Map<String, Object> model = new LinkedHashMap<>();
         for (int i = 0; i + 1 < kv.length; i += 2) {
-            model.put(kv[i], kv[i + 1]);
+            model.put(String.valueOf(kv[i]), kv[i + 1]);
         }
         return model;
     }

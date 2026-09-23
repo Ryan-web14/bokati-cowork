@@ -126,7 +126,7 @@ class SubscriptionDirectDebitServiceTest {
     @Test
     void successfulDebitClosesTheGracePeriod() {
         when(gateway.pay(eq("INV-1"), eq("WAL-1"), eq(new BigDecimal("30000")), anyString()))
-                .thenReturn(new PayInvoiceResponse(null, new PaymentTransactionResponse("TXN-1", null, null, null, null, null, null, null, null, null, null, null, null)));
+                .thenReturn(new PayInvoiceResponse(null, new PaymentTransactionResponse("TXN-1", null, null, null, null, null, null, null, null, null, null, null, null, null)));
 
         SubscriptionDebitAttempt attempt = service.collect(1L, "INV-1").orElseThrow();
 

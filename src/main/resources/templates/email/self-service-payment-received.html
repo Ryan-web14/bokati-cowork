@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Paiement client')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Un client vient de régler depuis son espace.'}">Un client vient de régler depuis son espace.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Paiement reçu depuis l'espace client</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,
+        <strong th:text="${customerName}">Un client</strong> vient de régler
+        <strong th:text="${amount} + ' ' + ${currency}">montant</strong> depuis son espace, sans passer par la caisse.
+        <strong>La transaction est encaissée · il n'y a rien à valider.</strong>
+      </div>
+
+      <div class="section-lbl">Transaction</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${transactionNumber}">Référence</td>
+        </tr>
+        <tr th:if="${receiptNumber}">
+          <td class="r-key">Reçu</td>
+          <td class="r-val mono" th:text="${receiptNumber}">Reçu</td>
+        </tr>
+        <tr>
+          <td class="r-key">Moyen de paiement</td>
+          <td class="r-val" th:text="${paymentMethod}">Moyen de paiement</td>
+        </tr>
+        <tr>
+          <td class="r-key">Montant</td>
+          <td class="r-val" th:text="${amount} + ' ' + ${currency}">Montant</td>
+        </tr>
+        <tr th:if="${paidAt}">
+          <td class="r-key">Encaissé le</td>
+          <td class="r-val" th:text="${paidAt}">Encaissé le</td>
+        </tr>
+        <tr th:if="${purpose}">
+          <td class="r-key">Objet</td>
+          <td class="r-val" th:text="${purpose}">Objet</td>
+        </tr>
+      </table>
+
+      <div class="section-lbl">Client</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Nom</td>
+          <td class="r-val" th:text="${customerName}">Nom</td>
+        </tr>
+        <tr th:if="${customerCode}">
+          <td class="r-key">Code</td>
+          <td class="r-val mono" th:text="${customerCode}">Code</td>
+        </tr>
+        <tr th:if="${customerEmail}">
+          <td class="r-key">Courriel</td>
+          <td class="r-val" th:text="${customerEmail}">Courriel</td>
+        </tr>
+        <tr th:if="${customerPhone}">
+          <td class="r-key">Téléphone</td>
+          <td class="r-val" th:text="${customerPhone}">Téléphone</td>
+        </tr>
+      </table>
+
+      <div class="em-note">
+        Ce client peut se présenter sans rien devoir. Pensez à en tenir compte au rapprochement de
+        la recette du jour : ce montant n'est passé par aucune caisse.
+      </div>
+
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

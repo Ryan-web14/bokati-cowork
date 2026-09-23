@@ -94,6 +94,37 @@ alerte `MOBILE_MONEY_DEPOSIT_UNRESOLVED` par destinataire de `alert-email` (plus
 séparées par des virgules ou des points-virgules). L'alerte n'est envoyée qu'une fois · un dépôt
 déjà `UNRESOLVED` ne se redéclare pas.
 
+## Ce que le client apprend · `MobileMoneyClientNotifier`
+
+Un échec mobile money survient souvent plusieurs minutes après que le client a fermé sa page : il
+a saisi un mauvais code, son solde ne suffisait pas, la demande a expiré pendant qu'il était en
+réunion. Jusqu'ici il ne l'apprenait nulle part · sa facture restait ouverte sans explication, et
+il rappelait l'accueil pour comprendre.
+
+Deux courriels, jamais plus :
+
+| Événement | Gabarit | Quand | Ce qu'il dit |
+|---|---|---|---|
+| `MOBILE_MONEY_DEPOSIT_FAILED` | `mobile-money-deposit-failed` | `PawapayCallbackProcessor.handleFailed` | La raison en français (`userMessage`), et la conduite à tenir selon `retryable` : reprendre le même paiement, ou changer de numéro / de moyen |
+| `MOBILE_MONEY_DEPOSIT_PENDING_REVIEW` | `mobile-money-deposit-pending-review` | `MobileMoneySupervisionService` au passage en `UNRESOLVED` | **Ne pas payer une seconde fois.** Nous vérifions auprès de l'opérateur |
+
+Le second est le message le plus important du module. Un client sans nouvelles qui voit sa facture
+ouverte repaye, et se retrouve débité deux fois pour une seule prestation.
+
+Les deux courriels annoncent explicitement qu'aucun montant n'a été prélevé (échec) ou que le
+rapprochement est en cours (non tranché). Le code technique de l'opérateur n'apparaît jamais dans
+le corps : `MTN_MOMO_COG` devient « MTN Mobile Money Congo », `INSUFFICIENT_BALANCE` devient la
+phrase correspondante de `PawapayFailureCodes`.
+
+Un échec **synchrone** à l'initiation (l'opérateur refuse dans la seconde) ne déclenche pas de
+courriel : le client est devant son écran et reçoit le message dans la réponse HTTP.
+
+Sans adresse joignable pour le client, rien ne part · c'est journalisé, et aucun encaissement
+n'est bloqué pour autant.
+
+Voir aussi `docs/backend/paiement-libre-service.md` : un règlement abouti depuis l'espace client
+prévient aussi le back-office.
+
 ## Routes
 
 | Route | Accès | Ce qu'elle fait |
@@ -142,6 +173,8 @@ supplémentaire pour reconfirmer le statut. Configurer le secret côté PawaPay 
 - `V244` (dev) / `V240` (prod) · colonnes de résilience sur `pawapay_deposit`, table
   `pawapay_callback`.
 - `V245` (dev) / `V241` (prod) · gabarit de courriel `MOBILE_MONEY_DEPOSIT_UNRESOLVED`.
+- `V247` (dev) / `V243` (prod) · gabarits `MOBILE_MONEY_DEPOSIT_FAILED` et
+  `MOBILE_MONEY_DEPOSIT_PENDING_REVIEW`.
 
 ## Ce qui reste à faire hors code
 

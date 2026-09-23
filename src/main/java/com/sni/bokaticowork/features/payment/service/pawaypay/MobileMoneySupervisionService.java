@@ -56,6 +56,7 @@ public class MobileMoneySupervisionService {
     private final PawapayDepositService depositService;
     private final PawapayProperties properties;
     private final OutboxService outboxService;
+    private final MobileMoneyClientNotifier clientNotifier;
 
     // ---------------------------------------------------------------------------------------
     // Relecture
@@ -98,8 +99,11 @@ public class MobileMoneySupervisionService {
             // Un depot deja declare a rapprocher ne se redeclare pas · l'alerte a deja ete envoyee
             // et la relire une nouvelle fois ne produirait qu'un second courriel identique.
             if (!"UNRESOLVED".equals(deposit.getStatus())) {
-                depositService.markUnresolved(deposit.getDepositId());
+                PawapayDeposit flagged = depositService.markUnresolved(deposit.getDepositId());
                 alertUnresolved(deposit);
+                // Le client aussi doit l'apprendre · sans nouvelles, il voit sa facture ouverte et
+                // il repaye, ce qui le fait debiter deux fois pour une seule prestation.
+                clientNotifier.depositPendingReview(flagged == null ? deposit : flagged);
             }
             return Verdict.UNRESOLVED;
         }

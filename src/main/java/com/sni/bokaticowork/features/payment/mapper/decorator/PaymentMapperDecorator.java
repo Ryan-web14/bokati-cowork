@@ -94,7 +94,8 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 transaction.getPaidAt(),
                 transaction.getReceivedBy(),
                 transaction.getFailureReason(),
-                transaction.getMetadataJson()
+                transaction.getMetadataJson(),
+                transaction.getChannel()
         );
     }
 

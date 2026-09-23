@@ -50,6 +50,7 @@ class MobileMoneySupervisionServiceTest {
     @Mock private PawapayCallbackProcessor callbackProcessor;
     @Mock private PawapayDepositService depositService;
     @Mock private OutboxService outboxService;
+    @Mock private com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyClientNotifier clientNotifier;
 
     private PawapayProperties properties;
     private MobileMoneySupervisionService supervision;
@@ -60,7 +61,7 @@ class MobileMoneySupervisionServiceTest {
         properties.setPollingMaxHours(24);
         properties.setAlertEmail("tresorerie@elleaose.com, finance@elleaose.com");
         supervision = new MobileMoneySupervisionService(depositRepository, callbackRepository, provider,
-                callbackProcessor, depositService, properties, outboxService);
+                callbackProcessor, depositService, properties, outboxService, clientNotifier);
     }
 
     private PawapayDeposit deposit(String status, Instant createdAt) {
@@ -160,6 +161,8 @@ class MobileMoneySupervisionServiceTest {
                 eq("dep-1:tresorerie@elleaose.com"), any());
         verify(outboxService).publish(eq("MOBILE_MONEY_DEPOSIT_UNRESOLVED"), eq("PAYMENT"),
                 eq("dep-1:finance@elleaose.com"), any());
+        // Le client aussi · sans nouvelles il repaye, et se retrouve debite deux fois.
+        verify(clientNotifier).depositPendingReview(any());
     }
 
     @Test
@@ -174,6 +177,7 @@ class MobileMoneySupervisionServiceTest {
 
         verify(depositService, never()).markUnresolved(anyString());
         verify(outboxService, never()).publish(anyString(), anyString(), anyString(), any());
+        verify(clientNotifier, never()).depositPendingReview(any());
     }
 
     @Test

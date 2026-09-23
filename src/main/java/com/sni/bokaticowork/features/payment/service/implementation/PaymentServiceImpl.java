@@ -103,6 +103,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final SubscriptionBillingMapper billingMapper;
     private final ObjectMapper objectMapper;
     private final MobileMoneyPaymentProvider mobileMoneyProvider;
+    private final com.sni.bokaticowork.features.payment.service.support.PaymentOriginResolver paymentOrigin;
+    private final com.sni.bokaticowork.features.payment.service.support.SelfServicePaymentNotifier selfServiceNotifier;
     private final PawapayDepositService pawapayDepositService;
     private final com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyInitiationGuard mobileMoneyGuard;
     @org.springframework.context.annotation.Lazy
@@ -316,6 +318,9 @@ public class PaymentServiceImpl implements PaymentService {
         reconcileIntent(intent);
         creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), request.createdBy());
         publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
+        // Personne n'etait en face · la caisse doit apprendre le reglement autrement qu'en ouvrant
+        // la facture, sinon elle sert un client qu'elle croit debiteur ou le relance apres coup.
+        selfServiceNotifier.paymentSettled(transaction);
         return mapper.toTransactionResponse(transaction);
     }
 
@@ -343,6 +348,9 @@ public class PaymentServiceImpl implements PaymentService {
                 .transactionNumber(txnNumber)
                 .paymentIntent(intent)
                 .paymentMethod(PaymentMethod.MOBILE_MONEY)
+                // Le canal se lit a l'initiation · au moment ou l'operateur confirmera, des minutes
+                // plus tard, il n'y aura plus de session pour dire qui avait lance le paiement.
+                .channel(paymentOrigin.current())
                 .provider("PAWAYPAY")
                 .amount(depositAmount)
                 .currency(intent.getCurrency())
@@ -978,6 +986,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .transactionNumber(txnNumber)
                 .paymentIntent(intent)
                 .paymentMethod(method)
+                .channel(paymentOrigin.current())
                 .provider(provider)
                 .providerReference(resolvedProviderReference)
                 .receiptNumber(sequenceGenerator.next("receipt"))

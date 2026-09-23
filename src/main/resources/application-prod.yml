@@ -135,6 +135,10 @@ bokati:
     administration-email: ${DOMICILIATION_ADMINISTRATION_EMAIL:}
     notify-administration-on-termination: ${DOMICILIATION_NOTIFY_ADMINISTRATION:false}
 
+    self-service:
+      # Qui est prevenu qu un client a regle depuis son espace · une ou plusieurs adresses,
+      # separees par des virgules. Vide : seule la notification dans le portail part.
+      confirmation-email: ${SELF_SERVICE_CONFIRMATION_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}
     pawaypay:
       enabled: ${PAWAYPAY_ENABLED:true}
       api-key: ${PAWAYPAY_API_KEY}

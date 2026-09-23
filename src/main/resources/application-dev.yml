@@ -108,6 +108,10 @@ bokati:
     cash-session:
       auto-limit: ${CASH_SESSION_AUTO_LIMIT:10000000}
 
+    self-service:
+      # Qui est prevenu qu un client a regle depuis son espace · une ou plusieurs adresses,
+      # separees par des virgules. Vide : seule la notification dans le portail part.
+      confirmation-email: ${SELF_SERVICE_CONFIRMATION_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}
     pawaypay:
       enabled: ${PAWAYPAY_ENABLED:true}
       # La cle est un secret de compte marchand · elle vient de l'environnement, jamais du depot.

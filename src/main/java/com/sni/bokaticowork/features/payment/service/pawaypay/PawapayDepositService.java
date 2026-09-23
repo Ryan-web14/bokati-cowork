@@ -179,10 +179,11 @@ public class PawapayDepositService {
         repository.save(deposit);
     }
 
-    public void markFailed(String depositId, PawapayCallbackPayload payload, String reason) {
+    /** Rend le depot tel qu'il vient de devenir · l'appelant doit pouvoir en parler au client. */
+    public PawapayDeposit markFailed(String depositId, PawapayCallbackPayload payload, String reason) {
         PawapayDeposit deposit = repository.findByDepositId(depositId).orElse(null);
         if (deposit == null) {
-            return;
+            return null;
         }
         PawapayFailureCodes.Explanation explanation = payload == null
                 ? PawapayFailureCodes.explain(reason)
@@ -196,7 +197,7 @@ public class PawapayDepositService {
         deposit.setFailedAt(Instant.now());
         deposit.setNextStatusCheckAt(null);
         deposit.setProviderResponseJson(writeJson(payload));
-        repository.save(deposit);
+        return repository.save(deposit);
     }
 
     /**
