@@ -33,6 +33,10 @@ réservation est conservé à part, parce qu'une annonce qui expire doit rendre 
 | `CANCELLED` | Le client s'est ravisé, ou la caisse a fait le ménage |
 | `EXPIRED` | Le délai est passé sans que personne ne se présente |
 
+Le délai par défaut est de **4 heures**. Un créneau tenu pour quelqu'un qui ne vient pas est un
+créneau que personne d'autre ne peut prendre : mieux vaut le rendre dans la demi-journée que le
+lendemain. Le worker passe toutes les 15 minutes, pour que ce délai soit tenu de près.
+
 Une seule annonce en cours par facture : deux annonces finissent par deux encaissements, et le
 client paie deux fois. La seconde demande rend la première.
 
@@ -49,7 +53,7 @@ Caisse  → file « à encaisser »
         → la réservation se confirme d'elle-même quand l'intention est soldée
 
 Personne ne vient
-        → worker horaire → EXPIRED
+        → worker (toutes les 15 min) → EXPIRED
         → réservation PENDING_PAYMENT → annulée, créneau rendu
         → facture → reste due, simplement plus annoncée
 ```
@@ -106,8 +110,8 @@ règlement mobile money se signale comme un fait accompli
 bokati:
   payment:
     cash-declaration:
-      validity-hours: ${CASH_DECLARATION_VALIDITY_HOURS:24}
-      expiry-delay-ms: ${CASH_DECLARATION_EXPIRY_DELAY_MS:3600000}   # cadence du worker
+      validity-hours: ${CASH_DECLARATION_VALIDITY_HOURS:4}
+      expiry-delay-ms: ${CASH_DECLARATION_EXPIRY_DELAY_MS:900000}    # cadence du worker
       # Qui tient la caisse · à défaut, les adresses des paiements libre-service.
       desk-email: ${CASH_DECLARATION_DESK_EMAIL:}
 ```

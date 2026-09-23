@@ -67,7 +67,7 @@ public class CashPaymentDeclarationService {
     private final CashDeclarationNotifier notifier;
 
     /** Combien de temps une annonce tient · au-dela, la reservation est rendue. */
-    @Value("${bokati.payment.cash-declaration.validity-hours:24}")
+    @Value("${bokati.payment.cash-declaration.validity-hours:4}")
     private int validityHours;
 
     // ---------------------------------------------------------------------------------------

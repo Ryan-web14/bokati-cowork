@@ -43,7 +43,7 @@ public class CashDeclarationExpiryWorker {
     public record Sweep(int expired, int bookingsReleased) {
     }
 
-    @Scheduled(fixedDelayString = "${bokati.payment.cash-declaration.expiry-delay-ms:3600000}")
+    @Scheduled(fixedDelayString = "${bokati.payment.cash-declaration.expiry-delay-ms:900000}")
     public void expireStaleDeclarations() {
         try {
             Sweep sweep = run();

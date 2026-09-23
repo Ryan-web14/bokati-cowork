@@ -111,8 +111,10 @@ bokati:
     cash-declaration:
       # Combien de temps une annonce de paiement en especes tient · au-dela, la reservation
       # est rendue et la facture redevient simplement due.
-      validity-hours: ${CASH_DECLARATION_VALIDITY_HOURS:24}
-      expiry-delay-ms: ${CASH_DECLARATION_EXPIRY_DELAY_MS:3600000}
+      validity-hours: ${CASH_DECLARATION_VALIDITY_HOURS:4}
+      # Le worker passe plus souvent que le delai n est court · sinon un creneau tenu
+      # 4 h serait rendu avec une heure de retard.
+      expiry-delay-ms: ${CASH_DECLARATION_EXPIRY_DELAY_MS:900000}
       # Qui tient la caisse · a defaut, les adresses des paiements libre-service.
       desk-email: ${CASH_DECLARATION_DESK_EMAIL:}
     self-service:

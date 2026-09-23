@@ -34,7 +34,7 @@ Réponse :
   "status": "AWAITING_CONFIRMATION",
   "note": "Je passe vers 14h",
   "declaredAt": "2026-09-23T13:02:11Z",
-  "expiresAt": "2026-09-24T13:02:11Z",
+  "expiresAt": "2026-09-23T17:02:11Z",
   "confirmedAt": null,
   "confirmedAmount": null,
   "transactionNumber": null
@@ -46,7 +46,7 @@ Réponse :
 **N'affichez jamais « payé ».** La facture reste due, la réservation reste en attente de paiement.
 Le bon message est du genre :
 
-> Passez régler **25 000 XAF** en espèces à l'accueil avant le **24/09 à 13h02**.
+> Passez régler **25 000 XAF** en espèces à l'accueil avant **17h02** (dans 4 h).
 > Votre créneau est tenu jusque-là.
 
 Sur la facture concernée, remplacez le bouton de paiement en espèces par l'état de l'annonce et un
@@ -141,7 +141,7 @@ La notification persistante correspondante est lisible par
 
 ## 3. Expiration
 
-Un worker horaire ferme les annonces échues :
+Le délai est de **4 heures** par défaut. Un worker ferme les annonces échues toutes les 15 minutes :
 
 | Ce qui était annoncé | Ce qui se passe |
 |---|---|

@@ -71,7 +71,7 @@ class CashPaymentDeclarationServiceTest {
     void setUp() {
         service = new CashPaymentDeclarationService(repository, billingDocumentService, billingDocumentRepository,
                 bookingRepository, paymentService, sequenceGenerator, notifier);
-        ReflectionTestUtils.setField(service, "validityHours", 24);
+        ReflectionTestUtils.setField(service, "validityHours", 4);
         when(sequenceGenerator.next(anyString())).thenReturn("ESP-2026-000001");
         when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }
