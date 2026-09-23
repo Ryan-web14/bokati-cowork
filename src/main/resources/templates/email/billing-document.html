@@ -14,6 +14,8 @@
     .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.30); margin-top: 5px; }
     .em-stripe-normal { height: 3px; background: #C9A84C; }
     .em-stripe-overdue { height: 3px; background: #C9A84C; }
+    .em-stripe-settled { height: 3px; background: #15803D; }
+    .due-val-settled { color: #15803D; }
     .em-body { padding: 40px 40px 36px; }
     .em-title { font-size: 21px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 6px; }
     .em-sub { font-size: 13px; color: #A99BBC; margin-bottom: 20px; }
@@ -49,7 +51,7 @@
 </head>
 <body>
 <div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
-     th:text="${preheader != null ? preheader : 'Votre document de facturation est disponible.'}">Votre document de facturation est disponible.</div>
+     th:text="${preheader != null ? preheader : (settled ? 'Votre facture est soldée, plus rien ne reste à régler.' : 'Votre document de facturation est disponible.')}">Votre document de facturation est disponible.</div>
 <div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 <div class="wrap">
   <div class="sheet">
@@ -59,7 +61,7 @@
       <img th:if="${#branding.logoUrl() != null}" th:src="${#branding.logoUrl()}" alt="Elle A Osé" style="height:36px; display:block;"/>
       <div class="em-brand-sub">Facturation</div>
     </div>
-    <div th:class="${overdue} ? 'em-stripe-overdue' : 'em-stripe-normal'"></div>
+    <div th:class="${settled} ? 'em-stripe-settled' : (${overdue} ? 'em-stripe-overdue' : 'em-stripe-normal')"></div>
 
     <div class="em-body">
       <div class="em-title" th:text="${title ?: 'Document de facturation'}">Document de facturation</div>
@@ -94,7 +96,11 @@
           <td class="r-key">Déjà réglé</td>
           <td class="r-val" th:text="${paidAmount}">montant</td>
         </tr>
-        <tr th:if="${balanceDue}" class="due-row">
+        <tr th:if="${settled}" class="due-row">
+          <td class="due-key">Solde</td>
+          <td class="due-val due-val-settled">Réglé</td>
+        </tr>
+        <tr th:if="${!settled and !#strings.isEmpty(balanceDue)}" class="due-row">
           <td class="due-key">Solde dû</td>
           <td th:class="${overdue} ? 'due-val due-val-overdue' : 'due-val'" th:text="${balanceDue}">montant</td>
         </tr>

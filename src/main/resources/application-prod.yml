@@ -142,8 +142,10 @@ bokati:
       # Le worker passe plus souvent que le delai n est court · sinon un creneau tenu
       # 4 h serait rendu avec une heure de retard.
       expiry-delay-ms: ${CASH_DECLARATION_EXPIRY_DELAY_MS:900000}
-      # Qui tient la caisse · a defaut, les adresses des paiements libre-service.
-      desk-email: ${CASH_DECLARATION_DESK_EMAIL:}
+      # Qui tient la caisse · une ou plusieurs adresses, separees par des virgules.
+      # La chaine de repli vit ici et non dans le code : une propriete definie mais vide
+      # n est pas une propriete absente, et le defaut du @Value ne se declenchait jamais.
+      desk-email: ${CASH_DECLARATION_DESK_EMAIL:${SELF_SERVICE_CONFIRMATION_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}}
     self-service:
       # Qui est prevenu qu un client a regle depuis son espace · une ou plusieurs adresses,
       # separees par des virgules. Vide : seule la notification dans le portail part.

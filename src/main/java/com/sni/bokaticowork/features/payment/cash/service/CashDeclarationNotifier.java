@@ -39,8 +39,14 @@ public class CashDeclarationNotifier {
     private final AdminInAppNotifier adminInAppNotifier;
     private final TransactionContextResolver contextResolver;
 
-    /** Qui tient la caisse · une ou plusieurs adresses, a defaut celles des paiements libre-service. */
-    @Value("${bokati.payment.cash-declaration.desk-email:${bokati.payment.self-service.confirmation-email:${bokati.support.manager-email:}}}")
+    /**
+     * Qui tient la caisse · une ou plusieurs adresses, separees par des virgules.
+     *
+     * <p>La chaine de repli est dans la configuration, pas ici. Une propriete declaree avec une
+     * valeur vide n est pas une propriete absente : le defaut ecrit dans le {@code @Value} ne se
+     * declenchait jamais, et la caisse ne recevait aucun courriel.</p>
+     */
+    @Value("${bokati.payment.cash-declaration.desk-email:}")
     private String deskEmail;
 
     /** Un client a annonce qu il passerait payer · la caisse a quelque chose a faire. */

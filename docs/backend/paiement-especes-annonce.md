@@ -112,9 +112,14 @@ bokati:
     cash-declaration:
       validity-hours: ${CASH_DECLARATION_VALIDITY_HOURS:4}
       expiry-delay-ms: ${CASH_DECLARATION_EXPIRY_DELAY_MS:900000}    # cadence du worker
-      # Qui tient la caisse · à défaut, les adresses des paiements libre-service.
-      desk-email: ${CASH_DECLARATION_DESK_EMAIL:}
+      # Qui tient la caisse · une ou plusieurs adresses, séparées par des virgules.
+      desk-email: ${CASH_DECLARATION_DESK_EMAIL:${SELF_SERVICE_CONFIRMATION_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}}
 ```
+
+La chaîne de repli vit dans la configuration, pas dans le `@Value`. Une propriété **déclarée avec
+une valeur vide n'est pas une propriété absente** : le défaut écrit en Java ne se déclenchait
+jamais, et la caisse ne recevait aucun courriel · seules la notification du portail et la
+diffusion WebSocket partaient.
 
 ## Migrations
 

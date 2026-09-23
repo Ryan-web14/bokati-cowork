@@ -171,6 +171,22 @@ class LotEmailTemplatesRenderTest {
         assertThat(invoiceOnly).doesNotContain("a été rendu").contains("reste réglable");
     }
 
+    @Test
+    void theBillingDocumentNoticeSaysSettledInsteadOfZeroDue() {
+        String settled = render("billing-document", model("customerName", "Joël", "documentLabel", "facture",
+                "documentNumber", "INV-1", "title", "Votre facture est soldee",
+                "subtitle", "Plus rien ne reste a regler", "message", "Nous accusons reception de votre reglement de 25000 XAF.",
+                "totalAmount", "25000 XAF", "paidAmount", "25000 XAF", "balanceDue", "0 XAF",
+                "issueDate", "23/09/2026", "overdue", false, "settled", true));
+        // Une facture soldee ne montre pas « Solde du : 0 XAF » · elle montre « Regle ».
+        assertThat(settled).contains("Réglé").doesNotContain("Solde dû");
+
+        String due = render("billing-document", model("customerName", "Joël", "documentLabel", "facture",
+                "documentNumber", "INV-1", "totalAmount", "25000 XAF", "paidAmount", "0 XAF",
+                "balanceDue", "25000 XAF", "issueDate", "23/09/2026", "overdue", false, "settled", false));
+        assertThat(due).contains("Solde dû").contains("25000 XAF");
+    }
+
     /** Les valeurs ne sont pas toutes des chaines · un drapeau se rend differemment d'un texte. */
     private static Map<String, Object> model(Object... kv) {
         Map<String, Object> model = new LinkedHashMap<>();
