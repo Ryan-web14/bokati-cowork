@@ -17,6 +17,8 @@ import com.sni.bokaticowork.features.payment.security.service.WalletMerchantPaym
 import com.sni.bokaticowork.features.payment.security.enums.WalletOperationType;
 
 import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
+import com.sni.bokaticowork.features.payment.cash.dto.request.DeclareCashPaymentRequest;
+import com.sni.bokaticowork.features.payment.cash.dto.response.CashPaymentDeclarationResponse;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
@@ -52,6 +54,7 @@ public class ClientBillingService {
     private final PaymentReceiptService paymentReceiptService;
     private final com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository pawapayDepositRepository;
     private final com.sni.bokaticowork.features.payment.service.pawaypay.PawapayDepositService pawapayDepositService;
+    private final com.sni.bokaticowork.features.payment.cash.service.CashPaymentDeclarationService cashDeclarationService;
 
     @Transactional(readOnly = true)
     public PaginatedResponse<ClientInvoiceSummaryResponse> listInvoices(Member member,
@@ -134,6 +137,34 @@ public class ClientBillingService {
             throw new ResourceNotFoundException("Paiement mobile money introuvable : " + depositId);
         }
         return pawapayDepositService.toResponse(deposit);
+    }
+
+    /**
+     * « Je passerai payer en especes » · une annonce, pas un paiement.
+     *
+     * <p>Le mobile money et le portefeuille aboutissent seuls. Les especes arrivent avec la
+     * personne · la facture reste donc due jusqu a ce que la caisse ait compte les billets.
+     * L annonce sert a prevenir la caisse, et a tenir le creneau d une reservation.</p>
+     */
+    @Transactional
+    public CashPaymentDeclarationResponse declareCashPayment(Member member, String documentNumber,
+                                                             DeclareCashPaymentRequest request) {
+        BillingDocumentResponse invoice = billingDocumentService.get(documentNumber);
+        verifyOwnership(member, invoice);
+        return cashDeclarationService.declare(documentNumber, request, member.getMemberId());
+    }
+
+    /** Les annonces de ce membre · celles en attente disent ce qu il reste a aller regler. */
+    @Transactional(readOnly = true)
+    public PaginatedResponse<CashPaymentDeclarationResponse> listCashDeclarations(Member member, Pageable pageable) {
+        return cashDeclarationService.listForCustomer(OWNER_TYPE, member.getMemberId(), pageable);
+    }
+
+    /** Le client se ravise · sa facture reste due, elle n est simplement plus annoncee. */
+    @Transactional
+    public CashPaymentDeclarationResponse cancelCashDeclaration(Member member, String declarationNumber) {
+        cashDeclarationService.ownedBy(declarationNumber, OWNER_TYPE, member.getMemberId());
+        return cashDeclarationService.cancel(declarationNumber, "Annulée par le client", member.getMemberId());
     }
 
     @Transactional

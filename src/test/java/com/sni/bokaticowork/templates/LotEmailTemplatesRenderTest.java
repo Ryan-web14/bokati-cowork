@@ -36,7 +36,8 @@ class LotEmailTemplatesRenderTest {
             "domiciliation-certificate-expiring", "domiciliation-fiscal-lost", "domiciliation-terminated", "domiciliation-administration-notice",
             "mail-item-event", "subscription-grace-period", "subscription-termination", "subscription-direct-debit-failed",
             "subscription-quote-sent", "billing-dunning", "billing-dunning-handover", "mobile-money-deposit-unresolved",
-            "mobile-money-deposit-failed", "mobile-money-deposit-pending-review", "self-service-payment-received"
+            "mobile-money-deposit-failed", "mobile-money-deposit-pending-review", "self-service-payment-received",
+            "cash-payment-declared", "cash-payment-confirmed", "cash-payment-declaration-expired"
     })
     void everyTemplateRendersWithAnEmptyModel(String template) {
         String html = render(template, Map.of());
@@ -137,6 +138,37 @@ class LotEmailTemplatesRenderTest {
                 "purpose", "Facture INV-1"));
         assertThat(html).contains("SARL Mboté").contains("25000").contains("TRX-1").contains("REC-1")
                 .contains("Facture INV-1").contains("rien à valider");
+    }
+
+    @Test
+    void theCashDeclarationNoticeTellsTheDeskWhatIsNotYetCollected() {
+        String html = render("cash-payment-declared", model("recipientName", "l'équipe",
+                "customerName", "Joël Bikindou", "amount", "25000", "currency", "XAF",
+                "declarationNumber", "ESP-2026-000001", "documentNumber", "INV-1",
+                "bookingNumber", "BKG-1", "note", "Je passe vers 14h"));
+        assertThat(html).contains("Joël Bikindou").contains("25000").contains("ESP-2026-000001")
+                .contains("BKG-1").contains("Je passe vers 14h")
+                .contains("tant que vous n").contains("confirmé");
+    }
+
+    @Test
+    void theCashConfirmationIsProofForTheClient() {
+        String html = render("cash-payment-confirmed", model("recipientName", "Joël",
+                "confirmedAmount", "25000", "currency", "XAF", "documentNumber", "INV-1",
+                "transactionNumber", "TXN-1"));
+        assertThat(html).contains("Joël").contains("25000").contains("TXN-1").contains("confirmation");
+    }
+
+    @Test
+    void theExpiredCashNoticeSaysTheSlotWasReleased() {
+        String released = render("cash-payment-declaration-expired", model("recipientName", "Joël",
+                "amount", "25000", "currency", "XAF", "documentNumber", "INV-1",
+                "bookingNumber", "BKG-1", "bookingReleased", true));
+        assertThat(released).contains("BKG-1").contains("a été rendu").contains("reste réglable");
+
+        String invoiceOnly = render("cash-payment-declaration-expired", model("amount", "25000",
+                "currency", "XAF", "documentNumber", "INV-1", "bookingReleased", false));
+        assertThat(invoiceOnly).doesNotContain("a été rendu").contains("reste réglable");
     }
 
     /** Les valeurs ne sont pas toutes des chaines · un drapeau se rend differemment d'un texte. */

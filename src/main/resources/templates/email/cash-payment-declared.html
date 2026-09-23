@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Espèces annoncées')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Un client passera régler en espèces.'}">Un client passera régler en espèces.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Espèces annoncées · à encaisser</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>,
+        <strong th:text="${customerName}">Un client</strong> annonce qu'il passera régler
+        <strong th:text="${amount} + ' ' + ${currency}">montant</strong> en espèces.
+        <strong>Rien n'est encaissé tant que vous n'avez pas confirmé</strong> : la facture reste due.
+      </div>
+
+      <div class="section-lbl">À encaisser</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Annonce</td>
+          <td class="r-val mono" th:text="${declarationNumber}">Annonce</td>
+        </tr>
+        <tr>
+          <td class="r-key">Facture</td>
+          <td class="r-val mono" th:text="${documentNumber}">Facture</td>
+        </tr>
+        <tr th:if="${bookingNumber}">
+          <td class="r-key">Réservation</td>
+          <td class="r-val mono" th:text="${bookingNumber}">Réservation</td>
+        </tr>
+        <tr>
+          <td class="r-key">Montant annoncé</td>
+          <td class="r-val" th:text="${amount} + ' ' + ${currency}">Montant</td>
+        </tr>
+        <tr>
+          <td class="r-key">Client</td>
+          <td class="r-val" th:text="${customerName}">Client</td>
+        </tr>
+        <tr th:if="${note}">
+          <td class="r-key">Message du client</td>
+          <td class="r-val" th:text="${note}">Message</td>
+        </tr>
+      </table>
+
+      <div class="em-note" th:if="${bookingNumber}">
+        Le créneau est tenu jusqu'à l'échéance de cette annonce. Passé ce délai sans encaissement,
+        il sera rendu automatiquement.
+      </div>
+      <div class="em-note">
+        À la confirmation, indiquez la session de caisse et le montant réellement compté ·
+        il peut différer de ce qui est annoncé.
+      </div>
+
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

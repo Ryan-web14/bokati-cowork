@@ -6,6 +6,8 @@ import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.client.member.model.Member;
+import com.sni.bokaticowork.features.payment.cash.dto.request.DeclareCashPaymentRequest;
+import com.sni.bokaticowork.features.payment.cash.dto.response.CashPaymentDeclarationResponse;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentReceiptResponse;
@@ -96,6 +98,32 @@ public class ClientBillingController {
         Member member = clientContextService.getAuthenticatedMember();
         return ResponseEntity.ok(clientBillingService.payWithWallet(member, documentNumber,
                 body == null ? null : body.pin()));
+    }
+
+    /**
+     * « Je passerai payer en especes » · la facture reste due jusqu a la confirmation de la caisse.
+     */
+    @PostMapping("/invoices/{documentNumber}/pay/cash")
+    public ResponseEntity<CashPaymentDeclarationResponse> declareCashPayment(
+            @PathVariable String documentNumber,
+            @Valid @RequestBody(required = false) DeclareCashPaymentRequest request) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientBillingService.declareCashPayment(member, documentNumber, request));
+    }
+
+    /** Mes annonces de paiement en especes · celles en attente restent a aller regler. */
+    @GetMapping("/cash-declarations")
+    public ResponseEntity<PaginatedResponse<CashPaymentDeclarationResponse>> listCashDeclarations(
+            @PageableDefault(size = 20) Pageable pageable) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientBillingService.listCashDeclarations(member, pageable));
+    }
+
+    /** Je me ravise · ma facture reste due, elle n est simplement plus annoncee. */
+    @PostMapping("/cash-declarations/{declarationNumber}/cancel")
+    public ResponseEntity<CashPaymentDeclarationResponse> cancelCashDeclaration(@PathVariable String declarationNumber) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientBillingService.cancelCashDeclaration(member, declarationNumber));
     }
 
     /** Ou en est mon paiement mobile money · la demande est-elle sur mon telephone, est-ce fini. */

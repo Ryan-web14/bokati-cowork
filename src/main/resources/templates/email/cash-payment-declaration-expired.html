@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Paiement non reçu')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Le délai de votre paiement en espèces est passé.'}">Le délai de votre paiement en espèces est passé.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Nous ne vous avons pas vu passer</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, vous aviez annoncé un règlement de
+        <strong th:text="${amount} + ' ' + ${currency}">montant</strong> en espèces. Le délai est passé sans que nous
+        l'ayons reçu.
+      </div>
+
+      <div class="section-lbl">Concerné</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Facture</td>
+          <td class="r-val mono" th:text="${documentNumber}">Facture</td>
+        </tr>
+        <tr>
+          <td class="r-key">Montant annoncé</td>
+          <td class="r-val" th:text="${amount} + ' ' + ${currency}">Montant</td>
+        </tr>
+        <tr th:if="${bookingNumber}">
+          <td class="r-key">Réservation</td>
+          <td class="r-val mono" th:text="${bookingNumber}">Réservation</td>
+        </tr>
+      </table>
+
+      <div class="em-note alert" th:if="${bookingReleased}">
+        Le créneau que nous tenions pour vous a été rendu. Vous pouvez réserver à nouveau depuis votre espace client.
+      </div>
+      <div class="em-note">
+        Votre facture reste réglable : passez à l'accueil, ou payez directement depuis votre espace client
+        par mobile money ou avec le solde de votre portefeuille.
+      </div>
+
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

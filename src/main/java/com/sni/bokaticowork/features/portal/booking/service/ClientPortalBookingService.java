@@ -11,6 +11,8 @@ import com.sni.bokaticowork.features.booking.dto.response.BookingResponse;
 import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingAvailabilityService;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingService;
+import com.sni.bokaticowork.features.payment.cash.dto.request.DeclareCashPaymentRequest;
+import com.sni.bokaticowork.features.payment.cash.dto.response.CashPaymentDeclarationResponse;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.portal.booking.dto.request.ClientCancelBookingRequest;
 import com.sni.bokaticowork.features.portal.booking.dto.request.ClientCheckAvailabilityRequest;
@@ -31,6 +33,7 @@ public class ClientPortalBookingService {
 
     private final BookingService bookingService;
     private final BookingAvailabilityService bookingAvailabilityService;
+    private final com.sni.bokaticowork.features.payment.cash.service.CashPaymentDeclarationService cashDeclarationService;
 
     @Transactional(readOnly = true)
     public PaginatedResponse<ClientBookingSummaryResponse> listBookings(Member member,
@@ -83,6 +86,26 @@ public class ClientPortalBookingService {
                 request.getParticipants()
         );
         return toDetailResponse(bookingService.create(req));
+    }
+
+    /**
+     * Le membre annonce qu il reglera sa reservation en especes.
+     *
+     * <p>Une reservation en paiement direct attend un reglement venu de l exterieur · elle reste
+     * PENDING_PAYMENT et son creneau est tenu jusqu a l echeance de l annonce. Rien n est
+     * encaisse tant que la caisse n a pas compte les billets.</p>
+     */
+    @Transactional
+    public CashPaymentDeclarationResponse declareCashPayment(Member member, String bookingNumber,
+                                                             DeclareCashPaymentRequest request) {
+        BookingResponse booking = bookingService.get(bookingNumber);
+        verifyOwnership(member, booking);
+        if (booking.status() != BookingStatus.PENDING_PAYMENT && booking.status() != BookingStatus.DRAFT) {
+            throw new BadRequestException("La réservation " + bookingNumber + " n'attend pas de paiement ("
+                    + booking.status() + ").");
+        }
+        String documentNumber = cashDeclarationService.documentOfBooking(bookingNumber);
+        return cashDeclarationService.declare(documentNumber, request, member.getMemberId());
     }
 
     @Transactional
