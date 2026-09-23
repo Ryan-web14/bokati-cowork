@@ -8,6 +8,7 @@ import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentPdfService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.billing.service.support.BillingReceivables;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
@@ -63,7 +64,7 @@ public class ClientBillingService {
                 null, null, from, to, null, pageable
         );
         PaginatedResponse<ClientInvoiceSummaryResponse> result = new PaginatedResponse<>();
-        result.setData(source.getData().stream().map(this::toSummary).toList());
+        result.setData(source.getData().stream().filter(this::visibleToClient).map(this::toSummary).toList());
         result.setPageable(source.getPageable());
         return result;
     }
@@ -181,11 +182,15 @@ public class ClientBillingService {
         CustomerStatementResponse statement = billingDocumentService.customerStatement(
                 OWNER_TYPE, member.getMemberId(), Pageable.unpaged()
         );
+        // Une facture en brouillon n'a jamais ete presentee au client · elle ne se compte ni dans
+        // ce qu'il a recu, ni dans ce qu'il doit. Elle le faisait passer pour debiteur a tort.
         long invoiceCount = statement.documents().stream()
-                .filter(d -> d.documentType() == BillingDocumentType.INVOICE)
+                .filter(d -> d.documentType() == BillingDocumentType.INVOICE
+                        && BillingReceivables.issued(d.documentType(), d.status()))
                 .count();
         long unpaidCount = statement.documents().stream()
                 .filter(d -> d.documentType() == BillingDocumentType.INVOICE
+                        && BillingReceivables.receivable(d.documentType(), d.status())
                         && d.balanceDue() != null
                         && d.balanceDue().compareTo(BigDecimal.ZERO) > 0)
                 .count();
@@ -197,6 +202,8 @@ public class ClientBillingService {
                 .totalInvoiced(statement.totalInvoiced())
                 .totalPaid(statement.totalPaid())
                 .totalBalanceDue(statement.totalBalanceDue())
+                .totalCreditAvailable(statement.totalCreditAvailable())
+                .netBalanceDue(statement.netBalanceDue())
                 .invoiceCount(invoiceCount)
                 .unpaidCount(unpaidCount)
                 .overdueCount(overdueCount)
@@ -210,6 +217,16 @@ public class ClientBillingService {
                 || !member.getMemberId().equals(invoice.customerCode())) {
             throw new ResourceNotFoundException("Invoice not found");
         }
+        // Une facture en brouillon est un document de travail · elle n'a pas ete emise, le client
+        // ne la connait pas, et il n'a rien a devoir a son titre. Elle n'existe pas pour lui.
+        if (invoice.status() == BillingDocumentStatus.DRAFT) {
+            throw new ResourceNotFoundException("Invoice not found");
+        }
+    }
+
+    /** Ce que le client peut voir · tout sauf ce qui n'a pas encore ete emis. */
+    private boolean visibleToClient(BillingDocumentResponse document) {
+        return document.status() != BillingDocumentStatus.DRAFT;
     }
 
     private ClientInvoiceSummaryResponse toSummary(BillingDocumentResponse d) {

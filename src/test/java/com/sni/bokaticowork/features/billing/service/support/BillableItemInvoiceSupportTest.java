@@ -254,7 +254,10 @@ class BillableItemInvoiceSupportTest {
                 null, null,
                 null, null, null, null,
                 // credit note link
-                null, null, null
+                null, null, null,
+                // ce que le document pese sur le solde du client
+                BillingReceivables.receivable(BillingDocumentType.INVOICE, status),
+                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, balanceDue)
         );
     }
 }

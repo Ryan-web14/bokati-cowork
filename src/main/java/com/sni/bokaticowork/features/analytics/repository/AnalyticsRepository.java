@@ -18,9 +18,15 @@ public class AnalyticsRepository {
         return single("""
                 SELECT
                     count(*) FILTER (WHERE document_type = 'INVOICE') AS invoice_count,
-                    coalesce(sum(total_amount) FILTER (WHERE document_type = 'INVOICE'), 0) AS invoiced_amount,
+                    coalesce(sum(total_amount) FILTER (
+                        WHERE document_type = 'INVOICE'
+                          AND status NOT IN ('DRAFT','REJECTED','EXPIRED','CONVERTED')), 0) AS invoiced_amount,
                     coalesce(sum(paid_amount) FILTER (WHERE document_type = 'INVOICE'), 0) AS paid_amount,
-                    coalesce(sum(balance_due) FILTER (WHERE document_type = 'INVOICE'), 0) AS outstanding_amount,
+                    -- Ce qui reste a encaisser · une facture en brouillon n'a jamais ete reclamee,
+                    -- et une facture reglee ou passee en perte n'est plus une creance.
+                    coalesce(sum(balance_due) FILTER (
+                        WHERE document_type = 'INVOICE'
+                          AND status NOT IN ('DRAFT','REJECTED','EXPIRED','CONVERTED','PAID','REFUNDED','WRITTEN_OFF')), 0) AS outstanding_amount,
                     count(*) FILTER (WHERE document_type = 'INVOICE' AND status = 'OVERDUE') AS overdue_invoice_count,
                     count(*) FILTER (WHERE document_type = 'QUOTE') AS quotation_count,
                     coalesce(sum(total_amount) FILTER (WHERE document_type = 'QUOTE'), 0) AS quoted_amount,
