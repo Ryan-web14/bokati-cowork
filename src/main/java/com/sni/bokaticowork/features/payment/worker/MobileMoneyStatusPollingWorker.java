@@ -1,30 +1,28 @@
 package com.sni.bokaticowork.features.payment.worker;
 
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
-import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
-import com.sni.bokaticowork.features.payment.provider.MobileMoneyPaymentProvider;
-import com.sni.bokaticowork.features.payment.provider.MobileMoneyStatusResponse;
-import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayProperties;
-import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayCallbackPayload;
-import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
-import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayCallbackProcessor;
+import com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneySupervisionService;
 import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayDepositService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
- * Polls PawaPay for PROCESSING mobile money transactions that have not received
- * a callback within the configured time window. Handles stuck transactions due to
- * network issues, missed webhooks, or operator delays.
+ * On relit le statut jusqu'a ce que l'operateur tranche · on ne tranche jamais a sa place.
+ *
+ * <p>Une demande mobile money attend que le client saisisse son code. Il peut le faire dans la
+ * minute, ou une heure plus tard en sortant de reunion. L'ancien worker abandonnait en
+ * {@code FAILED} au bout de vingt-cinq minutes : un paiement confirme ensuite arrivait sur une
+ * transaction deja declaree echouee et une intention deja annulee.</p>
+ *
+ * <p>Desormais chaque depot porte sa prochaine echeance de verification, rapprochee d'abord puis
+ * espacee. Au bout du temps imparti sans reponse definitive, le depot passe {@code UNRESOLVED} ·
+ * pas {@code FAILED} : la transaction reste en cours, l'intention reste payable, et quelqu'un est
+ * prevenu pour rapprocher. Une reponse tardive de l'operateur reste toujours acceptee.</p>
  */
 @Slf4j
 @Component
@@ -32,63 +30,45 @@ import java.util.List;
 @ConditionalOnProperty(name = "bokati.payment.pawaypay.enabled", havingValue = "true")
 public class MobileMoneyStatusPollingWorker {
 
-    private final PaymentTransactionRepository transactionRepository;
-    private final MobileMoneyPaymentProvider mobileMoneyProvider;
-    private final PawapayCallbackProcessor callbackProcessor;
+    private static final int BATCH = 100;
+
+    private final MobileMoneySupervisionService supervision;
     private final PawapayDepositService depositService;
-    private final PawapayProperties properties;
 
-    @Scheduled(fixedDelayString = "${bokati.payment.pawaypay.polling-delay-ms:300000}")
+    /** Ce qu'une passe a donne · utile aux tests et au journal. */
+    public record Sweep(int checked, int settled, int unresolved) {
+    }
+
+    @Scheduled(fixedDelayString = "${bokati.payment.pawaypay.polling-delay-ms:60000}")
     public void pollProcessingTransactions() {
-        Instant cutoff = Instant.now().minus(properties.getPollingMaxAgeMinutes(), ChronoUnit.MINUTES);
-        List<PaymentTransaction> stuck = transactionRepository.findProcessingMobileMoneyTransactions(cutoff);
-
-        if (stuck.isEmpty()) return;
-
-        log.info("Polling {} stuck mobile money transaction(s)", stuck.size());
-
-        for (PaymentTransaction transaction : stuck) {
-            try {
-                poll(transaction);
-            } catch (Exception ex) {
-                log.error("Error polling transaction {}", transaction.getTransactionNumber(), ex);
+        try {
+            Sweep sweep = run();
+            if (sweep.checked() > 0) {
+                log.info("Depots mobile money · {} verifie(s), {} tranche(s), {} sans reponse",
+                        sweep.checked(), sweep.settled(), sweep.unresolved());
             }
+        } catch (Exception ex) {
+            log.error("MobileMoneyStatusPollingWorker failed: {}", ex.getMessage(), ex);
         }
     }
 
-    private void poll(PaymentTransaction transaction) {
-        String depositId = transaction.getProviderReference();
-        if (!StringUtils.hasText(depositId)) return;
-
-        MobileMoneyStatusResponse status = mobileMoneyProvider.checkStatus(depositId);
-        PawapayDeposit deposit = depositService.markStatusChecked(depositId, status.message());
-        log.debug("Poll result for transaction {}: status={}", transaction.getTransactionNumber(), status.status());
-
-        if ("SUCCEEDED".equals(status.status())) {
-            // Synthesize a COMPLETED callback and reuse the existing processor logic
-            callbackProcessor.process(new PawapayCallbackPayload(
-                    depositId, "COMPLETED", null, null, null, null, null, null,
-                    null, null, null, null, null, null, null, null
-            ));
-        } else if ("FAILED".equals(status.status())) {
-            callbackProcessor.process(new PawapayCallbackPayload(
-                    depositId, "FAILED", null, null, null, null, null, null,
-                    null, null, null, null, null, null, null, null
-            ));
-        } else {
-            // Still PROCESSING at the operator. Give up once we have exhausted the retry
-            // budget so we stop polling the same stuck deposit forever and settle it FAILED.
-            int attempts = deposit != null ? deposit.getStatusCheckCount() : 0;
-            if (attempts >= properties.getMaxPollingAttempts()) {
-                log.warn("Abandoning mobile money transaction {} as FAILED after {} status check(s)",
-                        transaction.getTransactionNumber(), attempts);
-                callbackProcessor.process(new PawapayCallbackPayload(
-                        depositId, "FAILED", null, null, null, null, null, null,
-                        null, null, null, null, null, null, null,
-                        TextNode.valueOf("Abandoned after " + attempts + " status checks without resolution")
-                ));
+    public Sweep run() {
+        List<PawapayDeposit> due = supervision.due(BATCH);
+        int settled = 0;
+        int unresolved = 0;
+        for (PawapayDeposit deposit : due) {
+            try {
+                MobileMoneySupervisionService.Verdict verdict = supervision.settle(deposit);
+                if (verdict == MobileMoneySupervisionService.Verdict.SETTLED) settled++;
+                if (verdict == MobileMoneySupervisionService.Verdict.UNRESOLVED) unresolved++;
+            } catch (Exception ex) {
+                // Un depot qui fait echouer sa relecture ne doit ni bloquer les suivants ni rester
+                // en tete de file · on lui pose simplement la prochaine echeance.
+                log.error("Verification du depot {} en erreur · reprise a la prochaine echeance",
+                        deposit.getDepositId(), ex);
+                depositService.scheduleNextCheck(deposit.getDepositId(), null);
             }
-            // else: leave it for the next poll cycle
         }
+        return new Sweep(due.size(), settled, unresolved);
     }
 }

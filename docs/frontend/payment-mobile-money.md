@@ -231,6 +231,13 @@ Exemple :
   "amount": 2500,
   "currency": "XAF",
   "status": "PROCESSING",
+  "phase": "WAITING_FOR_PAYER",
+  "providerMessage": "PROCESSING",
+  "failureReason": null,
+  "failureCode": null,
+  "userMessage": null,
+  "retryable": null,
+  "nextStatusCheckAt": "2026-09-23T13:51:00Z",
   "intentNumber": "INT-CUS-202604-00000001",
   "transactionNumber": "TXN-MM-202604-00000001",
   "transaction": {
@@ -242,37 +249,104 @@ Exemple :
 }
 ```
 
-Comportement frontend :
+### 6.1 `phase` · ce qu'il faut afficher
 
-- Afficher un etat `PROCESSING` apres l'initiation.
-- Proposer un rafraichissement ou polling si necessaire.
-- Recharger la facture apres confirmation pour afficher le solde restant.
+N'affichez jamais `status` ni `providerMessage` a un client : ce sont des termes techniques.
+Utilisez `phase`.
 
-## 7. Recuperer un depot
+| `phase` | Ce que vit le client | Ecran |
+|---|---|---|
+| `WAITING_FOR_PAYER` | La demande est sur son telephone, il doit saisir son code | « Validez la demande sur votre telephone » + compte a rebours |
+| `CONFIRMING` | Il a valide (ou l'appel n'a pas abouti), on attend l'operateur | « Confirmation en cours… » |
+| `COMPLETED` | L'operateur a confirme l'encaissement | Recu, solde de la facture rafraichi |
+| `FAILED` | L'operateur a refuse, ou la demande n'est jamais partie | `userMessage` + bouton « Reessayer » si `retryable` |
+| `UNRESOLVED` | Aucune reponse definitive apres 24 h | `userMessage` + « Notre equipe verifie aupres de l'operateur » |
+
+Une initiation peut repondre directement `CONFIRMING` : cela veut dire que l'appel vers l'operateur
+n'a pas abouti a une reponse, **pas** que le paiement a echoue. La demande est peut-etre partie
+sur le telephone du client. Ne proposez pas de reessayer dans cet etat.
+
+### 6.2 `failureCode`, `userMessage`, `retryable`
+
+Quand `phase` vaut `FAILED`, ces trois champs sont renseignes :
+
+- `userMessage` est une phrase francaise prete a afficher · affichez-la telle quelle ;
+- `retryable` dit si reessayer **avec le meme numero** a un sens. Faux pour un numero inconnu de
+  l'operateur, un plafond atteint, un compte non autorise : proposez alors de changer de numero ou
+  de moyen de paiement, pas de recommencer a l'identique ;
+- `failureCode` est le code brut de l'operateur, utile pour vos propres statistiques.
+
+Codes les plus frequents : `PAYMENT_NOT_APPROVED` (le client n'a pas valide), `INSUFFICIENT_BALANCE`,
+`PAYER_NOT_FOUND`, `PAYER_LIMIT_REACHED`, `TRANSACTION_ALREADY_IN_PROCESS`, `EXPIRED`.
+
+### 6.3 Erreurs d'initiation · `400` avant tout appel
+
+Le backend verifie ce qui peut l'etre avant d'appeler l'operateur, et repond `400` avec un message
+francais deja affichable :
+
+- opérateur absent ;
+- montant nul, negatif, ou avec des centimes (les operateurs n'acceptent que des montants entiers) ;
+- devise de l'operateur differente de celle de la facture (un operateur RDC ne regle pas une
+  facture en XAF) ;
+- numero de telephone illisible ou, si les plages sont configurees, incompatible avec l'operateur
+  choisi.
+
+### 6.4 Double initiation
+
+Une seconde initiation pour la **meme intention et le meme numero** dans les 20 minutes ne cree pas
+un second depot : le backend rend le depot en cours, avec le meme `depositId`. Le bouton de
+paiement peut donc etre re-clique sans faire sonner deux fois le telephone du client · mais
+desactivez-le quand meme pendant la requete.
+
+## 7. Suivre un depot
+
+### 7.1 Cote client
 
 ```http
-GET /api/v1/payments/mobile-money/deposits/{depositId}
+GET /api/v1/client/billing/mobile-money/deposits/{depositId}
 ```
 
-Utilisation :
+Reponse : le meme `MobileMoneyDepositResponse`. Un membre ne peut lire que **ses** depots · un
+depot qui ne lui appartient pas repond `404`.
 
-- suivi de paiement
-- ecran support/admin
-- verification du statut apres callback ou polling
+Rythme de rafraichissement conseille : toutes les 3 secondes pendant la premiere minute, puis
+toutes les 10 secondes. Arretez des que `phase` vaut `COMPLETED`, `FAILED` ou `UNRESOLVED`.
+Le champ `nextStatusCheckAt` indique quand le backend reparlera lui-meme a l'operateur · inutile
+d'interroger plus vite que ca apres les premieres minutes.
+
+Le backend continue a relire le statut de son cote pendant 24 h, meme si l'utilisateur ferme la
+page. Un client qui valide sa demande vingt minutes plus tard verra sa facture reglee.
+
+### 7.2 Cote personnel (staff)
+
+```http
+GET  /api/v1/payments/mobile-money/deposits/{depositId}
+GET  /api/v1/payments/mobile-money/deposits?status=UNRESOLVED&page=0&size=20
+POST /api/v1/payments/mobile-money/deposits/{depositId}/recheck
+GET  /api/v1/payments/mobile-money/callbacks?outcome=FAILED&page=0&size=20
+```
+
+Ces routes demandent `ADMIN`, `SUPER_ADMIN` ou `MANAGER`. `GET /deposits/{id}` **n'est plus
+publique** : elle exposait le numero de telephone et le montant de n'importe quel payeur a qui
+connaissait un identifiant de depot.
+
+Ecran de rapprochement suggere : la liste `status=UNRESOLVED` est la file des paiements dont
+l'operateur n'a jamais tranche. Le bouton « Verifier maintenant » appelle `/recheck`, qui relit le
+statut chez l'operateur et met a jour le depot si celui-ci a fini par repondre.
+
+Le journal `/callbacks` montre chaque rappel recu et ce qui en a ete fait (`PROCESSED`, `DEFERRED`,
+`IGNORED`, `FAILED`), avec le detail. C'est ce qui permet d'expliquer un paiement manquant.
 
 ## 8. Endpoint de test
-
-Pour tester rapidement avec MTN Congo et un montant fixe de `10 XAF` :
 
 ```http
 POST /api/v1/payments/mobile-money/pawaypay/test/{phoneNumber}
 ```
 
-Exemple :
-
-```http
-POST /api/v1/payments/mobile-money/pawaypay/test/242061135836
-```
+Cette route envoie une **vraie** demande de `10 XAF` sur un **vrai** telephone, avec le compte
+marchand reel. Elle demande donc un compte `ADMIN` ou `SUPER_ADMIN`, et n'est disponible que si
+`bokati.payment.pawaypay.test-endpoint-enabled` est vrai (vrai en developpement, faux en
+production). Sinon elle repond `403`.
 
 Le backend utilise automatiquement :
 

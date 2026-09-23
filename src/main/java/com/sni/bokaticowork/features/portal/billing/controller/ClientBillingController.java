@@ -98,6 +98,13 @@ public class ClientBillingController {
                 body == null ? null : body.pin()));
     }
 
+    /** Ou en est mon paiement mobile money · la demande est-elle sur mon telephone, est-ce fini. */
+    @GetMapping("/mobile-money/deposits/{depositId}")
+    public ResponseEntity<MobileMoneyDepositResponse> mobileMoneyDeposit(@PathVariable String depositId) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientBillingService.mobileMoneyDeposit(member, depositId));
+    }
+
     @GetMapping("/payments")
     public ResponseEntity<PaginatedResponse<PaymentIntentResponse>> listPayments(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {

@@ -1,4 +1,4 @@
-# Mobile money (PawaPay) · audit et plan d'implémentation
+ # Mobile money (PawaPay) · audit et plan d'implémentation
 
 Périmètre : `features/payment/provider/pawaypay`, `features/payment/service/pawaypay`,
 `MobileMoneyController`, `MobileMoneyStatusPollingWorker`, `PaymentServiceImpl.initiateMobileMoneyDeposit`,
@@ -230,7 +230,7 @@ Un seul lot, livré d'un bloc parce que les pièces se tiennent : la relecture d
   `verified_via` (`SIGNATURE` / `PROVIDER_STATUS` / `NONE`), `outcome` (`PROCESSED` / `DEFERRED` /
   `IGNORED` / `FAILED`), `detail`, `remote_address`, `received_at`, `processed_at`.
 
-### 4.2 Fournisseur · **en cours**
+### 4.2 Fournisseur · **fait**
 
 - `PawapayClient` : délais de connexion et de réponse, `ProviderUnreachableException` pour réseau,
   délai et 5xx ; `getDepositStatus` rend un `DepositStatus(found, providerStatus, failureReason,
@@ -245,7 +245,7 @@ Un seul lot, livré d'un bloc parce que les pièces se tiennent : la relecture d
   `UNKNOWN`. `PawapayDepositProvider` ne convertit plus une exception en `FAILED`.
 - Métadonnées au format `fieldName` / `fieldValue` / `isPII`.
 
-### 4.3 Initiation · `PaymentServiceImpl` et `PawapayDepositService`
+### 4.3 Initiation · `PaymentServiceImpl` et `PawapayDepositService` · **fait**
 
 - Contrôles avant appel : devise de l'opérateur = devise de l'intention ; préfixe du numéro par
   opérateur ; montant entier positif.
@@ -256,7 +256,7 @@ Un seul lot, livré d'un bloc parce que les pièces se tiennent : la relecture d
   `PENDING`.
 - Réponse au client : + `failureCode`, `userMessage`, `retryable`, `phase`, `nextStatusCheckAt`.
 
-### 4.4 Rappels · `PawapayCallbackGateway` (nouveau, sorti du contrôleur)
+### 4.4 Rappels · `PawapayCallbackGateway` (nouveau, sorti du contrôleur) · **fait**
 
 1. Écrire le rappel (`pawapay_callback`).
 2. Signature valide ⇒ traiter le corps (`verified_via = SIGNATURE`).
@@ -269,7 +269,7 @@ Un seul lot, livré d'un bloc parce que les pièces se tiennent : la relecture d
 Le `verify` du `PawapaySignatureVerifier` renvoie **faux** sans secret (« non vérifiable »), plus
 jamais vrai par défaut. `findLatestCallbackCandidate` est supprimé.
 
-### 4.5 Traitement · `PawapayCallbackProcessor`
+### 4.5 Traitement · `PawapayCallbackProcessor` · **fait**
 
 - `handleFailed` : intention `PENDING` (ou `EXPIRED`), `failure_code` / `user_message` / `retryable`
   sur le dépôt ; ne touche pas une transaction déjà terminale.
@@ -278,16 +278,19 @@ jamais vrai par défaut. `findLatestCallbackCandidate` est supprimé.
 - Nouveau `markUnresolved` : dépôt `UNRESOLVED`, transaction laissée `PROCESSING`, intention
   `PENDING`, alerte `MOBILE_MONEY_DEPOSIT_UNRESOLVED` (`alert-email`, plusieurs adresses possibles).
 
-### 4.6 Relecture · `MobileMoneyStatusPollingWorker`
+### 4.6 Relecture · `MobileMoneyStatusPollingWorker` · **fait**
 
 - Toutes les minutes, les dépôts dont `next_status_check_at` est échu (par lot de 100).
 - `SUCCEEDED` / `FAILED` / `NOT_FOUND` ⇒ traitement ; `PROCESSING` / `UNKNOWN` ⇒ prochaine
   échéance selon le calendrier 1, 2, 3, 5, 10, 15, 30 min puis 60 min ; au-delà de
   `polling-max-hours` ⇒ `markUnresolved`.
-- Plus de `max-polling-attempts` ni de `polling-max-age-minutes` (gardés en configuration pour
-  ne pas casser les déploiements, ignorés).
+- `max-polling-attempts` et `polling-max-age-minutes` sont retirés · une propriété inconnue dans
+  un `application-*.yml` ne fait pas échouer le démarrage, et les garder aurait laissé croire
+  qu'elles pilotent encore quelque chose.
+- La règle vit dans `MobileMoneySupervisionService.settle`, partagée avec la relecture manuelle ·
+  un dépôt relu par un agent et un dépôt relu par le worker aboutissent au même état.
 
-### 4.7 Routes
+### 4.7 Routes · **fait**
 
 | Route | Rôle | Changement |
 |---|---|---|
@@ -300,25 +303,30 @@ jamais vrai par défaut. `findLatestCallbackCandidate` est supprimé.
 | `GET /payments/mobile-money/callbacks?referenceId=` | `ADMIN` | nouveau · journal des rappels |
 | `GET /client/billing/mobile-money/deposits/{id}` | membre | nouveau · son dépôt, vue réduite |
 
-### 4.8 Configuration
+### 4.8 Configuration · **fait**
 
 `application-dev.yml` : `PAWAYPAY_API_KEY` sans valeur par défaut. `application-prod.yml` :
 `callback-secret` **obligatoire à renseigner** (le code ne fait plus confiance sans lui, mais la
 signature évite un appel API par rappel), `connect-timeout-ms`, `read-timeout-ms`,
 `polling-delay-ms: 60000`, `polling-max-hours: 24`, `alert-email` (repli : manager support).
 
-### 4.9 Tests
+### 4.9 Tests · **fait**
 
-- `PawapayClientTest` : lecture des trois formes de statut, `NOT_FOUND`, `UNKNOWN` sur exception.
-- `PawapayCallbackGatewayTest` : sans secret ⇒ relecture obligatoire ; corps forgé `COMPLETED`
-  avec statut réel `PROCESSING` ⇒ `DEFERRED`, rien n'est écrit ; signature valide ⇒ traité ;
-  erreur ⇒ `FAILED` + relecture programmée.
-- `PawapayCallbackProcessorTest` : `COMPLETED` idempotent ; `FAILED` ⇒ intention `PENDING` et
-  message français ; `COMPLETED` tardif après `FAILED` ⇒ `SUCCEEDED`.
-- `MobileMoneyStatusPollingWorkerTest` : `UNKNOWN` ⇒ aucune écriture, échéance repoussée ;
-  calendrier dégressif ; `UNRESOLVED` après 24 h, jamais `FAILED`.
-- `PaymentServiceImpl` (initiation) : double initiation ⇒ même dépôt ; injoignable ⇒
-  `PROCESSING` + `SUBMITTED_UNCONFIRMED` ; devise et préfixe refusés avant appel.
+- `MobileMoneyInitiationGuardTest` (11) · opérateur, montant entier positif, devise, numéro,
+  plages de préfixes configurées et absentes.
+- `MobileMoneySupervisionServiceTest` (10) · `SUCCEEDED` / `FAILED` / `NOT_FOUND` tranchés,
+  `PROCESSING` et `UNKNOWN` sans aucune écriture, `UNRESOLVED` après le délai avec une alerte par
+  destinataire, jamais deux fois, relecture d'un `UNRESOLVED` à la demande.
+- `PawapayCallbackGatewayTest` (10) · signature valide ⇒ traité ; non signé ⇒ relecture
+  obligatoire ; corps forgé démenti par l'opérateur ⇒ `IGNORED` ; `PROCESSING` et opérateur
+  injoignable ⇒ `DEFERRED` ; corps illisible et exception ⇒ `FAILED` consigné ; remboursement
+  non signé relu chez l'opérateur.
+- `PawapayDepositScheduleTest` (3) · calendrier 1-2-3-5-10-15-30 puis 60 min ; sans secret la
+  signature n'est jamais réputée valide ; avec secret seule la bonne empreinte passe.
+- `LotEmailTemplatesRenderTest` · le gabarit `mobile-money-deposit-unresolved` se rend et nomme
+  ce qu'il faut rapprocher.
+
+Suite complète : 984 tests, 0 échec.
 
 ### 4.10 Hors code, à faire par vous
 
@@ -332,7 +340,10 @@ signature évite un appel API par rappel), `connect-timeout-ms`, `read-timeout-m
 
 ## 5. Ordre de livraison
 
-1. 4.1, 4.2 (schéma, client, codes d'échec) · fait ou en cours.
-2. 4.3, 4.5, 4.6 (initiation, traitement, relecture) · le cœur de la résilience.
-3. 4.4, 4.7 (passerelle de rappel, routes) · la sécurité.
-4. 4.8, 4.9, doc frontend (section mobile money du guide) et doc backend.
+1. 4.1, 4.2 (schéma, client, codes d'échec) · **fait**.
+2. 4.3, 4.5, 4.6 (initiation, traitement, relecture) · **fait**.
+3. 4.4, 4.7 (passerelle de rappel, routes) · **fait**.
+4. 4.8, 4.9, doc frontend et doc backend (`docs/backend/mobile-money.md`) · **fait**.
+
+Reste 4.10, qui ne s'écrit pas en Java : révoquer la clé exposée, poser un secret de rappel,
+vérifier l'URL enregistrée chez PawaPay, renseigner `PAWAYPAY_ALERT_EMAIL`.

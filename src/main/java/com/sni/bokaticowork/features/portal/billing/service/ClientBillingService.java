@@ -15,6 +15,7 @@ import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
 import com.sni.bokaticowork.features.payment.security.service.WalletMerchantPaymentGuard;
 import com.sni.bokaticowork.features.payment.security.enums.WalletOperationType;
 
+import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
@@ -48,6 +49,8 @@ public class ClientBillingService {
     private final WalletService walletService;
     private final WalletMerchantPaymentGuard merchantPaymentGuard;
     private final PaymentReceiptService paymentReceiptService;
+    private final com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository pawapayDepositRepository;
+    private final com.sni.bokaticowork.features.payment.service.pawaypay.PawapayDepositService pawapayDepositService;
 
     @Transactional(readOnly = true)
     public PaginatedResponse<ClientInvoiceSummaryResponse> listInvoices(Member member,
@@ -109,6 +112,27 @@ public class ClientBillingService {
                         null
                 )
         );
+    }
+
+    /**
+     * Ou en est le paiement mobile money que ce membre a lance.
+     *
+     * <p>Le suivi passait par la route d'administration, ouverte a tous : un identifiant de
+     * depot suffisait a lire le numero et le montant de n'importe qui. Ici on verifie que le
+     * depot appartient au membre connecte, et on ne lui dit rien d'autre que le sien.</p>
+     */
+    @Transactional(readOnly = true)
+    public MobileMoneyDepositResponse mobileMoneyDeposit(Member member, String depositId) {
+        PawapayDeposit deposit = pawapayDepositRepository.findByDepositId(depositId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paiement mobile money introuvable : " + depositId));
+        boolean owned = OWNER_TYPE.equalsIgnoreCase(deposit.getCustomerType())
+                && member.getMemberId().equalsIgnoreCase(deposit.getCustomerCode());
+        if (!owned) {
+            // On ne distingue pas « ce depot n'existe pas » de « ce depot n'est pas le votre » ·
+            // la difference renseignerait sur les paiements des autres.
+            throw new ResourceNotFoundException("Paiement mobile money introuvable : " + depositId);
+        }
+        return pawapayDepositService.toResponse(deposit);
     }
 
     @Transactional

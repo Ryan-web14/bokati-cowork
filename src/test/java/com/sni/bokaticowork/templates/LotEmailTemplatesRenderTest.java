@@ -35,7 +35,7 @@ class LotEmailTemplatesRenderTest {
             "domiciliation-activated", "domiciliation-registration-rejected", "domiciliation-certificate-issued",
             "domiciliation-certificate-expiring", "domiciliation-fiscal-lost", "domiciliation-terminated", "domiciliation-administration-notice",
             "mail-item-event", "subscription-grace-period", "subscription-termination", "subscription-direct-debit-failed",
-            "subscription-quote-sent", "billing-dunning", "billing-dunning-handover"
+            "subscription-quote-sent", "billing-dunning", "billing-dunning-handover", "mobile-money-deposit-unresolved"
     })
     void everyTemplateRendersWithAnEmptyModel(String template) {
         String html = render(template, Map.of());
@@ -96,6 +96,15 @@ class LotEmailTemplatesRenderTest {
         assertThat(render("billing-dunning-handover", model("documentNumber", "INV-1", "customerName", "SARL Mboté", "customerCode", "BIZ-1",
                 "balanceDue", "45000", "currency", "XAF", "daysOverdue", "45", "message", "À traiter.")))
                 .contains("SARL Mboté").contains("BIZ-1").contains("45");
+    }
+
+    @Test
+    void theUnresolvedDepositAlertNamesWhatMustBeReconciled() {
+        String html = render("mobile-money-deposit-unresolved", model("depositId", "dep-42", "intentNumber", "PIN-7",
+                "transactionNumber", "TRX-9", "phoneNumber", "+242061234567", "provider", "MTN_MOMO_COG",
+                "amount", "5000", "currency", "XAF", "hours", "24"));
+        assertThat(html).contains("dep-42").contains("PIN-7").contains("TRX-9")
+                .contains("+242061234567").contains("5000").contains("24");
     }
 
     private static Map<String, Object> model(String... kv) {

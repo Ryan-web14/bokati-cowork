@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Paiement mobile money sans réponse')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Un paiement mobile money est resté sans réponse définitive.'}">Un paiement mobile money est resté sans réponse définitive.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('alert')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Paiement mobile money à rapprocher</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, un paiement mobile money attend depuis plus de
+        <strong th:text="${hours}">24</strong> heures sans que l'opérateur ait tranché. Il n'a été ni encaissé ni déclaré en échec :
+        l'argent est peut-être parti, et seul un rapprochement avec l'opérateur permet de le dire.
+      </div>
+      <div class="section-lbl">Dépôt</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence du dépôt</td>
+          <td class="r-val mono" th:text="${depositId}">Référence du dépôt</td>
+        </tr>
+        <tr>
+          <td class="r-key">Intention de paiement</td>
+          <td class="r-val mono" th:text="${intentNumber}">Intention de paiement</td>
+        </tr>
+        <tr>
+          <td class="r-key">Transaction</td>
+          <td class="r-val mono" th:text="${transactionNumber}">Transaction</td>
+        </tr>
+        <tr>
+          <td class="r-key">Numéro du payeur</td>
+          <td class="r-val" th:text="${phoneNumber}">Numéro du payeur</td>
+        </tr>
+        <tr>
+          <td class="r-key">Opérateur</td>
+          <td class="r-val" th:text="${provider}">Opérateur</td>
+        </tr>
+        <tr>
+          <td class="r-key">Montant</td>
+          <td class="r-val" th:text="${amount} + ' ' + ${currency}">Montant</td>
+        </tr>
+      </table>
+      <div class="em-note alert">
+        À faire : retrouver la référence chez l'opérateur. Si le prélèvement a eu lieu, marquer le dépôt encaissé ;
+        sinon le déclarer en échec. Tant que ce n'est pas tranché, la facture reste payable et le client peut être relancé à tort.
+      </div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

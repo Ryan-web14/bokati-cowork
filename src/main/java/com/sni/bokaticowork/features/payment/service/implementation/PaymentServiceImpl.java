@@ -104,6 +104,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ObjectMapper objectMapper;
     private final MobileMoneyPaymentProvider mobileMoneyProvider;
     private final PawapayDepositService pawapayDepositService;
+    private final com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyInitiationGuard mobileMoneyGuard;
     @org.springframework.context.annotation.Lazy
     private final BillingEmailService billingEmailService;
     private final OutboxService outboxService;
@@ -322,6 +323,17 @@ public class PaymentServiceImpl implements PaymentService {
     public MobileMoneyDepositResponse initiateMobileMoneyDeposit(String intentNumber, InitiateMobileMoneyDepositRequest request) {
         PaymentIntent intent = pendingIntent(intentNumber);
         BigDecimal depositAmount = requestedIntentAmount(request.amount(), intent);
+        // Ce qui peut se savoir avant l'appel se dit avant l'appel · devise, montant, numero.
+        mobileMoneyGuard.check(intent, request, depositAmount);
+
+        // Une demande deja partie sur ce numero pour cette intention est rendue telle quelle :
+        // deux demandes sur le telephone du client, c'est deux paiements possibles.
+        PawapayDeposit pending = pawapayDepositService.inFlight(intent, request).orElse(null);
+        if (pending != null) {
+            log.info("Depot mobile money {} deja en cours pour l'intention {} · demande rendue telle quelle",
+                    pending.getDepositId(), intentNumber);
+            return pawapayDepositService.toResponse(pending);
+        }
 
         String methodCtx = CodeComposer.abbrev("MOBILE_MONEY");
         long txnSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
