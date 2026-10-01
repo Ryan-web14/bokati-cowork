@@ -130,6 +130,13 @@
         /* L'unite se lit avec la quantite, pas comme une annotation · meme corps, teinte plus
            douce, et une vraie espace pour que "2 h" ne se lise pas "2h". */
         .line-unit { color: #1f1430; font-weight: 400; }
+        /* Meme forme que la categorie · une mention qui qualifie la prestation, pas une valeur. */
+        .line-exempt {
+            display: inline-block; white-space: nowrap;
+            font-size: 7.2px; font-weight: 700; letter-spacing: .4px;
+            text-transform: uppercase; color: #1f1430; background: #f4efe2;
+            border: 0.5px solid #c9a84c; border-radius: 2px; padding: 1px 4px; margin-right: 4px;
+        }
         .line-discount { color: #1f1430; font-weight: 700; }
         /* Mention secondaire d'une remise : le montant accorde en TTC, sous le libelle. */
         .disc-note { font-size: 7.6px; color: #6B6478; font-weight: 400; margin-top: 1px; }
@@ -334,10 +341,9 @@
         <thead>
             <tr>
                 <th style="width:4%; text-align:center;">#</th>
-                <th style="width:33%;">Désignation</th>
+                <th style="width:37%;">Désignation</th>
                 <th class="r" style="width:10%;">Qté</th>
                 <th class="r" style="width:12%;">P.U. HT</th>
-                <th class="r" style="width:8%;">TVA</th>
                 <th class="r" style="width:12%;">Brut HT</th>
                 <th class="r" style="width:11%;">Remise</th>
                 <th class="r" style="width:14%;">Net HT</th>
@@ -352,6 +358,11 @@
                          chaque poste. -->
                     <div class="line-name">
                         <span class="line-category" th:if="${line.category()}" th:text="${line.category()}">Catégorie</span>
+                        <!-- La colonne « TVA » repetait le meme taux sur chaque ligne alors que le
+                             recapitulatif le porte deja. Seule l'exoneration apprend quelque chose,
+                             et elle se dit ici : sans cela, une prestation exoneree ne se verrait
+                             plus du tout. -->
+                        <span class="line-exempt" th:if="${line.taxable() != null and !line.taxable()}">Exonéré</span>
                         <span th:text="${line.description()}">Service</span>
                         <span th:if="${line.optional()}" class="line-sub" style="margin-left:4px;">(option)</span>
                     </div>
@@ -365,10 +376,9 @@
                     <span th:text="${fmt.quantity(line.quantity())}">1</span><span
                           class="line-unit" th:if="${line.unit()}" th:text="${' ' + line.unit()}"> h</span>
                 </td>
-                <td class="r num" th:text="${fmt.amount(line.unitPrice())}">0</td>
-                <!-- Taux par ligne · une prestation exoneree doit se voir. « Exonéré » plutot
-                     que « 0 % » : le zero se lit comme une donnee manquante. -->
-                <td class="r num" th:text="${line.taxable() != null and !line.taxable() ? 'Exonéré' : fmt.percent(line.vatRate())}">18 %</td>
+                <!-- Deduit du brut HT et non lu sur la ligne · le prix saisi peut etre TTC,
+                     auquel cas il affichait le prix total de la prestation dans une colonne HT. -->
+                <td class="r num" th:text="${fmt.amount(fmt.unitPriceHt(line))}">0</td>
                 <td class="r num" th:text="${fmt.amount(line.subtotalAmount())}">0</td>
                 <!-- Remise portee par la ligne elle-meme. Le recapitulatif ne montre que le
                      cumul : sans cette colonne, le client voit un total remise sans pouvoir

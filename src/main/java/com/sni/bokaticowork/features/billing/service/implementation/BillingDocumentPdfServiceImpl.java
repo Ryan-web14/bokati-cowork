@@ -454,6 +454,30 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             return line.subtotalAmount().subtract(discount);
         }
 
+        /**
+         * Prix unitaire hors taxe · deduit du brut HT, jamais lu sur la ligne telle quelle.
+         *
+         * <p>{@code line.unitPrice()} est le prix <b>tel qu'il a ete saisi</b>. Quand la ligne est
+         * en prix TTC ({@code taxIncluded}), c'est donc un prix TTC, pendant que le brut de la
+         * meme ligne a ete ramene en HT : la colonne « P.U. HT » affichait alors le prix total de
+         * la prestation, et la ligne ne se verifiait plus de gauche a droite.</p>
+         *
+         * <p>En divisant le brut HT par la quantite, la colonne est HT par construction et reste
+         * coherente avec celle d'a cote, quel que soit le mode de saisie.</p>
+         */
+        public java.math.BigDecimal unitPriceHt(BillingDocumentLineResponse line) {
+            if (line == null) {
+                return java.math.BigDecimal.ZERO;
+            }
+            java.math.BigDecimal subtotal = line.subtotalAmount();
+            java.math.BigDecimal quantity = line.quantity();
+            if (subtotal == null || quantity == null || quantity.signum() == 0) {
+                // Sans brut ou sans quantite, il n'y a rien a deduire · on rend ce qui a ete saisi.
+                return line.unitPrice() == null ? java.math.BigDecimal.ZERO : line.unitPrice();
+            }
+            return subtotal.divide(quantity, 4, RoundingMode.HALF_UP);
+        }
+
         public BillingDocumentTemplateFormatter(String currency, ObjectMapper objectMapper, Locale locale) {
             this.currency = currency;
             this.objectMapper = objectMapper;
