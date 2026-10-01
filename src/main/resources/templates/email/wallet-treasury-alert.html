@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Couverture des portefeuilles')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'La trésorerie ne couvre plus l''encours des portefeuilles.'}">La trésorerie ne couvre plus l'encours des portefeuilles.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('alert')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Couverture des portefeuilles</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, le rapprochement du jour montre que la trésorerie disponible ne couvre plus l'encours des portefeuilles clients.
+      </div>
+      <div class="section-lbl">Rapprochement</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${reconciliationNumber}">Référence</td>
+        </tr>
+        <tr>
+          <td class="r-key">Encours des portefeuilles</td>
+          <td class="r-val" th:text="${totalWalletBalance}">Encours des portefeuilles</td>
+        </tr>
+        <tr>
+          <td class="r-key">Trésorerie disponible</td>
+          <td class="r-val" th:text="${availableCash}">Trésorerie disponible</td>
+        </tr>
+        <tr>
+          <td class="r-key">Taux de couverture</td>
+          <td class="r-val" th:text="${coverageRatio}">Taux de couverture</td>
+        </tr>
+        <tr>
+          <td class="r-key">Devise</td>
+          <td class="r-val" th:text="${currency}">Devise</td>
+        </tr>
+      </table>
+      <div class="em-note alert">Les avances clients doivent être adossées en trésorerie. Ce message est destiné à l'administration.</div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

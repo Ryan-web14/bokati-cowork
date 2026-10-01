@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.payment.model;
 
 import com.sni.bokaticowork.core.annotation.IdGeneration;
+import com.sni.bokaticowork.features.payment.enums.PaymentChannel;
 import com.sni.bokaticowork.features.payment.enums.PaymentMethod;
 import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
 import jakarta.persistence.Column;
@@ -74,6 +75,16 @@ public class PaymentTransaction {
 
     @Column(name = "received_by", length = 120)
     private String receivedBy;
+
+    /**
+     * D'ou vient l'encaissement · nul pour les transactions anterieures a la colonne.
+     *
+     * <p>On ne devine pas le passe : une transaction sans canal reste sans canal, parce que lui en
+     * attribuer un fausserait toute lecture ulterieure.</p>
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "channel", length = 30)
+    private PaymentChannel channel;
 
     @Column(name = "failure_reason", columnDefinition = "text")
     private String failureReason;

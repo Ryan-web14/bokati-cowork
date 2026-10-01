@@ -7,6 +7,11 @@ import jakarta.validation.constraints.NotNull;
 public record ClientSubscribeRequest(
         @NotBlank String planCode,
         @NotNull BillingCycle billingCycle,
-        Boolean autoRenew
+        Boolean autoRenew,
+        /** Codes de reduction retenus dans le panier · consommes a la souscription. */
+        java.util.List<String> couponCodes
 ) {
+    public java.util.List<String> couponCodesOrEmpty() {
+        return couponCodes == null ? java.util.List.of() : couponCodes;
+    }
 }

@@ -400,7 +400,9 @@ public class BillingDocumentController {
     }
 
     private String toStatementCsv(CustomerStatementResponse statement) {
-        StringBuilder csv = new StringBuilder("documentNumber,type,status,issueDate,dueDate,totalAmount,paidAmount,balanceDue,currency\n");
+        // balanceDue seul se lisait comme une dette sur toutes les lignes, brouillons et avoirs
+        // compris · customerImpact dit ce que chaque ligne pese reellement, signe.
+        StringBuilder csv = new StringBuilder("documentNumber,type,status,issueDate,dueDate,totalAmount,paidAmount,balanceDue,receivable,customerImpact,currency\n");
         for (BillingDocumentResponse document : statement.documents()) {
             csv.append(csv(document.documentNumber())).append(',')
                     .append(document.documentType()).append(',')
@@ -410,6 +412,8 @@ public class BillingDocumentController {
                     .append(document.totalAmount()).append(',')
                     .append(document.paidAmount()).append(',')
                     .append(document.balanceDue()).append(',')
+                    .append(Boolean.TRUE.equals(document.receivable())).append(',')
+                    .append(document.customerImpact()).append(',')
                     .append(csv(document.currency())).append('\n');
         }
         return csv.toString();

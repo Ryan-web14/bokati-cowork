@@ -60,26 +60,84 @@ public class BillingEmailServiceImpl implements BillingEmailService {
         }
     }
 
+    /**
+     * Ou en est le document pour celui qui le recoit.
+     *
+     * <p>Le meme courriel sert a annoncer une facture et a la renvoyer une fois reglee · sans cet
+     * etat, un client qui venait de payer recevait « Votre facture est disponible » suivi d'un
+     * « Solde du : 0 XAF ». Le document etait juste, le message disait le contraire.</p>
+     */
+    enum NoticeState {
+        /** Rien n'a encore ete regle. */
+        ISSUED,
+        /** Un premier reglement est arrive, un solde reste. */
+        PARTIALLY_PAID,
+        /** Plus rien n'est du. */
+        SETTLED,
+        /** L'echeance est passee et un solde reste. */
+        OVERDUE
+    }
+
+    /**
+     * L'etat se lit sur les montants, pas sur le statut.
+     *
+     * <p>Une facture peut etre {@code SENT} et deja soldee : le statut suit le cycle du document,
+     * les montants suivent l'argent. C'est l'argent qui interesse le destinataire.</p>
+     */
+    static NoticeState stateOf(BillingDocumentResponse document) {
+        boolean settled = document.balanceDue() == null || document.balanceDue().signum() <= 0;
+        boolean anyPaid = document.paidAmount() != null && document.paidAmount().signum() > 0;
+        if (settled && anyPaid) {
+            return NoticeState.SETTLED;
+        }
+        if (BillingDocumentStatus.OVERDUE.equals(document.status())) {
+            return NoticeState.OVERDUE;
+        }
+        return anyPaid ? NoticeState.PARTIALLY_PAID : NoticeState.ISSUED;
+    }
+
     private String renderBillingDocument(BillingDocumentResponse document) {
-        boolean overdue = BillingDocumentStatus.OVERDUE.equals(document.status());
+        NoticeState state = stateOf(document);
+        boolean overdue = state == NoticeState.OVERDUE;
+        boolean settled = state == NoticeState.SETTLED;
         String documentLabel = billingDocumentLabel(document.documentType());
+        String balance = money(document.balanceDue(), document.currency());
+        String paid = money(document.paidAmount(), document.currency());
+
         Context context = new Context(appLocale);
         context.setVariable("customerName", valueOrDefault(document.customerName(), "client"));
         context.setVariable("documentLabel", documentLabel);
         context.setVariable("documentNumber", valueOrDefault(document.documentNumber(), "-"));
-        context.setVariable("title", overdue ? "Rappel de reglement" : "Votre " + documentLabel + " est disponible");
-        context.setVariable("subtitle", overdue
-                ? "Un solde reste a regler sur cette facture"
-                : "Le recapitulatif est disponible en piece jointe");
-        context.setVariable("message", overdue
-                ? "Nous vous rappelons qu'un solde reste a regler. Vous trouverez le detail de la facture en piece jointe."
-                : "Vous trouverez en piece jointe le detail de votre " + documentLabel + ". Ce document reprend les informations utiles pour votre suivi.");
+        context.setVariable("title", switch (state) {
+            case SETTLED -> "Votre " + documentLabel + " est soldee";
+            case OVERDUE -> "Rappel de reglement";
+            case PARTIALLY_PAID -> "Votre reglement a ete enregistre";
+            case ISSUED -> "Votre " + documentLabel + " est disponible";
+        });
+        context.setVariable("subtitle", switch (state) {
+            case SETTLED -> "Plus rien ne reste a regler";
+            case OVERDUE -> "Un solde reste a regler sur cette facture";
+            case PARTIALLY_PAID -> "Un solde reste a regler";
+            case ISSUED -> "Le recapitulatif est disponible en piece jointe";
+        });
+        context.setVariable("message", switch (state) {
+            case SETTLED -> "Nous accusons reception de votre reglement de " + paid + ". Votre "
+                    + documentLabel + " est soldee, plus rien ne reste a regler. Vous en trouverez"
+                    + " la version a jour en piece jointe.";
+            case OVERDUE -> "Nous vous rappelons qu'un solde reste a regler. Vous trouverez le detail de la facture en piece jointe.";
+            case PARTIALLY_PAID -> "Nous accusons reception de votre reglement de " + paid + ". Un solde de "
+                    + balance + " reste a regler. Vous trouverez la " + documentLabel
+                    + " a jour en piece jointe.";
+            case ISSUED -> "Vous trouverez en piece jointe le detail de votre " + documentLabel
+                    + ". Ce document reprend les informations utiles pour votre suivi.";
+        });
         context.setVariable("totalAmount", money(document.totalAmount(), document.currency()));
-        context.setVariable("paidAmount", money(document.paidAmount(), document.currency()));
-        context.setVariable("balanceDue", money(document.balanceDue(), document.currency()));
+        context.setVariable("paidAmount", paid);
+        context.setVariable("balanceDue", balance);
         context.setVariable("issueDate", date(document.issueDate()));
         context.setVariable("dueDate", date(document.dueDate()));
         context.setVariable("overdue", overdue);
+        context.setVariable("settled", settled);
         return templateEngine.process("billing-document", context);
     }
 
@@ -125,10 +183,15 @@ public class BillingEmailServiceImpl implements BillingEmailService {
 
     private String billingSubject(BillingDocumentResponse document) {
         String label = billingDocumentLabel(document.documentType());
-        if (BillingDocumentStatus.OVERDUE.equals(document.status())) {
-            return "Rappel de reglement - " + valueOrDefault(document.documentNumber(), label);
-        }
-        return "Votre " + label + " " + valueOrDefault(document.documentNumber(), "");
+        String reference = valueOrDefault(document.documentNumber(), label);
+        return switch (stateOf(document)) {
+            // Le sujet doit se lire sans ouvrir · « Votre facture INV-1 » sur une facture qu'on
+            // vient de payer se lit comme une relance.
+            case SETTLED -> "Votre " + label + " " + reference + " est soldee";
+            case OVERDUE -> "Rappel de reglement - " + reference;
+            case PARTIALLY_PAID -> "Reglement enregistre - " + reference;
+            case ISSUED -> "Votre " + label + " " + valueOrDefault(document.documentNumber(), "");
+        };
     }
 
     private String billingDocumentLabel(BillingDocumentType type) {

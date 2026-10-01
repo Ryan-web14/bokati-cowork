@@ -40,6 +40,7 @@ public class SubscriptionChangeRequestServiceImpl implements SubscriptionChangeR
     private final PlanVersionRepository planVersionRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final SubscriptionChangeMapper changeMapper;
+    private final com.sni.bokaticowork.features.subscription.lifecycle.service.PlanChangeProrationService prorationService;
 
     @Override
     public SubscriptionChangeResponse request(String subscriptionNumber, CreateSubscriptionChangeRequest request) {
@@ -73,9 +74,9 @@ public class SubscriptionChangeRequestServiceImpl implements SubscriptionChangeR
             throw new ConflictException("subscription change", "only REQUESTED or APPROVED changes can be applied");
         }
         if (change.getTargetPlanVersion() != null) {
-            Subscription subscription = change.getSubscription();
-            subscription.setPlanVersion(change.getTargetPlanVersion());
-            subscriptionRepository.save(subscription);
+            // Le prorata est explicite · le reste a courir a l'ancien prix rendu, au nouveau prix du
+            prorationService.apply(change);
+            subscriptionRepository.save(change.getSubscription());
         }
         change.setStatus(SubscriptionChangeStatus.APPLIED);
         change.setAppliedAt(Instant.now());

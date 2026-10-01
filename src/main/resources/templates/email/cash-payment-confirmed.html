@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Paiement reçu')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre paiement en espèces a bien été reçu.'}">Votre paiement en espèces a bien été reçu.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Votre paiement a bien été reçu</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, nous confirmons avoir reçu
+        <strong th:text="${confirmedAmount} + ' ' + ${currency}">montant</strong> en espèces. Ce message vaut confirmation.
+      </div>
+
+      <div class="section-lbl">Paiement</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Montant reçu</td>
+          <td class="r-val" th:text="${confirmedAmount} + ' ' + ${currency}">Montant</td>
+        </tr>
+        <tr>
+          <td class="r-key">Facture</td>
+          <td class="r-val mono" th:text="${documentNumber}">Facture</td>
+        </tr>
+        <tr th:if="${transactionNumber}">
+          <td class="r-key">Référence du paiement</td>
+          <td class="r-val mono" th:text="${transactionNumber}">Référence</td>
+        </tr>
+        <tr th:if="${bookingNumber}">
+          <td class="r-key">Réservation</td>
+          <td class="r-val mono" th:text="${bookingNumber}">Réservation</td>
+        </tr>
+      </table>
+
+      <div class="em-note">
+        Votre reçu est disponible dans votre espace client, à la rubrique des paiements.
+      </div>
+
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

@@ -98,6 +98,46 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
     List<Subscription> findAllByContractCode(String contractCode);
 
+    /** Les abonnements en cours sur une version de plan · ceux qu'une hausse de catalogue toucherait. */
+    @Query(nativeQuery = true, value = """
+            SELECT * FROM subscription
+            WHERE plan_version_id = :planVersionId
+              AND status IN ('ACTIVE', 'TRIALING', 'PAST_DUE', 'PAUSED', 'PENDING_ACTIVATION', 'GRACE_PERIOD', 'PENDING_TERMINATION', 'PENDING_DOCUMENTS')
+            ORDER BY subscription_number
+            """)
+    List<Subscription> findAllOpenOnPlanVersion(@Param("planVersionId") Long planVersionId);
+
+    /**
+     * Les abonnements actifs dont une echeance de renouvellement est impayee depuis plus de
+     * {@code unpaidSince} · candidats a la tolerance avant suspension.
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT DISTINCT s.*
+            FROM subscription s
+            JOIN billable_item bi ON bi.source_id = s.subscription_number AND bi.source_type = 'SUBSCRIPTION_RENEWAL'
+            JOIN billing_document bd ON bd.id = bi.invoice_id
+            WHERE s.status = 'ACTIVE'
+              AND bd.balance_due > 0
+              AND bd.status IN ('ISSUED', 'SENT', 'PARTIALLY_PAID', 'OVERDUE')
+              AND bi.created_at < :unpaidSince
+            """)
+    List<Subscription> findActiveWithRenewalUnpaidSince(@Param("unpaidSince") Instant unpaidSince);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE status = :status ORDER BY updated_at ASC")
+    List<Subscription> findAllByStatus(@Param("status") String status);
+
+    /** Les abonnements ouverts d'un souscripteur · pour aligner leurs echeances. */
+    @Query(nativeQuery = true, value = """
+            SELECT * FROM subscription
+            WHERE subscriber_type = :subscriberType AND subscriber_code = :subscriberCode
+              AND status IN ('ACTIVE', 'TRIALING', 'PAST_DUE', 'GRACE_PERIOD')
+            ORDER BY current_period_end ASC
+            """)
+    List<Subscription> findOpenBySubscriber(@Param("subscriberType") String subscriberType, @Param("subscriberCode") String subscriberCode);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscriber_type = :subscriberType AND subscriber_code = :subscriberCode ORDER BY created_at DESC")
+    List<Subscription> findAllBySubscriber(@Param("subscriberType") String subscriberType, @Param("subscriberCode") String subscriberCode);
+
     @Query(nativeQuery = true, value = """
             SELECT id
             FROM subscription

@@ -1,6 +1,10 @@
 package com.sni.bokaticowork.features.subscription.promotion.pricing.controller;
 
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.client.member.model.Member;
+import com.sni.bokaticowork.features.portal.context.ClientContextService;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.service.PricingRequestResolver;
+import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.service.CouponService;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.dto.ClientPromotionView;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.dto.PricingSimulationRequest;
@@ -40,6 +44,8 @@ public class ClientPricingController {
     private final PricingSimulationService simulationService;
     private final ClientPromotionService clientPromotionService;
     private final CouponService couponService;
+    private final PricingRequestResolver requestResolver;
+    private final ClientContextService clientContext;
 
     public record CatalogueRequest(
             @Valid PricingSimulationRequest context,
@@ -56,8 +62,10 @@ public class ClientPricingController {
      */
     @PostMapping("/catalogue/prices")
     public ResponseEntity<List<EffectivePrice>> cataloguePrices(@Valid @RequestBody CatalogueRequest request) {
+        PricingSimulationRequest context = forMember(request.context());
         return ResponseEntity.ok(pricingEngine.priceCatalogue(
-                simulationService.toContext(request.context()), request.items()));
+                simulationService.toContext(context),
+                requestResolver.resolveItems(request.items(), context.billingCycle())));
     }
 
     /**
@@ -66,7 +74,7 @@ public class ClientPricingController {
     @PostMapping("/promotions/available")
     public ResponseEntity<List<ClientPromotionView>> availablePromotions(
             @Valid @RequestBody PricingSimulationRequest request) {
-        return ResponseEntity.ok(clientPromotionService.availableFor(simulationService.toContext(request)));
+        return ResponseEntity.ok(clientPromotionService.availableFor(simulationService.toContext(forMember(request))));
     }
 
     /**
@@ -77,7 +85,7 @@ public class ClientPricingController {
      */
     @PostMapping("/cart/preview")
     public ResponseEntity<PricingSimulationResponse> previewCart(@Valid @RequestBody PricingSimulationRequest request) {
-        return ResponseEntity.ok(simulationService.simulate(request));
+        return ResponseEntity.ok(simulationService.simulate(forMember(request)));
     }
 
     /**
@@ -90,10 +98,11 @@ public class ClientPricingController {
     public ResponseEntity<PricingSimulationResponse> applyCoupon(@RequestParam String cartReference,
                                                                  @RequestParam String code,
                                                                  @Valid @RequestBody PricingSimulationRequest request) {
-        var context = simulationService.toContext(request);
+        PricingSimulationRequest resolved = forMember(request);
+        var context = simulationService.toContext(resolved);
         // Le code est d'abord evalue sur le panier, puis retenu avec le montant annonce · retenir
         // avant d'evaluer immobiliserait un code qui ne s'applique meme pas.
-        PricingSimulationResponse preview = simulationService.simulate(withCoupon(request, code));
+        PricingSimulationResponse preview = simulationService.simulate(withCoupon(resolved, code));
         couponService.reserve(code, cartReference, context.subscriberType(), context.subscriberCode(),
                 preview.discountTotal(), preview.currency(), context.subscriberCode());
         return ResponseEntity.ok(preview);
@@ -105,6 +114,15 @@ public class ClientPricingController {
                                                              @RequestParam String cartReference) {
         return ResponseEntity.ok(Map.of(
                 "released", couponService.release(cartReference, "Code retiré du panier " + code)));
+    }
+
+    /**
+     * La demande telle que le serveur la comprend · l'abonne est celui de la session, la devise
+     * vient du catalogue quand elle n'est pas donnee.
+     */
+    private PricingSimulationRequest forMember(PricingSimulationRequest request) {
+        Member member = clientContext.getAuthenticatedMember();
+        return requestResolver.resolveFor(request, SubscriberType.MEMBER.name(), member.getMemberId());
     }
 
     private PricingSimulationRequest withCoupon(PricingSimulationRequest request, String code) {

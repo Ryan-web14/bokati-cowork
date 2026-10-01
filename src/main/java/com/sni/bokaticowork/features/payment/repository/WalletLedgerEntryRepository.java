@@ -20,6 +20,15 @@ public interface WalletLedgerEntryRepository extends JpaRepository<WalletLedgerE
 
     Optional<WalletLedgerEntry> findByTransactionNumber(String transactionNumber);
 
+    /**
+     * Par son numero d'ecriture · celui que le releve et la liste affichent en premier.
+     *
+     * <p>Une ecriture porte deux identifiants : le sien (WLE) et celui de la transaction (WTX),
+     * ce dernier absent sur les ecritures anterieures au chainage. Les deux doivent mener au
+     * meme recu.</p>
+     */
+    Optional<WalletLedgerEntry> findByEntryNumber(String entryNumber);
+
     /** Les ecritures d'une periode, dans l'ordre d'ecriture · celui d'un releve. */
     @Query(nativeQuery = true, value = """
             SELECT *

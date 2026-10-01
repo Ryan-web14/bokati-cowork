@@ -84,6 +84,22 @@ public record BillingDocumentResponse(
         // ── Lien document-correctif ────────────────────────────────────────────
         String originalDocumentNumber,
         String originalDocumentType,
-        String creditNoteReason
+        String creditNoteReason,
+        // -- Ce que ce document pese sur le solde du client --------------------------
+        /**
+         * Ce document constitue-t-il une creance en cours ?
+         *
+         * <p>Faux pour un brouillon, un document annule, une facture deja reglee, et pour un
+         * avoir. C'est le seul critere a utiliser pour decider si un montant est reclamable.</p>
+         */
+        Boolean receivable,
+        /**
+         * Ce que ce document change au solde du client · positif s'il doit, negatif si on lui doit.
+         *
+         * <p>Additionner ce champ sur une liste de documents donne le solde juste, quels que
+         * soient les types et les etats presents. Additionner {@code balanceDue} ne le donne pas :
+         * un brouillon et un avoir y portent un montant qui n'est pas une dette.</p>
+         */
+        BigDecimal customerImpact
 ) {
 }

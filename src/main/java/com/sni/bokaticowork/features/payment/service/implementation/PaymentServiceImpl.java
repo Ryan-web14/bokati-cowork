@@ -103,7 +103,10 @@ public class PaymentServiceImpl implements PaymentService {
     private final SubscriptionBillingMapper billingMapper;
     private final ObjectMapper objectMapper;
     private final MobileMoneyPaymentProvider mobileMoneyProvider;
+    private final com.sni.bokaticowork.features.payment.service.support.PaymentOriginResolver paymentOrigin;
+    private final com.sni.bokaticowork.features.payment.service.support.SelfServicePaymentNotifier selfServiceNotifier;
     private final PawapayDepositService pawapayDepositService;
+    private final com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyInitiationGuard mobileMoneyGuard;
     @org.springframework.context.annotation.Lazy
     private final BillingEmailService billingEmailService;
     private final OutboxService outboxService;
@@ -315,6 +318,9 @@ public class PaymentServiceImpl implements PaymentService {
         reconcileIntent(intent);
         creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), request.createdBy());
         publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
+        // Personne n'etait en face · la caisse doit apprendre le reglement autrement qu'en ouvrant
+        // la facture, sinon elle sert un client qu'elle croit debiteur ou le relance apres coup.
+        selfServiceNotifier.paymentSettled(transaction);
         return mapper.toTransactionResponse(transaction);
     }
 
@@ -322,6 +328,17 @@ public class PaymentServiceImpl implements PaymentService {
     public MobileMoneyDepositResponse initiateMobileMoneyDeposit(String intentNumber, InitiateMobileMoneyDepositRequest request) {
         PaymentIntent intent = pendingIntent(intentNumber);
         BigDecimal depositAmount = requestedIntentAmount(request.amount(), intent);
+        // Ce qui peut se savoir avant l'appel se dit avant l'appel · devise, montant, numero.
+        mobileMoneyGuard.check(intent, request, depositAmount);
+
+        // Une demande deja partie sur ce numero pour cette intention est rendue telle quelle :
+        // deux demandes sur le telephone du client, c'est deux paiements possibles.
+        PawapayDeposit pending = pawapayDepositService.inFlight(intent, request).orElse(null);
+        if (pending != null) {
+            log.info("Depot mobile money {} deja en cours pour l'intention {} · demande rendue telle quelle",
+                    pending.getDepositId(), intentNumber);
+            return pawapayDepositService.toResponse(pending);
+        }
 
         String methodCtx = CodeComposer.abbrev("MOBILE_MONEY");
         long txnSeq = CodeComposer.extractSeq(sequenceGenerator.next("payment_transaction"));
@@ -331,6 +348,9 @@ public class PaymentServiceImpl implements PaymentService {
                 .transactionNumber(txnNumber)
                 .paymentIntent(intent)
                 .paymentMethod(PaymentMethod.MOBILE_MONEY)
+                // Le canal se lit a l'initiation · au moment ou l'operateur confirmera, des minutes
+                // plus tard, il n'y aura plus de session pour dire qui avait lance le paiement.
+                .channel(paymentOrigin.current())
                 .provider("PAWAYPAY")
                 .amount(depositAmount)
                 .currency(intent.getCurrency())
@@ -347,7 +367,10 @@ public class PaymentServiceImpl implements PaymentService {
         MobileMoneyInitiationResponse response = mobileMoneyProvider.initiate(providerRequest);
         deposit = pawapayDepositService.markInitiationResult(deposit.getDepositId(), response);
 
-        if ("PROCESSING".equals(response.status())) {
+        if ("PROCESSING".equals(response.status()) || response.unknown()) {
+            // UNKNOWN · l'operateur n'a pas repondu, la demande est peut-etre partie. La transaction
+            // reste PROCESSING et c'est la relecture de statut qui tranchera : declarer un echec ici
+            // pousserait le client a repayer une demande qu'il va recevoir sur son telephone.
             transaction.setProviderReference(response.providerReference());
             transactionRepository.save(transaction);
             return pawapayDepositService.toResponse(deposit);
@@ -918,7 +941,8 @@ public class PaymentServiceImpl implements PaymentService {
                 original.getProviderReference(), amount, request.reason(), original.getCurrency()
         ));
 
-        if ("PROCESSING".equals(response.status())) {
+        if ("PROCESSING".equals(response.status()) || "UNKNOWN".equals(response.status())) {
+            // Meme regle que pour un depot · sans reponse, le remboursement reste en cours.
             refund.setProviderReference(response.refundReference());
             transactionRepository.save(refund);
             return mapper.toTransactionResponse(refund);
@@ -962,6 +986,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .transactionNumber(txnNumber)
                 .paymentIntent(intent)
                 .paymentMethod(method)
+                .channel(paymentOrigin.current())
                 .provider(provider)
                 .providerReference(resolvedProviderReference)
                 .receiptNumber(sequenceGenerator.next("receipt"))

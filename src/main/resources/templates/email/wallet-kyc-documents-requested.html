@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Pièces à fournir')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Des pièces sont nécessaires pour relever vos plafonds.'}">Des pièces sont nécessaires pour relever vos plafonds.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Pièces à fournir</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, pour relever les plafonds de votre portefeuille, nous avons besoin de quelques pièces.
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr th:if="${reason}">
+          <td class="r-key">Pourquoi</td>
+          <td class="r-val" th:text="${reason}">Pourquoi</td>
+        </tr>
+        <tr>
+          <td class="r-key">Pièces attendues</td>
+          <td class="r-val" th:text="${missingDocuments}">Pièces attendues</td>
+        </tr>
+        <tr th:if="${kycCaseCode}">
+          <td class="r-key">Dossier</td>
+          <td class="r-val mono" th:text="${kycCaseCode}">Dossier</td>
+        </tr>
+        <tr>
+          <td class="r-key">Portefeuille</td>
+          <td class="r-val mono" th:text="${walletNumber}">Portefeuille</td>
+        </tr>
+      </table>
+      <div class="em-note">Déposez vos pièces depuis votre espace client. Vos plafonds actuels restent en vigueur en attendant.</div>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Déposer mes pièces</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

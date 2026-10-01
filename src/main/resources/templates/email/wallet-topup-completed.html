@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Rechargement effectué')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre portefeuille a été rechargé.'}">Votre portefeuille a été rechargé.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Rechargement effectué</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, votre rechargement a bien été crédité sur votre portefeuille.
+      </div>
+      <div class="amount"><span th:text="${amount}">0</span> <small th:text="${currency}">XAF</small></div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${aggregateId}">Référence</td>
+        </tr>
+        <tr>
+          <td class="r-key">Portefeuille</td>
+          <td class="r-val mono" th:text="${walletNumber}">Portefeuille</td>
+        </tr>
+        <tr th:if="${availableBalance}">
+          <td class="r-key">Solde disponible</td>
+          <td class="r-val" th:text="${availableBalance}">Solde disponible</td>
+        </tr>
+      </table>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

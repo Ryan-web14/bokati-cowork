@@ -19,6 +19,10 @@ public interface BillableItemRepository extends JpaRepository<BillableItem, Long
     @Query(nativeQuery = true, value = "SELECT * FROM billable_item WHERE billable_number = :billableNumber")
     Optional<BillableItem> findByBillableNumber(@Param("billableNumber") String billableNumber);
 
+    /** Les elements factures sur un document · pour retrouver l'abonnement derriere une facture. */
+    @Query(nativeQuery = true, value = "SELECT * FROM billable_item WHERE invoice_id = :invoiceId")
+    List<BillableItem> findByInvoiceId(@Param("invoiceId") Long invoiceId);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billable_item

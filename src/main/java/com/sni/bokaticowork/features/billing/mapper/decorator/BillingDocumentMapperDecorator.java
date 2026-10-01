@@ -5,6 +5,7 @@ import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentClauseR
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentDiscountResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import com.sni.bokaticowork.features.billing.service.support.BillingReceivables;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentSignatureResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentTaxResponse;
 import com.sni.bokaticowork.features.billing.dto.response.BillingRecoverableResponse;
@@ -153,7 +154,10 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 document.getSignedAt(),
                 document.getOriginalDocumentNumber(),
                 document.getOriginalDocumentType(),
-                document.getCreditNoteReason()
+                document.getCreditNoteReason(),
+                BillingReceivables.receivable(document.getDocumentType(), document.getStatus()),
+                BillingReceivables.customerImpact(document.getDocumentType(), document.getStatus(),
+                        document.getBalanceDue(), document.getTotalAmount())
         );
     }
 

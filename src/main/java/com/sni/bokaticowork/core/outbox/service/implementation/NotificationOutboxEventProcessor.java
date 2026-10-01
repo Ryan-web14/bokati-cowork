@@ -31,6 +31,8 @@ public class NotificationOutboxEventProcessor implements OutboxEventProcessor {
             "INVOICE",
             "QUOTE",
             "WALLET",
+            "DOMICILIATION",
+            "SUBSCRIPTION_QUOTE",
             "CASH_REGISTER",
             "INVENTORY",
             "ADMIN"

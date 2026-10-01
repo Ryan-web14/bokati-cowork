@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Attestation bientôt échue')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre attestation de domiciliation arrive à échéance.'}">Votre attestation de domiciliation arrive à échéance.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Attestation bientôt échue</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, votre attestation de domiciliation arrive à échéance. Pensez à en demander une nouvelle si vous en avez encore besoin.
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Contrat</td>
+          <td class="r-val mono" th:text="${contractNumber}">Contrat</td>
+        </tr>
+        <tr th:if="${scope}">
+          <td class="r-key">Portée</td>
+          <td class="r-val" th:text="${scope}">Portée</td>
+        </tr>
+        <tr>
+          <td class="r-key">Échéance</td>
+          <td class="r-val" th:text="${validUntil}">Échéance</td>
+        </tr>
+      </table>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Demander une attestation</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

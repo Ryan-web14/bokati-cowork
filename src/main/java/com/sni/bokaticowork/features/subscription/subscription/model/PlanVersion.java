@@ -20,6 +20,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
@@ -66,6 +67,32 @@ public class PlanVersion {
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "terms_json", columnDefinition = "jsonb")
     private String termsJson;
+
+    /** CATALOGUE pour tout le monde · SUBSCRIPTION pour un seul abonnement, hors catalogue. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "scope", nullable = false, length = 20)
+    @Builder.Default
+    private Scope scope = Scope.CATALOGUE;
+
+    /** Renseigne seulement pour une version privee · l'abonnement a qui elle appartient. */
+    @Column(name = "owner_subscription_id")
+    private Long ownerSubscriptionId;
+
+    /** La version de catalogue dont celle-ci descend · le lien qui evite les orphelins. */
+    @Column(name = "derived_from_version_id")
+    private Long derivedFromVersionId;
+
+    /** Prix plancher d'une version de catalogue · aucune derivation en dessous, meme approuvee. */
+    @Column(name = "floor_price", precision = 19, scale = 4)
+    private BigDecimal floorPrice;
+
+    public enum Scope {
+        CATALOGUE, SUBSCRIPTION
+    }
+
+    public boolean privateToSubscription() {
+        return scope == Scope.SUBSCRIPTION;
+    }
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

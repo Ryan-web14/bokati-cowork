@@ -103,6 +103,12 @@ class MemberServiceImplTest {
                         .toE164(invocation.getArgument(0), "+242", true).orElse(invocation.getArgument(0)));
     }
 
+    @Mock
+    private com.sni.bokaticowork.security.admin.role.service.interfaces.RoleUserService roleUserService;
+
+    @Mock
+    private com.sni.bokaticowork.features.payment.compliance.service.ComplianceSignals complianceSignals;
+
     @InjectMocks
     private MemberServiceImpl memberService;
 

@@ -35,6 +35,7 @@ import java.util.List;
 public class WalletPaymentRequestService {
 
     private final WalletPaymentRequestRepository requestRepository;
+    private final com.sni.bokaticowork.features.payment.repository.WalletAccountRepository walletRepository;
     private final WalletCounterpartyResolver counterpartyResolver;
     private final WalletNotifier notifier;
     private final SequenceGeneratorFacade sequenceGenerator;
@@ -54,10 +55,12 @@ public class WalletPaymentRequestService {
             throw new BadRequestException("Vous ne pouvez pas vous adresser une demande de paiement");
         }
 
+        // Relus dans cette transaction · la vue rendue nomme le portefeuille d'en face, et une
+        // instance venue d'avant la session ne se laisse plus lire une fois celle-ci fermee.
         WalletPaymentRequest request = requestRepository.save(WalletPaymentRequest.builder()
                 .requestNumber(sequenceGenerator.next("wallet_payment_request"))
-                .requesterWallet(requester)
-                .payerWallet(payer)
+                .requesterWallet(managed(requester))
+                .payerWallet(managed(payer))
                 .amount(amount.setScale(4, RoundingMode.HALF_UP))
                 .currency(requester.getCurrency())
                 .reason(StringUtils.hasText(reason) ? reason.trim() : null)
@@ -66,6 +69,13 @@ public class WalletPaymentRequestService {
                 .build());
         notifier.paymentRequestReceived(payer, requester, request.getAmount(), request.getRequestNumber(), request.getReason());
         return request;
+    }
+
+    /** Le portefeuille tel que cette transaction le connait · jamais l'exemplaire venu d'avant. */
+    private WalletAccount managed(WalletAccount wallet) {
+        return wallet == null || wallet.getId() == null
+                ? wallet
+                : walletRepository.findById(wallet.getId()).orElse(wallet);
     }
 
     @Transactional(readOnly = true)

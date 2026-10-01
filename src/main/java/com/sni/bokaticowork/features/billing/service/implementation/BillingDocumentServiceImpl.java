@@ -1359,7 +1359,13 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         BigDecimal totalInvoiced = asBigDecimal(row != null ? row[0] : null);
         BigDecimal totalPaid = asBigDecimal(row != null ? row[1] : null);
         BigDecimal balance = asBigDecimal(row != null ? row[2] : null);
-        return new CustomerStatementResponse(normalizedCustomerType, normalizedCustomerCode, totalInvoiced, totalPaid, balance, documents.getContent());
+        BigDecimal creditAvailable = asBigDecimal(row != null ? row[3] : null);
+        BigDecimal draft = asBigDecimal(row != null ? row[4] : null);
+        // Un avoir disponible s'impute sur ce qui est du · s'il depasse, le client n'est pas
+        // debiteur pour autant, il garde un credit. Le net s'arrete donc a zero.
+        BigDecimal net = balance.subtract(creditAvailable).max(BigDecimal.ZERO);
+        return new CustomerStatementResponse(normalizedCustomerType, normalizedCustomerCode,
+                totalInvoiced, totalPaid, balance, creditAvailable, net, draft, documents.getContent());
     }
 
     private static BigDecimal asBigDecimal(Object value) {

@@ -1,10 +1,10 @@
 package com.sni.bokaticowork.features.payment.service.pawaypay;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus;
 import com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus;
 import com.sni.bokaticowork.features.payment.model.PaymentIntent;
+import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
 import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayCallbackPayload;
 import com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository;
@@ -34,6 +34,8 @@ public class PawapayCallbackProcessor {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final PawapayDepositService depositService;
     private final PawapayDepositRepository depositRepository;
+    private final MobileMoneyClientNotifier clientNotifier;
+    private final com.sni.bokaticowork.features.payment.service.support.SelfServicePaymentNotifier selfServiceNotifier;
 
     public void process(PawapayCallbackPayload payload) {
         String depositId = payload.depositId();
@@ -66,9 +68,15 @@ public class PawapayCallbackProcessor {
         }
     }
 
+    /**
+     * Le depot designe par le rappel · par identifiant, jamais par ressemblance.
+     *
+     * <p>On cherchait auparavant, a defaut d'identifiant connu, le dernier depot du meme numero
+     * pour le meme montant. Un rappel forge avec un numero et un montant plausibles encaissait
+     * donc le depot de quelqu'un d'autre. Un rappel qui ne designe rien ne fait plus rien.</p>
+     */
     private PaymentTransaction resolveTransaction(PawapayCallbackPayload payload) {
         return resolveTransaction(payload.depositId(), payload.clientReferenceId())
-                .or(() -> findLatestCallbackCandidate(payload))
                 .map(transaction -> ensureProviderReference(transaction, payload.depositId()))
                 .orElse(null);
     }
@@ -79,37 +87,6 @@ public class PawapayCallbackProcessor {
                 .or(() -> clientReferenceId == null || clientReferenceId.isBlank()
                         ? Optional.empty()
                         : transactionRepository.findByTransactionNumber(clientReferenceId.trim()));
-    }
-
-    private Optional<PaymentTransaction> findLatestCallbackCandidate(PawapayCallbackPayload payload) {
-        String phoneNumber = textAt(payload.payer(), "accountDetails", "phoneNumber");
-        String provider = textAt(payload.payer(), "accountDetails", "provider");
-        if (clean(phoneNumber) == null || clean(provider) == null) {
-            return Optional.empty();
-        }
-        return depositRepository.findLatestMatchingCallback(
-                        clean(phoneNumber),
-                        clean(provider),
-                        clean(payload.currency()),
-                        clean(payload.amount())
-                )
-                .map(deposit -> deposit.getPaymentTransaction());
-    }
-
-    private String textAt(JsonNode root, String first, String second) {
-        if (root == null || root.isNull()) {
-            return null;
-        }
-        JsonNode firstNode = root.get(first);
-        if (firstNode == null || firstNode.isNull()) {
-            return null;
-        }
-        JsonNode secondNode = firstNode.get(second);
-        return secondNode != null && secondNode.isTextual() ? secondNode.asText() : null;
-    }
-
-    private String clean(String value) {
-        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private Optional<PaymentTransaction> findDepositTransaction(String depositId, String clientReferenceId) {
@@ -170,6 +147,9 @@ public class PawapayCallbackProcessor {
                     transaction.getTransactionNumber(),
                     java.util.Map.of("transactionNumber", transaction.getTransactionNumber(), "status", PaymentTransactionStatus.SUCCEEDED.name())
             );
+            // Le client a paye depuis son espace, seul · c'est ici, a la confirmation de
+            // l'operateur, que la caisse peut l'apprendre. Le canal a ete retenu a l'initiation.
+            selfServiceNotifier.paymentSettled(transaction);
         }
 
         reconcileIntent(transaction);
@@ -204,19 +184,25 @@ public class PawapayCallbackProcessor {
         transaction.setStatus(PaymentTransactionStatus.FAILED);
         transaction.setFailureReason(reason);
         transactionRepository.save(transaction);
-        depositService.markFailed(transaction.getProviderReference(), payload, reason);
+        PawapayDeposit deposit = depositService.markFailed(transaction.getProviderReference(), payload, reason);
+
+        // Le refus arrive souvent plusieurs minutes apres que le client a ferme sa page · sans ce
+        // message il voyait sa facture rester ouverte sans jamais savoir pourquoi.
+        if (deposit != null) {
+            clientNotifier.depositFailed(deposit);
+        }
 
         reconcileIntent(transaction);
 
-        // A failed mobile money deposit invalidates the payment intent right away · no
-        // retry/dunning. If the intent is not otherwise settled (nothing paid, nothing in
-        // flight), cancel it so it stops sitting in PENDING and is no longer payable.
+        // Un essai qui echoue n'annule pas l'intention · le client s'est trompe de code, son solde
+        // etait insuffisant, il a refuse par megarde. Annuler l'intention le privait de tout moyen
+        // de payer cette facture : elle redevient payable, sauf si son delai est passe.
         PaymentIntent intent = transaction.getPaymentIntent();
-        if (intent.getStatus() == PaymentIntentStatus.PENDING) {
-            intent.setStatus(PaymentIntentStatus.CANCELLED);
+        if (intent.getStatus() == PaymentIntentStatus.PROCESSING || intent.getStatus() == PaymentIntentStatus.PENDING) {
+            boolean expired = intent.getExpiresAt() != null && intent.getExpiresAt().isBefore(Instant.now());
+            intent.setStatus(expired ? PaymentIntentStatus.EXPIRED : PaymentIntentStatus.PENDING);
             intentRepository.save(intent);
-            log.info("Cancelled payment intent {} after mobile money deposit failure",
-                    intent.getIntentNumber());
+            log.info("Intention {} de nouveau {} apres l'echec du depot", intent.getIntentNumber(), intent.getStatus());
         }
 
         log.info("PawaPay deposit failed · transaction={}, depositId={}, reason={}",

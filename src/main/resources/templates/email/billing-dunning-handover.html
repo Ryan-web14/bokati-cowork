@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Impayé à traiter')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Une facture impayée demande une intervention.'}">Une facture impayée demande une intervention.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('alert')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Impayé à traiter</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, <span th:text="${message}">une facture reste impayée après toutes les relances automatiques.</span>
+      </div>
+      <div class="amount"><span th:text="${balanceDue}">0</span> <small th:text="${currency}">XAF</small></div>
+      <div class="section-lbl">Facture</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${documentNumber}">Référence</td>
+        </tr>
+        <tr>
+          <td class="r-key">Client</td>
+          <td class="r-val" th:text="${customerName}">Client</td>
+        </tr>
+        <tr>
+          <td class="r-key">Code client</td>
+          <td class="r-val mono" th:text="${customerCode}">Code client</td>
+        </tr>
+        <tr th:if="${dueDate}">
+          <td class="r-key">Échéance</td>
+          <td class="r-val" th:text="${dueDate}">Échéance</td>
+        </tr>
+        <tr>
+          <td class="r-key">Jours de retard</td>
+          <td class="r-val" th:text="${daysOverdue}">Jours de retard</td>
+        </tr>
+        <tr th:if="${subscriptionNumber != null and subscriptionNumber != ''}">
+          <td class="r-key">Abonnement</td>
+          <td class="r-val mono" th:text="${subscriptionNumber}">Abonnement</td>
+        </tr>
+      </table>
+      <div class="em-note alert">Plus rien d'automatique ne sera envoyé pour cette facture. Le dossier est à reprendre par une personne.</div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

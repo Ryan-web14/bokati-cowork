@@ -26,4 +26,6 @@ public interface SubscriptionChangeRequestRepository extends JpaRepository<Subsc
             ORDER BY effective_date ASC
             """)
     List<SubscriptionChangeRequest> findApprovedDueChanges(@Param("date") LocalDate date);
+
+    List<SubscriptionChangeRequest> findBySubscription_IdOrderByCreatedAtDesc(Long subscriptionId);
 }

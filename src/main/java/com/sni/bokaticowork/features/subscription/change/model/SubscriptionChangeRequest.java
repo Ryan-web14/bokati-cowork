@@ -62,6 +62,19 @@ public class SubscriptionChangeRequest {
     @Builder.Default
     private BigDecimal prorationAmount = BigDecimal.ZERO;
 
+    /** La politique de prorata en vigueur quand le changement a ete applique · memorisee, pas relue. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "proration_policy", length = 20)
+    private com.sni.bokaticowork.features.subscription.lifecycle.model.ProrationPolicy prorationPolicy;
+
+    /** Le montant est toujours positif · ce drapeau dit s'il est du par le client ou lui est rendu. */
+    @Column(name = "proration_credit", nullable = false)
+    @Builder.Default
+    private Boolean prorationCredit = Boolean.FALSE;
+
+    @Column(name = "proration_billable_number", length = 100)
+    private String prorationBillableNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 40)
     @Builder.Default

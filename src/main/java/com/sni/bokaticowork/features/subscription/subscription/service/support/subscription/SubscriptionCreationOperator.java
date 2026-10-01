@@ -68,6 +68,7 @@ public class SubscriptionCreationOperator {
     private final PlanPriceAmountCalculator priceCalculator;
     private final SubscriberKycLevelGuard kycGuard;
     private final SubscriptionPricingBridge pricingBridge;
+    private final com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionCommitmentService commitmentService;
 
     public Subscription create(CreateSubscriptionRequest request) {
         PlanVersion planVersion = planResolver.resolvePlanVersion(request.planCode(), request.planVersionId());
@@ -133,6 +134,8 @@ public class SubscriptionCreationOperator {
 
         eventWriter.writeHistory(saved, null, saved.getStatus(), "Creation", "SYSTEM");
         eventWriter.writeEvent(saved, SubscriptionEventType.SUBSCRIPTION_CREATED, null);
+        // Le prix de plan porte un engagement · il est pose ici, avec la formule de rupture de la politique
+        commitmentService.setFromPlan(saved, price.getCommitmentMonths());
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
         billingSupport.createSubscriptionSetupItems(saved, priced.recurringAmount(), priced.setupFee(),

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Fin de domiciliation')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre domiciliation prend fin.'}">Votre domiciliation prend fin.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Fin de domiciliation</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, votre contrat de domiciliation prend fin à la date indiquée ci-dessous.
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Société</td>
+          <td class="r-val" th:text="${legalName}">Société</td>
+        </tr>
+        <tr>
+          <td class="r-key">Contrat</td>
+          <td class="r-val mono" th:text="${contractNumber}">Contrat</td>
+        </tr>
+        <tr>
+          <td class="r-key">Date d'effet</td>
+          <td class="r-val" th:text="${effectiveDate}">Date d'effet</td>
+        </tr>
+        <tr th:if="${reason}">
+          <td class="r-key">Motif</td>
+          <td class="r-val" th:text="${reason}">Motif</td>
+        </tr>
+      </table>
+      <div class="em-note">Pensez à retirer le courrier en attente et à mettre à jour votre adresse auprès de vos correspondants. Vos documents sont conservés dix ans.</div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

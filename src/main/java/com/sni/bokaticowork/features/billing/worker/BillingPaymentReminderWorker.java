@@ -18,6 +18,7 @@ public class BillingPaymentReminderWorker {
 
     private final BillingDocumentRepository documentRepository;
     private final BillingEmailService billingEmailService;
+    private final com.sni.bokaticowork.features.billing.dunning.repository.DunningPolicyRepository dunningPolicyRepository;
 
     /**
      * An invoice stays OVERDUE until it is paid, so the candidate query matches it on every run.
@@ -33,6 +34,10 @@ public class BillingPaymentReminderWorker {
     @Scheduled(cron = "${bokati.billing.workers.payment-reminder-cron:0 0 8 * * *}")
     public void sendOverdueReminders() {
         try {
+            // Des qu'une politique de relance parametree est active, c'est elle qui relance · pas ce renvoi periodique
+            if (dunningPolicyRepository.existsByActiveTrue()) {
+                return;
+            }
             Instant now = Instant.now();
             Instant notRemindedSince = now.minus(cooldownDays, ChronoUnit.DAYS);
             int sent = 0;

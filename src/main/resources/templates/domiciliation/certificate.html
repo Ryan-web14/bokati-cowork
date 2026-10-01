@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${scopeLabel} + ' · ' + ${contractNumber}">Attestation de domiciliation</title>
+    <style>
+        @page { size: A4; margin: 40px 44px; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #2b2030; font-size: 11px; line-height: 1.6; }
+        .header { border-bottom: 2px solid #d9a21b; padding-bottom: 10px; margin-bottom: 24px; }
+        .brand { font-size: 17px; font-weight: 700; color: #281332; letter-spacing: 2px; text-transform: uppercase; }
+        .title { font-size: 18px; font-weight: 700; color: #281332; text-align: center; margin: 24px 0; text-transform: uppercase; letter-spacing: 1.5px; }
+        .scope { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.8px; }
+        .scope-fiscal { background: #e9f7ef; color: #1d7a46; }
+        .scope-commercial { background: #fffaf0; color: #9a6b00; border: 1px solid #d9a21b; }
+        p { margin: 10px 0; text-align: justify; }
+        .ref { font-family: "Courier New", monospace; font-size: 9.5px; color: #6f6478; margin-top: 18px; }
+        .validity { border: 1px solid #d9a21b; background: #fffaf0; padding: 10px 14px; margin: 18px 0; font-weight: 700; }
+        .signature { margin-top: 48px; text-align: right; }
+        .footer { margin-top: 24px; font-size: 7.6px; color: #9b8caa; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="brand">Bokati Cowork</div>
+</div>
+
+<div class="title" th:text="${scopeLabel}">Attestation de domiciliation</div>
+<div style="text-align:center">
+    <span class="scope" th:classappend="${scope == 'FISCAL'} ? 'scope-fiscal' : 'scope-commercial'"
+          th:text="${scope == 'FISCAL'} ? 'PORTÉE FISCALE' : 'PORTÉE COMMERCIALE'">…</span>
+</div>
+
+<p>Le domiciliataire soussigné atteste que la société <strong th:text="${legalName}">…</strong>
+    <span th:if="${legalForm != null}" th:text="'(' + ${legalForm} + ')'"></span>,
+    <span th:if="${registrationNumber != null}" th:text="'immatriculée sous le numéro ' + ${registrationNumber} + ','"></span>
+    <span th:if="${taxNumber != null}" th:text="'NIU ' + ${taxNumber} + ','"></span>
+    est domiciliée à l'adresse suivante :</p>
+
+<p style="text-align:center;font-weight:700" th:text="${addressLine} + (${suiteNumber != null} ? ' · ' + ${suiteNumber} : '')">…</p>
+
+<p th:if="${scope == 'FISCAL'}">Cette domiciliation résulte d'un engagement de douze mois. L'adresse ci-dessus vaut siège fiscal et peut être produite auprès de l'administration fiscale.</p>
+<p th:if="${scope != 'FISCAL'}">Cette domiciliation résulte d'un engagement inférieur à douze mois. L'adresse ci-dessus vaut adresse commerciale seulement et <strong>ne peut pas être produite comme siège fiscal</strong>.</p>
+
+<p th:if="${registrationReference != null}">Le contrat de domiciliation <span th:text="${contractNumber}"></span> a été enregistré
+    <span th:if="${registrationOffice != null}" th:text="'auprès de ' + ${registrationOffice}"></span>
+    sous la référence <strong th:text="${registrationReference}">…</strong>
+    <span th:if="${registrationDate != null}" th:text="'le ' + ${registrationDate}"></span>.</p>
+
+<div class="validity" th:text="'Valable jusqu&#39;au ' + ${validUntil}">…</div>
+
+<div class="signature">
+    Fait le <span th:text="${issuedAt}"></span><br/><br/><br/>
+    Le domiciliataire
+</div>
+
+<div class="ref" th:text="'Contrat ' + ${contractNumber} + ' · attestation générée par le système, révocable en cas de changement d&#39;engagement'">…</div>
+<div class="footer">Toute attestation cesse d'être valable avant son terme si le contrat prend fin ou si l'engagement qui la fonde est modifié.</div>
+</body>
+</html>

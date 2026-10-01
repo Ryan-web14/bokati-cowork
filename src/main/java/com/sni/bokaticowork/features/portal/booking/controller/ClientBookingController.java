@@ -2,6 +2,8 @@ package com.sni.bokaticowork.features.portal.booking.controller;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.payment.cash.dto.response.CashPaymentDeclarationResponse;
+import com.sni.bokaticowork.features.payment.cash.dto.request.DeclareCashPaymentRequest;
 import com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse;
 import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.client.member.model.Member;
@@ -67,6 +69,20 @@ public class ClientBookingController {
             @RequestBody(required = false) ClientCancelBookingRequest request) {
         Member member = clientContextService.getAuthenticatedMember();
         return ResponseEntity.ok(clientPortalBookingService.cancelBooking(member, bookingNumber, request));
+    }
+
+    /**
+     * « Je passerai payer ma reservation en especes ».
+     *
+     * <p>Le creneau est tenu jusqu a l echeance de l annonce · passe ce delai sans encaissement,
+     * il est rendu. Rien n est encaisse tant que la caisse n a pas compte les billets.</p>
+     */
+    @PostMapping("/{bookingNumber}/pay/cash")
+    public ResponseEntity<CashPaymentDeclarationResponse> declareCashPayment(
+            @PathVariable String bookingNumber,
+            @Valid @RequestBody(required = false) DeclareCashPaymentRequest request) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientPortalBookingService.declareCashPayment(member, bookingNumber, request));
     }
 
     @PostMapping("/availability")

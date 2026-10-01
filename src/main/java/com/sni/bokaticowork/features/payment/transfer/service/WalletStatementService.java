@@ -108,12 +108,22 @@ public class WalletStatementService {
         return render(templateEngine.process("wallet/statement", context));
     }
 
+    /**
+     * Le recu d'une ecriture, designee par l'un ou l'autre de ses numeros.
+     *
+     * <p>Une ecriture porte le sien (WLE) et celui de la transaction (WTX) · le releve affiche les
+     * deux, et les ecritures anterieures au chainage n'ont que le premier. Exiger le second
+     * rendait leur recu introuvable.</p>
+     */
     @Transactional(readOnly = true)
-    public byte[] receipt(WalletAccount wallet, String transactionNumber) {
-        WalletLedgerEntry entry = ledgerRepository.findByTransactionNumber(transactionNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Transaction introuvable"));
+    public byte[] receipt(WalletAccount wallet, String reference) {
+        WalletLedgerEntry entry = ledgerRepository.findByTransactionNumber(reference)
+                .or(() -> ledgerRepository.findByEntryNumber(reference))
+                .orElseThrow(() -> new ResourceNotFoundException("Écriture introuvable · " + reference));
         if (!entry.getWallet().getId().equals(wallet.getId())) {
-            throw new ResourceNotFoundException("Transaction introuvable");
+            // Meme message que l'absence · dire « elle existe mais pas chez vous » apprendrait
+            // a un tiers qu'un numero est valide.
+            throw new ResourceNotFoundException("Écriture introuvable · " + reference);
         }
         WalletLedgerEntryResponse view = paymentMapper.toLedgerEntryResponse(entry);
         Context context = new Context(appLocale);

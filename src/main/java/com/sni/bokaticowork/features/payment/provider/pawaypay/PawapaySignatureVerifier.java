@@ -31,11 +31,16 @@ public class PawapaySignatureVerifier {
     }
 
     /**
-     * Returns true when the signature is valid, or when verification is disabled.
+     * Vrai seulement quand la signature est presente, verifiable et juste.
+     *
+     * <p>Sans secret configure, cette methode repondait vrai : n'importe qui connaissant l'URL du
+     * webhook pouvait declarer un paiement recu. Elle repond desormais faux · l'appelant doit alors
+     * relire le statut aupres de l'operateur avant d'ecrire quoi que ce soit.</p>
      */
     public boolean verify(String rawBody, String signatureHeader) {
         if (!isEnabled()) {
-            return true;
+            log.warn("Aucun secret de rappel PawaPay configure · la signature ne peut pas etre verifiee");
+            return false;
         }
         if (!StringUtils.hasText(signatureHeader)) {
             log.warn("PawaPay callback received without X-PawaPay-Signature header");

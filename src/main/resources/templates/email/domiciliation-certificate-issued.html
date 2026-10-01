@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Attestation disponible')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre attestation de domiciliation est disponible.'}">Votre attestation de domiciliation est disponible.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Attestation disponible</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, votre attestation de domiciliation est disponible dans votre espace client.
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Société</td>
+          <td class="r-val" th:text="${legalName}">Société</td>
+        </tr>
+        <tr>
+          <td class="r-key">Contrat</td>
+          <td class="r-val mono" th:text="${contractNumber}">Contrat</td>
+        </tr>
+        <tr>
+          <td class="r-key">Portée</td>
+          <td class="r-val" th:text="${scope}">Portée</td>
+        </tr>
+        <tr>
+          <td class="r-key">Valable jusqu'au</td>
+          <td class="r-val" th:text="${validUntil}">Valable jusqu'au</td>
+        </tr>
+        <tr th:if="${documentCode}">
+          <td class="r-key">Document</td>
+          <td class="r-val mono" th:text="${documentCode}">Document</td>
+        </tr>
+      </table>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Télécharger mon attestation</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

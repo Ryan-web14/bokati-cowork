@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Adresse fiscale')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre adresse n''est plus fiscale.'}">Votre adresse n'est plus fiscale.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Adresse fiscale</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, votre engagement est passé sous douze mois : votre adresse de domiciliation n'est plus utilisable comme adresse fiscale, et l'attestation fiscale en cours est révoquée.
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Société</td>
+          <td class="r-val" th:text="${legalName}">Société</td>
+        </tr>
+        <tr>
+          <td class="r-key">Contrat</td>
+          <td class="r-val mono" th:text="${contractNumber}">Contrat</td>
+        </tr>
+        <tr>
+          <td class="r-key">Engagement actuel (mois)</td>
+          <td class="r-val" th:text="${commitmentMonths}">Engagement actuel (mois)</td>
+        </tr>
+      </table>
+      <div class="em-note warn">Pour retrouver la qualité fiscale, un engagement de douze mois suffit. Notre équipe peut vous accompagner.</div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

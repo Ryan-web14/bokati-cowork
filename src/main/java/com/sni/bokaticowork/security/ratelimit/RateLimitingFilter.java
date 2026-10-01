@@ -94,8 +94,11 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (path.startsWith(ApiPath.V1 + "/auth/ott/") || path.startsWith(ApiPath.V1 + "/auth/password-reset/")) {
             return new Rule("otp:" + ip + ":" + path, otpMaxRequests, otpWindowSeconds);
         }
+        // Les routes publiques du mobile money · rappels de l'operateur et retour du navigateur.
+        // La route de retour declenche une lecture chez l'operateur a chaque appel : sans plafond,
+        // une boucle sur cette URL consommait notre quota d'API et notre base.
         if (path.startsWith(ApiPath.V1 + "/payments/mobile-money/")
-                && (path.contains("callback") || path.contains("refund-callback"))) {
+                && (path.contains("callback") || path.endsWith("/return"))) {
             return new Rule("callback:" + ip + ":" + path, callbackMaxRequests, callbackWindowSeconds);
         }
         if (path.startsWith(ApiPath.V1)) {

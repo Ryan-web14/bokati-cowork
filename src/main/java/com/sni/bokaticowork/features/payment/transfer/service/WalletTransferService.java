@@ -73,6 +73,8 @@ public class WalletTransferService {
     private final WalletDeviceService deviceService;
     private final WalletNotifier notifier;
     private final WalletRiskFlagService flagService;
+    private final com.sni.bokaticowork.features.payment.compliance.service.ComplianceRuleEngine ruleEngine;
+    private final com.sni.bokaticowork.features.payment.compliance.service.IdentityUpgradeService identityUpgrade;
     private final SequenceGeneratorFacade sequenceGenerator;
 
     /** Au-dela, un transfert depuis un appareil jamais vu est signale. */
@@ -163,7 +165,10 @@ public class WalletTransferService {
             limit = limitService.checkTransfer(source, kycLevelResolver.levelOf(source), amount);
             if (!limit.allowed()) {
                 blocking = limit.reason();
-                upgrade = limit.upgradePath();
+                // Le chemin de sortie nomme les pieces qui manquent · sans rien envoyer, on simule.
+                upgrade = identityUpgrade.whatIsMissing(source)
+                        .map(com.sni.bokaticowork.features.payment.compliance.service.IdentityUpgradeService.DocumentsRequest::message)
+                        .orElse(limit.upgradePath());
             } else if (source.getAvailableBalance().compareTo(total) < 0) {
                 blocking = "Solde disponible insuffisant · il manque "
                         + plain(total.subtract(source.getAvailableBalance())) + " " + source.getCurrency();
@@ -208,7 +213,10 @@ public class WalletTransferService {
         WalletAccount target = counterparty.wallet();
 
         assertTransferable(source, target, amount);
-        limitService.assertAllowed(source, limitService.checkTransfer(source, kycLevelResolver.levelOf(source), amount));
+        // Un plafond depasse ne se refuse pas sechement : le refus nomme les pieces a fournir, et la
+        // demande part par courriel · un message d'erreur se ferme et s'oublie.
+        limitService.assertAllowed(source, identityUpgrade.enrich(source,
+                limitService.checkTransfer(source, kycLevelResolver.levelOf(source), amount)));
         BigDecimal fee = fee(amount);
         if (source.getAvailableBalance().compareTo(amount.add(fee)) < 0) {
             throw new ConflictException("wallet", "solde disponible insuffisant");
@@ -218,6 +226,9 @@ public class WalletTransferService {
         if (StringUtils.hasText(order.paymentRequestNumber())) {
             request = openPaymentRequest(order.paymentRequestNumber(), source, target, amount);
         }
+
+        // Les regles qui bloquent parlent avant · les autres regarderont apres, sans gener.
+        ruleEngine.assertNotBlocked(source, deviceId);
 
         WalletDeviceService.DeviceVerdict device = deviceService.touch(source, deviceId, ipAddress);
         if (device.firstUse() && largeTransferAmount != null && amount.compareTo(largeTransferAmount) >= 0) {
@@ -232,11 +243,17 @@ public class WalletTransferService {
                         source.getCurrency(), target.getWalletNumber(), counterparty.displayName()),
                 ipAddress, deviceId);
 
+        // Les deux portefeuilles sont relus dans cette transaction · le titulaire les a choisis
+        // avant elle, et une instance detachee laisse derriere elle une association que la reponse
+        // ne peut plus lire une fois la session fermee.
+        WalletAccount managedSource = managed(source);
+        WalletAccount managedTarget = managed(target);
+
         WalletTransfer transfer = transferRepository.save(WalletTransfer.builder()
                 .transferNumber(sequenceGenerator.next("wallet_transfer"))
                 .transferUuid(TimeOrderedUuid.next())
-                .sourceWallet(source)
-                .targetWallet(target)
+                .sourceWallet(managedSource)
+                .targetWallet(managedTarget)
                 .amount(amount)
                 .feeAmount(fee)
                 .currency(source.getCurrency())
@@ -250,6 +267,13 @@ public class WalletTransferService {
                 .expiresAt(Instant.now().plus(Duration.ofMinutes(confirmationValidityMinutes)))
                 .build());
         return new InitiatedTransfer(transfer, confirmation);
+    }
+
+    /** Le portefeuille tel que cette transaction le connait · jamais l'exemplaire venu d'avant. */
+    private WalletAccount managed(WalletAccount wallet) {
+        return wallet == null || wallet.getId() == null
+                ? wallet
+                : walletRepository.findById(wallet.getId()).orElse(wallet);
     }
 
     // -----------------------------------------------------------------------------------------
@@ -350,6 +374,9 @@ public class WalletTransferService {
         WalletAccount freshTarget = walletRepository.findById(target.getId()).orElse(target);
         notifier.transferSent(freshSource, freshTarget, transfer.getAmount(), number);
         notifier.transferReceived(freshTarget, freshSource, transfer.getAmount(), number);
+        // La surveillance regarde les deux bouts, une fois le transfert valide.
+        ruleEngine.evaluateAfterCommit(source.getId(), transfer.getDeviceId());
+        ruleEngine.evaluateAfterCommit(target.getId(), null);
         log.info("Transfert {} · {} {} de {} vers {}", number, plain(transfer.getAmount()),
                 transfer.getCurrency(), source.getWalletNumber(), target.getWalletNumber());
     }

@@ -81,6 +81,8 @@ public final class WalletUsageDtos {
             UUID transferUuid,
             String direction,
             String counterpartyWallet,
+            /** Le nom de l'autre partie · un numero de portefeuille ne se reconnait pas. */
+            String counterpartyName,
             BigDecimal amount,
             BigDecimal feeAmount,
             BigDecimal totalDebit,
@@ -94,12 +96,17 @@ public final class WalletUsageDtos {
             Instant createdAt
     ) {
         public static TransferView of(WalletTransfer transfer, Long viewerWalletId) {
+            return of(transfer, viewerWalletId, null);
+        }
+
+        public static TransferView of(WalletTransfer transfer, Long viewerWalletId, String counterpartyName) {
             boolean outgoing = transfer.getSourceWallet().getId().equals(viewerWalletId);
             return new TransferView(
                     transfer.getTransferNumber(),
                     transfer.getTransferUuid(),
                     outgoing ? "OUT" : "IN",
                     outgoing ? transfer.getTargetWallet().getWalletNumber() : transfer.getSourceWallet().getWalletNumber(),
+                    counterpartyName,
                     transfer.getAmount(),
                     outgoing ? transfer.getFeeAmount() : BigDecimal.ZERO,
                     outgoing ? transfer.totalDebit() : transfer.getAmount(),
@@ -124,11 +131,17 @@ public final class WalletUsageDtos {
     ) {
     }
 
-    public record BeneficiaryView(Long id, String alias, String walletNumber, Integer transferCount,
-                                  Instant lastUsedAt, Instant createdAt) {
+    public record BeneficiaryView(Long id, String alias, String walletNumber,
+                                  /** Le nom du destinataire · l'alias est celui que le titulaire lui a donne. */
+                                  String name,
+                                  Integer transferCount, Instant lastUsedAt, Instant createdAt) {
         public static BeneficiaryView of(WalletBeneficiary beneficiary) {
+            return of(beneficiary, null);
+        }
+
+        public static BeneficiaryView of(WalletBeneficiary beneficiary, String name) {
             return new BeneficiaryView(beneficiary.getId(), beneficiary.getAlias(),
-                    beneficiary.getBeneficiaryWallet().getWalletNumber(), beneficiary.getTransferCount(),
+                    beneficiary.getBeneficiaryWallet().getWalletNumber(), name, beneficiary.getTransferCount(),
                     beneficiary.getLastUsedAt(), beneficiary.getCreatedAt());
         }
     }
@@ -137,6 +150,8 @@ public final class WalletUsageDtos {
             String requestNumber,
             String direction,
             String counterpartyWallet,
+            /** Le nom de l'autre partie · qui demande, ou a qui l'on demande. */
+            String counterpartyName,
             BigDecimal amount,
             String currency,
             String reason,
@@ -147,11 +162,16 @@ public final class WalletUsageDtos {
             Instant createdAt
     ) {
         public static PaymentRequestView of(WalletPaymentRequest request, Long viewerWalletId) {
+            return of(request, viewerWalletId, null);
+        }
+
+        public static PaymentRequestView of(WalletPaymentRequest request, Long viewerWalletId, String counterpartyName) {
             boolean mine = request.getRequesterWallet().getId().equals(viewerWalletId);
             return new PaymentRequestView(
                     request.getRequestNumber(),
                     mine ? "SENT" : "RECEIVED",
                     mine ? request.getPayerWallet().getWalletNumber() : request.getRequesterWallet().getWalletNumber(),
+                    counterpartyName,
                     request.getAmount(), request.getCurrency(), request.getReason(), request.getStatus(),
                     request.getTransferNumber(), request.getExpiresAt(), request.getResolvedAt(), request.getCreatedAt());
         }

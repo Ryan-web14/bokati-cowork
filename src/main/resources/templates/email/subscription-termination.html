@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Votre résiliation')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Le point sur votre demande de résiliation.'}">Le point sur votre demande de résiliation.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Votre résiliation</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, <span th:switch="${eventType}">
+          <span th:case="'SUBSCRIPTION_TERMINATION_REQUESTED'">nous avons bien enregistré votre demande de résiliation. Votre abonnement reste actif jusqu'à la date d'effet.</span>
+          <span th:case="'SUBSCRIPTION_TERMINATION_ACCEPTED'">votre demande de résiliation est acceptée. Votre abonnement prendra fin à la date d'effet ci-dessous.</span>
+          <span th:case="'SUBSCRIPTION_TERMINATION_COMPLETED'">votre abonnement est désormais clos. Merci pour le temps passé avec nous.</span>
+          <span th:case="*" th:text="${subject}">le point sur votre résiliation.</span>
+        </span>
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Abonnement</td>
+          <td class="r-val mono" th:text="${subscriptionNumber}">Abonnement</td>
+        </tr>
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${terminationCode}">Référence</td>
+        </tr>
+        <tr>
+          <td class="r-key">Date d'effet</td>
+          <td class="r-val" th:text="${effectiveDate}">Date d'effet</td>
+        </tr>
+        <tr th:if="${feeAmount != null and feeAmount != '0'}">
+          <td class="r-key">Frais de rupture d'engagement</td>
+          <td class="r-val" th:text="${feeAmount}">Frais de rupture d'engagement</td>
+        </tr>
+      </table>
+      <div class="em-note">Avant la clôture : restituer votre badge et le matériel confié, retirer votre courrier, solder les factures ouvertes. Vous pouvez retirer votre demande depuis votre espace tant que rien n'a été facturé.</div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

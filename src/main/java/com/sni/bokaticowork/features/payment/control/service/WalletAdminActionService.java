@@ -211,6 +211,12 @@ public class WalletAdminActionService {
             }
 
             case UNSUSPEND -> {
+                if (wallet.getFrozenReason() != null
+                        && wallet.getFrozenReason().startsWith(com.sni.bokaticowork.features.payment.compliance.service.ComplianceFreezeService.REASON_PREFIX)) {
+                    // Un gel sur instruction ne se leve pas comme une suspension · l'administrateur
+                    // qui degelerait sans le savoir commettrait une faute qu'il n'a pas voulue.
+                    throw new ConflictException("wallet", "ce portefeuille est gelé sur instruction · la levée passe par le module de conformité, avec sa référence");
+                }
                 wallet.setFrozenAt(null);
                 wallet.setFrozenReason(null);
                 if (wallet.getStatus() == WalletStatus.SUSPENDED || wallet.getStatus() == WalletStatus.UNDER_REVIEW) {

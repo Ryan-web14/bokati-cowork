@@ -77,7 +77,8 @@ public class ClientCatalogService {
                 LocalDate.now(),
                 request.autoRenew() != null ? request.autoRenew() : true,
                 null,
-                false
+                false,
+                request.couponCodesOrEmpty()
         );
         return subscriptionService.create(createRequest);
     }

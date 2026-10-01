@@ -121,16 +121,57 @@ bokati:
     cash-session:
       auto-limit: ${CASH_SESSION_AUTO_LIMIT:10000000}
 
+  # Destinataires internes des courriels d'alerte · a defaut, le manager support
+  billing:
+    dunning:
+      # Qui reprend un impaye a la main quand les relances automatiques sont epuisees · une ou plusieurs adresses, separees par des virgules
+      handover-email: ${DUNNING_HANDOVER_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}
+  wallet:
+    treasury:
+      # Qui est prevenu quand la tresorerie ne couvre plus l'encours des portefeuilles · une ou plusieurs adresses, separees par des virgules
+      alert-email: ${WALLET_TREASURY_ALERT_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}
+  domiciliation:
+    # L'administration fiscale · adresse externe, sans repli : vide tant qu'elle n'est pas confirmee
+    administration-email: ${DOMICILIATION_ADMINISTRATION_EMAIL:}
+    notify-administration-on-termination: ${DOMICILIATION_NOTIFY_ADMINISTRATION:false}
+
+    cash-declaration:
+      # Combien de temps une annonce de paiement en especes tient · au-dela, la reservation
+      # est rendue et la facture redevient simplement due.
+      validity-hours: ${CASH_DECLARATION_VALIDITY_HOURS:4}
+      # Le worker passe plus souvent que le delai n est court · sinon un creneau tenu
+      # 4 h serait rendu avec une heure de retard.
+      expiry-delay-ms: ${CASH_DECLARATION_EXPIRY_DELAY_MS:900000}
+      # Qui tient la caisse · une ou plusieurs adresses, separees par des virgules.
+      # La chaine de repli vit ici et non dans le code : une propriete definie mais vide
+      # n est pas une propriete absente, et le defaut du @Value ne se declenchait jamais.
+      desk-email: ${CASH_DECLARATION_DESK_EMAIL:${SELF_SERVICE_CONFIRMATION_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}}
+    self-service:
+      # Qui est prevenu qu un client a regle depuis son espace · une ou plusieurs adresses,
+      # separees par des virgules. Vide : seule la notification dans le portail part.
+      confirmation-email: ${SELF_SERVICE_CONFIRMATION_EMAIL:${SUPPORT_MANAGER_EMAIL:supportela@elleaose.com}}
     pawaypay:
       enabled: ${PAWAYPAY_ENABLED:true}
       api-key: ${PAWAYPAY_API_KEY}
       base-url: ${PAWAYPAY_BASE_URL:https://api.pawapay.io}
       callback-base-url: ${APP_BASE_URL}
-      # Optional · leave empty to skip callback signature verification (no signature configured on PawaPay yet)
+      # Sans secret, aucune signature n'est verifiable · chaque rappel est alors reconfirme
+      # aupres de l'operateur avant la moindre ecriture.
       callback-secret: ${PAWAYPAY_CALLBACK_SECRET:}
-      polling-delay-ms: ${PAWAYPAY_POLLING_DELAY_MS:300000}
-      polling-max-age-minutes: ${PAWAYPAY_POLLING_MAX_AGE_MINUTES:10}
-      max-polling-attempts: ${PAWAYPAY_MAX_POLLING_ATTEMPTS:3}
+      connect-timeout-ms: ${PAWAYPAY_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${PAWAYPAY_READ_TIMEOUT_MS:20000}
+      # Le worker passe toutes les minutes · chaque depot porte sa propre echeance.
+      polling-delay-ms: ${PAWAYPAY_POLLING_DELAY_MS:60000}
+      # Au-dela, le depot est declare a rapprocher · jamais echoue.
+      polling-max-hours: ${PAWAYPAY_POLLING_MAX_HOURS:24}
+      in-flight-window-minutes: ${PAWAYPAY_IN_FLIGHT_WINDOW_MINUTES:20}
+      # Qui rapproche les depots sans reponse · une ou plusieurs adresses separees par des virgules.
+      alert-email: ${PAWAYPAY_ALERT_EMAIL:}
+      # Plages de numeros par operateur · vide, aucun controle de prefixe (une plage fausse
+      # refuserait un paiement valable). Exemple : MTN_MOMO_COG=06,05;AIRTEL_COG=04,05
+      operator-prefixes: ${PAWAYPAY_OPERATOR_PREFIXES:}
+      # L'essai depense de l'argent reel · ferme en production.
+      test-endpoint-enabled: ${PAWAYPAY_TEST_ENDPOINT_ENABLED:false}
       payment-page-country: ${PAWAYPAY_PAYMENT_PAGE_COUNTRY:COG}
       payment-page-language: ${PAWAYPAY_PAYMENT_PAGE_LANGUAGE:fr}
       payment-page-result-url: ${PAWAYPAY_PAYMENT_PAGE_RESULT_URL:https://app.elleaose.com/payment/result}

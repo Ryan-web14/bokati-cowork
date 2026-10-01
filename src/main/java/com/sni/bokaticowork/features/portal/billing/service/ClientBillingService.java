@@ -8,6 +8,7 @@ import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentPdfService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.billing.service.support.BillingReceivables;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
@@ -15,6 +16,9 @@ import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
 import com.sni.bokaticowork.features.payment.security.service.WalletMerchantPaymentGuard;
 import com.sni.bokaticowork.features.payment.security.enums.WalletOperationType;
 
+import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
+import com.sni.bokaticowork.features.payment.cash.dto.request.DeclareCashPaymentRequest;
+import com.sni.bokaticowork.features.payment.cash.dto.response.CashPaymentDeclarationResponse;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
@@ -48,6 +52,9 @@ public class ClientBillingService {
     private final WalletService walletService;
     private final WalletMerchantPaymentGuard merchantPaymentGuard;
     private final PaymentReceiptService paymentReceiptService;
+    private final com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository pawapayDepositRepository;
+    private final com.sni.bokaticowork.features.payment.service.pawaypay.PawapayDepositService pawapayDepositService;
+    private final com.sni.bokaticowork.features.payment.cash.service.CashPaymentDeclarationService cashDeclarationService;
 
     @Transactional(readOnly = true)
     public PaginatedResponse<ClientInvoiceSummaryResponse> listInvoices(Member member,
@@ -60,7 +67,7 @@ public class ClientBillingService {
                 null, null, from, to, null, pageable
         );
         PaginatedResponse<ClientInvoiceSummaryResponse> result = new PaginatedResponse<>();
-        result.setData(source.getData().stream().map(this::toSummary).toList());
+        result.setData(source.getData().stream().filter(this::visibleToClient).map(this::toSummary).toList());
         result.setPageable(source.getPageable());
         return result;
     }
@@ -111,6 +118,55 @@ public class ClientBillingService {
         );
     }
 
+    /**
+     * Ou en est le paiement mobile money que ce membre a lance.
+     *
+     * <p>Le suivi passait par la route d'administration, ouverte a tous : un identifiant de
+     * depot suffisait a lire le numero et le montant de n'importe qui. Ici on verifie que le
+     * depot appartient au membre connecte, et on ne lui dit rien d'autre que le sien.</p>
+     */
+    @Transactional(readOnly = true)
+    public MobileMoneyDepositResponse mobileMoneyDeposit(Member member, String depositId) {
+        PawapayDeposit deposit = pawapayDepositRepository.findByDepositId(depositId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paiement mobile money introuvable : " + depositId));
+        boolean owned = OWNER_TYPE.equalsIgnoreCase(deposit.getCustomerType())
+                && member.getMemberId().equalsIgnoreCase(deposit.getCustomerCode());
+        if (!owned) {
+            // On ne distingue pas « ce depot n'existe pas » de « ce depot n'est pas le votre » ·
+            // la difference renseignerait sur les paiements des autres.
+            throw new ResourceNotFoundException("Paiement mobile money introuvable : " + depositId);
+        }
+        return pawapayDepositService.toResponse(deposit);
+    }
+
+    /**
+     * « Je passerai payer en especes » · une annonce, pas un paiement.
+     *
+     * <p>Le mobile money et le portefeuille aboutissent seuls. Les especes arrivent avec la
+     * personne · la facture reste donc due jusqu a ce que la caisse ait compte les billets.
+     * L annonce sert a prevenir la caisse, et a tenir le creneau d une reservation.</p>
+     */
+    @Transactional
+    public CashPaymentDeclarationResponse declareCashPayment(Member member, String documentNumber,
+                                                             DeclareCashPaymentRequest request) {
+        BillingDocumentResponse invoice = billingDocumentService.get(documentNumber);
+        verifyOwnership(member, invoice);
+        return cashDeclarationService.declare(documentNumber, request, member.getMemberId());
+    }
+
+    /** Les annonces de ce membre · celles en attente disent ce qu il reste a aller regler. */
+    @Transactional(readOnly = true)
+    public PaginatedResponse<CashPaymentDeclarationResponse> listCashDeclarations(Member member, Pageable pageable) {
+        return cashDeclarationService.listForCustomer(OWNER_TYPE, member.getMemberId(), pageable);
+    }
+
+    /** Le client se ravise · sa facture reste due, elle n est simplement plus annoncee. */
+    @Transactional
+    public CashPaymentDeclarationResponse cancelCashDeclaration(Member member, String declarationNumber) {
+        cashDeclarationService.ownedBy(declarationNumber, OWNER_TYPE, member.getMemberId());
+        return cashDeclarationService.cancel(declarationNumber, "Annulée par le client", member.getMemberId());
+    }
+
     @Transactional
     public PaymentTransactionResponse payWithWallet(Member member, String documentNumber, String pin) {
         BillingDocumentResponse invoice = billingDocumentService.get(documentNumber);
@@ -157,11 +213,15 @@ public class ClientBillingService {
         CustomerStatementResponse statement = billingDocumentService.customerStatement(
                 OWNER_TYPE, member.getMemberId(), Pageable.unpaged()
         );
+        // Une facture en brouillon n'a jamais ete presentee au client · elle ne se compte ni dans
+        // ce qu'il a recu, ni dans ce qu'il doit. Elle le faisait passer pour debiteur a tort.
         long invoiceCount = statement.documents().stream()
-                .filter(d -> d.documentType() == BillingDocumentType.INVOICE)
+                .filter(d -> d.documentType() == BillingDocumentType.INVOICE
+                        && BillingReceivables.issued(d.documentType(), d.status()))
                 .count();
         long unpaidCount = statement.documents().stream()
                 .filter(d -> d.documentType() == BillingDocumentType.INVOICE
+                        && BillingReceivables.receivable(d.documentType(), d.status())
                         && d.balanceDue() != null
                         && d.balanceDue().compareTo(BigDecimal.ZERO) > 0)
                 .count();
@@ -173,6 +233,8 @@ public class ClientBillingService {
                 .totalInvoiced(statement.totalInvoiced())
                 .totalPaid(statement.totalPaid())
                 .totalBalanceDue(statement.totalBalanceDue())
+                .totalCreditAvailable(statement.totalCreditAvailable())
+                .netBalanceDue(statement.netBalanceDue())
                 .invoiceCount(invoiceCount)
                 .unpaidCount(unpaidCount)
                 .overdueCount(overdueCount)
@@ -186,6 +248,16 @@ public class ClientBillingService {
                 || !member.getMemberId().equals(invoice.customerCode())) {
             throw new ResourceNotFoundException("Invoice not found");
         }
+        // Une facture en brouillon est un document de travail · elle n'a pas ete emise, le client
+        // ne la connait pas, et il n'a rien a devoir a son titre. Elle n'existe pas pour lui.
+        if (invoice.status() == BillingDocumentStatus.DRAFT) {
+            throw new ResourceNotFoundException("Invoice not found");
+        }
+    }
+
+    /** Ce que le client peut voir · tout sauf ce qui n'a pas encore ete emis. */
+    private boolean visibleToClient(BillingDocumentResponse document) {
+        return document.status() != BillingDocumentStatus.DRAFT;
     }
 
     private ClientInvoiceSummaryResponse toSummary(BillingDocumentResponse d) {

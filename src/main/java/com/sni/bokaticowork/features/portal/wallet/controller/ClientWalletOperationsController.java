@@ -6,6 +6,9 @@ import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
+import com.sni.bokaticowork.features.payment.transfer.model.WalletPaymentRequest;
+import com.sni.bokaticowork.features.payment.transfer.model.WalletTransfer;
+import com.sni.bokaticowork.features.payment.transfer.service.WalletPartyNames;
 import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
 import com.sni.bokaticowork.features.payment.transfer.dto.WalletUsageDtos.BeneficiaryRequest;
 import com.sni.bokaticowork.features.payment.transfer.dto.WalletUsageDtos.BeneficiaryView;
@@ -74,6 +77,7 @@ public class ClientWalletOperationsController {
     private static final String DEVICE_HEADER = "X-Device-Id";
 
     private final ClientContextService clientContextService;
+    private final com.sni.bokaticowork.features.payment.transfer.service.WalletPartyNames partyNames;
     private final WalletAccountRepository walletRepository;
     private final WalletTransferRepository transferRepository;
     private final WalletTransferService transferService;
@@ -108,7 +112,7 @@ public class ClientWalletOperationsController {
         WalletTransferService.InitiatedTransfer initiated = transferService.initiate(
                 wallet, request.toOrder(), member.getMemberId(), clientIp(http), deviceId);
         return ResponseEntity.ok(new InitiatedTransferView(
-                TransferView.of(initiated.transfer(), wallet.getId()),
+                TransferView.of(initiated.transfer(), wallet.getId(), counterpartyName(initiated.transfer(), wallet)),
                 initiated.confirmation().getConfirmationCode(),
                 initiated.confirmation().getChallengeType(),
                 initiated.confirmation().getExpiresAt(),
@@ -120,28 +124,32 @@ public class ClientWalletOperationsController {
                                                 @PathVariable String transferNumber,
                                                 @Valid @RequestBody PinRequest request) {
         WalletAccount wallet = owned(walletNumber);
-        return ResponseEntity.ok(TransferView.of(transferService.confirm(wallet, transferNumber, request.pin()), wallet.getId()));
+        WalletTransfer confirmed = transferService.confirm(wallet, transferNumber, request.pin());
+        return ResponseEntity.ok(TransferView.of(confirmed, wallet.getId(), counterpartyName(confirmed, wallet)));
     }
 
     @PostMapping("/transfers/{transferNumber}/cancel")
     public ResponseEntity<TransferView> cancel(@PathVariable String walletNumber, @PathVariable String transferNumber) {
         WalletAccount wallet = owned(walletNumber);
-        return ResponseEntity.ok(TransferView.of(transferService.cancel(wallet, transferNumber), wallet.getId()));
+        WalletTransfer cancelled = transferService.cancel(wallet, transferNumber);
+        return ResponseEntity.ok(TransferView.of(cancelled, wallet.getId(), counterpartyName(cancelled, wallet)));
     }
 
     @GetMapping("/transfers")
     public ResponseEntity<PaginatedResponse<TransferView>> transfers(@PathVariable String walletNumber,
                                                                      @PageableDefault(size = 20) Pageable pageable) {
+        WalletPartyNames.Lookup names = partyNames.lookup();
         WalletAccount wallet = owned(walletNumber);
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return ResponseEntity.ok(new PaginatedResponse<>(transferRepository.findInvolving(wallet.getId(), unsorted)
-                .map(transfer -> TransferView.of(transfer, wallet.getId()))));
+                .map(transfer -> TransferView.of(transfer, wallet.getId(), names.of(counterpartyOf(transfer, wallet))))));
     }
 
     @GetMapping("/transfers/{transferNumber}")
     public ResponseEntity<TransferView> transfer(@PathVariable String walletNumber, @PathVariable String transferNumber) {
         WalletAccount wallet = owned(walletNumber);
-        return ResponseEntity.ok(TransferView.of(transferService.get(wallet, transferNumber), wallet.getId()));
+        WalletTransfer transfer = transferService.get(wallet, transferNumber);
+        return ResponseEntity.ok(TransferView.of(transfer, wallet.getId(), counterpartyName(transfer, wallet)));
     }
 
     // -------------------------------------------------------------------------------------
@@ -150,15 +158,17 @@ public class ClientWalletOperationsController {
 
     @GetMapping("/beneficiaries")
     public ResponseEntity<List<BeneficiaryView>> beneficiaries(@PathVariable String walletNumber) {
+        WalletPartyNames.Lookup names = partyNames.lookup();
         WalletAccount wallet = owned(walletNumber);
-        return ResponseEntity.ok(beneficiaryService.list(wallet).stream().map(BeneficiaryView::of).toList());
+        return ResponseEntity.ok(beneficiaryService.list(wallet).stream().map(b -> BeneficiaryView.of(b, names.of(b.getBeneficiaryWallet()))).toList());
     }
 
     @PostMapping("/beneficiaries")
     public ResponseEntity<BeneficiaryView> addBeneficiary(@PathVariable String walletNumber,
                                                           @Valid @RequestBody BeneficiaryRequest request) {
         WalletAccount wallet = owned(walletNumber);
-        return ResponseEntity.ok(BeneficiaryView.of(beneficiaryService.add(wallet, request.counterparty(), request.alias())));
+        var beneficiary = beneficiaryService.add(wallet, request.counterparty(), request.alias());
+        return ResponseEntity.ok(BeneficiaryView.of(beneficiary, partyNames.of(beneficiary.getBeneficiaryWallet())));
     }
 
     @DeleteMapping("/beneficiaries/{id}")
@@ -183,21 +193,24 @@ public class ClientWalletOperationsController {
     public ResponseEntity<PaginatedResponse<PaymentRequestView>> paymentRequests(
             @PathVariable String walletNumber, @PageableDefault(size = 20) Pageable pageable) {
         WalletAccount wallet = owned(walletNumber);
+        WalletPartyNames.Lookup names = partyNames.lookup();
         Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         return ResponseEntity.ok(new PaginatedResponse<>(paymentRequestService.list(wallet, unsorted)
-                .map(request -> PaymentRequestView.of(request, wallet.getId()))));
+                .map(request -> PaymentRequestView.of(request, wallet.getId(), names.of(counterpartyOf(request, wallet))))));
     }
 
     @PostMapping("/payment-requests/{requestNumber}/decline")
     public ResponseEntity<PaymentRequestView> decline(@PathVariable String walletNumber, @PathVariable String requestNumber) {
         WalletAccount wallet = owned(walletNumber);
-        return ResponseEntity.ok(PaymentRequestView.of(paymentRequestService.decline(wallet, requestNumber), wallet.getId()));
+        WalletPaymentRequest declined = paymentRequestService.decline(wallet, requestNumber);
+        return ResponseEntity.ok(PaymentRequestView.of(declined, wallet.getId(), counterpartyName(declined, wallet)));
     }
 
     @PostMapping("/payment-requests/{requestNumber}/cancel")
     public ResponseEntity<PaymentRequestView> cancelRequest(@PathVariable String walletNumber, @PathVariable String requestNumber) {
         WalletAccount wallet = owned(walletNumber);
-        return ResponseEntity.ok(PaymentRequestView.of(paymentRequestService.cancel(wallet, requestNumber), wallet.getId()));
+        WalletPaymentRequest cancelledRequest = paymentRequestService.cancel(wallet, requestNumber);
+        return ResponseEntity.ok(PaymentRequestView.of(cancelledRequest, wallet.getId(), counterpartyName(cancelledRequest, wallet)));
     }
 
     // -------------------------------------------------------------------------------------
@@ -304,6 +317,25 @@ public class ClientWalletOperationsController {
     }
 
     // -------------------------------------------------------------------------------------
+
+    /** Le portefeuille d'en face, vu du titulaire. */
+    private WalletAccount counterpartyOf(WalletTransfer transfer, WalletAccount viewer) {
+        return transfer.getSourceWallet().getId().equals(viewer.getId())
+                ? transfer.getTargetWallet() : transfer.getSourceWallet();
+    }
+
+    private WalletAccount counterpartyOf(WalletPaymentRequest request, WalletAccount viewer) {
+        return request.getRequesterWallet().getId().equals(viewer.getId())
+                ? request.getPayerWallet() : request.getRequesterWallet();
+    }
+
+    private String counterpartyName(WalletTransfer transfer, WalletAccount viewer) {
+        return partyNames.of(counterpartyOf(transfer, viewer));
+    }
+
+    private String counterpartyName(WalletPaymentRequest request, WalletAccount viewer) {
+        return partyNames.of(counterpartyOf(request, viewer));
+    }
 
     private WalletAccount owned(String walletNumber) {
         return owned(clientContextService.getAuthenticatedMember(), walletNumber);

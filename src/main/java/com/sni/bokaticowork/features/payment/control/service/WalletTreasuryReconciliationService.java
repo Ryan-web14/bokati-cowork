@@ -44,6 +44,7 @@ public class WalletTreasuryReconciliationService {
     @Value("${bokati.wallet.treasury.coverage-alert-ratio:1.0}")
     private BigDecimal coverageAlertRatio;
 
+    /** Une ou plusieurs adresses, separees par des virgules · direction, finance, qui doit savoir. */
     @Value("${bokati.wallet.treasury.alert-email:}")
     private String alertEmail;
 
@@ -161,18 +162,18 @@ public class WalletTreasuryReconciliationService {
                 reconciliation.getCoverageRatio().multiply(BigDecimal.valueOf(100)).setScale(1, RoundingMode.HALF_UP),
                 reconciliation.getReconciliationDate(), reconciliation.getTotalWalletBalance(), reconciliation.getCurrency(),
                 reconciliation.getAvailableCash(), reconciliation.getCurrency());
-        if (!StringUtils.hasText(alertEmail)) {
-            return;
+        // Une adresse ou plusieurs · un courriel par destinataire, la boite de sortie n'en fusionne pas
+        for (String recipient : com.sni.bokaticowork.core.utils.mail.Recipients.split(alertEmail)) {
+            outboxService.publish("WALLET_TREASURY_COVERAGE_ALERT", "WALLET", reconciliation.getReconciliationNumber() + ":" + recipient, Map.of(
+                    "adminEmail", recipient,
+                    "subject", "Couverture des portefeuilles insuffisante · " + reconciliation.getReconciliationDate(),
+                    "templateCode", "WALLET_TREASURY_COVERAGE_ALERT",
+                    "reconciliationNumber", reconciliation.getReconciliationNumber(),
+                    "coverageRatio", reconciliation.getCoverageRatio().toPlainString(),
+                    "totalWalletBalance", reconciliation.getTotalWalletBalance().toPlainString(),
+                    "availableCash", reconciliation.getAvailableCash().toPlainString(),
+                    "currency", reconciliation.getCurrency()));
         }
-        outboxService.publish("WALLET_TREASURY_COVERAGE_ALERT", "WALLET", reconciliation.getReconciliationNumber(), Map.of(
-                "adminEmail", alertEmail,
-                "subject", "Couverture des portefeuilles insuffisante · " + reconciliation.getReconciliationDate(),
-                "templateCode", "WALLET_TREASURY_COVERAGE_ALERT",
-                "reconciliationNumber", reconciliation.getReconciliationNumber(),
-                "coverageRatio", reconciliation.getCoverageRatio().toPlainString(),
-                "totalWalletBalance", reconciliation.getTotalWalletBalance().toPlainString(),
-                "availableCash", reconciliation.getAvailableCash().toPlainString(),
-                "currency", reconciliation.getCurrency()));
     }
 
     private Object[] aggregate(String currency) {

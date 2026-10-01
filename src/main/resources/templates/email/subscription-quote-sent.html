@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Votre devis')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Un devis vous attend.'}">Un devis vous attend.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Votre devis</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, voici le devis que nous avons préparé pour vous. Il est valable jusqu'à la date indiquée.
+      </div>
+      <div class="amount"><span th:text="${quotedPrice}">0</span> <small th:text="${currency}">XAF</small></div>
+      <div class="section-lbl">Devis</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${quoteNumber}">Référence</td>
+        </tr>
+        <tr>
+          <td class="r-key">Formule</td>
+          <td class="r-val" th:text="${planName}">Formule</td>
+        </tr>
+        <tr>
+          <td class="r-key">Rythme</td>
+          <td class="r-val" th:text="${billingCycle}">Rythme</td>
+        </tr>
+        <tr th:if="${commitmentMonths != null and commitmentMonths != '0'}">
+          <td class="r-key">Engagement (mois)</td>
+          <td class="r-val" th:text="${commitmentMonths}">Engagement (mois)</td>
+        </tr>
+        <tr>
+          <td class="r-key">Valable jusqu'au</td>
+          <td class="r-val" th:text="${validUntil}">Valable jusqu'au</td>
+        </tr>
+      </table>
+      <div class="em-note">Vous pouvez accepter ou refuser ce devis depuis votre espace client. À l'acceptation, votre abonnement est créé et le paiement de la première échéance l'active.</div>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Voir mon devis</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

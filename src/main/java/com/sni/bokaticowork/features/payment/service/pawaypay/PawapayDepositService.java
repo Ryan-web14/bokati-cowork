@@ -15,6 +15,7 @@ import com.sni.bokaticowork.features.payment.model.PaymentTransaction;
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyInitiationRequest;
 import com.sni.bokaticowork.features.payment.provider.MobileMoneyInitiationResponse;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.CongoCorrespondent;
+import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayFailureCodes;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayDepositProvider;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayProperties;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.dto.PawapayCallbackPayload;
@@ -47,6 +48,23 @@ public class PawapayDepositService {
     private final PawapayProperties properties;
     private final ObjectMapper objectMapper;
     private final PaymentMapper paymentMapper;
+
+    /**
+     * Le depot deja en cours pour cette intention et ce numero, s'il y en a un.
+     *
+     * <p>Un double clic, un rafraichissement ou deux onglets envoyaient deux demandes sur le
+     * telephone du client · il pouvait valider les deux et payer deux fois, sans avoir
+     * automatique. Dans la fenetre configuree, la seconde demande rend la premiere.</p>
+     */
+    @Transactional(readOnly = true)
+    public java.util.Optional<PawapayDeposit> inFlight(PaymentIntent intent, InitiateMobileMoneyDepositRequest request) {
+        String phoneNumber = msisdn(request);
+        if (phoneNumber == null || intent.getId() == null) {
+            return java.util.Optional.empty();
+        }
+        Instant since = Instant.now().minus(java.time.Duration.ofMinutes(properties.getInFlightWindowMinutes()));
+        return repository.findInFlight(intent.getId(), phoneNumber, since);
+    }
 
     public PawapayDeposit prepareDeposit(PaymentIntent intent,
                                          PaymentTransaction transaction,
@@ -102,18 +120,40 @@ public class PawapayDepositService {
         );
     }
 
+    /**
+     * Ce que l'operateur a repondu a l'initiation · et quand on le relira.
+     *
+     * <p>Sans reponse ({@code UNKNOWN}), le depot n'est pas en echec : il est
+     * {@code SUBMITTED_UNCONFIRMED} et sera relu dans une minute. Un refus explicite porte le code
+     * de l'operateur, la phrase qu'on dit au client, et s'il peut reessayer.</p>
+     */
     public PawapayDeposit markInitiationResult(String depositId, MobileMoneyInitiationResponse response) {
         PawapayDeposit deposit = serviceByDepositId(depositId);
-        deposit.setStatus(response.status());
+        deposit.setInitiationAttempts(deposit.getInitiationAttempts() + 1);
         deposit.setProviderMessage(response.message());
         Map<String, Object> providerResponse = new LinkedHashMap<>();
         providerResponse.put("providerReference", response.providerReference());
         providerResponse.put("status", response.status());
         providerResponse.put("message", response.message());
         deposit.setProviderResponseJson(writeJson(providerResponse));
+
         if ("FAILED".equals(response.status())) {
+            PawapayFailureCodes.Explanation explanation = PawapayFailureCodes.explain(response.failureReason());
+            deposit.setStatus("FAILED");
+            deposit.setFailureCode(explanation.code());
             deposit.setFailureReason(response.message());
+            deposit.setUserMessage(explanation.userMessage());
+            deposit.setRetryable(explanation.retryable());
             deposit.setFailedAt(Instant.now());
+            deposit.setNextStatusCheckAt(null);
+        } else if (response.unknown()) {
+            deposit.setStatus("SUBMITTED_UNCONFIRMED");
+            deposit.setUserMessage("Nous confirmons votre paiement auprès de l'opérateur. Ne payez pas une seconde fois.");
+            deposit.setNextStatusCheckAt(Instant.now().plusSeconds(60));
+        } else {
+            deposit.setStatus("PROCESSING");
+            deposit.setUserMessage("Validez la demande reçue sur votre téléphone avec votre code secret.");
+            deposit.setNextStatusCheckAt(Instant.now().plusSeconds(60));
         }
         return repository.save(deposit);
     }
@@ -126,21 +166,94 @@ public class PawapayDepositService {
         deposit.setStatus("SUCCEEDED");
         deposit.setProviderMessage("COMPLETED");
         deposit.setCompletedAt(Instant.now());
+        deposit.setUserMessage("Paiement reçu. Merci.");
+        deposit.setFailureCode(null);
+        deposit.setRetryable(null);
+        // Plus rien a attendre de l'operateur · on cesse de le questionner.
+        deposit.setNextStatusCheckAt(null);
+        deposit.setUnresolvedAt(null);
+        if (payload != null && payload.providerTransactionId() != null) {
+            deposit.setProviderTransactionId(payload.providerTransactionId());
+        }
         deposit.setProviderResponseJson(writeJson(payload));
         repository.save(deposit);
     }
 
-    public void markFailed(String depositId, PawapayCallbackPayload payload, String reason) {
+    /** Rend le depot tel qu'il vient de devenir · l'appelant doit pouvoir en parler au client. */
+    public PawapayDeposit markFailed(String depositId, PawapayCallbackPayload payload, String reason) {
         PawapayDeposit deposit = repository.findByDepositId(depositId).orElse(null);
         if (deposit == null) {
-            return;
+            return null;
         }
+        PawapayFailureCodes.Explanation explanation = payload == null
+                ? PawapayFailureCodes.explain(reason)
+                : PawapayFailureCodes.explain(payload.failureReason());
         deposit.setStatus("FAILED");
         deposit.setProviderMessage("FAILED");
         deposit.setFailureReason(reason);
+        deposit.setFailureCode(explanation.code());
+        deposit.setUserMessage(explanation.userMessage());
+        deposit.setRetryable(explanation.retryable());
         deposit.setFailedAt(Instant.now());
+        deposit.setNextStatusCheckAt(null);
         deposit.setProviderResponseJson(writeJson(payload));
-        repository.save(deposit);
+        return repository.save(deposit);
+    }
+
+    /**
+     * Sans reponse definitive au bout du temps imparti · a rapprocher a la main.
+     *
+     * <p>Ce n'est pas un echec : l'argent est peut-etre parti. Declarer FAILED ferait payer deux
+     * fois le client ; declarer SUCCEEDED lui offrirait le service. On cesse simplement de
+     * questionner l'operateur et on le dit a quelqu'un.</p>
+     */
+    public PawapayDeposit markUnresolved(String depositId) {
+        PawapayDeposit deposit = repository.findByDepositId(depositId).orElse(null);
+        if (deposit == null) {
+            return null;
+        }
+        deposit.setStatus("UNRESOLVED");
+        deposit.setUnresolvedAt(Instant.now());
+        deposit.setNextStatusCheckAt(null);
+        deposit.setFailureCode("UNRESOLVED");
+        deposit.setUserMessage(PawapayFailureCodes.explain("UNRESOLVED").userMessage());
+        deposit.setRetryable(false);
+        return repository.save(deposit);
+    }
+
+    /**
+     * Repousse la prochaine verification · rapprochee d'abord, espacee ensuite.
+     *
+     * <p>Un client valide en general dans la minute ; passe le quart d'heure, il est parti manger.
+     * Interroger l'operateur toutes les minutes pendant vingt-quatre heures ne sert personne.</p>
+     */
+    public PawapayDeposit scheduleNextCheck(String depositId, String providerStatus) {
+        return repository.findByDepositId(depositId).map(deposit -> {
+            if (!deposit.pending()) {
+                // Le depot est deja tranche · on ne le remet pas dans la file d'attente.
+                return deposit;
+            }
+            int attempts = deposit.getStatusCheckCount() + 1;
+            deposit.setStatusCheckCount(attempts);
+            deposit.setLastStatusCheckedAt(Instant.now());
+            if (providerStatus != null) {
+                deposit.setProviderMessage(providerStatus);
+            }
+            deposit.setNextStatusCheckAt(Instant.now().plusSeconds(backoffSeconds(attempts)));
+            return repository.save(deposit);
+        }).orElse(null);
+    }
+
+    /** 1, 2, 3, 5, 10, 15, 30 minutes, puis toutes les heures. */
+    static long backoffSeconds(int attempts) {
+        int[] minutes = {1, 2, 3, 5, 10, 15, 30};
+        return 60L * (attempts <= minutes.length ? minutes[Math.max(0, attempts - 1)] : 60);
+    }
+
+    /** Le depot attend-il depuis plus longtemps que ce qu'on accepte d'attendre ? */
+    public boolean waitedTooLong(PawapayDeposit deposit) {
+        return deposit.getCreatedAt() != null
+                && deposit.getCreatedAt().isBefore(Instant.now().minus(java.time.Duration.ofHours(properties.getPollingMaxHours())));
     }
 
     public PawapayDeposit markStatusChecked(String depositId, String providerStatus) {
@@ -187,8 +300,13 @@ public class PawapayDepositService {
                 deposit.getAmount(),
                 deposit.getCurrency(),
                 deposit.getStatus(),
+                phase(deposit),
                 deposit.getProviderMessage(),
                 deposit.getFailureReason(),
+                deposit.getFailureCode(),
+                deposit.getUserMessage(),
+                deposit.getRetryable(),
+                deposit.getNextStatusCheckAt(),
                 deposit.getIntentNumber(),
                 deposit.getTransactionNumber(),
                 deposit.getCustomerType(),
@@ -203,6 +321,25 @@ public class PawapayDepositService {
                 deposit.getUpdatedAt(),
                 paymentMapper.toTransactionResponse(deposit.getPaymentTransaction())
         );
+    }
+
+    /**
+     * Ou en est le depot, pour l'ecran.
+     *
+     * <p>Le statut technique ne se montre pas a un client. Ce qu'il veut savoir tient en une
+     * phrase : la demande est-elle sur son telephone, attend-on l'operateur, est-ce fini.</p>
+     */
+    private String phase(PawapayDeposit deposit) {
+        if (deposit.getUnresolvedAt() != null) {
+            return "UNRESOLVED";
+        }
+        return switch (deposit.getStatus() == null ? "" : deposit.getStatus()) {
+            case "SUCCEEDED" -> "COMPLETED";
+            case "FAILED" -> "FAILED";
+            case "SUBMITTED_UNCONFIRMED" -> "CONFIRMING";
+            case "PROCESSING", "CREATED", "ACCEPTED" -> "WAITING_FOR_PAYER";
+            default -> "CONFIRMING";
+        };
     }
 
     private PawapayDeposit serviceByDepositId(String depositId) {
