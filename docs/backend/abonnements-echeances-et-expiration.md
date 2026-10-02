@@ -116,9 +116,15 @@ au lendemain · mais il ne doit pas non plus bénéficier de semaines de service
 | Retard après la fin de période | Ce qui se passe |
 |---|---|
 | dès le lendemain | Entrée en `GRACE_PERIOD`, le client est prévenu |
-| au-delà de `gracePeriodDays` (7 j) | `EXPIRED`, avec le motif et le nombre de jours de retard |
+| au-delà de `renewalExpiryDays` (7 j) | `EXPIRED`, avec le motif et le nombre de jours de retard |
 
-`gracePeriodDays` est un champ de la politique · le délai se règle en base, sans déploiement.
+`renewalExpiryDays` est **son propre champ** dans `subscription_policy`. Il empruntait
+`gracePeriodDays`, qui sert à décider quand une échéance impayée entre en tolérance : les deux
+notions n'ont rien à voir, et un chiffre qui convient à l'une convient mal à l'autre. Les deux se
+règlent en base, sans déploiement, par `PUT /subscription-lifecycle/policy`.
+
+`gracePeriodDays` vaut désormais **1 jour** : une échéance impayée entre en tolérance dès le
+lendemain, pas une semaine plus tard.
 
 Un règlement ou un renouvellement entre-temps fait avancer la période, et l'abonnement sort du
 balayage de lui-même. Le service revérifie la date **dans sa propre transaction** avant d'écrire,
@@ -126,6 +132,31 @@ pour ne pas fermer un abonnement renouvelé entre la lecture et l'écriture.
 
 Un préavis de résiliation en cours (`PENDING_TERMINATION`) est laissé tranquille : il a sa propre
 date d'effet.
+
+## La durée payée est la durée reçue
+
+Le renouvellement avance la période **dès qu'il facture** : elle commence le lendemain de la
+période précédente, avant tout règlement. Un client qui payait dix jours plus tard se retrouvait
+donc avec une période commencée dix jours plus tôt · il payait un mois et en recevait vingt jours.
+Personne ne le lui avait annoncé, et personne ne le voyait.
+
+Quand l'échéance est réglée **après sa date**, la période est maintenant réancrée sur le jour du
+règlement :
+
+```
+Échéance au 01/09, période du 01/09 au 30/09, réglée le 11/09
+   → période du 11/09 au 10/10, prochaine échéance le 11/10
+```
+
+La facture impayée passe payée par le circuit habituel · c'est l'encaissement qui la solde, rien
+n'est particulier ici. Ce qui change est la période.
+
+Déclenché par `PaymentTransactionWorkflowProcessor` sur un règlement d'abonnement, pour un
+abonnement `ACTIVE` ou en `GRACE_PERIOD` (qui en sort au même moment). **Seul un règlement complet**
+réancre : sur un paiement partiel l'échéance n'est pas honorée, il n'y a rien à réancrer. Un
+règlement à l'heure ou en avance ne change rien.
+
+Un recalage impossible ne défait jamais l'encaissement · l'argent est reçu, c'est journalisé.
 
 ## Défaut 3 · une facture scellée n'était pas « impayée »
 
@@ -168,6 +199,8 @@ ORDER BY current_period_end;
 
 - `V250` (dev) / `V246` (prod) · `subscription.end_notice_stage` et l'index du balayage.
 - `V251` (dev) / `V247` (prod) · les trois gabarits de courriel.
+- `V252` (dev) / `V248` (prod) · `subscription_policy.renewal_expiry_days` (7), et
+  `grace_period_days` ramené à 1.
 
 ## Rattrapage
 

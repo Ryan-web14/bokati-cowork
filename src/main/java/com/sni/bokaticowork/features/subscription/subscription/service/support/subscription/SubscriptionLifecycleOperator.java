@@ -258,6 +258,45 @@ public class SubscriptionLifecycleOperator {
         return renewed;
     }
 
+    /**
+     * Regle en retard · la periode repart du jour du paiement, pas de l'echeance manquee.
+     *
+     * <p>Le renouvellement avance la periode des qu'il facture : elle commence donc le lendemain
+     * de la periode precedente, avant tout reglement. Quand le client paie dix jours plus tard, il
+     * se retrouvait avec une periode commencee dix jours plus tot · il payait un mois et en
+     * recevait vingt jours. Personne ne le lui avait annonce, et personne ne le voyait.</p>
+     *
+     * <p>La periode est donc reancree sur le jour du reglement. Le client recoit la duree qu'il a
+     * payee, et l'echeance suivante se decale d'autant.</p>
+     *
+     * <p>Un reglement a l'heure ne change rien · seule une date de paiement posterieure au debut
+     * de periode, c'est-a-dire a l'echeance, declenche le recalage.</p>
+     */
+    @Transactional
+    public boolean realignOnLatePayment(Subscription subscription, LocalDate paidOn) {
+        LocalDate periodStart = subscription.getCurrentPeriodStart();
+        if (periodStart == null || paidOn == null || !paidOn.isAfter(periodStart)) {
+            return false;
+        }
+        LocalDate newEnd = periodCalculator.periodEnd(paidOn, subscription.getBillingCycle());
+        if (newEnd == null) {
+            return false;
+        }
+        LocalDate previousEnd = subscription.getCurrentPeriodEnd();
+        subscription.setCurrentPeriodStart(paidOn);
+        subscription.setCurrentPeriodEnd(newEnd);
+        subscription.setNextBillingDate(periodCalculator.nextBillingDate(paidOn, subscription.getBillingCycle()));
+        // La periode repart · les avis de fin deja envoyes concernaient l'ancienne.
+        subscription.setEndNoticeStage(null);
+        subscriptionRepository.save(subscription);
+        eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED,
+                "{\"realignedOn\":\"" + paidOn + "\",\"previousPeriodEnd\":\""
+                        + (previousEnd == null ? "" : previousEnd) + "\",\"newPeriodEnd\":\"" + newEnd + "\"}");
+        log.info("Abonnement {} · regle le {}, periode recalee du {} au {}",
+                subscription.getSubscriptionNumber(), paidOn, paidOn, newEnd);
+        return true;
+    }
+
     /** Un abonnement, sa propre transaction · relu dedans, pour ne pas ecrire depuis un detache. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void renewOne(Long subscriptionId) {

@@ -49,7 +49,8 @@ public class SubscriptionLifecycleController {
     public record PolicyRequest(ProrationPolicy prorationPolicy, Integer defaultNoticeDays, EarlyTerminationFormula earlyTerminationFormula,
                                 BigDecimal earlyTerminationPercent, BigDecimal earlyTerminationFixedFee, Integer freezeMaxPerYear,
                                 Integer freezeMaxDays, Integer freezeNoticeDays, BigDecimal freezeFeePercent, Integer gracePeriodDays,
-                                Integer suspensionAfterGraceDays, Integer quoteValidityDays) {
+                                Integer suspensionAfterGraceDays, Integer renewalExpiryDays,
+                                Integer quoteValidityDays) {
     }
 
     @GetMapping("/policy")
@@ -62,7 +63,8 @@ public class SubscriptionLifecycleController {
     public ResponseEntity<SubscriptionPolicy> updatePolicy(@RequestBody PolicyRequest r) {
         return ResponseEntity.ok(policyService.update(new SubscriptionPolicyService.Update(r.prorationPolicy(), r.defaultNoticeDays(),
                 r.earlyTerminationFormula(), r.earlyTerminationPercent(), r.earlyTerminationFixedFee(), r.freezeMaxPerYear(), r.freezeMaxDays(),
-                r.freezeNoticeDays(), r.freezeFeePercent(), r.gracePeriodDays(), r.suspensionAfterGraceDays(), r.quoteValidityDays())));
+                r.freezeNoticeDays(), r.freezeFeePercent(), r.gracePeriodDays(), r.suspensionAfterGraceDays(), r.renewalExpiryDays(),
+                r.quoteValidityDays())));
     }
 
     // ---- Engagement -----------------------------------------------------------------------------

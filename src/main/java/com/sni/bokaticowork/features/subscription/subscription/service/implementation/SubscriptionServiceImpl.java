@@ -156,6 +156,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
      * transaction ici, l'echec d'un abonnement ne peut plus defaire celui du voisin.</p>
      */
     @Override
+    public boolean realignOnLatePayment(String subscriptionNumber, java.time.LocalDate paidOn) {
+        return lifecycleOperator.realignOnLatePayment(getForService(subscriptionNumber), paidOn);
+    }
+
+    @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public int renewDueSubscriptions() {
         return lifecycleOperator.renewDueSubscriptions();

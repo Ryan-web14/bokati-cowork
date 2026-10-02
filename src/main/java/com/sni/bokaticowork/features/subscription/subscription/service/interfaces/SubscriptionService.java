@@ -47,6 +47,13 @@ public interface SubscriptionService {
 
     int renewDueSubscriptions();
 
+    /**
+     * Recale la periode sur le jour du reglement quand l'echeance a ete payee en retard.
+     *
+     * @return vrai si la periode a bouge
+     */
+    boolean realignOnLatePayment(String subscriptionNumber, java.time.LocalDate paidOn);
+
     int cancelEndedSubscriptions();
 
     int repairActiveSubscriptionsWithoutGrants();

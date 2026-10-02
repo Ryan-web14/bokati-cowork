@@ -77,12 +77,26 @@ public class SubscriptionPolicy {
     /** Jours apres une echeance impayee avant d'entrer en tolerance. */
     @Column(name = "grace_period_days", nullable = false)
     @Builder.Default
-    private Integer gracePeriodDays = 7;
+    private Integer gracePeriodDays = 1;
 
     /** Jours de tolerance avant suspension. */
     @Column(name = "suspension_after_grace_days", nullable = false)
     @Builder.Default
     private Integer suspensionAfterGraceDays = 14;
+
+    /**
+     * Combien de jours un abonnement survit a une reconduction automatique qui a echoue.
+     *
+     * <p>Ce delai emprunta un temps {@code gracePeriodDays}, qui sert a decider quand une
+     * echeance impayee entre en tolerance. Les deux notions n ont rien a voir · un chiffre qui
+     * convient a l une convient mal a l autre. Celui-ci est le sien.</p>
+     *
+     * <p>La reconduction a echoue de notre fait, l abonne n y est pour rien · il est prevenu des
+     * le lendemain de la fin de periode, et ferme au bout de ce delai.</p>
+     */
+    @Column(name = "renewal_expiry_days", nullable = false)
+    @Builder.Default
+    private Integer renewalExpiryDays = 7;
 
     @Column(name = "quote_validity_days", nullable = false)
     @Builder.Default

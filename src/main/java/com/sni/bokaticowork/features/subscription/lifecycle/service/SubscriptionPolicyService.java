@@ -23,7 +23,8 @@ public class SubscriptionPolicyService {
     public record Update(ProrationPolicy prorationPolicy, Integer defaultNoticeDays,
                          EarlyTerminationFormula earlyTerminationFormula, BigDecimal earlyTerminationPercent, BigDecimal earlyTerminationFixedFee,
                          Integer freezeMaxPerYear, Integer freezeMaxDays, Integer freezeNoticeDays, BigDecimal freezeFeePercent,
-                         Integer gracePeriodDays, Integer suspensionAfterGraceDays, Integer quoteValidityDays) {
+                         Integer gracePeriodDays, Integer suspensionAfterGraceDays, Integer renewalExpiryDays,
+                         Integer quoteValidityDays) {
     }
 
     /** La politique active · sans ligne en base, les valeurs par defaut du modele valent. */
@@ -50,6 +51,9 @@ public class SubscriptionPolicyService {
         if (update.freezeFeePercent() != null) policy.setFreezeFeePercent(percent(update.freezeFeePercent(), "part facturée pendant le gel"));
         if (update.gracePeriodDays() != null) policy.setGracePeriodDays(nonNegative(update.gracePeriodDays(), "tolérance"));
         if (update.suspensionAfterGraceDays() != null) policy.setSuspensionAfterGraceDays(nonNegative(update.suspensionAfterGraceDays(), "délai avant suspension"));
+        if (update.renewalExpiryDays() != null) {
+            policy.setRenewalExpiryDays(nonNegative(update.renewalExpiryDays(), "fermeture apres reconduction en echec"));
+        }
         if (update.quoteValidityDays() != null) {
             if (update.quoteValidityDays() < 1) throw new BadRequestException("La validité d'un devis est d'au moins un jour");
             policy.setQuoteValidityDays(update.quoteValidityDays());

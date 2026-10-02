@@ -67,7 +67,7 @@ public class SubscriptionExpiryService {
         // Prevenu des le lendemain de la fin de periode · la reconduction a deja echoue, il n'y a
         // aucune raison d'attendre une semaine pour le dire.
         LocalDate warnBefore = today;
-        LocalDate expireBefore = today.minusDays(policy.getGracePeriodDays());
+        LocalDate expireBefore = today.minusDays(policy.getRenewalExpiryDays());
 
         int warned = 0;
         int expired = 0;
