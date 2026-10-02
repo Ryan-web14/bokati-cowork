@@ -80,11 +80,11 @@ class SubscriptionExpiryServiceTest {
     }
 
     @Test
-    @DisplayName("Le cas de production · période échue de 24 jours, l'abonnement se ferme")
-    void theSubscriptionFromSeptemberSeventhIsClosed() {
-        // 7 + 14 = 21 jours de latitude · 24 jours de retard les depassent.
+    @DisplayName("Au-delà de 7 jours de retard, la reconduction en échec est fermée")
+    void aFailedAutoRenewalIsClosedAfterAWeek() {
+        // gracePeriodDays = 7 · huit jours de retard le depassent.
         Subscription stuck = subscription(1L, "SUB-MEM-COW-MON-202609-00000015",
-                LocalDate.now().minusDays(24), SubscriptionStatus.ACTIVE);
+                LocalDate.now().minusDays(8), SubscriptionStatus.ACTIVE);
         ended(stuck);
 
         SubscriptionExpiryService.Sweep sweep = service.sweep();
@@ -92,15 +92,15 @@ class SubscriptionExpiryServiceTest {
         assertThat(sweep.expired()).isEqualTo(1);
         ArgumentCaptor<String> reason = ArgumentCaptor.forClass(String.class);
         verify(statusManager).changeStatus(eq(stuck), eq(SubscriptionStatus.EXPIRED), reason.capture(), eq("SYSTEM"));
-        assertThat(reason.getValue()).contains("Période échue").contains("24 jours");
+        assertThat(reason.getValue()).contains("Période échue").contains("8 jours");
         verify(subscriptionRepository).save(stuck);
     }
 
     @Test
-    @DisplayName("Avant de fermer, on prévient · la tolérance est l'état prévu pour ça")
-    void theSubscriberIsWarnedBeforeTheSubscriptionCloses() {
-        // 10 jours de retard · au-dela de la tolerance de 7, en deca des 21 de la fermeture.
-        Subscription late = subscription(1L, "SUB-1", LocalDate.now().minusDays(10), SubscriptionStatus.ACTIVE);
+    @DisplayName("Dès le lendemain de la fin de période, on prévient · sans attendre une semaine")
+    void theSubscriberIsWarnedTheVeryNextDay() {
+        // Un seul jour de retard · la reconduction a echoue, on le dit tout de suite.
+        Subscription late = subscription(1L, "SUB-1", LocalDate.now().minusDays(1), SubscriptionStatus.ACTIVE);
         ended(late);
 
         SubscriptionExpiryService.Sweep sweep = service.sweep();
@@ -112,21 +112,21 @@ class SubscriptionExpiryServiceTest {
     }
 
     @Test
-    @DisplayName("Un retard dans la tolérance ne déclenche rien · le client a le temps de régler")
-    void aFreshDelayIsLeftAlone() {
+    @DisplayName("Dans la tolérance, on prévient mais on ne ferme pas · le client a le temps de régler")
+    void aFreshDelayIsWarnedButNotClosed() {
         ended(subscription(1L, "SUB-1", LocalDate.now().minusDays(3), SubscriptionStatus.ACTIVE));
 
         SubscriptionExpiryService.Sweep sweep = service.sweep();
 
-        assertThat(sweep.warned()).isZero();
+        assertThat(sweep.warned()).isEqualTo(1);
         assertThat(sweep.expired()).isZero();
-        verify(graceService, never()).enter(any(), anyString());
+        verify(statusManager, never()).changeStatus(any(), eq(SubscriptionStatus.EXPIRED), anyString(), anyString());
     }
 
     @Test
     @DisplayName("Un abonnement déjà en tolérance n'y entre pas deux fois · il attend sa fermeture")
     void aSubscriptionAlreadyInGraceIsNotWarnedAgain() {
-        ended(subscription(1L, "SUB-1", LocalDate.now().minusDays(10), SubscriptionStatus.GRACE_PERIOD));
+        ended(subscription(1L, "SUB-1", LocalDate.now().minusDays(3), SubscriptionStatus.GRACE_PERIOD));
 
         SubscriptionExpiryService.Sweep sweep = service.sweep();
 
@@ -137,7 +137,7 @@ class SubscriptionExpiryServiceTest {
     @Test
     @DisplayName("Une période relancée entre la lecture et l'écriture ne se ferme pas")
     void aPeriodRenewedMeanwhileIsLeftAlone() {
-        Subscription renewed = subscription(1L, "SUB-1", LocalDate.now().minusDays(24), SubscriptionStatus.ACTIVE);
+        Subscription renewed = subscription(1L, "SUB-1", LocalDate.now().minusDays(8), SubscriptionStatus.ACTIVE);
         ended(renewed);
         // Le renouvellement a passe entre-temps · la periode est repartie vers l'avant.
         renewed.setCurrentPeriodEnd(LocalDate.now().plusDays(20));
@@ -162,6 +162,7 @@ class SubscriptionExpiryServiceTest {
     void oneFailureNeverStopsTheSweep() {
         Subscription broken = subscription(1L, "SUB-CASSE", LocalDate.now().minusDays(30), SubscriptionStatus.ACTIVE);
         Subscription healthy = subscription(2L, "SUB-SAIN", LocalDate.now().minusDays(30), SubscriptionStatus.ACTIVE);
+        // Les deux depassent largement les 7 jours · c'est la boucle qu'on observe, pas le delai.
         ended(broken, healthy);
         org.mockito.Mockito.doThrow(new IllegalStateException("plan introuvable"))
                 .when(statusManager).changeStatus(eq(broken), any(), anyString(), anyString());

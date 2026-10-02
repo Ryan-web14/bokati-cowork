@@ -35,11 +35,15 @@ import java.util.List;
  * periode, droits ouverts, sans qu'aucune facture n'ait ete emise. Personne ne reclamait rien et
  * personne ne fermait rien.</p>
  *
- * <p>La regle est celle que la politique porte deja · on n'invente pas de delai : au-dela de
- * {@code gracePeriodDays} apres la fin de periode l'abonne est prevenu et passe en tolerance ;
- * au-dela de {@code gracePeriodDays + suspensionAfterGraceDays} l'abonnement passe
- * {@code EXPIRED}. Un reglement ou un renouvellement entre-temps fait avancer la periode, et
- * l'abonnement sort de ce balayage de lui-meme.</p>
+ * <p>Le delai est court et volontairement asymetrique avec les abonnements qui prennent fin : la
+ * reconduction a echoue de notre fait, l'abonne n'y est pour rien, il ne doit donc pas etre ferme
+ * du jour au lendemain · mais il ne doit pas non plus beneficier de semaines de service gratuit.
+ * Des le lendemain de la fin de periode il est prevenu et passe en tolerance ; au-dela de
+ * {@code gracePeriodDays} il passe {@code EXPIRED}.</p>
+ *
+ * <p>C'est un champ que la politique porte deja · le delai se regle en base, sans deploiement.
+ * Un reglement ou un renouvellement entre-temps fait avancer la periode, et l'abonnement sort de
+ * ce balayage de lui-meme.</p>
  */
 @Slf4j
 @Service
@@ -60,9 +64,10 @@ public class SubscriptionExpiryService {
     public Sweep sweep() {
         SubscriptionPolicy policy = policyService.current();
         LocalDate today = LocalDate.now();
-        LocalDate warnBefore = today.minusDays(policy.getGracePeriodDays());
-        LocalDate expireBefore = today.minusDays(
-                (long) policy.getGracePeriodDays() + policy.getSuspensionAfterGraceDays());
+        // Prevenu des le lendemain de la fin de periode · la reconduction a deja echoue, il n'y a
+        // aucune raison d'attendre une semaine pour le dire.
+        LocalDate warnBefore = today;
+        LocalDate expireBefore = today.minusDays(policy.getGracePeriodDays());
 
         int warned = 0;
         int expired = 0;
@@ -115,7 +120,7 @@ public class SubscriptionExpiryService {
             return Outcome.EXPIRED;
         }
 
-        if (periodEnd.isBefore(warnBefore) && subscription.getStatus() != SubscriptionStatus.GRACE_PERIOD) {
+        if (!periodEnd.isAfter(warnBefore) && subscription.getStatus() != SubscriptionStatus.GRACE_PERIOD) {
             // Prevenir avant de fermer · l'abonne doit pouvoir regler, et la tolerance est
             // exactement l'etat prevu pour ca. La suspension au terme de la tolerance est geree
             // par le balayage existant ; si rien ne bouge, la fermeture viendra d'ici.

@@ -2,7 +2,10 @@ package com.sni.bokaticowork.features.portal.subscription.service;
 
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
+import java.time.LocalDate;
+import com.sni.bokaticowork.features.portal.subscription.dto.response.ClientSubscriptionRenewalResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
@@ -37,6 +40,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.interface
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.PassService;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.SubscriptionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,11 +49,15 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ClientSubscriptionService {
 
     private static final SubscriberType MEMBER = SubscriberType.MEMBER;
+
+    /** La fenetre de renouvellement · le premier avis de fin part a J-7. */
+    private static final int RENEWAL_WINDOW_DAYS = 7;
 
     private final SubscriptionService subscriptionService;
     private final PassService passService;
@@ -182,6 +190,58 @@ public class ClientSubscriptionService {
                 intent.intentNumber(),
                 new WalletPaymentRequest(wallet.walletNumber(), null, member.getMemberId(), null)
         );
+    }
+
+    // ── Renouvellement ──────────────────────────────────────────────────
+
+    /**
+     * Le client renouvelle lui-meme · sa periode repart et la facture l'attend.
+     *
+     * <p>Un abonnement a renouvellement manuel prend fin a la date annoncee. Le client etait
+     * prevenu a J-7, J-3 et le jour meme, mais n'avait aucun moyen d'agir depuis son espace : il
+     * fallait appeler ou passer a l'accueil. Beaucoup laissaient leur abonnement tomber faute de
+     * geste possible au moment ou ils y pensaient.</p>
+     *
+     * <p>Le renouvellement n'est ouvert que dans la fenetre des avis · reconduire un abonnement
+     * qui court encore un mois avancerait sa periode sans raison, et le client paierait une
+     * echeance qu'il ne devait pas encore.</p>
+     *
+     * <p>La facture est emise par le renouvellement lui-meme, comme pour une reconduction
+     * automatique · elle est rendue ici pour que l'ecran propose de la regler aussitot.</p>
+     */
+    @Transactional
+    public ClientSubscriptionRenewalResponse renewSubscription(Member member, String subscriptionNumber) {
+        SubscriptionResponse current = subscriptionService.get(subscriptionNumber);
+        verifySubscriptionOwnership(member, current);
+        assertRenewable(current);
+
+        SubscriptionResponse renewed = subscriptionService.renew(subscriptionNumber);
+        BillingDocumentResponse invoice = null;
+        try {
+            invoice = findPayableInvoice("SUBSCRIPTION", subscriptionNumber, renewed.currency());
+        } catch (RuntimeException ex) {
+            // Un renouvellement sans rien a facturer est possible · periode offerte, avoir impute.
+            // La periode est reconduite, c'est l'essentiel : on ne fait pas echouer pour autant.
+            log.info("Abonnement {} · renouvelle sans facture a regler ({})", subscriptionNumber, ex.getMessage());
+        }
+        return new ClientSubscriptionRenewalResponse(renewed, invoice);
+    }
+
+    /** La fenetre de renouvellement · celle des avis de fin, pas avant. */
+    private void assertRenewable(SubscriptionResponse subscription) {
+        if (subscription.status() != SubscriptionStatus.ACTIVE) {
+            throw new BadRequestException("Seul un abonnement actif peut être renouvelé. Le vôtre est "
+                    + subscription.status() + ".");
+        }
+        LocalDate periodEnd = subscription.currentPeriodEnd();
+        if (periodEnd == null) {
+            throw new BadRequestException("Cet abonnement n'a pas de période à reconduire.");
+        }
+        LocalDate opensOn = periodEnd.minusDays(RENEWAL_WINDOW_DAYS);
+        if (LocalDate.now().isBefore(opensOn)) {
+            throw new BadRequestException("Votre abonnement court jusqu'au " + periodEnd
+                    + ". Le renouvellement sera possible à partir du " + opensOn + ".");
+        }
     }
 
     // ── Pass payment ────────────────────────────────────────────────────

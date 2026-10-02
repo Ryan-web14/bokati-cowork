@@ -57,6 +57,23 @@ reconduction automatique (`auto_renew = false`), ou une cloture de fin de period
 renouvelle · lui annoncer une fin serait faux. Quand sa reconduction echoue, c'est le filet du
 defaut 2 ci-dessous qui le rattrape.
 
+**Le client renouvelle depuis son espace.**
+
+```http
+POST /api/v1/client/subscriptions/{subscriptionNumber}/renew
+```
+
+Ouvert dans les **sept jours** qui précèdent la fin, c'est-à-dire à partir du premier avis · avant,
+un `400` dit à quelle date ce sera possible. Reconduire un abonnement qui court encore un mois
+avancerait sa période sans raison, et le client paierait une échéance qu'il ne devait pas encore.
+
+La réponse porte la période reconduite **et la facture de renouvellement**, pour que l'écran
+propose de la régler dans le même mouvement. Sans elle, le client devait aller la chercher dans sa
+liste de factures, et beaucoup repartaient sans payer.
+
+Les avis de J-7, J-3 et du jour même deviennent donc actionnables : ils disent quoi faire, et le
+client peut le faire.
+
 **Renouveler emet une facture** · c'est le renouvellement qui facture, jamais l'avis. Les avis
 disent quoi faire, ils n'engagent rien : personne ne recoit de facture pour une periode qu'il n'a
 pas demandee. `PATCH /subscriptions/{n}/renew` fait avancer la periode et emet la facture de
@@ -92,13 +109,16 @@ Il part de `findEndedPeriodsStillOpen` : les abonnements encore en cours, `auto_
 `cancel_at_period_end = false`, dont `current_period_end` est derrière nous. Les deux balayages ne
 se recouvrent donc jamais.
 
-Les délais sont ceux que la politique porte déjà · aucune configuration nouvelle :
+Le délai est court, et volontairement asymétrique avec les abonnements qui prennent fin : la
+reconduction a échoué de notre fait, l'abonné n'y est pour rien, il ne doit pas être fermé du jour
+au lendemain · mais il ne doit pas non plus bénéficier de semaines de service gratuit.
 
 | Retard après la fin de période | Ce qui se passe |
 |---|---|
-| jusqu'à `gracePeriodDays` (7 j) | Rien · le client a le temps de régler |
-| au-delà de `gracePeriodDays` | Entrée en `GRACE_PERIOD`, le client est prévenu |
-| au-delà de `gracePeriodDays + suspensionAfterGraceDays` (21 j) | `EXPIRED`, avec le motif et le nombre de jours de retard |
+| dès le lendemain | Entrée en `GRACE_PERIOD`, le client est prévenu |
+| au-delà de `gracePeriodDays` (7 j) | `EXPIRED`, avec le motif et le nombre de jours de retard |
+
+`gracePeriodDays` est un champ de la politique · le délai se règle en base, sans déploiement.
 
 Un règlement ou un renouvellement entre-temps fait avancer la période, et l'abonnement sort du
 balayage de lui-même. Le service revérifie la date **dans sa propre transaction** avant d'écrire,
@@ -157,7 +177,7 @@ abonnements de cette liste sont traités selon leur nature :
 - **sans reconduction automatique** · leur fin est déjà passée, ils passent directement
   `CANCELLED` avec l'avis de fin. C'est le cas de celui du 07/09. Les avis de J-7 et J-3 ne
   rattrapent pas le passé · il n'y a plus rien à annoncer, la fin est derrière nous ;
-- **en reconduction automatique** · ils entrent en tolérance puis passent `EXPIRED` au-delà de 21
+- **en reconduction automatique** · ils entrent en tolérance puis passent `EXPIRED` au-delà de 7
   jours de retard.
 
 C'est voulu, mais ce n'est pas anodin : ces abonnements n'ont jamais été facturés, donc le client

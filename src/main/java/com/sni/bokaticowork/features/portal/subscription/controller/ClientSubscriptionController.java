@@ -4,6 +4,7 @@ import com.sni.bokaticowork.features.portal.wallet.dto.ClientWalletPinRequest;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.portal.subscription.dto.response.ClientSubscriptionRenewalResponse;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
@@ -68,6 +69,19 @@ public class ClientSubscriptionController {
             @Valid @RequestBody(required = false) ClientCancelSubscriptionRequest request) {
         Member member = clientContextService.getAuthenticatedMember();
         return ResponseEntity.ok(clientSubscriptionService.cancelSubscription(member, subscriptionNumber, request));
+    }
+
+    /**
+     * Renouveler depuis son espace · la periode repart et la facture est rendue avec.
+     *
+     * <p>Ouvert dans les sept jours qui precedent la fin, c'est-a-dire a partir du premier avis.
+     * Avant, un {@code 400} dit a quelle date le renouvellement sera possible.</p>
+     */
+    @PostMapping("/{subscriptionNumber}/renew")
+    public ResponseEntity<ClientSubscriptionRenewalResponse> renewSubscription(
+            @PathVariable String subscriptionNumber) {
+        Member member = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(clientSubscriptionService.renewSubscription(member, subscriptionNumber));
     }
 
     @GetMapping("/{subscriptionNumber}/entitlements")
