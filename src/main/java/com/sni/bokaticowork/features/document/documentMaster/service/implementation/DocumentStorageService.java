@@ -32,8 +32,8 @@ public class DocumentStorageService {
             @Value("${app.document.storage.root-path:storage/documents}") String rootPath,
             @Value("${app.document.storage.minio.endpoint:http://localhost:9000}") String minioEndpoint,
             @Value("${app.document.storage.minio.bucket:bokati-documents}") String minioBucket,
-            @Value("${app.document.storage.minio.access-key:minioadmin}") String minioAccessKey,
-            @Value("${app.document.storage.minio.secret-key:minioadmin}") String minioSecretKey,
+            @Value("${app.document.storage.minio.access-key:}") String minioAccessKey,
+            @Value("${app.document.storage.minio.secret-key:}") String minioSecretKey,
             @Value("${app.document.storage.minio.region:}") String minioRegion
     ) {
         this.provider = normalizeProvider(provider);

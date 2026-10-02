@@ -30,7 +30,15 @@ public class JWTService {
     private static final String TOKEN_TYPE_VERIFICATION = "verification";
     private static final int MIN_HMAC_KEY_BYTES = 32;
 
-    @Value("${app.security.jwt.secret:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}")
+    /**
+     * Le secret de signature · aucune valeur par defaut, volontairement.
+     *
+     * <p>Un secret ecrit en dur ici valait pour toute instance qui ne le surchargeait pas,
+     * et quiconque avait lu le depot pouvait forger un jeton avec les roles de son choix.
+     * Sans valeur de repli, une instance mal configuree ne demarre pas · c est le seul
+     * comportement acceptable pour une cle de signature.</p>
+     */
+    @Value("${app.security.jwt.secret}")
     private String secret;
 
     //Remettre 900000 millisecond

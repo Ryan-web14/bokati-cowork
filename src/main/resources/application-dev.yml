@@ -43,9 +43,9 @@ spring:
   mail:
     microsoft:
       graph:
-        client-id: ${MICROSOFT_GRAPH_CLIENT_ID:80eab8f6-815f-4e41-bcc5-1a08e6191949}
-        client-secret: ${MICROSOFT_GRAPH_CLIENT_SECRET:jpj8Q~j4pgjkI4DBLCIBN_r3GbCoI7IVEoemfaiE}
-        tenant-id: ${MICROSOFT_GRAPH_TENANT_ID:e1006690-4205-4c71-9f74-1b9fdcbdcaf2}
+        client-id: ${MICROSOFT_GRAPH_CLIENT_ID}
+        client-secret: ${MICROSOFT_GRAPH_CLIENT_SECRET}
+        tenant-id: ${MICROSOFT_GRAPH_TENANT_ID}
         sender-email: ${MICROSOFT_SENDER_EMAIL:no-reply@elleaose.com}
 
   rabbitmq:
@@ -165,8 +165,8 @@ app:
       minio:
         endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
         bucket: ${MINIO_BUCKET:bokati-documents}
-        access-key: ${MINIO_ACCESS_KEY:minioadmin}
-        secret-key: ${MINIO_SECRET_KEY:minioadmin}
+        access-key: ${MINIO_ACCESS_KEY}
+        secret-key: ${MINIO_SECRET_KEY}
 
     worker:
       enabled: ${DOCUMENT_WORKER_ENABLED:true}
@@ -218,7 +218,7 @@ app:
         window-seconds: ${RATE_LIMIT_ADMIN_WINDOW_SECONDS:60}
 
     jwt:
-      secret: ${APP_JWT_SECRET:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}
+      secret: ${APP_JWT_SECRET}
       access-token-expiration-ms: ${APP_JWT_ACCESS_EXPIRATION_MS:604800000}
       refresh-token-expiration-ms: ${APP_JWT_REFRESH_EXPIRATION_MS:604800000}
       verification-token-expiration-ms: ${APP_JWT_VERIFICATION_EXPIRATION_MS:604800000}
@@ -230,4 +230,4 @@ app:
       expiration-ms: ${APP_PASSWORD_RESET_EXPIRATION_MS:900000}
 
     token-hash:
-      secret: ${TOKEN_HASH_SECRET:K8sL2vQ9xM4pZ7tN1cR6aB3eY5uH0jD}
+      secret: ${TOKEN_HASH_SECRET}

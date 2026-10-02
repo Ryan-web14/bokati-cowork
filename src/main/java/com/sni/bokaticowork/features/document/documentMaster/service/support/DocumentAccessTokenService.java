@@ -23,8 +23,14 @@ public class DocumentAccessTokenService {
     private static final Base64.Encoder B64 = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder B64D = Base64.getUrlDecoder();
 
-    // Falls back to the JWT secret so no new env var is required in existing deployments.
-    @Value("${app.documents.preview-token.secret:${app.security.jwt.secret:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}}")
+    /**
+     * Repli sur le secret JWT quand aucune cle propre n'est configuree.
+     *
+     * <p>Le repli ne porte plus de valeur en dur · une instance sans secret ne demarre pas. Une
+     * cle propre reste preferable : signer deux choses differentes avec la meme cle fait qu'une
+     * fuite de l'une compromet l'autre.</p>
+     */
+    @Value("${app.documents.preview-token.secret:${app.security.jwt.secret}}")
     private String secret;
 
     @Value("${app.documents.preview-token.ttl-seconds:300}")
