@@ -123,8 +123,22 @@ au lendemain · mais il ne doit pas non plus bénéficier de semaines de service
 notions n'ont rien à voir, et un chiffre qui convient à l'une convient mal à l'autre. Les deux se
 règlent en base, sans déploiement, par `PUT /subscription-lifecycle/policy`.
 
-`gracePeriodDays` vaut désormais **1 jour** : une échéance impayée entre en tolérance dès le
-lendemain, pas une semaine plus tard.
+`gracePeriodDays` vaut désormais **1 jour** et `suspensionAfterGraceDays` **3 jours** : une
+échéance impayée entre en tolérance dès le lendemain, et les droits se ferment trois jours plus
+tard. Les quatorze jours d'origine laissaient deux semaines de service sur une facture impayée ·
+avec une tolérance qui s'ouvre dès le lendemain, le rythme des deux réglages n'allait plus
+ensemble.
+
+### Les délais en place
+
+| Situation | Délai | Champ |
+|---|---|---|
+| Fin d'abonnement annoncée | J-7, J-3, J0, puis `CANCELLED` à J+1 | en dur · c'est le calendrier |
+| Échéance impayée → tolérance | 1 jour | `gracePeriodDays` |
+| Tolérance → suspension | 3 jours | `suspensionAfterGraceDays` |
+| Reconduction auto en échec → `EXPIRED` | 7 jours | `renewalExpiryDays` |
+
+Les trois champs se règlent par `PUT /subscription-lifecycle/policy`, en base, sans déploiement.
 
 Un règlement ou un renouvellement entre-temps fait avancer la période, et l'abonnement sort du
 balayage de lui-même. Le service revérifie la date **dans sa propre transaction** avant d'écrire,
@@ -201,6 +215,7 @@ ORDER BY current_period_end;
 - `V251` (dev) / `V247` (prod) · les trois gabarits de courriel.
 - `V252` (dev) / `V248` (prod) · `subscription_policy.renewal_expiry_days` (7), et
   `grace_period_days` ramené à 1.
+- `V253` (dev) / `V249` (prod) · `suspension_after_grace_days` ramené à 3.
 
 ## Rattrapage
 

@@ -75,14 +75,27 @@ public class SubscriptionPolicy {
     private BigDecimal freezeFeePercent = BigDecimal.ZERO;
 
     /** Jours apres une echeance impayee avant d'entrer en tolerance. */
+    /**
+     * Jours avant qu'une echeance impayee entre en tolerance · un seul.
+     *
+     * <p>Une echeance qui n'est pas reglee le jour dit se signale des le lendemain. Attendre une
+     * semaine pour le dire ne servait personne : ni le client, qui l'apprenait trop tard, ni la
+     * maison, qui laissait courir des droits sans contrepartie.</p>
+     */
     @Column(name = "grace_period_days", nullable = false)
     @Builder.Default
     private Integer gracePeriodDays = 1;
 
-    /** Jours de tolerance avant suspension. */
+    /**
+     * Jours de tolerance avant suspension · trois.
+     *
+     * <p>Avec une tolerance qui s'ouvre des le lendemain, deux semaines de suspension laissaient
+     * quinze jours de droits ouverts sur une facture impayee · le rythme des deux reglages n'allait
+     * plus ensemble.</p>
+     */
     @Column(name = "suspension_after_grace_days", nullable = false)
     @Builder.Default
-    private Integer suspensionAfterGraceDays = 14;
+    private Integer suspensionAfterGraceDays = 3;
 
     /**
      * Combien de jours un abonnement survit a une reconduction automatique qui a echoue.
