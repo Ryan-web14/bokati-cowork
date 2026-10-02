@@ -211,10 +211,9 @@
     <table class="lines">
         <thead>
             <tr>
-                <th class="l" style="width:44%">Désignation</th>
+                <th class="l" style="width:54%">Désignation</th>
                 <th style="width:12%">Quantité</th>
                 <th style="width:14%">P.U. HT</th>
-                <th style="width:10%">TVA</th>
                 <th style="width:20%">Montant HT</th>
             </tr>
         </thead>
@@ -223,6 +222,10 @@
                 <td class="l">
                     <div class="line-name">
                         <span class="line-cat" th:if="${line.category()}" th:text="${line.category()}">Catégorie</span>
+                        <!-- La colonne « TVA » repetait le meme taux sur chaque ligne alors que le
+                             pied de document le porte deja. Seule l'exoneration apprend quelque
+                             chose, et elle se dit ici. -->
+                        <span class="line-cat" th:if="${line.taxable() != null and !line.taxable()}">Exonéré</span>
                         <span th:text="${line.description()}">Prestation</span>
                     </div>
                     <div class="line-sub" th:if="${line.detailedDescription()}" th:text="${line.detailedDescription()}"></div>
@@ -232,8 +235,10 @@
                     <span th:text="${fmt.quantity(line.quantity())}">1</span><span
                           class="unit" th:if="${line.unit()}" th:text="${' ' + line.unit()}"></span>
                 </td>
-                <td class="num" th:text="${fmt.amount(line.unitPrice())}">0</td>
-                <td class="num" th:text="${line.taxable() != null and !line.taxable() ? 'Exonéré' : fmt.percent(line.vatRate())}">18 %</td>
+                <!-- Deduit du brut HT · le prix saisi peut etre TTC, auquel cas il affichait le
+                     prix total de la prestation dans une colonne HT. Meme correction que sur la
+                     facture, dont l'avoir reprend les lignes. -->
+                <td class="num" th:text="${fmt.amount(fmt.unitPriceHt(line))}">0</td>
                 <td class="num net" th:text="${fmt.amount(fmt.netHt(line))}">0</td>
             </tr>
         </tbody>

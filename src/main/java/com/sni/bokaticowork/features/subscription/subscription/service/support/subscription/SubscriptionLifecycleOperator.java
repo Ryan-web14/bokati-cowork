@@ -36,6 +36,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -68,6 +70,8 @@ public class SubscriptionLifecycleOperator {
     private final @Lazy com.sni.bokaticowork.features.subscription.derivation.service.PlanDerivationService derivationService;
     private final @Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionFreezeService freezeService;
     private final @Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionDirectDebitService directDebitService;
+    /** Soi-meme, pour que chaque abonnement d'un balayage obtienne sa propre transaction. */
+    private final @Lazy SubscriptionLifecycleOperator self;
 
 
     public void activate(Subscription subscription, String reason, String actor) {
@@ -219,20 +223,116 @@ public class SubscriptionLifecycleOperator {
         renewActive(subscription);
     }
 
+    /**
+     * Les echeances du jour · un abonnement qui echoue n'empeche plus les autres d'etre factures.
+     *
+     * <p>Le balayage s'executait dans une transaction unique et sans rattrapage par abonnement :
+     * un seul abonnement en erreur annulait la passe entiere, y compris les renouvellements deja
+     * ecrits. Le worker consignait l'echec et recommencait un quart d'heure plus tard sur la meme
+     * liste, avec le meme abonnement en tete et le meme resultat · plus rien n'etait facture, pour
+     * personne, indefiniment.</p>
+     *
+     * <p>Chaque abonnement a desormais sa propre transaction. Celui qui echoue est consigne avec
+     * son numero · c'est par la qu'on le retrouve · et les suivants passent.</p>
+     */
     public int renewDueSubscriptions() {
         List<Subscription> subscriptions = subscriptionRepository.findAllByStatusAndNextBillingDateLessThanEqualAndAutoRenewTrue(
                 SubscriptionStatus.ACTIVE.name(),
                 LocalDate.now()
         );
-        subscriptions.forEach(this::renewActive);
-        return subscriptions.size();
+        int renewed = 0;
+        int failed = 0;
+        for (Subscription subscription : subscriptions) {
+            try {
+                self.renewOne(subscription.getId());
+                renewed++;
+            } catch (Exception ex) {
+                failed++;
+                log.error("Abonnement {} · renouvellement impossible, les suivants continuent",
+                        subscription.getSubscriptionNumber(), ex);
+            }
+        }
+        if (failed > 0) {
+            log.warn("Echeances d'abonnement · {} facture(s), {} en echec a reprendre a la main", renewed, failed);
+        }
+        return renewed;
     }
 
+    /**
+     * Regle en retard · la periode repart du jour du paiement, pas de l'echeance manquee.
+     *
+     * <p>Le renouvellement avance la periode des qu'il facture : elle commence donc le lendemain
+     * de la periode precedente, avant tout reglement. Quand le client paie dix jours plus tard, il
+     * se retrouvait avec une periode commencee dix jours plus tot · il payait un mois et en
+     * recevait vingt jours. Personne ne le lui avait annonce, et personne ne le voyait.</p>
+     *
+     * <p>La periode est donc reancree sur le jour du reglement. Le client recoit la duree qu'il a
+     * payee, et l'echeance suivante se decale d'autant.</p>
+     *
+     * <p>Un reglement a l'heure ne change rien · seule une date de paiement posterieure au debut
+     * de periode, c'est-a-dire a l'echeance, declenche le recalage.</p>
+     */
+    @Transactional
+    public boolean realignOnLatePayment(Subscription subscription, LocalDate paidOn) {
+        LocalDate periodStart = subscription.getCurrentPeriodStart();
+        if (periodStart == null || paidOn == null || !paidOn.isAfter(periodStart)) {
+            return false;
+        }
+        LocalDate newEnd = periodCalculator.periodEnd(paidOn, subscription.getBillingCycle());
+        if (newEnd == null) {
+            return false;
+        }
+        LocalDate previousEnd = subscription.getCurrentPeriodEnd();
+        subscription.setCurrentPeriodStart(paidOn);
+        subscription.setCurrentPeriodEnd(newEnd);
+        subscription.setNextBillingDate(periodCalculator.nextBillingDate(paidOn, subscription.getBillingCycle()));
+        // La periode repart · les avis de fin deja envoyes concernaient l'ancienne.
+        subscription.setEndNoticeStage(null);
+        subscriptionRepository.save(subscription);
+        eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED,
+                "{\"realignedOn\":\"" + paidOn + "\",\"previousPeriodEnd\":\""
+                        + (previousEnd == null ? "" : previousEnd) + "\",\"newPeriodEnd\":\"" + newEnd + "\"}");
+        log.info("Abonnement {} · regle le {}, periode recalee du {} au {}",
+                subscription.getSubscriptionNumber(), paidOn, paidOn, newEnd);
+        return true;
+    }
+
+    /** Un abonnement, sa propre transaction · relu dedans, pour ne pas ecrire depuis un detache. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void renewOne(Long subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
+        if (subscription == null || subscription.getStatus() != SubscriptionStatus.ACTIVE) {
+            return;
+        }
+        renewActive(subscription);
+    }
+
+    /** Meme regle que pour les echeances · un abonnement en erreur ne retient pas les autres. */
     public int cancelEndedSubscriptions() {
         List<Subscription> subscriptions = subscriptionRepository.findAllByCancelAtPeriodEndTrueAndCurrentPeriodEndLessThanEqualAndStatus(
                 LocalDate.now(),
                 SubscriptionStatus.ACTIVE.name()
         );
+        int cancelled = 0;
+        for (Subscription subscription : subscriptions) {
+            try {
+                self.cancelAtPeriodEnd(subscription.getId());
+                cancelled++;
+            } catch (Exception ex) {
+                log.error("Abonnement {} · cloture de fin de periode impossible, les suivants continuent",
+                        subscription.getSubscriptionNumber(), ex);
+            }
+        }
+        return cancelled;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void cancelAtPeriodEnd(Long subscriptionId) {
+        Subscription found = subscriptionRepository.findById(subscriptionId).orElse(null);
+        if (found == null || found.getStatus() != SubscriptionStatus.ACTIVE) {
+            return;
+        }
+        List<Subscription> subscriptions = List.of(found);
         subscriptions.forEach(subscription -> {
             String reason = "Cancellation at period end";
             statusManager.changeStatus(subscription, SubscriptionStatus.CANCELLED, reason, "SYSTEM");
@@ -249,7 +349,6 @@ public class SubscriptionLifecycleOperator {
                         saved.getSubscriptionNumber(), ex);
             }
         });
-        return subscriptions.size();
     }
 
     public int repairActiveSubscriptionsWithoutGrants() {
@@ -275,6 +374,8 @@ public class SubscriptionLifecycleOperator {
         subscription.setCurrentPeriodStart(newStart);
         subscription.setCurrentPeriodEnd(newEnd);
         subscription.setNextBillingDate(nextBilling);
+        // La periode repart · les avis de fin deja envoyes ne concernaient que l'ancienne.
+        subscription.setEndNoticeStage(null);
         java.math.BigDecimal recurringAmount = subscription.getSubtotalAmount().add(subscription.getTaxAmount());
         var invoice = billingSupport.createBillableItem(subscription, "SUBSCRIPTION_RENEWAL", "Subscription renewal", recurringAmount);
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.ACTIVE);

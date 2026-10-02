@@ -75,14 +75,41 @@ public class SubscriptionPolicy {
     private BigDecimal freezeFeePercent = BigDecimal.ZERO;
 
     /** Jours apres une echeance impayee avant d'entrer en tolerance. */
+    /**
+     * Jours avant qu'une echeance impayee entre en tolerance · un seul.
+     *
+     * <p>Une echeance qui n'est pas reglee le jour dit se signale des le lendemain. Attendre une
+     * semaine pour le dire ne servait personne : ni le client, qui l'apprenait trop tard, ni la
+     * maison, qui laissait courir des droits sans contrepartie.</p>
+     */
     @Column(name = "grace_period_days", nullable = false)
     @Builder.Default
-    private Integer gracePeriodDays = 7;
+    private Integer gracePeriodDays = 1;
 
-    /** Jours de tolerance avant suspension. */
+    /**
+     * Jours de tolerance avant suspension · trois.
+     *
+     * <p>Avec une tolerance qui s'ouvre des le lendemain, deux semaines de suspension laissaient
+     * quinze jours de droits ouverts sur une facture impayee · le rythme des deux reglages n'allait
+     * plus ensemble.</p>
+     */
     @Column(name = "suspension_after_grace_days", nullable = false)
     @Builder.Default
-    private Integer suspensionAfterGraceDays = 14;
+    private Integer suspensionAfterGraceDays = 3;
+
+    /**
+     * Combien de jours un abonnement survit a une reconduction automatique qui a echoue.
+     *
+     * <p>Ce delai emprunta un temps {@code gracePeriodDays}, qui sert a decider quand une
+     * echeance impayee entre en tolerance. Les deux notions n ont rien a voir · un chiffre qui
+     * convient a l une convient mal a l autre. Celui-ci est le sien.</p>
+     *
+     * <p>La reconduction a echoue de notre fait, l abonne n y est pour rien · il est prevenu des
+     * le lendemain de la fin de periode, et ferme au bout de ce delai.</p>
+     */
+    @Column(name = "renewal_expiry_days", nullable = false)
+    @Builder.Default
+    private Integer renewalExpiryDays = 7;
 
     @Column(name = "quote_validity_days", nullable = false)
     @Builder.Default

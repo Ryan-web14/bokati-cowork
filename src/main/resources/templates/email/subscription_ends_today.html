@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Fin d abonnement ce soir')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre abonnement prend fin ce soir à minuit.'}">Votre abonnement prend fin ce soir à minuit.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('alert')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Votre abonnement prend fin ce soir</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, votre abonnement
+        <strong th:text="${subscriptionNumber}">référence</strong> prend fin
+        <strong>ce soir à minuit</strong>. Vos accès resteront ouverts jusque-là.
+      </div>
+
+      <div class="section-lbl">Abonnement</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Référence</td>
+          <td class="r-val mono" th:text="${subscriptionNumber}">Référence</td>
+        </tr>
+        <tr th:if="${planName}">
+          <td class="r-key">Formule</td>
+          <td class="r-val" th:text="${planName}">Formule</td>
+        </tr>
+        <tr>
+          <td class="r-key">Dernier jour</td>
+          <td class="r-val" th:text="${periodEnd}">Dernier jour</td>
+        </tr>
+      </table>
+
+      <div class="em-note alert">
+        Si vous souhaitez continuer, demandez le renouvellement aujourd'hui · une facture vous sera
+        adressée. Sans renouvellement, l'abonnement sera clos demain.
+      </div>
+
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

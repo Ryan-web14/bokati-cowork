@@ -108,6 +108,52 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findAllOpenOnPlanVersion(@Param("planVersionId") Long planVersionId);
 
     /**
+     * Les abonnements qui vont reellement prendre fin · ceux qu'il faut prevenir.
+     *
+     * <p>Un abonnement en reconduction automatique ne prend pas fin, il se renouvelle : lui
+     * annoncer une fin serait faux. Ne sont retenus que ceux qui s'arretent · pas de reconduction
+     * automatique, ou une cloture de fin de periode demandee.</p>
+     *
+     * <p>La fenetre va jusqu'a {@code horizon} inclus, et remonte au-dela de la date du jour pour
+     * attraper ceux dont la fin est deja passee · c'est le lendemain qu'ils se cloturent.</p>
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM subscription
+            WHERE status IN ('ACTIVE', 'TRIALING', 'GRACE_PERIOD', 'PAST_DUE')
+              AND current_period_end IS NOT NULL
+              AND current_period_end <= :horizon
+              AND (auto_renew = false OR cancel_at_period_end = true)
+            ORDER BY current_period_end ASC
+            """)
+    List<Subscription> findEndingSubscriptions(@Param("horizon") LocalDate horizon);
+
+    /**
+     * Les abonnements dont la periode est echue et que rien n'a fait avancer.
+     *
+     * <p>Trois portes menaient a cet etat, et aucune ne se refermait : le renouvellement ne prend
+     * que les abonnements en reconduction automatique, la cloture de fin de periode ne prend que
+     * ceux qui l'avaient demandee, et la tolerance ne voit que ceux qui portent une facture de
+     * renouvellement impayee. Un abonnement sans reconduction, ou dont le renouvellement a
+     * echoue, n'etait donc ni facture, ni clos · il restait ACTIVE indefiniment, droits ouverts,
+     * des mois apres la fin de sa periode.</p>
+     *
+     * <p>On ne retient que les abonnements encore en cours dont la periode est derriere nous. Un
+     * preavis de resiliation en cours est laisse tranquille : il a sa propre date d'effet.</p>
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM subscription
+            WHERE status IN ('ACTIVE', 'TRIALING', 'GRACE_PERIOD', 'PAST_DUE')
+              AND current_period_end IS NOT NULL
+              AND current_period_end < :today
+              AND auto_renew = true
+              AND cancel_at_period_end = false
+            ORDER BY current_period_end ASC
+            """)
+    List<Subscription> findEndedPeriodsStillOpen(@Param("today") LocalDate today);
+
+    /**
      * Les abonnements actifs dont une echeance de renouvellement est impayee depuis plus de
      * {@code unpaidSince} · candidats a la tolerance avant suspension.
      */
@@ -118,7 +164,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
             JOIN billing_document bd ON bd.id = bi.invoice_id
             WHERE s.status = 'ACTIVE'
               AND bd.balance_due > 0
-              AND bd.status IN ('ISSUED', 'SENT', 'PARTIALLY_PAID', 'OVERDUE')
+              AND bd.status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
               AND bi.created_at < :unpaidSince
             """)
     List<Subscription> findActiveWithRenewalUnpaidSince(@Param("unpaidSince") Instant unpaidSince);

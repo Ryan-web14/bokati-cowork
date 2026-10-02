@@ -26,6 +26,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.s
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -147,12 +148,26 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         return billingSupport.getBillingSchedule(getForService(subscriptionNumber));
     }
 
+    /**
+     * Les balayages ne portent pas de transaction · chaque abonnement a la sienne.
+     *
+     * <p>La classe est transactionnelle, ce qui enfermait tout le balayage dans une seule
+     * transaction : un abonnement en erreur annulait les renouvellements deja ecrits. Sans
+     * transaction ici, l'echec d'un abonnement ne peut plus defaire celui du voisin.</p>
+     */
     @Override
+    public boolean realignOnLatePayment(String subscriptionNumber, java.time.LocalDate paidOn) {
+        return lifecycleOperator.realignOnLatePayment(getForService(subscriptionNumber), paidOn);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public int renewDueSubscriptions() {
         return lifecycleOperator.renewDueSubscriptions();
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public int cancelEndedSubscriptions() {
         return lifecycleOperator.cancelEndedSubscriptions();
     }

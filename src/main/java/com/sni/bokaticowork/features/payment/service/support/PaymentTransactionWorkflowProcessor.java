@@ -29,6 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
@@ -151,6 +154,13 @@ public class PaymentTransactionWorkflowProcessor {
             if (subscription.getStatus() == SubscriptionStatus.GRACE_PERIOD) {
                 // Un paiement pendant la tolerance rend les droits sans intervention
                 graceService.exit(subscription, "Paiement " + transaction.getTransactionNumber());
+                realignIfPaidLate(transaction, subscription);
+                return;
+            }
+            if (subscription.getStatus() == SubscriptionStatus.ACTIVE) {
+                // Deja actif · seule la periode peut avoir a bouger, si l'echeance a ete payee
+                // en retard. La duree payee doit etre la duree recue.
+                realignIfPaidLate(transaction, subscription);
                 return;
             }
             if (subscription.getStatus() != SubscriptionStatus.PENDING_ACTIVATION) {
@@ -236,6 +246,31 @@ public class PaymentTransactionWorkflowProcessor {
             }
             case "BOOKING" -> bookingService.systemCancel(source.code(), reason);
             default -> log.debug("No asynchronous refund workflow configured for source {} {}", source.type(), source.code());
+        }
+    }
+
+    /**
+     * Une echeance payee en retard fait repartir la periode du jour du reglement.
+     *
+     * <p>Le renouvellement avance la periode des qu'il facture · un client qui paie dix jours plus
+     * tard recevait donc une periode commencee dix jours plus tot. Il payait un mois et en
+     * recevait vingt jours.</p>
+     *
+     * <p>Seul un reglement complet recale la periode : sur un paiement partiel, l'echeance n'est
+     * pas honoree et il n'y a rien a reancrer.</p>
+     */
+    private void realignIfPaidLate(PaymentTransaction transaction, Subscription subscription) {
+        try {
+            if (!isSubscriptionPaymentSettled(transaction, subscription)) {
+                return;
+            }
+            Instant paidAt = transaction.getPaidAt() == null ? Instant.now() : transaction.getPaidAt();
+            LocalDate paidOn = LocalDate.ofInstant(paidAt, ZoneId.systemDefault());
+            subscriptionService.realignOnLatePayment(subscription.getSubscriptionNumber(), paidOn);
+        } catch (Exception ex) {
+            // L'argent est recu · un recalage impossible ne doit pas defaire l'encaissement.
+            log.warn("Abonnement {} · recalage de periode apres paiement {} impossible",
+                    subscription.getSubscriptionNumber(), transaction.getTransactionNumber(), ex);
         }
     }
 
