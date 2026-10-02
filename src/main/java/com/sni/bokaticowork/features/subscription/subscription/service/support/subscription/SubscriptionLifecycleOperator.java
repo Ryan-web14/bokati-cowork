@@ -335,6 +335,8 @@ public class SubscriptionLifecycleOperator {
         subscription.setCurrentPeriodStart(newStart);
         subscription.setCurrentPeriodEnd(newEnd);
         subscription.setNextBillingDate(nextBilling);
+        // La periode repart · les avis de fin deja envoyes ne concernaient que l'ancienne.
+        subscription.setEndNoticeStage(null);
         java.math.BigDecimal recurringAmount = subscription.getSubtotalAmount().add(subscription.getTaxAmount());
         var invoice = billingSupport.createBillableItem(subscription, "SUBSCRIPTION_RENEWAL", "Subscription renewal", recurringAmount);
         billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.ACTIVE);

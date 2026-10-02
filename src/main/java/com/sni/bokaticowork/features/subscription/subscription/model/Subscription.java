@@ -96,6 +96,15 @@ public class Subscription {
     @Column(name = "next_billing_date")
     private LocalDate nextBillingDate;
 
+    /**
+     * L'avis de fin le plus urgent deja envoye · 7, 3, puis 0 le jour de la fin.
+     *
+     * <p>Le balayage passe toutes les heures : sans ce marqueur, chaque passe renverrait le meme
+     * avis. Un renouvellement le remet a nul, la periode suivante repart de zero.</p>
+     */
+    @Column(name = "end_notice_stage")
+    private Integer endNoticeStage;
+
     @Column(name = "trial_start")
     private LocalDate trialStart;
 

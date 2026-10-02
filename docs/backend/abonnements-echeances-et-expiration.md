@@ -39,7 +39,35 @@ numéro** avant de passer au suivant. Le compte rendu ne compte plus que ce qui 
 
 `cancelEndedSubscriptions()` avait la même structure et reçoit le même traitement.
 
-## Défaut 2 · rien ne fermait une période échue
+## Le calendrier de fin d'abonnement
+
+Un abonnement qui ne se reconduit pas tout seul s'arrete a la fin de sa periode, et l'abonne doit
+le savoir avant. `SubscriptionEndNoticeService`, du point de vue du client :
+
+| Quand | Ce qui part | Ce que dit le message |
+|---|---|---|
+| **J-7** | `SUBSCRIPTION_ENDING_SOON` | « Votre abonnement se termine le … », et quoi faire pour continuer |
+| **J-3** | `SUBSCRIPTION_ENDING_SOON` | Le rappel |
+| **Le jour meme** | `SUBSCRIPTION_ENDS_TODAY` | « Il prend fin ce soir a minuit » |
+| **Le lendemain** | `SUBSCRIPTION_ENDED` | L'abonnement passe `CANCELLED`, les acces sont clos |
+
+**Qui recoit ces avis** · uniquement les abonnements qui prennent reellement fin : pas de
+reconduction automatique (`auto_renew = false`), ou une cloture de fin de periode demandee
+(`cancel_at_period_end = true`). Un abonnement en reconduction automatique ne prend pas fin, il se
+renouvelle · lui annoncer une fin serait faux. Quand sa reconduction echoue, c'est le filet du
+defaut 2 ci-dessous qui le rattrape.
+
+**Renouveler emet une facture** · c'est le renouvellement qui facture, jamais l'avis. Les avis
+disent quoi faire, ils n'engagent rien : personne ne recoit de facture pour une periode qu'il n'a
+pas demandee. `PATCH /subscriptions/{n}/renew` fait avancer la periode et emet la facture de
+renouvellement, comme pour une reconduction automatique.
+
+**Un avis ne part qu'une fois.** Le balayage passe toutes les heures ; `subscription.end_notice_stage`
+retient le jalon le plus urgent deja envoye (7, puis 3, puis 0). Un renouvellement le remet a nul,
+la periode suivante repart de zero. Un abonnement vu pour la premiere fois a deux jours de sa fin
+recoit l'avis de J-3, pas la serie des trois d'un coup.
+
+## Défaut 2 · le filet des reconductions automatiques en échec
 
 Trois chemins mènent à la fin d'une période. Aucun ne se refermait :
 
@@ -55,9 +83,14 @@ sans qu'aucun code ne l'attribue jamais.
 Net : période terminée + pas de reconduction + pas de `cancelAtPeriodEnd` = `ACTIVE` pour toujours.
 C'est exactement l'abonnement du 07/09.
 
-**Corrigé** · `SubscriptionExpiryService`, branché dans `SubscriptionLifecycleWorker` juste après la
-tolérance. Il part de `findEndedPeriodsStillOpen` : tout abonnement encore en cours
-(`ACTIVE`, `TRIALING`, `GRACE_PERIOD`, `PAST_DUE`) dont `current_period_end` est derrière nous.
+**Corrigé** · le calendrier ci-dessus couvre les abonnements qui prennent fin. Reste le cas d'un
+abonnement **en reconduction automatique dont le renouvellement échoue** : il ne doit pas être
+fermé le lendemain, puisque le client veut continuer et que c'est nous qui avons manqué. C'est
+`SubscriptionExpiryService` qui le rattrape, avec un délai plus long.
+
+Il part de `findEndedPeriodsStillOpen` : les abonnements encore en cours, `auto_renew = true`,
+`cancel_at_period_end = false`, dont `current_period_end` est derrière nous. Les deux balayages ne
+se recouvrent donc jamais.
 
 Les délais sont ceux que la politique porte déjà · aucune configuration nouvelle :
 
@@ -111,11 +144,21 @@ WHERE status IN ('ACTIVE','TRIALING','GRACE_PERIOD','PAST_DUE')
 ORDER BY current_period_end;
 ```
 
+## Migrations
+
+- `V250` (dev) / `V246` (prod) · `subscription.end_notice_stage` et l'index du balayage.
+- `V251` (dev) / `V247` (prod) · les trois gabarits de courriel.
+
 ## Rattrapage
 
 Au premier passage du worker de cycle de vie (toutes les heures, 2 min après le démarrage), les
-abonnements de cette liste seront prévenus puis fermés selon leur retard. **Ceux de plus de 21
-jours passeront directement en `EXPIRED`** · y compris celui du 07/09.
+abonnements de cette liste sont traités selon leur nature :
+
+- **sans reconduction automatique** · leur fin est déjà passée, ils passent directement
+  `CANCELLED` avec l'avis de fin. C'est le cas de celui du 07/09. Les avis de J-7 et J-3 ne
+  rattrapent pas le passé · il n'y a plus rien à annoncer, la fin est derrière nous ;
+- **en reconduction automatique** · ils entrent en tolérance puis passent `EXPIRED` au-delà de 21
+  jours de retard.
 
 C'est voulu, mais ce n'est pas anodin : ces abonnements n'ont jamais été facturés, donc le client
 n'a jamais reçu de demande de règlement pour la période échue. Avant le déploiement, décidez pour

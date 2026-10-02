@@ -37,7 +37,8 @@ class LotEmailTemplatesRenderTest {
             "mail-item-event", "subscription-grace-period", "subscription-termination", "subscription-direct-debit-failed",
             "subscription-quote-sent", "billing-dunning", "billing-dunning-handover", "mobile-money-deposit-unresolved",
             "mobile-money-deposit-failed", "mobile-money-deposit-pending-review", "self-service-payment-received",
-            "cash-payment-declared", "cash-payment-confirmed", "cash-payment-declaration-expired"
+            "cash-payment-declared", "cash-payment-confirmed", "cash-payment-declaration-expired",
+            "subscription_ending_soon", "subscription_ends_today", "subscription_ended"
     })
     void everyTemplateRendersWithAnEmptyModel(String template) {
         String html = render(template, Map.of());
@@ -185,6 +186,23 @@ class LotEmailTemplatesRenderTest {
                 "documentNumber", "INV-1", "totalAmount", "25000 XAF", "paidAmount", "0 XAF",
                 "balanceDue", "25000 XAF", "issueDate", "23/09/2026", "overdue", false, "settled", false));
         assertThat(due).contains("Solde dû").contains("25000 XAF");
+    }
+
+    @Test
+    void theEndNoticesSayWhenTheSubscriptionStopsAndWhatToDo() {
+        String sevenDays = render("subscription_ending_soon", model("recipientName", "Joël",
+                "subscriptionNumber", "SUB-1", "planName", "Bureau partagé", "periodEnd", "2026-10-09",
+                "daysLeft", "7", "stage", "7", "manualRenewal", "true"));
+        assertThat(sevenDays).contains("Joël").contains("SUB-1").contains("2026-10-09").contains("7")
+                .contains("ne se reconduit pas automatiquement").contains("minuit");
+
+        String lastDay = render("subscription_ends_today", model("recipientName", "Joël",
+                "subscriptionNumber", "SUB-1", "periodEnd", "2026-10-02", "daysLeft", "0"));
+        assertThat(lastDay).contains("ce soir").contains("minuit").contains("demain");
+
+        String ended = render("subscription_ended", model("recipientName", "Joël",
+                "subscriptionNumber", "SUB-1", "periodEnd", "2026-10-02"));
+        assertThat(ended).contains("a pris fin").contains("2026-10-02");
     }
 
     /** Les valeurs ne sont pas toutes des chaines · un drapeau se rend differemment d'un texte. */

@@ -108,6 +108,27 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findAllOpenOnPlanVersion(@Param("planVersionId") Long planVersionId);
 
     /**
+     * Les abonnements qui vont reellement prendre fin · ceux qu'il faut prevenir.
+     *
+     * <p>Un abonnement en reconduction automatique ne prend pas fin, il se renouvelle : lui
+     * annoncer une fin serait faux. Ne sont retenus que ceux qui s'arretent · pas de reconduction
+     * automatique, ou une cloture de fin de periode demandee.</p>
+     *
+     * <p>La fenetre va jusqu'a {@code horizon} inclus, et remonte au-dela de la date du jour pour
+     * attraper ceux dont la fin est deja passee · c'est le lendemain qu'ils se cloturent.</p>
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM subscription
+            WHERE status IN ('ACTIVE', 'TRIALING', 'GRACE_PERIOD', 'PAST_DUE')
+              AND current_period_end IS NOT NULL
+              AND current_period_end <= :horizon
+              AND (auto_renew = false OR cancel_at_period_end = true)
+            ORDER BY current_period_end ASC
+            """)
+    List<Subscription> findEndingSubscriptions(@Param("horizon") LocalDate horizon);
+
+    /**
      * Les abonnements dont la periode est echue et que rien n'a fait avancer.
      *
      * <p>Trois portes menaient a cet etat, et aucune ne se refermait : le renouvellement ne prend
@@ -126,6 +147,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
             WHERE status IN ('ACTIVE', 'TRIALING', 'GRACE_PERIOD', 'PAST_DUE')
               AND current_period_end IS NOT NULL
               AND current_period_end < :today
+              AND auto_renew = true
+              AND cancel_at_period_end = false
             ORDER BY current_period_end ASC
             """)
     List<Subscription> findEndedPeriodsStillOpen(@Param("today") LocalDate today);
