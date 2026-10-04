@@ -1,5 +1,12 @@
 
 spring:
+  # Les secrets viennent de l environnement, sans valeur de repli dans le depot. En local
+  # c est le fichier .env qui les porte, et rien ne le chargeait dans la JVM · il ne servait
+  # qu a docker compose. L application ne demarrait donc plus du tout en local des que les
+  # defauts ont ete retires du code. optional: le rend sans effet la ou il n existe pas,
+  # c est-a-dire en production, ou Heroku fournit de vraies variables.
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: bokati-cowork
   profiles:
