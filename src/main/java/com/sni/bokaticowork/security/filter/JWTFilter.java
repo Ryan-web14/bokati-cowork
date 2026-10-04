@@ -3,6 +3,7 @@ package com.sni.bokaticowork.security.filter;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.security.config.PublicPaths;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.service.tokenService.implementation.JWTService;
 import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -32,13 +32,7 @@ public class JWTFilter extends OncePerRequestFilter {
     private final UserSessionService sessionService;
     private static final String BEARER_PREFIX = "Bearer ";
 
-    @Value("${app.security.auto-admin.enabled:true}")
-    private boolean autoAdminEnabled;
-
-    @Value("${app.security.auto-admin.email:admin@bokati.com}")
-    private String autoAdminEmail;
-
-    @Value("${app.documents.public-preview-enabled:true}")
+    @Value("${app.documents.public-preview-enabled:false}")
     private boolean publicDocumentPreviewEnabled;
 
     @Override
@@ -60,7 +54,9 @@ public class JWTFilter extends OncePerRequestFilter {
             try {
                 String token = extractToken(request);
                 if (token == null) {
-                    authenticateAutoAdmin();
+                    // Sans jeton, aucune identite · la chaine de securite decidera si le chemin
+                    // est public. Ce point authentifiait auparavant en administrateur, ce qui
+                    // rendait toute l'API accessible a une requete sans en-tete.
                     filterChain.doFilter(request, response);
                     return;
                 }
@@ -106,28 +102,21 @@ public class JWTFilter extends OncePerRequestFilter {
     }
 
 
+    /**
+     * N'authentifie qu'avec un jeton d'acces.
+     *
+     * <p>Le type n'etait pas verifie : un jeton de rafraichissement, valable sept jours, ou un
+     * jeton de verification d'adresse authentifiaient n'importe quel appel d'API · ce qui annulait
+     * l'interet d'un jeton d'acces court.</p>
+     */
     private void processToken(String token){
+        if (!jwtService.isAccessToken(token)) {
+            throw new JwtException("Only an access token can authenticate an API call");
+        }
         String email = jwtService.extractEmail(token);
 
         if(email != null && SecurityContextHolder.getContext().getAuthentication() == null){
             setAuthenticatedPrincipal((UserPrincipal) userDetailService.loadUserByUsername(email));
-        }
-    }
-
-    private void authenticateAutoAdmin() {
-        if (!autoAdminEnabled || SecurityContextHolder.getContext().getAuthentication() != null) {
-            return;
-        }
-        if (!StringUtils.hasText(autoAdminEmail)) {
-            logger.warn("Auto admin authentication is enabled but app.security.auto-admin.email is empty");
-            return;
-        }
-        try {
-            UserPrincipal userPrincipal = (UserPrincipal) userDetailService.loadUserByUsername(autoAdminEmail.trim());
-            setAuthenticatedPrincipal(userPrincipal);
-            logger.debug("Authenticated user: " + userPrincipal.getUser().getEmail());
-        } catch (Exception ex) {
-            logger.warn("Unable to load auto admin user " + autoAdminEmail, ex);
         }
     }
 
@@ -154,28 +143,15 @@ public class JWTFilter extends OncePerRequestFilter {
         return null;
     }
 
+    /**
+     * Les chemins publics · une seule liste, celle que la configuration de securite consomme.
+     *
+     * <p>Il y en avait deux, et elles divergeaient : trois chemins ouverts par
+     * {@code SecurityConfig} manquaient ici, et ne fonctionnaient que par le repli sur
+     * l'administrateur automatique. Voir {@link PublicPaths}.</p>
+     */
     private boolean isPublicApiRequest(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        return uri != null && (
-                uri.equals(ApiPath.V1 + "/auth/login")
-                        || uri.equals(ApiPath.V1 + "/auth/refresh")
-                        || uri.equals(ApiPath.V1 + "/auth/register")
-                        || uri.startsWith(ApiPath.V1 + "/auth/ott/")
-                        || uri.startsWith(ApiPath.V1 + "/auth/password-reset/")
-                        || uri.equals(ApiPath.V1 + "/auth/unlock-account")
-                        || uri.equals(ApiPath.V1 + "/auth/unlock-account/confirm")
-                        || uri.equals(ApiPath.V1 + "/auth/email/verify/resend")
-                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/callback")
-                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/callback")
-                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback")
-                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback")
-                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawapay/return")
-                        || uri.equals(ApiPath.V1 + "/payments/mobile-money/pawaypay/return")
-                        || uri.startsWith("/verify/")
-                        || uri.startsWith(ApiPath.V1 + "/client/catalog/plans")
-                        || uri.startsWith(ApiPath.V1 + "/shares/")
-                        || isPublicDocumentPreview(request, uri)
-        );
+        return PublicPaths.matches(request) || isPublicDocumentPreview(request, request.getRequestURI());
     }
 
     /**

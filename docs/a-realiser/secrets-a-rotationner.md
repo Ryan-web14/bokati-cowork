@@ -143,11 +143,15 @@ git clone https://github.com/Ryan-web14/bokati-cowork.git ../bokati-clean
 cd ../bokati-clean
 
 # 3. Le fichier des remplacements · une ligne par secret, valeur litterale
+# Les valeurs litterales se recuperent depuis l historique · elles ne sont pas
+# recopiees ici, un document qui les reimprime annule l interet de l operation :
+#   git show <commit>:src/main/resources/application-dev.yml | grep -E 'JWT_SECRET|TOKEN_HASH|GRAPH_CLIENT_SECRET'
+#   git show <commit>:src/main/resources/application.yml     | grep FISCAL_SIGNING
 cat > ../remplacements.txt <<'EOF'
-Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE==>SECRET_RETIRE
-12f70020a5b8526752f2f245f2148ea881223390f356e0e8246ccde588042d8f==>SECRET_RETIRE
-jpj8Q~j4pgjkI4DBLCIBN_r3GbCoI7IVEoemfaiE==>SECRET_RETIRE
-K8sL2vQ9xM4pZ7tN1cR6aB3eY5uH0jD==>SECRET_RETIRE
+<valeur litterale du secret JWT>==>SECRET_RETIRE
+<valeur litterale de la cle fiscale>==>SECRET_RETIRE
+<valeur litterale du secret Azure>==>SECRET_RETIRE
+<valeur litterale du secret de hachage>==>SECRET_RETIRE
 EOF
 # La cle PawaPay aussi · la recuperer depuis l historique, elle est longue :
 #   git log -p -S 'PAWAYPAY_API_KEY' -- src/main/resources/application-dev.yml
@@ -156,7 +160,7 @@ EOF
 git filter-repo --replace-text ../remplacements.txt
 
 # 5. Verification · doit ne rien rendre
-git log --all -p | grep -cE 'Q7mP2xL9|12f70020a5b8|jpj8Q~j4|K8sL2vQ9'
+git log --all -p | grep -cF SECRET_RETIRE   # doit valoir le nombre d occurrences remplacees
 
 # 6. La poussee en force · irreversible pour les clones existants
 git push --force --all

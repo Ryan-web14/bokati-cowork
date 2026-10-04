@@ -12,6 +12,62 @@ plan de correction est en §7, dans l'ordre où il faut le livrer.
 
 ---
 
+## État d'avancement
+
+Mis à jour à chaque correctif livré.
+
+| # | Constat | Gravité | État | Commit |
+|---|---|---|---|---|
+| §0 | `bootstrap-admin` crée un admin sans authentification | critique | **corrigé** | lot 1 |
+| §0 | Défauts dangereux dans le code, sûreté portée par le profil | critique | **corrigé** | lot 1 |
+| A1 | Auto-admin · authentification contournée sans jeton | critique | **corrigé** | lot 1 |
+| A2 | `/actuator/metrics` déclaré exposé | faible | **sans objet** · dépendait d'A1 | lot 1 |
+| §2.5 | Deux listes de chemins publics divergentes | moyen | **corrigé** | lot 1 |
+| J1 | Secret JWT en clair dans la source | critique | **corrigé** | `1374858` |
+| J2 | Jeton d'accès de 25 h par défaut | élevé | **corrigé** | lot 1 |
+| J3 | Type de jeton non exigé sur l'API | moyen | **corrigé** | lot 1 |
+| §2.8 | Clé du jeton d'aperçu partagée avec le JWT | faible | **partiel** · plus de valeur en dur, clé toujours partagée | `1374858` |
+| W2 | WebSocket · type de jeton et révocation non vérifiés | moyen | à faire | |
+| §3 | WebSocket · aucune autorisation par destination | élevé | à faire | |
+| §2.6 | Plafond de requêtes absent hors `ApiPath.V1` | moyen | à faire | |
+| §2.1 | Pas de plafond propre sur `unlock-account` et `verify/resend` | moyen | à faire | |
+| §2.3 | Écritures anonymes sous `/public` sans plafond propre | moyen | à faire | |
+| §2.4 | Cookie scanner · clé en clair, `path=/`, un an, check-in en GET | moyen | à faire | |
+| C3 | Traversée de chemin par l'extension de fichier | élevé | à faire | |
+| J4 | Jeton non lié à son porteur | moyen | à faire | |
+| §6 | CORS trop large | faible | à faire | |
+| §6 | Plafond de requêtes en mémoire du processus | moyen | à faire | |
+| C4 | SSRF par les webhooks | faible | à faire | |
+| C1 | Injection de commande | n/a | **aucun vecteur** · vérifié | |
+| C2 | Injection SQL | n/a | **aucun vecteur** · vérifié | |
+
+### Ce que le lot 1 a changé
+
+- **`bootstrap-admin`** · trois verrous, et il faut les trois : un secret d'amorçage
+  (`app.security.bootstrap.secret`, **vide par défaut donc amorçage fermé**) comparé en temps
+  constant, l'absence de tout administrateur, et un journal explicite. La route reste publique ·
+  par définition il n'y a encore personne · mais elle ne crée plus rien.
+- **Auto-admin supprimé** · la méthode, les deux réglages, et les sections `auto-admin` des deux
+  profils. Sans jeton, le filtre ne pose plus aucune identité. Le garde-fou de démarrage **refuse
+  de démarrer** si la propriété réapparaît dans la configuration.
+- **Une seule liste de chemins publics** · `PublicPaths`, consommée par `SecurityConfig` et par
+  `JWTFilter`. Livrée dans le même commit que la suppression de l'auto-admin, parce que trois
+  chemins ne fonctionnaient que grâce à lui.
+- **Type de jeton exigé** · `JWTFilter` refuse un jeton de rafraîchissement ou de vérification.
+- **Défauts inversés** · jeton d'accès à 15 min (contre 25 h), aperçu public de document fermé.
+- **`SecurityConfigurationGuard`** · en profil `prod`, l'application **s'arrête** si le secret est
+  vide ou trop court, si le jeton d'accès dépasse une heure, si la clé fiscale est vide, ou si
+  l'auto-admin est encore configuré. Hors production, les mêmes constats sont des avertissements.
+
+Le garde-fou a immédiatement trouvé deux erreurs dans le `.env` local, corrigées :
+`APP_JWT_ACCESS_EXPIRATION_MS` valait **604800000**, soit sept jours · la durée du
+rafraîchissement recopiée sur l'accès ; et `APP_JWT_SECRET` faisait 31 caractères.
+**À vérifier sur Heroku** : si `APP_JWT_ACCESS_EXPIRATION_MS` y porte la même valeur, la
+production délivre des jetons d'accès de sept jours malgré le défaut du `yml` · et l'application
+refusera désormais de démarrer, ce qui est le comportement voulu.
+
+---
+
 ## 0. Les deux constats qui gouvernent tout le reste
 
 ### Un administrateur se crée sans authentification · **critique, exploitable en production**
@@ -300,7 +356,7 @@ révocation de session :
 ### J1 · Secret de signature écrit en clair dans la source · **critique**
 
 ```java
-@Value("${app.security.jwt.secret:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}")
+@Value("${app.security.jwt.secret:<ancien secret JWT, 62 car.>}")
 ```
 
 Un secret HMAC de 62 caractères, valide, dans le dépôt. La production le surcharge, mais :

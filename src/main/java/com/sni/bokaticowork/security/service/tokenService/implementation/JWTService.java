@@ -41,8 +41,14 @@ public class JWTService {
     @Value("${app.security.jwt.secret}")
     private String secret;
 
-    //Remettre 900000 millisecond
-    @Value("${app.security.jwt.access-token-expiration-ms:90000000}")
+    /**
+     * Quinze minutes · la valeur annoncee par la documentation, et desormais celle du code.
+     *
+     * <p>Le defaut etait de 90 000 000 ms, soit vingt-cinq heures, avec un commentaire disant de
+     * remettre 900 000. Toute instance qui ne surchargeait pas ce reglage delivrait donc des
+     * jetons exploitables une journee entiere en cas de vol.</p>
+     */
+    @Value("${app.security.jwt.access-token-expiration-ms:900000}")
     private long accessTokenExpiration;
 
     @Value("${app.security.jwt.refresh-token-expiration-ms:604800000}")
