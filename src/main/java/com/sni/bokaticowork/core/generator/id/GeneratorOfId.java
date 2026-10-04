@@ -1,12 +1,28 @@
 package com.sni.bokaticowork.core.generator.id;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.hibernate.id.IdentifierGenerator;
 
 import java.io.Serializable;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Generateur d'identifiants de type Snowflake · horodatage, identifiant de machine, sequence.
+ *
+ * <p>C'est la cle primaire de 258 entites, via {@code @IdGeneration}. L'unicite ne tient donc pas
+ * a une contrainte de base mais a ce calcul, et elle repose entierement sur le fait que deux
+ * instances qui tournent en meme temps portent des identifiants de machine differents.</p>
+ *
+ * <p>Ce n'etait pas le cas · l'identifiant de machine derivait de {@code user.name}, qui est le
+ * meme sur tous les dynos Heroku. Les journaux de production le montraient directement :
+ * {@code machine ID: 444} sur {@code web.1} <b>et</b> sur {@code web.2}. Chaque instance tenant son
+ * compteur de sequence en memoire et le remettant a zero a chaque milliseconde, deux instances qui
+ * inserent dans la meme table a la meme milliseconde produisaient <b>la meme cle primaire</b> ·
+ * violation d'unicite, donc echec d'ecriture, en apparence aleatoire.</p>
+ */
+@Slf4j
 public class GeneratorOfId implements IdentifierGenerator {
 
     //Custom epoch in bits
@@ -19,19 +35,41 @@ public class GeneratorOfId implements IdentifierGenerator {
     private static int MACHINE_ID_BITS = 10;
 
     //MAXIMUM VALUE
-    private static long MAX_MACHINE_ID = (1L << MACHINE_ID_BITS) - 1; // 4096
-    private static long MAX_SEQUENCE = (1L << SEQUENCE_BITS) - 1; //1093 values possible
+    private static long MAX_MACHINE_ID = (1L << MACHINE_ID_BITS) - 1; // 1023
+    private static long MAX_SEQUENCE = (1L << SEQUENCE_BITS) - 1; // 4095
 
     //Bit shift
     private static int MACHINE_ID_SHIFT = SEQUENCE_BITS;
     private static int TIMESTAMP_SHIFT = SEQUENCE_BITS + MACHINE_ID_BITS;
 
+    /** Reglage explicite · c'est lui qui rend l'unicite certaine plutot que probable. */
+    static final String MACHINE_ID_VARIABLE = "ID_GENERATOR_MACHINE_ID";
+    /** Sur Heroku, {@code web.1}, {@code web.2}, {@code worker.1} · une valeur par instance. */
+    static final String DYNO_VARIABLE = "DYNO";
+
+    /**
+     * Resolu une seule fois pour le processus.
+     *
+     * <p>Hibernate instancie un generateur par champ annote · sans cela, les 258 instances
+     * resoudraient et journaliseraient la meme valeur chacune de son cote.</p>
+     */
+    private static final Resolved MACHINE = resolveMachine(System.getenv(MACHINE_ID_VARIABLE),
+            System.getenv(DYNO_VARIABLE));
+
+    static {
+        // La seule ligne que ce generateur journalise · elle est indispensable. Deux instances qui
+        // annoncent le meme identifiant de machine se voient immediatement dans les journaux, ce
+        // qui n'etait pas le cas quand toutes affichaient 444 sans que rien ne le signale.
+        log.info("Generateur d'identifiants · identifiant de machine {} (source : {})",
+                MACHINE.machineId(), MACHINE.source());
+    }
+
     private long lastTimestamp = -1L;
     private long sequence = 0;
-    private long machineId;
+    private final long machineId;
 
-    public GeneratorOfId(){
-        this.machineId = getMachineId();
+    public GeneratorOfId() {
+        this.machineId = MACHINE.machineId();
     }
 
     @Override
@@ -60,15 +98,12 @@ public class GeneratorOfId implements IdentifierGenerator {
 
         lastTimestamp = timestamp;
 
-        long finalId =  (timestamp << TIMESTAMP_SHIFT) |
-                (machineId << MACHINE_ID_SHIFT) | sequence;
-
-
-        verifyIdComponents( finalId);
-
-        System.out.println("Generated ID: " + finalId);
-
-        return finalId;
+        // Rien n'est journalise ici · cette methode s'execute a chaque insertion. Elle imprimait
+        // treize lignes sur la sortie standard a chaque appel, dont une auto-verification qui
+        // comparait des valeurs calculees deux lignes plus haut et ne pouvait donc pas echouer.
+        // Sur Heroku, le collecteur de journaux ecarte les lignes au-dela de son debit : ce bruit
+        // faisait disparaitre les vraies erreurs.
+        return (timestamp << TIMESTAMP_SHIFT) | (machineId << MACHINE_ID_SHIFT) | sequence;
     }
 
     private long waitForNextMillis(long lastTimestamp) {
@@ -79,16 +114,52 @@ public class GeneratorOfId implements IdentifierGenerator {
         return timestamp;
     }
 
-    private long getMachineId() {
-
-        try {
-            String hostName = System.getProperty("user.name", "unknown");
-            int hashCode = Math.abs(hostName.hashCode());
-            return hashCode % (MAX_MACHINE_ID + 1);
-        } catch (Exception e) {
-            // Fallback to random if system properties are not available
-            return ThreadLocalRandom.current().nextLong(0, MAX_MACHINE_ID + 1);
+    /**
+     * D'ou vient l'identifiant de machine, par ordre de confiance.
+     *
+     * <p>Le reglage explicite d'abord · lui seul garantit l'unicite au lieu de la rendre probable,
+     * et c'est ce qu'il faut renseigner des que l'on depasse quelques instances. A defaut, le nom
+     * du dyno, qui differe par instance et reste stable d'un redemarrage a l'autre. En dernier
+     * recours un tirage aleatoire · imparfait, mais une chance sur 1024 de collision vaut
+     * infiniment mieux que la certitude d'en avoir une.</p>
+     */
+    static Resolved resolveMachine(String configured, String dyno) {
+        Long explicit = parseMachineId(configured);
+        if (explicit != null) {
+            return new Resolved(explicit, MACHINE_ID_VARIABLE);
         }
+        if (configured != null && !configured.isBlank()) {
+            log.warn("{} vaut « {} », qui n'est pas un entier entre 0 et {} · valeur ignoree",
+                    MACHINE_ID_VARIABLE, configured, MAX_MACHINE_ID);
+        }
+        if (dyno != null && !dyno.isBlank()) {
+            // Le nom entier, et non son type ou son numero seul · « web.1 » et « worker.1 » ne
+            // doivent pas se rejoindre.
+            return new Resolved(spread(dyno.trim()), DYNO_VARIABLE);
+        }
+        return new Resolved(ThreadLocalRandom.current().nextLong(0, MAX_MACHINE_ID + 1), "aleatoire");
+    }
+
+    private static Long parseMachineId(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            long value = Long.parseLong(raw.trim());
+            return value >= 0 && value <= MAX_MACHINE_ID ? value : null;
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    /** Repartit une chaine sur toute la plage · {@code hashCode} seul se concentre trop. */
+    private static long spread(String value) {
+        long hash = 1125899906842597L;
+        for (int i = 0; i < value.length(); i++) {
+            hash = 31 * hash + value.charAt(i);
+        }
+        hash ^= (hash >>> 32);
+        return Math.floorMod(hash, MAX_MACHINE_ID + 1);
     }
 
     public static long extractTimestamp(long id) {
@@ -103,34 +174,7 @@ public class GeneratorOfId implements IdentifierGenerator {
         return id & MAX_SEQUENCE;
     }
 
-
-    private void verifyIdComponents(long id) {
-        System.out.println("\n--- Verification (Extracting Components) ---");
-
-        long extractedTimestamp = extractTimestamp(id);
-        long extractedMachineId = extractMachineId(id);
-        long extractedSequence = extractSequence(id);
-
-        System.out.println("Extracted timestamp: " + (extractedTimestamp - CUSTOM_EPOCH) + " (relative)");
-        System.out.println("Extracted timestamp: " + extractedTimestamp + " (absolute)");
-        System.out.println("Extracted timestamp: " + new java.util.Date(extractedTimestamp) + " (date)");
-        System.out.println("Extracted machine ID: " + extractedMachineId);
-        System.out.println("Extracted sequence: " + extractedSequence);
-
-        // Verify they match original values
-        boolean timestampMatch = (extractedTimestamp - CUSTOM_EPOCH) == lastTimestamp;
-        boolean machineIdMatch = extractedMachineId == machineId;
-        boolean sequenceMatch = extractedSequence == sequence;
-
-        System.out.println("\n--- Verification Results ---");
-        System.out.println("Timestamp matches: " + timestampMatch);
-        System.out.println("Machine ID matches: " + machineIdMatch);
-        System.out.println("Sequence matches: " + sequenceMatch);
-        System.out.println("Overall verification: " + (timestampMatch && machineIdMatch && sequenceMatch ? "PASS" : "FAIL"));
-        System.out.println("========================");
+    /** L'identifiant retenu et sa provenance · la provenance rend une collision diagnosticable. */
+    record Resolved(long machineId, String source) {
     }
-
-
 }
-
-
