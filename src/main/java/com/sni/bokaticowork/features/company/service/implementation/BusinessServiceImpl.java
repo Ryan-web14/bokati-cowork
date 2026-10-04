@@ -203,6 +203,30 @@ public class BusinessServiceImpl implements BusinessService {
         businessRepo.save(business);
     }
 
+    /**
+     * Designe l entite exploitante · le drapeau est retire a celle qui le portait.
+     *
+     * <p>Le retrait precede la pose, et les deux sont dans la meme transaction · l index unique
+     * partiel refuserait deux porteurs, et laisser la base dans un etat sans exploitant, meme un
+     * instant, suffirait a faire echouer une generation de contrat concurrente.</p>
+     */
+    @Override
+    public void designateOperatingBusiness(String businessCode) {
+        BusinessEntity business = getBusinessForService(businessCode);
+        if (business.isOperator()) {
+            return;
+        }
+        businessRepo.findFirstByOperatorTrueAndDeletedFalse().ifPresent(previous -> {
+            previous.setOperator(false);
+            previous.setUpdated_by("SYSTEM");
+            businessRepo.saveAndFlush(previous);
+        });
+        business.setOperator(true);
+        business.setUpdated_by("SYSTEM");
+        businessRepo.save(business);
+        log.info("Entite exploitante designee · {} ({})", business.getName(), business.getCode());
+    }
+
     @Override
     public void deleteBusiness(String businessCode) {
         BusinessEntity business = getBusinessForService(businessCode);

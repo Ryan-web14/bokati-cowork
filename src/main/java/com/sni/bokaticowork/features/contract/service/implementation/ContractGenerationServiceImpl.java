@@ -306,25 +306,21 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
      * <p>Elle est toujours la meme : c'est l'espace qui contracte, quel que soit le cocontractant.
      * Celui-ci peut etre une entreprise comme un particulier, ce qui ne change rien ici.
      *
-     * <p>Quand l'appelant ne precise pas de code, on prend la seule entite en exploitation plutot
-     * que d'echouer. Exiger le code a chaque appel rendait la generation cassante sans rien
-     * apporter : la plateforme n'en exploite qu'une.
+     * <p>Sans code precise, on prend la ligne portant le drapeau d'exploitant. C'etait « la seule
+     * ligne active », deduction qui ne tenait que tant qu'il n'y avait qu'une ligne : cette table
+     * porte aussi les clients entreprises, qu'un souscripteur BUSINESS_ENTITY y resout. En
+     * production il n'y en avait aucune, donc aucun contrat ne se generait ; au premier client
+     * entreprise enregistre, la deduction aurait de toute facon cesse de fonctionner.
      */
     private BusinessEntity resolveBusiness(String businessCode) {
         if (StringUtils.hasText(businessCode)) {
             return businessService.serviceBusinessByCode(businessCode.trim());
         }
-        List<BusinessEntity> active = businessRepository.findAllByDeletedFalse();
-        if (active.size() == 1) {
-            return active.getFirst();
-        }
-        if (active.isEmpty()) {
-            throw new BadRequestException("Aucune entite exploitante n'est enregistree. "
-                    + "Creez la fiche de l'espace avant de generer un contrat : son adresse "
-                    + "determine le lieu de signature et la juridiction competente.");
-        }
-        throw new BadRequestException("Plusieurs entites exploitantes sont enregistrees ("
-                + active.size() + "). Precisez businessCode pour indiquer laquelle contracte.");
+        return businessRepository.findFirstByOperatorTrueAndDeletedFalse()
+                .orElseThrow(() -> new BadRequestException(
+                        "Aucune entite exploitante n'est designee. Creez la fiche de l'espace puis "
+                        + "designez-la comme exploitante avant de generer un contrat : son adresse "
+                        + "determine le lieu de signature et la juridiction competente."));
     }
 
     private void validate(GenerateContractRequest request) {

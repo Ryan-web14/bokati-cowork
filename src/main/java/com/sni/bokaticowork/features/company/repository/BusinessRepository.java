@@ -17,14 +17,17 @@ public interface BusinessRepository extends JpaRepository<BusinessEntity, Long>,
 
     Optional<BusinessEntity> findByCode(String code);
 
-    /**
-     * Entites exploitantes actives.
-     *
-     * <p>Sert a resoudre l'exploitant quand l'appelant ne le precise pas : la plateforme en compte
-     * une seule en exploitation, et l'exiger a chaque appel rendait la generation de contrat
-     * cassante sans rien apporter.
-     */
     List<BusinessEntity> findAllByDeletedFalse();
+
+    /**
+     * L entite qui exploite l espace · celle qui signe face au client.
+     *
+     * <p>Elle etait deduite de « la seule ligne active », alors que cette table porte aussi les
+     * clients entreprises · des le premier client entreprise enregistre, la deduction cassait et
+     * aucun contrat ne se generait plus. Le drapeau la designe, et un index unique partiel
+     * garantit qu au plus une ligne vivante le porte.</p>
+     */
+    Optional<BusinessEntity> findFirstByOperatorTrueAndDeletedFalse();
     Optional<BusinessEntity> findByNiuNumber(String niuNumber);
     Optional<BusinessEntity> findByRccmNumber(String rccmNumber);
     Optional<BusinessEntity> findByNameIgnoreCase(String name);

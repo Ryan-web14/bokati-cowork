@@ -81,6 +81,18 @@ public class BusinessEntity {
     @Column(name = "deleted")
     private boolean deleted = Boolean.FALSE;
 
+    /**
+     * Vrai pour l entite qui exploite l espace · la partie qui signe face au client.
+     *
+     * <p>Cette table porte deux roles : l espace lui-meme et les clients entreprises. La
+     * generation de contrat prenait « la seule ligne active » pour l exploitant, ce qui ne tient
+     * que tant qu il n y a qu une ligne au total. Un index unique partiel garantit qu au plus
+     * une ligne vivante porte ce drapeau.</p>
+     */
+    @Builder.Default
+    @Column(name = "is_operator", nullable = false)
+    private boolean operator = Boolean.FALSE;
+
     @Column(name = "created_by", nullable = false)
     private String created_by;
 

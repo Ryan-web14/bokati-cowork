@@ -103,6 +103,17 @@ public class BusinessController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Designe l entite exploitante · indispensable avant toute generation de contrat.
+     */
+    @PatchMapping("/{code}/operator")
+    @Audited(module = "BUSINESS", action = "DESIGNATE_OPERATOR", ressource = "business")
+    @Idempotent(operation = "BUSINESS_DESIGNATE_OPERATOR")
+    public ResponseEntity<Void> designateOperatingBusiness(@PathVariable String code) {
+        businessService.designateOperatingBusiness(code);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{code}")
     @Audited(module = "BUSINESS", action = "DELETE", ressource = "business")
     public ResponseEntity<Void> deleteBusiness(@PathVariable String code) {
