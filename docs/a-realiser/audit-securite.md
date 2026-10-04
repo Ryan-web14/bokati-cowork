@@ -33,7 +33,7 @@ Mis à jour à chaque correctif livré.
 | §2.1 | Pas de plafond propre sur `unlock-account` et `verify/resend` | moyen | à faire | |
 | §2.3 | Écritures anonymes sous `/public` sans plafond propre | moyen | à faire | |
 | §2.4 | Cookie scanner · clé en clair, `path=/`, un an, check-in en GET | moyen | à faire | |
-| C3 | Traversée de chemin par l'extension de fichier | élevé | à faire | |
+| C3 | Traversée de chemin par l'extension de fichier | élevé | **corrigé** | lot 3 |
 | J4 | Jeton non lié à son porteur | moyen | à faire | |
 | §6 | CORS trop large | faible | à faire | |
 | §6 | Plafond de requêtes en mémoire du processus | moyen | à faire | |
@@ -79,6 +79,30 @@ Mis à jour à chaque correctif livré.
 
 Note · `WebSocketTopics.SUPPORT_TICKETS` est déclaré mais **personne ne publie dessus**. La règle
 le couvre quand même : le jour où un service s'en sert, il n'aura pas à y penser.
+
+### Ce que le lot 3 a changé · écriture de fichiers
+
+- **L'extension se restreint à un alphabet** · lettres et chiffres, huit au plus, et la lecture
+  s'arrête au premier caractère qui n'en est pas un. Un nom comme
+  `photo.../../../etc/passwd` ne produit plus d'extension du tout.
+- **Chaque segment de chemin est assaini** · dossier du propriétaire et code du document. Ils
+  viennent de données et sont sûrs aujourd'hui ; le calcul du chemin ne dépend plus de cette
+  hypothèse.
+- **L'écriture est confinée** · `normalize()` résout les `..`, il ne dit pas si le résultat est
+  encore chez nous. C'est cette vérification qui manquait, et c'est la seule qui compte.
+- **La lecture aussi** · un enregistrement écrit avant ce correctif pourrait pointer hors de la
+  racine ; il ne sortira rien.
+
+Un test tient l'invariant qui ferme la faille, indépendamment du détail : quelle que soit
+l'entrée, l'extension retenue correspond à `[a-z0-9]{0,8}`.
+
+**Une régression introduite et corrigée dans le même lot** · vider les défauts `minioadmin` du
+lot « secrets » rendait le constructeur de `MinioClient` fatal au démarrage (il refuse des
+identifiants vides). Le client objet ne se construit désormais que si le fournisseur est
+`MINIO`/`S3` **et** que les clés sont présentes ; dans ce cas leur absence lève une erreur
+explicite, et un stockage sur disque n'exige plus de clés S3. En production
+`application-prod.yml` laisse ces clés vides quand `BUCKETEER_*`/`AWS_*` ne sont pas
+renseignées · le démarrage aurait échoué.
 
 Le garde-fou a immédiatement trouvé deux erreurs dans le `.env` local, corrigées :
 `APP_JWT_ACCESS_EXPIRATION_MS` valait **604800000**, soit sept jours · la durée du

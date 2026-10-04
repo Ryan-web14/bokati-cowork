@@ -22,6 +22,11 @@ import java.util.UUID;
 @Service
 public class DocumentStorageService {
 
+    /** Une extension plus longue que huit caracteres n en est pas une. */
+    private static final int MAX_EXTENSION_LENGTH = 8;
+    /** De quoi contenir un code ou un identifiant, pas un chemin. */
+    private static final int MAX_SEGMENT_LENGTH = 120;
+
     private final Path rootPath;
     private final String provider;
     private final String minioBucket;
@@ -39,13 +44,26 @@ public class DocumentStorageService {
         this.provider = normalizeProvider(provider);
         this.rootPath = Path.of(rootPath).toAbsolutePath().normalize();
         this.minioBucket = minioBucket;
-        MinioClient.Builder builder = MinioClient.builder()
-                .endpoint(minioEndpoint)
-                .credentials(minioAccessKey, minioSecretKey);
-        if (StringUtils.hasText(minioRegion)) {
-            builder.region(minioRegion);
+        // Le client objet ne se construit que s'il sert · son constructeur refuse des identifiants
+        // vides, et un stockage sur disque n'a aucune raison d'exiger des cles d'acces S3. Les
+        // defauts de developpement qui remplissaient ces champs ont ete retires, ce qui rendait
+        // l'absence de cles fatale au demarrage.
+        boolean objectStorage = "MINIO".equals(this.provider) || "S3".equals(this.provider);
+        if (objectStorage && StringUtils.hasText(minioAccessKey) && StringUtils.hasText(minioSecretKey)) {
+            MinioClient.Builder builder = MinioClient.builder()
+                    .endpoint(minioEndpoint)
+                    .credentials(minioAccessKey, minioSecretKey);
+            if (StringUtils.hasText(minioRegion)) {
+                builder.region(minioRegion);
+            }
+            this.minioClient = builder.build();
+        } else {
+            if (objectStorage) {
+                throw new IllegalStateException("Le stockage " + this.provider
+                        + " demande app.document.storage.minio.access-key et .secret-key");
+            }
+            this.minioClient = null;
         }
-        this.minioClient = builder.build();
     }
 
     public StoredDocument store(String ownerFolder, String documentCode, int versionNumber, MultipartFile file) {
@@ -70,7 +88,9 @@ public class DocumentStorageService {
             return readMinio(storagePath);
         }
         try {
-            return Files.readAllBytes(Path.of(storagePath));
+            // Le chemin vient de la base · un enregistrement ecrit avant ce correctif pourrait
+            // pointer hors de la racine. On le confine aussi en lecture.
+            return Files.readAllBytes(confine(Path.of(storagePath).toAbsolutePath().normalize()));
         } catch (IOException ex) {
             throw new BadRequestException("Unable to read document file", ex);
         }
@@ -89,7 +109,7 @@ public class DocumentStorageService {
 
     private StoredDocument storeFilesystem(String objectKey, String storedFileName, InputStream inputStream) {
         try {
-            Path target = rootPath.resolve(objectKey).normalize();
+            Path target = confine(rootPath.resolve(objectKey).normalize());
             Path directory = target.getParent();
             Files.createDirectories(directory);
             Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
@@ -136,16 +156,93 @@ public class DocumentStorageService {
         }
     }
 
+    /**
+     * La cle de l objet · chaque segment assaini, aucun ne peut remonter.
+     *
+     * <p>Vaut pour le systeme de fichiers comme pour le stockage objet : une cle portant
+     * {@code ..} ecrirait hors du prefixe prevu sur l un comme sur l autre.</p>
+     */
     private String objectKey(String ownerFolder, String documentCode, int versionNumber, String storedFileName) {
-        return ownerFolder.replace('\\', '/')
-                + "/" + documentCode
-                + "/v" + versionNumber
-                + "/" + storedFileName;
+        StringBuilder key = new StringBuilder();
+        for (String part : ownerFolder.replace('\\', '/').split("/")) {
+            String safe = safeSegment(part);
+            if (!safe.isEmpty()) {
+                key.append(safe).append('/');
+            }
+        }
+        key.append(safeSegment(documentCode)).append('/')
+                .append('v').append(versionNumber).append('/')
+                .append(safeSegment(storedFileName));
+        return key.toString();
     }
 
+    /**
+     * L extension du fichier depose · reduite a ce qui peut etre une extension.
+     *
+     * <p>Elle etait reprise telle quelle depuis le nom fourni par le client. Le nom du fichier,
+     * lui, etait bien remplace par un UUID · mais l extension se collait derriere, et
+     * {@code lastIndexOf('.')} sur un nom comme {@code photo.../../../quelque/part} rendait
+     * « extension » tout ce qui suivait le dernier point, separateurs compris. Le chemin cible
+     * etait normalise, mais jamais confine : le fichier atterrissait ou l appelant voulait.</p>
+     *
+     * <p>Seules des lettres et des chiffres, huit au plus. Tout le reste disparait · une extension
+     * n a jamais eu besoin d autre chose, et ce qui n est pas reconnu vaut mieux perdu que
+     * interprete.</p>
+     */
     private String extractExtension(String filename) {
+        if (filename == null) {
+            return "";
+        }
         int lastDot = filename.lastIndexOf('.');
-        return lastDot < 0 ? "" : filename.substring(lastDot + 1).toLowerCase();
+        if (lastDot < 0 || lastDot == filename.length() - 1) {
+            return "";
+        }
+        String raw = filename.substring(lastDot + 1).toLowerCase(Locale.ROOT);
+        StringBuilder safe = new StringBuilder(MAX_EXTENSION_LENGTH);
+        for (int i = 0; i < raw.length() && safe.length() < MAX_EXTENSION_LENGTH; i++) {
+            char c = raw.charAt(i);
+            if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+                safe.append(c);
+            } else {
+                // Un separateur ou un point au milieu n appartient pas a une extension · ce qui
+                // suit non plus.
+                break;
+            }
+        }
+        return safe.toString();
+    }
+
+    /**
+     * Un segment de chemin · reduit a ce qui peut en etre un.
+     *
+     * <p>Le dossier du proprietaire et le code du document viennent de donnees, pas d un
+     * formulaire · ils sont surs aujourd hui. Les assainir coute deux lignes et rend le calcul du
+     * chemin independant de cette hypothese.</p>
+     */
+    private String safeSegment(String segment) {
+        if (!StringUtils.hasText(segment)) {
+            return "";
+        }
+        String cleaned = segment.trim().replaceAll("[^A-Za-z0-9._-]", "_");
+        // « . » et « .. » designent un repertoire, jamais un nom · ils ne traversent pas ici.
+        while (cleaned.startsWith(".")) {
+            cleaned = cleaned.substring(1);
+        }
+        return cleaned.length() > MAX_SEGMENT_LENGTH ? cleaned.substring(0, MAX_SEGMENT_LENGTH) : cleaned;
+    }
+
+    /**
+     * Refuse tout chemin qui sort de la racine de stockage.
+     *
+     * <p>{@code normalize()} resout les {@code ..} · il ne dit pas si le resultat est encore chez
+     * nous. C est cette verification qui manquait, et c est la seule qui compte : quelle que soit
+     * la facon dont un {@code ..} arrive dans le calcul, il ne sort pas d ici.</p>
+     */
+    private Path confine(Path candidate) {
+        if (!candidate.startsWith(rootPath)) {
+            throw new BadRequestException("Chemin de stockage refusé · il sort du répertoire des documents");
+        }
+        return candidate;
     }
 
     private String normalizeProvider(String value) {
