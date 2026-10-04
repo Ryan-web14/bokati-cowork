@@ -27,8 +27,8 @@ Mis à jour à chaque correctif livré.
 | J2 | Jeton d'accès de 25 h par défaut | élevé | **corrigé** | lot 1 |
 | J3 | Type de jeton non exigé sur l'API | moyen | **corrigé** | lot 1 |
 | §2.8 | Clé du jeton d'aperçu partagée avec le JWT | faible | **partiel** · plus de valeur en dur, clé toujours partagée | `1374858` |
-| W2 | WebSocket · type de jeton et révocation non vérifiés | moyen | à faire | |
-| §3 | WebSocket · aucune autorisation par destination | élevé | à faire | |
+| W2 | WebSocket · type de jeton et révocation non vérifiés | moyen | **corrigé** | lot 2 |
+| §3 | WebSocket · aucune autorisation par destination | élevé | **corrigé** | lot 2 |
 | §2.6 | Plafond de requêtes absent hors `ApiPath.V1` | moyen | à faire | |
 | §2.1 | Pas de plafond propre sur `unlock-account` et `verify/resend` | moyen | à faire | |
 | §2.3 | Écritures anonymes sous `/public` sans plafond propre | moyen | à faire | |
@@ -58,6 +58,27 @@ Mis à jour à chaque correctif livré.
 - **`SecurityConfigurationGuard`** · en profil `prod`, l'application **s'arrête** si le secret est
   vide ou trop court, si le jeton d'accès dépasse une heure, si la clé fiscale est vide, ou si
   l'auto-admin est encore configuré. Hors production, les mêmes constats sont des avertissements.
+
+### Ce que le lot 2 a changé · WebSocket
+
+- **Autorisation par destination** · `WebSocketDestinations` réserve `/topic/admin/**`,
+  `/topic/inventory/**` et `/topic/support/**` aux rôles de la maison. Un membre du portail qui
+  tente l'un des trois reçoit un refus nominatif dans les journaux.
+- **Toute destination demande une identité** · y compris les files `/queue/**`, qui n'en
+  exigeaient aucune. Seul `/topic/` était contrôlé.
+- **Le type de jeton est exigé à la connexion** · un jeton de rafraîchissement, valable sept
+  jours, ouvrait une session temps réel.
+- **La révocation de session est consultée** · une déconnexion ferme désormais le temps réel
+  aussi. `/ws/**` est exclu du filtre HTTP, donc personne ne la vérifiait.
+- **Un jeton inacceptable refuse la connexion** au lieu de la laisser sans identité · ce qui,
+  avant le durcissement des abonnements, ouvrait les files.
+- **La liste des rôles de la maison vit une seule fois** (`SecurityRoles`). Elle existait en
+  trois exemplaires · gestionnaire d'autorisation de l'API, résolveur d'origine de paiement, et
+  l'autorisation WebSocket allait en ajouter un quatrième. C'est la copie oubliée qui devient la
+  faille.
+
+Note · `WebSocketTopics.SUPPORT_TICKETS` est déclaré mais **personne ne publie dessus**. La règle
+le couvre quand même : le jour où un service s'en sert, il n'aura pas à y penser.
 
 Le garde-fou a immédiatement trouvé deux erreurs dans le `.env` local, corrigées :
 `APP_JWT_ACCESS_EXPIRATION_MS` valait **604800000**, soit sept jours · la durée du

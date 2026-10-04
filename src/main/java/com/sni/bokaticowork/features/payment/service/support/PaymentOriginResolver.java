@@ -1,13 +1,12 @@
 package com.sni.bokaticowork.features.payment.service.support;
 
 import com.sni.bokaticowork.features.payment.enums.PaymentChannel;
+import com.sni.bokaticowork.security.authorization.SecurityRoles;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
 
 /**
  * D'ou vient l'encaissement qu'on est en train d'ecrire.
@@ -22,25 +21,12 @@ import java.util.Set;
 public class PaymentOriginResolver {
 
     /**
-     * Les roles de la maison · leur presence signifie qu'un agent opere.
+     * Les roles de la maison · leur presence signifie qu un agent opere.
      *
-     * <p>Alignee sur {@code AdminApiAuthorizationManager} · un role ajoute la-bas sans l'etre ici
-     * ferait passer un agent pour un client, donc enverrait une notification de trop. Le sens de
-     * l'erreur est le bon : on previent a tort plutot que de se taire a tort.</p>
+     * <p>La liste vit dans {@link SecurityRoles} · elle etait recopiee ici, et une copie
+     * oubliee aurait fait passer un agent pour un client, donc envoye une notification de
+     * trop. Le sens de l erreur etait le bon, mais mieux vaut ne pas avoir a y compter.</p>
      */
-    private static final Set<String> BACK_OFFICE_ROLES = Set.of(
-            "ROLE_SUPER_ADMIN",
-            "ROLE_ADMIN",
-            "ROLE_MANAGER",
-            "ROLE_FINANCE",
-            "ROLE_CASHIER",
-            "ROLE_STAFF",
-            "ROLE_SUPPORT",
-            "ROLE_KYC_REVIEWER",
-            "ROLE_AUDITOR",
-            "ROLE_VIEWER",
-            "ROLE_OPERATIONS_AGENT"
-    );
 
     public PaymentChannel current() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -50,12 +36,9 @@ public class PaymentOriginResolver {
             // Une route publique porte une authentification anonyme : ce n'est pas un client.
             return PaymentChannel.SYSTEM;
         }
-        for (GrantedAuthority authority : auth.getAuthorities()) {
-            if (authority.getAuthority() != null && BACK_OFFICE_ROLES.contains(authority.getAuthority())) {
-                return PaymentChannel.BACK_OFFICE;
-            }
-        }
-        return PaymentChannel.SELF_SERVICE;
+        return SecurityRoles.hasAdminRealmRole(auth.getAuthorities())
+                ? PaymentChannel.BACK_OFFICE
+                : PaymentChannel.SELF_SERVICE;
     }
 
     /** Qui opere, pour le journal · jamais affiche a un client. */

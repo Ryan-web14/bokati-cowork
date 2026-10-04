@@ -22,20 +22,9 @@ import java.util.function.Supplier;
 @Component
 public class AdminApiAuthorizationManager implements AuthorizationManager<RequestAuthorizationContext> {
 
-    private static final String SUPER_ADMIN = "ROLE_SUPER_ADMIN";
-    private static final Set<String> ADMIN_REALM_ROLES = Set.of(
-            SUPER_ADMIN,
-            "ROLE_ADMIN",
-            "ROLE_MANAGER",
-            "ROLE_FINANCE",
-            "ROLE_CASHIER",
-            "ROLE_STAFF",
-            "ROLE_SUPPORT",
-            "ROLE_KYC_REVIEWER",
-            "ROLE_AUDITOR",
-            "ROLE_VIEWER",
-            "ROLE_OPERATIONS_AGENT"
-    );
+    private static final String SUPER_ADMIN = SecurityRoles.SUPER_ADMIN;
+    /** La liste vit dans {@link SecurityRoles} · elle etait recopiee ici et ailleurs. */
+    private static final Set<String> ADMIN_REALM_ROLES = SecurityRoles.ADMIN_REALM;
 
     /**
      * Seuls modules qui declarent reellement une permission {@code <MODULE>_DELETE} en base.
