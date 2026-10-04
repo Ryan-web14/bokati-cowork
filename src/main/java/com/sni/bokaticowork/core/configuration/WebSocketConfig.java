@@ -49,16 +49,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Value("${bokati.websocket.stomp.use-tls:false}")
     private boolean useTls;
 
-    @Value("${bokati.websocket.stomp.client-login:guest}")
+    @Value("${bokati.websocket.stomp.client-login:}")
     private String clientLogin;
 
-    @Value("${bokati.websocket.stomp.client-passcode:guest}")
+    @Value("${bokati.websocket.stomp.client-passcode:}")
     private String clientPasscode;
 
-    @Value("${bokati.websocket.stomp.system-login:guest}")
+    @Value("${bokati.websocket.stomp.system-login:}")
     private String systemLogin;
 
-    @Value("${bokati.websocket.stomp.system-passcode:guest}")
+    @Value("${bokati.websocket.stomp.system-passcode:}")
     private String systemPasscode;
 
     @Value("${bokati.websocket.stomp.virtual-host:/}")

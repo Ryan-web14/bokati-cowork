@@ -50,7 +50,7 @@ public class SecurityConfig {
     private final ClientPortalAuthorizationManager clientPortalAuthorizationManager;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.documents.public-preview-enabled:true}")
+    @Value("${app.documents.public-preview-enabled:false}")
     private boolean publicDocumentPreviewEnabled;
 
     @Bean
@@ -78,37 +78,8 @@ public class SecurityConfig {
                         if (publicDocumentPreviewEnabled) {
                             auth.requestMatchers(HttpMethod.GET, ApiPath.V1 + "/documents/*/signed-preview").permitAll();
                         }
-                        auth.requestMatchers(
-                                ApiPath.V1 + "/auth/login",
-                                ApiPath.V1 + "/auth/refresh",
-                                ApiPath.V1 + "/auth/register",
-                                ApiPath.V1 + "/auth/ott/**",
-                                ApiPath.V1 + "/auth/password-reset/**",
-                                ApiPath.V1 + "/auth/unlock-account",
-                                ApiPath.V1 + "/auth/unlock-account/confirm",
-                                ApiPath.V1 + "/auth/email/verify/resend",
-                                ApiPath.V1 + "/payments/mobile-money/providers",
-                                ApiPath.V1 + "/payments/mobile-money/pawapay/callback",
-                                ApiPath.V1 + "/payments/mobile-money/pawaypay/callback",
-                                ApiPath.V1 + "/payments/mobile-money/pawapay/refund-callback",
-                                ApiPath.V1 + "/payments/mobile-money/pawaypay/refund-callback",
-                                ApiPath.V1 + "/payments/mobile-money/pawapay/return",
-                                ApiPath.V1 + "/payments/mobile-money/pawaypay/return",
-                                "/verify/**",
-                                ApiPath.V1 + "/admin/provisioning/bootstrap-admin",
-                                ApiPath.V1 + "/public/**",
-                                ApiPath.V1 + "/client/catalog/plans",
-                                ApiPath.V1 + "/client/catalog/plans/**",
-                                ApiPath.V1 + "/shares/**",
-                                ApiPath.V1 + "/countries"
-
-                        ).permitAll();
-                        // Le logo de marque part dans chaque courriel sous forme d'URL · une image
-                        // protegee revient en 401 et le destinataire voit une image cassee. Les
-                        // clients de messagerie chargent l'image sans jeton, par construction.
-                        auth.requestMatchers(HttpMethod.GET, "/images/**").permitAll();
-                        auth.requestMatchers("/ws/**").permitAll();
-                        auth.requestMatchers("/actuator/health", "/actuator/info").permitAll();
+                        // Une seule liste, partagee avec JWTFilter · voir PublicPaths.
+                        auth.requestMatchers(PublicPaths.patterns()).permitAll();
                         auth.requestMatchers(ApiPath.V1 + "/client/**").access(clientPortalAuthorizationManager);
                         // Alias of the client KYC endpoints for the portal frontend.
                         auth.requestMatchers(ApiPath.V1 + "/portal/kyc", ApiPath.V1 + "/portal/kyc/**").access(clientPortalAuthorizationManager);

@@ -217,10 +217,12 @@ app:
       data-path: ${KYC_OCR_DATA_PATH:storage/tessdata}
 
   security:
-    auto-admin:
-      enabled: ${AUTO_ADMIN_SECURITY_CONTEXT_ENABLED:false}
-      email: ${AUTO_ADMIN_EMAIL:admin@bokati.com}
 
+    bootstrap:
+      # Secret exige pour creer le premier administrateur. Vide = amorcage ferme, ce qui est
+      # le bon etat une fois la maison installee. La route refuse de toute facon des qu un
+      # administrateur existe.
+      secret: ${BOOTSTRAP_SECRET:}
     failed-login:
       max-attempts: ${FAILED_LOGIN_MAX_ATTEMPTS:5}
 
@@ -242,6 +244,34 @@ app:
       admin:
         max-requests: ${RATE_LIMIT_ADMIN_MAX_REQUESTS:600}
         window-seconds: ${RATE_LIMIT_ADMIN_WINDOW_SECONDS:60}
+
+      # Les ecritures qu un inconnu declenche · prospect, inscription, enquete.
+      public-write:
+        max-requests: ${RATE_LIMIT_PUBLIC_WRITE_MAX:10}
+        window-seconds: ${RATE_LIMIT_PUBLIC_WRITE_WINDOW:600}
+
+      # Les pages de verification · elles confirment l existence d un numero, et les numeros
+      # sont sequentiels.
+      verify:
+        max-requests: ${RATE_LIMIT_VERIFY_MAX:60}
+        window-seconds: ${RATE_LIMIT_VERIFY_WINDOW:600}
+
+      # Le depot de fichier non authentifie de /verify/doc/{n}/compare · chaque appel fait
+      # analyser un PDF.
+      upload:
+        max-requests: ${RATE_LIMIT_UPLOAD_MAX:5}
+        window-seconds: ${RATE_LIMIT_UPLOAD_WINDOW:600}
+
+      # Le filet · tout chemin non nomme ailleurs. Il existe precisement pour qu une route
+      # oubliee ne soit jamais sans plafond · c etait le cas de tout ce qui ne commencait pas
+      # par /sni/api/v1.
+      default:
+        max-requests: ${RATE_LIMIT_DEFAULT_MAX:300}
+        window-seconds: ${RATE_LIMIT_DEFAULT_WINDOW:60}
+
+      # Combien de relais de confiance s interposent · Heroku en met un. Zero ignore
+      # entierement X-Forwarded-For, que l appelant peut ecrire lui-meme.
+      trusted-proxy-count: ${RATE_LIMIT_TRUSTED_PROXY_COUNT:1}
 
     jwt:
       secret: ${APP_JWT_SECRET}

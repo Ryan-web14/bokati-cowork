@@ -30,11 +30,25 @@ public class JWTService {
     private static final String TOKEN_TYPE_VERIFICATION = "verification";
     private static final int MIN_HMAC_KEY_BYTES = 32;
 
-    @Value("${app.security.jwt.secret:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}")
+    /**
+     * Le secret de signature · aucune valeur par defaut, volontairement.
+     *
+     * <p>Un secret ecrit en dur ici valait pour toute instance qui ne le surchargeait pas,
+     * et quiconque avait lu le depot pouvait forger un jeton avec les roles de son choix.
+     * Sans valeur de repli, une instance mal configuree ne demarre pas · c est le seul
+     * comportement acceptable pour une cle de signature.</p>
+     */
+    @Value("${app.security.jwt.secret}")
     private String secret;
 
-    //Remettre 900000 millisecond
-    @Value("${app.security.jwt.access-token-expiration-ms:90000000}")
+    /**
+     * Quinze minutes · la valeur annoncee par la documentation, et desormais celle du code.
+     *
+     * <p>Le defaut etait de 90 000 000 ms, soit vingt-cinq heures, avec un commentaire disant de
+     * remettre 900 000. Toute instance qui ne surchargeait pas ce reglage delivrait donc des
+     * jetons exploitables une journee entiere en cas de vol.</p>
+     */
+    @Value("${app.security.jwt.access-token-expiration-ms:900000}")
     private long accessTokenExpiration;
 
     @Value("${app.security.jwt.refresh-token-expiration-ms:604800000}")

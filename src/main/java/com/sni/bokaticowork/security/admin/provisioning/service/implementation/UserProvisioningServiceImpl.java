@@ -13,10 +13,18 @@ import com.sni.bokaticowork.security.admin.role.service.interfaces.RoleUserServi
 import com.sni.bokaticowork.security.admin.user.dto.request.UserRequest;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
+import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.util.StringUtils;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserProvisioningServiceImpl implements UserProvisioningService {
@@ -26,20 +34,61 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
     private static final String STAFF_ROLE = "STAFF";
     private static final String MEMBER_ROLE = "MEMBER";
 
+    /** Sans secret configure, l'amorcage est ferme · c'est le defaut voulu. */
+    @Value("${app.security.bootstrap.secret:}")
+    private String bootstrapSecret;
+
     private final UserService userService;
     private final MemberService memberService;
     private final RoleUserService roleUserService;
 
+    /**
+     * L'amorcage du premier administrateur · une seule fois, et avec un secret.
+     *
+     * <p>Le garde-fou qui refermait cet amorcage etait commente, et la route est publique. Une
+     * seule requete POST non authentifiee rendait donc un compte ADMIN active, a n'importe qui,
+     * autant de fois qu'il le voulait. C'etait la faille la plus directement exploitable du
+     * systeme, et elle ne dependait d'aucun reglage.</p>
+     *
+     * <p>Trois verrous desormais, et il faut les trois :</p>
+     * <ol>
+     *   <li>un <b>secret d'amorcage</b> fourni dans la demande et confronte a
+     *       {@code app.security.bootstrap.secret} · sans secret configure, l'amorcage est
+     *       entierement ferme, ce qui est le bon etat par defaut ;</li>
+     *   <li>l'absence de tout administrateur · des qu'il en existe un, la porte se referme
+     *       definitivement et seul un administrateur cree les suivants ;</li>
+     *   <li>un journal explicite · un amorcage est un evenement unique dans la vie du systeme,
+     *       il doit se voir dans les journaux.</li>
+     * </ol>
+     */
     @Override
     public Users initializeGlobalAdmin(UserRequest request) {
-//        if (roleUserService.hasAnyUserAssignedToRole(ADMIN_ROLE)) {
-//            throw new BadRequestException("Global admin has already been initialized");
-//        }
+        assertBootstrapAllowed(request == null ? null : request.getBootstrapSecret());
 
         Users admin = userService.createUser(request);
         roleUserService.addRoleToUser(admin.getId(), ADMIN_ROLE, SYSTEM_ASSIGNER);
         userService.activateUser(admin.getEmail());
+        log.warn("Amorcage · premier administrateur cree pour {} · la route d'amorcage est desormais fermee",
+                admin.getEmail());
         return admin;
+    }
+
+    private void assertBootstrapAllowed(String providedSecret) {
+        if (!StringUtils.hasText(bootstrapSecret)) {
+            // Aucun secret configure · l'amorcage n'est pas « ouvert par defaut », il est ferme.
+            log.warn("Tentative d'amorcage refusee · aucun secret d'amorcage n'est configure");
+            throw new ForbiddenException("L'amorçage n'est pas ouvert.");
+        }
+        if (!MessageDigest.isEqual(
+                bootstrapSecret.trim().getBytes(StandardCharsets.UTF_8),
+                (providedSecret == null ? "" : providedSecret.trim()).getBytes(StandardCharsets.UTF_8))) {
+            log.warn("Tentative d'amorcage refusee · secret d'amorcage invalide");
+            throw new ForbiddenException("L'amorçage n'est pas ouvert.");
+        }
+        if (roleUserService.hasAnyUserAssignedToRole(ADMIN_ROLE)) {
+            log.warn("Tentative d'amorcage refusee · un administrateur existe deja");
+            throw new ForbiddenException("L'amorçage a déjà été effectué.");
+        }
     }
 
     @Override

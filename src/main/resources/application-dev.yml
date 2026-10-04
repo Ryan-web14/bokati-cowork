@@ -43,9 +43,9 @@ spring:
   mail:
     microsoft:
       graph:
-        client-id: ${MICROSOFT_GRAPH_CLIENT_ID:80eab8f6-815f-4e41-bcc5-1a08e6191949}
-        client-secret: ${MICROSOFT_GRAPH_CLIENT_SECRET:jpj8Q~j4pgjkI4DBLCIBN_r3GbCoI7IVEoemfaiE}
-        tenant-id: ${MICROSOFT_GRAPH_TENANT_ID:e1006690-4205-4c71-9f74-1b9fdcbdcaf2}
+        client-id: ${MICROSOFT_GRAPH_CLIENT_ID}
+        client-secret: ${MICROSOFT_GRAPH_CLIENT_SECRET}
+        tenant-id: ${MICROSOFT_GRAPH_TENANT_ID}
         sender-email: ${MICROSOFT_SENDER_EMAIL:no-reply@elleaose.com}
 
   rabbitmq:
@@ -165,8 +165,8 @@ app:
       minio:
         endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
         bucket: ${MINIO_BUCKET:bokati-documents}
-        access-key: ${MINIO_ACCESS_KEY:minioadmin}
-        secret-key: ${MINIO_SECRET_KEY:minioadmin}
+        access-key: ${MINIO_ACCESS_KEY}
+        secret-key: ${MINIO_SECRET_KEY}
 
     worker:
       enabled: ${DOCUMENT_WORKER_ENABLED:true}
@@ -191,10 +191,12 @@ app:
       data-path: ${KYC_OCR_DATA_PATH:storage/tessdata}
 
   security:
-    auto-admin:
-      enabled: ${AUTO_ADMIN_SECURITY_CONTEXT_ENABLED:true}
-      email: ${AUTO_ADMIN_EMAIL:admin@bokati.com}
 
+    bootstrap:
+      # Secret exige pour creer le premier administrateur. Vide = amorcage ferme, ce qui est
+      # le bon etat une fois la maison installee. La route refuse de toute facon des qu un
+      # administrateur existe.
+      secret: ${BOOTSTRAP_SECRET:}
     failed-login:
       max-attempts: ${FAILED_LOGIN_MAX_ATTEMPTS:5}
 
@@ -217,8 +219,36 @@ app:
         max-requests: ${RATE_LIMIT_ADMIN_MAX_REQUESTS:600}
         window-seconds: ${RATE_LIMIT_ADMIN_WINDOW_SECONDS:60}
 
+      # Les ecritures qu un inconnu declenche · prospect, inscription, enquete.
+      public-write:
+        max-requests: ${RATE_LIMIT_PUBLIC_WRITE_MAX:10}
+        window-seconds: ${RATE_LIMIT_PUBLIC_WRITE_WINDOW:600}
+
+      # Les pages de verification · elles confirment l existence d un numero, et les numeros
+      # sont sequentiels.
+      verify:
+        max-requests: ${RATE_LIMIT_VERIFY_MAX:60}
+        window-seconds: ${RATE_LIMIT_VERIFY_WINDOW:600}
+
+      # Le depot de fichier non authentifie de /verify/doc/{n}/compare · chaque appel fait
+      # analyser un PDF.
+      upload:
+        max-requests: ${RATE_LIMIT_UPLOAD_MAX:5}
+        window-seconds: ${RATE_LIMIT_UPLOAD_WINDOW:600}
+
+      # Le filet · tout chemin non nomme ailleurs. Il existe precisement pour qu une route
+      # oubliee ne soit jamais sans plafond · c etait le cas de tout ce qui ne commencait pas
+      # par /sni/api/v1.
+      default:
+        max-requests: ${RATE_LIMIT_DEFAULT_MAX:300}
+        window-seconds: ${RATE_LIMIT_DEFAULT_WINDOW:60}
+
+      # Combien de relais de confiance s interposent · Heroku en met un. Zero ignore
+      # entierement X-Forwarded-For, que l appelant peut ecrire lui-meme.
+      trusted-proxy-count: ${RATE_LIMIT_TRUSTED_PROXY_COUNT:1}
+
     jwt:
-      secret: ${APP_JWT_SECRET:Q7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aEQ7mP2xL9vB4nH6sT1yK8dF5wR3cZ0aE}
+      secret: ${APP_JWT_SECRET}
       access-token-expiration-ms: ${APP_JWT_ACCESS_EXPIRATION_MS:604800000}
       refresh-token-expiration-ms: ${APP_JWT_REFRESH_EXPIRATION_MS:604800000}
       verification-token-expiration-ms: ${APP_JWT_VERIFICATION_EXPIRATION_MS:604800000}
@@ -230,4 +260,4 @@ app:
       expiration-ms: ${APP_PASSWORD_RESET_EXPIRATION_MS:900000}
 
     token-hash:
-      secret: ${TOKEN_HASH_SECRET:K8sL2vQ9xM4pZ7tN1cR6aB3eY5uH0jD}
+      secret: ${TOKEN_HASH_SECRET}

@@ -26,4 +26,12 @@ public class UserRequest {
     private String password;
 
     private boolean generatePassword;
+
+    /**
+     * Secret d'amorcage · n'a de sens que pour la creation du premier administrateur.
+     *
+     * <p>Il est confronte a {@code app.security.bootstrap.secret}. Ignore partout ailleurs · la
+     * creation d'un agent ou d'un membre passe par un compte authentifie, pas par un secret.</p>
+     */
+    private String bootstrapSecret;
 }
