@@ -29,14 +29,15 @@ Mis à jour à chaque correctif livré.
 | §2.8 | Clé du jeton d'aperçu partagée avec le JWT | faible | **partiel** · plus de valeur en dur, clé toujours partagée | `1374858` |
 | W2 | WebSocket · type de jeton et révocation non vérifiés | moyen | **corrigé** | lot 2 |
 | §3 | WebSocket · aucune autorisation par destination | élevé | **corrigé** | lot 2 |
-| §2.6 | Plafond de requêtes absent hors `ApiPath.V1` | moyen | à faire | |
-| §2.1 | Pas de plafond propre sur `unlock-account` et `verify/resend` | moyen | à faire | |
-| §2.3 | Écritures anonymes sous `/public` sans plafond propre | moyen | à faire | |
+| §2.6 | Plafond de requêtes absent hors `ApiPath.V1` | moyen | **corrigé** | lot 4 |
+| §2.1 | Pas de plafond propre sur `unlock-account` et `verify/resend` | moyen | **corrigé** | lot 4 |
+| §2.3 | Écritures anonymes sous `/public` sans plafond propre | moyen | **corrigé** | lot 4 |
+| R1 | Plafond indexé sur un en-tête que l'appelant écrit lui-même | **élevé** | **corrigé** | lot 4 |
 | §2.4 | Cookie scanner · clé en clair, `path=/`, un an, check-in en GET | moyen | à faire | |
 | C3 | Traversée de chemin par l'extension de fichier | élevé | **corrigé** | lot 3 |
 | J4 | Jeton non lié à son porteur | moyen | à faire | |
 | §6 | CORS trop large | faible | à faire | |
-| §6 | Plafond de requêtes en mémoire du processus | moyen | à faire | |
+| §6 | Plafond de requêtes en mémoire du processus | moyen | **corrigé** | lot 4 |
 | C4 | SSRF par les webhooks | faible | à faire | |
 | C1 | Injection de commande | n/a | **aucun vecteur** · vérifié | |
 | C2 | Injection SQL | n/a | **aucun vecteur** · vérifié | |
@@ -110,6 +111,59 @@ rafraîchissement recopiée sur l'accès ; et `APP_JWT_SECRET` faisait 31 caract
 **À vérifier sur Heroku** : si `APP_JWT_ACCESS_EXPIRATION_MS` y porte la même valeur, la
 production délivre des jetons d'accès de sept jours malgré le défaut du `yml` · et l'application
 refusera désormais de démarrer, ce qui est le comportement voulu.
+
+### Ce que le lot 4 a changé · les plafonds de requêtes
+
+Le filtre faisait trois choses dans une seule classe : choisir le plafond, compter, et répondre.
+Chacune avait son défaut, et le premier annulait les deux autres. Les trois sont désormais
+séparées — `RateLimitRules`, `RateLimitStore`, `ClientIpResolver` — et chacune se teste seule.
+
+**L'adresse du client ne se choisit plus soi-même** (R1, le plus grave des quatre).
+Le compteur était indexé sur la **première** valeur de `X-Forwarded-For`. Cet en-tête se
+construit de gauche à droite au fil des relais : la partie gauche est ce que l'appelant a envoyé,
+donc ce qu'il a décidé. Il suffisait d'ajouter `X-Forwarded-For: <au hasard>` à chaque requête
+pour obtenir un compteur neuf à chaque requête · **aucun plafond ne tenait, celui du login
+compris**, pour qui le savait. On lit maintenant la valeur à `trusted-proxy-count` rangs depuis la
+**droite** : chacune de ces positions a été écrite par un relais, et seuls les nôtres le sont. Les
+valeurs forgées se retrouvent à gauche et sont ignorées. Un relais sur Heroku, d'où le défaut à
+`1` ; `0` ignore l'en-tête en entier, et une chaîne plus courte qu'annoncé retombe sur l'adresse
+du pair direct, qui ne se falsifie pas.
+
+**Plus aucune route sans plafond** (§2.6). La règle ne reconnaissait que les chemins commençant
+par `ApiPath.V1` et rendait `null` pour tout le reste · ce `null` voulait dire « passe sans
+compter ». Étaient donc illimités `/verify/**`, qui confirme l'existence d'un document à partir de
+son numéro — et les numéros sont séquentiels, donc le volume de facturation s'énumérait sans
+contrainte —, `/images/**`, `/public/quotes/sign`, et surtout
+`POST /verify/doc/{n}/compare`, qui **accepte un fichier sans authentification** et compare des
+PDF. Désormais `ruleFor` ne rend jamais `null` : un filet de 300 requêtes par minute attrape tout
+chemin non nommé ailleurs, et le dépôt de fichier a son propre plafond, à 5 par dix minutes.
+
+**Les routes sensibles ont leur propre plafond** (§2.1, §2.3). `unlock-account` et
+`email/verify/resend` n'avaient que le générique de 600 par minute : le premier annulait en partie
+le verrouillage après cinq échecs, le second servait à inonder la boîte d'un tiers. Les deux
+rejoignent le seau des codes à usage unique — 3 par dix minutes, compté **par chemin** pour qu'un
+plafond n'en consomme pas l'autre. Les écritures anonymes sous `/public` (opportunités CRM,
+inscriptions à un événement, enquête de satisfaction) passent à 10 par dix minutes.
+
+**Le comptage est partagé entre les instances** (§6). Il vivait dans une table en mémoire du
+processus, avec trois conséquences : le plafond était multiplié par le nombre d'instances, un
+redémarrage le remettait à zéro — il suffisait d'attendre un déploiement —, et la table ne se
+purgeait **jamais**, une clé par adresse et par chemin gardée indéfiniment, ce qui faisait du
+plafond lui-même un moyen d'épuiser la mémoire. Redis compte quand il répond (`INCR` y est
+atomique, et l'expiration de la clé tient la fenêtre sans qu'on la gère). S'il ne répond pas, on
+retombe sur la mémoire locale, purgée cette fois, avec un avertissement journalisé une seule fois ·
+un plafond approximatif vaut mieux que pas de plafond, et beaucoup mieux que de refuser tout le
+trafic parce qu'un cache est tombé.
+
+Le refus porte maintenant un `Retry-After` · une interface qui respecte l'en-tête cesse de
+marteler d'elle-même, et la ligne de journal nomme l'adresse et la route, un plafond atteint étant
+soit un abus, soit une boucle côté client.
+
+**Cinquante tests**, dont celui qui tient la faille R1 (changer le préfixe forgé ne change pas la
+clé de comptage) et un qui compare les deux profils entre eux : chaque plafond est lu par un
+`@Value` avec repli, donc un nom mal indenté ou oublié dans un profil ne casse rien au démarrage ·
+le repli prend la main et le plafond réel n'est plus celui que la configuration annonce. C'est
+l'écart qui ne se voit qu'en production.
 
 ---
 
@@ -226,8 +280,8 @@ divergent déjà** (§2.5).
 | `POST /auth/refresh` | **Vérifié : la rotation est correcte.** `revokeToken(ancien)` puis nouveau couple accès + rafraîchissement, et `refreshSession`. Un jeton de rafraîchissement volé puis utilisé par le légitime se révoque de lui-même |
 | `POST /auth/register` | Inscription portail · `registerMemberFromPortal` crée le membre **sans rôle**. Le rôle `MEMBER` n'est accordé qu'à l'activation par le personnel. Pas d'élévation possible |
 | `POST /auth/ott/*`, `/password-reset/*` | 3 requêtes / 600 s par IP et par chemin |
-| `POST /auth/unlock-account`, `/unlock-account/confirm` | Plafond générique seulement (600/min) · un déverrouillage de compte non plafonné spécifiquement annule en partie le verrouillage après 5 échecs |
-| `POST /auth/email/verify/resend` | Plafond générique seulement · vecteur d'envoi massif de courriels vers une adresse tierce |
+| `POST /auth/unlock-account`, `/unlock-account/confirm` | **Corrigé au lot 4** · 3 requêtes / 600 s par IP et par chemin. Avant : plafond générique seulement (600/min), ce qui annulait en partie le verrouillage après 5 échecs |
+| `POST /auth/email/verify/resend` | **Corrigé au lot 4** · même plafond. Avant : générique seulement, donc vecteur d'envoi massif de courriels vers une adresse tierce |
 
 ### 2.2 Rappels d'opérateur de paiement · durcis au lot précédent
 
@@ -245,7 +299,7 @@ divergent déjà** (§2.5).
 | `/public/bookings/check-in/scanner-verify` | POST | Valide la clé admin, pose le cookie · voir §2.4 |
 | `/public/bookings/check-in/scanner-setup` | GET/POST | Idem |
 | `/public/bookings/check-in/self` | POST | Auto-check-in client · fenêtre horaire et géolocalisation vérifiées |
-| `/public/crm/leads` | POST | **Écriture non authentifiée** · création d'opportunités. Plafond générique seulement : inondation de la base CRM |
+| `/public/crm/leads` | POST | **Écriture non authentifiée** · création d'opportunités. **Corrigé au lot 4** · 10 requêtes / 600 s. Avant : générique seulement, donc inondation de la base CRM |
 | `/public/events/{code}/registrations` | POST | **Écriture non authentifiée** · inscriptions à un événement. Même constat |
 | `/public/events/{code}`, `/public/opening`, `/public/resources` | GET | Lecture de catalogue · attendu |
 | `/public/support/csat` | POST | Enquête de satisfaction · à confirmer qu'un jeton lie la réponse au ticket |
@@ -575,8 +629,9 @@ Le verrouillage de compte après 5 échecs, lui, est en base · c'est la vraie p
 
 14. **Confiner les écritures de fichier** (C3) : alphabet restreint pour l'extension
     (`[a-z0-9]{1,8}`), et refus si la cible normalisée ne commence pas par `rootPath`.
-15. **Plafond de requêtes partagé** · Redis est déjà dans l'infrastructure. Et ne faire confiance à
-    `X-Forwarded-For` que pour le nombre de sauts de proxy connus.
+15. ~~**Plafond de requêtes partagé** · Redis est déjà dans l'infrastructure. Et ne faire confiance à
+    `X-Forwarded-For` que pour le nombre de sauts de proxy connus.~~ **Livré au lot 4**, avec les
+    plafonds manquants (§2.1, §2.3, §2.6).
 16. Resserrer CORS sur les origines réelles du frontend.
 17. **Écrire l'invariant sur les cookies** : aucun cookie porteur d'autorité hors du flux de
     check-in, et un test qui le tient · c'est ce qui garde le CSRF hors sujet pour l'API.
