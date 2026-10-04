@@ -8,6 +8,11 @@
 
 ## Table des matières
 
+### PARTIE 0 — À lire avant tout
+
+- [`ownerCode` et `businessCode` ne désignent pas la même partie](#ownercode-et-businesscode-ne-désignent-pas-la-même-partie)
+- [Prérequis · une entité exploitante désignée](#prérequis--une-entité-exploitante-désignée)
+
 ### PARTIE 1 — Contrats (endpoints existants)
 
 1. [Patterns communs](#1-patterns-communs)
@@ -65,6 +70,42 @@
 ### Résolution automatique
 
 Le backend résout automatiquement les codes (`ownerCode`, `businessCode`, `templateCode`) vers les entités correspondantes. Le frontend n'a jamais besoin d'envoyer des IDs numériques.
+
+### `ownerCode` et `businessCode` ne désignent pas la même partie
+
+Un contrat a deux côtés, et c'est la distinction la plus facile à manquer.
+
+| Champ | Qui | Valeur à envoyer |
+|---|---|---|
+| `ownerCode` | **le cocontractant** · le client, personne ou entreprise | son code (`CUS-…`, `MBR-…`, ou le code de la société cliente) |
+| `businessCode` | **l'entité exploitante** · l'espace, qui signe face au client | `null` dans presque tous les cas |
+
+Laissez `businessCode` à `null`. Le backend prend alors l'entreprise **désignée exploitante**, dont l'adresse détermine le lieu de signature et la juridiction compétente. Ne le renseignez que pour faire contracter une autre entité exploitante que celle désignée · cas rare.
+
+> **Ne jamais y mettre le code du client.** `business_entity` porte à la fois l'espace et les clients entreprises : un code de client y est donc trouvé, et le contrat nomme alors le client des deux côtés, avec son adresse comme lieu de signature. Le backend le faisait et c'est corrigé, mais l'API accepte toujours la valeur.
+
+### Prérequis · une entité exploitante désignée
+
+Toute génération de contrat échoue tant qu'aucune entreprise ne porte le drapeau d'exploitant :
+
+```json
+{
+  "errorCode": "BAD_REQUEST",
+  "status": 400,
+  "message": "Aucune entite exploitante n'est designee. Creez la fiche de l'espace puis designez-la comme exploitante avant de generer un contrat : son adresse determine le lieu de signature et la juridiction competente."
+}
+```
+
+La désignation se fait une fois, en back-office :
+
+```http
+PATCH /sni/api/v1/businesses/{code}/operator
+Idempotency-Key: <UUID>
+```
+
+`204 No Content`. La désignation est exclusive · elle retire le drapeau à l'entreprise qui le portait, et une seule entreprise vivante peut l'avoir à la fois (index unique en base). Audité sous `BUSINESS / DESIGNATE_OPERATOR`.
+
+Côté interface : si cette erreur remonte, ce n'est pas au client de la résoudre. Renvoyez l'administrateur vers la fiche de l'espace, et affichez le message tel quel · il dit quoi faire.
 
 ### Headers d'idempotence
 
