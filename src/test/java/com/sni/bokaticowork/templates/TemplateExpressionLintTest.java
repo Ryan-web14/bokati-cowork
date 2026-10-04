@@ -35,6 +35,13 @@ class TemplateExpressionLintTest {
     private static final Pattern EXPRESSION =
             Pattern.compile("th:[a-zA-Z-]+\\s*=\\s*\"([^\"]*)\"");
 
+    /** Un selecteur de fragment · le contenu entre {@code ~{} }. */
+    private static final Pattern FRAGMENT_SELECTOR = Pattern.compile("(~\\{[^\"}]*})");
+
+    /** Une apostrophe doublee entouree de texte · {@code ''} seul est un litteral vide, legitime. */
+    private static final Pattern DOUBLED_QUOTE_IN_LITERAL =
+            Pattern.compile("'[^']+''|''[^']+'");
+
     @Test
     void shouldNotEscapeQuotesWithABackslashInsideAnExpression() throws IOException {
         List<String> offenders = new ArrayList<>();
@@ -56,6 +63,41 @@ class TemplateExpressionLintTest {
                 .withFailMessage("Apostrophe echappee par une contre-oblique dans une expression :"
                         + " SpEL leve une erreur au rendu, donc a l'envoi. Ecrivez '' ou reformulez"
                         + " sans apostrophe droite.%n  %s", String.join("%n  ", offenders))
+                .isEmpty();
+    }
+
+    /**
+     * Une apostrophe doublee dans un selecteur de fragment · {@code ~{a :: b('l''accueil')}}.
+     *
+     * <p>Le doublement est la facon correcte d'ecrire une apostrophe dans un litteral SpEL, et il
+     * fonctionne dans un {@code th:text}. Mais l'analyseur des expressions de fragment la refuse :
+     * {@code Could not parse as expression}. La page ne s'affiche alors <b>jamais</b>, et comme
+     * aucun test ne rendait les pages HTML, {@code checkin-admin-code.html} est reste illisible
+     * tout en etant la page que voit un poste de pointage non autorise.</p>
+     *
+     * <p>Un litteral entierement vide ({@code header('')}) n'est pas concerne · il est partout.</p>
+     */
+    @Test
+    void shouldNotDoubleQuotesInsideAFragmentSelector() throws IOException {
+        List<String> offenders = new ArrayList<>();
+
+        try (Stream<Path> files = Files.walk(TEMPLATES)) {
+            for (Path file : files.filter(f -> f.toString().endsWith(".html")).toList()) {
+                String content = Files.readString(file, StandardCharsets.UTF_8);
+                Matcher matcher = FRAGMENT_SELECTOR.matcher(content);
+                while (matcher.find()) {
+                    String selector = matcher.group(1);
+                    if (DOUBLED_QUOTE_IN_LITERAL.matcher(selector).find()) {
+                        offenders.add(TEMPLATES.relativize(file) + " · " + shorten(selector));
+                    }
+                }
+            }
+        }
+
+        assertThat(offenders)
+                .withFailMessage("Apostrophe doublee dans un selecteur de fragment : l'analyseur la"
+                        + " refuse et la page ne s'affiche pas du tout. Reformulez sans"
+                        + " apostrophe.%n  %s", String.join("%n  ", offenders))
                 .isEmpty();
     }
 

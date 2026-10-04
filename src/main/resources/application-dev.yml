@@ -85,6 +85,11 @@ management:
         enabled: false
 
 bokati:
+  checkin:
+    # En local le serveur est en HTTP · un cookie Secure ne serait pas conserve par le
+    # navigateur, et le poste de pointage ne pourrait jamais etre autorise. En production
+    # cette valeur reste true.
+    scanner-cookie-secure: ${CHECKIN_SCANNER_COOKIE_SECURE:false}
   websocket:
     use-stomp-relay: true
     stomp:
@@ -218,6 +223,13 @@ app:
       admin:
         max-requests: ${RATE_LIMIT_ADMIN_MAX_REQUESTS:600}
         window-seconds: ${RATE_LIMIT_ADMIN_WINDOW_SECONDS:60}
+
+      # Le pointage a l accueil · genereux, parce que tous les postes d un lieu sortent par la
+      # meme adresse publique. Sans ce seau les pointages tombaient dans public-write, a dix par
+      # dix minutes. La soumission de la cle du poste, elle, va au seau otp.
+      checkin:
+        max-requests: ${RATE_LIMIT_CHECKIN_MAX:120}
+        window-seconds: ${RATE_LIMIT_CHECKIN_WINDOW:60}
 
       # Les ecritures qu un inconnu declenche · prospect, inscription, enquete.
       public-write:

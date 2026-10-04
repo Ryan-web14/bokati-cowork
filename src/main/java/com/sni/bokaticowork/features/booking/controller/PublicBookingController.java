@@ -7,7 +7,7 @@ import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.booking.config.BookingCheckInProperties;
 import com.sni.bokaticowork.features.booking.service.support.BookingConfirmationDocumentService;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingService;
-import jakarta.servlet.http.Cookie;
+import com.sni.bokaticowork.features.booking.service.support.ScannerTerminalGate;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +30,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PublicBookingController {
 
-    private static final String SCANNER_COOKIE_NAME = "bokati_scanner";
-
     private final BookingService bookingService;
     private final BookingConfirmationDocumentService confirmationDocumentService;
     private final BookingCheckInProperties checkInProperties;
+    private final ScannerTerminalGate scannerTerminalGate;
 
     @GetMapping("/{bookingNumber}")
     public ModelAndView view(@PathVariable String bookingNumber,
@@ -59,40 +58,53 @@ public class PublicBookingController {
     }
 
     /**
-     * QR code scan endpoint · réservé aux terminaux scanner autorisés.
-     * Sans cookie scanner valide, affiche le formulaire de code admin.
+     * La page que le QR code ouvre · elle ne pointe personne.
+     *
+     * <p>Le pointage se faisait ici, sur un GET, avec pour seule autorite un cookie envoye a tout
+     * le domaine : une page quelconque visitee par le terminal pouvait donc declencher des
+     * pointages avec un simple {@code <img src>}, la protection CSRF etant desactivee
+     * globalement. Un GET ne doit rien changer · celui-ci affiche la reservation et demande une
+     * confirmation, qui part en POST.</p>
      */
     @GetMapping("/check-in/scan/{checkInToken}")
     public ModelAndView scanCheckIn(@PathVariable String checkInToken,
                                     HttpServletRequest request) {
-        if (!checkInProperties.hasScannerCookie(request)) {
-            ModelAndView mav = new ModelAndView("booking/checkin-admin-code");
-            mav.addObject("checkInToken", checkInToken);
-            mav.addObject("scannerConfigured", checkInProperties.isScannerKeyConfigured());
-            return mav;
+        if (!scannerTerminalGate.isAuthorizedTerminal(request)) {
+            return adminCodePage(checkInToken, null);
+        }
+        ModelAndView mav = new ModelAndView("booking/checkin-confirm");
+        mav.addObject("checkInToken", checkInToken);
+        mav.addObject("confirmUrl", ApiPath.V1 + "/public/bookings/check-in/scan");
+        return mav;
+    }
+
+    /**
+     * Le pointage lui-meme · POST, et seulement depuis un poste autorise.
+     */
+    @PostMapping("/check-in/scan")
+    public ModelAndView confirmScanCheckIn(@RequestParam String checkInToken,
+                                           HttpServletRequest request) {
+        if (!scannerTerminalGate.isAuthorizedTerminal(request)) {
+            // L'autorisation a expire entre l'affichage et la confirmation · on redemande la cle.
+            return adminCodePage(checkInToken, null);
         }
         return performScanCheckIn(checkInToken);
     }
 
     /**
-     * Valide le code admin, enregistre le cookie scanner puis effectue le check-in.
+     * Valide le code du poste, pose l'autorisation, puis effectue le pointage.
+     *
+     * <p>Le pointage a lieu ici sans confirmation supplementaire : la requete est un POST et la
+     * cle vient d'etre prouvee dans cette meme requete.</p>
      */
     @PostMapping("/check-in/scanner-verify")
     public ModelAndView scannerVerify(@RequestParam String checkInToken,
                                       @RequestParam String adminCode,
                                       HttpServletResponse response) {
         if (!checkInProperties.isScannerKeyValid(adminCode)) {
-            ModelAndView mav = new ModelAndView("booking/checkin-admin-code");
-            mav.addObject("checkInToken", checkInToken);
-            mav.addObject("scannerConfigured", checkInProperties.isScannerKeyConfigured());
-            mav.addObject("error", "Code invalide. Veuillez réessayer.");
-            return mav;
+            return adminCodePage(checkInToken, "Code invalide. Veuillez réessayer.");
         }
-        Cookie cookie = new Cookie(SCANNER_COOKIE_NAME, adminCode.trim());
-        cookie.setMaxAge(365 * 24 * 3600);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        response.addCookie(cookie);
+        scannerTerminalGate.authorizeTerminal(response);
         return performScanCheckIn(checkInToken);
     }
 
@@ -103,6 +115,7 @@ public class PublicBookingController {
     public ModelAndView scannerSetupPage() {
         ModelAndView mav = new ModelAndView("booking/checkin-scanner-setup");
         mav.addObject("scannerConfigured", checkInProperties.isScannerKeyConfigured());
+        mav.addObject("setupUrl", ApiPath.V1 + "/public/bookings/check-in/scanner-setup");
         return mav;
     }
 
@@ -112,17 +125,27 @@ public class PublicBookingController {
         if (!checkInProperties.isScannerKeyValid(setupKey)) {
             ModelAndView mav = new ModelAndView("booking/checkin-scanner-setup");
             mav.addObject("scannerConfigured", checkInProperties.isScannerKeyConfigured());
+            mav.addObject("setupUrl", ApiPath.V1 + "/public/bookings/check-in/scanner-setup");
             mav.addObject("error", "Clé invalide. Contactez l'administrateur système.");
             return mav;
         }
-        Cookie cookie = new Cookie(SCANNER_COOKIE_NAME, setupKey.trim());
-        cookie.setMaxAge(365 * 24 * 3600);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        response.addCookie(cookie);
+        scannerTerminalGate.authorizeTerminal(response);
         ModelAndView mav = new ModelAndView("booking/checkin-scanner-setup");
         mav.addObject("scannerConfigured", true);
         mav.addObject("setupSuccess", true);
+        mav.addObject("setupUrl", ApiPath.V1 + "/public/bookings/check-in/scanner-setup");
+        mav.addObject("grantValidityDays", checkInProperties.grantValidity().toDays());
+        return mav;
+    }
+
+    private ModelAndView adminCodePage(String checkInToken, String error) {
+        ModelAndView mav = new ModelAndView("booking/checkin-admin-code");
+        mav.addObject("checkInToken", checkInToken);
+        mav.addObject("scannerConfigured", checkInProperties.isScannerKeyConfigured());
+        mav.addObject("verifyUrl", ApiPath.V1 + "/public/bookings/check-in/scanner-verify");
+        if (error != null) {
+            mav.addObject("error", error);
+        }
         return mav;
     }
 

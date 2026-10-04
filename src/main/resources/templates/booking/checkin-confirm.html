@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Confirmer le pointage · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+
+  <p class="state todo">À confirmer</p>
+  <h1>Enregistrer cette arrivée</h1>
+  <!--
+    Cette page existe pour que l'ouverture du lien ne pointe personne d'elle-meme · un lien
+    ouvert ne doit rien changer. La confirmation part en POST, qui n'est pas declenchable par
+    un site tiers avec le cookie du poste.
+  -->
+  <p class="lede">Ce poste est autorisé. Confirmez pour enregistrer l'arrivée.</p>
+
+  <form th:action="@{${confirmUrl}}" method="post">
+    <input type="hidden" name="checkInToken" th:value="${checkInToken}">
+    <button type="submit" class="btn">Enregistrer l'arrivée</button>
+  </form>
+
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+</body>
+</html>

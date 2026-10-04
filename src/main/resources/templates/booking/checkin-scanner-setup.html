@@ -10,6 +10,7 @@
     <p class="state ok">Activé</p>
     <h1>Ce poste est activé</h1>
     <p class="lede">Il peut désormais enregistrer les arrivées. Gardez cet appareil à l'accueil.</p>
+    <p class="notice" th:if="${grantValidityDays != null}">L'autorisation de ce poste expire dans <span th:text="${grantValidityDays}">30</span> jours. Il faudra alors ressaisir la clé d'activation.</p>
   </th:block>
 
   <th:block th:unless="${setupSuccess}">
@@ -20,7 +21,7 @@
 
     <p class="notice" th:if="${error != null}" style="border-left-color:#A32A34; color:#A32A34; margin-top:0; margin-bottom:16px" th:text="${error}">Message</p>
 
-    <form th:if="${scannerConfigured}" th:action="@{/v1/public/bookings/check-in/scanner-setup}" method="post">
+    <form th:if="${scannerConfigured}" th:action="@{${setupUrl}}" method="post">
       <div class="field">
         <label for="setupKey">Clé d'activation</label>
         <input type="password" id="setupKey" name="setupKey" required autocomplete="off">

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
-<head th:insert="~{fragments/page :: pagehead('Pointage à l''accueil · Elle A Osé')}"></head>
+<head th:insert="~{fragments/page :: pagehead('Code du poste · Elle A Osé')}"></head>
 <body>
 <main class="page">
   <div th:replace="~{fragments/page :: brand}"></div>
@@ -13,7 +13,7 @@
 
     <p class="notice" th:if="${error != null}" style="border-left-color:#A32A34; color:#A32A34; margin-top:0; margin-bottom:16px" th:text="${error}">Message</p>
 
-    <form th:action="@{/v1/public/bookings/check-in/scanner-verify}" method="post">
+    <form th:action="@{${verifyUrl}}" method="post">
       <input type="hidden" name="checkInToken" th:value="${checkInToken}">
       <div class="field">
         <label for="adminCode">Code du poste</label>

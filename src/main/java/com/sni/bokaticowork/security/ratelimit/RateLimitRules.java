@@ -27,6 +27,9 @@ import java.util.Locale;
 @Component
 public class RateLimitRules {
 
+    /** Les routes du pointage a l'accueil · voir {@link #checkinMax}. */
+    private static final String CHECKIN_PREFIX = ApiPath.V1 + "/public/bookings/check-in";
+
     @Value("${app.security.rate-limit.login.max-requests:5}")
     private int loginMax;
     @Value("${app.security.rate-limit.login.window-seconds:60}")
@@ -41,6 +44,19 @@ public class RateLimitRules {
     private int callbackMax;
     @Value("${app.security.rate-limit.callback.window-seconds:60}")
     private long callbackWindow;
+
+    /**
+     * Le pointage a l'accueil · genereux, parce que tout un accueil partage une seule adresse.
+     *
+     * <p>Sans ce seau, les pointages tombaient dans {@code public-write} a dix par dix minutes ·
+     * une matinee chargee aurait atteint le plafond, tous les postes du lieu sortant par la meme
+     * adresse publique. La soumission de la cle du poste, elle, reste au seau des codes a usage
+     * unique : c'est un secret qu'on devine, pas un geste de routine.</p>
+     */
+    @Value("${app.security.rate-limit.checkin.max-requests:120}")
+    private int checkinMax;
+    @Value("${app.security.rate-limit.checkin.window-seconds:60}")
+    private long checkinWindow;
 
     /** Les ecritures que n'importe qui peut declencher · un prospect, une inscription. */
     @Value("${app.security.rate-limit.public-write.max-requests:10}")
@@ -104,6 +120,13 @@ public class RateLimitRules {
         }
         if (path.startsWith("/verify/")) {
             return new Rule("verify:" + clientIp, verifyMax, verifyWindow);
+        }
+        // La cle d'un poste de pointage est un secret partage · on la traite comme un code.
+        if (path.startsWith(CHECKIN_PREFIX + "/scanner")) {
+            return new Rule("otp:" + clientIp + ":" + path, otpMax, otpWindow);
+        }
+        if (path.startsWith(CHECKIN_PREFIX)) {
+            return new Rule("checkin:" + clientIp, checkinMax, checkinWindow);
         }
         if (isPublicWrite(verb, path)) {
             return new Rule("public-write:" + clientIp + ":" + path, publicWriteMax, publicWriteWindow);
