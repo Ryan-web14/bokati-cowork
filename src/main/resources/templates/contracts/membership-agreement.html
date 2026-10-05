@@ -187,7 +187,8 @@ body {
     text-align: center;
 }
 
-@media print { body { width: 210mm; } }
+/* Aucune largeur imposee au corps · @page definit la zone utile. La forcer a 210mm la rendait
+   plus large que la page imprimable et coupait la fin des phrases. */
 </style>
 <th:block th:replace="~{fragments/contract-brand :: styles}"></th:block>
 </head>

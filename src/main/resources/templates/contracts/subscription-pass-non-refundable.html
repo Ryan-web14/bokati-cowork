@@ -421,7 +421,9 @@ body {
 }
 
 @media print {
-  body { width: 210mm; }
+  /* Pas de largeur imposee au corps · @page definit deja la zone utile (210mm moins les
+     marges). La forcer a 210mm la rendait 48mm plus large que la page imprimable, et tout ce
+     qui depassait etait coupe au bord · les phrases sortaient du cadre, incompletes. */
   .nr-banner, .legal-notice { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
@@ -469,8 +471,8 @@ body {
   immatriculé au RCCM sous le numéro
   <strong th:text="${variables != null and variables['operatorRccm'] != null ? variables['operatorRccm'] : 'CG-PNR-01-2017-00472'}">CG-PNR-01-2017-00472</strong>,
   situé au
-  <span th:text="${variables != null and variables['operatorAddress'] != null ? variables['operatorAddress'] : '84 boulevard du Général Charles de Gaulle'}">84 boulevard du Général Charles de Gaulle</span>,
-  Pointe-Noire, République du Congo,
+  <span th:text="${variables != null and variables['operatorAddress'] != null ? variables['operatorAddress'] : '84 boulevard du Général Charles de Gaulle, Pointe-Noire'}">84 boulevard du Général Charles de Gaulle</span>,
+  République du Congo,
   représenté par
   <strong th:text="${variables != null and variables['operatorRepresentative'] != null ? variables['operatorRepresentative'] : 'Mme Hope MADHONE'}">Mme Hope MADHONE</strong>,
   ci-après dénommé <strong>«&#160;le Prestataire&#160;»</strong>,
@@ -485,9 +487,10 @@ body {
   <span th:if="${ownerAddress != null}">dont le siège est situé à <span th:text="${ownerAddress}">adresse</span>,</span>
   <span th:if="${ownerCode != null}">référencée sous le code client <strong th:text="${ownerCode}">CODE-001</strong>,</span>
   <span th:if="${ownerEmail != null}">joignable à <span th:text="${ownerEmail}">email</span>,</span>
-  représentée par
-  <strong th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom signataire</strong>
-  en qualité de <span th:text="${request.signatoryRole != null ? request.signatoryRole : 'Représentant légal'}">Représentant légal</span>,
+  <span th:if="${request.signatoryName != null}">représentée par
+    <strong th:text="${request.signatoryName}">Nom signataire</strong>
+    en qualité de <span th:text="${request.signatoryRole != null ? request.signatoryRole : 'Représentant légal'}">Représentant légal</span>,</span><span
+       th:if="${request.signatoryName == null}">agissant par son représentant légal,</span>
   ci-après dénommée <strong>«&#160;le Client&#160;»</strong>.
 </p>
 
@@ -591,22 +594,12 @@ body {
 <div class="article">
   <div class="article-heading">Article 4 : Prix de la prestation et modalités de paiement</div>
   <div class="article-body">
-    <table class="ruled-table" style="margin-bottom:10pt;" th:if="${variables['amountLabel'] != null}">
-      <tr>
-        <td class="rlbl">Montant de la prestation</td>
-        <td class="rval"><strong th:text="${variables['amountLabel']}">180 000 FCFA</strong></td>
-      </tr>
-      <tr th:if="${variables['unitPriceLabel'] != null and variables['quantity'] != null}">
-        <td class="rlbl">Détail</td>
-        <td class="rval">
-          <span th:text="${variables['quantity']}">2</span>
-          &#215;&#160;<span th:text="${variables['unitPriceLabel']}">90 000 FCFA</span>
-        </td>
-      </tr>
-    </table>
     <p th:if="${variables['amountLabel'] != null}">
       Le prix de la présente prestation s'élève à
-      <strong th:text="${variables['amountLabel']}">180 000 FCFA</strong> pour la période souscrite.
+      <strong th:text="${variables['amountLabel']}">180 000 FCFA</strong> pour la période
+      souscrite<span th:if="${variables['unitPriceLabel'] != null and variables['quantity'] != null}">,
+        soit <span th:text="${variables['quantity']}">2</span> unités au prix unitaire de
+        <span th:text="${variables['unitPriceLabel']}">90 000 FCFA</span></span>.
       Il est payable intégralement et par avance, et la prestation n'est ouverte qu'une fois le
       paiement constaté par le Prestataire.
     </p>

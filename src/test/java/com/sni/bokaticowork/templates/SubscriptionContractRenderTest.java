@@ -68,8 +68,10 @@ class SubscriptionContractRenderTest {
     void theAmountPaidIsStated() {
         String html = render(subscriptionVariables());
 
-        assertThat(html).contains("Montant de la prestation");
-        assertThat(normalise(html)).contains("180 000 FCFA");
+        // Le montant vit dans la phrase, plus dans un tableau qui la repetait mot pour mot.
+        assertThat(normalise(html))
+                .contains("Le prix de la présente prestation")
+                .contains("180 000 FCFA");
         // La devise ISO n'a rien a faire sur un contrat congolais.
         assertThat(html).doesNotContain(">XAF<");
     }
@@ -172,7 +174,7 @@ class SubscriptionContractRenderTest {
         String html = normalise(render(vars));
 
         assertThat(html).contains("celui de l offre valid".replace("l offre", "l'offre"));
-        assertThat(html).doesNotContain("Montant de la prestation");
+        assertThat(html).doesNotContain("FCFA");
     }
 
     @Test
@@ -229,6 +231,52 @@ class SubscriptionContractRenderTest {
         java.nio.file.Path target = java.nio.file.Path.of(System.getProperty("contract.preview"));
         java.nio.file.Files.writeString(target, render(subscriptionVariables()));
         System.out.println("Apercu ecrit : " + target.toAbsolutePath());
+    }
+
+    /**
+     * Rend le PDF par le meme chemin que la production, puis sa premiere page en PNG.
+     *
+     * <p>Les debordements ne se voient pas dans le HTML · ils apparaissent a la mise en page. Le
+     * corps portait {@code width: 210mm} sous {@code @media print}, alors que la zone utile vaut
+     * 210mm moins les marges de {@code @page} : tout ce qui depassait etait coupe au bord de la
+     * page, et les phrases sortaient incompletes. Desactive par defaut :
+     * {@code mvn test -Dtest=SubscriptionContractRenderTest -Dpdf.out=/chemin/contrat.pdf}</p>
+     */
+    @Test
+    @org.junit.jupiter.api.condition.EnabledIfSystemProperty(named = "pdf.out", matches = ".+")
+    void writeThePdfAndItsFirstPageAsPng() throws Exception {
+        String html = render(subscriptionVariables());
+        java.nio.file.Path pdf = java.nio.file.Path.of(System.getProperty("pdf.out"));
+
+        org.jsoup.nodes.Document jsoup = org.jsoup.Jsoup.parse(html);
+        jsoup.outputSettings()
+                .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
+                .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
+                .charset(java.nio.charset.StandardCharsets.UTF_8)
+                .prettyPrint(false);
+        try (java.io.OutputStream out = java.nio.file.Files.newOutputStream(pdf)) {
+            com.openhtmltopdf.pdfboxout.PdfRendererBuilder builder =
+                    new com.openhtmltopdf.pdfboxout.PdfRendererBuilder();
+            builder.useFastMode();
+            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoup), null);
+            builder.toStream(out);
+            builder.run();
+        }
+
+        try (org.apache.pdfbox.pdmodel.PDDocument document =
+                     org.apache.pdfbox.pdmodel.PDDocument.load(pdf.toFile())) {
+            org.apache.pdfbox.rendering.PDFRenderer renderer =
+                    new org.apache.pdfbox.rendering.PDFRenderer(document);
+            for (int page = 0; page < Math.min(2, document.getNumberOfPages()); page++) {
+                java.io.File png = pdf.resolveSibling(
+                        pdf.getFileName().toString().replaceAll("[.]pdf$", "") + "-p" + (page + 1) + ".png")
+                        .toFile();
+                javax.imageio.ImageIO.write(renderer.renderImage(page, 2f,
+                        org.apache.pdfbox.rendering.ImageType.RGB), "png", png);
+                System.out.println("PNG ecrit : " + png.getAbsolutePath());
+            }
+            System.out.println("Pages : " + document.getNumberOfPages());
+        }
     }
 
     /** Les espaces insecables francais se comparent mal · on les ramene a l'espace ordinaire. */
