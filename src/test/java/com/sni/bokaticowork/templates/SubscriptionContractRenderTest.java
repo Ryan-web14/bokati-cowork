@@ -29,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class SubscriptionContractRenderTest {
 
-    private static final String TEMPLATE = "contracts/subscription-pass-non-refundable";
+    private static final String TEMPLATE = System.getProperty(
+            "contract.template", "contracts/subscription-pass-non-refundable");
 
     private final SpringTemplateEngine engine = engine();
 

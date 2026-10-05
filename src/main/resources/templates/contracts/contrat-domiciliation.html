@@ -204,9 +204,21 @@ body {
      les prestations souscrites.</p>
 </div>
 
+<div class="article">
+  <div class="article-heading">Article 2 &middot; Définitions</div>
+  <p>Les termes ci-dessous ont, dans l’ensemble du présent contrat, le sens qui leur est donné ici.</p>
+  <p><strong>Le Domiciliataire</strong> désigne l’établissement qui met son adresse à disposition,
+     identifié en tête du présent contrat. <strong>Le Domicilié</strong> désigne la personne morale
+     qui y établit son siège et en règle la redevance.</p>
+  <p><strong>La domiciliation</strong> est la mise à disposition d’une adresse comme siège social,
+     assortie des prestations énumérées à l’article 3. <strong>La redevance</strong> est le prix
+     périodique de ces prestations. Le présent contrat ne constitue ni un bail commercial, ni un
+     bail professionnel.</p>
+</div>
+
 <!-- Prestations reellement souscrites · plus de cases a cocher au stylo -->
 <div class="article" th:if="${variables['includedServices'] != null}">
-  <div class="article-heading">Article 2 &middot; Prestations incluses</div>
+  <div class="article-heading">Article 3 &middot; Prestations incluses</div>
   <p>Le Domiciliataire s'engage à fournir les prestations suivantes, dans les conditions définies au
      présent contrat :</p>
   <ul class="services">
@@ -216,7 +228,7 @@ body {
 </div>
 
 <div class="article">
-  <div class="article-heading">Article 3 &middot; Durée et renouvellement</div>
+  <div class="article-heading">Article 4 &middot; Durée et renouvellement</div>
   <p th:if="${variables['startDate'] != null and variables['endDate'] != null}"
      th:text="|Le contrat prend effet le ${variables['startDate']} et court jusqu'au ${variables['endDate']}. Il se renouvelle par tacite reconduction pour des périodes de même durée, sauf dénonciation par l'une des parties dans le délai de préavis prévu à l'article 6.|">Durée</p>
   <p th:unless="${variables['startDate'] != null and variables['endDate'] != null}">
@@ -225,7 +237,7 @@ body {
 </div>
 
 <div class="article">
-  <div class="article-heading">Article 4 &middot; Redevance et modalités de paiement</div>
+  <div class="article-heading">Article 5 &middot; Redevance et modalités de paiement</div>
   <p th:if="${variables['monthlyFee'] != null}"
      th:text="|La redevance est fixée à ${variables['monthlyFee']} par mois, payable le premier jour de chaque mois. Tout retard de paiement excédant quinze (15) jours entraîne la suspension des prestations jusqu'à régularisation, sans que le Domicilié puisse prétendre à une réduction de la redevance pour la période suspendue.|">Redevance</p>
   <p th:unless="${variables['monthlyFee'] != null}">
@@ -235,7 +247,7 @@ body {
 </div>
 
 <div class="article">
-  <div class="article-heading">Article 5 &middot; Obligations des parties</div>
+  <div class="article-heading">Article 6 &middot; Obligations des parties</div>
   <p>Le Domiciliataire tient à la disposition du Domicilié le courrier reçu à son nom et le conserve
      pendant la durée du contrat. Il délivre sur demande une attestation de domiciliation.</p>
   <p th:if="${variables['mailRegime'] != null}"
@@ -246,7 +258,7 @@ body {
 </div>
 
 <div class="article">
-  <div class="article-heading">Article 6 &middot; Résiliation</div>
+  <div class="article-heading">Article 7 &middot; Résiliation</div>
   <p th:if="${variables['noticeDays'] != null}"
      th:text="|Chaque partie peut résilier le contrat par écrit, moyennant un préavis de ${variables['noticeDays']} jours. Le Domicilié procède alors sans délai au transfert de son siège et cesse toute utilisation de l'adresse.|">Résiliation</p>
   <p th:unless="${variables['noticeDays'] != null}">
@@ -259,16 +271,16 @@ body {
 </div>
 
 <div class="article">
-  <div class="article-heading">Article 7 &middot; Confidentialité, données personnelles et droit applicable</div>
+  <div class="article-heading">Article 8 &middot; Confidentialité, données personnelles et droit applicable</div>
   <p>Chaque partie s'oblige à la confidentialité sur les informations recueillies à l'occasion du
      présent contrat. Les données personnelles du Domicilié sont traitées aux seules fins d'exécution
      du contrat et conservées pendant la durée légale.</p>
-  <p th:text="|Les parties s'efforcent de rechercher une solution amiable avant tout recours judiciaire. À défaut d'accord dans un délai de trente (30) jours à compter de la notification du différend, le litige est soumis à la juridiction compétente de ${placeOfSigning}. Le présent contrat est établi en deux (2) exemplaires originaux, un pour chaque partie.|">Droit applicable</p>
+  <p th:text="|Le présent contrat est soumis au droit de la République du Congo. Les parties s'efforcent de rechercher une solution amiable avant tout recours judiciaire. À défaut d'accord dans un délai de trente (30) jours à compter de la notification du différend, le litige est soumis à la juridiction compétente de ${placeOfSigning}. Le présent contrat est établi en deux (2) exemplaires originaux, un pour chaque partie.|">Droit applicable</p>
 </div>
 
 <!-- Clauses libres ajoutees a la generation -->
 <div class="article" th:if="${clauses != null and !clauses.isEmpty()}">
-  <div class="article-heading">Article 8 &middot; Clauses particulières</div>
+  <div class="article-heading">Article 9 &middot; Clauses particulières</div>
   <p th:each="clause : ${clauses}" th:text="${clause}">Clause</p>
 </div>
 

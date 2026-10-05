@@ -245,74 +245,120 @@ body {
   <div class="article-text">
     <p th:if="${request.description != null and !#strings.isEmpty(request.description)}" th:text="${request.description}">Description.</p>
     <p th:if="${request.description == null or #strings.isEmpty(request.description)}">
-      Le présent contrat a pour objet de définir les conditions d'adhésion du Bénéficiaire aux services proposés par le Prestataire,
-      ainsi que les droits et obligations réciproques des parties dans le cadre de cette relation contractuelle.
+      Le présent contrat définit les conditions d'adhésion du Bénéficiaire aux services de l'espace
+      de travail exploité par le Prestataire, ainsi que les droits et obligations réciproques des
+      parties.
+    </p>
+    <p>
+      Il s'agit d'un contrat de prestation de services. Il ne constitue ni un bail commercial, ni un
+      bail professionnel, et ne confère au Bénéficiaire aucun droit au maintien dans les lieux.
     </p>
   </div>
 </div>
 
-<!-- ARTICLE 2 : CADRE CONTRACTUEL -->
+<!-- ARTICLE 2 : DÉFINITIONS -->
 <div class="article">
-  <div class="article-heading">Article 2 · Cadre contractuel et durée</div>
-  <table class="data-table">
-    <tr>
-      <td class="lbl">Date d'effet</td>
-      <td th:text="${variables['effectiveDate']}"></td>
-    </tr>
-    <tr>
-      <td class="lbl">Date de début</td>
-      <td th:text="${variables['startDate']}"></td>
-    </tr>
-    <tr>
-      <td class="lbl">Date de fin</td>
-      <td th:text="${variables['endDate']}"></td>
-    </tr>
-    <tr>
-      <td class="lbl">Signataire</td>
-      <td th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom du signataire</td>
-    </tr>
-    <tr>
-      <td class="lbl">Fonction / Qualité</td>
-      <td th:text="${request.signatoryRole != null ? request.signatoryRole : 'Membre / Représentant'}">Membre</td>
-    </tr>
-  </table>
+  <div class="article-heading">Article 2 · Définitions</div>
+  <div class="article-text">
+    <p>Les termes ci-dessous ont, dans l'ensemble du présent contrat, le sens qui leur est donné ici.</p>
+    <p>
+      <strong>Le Prestataire</strong> désigne l'établissement exploitant l'espace de travail,
+      identifié en tête du présent contrat. <strong>Le Bénéficiaire</strong> désigne la personne qui
+      adhère aux services et en règle le prix. <strong>L'espace</strong> désigne les locaux exploités
+      par le Prestataire, y compris les postes de travail, les espaces communs et les équipements mis
+      à disposition.
+    </p>
+    <p>
+      <strong>L'adhésion</strong> est le droit d'accès aux services pour la période définie à
+      l'article 3. <strong>Le règlement intérieur</strong> est le document, remis au Bénéficiaire et
+      affiché dans l'espace, qui fixe les règles d'usage des lieux.
+    </p>
+  </div>
 </div>
 
-<!-- ARTICLE 3 : OBLIGATIONS ET ENGAGEMENTS -->
+<!-- ARTICLE 3 : DURÉE -->
 <div class="article">
-  <div class="article-heading">Article 3 · Obligations et engagements des parties</div>
+  <div class="article-heading">Article 3 · Durée de l'adhésion</div>
   <div class="article-text">
-    <div th:if="${#lists.isEmpty(clauses)}">
-      <p>Le Bénéficiaire s'engage à respecter le règlement intérieur, les conditions d'utilisation
-      des ressources et les obligations de paiement applicables à l'ensemble des services souscrits.</p>
-      <p>Le Prestataire s'engage à mettre à la disposition du Bénéficiaire les services convenus,
-      dans les conditions définies au présent contrat et selon les standards de qualité en vigueur.</p>
-    </div>
+    <p>
+      L'adhésion<span th:if="${variables['effectiveDate'] != null}"> prend effet le <strong th:text="${variables['effectiveDate']}">date</strong></span><span
+            th:if="${variables['startDate'] != null}"> et s'ouvre au Bénéficiaire le <strong th:text="${variables['startDate']}">date</strong></span><span
+            th:if="${variables['endDate'] != null}">, pour s'achever le <strong th:text="${variables['endDate']}">date</strong></span>.
+      <span th:if="${variables['billingCycleLabel'] != null}">Le renouvellement et le règlement
+        interviennent <strong th:text="${variables['billingCycleLabel']}">tous les mois</strong>.</span>
+    </p>
+    <p th:if="${variables['endDate'] == null}">
+      Elle reste ouverte jusqu'à sa résiliation dans les conditions prévues au présent contrat.
+    </p>
+    <p>
+      À l'échéance, l'adhésion ne se poursuit que si elle est renouvelée et réglée.
+    </p>
+  </div>
+</div>
+
+<!-- ARTICLE 4 : PRIX ET PAIEMENT -->
+<div class="article">
+  <div class="article-heading">Article 4 · Prix et modalités de paiement</div>
+  <div class="article-text">
+    <p th:if="${variables['amountLabel'] != null}">
+      Le prix de la présente adhésion s'élève à
+      <strong th:text="${variables['amountLabel']}">180 000 FCFA</strong> pour la période souscrite.
+      Il est payable intégralement et par avance, et les services ne sont ouverts qu'une fois le
+      paiement constaté par le Prestataire.
+    </p>
+    <p th:if="${variables['amountLabel'] == null}">
+      Le prix de la présente adhésion est celui de l'offre validée au moment de la souscription. Il
+      est payable intégralement et par avance, et les services ne sont ouverts qu'une fois le
+      paiement constaté par le Prestataire.
+    </p>
+    <p>
+      Le Prestataire accepte les règlements par virement bancaire, par chèque, en espèces et par
+      transfert d'argent mobile. Passé un retard de cinq (5) jours, une pénalité de cinq pour cent
+      (5&#160;%) du montant dû est appliquée, et le Prestataire peut suspendre de plein droit l'accès
+      à l'espace jusqu'au règlement complet.
+    </p>
+  </div>
+</div>
+
+<!-- ARTICLE 5 : OBLIGATIONS -->
+<div class="article">
+  <div class="article-heading">Article 5 · Obligations et engagements des parties</div>
+  <div class="article-text">
+    <p>
+      Le Prestataire met à la disposition du Bénéficiaire les services convenus, dans les conditions
+      définies au présent contrat et selon les standards de qualité en vigueur.
+    </p>
+    <p>
+      Le Bénéficiaire respecte le règlement intérieur, les conditions d'utilisation des ressources et
+      les échéances de paiement. Il demeure seul responsable de ses biens personnels dans les locaux
+      et répond des dommages qu'il cause aux équipements du Prestataire.
+    </p>
     <div th:each="clause : ${clauses}" class="clause" th:text="${clause}">Clause contractuelle.</div>
   </div>
 </div>
 
-<!-- ARTICLE 4 : CONDITIONS SPÉCIFIQUES -->
-<div class="article" th:if="${variables != null and !#maps.isEmpty(variables)}">
-  <div class="article-heading">Article 4 · Conditions spécifiques</div>
-  <table class="vars-table">
-    <tr th:each="entry : ${variables.entrySet()}">
-      <td class="key" th:text="${entry.key}">Paramètre</td>
-      <td th:text="${entry.value}">Valeur</td>
-    </tr>
-  </table>
+<!-- ARTICLE 6 : RÉFÉRENCES -->
+<div class="article" th:if="${ownerCode != null or variables['planCode'] != null}">
+  <div class="article-heading">Article 6 · Références de l'adhésion</div>
+  <div class="article-text">
+    <p>
+      <span th:if="${ownerCode != null}">Le Bénéficiaire est référencé sous le code <strong th:text="${ownerCode}">CUS-000001</strong>.&#160;</span><span
+            th:if="${variables['planCode'] != null}">L'adhésion correspond à la formule <strong th:text="${variables['planCode']}">FLEX</strong><span
+            th:if="${variables['planVersion'] != null}">, dans sa version <span th:text="${variables['planVersion']}">3</span></span>.</span>
+    </p>
+  </div>
 </div>
 
-<!-- ARTICLE 5 : DISPOSITIONS LÉGALES -->
+<!-- ARTICLE 7 : DISPOSITIONS LÉGALES -->
 <div class="article">
-  <div class="article-heading" th:text="${variables != null and !#maps.isEmpty(variables)} ? 'Article 5 · Dispositions légales et règlement des litiges' : 'Article 4 · Dispositions légales et règlement des litiges'">Article · Dispositions légales</div>
+  <div class="article-heading">Article 7 · Droit applicable et règlement des litiges</div>
   <div class="legal-notice">
-    Le présent contrat est régi par le droit applicable dans le pays d'établissement du Prestataire.
-    En cas de différend relatif à l'interprétation ou à l'exécution du présent contrat, les parties s'engagent à
-    rechercher une solution amiable avant tout recours judiciaire. À défaut d'accord amiable dans un délai de
-    trente (30) jours à compter de la notification du différend, le litige sera soumis à la juridiction compétente
-    du ressort du siège social du Prestataire. Le présent contrat est établi en deux (2) exemplaires originaux,
-    un pour chaque partie.
+    Le présent contrat est soumis au droit de la <strong>République du Congo</strong>. En cas de
+    différend relatif à son interprétation ou à son exécution, les parties s'engagent à rechercher
+    une solution amiable ; à défaut d'accord dans un délai de trente (30) jours, le litige relève de
+    la juridiction de
+    <strong th:text="${placeOfSigning != null ? placeOfSigning : 'Pointe-Noire'}">Pointe-Noire</strong>.
+    Le présent contrat est établi en deux (2) exemplaires originaux, un pour chaque partie.
   </div>
 </div>
 
