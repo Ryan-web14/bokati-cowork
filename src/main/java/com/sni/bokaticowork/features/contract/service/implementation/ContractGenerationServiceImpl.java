@@ -21,6 +21,7 @@ import com.sni.bokaticowork.features.contract.repository.ContractTemplateReposit
 import com.sni.bokaticowork.features.contract.service.support.ContractEmailNotifier;
 import com.sni.bokaticowork.core.utils.BrandLogo;
 import com.sni.bokaticowork.features.company.repository.BusinessRepository;
+import com.sni.bokaticowork.features.contract.service.support.ContractPdfFonts;
 import com.sni.bokaticowork.features.contract.service.support.ContractWording;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,7 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
 
     private final SpringTemplateEngine templateEngine;
     private final ContractWording wording;
+    private final ContractPdfFonts pdfFonts;
     private final BrandLogo brandLogo;
     private final BusinessRepository businessRepository;
     private final DocumentService documentService;
@@ -272,6 +274,9 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
                     .prettyPrint(false);
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
+            // Sans cela le moteur ignore le <link> vers Google Fonts et retombe sur Times ·
+            // la mise en page obtenue n etait pas celle qui avait ete dessinee.
+            pdfFonts.register(builder);
             builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoupDoc), null);
             builder.toStream(out);
             builder.run();

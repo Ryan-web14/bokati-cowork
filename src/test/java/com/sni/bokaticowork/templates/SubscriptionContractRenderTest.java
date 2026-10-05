@@ -259,6 +259,10 @@ class SubscriptionContractRenderTest {
             com.openhtmltopdf.pdfboxout.PdfRendererBuilder builder =
                     new com.openhtmltopdf.pdfboxout.PdfRendererBuilder();
             builder.useFastMode();
+            com.sni.bokaticowork.features.contract.service.support.ContractPdfFonts fonts =
+                    new com.sni.bokaticowork.features.contract.service.support.ContractPdfFonts();
+            fonts.load();
+            fonts.register(builder);
             builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoup), null);
             builder.toStream(out);
             builder.run();
