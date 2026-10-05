@@ -113,10 +113,47 @@ class ContractTemplatesRenderTest {
         assertThat(corps).contains("180 000 FCFA");
     }
 
+    @ParameterizedTest
+    @DisplayName("Les articles se suivent sans trou · un saut fait croire a une page manquante")
+    @ValueSource(strings = {"subscription-pass-non-refundable", "membership-agreement",
+            "business-service-agreement", "contrat-domiciliation"})
+    void theArticlesFollowWithoutAGap(String gabarit) {
+        String corps = texteDuCorps(render(gabarit));
+
+        // La domiciliation masquait son article 3 quand aucune prestation n'etait transmise · la
+        // numerotation passait alors de 2 a 4. Sur un contrat, un numero absent fait douter d'une
+        // page manquante, et c'est le genre de doute qui se paie au moment de la signature.
+        java.util.List<Integer> numeros = new java.util.ArrayList<>();
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(?i)Article[ ]+([0-9]+)[ ]*[:·]").matcher(corps);
+        while (m.find()) {
+            int numero = Integer.parseInt(m.group(1));
+            if (numeros.isEmpty() || numeros.get(numeros.size() - 1) != numero) {
+                numeros.add(numero);
+            }
+        }
+
+        assertThat(numeros).as("numeros d'article rendus").isNotEmpty();
+        assertThat(numeros).isEqualTo(
+                java.util.stream.IntStream.rangeClosed(1, numeros.size()).boxed().toList());
+    }
+
+    @ParameterizedTest
+    @DisplayName("La police Spectral est demandee par tous les gabarits")
+    @ValueSource(strings = {"subscription-pass-non-refundable", "membership-agreement",
+            "business-service-agreement", "contrat-domiciliation"})
+    void everyTemplateAsksForSpectral(String gabarit) throws IOException {
+        String source = Files.readString(DOSSIER.resolve(gabarit + ".html"), StandardCharsets.UTF_8);
+
+        assertThat(source).contains("\"Spectral\"");
+        // Le <link> vers Google Fonts ne sert a rien dans un PDF et retarde chaque generation.
+        assertThat(source).doesNotContain("fonts.googleapis.com");
+    }
+
     /** Le corps contractuel seul · la feuille de style porte des commentaires. */
     private String texteDuCorps(String html) {
         String rendu = html.replace(' ', ' ').replace(' ', ' ')
-                .replace("&#160;", " ").replace("&#39;", "'");
+                .replace("&#160;", " ").replace("&#39;", "'").replace("&middot;", "·");
         int debut = rendu.indexOf("ARTICLE 1");
         if (debut < 0) {
             debut = rendu.indexOf("Article 1");
