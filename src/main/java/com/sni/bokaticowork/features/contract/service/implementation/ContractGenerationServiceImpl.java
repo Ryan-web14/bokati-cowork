@@ -225,6 +225,9 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         vars.put("placeOfSigning", wording.placeOfSigning(business));
         vars.put("signingDate", wording.inWords(LocalDate.now()));
         wording.frenchifyDates(vars, "startDate", "endDate", "effectiveDate");
+        // Les valeurs d enumeration arrivent en identifiants techniques anglais · un contrat
+        // francais ne doit pas afficher MONTHLY ni SUBSCRIPTION_ADDON.
+        wording.frenchifyLabels(vars);
         return vars;
     }
 

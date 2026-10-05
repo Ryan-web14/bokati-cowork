@@ -142,7 +142,9 @@ public class SubscriptionContractSupport {
                         "planVersion", planVersion(addon.getPlanVersion()),
                         "quantity", addon.getQuantity() == null ? "" : String.valueOf(addon.getQuantity()),
                         "currency", nullSafe(addon.getCurrency()),
-                        "unitPrice", amount(addon.getUnitPrice())
+                        "unitPrice", amount(addon.getUnitPrice()),
+                        // Le prix unitaire seul laissait le total a calculer par le lecteur.
+                        "totalAmount", amount(addonTotal(addon))
                 ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
@@ -194,7 +196,11 @@ public class SubscriptionContractSupport {
                         "passType", pass.getPassType() == null ? "" : pass.getPassType().name(),
                         "subscriptionNumber", pass.getSubscription() == null ? "" : pass.getSubscription().getSubscriptionNumber(),
                         "planCode", planCode(pass.getPlanVersion()),
-                        "planVersion", planVersion(pass.getPlanVersion())
+                        "planVersion", planVersion(pass.getPlanVersion()),
+                        // Un contrat de pass ne portait aucun montant · ni devise ni prix. Le
+                        // montant paye est la clause que le client relit en premier.
+                        "currency", nullSafe(pass.getCurrency()),
+                        "totalAmount", amount(pass.getTotalAmount())
                 ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
@@ -416,6 +422,15 @@ public class SubscriptionContractSupport {
 
     private String planVersion(PlanVersion planVersion) {
         return planVersion == null || planVersion.getVersionNumber() == null ? "" : String.valueOf(planVersion.getVersionNumber());
+    }
+
+    /** Total d une option · le prix unitaire multiplie par la quantite souscrite. */
+    private BigDecimal addonTotal(SubscriptionAddon addon) {
+        if (addon.getUnitPrice() == null) {
+            return null;
+        }
+        int quantity = addon.getQuantity() == null ? 1 : Math.max(1, addon.getQuantity());
+        return addon.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
     }
 
     private String amount(BigDecimal amount) {
