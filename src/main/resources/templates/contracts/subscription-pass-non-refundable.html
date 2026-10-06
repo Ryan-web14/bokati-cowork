@@ -3,9 +3,6 @@
 <head>
 <meta charset="UTF-8"/>
 <title th:text="${request.title}">Contrat de souscription / Pass non remboursable</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&display=swap" rel="stylesheet"/>
 <style>
 @page {
   size: A4;
@@ -421,7 +418,9 @@ body {
 }
 
 @media print {
-  body { width: 210mm; }
+  /* Pas de largeur imposee au corps · @page definit deja la zone utile (210mm moins les
+     marges). La forcer a 210mm la rendait 48mm plus large que la page imprimable, et tout ce
+     qui depassait etait coupe au bord · les phrases sortaient du cadre, incompletes. */
   .nr-banner, .legal-notice { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
@@ -469,8 +468,8 @@ body {
   immatriculé au RCCM sous le numéro
   <strong th:text="${variables != null and variables['operatorRccm'] != null ? variables['operatorRccm'] : 'CG-PNR-01-2017-00472'}">CG-PNR-01-2017-00472</strong>,
   situé au
-  <span th:text="${variables != null and variables['operatorAddress'] != null ? variables['operatorAddress'] : '84 boulevard du Général Charles de Gaulle'}">84 boulevard du Général Charles de Gaulle</span>,
-  Pointe-Noire, République du Congo,
+  <span th:text="${variables != null and variables['operatorAddress'] != null ? variables['operatorAddress'] : '84 boulevard du Général Charles de Gaulle, Pointe-Noire'}">84 boulevard du Général Charles de Gaulle</span>,
+  République du Congo,
   représenté par
   <strong th:text="${variables != null and variables['operatorRepresentative'] != null ? variables['operatorRepresentative'] : 'Mme Hope MADHONE'}">Mme Hope MADHONE</strong>,
   ci-après dénommé <strong>«&#160;le Prestataire&#160;»</strong>,
@@ -485,9 +484,10 @@ body {
   <span th:if="${ownerAddress != null}">dont le siège est situé à <span th:text="${ownerAddress}">adresse</span>,</span>
   <span th:if="${ownerCode != null}">référencée sous le code client <strong th:text="${ownerCode}">CODE-001</strong>,</span>
   <span th:if="${ownerEmail != null}">joignable à <span th:text="${ownerEmail}">email</span>,</span>
-  représentée par
-  <strong th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom signataire</strong>
-  en qualité de <span th:text="${request.signatoryRole != null ? request.signatoryRole : 'Représentant légal'}">Représentant légal</span>,
+  <span th:if="${request.signatoryName != null}">représentée par
+    <strong th:text="${request.signatoryName}">Nom signataire</strong>
+    en qualité de <span th:text="${request.signatoryRole != null ? request.signatoryRole : 'Représentant légal'}">Représentant légal</span>,</span><span
+       th:if="${request.signatoryName == null}">agissant par son représentant légal,</span>
   ci-après dénommée <strong>«&#160;le Client&#160;»</strong>.
 </p>
 
@@ -509,240 +509,241 @@ body {
      ARTICLE 1 · OBJET
      ───────────────────────────────────────────────── -->
 <div class="article">
-  <div class="article-heading">Article 1 : Objet de la souscription</div>
+  <div class="article-heading">Article 1 : Objet du contrat</div>
   <div class="article-body">
     <p th:if="${request.description != null and !#strings.isEmpty(request.description)}"
        th:text="${request.description}">Description.</p>
     <p th:if="${request.description == null or #strings.isEmpty(request.description)}">
-      Le présent contrat a pour objet la mise à disposition par le Prestataire, au bénéfice du Client,
-      d'un accès à l'espace de travail partagé de type
-      <strong th:text="${variables != null and variables['workspaceType'] != null ? variables['workspaceType'] : '[Bureau Fixe / Bureau Privatif / Poste Nomade]'}">[type d'espace]</strong>,
-      ainsi que des services associés, à savoir la connexion internet, l'électricité, le mobilier, la climatisation, le ménage
-      et l'accès aux espaces communs, conformément aux conditions définies ci-après.
-      Ce contrat ne constitue en aucun cas un bail commercial. La présente souscription est
-      <strong>non remboursable</strong> une fois validée par le système du Prestataire.
+      Le Prestataire met à la disposition du Client un accès à son espace de travail partagé, ainsi
+      que les services qui l'accompagnent, dans les conditions définies aux articles suivants.
+      La prestation prend la forme d'un
+      <strong th:text="${variables['objectLabel'] != null ? variables['objectLabel'] : 'abonnement'}">abonnement</strong><span th:if="${variables['passTypeLabel'] != null}">, de type <strong th:text="${variables['passTypeLabel']}">pass journalier</strong></span>.
     </p>
-  </div>
-</div>
-
-<!-- ─────────────────────────────────────────────────
-     ARTICLE 2 · PÉRIODE ET CONDITIONS D'ACCÈS
-     ───────────────────────────────────────────────── -->
-<div class="article">
-  <div class="article-heading">Article 2 : Période et conditions d'accès</div>
-  <div class="article-body">
-    <div class="period-grid">
-      <!-- colonne gauche : PÉRIODE -->
-      <div>
-        <div class="period-col-title">Période</div>
-        <div class="pgitem" th:if="${variables['effectiveDate'] != null}">
-          <span class="pglbl">Date d'effet</span>
-          <span class="pgval" th:text="${variables['effectiveDate']}">Date</span>
-        </div>
-        <div class="pgitem" th:if="${variables['startDate'] != null}">
-          <span class="pglbl">Date de début</span>
-          <span class="pgval" th:text="${variables['startDate']}">Date</span>
-        </div>
-        <div class="pgitem">
-          <span class="pglbl">Date de fin / expiration</span>
-          <span class="pgval" th:text="${variables['endDate']}">Date</span>
-        </div>
-      </div>
-      <!-- séparateur -->
-      <div class="period-divider"></div>
-      <!-- colonne droite : CONDITIONS -->
-      <div>
-        <div class="period-col-title">Conditions d'accès</div>
-        <div class="pgitem" th:if="${variables['workspaceType'] != null}">
-          <span class="pglbl">Type d'espace</span>
-          <span class="pgval" th:text="${variables['workspaceType']}">Valeur</span>
-        </div>
-        <div class="pgitem" th:if="${variables['passType'] != null}">
-          <span class="pglbl">Type de pass / souscription</span>
-          <span class="pgval" th:text="${variables['passType']}">Valeur</span>
-        </div>
-        <div class="pgitem">
-          <span class="pglbl">Horaires d'accès</span>
-          <span class="pgval"
-                th:text="${variables != null and variables['accessHours'] != null ? variables['accessHours'] : 'Lundi au vendredi, 8h00 – 18h00'}">
-            Lundi au vendredi, 8h00 – 18h00
-          </span>
-        </div>
-        <div class="pgitem">
-          <span class="pglbl">Signataire</span>
-          <span class="pgval" th:text="${request.signatoryName != null ? request.signatoryName : ownerName}">Nom signataire</span>
-        </div>
-        <div class="pgitem">
-          <span class="pglbl">Qualité</span>
-          <span class="pgval" th:text="${request.signatoryRole != null ? request.signatoryRole : 'Bénéficiaire / Représentant'}">Qualité</span>
-        </div>
-      </div>
-    </div>
     <p>
-      Le Client s'engage à respecter le règlement intérieur et les règles de bonne conduite de l'espace,
-      et à ne pas utiliser les locaux pour des activités illicites ou contraires à l'ordre public.
+      Le présent contrat est un contrat de prestation de services. Il ne constitue ni un bail
+      commercial, ni un bail professionnel, et ne confère au Client aucun droit au maintien dans les
+      lieux ni aucune propriété commerciale.
     </p>
   </div>
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 3 · TARIFICATION ET SERVICES INCLUS
+     ARTICLE 2 · DÉFINITIONS
      ───────────────────────────────────────────────── -->
 <div class="article">
-  <div class="article-heading">Article 3 : Tarification et services inclus</div>
-  <div class="article-body">
-    <table class="ruled-table" style="margin-bottom:10pt;">
-      <tr>
-        <td class="rlbl">Montant souscrit</td>
-        <td class="rval">
-          <strong th:text="${variables != null and variables['passPrice'] != null ? variables['passPrice'] : ''}"></strong>
-          <span th:if="${variables != null and variables['passUnit'] != null}">&nbsp;/&nbsp;<span th:text="${variables['passUnit']}">unité</span></span>
-        </td>
-      </tr>
-      <tr th:if="${variables != null and variables['depositAmount'] != null}">
-        <td class="rlbl">Dépôt de garantie</td>
-        <td class="rval" th:text="${variables['depositAmount']}"></td>
-      </tr>
-      <tr>
-        <td class="rlbl">Modes de paiement</td>
-        <td class="rval"
-            th:text="${variables != null and variables['paymentMethod'] != null ? variables['paymentMethod'] : 'Virement bancaire, chèque, espèces, Mobile Money (MTN MoMo / Airtel Money)'}">
-          Virement bancaire, chèque, espèces, Mobile Money (MTN MoMo / Airtel Money)
-        </td>
-      </tr>
-    </table>
-
-    <p>La présente souscription comprend les services suivants&#160;:</p>
-    <ul class="services-list">
-      <li>Connexion internet haut débit</li>
-      <li>Mobilier ergonomique</li>
-      <li>Climatisation et électricité</li>
-      <li>Accès à la cafétéria</li>
-      <li>Ménage et entretien des espaces</li>
-      <li th:if="${variables != null and variables['includesMeetingRoom'] == 'true'}">
-        Accès aux salles de réunion
-      </li>
-    </ul>
-
-    <p style="margin-top:9pt; font-size:9.5pt; color:#555; font-style:italic;">
-      Pour mémoire, les tarifs standards de l'espace&#160;: poste fixe 200&#160;000&#160;FCFA/mois,
-      poste nomade 150&#160;000&#160;FCFA/mois, pass journalier 15&#160;000&#160;FCFA/jour,
-      salle de réunion 21&#160;000&#160;FCFA/heure.
-      Domiciliation d'entreprise en option à 50&#160;000&#160;FCFA/mois.
-    </p>
-  </div>
-</div>
-
-<!-- ─────────────────────────────────────────────────
-     ARTICLE 4 · MODALITÉS DE PAIEMENT
-     ───────────────────────────────────────────────── -->
-<div class="article">
-  <div class="article-heading">Article 4 : Modalités de paiement</div>
+  <div class="article-heading">Article 2 : Définitions</div>
   <div class="article-body">
     <p>
-      Le montant de la présente souscription est payable intégralement et par avance dès la signature,
-      au plus tard le 5 de chaque mois pour les abonnements récurrents.
-      Le Prestataire accepte les règlements par virement bancaire, chèque, espèces
-      ou Mobile Money (MTN MoMo / Airtel Money).
+      Les termes ci-dessous ont, dans l'ensemble du présent contrat, le sens qui leur est donné ici.
     </p>
     <p>
-      La présente souscription étant <strong>non remboursable</strong>, aucun remboursement (total ou
-      partiel) ne sera accordé après validation par le système du Prestataire, quelle qu'en soit
-      la cause, sauf obligation légale contraire ou décision écrite et formelle du Prestataire.
+      <strong>Le Prestataire</strong> désigne l'établissement exploitant l'espace de travail
+      partagé, identifié en tête du présent contrat. <strong>Le Client</strong> désigne la personne
+      physique ou morale qui souscrit la prestation et en règle le prix.
+      <strong>L'espace</strong> désigne les locaux exploités par le Prestataire, y compris les
+      postes de travail, les espaces communs et les équipements mis à disposition.
     </p>
-    <p th:if="${variables != null and variables['latePenalty'] != null}" th:text="${variables['latePenalty']}"></p>
-    <p th:if="${variables == null or variables['latePenalty'] == null}">
-      En cas de retard de paiement de plus de cinq (5) jours, une pénalité de 5&#160;% sera appliquée
-      et l'accès à l'espace ainsi qu'au réseau internet pourra être suspendu de plein droit
-      jusqu'à régularisation complète.
+    <p>
+      <strong>L'abonnement</strong> est un droit d'accès à l'espace pour une période déterminée,
+      renouvelable selon la périodicité convenue. <strong>Le pass</strong> est un droit d'accès
+      limité à une durée ou à un volume d'utilisation, consommé jusqu'à épuisement.
+      <strong>Une option</strong> est une prestation complémentaire rattachée à un abonnement
+      existant.
+    </p>
+    <p>
+      <strong>La période d'engagement</strong> est l'intervalle qui court de la date de début à la
+      date de fin mentionnées à l'article 3. <strong>Le caractère non remboursable</strong> signifie
+      que le prix acquitté reste dû dans son intégralité une fois la souscription validée, y compris
+      si le Client n'utilise pas tout ou partie de la prestation.
     </p>
   </div>
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 5 · RESPONSABILITÉS ET ASSURANCES
+     ARTICLE 3 · DURÉE
      ───────────────────────────────────────────────── -->
 <div class="article">
-  <div class="article-heading">Article 5 : Responsabilités et assurances</div>
+  <div class="article-heading">Article 3 : Durée et période d'engagement</div>
   <div class="article-body">
     <p>
-      Le Client est seul responsable de ses biens personnels et de son matériel au sein des locaux.
-      Le Prestataire décline toute responsabilité en cas de vol, perte ou dégradation des équipements
-      appartenant au Client. Le Client s'engage à souscrire, à ses frais, une assurance responsabilité
-      civile couvrant ses équipements et activités au sein de l'espace.
+      La prestation
+      <span th:if="${variables['effectiveDate'] != null}">prend effet le <strong th:text="${variables['effectiveDate']}">date</strong> et </span><span
+            th:if="${variables['startDate'] != null}">s'ouvre au Client le <strong th:text="${variables['startDate']}">date</strong></span><span
+            th:if="${variables['startDate'] == null}">s'ouvre au Client à la date de validation du paiement</span><span
+            th:if="${variables['endDate'] != null}">, pour s'achever le <strong th:text="${variables['endDate']}">date</strong></span>.
+      <span th:if="${variables['billingCycleLabel'] != null}">Le renouvellement et le règlement
+        interviennent <strong th:text="${variables['billingCycleLabel']}">tous les mois</strong>.</span>
+    </p>
+    <p th:if="${variables['endDate'] == null}">
+      La prestation reste ouverte jusqu'à épuisement du volume souscrit ou jusqu'à sa résiliation
+      dans les conditions prévues au présent contrat.
     </p>
     <p>
-      Tout dommage causé aux locaux, équipements ou biens du Prestataire sera facturé au Client
-      à sa valeur de remplacement ou de réparation et pourra entraîner la résiliation immédiate
-      du présent contrat.
+      À l'échéance, la prestation ne se poursuit que si elle est renouvelée et réglée. Le Client est
+      informé de l'approche de l'échéance par les moyens de contact qu'il a communiqués.
     </p>
   </div>
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 6 · CONFIDENTIALITÉ ET DONNÉES
+     ARTICLE 4 · PRIX ET PAIEMENT
      ───────────────────────────────────────────────── -->
 <div class="article">
-  <div class="article-heading">Article 6 : Confidentialité et protection des données</div>
+  <div class="article-heading">Article 4 : Prix de la prestation et modalités de paiement</div>
+  <div class="article-body">
+    <p th:if="${variables['amountLabel'] != null}">
+      Le prix de la présente prestation s'élève à
+      <strong th:text="${variables['amountLabel']}">180 000 FCFA</strong> pour la période
+      souscrite<span th:if="${variables['unitPriceLabel'] != null and variables['quantity'] != null}">,
+        soit <span th:text="${variables['quantity']}">2</span> unités au prix unitaire de
+        <span th:text="${variables['unitPriceLabel']}">90 000 FCFA</span></span>.
+      Il est payable intégralement et par avance, et la prestation n'est ouverte qu'une fois le
+      paiement constaté par le Prestataire.
+    </p>
+    <p th:if="${variables['amountLabel'] == null}">
+      Le prix de la présente prestation est celui de l'offre validée au moment de la souscription.
+      Il est payable intégralement et par avance, et la prestation n'est ouverte qu'une fois le
+      paiement constaté par le Prestataire.
+    </p>
+    <p>
+      Le Prestataire accepte les règlements par virement bancaire, par chèque, en espèces et par
+      transfert d'argent mobile. En cas d'abonnement renouvelable, le règlement de chaque nouvelle
+      période est attendu au plus tard le cinquième jour de celle-ci.
+    </p>
+    <p th:if="${variables['latePenalty'] != null}" th:text="${variables['latePenalty']}"></p>
+    <p th:if="${variables['latePenalty'] == null}">
+      Passé un retard de cinq (5) jours, une pénalité de cinq pour cent (5&#160;%) du montant dû est
+      appliquée, et le Prestataire peut suspendre de plein droit l'accès à l'espace et au réseau
+      jusqu'au règlement complet.
+    </p>
+    <p>
+      La prestation étant <strong>non remboursable</strong> au sens de l'article 2, aucun
+      remboursement total ou partiel n'est accordé après validation de la souscription, quelle qu'en
+      soit la cause, sauf obligation légale contraire ou décision écrite du Prestataire.
+    </p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 5 · SERVICES ET ACCÈS
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 5 : Services inclus et conditions d'accès</div>
+  <div class="article-body">
+    <p>
+      Le prix convenu comprend la mise à disposition d'un poste de travail et du mobilier associé,
+      la connexion internet haut débit, l'électricité et la climatisation, l'entretien des espaces,
+      ainsi que l'accès aux espaces communs et à la cafétéria<span
+         th:if="${variables['includesMeetingRoom'] == 'true'}">, et l'accès aux salles de
+        réunion</span>. Toute prestation non énumérée ici fait l'objet d'une facturation distincte.
+    </p>
+    <p>
+      L'accès est ouvert
+      <strong th:text="${variables['accessHours'] != null ? variables['accessHours'] : 'du lundi au vendredi, de 8h00 à 18h00'}">du lundi au vendredi, de 8h00 à 18h00</strong>. Il est strictement personnel et ne peut être cédé, prêté ni partagé sans l'accord écrit du
+      Prestataire.
+    </p>
+    <p>
+      Le Client s'engage à respecter le règlement intérieur de l'espace et les règles de bonne
+      conduite à l'égard des autres utilisateurs, et à n'exercer dans les locaux aucune activité
+      illicite ou contraire à l'ordre public.
+    </p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 6 · RESPONSABILITÉS ET ASSURANCES
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 6 : Responsabilités et assurances</div>
+  <div class="article-body">
+    <p>
+      Le Client demeure seul responsable de ses biens personnels et de son matériel au sein des
+      locaux. Le Prestataire ne répond pas des vols, pertes ou dégradations affectant les
+      équipements appartenant au Client. Celui-ci s'engage à souscrire, à ses frais, une assurance
+      de responsabilité civile couvrant ses équipements et ses activités dans l'espace.
+    </p>
+    <p>
+      Tout dommage causé aux locaux, aux équipements ou aux biens du Prestataire est facturé au
+      Client à sa valeur de réparation ou de remplacement, et peut entraîner la résiliation
+      immédiate du présent contrat.
+    </p>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 7 · CONFIDENTIALITÉ ET DONNÉES
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 7 : Confidentialité et protection des données</div>
   <div class="article-body">
     <p>
       Le Prestataire garantit la confidentialité des informations échangées dans le cadre du présent
-      contrat et s'engage à ne pas divulguer les données personnelles et professionnelles du Client
-      à des tiers, sauf obligation légale. Le Client s'engage réciproquement à respecter la
-      confidentialité des informations relatives aux autres utilisateurs de l'espace.
+      contrat et ne communique les données personnelles et professionnelles du Client à aucun tiers,
+      sauf obligation légale. Il les conserve pour la durée nécessaire à l'exécution du contrat et
+      au respect de ses obligations comptables et fiscales.
+    </p>
+    <p>
+      Le Client s'engage réciproquement à respecter la confidentialité des informations relatives aux
+      autres utilisateurs de l'espace.
     </p>
   </div>
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 7 · CLAUSES COMPLÉMENTAIRES (dynamique)
+     ARTICLE 8 · CARACTÉRISTIQUES DE L'OFFRE
      ───────────────────────────────────────────────── -->
-<div class="article">
-  <div class="article-heading">Article 7 : Clauses contractuelles complémentaires</div>
+<div class="article"
+     th:if="${variables['subscriptionNumber'] != null or variables['passNumber'] != null
+              or variables['planCode'] != null}">
+  <div class="article-heading">Article 8 : Références et caractéristiques de l'offre souscrite</div>
   <div class="article-body">
-    <div th:if="${clauses == null or #lists.isEmpty(clauses)}">
-      <p>
-        Les conditions applicables sont celles de l'offre validée au moment de la prise de souscription
-        ou du pass. Le Client reconnaît avoir pris connaissance de l'ensemble des modalités
-        préalablement à la présente signature. Le présent contrat constitue l'intégralité de l'accord
-        entre les parties&#160;; toute modification devra être faite par écrit et signée des deux parties.
-      </p>
-    </div>
-    <div th:each="clause : ${clauses}" class="clause-item" th:text="${clause}">Clause contractuelle.</div>
+    <p>
+      La prestation est enregistrée dans les systèmes du Prestataire sous les références suivantes,
+      qui permettent au Client de la retrouver dans ses échanges avec l'espace.
+    </p>
+    <p>
+      <span th:if="${variables['subscriptionNumber'] != null}">L'abonnement porte le numéro <strong th:text="${variables['subscriptionNumber']}">SUB-000001</strong>.&#160;</span><span
+            th:if="${variables['passNumber'] != null}">Le pass porte le numéro <strong th:text="${variables['passNumber']}">PSS-000001</strong>.&#160;</span><span
+            th:if="${variables['addonId'] != null}">L'option porte la référence <strong th:text="${variables['addonId']}">1</strong>.&#160;</span><span
+            th:if="${ownerCode != null}">Le Client est référencé sous le code <strong th:text="${ownerCode}">CUS-000001</strong>.</span>
+    </p>
+    <p th:if="${variables['planCode'] != null}">
+      La prestation correspond à la formule
+      <strong th:text="${variables['planCode']}">FLEX</strong><span th:if="${variables['planVersion'] != null}">, dans sa version <span th:text="${variables['planVersion']}">3</span></span>.
+      Les caractéristiques de cette formule sont celles publiées par le Prestataire à la date de
+      souscription ; le Client reconnaît en avoir pris connaissance avant de souscrire.
+    </p>
   </div>
 </div>
 
 <!-- ─────────────────────────────────────────────────
-     ARTICLE 8 · PARAMÈTRES DE L'OFFRE (conditionnel)
-     ───────────────────────────────────────────────── -->
-<div class="article" th:if="${variables != null and !#maps.isEmpty(variables)}">
-  <div class="article-heading">Article 8 : Paramètres de l'offre</div>
-  <table class="vars-table">
-    <tr th:each="entry : ${variables.entrySet()}">
-      <td class="vk" th:text="${entry.key}">Paramètre</td>
-      <td th:text="${entry.value}">Valeur</td>
-    </tr>
-  </table>
-</div>
-
-<!-- ─────────────────────────────────────────────────
-     ARTICLE 9 (ou 8) · DISPOSITIONS LÉGALES
+     ARTICLE 9 · CLAUSES COMPLÉMENTAIRES
      ───────────────────────────────────────────────── -->
 <div class="article">
-  <div class="article-heading"
-       th:text="${variables != null and !#maps.isEmpty(variables)}
-                ? 'Article 9 : Dispositions légales et caractère non remboursable'
-                : 'Article 8 : Dispositions légales et caractère non remboursable'">
-    Article : Dispositions légales et caractère non remboursable
+  <div class="article-heading">Article 9 : Clauses complémentaires et intégralité de l'accord</div>
+  <div class="article-body">
+    <div th:each="clause : ${clauses}" class="clause-item" th:text="${clause}">Clause contractuelle.</div>
+    <p>
+      Le présent contrat, avec les conditions de l'offre validée au moment de la souscription,
+      constitue l'intégralité de l'accord entre les parties. Toute modification doit être établie
+      par écrit et acceptée par les deux parties.
+    </p>
   </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────
+     ARTICLE 10 · DISPOSITIONS LÉGALES
+     ───────────────────────────────────────────────── -->
+<div class="article">
+  <div class="article-heading">Article 10 : Droit applicable et règlement des litiges</div>
   <div class="legal-notice">
-    Le présent contrat est soumis au droit de la <strong>République du Congo</strong>.
-    La souscription ou le pass étant <strong>non remboursable</strong>, le Client renonce expressément
-    à tout droit de rétractation sur la présente transaction après confirmation par le système du
-    Prestataire, conformément aux dispositions légales applicables aux services fournis immédiatement
-    après accord explicite. En cas de litige, les parties s'engagent à rechercher une solution amiable
-    avant tout recours judiciaire&#160;; à défaut, la juridiction compétente sera celle de
-    <strong>Pointe-Noire</strong>. Le présent contrat est établi en deux (2) exemplaires originaux.
+    Le présent contrat est soumis au droit de la <strong>République du Congo</strong>. La prestation
+    étant fournie immédiatement après l'accord exprès du Client, celui-ci renonce, dans les limites
+    permises par la loi, à tout droit de rétractation après validation de sa souscription. En cas de
+    différend, les parties s'engagent à rechercher d'abord une solution amiable ; à défaut d'accord,
+    le litige relève de la juridiction de
+    <strong th:text="${placeOfSigning != null ? placeOfSigning : 'Pointe-Noire'}">Pointe-Noire</strong>.
+    Le présent contrat est établi en deux (2) exemplaires originaux, un pour chaque partie.
   </div>
 </div>
 
@@ -817,5 +818,5 @@ body {
      ───────────────────────────────────────────────── -->
 <div th:replace="~{fragments/contract-brand :: footer}"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</body>
 </html>

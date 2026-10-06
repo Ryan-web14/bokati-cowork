@@ -35,10 +35,10 @@ class RateLimitingFilterTest {
         when(noRedis.getIfAvailable()).thenReturn(null);
 
         RateLimitRules rules = new RateLimitRules();
-        Map.of("loginMax", 2, "otpMax", 3, "callbackMax", 120, "publicWriteMax", 10,
+        Map.of("loginMax", 2, "otpMax", 3, "callbackMax", 120, "checkinMax", 120, "publicWriteMax", 10,
                         "verifyMax", 60, "uploadMax", 5, "adminMax", 600, "defaultMax", 300)
                 .forEach((field, value) -> ReflectionTestUtils.setField(rules, field, value));
-        Map.of("loginWindow", 60L, "otpWindow", 600L, "callbackWindow", 60L, "publicWriteWindow", 600L,
+        Map.of("loginWindow", 60L, "otpWindow", 600L, "callbackWindow", 60L, "checkinWindow", 60L, "publicWriteWindow", 600L,
                         "verifyWindow", 600L, "uploadWindow", 600L, "adminWindow", 60L, "defaultWindow", 60L)
                 .forEach((field, value) -> ReflectionTestUtils.setField(rules, field, value));
 

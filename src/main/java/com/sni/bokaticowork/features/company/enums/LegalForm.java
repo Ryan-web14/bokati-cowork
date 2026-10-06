@@ -13,7 +13,15 @@ public enum LegalForm {
     SCI("Société Civile Immobilière"),
     SA("Société Anonyme"),
     SAU("Société Anonyme Unipersonnelle"),
-    SASU("Société par Actions Simplifiée Unipersonnelle");
+    SASU("Société par Actions Simplifiée Unipersonnelle"),
+
+    /**
+     * Etablissement · commercant personne physique, immatricule au registre A du RCCM.
+     *
+     * <p>La liste ne portait que des formes societaires · un etablissement etait donc refuse a
+     * la creation, y compris pour l espace lui-meme, dont le RCCM est en A11.</p>
+     */
+    ETABLISSEMENT("Etablissement");
 
 
     LegalForm(String s) {

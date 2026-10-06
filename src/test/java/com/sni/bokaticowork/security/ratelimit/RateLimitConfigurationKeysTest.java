@@ -27,7 +27,7 @@ class RateLimitConfigurationKeysTest {
 
     /** Les plafonds nommes · un oubli ici est un oubli dans {@link RateLimitRules}. */
     private static final Set<String> EXPECTED_BUCKETS =
-            Set.of("login", "otp", "callback", "public-write", "verify", "upload", "admin", "default");
+            Set.of("login", "otp", "callback", "checkin", "public-write", "verify", "upload", "admin", "default");
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> rateLimitSection(String profile) {

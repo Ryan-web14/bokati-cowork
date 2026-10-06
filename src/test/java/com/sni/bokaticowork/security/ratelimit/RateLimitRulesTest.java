@@ -31,7 +31,7 @@ class RateLimitRulesTest {
         Map.of(
                 "loginMax", 5,
                 "otpMax", 3,
-                "callbackMax", 120,
+                "callbackMax", 120, "checkinMax", 120,
                 "publicWriteMax", 10,
                 "verifyMax", 60,
                 "uploadMax", 5,
@@ -41,7 +41,7 @@ class RateLimitRulesTest {
         Map.of(
                 "loginWindow", 60L,
                 "otpWindow", 600L,
-                "callbackWindow", 60L,
+                "callbackWindow", 60L, "checkinWindow", 60L,
                 "publicWriteWindow", 600L,
                 "verifyWindow", 600L,
                 "uploadWindow", 600L,
@@ -87,6 +87,10 @@ class RateLimitRulesTest {
             "POST, /verify/doc/42/compare, upload:, 5",
             "GET, /verify/doc/42, verify:, 60",
             "POST, /public/quotes/sign, public-write:, 10",
+            "POST, " + ApiPath.V1 + "/public/bookings/check-in/scan, checkin:, 120",
+            "POST, " + ApiPath.V1 + "/public/bookings/check-in/self, checkin:, 120",
+            "POST, " + ApiPath.V1 + "/public/bookings/check-in/scanner-verify, otp:, 3",
+            "POST, " + ApiPath.V1 + "/public/bookings/check-in/scanner-setup, otp:, 3",
             "GET, " + ApiPath.V1 + "/customers, admin:, 600",
             "GET, /images/logo.png, default:, 300"
     })
@@ -104,6 +108,31 @@ class RateLimitRulesTest {
         RateLimitRules.Rule read = rules.ruleFor("GET", "/verify/doc/42", "203.0.113.9");
 
         assertThat(upload.maxRequests()).isLessThan(read.maxRequests());
+    }
+
+    @Test
+    @DisplayName("Un accueil charge ne se bloque pas lui-meme · tous ses postes ont la meme adresse")
+    void checkInIsNotCountedAsAnAnonymousWrite() {
+        // Le pointage est sous /public et part en POST · il tombait donc dans public-write, a dix
+        // par dix minutes, pour l'ensemble des postes du lieu reunis.
+        RateLimitRules.Rule checkIn =
+                rules.ruleFor("POST", ApiPath.V1 + "/public/bookings/check-in/scan", "203.0.113.9");
+        RateLimitRules.Rule anonymousWrite =
+                rules.ruleFor("POST", ApiPath.V1 + "/public/crm/leads", "203.0.113.9");
+
+        assertThat(checkIn.key()).startsWith("checkin:");
+        assertThat(checkIn.maxRequests()).isGreaterThan(anonymousWrite.maxRequests());
+    }
+
+    @Test
+    @DisplayName("La cle d'un poste est plus serree que le pointage lui-meme")
+    void theTerminalKeyIsTighterThanTheCheckInItself() {
+        RateLimitRules.Rule key =
+                rules.ruleFor("POST", ApiPath.V1 + "/public/bookings/check-in/scanner-verify", "203.0.113.9");
+        RateLimitRules.Rule checkIn =
+                rules.ruleFor("POST", ApiPath.V1 + "/public/bookings/check-in/scan", "203.0.113.9");
+
+        assertThat(key.maxRequests()).isLessThan(checkIn.maxRequests());
     }
 
     @Test

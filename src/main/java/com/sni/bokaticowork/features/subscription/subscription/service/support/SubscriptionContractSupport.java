@@ -58,7 +58,7 @@ public class SubscriptionContractSupport {
         CreateContractRequest createRequest = baseCreateRequest(
                 ownerType,
                 subscription.getSubscriberCode(),
-                businessCode(ownerType, subscription.getSubscriberCode()),
+                operatingBusinessCode(),
                 templateCode,
                 title,
                 description,
@@ -72,7 +72,7 @@ public class SubscriptionContractSupport {
         DocumentResponse document = contractGenerationService.generatePdf(baseGenerateRequest(
                 ownerType,
                 subscription.getSubscriberCode(),
-                businessCode(ownerType, subscription.getSubscriberCode()),
+                operatingBusinessCode(),
                 templateCode,
                 title,
                 description,
@@ -110,7 +110,7 @@ public class SubscriptionContractSupport {
         CreateContractRequest createRequest = baseCreateRequest(
                 ownerType,
                 subscription.getSubscriberCode(),
-                businessCode(ownerType, subscription.getSubscriberCode()),
+                operatingBusinessCode(),
                 templateCode,
                 title,
                 description,
@@ -124,7 +124,7 @@ public class SubscriptionContractSupport {
         DocumentResponse document = contractGenerationService.generatePdf(baseGenerateRequest(
                 ownerType,
                 subscription.getSubscriberCode(),
-                businessCode(ownerType, subscription.getSubscriberCode()),
+                operatingBusinessCode(),
                 templateCode,
                 title,
                 description,
@@ -142,7 +142,9 @@ public class SubscriptionContractSupport {
                         "planVersion", planVersion(addon.getPlanVersion()),
                         "quantity", addon.getQuantity() == null ? "" : String.valueOf(addon.getQuantity()),
                         "currency", nullSafe(addon.getCurrency()),
-                        "unitPrice", amount(addon.getUnitPrice())
+                        "unitPrice", amount(addon.getUnitPrice()),
+                        // Le prix unitaire seul laissait le total a calculer par le lecteur.
+                        "totalAmount", amount(addonTotal(addon))
                 ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
@@ -164,7 +166,7 @@ public class SubscriptionContractSupport {
         CreateContractRequest createRequest = baseCreateRequest(
                 ownerType,
                 pass.getOwnerCode(),
-                businessCode(ownerType, pass.getOwnerCode()),
+                operatingBusinessCode(),
                 templateCode,
                 title,
                 description,
@@ -178,7 +180,7 @@ public class SubscriptionContractSupport {
         DocumentResponse document = contractGenerationService.generatePdf(baseGenerateRequest(
                 ownerType,
                 pass.getOwnerCode(),
-                businessCode(ownerType, pass.getOwnerCode()),
+                operatingBusinessCode(),
                 templateCode,
                 title,
                 description,
@@ -194,7 +196,11 @@ public class SubscriptionContractSupport {
                         "passType", pass.getPassType() == null ? "" : pass.getPassType().name(),
                         "subscriptionNumber", pass.getSubscription() == null ? "" : pass.getSubscription().getSubscriptionNumber(),
                         "planCode", planCode(pass.getPlanVersion()),
-                        "planVersion", planVersion(pass.getPlanVersion())
+                        "planVersion", planVersion(pass.getPlanVersion()),
+                        // Un contrat de pass ne portait aucun montant · ni devise ni prix. Le
+                        // montant paye est la clause que le client relit en premier.
+                        "currency", nullSafe(pass.getCurrency()),
+                        "totalAmount", amount(pass.getTotalAmount())
                 ))
         ));
         contractService.markGenerated(contract.getContractCode(), document.getCode());
@@ -366,8 +372,20 @@ public class SubscriptionContractSupport {
         };
     }
 
-    private String businessCode(DocumentOwnerType ownerType, String ownerCode) {
-        return ownerType == DocumentOwnerType.BUSINESS ? ownerCode : null;
+    /**
+     * Qui contracte du cote de l espace · jamais le souscripteur.
+     *
+     * <p>Cette methode rendait le code du souscripteur quand celui-ci etait une entreprise. Or ce
+     * parametre designe l entite exploitante, pas le cocontractant · le contrat nommait donc le
+     * client des deux cotes, l espace n y figurait pas, et le lieu de signature comme la
+     * juridiction competente venaient de l adresse du client.</p>
+     *
+     * <p>Rendre {@code null} laisse la generation prendre l entite designee comme exploitante, ce
+     * qui est la seule reponse juste : c est toujours l espace qui contracte, que le cocontractant
+     * soit une entreprise ou un particulier.</p>
+     */
+    private String operatingBusinessCode() {
+        return null;
     }
 
     private String subscriptionDescription(Subscription subscription) {
@@ -404,6 +422,15 @@ public class SubscriptionContractSupport {
 
     private String planVersion(PlanVersion planVersion) {
         return planVersion == null || planVersion.getVersionNumber() == null ? "" : String.valueOf(planVersion.getVersionNumber());
+    }
+
+    /** Total d une option · le prix unitaire multiplie par la quantite souscrite. */
+    private BigDecimal addonTotal(SubscriptionAddon addon) {
+        if (addon.getUnitPrice() == null) {
+            return null;
+        }
+        int quantity = addon.getQuantity() == null ? 1 : Math.max(1, addon.getQuantity());
+        return addon.getUnitPrice().multiply(BigDecimal.valueOf(quantity));
     }
 
     private String amount(BigDecimal amount) {

@@ -24,9 +24,12 @@ public class BusinessEntityRequest {
     @NotBlank(message = "the legal form of the business is required")
     private String legalForm;
 
-    @Size(min = 12, max = 18, message = "Niu number must be 12 or 13 digits")
-    @NotBlank(message = "Niu number is required")
-    @NotNull
+    /**
+     * Facultatif · toutes les entites n en ont pas encore un au moment de leur creation.
+     *
+     * <p>Quand il est fourni, il doit respecter le format congolais verifie par
+     * {@code ValidationUtils.validateNiu}. Absent, il ne bloque plus l enregistrement.</p>
+     */
     private String niuNumber;
 
     @NotBlank(message = "Rccm number is required")

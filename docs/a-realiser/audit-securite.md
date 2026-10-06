@@ -33,7 +33,10 @@ Mis à jour à chaque correctif livré.
 | §2.1 | Pas de plafond propre sur `unlock-account` et `verify/resend` | moyen | **corrigé** | lot 4 |
 | §2.3 | Écritures anonymes sous `/public` sans plafond propre | moyen | **corrigé** | lot 4 |
 | R1 | Plafond indexé sur un en-tête que l'appelant écrit lui-même | **élevé** | **corrigé** | lot 4 |
-| §2.4 | Cookie scanner · clé en clair, `path=/`, un an, check-in en GET | moyen | à faire | |
+| §2.4 | Cookie scanner · clé en clair, `path=/`, un an, check-in en GET | moyen | **corrigé** | lot 5 |
+| R2 | Pointage à l'accueil compté comme une écriture anonyme (10/10 min pour tout le lieu) | moyen | **corrigé** · régression du lot 4 | lot 5 |
+| R3 | `checkin-admin-code.html` ne s'affichait jamais · apostrophe doublée dans un sélecteur de fragment | **élevé** | **corrigé** | lot 5 |
+| R4 | Les deux formulaires du poste visaient `/v1/public/...`, un chemin inexistant | **élevé** | **corrigé** | lot 5 |
 | C3 | Traversée de chemin par l'extension de fichier | élevé | **corrigé** | lot 3 |
 | J4 | Jeton non lié à son porteur | moyen | à faire | |
 | §6 | CORS trop large | faible | à faire | |
@@ -165,6 +168,55 @@ clé de comptage) et un qui compare les deux profils entre eux : chaque plafond 
 le repli prend la main et le plafond réel n'est plus celui que la configuration annonce. C'est
 l'écart qui ne se voit qu'en production.
 
+### Ce que le lot 5 a changé · le poste de pointage
+
+Le cookie du terminal **contenait la clé d'administration en clair**, pour un an, avec `path=/` ·
+elle partait donc sur le réseau à chaque requête du domaine, API comprise, et lire le cookie d'un
+poste suffisait à en activer un autre. Un cookie n'est pas un coffre.
+
+**Ce qu'il porte maintenant est une preuve, pas un secret** · la date d'expiration et une
+signature HMAC de cette date par la clé. Trois propriétés en découlent : lire le cookie ne donne
+pas la clé ; l'autorisation expire d'elle-même, ce qu'elle ne faisait pas, le cookie restant
+valable aussi longtemps que la clé ; et **changer la clé révoque tous les postes d'un coup**,
+puisque plus aucune signature ne se vérifie. Trente jours par défaut, configurable.
+
+**Les attributs manquants** · `Secure` (il partait en clair si le domaine était joignable en
+HTTP), `SameSite=Strict` — c'est ce seul attribut qui lui enlève son autorité ambiante, la
+protection CSRF étant désactivée globalement — et un `path` limité aux trois routes de pointage au
+lieu de tout le domaine. L'ancien cookie est **activement expiré** à chaque passage : il porte la
+clé et resterait un an dans le navigateur des postes déjà activés.
+
+**Un GET ne pointe plus personne** · le pointage se faisait sur `GET /check-in/scan/{token}`, avec
+pour seule autorité ce cookie envoyé partout : une page quelconque visitée par le terminal de
+l'accueil pouvait enregistrer des arrivées avec un `<img src>`. Le GET affiche désormais la
+confirmation, et un POST pointe. Avec `SameSite=Strict`, ce POST n'est pas déclenchable depuis un
+site tiers.
+
+`isScannerKeyValid` compare en temps constant (`MessageDigest.isEqual`).
+
+**Deux bugs trouvés en écrivant les tests, qui rendaient tout le flux inutilisable en production**
+· ce sont les plus coûteux du lot, et aucun n'était dans l'audit :
+
+- `checkin-admin-code.html` **ne s'affichait jamais**. Son titre contenait une apostrophe doublée
+  dans un sélecteur de fragment (`pagehead('Pointage à l''accueil')`). Le doublement est la façon
+  correcte d'écrire une apostrophe dans un littéral SpEL et fonctionne dans un `th:text`, mais
+  l'analyseur des expressions de fragment le refuse · `Could not parse as expression`. C'est la
+  page que voit un poste non autorisé. Aucun test ne rendait les pages HTML, seulement les
+  courriels. Un contrôle dans `TemplateExpressionLintTest` tient désormais l'invariant sur tout
+  l'arbre, et `CheckInPagesRenderTest` rend réellement les trois pages.
+- Les deux formulaires visaient `/v1/public/bookings/...` alors que le préfixe est `/sni/api/v1` ·
+  ils tombaient en **404**, donc aucun poste ne pouvait être activé. L'URL vient maintenant du
+  contrôleur, construite depuis `ApiPath`, et le HTML rendu est vérifié.
+
+**Une régression du lot 4, corrigée ici** · en plaçant les écritures anonymes sous `/public` dans
+un seau à dix requêtes par dix minutes, j'y ai fait tomber les pointages, qui sont aussi des POST
+sous `/public`. Tous les postes d'un lieu sortant par la même adresse publique, une matinée chargée
+aurait atteint le plafond et bloqué l'accueil. Le pointage a son propre seau à 120 par minute ; la
+soumission de la clé du poste va au seau des codes à usage unique, à trois par dix minutes, parce
+que c'est un secret qu'on devine et non un geste de routine.
+
+**Trente-huit tests** sur l'autorisation, le cookie et le contrôleur, plus cinq de rendu.
+
 ---
 
 ## 0. Les deux constats qui gouvernent tout le reste
@@ -295,8 +347,8 @@ divergent déjà** (§2.5).
 |---|---|---|
 | `/public/bookings/{n}` | GET | **Vérifié : jeton obligatoire** (`@RequestParam String token`). Non énumérable par numéro |
 | `/public/bookings/{n}/confirmation.pdf` | GET | Idem · jeton obligatoire |
-| `/public/bookings/check-in/scan/{token}` | GET | Jeton de check-in + **cookie scanner** · voir §2.4 |
-| `/public/bookings/check-in/scanner-verify` | POST | Valide la clé admin, pose le cookie · voir §2.4 |
+| `/public/bookings/check-in/scan/{token}` | GET | **Corrigé au lot 5** · le GET n'affiche qu'une confirmation, le pointage part en POST |
+| `/public/bookings/check-in/scanner-verify` | POST | **Corrigé au lot 5** · pose une autorisation signée, plus la clé elle-même |
 | `/public/bookings/check-in/scanner-setup` | GET/POST | Idem |
 | `/public/bookings/check-in/self` | POST | Auto-check-in client · fenêtre horaire et géolocalisation vérifiées |
 | `/public/crm/leads` | POST | **Écriture non authentifiée** · création d'opportunités. **Corrigé au lot 4** · 10 requêtes / 600 s. Avant : générique seulement, donc inondation de la base CRM |
@@ -633,8 +685,11 @@ Le verrouillage de compte après 5 échecs, lui, est en base · c'est la vraie p
     `X-Forwarded-For` que pour le nombre de sauts de proxy connus.~~ **Livré au lot 4**, avec les
     plafonds manquants (§2.1, §2.3, §2.6).
 16. Resserrer CORS sur les origines réelles du frontend.
-17. **Écrire l'invariant sur les cookies** : aucun cookie porteur d'autorité hors du flux de
-    check-in, et un test qui le tient · c'est ce qui garde le CSRF hors sujet pour l'API.
+17. ~~**Écrire l'invariant sur les cookies** : aucun cookie porteur d'autorité hors du flux de
+    check-in, et un test qui le tient · c'est ce qui garde le CSRF hors sujet pour l'API.~~
+    **Partiellement livré au lot 5** · le cookie du poste est désormais `SameSite=Strict` et limité
+    aux routes de pointage. L'invariant global (aucun autre cookie porteur d'autorité) reste à
+    écrire comme test.
 18. Allowlist d'hôtes pour les webhooks (C4).
 
 ### Hors code

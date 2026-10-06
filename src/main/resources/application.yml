@@ -1,5 +1,12 @@
 
 spring:
+  # Les secrets viennent de l environnement, sans valeur de repli dans le depot. En local
+  # c est le fichier .env qui les porte, et rien ne le chargeait dans la JVM · il ne servait
+  # qu a docker compose. L application ne demarrait donc plus du tout en local des que les
+  # defauts ont ete retires du code. optional: le rend sans effet la ou il n existe pas,
+  # c est-a-dire en production, ou Heroku fournit de vraies variables.
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: bokati-cowork
   profiles:
@@ -169,7 +176,16 @@ bokati:
       monthly-closure-cron:   ${BILLING_MONTHLY_CLOSURE_CRON:0 15 0 1 * *}
       annual-closure-cron:    ${BILLING_ANNUAL_CLOSURE_CRON:0 0 1 1 1 *}
   checkin:
+    # Cle partagee par tous les postes de pointage. Elle ne circule plus dans le cookie du
+    # poste : celui-ci porte une autorisation signee par elle. La changer revoque donc tous
+    # les postes d un coup.
     scanner-key: ${CHECKIN_SCANNER_KEY:}
+    # Duree de vie de l autorisation posee sur un poste. Le cookie precedent durait un an et
+    # contenait la cle elle-meme · il n expirait jamais utilement.
+    scanner-grant-validity-days: ${CHECKIN_SCANNER_GRANT_VALIDITY_DAYS:30}
+    # A ne mettre a false qu en local, ou un navigateur refuse de garder un cookie Secure
+    # servi en HTTP.
+    scanner-cookie-secure: ${CHECKIN_SCANNER_COOKIE_SECURE:true}
     early-window-minutes: ${CHECKIN_EARLY_WINDOW_MINUTES:15}
     location:
       latitude: ${CHECKIN_LOCATION_LAT:0}

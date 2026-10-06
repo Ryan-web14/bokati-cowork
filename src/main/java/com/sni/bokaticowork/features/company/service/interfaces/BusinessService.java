@@ -27,6 +27,15 @@ public interface BusinessService {
     void updateBusinessAddress(String businessCode, AddressRequest request);
     void updateBusinessStatus(String businessCode, UpdateBusinessStatusRequest request);
 
+    /**
+     * Designe cette entite comme exploitante de l espace · celle qui signe face au client.
+     *
+     * <p>Geste explicite et unique : la designation retire le drapeau a celle qui le portait.
+     * Sans entite designee, aucun contrat ne peut etre genere · son adresse determine le lieu de
+     * signature et la juridiction competente.</p>
+     */
+    void designateOperatingBusiness(String businessCode);
+
     //This function will soft delete the business
     void deleteBusiness(String businessCode);
 

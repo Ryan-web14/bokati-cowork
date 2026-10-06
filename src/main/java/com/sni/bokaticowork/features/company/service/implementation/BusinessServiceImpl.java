@@ -87,8 +87,13 @@ public class BusinessServiceImpl implements BusinessService {
             throw new ResourceAlreadyExistException("A business with this name already exists");
         }
 
-        if (!business.getNiuNumber().equalsIgnoreCase(request.getNiuNumber().trim())
-                && businessRepo.existsByNiuNumber(request.getNiuNumber().trim().toUpperCase(Locale.ROOT))) {
+        // Les deux cotes peuvent etre absents · la comparaison le faisait tomber en NPE des que
+        // le NIU est devenu facultatif.
+        String requestedNiu = StringUtils.hasText(request.getNiuNumber())
+                ? request.getNiuNumber().trim() : null;
+        if (requestedNiu != null
+                && !requestedNiu.equalsIgnoreCase(business.getNiuNumber())
+                && businessRepo.existsByNiuNumber(requestedNiu.toUpperCase(Locale.ROOT))) {
             throw new ResourceAlreadyExistException("A business with this NIU number already exists");
         }
 
@@ -203,6 +208,30 @@ public class BusinessServiceImpl implements BusinessService {
         businessRepo.save(business);
     }
 
+    /**
+     * Designe l entite exploitante · le drapeau est retire a celle qui le portait.
+     *
+     * <p>Le retrait precede la pose, et les deux sont dans la meme transaction · l index unique
+     * partiel refuserait deux porteurs, et laisser la base dans un etat sans exploitant, meme un
+     * instant, suffirait a faire echouer une generation de contrat concurrente.</p>
+     */
+    @Override
+    public void designateOperatingBusiness(String businessCode) {
+        BusinessEntity business = getBusinessForService(businessCode);
+        if (business.isOperator()) {
+            return;
+        }
+        businessRepo.findFirstByOperatorTrueAndDeletedFalse().ifPresent(previous -> {
+            previous.setOperator(false);
+            previous.setUpdated_by("SYSTEM");
+            businessRepo.saveAndFlush(previous);
+        });
+        business.setOperator(true);
+        business.setUpdated_by("SYSTEM");
+        businessRepo.save(business);
+        log.info("Entite exploitante designee · {} ({})", business.getName(), business.getCode());
+    }
+
     @Override
     public void deleteBusiness(String businessCode) {
         BusinessEntity business = getBusinessForService(businessCode);
@@ -236,7 +265,8 @@ public class BusinessServiceImpl implements BusinessService {
             throw new ResourceAlreadyExistException("A business with this name already exists");
         }
 
-        if (businessRepo.existsByNiuNumber(request.getNiuNumber().trim().toUpperCase(Locale.ROOT))) {
+        if (StringUtils.hasText(request.getNiuNumber())
+                && businessRepo.existsByNiuNumber(request.getNiuNumber().trim().toUpperCase(Locale.ROOT))) {
             throw new ResourceAlreadyExistException("A business with this NIU number already exists");
         }
 
@@ -269,7 +299,10 @@ public class BusinessServiceImpl implements BusinessService {
             errors.add("Invalid business request, the legal form is not valid");
         }
 
-        if (!StringUtils.hasText(request.getNiuNumber()) || !ValidationUtils.validateNiu(request.getNiuNumber().trim().toUpperCase(Locale.ROOT))) {
+        // Le NIU est facultatif · verifie seulement s il est fourni. L exiger empechait
+        // d enregistrer une entite qui n en a pas encore, l espace lui-meme compris.
+        if (StringUtils.hasText(request.getNiuNumber())
+                && !ValidationUtils.validateNiu(request.getNiuNumber().trim().toUpperCase(Locale.ROOT))) {
             errors.add("Invalid business request, the NIU number is not valid");
         }
 
