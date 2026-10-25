@@ -72,6 +72,9 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 throw new MessagingException("Token carries no subject");
             }
             UserPrincipal principal = (UserPrincipal) userDetailService.loadUserByUsername(email);
+            if (!principal.isEnabled()) {
+                throw new MessagingException("Account disabled");
+            }
             accessor.setUser(new UsernamePasswordAuthenticationToken(
                     principal, null, principal.getAuthorities()));
         } catch (MessagingException ex) {

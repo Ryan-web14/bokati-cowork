@@ -36,4 +36,8 @@ public class RefreshToken {
 
     @Column(name = "revoked")
     private boolean revoked;
+
+    /** Quand le jeton a ete revoque · distingue un vol d'un rafraichissement concurrent. */
+    @Column(name = "revoked_at")
+    private Instant revokedAt;
 }

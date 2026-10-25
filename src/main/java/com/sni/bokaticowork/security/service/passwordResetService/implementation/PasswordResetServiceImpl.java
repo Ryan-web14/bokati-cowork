@@ -6,7 +6,6 @@ import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
 import com.sni.bokaticowork.security.model.PasswordResetToken;
 import com.sni.bokaticowork.security.repository.PasswordResetTokenRepository;
-import com.sni.bokaticowork.security.repository.RefreshTokenRepository;
 import com.sni.bokaticowork.security.service.passwordResetService.interfaces.PasswordResetService;
 import com.sni.bokaticowork.security.service.passwordResetService.support.PasswordPolicyValidator;
 import com.sni.bokaticowork.security.service.passwordResetService.support.PasswordResetNotifier;
@@ -33,7 +32,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final PasswordResetTokenRepository passwordResetTokenRepo;
     private final UserService userService;
     private final PasswordResetMailService mailService;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetNotifier notifier;
     private final PasswordPolicyValidator passwordPolicyValidator;
 
@@ -108,7 +106,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         userService.resetUserPassword(user, newPassword);
         passwordResetTokenRepo.invalidateToken(tokenHash);
-        refreshTokenRepository.revokeActiveTokensByUserId(user.getId());
+        // Sessions et jetons de rafraichissement sont fermes par resetUserPassword.
 
         user.setFailedLoginAttempts(0);
         user.setIsAccountLocked(false);

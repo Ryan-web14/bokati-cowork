@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -116,7 +117,21 @@ public class JWTFilter extends OncePerRequestFilter {
         String email = jwtService.extractEmail(token);
 
         if(email != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            setAuthenticatedPrincipal((UserPrincipal) userDetailService.loadUserByUsername(email));
+            UserPrincipal principal;
+            try {
+                principal = (UserPrincipal) userDetailService.loadUserByUsername(email);
+            } catch (UsernameNotFoundException ex) {
+                // Compte supprime depuis l'emission du jeton · un 401, et non plus un 500.
+                throw new JwtException("Token subject no longer exists");
+            }
+            // Le compte etait relu sans que son etat soit regarde · un compte desactive gardait
+            // l'acces jusqu'a l'expiration de son jeton. Le verrouillage n'est volontairement pas
+            // teste ici : cinq mauvais mots de passe suffisent a le poser, et un inconnu pourrait
+            // ainsi deconnecter n'importe qui.
+            if (!principal.isEnabled()) {
+                throw new JwtException("Account disabled");
+            }
+            setAuthenticatedPrincipal(principal);
         }
     }
 

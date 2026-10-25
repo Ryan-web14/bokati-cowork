@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.security.admin.user.service.implementation;
 
 
+import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -39,6 +40,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepo;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final UserSessionService sessionService;
     private final int  DEFAULT_GENERATOR_LENGTH = 8;
 
     @Value("${app.security.failed-login.max-attempts:5}")
@@ -151,6 +153,7 @@ public class UserServiceImpl implements UserService {
         user.setIsAccountLocked(true);
         user.setIsAccountExpired(false);
         userRepo.save(user);
+        sessionService.revokeAllForUser(user);
     }
 
     @Override
@@ -203,6 +206,9 @@ public class UserServiceImpl implements UserService {
         user.setIsAccountLocked(true);
         user.setIsAccountExpired(false);
         userRepo.save(user);
+        // Un compte desactive ne garde aucune session · ses jetons d'acces deja emis tombent
+        // avec elles, sans attendre leurs quinze minutes.
+        sessionService.revokeAllForUser(user);
     }
 
     @Override
@@ -239,6 +245,7 @@ public class UserServiceImpl implements UserService {
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepo.save(user);
+        sessionService.revokeAllForUser(user);
     }
 
     @Override
@@ -246,6 +253,9 @@ public class UserServiceImpl implements UserService {
     public void resetUserPassword(Users user, String newPassword){
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepo.save(user);
+        // Un nouveau mot de passe ferme toutes les sessions · si l'ancien a fuite, celui qui
+        // s'en servait perd l'acces au meme moment, et pas a l'expiration de son jeton.
+        sessionService.revokeAllForUser(user);
     }
 
     @Override
@@ -263,11 +273,13 @@ public class UserServiceImpl implements UserService {
             String generatedPassword = GeneratorOfPassword.generatePassword(DEFAULT_GENERATOR_LENGTH);
           user.setPasswordHash(passwordEncoder.encode(generatedPassword));
           userRepo.save(user);
+          sessionService.revokeAllForUser(user);
           return generatedPassword;
         }
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepo.save(user);
+        sessionService.revokeAllForUser(user);
         return email;
     }
 

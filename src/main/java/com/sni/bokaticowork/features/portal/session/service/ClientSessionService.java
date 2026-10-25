@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.portal.session.service;
 
+import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.portal.session.dto.response.ClientSessionResponse;
@@ -19,6 +20,7 @@ public class ClientSessionService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenService refreshTokenService;
+    private final UserSessionService sessionService;
 
     @Transactional(readOnly = true)
     public List<ClientSessionResponse> listSessions(Member member) {
@@ -36,12 +38,16 @@ public class ClientSessionService {
         if (token.getUser().getId() != userId) {
             throw new ResourceNotFoundException("Session not found");
         }
-        refreshTokenService.revokeToken(token.getToken());
+        // token.getToken() est deja le hash · revokeToken le rehachait et ne trouvait jamais
+        // rien, si bien que « deconnecter cet appareil » ne deconnectait rien.
+        refreshTokenService.revoke(token);
+        sessionService.invalidateSessionByRefreshTokenHash(token.getToken());
     }
 
     @Transactional
     public void revokeAllSessions(Member member) {
-        refreshTokenService.revokeAllTokenForUser(member.getUser().getId());
+        // Les sessions aussi · sans elles, les jetons d'acces deja emis restaient valables.
+        sessionService.revokeAllForUser(member.getUser());
     }
 
     private ClientSessionResponse toResponse(RefreshToken token) {

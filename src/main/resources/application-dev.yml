@@ -277,6 +277,9 @@ app:
       access-token-expiration-ms: ${APP_JWT_ACCESS_EXPIRATION_MS:604800000}
       refresh-token-expiration-ms: ${APP_JWT_REFRESH_EXPIRATION_MS:604800000}
       verification-token-expiration-ms: ${APP_JWT_VERIFICATION_EXPIRATION_MS:604800000}
+      # Un jeton de rafraichissement deja consomme qui revient au-dela de ce delai ferme toutes
+      # les sessions du compte · c est la signature d un vol. En deca, deux onglets concurrents.
+      refresh-reuse-grace-seconds: ${APP_JWT_REFRESH_REUSE_GRACE_SECONDS:30}
 
     one-time-token:
       expiration-ms: ${APP_OTT_EXPIRATION_MS:900000}

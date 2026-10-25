@@ -62,8 +62,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public void rotateToken(String oldToken, String newToken) {
         RefreshToken oldRt = getActiveToken(oldToken);
 
-        oldRt.setRevoked(true);
-        refreshTokenRepo.save(oldRt);
+        revoke(oldRt);
 
         String newTokenHash = tokenHashService.hash(newToken);
 
@@ -81,14 +80,27 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public void revokeToken(String token) {
         String tokenHash = tokenHashService.hash(token);
 
-        refreshTokenRepo.findByTokenAndRevokedFalse(tokenHash).ifPresent(rt -> {
-            rt.setRevoked(true);
-            refreshTokenRepo.save(rt);
-        });
+        refreshTokenRepo.findByTokenAndRevokedFalse(tokenHash).ifPresent(this::revoke);
     }
 
     @Override
+    public java.util.Optional<RefreshToken> findByToken(String token) {
+        return refreshTokenRepo.findByToken(tokenHashService.hash(token));
+    }
+
+    @Override
+    public void revoke(RefreshToken token) {
+        if (token.isRevoked()) {
+            return;
+        }
+        token.setRevoked(true);
+        token.setRevokedAt(Instant.now());
+        refreshTokenRepo.save(token);
+    }
+
+    @Override
+    @Transactional
     public void revokeAllTokenForUser(Long userId) {
-        refreshTokenRepo.revokeActiveTokensByUserId(userId);
+        refreshTokenRepo.revokeActiveTokensByUserId(userId, Instant.now());
     }
 }

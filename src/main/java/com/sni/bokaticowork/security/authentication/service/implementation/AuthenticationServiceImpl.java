@@ -9,6 +9,7 @@ import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
+import com.sni.bokaticowork.security.model.RefreshToken;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.provisioning.service.interfaces.UserProvisioningService;
 import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
@@ -29,7 +30,11 @@ import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.jsonwebtoken.JwtException;
+import java.time.Instant;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -56,6 +61,16 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
     private final JWTService jwtService;
     private final RefreshTokenService refreshTokenService;
 
+    /**
+     * Le delai pendant lequel un jeton tout juste consomme peut revenir sans alerte.
+     *
+     * <p>Deux onglets qui rafraichissent au meme instant presentent le meme jeton · le second
+     * arrive apres la rotation. C'est un refus, pas un vol. Au-dela, un jeton consomme qui
+     * revient signifie que deux personnes detiennent la meme valeur.</p>
+     */
+    @Value("${app.security.jwt.refresh-reuse-grace-seconds:30}")
+    private long refreshReuseGraceSeconds;
+
     @Transactional
     public LoginResponse login(LoginRequest request, HttpServletRequest httpReq) throws AuthenticationException{
 
@@ -65,25 +80,60 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
             return authenticationAndCreateSesison(token, httpReq);
     }
 
-    @Transactional
+    /**
+     * Echange un jeton de rafraichissement contre une nouvelle paire.
+     *
+     * <p>Les refus ne defont pas ce qu'ils ont revoque · d'ou le {@code noRollbackFor}. Sans lui,
+     * l'exception qui repond 401 annulait la fermeture des sessions decidee juste avant.</p>
+     */
+    @Transactional(noRollbackFor = BadCredentialException.class)
     public LoginResponse refreshToken(RefreshTokenRequest request, HttpServletRequest httpReq) {
         String oldRefreshToken = request.getRefreshToken();
-        var storedRefreshToken = refreshTokenService.getActiveToken(oldRefreshToken);
-        Users staleUser = storedRefreshToken.getUser();
+        RefreshToken storedRefreshToken = refreshTokenService.findByToken(oldRefreshToken)
+                .orElseThrow(() -> new BadCredentialException(INVALID_CREDENTIALS_MESSAGE));
 
-        if (!jwtService.isTokenValid(oldRefreshToken, staleUser)) {
-            refreshTokenService.revokeToken(oldRefreshToken);
-            sessionService.invalidateSessionByToken(oldRefreshToken);
+        if (storedRefreshToken.isRevoked()) {
+            handleConsumedRefreshToken(storedRefreshToken, httpReq);
+            throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
+        }
+
+        Users staleUser = storedRefreshToken.getUser();
+        String sessionId;
+        try {
+            if (storedRefreshToken.getExpiration() == null
+                    || storedRefreshToken.getExpiration().isBefore(Instant.now())
+                    || !jwtService.isTokenValid(oldRefreshToken, staleUser)) {
+                throw new JwtException("Refresh token expired or not issued to this user");
+            }
+            sessionId = jwtService.extractSessionId(oldRefreshToken);
+        } catch (JwtException ex) {
+            refreshTokenService.revoke(storedRefreshToken);
+            throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
+        }
+
+        // Une session fermee (deconnexion, administrateur, vol detecte) ne se rouvre pas par un
+        // rafraichissement · c'etait le cas, refreshSession la remettait active.
+        if (sessionService.isSessionRevoked(sessionId)) {
+            refreshTokenService.revoke(storedRefreshToken);
             throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
         }
 
         // Reload user within this transaction so all lazy associations (roles, permissions)
         // are initialized before buildAccessToken creates a new UserPrincipal.
         // open-in-view=false means the session from getActiveToken() is already closed.
-        UserPrincipal freshPrincipal = (UserPrincipal) userDetailService.loadUserByUsername(staleUser.getEmail());
+        UserPrincipal freshPrincipal;
+        try {
+            freshPrincipal = (UserPrincipal) userDetailService.loadUserByUsername(staleUser.getEmail());
+        } catch (UsernameNotFoundException ex) {
+            refreshTokenService.revoke(storedRefreshToken);
+            throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
+        }
         Users freshUser = freshPrincipal.getUser();
+        if (!freshPrincipal.isEnabled()) {
+            sessionService.revokeAllForUser(freshUser);
+            throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
+        }
 
-        String sessionId = jwtService.extractSessionId(oldRefreshToken);
         String newAccessToken = jwtService.generateAccesToken(freshUser, sessionId);
         String newRefreshToken = jwtService.generateRefreshToken(freshUser, sessionId);
 
@@ -94,6 +144,32 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
                 .build();
+    }
+
+    /**
+     * Un jeton deja consomme revient · rafraichissement concurrent, ou vol.
+     *
+     * <p>Dans le delai de grace, c'est un second onglet · on refuse, sans plus. Au-dela, le jeton
+     * a ete copie : le titulaire et un tiers detiennent la meme valeur, et on ne sait pas lequel
+     * presente celle-ci. Toutes les sessions de l'utilisateur sont fermees, le voleur perd la
+     * sienne, le titulaire se reconnecte. Un jeton revoque avant l'enregistrement de la date ne
+     * declenche rien · on ne peut pas le dater.</p>
+     */
+    private void handleConsumedRefreshToken(RefreshToken stored, HttpServletRequest httpReq) {
+        Instant revokedAt = stored.getRevokedAt();
+        if (revokedAt == null) {
+            return;
+        }
+        Users user = stored.getUser();
+        if (revokedAt.isAfter(Instant.now().minusSeconds(refreshReuseGraceSeconds))) {
+            log.info("Jeton de rafraichissement presente apres sa rotation pour {} · rafraichissement concurrent, refuse",
+                    user.getUserId());
+            return;
+        }
+        log.warn("ALERTE SECURITE · jeton de rafraichissement deja consomme presente pour {} depuis {} "
+                        + "(revoque le {}) · toutes ses sessions sont fermees",
+                user.getUserId(), httpReq == null ? "?" : httpReq.getRemoteAddr(), revokedAt);
+        sessionService.revokeAllForUser(user);
     }
 
     @Override
