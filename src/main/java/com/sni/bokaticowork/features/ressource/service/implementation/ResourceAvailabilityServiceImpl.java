@@ -121,7 +121,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             throw new ConflictException("resource availability", "the requested range overlaps existing availability slots");
         }
 
-        int capacity = resolveCapacity(resource, request.getCapacity());
+        int capacity = resolveCapacity(resource);
         List<ResourceAvailability> slots = buildSlots(resource, request.getStartedAt(), request.getEndedAt(), capacity, request.getActive());
         availabilityRepository.saveAll(slots);
     }
@@ -541,19 +541,22 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     }
 
     /**
-     * La quantite par creneau.
+     * La quantite par creneau · toujours la capacite reelle de la ressource, quelle que soit la
+     * valeur envoyee.
      *
-     * <p>Une ressource partagee (open space, parking, casier...) prend toujours sa capacite reelle,
-     * quelle que soit la valeur envoyee · une disponibilite creee a 1 sur un open space de vingt
-     * postes n'en ouvrait qu'un, sans que rien ne le signale. Une piece louee entiere (salle de
-     * reunion, bureau privatif...) reste plafonnee a sa limite de reservations simultanees, 1.</p>
+     * <p>Une ressource partagee (open space, parking, casier...) ouvre autant de places que sa
+     * capacite de reservations simultanees · une disponibilite creee a 1 sur un open space de vingt
+     * postes n'en ouvrait qu'un, sans que rien ne le signale.</p>
+     *
+     * <p>Une piece louee entiere (salle de reunion, bureau privatif...) affiche ses places assises
+     * · une salle de douze montre 12 et non 1. C'est un affichage : la reservation d'une piece
+     * consomme tout le restant et n'est acceptee que sur un creneau intact (restant egal au total),
+     * si bien qu'un seul groupe l'occupe a la fois, que le total vaille 1 ou 12.</p>
      */
-    private int resolveCapacity(Resource resource, Integer requestedCapacity) {
-        int bookableSlots = resource.resolveBookableSlots();
-        // Never exceed the type-level concurrent booking limit, even if the caller passes a higher value.
-        int baseCapacity = requestedCapacity != null && resource.isWholeResourceBooking()
-                ? Math.min(requestedCapacity, bookableSlots)
-                : bookableSlots;
+    private int resolveCapacity(Resource resource) {
+        int baseCapacity = resource.isWholeResourceBooking()
+                ? resource.resolveSeatingCapacity()
+                : resource.resolveBookableSlots();
         if (baseCapacity < 1) {
             throw new BadRequestException("Availability capacity must be greater than zero");
         }

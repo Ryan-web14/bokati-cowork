@@ -165,11 +165,11 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
     List<ResourceAvailability> findExpiredSlots(@Param("cutoff") LocalDateTime cutoff, Limit limit);
 
     /**
-     * Creneaux a venir d'une ressource partagee dont la quantite n'est pas sa capacite reelle.
+     * Creneaux a venir dont la quantite n'est pas la capacite reelle de leur ressource.
      *
-     * <p>La capacite reelle est celle que {@code Resource.resolveBookableSlots} rend · la limite du
-     * type si elle est posee, sinon la capacite de la ressource. Les pieces louees entieres ne sont
-     * pas concernees.</p>
+     * <p>La capacite reelle est celle que la creation applique · pour une ressource partagee, la
+     * limite du type si elle est posee, sinon la capacite de la ressource ; pour une piece louee
+     * entiere, ses places assises.</p>
      */
     @Query("""
             select ra.id
@@ -177,11 +177,12 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             join ra.resource r
             join r.resourceType t
             where ra.endedAt > :now
-              and t.wholeResourceBooking = false
-              and ra.totalCapacity <> coalesce(t.bookableSlots, r.capacity)
+              and ra.totalCapacity <> case when t.wholeResourceBooking = true
+                                           then r.capacity
+                                           else coalesce(t.bookableSlots, r.capacity) end
             order by ra.id asc
             """)
-    List<Long> findMisalignedSharedSlotIds(@Param("now") LocalDateTime now, Limit limit);
+    List<Long> findMisalignedSlotIds(@Param("now") LocalDateTime now, Limit limit);
 
     /** Un creneau reserve aux abonnes recouvre-t-il cette plage · bornes exclusives, comme un chevauchement. */
     boolean existsByResourceAndSubscribersOnlyTrueAndStartedAtLessThanAndEndedAtGreaterThan(

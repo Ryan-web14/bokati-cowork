@@ -14,15 +14,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Remet les creneaux a venir des ressources partagees a leur capacite reelle.
+ * Remet les creneaux a venir a la capacite reelle de leur ressource.
  *
  * <p>Un open space de vingt postes pouvait avoir des creneaux a 1 · la quantite envoyee a la
  * creation etait gardee telle quelle, et une capacite relevee ensuite ne se reportait pas sur les
- * creneaux deja ouverts. Les pieces louees entieres (salle de reunion, bureau privatif...) ne sont
- * jamais touchees : leur creneau vaut une reservation, pas un nombre de places.</p>
+ * creneaux deja ouverts. Une salle de douze places affichait 1.</p>
  *
- * <p>Ce qui est deja reserve est conserve · la part consommee d'un creneau ({@code total - restant})
- * reste consommee, seule la part libre suit la nouvelle capacite. Un creneau ferme (fermeture
+ * <p>Ce qui est deja reserve est conserve. Sur une ressource partagee, la part consommee d'un
+ * creneau ({@code total - restant}) reste consommee, seule la part libre suit la nouvelle capacite.
+ * Sur une piece louee entiere, un creneau est libre (restant egal au total) ou pris · libre, il
+ * passe a la capacite de la piece ; pris, il le reste, a zero. Un creneau ferme (fermeture
  * declaree, creneau desactive) le reste.</p>
  *
  * <p>Un lot par transaction, creneaux verrouilles · une reservation qui arrive pendant l'alignement
@@ -51,7 +52,7 @@ public class SharedSlotCapacityAligner {
     public int alignAll() {
         int aligned = 0;
         while (true) {
-            List<Long> ids = availabilityRepository.findMisalignedSharedSlotIds(
+            List<Long> ids = availabilityRepository.findMisalignedSlotIds(
                     LocalDateTime.now(), Limit.of(BATCH_SIZE));
             if (ids.isEmpty()) {
                 return aligned;
@@ -83,17 +84,26 @@ public class SharedSlotCapacityAligner {
 
     /** Un creneau · {@code false} s'il etait deja juste ou n'est pas a toucher. */
     boolean align(ResourceAvailability slot) {
-        if (slot.getResource() == null || slot.getResource().isWholeResourceBooking()) {
+        if (slot.getResource() == null) {
             return false;
         }
-        int target = slot.getResource().resolveBookableSlots();
+        boolean whole = slot.getResource().isWholeResourceBooking();
+        int target = whole
+                ? slot.getResource().resolveSeatingCapacity()
+                : slot.getResource().resolveBookableSlots();
         int total = slot.getTotalCapacity() == null ? 0 : slot.getTotalCapacity();
         if (target < 1 || target == total) {
             return false;
         }
         int remaining = slot.getRemainingCapacity() == null ? 0 : slot.getRemainingCapacity();
-        int consumed = Math.max(0, total - remaining);
-        int newRemaining = Math.max(0, target - consumed);
+        int newRemaining;
+        if (whole) {
+            // Une piece se loue entiere · intacte, elle reste libre ; entamee, elle reste prise.
+            newRemaining = remaining == total ? target : 0;
+        } else {
+            int consumed = Math.max(0, total - remaining);
+            newRemaining = Math.max(0, target - consumed);
+        }
 
         slot.setTotalCapacity(target);
         slot.setRemainingCapacity(newRemaining);

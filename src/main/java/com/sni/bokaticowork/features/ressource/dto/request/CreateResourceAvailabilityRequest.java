@@ -30,12 +30,12 @@ public class CreateResourceAvailabilityRequest {
      * portent l'entite et la reponse, et celui qu'emploie l'interface. Sans cet alias le champ
      * etait simplement jete et <b>toute</b> capacite demandee retombait sur celle de la ressource.
      *
-     * <p>Vide, la capacite de la ressource s'applique.
-     *
-     * <p>A savoir : sur une ressource <b>partagee</b> (open space, parking, casier...), la valeur
-     * est <b>ignoree</b> · le creneau prend toujours la capacite reelle de la ressource. Sur une
-     * piece louee entiere (salle de reunion, bureau privatif...), elle est plafonnee a la limite
-     * de reservations simultanees, 1. Voir {@code ResourceAvailabilityServiceImpl.resolveCapacity}.
+     * <p>A savoir : la valeur est <b>ignoree</b> · le creneau prend toujours la capacite reelle de
+     * la ressource. Sur une ressource partagee (open space, parking...), ce sont ses places
+     * reservables ; sur une piece louee entiere (salle de reunion, bureau privatif...), ses places
+     * assises, a titre d'affichage, la piece restant reservee par un seul groupe a la fois. Le
+     * champ reste accepte pour ne pas casser les appels existants. Voir
+     * {@code ResourceAvailabilityServiceImpl.resolveCapacity}.
      */
     @JsonAlias("totalCapacity")
     private Integer capacity;

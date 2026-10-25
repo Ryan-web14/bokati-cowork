@@ -504,13 +504,15 @@ class ResourceAvailabilityServiceImplTest {
     }
 
     @Test
-    void meetingRoomSlotsStayAtOneBookingWhateverTheRequestSays() {
+    void meetingRoomSlotsShowTheSeatsWhateverTheRequestSays() {
+        // Affichage · l'exclusivite de la salle tient a la regle de reservation (restant egal au
+        // total), couverte par takesTheWholeSlot... et refusesAPartiallyTakenSlot...
         Resource meetingRoom = wholeResource(12);
         when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(meetingRoom);
 
         List<ResourceAvailability> slots = createOneHour(5);
 
-        assertTrue(slots.stream().allMatch(slot -> slot.getTotalCapacity() == 1 && slot.getRemainingCapacity() == 1));
+        assertTrue(slots.stream().allMatch(slot -> slot.getTotalCapacity() == 12 && slot.getRemainingCapacity() == 12));
     }
 
     private List<ResourceAvailability> createOneHour(int requestedCapacity) {

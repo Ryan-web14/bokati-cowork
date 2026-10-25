@@ -27,7 +27,7 @@ class SharedSlotCapacityQueriesIT extends PostgresIntegrationTestBase {
     @Test
     @DisplayName("La recherche des creneaux hors capacite s'execute sur le schema de production")
     void misalignedSlotQueryRuns() {
-        List<Long> ids = availabilityRepository.findMisalignedSharedSlotIds(LocalDateTime.now(), Limit.of(10));
+        List<Long> ids = availabilityRepository.findMisalignedSlotIds(LocalDateTime.now(), Limit.of(10));
 
         assertThat(ids).isNotNull();
     }

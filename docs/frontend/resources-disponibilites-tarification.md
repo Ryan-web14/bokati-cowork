@@ -35,11 +35,17 @@ POST /resource-availabilities
 }
 ```
 
-**La quantité par créneau n'est plus choisie par l'interface.** Sur une ressource partagée (open
-space, parking, casier, studio, labo), `totalCapacity` est ignoré : chaque créneau prend la
-capacité réelle de la ressource. Sur une pièce louée entière (salle de réunion, bureau privatif,
-salle de formation, cabine, espace événementiel), un créneau vaut une réservation, donc 1. Le
-champ reste accepté pour ne pas casser les appels existants, mais il est inutile de l'afficher
+**La quantité par créneau n'est plus choisie par l'interface.** `totalCapacity` est ignoré :
+chaque créneau prend la capacité réelle de la ressource.
+
+- Ressource partagée (open space, parking, casier, studio, labo) : ses places réservables. Une
+  réservation en consomme autant que sa quantité.
+- Pièce louée entière (salle de réunion, bureau privatif, salle de formation, cabine, espace
+  événementiel) : ses places assises, par exemple 12. **C'est un affichage.** Une réservation prend
+  toute la pièce : le créneau passe de 12 à 0, et un second groupe ne peut pas réserver en même
+  temps. Le nombre de participants d'une réservation est contrôlé contre ces places assises.
+
+Le champ reste accepté pour ne pas casser les appels existants, mais il est inutile de l'afficher
 dans le formulaire.
 
 ### Les soirées sont réservées aux abonnés

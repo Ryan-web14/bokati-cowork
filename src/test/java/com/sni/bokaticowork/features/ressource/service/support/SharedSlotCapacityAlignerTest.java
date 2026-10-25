@@ -128,12 +128,26 @@ class SharedSlotCapacityAlignerTest {
     }
 
     @Test
-    @DisplayName("Une salle de reunion n'est jamais touchee")
-    void aMeetingRoomIsLeftAlone() {
+    @DisplayName("Une salle libre affiche ses places assises")
+    void aFreeMeetingRoomShowsItsSeats() {
         ResourceAvailability slot = slot(meetingRoom(12), 1, 1, true);
 
-        assertThat(aligner.align(slot)).isFalse();
-        assertThat(slot.getTotalCapacity()).isEqualTo(1);
+        assertThat(aligner.align(slot)).isTrue();
+        assertThat(slot.getTotalCapacity()).isEqualTo(12);
+        assertThat(slot.getRemainingCapacity()).isEqualTo(12);
+        assertThat(slot.getAvailable()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Une salle deja reservee le reste · son creneau passe a 12 mais avec 0 de libre")
+    void aBookedMeetingRoomStaysBooked() {
+        ResourceAvailability slot = slot(meetingRoom(12), 1, 0, false);
+
+        aligner.align(slot);
+
+        assertThat(slot.getTotalCapacity()).isEqualTo(12);
+        assertThat(slot.getRemainingCapacity()).isZero();
+        assertThat(slot.getAvailable()).isFalse();
     }
 
     @Test

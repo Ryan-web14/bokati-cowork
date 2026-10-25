@@ -10,14 +10,14 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Remet les creneaux des ressources partagees a leur capacite reelle.
+ * Remet les creneaux a venir a la capacite reelle de leur ressource.
  *
  * <p>Premier passage peu apres le demarrage, donc des le deploiement · c'est lui qui rattrape les
  * creneaux deja ouverts a une mauvaise quantite. Puis toutes les heures, pour suivre une capacite
  * modifiee depuis. Un passage sans ecart ne fait qu'une requete et n'ecrit rien dans le journal.</p>
  *
- * <p>Les salles de reunion et les autres pieces louees entieres ne sont pas touchees · voir
- * {@link SharedSlotCapacityAligner}.</p>
+ * <p>Une salle de douze places passe de 1 a 12 · c'est un affichage, la salle reste reservee par
+ * un seul groupe a la fois. Voir {@link SharedSlotCapacityAligner}.</p>
  */
 @Slf4j
 @Component
@@ -39,7 +39,7 @@ public class SharedSlotCapacityWorker {
         try {
             int aligned = aligner.alignAll();
             if (aligned > 0) {
-                log.info("Capacite des creneaux · {} creneaux de ressources partagees remis a leur capacite reelle",
+                log.info("Capacite des creneaux · {} creneaux remis a la capacite reelle de leur ressource",
                         aligned);
             }
         } catch (RuntimeException ex) {
