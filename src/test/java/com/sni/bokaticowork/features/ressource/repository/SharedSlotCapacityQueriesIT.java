@@ -33,6 +33,17 @@ class SharedSlotCapacityQueriesIT extends PostgresIntegrationTestBase {
     }
 
     @Test
+    @DisplayName("La colonne subscribers_only existe et la recherche de soirees s'execute")
+    void subscribersOnlyColumnAndQueryExist() {
+        LocalDateTime evening = LocalDateTime.now().plusDays(1).withHour(19).withMinute(0);
+        com.sni.bokaticowork.features.ressource.model.Resource unsaved =
+                com.sni.bokaticowork.features.ressource.model.Resource.builder().id(-1L).build();
+
+        assertThat(availabilityRepository.existsByResourceAndSubscribersOnlyTrueAndStartedAtLessThanAndEndedAtGreaterThan(
+                unsaved, evening.plusHours(1), evening)).isFalse();
+    }
+
+    @Test
     @DisplayName("Le verrouillage par identifiants s'execute sur le schema de production")
     void lockByIdsRuns() {
         assertThat(availabilityRepository.lockAllByIdIn(List.of(-1L))).isEmpty();

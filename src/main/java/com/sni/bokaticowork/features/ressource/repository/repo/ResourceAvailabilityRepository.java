@@ -183,6 +183,10 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             """)
     List<Long> findMisalignedSharedSlotIds(@Param("now") LocalDateTime now, Limit limit);
 
+    /** Un creneau reserve aux abonnes recouvre-t-il cette plage · bornes exclusives, comme un chevauchement. */
+    boolean existsByResourceAndSubscribersOnlyTrueAndStartedAtLessThanAndEndedAtGreaterThan(
+            Resource resource, LocalDateTime endedAt, LocalDateTime startedAt);
+
     /** Les memes creneaux, verrouilles · une reservation concurrente attend la fin de l'alignement. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

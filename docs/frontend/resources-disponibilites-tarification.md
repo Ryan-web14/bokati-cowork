@@ -42,6 +42,29 @@ salle de formation, cabine, espace événementiel), un créneau vaut une réserv
 champ reste accepté pour ne pas casser les appels existants, mais il est inutile de l'afficher
 dans le formulaire.
 
+### Les soirées sont réservées aux abonnés
+
+Une disponibilité peut désormais aller jusqu'à **22:00**. Tout créneau qui commence à **18:00 ou
+plus tard** est marqué `subscribersOnly: true` à sa création. Rien à envoyer : c'est l'heure qui
+décide. Ouvrir une journée de 08:00 à 22:00 donne donc d'un seul appel la journée publique et la
+soirée des abonnés.
+
+| Qui | Voit les soirées | Peut les réserver |
+|---|---|---|
+| Calendrier public (`/public/resources/{code}/calendar`) | non | non |
+| Membre sans abonnement actif (portail) | non | non, `403` « Ce créneau est réservé aux abonnés » |
+| Membre abonné (portail) | oui, `subscribersOnly: true` | oui |
+| Accueil / back-office | oui, `subscribersOnly: true` | oui, pour n'importe quel client |
+
+Abonné veut dire : un abonnement actif sur la période en cours, au nom du membre ou du client
+auquel il est rattaché. Sur le portail, `POST /client/bookings/availability` répond
+`available: false` avec le message « Créneau réservé aux abonnés » plutôt qu'une erreur. Le champ
+`subscribersOnly` apparaît dans `ResourceAvailabilityResponse` et dans les fenêtres des calendriers
+public et admin ; les créneaux créés avant cette version restent ouverts à tous.
+
+Le samedi s'arrête à 12:00 pour tout le monde. Une dérogation passe par l'accueil, qui ouvre le
+créneau de l'après-midi et le réserve pour le client.
+
 **Absent, la durée de la ressource s'applique ; une ressource qui n'en porte aucune reste à 30.**
 Une interface qui envoie `30` sur un parc à 30 ne change donc rien. Le champ porte exactement le
 nom que le frontend employait déjà.
@@ -179,7 +202,7 @@ distincte — ne comptez pas sur `results.length` pour égaler `resourceCodes.le
 - `the requested range overlaps existing availability slots`
 - `the requested range overlaps an active closure`
 - `availability can only be created up to one month in advance`
-- `availability must be created within working hours from 08:00 to 20:00`
+- `availability must be created within working hours from 08:00 to 22:00`
 - `availability cannot be created in the past`
 - `the resource is inactive` · `the resource is not bookable`
 - `Resource with code X not found`

@@ -34,8 +34,8 @@ import static org.mockito.Mockito.when;
 /**
  * Le mois s'ouvre aux bons horaires, et seulement pour les ressources qui n'ont rien.
  *
- * <p>Le mercredi 28 octobre 2026 a 10:07 · il reste mercredi (des 10:30), jeudi, vendredi et
- * samedi 31. Dimanche n'existe pas dans ce reste de mois, ce qui laisse le samedi verifier ses
+ * <p>Le mercredi 28 octobre 2026 a 10:07 · il reste mercredi (des 10:30), jeudi, vendredi, chacun
+ * avec sa soiree d'abonnes, et samedi 31. Dimanche n'existe pas dans ce reste de mois, ce qui laisse le samedi verifier ses
  * horaires courts.</p>
  */
 @ExtendWith(MockitoExtension.class)
@@ -53,7 +53,7 @@ class MonthlyAvailabilityGeneratorTest {
     @BeforeEach
     void setUp() {
         generator = new MonthlyAvailabilityGenerator(resourceRepository, availabilityRepository,
-                availabilityService, new ResourceSlotPolicy(), "08:00-18:00", "08:00-12:00", "");
+                availabilityService, new ResourceSlotPolicy(), "08:00-18:00", "18:00-22:00", "08:00-12:00", "");
     }
 
     private static Resource resource(String code) {
@@ -69,7 +69,7 @@ class MonthlyAvailabilityGeneratorTest {
     }
 
     @Test
-    @DisplayName("Lundi-vendredi 08:00-18:00, samedi 08:00-12:00, aujourd'hui a partir du prochain creneau")
+    @DisplayName("Lundi-vendredi 08:00-18:00 puis 18:00-22:00, samedi 08:00-12:00, aujourd'hui a partir du prochain creneau")
     void opensTheRestOfTheMonthWithTheRightHours() {
         when(resourceRepository.findAll()).thenReturn(List.of(resource("RES-1")));
 
@@ -78,17 +78,23 @@ class MonthlyAvailabilityGeneratorTest {
         List<CreateResourceAvailabilityRequest> requests = created();
         assertThat(requests).extracting(CreateResourceAvailabilityRequest::getStartedAt).containsExactly(
                 LocalDateTime.of(2026, 10, 28, 10, 30),
+                LocalDateTime.of(2026, 10, 28, 18, 0),
                 LocalDateTime.of(2026, 10, 29, 8, 0),
+                LocalDateTime.of(2026, 10, 29, 18, 0),
                 LocalDateTime.of(2026, 10, 30, 8, 0),
+                LocalDateTime.of(2026, 10, 30, 18, 0),
                 LocalDateTime.of(2026, 10, 31, 8, 0));
         assertThat(requests).extracting(CreateResourceAvailabilityRequest::getEndedAt).containsExactly(
                 LocalDateTime.of(2026, 10, 28, 18, 0),
+                LocalDateTime.of(2026, 10, 28, 22, 0),
                 LocalDateTime.of(2026, 10, 29, 18, 0),
+                LocalDateTime.of(2026, 10, 29, 22, 0),
                 LocalDateTime.of(2026, 10, 30, 18, 0),
+                LocalDateTime.of(2026, 10, 30, 22, 0),
                 LocalDateTime.of(2026, 10, 31, 12, 0));
         assertThat(requests).allMatch(r -> r.getCapacity() == null);
         assertThat(report.resourcesFilled()).isEqualTo(1);
-        assertThat(report.daysCreated()).isEqualTo(4);
+        assertThat(report.rangesCreated()).isEqualTo(7);
     }
 
     @Test
@@ -102,7 +108,7 @@ class MonthlyAvailabilityGeneratorTest {
         MonthlyAvailabilityGenerator.Report report = generator.generate(NOW);
 
         verify(availabilityService, never()).createAvailability(argThat(r -> "RES-1".equals(r.getResourceCode())));
-        verify(availabilityService, times(4)).createAvailability(argThat(r -> "RES-2".equals(r.getResourceCode())));
+        verify(availabilityService, times(7)).createAvailability(argThat(r -> "RES-2".equals(r.getResourceCode())));
         assertThat(report.resourcesSkipped()).isEqualTo(1);
     }
 
@@ -130,19 +136,31 @@ class MonthlyAvailabilityGeneratorTest {
 
         MonthlyAvailabilityGenerator.Report report = generator.generate(NOW);
 
-        assertThat(report.daysCreated()).isEqualTo(3);
-        assertThat(report.daysRefused()).isEqualTo(1);
+        assertThat(report.rangesCreated()).isEqualTo(5);
+        assertThat(report.rangesRefused()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("Apres la fermeture du jour, aujourd'hui n'est pas ouvert")
-    void nothingTodayAfterClosingTime() {
+    @DisplayName("Apres 18:00, aujourd'hui n'ouvre que la soiree des abonnes, a partir du prochain creneau")
+    void onlyTheEveningTodayAfterSix() {
         when(resourceRepository.findAll()).thenReturn(List.of(resource("RES-1")));
 
         generator.generate(LocalDateTime.of(2026, 10, 28, 18, 5));
 
+        CreateResourceAvailabilityRequest first = created().getFirst();
+        assertThat(first.getStartedAt()).isEqualTo(LocalDateTime.of(2026, 10, 28, 18, 30));
+        assertThat(first.getEndedAt()).isEqualTo(LocalDateTime.of(2026, 10, 28, 22, 0));
+    }
+
+    @Test
+    @DisplayName("Apres 22:00, aujourd'hui n'est plus ouvert")
+    void nothingTodayAfterTen() {
+        when(resourceRepository.findAll()).thenReturn(List.of(resource("RES-1")));
+
+        generator.generate(LocalDateTime.of(2026, 10, 28, 22, 5));
+
         assertThat(created()).extracting(r -> r.getStartedAt().toLocalDate().getDayOfMonth())
-                .containsExactly(29, 30, 31);
+                .containsExactly(29, 29, 30, 30, 31);
     }
 
     @Test
@@ -158,7 +176,7 @@ class MonthlyAvailabilityGeneratorTest {
     @DisplayName("Une plage horaire mal ecrite arrete le demarrage plutot que d'ouvrir n'importe quoi")
     void rejectsMalformedHours() {
         assertThatThrownBy(() -> new MonthlyAvailabilityGenerator(resourceRepository, availabilityRepository,
-                availabilityService, new ResourceSlotPolicy(), "18:00-08:00", "08:00-12:00", ""))
+                availabilityService, new ResourceSlotPolicy(), "18:00-08:00", "18:00-22:00", "08:00-12:00", ""))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

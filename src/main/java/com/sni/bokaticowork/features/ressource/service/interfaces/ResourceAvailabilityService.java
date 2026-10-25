@@ -38,6 +38,24 @@ public interface ResourceAvailabilityService {
             Integer quantity
     );
 
+    /**
+     * Les memes fenetres, en ecartant au besoin les creneaux reserves aux abonnes.
+     *
+     * @param includeSubscribersOnly {@code false} pour un membre sans abonnement actif · les
+     *                               soirees n'existent alors pas pour lui
+     */
+    List<ResourceAvailabilityWindowResponse> findRemainingWindows(
+            String resourceCode,
+            LocalDateTime startedAt,
+            LocalDateTime endedAt,
+            Integer durationMinutes,
+            Integer quantity,
+            boolean includeSubscribersOnly
+    );
+
+    /** La plage recouvre-t-elle au moins un creneau reserve aux abonnes. */
+    boolean touchesSubscribersOnly(String resourceCode, LocalDateTime startedAt, LocalDateTime endedAt);
+
     void reserve(ReserveResourceAvailabilityRequest request);
 
     void release(ReleaseResourceAvailabilityRequest request);

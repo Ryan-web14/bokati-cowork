@@ -26,6 +26,12 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
 
     @Override
     public PublicResourceCalendarResponse calendar(String resourceCode, LocalDate fromDate, LocalDate toDate) {
+        return calendar(resourceCode, fromDate, toDate, false);
+    }
+
+    @Override
+    public PublicResourceCalendarResponse calendar(String resourceCode, LocalDate fromDate, LocalDate toDate,
+                                                   boolean includeSubscribersOnly) {
         Resource resource = resourceService.getResourceForService(resourceCode);
         LocalDate start = fromDate == null ? LocalDate.now() : fromDate;
         LocalDate end = toDate == null ? start.plusMonths(1) : toDate;
@@ -34,7 +40,10 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
                 start.atStartOfDay(),
                 end.plusDays(1).atStartOfDay()
         );
+        // Un lecteur sans droit aux soirees ne les voit pas du tout · ni dans les fenetres, ni
+        // dans les totaux du jour, sans quoi une journee pleine paraitrait a moitie libre.
         Map<LocalDate, List<ResourceAvailability>> byDay = slots.stream()
+                .filter(slot -> includeSubscribersOnly || !Boolean.TRUE.equals(slot.getSubscribersOnly()))
                 .collect(Collectors.groupingBy(slot -> slot.getStartedAt().toLocalDate()));
 
         List<PublicResourceCalendarResponse.Day> days = new ArrayList<>();
@@ -57,6 +66,7 @@ public class PublicResourceCalendarServiceImpl implements PublicResourceCalendar
                             .remainingCapacity(slot.getRemainingCapacity())
                             .available(slot.getAvailable())
                             .active(slot.getActive())
+                            .subscribersOnly(Boolean.TRUE.equals(slot.getSubscribersOnly()))
                             .build())
                     .toList();
             days.add(PublicResourceCalendarResponse.Day.builder()

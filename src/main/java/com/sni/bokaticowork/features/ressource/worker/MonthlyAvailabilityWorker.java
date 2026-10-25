@@ -51,10 +51,10 @@ public class MonthlyAvailabilityWorker {
         }
         try {
             MonthlyAvailabilityGenerator.Report report = generator.generate(LocalDateTime.now());
-            log.info("Disponibilites mensuelles ({}) · {} ressources ouvertes ({} journees), {} deja pourvues sautees, "
-                            + "{} journees refusees (fermeture, chevauchement)",
-                    trigger, report.resourcesFilled(), report.daysCreated(), report.resourcesSkipped(),
-                    report.daysRefused());
+            log.info("Disponibilites mensuelles ({}) · {} ressources ouvertes ({} plages), {} deja pourvues sautees, "
+                            + "{} plages refusees (fermeture, chevauchement)",
+                    trigger, report.resourcesFilled(), report.rangesCreated(), report.resourcesSkipped(),
+                    report.rangesRefused());
         } catch (RuntimeException ex) {
             log.error("Disponibilites mensuelles ({}) · passage interrompu", trigger, ex);
         } finally {

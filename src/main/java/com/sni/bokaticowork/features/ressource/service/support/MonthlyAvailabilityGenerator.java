@@ -17,14 +17,21 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Ouvre les disponibilites du mois en cours pour toutes les ressources reservables.
  *
- * <p>Les horaires viennent de la configuration · par defaut du lundi au vendredi de 08:00 a 18:00,
- * le samedi de 08:00 a 12:00, le dimanche ferme. La plage va de maintenant a la fin du mois.</p>
+ * <p>Les horaires viennent de la configuration · par defaut du lundi au vendredi de 08:00 a 18:00
+ * pour tous, puis de 18:00 a 22:00 pour les abonnes, le samedi de 08:00 a 12:00, le dimanche ferme.
+ * La plage va de maintenant a la fin du mois. La soiree est une plage distincte : une fermeture
+ * declaree le soir seulement ne retire pas la journee.</p>
+ *
+ * <p>Le samedi apres-midi n'est pas ouvert · une derogation passe par l'accueil, qui ouvre et
+ * reserve le creneau pour le client.</p>
  *
  * <p>Une ressource qui a deja au moins un creneau a venir dans le mois est sautee, telle quelle ·
  * l'administrateur qui a ouvert ses propres horaires ne les voit pas completes ni ecrasees.</p>
@@ -42,7 +49,7 @@ public class MonthlyAvailabilityGenerator {
     private final ResourceAvailabilityRepository availabilityRepository;
     private final ResourceAvailabilityService availabilityService;
     private final ResourceSlotPolicy slotPolicy;
-    private final Map<DayOfWeek, OpeningHours> openingHours;
+    private final Map<DayOfWeek, List<OpeningHours>> openingHours;
 
     public MonthlyAvailabilityGenerator(
             ResourceRepository resourceRepository,
@@ -50,6 +57,7 @@ public class MonthlyAvailabilityGenerator {
             ResourceAvailabilityService availabilityService,
             ResourceSlotPolicy slotPolicy,
             @Value("${bokati.resource.availability.generation.weekday-hours:08:00-18:00}") String weekdayHours,
+            @Value("${bokati.resource.availability.generation.weekday-subscriber-hours:18:00-22:00}") String weekdaySubscriberHours,
             @Value("${bokati.resource.availability.generation.saturday-hours:08:00-12:00}") String saturdayHours,
             @Value("${bokati.resource.availability.generation.sunday-hours:}") String sundayHours) {
         this.resourceRepository = resourceRepository;
@@ -58,9 +66,11 @@ public class MonthlyAvailabilityGenerator {
         this.slotPolicy = slotPolicy;
         this.openingHours = new EnumMap<>(DayOfWeek.class);
         OpeningHours weekday = OpeningHours.parse(weekdayHours);
+        OpeningHours weekdayEvening = OpeningHours.parse(weekdaySubscriberHours);
         for (DayOfWeek day : new DayOfWeek[]{DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
                 DayOfWeek.THURSDAY, DayOfWeek.FRIDAY}) {
             putIfOpen(day, weekday);
+            putIfOpen(day, weekdayEvening);
         }
         putIfOpen(DayOfWeek.SATURDAY, OpeningHours.parse(saturdayHours));
         putIfOpen(DayOfWeek.SUNDAY, OpeningHours.parse(sundayHours));
@@ -68,12 +78,12 @@ public class MonthlyAvailabilityGenerator {
 
     private void putIfOpen(DayOfWeek day, OpeningHours hours) {
         if (hours != null) {
-            openingHours.put(day, hours);
+            openingHours.computeIfAbsent(day, ignored -> new ArrayList<>()).add(hours);
         }
     }
 
     /** Ce que le passage a fait · pour le journal du worker. */
-    public record Report(int resourcesFilled, int resourcesSkipped, int daysCreated, int daysRefused) {
+    public record Report(int resourcesFilled, int resourcesSkipped, int rangesCreated, int rangesRefused) {
     }
 
     public Report generate(LocalDateTime now) {
@@ -103,36 +113,34 @@ public class MonthlyAvailabilityGenerator {
         return new Report(filled, skipped, created, refused);
     }
 
-    /** {jours crees, jours refuses} pour une ressource. */
+    /** {plages creees, plages refusees} pour une ressource. */
     private int[] fillMonth(Resource resource, LocalDateTime now, LocalDate lastDay) {
         int slotMinutes = slotPolicy.slotMinutes(resource);
         int created = 0;
         int refused = 0;
         for (LocalDate day = now.toLocalDate(); !day.isAfter(lastDay); day = day.plusDays(1)) {
-            OpeningHours hours = openingHours.get(day.getDayOfWeek());
-            if (hours == null) {
-                continue;
-            }
-            LocalDateTime start = day.atTime(hours.open());
-            LocalDateTime end = day.atTime(hours.close());
-            if (start.isBefore(now)) {
-                start = nextBoundary(now, slotMinutes);
-            }
-            if (!start.isBefore(end)) {
-                continue;
-            }
-            try {
-                availabilityService.createAvailability(CreateResourceAvailabilityRequest.builder()
-                        .resourceCode(resource.getCode())
-                        .startedAt(start)
-                        .endedAt(end)
-                        .build());
-                created++;
-            } catch (BaseException ex) {
-                // Refus metier · fermeture declaree, creneaux deja la, politique de la ressource.
-                // La journee est sautee, les suivantes continuent.
-                refused++;
-                log.debug("Disponibilites mensuelles · {} le {} sautee : {}", resource.getCode(), day, ex.getMessage());
+            for (OpeningHours hours : openingHours.getOrDefault(day.getDayOfWeek(), List.of())) {
+                LocalDateTime start = day.atTime(hours.open());
+                LocalDateTime end = day.atTime(hours.close());
+                if (start.isBefore(now)) {
+                    start = nextBoundary(now, slotMinutes);
+                }
+                if (!start.isBefore(end)) {
+                    continue;
+                }
+                try {
+                    availabilityService.createAvailability(CreateResourceAvailabilityRequest.builder()
+                            .resourceCode(resource.getCode())
+                            .startedAt(start)
+                            .endedAt(end)
+                            .build());
+                    created++;
+                } catch (BaseException ex) {
+                    // Refus metier · fermeture declaree, creneaux deja la, politique de la ressource.
+                    // La plage est sautee, les suivantes continuent.
+                    refused++;
+                    log.debug("Disponibilites mensuelles · {} le {} sautee : {}", resource.getCode(), day, ex.getMessage());
+                }
             }
         }
         return new int[]{created, refused};
