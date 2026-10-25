@@ -40,6 +40,11 @@ public class RateLimitRules {
     @Value("${app.security.rate-limit.otp.window-seconds:600}")
     private long otpWindow;
 
+    @Value("${app.security.rate-limit.register.max-requests:5}")
+    private int registerMax;
+    @Value("${app.security.rate-limit.register.window-seconds:3600}")
+    private long registerWindow;
+
     @Value("${app.security.rate-limit.callback.max-requests:120}")
     private int callbackMax;
     @Value("${app.security.rate-limit.callback.window-seconds:60}")
@@ -100,6 +105,11 @@ public class RateLimitRules {
 
         if (path.equals(ApiPath.V1 + "/auth/login")) {
             return new Rule("login:" + clientIp, loginMax, loginWindow);
+        }
+        // Chaque inscription cree un utilisateur, un membre et un client · elle tombait dans le
+        // seau admin, a six cents par minute, et un robot pouvait remplir la base.
+        if (path.equals(ApiPath.V1 + "/auth/register")) {
+            return new Rule("register:" + clientIp, registerMax, registerWindow);
         }
         if (path.startsWith(ApiPath.V1 + "/auth/ott/")
                 || path.startsWith(ApiPath.V1 + "/auth/password-reset/")

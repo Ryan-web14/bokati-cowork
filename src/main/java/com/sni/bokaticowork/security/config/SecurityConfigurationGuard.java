@@ -52,6 +52,9 @@ public class SecurityConfigurationGuard {
     @Value("${app.security.bootstrap.secret:}")
     private String bootstrapSecret;
 
+    @Value("${app.security.cors.allowed-origins:*}")
+    private String corsAllowedOrigins;
+
     public SecurityConfigurationGuard(Environment environment) {
         this.environment = environment;
     }
@@ -97,6 +100,14 @@ public class SecurityConfigurationGuard {
         if (isProduction() && StringUtils.hasText(bootstrapSecret)) {
             log.warn("app.security.bootstrap.secret est renseigne en production · la route d'amorcage "
                     + "reste ouverte tant qu'aucun administrateur n'existe. A retirer apres installation.");
+        }
+
+        List<String> origins = CorsOrigins.parse(corsAllowedOrigins);
+        if (origins.isEmpty()) {
+            faults.add("app.security.cors.allowed-origins est vide · aucun front ne peut appeler l'API");
+        } else if (CorsOrigins.allowsAny(origins)) {
+            faults.add("app.security.cors.allowed-origins vaut * · n'importe quelle page peut appeler "
+                    + "l'API depuis le navigateur d'un utilisateur, la liste doit nommer les fronts");
         }
 
         if (environment.getProperty("app.security.auto-admin.enabled") != null) {
