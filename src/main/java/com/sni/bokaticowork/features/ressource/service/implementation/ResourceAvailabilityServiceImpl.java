@@ -490,10 +490,18 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         return resourceService.saveResource(resource);
     }
 
+    /**
+     * La quantite par creneau.
+     *
+     * <p>Une ressource partagee (open space, parking, casier...) prend toujours sa capacite reelle,
+     * quelle que soit la valeur envoyee · une disponibilite creee a 1 sur un open space de vingt
+     * postes n'en ouvrait qu'un, sans que rien ne le signale. Une piece louee entiere (salle de
+     * reunion, bureau privatif...) reste plafonnee a sa limite de reservations simultanees, 1.</p>
+     */
     private int resolveCapacity(Resource resource, Integer requestedCapacity) {
         int bookableSlots = resource.resolveBookableSlots();
         // Never exceed the type-level concurrent booking limit, even if the caller passes a higher value.
-        int baseCapacity = requestedCapacity != null
+        int baseCapacity = requestedCapacity != null && resource.isWholeResourceBooking()
                 ? Math.min(requestedCapacity, bookableSlots)
                 : bookableSlots;
         if (baseCapacity < 1) {

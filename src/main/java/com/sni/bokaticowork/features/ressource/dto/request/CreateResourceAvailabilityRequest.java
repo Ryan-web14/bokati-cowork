@@ -32,11 +32,10 @@ public class CreateResourceAvailabilityRequest {
      *
      * <p>Vide, la capacite de la ressource s'applique.
      *
-     * <p>A savoir : la valeur est ensuite <b>plafonnee</b> par
-     * {@code ResourceAvailabilityServiceImpl.resolveCapacity} a la limite de reservations
-     * simultanees de la ressource. Demander 16 sur une ressource qui en admet 15 donne donc 15,
-     * et ce plafonnement est silencieux · ce n'est pas l'alias qui manque alors, c'est la regle
-     * qui s'applique.
+     * <p>A savoir : sur une ressource <b>partagee</b> (open space, parking, casier...), la valeur
+     * est <b>ignoree</b> · le creneau prend toujours la capacite reelle de la ressource. Sur une
+     * piece louee entiere (salle de reunion, bureau privatif...), elle est plafonnee a la limite
+     * de reservations simultanees, 1. Voir {@code ResourceAvailabilityServiceImpl.resolveCapacity}.
      */
     @JsonAlias("totalCapacity")
     private Integer capacity;

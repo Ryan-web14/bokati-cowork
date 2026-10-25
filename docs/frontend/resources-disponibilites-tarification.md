@@ -35,6 +35,13 @@ POST /resource-availabilities
 }
 ```
 
+**La quantité par créneau n'est plus choisie par l'interface.** Sur une ressource partagée (open
+space, parking, casier, studio, labo), `totalCapacity` est ignoré : chaque créneau prend la
+capacité réelle de la ressource. Sur une pièce louée entière (salle de réunion, bureau privatif,
+salle de formation, cabine, espace événementiel), un créneau vaut une réservation, donc 1. Le
+champ reste accepté pour ne pas casser les appels existants, mais il est inutile de l'afficher
+dans le formulaire.
+
 **Absent, la durée de la ressource s'applique ; une ressource qui n'en porte aucune reste à 30.**
 Une interface qui envoie `30` sur un parc à 30 ne change donc rien. Le champ porte exactement le
 nom que le frontend employait déjà.

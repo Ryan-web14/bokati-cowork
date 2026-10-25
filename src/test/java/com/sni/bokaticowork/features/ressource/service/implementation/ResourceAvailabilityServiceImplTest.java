@@ -472,6 +472,42 @@ class ResourceAvailabilityServiceImplTest {
                 .when(closureRepository.existsActiveOverlap(eq(resource), any(), any())).thenReturn(false);
     }
 
+    @Test
+    void sharedResourceSlotsTakeTheRealCapacityWhateverTheRequestSays() {
+        Resource openSpace = sharedResource(20);
+        when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(openSpace);
+
+        List<ResourceAvailability> slots = createOneHour(3);
+
+        assertEquals(2, slots.size());
+        assertTrue(slots.stream().allMatch(slot -> slot.getTotalCapacity() == 20 && slot.getRemainingCapacity() == 20));
+    }
+
+    @Test
+    void meetingRoomSlotsStayAtOneBookingWhateverTheRequestSays() {
+        Resource meetingRoom = wholeResource(12);
+        when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(meetingRoom);
+
+        List<ResourceAvailability> slots = createOneHour(5);
+
+        assertTrue(slots.stream().allMatch(slot -> slot.getTotalCapacity() == 1 && slot.getRemainingCapacity() == 1));
+    }
+
+    private List<ResourceAvailability> createOneHour(int requestedCapacity) {
+        LocalDateTime startedAt = LocalDate.now().plusDays(3).atTime(9, 0);
+        service.createAvailability(CreateResourceAvailabilityRequest.builder()
+                .resourceCode(RESOURCE_CODE)
+                .startedAt(startedAt)
+                .endedAt(startedAt.plusHours(1))
+                .capacity(requestedCapacity)
+                .build());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Iterable<ResourceAvailability>> slotsCaptor = ArgumentCaptor.forClass((Class<Iterable<ResourceAvailability>>) (Class<?>) Iterable.class);
+        verify(availabilityRepository).saveAll(slotsCaptor.capture());
+        return StreamSupport.stream(slotsCaptor.getValue().spliterator(), false).toList();
+    }
+
     private ResourceAvailability slotOf(Resource resource, int totalCapacity, int remainingCapacity) {
         LocalDateTime start = LocalDateTime.now().plusDays(2).withHour(10)
                 .withMinute(0).withSecond(0).withNano(0);

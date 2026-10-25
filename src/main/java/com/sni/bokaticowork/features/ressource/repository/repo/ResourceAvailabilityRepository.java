@@ -163,4 +163,34 @@ public interface ResourceAvailabilityRepository extends JpaRepository<ResourceAv
             order by ra.endedAt asc
             """)
     List<ResourceAvailability> findExpiredSlots(@Param("cutoff") LocalDateTime cutoff, Limit limit);
+
+    /**
+     * Creneaux a venir d'une ressource partagee dont la quantite n'est pas sa capacite reelle.
+     *
+     * <p>La capacite reelle est celle que {@code Resource.resolveBookableSlots} rend · la limite du
+     * type si elle est posee, sinon la capacite de la ressource. Les pieces louees entieres ne sont
+     * pas concernees.</p>
+     */
+    @Query("""
+            select ra.id
+            from ResourceAvailability ra
+            join ra.resource r
+            join r.resourceType t
+            where ra.endedAt > :now
+              and t.wholeResourceBooking = false
+              and ra.totalCapacity <> coalesce(t.bookableSlots, r.capacity)
+            order by ra.id asc
+            """)
+    List<Long> findMisalignedSharedSlotIds(@Param("now") LocalDateTime now, Limit limit);
+
+    /** Les memes creneaux, verrouilles · une reservation concurrente attend la fin de l'alignement. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select ra
+            from ResourceAvailability ra
+            join fetch ra.resource r
+            join fetch r.resourceType
+            where ra.id in :ids
+            """)
+    List<ResourceAvailability> lockAllByIdIn(@Param("ids") List<Long> ids);
 }
