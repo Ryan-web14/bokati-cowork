@@ -4,6 +4,8 @@ import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.security.admin.support.PrivilegeChangeNotifier;
+import com.sni.bokaticowork.security.admin.support.PrivilegeGuard;
 import com.sni.bokaticowork.security.admin.role.dto.request.PermissionRequest;
 import com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse;
 import com.sni.bokaticowork.security.admin.role.service.interfaces.PermissionService;
@@ -34,12 +36,15 @@ import java.util.List;
 public class PermissionAdminController {
 
     private final PermissionService permissionService;
+    private final PrivilegeGuard privilegeGuard;
+    private final PrivilegeChangeNotifier privilegeChangeNotifier;
 
     @PostMapping
     @Audited(module = "PERMISSION", action = "CREATE", ressource = "permission")
     @Idempotent(operation = "PERMISSION_CREATE")
     @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<PermissionResponse> create(@Valid @RequestBody PermissionRequest request) {
+        privilegeGuard.assertMayManageRoles();
         return ResponseEntity.status(HttpStatus.CREATED).body(permissionService.createPermission(request));
     }
 
@@ -48,6 +53,7 @@ public class PermissionAdminController {
     @Idempotent(operation = "PERMISSION_UPDATE")
     @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<PermissionResponse> update(@PathVariable String name, @Valid @RequestBody PermissionRequest request) {
+        privilegeGuard.assertMayManageRoles();
         return ResponseEntity.ok(permissionService.updatePermissionByName(name, request));
     }
 
@@ -83,7 +89,9 @@ public class PermissionAdminController {
     @Idempotent(operation = "PERMISSION_ACTIVATE", requestBodyArgIndex = -1)
     @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<Void> activate(@PathVariable String name) {
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayManageRoles();
         permissionService.activatePermissionByName(name);
+        privilegeChangeNotifier.notify(actor.email(), "Permission activee", name, "elle reprend effet sur tous les roles qui la portent");
         return ResponseEntity.noContent().build();
     }
 
@@ -92,7 +100,9 @@ public class PermissionAdminController {
     @Idempotent(operation = "PERMISSION_DEACTIVATE", requestBodyArgIndex = -1)
     @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<Void> deactivate(@PathVariable String name) {
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayManageRoles();
         permissionService.deactivatePermissionByName(name);
+        privilegeChangeNotifier.notify(actor.email(), "Permission desactivee", name, "");
         return ResponseEntity.noContent().build();
     }
 
@@ -100,7 +110,9 @@ public class PermissionAdminController {
     @Audited(module = "PERMISSION", action = "DELETE", ressource = "permission")
     @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<Void> delete(@PathVariable String name) {
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayManageRoles();
         permissionService.deletePermissionByName(name);
+        privilegeChangeNotifier.notify(actor.email(), "Permission supprimee", name, "");
         return ResponseEntity.noContent().build();
     }
 }

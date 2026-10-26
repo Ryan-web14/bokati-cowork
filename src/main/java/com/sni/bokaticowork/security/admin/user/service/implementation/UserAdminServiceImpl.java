@@ -1,6 +1,10 @@
 package com.sni.bokaticowork.security.admin.user.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.security.admin.role.model.Role;
+import com.sni.bokaticowork.security.admin.role.service.interfaces.RoleService;
+import com.sni.bokaticowork.security.admin.support.PrivilegeChangeNotifier;
+import com.sni.bokaticowork.security.admin.support.PrivilegeGuard;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.security.service.passwordResetService.interfaces.PasswordResetService;
@@ -50,6 +54,9 @@ public class UserAdminServiceImpl implements UserAdminService {
     private final RoleUserRepository roleUserRepository;
     private final DefaultEmailSender emailSender;
     private final PasswordResetService passwordResetService;
+    private final RoleService roleService;
+    private final PrivilegeGuard privilegeGuard;
+    private final PrivilegeChangeNotifier privilegeChangeNotifier;
 
     @Value("${app.admin-access-url:https://admin.elleaose.com}")
     private String adminAccessUrl;
@@ -65,11 +72,18 @@ public class UserAdminServiceImpl implements UserAdminService {
                 .generatePassword(generatePassword)
                 .build();
 
-        Users user = userService.createUser(userRequest);
         List<String> requestedRoles = normalizeRoles(request.getRoleNames());
         if (requestedRoles.isEmpty()) {
             requestedRoles = List.of(DEFAULT_STAFF_ROLE);
         }
+        // Creer un compte d'administration, c'est lui attribuer des roles · memes regles qu'une
+        // attribution, verifiees avant que le compte n'existe.
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayManageRoles();
+        for (String roleName : requestedRoles) {
+            privilegeGuard.assertMayGrant(actor, roleByName(roleName));
+        }
+
+        Users user = userService.createUser(userRequest);
         for (String roleName : requestedRoles) {
             roleUserService.addRoleToUser(user.getId(), roleName, assignedBy);
         }
@@ -81,6 +95,8 @@ public class UserAdminServiceImpl implements UserAdminService {
 
         Users createdUser = userService.getUserByIdForService(user.getId());
         sendAdminUserCreatedEmailAfterCommit(createdUser, requestedRoles);
+        privilegeChangeNotifier.notify(actor.email(), "Compte d'administration cree", createdUser.getEmail(),
+                "Roles : " + String.join(", ", requestedRoles));
         return toAdminResponse(createdUser, generatedPassword);
     }
 
@@ -132,6 +148,12 @@ public class UserAdminServiceImpl implements UserAdminService {
     @Override
     public AdminUserResponse update(String userCode, AdminUpdateUserRequest request, String assignedBy) {
         Users user = findByCode(userCode);
+        PrivilegeGuard.Actor actor = privilegeGuard.currentActor();
+        privilegeGuard.assertMayActOn(actor, user);
+        if (Boolean.FALSE.equals(request.getIsAccountEnabled()) || Boolean.TRUE.equals(request.getIsAccountLocked())) {
+            privilegeGuard.assertKeepsASuperAdmin(user);
+        }
+        RoleChange roleChange = request.getRoleNames() == null ? null : planRoleChange(actor, user, request.getRoleNames());
         if (StringUtils.hasText(request.getEmail())
                 && !user.getEmail().equalsIgnoreCase(request.getEmail())
                 && userRepository.existsByEmailIgnoreCase(request.getEmail())) {
@@ -157,12 +179,17 @@ public class UserAdminServiceImpl implements UserAdminService {
         if (request.getRoleNames() != null) {
             syncRoles(user, request.getRoleNames(), assignedBy);
         }
+        if (roleChange != null && !roleChange.isEmpty()) {
+            privilegeChangeNotifier.notify(actor.email(), "Roles d'un compte modifies", user.getEmail(),
+                    roleChange.describe());
+        }
         return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
 
     @Override
     public AdminUserResponse activate(String userCode) {
         Users user = findByCode(userCode);
+        privilegeGuard.assertMayActOn(privilegeGuard.currentActor(), user);
         userService.activateUser(user.getEmail());
         return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
@@ -170,6 +197,8 @@ public class UserAdminServiceImpl implements UserAdminService {
     @Override
     public AdminUserResponse deactivate(String userCode) {
         Users user = findByCode(userCode);
+        privilegeGuard.assertMayActOn(privilegeGuard.currentActor(), user);
+        privilegeGuard.assertKeepsASuperAdmin(user);
         userService.deactivateUser(user.getEmail());
         return toAdminResponse(userService.getUserByIdForService(user.getId()), null);
     }
@@ -177,6 +206,7 @@ public class UserAdminServiceImpl implements UserAdminService {
     @Override
     public AdminUserResponse unlock(String userCode) {
         Users user = findByCode(userCode);
+        privilegeGuard.assertMayActOn(privilegeGuard.currentActor(), user);
         user.setIsAccountLocked(false);
         user.setFailedLoginAttempts(0);
         userRepository.save(user);
@@ -186,6 +216,9 @@ public class UserAdminServiceImpl implements UserAdminService {
     @Override
     public AdminUserResponse resetPassword(String userCode, AdminResetUserPasswordRequest request) {
         Users user = findByCode(userCode);
+        // Le mot de passe genere est rendu a l'appelant · sans ce controle, reinitialiser celui
+        // d'un super-administrateur suffisait a se connecter a sa place.
+        privilegeGuard.assertMayActOn(privilegeGuard.currentActor(), user);
         boolean generate = request == null || request.getGeneratePassword() == null || request.getGeneratePassword();
         String generatedPassword = null;
         if (generate) {
@@ -207,6 +240,7 @@ public class UserAdminServiceImpl implements UserAdminService {
     public void initiatePasswordReset(String userId, String actor) {
         Users user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userId));
+        privilegeGuard.assertMayActOn(privilegeGuard.currentActor(), user);
         passwordResetService.generatePasswordResetToken(user, actor);
         log.info("Admin password reset initiated for {} by {}", userId, actor);
     }
@@ -214,12 +248,62 @@ public class UserAdminServiceImpl implements UserAdminService {
     @Override
     public void archive(String userCode) {
         Users user = findByCode(userCode);
+        privilegeGuard.assertMayActOn(privilegeGuard.currentActor(), user);
+        privilegeGuard.assertKeepsASuperAdmin(user);
         userService.softDeleteUser(user.getEmail());
     }
 
     private Users findByCode(String userCode) {
         return userRepository.findByUserId(userCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable : " + userCode));
+    }
+
+    private Role roleByName(String roleName) {
+        return roleService.getRoleByNameService(roleName)
+                .orElseThrow(() -> new ResourceNotFoundException("Role introuvable : " + roleName));
+    }
+
+    /** Ce qu'une liste de roles ajoute et retire au compte. */
+    private record RoleChange(List<String> added, List<String> removed) {
+        boolean isEmpty() {
+            return added.isEmpty() && removed.isEmpty();
+        }
+
+        String describe() {
+            return "Ajoutes : " + (added.isEmpty() ? "aucun" : String.join(", ", added))
+                    + " · retires : " + (removed.isEmpty() ? "aucun" : String.join(", ", removed));
+        }
+    }
+
+    /**
+     * Verifie le changement de roles avant de l'appliquer.
+     *
+     * <p>Une liste identique a l'existant ne change rien et ne demande rien · le formulaire
+     * d'edition renvoie les roles a chaque enregistrement, meme quand on ne touche qu'au nom.</p>
+     */
+    private RoleChange planRoleChange(PrivilegeGuard.Actor actor, Users user, List<String> roleNames) {
+        List<String> wanted = normalizeRoles(roleNames);
+        List<String> current = roleUserRepository.findByUserId(user.getId()).stream()
+                .map(assignment -> assignment.getRole().getName())
+                .toList();
+        List<String> added = wanted.stream().filter(name -> !current.contains(name)).toList();
+        List<String> removed = current.stream().filter(name -> !wanted.contains(name)).toList();
+        RoleChange change = new RoleChange(added, removed);
+        if (change.isEmpty()) {
+            return change;
+        }
+        privilegeGuard.assertMayManageRoles();
+        privilegeGuard.assertNotSelf(actor, user);
+        for (String name : added) {
+            privilegeGuard.assertMayGrant(actor, roleByName(name));
+        }
+        for (String name : removed) {
+            privilegeGuard.assertMayGrant(actor, roleByName(name));
+            if (PrivilegeGuard.SUPER_ADMIN.equalsIgnoreCase(name)) {
+                privilegeGuard.assertKeepsASuperAdmin(user);
+            }
+        }
+        return change;
     }
 
     private void syncRoles(Users user, List<String> roleNames, String assignedBy) {

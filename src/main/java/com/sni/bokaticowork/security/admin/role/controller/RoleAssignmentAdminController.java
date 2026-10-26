@@ -2,7 +2,14 @@ package com.sni.bokaticowork.security.admin.role.controller;
 
 import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
+import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.security.admin.role.model.Role;
+import com.sni.bokaticowork.security.admin.role.repository.PermissionRepository;
+import com.sni.bokaticowork.security.admin.user.model.Users;
+import com.sni.bokaticowork.security.admin.user.service.interfaces.UserService;
+import com.sni.bokaticowork.security.admin.support.PrivilegeChangeNotifier;
+import com.sni.bokaticowork.security.admin.support.PrivilegeGuard;
 import com.sni.bokaticowork.security.admin.role.dto.request.AssignRoleToUserRequest;
 import com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionNamesRequest;
 import com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionsRequest;
@@ -36,6 +43,10 @@ public class RoleAssignmentAdminController {
     private final RoleUserService roleUserService;
     private final RolePermissionService rolePermissionService;
     private final RoleService roleService;
+    private final UserService userService;
+    private final PermissionRepository permissionRepository;
+    private final PrivilegeGuard privilegeGuard;
+    private final PrivilegeChangeNotifier privilegeChangeNotifier;
 
     @GetMapping("/users/{userId}/roles")
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
@@ -50,7 +61,16 @@ public class RoleAssignmentAdminController {
     public ResponseEntity<Void> assignRole(@PathVariable String userId,
                                            @Valid @RequestBody AssignRoleToUserRequest request,
                                            Authentication authentication) {
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayManageRoles();
+        Users target = userService.getUserByUserIdForService(userId);
+        privilegeGuard.assertNotSelf(actor, target);
+        privilegeGuard.assertMayActOn(actor, target);
+        Role role = roleService.getRoleByNameService(request.roleName())
+                .orElseThrow(() -> new ResourceNotFoundException("Role introuvable : " + request.roleName()));
+        privilegeGuard.assertMayGrant(actor, role);
+
         roleUserService.addRoleToUser(userId, request.roleName(), actor(authentication));
+        privilegeChangeNotifier.notify(actor.email(), "Role attribue", target.getEmail(), role.getName());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -58,7 +78,18 @@ public class RoleAssignmentAdminController {
     @Audited(module = "ROLE_USER", action = "REMOVE_ROLE", ressource = "role_user")
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> removeRole(@PathVariable String userId, @PathVariable Long roleId) {
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayManageRoles();
+        Users target = userService.getUserByUserIdForService(userId);
+        privilegeGuard.assertNotSelf(actor, target);
+        privilegeGuard.assertMayActOn(actor, target);
+        Role role = roleById(roleId);
+        privilegeGuard.assertMayGrant(actor, role);
+        if (PrivilegeGuard.SUPER_ADMIN.equalsIgnoreCase(role.getName())) {
+            privilegeGuard.assertKeepsASuperAdmin(target);
+        }
+
         roleUserService.deleteRoleFromUser(userId, roleId);
+        privilegeChangeNotifier.notify(actor.email(), "Role retire", target.getEmail(), role.getName());
         return ResponseEntity.noContent().build();
     }
 
@@ -74,8 +105,17 @@ public class RoleAssignmentAdminController {
     @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<Void> replaceRolePermissions(@PathVariable Long roleId,
                                                        @Valid @RequestBody UpdateRolePermissionsRequest request) {
+        Role role = roleById(roleId);
+        List<String> names = permissionRepository.findAllById(request.permissionIds()).stream()
+                .map(com.sni.bokaticowork.security.admin.role.model.Permission::getName)
+                .sorted()
+                .toList();
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayEditRole(role, names);
+
         rolePermissionService.deleteAllPermissionFromRole(roleId);
         rolePermissionService.addPermissionToRole(request.permissionIds(), roleId);
+        privilegeChangeNotifier.notify(actor.email(), "Permissions d'un role remplacees", role.getName(),
+                String.join(", ", names));
         return ResponseEntity.noContent().build();
     }
 
@@ -85,7 +125,12 @@ public class RoleAssignmentAdminController {
     @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<Void> replaceRolePermissionNames(@PathVariable Long roleId,
                                                            @Valid @RequestBody UpdateRolePermissionNamesRequest request) {
+        Role role = roleById(roleId);
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayEditRole(role, request.permissionNames());
+
         rolePermissionService.replacePermissionsByName(roleId, request.permissionNames());
+        privilegeChangeNotifier.notify(actor.email(), "Permissions d'un role remplacees", role.getName(),
+                String.join(", ", request.permissionNames()));
         return ResponseEntity.noContent().build();
     }
 
@@ -93,8 +138,17 @@ public class RoleAssignmentAdminController {
     @Audited(module = "ROLE_PERMISSION", action = "CLEAR_PERMISSIONS", ressource = "role_permission")
     @PreAuthorize("hasAuthority('SYSTEM:PERMISSIONS')")
     public ResponseEntity<Void> clearRolePermissions(@PathVariable Long roleId) {
+        Role role = roleById(roleId);
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayEditRole(role, List.of());
+
         rolePermissionService.deleteAllPermissionFromRole(roleId);
+        privilegeChangeNotifier.notify(actor.email(), "Permissions d'un role retirees", role.getName(), "toutes");
         return ResponseEntity.noContent().build();
+    }
+
+    private Role roleById(Long roleId) {
+        return roleService.getRoleByIdService(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Role introuvable : " + roleId));
     }
 
     private String actor(Authentication authentication) {
