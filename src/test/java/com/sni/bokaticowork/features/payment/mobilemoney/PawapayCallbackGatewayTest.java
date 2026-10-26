@@ -61,6 +61,20 @@ class PawapayCallbackGatewayTest {
         gateway = new PawapayCallbackGateway(journal, verifier, callbackProcessor, refundProcessor,
                 depositService, provider, clientProvider, new ObjectMapper());
         when(journal.open(any(), anyString(), anyBoolean(), any())).thenReturn(7L);
+        when(depositService.known("dep-1")).thenReturn(true);
+    }
+
+    @Test
+    @DisplayName("Un rappel arrive avant l'enregistrement du depot est mis en attente, sans rien ecrire")
+    void defersACallbackForADepositNotYetCommitted() {
+        when(depositService.known("dep-1")).thenReturn(false);
+        when(verifier.verify(DEPOSIT_BODY, "sha256=abc")).thenReturn(true);
+
+        assertThat(gateway.receiveDeposit(DEPOSIT_BODY, "sha256=abc", "10.0.0.1"))
+                .isEqualTo(PawapayCallback.Outcome.DEFERRED);
+
+        verify(callbackProcessor, never()).process(any());
+        verify(provider, never()).checkStatus(anyString());
     }
 
     @Test

@@ -72,6 +72,13 @@ public class PawapayCallbackGateway {
         }
 
         try {
+            if (!depositService.known(depositId)) {
+                // Le depot n'est peut-etre pas encore valide en base · l'initiation le relira des
+                // qu'il le sera. Le traiter maintenant ne trouvait rien et le marquait traite.
+                log.info("Rappel de depot {} recu avant son enregistrement · mis en attente", depositId);
+                return close(entry, depositId, reported, PawapayCallback.VerifiedVia.NONE,
+                        PawapayCallback.Outcome.DEFERRED, EarlyCallbackRelay.EARLY_DETAIL);
+            }
             if (signatureVerifier.verify(rawBody, signatureHeader)) {
                 callbackProcessor.process(payload);
                 log.info("Rappel de depot {} traite · signature verifiee, statut annonce {}", depositId, reported);

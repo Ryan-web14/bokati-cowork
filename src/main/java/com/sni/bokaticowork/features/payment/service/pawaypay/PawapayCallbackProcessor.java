@@ -39,6 +39,7 @@ public class PawapayCallbackProcessor {
     private final com.sni.bokaticowork.features.payment.service.support.SelfServicePaymentNotifier selfServiceNotifier;
     private final MobileMoneyAlertRecipients alertRecipients;
     private final com.sni.bokaticowork.features.payment.service.interfaces.WalletService walletService;
+    private final jakarta.persistence.EntityManager entityManager;
 
     public void process(PawapayCallbackPayload payload) {
         String depositId = payload.depositId();
@@ -87,8 +88,24 @@ public class PawapayCallbackProcessor {
      */
     private PaymentTransaction resolveTransaction(PawapayCallbackPayload payload) {
         return resolveTransaction(payload.depositId(), payload.clientReferenceId())
+                .map(this::lock)
                 .map(transaction -> ensureProviderReference(transaction, payload.depositId()))
                 .orElse(null);
+    }
+
+    /**
+     * Verrouille la transaction et relit son etat sous verrou.
+     *
+     * <p>Un rappel, la relecture programmee et un agent peuvent trancher le meme depot au meme
+     * instant. Sans verrou, chacun lisait PROCESSING et chacun encaissait : deux recus, deux
+     * imputations tentees, deux courriels. Le second attend desormais le premier, puis lit le
+     * statut qu'il a laisse et s'arrete.</p>
+     */
+    private PaymentTransaction lock(PaymentTransaction transaction) {
+        if (entityManager != null && transaction.getId() != null && entityManager.contains(transaction)) {
+            entityManager.refresh(transaction, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        }
+        return transaction;
     }
 
     private Optional<PaymentTransaction> resolveTransaction(String depositId, String clientReferenceId) {

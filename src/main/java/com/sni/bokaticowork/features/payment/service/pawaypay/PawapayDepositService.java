@@ -67,6 +67,12 @@ public class PawapayDepositService {
         return repository.findInFlight(intent.getId(), phoneNumber, since);
     }
 
+    /** Le depot existe-t-il deja chez nous · un rappel peut arriver avant la validation de sa creation. */
+    @Transactional(readOnly = true)
+    public boolean known(String depositId) {
+        return depositId != null && repository.findByDepositId(depositId).isPresent();
+    }
+
     public PawapayDeposit prepareDeposit(PaymentIntent intent,
                                          PaymentTransaction transaction,
                                          InitiateMobileMoneyDepositRequest request) {

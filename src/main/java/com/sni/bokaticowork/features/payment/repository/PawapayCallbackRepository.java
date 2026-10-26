@@ -16,4 +16,7 @@ public interface PawapayCallbackRepository extends JpaRepository<PawapayCallback
     Page<PawapayCallback> findAllByOrderByReceivedAtDesc(Pageable pageable);
 
     Page<PawapayCallback> findByOutcomeOrderByReceivedAtDesc(PawapayCallback.Outcome outcome, Pageable pageable);
+
+    boolean existsByKindAndReferenceIdAndOutcome(PawapayCallback.Kind kind, String referenceId,
+                                                 PawapayCallback.Outcome outcome);
 }
