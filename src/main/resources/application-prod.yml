@@ -186,6 +186,8 @@ bokati:
       # Plages de numeros par operateur · vide, aucun controle de prefixe (une plage fausse
       # refuserait un paiement valable). Exemple : MTN_MOMO_COG=06,05;AIRTEL_COG=04,05
       operator-prefixes: ${PAWAYPAY_OPERATOR_PREFIXES:}
+      # Operateurs actives sur le compte PawaPay · les seuls proposes et acceptes. Vide = tous.
+      enabled-providers: ${PAWAYPAY_ENABLED_PROVIDERS:MTN_MOMO_COG,AIRTEL_COG,AIRTEL_GAB,MTN_MOMO_CMR,MTN_MOMO_CIV,ORANGE_CIV,FREE_SEN,ORANGE_SEN,AIRTEL_COD,ORANGE_COD,VODACOM_MPESA_COD}
       # L'essai depense de l'argent reel · ferme en production.
       test-endpoint-enabled: ${PAWAYPAY_TEST_ENDPOINT_ENABLED:false}
       payment-page-country: ${PAWAYPAY_PAYMENT_PAGE_COUNTRY:COG}

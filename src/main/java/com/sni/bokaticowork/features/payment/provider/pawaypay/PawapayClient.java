@@ -109,6 +109,39 @@ public class PawapayClient {
         return DepositStatus.parse(depositId, body, objectMapper);
     }
 
+    /** L'operateur d'un numero, selon PawaPay · {@code null} s'il ne sait pas le dire. */
+    public record ProviderPrediction(String country, String provider, String phoneNumber) {
+    }
+
+    /**
+     * Devine l'operateur d'un numero · le payeur n'a plus a le choisir.
+     *
+     * <p>Un 4xx (numero illisible, pays non couvert) rend {@code null} : la page demande alors
+     * l'operateur au payeur. Une panne remonte en {@link ProviderUnreachableException}.</p>
+     */
+    public ProviderPrediction predictProvider(String phoneNumber) {
+        try {
+            JsonNode body = restClient.post()
+                    .uri("/v2/predict-provider")
+                    .body(java.util.Map.of("phoneNumber", phoneNumber))
+                    .retrieve()
+                    .body(JsonNode.class);
+            if (body == null || !body.hasNonNull("provider")) {
+                return null;
+            }
+            return new ProviderPrediction(body.path("country").asText(null), body.path("provider").asText(null),
+                    body.path("phoneNumber").asText(null));
+        } catch (ResourceAccessException ex) {
+            throw new ProviderUnreachableException("PawaPay injoignable pour la prediction d'operateur", ex);
+        } catch (HttpStatusCodeException ex) {
+            if (ex.getStatusCode().is5xxServerError()) {
+                throw new ProviderUnreachableException("PawaPay en erreur " + ex.getStatusCode().value(), ex);
+            }
+            log.info("Operateur non devine pour un numero · HTTP {}", ex.getStatusCode().value());
+            return null;
+        }
+    }
+
     public PawapayPaymentPageResponse createPaymentPage(PawapayPaymentPageRequest request) {
         log.debug("Creating PawaPay payment page: depositId={}", request.depositId());
         try {

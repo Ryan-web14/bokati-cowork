@@ -11,10 +11,8 @@ import com.sni.bokaticowork.features.payment.mapper.interfaces.PaymentMapper;
 import com.sni.bokaticowork.features.payment.model.PaymentIntent;
 import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentLinkService;
-import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayPaymentPageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -42,7 +40,10 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     private final PaymentIntentRepository intentRepository;
     private final PaymentMapper mapper;
     private final DefaultEmailSender emailSender;
-    private final ObjectProvider<PawapayPaymentPageService> paymentPageServiceProvider;
+
+    /** L'adresse publique du serveur · le lien mene a la page de paiement qu'il sert. */
+    @org.springframework.beans.factory.annotation.Value("${app.api-base-url:}")
+    private String publicBaseUrl;
 
     @Override
     public PaymentLinkResponse createLink(String intentNumber, CreatePaymentLinkRequest request) {
@@ -51,42 +52,47 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
             throw new BadRequestException("Only pending payment intents can receive a payment link");
         }
 
-        PawapayPaymentPageService pageService = paymentPageServiceProvider.getIfAvailable();
-        if (pageService == null) {
-            throw new BadRequestException("Mobile money checkout is not enabled");
-        }
-
         PaymentIntentResponse view = mapper.toIntentResponse(intent);
         BigDecimal amount = view.remainingAmount();
         if (amount == null || amount.signum() <= 0) {
             throw new BadRequestException("Payment intent has no outstanding amount to collect");
         }
 
-        PawapayPaymentPageService.Checkout checkout = pageService.createCheckout(intent, amount);
-
+        // Le lien ouvre notre propre page de paiement · le depot ne part que quand le payeur a saisi
+        // son numero, et il est alors suivi comme tous les autres. La page hebergee de PawaPay,
+        // utilisee avant, creait un depot que rien ne suivait.
         int ttl = request == null || request.expiresInMinutes() == null ? 1440 : request.expiresInMinutes();
         intent.setPaymentLinkToken(UUID.randomUUID().toString().replace("-", ""));
         intent.setPaymentLinkExpiresAt(Instant.now().plus(Math.max(5, ttl), ChronoUnit.MINUTES));
         intentRepository.save(intent);
+        String checkoutUrl = checkoutUrl(intent.getPaymentLinkToken());
 
         String recipientEmail = view.customerEmail();
         if (StringUtils.hasText(recipientEmail)) {
             // Send only after the transaction commits · otherwise a rollback would still
             // email a checkout URL whose backing transaction/deposit no longer exists.
-            registerAfterCommitEmail(recipientEmail, view.customerName(), intent, amount, checkout.redirectUrl());
+            registerAfterCommitEmail(recipientEmail, view.customerName(), intent, amount, checkoutUrl);
         } else {
             log.warn("No email address for intent {} · payment link created but not emailed", intentNumber);
         }
 
         return new PaymentLinkResponse(
                 intent.getIntentNumber(),
-                checkout.redirectUrl(),
-                checkout.depositId(),
-                checkout.transactionNumber(),
+                checkoutUrl,
+                null,
+                null,
                 intent.getPaymentLinkToken(),
                 intent.getPaymentLinkExpiresAt(),
                 StringUtils.hasText(recipientEmail) ? recipientEmail : null
         );
+    }
+
+    private String checkoutUrl(String token) {
+        String base = publicBaseUrl == null ? "" : publicBaseUrl.trim();
+        if (base.endsWith("/")) {
+            base = base.substring(0, base.length() - 1);
+        }
+        return base + "/public/pay/" + token;
     }
 
     @Override

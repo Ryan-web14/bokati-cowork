@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Paiement mobile money · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+
+  <p class="state todo">À régler</p>
+  <p class="amount" th:text="${#numbers.formatDecimal(page.amount, 1, 'WHITESPACE', 0, 'POINT')} + ' ' + ${page.currency}">10 XAF</p>
+  <p class="lede">
+    <th:block th:if="${page.customerName}">Paiement de <strong th:text="${page.customerName}">Client</strong>.</th:block>
+    Choisissez votre pays et saisissez votre numéro mobile money. Vous validerez ensuite le paiement sur votre téléphone.
+  </p>
+
+  <th:block th:if="${#lists.isEmpty(page.countries)}">
+    <p class="error">Le paiement mobile money n'est pas disponible pour ce montant. Contactez l'accueil.</p>
+  </th:block>
+
+  <form th:unless="${#lists.isEmpty(page.countries)}" th:action="@{${action}}" method="post" id="pay-form">
+    <div class="field">
+      <label for="country">Pays</label>
+      <select id="country" name="country" required>
+        <option th:each="c : ${page.countries}" th:value="${c.code}" th:text="${c.name} + ' (' + ${c.dialCode} + ')'"
+                th:selected="${c.code == selectedCountry}" th:attr="data-dial=${c.dialCode}">Congo</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="phone">Numéro mobile money</label>
+      <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required
+             th:value="${phone}" placeholder="06 123 45 67">
+    </div>
+
+    <div class="field" th:if="${needOperator}" id="operator-field">
+      <label for="operator">Opérateur</label>
+      <select id="operator" name="operator" required>
+        <th:block th:each="c : ${page.countries}" th:if="${c.code == selectedCountry}">
+          <option th:each="op : ${c.operators}" th:value="${op.code}" th:text="${op.name}">MTN</option>
+        </th:block>
+      </select>
+    </div>
+
+    <p class="error" th:if="${error}" th:text="${error}" role="alert">Erreur</p>
+
+    <button type="submit" class="btn" id="pay-button"
+            th:text="'Payer ' + ${#numbers.formatDecimal(page.amount, 1, 'WHITESPACE', 0, 'POINT')} + ' ' + ${page.currency}">Payer</button>
+  </form>
+
+  <p class="notice">Une demande de paiement arrive sur votre téléphone. Saisissez votre code secret mobile money pour la valider. Elle A Osé ne vous demandera jamais ce code.</p>
+
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+<script>
+  (function () {
+    var form = document.getElementById('pay-form');
+    if (!form) return;
+    // Un pays change : la liste d'operateurs affichee n'est plus la bonne, PawaPay devinera.
+    var country = document.getElementById('country');
+    var operatorField = document.getElementById('operator-field');
+    if (country && operatorField) {
+      country.addEventListener('change', function () { operatorField.remove(); });
+    }
+    // Un seul envoi · un double clic lancerait deux demandes sur le telephone.
+    form.addEventListener('submit', function () {
+      var button = document.getElementById('pay-button');
+      button.disabled = true;
+      button.textContent = 'Envoi de la demande…';
+    });
+  })();
+</script>
+</body>
+</html>

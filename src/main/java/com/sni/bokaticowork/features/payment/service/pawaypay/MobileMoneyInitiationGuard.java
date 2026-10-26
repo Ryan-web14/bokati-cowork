@@ -35,10 +35,30 @@ public class MobileMoneyInitiationGuard {
     @Value("${bokati.payment.pawaypay.operator-prefixes:}")
     private String operatorPrefixes;
 
+    /** Les operateurs actives sur le compte PawaPay · vide, tous ceux de la liste sont acceptes. */
+    @Value("${bokati.payment.pawaypay.enabled-providers:}")
+    private String enabledProviders;
+
+    /** L'operateur est-il active sur le compte · la page de paiement ne propose que ceux-la. */
+    public boolean isEnabled(CongoCorrespondent operator) {
+        if (operator == null) {
+            return false;
+        }
+        if (!StringUtils.hasText(enabledProviders)) {
+            return true;
+        }
+        return java.util.Arrays.stream(enabledProviders.split(","))
+                .map(String::trim)
+                .anyMatch(code -> code.equalsIgnoreCase(operator.name()) || code.equalsIgnoreCase(operator.providerCode()));
+    }
+
     public void check(PaymentIntent intent, InitiateMobileMoneyDepositRequest request, BigDecimal amount) {
         CongoCorrespondent operator = request.correspondent();
         if (operator == null) {
             throw new BadRequestException("Choisissez l'opérateur mobile money.");
+        }
+        if (!isEnabled(operator)) {
+            throw new BadRequestException("Le paiement par " + operator.getDisplayName() + " n'est pas disponible.");
         }
         if (amount == null || amount.signum() <= 0) {
             throw new BadRequestException("Le montant du paiement doit être positif.");
@@ -54,6 +74,12 @@ public class MobileMoneyInitiationGuard {
         String msisdn = PhoneNumbers.toE164(request.phoneNumber(), operator.dialCode(), operator.keepsTrunkZero())
                 .orElseThrow(() -> new BadRequestException("Le numéro de téléphone n'est pas valide pour "
                         + operator.getDisplayName() + "."));
+        // Un numero d'un autre pays passait · un +243 avec un operateur du Congo-Brazzaville partait
+        // chez l'operateur, qui le refusait apres coup.
+        if (operator.dialCode() != null && !msisdn.startsWith(operator.dialCode())) {
+            throw new BadRequestException("Ce numéro n'est pas un numéro " + operator.getDisplayName()
+                    + " · il doit commencer par " + operator.dialCode() + ".");
+        }
         checkPrefix(operator, msisdn);
     }
 
