@@ -111,7 +111,7 @@ public class MobileMoneyController {
     // ---------------------------------------------------------------------------------------
 
     /**
-     * Envoie une vraie demande de 10 XAF sur un vrai telephone · d'ou deux verrous.
+     * Envoie une vraie demande (10 XAF par defaut, operateur au choix) sur un vrai telephone · d'ou deux verrous.
      *
      * <p>Cette route etait ouverte a tous en production : n'importe qui pouvait faire sonner
      * n'importe quel numero, autant de fois qu'il le voulait, avec notre compte marchand. Elle
@@ -119,7 +119,10 @@ public class MobileMoneyController {
      */
     @PostMapping("/pawaypay/test/{phoneNumber}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<MobileMoneyTestDepositResponse> testDeposit(@PathVariable String phoneNumber) {
+    public ResponseEntity<MobileMoneyTestDepositResponse> testDeposit(
+            @PathVariable String phoneNumber,
+            @RequestParam(defaultValue = "MTN_MOMO_COG") CongoCorrespondent operator,
+            @RequestParam(defaultValue = "10") BigDecimal amount) {
         if (!properties.isTestEndpointEnabled()) {
             throw new ForbiddenException("L'essai mobile money est désactivé. "
                     + "Activez bokati.payment.pawaypay.test-endpoint-enabled pour l'utiliser.");
@@ -130,8 +133,8 @@ public class MobileMoneyController {
         PaymentIntentResponse intent = paymentService.createIntent(new CreatePaymentIntentRequest(
                 "CUSTOMER",
                 testCode,
-                BigDecimal.TEN,
-                "XAF",
+                amount,
+                operator.getCurrency(),
                 "Bokati test " + testRun.substring(Math.max(0, testRun.length() - 6)),
                 "MOBILE_MONEY_TEST",
                 normalizedPhone + "-" + testRun,
@@ -141,7 +144,7 @@ public class MobileMoneyController {
                         "test", true,
                         "testRun", testRun,
                         "phoneNumber", normalizedPhone,
-                        "provider", CongoCorrespondent.MTN_MOMO_COG.providerCode()
+                        "provider", operator.providerCode()
                 ))
         ));
         MobileMoneyDepositResponse deposit = paymentService.initiateMobileMoneyDeposit(
@@ -149,8 +152,8 @@ public class MobileMoneyController {
                 new InitiateMobileMoneyDepositRequest(
                         intent.intentNumber(),
                         normalizedPhone,
-                        CongoCorrespondent.MTN_MOMO_COG,
-                        BigDecimal.TEN,
+                        operator,
+                        amount,
                         "backend-test",
                         null
                 )

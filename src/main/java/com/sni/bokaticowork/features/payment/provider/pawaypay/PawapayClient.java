@@ -45,7 +45,22 @@ public class PawapayClient {
                 .requestFactory(factory)
                 .defaultHeader("Authorization", "Bearer " + properties.getApiKey())
                 .defaultHeader("Content-Type", "application/json")
+                .requestInterceptors(interceptors -> {
+                    if (properties.getSigning().isConfigured()) {
+                        interceptors.add(new PawapaySigningInterceptor(new PawapayRequestSigner(
+                                properties.getSigning().getPrivateKey(),
+                                properties.getSigning().getKeyId(),
+                                properties.getSigning().getAlgorithm())));
+                    }
+                })
                 .build();
+        if (properties.getSigning().isConfigured()) {
+            log.info("PawaPay · requetes financieres signees (keyid={}, alg={})",
+                    properties.getSigning().getKeyId(), properties.getSigning().getAlgorithm());
+        } else {
+            log.warn("PawaPay · aucune cle de signature configuree, les requetes partent non signees. "
+                    + "Si les appels signes sont exiges chez PawaPay, depots et remboursements seront refuses.");
+        }
     }
 
     public PawapayDepositResponse initiateDeposit(PawapayDepositRequest request) {
