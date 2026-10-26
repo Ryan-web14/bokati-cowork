@@ -73,6 +73,8 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 : participantRepository.findByBookingId(booking.getId()).stream().map(this::toResponse).toList();
         BookingPaymentStatus paymentStatus = BookingPaymentStatus.of(
                 booking.getPaymentMode(), booking.getStatus(), booking.getConfirmedAt());
+        com.sni.bokaticowork.features.booking.service.support.BookingSeats seats =
+                com.sni.bokaticowork.features.booking.service.support.BookingSeats.of(booking);
         return new BookingResponse(
                 booking.getBookingNumber(),
                 booking.getResource().getCode(),
@@ -110,7 +112,10 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getCancelledAt(),
                 booking.getCreatedAt(),
                 lines,
-                participants
+                participants,
+                seats.resourceCapacity(),
+                seats.wholeResource(),
+                seats.label()
         );
     }
 

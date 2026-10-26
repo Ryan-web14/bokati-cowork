@@ -17,7 +17,7 @@
     <div><dt>Date</dt><dd th:text="${bookingDate}">Date</dd></div>
     <div><dt>Horaire</dt><dd th:text="|${startTime} · ${endTime}|">Horaire</dd></div>
     <div><dt>Durée</dt><dd th:text="${durationLabel}">Durée</dd></div>
-    <div th:if="${quantity}"><dt>Places</dt><dd th:text="${quantity}">1</dd></div>
+    <div th:if="${seatsLabel}"><dt>Places</dt><dd th:text="${seatsLabel}">2 places réservées sur 4</dd></div>
     <div th:if="${address}"><dt>Adresse</dt><dd th:text="|${address}, ${city}|">Adresse</dd></div>
   </dl>
 

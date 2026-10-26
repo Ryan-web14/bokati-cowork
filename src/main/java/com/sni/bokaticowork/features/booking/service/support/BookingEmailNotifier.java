@@ -7,6 +7,8 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.booking.enums.BookingEventType;
+import com.sni.bokaticowork.features.booking.enums.BookingPaymentStatus;
+import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.booking.model.Booking;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -126,7 +128,27 @@ public class BookingEmailNotifier {
         ctx.setVariable("durationLabel",  durationLabel);
         ctx.setVariable("duration",       durationLabel);
         ctx.setVariable("resourceType",   resolveResourceType(booking));
-        ctx.setVariable("resourceCapacity", resolveCapacity(booking));
+        // Ce qui est reserve, et non la capacite de la ressource · 2 places d'un bureau de 4
+        // s'affichaient « Capacité : 4 personne(s) », et le client croyait avoir le bureau entier.
+        BookingSeats seats = BookingSeats.of(booking);
+        ctx.setVariable("seatsLabel", seats.label());
+        ctx.setVariable("wholeResource", seats.wholeResource());
+        ctx.setVariable("seatsCount",    seats.reservedSeats());
+
+        // Ou en est la reservation · le meme e-mail part a la creation (paiement ou validation
+        // encore attendus) et a la confirmation, il ne peut pas titrer « confirmée » dans tous les cas.
+        BookingPaymentStatus paymentStatus = BookingPaymentStatus.of(
+                booking.getPaymentMode(), booking.getStatus(), booking.getConfirmedAt());
+        boolean awaitingApproval = booking.getStatus() == BookingStatus.PENDING_APPROVAL;
+        boolean awaitingPayment = !awaitingApproval && paymentStatus == BookingPaymentStatus.PENDING;
+        ctx.setVariable("awaitingApproval",   awaitingApproval);
+        ctx.setVariable("awaitingPayment",    awaitingPayment);
+        ctx.setVariable("covered",            paymentStatus == BookingPaymentStatus.COVERED);
+        ctx.setVariable("paymentStatusLabel", paymentStatus.getLabel());
+        ctx.setVariable("headline", awaitingApproval ? "Demande de réservation reçue"
+                : awaitingPayment ? "Réservation enregistrée" : "Réservation confirmée");
+        ctx.setVariable("statusLabel", awaitingApproval ? "En attente de validation"
+                : awaitingPayment ? "Paiement attendu" : "Confirmée");
         ctx.setVariable("address",        resolveLocationLabel(booking));
         ctx.setVariable("city",           resolveZone(booking));
         BillingTaxRuleResolver.TaxProfile taxProfile = taxRuleResolver.defaultTaxProfile();
@@ -169,9 +191,21 @@ public class BookingEmailNotifier {
         };
     }
 
+    private String createdSubject(Booking booking) {
+        if (booking.getStatus() == BookingStatus.PENDING_APPROVAL) {
+            return "Demande de réservation reçue " + booking.getBookingNumber();
+        }
+        BookingPaymentStatus payment = BookingPaymentStatus.of(
+                booking.getPaymentMode(), booking.getStatus(), booking.getConfirmedAt());
+        return payment == BookingPaymentStatus.PENDING
+                ? "Réservation enregistrée, paiement attendu " + booking.getBookingNumber()
+                : "Réservation confirmée " + booking.getBookingNumber();
+    }
+
     private String subject(BookingEventType eventType, Booking booking) {
         return switch (eventType) {
-            case BOOKING_CONFIRMED, BOOKING_CREATED -> "Confirmation réservation " + booking.getBookingNumber();
+            case BOOKING_CONFIRMED -> "Réservation confirmée " + booking.getBookingNumber();
+            case BOOKING_CREATED -> createdSubject(booking);
             case BOOKING_CANCELLED  -> "Annulation réservation " + booking.getBookingNumber();
             case BOOKING_REJECTED   -> "Réservation rejetée " + booking.getBookingNumber();
             case BOOKING_STARTED    -> "Réservation démarrée " + booking.getBookingNumber();
@@ -342,13 +376,6 @@ public class BookingEmailNotifier {
         }
     }
 
-    private Integer resolveCapacity(Booking booking) {
-        try {
-            return booking.getResource() != null ? booking.getResource().getCapacity() : null;
-        } catch (Exception ex) {
-            return null;
-        }
-    }
 
     private String resolveLocationLabel(Booking booking) {
         try {

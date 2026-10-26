@@ -338,9 +338,9 @@
             </div>
           </td>
         </tr>
-        <tr th:if="${capacity}">
-          <td class="bk-key">Capacité</td>
-          <td><div class="bk-val" th:text="${capacity}">4 personnes</div></td>
+        <tr th:if="${seatsLabel}">
+          <td class="bk-key" th:text="${wholeResource} ? 'Réservation' : 'Places'">Places</td>
+          <td><div class="bk-val" th:text="${seatsLabel}">2 places réservées sur 4</div></td>
         </tr>
         <tr>
           <td class="bk-key">Adresse</td>

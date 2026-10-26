@@ -72,6 +72,7 @@ public class BookingConfirmationDocumentService {
         model.addAttribute("endTime", formatTime(booking.getEndedAt()));
         model.addAttribute("durationLabel", formatDuration(booking.getDurationMinutes()));
         model.addAttribute("quantity", booking.getQuantity());
+        model.addAttribute("seatsLabel", BookingSeats.of(booking).label());
         model.addAttribute("address", resolveLocationLabel(booking));
         model.addAttribute("city", resolveZone(booking));
         BigDecimal taxableBase = computeTaxIncludedBase(booking.getTotalAmount());
@@ -102,6 +103,7 @@ public class BookingConfirmationDocumentService {
         ctx.setVariable("endTime", formatTime(booking.getEndedAt()));
         ctx.setVariable("durationLabel", formatDuration(booking.getDurationMinutes()));
         ctx.setVariable("quantity", booking.getQuantity());
+        ctx.setVariable("seatsLabel", BookingSeats.of(booking).label());
         ctx.setVariable("address", resolveLocationLabel(booking));
         ctx.setVariable("city", resolveZone(booking));
         BigDecimal taxableBase = computeTaxIncludedBase(booking.getTotalAmount());

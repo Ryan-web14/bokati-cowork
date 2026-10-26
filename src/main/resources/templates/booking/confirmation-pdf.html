@@ -76,7 +76,7 @@
                         <div class="row clearfix"><span class="key">Date</span><span class="val" th:text="${bookingDate}"></span></div>
                         <div class="row clearfix"><span class="key">Horaires</span><span class="val"><span th:text="${startTime}"></span> - <span th:text="${endTime}"></span></span></div>
                         <div class="row clearfix"><span class="key">Durée</span><span class="val" th:text="${durationLabel}"></span></div>
-                        <div class="row clearfix"><span class="key">Quantité</span><span class="val" th:text="${quantity}">1</span></div>
+                        <div class="row clearfix"><span class="key">Places</span><span class="val" th:text="${seatsLabel ?: quantity}">2 places réservées sur 4</span></div>
                         <div class="row clearfix"><span class="key">Statut</span><span class="val" th:text="${status}"></span></div>
                         <div class="row clearfix"><span class="key">Mode paiement</span><span class="val" th:text="${paymentMode}"></span></div>
                         <div class="row clearfix"><span class="key">Base HT</span><span class="val" th:text="${priceHT}"></span></div>
