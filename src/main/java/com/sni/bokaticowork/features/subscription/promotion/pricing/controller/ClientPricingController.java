@@ -112,8 +112,10 @@ public class ClientPricingController {
     @DeleteMapping("/cart/coupons/{code}")
     public ResponseEntity<Map<String, Integer>> removeCoupon(@PathVariable String code,
                                                              @RequestParam String cartReference) {
+        Member member = clientContext.getAuthenticatedMember();
         return ResponseEntity.ok(Map.of(
-                "released", couponService.release(cartReference, "Code retiré du panier " + code)));
+                "released", couponService.releaseFor(cartReference, code, SubscriberType.MEMBER.name(),
+                        member.getMemberId(), "Code retiré du panier " + code)));
     }
 
     /**

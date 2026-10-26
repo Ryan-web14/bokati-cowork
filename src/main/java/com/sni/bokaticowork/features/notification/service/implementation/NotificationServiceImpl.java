@@ -125,6 +125,18 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
+    public NotificationMessageResponse markAsReadFor(String notificationNumber, String recipientEmail) {
+        boolean owned = messageRepository.findByNotificationNumber(notificationNumber)
+                .filter(message -> recipientEmail != null
+                        && normalizeEmail(recipientEmail).equalsIgnoreCase(message.getRecipientEmail()))
+                .isPresent();
+        if (!owned) {
+            throw new ResourceNotFoundException("Notification introuvable : " + notificationNumber);
+        }
+        return markAsRead(notificationNumber);
+    }
+
+    @Override
     public NotificationMessageResponse markAsRead(String notificationNumber) {
         messageRepository.markOneAsRead(notificationNumber, Instant.now());
         return mapper.toResponse(messageRepository.findByNotificationNumber(notificationNumber)

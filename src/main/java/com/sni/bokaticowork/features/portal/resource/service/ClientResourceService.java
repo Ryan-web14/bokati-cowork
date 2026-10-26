@@ -142,7 +142,8 @@ public class ClientResourceService {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private void assertPortalVisible(String code) {
+    /** La ressource est-elle proposee sur le portail · introuvable sinon, comme une ressource inexistante. */
+    public void assertPortalVisible(String code) {
         Resource resource = resourceService.getResourceForService(code);
         if (!Boolean.TRUE.equals(resource.getPortalVisible())
                 || resource.getStatus() != ResourceStatus.ACTIVE

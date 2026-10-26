@@ -108,6 +108,36 @@ public class BookingServiceImpl implements BookingService {
     @Value("${bokati.task.booking-cleanup-default-assignee:}")
     private String bookingCleanupDefaultAssignee;
 
+    /**
+     * Un rejeu ne rend la reservation qu'a celui qui l'a faite.
+     *
+     * <p>La cle d'idempotence etait cherchee sans regarder le titulaire · un membre qui envoyait la
+     * cle d'un autre recevait sa reservation entiere, jeton de pointage et lien de visio compris.
+     * Quand la demande nomme son titulaire (le portail fixe toujours le membre), le titulaire de la
+     * reservation existante doit etre le meme. Une demande de l'accueil par e-mail ou telephone ne
+     * nomme personne et garde le rejeu simple · l'accueil voit deja toutes les reservations.</p>
+     */
+    private void assertReplayBelongsToRequester(Booking existing, CreateBookingRequest request) {
+        SubscriberType requestedType = null;
+        String requestedCode = null;
+        if (StringUtils.hasText(request.memberId())) {
+            requestedType = SubscriberType.MEMBER;
+            requestedCode = request.memberId().trim();
+        } else if (StringUtils.hasText(request.customerId())) {
+            requestedType = SubscriberType.CUSTOMER;
+            requestedCode = request.customerId().trim();
+        } else if (StringUtils.hasText(request.businessCode())) {
+            requestedType = SubscriberType.BUSINESS_ENTITY;
+            requestedCode = request.businessCode().trim();
+        }
+        if (requestedType == null) {
+            return;
+        }
+        if (existing.getOwnerType() != requestedType || !requestedCode.equalsIgnoreCase(existing.getOwnerCode())) {
+            throw new ConflictException("booking", "this idempotency key is already used by another booking");
+        }
+    }
+
     @Override
     public BookingResponse create(CreateBookingRequest request) {
         return bookingMapper.toResponse(createInternal(request, null));
@@ -117,6 +147,7 @@ public class BookingServiceImpl implements BookingService {
         if (StringUtils.hasText(request.idempotencyKey())) {
             Booking existing = bookingRepository.findByIdempotencyKey(request.idempotencyKey().trim()).orElse(null);
             if (existing != null) {
+                assertReplayBelongsToRequester(existing, request);
                 return existing;
             }
         }

@@ -193,7 +193,8 @@ class PassCreationOperatorTest {
      */
     @Test
     void returnsTheExistingPassWhenTheSameRequestIsSentTwice() {
-        Pass alreadyCreated = Pass.builder().passNumber("PASS-0001").idempotencyKey("KEY-1").build();
+        Pass alreadyCreated = Pass.builder().passNumber("PASS-0001").idempotencyKey("KEY-1")
+                .ownerType(SubscriberType.MEMBER).ownerCode("MEM-0001").build();
         when(passRepository.findByIdempotencyKey("KEY-1")).thenReturn(Optional.of(alreadyCreated));
 
         Pass result = operator.createFromPlan(PLAN_CODE, purchase("KEY-1"));

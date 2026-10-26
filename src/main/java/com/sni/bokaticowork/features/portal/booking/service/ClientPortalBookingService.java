@@ -33,6 +33,7 @@ public class ClientPortalBookingService {
 
     private final BookingService bookingService;
     private final BookingAvailabilityService bookingAvailabilityService;
+    private final com.sni.bokaticowork.features.portal.resource.service.ClientResourceService clientResourceService;
     private final com.sni.bokaticowork.features.payment.cash.service.CashPaymentDeclarationService cashDeclarationService;
 
     @Transactional(readOnly = true)
@@ -59,6 +60,9 @@ public class ClientPortalBookingService {
 
     @Transactional
     public ClientBookingResponse createBooking(Member member, ClientCreateBookingRequest request) {
+        // Une ressource retiree du portail ne se reserve pas depuis le portail · seule sa page
+        // etait masquee, la reservation par son code passait.
+        clientResourceService.assertPortalVisible(request.getResourceCode());
         CreateBookingRequest req = new CreateBookingRequest(
                 request.getResourceCode(),
                 member.getMemberId(),
@@ -126,6 +130,7 @@ public class ClientPortalBookingService {
     }
 
     public BookingAvailabilityResponse checkAvailability(Member member, ClientCheckAvailabilityRequest request) {
+        clientResourceService.assertPortalVisible(request.getResourceCode());
         BookingAvailabilityRequest req = new BookingAvailabilityRequest(
                 request.getResourceCode(),
                 member.getMemberId(),
