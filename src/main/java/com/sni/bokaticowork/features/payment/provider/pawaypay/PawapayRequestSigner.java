@@ -245,7 +245,7 @@ public class PawapayRequestSigner {
                 throw state;
             }
             throw new IllegalStateException("La cle de signature PawaPay est illisible ("
-                    + describe(normalized, null) + ")", ex);
+                    + describe(normalized, null) + diagnose(normalized, ex) + ")", ex);
         }
     }
 
@@ -313,12 +313,65 @@ public class PawapayRequestSigner {
         }
     }
 
+    /**
+     * Remet le corps en base64 canonique avant de l'envelopper.
+     *
+     * <p>Le decodeur de BouncyCastle exige le remplissage final ({@code =} ou {@code ==}), qu'un
+     * copier-coller ou une saisie dans une variable d'environnement perd facilement. Le decodeur
+     * de Java s'en passe · on decode avec lui puis on re-encode proprement. Un corps qui ne se
+     * decode pas du tout est laisse tel quel et echouera avec son diagnostic.</p>
+     */
     private static String wrap(String type, String base64Body) {
+        try {
+            base64Body = Base64.getEncoder().encodeToString(Base64.getMimeDecoder().decode(base64Body));
+        } catch (IllegalArgumentException notBase64) {
+            // laisse tel quel
+        }
         StringBuilder out = new StringBuilder("-----BEGIN ").append(type).append("-----\n");
         for (int i = 0; i < base64Body.length(); i += 64) {
             out.append(base64Body, i, Math.min(base64Body.length(), i + 64)).append('\n');
         }
         return out.append("-----END ").append(type).append("-----\n").toString();
+    }
+
+    /**
+     * Pourquoi la lecture a echoue, sans rien citer de la cle · le corps est-il du base64, combien
+     * d'octets donne-t-il, forme-t-il une structure ASN.1 complete ? Une cle tronquee au collage se
+     * reconnait ici, la ou le seul message de BouncyCastle ne disait rien d'utile.
+     */
+    private static String diagnose(String normalized, Exception ex) {
+        StringBuilder out = new StringBuilder();
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("-----BEGIN [A-Z0-9 ]+-----(.*?)-----END", java.util.regex.Pattern.DOTALL)
+                .matcher(normalized);
+        if (matcher.find()) {
+            String body = matcher.group(1).replaceAll("\\s", "");
+            out.append(", corps de ").append(body.length()).append(" caracteres base64");
+            try {
+                byte[] der = Base64.getMimeDecoder().decode(body);
+                out.append(", ").append(der.length).append(" octets");
+                try {
+                    org.bouncycastle.asn1.ASN1Primitive.fromByteArray(der);
+                    out.append(", structure ASN.1 complete");
+                } catch (IOException | RuntimeException truncated) {
+                    out.append(", structure ASN.1 incomplete : cle tronquee ou alteree au collage");
+                }
+            } catch (IllegalArgumentException notBase64) {
+                out.append(", corps non base64 (caractere parasite)");
+            }
+        }
+        // Le message de BouncyCastle ne cite pas la cle, mais on ne le reprend que s'il ne contient
+        // aucune longue suite base64 par prudence.
+        Throwable cause = ex;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+        String message = cause.getMessage();
+        if (message != null && !message.matches("(?s).*[A-Za-z0-9+/=]{24,}.*")) {
+            out.append(", cause ").append(cause.getClass().getSimpleName()).append(" : ")
+                    .append(message.length() > 160 ? message.substring(0, 160) : message);
+        }
+        return out.toString();
     }
 
     /** Ce qu'on peut dire d'une cle illisible sans jamais en reveler le contenu. */
