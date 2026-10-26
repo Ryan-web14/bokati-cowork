@@ -8,5 +8,6 @@ public record PawapayDepositResponse(
         String depositId,
         String status,          // ACCEPTED or REJECTED
         String created,
-        JsonNode rejectionReason
+        // v2 renvoie failureReason, v1 rejectionReason · sans l alias, le motif d un refus v2 etait perdu.
+        @com.fasterxml.jackson.annotation.JsonAlias("failureReason") JsonNode rejectionReason
 ) {}

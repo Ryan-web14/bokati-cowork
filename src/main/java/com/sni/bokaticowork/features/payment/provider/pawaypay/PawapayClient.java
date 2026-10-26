@@ -67,11 +67,7 @@ public class PawapayClient {
         log.debug("Initiating PawaPay deposit: depositId={}, provider={}",
                 request.depositId(), request.payer().accountDetails().provider());
         try {
-            return restClient.post()
-                    .uri("/v2/deposits")
-                    .body(request)
-                    .retrieve()
-                    .body(PawapayDepositResponse.class);
+            return post("/v2/deposits", request, PawapayDepositResponse.class);
         } catch (ResourceAccessException ex) {
             throw new ProviderUnreachableException("PawaPay injoignable à l'initiation", ex);
         } catch (HttpStatusCodeException ex) {
@@ -80,6 +76,48 @@ public class PawapayClient {
             }
             throw ex;
         }
+    }
+
+
+    /**
+     * Envoie un POST et lit la reponse avec l'{@link ObjectMapper} Jackson 2 du client.
+     *
+     * <p>Spring Boot 4 convertit le JSON avec Jackson 3, qui ne sait pas fabriquer un
+     * {@code com.fasterxml.jackson.databind.JsonNode} · chaque lecture de statut levait une exception,
+     * rangee en UNKNOWN, et un depot paye restait « en cours ». Le client echange donc des octets et
+     * fait lui-meme la conversion. Bonus : la signature porte sur exactement les octets envoyes.</p>
+     */
+    private <T> T post(String uri, Object request, Class<T> responseType) {
+        byte[] response = restClient.post()
+                .uri(uri)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(writeBytes(request))
+                .retrieve()
+                .body(byte[].class);
+        return read(response, responseType);
+    }
+
+    private byte[] writeBytes(Object value) {
+        try {
+            return objectMapper.writeValueAsBytes(value);
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException("Requete PawaPay non serialisable", ex);
+        }
+    }
+
+    private <T> T read(byte[] body, Class<T> type) {
+        if (body == null || body.length == 0) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(body, type);
+        } catch (java.io.IOException ex) {
+            throw new IllegalStateException("Reponse PawaPay illisible", ex);
+        }
+    }
+
+    private JsonNode readTree(byte[] body) {
+        return read(body, JsonNode.class);
     }
 
     /**
@@ -91,10 +129,10 @@ public class PawapayClient {
         log.debug("Checking PawaPay deposit status: depositId={}", depositId);
         JsonNode body;
         try {
-            body = restClient.get()
+            body = readTree(restClient.get()
                     .uri("/v2/deposits/{depositId}", depositId)
                     .retrieve()
-                    .body(JsonNode.class);
+                    .body(byte[].class));
         } catch (ResourceAccessException ex) {
             throw new ProviderUnreachableException("PawaPay injoignable pour le statut", ex);
         } catch (HttpStatusCodeException ex) {
@@ -121,11 +159,7 @@ public class PawapayClient {
      */
     public ProviderPrediction predictProvider(String phoneNumber) {
         try {
-            JsonNode body = restClient.post()
-                    .uri("/v2/predict-provider")
-                    .body(java.util.Map.of("phoneNumber", phoneNumber))
-                    .retrieve()
-                    .body(JsonNode.class);
+            JsonNode body = post("/v2/predict-provider", java.util.Map.of("phoneNumber", phoneNumber), JsonNode.class);
             if (body == null || !body.hasNonNull("provider")) {
                 return null;
             }
@@ -145,11 +179,7 @@ public class PawapayClient {
     public PawapayPaymentPageResponse createPaymentPage(PawapayPaymentPageRequest request) {
         log.debug("Creating PawaPay payment page: depositId={}", request.depositId());
         try {
-            return restClient.post()
-                    .uri("/v2/paymentpage")
-                    .body(request)
-                    .retrieve()
-                    .body(PawapayPaymentPageResponse.class);
+            return post("/v2/paymentpage", request, PawapayPaymentPageResponse.class);
         } catch (ResourceAccessException ex) {
             throw new ProviderUnreachableException("PawaPay injoignable pour la page de paiement", ex);
         }
@@ -158,11 +188,7 @@ public class PawapayClient {
     public PawapayRefundResponse initiateRefund(PawapayRefundRequest request) {
         log.debug("Initiating PawaPay refund: refundId={}, depositId={}", request.refundId(), request.depositId());
         try {
-            return restClient.post()
-                    .uri("/v2/refunds")
-                    .body(request)
-                    .retrieve()
-                    .body(PawapayRefundResponse.class);
+            return post("/v2/refunds", request, PawapayRefundResponse.class);
         } catch (ResourceAccessException ex) {
             throw new ProviderUnreachableException("PawaPay injoignable pour le remboursement", ex);
         }
@@ -172,10 +198,10 @@ public class PawapayClient {
     public DepositStatus getRefundStatus(String refundId) {
         JsonNode body;
         try {
-            body = restClient.get()
+            body = readTree(restClient.get()
                     .uri("/v2/refunds/{refundId}", refundId)
                     .retrieve()
-                    .body(JsonNode.class);
+                    .body(byte[].class));
         } catch (ResourceAccessException ex) {
             throw new ProviderUnreachableException("PawaPay injoignable pour le statut du remboursement", ex);
         } catch (HttpStatusCodeException ex) {
