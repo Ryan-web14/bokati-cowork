@@ -47,19 +47,44 @@ public class PawapayClient {
                 .defaultHeader("Content-Type", "application/json")
                 .requestInterceptors(interceptors -> {
                     if (properties.getSigning().isConfigured()) {
-                        interceptors.add(new PawapaySigningInterceptor(new PawapayRequestSigner(
-                                properties.getSigning().getPrivateKey(),
-                                properties.getSigning().getKeyId(),
-                                properties.getSigning().getAlgorithm())));
+                        interceptors.add(signingInterceptor(properties.getSigning()));
                     }
                 })
                 .build();
         if (properties.getSigning().isConfigured()) {
-            log.info("PawaPay · requetes financieres signees (keyid={}, alg={})",
+            log.info("PawaPay · signature des requetes financieres configuree (keyid={}, alg={})",
                     properties.getSigning().getKeyId(), properties.getSigning().getAlgorithm());
         } else {
             log.warn("PawaPay · aucune cle de signature configuree, les requetes partent non signees. "
                     + "Si les appels signes sont exiges chez PawaPay, depots et remboursements seront refuses.");
+        }
+    }
+
+    /**
+     * L'intercepteur de signature, ou, si la cle est illisible, un intercepteur qui refuse chaque
+     * appel financier.
+     *
+     * <p>Une cle mal collee dans une variable d'environnement faisait echouer la creation de ce
+     * client, donc le demarrage de toute l'application · la production est tombee pour un depot
+     * mobile money que personne ne faisait. Le defaut reste visible (journal d'erreur au demarrage,
+     * refus explicite a chaque depot ou remboursement) sans emporter le reste. On n'envoie jamais
+     * d'appel financier non signe a la place : la signature a ete demandee.</p>
+     */
+    private static org.springframework.http.client.ClientHttpRequestInterceptor signingInterceptor(
+            PawapayProperties.Signing signing) {
+        try {
+            return new PawapaySigningInterceptor(new PawapayRequestSigner(
+                    signing.getPrivateKey(), signing.getKeyId(), signing.getAlgorithm()));
+        } catch (RuntimeException ex) {
+            String reason = ex.getMessage();
+            log.error("PawaPay · cle de signature inutilisable, depots et remboursements refuses jusqu'a "
+                    + "correction de PAWAYPAY_SIGNING_PRIVATE_KEY : {}", reason);
+            return (request, body, execution) -> {
+                if (request.getMethod() == org.springframework.http.HttpMethod.GET) {
+                    return execution.execute(request, body);
+                }
+                throw new PawapaySigningUnavailableException(reason);
+            };
         }
     }
 
