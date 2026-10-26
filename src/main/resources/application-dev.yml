@@ -202,6 +202,13 @@ app:
       # le bon etat une fois la maison installee. La route refuse de toute facon des qu un
       # administrateur existe.
       secret: ${BOOTSTRAP_SECRET:}
+    registration:
+      # Inscription en libre-service · domaines reserves et boites jetables refuses (liste dans
+      # security/disposable-email-domains.txt), plus ceux-ci, separes par des virgules.
+      blocked-domains: ${REGISTRATION_BLOCKED_DOMAINS:}
+      # Refuse un domaine sans serveur de courrier. Une panne du DNS ne refuse personne.
+      mx-check-enabled: ${REGISTRATION_MX_CHECK_ENABLED:true}
+      dns-timeout-ms: ${REGISTRATION_DNS_TIMEOUT_MS:3000}
     failed-login:
       max-attempts: ${FAILED_LOGIN_MAX_ATTEMPTS:5}
 

@@ -60,6 +60,7 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
     private final PasswordResetService passwordResetService;
     private final JWTService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final com.sni.bokaticowork.security.registration.EmailDomainPolicy emailDomainPolicy;
 
     /**
      * Le delai pendant lequel un jeton tout juste consomme peut revenir sans alerte.
@@ -244,6 +245,9 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional
     public OttResponse register(RegisterMemberRequest request) {
+        // Avant toute ecriture · une adresse reservee ou jetable ne recevra jamais le code de
+        // verification, et le compte resterait la, inutile.
+        emailDomainPolicy.assertAcceptable(request.getEmail());
         CreateMemberRequest createReq = CreateMemberRequest.builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
