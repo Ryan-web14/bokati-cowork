@@ -76,7 +76,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                     .filter(rule -> rule.getResourceBookingUnit() == unit)
                     .filter(rule -> overlaps(rule, request))
                     .map(rule -> new PricingRuleConflictPreviewResponse.CompetingRule(
-                            rule.getId(), rule.getLabel(), rule.getPrice(),
+                            rule.getShortId(), rule.getLabel(), rule.getPrice(),
                             rule.getPriority(), rule.getDayOfWeek(),
                             asText(rule.getStartsAt()), asText(rule.getEndsAt()),
                             // A priorite egale, findApplicableRules departage par id decroissant ·
@@ -231,7 +231,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
                 .endedAt(endedAt)
                 .basePrice(baseRule.getPrice())
                 .finalPrice(unitPrice * (int) quantity)
-                .appliedRuleId(applied.getId())
+                .appliedRuleId(applied.getShortId())
                 .appliedRuleLabel(applied.getLabel())
                 .adjustmentType(applied.getAdjustmentType() == null ? null : applied.getAdjustmentType().name())
                 .adjustmentValue(applied.getAdjustmentValue())
@@ -281,13 +281,16 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         if (id == null) {
             throw new BadRequestException("Pricing rule id is required");
         }
-        return pricingRuleRepository.findById(id)
+        // Le numero court est ce que l'API expose · l'identifiant genere reste accepte pour les
+        // clients qui l'avaient garde, et ne peut pas se confondre avec un numero court.
+        return pricingRuleRepository.findByShortId(id)
+                .or(() -> pricingRuleRepository.findById(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Resource pricing rule with id " + id + " not found"));
     }
 
     private ResourcePricingRuleResponse toResponse(ResourcePricingRule rule) {
         return ResourcePricingRuleResponse.builder()
-                .id(rule.getId())
+                .id(rule.getShortId())
                 .resourceCode(rule.getResource().getCode())
                 .bookingUnit(rule.getResourceBookingUnit() == null ? null : rule.getResourceBookingUnit().name())
                 .price(rule.getPrice())

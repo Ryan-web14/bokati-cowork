@@ -139,6 +139,7 @@ public class AdminResourceCalendarServiceImpl implements AdminResourceCalendarSe
                             .occupancyLevel(occupancyLevel(rate))
                             .available(Boolean.TRUE.equals(slot.getAvailable()) && remaining > 0)
                             .active(Boolean.TRUE.equals(slot.getActive()))
+                            .subscribersOnly(Boolean.TRUE.equals(slot.getSubscribersOnly()))
                             .build();
                 })
                 .toList();

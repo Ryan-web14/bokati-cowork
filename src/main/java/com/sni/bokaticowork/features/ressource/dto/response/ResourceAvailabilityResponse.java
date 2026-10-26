@@ -22,4 +22,6 @@ public class ResourceAvailabilityResponse {
     private Integer remainingCapacity;
     private Boolean available;
     private Boolean active;
+    /** Creneau du soir reserve aux abonnes. */
+    private Boolean subscribersOnly;
 }

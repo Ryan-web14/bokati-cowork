@@ -2,6 +2,8 @@ package com.sni.bokaticowork.features.portal.resource.controller;
 
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.portal.context.ClientContextService;
+import com.sni.bokaticowork.features.portal.context.SubscriberAccess;
 import com.sni.bokaticowork.features.portal.resource.dto.response.ClientResourceDetailResponse;
 import com.sni.bokaticowork.features.portal.resource.dto.response.ClientResourceSummaryResponse;
 import com.sni.bokaticowork.features.portal.resource.service.ClientResourceService;
@@ -30,6 +32,13 @@ import java.util.List;
 public class ClientResourceController {
 
     private final ClientResourceService clientResourceService;
+    private final ClientContextService clientContextService;
+    private final SubscriberAccess subscriberAccess;
+
+    /** Le membre connecte a-t-il droit aux soirees · elles n'existent pas pour les autres. */
+    private boolean subscriber() {
+        return subscriberAccess.isSubscriber(clientContextService.getAuthenticatedMember());
+    }
 
     @GetMapping
     public ResponseEntity<PaginatedResponse<ClientResourceSummaryResponse>> listResources(
@@ -51,7 +60,7 @@ public class ClientResourceController {
             @PathVariable String code,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return ResponseEntity.ok(clientResourceService.getCalendar(code, from, to));
+        return ResponseEntity.ok(clientResourceService.getCalendar(code, from, to, subscriber()));
     }
 
     @GetMapping("/{code}/slots")
@@ -61,7 +70,8 @@ public class ClientResourceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endedAt,
             @RequestParam(required = false, defaultValue = "30") Integer durationMinutes,
             @RequestParam(required = false, defaultValue = "1") Integer quantity) {
-        return ResponseEntity.ok(clientResourceService.getAvailableSlots(code, startedAt, endedAt, durationMinutes, quantity));
+        return ResponseEntity.ok(clientResourceService.getAvailableSlots(code, startedAt, endedAt, durationMinutes, quantity,
+                subscriber()));
     }
 
     @GetMapping("/{code}/quote")

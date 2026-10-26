@@ -21,6 +21,8 @@ public interface ResourcePricingRuleRepository extends JpaRepository<ResourcePri
 
     Optional<ResourcePricingRule> findByIdAndResource(Long id, Resource resource);
 
+    Optional<ResourcePricingRule> findByShortId(Long shortId);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM resource_pricing_rule

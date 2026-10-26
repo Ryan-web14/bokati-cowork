@@ -34,7 +34,9 @@ public record PublicResourceCalendarResponse(
             Integer totalCapacity,
             Integer remainingCapacity,
             Boolean available,
-            Boolean active
+            Boolean active,
+            /** Soiree reservee aux abonnes · le calendrier public ne la montre jamais. */
+            Boolean subscribersOnly
     ) {
     }
 }

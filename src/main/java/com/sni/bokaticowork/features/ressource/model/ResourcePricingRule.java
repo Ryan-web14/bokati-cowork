@@ -27,6 +27,17 @@ public class ResourcePricingRule {
     @Column(name = "id")
     private Long id;
 
+    /**
+     * Le numero court de la regle · c'est lui que l'API expose sous le nom {@code id}.
+     *
+     * <p>L'identifiant genere depasse 2^53 et JavaScript l'arrondit · l'interface renvoyait ensuite
+     * un identifiant qui ne designait aucune regle. Celui-ci vient d'une sequence de la base et
+     * reste petit. Attribue par la base a l'insertion, jamais par le code.</p>
+     */
+    @org.hibernate.annotations.Generated
+    @Column(name = "short_id", insertable = false, updatable = false)
+    private Long shortId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resource_id", nullable = false, foreignKey = @ForeignKey(name = "resource_pricing_rule_resource_fk"))
     private Resource resource;

@@ -1,0 +1,61 @@
+package com.sni.bokaticowork.features.portal.context;
+
+import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
+import com.sni.bokaticowork.features.client.member.model.Member;
+import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceAvailabilityService;
+import com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+/**
+ * Le droit d'un membre aux creneaux du soir, reserves aux abonnes.
+ *
+ * <p>Abonne veut dire : un abonnement actif sur la periode en cours, au nom du membre ou du client
+ * auquel il est rattache (l'abonnement d'une entreprise couvre ses membres). C'est la meme
+ * definition que celle qu'applique deja le paiement par abonnement d'une reservation.</p>
+ *
+ * <p>Ne concerne que le portail · l'accueil reserve les soirees pour n'importe qui, et ne passe
+ * pas par ici.</p>
+ */
+@Component
+@RequiredArgsConstructor
+public class SubscriberAccess {
+
+    static final String RESERVED_MESSAGE =
+            "Ce créneau est réservé aux abonnés. Souscrivez un abonnement ou adressez-vous à l'accueil.";
+
+    private final SubscriptionRepository subscriptionRepository;
+    private final ResourceAvailabilityService availabilityService;
+
+    @Transactional(readOnly = true)
+    public boolean isSubscriber(Member member) {
+        if (member == null) {
+            return false;
+        }
+        LocalDate today = LocalDate.now();
+        if (StringUtils.hasText(member.getMemberId())
+                && !subscriptionRepository.findAllCurrentActive("MEMBER", member.getMemberId(), today).isEmpty()) {
+            return true;
+        }
+        return member.getCustomer() != null
+                && StringUtils.hasText(member.getCustomer().getCustomerId())
+                && !subscriptionRepository.findAllCurrentActive("CUSTOMER", member.getCustomer().getCustomerId(), today).isEmpty();
+    }
+
+    /** La plage touche-t-elle une soiree que ce membre n'a pas le droit de reserver. */
+    @Transactional(readOnly = true)
+    public boolean isDenied(Member member, String resourceCode, LocalDateTime startedAt, LocalDateTime endedAt) {
+        return availabilityService.touchesSubscribersOnly(resourceCode, startedAt, endedAt) && !isSubscriber(member);
+    }
+
+    public void assertMayBook(Member member, String resourceCode, LocalDateTime startedAt, LocalDateTime endedAt) {
+        if (isDenied(member, resourceCode, startedAt, endedAt)) {
+            throw new ForbiddenException(RESERVED_MESSAGE);
+        }
+    }
+}

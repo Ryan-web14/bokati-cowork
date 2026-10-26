@@ -46,7 +46,11 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     private static final int MAX_AVAILABILITY_CREATION_MONTHS = 1;
     private static final LocalTime WORKING_DAY_START = LocalTime.of(8, 0);
-    private static final LocalTime WORKING_DAY_END = LocalTime.of(20, 0);
+    /**
+     * 22:00 · les soirees de 18:00 a 22:00 existent desormais, reservees aux abonnes. Le public
+     * s'arrete a 18:00 par les horaires d'ouverture, pas par cette borne.
+     */
+    private static final LocalTime WORKING_DAY_END = LocalTime.of(22, 0);
 
     private final ResourceAvailabilityRepository availabilityRepository;
     private final ResourceClosureRepository closureRepository;
@@ -57,6 +61,16 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     /** Borne d'un appel groupe · une plage d'un mois produit deja ~384 creneaux par ressource. */
     @org.springframework.beans.factory.annotation.Value("${bokati.resource.bulk-max-resources:20}")
     private int maxBulkResources;
+
+    /**
+     * L'heure a partir de laquelle un creneau est reserve aux abonnes.
+     *
+     * <p>Une regle d'horaire plutot qu'un champ de la requete · un administrateur qui ouvre une
+     * journee de 08:00 a 22:00 obtient d'un seul geste la journee publique et la soiree des
+     * abonnes, sans pouvoir oublier de cocher la seconde.</p>
+     */
+    @org.springframework.beans.factory.annotation.Value("${bokati.resource.availability.subscriber-hours-from:18:00}")
+    private String subscriberHoursFrom = "18:00";
 
     /**
      * Ouvre la meme plage sur plusieurs ressources.
@@ -107,7 +121,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             throw new ConflictException("resource availability", "the requested range overlaps existing availability slots");
         }
 
-        int capacity = resolveCapacity(resource, request.getCapacity());
+        int capacity = resolveCapacity(resource);
         List<ResourceAvailability> slots = buildSlots(resource, request.getStartedAt(), request.getEndedAt(), capacity, request.getActive());
         availabilityRepository.saveAll(slots);
     }
@@ -155,11 +169,23 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             Integer durationMinutes,
             Integer quantity
     ) {
+        return findRemainingWindows(resourceCode, startedAt, endedAt, durationMinutes, quantity, true);
+    }
+
+    @Override
+    public List<ResourceAvailabilityWindowResponse> findRemainingWindows(
+            String resourceCode,
+            LocalDateTime startedAt,
+            LocalDateTime endedAt,
+            Integer durationMinutes,
+            Integer quantity,
+            boolean includeSubscribersOnly
+    ) {
         expirePastAvailabilitySlots();
         Resource resource = resourceService.getResourceForService(resourceCode);
         int normalizedQuantity = normalizeQuantity(quantity);
         if (startedAt == null && endedAt == null && durationMinutes == null) {
-            return findFullRemainingWindows(resource, normalizedQuantity);
+            return findFullRemainingWindows(resource, normalizedQuantity, includeSubscribersOnly);
         }
 
         int normalizedDuration = normalizeDurationMinutes(resource, durationMinutes);
@@ -171,7 +197,10 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             return List.of();
         }
 
+        // Sans le droit aux soirees, un creneau d'abonnes n'existe pas · une fenetre qui le
+        // traverserait n'est donc pas contigue, et n'est pas proposee.
         List<ResourceAvailability> slots = availabilityRepository.findCandidateSlots(resource, startedAt, endedAt).stream()
+                .filter(slot -> includeSubscribersOnly || !Boolean.TRUE.equals(slot.getSubscribersOnly()))
                 .sorted(Comparator.comparing(ResourceAvailability::getStartedAt))
                 .toList();
 
@@ -333,7 +362,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             throw new ConflictException("resource availability", "availability can only be created up to one month in advance");
         }
         if (!isValidAvailabilityStart(startedAt.toLocalTime()) || !isValidAvailabilityEnd(endedAt.toLocalTime())) {
-            throw new ConflictException("resource availability", "availability must be created within working hours from 08:00 to 20:00");
+            throw new ConflictException("resource availability", "availability must be created within working hours from 08:00 to 22:00");
         }
     }
 
@@ -384,11 +413,31 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                     .remainingCapacity(capacity)
                     .available(capacity > 0)
                     .active(active == null ? Boolean.TRUE : active)
+                    .subscribersOnly(isSubscriberHour(current.toLocalTime()))
                     .build());
             current = next;
         }
 
         return slots;
+    }
+
+    /** Lue telle quelle et parsee ici · la conversion automatique d'une heure depend de la locale. */
+    private boolean isSubscriberHour(LocalTime slotStart) {
+        if (subscriberHoursFrom == null || subscriberHoursFrom.isBlank()) {
+            return false;
+        }
+        return !slotStart.isBefore(LocalTime.parse(subscriberHoursFrom.trim()));
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public boolean touchesSubscribersOnly(String resourceCode, LocalDateTime startedAt, LocalDateTime endedAt) {
+        if (startedAt == null || endedAt == null) {
+            return false;
+        }
+        Resource resource = resourceService.getResourceForService(resourceCode);
+        return availabilityRepository.existsByResourceAndSubscribersOnlyTrueAndStartedAtLessThanAndEndedAtGreaterThan(
+                resource, endedAt, startedAt);
     }
 
     private boolean isValidAvailabilityStart(LocalTime value) {
@@ -408,6 +457,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
                 .slotDurationMinutes(slot.getSlotDurationMinutes())
                 .totalCapacity(slot.getTotalCapacity())
                 .remainingCapacity(slot.getRemainingCapacity())
+                .subscribersOnly(slot.getSubscribersOnly())
                 .available(slot.getAvailable())
                 .active(slot.getActive())
                 .build();
@@ -490,12 +540,23 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         return resourceService.saveResource(resource);
     }
 
-    private int resolveCapacity(Resource resource, Integer requestedCapacity) {
-        int bookableSlots = resource.resolveBookableSlots();
-        // Never exceed the type-level concurrent booking limit, even if the caller passes a higher value.
-        int baseCapacity = requestedCapacity != null
-                ? Math.min(requestedCapacity, bookableSlots)
-                : bookableSlots;
+    /**
+     * La quantite par creneau · toujours la capacite reelle de la ressource, quelle que soit la
+     * valeur envoyee.
+     *
+     * <p>Une ressource partagee (open space, parking, casier...) ouvre autant de places que sa
+     * capacite de reservations simultanees · une disponibilite creee a 1 sur un open space de vingt
+     * postes n'en ouvrait qu'un, sans que rien ne le signale.</p>
+     *
+     * <p>Une piece louee entiere (salle de reunion, bureau privatif...) affiche ses places assises
+     * · une salle de douze montre 12 et non 1. C'est un affichage : la reservation d'une piece
+     * consomme tout le restant et n'est acceptee que sur un creneau intact (restant egal au total),
+     * si bien qu'un seul groupe l'occupe a la fois, que le total vaille 1 ou 12.</p>
+     */
+    private int resolveCapacity(Resource resource) {
+        int baseCapacity = resource.isWholeResourceBooking()
+                ? resource.resolveSeatingCapacity()
+                : resource.resolveBookableSlots();
         if (baseCapacity < 1) {
             throw new BadRequestException("Availability capacity must be greater than zero");
         }
@@ -536,8 +597,12 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         availabilityRepository.saveAll(expiredSlots);
     }
 
-    private List<ResourceAvailabilityWindowResponse> findFullRemainingWindows(Resource resource, int quantity) {
-        List<ResourceAvailability> slots = availabilityRepository.findFutureActiveSlots(resource, LocalDateTime.now(), Pageable.unpaged());
+    private List<ResourceAvailabilityWindowResponse> findFullRemainingWindows(Resource resource, int quantity,
+                                                                              boolean includeSubscribersOnly) {
+        List<ResourceAvailability> slots = availabilityRepository.findFutureActiveSlots(resource, LocalDateTime.now(), Pageable.unpaged())
+                .stream()
+                .filter(slot -> includeSubscribersOnly || !Boolean.TRUE.equals(slot.getSubscribersOnly()))
+                .toList();
 
         List<ResourceAvailabilityWindowResponse> windows = new ArrayList<>();
         List<ResourceAvailability> currentWindow = new ArrayList<>();
