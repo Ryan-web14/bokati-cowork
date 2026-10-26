@@ -94,6 +94,16 @@ public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
             reason.put("failureMessage", ex.getResponseBodyAsString());
             return new MobileMoneyInitiationResponse(request.depositId(), "FAILED", message, reason);
         } catch (Exception ex) {
+            if (PawapaySigningUnavailableException.find(ex) != null) {
+                // Rien n'est parti chez PawaPay · un echec net, pas une issue a relire.
+                log.error("Depot PawaPay non envoye pour l'intention {} · {}", request.intentNumber(), ex.getMessage());
+                com.fasterxml.jackson.databind.node.ObjectNode reason =
+                        com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+                reason.put("failureCode", "SIGNING_UNAVAILABLE");
+                return new MobileMoneyInitiationResponse(request.depositId(), "FAILED",
+                        "Paiement mobile temporairement indisponible, réessayez plus tard ou choisissez un autre moyen de paiement",
+                        reason);
+            }
             log.error("Initiation PawaPay en erreur pour l'intention {}", request.intentNumber(), ex);
             return new MobileMoneyInitiationResponse(request.depositId(), "UNKNOWN", "En attente de confirmation de l'opérateur");
         }
@@ -143,6 +153,12 @@ public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
             return new MobileMoneyRefundResponse(request.providerReference(), refundId, "UNKNOWN",
                     "En attente de confirmation de l'opérateur");
         } catch (Exception ex) {
+            if (PawapaySigningUnavailableException.find(ex) != null) {
+                // Rien n'est parti · le remboursement est refuse net et peut etre relance une fois la cle corrigee.
+                log.error("Remboursement PawaPay non envoye pour {} · {}", request.providerReference(), ex.getMessage());
+                return new MobileMoneyRefundResponse(request.providerReference(), null, "FAILED",
+                        "Remboursement mobile temporairement indisponible : signature PawaPay non configurée");
+            }
             log.error("Remboursement PawaPay en erreur pour {}", request.providerReference(), ex);
             return new MobileMoneyRefundResponse(request.providerReference(), refundId, "UNKNOWN",
                     "En attente de confirmation de l'opérateur");

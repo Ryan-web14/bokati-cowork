@@ -206,18 +206,22 @@ public class PawapayRequestSigner {
     }
 
     /**
-     * Lit la cle privee PEM · le format d'OpenSSL ({@code EC PRIVATE KEY}, celui de
-     * {@code openssl ecparam -genkey}) comme le PKCS#8 ({@code PRIVATE KEY}).
+     * Lit la cle privee PEM · le format d'OpenSSL ({@code EC PRIVATE KEY}, {@code RSA PRIVATE KEY})
+     * comme le PKCS#8 ({@code PRIVATE KEY}).
      *
-     * <p>Les sauts de ligne ecrits {@code \n} sont acceptes · certaines interfaces de configuration
-     * ne gardent pas les vrais sauts de ligne d'une variable.</p>
+     * <p>Une variable d'environnement ne garde pas toujours la cle telle qu'elle a ete generee.
+     * Selon l'outil qui l'a recue (tableau de bord Heroku, fichier .env, CLI), on retrouve des sauts
+     * de ligne ecrits antislash-n, des guillemets autour, la cle aplatie sur une seule ligne avec des
+     * espaces, la cle sans ses lignes BEGIN et END, ou le PEM entier encode en base64. Tous ces cas
+     * sont ramenes a un PEM propre avant lecture ; le message d'erreur dit ce qui a ete vu, jamais
+     * le contenu de la cle.</p>
      */
     static PrivateKey parsePrivateKey(String pem) {
         if (pem == null || pem.isBlank()) {
             throw new IllegalStateException("La cle privee de signature PawaPay est vide "
                     + "(bokati.payment.pawaypay.signing.private-key)");
         }
-        String normalized = pem.trim().replace("\\n", "\n");
+        String normalized = normalizePem(pem);
         try (PEMParser parser = new PEMParser(new StringReader(normalized))) {
             Object parsed = parser.readObject();
             JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
@@ -233,9 +237,100 @@ public class PawapayRequestSigner {
             if (parsed instanceof PrivateKeyInfo info) {
                 return converter.getPrivateKey(info);
             }
-            throw new IllegalStateException("La cle de signature PawaPay n'est pas une cle privee PEM lisible");
-        } catch (IOException ex) {
-            throw new IllegalStateException("La cle de signature PawaPay est illisible", ex);
+            throw new IllegalStateException("La cle de signature PawaPay n'est pas une cle privee PEM lisible ("
+                    + describe(normalized, parsed) + ")");
+        } catch (IOException | RuntimeException ex) {
+            if (ex instanceof IllegalStateException state && state.getMessage() != null
+                    && state.getMessage().startsWith("La cle de signature PawaPay")) {
+                throw state;
+            }
+            throw new IllegalStateException("La cle de signature PawaPay est illisible ("
+                    + describe(normalized, null) + ")", ex);
         }
+    }
+
+    /** Ramene les formes abimees d'une cle PEM a un PEM de 64 colonnes, en-tete compris. */
+    static String normalizePem(String raw) {
+        String value = raw.trim();
+        if (value.length() >= 2 && (value.startsWith("\"") && value.endsWith("\"")
+                || value.startsWith("'") && value.endsWith("'"))) {
+            value = value.substring(1, value.length() - 1).trim();
+        }
+        value = value.replace("\\r\\n", "\n").replace("\\n", "\n").replace("\r\n", "\n").replace('\r', '\n');
+
+        // Le PEM entier encode en base64 · on le decode puis on recommence.
+        if (!value.contains("-----BEGIN")) {
+            // Une ligne END restee seule apres qu'on a retire la ligne BEGIN dit encore le format.
+            java.util.regex.Matcher end = java.util.regex.Pattern.compile("-----END ([A-Z0-9 ]+)-----").matcher(value);
+            String declared = end.find() ? end.group(1).trim() : null;
+            String compact = value.replaceAll("-----END [A-Z0-9 ]+-----", "").replaceAll("\\s", "");
+            byte[] der;
+            try {
+                der = Base64.getMimeDecoder().decode(compact);
+            } catch (IllegalArgumentException notBase64) {
+                return value;
+            }
+            String decoded = new String(der, StandardCharsets.US_ASCII);
+            if (decoded.contains("-----BEGIN")) {
+                return normalizePem(decoded);
+            }
+            return wrap(declared != null ? declared : detectDerType(der), compact);
+        }
+
+        // En-tete present, mais lignes possiblement aplaties ou espacees · on reconstruit.
+        java.util.regex.Matcher matcher = java.util.regex.Pattern
+                .compile("-----BEGIN ([A-Z0-9 ]+)-----(.*?)-----END \\1-----",java.util.regex.Pattern.DOTALL)
+                .matcher(value);
+        if (!matcher.find()) {
+            return value;
+        }
+        String type = matcher.group(1).trim();
+        String body = matcher.group(2);
+        // Un PEM chiffre porte des en-tetes Proc-Type / DEK-Info · on le laisse tel quel, il echouera
+        // avec un message clair plutot que d'etre corrompu.
+        if (body.contains(":")) {
+            return value;
+        }
+        return wrap(type, body.replaceAll("\\s", ""));
+    }
+
+    /**
+     * Le format d'une cle reduite a son corps · PKCS#8 ({@code PRIVATE KEY}), RSA PKCS#1
+     * ({@code RSA PRIVATE KEY}, celui d'« openssl genrsa ») ou EC SEC1 ({@code EC PRIVATE KEY}).
+     */
+    static String detectDerType(byte[] der) {
+        try {
+            org.bouncycastle.asn1.ASN1Sequence sequence = org.bouncycastle.asn1.ASN1Sequence.getInstance(der);
+            if (sequence.size() >= 3 && sequence.getObjectAt(1) instanceof org.bouncycastle.asn1.ASN1Sequence) {
+                return "PRIVATE KEY";
+            }
+            if (sequence.size() >= 9) {
+                return "RSA PRIVATE KEY";
+            }
+            return "EC PRIVATE KEY";
+        } catch (RuntimeException notAsn1) {
+            return "PRIVATE KEY";
+        }
+    }
+
+    private static String wrap(String type, String base64Body) {
+        StringBuilder out = new StringBuilder("-----BEGIN ").append(type).append("-----\n");
+        for (int i = 0; i < base64Body.length(); i += 64) {
+            out.append(base64Body, i, Math.min(base64Body.length(), i + 64)).append('\n');
+        }
+        return out.append("-----END ").append(type).append("-----\n").toString();
+    }
+
+    /** Ce qu'on peut dire d'une cle illisible sans jamais en reveler le contenu. */
+    private static String describe(String normalized, Object parsed) {
+        // Seul le nom de l'en-tete est repris · jamais une ligne entiere, qui peut contenir la cle
+        // quand celle-ci a ete aplatie sur une seule ligne.
+        java.util.regex.Matcher begin = java.util.regex.Pattern.compile("-----BEGIN ([A-Z0-9 ]{1,40})-----").matcher(normalized);
+        String header = begin.find() ? "BEGIN " + begin.group(1) : "absent";
+        String kind = parsed == null ? "aucun objet reconnu" : parsed.getClass().getSimpleName();
+        boolean encrypted = normalized.contains("ENCRYPTED") || normalized.contains("Proc-Type");
+        return "en-tete \"" + header + "\", "
+                + kind + (encrypted ? ", cle chiffree par mot de passe : fournir la cle en clair" : "")
+                + ", " + normalized.length() + " caracteres apres normalisation";
     }
 }
