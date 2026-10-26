@@ -41,6 +41,7 @@ class ClientPortalBookingEveningTest {
     @Mock private BookingService bookingService;
     @Mock private BookingAvailabilityService bookingAvailabilityService;
     @Mock private SubscriberAccess subscriberAccess;
+    @Mock private com.sni.bokaticowork.features.portal.resource.service.ClientResourceService clientResourceService;
     @InjectMocks private ClientPortalBookingService service;
 
     private Member member;
