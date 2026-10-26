@@ -101,9 +101,9 @@
             <span class="dur" th:text="${durationLabel}">4 h</span>
           </td>
         </tr>
-        <tr th:if="${resourceCapacity}">
-          <td class="r-key">Capacité</td>
-          <td class="r-val" th:text="${resourceCapacity} + ' personne(s)'"></td>
+        <tr th:if="${seatsLabel}">
+          <td class="r-key" th:text="${wholeResource} ? 'Réservation' : 'Places'">Places</td>
+          <td class="r-val" th:text="${seatsLabel}">2 places réservées sur 4</td>
         </tr>
         <tr th:if="${address}">
           <td class="r-key">Adresse</td>

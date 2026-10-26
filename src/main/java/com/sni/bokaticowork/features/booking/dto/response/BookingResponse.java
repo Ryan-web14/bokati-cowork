@@ -48,6 +48,12 @@ public record BookingResponse(
         Instant cancelledAt,
         Instant createdAt,
         List<BookingLineResponse> lines,
-        List<BookingParticipantResponse> participants
+        List<BookingParticipantResponse> participants,
+        /** Places de la ressource · a ne pas confondre avec {@code quantity}, ce qui est reserve. */
+        Integer resourceCapacity,
+        /** La piece est louee entiere · {@code quantity} compte alors des participants, pas des places. */
+        Boolean wholeResourceBooking,
+        /** Ce qui est reserve, pret a afficher · « 2 places réservées sur 4 », « Espace entier · 3 participants (12 places) ». */
+        String seatsLabel
 ) {
 }

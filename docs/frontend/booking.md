@@ -1243,3 +1243,16 @@ affiche avant confirmation est celui qui sera facture.
 - Afficher le montant estime en direct : les paliers de duree produisent des sauts que le
   formulaire seul ne laisse pas deviner.
 - `bookingUnit` est reserve a l'administration · ne pas l'exposer dans le parcours client.
+
+## Places réservées : ce qu'il faut afficher
+
+`quantity` ne veut pas dire la même chose selon la ressource. Ne jamais afficher la capacité de la ressource à la place de ce qui est réservé.
+
+| Champ | Sens |
+| --- | --- |
+| `quantity` | Places réservées (espace partagé) ou participants annoncés (pièce louée entière) |
+| `resourceCapacity` | Places de la ressource, pour information |
+| `wholeResourceBooking` | `true` : la pièce entière est réservée, `quantity` compte des participants |
+| `seatsLabel` | Le libellé prêt à afficher : « 2 places réservées sur 4 », « Espace entier · 3 participants (12 places) » |
+
+Les mêmes champs existent sur les réponses du portail client (`ClientBookingResponse`, `ClientBookingSummaryResponse`). L'e-mail, la page et le PDF de confirmation affichent `seatsLabel`.

@@ -25,6 +25,12 @@ public class ClientBookingSummaryResponse {
     private LocalDateTime endedAt;
     private Integer durationMinutes;
     private Integer quantity;
+    /** Ce qui est reserve, pret a afficher · « 2 places réservées sur 4 ». */
+    private String seatsLabel;
+    /** Places de la ressource · pas ce qui est reserve. */
+    private Integer resourceCapacity;
+    /** La piece est louee entiere · quantity compte alors des participants. */
+    private Boolean wholeResourceBooking;
     private ResourceBookingUnit bookingUnit;
     private BookingPaymentMode paymentMode;
     private BookingPaymentStatus paymentStatus;

@@ -126,7 +126,11 @@ public class BookingEmailNotifier {
         ctx.setVariable("durationLabel",  durationLabel);
         ctx.setVariable("duration",       durationLabel);
         ctx.setVariable("resourceType",   resolveResourceType(booking));
-        ctx.setVariable("resourceCapacity", resolveCapacity(booking));
+        // Ce qui est reserve, et non la capacite de la ressource · 2 places d'un bureau de 4
+        // s'affichaient « Capacité : 4 personne(s) », et le client croyait avoir le bureau entier.
+        BookingSeats seats = BookingSeats.of(booking);
+        ctx.setVariable("seatsLabel", seats.label());
+        ctx.setVariable("wholeResource", seats.wholeResource());
         ctx.setVariable("address",        resolveLocationLabel(booking));
         ctx.setVariable("city",           resolveZone(booking));
         BillingTaxRuleResolver.TaxProfile taxProfile = taxRuleResolver.defaultTaxProfile();
@@ -342,13 +346,6 @@ public class BookingEmailNotifier {
         }
     }
 
-    private Integer resolveCapacity(Booking booking) {
-        try {
-            return booking.getResource() != null ? booking.getResource().getCapacity() : null;
-        } catch (Exception ex) {
-            return null;
-        }
-    }
 
     private String resolveLocationLabel(Booking booking) {
         try {
