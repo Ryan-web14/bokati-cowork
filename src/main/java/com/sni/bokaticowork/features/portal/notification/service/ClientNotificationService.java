@@ -34,20 +34,13 @@ public class ClientNotificationService {
 
     @Transactional
     public NotificationMessageResponse markAsRead(Member member, String notificationNumber) {
-        NotificationMessageResponse notification = notificationService.markAsRead(notificationNumber);
-        verifyRecipient(member, notification);
-        return notification;
+        // Le destinataire est verifie avant l'ecriture · l'ancien ordre marquait d'abord, et ne
+        // s'en remettait qu'a l'annulation de la transaction quand la notification etait a un autre.
+        return notificationService.markAsReadFor(notificationNumber, member.getEmail());
     }
 
     @Transactional
     public int markAllRead(Member member) {
         return notificationService.markAllRead(member.getEmail());
-    }
-
-    private void verifyRecipient(Member member, NotificationMessageResponse notification) {
-        if (!member.getEmail().equalsIgnoreCase(notification.recipientEmail())) {
-            throw new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException(
-                    "Notification not found");
-        }
     }
 }

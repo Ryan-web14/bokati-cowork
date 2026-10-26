@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.subscription.subscription.service.support.pass;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.payment.dto.request.CreateWalletHoldRequest;
@@ -98,7 +99,7 @@ public class PassCreationOperator {
     // -----------------------------------------------------------------------------------------
 
     public Pass create(CreatePassRequest request) {
-        Pass replayed = replay(request.idempotencyKey());
+        Pass replayed = replay(request.idempotencyKey(), request.ownerType(), request.ownerCode());
         if (replayed != null) {
             return replayed;
         }
@@ -153,7 +154,7 @@ public class PassCreationOperator {
     // -----------------------------------------------------------------------------------------
 
     public Pass createFromPlan(String planCode, CreatePassPurchaseRequest request) {
-        Pass replayed = replay(request.idempotencyKey());
+        Pass replayed = replay(request.idempotencyKey(), request.ownerType(), request.ownerCode());
         if (replayed != null) {
             return replayed;
         }
@@ -215,12 +216,21 @@ public class PassCreationOperator {
     /**
      * Rend le pass deja cree sous cette cle, s'il existe. Sans cela un double envoi de la demande
      * produisait deux pass et deux factures, ce que le titulaire ne decouvrait qu'en les recevant.
+     *
+     * <p>Seulement a son titulaire · la cle etait cherchee sans lui, et un membre qui envoyait la
+     * cle d'un autre recevait son pass.</p>
      */
-    private Pass replay(String idempotencyKey) {
+    private Pass replay(String idempotencyKey, SubscriberType ownerType, String ownerCode) {
         if (!StringUtils.hasText(idempotencyKey)) {
             return null;
         }
-        return passRepository.findByIdempotencyKey(idempotencyKey.trim()).orElse(null);
+        Pass existing = passRepository.findByIdempotencyKey(idempotencyKey.trim()).orElse(null);
+        if (existing != null && (existing.getOwnerType() != ownerType
+                || ownerCode == null || !ownerCode.trim().equalsIgnoreCase(existing.getOwnerCode()))) {
+            throw new com.sni.bokaticowork.core.exception.customs.ConflictException(
+                    "pass", "this idempotency key is already used by another pass");
+        }
+        return existing;
     }
 
     private void writeCreationTrace(Pass pass) {

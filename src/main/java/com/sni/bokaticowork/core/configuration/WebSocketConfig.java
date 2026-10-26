@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.core.configuration;
 
+import com.sni.bokaticowork.security.config.CorsOrigins;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketAuthInterceptor authInterceptor;
     private final WebSocketSubscriptionInterceptor subscriptionInterceptor;
+
+    // Meme liste que l'API · voir CorsOrigins.
+    @Value("${app.security.cors.allowed-origins:*}")
+    private String corsAllowedOrigins;
 
     @Value("${bokati.websocket.use-stomp-relay:false}")
     private boolean useStompRelay;
@@ -137,7 +142,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(CorsOrigins.parse(corsAllowedOrigins).toArray(String[]::new))
                 .withSockJS()
                 .setHeartbeatTime(25_000);
     }

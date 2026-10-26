@@ -39,6 +39,14 @@ public interface NotificationService {
 
     NotificationMessageResponse markAsRead(String notificationNumber);
 
+    /**
+     * Marque comme lue une notification de ce destinataire, et seulement de lui.
+     *
+     * <p>Le destinataire est verifie avant l'ecriture · une notification d'un autre, ou inexistante,
+     * repond introuvable sans rien modifier.</p>
+     */
+    NotificationMessageResponse markAsReadFor(String notificationNumber, String recipientEmail);
+
     int markAllRead(String recipientEmail);
 
     NotificationTemplateResponse upsertTemplate(NotificationTemplateRequest request);

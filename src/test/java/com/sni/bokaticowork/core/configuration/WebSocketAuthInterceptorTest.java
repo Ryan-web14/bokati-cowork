@@ -48,13 +48,18 @@ class WebSocketAuthInterceptorTest {
 
     @BeforeEach
     void setUp() {
-        Users user = new Users();
-        user.setEmail("joel@example.com");
-        when(userDetailService.loadUserByUsername("joel@example.com")).thenReturn(new UserPrincipal(user));
+        when(userDetailService.loadUserByUsername("joel@example.com")).thenReturn(new UserPrincipal(user(true)));
         when(jwtService.isAccessToken(TOKEN)).thenReturn(true);
         when(jwtService.extractSessionId(TOKEN)).thenReturn("SES-1");
         when(jwtService.extractEmail(TOKEN)).thenReturn("joel@example.com");
         when(sessionService.isSessionRevoked("SES-1")).thenReturn(false);
+    }
+
+    private static Users user(boolean enabled) {
+        Users user = new Users();
+        user.setEmail("joel@example.com");
+        user.setIsAccountEnabled(enabled);
+        return user;
     }
 
     private Message<byte[]> connect(String authorization) {
@@ -132,6 +137,15 @@ class WebSocketAuthInterceptorTest {
         Message<byte[]> result = (Message<byte[]>) interceptor.preSend(connect("Basic abcdef"), null);
 
         assertThat(userOf(result)).isNull();
+    }
+
+    @Test
+    @DisplayName("Un compte désactivé ne rouvre pas de session, même avec un jeton encore valide")
+    void aDisabledAccountCannotConnect() {
+        when(userDetailService.loadUserByUsername("joel@example.com")).thenReturn(new UserPrincipal(user(false)));
+
+        assertThatThrownBy(() -> interceptor.preSend(connect("Bearer " + TOKEN), null))
+                .isInstanceOf(MessagingException.class);
     }
 
     @Test

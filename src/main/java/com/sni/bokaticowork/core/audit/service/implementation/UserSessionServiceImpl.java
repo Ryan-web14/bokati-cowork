@@ -136,6 +136,21 @@ public class UserSessionServiceImpl implements UserSessionService {
     }
 
     @Override
+    @Transactional
+    public void revokeAllForUser(Users user) {
+        invalidateSessionByUser(user);
+        tokenService.revokeAllTokenForUser(user.getId());
+    }
+
+    @Override
+    public void invalidateSessionByRefreshTokenHash(String refreshTokenHash) {
+        sessionRepo.findByRefreshTokenHash(refreshTokenHash).ifPresent(session -> {
+            markRevoked(session);
+            sessionRepo.save(session);
+        });
+    }
+
+    @Override
     public void invalidateOldestSessionByUser(Users user) {
         List<UserSession> sessions =
                 sessionRepo.findAllByUsers_IdAndRevokedFalseOrderByCreatedAtDesc(user.getId());
@@ -188,8 +203,8 @@ public class UserSessionServiceImpl implements UserSessionService {
             session.setRefreshTokenHash(refreshTokenHash);
             session.setExpiredAt(now.plusMillis(jwtService.getRefreshTokenExpiration()));
             session.setLastAccessAt(now);
-            session.setActive(true);
-            session.setRevoked(false);
+            // La session n'est plus remise a active ni des-revoquee ici · un rafraichissement
+            // rouvrait ainsi une session fermee par une deconnexion ou par un administrateur.
 
             sessionRepo.save(session);
 

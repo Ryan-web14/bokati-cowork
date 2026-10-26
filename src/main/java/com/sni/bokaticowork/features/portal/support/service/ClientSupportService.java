@@ -50,7 +50,7 @@ public class ClientSupportService {
                 request.relatedType(),
                 request.relatedCode()
         );
-        return ticketService.create(internal);
+        return clientView(ticketService.create(internal));
     }
 
     @Transactional(readOnly = true)
@@ -59,15 +59,19 @@ public class ClientSupportService {
                                                                    TicketCategory category,
                                                                    String searchText,
                                                                    Pageable pageable) {
-        return ticketService.search(status, null, OWNER_TYPE, member.getMemberId(),
+        PaginatedResponse<SupportTicketResponse> page = ticketService.search(status, null, OWNER_TYPE, member.getMemberId(),
                 category, null, null, null, null, searchText, pageable);
+        if (page.getData() != null) {
+            page.setData(page.getData().stream().map(ClientSupportService::clientView).toList());
+        }
+        return page;
     }
 
     @Transactional(readOnly = true)
     public SupportTicketResponse getTicket(Member member, String ticketNumber) {
         SupportTicketResponse ticket = ticketService.get(ticketNumber);
         verifyOwnership(member, ticket);
-        return ticket;
+        return clientView(ticket);
     }
 
     @Transactional
@@ -82,7 +86,7 @@ public class ClientSupportService {
                 request.content(),
                 false
         );
-        return ticketService.addMessage(ticketNumber, msg);
+        return clientView(ticketService.addMessage(ticketNumber, msg));
     }
 
     @Transactional
@@ -115,7 +119,7 @@ public class ClientSupportService {
     public SupportTicketResponse closeTicket(Member member, String ticketNumber) {
         SupportTicketResponse ticket = ticketService.get(ticketNumber);
         verifyOwnership(member, ticket);
-        return ticketService.close(ticketNumber);
+        return clientView(ticketService.close(ticketNumber));
     }
 
     @Transactional
@@ -123,12 +127,46 @@ public class ClientSupportService {
                                              SubmitCsatRequest request) {
         SupportTicketResponse ticket = ticketService.get(ticketNumber);
         verifyOwnership(member, ticket);
-        return ticketService.submitCsat(ticketNumber, request);
+        return clientView(ticketService.submitCsat(ticketNumber, request));
     }
 
     @Transactional(readOnly = true)
     public OwnerTicketSummaryResponse getSummary(Member member) {
-        return ticketService.ownerSummary(OWNER_TYPE, member.getMemberId());
+        OwnerTicketSummaryResponse summary = ticketService.ownerSummary(OWNER_TYPE, member.getMemberId());
+        return new OwnerTicketSummaryResponse(summary.ownerType(), summary.ownerCode(), summary.openTickets(),
+                summary.slaBreaches(), summary.avgCsatScore(), summary.atRisk(),
+                summary.recentTickets() == null ? null
+                        : summary.recentTickets().stream().map(ClientSupportService::clientView).toList());
+    }
+
+    /**
+     * Le ticket tel qu'un client doit le voir.
+     *
+     * <p>Le portail rendait le ticket de l'equipe tel quel · les notes internes entre agents, les
+     * pieces jointes internes, l'agent assigne et le motif d'escalade arrivaient chez le client.
+     * Ils sont retires ici, a la sortie, pour toutes les reponses du portail.</p>
+     */
+    static SupportTicketResponse clientView(SupportTicketResponse ticket) {
+        if (ticket == null) {
+            return null;
+        }
+        return new SupportTicketResponse(
+                ticket.ticketNumber(), ticket.title(), ticket.description(), ticket.status(), ticket.priority(),
+                ticket.category(), ticket.ownerType(), ticket.ownerCode(), ticket.contactName(),
+                ticket.contactEmail(), ticket.contactPhone(),
+                null,
+                ticket.relatedType(), ticket.relatedCode(), ticket.firstResponseDueAt(), ticket.resolutionDueAt(),
+                ticket.firstRespondedAt(), ticket.resolvedAt(), ticket.closedAt(), ticket.csatScore(),
+                ticket.csatComment(), ticket.csatSubmittedAt(), ticket.escalationLevel(), ticket.escalatedAt(),
+                null,
+                ticket.createdAt(), ticket.updatedAt(),
+                ticket.messages() == null ? null : ticket.messages().stream()
+                        .filter(message -> !Boolean.TRUE.equals(message.internal()))
+                        .toList(),
+                ticket.attachments() == null ? null : ticket.attachments().stream()
+                        .filter(attachment -> !Boolean.TRUE.equals(attachment.internal()))
+                        .toList(),
+                ticket.tags());
     }
 
     private void verifyOwnership(Member member, SupportTicketResponse ticket) {

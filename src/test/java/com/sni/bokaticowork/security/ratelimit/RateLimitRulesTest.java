@@ -30,6 +30,7 @@ class RateLimitRulesTest {
         rules = new RateLimitRules();
         Map.of(
                 "loginMax", 5,
+                "registerMax", 5,
                 "otpMax", 3,
                 "callbackMax", 120, "checkinMax", 120,
                 "publicWriteMax", 10,
@@ -40,6 +41,7 @@ class RateLimitRulesTest {
         ).forEach((field, value) -> ReflectionTestUtils.setField(rules, field, value));
         Map.of(
                 "loginWindow", 60L,
+                "registerWindow", 3600L,
                 "otpWindow", 600L,
                 "callbackWindow", 60L, "checkinWindow", 60L,
                 "publicWriteWindow", 600L,
@@ -79,6 +81,7 @@ class RateLimitRulesTest {
     @DisplayName("Chaque route tombe sur le plafond attendu")
     @CsvSource({
             "POST, " + ApiPath.V1 + "/auth/login, login:, 5",
+            "POST, " + ApiPath.V1 + "/auth/register, register:, 5",
             "POST, " + ApiPath.V1 + "/auth/ott/request, otp:, 3",
             "POST, " + ApiPath.V1 + "/auth/password-reset/form, otp:, 3",
             "POST, " + ApiPath.V1 + "/auth/unlock-account, otp:, 3",

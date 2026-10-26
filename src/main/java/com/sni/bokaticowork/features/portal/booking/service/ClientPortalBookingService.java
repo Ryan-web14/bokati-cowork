@@ -33,6 +33,7 @@ public class ClientPortalBookingService {
 
     private final BookingService bookingService;
     private final BookingAvailabilityService bookingAvailabilityService;
+    private final com.sni.bokaticowork.features.portal.resource.service.ClientResourceService clientResourceService;
     private final com.sni.bokaticowork.features.portal.context.SubscriberAccess subscriberAccess;
     private final com.sni.bokaticowork.features.payment.cash.service.CashPaymentDeclarationService cashDeclarationService;
 
@@ -60,6 +61,9 @@ public class ClientPortalBookingService {
 
     @Transactional
     public ClientBookingResponse createBooking(Member member, ClientCreateBookingRequest request) {
+        // Une ressource retiree du portail ne se reserve pas depuis le portail · seule sa page
+        // etait masquee, la reservation par son code passait.
+        clientResourceService.assertPortalVisible(request.getResourceCode());
         // Le seul chemin ou le membre reserve pour lui-meme · l'accueil et le systeme (confirmation
         // apres paiement) passent ailleurs, et ont le droit de reserver une soiree pour quiconque.
         subscriberAccess.assertMayBook(member, request.getResourceCode(), request.getStartedAt(), request.getEndedAt());
@@ -130,6 +134,7 @@ public class ClientPortalBookingService {
     }
 
     public BookingAvailabilityResponse checkAvailability(Member member, ClientCheckAvailabilityRequest request) {
+        clientResourceService.assertPortalVisible(request.getResourceCode());
         BookingAvailabilityRequest req = new BookingAvailabilityRequest(
                 request.getResourceCode(),
                 member.getMemberId(),

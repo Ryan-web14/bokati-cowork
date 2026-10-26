@@ -53,6 +53,9 @@ public class SecurityConfig {
     @Value("${app.documents.public-preview-enabled:false}")
     private boolean publicDocumentPreviewEnabled;
 
+    @Value("${app.security.cors.allowed-origins:*}")
+    private String corsAllowedOrigins;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -135,7 +138,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOriginPatterns(CorsOrigins.parse(corsAllowedOrigins));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("*"));

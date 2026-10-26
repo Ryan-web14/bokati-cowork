@@ -2,7 +2,11 @@ package com.sni.bokaticowork.security.admin.role.controller;
 
 import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
+import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.security.admin.role.model.Role;
+import com.sni.bokaticowork.security.admin.support.PrivilegeChangeNotifier;
+import com.sni.bokaticowork.security.admin.support.PrivilegeGuard;
 import com.sni.bokaticowork.security.admin.role.dto.request.RoleRequest;
 import com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse;
 import com.sni.bokaticowork.security.admin.role.service.interfaces.RoleService;
@@ -30,13 +34,25 @@ import java.util.List;
 public class RoleAdminController {
 
     private final RoleService roleService;
+    private final PrivilegeGuard privilegeGuard;
+    private final PrivilegeChangeNotifier privilegeChangeNotifier;
+
+    /** Modifier, activer, desactiver ou supprimer un role · memes regles, une seule alerte. */
+    private PrivilegeGuard.Actor guardEdit(String name) {
+        Role role = roleService.getRoleByNameService(name)
+                .orElseThrow(() -> new ResourceNotFoundException("Role introuvable : " + name));
+        return privilegeGuard.assertMayEditRole(role, null);
+    }
 
     @PostMapping
     @Audited(module = "ROLE", action = "CREATE", ressource = "role")
     @Idempotent(operation = "ROLE_CREATE")
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<RoleResponse> create(@Valid @RequestBody RoleRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(roleService.addRole(request));
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayManageRoles();
+        RoleResponse created = roleService.addRole(request);
+        privilegeChangeNotifier.notify(actor.email(), "Role cree", request.getName(), "sans permission a la creation");
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{name}")
@@ -44,6 +60,7 @@ public class RoleAdminController {
     @Idempotent(operation = "ROLE_UPDATE")
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<RoleResponse> update(@PathVariable String name, @Valid @RequestBody RoleRequest request) {
+        guardEdit(name);
         return ResponseEntity.ok(roleService.updateRole(name, request));
     }
 
@@ -70,7 +87,9 @@ public class RoleAdminController {
     @Idempotent(operation = "ROLE_ACTIVATE", requestBodyArgIndex = -1)
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> activate(@PathVariable String name) {
+        PrivilegeGuard.Actor actor = guardEdit(name);
         roleService.activateRole(name);
+        privilegeChangeNotifier.notify(actor.email(), "Role active", name, "ses permissions reprennent effet");
         return ResponseEntity.noContent().build();
     }
 
@@ -79,7 +98,9 @@ public class RoleAdminController {
     @Idempotent(operation = "ROLE_DEACTIVATE", requestBodyArgIndex = -1)
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> deactivate(@PathVariable String name) {
+        PrivilegeGuard.Actor actor = guardEdit(name);
         roleService.deactivateRole(name);
+        privilegeChangeNotifier.notify(actor.email(), "Role desactive", name, "ses porteurs perdent ses permissions");
         return ResponseEntity.noContent().build();
     }
 
@@ -87,7 +108,9 @@ public class RoleAdminController {
     @Audited(module = "ROLE", action = "DELETE", ressource = "role")
     @PreAuthorize("hasAuthority('SYSTEM:ROLES')")
     public ResponseEntity<Void> delete(@PathVariable String name) {
+        PrivilegeGuard.Actor actor = guardEdit(name);
         roleService.deleteRole(name);
+        privilegeChangeNotifier.notify(actor.email(), "Role supprime", name, "");
         return ResponseEntity.noContent().build();
     }
 }

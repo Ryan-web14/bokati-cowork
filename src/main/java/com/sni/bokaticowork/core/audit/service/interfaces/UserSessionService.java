@@ -31,6 +31,15 @@ public interface UserSessionService {
     void invalidateAllSessions();
     void invalidateSessionByToken(String token);
     void invalidateSessionByUser(Users user);
+
+    /**
+     * Ferme tout, partout · les sessions, donc les jetons d'acces deja emis, et les jetons de
+     * rafraichissement. Apres un changement de mot de passe, une desactivation, ou un vol detecte.
+     */
+    void revokeAllForUser(Users user);
+
+    /** Ferme la session qui porte ce jeton de rafraichissement, donne par son hash. */
+    void invalidateSessionByRefreshTokenHash(String refreshTokenHash);
     void invalidateOldestSessionByUser(Users user);
     List<UserSessionResponse> getAllSessions();
     public List<UserSessionResponse> getAllActiveSessionsForUser(Users user);

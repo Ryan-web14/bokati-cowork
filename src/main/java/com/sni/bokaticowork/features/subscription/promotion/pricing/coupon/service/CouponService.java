@@ -148,6 +148,13 @@ public class CouponService {
             // Un rafraichissement de page ne doit pas empiler les retenues : le meme panier garde
             // la sienne, avec le montant reactualise.
             CouponReservation reservation = existing.get();
+            // Mais seulement pour son abonne · la reference de panier vient de l'appelant, et un
+            // autre membre qui la reprenait reecrivait la retenue sans passer l'eligibilite.
+            // Une retenue ancienne sans titulaire reste rafraichissable · seule celle d'un autre
+            // titulaire est refusee.
+            if (reservation.getSubscriberCode() != null && !sameSubscriber(reservation, subscriberType, subscriberCode)) {
+                throw new BadRequestException("Ce panier n'est pas le vôtre");
+            }
             reservation.setDiscountAmount(discountAmount);
             reservation.setExpiresAt(Instant.now().plus(Duration.ofMinutes(reservationMinutes)));
             return reservationRepository.save(reservation);
@@ -217,6 +224,30 @@ public class CouponService {
                 ? reserve(code, documentReference, subscriberType, subscriberCode, discountAmount, currency, actor).getCartReference()
                 : held.getFirst().getCartReference();
         capture(cartReference);
+    }
+
+    /**
+     * Retire un code du panier d'un abonne · lui seul, et seulement ce code.
+     *
+     * <p>Le retrait du portail rendait toutes les retenues du panier, a qui que soit le panier, et
+     * ignorait le code demande · un membre pouvait vider le panier d'un autre en connaissant sa
+     * reference.</p>
+     */
+    @Transactional
+    public int releaseFor(String cartReference, String code, String subscriberType, String subscriberCode, String reason) {
+        List<CouponReservation> reservations = reservationRepository.findActiveByCart(cartReference).stream()
+                .filter(reservation -> sameSubscriber(reservation, subscriberType, subscriberCode))
+                .filter(reservation -> code == null || (reservation.getCoupon() != null
+                        && code.trim().equalsIgnoreCase(reservation.getCoupon().getCode())))
+                .toList();
+        reservations.forEach(reservation -> releaseOne(reservation, reason, CouponReservationStatus.RELEASED));
+        return reservations.size();
+    }
+
+    private static boolean sameSubscriber(CouponReservation reservation, String subscriberType, String subscriberCode) {
+        return subscriberType != null && subscriberCode != null
+                && subscriberType.equalsIgnoreCase(reservation.getSubscriberType())
+                && subscriberCode.equalsIgnoreCase(reservation.getSubscriberCode());
     }
 
     /** Rend les codes retenus par un panier abandonné ou modifié. */

@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.security.admin.provisioning.controller;
 
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.security.admin.support.PrivilegeChangeNotifier;
+import com.sni.bokaticowork.security.admin.support.PrivilegeGuard;
 import com.sni.bokaticowork.security.admin.provisioning.service.interfaces.UserProvisioningService;
 import com.sni.bokaticowork.security.admin.user.dto.request.UserRequest;
 import com.sni.bokaticowork.security.admin.user.dto.response.UserResponse;
@@ -22,6 +24,8 @@ public class UserProvisioningController {
 
     private final UserProvisioningService userProvisioningService;
     private final UserService userService;
+    private final PrivilegeGuard privilegeGuard;
+    private final PrivilegeChangeNotifier privilegeChangeNotifier;
 
     @PostMapping("/bootstrap-admin")
     public ResponseEntity<UserResponse> bootstrapAdmin(@Valid @RequestBody UserRequest request) {
@@ -32,7 +36,10 @@ public class UserProvisioningController {
 
     @PostMapping("/staff")
     public ResponseEntity<UserResponse> createStaff(@Valid @RequestBody UserRequest request, Authentication authentication) {
+        // Un compte STAFF ouvre l'administration · c'est une attribution de role comme une autre.
+        PrivilegeGuard.Actor actor = privilegeGuard.assertMayManageRoles();
         var user = userProvisioningService.createStaff(request, actor(authentication));
+        privilegeChangeNotifier.notify(actor.email(), "Compte d'administration cree", user.getEmail(), "Role : STAFF");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.getUserByEmail(user.getEmail()));
     }
