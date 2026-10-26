@@ -78,6 +78,21 @@ public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
             // qu'il ne s'est rien passe. Declarer un echec ici ferait payer deux fois le client.
             log.warn("PawaPay injoignable a l'initiation pour l'intention {} · {}", request.intentNumber(), ex.getMessage());
             return new MobileMoneyInitiationResponse(request.depositId(), "UNKNOWN", "En attente de confirmation de l'opérateur");
+        } catch (org.springframework.web.client.HttpClientErrorException ex) {
+            // Un 4xx : PawaPay a recu la demande et l'a refusee, aucun prelevement ne part. Ce n'est
+            // pas une issue inconnue · la ranger en UNKNOWN laissait une cle API invalide ou une
+            // signature refusee passer inapercue pendant 24 heures de relances.
+            int code = ex.getStatusCode().value();
+            log.error("PawaPay refuse la demande de depot pour l'intention {} · HTTP {} · {}",
+                    request.intentNumber(), code, ex.getResponseBodyAsString());
+            String message = code == 401 || code == 403
+                    ? "Paiement mobile indisponible : l'opérateur refuse notre authentification ou notre signature"
+                    : "Demande refusée par l'opérateur";
+            com.fasterxml.jackson.databind.node.ObjectNode reason =
+                    com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+            reason.put("failureCode", "HTTP_" + code);
+            reason.put("failureMessage", ex.getResponseBodyAsString());
+            return new MobileMoneyInitiationResponse(request.depositId(), "FAILED", message, reason);
         } catch (Exception ex) {
             log.error("Initiation PawaPay en erreur pour l'intention {}", request.intentNumber(), ex);
             return new MobileMoneyInitiationResponse(request.depositId(), "UNKNOWN", "En attente de confirmation de l'opérateur");

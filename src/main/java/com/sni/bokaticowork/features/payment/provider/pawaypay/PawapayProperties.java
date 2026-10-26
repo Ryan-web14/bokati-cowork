@@ -38,4 +38,30 @@ public class PawapayProperties {
     private String paymentPageLanguage = "fr";
     /** Frontend page the customer is redirected to after the hosted Payment Page (depositId + status appended) */
     private String paymentPageResultUrl = "";
+
+    /** Signature des requetes envoyees a PawaPay · voir {@link PawapayRequestSigner}. */
+    private Signing signing = new Signing();
+
+    @Getter
+    @Setter
+    public static class Signing {
+        /**
+         * La cle privee, au format PEM · celle dont la cle publique est deposee chez PawaPay.
+         *
+         * <p>Vide, rien n'est signe · PawaPay refuse alors les demandes financieres si les appels
+         * signes sont exiges dans son tableau de bord. Jamais dans le depot : l'environnement seulement.</p>
+         */
+        private String privateKey;
+        /** L'identifiant de la cle, tel que PawaPay l'attend dans {@code keyid}. */
+        private String keyId;
+        /**
+         * ecdsa-p256-sha256, ecdsa-p384-sha384, rsa-pss-sha512 ou rsa-v1_5-sha256 · vide, celui qui
+         * convient a la cle (rsa-pss-sha512 pour une cle RSA, ecdsa-p256-sha256 pour une cle EC).
+         */
+        private String algorithm;
+
+        public boolean isConfigured() {
+            return privateKey != null && !privateKey.isBlank();
+        }
+    }
 }

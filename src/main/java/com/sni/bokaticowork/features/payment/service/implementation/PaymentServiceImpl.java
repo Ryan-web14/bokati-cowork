@@ -520,12 +520,19 @@ public class PaymentServiceImpl implements PaymentService {
         return processedBy;
     }
 
+    /**
+     * Un refus de l'operateur est trace (remboursement FAILED) et ne rend pas la transaction
+     * englobante irrecuperable · l'annulation d'une reservation qui rembourse en passant echouait
+     * entiere sur un simple refus de PawaPay.
+     */
     @Override
+    @Transactional(noRollbackFor = MobileMoneyRefundRejectedException.class)
     public PaymentTransactionResponse refund(String transactionNumber, RefundPaymentRequest request) {
         return refundOrReverse(transactionNumber, request, PaymentTransactionStatus.REFUNDED);
     }
 
     @Override
+    @Transactional(noRollbackFor = MobileMoneyRefundRejectedException.class)
     public PaymentTransactionResponse reverse(String transactionNumber, RefundPaymentRequest request) {
         return refundOrReverse(transactionNumber, request, PaymentTransactionStatus.REVERSED);
     }
@@ -849,7 +856,14 @@ public class PaymentServiceImpl implements PaymentService {
             throw new BadRequestException("Refund amount cannot exceed remaining refundable amount (" + remaining + ")");
         }
         boolean fullyRefunded = refundedSoFar.add(amount).compareTo(original.getAmount()) >= 0;
-        allocationService.reverseAllocations(original, amount);
+        boolean asyncMobileMoney = original.getPaymentMethod() == PaymentMethod.MOBILE_MONEY
+                && StringUtils.hasText(original.getProviderReference());
+        // Un remboursement mobile money n'est acquis qu'a la confirmation de PawaPay · rouvrir la
+        // facture des maintenant la laissait impayee quand l'operateur refusait, alors que l'argent
+        // etait toujours chez nous. L'affectation est annulee au remboursement confirme.
+        if (!asyncMobileMoney) {
+            allocationService.reverseAllocations(original, amount);
+        }
         if (original.getPaymentMethod() == PaymentMethod.WALLET) {
             WalletAccount wallet = walletService.serviceWallet(original.getProviderReference());
             // Pas de cle d'idempotence : une transaction peut etre remboursee en plusieurs fois.
@@ -900,9 +914,16 @@ public class PaymentServiceImpl implements PaymentService {
         return mapper.toTransactionResponse(refund);
     }
 
+    /**
+     * Ce qui est deja rembourse ou en train de l'etre.
+     *
+     * <p>Un remboursement en cours (PROCESSING) compte · sans lui, un second remboursement pouvait
+     * partir pendant que le premier attendait l'operateur, et le client etait rembourse deux fois.</p>
+     */
     private BigDecimal refundedTotal(String transactionNumber) {
         return transactionRepository.findAllByOriginalTransactionNumber(transactionNumber).stream()
-                .filter(t -> t.getStatus() == PaymentTransactionStatus.REFUNDED || t.getStatus() == PaymentTransactionStatus.REVERSED)
+                .filter(t -> t.getStatus() == PaymentTransactionStatus.REFUNDED || t.getStatus() == PaymentTransactionStatus.REVERSED
+                        || t.getStatus() == PaymentTransactionStatus.PROCESSING)
                 .map(PaymentTransaction::getAmount)
                 .filter(java.util.Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -950,6 +971,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         if ("NOT_IMPLEMENTED".equals(response.status())) {
             // Noop provider in use · finalize synchronously
+            allocationService.reverseAllocations(original, amount);
             refund.setStatus(targetStatus);
             refund.setPaidAt(Instant.now());
             transactionRepository.save(refund);
@@ -968,7 +990,14 @@ public class PaymentServiceImpl implements PaymentService {
         refund.setStatus(PaymentTransactionStatus.FAILED);
         refund.setFailureReason(response.message());
         transactionRepository.save(refund);
-        throw new BadRequestException("Mobile money refund rejected: " + response.message());
+        throw new MobileMoneyRefundRejectedException("Remboursement refusé par l'opérateur : " + response.message());
+    }
+
+    /** L'operateur a refuse le remboursement · rien n'a bouge, le refus est trace. */
+    public static class MobileMoneyRefundRejectedException extends BadRequestException {
+        public MobileMoneyRefundRejectedException(String message) {
+            super(message);
+        }
     }
 
     private PaymentTransaction saveSucceededTransaction(PaymentIntent intent, PaymentMethod method, String provider, String providerReference, String receivedBy, String metadataJson) {

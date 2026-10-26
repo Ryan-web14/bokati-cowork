@@ -14,6 +14,7 @@ public enum CongoCorrespondent {
     AIRTEL_COD("Airtel Money RDC", "COD", "CDF"),
     VODACOM_MPESA_COD("Vodacom M-Pesa RDC", "COD", "CDF"),
     AIRTEL_GAB("Airtel Money Gabon", "GAB", "XAF"),
+    MTN_MOMO_CMR("MTN Mobile Money Cameroun", "CMR", "XAF"),
 
     // Backward-compatible aliases kept for existing clients.
     AIRTEL_OAPI_COG("Airtel Money Congo", "COG", "XAF", "AIRTEL_COG"),
@@ -69,6 +70,7 @@ public enum CongoCorrespondent {
             case "CIV" -> "+225";
             case "SEN" -> "+221";
             case "GAB" -> "+241";
+            case "CMR" -> "+237";
             default -> null;
         };
     }

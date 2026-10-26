@@ -9,5 +9,5 @@ public record PawapayRefundResponse(
         String depositId,
         String status,          // ACCEPTED or REJECTED
         String created,
-        JsonNode rejectionReason
+        @com.fasterxml.jackson.annotation.JsonAlias("failureReason") JsonNode rejectionReason
 ) {}

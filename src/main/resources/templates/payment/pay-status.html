@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Suivi du paiement · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+
+  <div id="state" aria-live="polite"
+       th:attr="data-phase=${deposit.phase},data-url=@{${stateUrl}}">
+    <p class="state todo" id="state-tag">En cours</p>
+    <h1 id="state-title">Validez le paiement sur votre téléphone</h1>
+    <p class="lede" id="state-text">Une demande de paiement a été envoyée à votre téléphone. Saisissez votre code secret mobile money pour la valider. Cette page se met à jour toute seule.</p>
+  </div>
+
+  <dl class="rows">
+    <div><dt>Montant</dt><dd th:text="${#numbers.formatDecimal(deposit.amount, 1, 'WHITESPACE', 0, 'POINT')} + ' ' + ${deposit.currency}">10 XAF</dd></div>
+    <div><dt>Référence</dt><dd class="mono" th:text="${deposit.depositId}">ref</dd></div>
+  </dl>
+
+  <a class="quiet" id="retry" th:href="@{${retryUrl}}" hidden>Réessayer le paiement</a>
+
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+<script>
+  (function () {
+    var box = document.getElementById('state');
+    var tag = document.getElementById('state-tag');
+    var title = document.getElementById('state-title');
+    var text = document.getElementById('state-text');
+    var retry = document.getElementById('retry');
+    var url = box.getAttribute('data-url');
+
+    var screens = {
+      WAITING_FOR_PAYER: ['todo', 'En cours', 'Validez le paiement sur votre téléphone',
+        'Une demande de paiement a été envoyée à votre téléphone. Saisissez votre code secret mobile money pour la valider. Cette page se met à jour toute seule.'],
+      CONFIRMING: ['todo', 'En cours', 'Confirmation en cours',
+        'Votre opérateur confirme le paiement. Cela prend en général moins d’une minute.'],
+      COMPLETED: ['ok', 'Payé', 'Paiement confirmé',
+        'Merci. Votre paiement est enregistré, vous recevrez votre reçu par e-mail.'],
+      FAILED: ['ko', 'Non abouti', 'Le paiement n’a pas abouti',
+        'Aucun montant n’a été prélevé. Vérifiez votre solde ou votre numéro, puis réessayez.'],
+      UNRESOLVED: ['todo', 'En vérification', 'Paiement en cours de vérification',
+        'Votre opérateur n’a pas encore donné de réponse définitive. Ne relancez pas le paiement : nous vérifions et vous tenons informé.']
+    };
+
+    function show(phase, message) {
+      var s = screens[phase] || screens.CONFIRMING;
+      tag.className = 'state ' + s[0];
+      tag.textContent = s[1];
+      title.textContent = s[2];
+      text.textContent = (phase === 'FAILED' && message) ? message : s[3];
+      retry.hidden = phase !== 'FAILED';
+    }
+
+    var done = { COMPLETED: true, FAILED: true, UNRESOLVED: true };
+    var started = Date.now();
+
+    function poll() {
+      fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (state) {
+          if (state) {
+            show(state.phase, state.message);
+            if (done[state.phase]) return;
+          }
+          // Toutes les 3 s les deux premieres minutes, puis toutes les 10 s.
+          setTimeout(poll, Date.now() - started < 120000 ? 3000 : 10000);
+        })
+        .catch(function () { setTimeout(poll, 10000); });
+    }
+
+    var initial = box.getAttribute('data-phase');
+    show(initial, null);
+    if (!done[initial]) setTimeout(poll, 3000);
+  })();
+</script>
+</body>
+</html>

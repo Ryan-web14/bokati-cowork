@@ -142,4 +142,29 @@ class MobileMoneyInitiationGuardTest {
         assertThatCode(() -> guard.check(intent(null), request("06 123 45 67", CongoCorrespondent.MTN_MOMO_COG),
                 new BigDecimal("5000"))).doesNotThrowAnyException();
     }
+    @Test
+    @DisplayName("Un numero d'un autre pays est refuse · un +243 avec un operateur du Congo-Brazzaville")
+    void numberFromAnotherCountryIsRefused() {
+        assertThatThrownBy(() -> guard.check(intent("XAF"), request("+243 81 234 5678", CongoCorrespondent.MTN_MOMO_COG),
+                BigDecimal.TEN)).hasMessageContaining("+242");
+    }
+
+    @Test
+    @DisplayName("Un operateur non active sur le compte est refuse, les autres passent")
+    void disabledOperatorIsRefused() {
+        ReflectionTestUtils.setField(guard, "enabledProviders", "MTN_MOMO_COG,AIRTEL_COG");
+
+        assertThatThrownBy(() -> guard.check(intent("XOF"), request("07 12 34 56 78", CongoCorrespondent.WAVE_CIV),
+                BigDecimal.TEN)).hasMessageContaining("pas disponible");
+        assertThatCode(() -> guard.check(intent("XAF"), request("06 123 45 67", CongoCorrespondent.MTN_MOMO_COG),
+                BigDecimal.TEN)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("MTN Cameroun prend l'indicatif +237")
+    void cameroonUsesItsDialCode() {
+        assertThat(CongoCorrespondent.MTN_MOMO_CMR.dialCode()).isEqualTo("+237");
+        assertThatCode(() -> guard.check(intent("XAF"), request("677 12 34 56", CongoCorrespondent.MTN_MOMO_CMR),
+                BigDecimal.TEN)).doesNotThrowAnyException();
+    }
 }

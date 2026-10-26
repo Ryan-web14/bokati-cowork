@@ -57,6 +57,7 @@ public class MobileMoneySupervisionService {
     private final PawapayProperties properties;
     private final OutboxService outboxService;
     private final MobileMoneyClientNotifier clientNotifier;
+    private final MobileMoneyAlertRecipients alertRecipients;
 
     // ---------------------------------------------------------------------------------------
     // Relecture
@@ -134,7 +135,8 @@ public class MobileMoneySupervisionService {
     private void alertUnresolved(PawapayDeposit deposit) {
         log.warn("Depot {} sans reponse definitive apres {} h · a rapprocher",
                 deposit.getDepositId(), properties.getPollingMaxHours());
-        for (String recipient : Recipients.split(properties.getAlertEmail())) {
+        // A defaut d'adresse configuree, les super-administrateurs · l'alerte ne part plus vers personne.
+        for (String recipient : alertRecipients.recipients()) {
             Map<String, Object> payload = new HashMap<>();
             payload.put("adminEmail", recipient);
             payload.put("templateCode", "MOBILE_MONEY_DEPOSIT_UNRESOLVED");

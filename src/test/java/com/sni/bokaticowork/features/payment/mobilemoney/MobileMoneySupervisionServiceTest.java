@@ -51,6 +51,7 @@ class MobileMoneySupervisionServiceTest {
     @Mock private PawapayDepositService depositService;
     @Mock private OutboxService outboxService;
     @Mock private com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyClientNotifier clientNotifier;
+    @Mock private com.sni.bokaticowork.security.admin.role.repository.RoleUserRepository roleUserRepository;
 
     private PawapayProperties properties;
     private MobileMoneySupervisionService supervision;
@@ -61,7 +62,8 @@ class MobileMoneySupervisionServiceTest {
         properties.setPollingMaxHours(24);
         properties.setAlertEmail("tresorerie@elleaose.com, finance@elleaose.com");
         supervision = new MobileMoneySupervisionService(depositRepository, callbackRepository, provider,
-                callbackProcessor, depositService, properties, outboxService, clientNotifier);
+                callbackProcessor, depositService, properties, outboxService, clientNotifier,
+                new com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyAlertRecipients(properties, roleUserRepository));
     }
 
     private PawapayDeposit deposit(String status, Instant createdAt) {
@@ -181,7 +183,23 @@ class MobileMoneySupervisionServiceTest {
     }
 
     @Test
-    @DisplayName("Sans adresse configuree, on n'envoie rien · mais le depot est quand meme marque")
+    @DisplayName("Sans adresse configuree, l'alerte part aux super-administrateurs, et plus vers personne")
+    void unresolvedAlertFallsBackToSuperAdmins() {
+        properties.setAlertEmail("");
+        when(roleUserRepository.findEnabledHolderEmails("SUPER_ADMIN")).thenReturn(java.util.List.of("direction@elleaose.com"));
+        when(provider.checkStatus("dep-1"))
+                .thenReturn(new MobileMoneyStatusResponse("dep-1", "PROCESSING", "en attente"));
+        PawapayDeposit old = deposit("PROCESSING", Instant.now().minus(30, ChronoUnit.HOURS));
+        when(depositService.waitedTooLong(old)).thenReturn(true);
+
+        supervision.settle(old);
+
+        verify(outboxService).publish(eq("MOBILE_MONEY_DEPOSIT_UNRESOLVED"), eq("PAYMENT"),
+                eq("dep-1:direction@elleaose.com"), any());
+    }
+
+    @Test
+    @DisplayName("Sans adresse configuree ni super-administrateur, on n'envoie rien · mais le depot est quand meme marque")
     void marksUnresolvedEvenWithoutARecipient() {
         properties.setAlertEmail("");
         when(provider.checkStatus("dep-1"))

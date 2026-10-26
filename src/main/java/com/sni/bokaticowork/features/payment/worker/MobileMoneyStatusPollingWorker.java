@@ -34,6 +34,7 @@ public class MobileMoneyStatusPollingWorker {
 
     private final MobileMoneySupervisionService supervision;
     private final PawapayDepositService depositService;
+    private final com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyRefundSupervision refundSupervision;
 
     /** Ce qu'une passe a donne · utile aux tests et au journal. */
     public record Sweep(int checked, int settled, int unresolved) {
@@ -46,6 +47,11 @@ public class MobileMoneyStatusPollingWorker {
             if (sweep.checked() > 0) {
                 log.info("Depots mobile money · {} verifie(s), {} tranche(s), {} sans reponse",
                         sweep.checked(), sweep.settled(), sweep.unresolved());
+            }
+            // Les remboursements aussi · un rappel de remboursement perdu le laissait en cours a vie.
+            int refunds = refundSupervision.sweep(BATCH);
+            if (refunds > 0) {
+                log.info("Remboursements mobile money · {} tranche(s) par relecture", refunds);
             }
         } catch (Exception ex) {
             log.error("MobileMoneyStatusPollingWorker failed: {}", ex.getMessage(), ex);

@@ -48,6 +48,7 @@ public class PawapayDepositService {
     private final PawapayProperties properties;
     private final ObjectMapper objectMapper;
     private final PaymentMapper paymentMapper;
+    private final MobileMoneyInitiationGuard initiationGuard;
 
     /**
      * Le depot deja en cours pour cette intention et ce numero, s'il y en a un.
@@ -274,6 +275,9 @@ public class PawapayDepositService {
     public List<MobileMoneyProviderOptionResponse> providers() {
         return Arrays.stream(CongoCorrespondent.values())
                 .filter(CongoCorrespondent::selectable)
+                // Seulement les operateurs actives sur le compte · proposer Wave ou un pays non
+                // ouvert menait a un refus de PawaPay apres que le client a saisi son numero.
+                .filter(initiationGuard::isEnabled)
                 .map(provider -> new MobileMoneyProviderOptionResponse(
                         provider.name(),
                         provider.getDisplayName(),
