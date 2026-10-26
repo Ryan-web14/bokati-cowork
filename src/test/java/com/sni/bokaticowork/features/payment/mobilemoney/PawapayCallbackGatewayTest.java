@@ -55,6 +55,10 @@ class PawapayCallbackGatewayTest {
     private PawapayCallbackGateway gateway;
 
     private static final String DEPOSIT_BODY = "{\"depositId\":\"dep-1\",\"status\":\"COMPLETED\"}";
+    private static final PawapaySignatureVerifier.CallbackRequest SIGNED = new PawapaySignatureVerifier.CallbackRequest(
+            "POST", java.util.List.of("app.elleaose.com"), "/sni/api/v1/payments/mobile-money/pawapay/callback",
+            java.util.Map.of("Signature", "sig-pp=:abc:", "Signature-Input", "sig-pp=(\"@method\")"),
+            DEPOSIT_BODY.getBytes());
 
     @BeforeEach
     void setUp() {
@@ -68,9 +72,9 @@ class PawapayCallbackGatewayTest {
     @DisplayName("Un rappel arrive avant l'enregistrement du depot est mis en attente, sans rien ecrire")
     void defersACallbackForADepositNotYetCommitted() {
         when(depositService.known("dep-1")).thenReturn(false);
-        when(verifier.verify(DEPOSIT_BODY, "sha256=abc")).thenReturn(true);
+        when(verifier.verify(SIGNED)).thenReturn(true);
 
-        assertThat(gateway.receiveDeposit(DEPOSIT_BODY, "sha256=abc", "10.0.0.1"))
+        assertThat(gateway.receiveDeposit(DEPOSIT_BODY, SIGNED, "10.0.0.1"))
                 .isEqualTo(PawapayCallback.Outcome.DEFERRED);
 
         verify(callbackProcessor, never()).process(any());
@@ -80,9 +84,9 @@ class PawapayCallbackGatewayTest {
     @Test
     @DisplayName("Une signature valide suffit · le corps du rappel fait foi")
     void processesASignedCallback() {
-        when(verifier.verify(DEPOSIT_BODY, "sha256=abc")).thenReturn(true);
+        when(verifier.verify(SIGNED)).thenReturn(true);
 
-        assertThat(gateway.receiveDeposit(DEPOSIT_BODY, "sha256=abc", "10.0.0.1"))
+        assertThat(gateway.receiveDeposit(DEPOSIT_BODY, SIGNED, "10.0.0.1"))
                 .isEqualTo(PawapayCallback.Outcome.PROCESSED);
 
         ArgumentCaptor<PawapayCallbackPayload> captor = ArgumentCaptor.forClass(PawapayCallbackPayload.class);
@@ -96,7 +100,7 @@ class PawapayCallbackGatewayTest {
     @Test
     @DisplayName("Sans signature, c'est l'operateur qui tranche · pas le corps recu")
     void reconfirmsAnUnsignedCallbackWithTheProvider() {
-        when(verifier.verify(anyString(), any())).thenReturn(false);
+        when(verifier.verify(any())).thenReturn(false);
         when(provider.checkStatus("dep-1"))
                 .thenReturn(new MobileMoneyStatusResponse("dep-1", "SUCCEEDED", "ok", null, "prov-9"));
 
@@ -111,7 +115,7 @@ class PawapayCallbackGatewayTest {
     @Test
     @DisplayName("Un rappel forge qui annonce un paiement que l'operateur dement n'encaisse rien")
     void ignoresAForgedCallback() {
-        when(verifier.verify(anyString(), any())).thenReturn(false);
+        when(verifier.verify(any())).thenReturn(false);
         when(provider.checkStatus("dep-1"))
                 .thenReturn(new MobileMoneyStatusResponse("dep-1", "NOT_FOUND", "inconnu"));
 
@@ -124,7 +128,7 @@ class PawapayCallbackGatewayTest {
     @Test
     @DisplayName("Un depot encore en cours chez l'operateur est remis a plus tard, sans ecriture")
     void defersAPendingDeposit() {
-        when(verifier.verify(anyString(), any())).thenReturn(false);
+        when(verifier.verify(any())).thenReturn(false);
         when(provider.checkStatus("dep-1"))
                 .thenReturn(new MobileMoneyStatusResponse("dep-1", "PROCESSING", "en attente"));
 
@@ -138,7 +142,7 @@ class PawapayCallbackGatewayTest {
     @Test
     @DisplayName("Un operateur injoignable ne fait rien echouer · le worker reprendra")
     void defersWhenTheProviderIsUnreachable() {
-        when(verifier.verify(anyString(), any())).thenReturn(false);
+        when(verifier.verify(any())).thenReturn(false);
         when(provider.checkStatus("dep-1")).thenThrow(new PawapayClient.ProviderUnreachableException("injoignable", null));
 
         assertThat(gateway.receiveDeposit(DEPOSIT_BODY, null, "10.0.0.1"))
@@ -151,7 +155,7 @@ class PawapayCallbackGatewayTest {
     @Test
     @DisplayName("Un corps illisible est consigne, pas avale en silence")
     void recordsAnUnreadableBody() {
-        assertThat(gateway.receiveDeposit("pas du json", "sha256=abc", "10.0.0.1"))
+        assertThat(gateway.receiveDeposit("pas du json", SIGNED, "10.0.0.1"))
                 .isEqualTo(PawapayCallback.Outcome.FAILED);
 
         verify(journal).close(eq(7L), eq(null), eq(null), eq(PawapayCallback.VerifiedVia.NONE),
@@ -162,7 +166,7 @@ class PawapayCallbackGatewayTest {
     @Test
     @DisplayName("Un rappel sans identifiant ne designe rien · il ne fait rien")
     void ignoresACallbackWithoutADepositId() {
-        assertThat(gateway.receiveDeposit("{\"status\":\"COMPLETED\"}", "sha256=abc", "10.0.0.1"))
+        assertThat(gateway.receiveDeposit("{\"status\":\"COMPLETED\"}", SIGNED, "10.0.0.1"))
                 .isEqualTo(PawapayCallback.Outcome.IGNORED);
 
         verify(callbackProcessor, never()).process(any());
@@ -171,11 +175,11 @@ class PawapayCallbackGatewayTest {
     @Test
     @DisplayName("Un echec de traitement laisse une trace · un paiement perdu doit pouvoir s'expliquer")
     void recordsAProcessingFailure() {
-        when(verifier.verify(anyString(), any())).thenReturn(true);
+        when(verifier.verify(any())).thenReturn(true);
         org.mockito.Mockito.doThrow(new IllegalStateException("base indisponible"))
                 .when(callbackProcessor).process(any());
 
-        assertThat(gateway.receiveDeposit(DEPOSIT_BODY, "sha256=abc", "10.0.0.1"))
+        assertThat(gateway.receiveDeposit(DEPOSIT_BODY, SIGNED, "10.0.0.1"))
                 .isEqualTo(PawapayCallback.Outcome.FAILED);
 
         verify(journal).close(eq(7L), eq("dep-1"), eq("COMPLETED"), eq(PawapayCallback.VerifiedVia.NONE),
@@ -187,7 +191,7 @@ class PawapayCallbackGatewayTest {
     void reconfirmsAnUnsignedRefund() {
         PawapayClient client = org.mockito.Mockito.mock(PawapayClient.class);
         when(clientProvider.getIfAvailable()).thenReturn(client);
-        when(verifier.verify(anyString(), any())).thenReturn(false);
+        when(verifier.verify(any())).thenReturn(false);
         when(client.getRefundStatus("ref-1"))
                 .thenReturn(new PawapayClient.DepositStatus("ref-1", true, "COMPLETED", null, null, null));
 
@@ -201,7 +205,7 @@ class PawapayCallbackGatewayTest {
     @DisplayName("Sans acces a l'operateur, un remboursement non signe reste sans effet")
     void ignoresAnUnsignedRefundWithoutAProviderClient() {
         when(clientProvider.getIfAvailable()).thenReturn(null);
-        when(verifier.verify(anyString(), any())).thenReturn(false);
+        when(verifier.verify(any())).thenReturn(false);
 
         assertThat(gateway.receiveRefund("{\"refundId\":\"ref-1\",\"status\":\"COMPLETED\"}", null, "10.0.0.1"))
                 .isEqualTo(PawapayCallback.Outcome.IGNORED);

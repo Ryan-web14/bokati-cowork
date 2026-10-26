@@ -154,7 +154,6 @@ bokati:
     pawaypay:
       enabled: ${PAWAYPAY_ENABLED:true}
       api-key: ${PAWAYPAY_API_KEY:}            # jamais de valeur par défaut dans le dépôt
-      callback-secret: ${PAWAYPAY_CALLBACK_SECRET:}
       connect-timeout-ms: 5000
       read-timeout-ms: 20000
       polling-delay-ms: 60000                  # cadence du worker
@@ -165,8 +164,36 @@ bokati:
       test-endpoint-enabled: false             # vrai en développement seulement
 ```
 
-Sans `callback-secret`, le module reste correct mais chaque rappel coûte un appel d'API
-supplémentaire pour reconfirmer le statut. Configurer le secret côté PawaPay économise cet appel.
+## Rappels signés (RFC 9421)
+
+PawaPay ne signe pas ses rappels par HMAC : `callback-secret` est ignoré. Une fois les rappels
+signés activés dans le tableau de bord PawaPay, chaque rappel porte `Signature`,
+`Signature-Input` et `Content-Digest`, vérifiés avec les clés publiques de PawaPay
+(`GET /v2/public-key/http`, gardées en mémoire et relues au plus toutes les cinq minutes quand une
+clé inconnue se présente).
+
+- Le condensat doit correspondre aux octets exacts du corps et être couvert par la signature.
+- La signature ne doit pas avoir expiré (`expires`, cinq minutes de tolérance d'horloge).
+- `@authority` est essayé avec `X-Forwarded-Host`, `Host` et l'hôte de `callback-base-url`.
+- ECDSA est accepté en DER et en forme brute r||s ; RSA-PSS SHA-512 et RSA v1.5 SHA-256 aussi.
+
+Un rappel non signé, ou dont la signature ne se vérifie pas, n'est jamais rejeté : son statut est
+relu chez PawaPay avec notre clé d'API, et seule cette relecture fait foi. La signature épargne
+donc un appel, elle ne conditionne pas l'encaissement.
+
+## Confirmation : montant, devise, trop-perçu, concurrence
+
+- Une confirmation dont le montant ou la devise diffère du dépôt ne solde rien : le dépôt passe
+  `UNRESOLVED` avec `failureCode = AMOUNT_MISMATCH`, les super-administrateurs sont prévenus,
+  et un agent tranche depuis l'outil de résolution. Un montant absent (résolution manuelle) ne
+  bloque pas.
+- Ce qui dépasse le solde d'une facture (source `BILLING_DOCUMENT`, `MULTI_BILLING_DOCUMENT`,
+  `PAYABLE_RECOVERY`) est crédité au portefeuille du client (`OVERPAYMENT_CREDIT`, une seule
+  fois par transaction).
+- La transaction est verrouillée (`SELECT ... FOR UPDATE`) le temps du traitement : un rappel,
+  la relecture programmée et un agent ne peuvent plus encaisser deux fois le même dépôt.
+- Un rappel arrivé avant que le dépôt soit validé en base est mis `DEFERRED`, puis le statut
+  est relu sitôt la transaction d'initiation validée.
 
 ## Migrations
 
@@ -180,7 +207,7 @@ supplémentaire pour reconfirmer le statut. Configurer le secret côté PawaPay 
 
 1. Révoquer la clé API PawaPay qui figurait en clair dans `application-dev.yml` et dans `.env`,
    en créer une nouvelle, la poser en `PAWAYPAY_API_KEY`.
-2. Configurer un secret de rappel dans PawaPay, le poser en `PAWAYPAY_CALLBACK_SECRET`.
+2. Activer les rappels signés dans le tableau de bord PawaPay (aucun secret à poser chez nous).
 3. Vérifier l'URL de rappel enregistrée chez PawaPay :
    `APP_BASE_URL` + `/sni/api/v1/payments/mobile-money/pawapay/callback`.
 4. Renseigner `PAWAYPAY_ALERT_EMAIL`.

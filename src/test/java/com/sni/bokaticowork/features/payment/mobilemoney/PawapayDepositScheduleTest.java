@@ -1,7 +1,5 @@
 package com.sni.bokaticowork.features.payment.mobilemoney;
 
-import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayProperties;
-import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapaySignatureVerifier;
 import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayDepositService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,33 +25,5 @@ class PawapayDepositScheduleTest {
             long seconds = ReflectionTestUtils.invokeMethod(PawapayDepositService.class, "backoffSeconds", attempt);
             assertThat(seconds).isEqualTo(3600L);
         }
-    }
-
-    @Test
-    @DisplayName("Sans secret configure, aucune signature n'est reputee valide")
-    void signatureIsNeverTrustedWithoutASecret() {
-        PawapayProperties properties = new PawapayProperties();
-        properties.setCallbackSecret("");
-        PawapaySignatureVerifier verifier = new PawapaySignatureVerifier(properties);
-
-        assertThat(verifier.isEnabled()).isFalse();
-        assertThat(verifier.verify("{\"depositId\":\"dep-1\"}", "sha256=nimporte-quoi")).isFalse();
-        assertThat(verifier.verify("{\"depositId\":\"dep-1\"}", null)).isFalse();
-    }
-
-    @Test
-    @DisplayName("Avec un secret, seule la bonne empreinte passe")
-    void signatureIsCheckedAgainstTheSecret() {
-        PawapayProperties properties = new PawapayProperties();
-        properties.setCallbackSecret("s3cr3t");
-        PawapaySignatureVerifier verifier = new PawapaySignatureVerifier(properties);
-
-        String body = "{\"depositId\":\"dep-1\"}";
-        String expected = ReflectionTestUtils.invokeMethod(verifier, "hmacSha256", "s3cr3t", body);
-
-        assertThat(verifier.verify(body, expected)).isTrue();
-        assertThat(verifier.verify(body, "sha256=" + expected)).isTrue();
-        assertThat(verifier.verify(body, "sha256=00000000")).isFalse();
-        assertThat(verifier.verify("{\"depositId\":\"dep-2\"}", expected)).isFalse();
     }
 }

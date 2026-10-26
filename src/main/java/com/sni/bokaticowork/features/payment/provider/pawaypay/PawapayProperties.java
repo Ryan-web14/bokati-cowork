@@ -12,7 +12,11 @@ public class PawapayProperties {
     private String apiKey;
     private String baseUrl = "https://api.pawapay.io/";
     private String callbackBaseUrl = "http://localhost:8080";
-    /** HMAC-SHA256 shared secret from PawaPay dashboard · leave empty to skip verification */
+    /**
+     * Ignore · PawaPay ne signe pas ses rappels par HMAC. Les rappels se verifient avec ses cles
+     * publiques (RFC 9421), voir {@link PawapaySignatureVerifier}. Garde pour ne pas casser une
+     * configuration existante.
+     */
     private String callbackSecret;
     /** Delai de connexion a l'API, en ms · au-dela l'appel est « injoignable », jamais « refuse ». */
     private long connectTimeoutMs = 5_000;
