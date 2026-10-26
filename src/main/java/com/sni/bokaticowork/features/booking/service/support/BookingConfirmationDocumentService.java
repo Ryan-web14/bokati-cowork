@@ -8,6 +8,7 @@ import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.billing.service.support.BillingTaxRuleResolver;
 import com.sni.bokaticowork.features.booking.model.Booking;
 import com.sni.bokaticowork.features.booking.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,14 +37,13 @@ import java.util.Locale;
 @Transactional(readOnly = true)
 public class BookingConfirmationDocumentService {
 
-    private static final BigDecimal TVA_RATE = new BigDecimal("0.184");
-    private static final BigDecimal CENTIME_ADDITIONNEL_RATE = new BigDecimal("0.05");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH);
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     private final BookingRepository bookingRepository;
     private final SpringTemplateEngine templateEngine;
     private final Locale appLocale;
+    private final BillingTaxRuleResolver taxRuleResolver;
 
     @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
@@ -75,13 +75,13 @@ public class BookingConfirmationDocumentService {
         model.addAttribute("seatsLabel", BookingSeats.of(booking).label());
         model.addAttribute("address", resolveLocationLabel(booking));
         model.addAttribute("city", resolveZone(booking));
-        BigDecimal taxableBase = computeTaxIncludedBase(booking.getTotalAmount());
+        BookingTaxBreakdown taxes = BookingTaxBreakdown.of(booking.getTotalAmount(), taxRuleResolver.defaultTaxProfile());
         model.addAttribute("priceTTC", money(booking.getTotalAmount(), booking.getCurrency()));
-        model.addAttribute("priceHT", money(taxableBase, booking.getCurrency()));
-        model.addAttribute("priceTVA", money(computeTaxAmount(taxableBase, TVA_RATE), booking.getCurrency()));
-        model.addAttribute("priceCentimeAdditionnel", money(computeTaxAmount(taxableBase, CENTIME_ADDITIONNEL_RATE), booking.getCurrency()));
-        model.addAttribute("tvaPct", "18.4 %");
-        model.addAttribute("centimeAdditionnelPct", "5 %");
+        model.addAttribute("priceHT", money(taxes.base(), booking.getCurrency()));
+        model.addAttribute("priceTVA", money(taxes.vat(), booking.getCurrency()));
+        model.addAttribute("priceCentimeAdditionnel", money(taxes.additionalCent(), booking.getCurrency()));
+        model.addAttribute("tvaPct", taxes.vatPct());
+        model.addAttribute("centimeAdditionnelPct", taxes.additionalCentPct());
         model.addAttribute("paymentMode", booking.getPaymentMode() == null ? "" : booking.getPaymentMode().name());
         model.addAttribute("verificationCode", booking.getCheckInToken());
         model.addAttribute("scanUrl", scanUrl(booking));
@@ -106,13 +106,13 @@ public class BookingConfirmationDocumentService {
         ctx.setVariable("seatsLabel", BookingSeats.of(booking).label());
         ctx.setVariable("address", resolveLocationLabel(booking));
         ctx.setVariable("city", resolveZone(booking));
-        BigDecimal taxableBase = computeTaxIncludedBase(booking.getTotalAmount());
+        BookingTaxBreakdown taxes = BookingTaxBreakdown.of(booking.getTotalAmount(), taxRuleResolver.defaultTaxProfile());
         ctx.setVariable("priceTTC", money(booking.getTotalAmount(), booking.getCurrency()));
-        ctx.setVariable("priceHT", money(taxableBase, booking.getCurrency()));
-        ctx.setVariable("priceTVA", money(computeTaxAmount(taxableBase, TVA_RATE), booking.getCurrency()));
-        ctx.setVariable("priceCentimeAdditionnel", money(computeTaxAmount(taxableBase, CENTIME_ADDITIONNEL_RATE), booking.getCurrency()));
-        ctx.setVariable("tvaPct", "18.4 %");
-        ctx.setVariable("centimeAdditionnelPct", "5 %");
+        ctx.setVariable("priceHT", money(taxes.base(), booking.getCurrency()));
+        ctx.setVariable("priceTVA", money(taxes.vat(), booking.getCurrency()));
+        ctx.setVariable("priceCentimeAdditionnel", money(taxes.additionalCent(), booking.getCurrency()));
+        ctx.setVariable("tvaPct", taxes.vatPct());
+        ctx.setVariable("centimeAdditionnelPct", taxes.additionalCentPct());
         ctx.setVariable("paymentMode", booking.getPaymentMode() == null ? "" : booking.getPaymentMode().name());
         ctx.setVariable("verificationCode", booking.getCheckInToken());
         ctx.setVariable("qrDataUri", "data:image/png;base64," + Base64.getEncoder().encodeToString(qrBytes(booking)));
@@ -232,17 +232,6 @@ public class BookingConfirmationDocumentService {
         NumberFormat nf = NumberFormat.getIntegerInstance(Locale.FRENCH);
         String curr = StringUtils.hasText(currency) ? " " + currency.toUpperCase() : " XAF";
         return nf.format(amount.setScale(0, RoundingMode.HALF_UP)) + curr;
-    }
-
-    private BigDecimal computeTaxIncludedBase(BigDecimal totalAmount) {
-        if (totalAmount == null) return null;
-        BigDecimal divisor = BigDecimal.ONE.add(TVA_RATE).add(CENTIME_ADDITIONNEL_RATE);
-        return totalAmount.divide(divisor, 8, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal computeTaxAmount(BigDecimal taxableBase, BigDecimal rate) {
-        if (taxableBase == null || rate == null) return null;
-        return taxableBase.multiply(rate);
     }
 
     private String valueOrDefault(String value, String fallback) {

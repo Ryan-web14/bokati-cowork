@@ -38,7 +38,6 @@ import java.util.concurrent.CompletableFuture;
 public class BookingEmailNotifier {
 
     private static final String QR_CONTENT_ID = "qr-booking";
-    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.FRENCH);
@@ -152,17 +151,14 @@ public class BookingEmailNotifier {
         ctx.setVariable("address",        resolveLocationLabel(booking));
         ctx.setVariable("city",           resolveZone(booking));
         BillingTaxRuleResolver.TaxProfile taxProfile = taxRuleResolver.defaultTaxProfile();
-        BigDecimal taxableBase = computeTaxIncludedBase(booking.getTotalAmount(), taxProfile);
-        BigDecimal vat = computeVat(taxableBase, taxProfile);
+        BookingTaxBreakdown taxes = BookingTaxBreakdown.of(booking.getTotalAmount(), taxProfile);
         ctx.setVariable("priceTTC",       formatAmount(booking.getTotalAmount(), booking.getCurrency()));
-        ctx.setVariable("priceHT",        formatAmount(taxableBase, booking.getCurrency()));
-        ctx.setVariable("priceTVA",       formatAmount(vat, booking.getCurrency()));
-        // Le centime additionnel se calcule sur la TVA, non sur la base HT.
-        ctx.setVariable("priceCentimeAdditionnel",
-                formatAmount(percentage(vat, taxProfile.additionalCentRate()), booking.getCurrency()));
+        ctx.setVariable("priceHT",        formatAmount(taxes.base(), booking.getCurrency()));
+        ctx.setVariable("priceTVA",       formatAmount(taxes.vat(), booking.getCurrency()));
+        ctx.setVariable("priceCentimeAdditionnel", formatAmount(taxes.additionalCent(), booking.getCurrency()));
         ctx.setVariable("priceFees",      null);
-        ctx.setVariable("tvaPct",         formatRate(taxProfile.vatRate()));
-        ctx.setVariable("centimeAdditionnelPct", formatRate(taxProfile.additionalCentRate()));
+        ctx.setVariable("tvaPct",         taxes.vatPct());
+        ctx.setVariable("centimeAdditionnelPct", taxes.additionalCentPct());
         ctx.setVariable("paymentMethod",  formatPaymentMode(booking.getPaymentMode()));
         ctx.setVariable("paymentLast4",   null);
         ctx.setVariable("paymentDate",    null);
@@ -319,41 +315,6 @@ public class BookingEmailNotifier {
         NumberFormat fmt = NumberFormat.getIntegerInstance(Locale.FRENCH);
         String curr = StringUtils.hasText(currency) ? " " + currency.toUpperCase() : " XAF";
         return fmt.format(amount.setScale(0, java.math.RoundingMode.HALF_UP)) + curr;
-    }
-
-    /**
-     * Base HT reconstituee depuis le TTC.
-     *
-     * <p>Le diviseur etait {@code 1 + 0,184 + 0,05}, ce qui supposait deux taxes appliquees a la
-     * meme base HT et un taux de TVA de 18,4 % qui n'existe nulle part ailleurs. Le centime
-     * additionnel porte en realite sur la TVA : le TTC vaut donc HT x (1 + tva x (1 + centime)).
-     *
-     * <p>Le total tombait juste dans les deux cas, seule la ventilation etait fausse, ce qui a
-     * rendu l'erreur invisible : sur une reservation de 20 000, le courriel annoncait 810 de
-     * centime additionnel la ou la facture en portait 151.
-     */
-    private BigDecimal computeTaxIncludedBase(BigDecimal totalAmount,
-                                              BillingTaxRuleResolver.TaxProfile taxProfile) {
-        if (totalAmount == null) return null;
-        BigDecimal vatRate = taxProfile.vatRate().divide(HUNDRED, 8, java.math.RoundingMode.HALF_UP);
-        BigDecimal centRate = taxProfile.additionalCentRate().divide(HUNDRED, 8, java.math.RoundingMode.HALF_UP);
-        BigDecimal divisor = BigDecimal.ONE.add(vatRate.multiply(BigDecimal.ONE.add(centRate)));
-        return totalAmount.divide(divisor, 8, java.math.RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal computeVat(BigDecimal taxableBase, BillingTaxRuleResolver.TaxProfile taxProfile) {
-        return percentage(taxableBase, taxProfile.vatRate());
-    }
-
-    private BigDecimal percentage(BigDecimal base, BigDecimal ratePercent) {
-        if (base == null || ratePercent == null) return null;
-        return base.multiply(ratePercent).divide(HUNDRED, 8, java.math.RoundingMode.HALF_UP);
-    }
-
-    /** {@code 18} devient {@code 18 %}, {@code 18.50} devient {@code 18,5 %}. */
-    private String formatRate(BigDecimal ratePercent) {
-        if (ratePercent == null) return null;
-        return ratePercent.stripTrailingZeros().toPlainString().replace('.', ',') + " %";
     }
 
     private String formatPaymentMode(com.sni.bokaticowork.features.booking.enums.BookingPaymentMode mode) {
