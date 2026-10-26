@@ -10,7 +10,21 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PawapayDepositRepository extends JpaRepository<PawapayDeposit, Long> {
+public interface PawapayDepositRepository extends JpaRepository<PawapayDeposit, Long>,
+        org.springframework.data.jpa.repository.JpaSpecificationExecutor<PawapayDeposit> {
+
+    /** Nombre et montant des depots par statut, sur une periode · la synthese de l'outil admin. */
+    @org.springframework.data.jpa.repository.Query("""
+            select d.status, d.currency, count(d), coalesce(sum(d.amount), 0)
+            from PawapayDeposit d
+            where d.createdAt >= :from and d.createdAt < :to
+            group by d.status, d.currency
+            """)
+    List<Object[]> summarize(@org.springframework.data.repository.query.Param("from") java.time.Instant from,
+                             @org.springframework.data.repository.query.Param("to") java.time.Instant to);
+
+    List<PawapayDeposit> findByCreatedAtGreaterThanEqualAndCreatedAtLessThanOrderByCreatedAtDesc(
+            java.time.Instant from, java.time.Instant to, org.springframework.data.domain.Pageable pageable);
 
     Optional<PawapayDeposit> findByDepositId(String depositId);
 
