@@ -39,6 +39,27 @@ class BookingConfirmationEmailSeatsTest {
         assertThat(html).contains("Espace entier · 3 participants (12 places)").contains(">Réservation<");
     }
 
+    @Test
+    @DisplayName("Paiement attendu : le titre ne dit pas « confirmée »")
+    void pendingPaymentIsNotAnnouncedAsConfirmed() {
+        String html = render(Map.of("awaitingPayment", true, "headline", "Réservation enregistrée",
+                "statusLabel", "Paiement attendu", "paymentStatusLabel", "En attente de paiement",
+                "resourceName", "Open space", "recipientName", "Joel", "seatsLabel", "2 places réservées sur 4",
+                "seatsCount", 2));
+
+        assertThat(html).contains("Réservation enregistrée").contains("Paiement attendu")
+                .contains("dès réception du paiement").doesNotContain(">Réservation confirmée<");
+    }
+
+    @Test
+    @DisplayName("Couverte par un abonnement : pas de detail de prix")
+    void coveredBookingHidesPrice() {
+        String html = render(Map.of("covered", true, "resourceName", "Open space", "recipientName", "Joel",
+                "priceTTC", "10 000 XAF"));
+
+        assertThat(html).contains("couverte par votre abonnement").doesNotContain("Total TTC");
+    }
+
     private String render(Map<String, Object> model) {
         Context context = new Context(Locale.FRANCE);
         model.forEach(context::setVariable);

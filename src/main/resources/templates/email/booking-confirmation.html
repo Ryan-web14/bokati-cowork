@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title th:text="|Réservation confirmée · ${bookingNumber ?: 'Votre réservation'} · Elle A Osé|">Réservation confirmée · Elle A Osé</title>
+  <title th:text="|${headline ?: 'Réservation confirmée'} · ${bookingNumber ?: 'Votre réservation'} · Elle A Osé|">Réservation confirmée · Elle A Osé</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #F4F2EF; font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #2A2135; }
@@ -13,29 +13,56 @@
     .em-brand { font-size: 13px; font-weight: 700; letter-spacing: 3.5px; text-transform: uppercase; color: #fff; }
     .em-brand-sub { font-size: 8.5px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.30); margin-top: 5px; }
     .em-stripe { height: 3px; background: #C9A84C; }
-    .em-body { padding: 40px 40px 36px; }
-    .em-title { font-size: 21px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 10px; }
-    .em-intro { font-size: 14.5px; color: #5C4F6E; line-height: 1.7; margin-bottom: 32px; }
+    .em-body { padding: 36px 40px 36px; }
+
+    .pill { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; padding: 6px 12px; border-radius: 999px; margin-bottom: 16px; }
+    .pill-ok { background: #E7F5EC; color: #1E7A45; }
+    .pill-wait { background: #FFF4DE; color: #9A6A00; }
+    .em-title { font-size: 23px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.3px; margin-bottom: 10px; }
+    .em-intro { font-size: 14.5px; color: #5C4F6E; line-height: 1.7; margin-bottom: 26px; }
     .em-intro strong { color: #1A0A2E; font-weight: 700; }
-    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #A99BBC; margin: 30px 0 6px; }
+
+    .ticket { border: 1px solid #ECE7F2; border-radius: 12px; overflow: hidden; }
+    .ticket-top { background: #FAF8FC; padding: 22px 24px 20px; border-bottom: 1px dashed #DCD3E6; }
+    .t-space { font-size: 18px; font-weight: 700; color: #1A0A2E; line-height: 1.3; }
+    .t-type { font-size: 12.5px; color: #8A7C9C; margin-top: 3px; }
+    .t-date { font-size: 15px; font-weight: 600; color: #1A0A2E; margin-top: 16px; }
+    .t-date::first-letter { text-transform: uppercase; }
+    .t-time { font-size: 26px; font-weight: 700; color: #1A0A2E; letter-spacing: -0.5px; margin-top: 4px; }
+    .t-time .arrow { color: #C9A84C; font-weight: 400; margin: 0 8px; }
+    .t-dur { display: inline-block; font-size: 12px; font-weight: 600; color: #8A7C9C; background: #fff; border: 1px solid #ECE7F2; border-radius: 6px; padding: 3px 8px; margin-left: 6px; vertical-align: middle; letter-spacing: 0; }
+    .t-seats { margin-top: 16px; }
+    .seat-badge { display: inline-block; background: #1A0A2E; color: #fff; font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 8px; }
+    .seat-badge .num { color: #C9A84C; font-size: 15px; }
+    .ticket-bottom { padding: 6px 24px; }
     .rows { width: 100%; border-collapse: collapse; }
     .rows tr { border-bottom: 1px solid #F0ECF6; }
     .rows tr:last-child { border-bottom: none; }
     .rows td { padding: 12px 0; vertical-align: top; }
     .r-key { font-size: 13px; color: #8A7C9C; width: 42%; }
     .r-val { font-size: 14px; font-weight: 600; color: #1A0A2E; text-align: right; line-height: 1.4; }
-    .r-sub { font-size: 12px; color: #A99BBC; font-weight: 400; margin-top: 2px; }
     .mono { font-family: "SF Mono", "Fira Code", Consolas, monospace; letter-spacing: 1px; }
-    .arrow { color: #A99BBC; margin: 0 7px; }
-    .dur { font-size: 12px; color: #A99BBC; margin-left: 6px; font-weight: 400; }
+    .st-ok { color: #1E7A45; }
+    .st-wait { color: #9A6A00; }
+
+    .section-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.4px; color: #A99BBC; margin: 30px 0 6px; }
     .total-row td { padding-top: 16px; border-top: 2px solid #1A0A2E; }
     .total-key { font-size: 13px; font-weight: 700; color: #1A0A2E; text-transform: uppercase; letter-spacing: 1px; }
     .total-val { font-size: 20px; font-weight: 700; color: #B8860B; text-align: right; letter-spacing: -.3px; }
-    .qr-wrap { text-align: center; padding: 8px 0 4px; }
-    .qr-img { display: inline-block; padding: 12px; background: #fff; border: 1px solid #ECE7F2; border-radius: 12px; }
-    .qr-ref { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 14px; font-weight: 700; color: #1A0A2E; letter-spacing: 2px; margin-top: 14px; }
-    .qr-code { font-size: 12px; color: #8A7C9C; margin-top: 4px; }
-    .qr-steps { font-size: 12.5px; color: #8A7C9C; line-height: 1.9; margin-top: 16px; text-align: left; }
+    .note { font-size: 13px; color: #5C4F6E; line-height: 1.65; background: #FAF8FC; border-radius: 10px; padding: 14px 16px; margin-top: 8px; }
+    .note-wait { background: #FFF8E8; color: #6B4E00; }
+
+    .access { border: 1px solid #ECE7F2; border-radius: 12px; padding: 22px 24px; margin-top: 8px; }
+    .access-table { width: 100%; border-collapse: collapse; }
+    .access-table td { vertical-align: middle; }
+    .qr-cell { width: 170px; padding-right: 20px; }
+    .qr-img { display: inline-block; padding: 8px; background: #fff; border: 1px solid #ECE7F2; border-radius: 10px; }
+    .qr-ref { font-family: "SF Mono", "Fira Code", Consolas, monospace; font-size: 15px; font-weight: 700; color: #1A0A2E; letter-spacing: 2px; }
+    .qr-code { font-size: 12.5px; color: #8A7C9C; margin-top: 4px; }
+    .qr-steps { font-size: 12.5px; color: #5C4F6E; line-height: 1.85; margin-top: 12px; }
+
+    .tips { font-size: 13px; color: #5C4F6E; line-height: 1.85; padding-left: 18px; }
+
     .cta-row { margin-top: 32px; }
     .cta-gold { display: block; background: #C9A84C; color: #1A0A2E; text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; padding: 16px; text-align: center; border-radius: 8px; margin-bottom: 10px; }
     .cta-ghost { display: block; text-align: center; color: #8A7C9C; text-decoration: none; font-size: 13px; font-weight: 600; padding: 12px; }
@@ -49,14 +76,18 @@
       .wrap { padding: 0; background: #fff; }
       .sheet { border-radius: 0; border: none; max-width: 100%; }
       .em-header { padding: 18px 24px; }
-      .em-body { padding: 30px 22px 28px; }
+      .em-body { padding: 28px 20px 28px; }
+      .ticket-top, .ticket-bottom, .access { padding-left: 18px; padding-right: 18px; }
+      .t-time { font-size: 22px; }
+      .qr-cell { display: block; width: 100%; padding: 0 0 14px; text-align: center; }
+      .access-table td { display: block; width: 100%; }
       .em-footer { padding: 18px 24px; }
     }
   </style>
 </head>
 <body>
 <div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
-     th:text="${preheader != null ? preheader : 'Votre réservation est confirmée. Les détails et le code d’accès sont dans ce message.'}">Votre réservation est confirmée. Les détails et le code d’accès sont dans ce message.</div>
+     th:text="${preheader} ?: |${resourceName} · ${bookingDate} · ${startTime} à ${endTime}|">Votre réservation est enregistrée.</div>
 <div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 <div class="wrap">
   <div class="sheet">
@@ -69,97 +100,132 @@
     <div class="em-stripe"></div>
 
     <div class="em-body">
-      <div class="em-title">Réservation confirmée</div>
-      <div class="em-intro">
-        Bonjour <strong th:text="${recipientName}">client</strong>, votre réservation est bien enregistrée.
-        Vous trouverez ci-dessous le récapitulatif et votre code d'accès.
+      <span th:class="${awaitingPayment} or ${awaitingApproval} ? 'pill pill-wait' : 'pill pill-ok'"
+            th:text="${statusLabel ?: 'Confirmée'}">Confirmée</span>
+      <div class="em-title" th:text="${headline ?: 'Réservation confirmée'}">Réservation confirmée</div>
+
+      <div class="em-intro" th:if="${awaitingApproval}">
+        Bonjour <strong th:text="${recipientName}">client</strong>, nous avons bien reçu votre demande.
+        Notre équipe la valide et vous écrit dès qu'elle est confirmée.
+      </div>
+      <div class="em-intro" th:if="${awaitingPayment}">
+        Bonjour <strong th:text="${recipientName}">client</strong>, votre créneau est retenu.
+        Il sera confirmé dès réception du paiement.
+      </div>
+      <div class="em-intro" th:unless="${awaitingPayment} or ${awaitingApproval}">
+        Bonjour <strong th:text="${recipientName}">client</strong>, tout est prêt pour vous accueillir.
+        Voici le récapitulatif et votre code d'accès.
       </div>
 
-      <div class="section-lbl">Votre réservation</div>
-      <table role="presentation" class="rows">
-        <tr>
-          <td class="r-key">Référence</td>
-          <td class="r-val mono" th:text="${bookingNumber}">BKG-000001</td>
-        </tr>
-        <tr>
-          <td class="r-key">Espace</td>
-          <td class="r-val">
-            <span th:text="${resourceName}">Bureau Privé</span>
-            <div class="r-sub" th:if="${resourceType}" th:text="${resourceType}">Bureau privé</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="r-key">Date</td>
-          <td class="r-val" th:text="${bookingDate ?: startedAt}"></td>
-        </tr>
-        <tr>
-          <td class="r-key">Horaires</td>
-          <td class="r-val">
-            <span th:text="${startTime}">09:00</span>
-            <span class="arrow">à</span>
-            <span th:text="${endTime}">13:00</span>
-            <span class="dur" th:text="${durationLabel}">4 h</span>
-          </td>
-        </tr>
-        <tr th:if="${seatsLabel}">
-          <td class="r-key" th:text="${wholeResource} ? 'Réservation' : 'Places'">Places</td>
-          <td class="r-val" th:text="${seatsLabel}">2 places réservées sur 4</td>
-        </tr>
-        <tr th:if="${address}">
-          <td class="r-key">Adresse</td>
-          <td class="r-val" th:text="${address}"></td>
-        </tr>
-      </table>
+      <!-- L'essentiel d'un coup d'oeil : quoi, quand, combien de places -->
+      <div class="ticket">
+        <div class="ticket-top">
+          <div class="t-space" th:text="${resourceName}">Open space</div>
+          <div class="t-type" th:if="${resourceType}" th:text="${resourceType}">Bureau partagé</div>
+          <div class="t-date" th:text="${bookingDate ?: startedAt}">lundi 26 octobre 2026</div>
+          <div class="t-time">
+            <span th:text="${startTime}">09:00</span><span class="arrow">&rarr;</span><span th:text="${endTime}">13:00</span>
+            <span class="t-dur" th:if="${!#strings.isEmpty(durationLabel)}" th:text="${durationLabel}">4 h</span>
+          </div>
+          <div class="t-seats" th:if="${seatsLabel}">
+            <span class="seat-badge" th:text="${seatsLabel}">2 places réservées sur 4</span>
+          </div>
+        </div>
+        <div class="ticket-bottom">
+          <table role="presentation" class="rows">
+            <tr>
+              <td class="r-key">Référence</td>
+              <td class="r-val mono" th:text="${bookingNumber}">BKG-000001</td>
+            </tr>
+            <tr th:if="${seatsLabel}">
+              <td class="r-key" th:text="${wholeResource} ? 'Réservation' : 'Places'">Places</td>
+              <td class="r-val" th:text="${wholeResource} ? 'Espace privatisé' : (${seatsCount} ?: 1) + (${seatsCount != null and seatsCount > 1} ? ' places' : ' place')">2 places</td>
+            </tr>
+            <tr th:if="${address}">
+              <td class="r-key">Adresse</td>
+              <td class="r-val" th:text="${address}">Brazzaville</td>
+            </tr>
+            <tr th:if="${paymentStatusLabel}">
+              <td class="r-key">Règlement</td>
+              <td th:class="${awaitingPayment} ? 'r-val st-wait' : 'r-val st-ok'" th:text="${paymentStatusLabel}">Payé</td>
+            </tr>
+          </table>
+        </div>
+      </div>
 
-      <div class="section-lbl">Détail du prix</div>
-      <table role="presentation" class="rows">
-        <tr>
-          <td class="r-key" th:text="|${resourceName} × ${durationLabel}|">Base HT</td>
-          <td class="r-val" th:text="${priceHT}"></td>
-        </tr>
-        <tr th:if="${priceFees}">
-          <td class="r-key">Frais de réservation</td>
-          <td class="r-val" th:text="${priceFees}"></td>
-        </tr>
-        <tr>
-          <td class="r-key" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</td>
-          <td class="r-val" th:text="${priceTVA}"></td>
-        </tr>
-        <tr th:if="${priceCentimeAdditionnel}">
-          <td class="r-key" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
-          <td class="r-val" th:text="${priceCentimeAdditionnel}"></td>
-        </tr>
-        <tr class="total-row">
-          <td class="total-key">Total TTC</td>
-          <td class="total-val" th:text="${priceTTC}"></td>
-        </tr>
-      </table>
+      <th:block th:if="${covered}">
+        <div class="section-lbl">Prix</div>
+        <div class="note">Cette réservation est couverte par votre abonnement ou votre pass. Rien n'est à régler.</div>
+      </th:block>
 
-      <div class="section-lbl">Paiement</div>
-      <table role="presentation" class="rows">
-        <tr>
-          <td class="r-key">Mode</td>
-          <td class="r-val" th:text="${paymentMethod}"></td>
-        </tr>
-        <tr th:if="${!#strings.isEmpty(paymentDate)}">
-          <td class="r-key">Date</td>
-          <td class="r-val" th:text="${paymentDate}"></td>
-        </tr>
-      </table>
+      <th:block th:unless="${covered}">
+        <div class="section-lbl">Détail du prix</div>
+        <table role="presentation" class="rows">
+          <tr>
+            <td class="r-key" th:text="|${resourceName} · ${durationLabel}|">Base HT</td>
+            <td class="r-val" th:text="${priceHT}"></td>
+          </tr>
+          <tr th:if="${priceFees}">
+            <td class="r-key">Frais de réservation</td>
+            <td class="r-val" th:text="${priceFees}"></td>
+          </tr>
+          <tr>
+            <td class="r-key" th:text="|TVA (${tvaPct ?: '18.4 %'})|">TVA</td>
+            <td class="r-val" th:text="${priceTVA}"></td>
+          </tr>
+          <tr th:if="${priceCentimeAdditionnel}">
+            <td class="r-key" th:text="|Centime additionnel (${centimeAdditionnelPct ?: '5 %'})|">Centime additionnel</td>
+            <td class="r-val" th:text="${priceCentimeAdditionnel}"></td>
+          </tr>
+          <tr class="total-row">
+            <td class="total-key">Total TTC</td>
+            <td class="total-val" th:text="${priceTTC}"></td>
+          </tr>
+          <tr th:if="${paymentMethod}">
+            <td class="r-key">Mode de paiement</td>
+            <td class="r-val" th:text="${paymentMethod}"></td>
+          </tr>
+          <tr th:if="${!#strings.isEmpty(paymentDate)}">
+            <td class="r-key">Payé le</td>
+            <td class="r-val" th:text="${paymentDate}"></td>
+          </tr>
+        </table>
+        <div class="note note-wait" th:if="${awaitingPayment}">
+          Tant que le paiement n'est pas reçu, la réservation n'est pas confirmée. Vous pouvez régler depuis « Voir ma réservation ».
+        </div>
+      </th:block>
 
       <div class="section-lbl">Votre code d'accès</div>
-      <div class="qr-wrap">
-        <div class="qr-img" th:if="${showQr}">
-          <img src="cid:qr-booking" alt="QR Code de réservation" width="150" height="150" style="display:block;"/>
-        </div>
-        <div class="qr-ref" th:text="${bookingNumber}">BKG-000001</div>
-        <div class="qr-code" th:if="${verificationCode}" th:text="|Code : ${verificationCode}|">Code : CHK-123</div>
-        <div class="qr-steps">
-          1. Présentez ce QR code à l'accueil à votre arrivée.<br/>
-          2. Si le scan échoue, communiquez le code ci-dessus.<br/>
-          3. Gardez cet email accessible jusqu'à la fin de votre session.
-        </div>
+      <div class="access">
+        <table role="presentation" class="access-table">
+          <tr>
+            <td class="qr-cell" th:if="${showQr}">
+              <div class="qr-img">
+                <img src="cid:qr-booking" alt="QR code de réservation" width="140" height="140" style="display:block;"/>
+              </div>
+            </td>
+            <td>
+              <div class="qr-ref" th:text="${bookingNumber}">BKG-000001</div>
+              <div class="qr-code" th:if="${verificationCode}" th:text="|Code : ${verificationCode}|">Code : CHK-123</div>
+              <div class="qr-steps" th:if="${showQr}">
+                Présentez ce QR code à l'accueil à votre arrivée.<br/>
+                Si le scan échoue, donnez le code ci-dessus.
+              </div>
+              <div class="qr-steps" th:unless="${showQr}">
+                Donnez cette référence à l'accueil à votre arrivée.
+              </div>
+            </td>
+          </tr>
+        </table>
       </div>
+
+      <div class="section-lbl">Bon à savoir</div>
+      <ul class="tips">
+        <li>Arrivez quelques minutes avant le début pour l'accueil.</li>
+        <li th:unless="${wholeResource}">Les places réservées vous sont garanties sur toute la durée du créneau.</li>
+        <li th:if="${wholeResource}">L'espace est à vous seul sur toute la durée du créneau.</li>
+        <li>Un empêchement ? Annulez depuis votre espace client pour libérer le créneau.</li>
+      </ul>
 
       <div class="cta-row">
         <a th:href="${bookingUrl ?: 'https://espace.elleaose.com'}" class="cta-gold">Voir ma réservation</a>
