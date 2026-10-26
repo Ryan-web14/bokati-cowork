@@ -25,7 +25,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.sni.bokaticowork.features.subscription.subscription.dto.response.EntitlementOperationResponse;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -93,6 +95,9 @@ class BookingEntitlementOverageTest {
         planVersion.setId(1L);
         subscription.setPlanVersion(planVersion);
         when(subscriptionRepository.findBySubscriptionNumber("SUB-0001")).thenReturn(Optional.of(subscription));
+        // Solde suffisant par defaut · givenBalanceExhausted le retire.
+        when(entitlementService.check(any())).thenReturn(new EntitlementOperationResponse(true, "ENT-SALLE", BigDecimal.ONE, BigDecimal.TEN, "ok"));
+        when(entitlementService.coverable(any())).thenReturn(true);
     }
 
     // -------------------------------------------------------------------------------------
@@ -149,7 +154,9 @@ class BookingEntitlementOverageTest {
         givenBalanceExhausted();
         when(overageGuard.allows(any(), anyString())).thenReturn(false);
 
-        assertThrows(ConflictException.class, () -> bridge.consume(booking));
+        // La cloture ne doit plus echouer · le droit n'est simplement pas decompte, et on le dit.
+        assertFalse(bridge.consume(booking));
+        verify(entitlementService, never()).consume(any());
         verify(usageRecordService, never()).record(any());
     }
 
@@ -177,6 +184,8 @@ class BookingEntitlementOverageTest {
     // -------------------------------------------------------------------------------------
 
     private void givenBalanceExhausted() {
+        when(entitlementService.check(any())).thenReturn(new EntitlementOperationResponse(false, "ENT-SALLE", BigDecimal.ONE, BigDecimal.ZERO, "Insufficient entitlement balance"));
+        when(entitlementService.coverable(any())).thenReturn(false);
         doThrow(new ConflictException("entitlement", "insufficient balance"))
                 .when(entitlementService).reserve(any());
         doThrow(new ConflictException("entitlement", "insufficient balance"))

@@ -58,7 +58,11 @@ public interface BookingService {
 
     BookingResponse noShow(String bookingNumber, BookingStatusChangeRequest request);
 
-    int markOverdueNoShows(int limit);
+    /** Les reservations a marquer absentes · a traiter une par une avec {@link #markOverdueNoShow}. */
+    List<String> overdueNoShowCandidates(int limit);
+
+    /** Marque absente une reservation echue, dans sa propre transaction · faux si elle ne l'est plus. */
+    boolean markOverdueNoShow(String bookingNumber);
 
     /**
      * Active les reservations pointees d'avance dont l'heure est arrivee.
@@ -67,7 +71,11 @@ public interface BookingService {
      */
     int startCheckedInBookings(int limit);
 
-    int markOverdueCompleted(int limit);
+    /** Les reservations a clore · a traiter une par une avec {@link #markOverdueCompleted(String)}. */
+    List<String> overdueCompletionCandidates(int limit);
+
+    /** Clot une reservation echue apres pointage, dans sa propre transaction · faux si elle ne l'est plus. */
+    boolean markOverdueCompleted(String bookingNumber);
 
     void recordCsat(String bookingNumber, int score);
 

@@ -107,6 +107,24 @@ public class EntitlementReservationOperator {
         return new EntitlementOperationResponse(true, request.entitlementCode(), request.quantity(), null, "Reserved entitlement consumed");
     }
 
+    /**
+     * La consommation demandee passerait-elle · par la retenue faite pour cette reference, ou par
+     * le solde ?
+     *
+     * <p>A interroger avant {@link #consume} quand un refus ne doit pas tout annuler : l'exception
+     * levee par une operation transactionnelle condamne la transaction de l'appelant, meme si
+     * celui-ci la rattrape.</p>
+     */
+    public boolean coverable(EntitlementOperationRequest request) {
+        BigDecimal reserved = activeReservations(request).stream()
+                .map(EntitlementReservation::getQuantity)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (reserved.signum() > 0) {
+            return reserved.compareTo(request.quantity()) >= 0;
+        }
+        return balanceReader.check(request).allowed();
+    }
+
     public EntitlementOperationResponse release(EntitlementOperationRequest request) {
         return releaseReservations(request, EntitlementReservationStatus.RELEASED, "Reserved entitlement released");
     }
@@ -188,7 +206,7 @@ public class EntitlementReservationOperator {
                 .referenceType(request.referenceType())
                 .referenceId(request.referenceId())
                 .status(EntitlementReservationStatus.ACTIVE)
-                .expiresAt(Instant.now().plusSeconds(900))
+                .expiresAt(request.holdUntil() != null ? request.holdUntil() : Instant.now().plusSeconds(900))
                 .build();
     }
 

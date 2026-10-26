@@ -395,18 +395,30 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public int markOverdueNoShows(int limit) {
-        int resolvedLimit = Math.max(1, limit);
+    @Transactional(readOnly = true)
+    public List<String> overdueNoShowCandidates(int limit) {
         LocalDateTime now = LocalDateTime.now();
-        List<Booking> candidates = bookingRepository.findOverdueNoShowCandidates(now, resolvedLimit);
-        int marked = 0;
-        for (Booking booking : candidates) {
-            if (isOverdueNoShowCandidate(booking, now)) {
-                markNoShowInternal(booking, new BookingStatusChangeRequest("SYSTEM", "Automatic no-show: booking ended without check-in or admin start", Boolean.FALSE));
-                marked++;
-            }
+        return bookingRepository.findOverdueNoShowCandidates(now, Math.max(1, limit)).stream()
+                .filter(booking -> isOverdueNoShowCandidate(booking, now))
+                .map(Booking::getBookingNumber)
+                .toList();
+    }
+
+    /**
+     * Une reservation a la fois, dans sa propre transaction · le worker en enchaine plusieurs.
+     *
+     * <p>Le lot entier tenait dans une seule transaction : une reservation dont le droit ne se
+     * decomptait pas annulait tout le lot, puis recommencait en tete du lot suivant, chaque
+     * minute. Plus aucune reservation n'etait marquee absente ni close.</p>
+     */
+    @Override
+    public boolean markOverdueNoShow(String bookingNumber) {
+        Booking booking = getForService(bookingNumber);
+        if (!isOverdueNoShowCandidate(booking, LocalDateTime.now())) {
+            return false;
         }
-        return marked;
+        markNoShowInternal(booking, new BookingStatusChangeRequest("SYSTEM", "Automatic no-show: booking ended without check-in or admin start", Boolean.FALSE));
+        return true;
     }
 
     @Override
@@ -427,24 +439,36 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public int markOverdueCompleted(int limit) {
-        int resolvedLimit = Math.max(1, limit);
+    @Transactional(readOnly = true)
+    public List<String> overdueCompletionCandidates(int limit) {
         LocalDateTime now = LocalDateTime.now();
-        List<Booking> candidates = bookingRepository.findOverdueCompletionCandidates(now, resolvedLimit);
-        int completed = 0;
-        for (Booking booking : candidates) {
-            // CONFIRMED admis a cote de IN_PROGRESS : une reservation pointee d'avance dont le
-            // balayage n'a pas eu le temps de tourner reste CONFIRMED, et resterait sinon coincee
-            // la, ni close ni marquee absente. completeInternal accepte deja les deux statuts.
-            if ((booking.getStatus() == BookingStatus.IN_PROGRESS
-                    || booking.getStatus() == BookingStatus.CONFIRMED)
-                    && booking.getEndedAt().isBefore(now)
-                    && (booking.getCheckedInAt() != null || booking.getStartedEventAt() != null)) {
-                completeInternal(booking, new BookingStatusChangeRequest("SYSTEM", "Automatic completion: booking ended after check-in", Boolean.FALSE));
-                completed++;
-            }
+        return bookingRepository.findOverdueCompletionCandidates(now, Math.max(1, limit)).stream()
+                .filter(booking -> isOverdueCompletionCandidate(booking, now))
+                .map(Booking::getBookingNumber)
+                .toList();
+    }
+
+    /** Une reservation a la fois, comme {@link #markOverdueNoShow} · un echec n'arrete pas les autres. */
+    @Override
+    public boolean markOverdueCompleted(String bookingNumber) {
+        Booking booking = getForService(bookingNumber);
+        if (!isOverdueCompletionCandidate(booking, LocalDateTime.now())) {
+            return false;
         }
-        return completed;
+        completeInternal(booking, new BookingStatusChangeRequest("SYSTEM", "Automatic completion: booking ended after check-in", Boolean.FALSE));
+        return true;
+    }
+
+    /**
+     * CONFIRMED admis a cote de IN_PROGRESS : une reservation pointee d'avance dont le balayage
+     * n'a pas eu le temps de tourner reste CONFIRMED, et resterait sinon coincee la, ni close ni
+     * marquee absente. completeInternal accepte deja les deux statuts.
+     */
+    private static boolean isOverdueCompletionCandidate(Booking booking, LocalDateTime now) {
+        return (booking.getStatus() == BookingStatus.IN_PROGRESS || booking.getStatus() == BookingStatus.CONFIRMED)
+                && booking.getEndedAt() != null
+                && booking.getEndedAt().isBefore(now)
+                && (booking.getCheckedInAt() != null || booking.getStartedEventAt() != null);
     }
 
 
@@ -699,8 +723,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be marked as no-show");
         }
-        if (booking.getPaymentMode().usesEntitlement()) {
-            entitlementBridge.consume(booking);
+        if (booking.getPaymentMode().usesEntitlement() && entitlementBridge.consume(booking)) {
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "No-show entitlement was consumed", null);
         }
         BookingStatus from = booking.getStatus();
@@ -718,8 +741,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getStatus() != BookingStatus.CONFIRMED && booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ConflictException("booking", "only confirmed or in-progress bookings can be completed");
         }
-        if (booking.getPaymentMode().usesEntitlement()) {
-            entitlementBridge.consume(booking);
+        if (booking.getPaymentMode().usesEntitlement() && entitlementBridge.consume(booking)) {
             eventWriter.write(booking, BookingEventType.ENTITLEMENT_CONSUMED, "Entitlement consumed", "Booking entitlement was consumed", null);
             eventWriter.write(booking, BookingEventType.USAGE_RECORDED, "Usage recorded", "Booking usage was recorded", null);
         }

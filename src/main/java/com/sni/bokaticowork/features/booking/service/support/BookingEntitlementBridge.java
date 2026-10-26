@@ -1,6 +1,5 @@
 package com.sni.bokaticowork.features.booking.service.support;
 
-import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.booking.model.Booking;
 import com.sni.bokaticowork.features.ressource.enums.ResourceBookingUnit;
@@ -107,15 +106,31 @@ public class BookingEntitlementBridge {
         if (!StringUtils.hasText(booking.getEntitlementCode())) {
             throw new BadRequestException("Entitlement code is required for subscription or pass booking");
         }
-        try {
-            entitlementService.reserve(operation(booking, charge(booking).quantity(), "reserve", "Booking confirmed"));
-        } catch (ConflictException ex) {
-            if (!isInsufficientBalance(ex) || !overageAllowed(booking)) {
-                throw ex;
-            }
+        EntitlementOperationRequest request = operation(booking, charge(booking).quantity(), "reserve",
+                "Booking confirmed", holdUntil(booking));
+        // On demande avant d'agir · rattraper le refus ne suffisait pas, l'exception levee par le
+        // service des droits avait deja condamne la transaction de la reservation, et le
+        // depassement echouait a la validation.
+        if (!entitlementService.check(request).allowed() && overageAllowed(booking)) {
             log.info("Reservation {} · droit {} epuise, retenue impossible, passage en depassement",
                     booking.getBookingNumber(), booking.getEntitlementCode());
+            return;
         }
+        entitlementService.reserve(request);
+    }
+
+    /**
+     * La retenue tient jusqu'apres la fin de la reservation · une semaine de marge pour la cloture.
+     *
+     * <p>Elle expirait au bout de quinze minutes : le droit d'une reservation prise trois jours a
+     * l'avance revenait au solde le jour meme, le membre pouvait le depenser ailleurs, et la cloture
+     * echouait faute de solde.</p>
+     */
+    public static Instant holdUntil(Booking booking) {
+        if (booking.getEndedAt() == null) {
+            return null;
+        }
+        return booking.getEndedAt().plusDays(7).atZone(java.time.ZoneId.systemDefault()).toInstant();
     }
 
     /**
@@ -134,10 +149,6 @@ public class BookingEntitlementBridge {
                 .orElse(false);
     }
 
-    private boolean isInsufficientBalance(ConflictException ex) {
-        return ex.getMessage() != null && ex.getMessage().contains("insufficient balance");
-    }
-
     /**
      * Consomme le droit, ou laisse la consommation au seul enregistrement d'usage.
      *
@@ -146,21 +157,26 @@ public class BookingEntitlementBridge {
      * la charge puis la facture. Sans cet enregistrement, les heures supplementaires seraient
      * consommees sans jamais etre facturees.</p>
      */
-    public void consume(Booking booking) {
+    public boolean consume(Booking booking) {
         if (!StringUtils.hasText(booking.getEntitlementCode())) {
-            return;
+            return false;
         }
         Charge charge = charge(booking);
+        EntitlementOperationRequest request = operation(booking, charge.quantity(), "consume", "Booking completed", null);
         boolean overage = false;
-        try {
-            entitlementService.consume(operation(booking, charge.quantity(), "consume", "Booking completed"));
-        } catch (ConflictException ex) {
-            if (!overageAllowed(booking)) {
-                throw ex;
-            }
+        if (entitlementService.coverable(request)) {
+            entitlementService.consume(request);
+        } else if (overageAllowed(booking)) {
             overage = true;
             log.info("Reservation {} · solde epuise, la consommation passe en depassement",
                     booking.getBookingNumber());
+        } else {
+            // Ni retenue ni solde, et pas de depassement permis · la cloture ne doit pas en mourir.
+            // Elle echouait, et avec elle tout le lot du worker, a chaque passage : la reservation
+            // restait confirmee pour toujours et les suivantes n'etaient plus jamais traitees.
+            log.warn("Reservation {} · droit {} non decompte a la cloture : ni retenue active ni solde suffisant ({} demande)",
+                    booking.getBookingNumber(), booking.getEntitlementCode(), charge.quantity().stripTrailingZeros().toPlainString());
+            return false;
         }
 
         // Le drapeau de consommation decide de tout ce qui suit, et c'est ici que le depassement se
@@ -188,6 +204,7 @@ public class BookingEntitlementBridge {
                 Instant.now(),
                 booking.getMetadataJson()
         ));
+        return true;
     }
 
     public void release(Booking booking) {
@@ -210,6 +227,11 @@ public class BookingEntitlementBridge {
     }
 
     private EntitlementOperationRequest operation(Booking booking, BigDecimal quantity, String action, String reason) {
+        return operation(booking, quantity, action, reason, null);
+    }
+
+    private EntitlementOperationRequest operation(Booking booking, BigDecimal quantity, String action, String reason,
+                                                  Instant holdUntil) {
         return new EntitlementOperationRequest(
                 booking.getOwnerType(),
                 booking.getOwnerCode(),
@@ -218,7 +240,8 @@ public class BookingEntitlementBridge {
                 REFERENCE_TYPE,
                 booking.getBookingNumber(),
                 "booking:" + booking.getBookingNumber() + ":" + action,
-                reason
+                reason,
+                holdUntil
         );
     }
 }

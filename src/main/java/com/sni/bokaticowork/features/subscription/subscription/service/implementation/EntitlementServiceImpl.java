@@ -66,6 +66,12 @@ public class EntitlementServiceImpl implements EntitlementService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean coverable(EntitlementOperationRequest request) {
+        return reservationOperator.coverable(request);
+    }
+
+    @Override
     public EntitlementOperationResponse release(EntitlementOperationRequest request) {
         return reservationOperator.release(request);
     }
