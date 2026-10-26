@@ -14,6 +14,7 @@ import java.time.LocalTime;
 @Data
 public class ResourcePricingRuleResponse {
 
+    /** Le numero court de la regle, et non l'identifiant de la base · voir ResourcePricingRule.shortId. */
     private Long id;
     private String resourceCode;
     private String bookingUnit;

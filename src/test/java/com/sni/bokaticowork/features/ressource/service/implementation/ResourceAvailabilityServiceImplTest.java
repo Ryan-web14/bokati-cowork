@@ -88,11 +88,14 @@ class ResourceAvailabilityServiceImplTest {
         verify(availabilityRepository).saveAll(slotsCaptor.capture());
 
         List<ResourceAvailability> slots = StreamSupport.stream(slotsCaptor.getValue().spliterator(), false).toList();
-        assertEquals(72, slots.size());
+        // 15:00-22:00, deux journees de 08:00 a 22:00, puis 08:00-15:00 · 42 heures, 84 creneaux.
+        assertEquals(84, slots.size());
         assertEquals(startedAt, slots.getFirst().getStartedAt());
         assertEquals(endedAt, slots.getLast().getEndedAt());
         assertFalse(slots.stream().anyMatch(slot -> slot.getStartedAt().toLocalTime().isBefore(LocalTime.of(8, 0))));
-        assertFalse(slots.stream().anyMatch(slot -> slot.getEndedAt().toLocalTime().isAfter(LocalTime.of(20, 0))));
+        assertFalse(slots.stream().anyMatch(slot -> slot.getEndedAt().toLocalTime().isAfter(LocalTime.of(22, 0))));
+        assertTrue(slots.stream().allMatch(slot ->
+                slot.getSubscribersOnly() == !slot.getStartedAt().toLocalTime().isBefore(LocalTime.of(18, 0))));
     }
 
     @Test
@@ -113,7 +116,7 @@ class ResourceAvailabilityServiceImplTest {
                         .build()
         ));
 
-        assertEquals("Could not process resource availability: availability must be created within working hours from 08:00 to 20:00", exception.getMessage());
+        assertEquals("Could not process resource availability: availability must be created within working hours from 08:00 to 22:00", exception.getMessage());
         verify(availabilityRepository, never()).saveAll(any());
     }
 
@@ -379,6 +382,23 @@ class ResourceAvailabilityServiceImplTest {
         return service.findRemainingWindows(RESOURCE_CODE, slotStart, slotStart.plusMinutes(30), 30, 1);
     }
 
+    @Test
+    void anEveningSlotIsInvisibleToANonSubscriberAndVisibleToASubscriber() {
+        Resource resource = sharedResource(10);
+        LocalDateTime evening = LocalDate.now().plusDays(3).atTime(19, 0);
+        ResourceAvailability slot = ResourceAvailability.builder()
+                .resource(resource).startedAt(evening).endedAt(evening.plusMinutes(30)).slotDurationMinutes(30)
+                .totalCapacity(10).remainingCapacity(10).available(true).active(true).subscribersOnly(true)
+                .build();
+        when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(resource);
+        when(availabilityRepository.findExpiredSlots(any(LocalDateTime.class), any(Limit.class))).thenReturn(List.of());
+        when(availabilityRepository.findCandidateSlots(eq(resource), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(slot));
+
+        assertTrue(service.findRemainingWindows(RESOURCE_CODE, evening, evening.plusMinutes(30), 30, 1, false).isEmpty());
+        assertEquals(1, service.findRemainingWindows(RESOURCE_CODE, evening, evening.plusMinutes(30), 30, 1, true).size());
+    }
+
     private LocalDateTime nextWholeHour() {
         return LocalDateTime.now().withMinute(0).withSecond(0).withNano(0).plusHours(1);
     }
@@ -470,6 +490,44 @@ class ResourceAvailabilityServiceImplTest {
         // Laxiste : la liberation ne consulte pas les fermetures, seule la reservation le fait.
         org.mockito.Mockito.lenient()
                 .when(closureRepository.existsActiveOverlap(eq(resource), any(), any())).thenReturn(false);
+    }
+
+    @Test
+    void sharedResourceSlotsTakeTheRealCapacityWhateverTheRequestSays() {
+        Resource openSpace = sharedResource(20);
+        when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(openSpace);
+
+        List<ResourceAvailability> slots = createOneHour(3);
+
+        assertEquals(2, slots.size());
+        assertTrue(slots.stream().allMatch(slot -> slot.getTotalCapacity() == 20 && slot.getRemainingCapacity() == 20));
+    }
+
+    @Test
+    void meetingRoomSlotsShowTheSeatsWhateverTheRequestSays() {
+        // Affichage · l'exclusivite de la salle tient a la regle de reservation (restant egal au
+        // total), couverte par takesTheWholeSlot... et refusesAPartiallyTakenSlot...
+        Resource meetingRoom = wholeResource(12);
+        when(resourceService.getResourceForService(RESOURCE_CODE)).thenReturn(meetingRoom);
+
+        List<ResourceAvailability> slots = createOneHour(5);
+
+        assertTrue(slots.stream().allMatch(slot -> slot.getTotalCapacity() == 12 && slot.getRemainingCapacity() == 12));
+    }
+
+    private List<ResourceAvailability> createOneHour(int requestedCapacity) {
+        LocalDateTime startedAt = LocalDate.now().plusDays(3).atTime(9, 0);
+        service.createAvailability(CreateResourceAvailabilityRequest.builder()
+                .resourceCode(RESOURCE_CODE)
+                .startedAt(startedAt)
+                .endedAt(startedAt.plusHours(1))
+                .capacity(requestedCapacity)
+                .build());
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Iterable<ResourceAvailability>> slotsCaptor = ArgumentCaptor.forClass((Class<Iterable<ResourceAvailability>>) (Class<?>) Iterable.class);
+        verify(availabilityRepository).saveAll(slotsCaptor.capture());
+        return StreamSupport.stream(slotsCaptor.getValue().spliterator(), false).toList();
     }
 
     private ResourceAvailability slotOf(Resource resource, int totalCapacity, int remainingCapacity) {

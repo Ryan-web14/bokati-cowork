@@ -34,6 +34,7 @@ public class ClientPortalBookingService {
     private final BookingService bookingService;
     private final BookingAvailabilityService bookingAvailabilityService;
     private final com.sni.bokaticowork.features.portal.resource.service.ClientResourceService clientResourceService;
+    private final com.sni.bokaticowork.features.portal.context.SubscriberAccess subscriberAccess;
     private final com.sni.bokaticowork.features.payment.cash.service.CashPaymentDeclarationService cashDeclarationService;
 
     @Transactional(readOnly = true)
@@ -63,6 +64,9 @@ public class ClientPortalBookingService {
         // Une ressource retiree du portail ne se reserve pas depuis le portail · seule sa page
         // etait masquee, la reservation par son code passait.
         clientResourceService.assertPortalVisible(request.getResourceCode());
+        // Le seul chemin ou le membre reserve pour lui-meme · l'accueil et le systeme (confirmation
+        // apres paiement) passent ailleurs, et ont le droit de reserver une soiree pour quiconque.
+        subscriberAccess.assertMayBook(member, request.getResourceCode(), request.getStartedAt(), request.getEndedAt());
         CreateBookingRequest req = new CreateBookingRequest(
                 request.getResourceCode(),
                 member.getMemberId(),
@@ -148,7 +152,15 @@ public class ClientPortalBookingService {
                 request.getQuantity(),
                 null
         );
-        return bookingAvailabilityService.check(req);
+        BookingAvailabilityResponse result = bookingAvailabilityService.check(req);
+        if (result.available() && subscriberAccess.isDenied(member, request.getResourceCode(),
+                request.getStartedAt(), request.getEndedAt())) {
+            return new BookingAvailabilityResponse(result.resourceCode(), result.resourceName(), result.startedAt(),
+                    result.endedAt(), result.durationMinutes(), result.quantity(), false, null,
+                    result.bookingUnit(), result.unitPrice(), result.estimatedAmount(), result.currency(),
+                    "Créneau réservé aux abonnés");
+        }
+        return result;
     }
 
 

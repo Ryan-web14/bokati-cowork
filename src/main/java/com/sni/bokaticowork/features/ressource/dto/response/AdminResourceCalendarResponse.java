@@ -42,7 +42,9 @@ public record AdminResourceCalendarResponse(
             double occupancyRate,
             String occupancyLevel,
             boolean available,
-            boolean active
+            boolean active,
+            /** Soiree reservee aux abonnes · l'accueil peut la reserver pour n'importe qui. */
+            boolean subscribersOnly
     ) {
     }
 }

@@ -54,6 +54,17 @@ public class ResourceAvailability {
     @Builder.Default
     private Boolean active = Boolean.TRUE;
 
+    /**
+     * Creneau du soir, reserve aux membres abonnes.
+     *
+     * <p>Le portail ne le montre ni ne le laisse reserver a un membre sans abonnement actif, et le
+     * calendrier public ne le montre pas. L'accueil, lui, peut le reserver pour n'importe qui.
+     * Pose a la creation selon l'heure de debut · voir {@code ResourceAvailabilityServiceImpl}.</p>
+     */
+    @Column(name = "subscribers_only", nullable = false)
+    @Builder.Default
+    private Boolean subscribersOnly = Boolean.FALSE;
+
     @Version
     @Column(name = "version", nullable = false)
     @Builder.Default

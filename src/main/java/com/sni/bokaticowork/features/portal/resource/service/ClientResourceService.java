@@ -119,18 +119,21 @@ public class ClientResourceService {
     }
 
     @Transactional(readOnly = true)
-    public PublicResourceCalendarResponse getCalendar(String code, LocalDate fromDate, LocalDate toDate) {
+    public PublicResourceCalendarResponse getCalendar(String code, LocalDate fromDate, LocalDate toDate,
+                                                      boolean subscriber) {
         assertPortalVisible(code);
-        return publicResourceCalendarService.calendar(code, fromDate, toDate);
+        return publicResourceCalendarService.calendar(code, fromDate, toDate, subscriber);
     }
 
     @Transactional(readOnly = true)
     public List<ResourceAvailabilityWindowResponse> getAvailableSlots(String code, LocalDateTime startedAt,
                                                                        LocalDateTime endedAt,
                                                                        Integer durationMinutes,
-                                                                       Integer quantity) {
+                                                                       Integer quantity,
+                                                                       boolean subscriber) {
         assertPortalVisible(code);
-        return resourceAvailabilityService.findRemainingWindows(code, startedAt, endedAt, durationMinutes, quantity);
+        return resourceAvailabilityService.findRemainingWindows(code, startedAt, endedAt, durationMinutes, quantity,
+                subscriber);
     }
 
     @Transactional(readOnly = true)
