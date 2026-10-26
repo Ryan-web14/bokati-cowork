@@ -51,7 +51,8 @@ class PawapaySigningKeyFormatsTest {
         try (JcaPEMWriter writer = new JcaPEMWriter(out)) {
             writer.writeObject(value);
         }
-        return out.toString();
+        // JcaPEMWriter suit le separateur du systeme · \r\n sous Windows.
+        return out.toString().replace("\r\n", "\n");
     }
 
     private static void assertSameKey(String variable) {
@@ -109,6 +110,49 @@ class PawapaySigningKeyFormatsTest {
         assertThatThrownBy(() -> PawapayRequestSigner.parsePrivateKey(broken))
                 .isInstanceOf(IllegalStateException.class)
                 .message().doesNotContain("secret").contains("BEGIN RSA PRIVATE KEY");
+    }
+
+    @Test
+    @DisplayName("Cle RSA 4096 dont le remplissage = final a ete perdu au collage")
+    void rsa4096WithoutPadding() throws Exception {
+        // La production a vu un corps de 3130 caracteres · 3132 moins le « == » final.
+        KeyPair big = keyWithPadding();
+        String pem = pem(big);
+        String stripped = pem.replace("=\n-----END", "\n-----END").replace("=\n-----END", "\n-----END");
+        assertThat(stripped).isNotEqualTo(pem);
+        assertThat(PawapayRequestSigner.parsePrivateKey(stripped).getEncoded()).isEqualTo(big.getPrivate().getEncoded());
+
+        String withoutBegin = stripped.substring(stripped.indexOf('\n') + 1);
+        assertThat(PawapayRequestSigner.parsePrivateKey(withoutBegin).getEncoded()).isEqualTo(big.getPrivate().getEncoded());
+        assertThat(PawapayRequestSigner.parsePrivateKey(withoutBegin.replace("\n", " ")).getEncoded())
+                .isEqualTo(big.getPrivate().getEncoded());
+    }
+
+    /** Une cle RSA 4096 dont le DER n'est pas multiple de 3 · son base64 finit par du remplissage. */
+    private static KeyPair keyWithPadding() throws Exception {
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA",
+                new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        generator.initialize(4096);
+        while (true) {
+            KeyPair pair = generator.generateKeyPair();
+            if (pem(pair).contains("=\n-----END")) {
+                return pair;
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Une cle tronquee au collage est signalee comme telle, sans rien en citer")
+    void truncatedKeyIsDiagnosed() {
+        String body = pkcs1Pem.substring(pkcs1Pem.indexOf('\n') + 1, pkcs1Pem.indexOf("-----END"))
+                .replaceAll("\\s", "");
+        String truncated = "-----BEGIN RSA PRIVATE KEY-----\n" + body.substring(0, body.length() - 200)
+                + "\n-----END RSA PRIVATE KEY-----";
+        assertThatThrownBy(() -> PawapayRequestSigner.parsePrivateKey(truncated))
+                .isInstanceOf(IllegalStateException.class)
+                .message()
+                .contains("structure ASN.1 incomplete")
+                .doesNotContain(body.substring(0, 24));
     }
 
     @Test
