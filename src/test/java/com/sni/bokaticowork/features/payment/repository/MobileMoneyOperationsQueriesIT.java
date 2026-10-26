@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MobileMoneyOperationsQueriesIT extends PostgresIntegrationTestBase {
 
     @Autowired private PawapayDepositRepository repository;
+    @Autowired private PaymentTransactionRepository transactionRepository;
 
     @Test
     @DisplayName("Synthese, periode et recherche filtree s'executent")
@@ -30,5 +31,6 @@ class MobileMoneyOperationsQueriesIT extends PostgresIntegrationTestBase {
                 cb.equal(root.get("depositId"), "x"), cb.equal(root.get("providerTransactionId"), "x"),
                 cb.like(root.get("phoneNumber"), "%242%"));
         assertThat(repository.findAll(byReference, PageRequest.of(0, 10))).isNotNull();
+        assertThat(transactionRepository.findPendingMobileMoneyRefunds(Instant.now(), 10)).isNotNull();
     }
 }

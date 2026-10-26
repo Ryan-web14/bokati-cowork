@@ -81,4 +81,18 @@ public interface PaymentTransactionRepository extends JpaRepository<PaymentTrans
             ORDER BY created_at ASC
             """)
     List<PaymentTransaction> findAllByOriginalTransactionNumber(@Param("transactionNumber") String transactionNumber);
+
+    /** Les remboursements mobile money encore en cours, les plus anciens d'abord · a relire chez PawaPay. */
+    @Query(nativeQuery = true, value = """
+            SELECT *
+            FROM payment_transaction
+            WHERE status = 'PROCESSING'
+              AND payment_method = 'MOBILE_MONEY'
+              AND provider_reference IS NOT NULL
+              AND metadata_json ->> 'originalTransactionNumber' IS NOT NULL
+              AND created_at < :before
+            ORDER BY created_at ASC
+            LIMIT :limit
+            """)
+    List<PaymentTransaction> findPendingMobileMoneyRefunds(@Param("before") java.time.Instant before, @Param("limit") int limit);
 }

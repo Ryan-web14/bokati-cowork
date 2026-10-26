@@ -25,6 +25,8 @@ public class PawapayRefundCallbackProcessor {
     private final PaymentTransactionRepository transactionRepository;
     private final PaymentIntentRepository intentRepository;
     private final OutboxService outboxService;
+    private final com.sni.bokaticowork.features.payment.service.support.PaymentAllocationService allocationService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     public void process(PawapayRefundCallbackPayload payload) {
         if (payload.refundId() == null) {
@@ -48,7 +50,13 @@ public class PawapayRefundCallbackProcessor {
 
         if ("COMPLETED".equals(payload.status())) {
             PaymentIntent intent = transaction.getPaymentIntent();
-            PaymentTransaction original = transactionRepository.findSucceededByPaymentIntentId(intent.getId()).orElse(null);
+            PaymentTransaction original = originalOf(transaction)
+                    .or(() -> transactionRepository.findSucceededByPaymentIntentId(intent.getId()))
+                    .orElse(null);
+            // La facture n'est rouverte qu'ici, quand PawaPay confirme · voir PaymentServiceImpl.
+            if (original != null && transaction.getAmount() != null) {
+                allocationService.reverseAllocations(original, transaction.getAmount());
+            }
             BigDecimal projectedRefundedTotal = original == null
                     ? BigDecimal.ZERO
                     : refundedTotal(original.getTransactionNumber()).add(transaction.getAmount() == null ? BigDecimal.ZERO : transaction.getAmount());
@@ -84,6 +92,22 @@ public class PawapayRefundCallbackProcessor {
         } else {
             log.warn("Unexpected PawaPay refund callback status '{}' for refundId {}",
                     payload.status(), payload.refundId());
+        }
+    }
+
+    /** La transaction remboursee, par le lien que porte le remboursement · plus sur que « le dernier paiement reussi ». */
+    private java.util.Optional<PaymentTransaction> originalOf(PaymentTransaction refund) {
+        try {
+            String metadata = refund.getMetadataJson();
+            if (metadata == null || metadata.isBlank()) {
+                return java.util.Optional.empty();
+            }
+            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(metadata).get("originalTransactionNumber");
+            return node == null || node.isNull()
+                    ? java.util.Optional.empty()
+                    : transactionRepository.findByTransactionNumber(node.asText());
+        } catch (java.io.IOException ex) {
+            return java.util.Optional.empty();
         }
     }
 
