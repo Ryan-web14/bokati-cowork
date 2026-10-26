@@ -126,7 +126,7 @@ public class MobileMoneySupervisionService {
 
     private PawapayCallbackPayload payload(PawapayDeposit deposit, String status, MobileMoneyStatusResponse checked) {
         return new PawapayCallbackPayload(
-                deposit.getDepositId(), status, null, null, deposit.getClientReferenceId(), null, null,
+                deposit.getDepositId(), status, checked.amount(), checked.currency(), deposit.getClientReferenceId(), null, null,
                 checked.providerTransactionId(), null, null, null, null, null, null, null,
                 checked.failureReason());
     }

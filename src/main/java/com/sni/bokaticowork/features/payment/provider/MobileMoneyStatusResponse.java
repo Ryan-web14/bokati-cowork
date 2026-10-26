@@ -14,10 +14,18 @@ public record MobileMoneyStatusResponse(
         String status,
         String message,
         JsonNode failureReason,
-        String providerTransactionId
+        String providerTransactionId,
+        // Ce que l'operateur dit avoir encaisse · compare au depot avant de declarer le paiement recu.
+        String amount,
+        String currency
 ) {
     public MobileMoneyStatusResponse(String providerReference, String status, String message) {
         this(providerReference, status, message, null, null);
+    }
+
+    public MobileMoneyStatusResponse(String providerReference, String status, String message,
+                                     JsonNode failureReason, String providerTransactionId) {
+        this(providerReference, status, message, failureReason, providerTransactionId, null, null);
     }
 
     public boolean unknown() {

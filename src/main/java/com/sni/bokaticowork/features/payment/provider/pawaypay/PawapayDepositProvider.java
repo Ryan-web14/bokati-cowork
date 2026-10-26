@@ -118,7 +118,8 @@ public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
                         "La demande n'a pas atteint l'opérateur", null, null);
             }
             return new MobileMoneyStatusResponse(providerReference, mapDepositStatus(status.providerStatus()),
-                    status.providerStatus(), status.failureReason(), status.providerTransactionId());
+                    status.providerStatus(), status.failureReason(), status.providerTransactionId(),
+                    text(status.raw(), "amount"), text(status.raw(), "currency"));
         } catch (PawapayClient.ProviderUnreachableException ex) {
             log.warn("Statut PawaPay indisponible pour {} · {}", providerReference, ex.getMessage());
             return new MobileMoneyStatusResponse(providerReference, "UNKNOWN", "Opérateur injoignable", null, null);
@@ -163,6 +164,10 @@ public class PawapayDepositProvider implements MobileMoneyPaymentProvider {
             return new MobileMoneyRefundResponse(request.providerReference(), refundId, "UNKNOWN",
                     "En attente de confirmation de l'opérateur");
         }
+    }
+
+    private static String text(com.fasterxml.jackson.databind.JsonNode node, String field) {
+        return node != null && node.hasNonNull(field) ? node.get(field).asText() : null;
     }
 
     private String formatAmount(BigDecimal amount) {

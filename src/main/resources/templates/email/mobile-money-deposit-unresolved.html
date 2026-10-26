@@ -10,7 +10,11 @@
 
     <div class="em-body">
       <div class="em-title">Paiement mobile money à rapprocher</div>
-      <div class="em-intro">
+      <div class="em-intro" th:if="${anomaly != null}">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, <span th:text="${anomaly}">écart</span>
+        Le paiement n'a été ni encaissé ni déclaré en échec : la facture reste ouverte tant que l'écart n'est pas levé avec le relevé de l'opérateur.
+      </div>
+      <div class="em-intro" th:if="${anomaly == null}">
         Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, un paiement mobile money attend depuis plus de
         <strong th:text="${hours}">24</strong> heures sans que l'opérateur ait tranché. Il n'a été ni encaissé ni déclaré en échec :
         l'argent est peut-être parti, et seul un rapprochement avec l'opérateur permet de le dire.

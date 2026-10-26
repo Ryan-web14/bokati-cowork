@@ -135,7 +135,7 @@ public class PawapayCallbackGateway {
 
     private PawapayCallbackPayload statusPayload(String depositId, String status, MobileMoneyStatusResponse checked) {
         return new PawapayCallbackPayload(
-                depositId, status, null, null, null, null, null,
+                depositId, status, checked.amount(), checked.currency(), null, null, null,
                 checked.providerTransactionId(), null, null, null, null, null, null, null,
                 checked.failureReason());
     }

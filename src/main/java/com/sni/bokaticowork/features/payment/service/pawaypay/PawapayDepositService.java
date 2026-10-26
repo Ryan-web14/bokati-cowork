@@ -223,6 +223,26 @@ public class PawapayDepositService {
     }
 
     /**
+     * Confirme par l'operateur, mais pas pour le montant ou la devise demandes · a rapprocher.
+     *
+     * <p>On cesse de relire : l'operateur a deja tranche, c'est l'ecart qu'un agent doit lever.</p>
+     */
+    public PawapayDeposit markAmountMismatch(String depositId, String mismatch) {
+        PawapayDeposit deposit = repository.findByDepositId(depositId).orElse(null);
+        if (deposit == null) {
+            return null;
+        }
+        deposit.setStatus("UNRESOLVED");
+        deposit.setUnresolvedAt(Instant.now());
+        deposit.setNextStatusCheckAt(null);
+        deposit.setFailureCode("AMOUNT_MISMATCH");
+        deposit.setFailureReason("Confirmation de l'operateur avec un ecart : " + mismatch);
+        deposit.setUserMessage(PawapayFailureCodes.explain("UNRESOLVED").userMessage());
+        deposit.setRetryable(false);
+        return repository.save(deposit);
+    }
+
+    /**
      * Repousse la prochaine verification · rapprochee d'abord, espacee ensuite.
      *
      * <p>Un client valide en general dans la minute ; passe le quart d'heure, il est parti manger.
