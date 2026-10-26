@@ -42,14 +42,19 @@ class PawapayRequestSignerTest {
     private static String opensslPem;
 
     @BeforeAll
-    static void loadKeys() throws Exception {
-        // Une paire jetable generee par « openssl ecparam -name P-256 -genkey », la commande de
-        // PawaPay · BEGIN EC PRIVATE KEY. Reservee aux tests, elle n'est deposee nulle part.
-        opensslPem = new String(PawapayRequestSignerTest.class.getResourceAsStream("/pawapay/test-only-private-key.pem")
-                .readAllBytes(), StandardCharsets.UTF_8);
-        String publicPem = new String(PawapayRequestSignerTest.class.getResourceAsStream("/pawapay/test-only-public-key.pem")
-                .readAllBytes(), StandardCharsets.UTF_8);
-        keys = new KeyPair(parsePublic(publicPem), PawapayRequestSigner.parsePrivateKey(opensslPem));
+    static void generateKeys() throws Exception {
+        // Une paire generee en memoire, a chaque execution · aucune cle privee dans le depot.
+        // Le fournisseur BouncyCastle ecrit le meme PEM qu'« openssl ecparam -name P-256 -genkey »
+        // (BEGIN EC PRIVATE KEY, courbe nommee incluse), la commande que PawaPay indique.
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("EC",
+                new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        generator.initialize(new ECGenParameterSpec("secp256r1"));
+        keys = generator.generateKeyPair();
+        StringWriter out = new StringWriter();
+        try (JcaPEMWriter writer = new JcaPEMWriter(out)) {
+            writer.writeObject(keys);
+        }
+        opensslPem = out.toString();
     }
 
     private PawapayRequestSigner signer() {
@@ -129,19 +134,6 @@ class PawapayRequestSignerTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> new PawapayRequestSigner(opensslPem, "K", "hmac-sha256"))
                 .hasMessageContaining("non pris en charge");
-    }
-
-    @Test
-    @DisplayName("Une cle generee par openssl ecparam, comme le fait PawaPay, se lit et sa signature se verifie")
-    void realOpensslKeySignsAndVerifies() throws Exception {
-        String privatePem = new String(getClass().getResourceAsStream("/pawapay/test-only-private-key.pem").readAllBytes(), StandardCharsets.UTF_8);
-        String publicPem = new String(getClass().getResourceAsStream("/pawapay/test-only-public-key.pem").readAllBytes(), StandardCharsets.UTF_8);
-        java.security.PrivateKey key = PawapayRequestSigner.parsePrivateKey(privatePem);
-        PawapayRequestSigner signer = new PawapayRequestSigner(key, "K", PawapayRequestSigner.resolveAlgorithm(key, null),
-                Clock.fixed(NOW, ZoneOffset.UTC));
-
-        assertThat(verifies(signer.sign("POST", DEPOSITS, "application/json", BODY), "SHA256withECDSA", null,
-                parsePublic(publicPem))).isTrue();
     }
 
     @Test
