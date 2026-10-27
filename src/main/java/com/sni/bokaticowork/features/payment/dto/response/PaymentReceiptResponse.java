@@ -18,6 +18,8 @@ public record PaymentReceiptResponse(
         String providerReference,
         String depositId,
         String payerPhone,
+        /** La reference de la transaction chez l'operateur (MTN, Airtel...) · vide hors mobile money. */
+        String operatorReference,
         String purpose,
         String sourceType,
         String sourceCode,

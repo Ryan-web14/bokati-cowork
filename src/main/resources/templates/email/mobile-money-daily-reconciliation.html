@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Rapprochement mobile money')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${remainingCount} + ' écart(s) à traiter dans les paiements mobile money'">Écarts à traiter dans les paiements mobile money</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('alert')}"></div>
+
+    <div class="em-body">
+      <div class="em-title" th:text="'Rapprochement mobile money du ' + ${day}">Rapprochement mobile money</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'administrateur'}">administrateur</strong>,
+        les paiements mobile money des deux derniers jours ont été relus chez PawaPay.
+      </div>
+
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Paiements relus</td>
+          <td class="r-val" th:text="${checked}">0</td>
+        </tr>
+        <tr>
+          <td class="r-key">Réglés automatiquement par relecture</td>
+          <td class="r-val" th:text="${autoSettledCount}">0</td>
+        </tr>
+        <tr>
+          <td class="r-key">Écarts à traiter</td>
+          <td class="r-val" th:text="${remainingCount}">0</td>
+        </tr>
+      </table>
+
+      <div class="em-note alert" th:if="${truncated}">
+        Plus de paiements que la limite d'une relecture sur la période : les plus anciens n'ont pas été relus.
+        Lancez le rapprochement depuis l'outil d'administration sur une période plus courte.
+      </div>
+
+      <th:block th:if="${lines != null and !#lists.isEmpty(lines)}">
+        <div class="section-lbl">Écarts</div>
+        <table role="presentation" class="rows" th:each="line : ${lines}">
+          <tr>
+            <td class="r-key">Dépôt</td>
+            <td class="r-val mono" th:text="${line.depositId}">Dépôt</td>
+          </tr>
+          <tr>
+            <td class="r-key">Intention</td>
+            <td class="r-val mono" th:text="${line.intentNumber}">Intention</td>
+          </tr>
+          <tr>
+            <td class="r-key">Montant</td>
+            <td class="r-val" th:text="${line.amount} + ' ' + ${line.currency}">Montant</td>
+          </tr>
+          <tr th:if="${line.phoneNumber != null}">
+            <td class="r-key">Payeur</td>
+            <td class="r-val" th:text="${line.phoneNumber}">Payeur</td>
+          </tr>
+          <tr>
+            <td class="r-key" th:text="${line.severity == 'CRITICAL' ? 'Écart critique' : 'Écart'}">Écart</td>
+            <td class="r-val" th:text="${line.message}">Écart</td>
+          </tr>
+          <tr>
+            <td class="r-key">À faire</td>
+            <td class="r-val" th:text="${line.action}">Action</td>
+          </tr>
+        </table>
+        <div class="em-intro" th:if="${moreLines != null and moreLines > 0}"
+             th:text="'Et ' + ${moreLines} + ' autre(s) écart(s), visibles dans l''outil d''administration.'">Et d'autres écarts.</div>
+      </th:block>
+
+      <div class="em-note alert" th:if="${remainingCount != null and remainingCount > 0}">
+        Chaque écart se traite depuis l'outil mobile money de l'administration : relire chez PawaPay, puis marquer
+        le paiement encaissé ou en échec avec la preuve de l'opérateur.
+      </div>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

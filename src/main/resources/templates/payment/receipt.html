@@ -188,6 +188,7 @@
                         <span th:if="${receipt.paymentMethod()?.name() == 'MOBILE_MONEY' and receipt.depositId() != null}">
                             Dépôt <b th:text="${receipt.depositId()}">ID</b><br></span>
                         <span th:if="${receipt.payerPhone() != null}">Payeur <b th:text="${receipt.payerPhone()}">Tél.</b><br></span>
+                        <span th:if="${receipt.operatorReference() != null}">Réf. opérateur <b th:text="${receipt.operatorReference()}">Réf.</b><br></span>
                         <span th:if="${receipt.intentNumber() != null}" th:text="|Intention ${receipt.intentNumber()}|"></span>
                         <span th:if="${receipt.intentNumber() != null and receipt.transactionStatus() != null}"> · </span>
                         <span th:if="${receipt.transactionStatus() != null}" th:text="|statut ${receipt.transactionStatus()}|"></span>

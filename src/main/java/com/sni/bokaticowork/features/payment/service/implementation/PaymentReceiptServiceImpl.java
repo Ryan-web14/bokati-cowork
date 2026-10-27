@@ -165,13 +165,17 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
 
         String depositId = null;
         String payerPhone = null;
+        String operatorReference = null;
         if (transaction.getPaymentMethod() == PaymentMethod.MOBILE_MONEY) {
             PawapayDeposit deposit = pawapayDepositRepository
                     .findByTransactionNumber(transaction.getTransactionNumber())
                     .orElse(null);
             if (deposit != null) {
                 depositId = deposit.getDepositId();
-                payerPhone = deposit.getPhoneNumber();
+                // Le recu s'imprime et se transmet · le numero du payeur y figure masque.
+                payerPhone = com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber());
+                // La reference de l'operateur est ce que le client cite a MTN ou Airtel en cas de litige.
+                operatorReference = deposit.getProviderTransactionId();
             }
         }
 
@@ -187,6 +191,7 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
                 transaction.getProviderReference(),
                 depositId,
                 payerPhone,
+                operatorReference,
                 transaction.getPaymentIntent().getPurpose(),
                 transaction.getPaymentIntent().getSourceType(),
                 transaction.getPaymentIntent().getSourceCode(),

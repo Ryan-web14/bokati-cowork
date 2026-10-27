@@ -143,7 +143,7 @@ public class MobileMoneySupervisionService {
             payload.put("depositId", deposit.getDepositId());
             payload.put("intentNumber", deposit.getIntentNumber());
             payload.put("transactionNumber", deposit.getTransactionNumber());
-            payload.put("phoneNumber", deposit.getPhoneNumber());
+            payload.put("phoneNumber", com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber()));
             payload.put("provider", deposit.getProvider());
             payload.put("amount", deposit.getAmount() == null ? "" : deposit.getAmount().toPlainString());
             payload.put("currency", deposit.getCurrency());

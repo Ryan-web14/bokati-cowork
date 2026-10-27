@@ -235,7 +235,7 @@ public class PawapayCallbackProcessor {
             alert.put("depositId", deposit.getDepositId());
             alert.put("intentNumber", deposit.getIntentNumber());
             alert.put("transactionNumber", deposit.getTransactionNumber());
-            alert.put("phoneNumber", deposit.getPhoneNumber());
+            alert.put("phoneNumber", com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber()));
             alert.put("provider", deposit.getProvider());
             alert.put("amount", deposit.getAmount() == null ? "" : deposit.getAmount().toPlainString());
             alert.put("currency", deposit.getCurrency());

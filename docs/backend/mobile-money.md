@@ -162,6 +162,7 @@ bokati:
       alert-email: ${PAWAYPAY_ALERT_EMAIL:}    # une ou plusieurs adresses
       operator-prefixes: ${PAWAYPAY_OPERATOR_PREFIXES:}   # vide = aucun contrôle de préfixe
       test-endpoint-enabled: false             # vrai en développement seulement
+      reconciliation-cron: "0 0 6 * * *"       # rapprochement du matin, heure de Brazzaville
 ```
 
 ## Rappels signés (RFC 9421)
@@ -195,6 +196,25 @@ donc un appel, elle ne conditionne pas l'encaissement.
 - Un rappel arrivé avant que le dépôt soit validé en base est mis `DEFERRED`, puis le statut
   est relu sitôt la transaction d'initiation validée.
 
+## Rapprochement quotidien
+
+Chaque matin à 6 h (heure de Brazzaville, `reconciliation-cron`), les paiements des 48 dernières
+heures sont relus chez PawaPay (au plus 200).
+
+- Ce qu'une relecture suffit à régler l'est aussitôt : rappel perdu, échec non reçu, dépôt laissé à
+  rapprocher que PawaPay a fini par trancher.
+- Le reste (montant ou devise différents, paiement que PawaPay ne confirme pas, dépôt sans réponse)
+  part dans un rapport `MOBILE_MONEY_DAILY_RECONCILIATION` aux destinataires des alertes.
+- Un jour sans écart ne produit aucun courriel.
+- Un seul dyno fait le passage du jour : la table `scheduled_job_run` garde une ligne par passage.
+
+## Numéros et reçus
+
+- Le numéro du payeur est masqué (`+24206*****67`) dans les courriels, sur le reçu et sur la
+  facture PDF. L'outil d'administration garde le numéro entier.
+- Le reçu porte la référence de la transaction chez l'opérateur (`operatorReference`), celle que
+  le client cite à MTN ou Airtel en cas de litige.
+
 ## Migrations
 
 - `V244` (dev) / `V240` (prod) · colonnes de résilience sur `pawapay_deposit`, table
@@ -202,6 +222,8 @@ donc un appel, elle ne conditionne pas l'encaissement.
 - `V245` (dev) / `V241` (prod) · gabarit de courriel `MOBILE_MONEY_DEPOSIT_UNRESOLVED`.
 - `V247` (dev) / `V243` (prod) · gabarits `MOBILE_MONEY_DEPOSIT_FAILED` et
   `MOBILE_MONEY_DEPOSIT_PENDING_REVIEW`.
+- `V260` (dev) / `V256` (prod) · table `scheduled_job_run` et gabarit
+  `MOBILE_MONEY_DAILY_RECONCILIATION`.
 
 ## Ce qui reste à faire hors code
 

@@ -94,7 +94,7 @@ public class MobileMoneyClientNotifier {
         payload.put("amount", plain(deposit.getAmount()));
         payload.put("currency", deposit.getCurrency());
         payload.put("provider", operatorName(deposit.getProvider()));
-        payload.put("phoneNumber", deposit.getPhoneNumber());
+        payload.put("phoneNumber", com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber()));
         return payload;
     }
 
