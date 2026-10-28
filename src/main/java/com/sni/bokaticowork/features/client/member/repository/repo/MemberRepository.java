@@ -35,6 +35,10 @@ public interface MemberRepository extends JpaRepository<Member, Long>, JpaSpecif
 
     Optional<Member> findByEmailIgnoreCaseAndDeletedFalse(String email);
 
+    /** Le code du client auquel le membre est rattache · sans charger ni le membre ni le client. */
+    @Query("SELECT c.customerId FROM Member m JOIN m.customer c WHERE m.memberId = :memberId")
+    Optional<String> findCustomerIdByMemberId(@Param("memberId") String memberId);
+
     @Query(
             nativeQuery = true,
             value = """

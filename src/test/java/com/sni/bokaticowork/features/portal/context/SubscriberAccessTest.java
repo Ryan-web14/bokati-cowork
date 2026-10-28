@@ -38,6 +38,7 @@ class SubscriberAccessTest {
 
     @Mock private SubscriptionRepository subscriptionRepository;
     @Mock private ResourceAvailabilityService availabilityService;
+    @Mock private com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository memberRepository;
     @InjectMocks private SubscriberAccess access;
 
     private Member member;
@@ -49,6 +50,8 @@ class SubscriberAccessTest {
         Customer customer = new Customer();
         customer.setCustomerId("CUS-1");
         member.setCustomer(customer);
+        // Le code du client se lit par requete · le membre arrive detache du portail.
+        when(memberRepository.findCustomerIdByMemberId(member.getMemberId())).thenReturn(java.util.Optional.of("CUS-1"));
         when(subscriptionRepository.findAllCurrentActive(anyString(), anyString(), any())).thenReturn(List.of());
         when(availabilityService.touchesSubscribersOnly(eq("RES-1"), any(), any())).thenReturn(true);
     }

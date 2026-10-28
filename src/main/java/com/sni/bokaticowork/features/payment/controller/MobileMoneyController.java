@@ -13,6 +13,7 @@ import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyTestDeposit
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.CongoCorrespondent;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapayProperties;
+import com.sni.bokaticowork.features.payment.provider.pawaypay.PawapaySignatureVerifier;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentService;
 import com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneySupervisionService;
 import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayCallbackGateway;
@@ -177,20 +178,20 @@ public class MobileMoneyController {
      */
     @PostMapping({"/pawapay/callback", "/pawaypay/callback"})
     public ResponseEntity<Void> depositCallback(
-            @RequestBody String rawBody,
-            @RequestHeader(value = "X-PawaPay-Signature", required = false) String signature,
+            @RequestBody(required = false) byte[] body,
             HttpServletRequest request) {
-        callbackGateway.receiveDeposit(rawBody, signature, clientIp(request));
+        PawapaySignatureVerifier.CallbackRequest signed = signedRequest(request, body);
+        callbackGateway.receiveDeposit(new String(signed.body(), java.nio.charset.StandardCharsets.UTF_8), signed, clientIp(request));
         return ResponseEntity.ok().build();
     }
 
     /** Rappel de PawaPay sur un remboursement · meme discernement, meme trace. */
     @PostMapping({"/pawapay/refund-callback", "/pawaypay/refund-callback"})
     public ResponseEntity<Void> refundCallback(
-            @RequestBody String rawBody,
-            @RequestHeader(value = "X-PawaPay-Signature", required = false) String signature,
+            @RequestBody(required = false) byte[] body,
             HttpServletRequest request) {
-        callbackGateway.receiveRefund(rawBody, signature, clientIp(request));
+        PawapaySignatureVerifier.CallbackRequest signed = signedRequest(request, body);
+        callbackGateway.receiveRefund(new String(signed.body(), java.nio.charset.StandardCharsets.UTF_8), signed, clientIp(request));
         return ResponseEntity.ok().build();
     }
 
@@ -215,6 +216,39 @@ public class MobileMoneyController {
                 ? base + (base.contains("?") ? "&" : "?") + "depositId=" + depositId + "&status=" + status
                 : "/";
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(target)).build();
+    }
+
+    /**
+     * Le rappel tel que PawaPay l'a signe · les octets exacts du corps, et les autorites possibles.
+     *
+     * <p>{@code @authority} est l'hote de l'URL de rappel declaree chez PawaPay. Derriere le routeur
+     * Heroku ou un tunnel, l'en-tete {@code Host} peut differer · on essaie l'hote transmis, l'hote
+     * recu et celui de l'URL de rappel configuree. Le corps est lu en octets : la signature porte sur
+     * eux, et le relire en texte puis le reencoder pourrait les changer.</p>
+     */
+    private PawapaySignatureVerifier.CallbackRequest signedRequest(HttpServletRequest request, byte[] body) {
+        Map<String, String> headers = new java.util.LinkedHashMap<>();
+        for (String name : java.util.Collections.list(request.getHeaderNames())) {
+            headers.put(name, String.join(", ", java.util.Collections.list(request.getHeaders(name))));
+        }
+        java.util.LinkedHashSet<String> authorities = new java.util.LinkedHashSet<>();
+        String forwardedHost = request.getHeader("X-Forwarded-Host");
+        if (StringUtils.hasText(forwardedHost)) {
+            authorities.add(forwardedHost.split(",")[0].trim());
+        }
+        if (StringUtils.hasText(request.getHeader("Host"))) {
+            authorities.add(request.getHeader("Host").trim());
+        }
+        try {
+            String configured = URI.create(properties.getCallbackBaseUrl().trim()).getRawAuthority();
+            if (StringUtils.hasText(configured)) {
+                authorities.add(configured);
+            }
+        } catch (Exception ignored) {
+            // URL de rappel mal formee · les en-tetes suffisent
+        }
+        return new PawapaySignatureVerifier.CallbackRequest(request.getMethod(), List.copyOf(authorities),
+                request.getRequestURI(), headers, body);
     }
 
     private String clientIp(HttpServletRequest request) {

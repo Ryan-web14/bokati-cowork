@@ -201,7 +201,7 @@ export type BookingStatus =
 
 export type BookingHoldStatus = "ACTIVE" | "CONFIRMED" | "RELEASED" | "EXPIRED";
 
-export type BookingParticipantRole = "HOST" | "GUEST" | "ORGANIZER";
+export type BookingParticipantRole = "HOST" | "GUEST" | "ORGANIZER" | "MEMBER"; // casse indifferente, vide = GUEST
 export type BookingParticipantStatus = "INVITED" | "CONFIRMED" | "DECLINED" | "REMOVED";
 
 export type BookingRecurrenceFrequency = "DAILY" | "WEEKLY" | "MONTHLY";

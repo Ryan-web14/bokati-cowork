@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -36,6 +37,9 @@ public class PawapayCallbackProcessor {
     private final PawapayDepositRepository depositRepository;
     private final MobileMoneyClientNotifier clientNotifier;
     private final com.sni.bokaticowork.features.payment.service.support.SelfServicePaymentNotifier selfServiceNotifier;
+    private final MobileMoneyAlertRecipients alertRecipients;
+    private final com.sni.bokaticowork.features.payment.service.interfaces.WalletService walletService;
+    private final jakarta.persistence.EntityManager entityManager;
 
     public void process(PawapayCallbackPayload payload) {
         String depositId = payload.depositId();
@@ -54,6 +58,13 @@ public class PawapayCallbackProcessor {
 
         String status = payload.status() == null ? "" : payload.status().trim().toUpperCase();
         if ("COMPLETED".equals(status) || "SUCCESSFUL".equals(status) || "SUCCEEDED".equals(status)) {
+            if (transaction.getStatus() != PaymentTransactionStatus.SUCCEEDED) {
+                String mismatch = amountMismatch(transaction, payload);
+                if (mismatch != null) {
+                    holdForReview(transaction, depositId, mismatch);
+                    return;
+                }
+            }
             handleCompleted(transaction, depositId);
             depositService.markCompleted(depositId, payload);
         } else if ("FAILED".equals(status) || "REJECTED".equals(status) || "EXPIRED".equals(status)) {
@@ -77,8 +88,24 @@ public class PawapayCallbackProcessor {
      */
     private PaymentTransaction resolveTransaction(PawapayCallbackPayload payload) {
         return resolveTransaction(payload.depositId(), payload.clientReferenceId())
+                .map(this::lock)
                 .map(transaction -> ensureProviderReference(transaction, payload.depositId()))
                 .orElse(null);
+    }
+
+    /**
+     * Verrouille la transaction et relit son etat sous verrou.
+     *
+     * <p>Un rappel, la relecture programmee et un agent peuvent trancher le meme depot au meme
+     * instant. Sans verrou, chacun lisait PROCESSING et chacun encaissait : deux recus, deux
+     * imputations tentees, deux courriels. Le second attend desormais le premier, puis lit le
+     * statut qu'il a laisse et s'arrete.</p>
+     */
+    private PaymentTransaction lock(PaymentTransaction transaction) {
+        if (entityManager != null && transaction.getId() != null && entityManager.contains(transaction)) {
+            entityManager.refresh(transaction, jakarta.persistence.LockModeType.PESSIMISTIC_WRITE);
+        }
+        return transaction;
     }
 
     private Optional<PaymentTransaction> resolveTransaction(String depositId, String clientReferenceId) {
@@ -124,7 +151,7 @@ public class PawapayCallbackProcessor {
             }
             transactionRepository.save(transaction);
             try {
-                allocationService.allocateIfBillingDocument(transaction);
+                creditOverpayment(transaction, allocationService.allocateIfBillingDocument(transaction));
             } catch (Exception ex) {
                 // On ne fait pas echouer l'encaissement : l'argent est bien recu et la transaction
                 // doit passer SUCCEEDED. Mais l'echec d'imputation laissait auparavant la facture
@@ -156,6 +183,94 @@ public class PawapayCallbackProcessor {
 
         log.info("PawaPay deposit completed · transaction={}, depositId={}",
                 transaction.getTransactionNumber(), depositId);
+    }
+
+    /**
+     * L'operateur annonce-t-il un autre montant, ou une autre devise, que ce qu'on lui a demande ?
+     *
+     * <p>Un depot se confirme sur son identifiant · le corps du rappel, ou la relecture de statut,
+     * dit aussi combien a ete preleve. On le croyait sans regarder : un rappel forge ou une anomalie
+     * chez l'operateur soldait une facture de 50 000 XAF pour 10 XAF recus. Un montant absent ne
+     * prouve rien et ne bloque rien ; un montant different bloque.</p>
+     */
+    static String amountMismatch(PaymentTransaction transaction, PawapayCallbackPayload payload) {
+        if (StringUtils.hasText(payload.amount()) && transaction.getAmount() != null) {
+            BigDecimal reported;
+            try {
+                reported = new BigDecimal(payload.amount().trim());
+            } catch (NumberFormatException ex) {
+                return "montant annonce illisible (" + payload.amount() + ")";
+            }
+            if (reported.compareTo(transaction.getAmount()) != 0) {
+                return "montant annonce " + reported.toPlainString() + ", attendu "
+                        + transaction.getAmount().stripTrailingZeros().toPlainString();
+            }
+        }
+        if (StringUtils.hasText(payload.currency()) && StringUtils.hasText(transaction.getCurrency())
+                && !payload.currency().trim().equalsIgnoreCase(transaction.getCurrency())) {
+            return "devise annoncee " + payload.currency().trim() + ", attendue " + transaction.getCurrency();
+        }
+        return null;
+    }
+
+    /**
+     * Ni encaisse ni refuse · mis de cote pour qu'un agent tranche avec le releve de l'operateur.
+     *
+     * <p>Declarer l'echec ferait repayer un client peut-etre preleve ; declarer le succes solderait
+     * la facture pour un montant qui n'est pas le bon. La transaction reste en cours, le depot passe
+     * a rapprocher, et les super-administrateurs sont prevenus.</p>
+     */
+    private void holdForReview(PaymentTransaction transaction, String depositId, String mismatch) {
+        log.error("Depot PawaPay {} confirme avec un ecart · {} · transaction {} laissee en cours, a rapprocher",
+                depositId, mismatch, transaction.getTransactionNumber());
+        PawapayDeposit deposit = depositService.markAmountMismatch(depositId, mismatch);
+        if (deposit == null) {
+            return;
+        }
+        for (String recipient : alertRecipients.recipients()) {
+            java.util.Map<String, Object> alert = new java.util.HashMap<>();
+            alert.put("adminEmail", recipient);
+            alert.put("templateCode", "MOBILE_MONEY_DEPOSIT_UNRESOLVED");
+            alert.put("anomaly", "L'opérateur a confirmé ce paiement avec un écart : " + mismatch + ".");
+            alert.put("depositId", deposit.getDepositId());
+            alert.put("intentNumber", deposit.getIntentNumber());
+            alert.put("transactionNumber", deposit.getTransactionNumber());
+            alert.put("phoneNumber", com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber()));
+            alert.put("provider", deposit.getProvider());
+            alert.put("amount", deposit.getAmount() == null ? "" : deposit.getAmount().toPlainString());
+            alert.put("currency", deposit.getCurrency());
+            outboxService.publish("MOBILE_MONEY_DEPOSIT_UNRESOLVED", "PAYMENT",
+                    deposit.getDepositId() + ":mismatch:" + recipient, alert);
+        }
+        clientNotifier.depositPendingReview(deposit);
+    }
+
+    /**
+     * Ce qui reste d'un paiement de facture une fois la facture soldee · credite au portefeuille.
+     *
+     * <p>Un depot laisse « a rapprocher » finit parfois par aboutir alors que le client a deja paye
+     * autrement. L'imputation ne prend que le solde du, et le reste disparaissait : le client etait
+     * preleve sans contrepartie. Il est desormais porte a son portefeuille, une seule fois. Les
+     * rechargements et les autres sources ne passent pas par ici · leur montant entier est leur
+     * objet, et ils sont credites ailleurs.</p>
+     */
+    private void creditOverpayment(PaymentTransaction transaction, BigDecimal remainder) {
+        PaymentIntent intent = transaction.getPaymentIntent();
+        if (remainder == null || remainder.signum() <= 0 || !billingSource(intent)) {
+            return;
+        }
+        var wallet = walletService.getOrCreate(intent.getCustomerType(), intent.getCustomerCode(), intent.getCurrency());
+        walletService.credit(walletService.serviceWallet(wallet.walletNumber()), remainder,
+                com.sni.bokaticowork.features.payment.enums.WalletEntryType.OVERPAYMENT_CREDIT, "PAYMENT_TRANSACTION",
+                transaction.getTransactionNumber(), "OVERPAYMENT", "SYSTEM",
+                "OVERPAYMENT:" + transaction.getTransactionNumber());
+        log.warn("Trop-percu de {} {} sur la transaction {} · credite au portefeuille {}",
+                remainder.toPlainString(), intent.getCurrency(), transaction.getTransactionNumber(), wallet.walletNumber());
+    }
+
+    static boolean billingSource(PaymentIntent intent) {
+        String source = intent == null || intent.getSourceType() == null ? "" : intent.getSourceType().trim().toUpperCase();
+        return source.equals("BILLING_DOCUMENT") || source.equals("MULTI_BILLING_DOCUMENT") || source.equals("PAYABLE_RECOVERY");
     }
 
     private void reconcileIntent(PaymentTransaction transaction) {

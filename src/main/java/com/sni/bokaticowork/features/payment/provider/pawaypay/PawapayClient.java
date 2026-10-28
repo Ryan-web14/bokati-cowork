@@ -219,6 +219,25 @@ public class PawapayClient {
         }
     }
 
+    /** Les cles publiques avec lesquelles PawaPay signe ses rappels · {@code GET /v2/public-key/http}. */
+    public java.util.List<PawapaySignatureVerifier.PublicKeyEntry> publicKeys() {
+        JsonNode body;
+        try {
+            body = readTree(restClient.get()
+                    .uri("/v2/public-key/http")
+                    .retrieve()
+                    .body(byte[].class));
+        } catch (ResourceAccessException ex) {
+            throw new ProviderUnreachableException("PawaPay injoignable pour les cles publiques", ex);
+        }
+        java.util.List<PawapaySignatureVerifier.PublicKeyEntry> entries = new java.util.ArrayList<>();
+        if (body != null && body.isArray()) {
+            body.forEach(node -> entries.add(new PawapaySignatureVerifier.PublicKeyEntry(
+                    node.path("id").asText(null), node.path("key").asText(null))));
+        }
+        return entries;
+    }
+
     /** Le statut d'un remboursement · meme enveloppe que les depots. */
     public DepositStatus getRefundStatus(String refundId) {
         JsonNode body;

@@ -126,7 +126,7 @@ public class MobileMoneySupervisionService {
 
     private PawapayCallbackPayload payload(PawapayDeposit deposit, String status, MobileMoneyStatusResponse checked) {
         return new PawapayCallbackPayload(
-                deposit.getDepositId(), status, null, null, deposit.getClientReferenceId(), null, null,
+                deposit.getDepositId(), status, checked.amount(), checked.currency(), deposit.getClientReferenceId(), null, null,
                 checked.providerTransactionId(), null, null, null, null, null, null, null,
                 checked.failureReason());
     }
@@ -143,7 +143,7 @@ public class MobileMoneySupervisionService {
             payload.put("depositId", deposit.getDepositId());
             payload.put("intentNumber", deposit.getIntentNumber());
             payload.put("transactionNumber", deposit.getTransactionNumber());
-            payload.put("phoneNumber", deposit.getPhoneNumber());
+            payload.put("phoneNumber", com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber()));
             payload.put("provider", deposit.getProvider());
             payload.put("amount", deposit.getAmount() == null ? "" : deposit.getAmount().toPlainString());
             payload.put("currency", deposit.getCurrency());

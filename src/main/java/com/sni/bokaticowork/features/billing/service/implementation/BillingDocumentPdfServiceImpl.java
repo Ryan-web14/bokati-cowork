@@ -375,7 +375,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
                                 .orElse(null);
                         if (deposit != null) {
                             depositId = deposit.getDepositId();
-                            payerPhone = deposit.getPhoneNumber();
+                            payerPhone = com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber());
                         }
                     }
                     return new PaymentInfo(

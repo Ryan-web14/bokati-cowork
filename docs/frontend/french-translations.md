@@ -3646,6 +3646,7 @@ Il sert de dictionnaire de libelles pour afficher proprement les champs techniqu
 | `GUEST` | Guest |
 | `HOST` | Host |
 | `ORGANIZER` | Organizer |
+| `MEMBER` | Membre |
 
 #### BookingParticipantStatus
 

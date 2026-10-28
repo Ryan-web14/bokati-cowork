@@ -67,6 +67,12 @@ public class PawapayDepositService {
         return repository.findInFlight(intent.getId(), phoneNumber, since);
     }
 
+    /** Le depot existe-t-il deja chez nous · un rappel peut arriver avant la validation de sa creation. */
+    @Transactional(readOnly = true)
+    public boolean known(String depositId) {
+        return depositId != null && repository.findByDepositId(depositId).isPresent();
+    }
+
     public PawapayDeposit prepareDeposit(PaymentIntent intent,
                                          PaymentTransaction transaction,
                                          InitiateMobileMoneyDepositRequest request) {
@@ -217,6 +223,26 @@ public class PawapayDepositService {
         deposit.setUnresolvedAt(Instant.now());
         deposit.setNextStatusCheckAt(null);
         deposit.setFailureCode("UNRESOLVED");
+        deposit.setUserMessage(PawapayFailureCodes.explain("UNRESOLVED").userMessage());
+        deposit.setRetryable(false);
+        return repository.save(deposit);
+    }
+
+    /**
+     * Confirme par l'operateur, mais pas pour le montant ou la devise demandes · a rapprocher.
+     *
+     * <p>On cesse de relire : l'operateur a deja tranche, c'est l'ecart qu'un agent doit lever.</p>
+     */
+    public PawapayDeposit markAmountMismatch(String depositId, String mismatch) {
+        PawapayDeposit deposit = repository.findByDepositId(depositId).orElse(null);
+        if (deposit == null) {
+            return null;
+        }
+        deposit.setStatus("UNRESOLVED");
+        deposit.setUnresolvedAt(Instant.now());
+        deposit.setNextStatusCheckAt(null);
+        deposit.setFailureCode("AMOUNT_MISMATCH");
+        deposit.setFailureReason("Confirmation de l'operateur avec un ecart : " + mismatch);
         deposit.setUserMessage(PawapayFailureCodes.explain("UNRESOLVED").userMessage());
         deposit.setRetryable(false);
         return repository.save(deposit);

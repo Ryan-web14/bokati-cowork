@@ -22,6 +22,9 @@ public interface EntitlementService {
 
     EntitlementOperationResponse consume(EntitlementOperationRequest request);
 
+    /** La consommation passerait-elle, par la retenue de la reference ou par le solde · sans rien ecrire. */
+    boolean coverable(EntitlementOperationRequest request);
+
     EntitlementOperationResponse release(EntitlementOperationRequest request);
 
     EntitlementOperationResponse refund(EntitlementOperationRequest request);

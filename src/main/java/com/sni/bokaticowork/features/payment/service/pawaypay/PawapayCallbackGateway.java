@@ -50,8 +50,9 @@ public class PawapayCallbackGateway {
     // Depots
     // ---------------------------------------------------------------------------------------
 
-    public PawapayCallback.Outcome receiveDeposit(String rawBody, String signatureHeader, String remoteAddress) {
-        boolean signaturePresent = StringUtils.hasText(signatureHeader);
+    public PawapayCallback.Outcome receiveDeposit(String rawBody, PawapaySignatureVerifier.CallbackRequest signed,
+                                          String remoteAddress) {
+        boolean signaturePresent = signed != null && signed.signed();
         Long entry = journal.open(PawapayCallback.Kind.DEPOSIT, rawBody, signaturePresent, remoteAddress);
 
         PawapayCallbackPayload payload;
@@ -72,7 +73,14 @@ public class PawapayCallbackGateway {
         }
 
         try {
-            if (signatureVerifier.verify(rawBody, signatureHeader)) {
+            if (!depositService.known(depositId)) {
+                // Le depot n'est peut-etre pas encore valide en base · l'initiation le relira des
+                // qu'il le sera. Le traiter maintenant ne trouvait rien et le marquait traite.
+                log.info("Rappel de depot {} recu avant son enregistrement · mis en attente", depositId);
+                return close(entry, depositId, reported, PawapayCallback.VerifiedVia.NONE,
+                        PawapayCallback.Outcome.DEFERRED, EarlyCallbackRelay.EARLY_DETAIL);
+            }
+            if (signatureVerifier.verify(signed)) {
                 callbackProcessor.process(payload);
                 log.info("Rappel de depot {} traite · signature verifiee, statut annonce {}", depositId, reported);
                 return close(entry, depositId, reported, PawapayCallback.VerifiedVia.SIGNATURE,
@@ -135,7 +143,7 @@ public class PawapayCallbackGateway {
 
     private PawapayCallbackPayload statusPayload(String depositId, String status, MobileMoneyStatusResponse checked) {
         return new PawapayCallbackPayload(
-                depositId, status, null, null, null, null, null,
+                depositId, status, checked.amount(), checked.currency(), null, null, null,
                 checked.providerTransactionId(), null, null, null, null, null, null, null,
                 checked.failureReason());
     }
@@ -144,8 +152,9 @@ public class PawapayCallbackGateway {
     // Remboursements
     // ---------------------------------------------------------------------------------------
 
-    public PawapayCallback.Outcome receiveRefund(String rawBody, String signatureHeader, String remoteAddress) {
-        boolean signaturePresent = StringUtils.hasText(signatureHeader);
+    public PawapayCallback.Outcome receiveRefund(String rawBody, PawapaySignatureVerifier.CallbackRequest signed,
+                                          String remoteAddress) {
+        boolean signaturePresent = signed != null && signed.signed();
         Long entry = journal.open(PawapayCallback.Kind.REFUND, rawBody, signaturePresent, remoteAddress);
 
         PawapayRefundCallbackPayload payload;
@@ -165,7 +174,7 @@ public class PawapayCallbackGateway {
         }
 
         try {
-            if (signatureVerifier.verify(rawBody, signatureHeader)) {
+            if (signatureVerifier.verify(signed)) {
                 refundCallbackProcessor.process(payload);
                 return close(entry, refundId, reported, PawapayCallback.VerifiedVia.SIGNATURE,
                         PawapayCallback.Outcome.PROCESSED, null);

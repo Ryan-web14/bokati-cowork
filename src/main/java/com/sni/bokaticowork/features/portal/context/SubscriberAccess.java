@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.portal.context;
 
 import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
 import com.sni.bokaticowork.features.client.member.model.Member;
+import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
 import com.sni.bokaticowork.features.ressource.service.interfaces.ResourceAvailabilityService;
 import com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class SubscriberAccess {
 
     private final SubscriptionRepository subscriptionRepository;
     private final ResourceAvailabilityService availabilityService;
+    private final MemberRepository memberRepository;
 
     @Transactional(readOnly = true)
     public boolean isSubscriber(Member member) {
@@ -42,9 +44,14 @@ public class SubscriberAccess {
                 && !subscriptionRepository.findAllCurrentActive("MEMBER", member.getMemberId(), today).isEmpty()) {
             return true;
         }
-        return member.getCustomer() != null
-                && StringUtils.hasText(member.getCustomer().getCustomerId())
-                && !subscriptionRepository.findAllCurrentActive("CUSTOMER", member.getCustomer().getCustomerId(), today).isEmpty();
+        // Le membre arrive detache · son client n'est qu'une reference paresseuse, et la lire ici
+        // levait LazyInitializationException : calendrier et creneaux du portail en 500. Le code
+        // du client se lit par requete, dans la transaction de cette methode.
+        return StringUtils.hasText(member.getMemberId())
+                && memberRepository.findCustomerIdByMemberId(member.getMemberId())
+                .filter(StringUtils::hasText)
+                .map(customerId -> !subscriptionRepository.findAllCurrentActive("CUSTOMER", customerId, today).isEmpty())
+                .orElse(false);
     }
 
     /** La plage touche-t-elle une soiree que ce membre n'a pas le droit de reserver. */

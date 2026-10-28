@@ -107,6 +107,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final com.sni.bokaticowork.features.payment.service.support.SelfServicePaymentNotifier selfServiceNotifier;
     private final PawapayDepositService pawapayDepositService;
     private final com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyInitiationGuard mobileMoneyGuard;
+    private final com.sni.bokaticowork.features.payment.service.pawaypay.EarlyCallbackRelay earlyCallbackRelay;
     @org.springframework.context.annotation.Lazy
     private final BillingEmailService billingEmailService;
     private final OutboxService outboxService;
@@ -373,6 +374,10 @@ public class PaymentServiceImpl implements PaymentService {
             // pousserait le client a repayer une demande qu'il va recevoir sur son telephone.
             transaction.setProviderReference(response.providerReference());
             transactionRepository.save(transaction);
+            // PawaPay a pu rappeler avant que ce depot soit valide en base · on le relira alors.
+            if (earlyCallbackRelay != null) {
+                earlyCallbackRelay.afterCommit(deposit.getDepositId());
+            }
             return pawapayDepositService.toResponse(deposit);
         }
 

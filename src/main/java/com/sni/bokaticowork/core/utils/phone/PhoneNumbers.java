@@ -47,6 +47,33 @@ public final class PhoneNumbers {
         return international ? "+" + digits : digits;
     }
 
+    /**
+     * Le numero tel qu'on peut l'ecrire dans un courriel ou sur un recu · le debut et les deux
+     * derniers chiffres, le reste masque.
+     *
+     * <p>Un courriel se transfere, un recu s'imprime et se pose sur un bureau. Le numero complet du
+     * payeur n'y sert a rien : l'indicatif et la fin suffisent a le reconnaitre, et l'outil
+     * d'administration garde le numero entier pour un rapprochement.</p>
+     *
+     * <p>{@code 242061234567} donne {@code +24206*****67}. Vide ou absent, rend {@code null}.</p>
+     */
+    public static String mask(String raw) {
+        String cleaned = clean(raw);
+        String digits = cleaned.replace("+", "");
+        if (digits.isEmpty()) {
+            return null;
+        }
+        if (digits.length() <= 4) {
+            return "*".repeat(digits.length());
+        }
+        int shown = Math.min(5, digits.length() - 4);
+        String masked = digits.substring(0, shown)
+                + "*".repeat(digits.length() - shown - 2)
+                + digits.substring(digits.length() - 2);
+        // Les numeros des depots sont stockes en MSISDN, indicatif compris, sans le plus.
+        return digits.length() >= 11 || cleaned.startsWith("+") ? "+" + masked : masked;
+    }
+
     /** Le numero est-il d'une forme qu'on peut lire · avant meme de savoir a quel pays il appartient. */
     public static boolean looksValid(String raw) {
         if (raw == null || raw.isBlank() || !TYPABLE.matcher(raw.trim()).matches()) {
