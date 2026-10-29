@@ -69,6 +69,39 @@ public class Customer {
     @Enumerated(EnumType.STRING)
     private CustomerStatus status;
 
+    /**
+     * Le profil legal d'une organisation cliente · identifiants, representant, regime de TVA.
+     * Vide pour une personne.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "business_entity_id", foreignKey = @ForeignKey(name = "customer_business_entity_fk"))
+    private com.sni.bokaticowork.features.company.model.BusinessEntity businessEntity;
+
+    /** Echeance des factures, en jours apres l'emission, quand la facture n'en fixe pas. */
+    @Column(name = "payment_terms_days")
+    private Integer paymentTermsDays;
+
+    /** Encours au-dela duquel aucune nouvelle facture n'est emise, sauf super-administrateur. */
+    @Column(name = "credit_limit", precision = 19, scale = 2)
+    private java.math.BigDecimal creditLimit;
+
+    /** Adresse imprimee sur la facture, quand elle differe de l'adresse generale. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "billing_address_id", foreignKey = @ForeignKey(name = "customer_billing_address_fk"))
+    private Address billingAddress;
+
+    @Column(name = "website")
+    private String website;
+
+    @Column(name = "blocked_reason", length = 500)
+    private String blockedReason;
+
+    @Column(name = "blocked_by", length = 150)
+    private String blockedBy;
+
+    @Column(name = "blocked_at")
+    private Instant blockedAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

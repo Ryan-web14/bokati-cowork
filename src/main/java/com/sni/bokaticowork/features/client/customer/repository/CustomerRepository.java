@@ -134,4 +134,30 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     @Query(nativeQuery = true, value = "UPDATE customer SET deleted = true WHERE customer_id = :customerId ")
     void deleteByCustomerId(@Param("customerId") String customerId);
 
+
+    /**
+     * Les organisations clientes · recherche dans le nom, les courriels et tous les identifiants.
+     *
+     * @param q texte en minuscules entoure de {@code %}, ou {@code null} pour tout
+     */
+    @Query("""
+            SELECT c FROM Customer c LEFT JOIN c.businessEntity b
+            WHERE c.type = com.sni.bokaticowork.features.client.customer.enums.CustomerType.COMPANY
+              AND (:status IS NULL OR c.status = :status)
+              AND (:q IS NULL
+                   OR LOWER(c.companyName) LIKE :q
+                   OR LOWER(c.email) LIKE :q
+                   OR LOWER(c.billingEmail) LIKE :q
+                   OR LOWER(c.customerId) LIKE :q
+                   OR EXISTS (SELECT 1 FROM BusinessEntityIdentifier i
+                              WHERE i.businessEntity = b AND LOWER(i.value) LIKE :q))
+            ORDER BY c.companyName ASC
+            """)
+    org.springframework.data.domain.Page<Customer> searchCompanies(
+            @Param("q") String q,
+            @Param("status") com.sni.bokaticowork.features.client.customer.enums.CustomerStatus status,
+            org.springframework.data.domain.Pageable pageable);
+
+    /** Un autre client deja relie a ce profil legal · une fiche legale ne sert qu'un compte. */
+    Optional<Customer> findFirstByBusinessEntity_IdAndIdNot(Long businessEntityId, Long id);
 }

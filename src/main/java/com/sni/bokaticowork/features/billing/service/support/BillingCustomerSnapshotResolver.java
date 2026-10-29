@@ -22,6 +22,7 @@ public class BillingCustomerSnapshotResolver {
     private final CustomerRepository customerRepository;
     private final BusinessRepository businessRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
+    private final com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile organizationProfile;
 
     public CustomerSnapshot resolve(CreateBillingDocumentRequest request) {
         validateCustomerReference(request.customerType(), request.customerCode());
@@ -42,7 +43,9 @@ public class BillingCustomerSnapshotResolver {
                 name,
                 firstText(request.customerEmail(), resolved.customerEmail()),
                 firstText(request.customerPhone(), resolved.customerPhone()),
-                request.billingAddressJson()
+                // L'adresse de la demande d'abord ; a defaut, celle de la fiche de l'organisation.
+                firstText(request.billingAddressJson(), resolved.billingAddressJson()),
+                resolved.organization()
         );
     }
 
@@ -83,13 +86,15 @@ public class BillingCustomerSnapshotResolver {
 
     private CustomerSnapshot fromCustomer(Customer customer) {
         String individualName = (nullSafe(customer.getFirstname()) + " " + nullSafe(customer.getLastname())).trim();
+        var organization = organizationProfile.of(customer).orElse(null);
         return new CustomerSnapshot(
                 "CUSTOMER",
                 customer.getCustomerId(),
                 fallback(customer.getCompanyName(), fallback(individualName, customer.getCustomerId())),
                 firstText(customer.getBillingEmail(), customer.getEmail()),
                 customer.getPhone(),
-                null
+                organization == null ? null : organization.billingAddressJson(),
+                organization
         );
     }
 
@@ -109,14 +114,25 @@ public class BillingCustomerSnapshotResolver {
         return value == null ? "" : value.trim();
     }
 
+    /**
+     * Le destinataire fige sur la facture · {@code organization} porte les conditions de la fiche
+     * d'une organisation cliente (identifiants, exoneration, echeance, plafond, blocage), vide sinon.
+     */
     public record CustomerSnapshot(String customerType,
                                    String customerCode,
                                    String customerName,
                                    String customerEmail,
                                    String customerPhone,
-                                   String billingAddressJson) {
+                                   String billingAddressJson,
+                                   com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization) {
+
+        public CustomerSnapshot(String customerType, String customerCode, String customerName,
+                                String customerEmail, String customerPhone, String billingAddressJson) {
+            this(customerType, customerCode, customerName, customerEmail, customerPhone, billingAddressJson, null);
+        }
+
         static CustomerSnapshot empty() {
-            return new CustomerSnapshot(null, null, null, null, null, null);
+            return new CustomerSnapshot(null, null, null, null, null, null, null);
         }
     }
 }

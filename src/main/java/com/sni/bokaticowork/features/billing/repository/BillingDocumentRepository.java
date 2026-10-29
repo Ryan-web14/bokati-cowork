@@ -23,6 +23,25 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
     Optional<BillingDocument> findByDocumentNumber(@Param("documentNumber") String documentNumber);
 
     /**
+     * L'encours d'un destinataire · ce qui lui est reclame et n'est pas regle.
+     *
+     * <p>Memes ensembles que {@code BillingReceivables} : types creances seulement (pas d'avoir),
+     * ni brouillon, ni annule, ni regle. Quand l'un change, l'autre change.</p>
+     */
+    @Query("""
+            SELECT COALESCE(SUM(d.balanceDue), 0)
+            FROM BillingDocument d
+            WHERE d.customerType = :customerType
+              AND d.customerCode = :customerCode
+              AND d.documentType IN :receivableTypes
+              AND d.status NOT IN :excludedStatuses
+            """)
+    java.math.BigDecimal sumOutstanding(@Param("customerType") String customerType,
+                                        @Param("customerCode") String customerCode,
+                                        @Param("receivableTypes") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentType> receivableTypes,
+                                        @Param("excludedStatuses") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus> excludedStatuses);
+
+    /**
      * Charge le document sous verrou exclusif, pour serialiser les mutations de
      * {@code paid_amount} / {@code balance_due} / {@code status}.
      * <p>

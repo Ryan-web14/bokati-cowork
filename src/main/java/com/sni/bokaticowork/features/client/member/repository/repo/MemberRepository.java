@@ -142,6 +142,9 @@ public interface MemberRepository extends JpaRepository<Member, Long>, JpaSpecif
 
     boolean existsByCustomerAndDeletedFalseAndIdNot(Customer customer, Long id);
 
+    /** Les membres dont ce client est le payeur · affiche sur la fiche d'une organisation. */
+    long countByCustomerAndDeletedFalse(Customer customer);
+
     Page<Member> findAllByCustomerAndDeletedFalse(Customer customer, Pageable pageable);
 
     @Query(

@@ -296,6 +296,18 @@ public class BillingDocument {
     @Column(name = "customer_category", length = 40)
     private String customerCategory;
 
+    /**
+     * Les identifiants saisis sur la fiche de l'organisation, figes a l'emission ·
+     * {@code [{"type":"RCCM","label":"RCCM","value":"CG-PNR-01-2017-A11-00472"}]}. Seuls ceux
+     * qui sont saisis y figurent, et seuls ceux-la sont imprimes.
+     */
+    @Column(name = "customer_identifiers_json", columnDefinition = "TEXT")
+    private String customerIdentifiersJson;
+
+    /** La mention d'exoneration de TVA de l'organisation, imprimee sur sa facture. */
+    @Column(name = "customer_vat_exemption_note", length = 500)
+    private String customerVatExemptionNote;
+
     // ── Lien document-correctif ─────────────────────────────────────────────────
 
     /** Numéro du document d'origine corrigé par cet avoir ou cette facture rectificative. */

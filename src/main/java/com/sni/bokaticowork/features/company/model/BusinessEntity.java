@@ -44,12 +44,37 @@ public class BusinessEntity {
     @NotBlank(message = "the legal form of the business is required")
     private String legalForm;
 
-    @Column(name = "niu_number", nullable = false)
-    @Size(max = 18, message = "Niu number must be 12 or 13 digits")
+    /** Facultatif · imprime sur la facture seulement s'il est saisi. */
+    @Column(name = "niu_number")
+    @Size(max = 18, message = "Niu number must be at most 18 characters")
     private String niuNumber;
 
-    @Column(name = "rccm_number", nullable = false)
+    /** Facultatif · une association ou une institution publique n'en a pas. */
+    @Column(name = "rccm_number")
     private String rccmNumber;
+
+    /** Ce qu'est l'organisation · decide des identifiants proposes. */
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "organization_type", nullable = false, length = 40)
+    private com.sni.bokaticowork.features.company.enums.OrganizationType organizationType =
+            com.sni.bokaticowork.features.company.enums.OrganizationType.SOCIETE;
+
+    @Column(name = "legal_representative_name", length = 200)
+    private String legalRepresentativeName;
+
+    @Column(name = "legal_representative_title", length = 120)
+    private String legalRepresentativeTitle;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "vat_regime", nullable = false, length = 20)
+    private com.sni.bokaticowork.features.company.enums.VatRegime vatRegime =
+            com.sni.bokaticowork.features.company.enums.VatRegime.SUBJECT;
+
+    /** Le texte imprime sur la facture d'une organisation exoneree (article, decision). */
+    @Column(name = "vat_exemption_note", length = 500)
+    private String vatExemptionNote;
 
     @Column(name = "tax_id")
     private String taxId;

@@ -28,6 +28,7 @@ import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementRespo
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
+import com.sni.bokaticowork.features.billing.service.support.BillingReceivables;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.enums.BillingLineType;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentAdvance;
@@ -186,6 +187,38 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 blocked);
     }
 
+    /**
+     * Refuse une facture qui ferait depasser a l'organisation son plafond d'encours.
+     *
+     * <p>Seul un super-administrateur passe outre · c'est une decision de credit, pas une erreur
+     * de saisie, et elle doit etre prise par quelqu'un qui en repond.</p>
+     */
+    private void ensureWithinCreditLimit(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
+                                         BigDecimal amount) {
+        if (organization.creditLimit() == null || isSuperAdmin()) {
+            return;
+        }
+        java.util.Set<BillingDocumentStatus> excluded = java.util.EnumSet.noneOf(BillingDocumentStatus.class);
+        excluded.addAll(BillingReceivables.NOT_ISSUED);
+        excluded.addAll(BillingReceivables.SETTLED);
+        BigDecimal outstanding = documentRepository.sumOutstanding("CUSTOMER", organization.customerCode(),
+                BillingReceivables.RECEIVABLE_TYPES, excluded);
+        BigDecimal after = outstanding.add(amount == null ? BigDecimal.ZERO : amount);
+        if (after.compareTo(organization.creditLimit()) > 0) {
+            throw new BadRequestException("Plafond d'encours dépassé pour " + organization.customerName()
+                    + " : encours " + outstanding.stripTrailingZeros().toPlainString()
+                    + ", plafond " + organization.creditLimit().stripTrailingZeros().toPlainString()
+                    + ". Un super-administrateur peut émettre la facture malgré tout.");
+        }
+    }
+
+    private boolean isSuperAdmin() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_SUPER_ADMIN".equals(a.getAuthority()) || "SUPER_ADMIN".equals(a.getAuthority()));
+    }
+
     /** Auteur d'une derogation · le nom du principal, ou SYSTEM hors contexte authentifie. */
     private String currentUserName() {
         var authentication = org.springframework.security.core.context.SecurityContextHolder
@@ -226,7 +259,21 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocumentResponse create(CreateBillingDocumentRequest request) {
         BillingCustomerSnapshotResolver.CustomerSnapshot customer = customerSnapshotResolver.resolve(request);
-        BillingCalculationService.CalculatedDocument calculation = calculationService.calculate(request.lines(), request.discounts());
+        var organization = customer.organization();
+        boolean claim = BillingReceivables.RECEIVABLE_TYPES.contains(request.documentType());
+        if (organization != null && claim && organization.blocked()) {
+            throw new BadRequestException("L'organisation " + organization.customerName() + " est bloquée"
+                    + (organization.blockedReason() == null ? "" : " : " + organization.blockedReason())
+                    + ". Aucune facture ne peut lui être émise tant qu'elle n'est pas débloquée.");
+        }
+        // Une organisation exoneree est facturee hors TVA, quel que soit le prix saisi.
+        List<CreateBillingDocumentLineRequest> lines = organization != null && organization.vatExempt()
+                ? calculationService.exempted(request.lines())
+                : request.lines();
+        BillingCalculationService.CalculatedDocument calculation = calculationService.calculate(lines, request.discounts());
+        if (organization != null && claim) {
+            ensureWithinCreditLimit(organization, calculation.totalAmount());
+        }
         BillingDocument document = buildDocument(request, customer, calculation);
         BillingDocument saved = documentWriter.save(document, calculation, request.discounts(), request.clauses(), request.advance());
         documentWriter.saveEarlyPaymentDiscount(saved, request.earlyPaymentDiscount());
@@ -1766,6 +1813,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // Le commercial reste vide quand personne n'est rattache. « SYSTEM » s'imprimait tel quel
         // sur la facture du client, en face du libelle « Commercial ».
         String salespersonCode = emptyToNull(request.salespersonCode());
+        var organization = customer.organization();
+        LocalDate issueDate = request.issueDate() == null ? LocalDate.now() : request.issueDate();
+        // L'echeance de la fiche s'applique quand la facture n'en fixe pas.
+        LocalDate dueDate = request.dueDate() != null ? request.dueDate()
+                : organization != null && organization.paymentTermsDays() != null
+                ? issueDate.plusDays(organization.paymentTermsDays()) : null;
         return BillingDocument.builder()
                 .documentNumber(documentNumber)
                 .documentType(request.documentType())
@@ -1791,8 +1844,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .totalAmount(calculation.totalAmount())
                 .paidAmount(BigDecimal.ZERO)
                 .balanceDue(calculation.totalAmount())
-                .issueDate(request.issueDate() == null ? LocalDate.now() : request.issueDate())
-                .dueDate(request.dueDate())
+                .issueDate(issueDate)
+                .dueDate(dueDate)
+                // Seuls les identifiants saisis sur la fiche sont figes, et seuls ceux-la s'impriment.
+                .customerNiu(organization == null ? null : organization.niu())
+                .customerIdentifiersJson(organization == null ? null : organization.identifiersJson())
+                .customerVatExemptionNote(organization == null ? null : organization.vatExemptionNote())
                 .customerReference(customerReference)
                 .poNumber(poNumber)
                 .projectCode(projectCode)

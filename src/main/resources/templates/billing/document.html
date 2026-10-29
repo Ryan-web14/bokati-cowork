@@ -260,7 +260,9 @@
                     <span th:if="${document.customerEmail()}"><strong>Email :</strong> <span th:text="${document.customerEmail()}"></span><br></span>
                     <span th:if="${document.customerPhone()}"><strong>Tél. :</strong> <span th:text="${document.customerPhone()}"></span><br></span>
                     <span th:each="addressLine : ${fmt.addressLines(document.billingAddressJson())}"><span th:text="${addressLine}"></span><br></span>
+                    <span th:each="identifier : ${customerIdentifiers}"><strong th:text="${identifier.label} + ' :'">NIU :</strong> <span th:text="${identifier.value}"></span><br></span>
                     <span th:if="${document.customerCategory() != null}"><strong>Catégorie :</strong> <span th:text="${document.customerCategory()}"></span><br></span>
+                    <span th:if="${customerVatExemptionNote != null}"><strong>Exonération de TVA :</strong> <span th:text="${customerVatExemptionNote}"></span><br></span>
                 </div>
             </td>
             <td style="width:46%; padding-left:14px; vertical-align:top;">
