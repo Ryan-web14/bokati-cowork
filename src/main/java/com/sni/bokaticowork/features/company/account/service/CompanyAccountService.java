@@ -17,7 +17,6 @@ import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
 import com.sni.bokaticowork.features.client.customer.service.interfaces.CustomerService;
-import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
 import com.sni.bokaticowork.features.company.account.dto.CompanyDtos;
 import com.sni.bokaticowork.features.company.enums.IdentifierType;
 import com.sni.bokaticowork.features.company.enums.LegalForm;
@@ -73,9 +72,9 @@ public class CompanyAccountService {
     private final BusinessEntityIdentifierRepository identifierRepository;
     private final AddressService addressService;
     private final CurrencyService currencyService;
-    private final MemberRepository memberRepository;
     private final BillingDocumentRepository documentRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository linkRepository;
 
     // ── Creation ─────────────────────────────────────────────────────────────
 
@@ -115,6 +114,7 @@ public class CompanyAccountService {
         saveIdentifiers(legal, identifiers);
 
         customer.setBusinessEntity(legal);
+        customer.setDefaultInvoiceLinkMode(com.sni.bokaticowork.features.company.enums.InvoiceLinkMode.ON_CHOICE);
         customer.setWebsite(trimToNull(request.website()));
         customer.setPaymentTermsDays(request.paymentTermsDays());
         customer.setCreditLimit(request.creditLimit());
@@ -463,7 +463,8 @@ public class CompanyAccountService {
                 customer.getBlockedBy(),
                 customer.getBlockedAt(),
                 legal == null ? null : legal.getCode(),
-                memberRepository.countByCustomerAndDeletedFalse(customer),
+                // Les membres rattaches · le payeur par defaut n'est plus le critere depuis la tranche 1.
+                linkRepository.countByCustomerAndStatus(customer, com.sni.bokaticowork.features.company.enums.MemberLinkStatus.ACTIVE),
                 subscriptionRepository.findAllCurrentActive("CUSTOMER", customer.getCustomerId(), LocalDate.now()).size(),
                 customer.getCreatedAt());
     }

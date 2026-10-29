@@ -93,6 +93,14 @@ public class Customer {
     @Column(name = "website")
     private String website;
 
+    /**
+     * Comment les factures des membres rattaches se relient a l'organisation, par defaut ·
+     * chaque lien peut le remplacer. Vide pour une personne.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "default_invoice_link_mode", length = 20)
+    private com.sni.bokaticowork.features.company.enums.InvoiceLinkMode defaultInvoiceLinkMode;
+
     @Column(name = "blocked_reason", length = 500)
     private String blockedReason;
 

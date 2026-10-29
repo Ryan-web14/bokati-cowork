@@ -33,6 +33,7 @@ public class SubscriberAccess {
     private final SubscriptionRepository subscriptionRepository;
     private final ResourceAvailabilityService availabilityService;
     private final MemberRepository memberRepository;
+    private final com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository linkRepository;
 
     @Transactional(readOnly = true)
     public boolean isSubscriber(Member member) {
@@ -47,11 +48,19 @@ public class SubscriberAccess {
         // Le membre arrive detache · son client n'est qu'une reference paresseuse, et la lire ici
         // levait LazyInitializationException : calendrier et creneaux du portail en 500. Le code
         // du client se lit par requete, dans la transaction de cette methode.
-        return StringUtils.hasText(member.getMemberId())
-                && memberRepository.findCustomerIdByMemberId(member.getMemberId())
+        if (!StringUtils.hasText(member.getMemberId())) {
+            return false;
+        }
+        boolean viaPayer = memberRepository.findCustomerIdByMemberId(member.getMemberId())
                 .filter(StringUtils::hasText)
                 .map(customerId -> !subscriptionRepository.findAllCurrentActive("CUSTOMER", customerId, today).isEmpty())
                 .orElse(false);
+        if (viaPayer) {
+            return true;
+        }
+        // L'abonnement de chaque organisation ou le membre est rattache et actif le couvre aussi.
+        return linkRepository.findActiveCompanyCodes(member.getMemberId()).stream()
+                .anyMatch(code -> !subscriptionRepository.findAllCurrentActive("CUSTOMER", code, today).isEmpty());
     }
 
     /** La plage touche-t-elle une soiree que ce membre n'a pas le droit de reserver. */

@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.company.account.controller;
 
+import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.company.account.dto.CompanyDtos;
@@ -32,6 +33,7 @@ public class CompanyAccountController {
 
     private final CompanyAccountService service;
 
+    @Audited(module = "COMPANY", action = "CREATE", ressource = "customer")
     @PostMapping
     public ResponseEntity<CompanyDtos.CompanyResponse> create(@Valid @RequestBody CompanyDtos.CreateCompanyRequest request,
                                                               Authentication authentication) {
@@ -51,6 +53,7 @@ public class CompanyAccountController {
         return ResponseEntity.ok(service.get(customerId));
     }
 
+    @Audited(module = "COMPANY", action = "UPDATE_LEGAL", ressource = "customer")
     @PatchMapping("/{customerId}/legal")
     public ResponseEntity<CompanyDtos.CompanyResponse> updateLegal(@PathVariable String customerId,
                                                                    @Valid @RequestBody CompanyDtos.UpdateLegalRequest request,
@@ -58,18 +61,21 @@ public class CompanyAccountController {
         return ResponseEntity.ok(service.updateLegal(customerId, request, actor(authentication)));
     }
 
+    @Audited(module = "COMPANY", action = "UPDATE_BILLING", ressource = "customer")
     @PatchMapping("/{customerId}/billing")
     public ResponseEntity<CompanyDtos.CompanyResponse> updateBilling(@PathVariable String customerId,
                                                                      @Valid @RequestBody CompanyDtos.UpdateBillingRequest request) {
         return ResponseEntity.ok(service.updateBilling(customerId, request));
     }
 
+    @Audited(module = "COMPANY", action = "UPDATE_CONTACT", ressource = "customer")
     @PatchMapping("/{customerId}/contact")
     public ResponseEntity<CompanyDtos.CompanyResponse> updateContact(@PathVariable String customerId,
                                                                      @Valid @RequestBody CompanyDtos.UpdateContactRequest request) {
         return ResponseEntity.ok(service.updateContact(customerId, request));
     }
 
+    @Audited(module = "COMPANY", action = "BLOCK", ressource = "customer")
     @PostMapping("/{customerId}/block")
     public ResponseEntity<CompanyDtos.CompanyResponse> block(@PathVariable String customerId,
                                                              @Valid @RequestBody CompanyDtos.BlockRequest request,
@@ -77,11 +83,13 @@ public class CompanyAccountController {
         return ResponseEntity.ok(service.block(customerId, request.reason(), actor(authentication)));
     }
 
+    @Audited(module = "COMPANY", action = "UNBLOCK", ressource = "customer")
     @PostMapping("/{customerId}/unblock")
     public ResponseEntity<CompanyDtos.CompanyResponse> unblock(@PathVariable String customerId) {
         return ResponseEntity.ok(service.unblock(customerId));
     }
 
+    @Audited(module = "COMPANY", action = "LINK_LEGAL_PROFILE", ressource = "customer")
     @PostMapping("/{customerId}/legal-profile")
     public ResponseEntity<CompanyDtos.CompanyResponse> linkLegalProfile(@PathVariable String customerId,
                                                                         @Valid @RequestBody CompanyDtos.LinkLegalProfileRequest request) {

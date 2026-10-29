@@ -72,6 +72,21 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
         assertThat(identifierRepository.count()).isGreaterThanOrEqualTo(0);
     }
 
+    @Autowired private com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository linkRepository;
+
+    @Test
+    @DisplayName("Rattachement : un lien actif par couple, une seule organisation automatique par membre")
+    void memberLinkIndexes() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        java.util.List<String> indexes = jdbc.queryForList(
+                "SELECT indexname FROM pg_indexes WHERE tablename = 'customer_member_link'", String.class);
+        assertThat(indexes).contains("uk_customer_member_link_active", "uk_customer_member_link_automatic",
+                "uk_customer_member_link_short_id");
+        assertThat(column(jdbc, "customer", "default_invoice_link_mode")).isNotEmpty();
+        assertThat(linkRepository.findActiveCompanyCodes("MBR-NONE")).isEmpty();
+        assertThat(linkRepository.findByShortId(-1L)).isEmpty();
+    }
+
     private static Map<String, Object> column(JdbcTemplate jdbc, String table, String name) {
         return jdbc.queryForList("""
                 SELECT is_nullable, column_default FROM information_schema.columns
