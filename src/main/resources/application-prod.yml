@@ -2,6 +2,11 @@
 # the request scheme and generated redirects reflect the original HTTPS request.
 server:
   forward-headers-strategy: framework
+  # 200 threads par defaut, bien au-dela du trafic · chacun reserve sa pile, le dyno n'a qu'1 Go.
+  tomcat:
+    threads:
+      max: ${SERVER_TOMCAT_THREADS_MAX:50}
+      min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:5}
 
 spring:
   application:
@@ -14,8 +19,8 @@ spring:
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: BokatiHikariPool
-      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
-      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
       connection-timeout: ${DB_CONNECTION_TIMEOUT:20000}
       idle-timeout: ${DB_IDLE_TIMEOUT:300000}
       max-lifetime: ${DB_MAX_LIFETIME:1800000}
@@ -31,6 +36,12 @@ spring:
       hibernate:
         default_schema: public
         format_sql: false
+        # Le cache des plans de requetes garde jusqu'a 2048 entrees par defaut · chaque taille de
+        # liste IN en fait une nouvelle. Borne, et tailles de IN arrondies, il tient en quelques Mo.
+        query:
+          plan_cache_max_size: 256
+          plan_parameter_metadata_max_size: 64
+          in_clause_parameter_padding: true
         jdbc:
           batch_size: 25
         order_inserts: true
