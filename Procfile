@@ -1,1 +1,1 @@
-web: java -XX:MaxRAMPercentage=50 -XX:MaxMetaspaceSize=300m -XX:ReservedCodeCacheSize=128m -XX:MaxDirectMemorySize=64m -Xss512k -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError -Dserver.port=$PORT -jar target/bokati-cowork-0.0.1-SNAPSHOT.jar
+web: java --enable-native-access=ALL-UNNAMED -XX:MaxRAMPercentage=50 -XX:MaxMetaspaceSize=300m -XX:ReservedCodeCacheSize=128m -XX:MaxDirectMemorySize=64m -Xss512k -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError -Dserver.port=$PORT -jar target/bokati-cowork-0.0.1-SNAPSHOT.jar

@@ -79,8 +79,11 @@ public class KycDocumentUploadService {
                         "Aucun dossier KYC actif pour ce propriétaire · créez-en un d'abord"));
 
         if ("BACK".equalsIgnoreCase(side)) {
+            KycDocument autoCreated = kycDocumentRepository.findByDocument(document).orElse(null);
             KycDocument frontDoc = kycDocumentRepository
-                    .findByKycCaseAndDocumentType(kycCase, documentTypeCode.toUpperCase())
+                    .findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, documentTypeCode.toUpperCase()).stream()
+                    .filter(candidate -> autoCreated == null || !candidate.getId().equals(autoCreated.getId()))
+                    .findFirst()
                     .orElseThrow(() -> new BadRequestException(
                             "Le recto doit être uploadé avant le verso pour le type : " + documentTypeCode));
 
@@ -94,7 +97,10 @@ public class KycDocumentUploadService {
         }
 
         // FRONT · check for existing KycDocument of this type in the case
-        return kycDocumentRepository.findByKycCaseAndDocumentType(kycCase, documentTypeCode.toUpperCase())
+        KycDocument justCreated = kycDocumentRepository.findByDocument(document).orElse(null);
+        return kycDocumentRepository.findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, documentTypeCode.toUpperCase()).stream()
+                .filter(candidate -> justCreated == null || !candidate.getId().equals(justCreated.getId()))
+                .findFirst()
                 .map(existing -> {
                     existing.setDocument(document);
                     if (StringUtils.hasText(documentNumber)) existing.setDocumentNumber(documentNumber);

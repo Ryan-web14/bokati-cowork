@@ -60,9 +60,13 @@ public class ClientKycService {
 
     @Transactional(readOnly = true)
     public List<ClientKycRequirementResponse> getRequirements(Member member) {
+        KycCase kycCase = resolveCase(member);
+        // Dossier valide ou en cours d'examen · plus rien a fournir tant qu'il n'est pas rouvert.
+        if (closedForUploads(kycCase)) {
+            return List.of();
+        }
         List<DocumentRequirement> reqs = requirementRepository
                 .findAllByOwnerTypeAndActiveTrueOrderByDocumentTypeNameAsc(DocumentOwnerType.MEMBER);
-        KycCase kycCase = resolveCase(member);
         // Once the case is approved the dossier is complete: nothing is required or missing anymore.
         boolean approved = kycCase.getStatus() == KycCaseStatus.APPROVED;
         List<KycRequirementStatus> statuses = kycService.getMissingRequirements(kycCase.getCode());
@@ -161,27 +165,54 @@ public class ClientKycService {
         Document document = documentRepository.findByCode(docResponse.getCode())
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found after upload"));
 
+        // documentService.upload a deja range le fichier dans le dossier KYC (une ligne kyc_document
+        // pour tout document de categorie KYC). En creer une seconde ici faisait apparaitre chaque
+        // piece deux fois, et un verso devenait une piece a part entiere. On reprend celle-la, comme
+        // le fait deja l'envoi par l'administration (KycDocumentUploadService).
+        KycDocument autoCreated = kycDocumentRepository.findByDocument(document).orElse(null);
+
         if ("BACK".equalsIgnoreCase(side)) {
-            KycDocument existing = kycDocumentRepository.findByKycCaseAndDocumentType(kycCase, documentType)
+            KycDocument front = otherOfType(kycCase, documentType, autoCreated)
                     .orElseThrow(() -> new BadRequestException(
                             "Front side must be uploaded before the back side for document type: " + documentType));
-            existing.setBackDocument(document);
-            kycDocumentRepository.save(existing);
+            if (autoCreated != null) {
+                kycDocumentRepository.delete(autoCreated);
+            }
+            front.setBackDocument(document);
+            kycDocumentRepository.save(front);
             kycAutomationService.syncMemberKyc(member.getMemberId());
-            return toDocumentResponse(existing);
+            return toDocumentResponse(front);
         }
 
-        KycDocument kycDocument = KycDocument.builder()
-                .kycCase(kycCase)
-                .ownerType(DocumentOwnerType.MEMBER)
-                .ownerId(member.getId())
-                .document(document)
-                .documentType(documentType)
-                .documentNumber(documentNumber)
-                .issueDate(issueDate)
-                .expiryDate(expiryDate)
-                .status(KycDocumentVerificationStatus.PENDING)
-                .build();
+        // Une piece deja deposee pour ce type est remplacee, pas doublee.
+        KycDocument existing = otherOfType(kycCase, documentType, autoCreated).orElse(null);
+        KycDocument kycDocument;
+        if (existing != null) {
+            existing.setDocument(document);
+            existing.setDocumentNumber(documentNumber);
+            existing.setIssueDate(issueDate);
+            existing.setExpiryDate(expiryDate);
+            existing.setStatus(KycDocumentVerificationStatus.PENDING);
+            if (autoCreated != null) {
+                kycDocumentRepository.delete(autoCreated);
+            }
+            kycDocument = existing;
+        } else if (autoCreated != null) {
+            kycDocument = autoCreated;
+            kycDocument.setKycCase(kycCase);
+        } else {
+            kycDocument = KycDocument.builder()
+                    .kycCase(kycCase)
+                    .ownerType(DocumentOwnerType.MEMBER)
+                    .ownerId(member.getId())
+                    .document(document)
+                    .documentType(documentType)
+                    .documentNumber(documentNumber)
+                    .issueDate(issueDate)
+                    .expiryDate(expiryDate)
+                    .status(KycDocumentVerificationStatus.PENDING)
+                    .build();
+        }
         kycDocumentRepository.save(kycDocument);
         kycAutomationService.syncMemberKyc(member.getMemberId());
         return toDocumentResponse(kycDocument);
@@ -247,12 +278,30 @@ public class ClientKycService {
         return doc;
     }
 
+    /** La piece deja deposee pour ce type, hors la ligne que l'envoi en cours vient de creer. */
+    private java.util.Optional<KycDocument> otherOfType(KycCase kycCase, String documentType, KycDocument autoCreated) {
+        return kycDocumentRepository.findAllByKycCaseAndDocumentTypeOrderByIdAsc(kycCase, documentType).stream()
+                .filter(candidate -> autoCreated == null || !candidate.getId().equals(autoCreated.getId()))
+                .findFirst();
+    }
+
     private void assertCaseEditable(KycCase kycCase) {
-        if (kycCase.getStatus() == KycCaseStatus.APPROVED
-                || kycCase.getStatus() == KycCaseStatus.UNDER_REVIEW
-                || kycCase.getStatus() == KycCaseStatus.SUBMITTED) {
+        if (closedForUploads(kycCase)) {
             throw new BadRequestException("KYC case is not open for document uploads. Current status: " + kycCase.getStatus());
         }
+    }
+
+    /**
+     * Le dossier n'attend plus rien du membre · valide, ou depose et en cours d'examen.
+     *
+     * <p>Les pieces exigees y etaient encore listees : le portail continuait de les reclamer a un
+     * membre dont le dossier etait complet. Elles reviennent des que le dossier est rouvert
+     * (correction demandee, renouvellement).</p>
+     */
+    static boolean closedForUploads(KycCase kycCase) {
+        return kycCase.getStatus() == KycCaseStatus.APPROVED
+                || kycCase.getStatus() == KycCaseStatus.UNDER_REVIEW
+                || kycCase.getStatus() == KycCaseStatus.SUBMITTED;
     }
 
     private ClientKycDocumentResponse toDocumentResponse(KycDocument kycDocument) {
@@ -290,7 +339,7 @@ public class ClientKycService {
                 .toList();
         // Once the case is approved the dossier is complete: nothing is required or missing anymore.
         boolean approved = kycCase.getStatus() == KycCaseStatus.APPROVED;
-        List<ClientKycRequirementResponse> requirements = caseResponse.getRequirements() != null
+        List<ClientKycRequirementResponse> requirements = !closedForUploads(kycCase) && caseResponse.getRequirements() != null
                 ? caseResponse.getRequirements().stream()
                 .map(r -> ClientKycRequirementResponse.builder()
                         .documentTypeCode(r.getDocumentTypeCode())

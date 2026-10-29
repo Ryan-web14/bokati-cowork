@@ -55,4 +55,11 @@ public interface KycDocumentRepository extends JpaRepository<KycDocument, Long> 
             @Param("statuses") Collection<KycDocumentVerificationStatus> statuses);
 
     Optional<KycDocument> findByKycCaseAndDocumentType(KycCase kycCase, String documentType);
+
+    /**
+     * Toutes les pieces d'un type dans un dossier · a preferer a {@link #findByKycCaseAndDocumentType}
+     * juste apres un envoi : la ligne creee par l'envoi lui-meme est deja la, et la variante a
+     * resultat unique levait une exception des qu'une piece de ce type existait.
+     */
+    List<KycDocument> findAllByKycCaseAndDocumentTypeOrderByIdAsc(KycCase kycCase, String documentType);
 }

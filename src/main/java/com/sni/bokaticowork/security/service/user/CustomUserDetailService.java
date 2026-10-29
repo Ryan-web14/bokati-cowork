@@ -27,7 +27,8 @@ public class CustomUserDetailService implements UserDetailsService {
         try{
             Users user = userRepo.findByEmailIgnoreCase(email)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found with email : " + email));
-            log.info("User successfully found with email: {}", email);
+            // Une ligne par requete authentifiee, avec l adresse · bruit et donnee personnelle en INFO.
+            log.debug("User successfully found with email: {}", email);
             return new UserPrincipal(user);
         }catch(Exception e){
             log.info("User not found with email: {}", email);
