@@ -19,6 +19,9 @@ public interface KycDocumentRepository extends JpaRepository<KycDocument, Long> 
 
     Optional<KycDocument> findByKycCaseAndDocument(KycCase kycCase, Document document);
 
+    /** La piece designee par son numero court · celui que l'API expose. */
+    Optional<KycDocument> findByShortId(Long shortId);
+
     Optional<KycDocument> findByDocument(Document document);
 
     List<KycDocument> findAllByDocument(Document document);

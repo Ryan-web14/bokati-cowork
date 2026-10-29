@@ -25,6 +25,16 @@ public class KycDocument {
     @Column(name = "id")
     private Long id;
 
+    /**
+     * Le numero court de la piece · c'est lui que l'API expose sous le nom {@code id}.
+     *
+     * <p>L'identifiant genere depasse 2^53 et JavaScript l'arrondit · le portail demandait ensuite
+     * une piece qui n'existait pas. Attribue par la base a l'insertion, jamais par le code.</p>
+     */
+    @org.hibernate.annotations.Generated
+    @Column(name = "short_id", insertable = false, updatable = false)
+    private Long shortId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kyc_case_id", foreignKey = @ForeignKey(name = "fk_kyc_document_case"))
     private KycCase kycCase;

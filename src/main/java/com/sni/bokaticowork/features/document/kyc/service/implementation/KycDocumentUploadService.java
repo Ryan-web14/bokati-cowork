@@ -140,7 +140,8 @@ public class KycDocumentUploadService {
                                               String documentNumber,
                                               LocalDate issueDate,
                                               LocalDate expiryDate) {
-        KycDocument kycDoc = kycDocumentRepository.findById(kycDocumentId)
+        // L'API expose le numero court de la piece, pas l'identifiant genere.
+        KycDocument kycDoc = kycDocumentRepository.findByShortId(kycDocumentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document KYC introuvable"));
 
         if (StringUtils.hasText(documentNumber)) kycDoc.setDocumentNumber(documentNumber.trim());
@@ -155,7 +156,7 @@ public class KycDocumentUploadService {
     private KycDocumentResponse toResponse(KycDocument kycDoc, DocumentType docType) {
         Document doc = kycDoc.getDocument();
         KycDocumentResponse.KycDocumentResponseBuilder builder = KycDocumentResponse.builder()
-                .id(kycDoc.getId())
+                .id(kycDoc.getShortId())
                 .documentCode(doc.getCode())
                 .documentType(kycDoc.getDocumentType())
                 .documentNumber(kycDoc.getDocumentNumber())

@@ -270,7 +270,8 @@ public class ClientKycService {
 
     private KycDocument resolveOwnedKycDocument(Member member, Long documentId) {
         KycCase kycCase = resolveCase(member);
-        KycDocument doc = kycDocumentRepository.findById(documentId)
+        // L'API expose le numero court de la piece, pas l'identifiant genere.
+        KycDocument doc = kycDocumentRepository.findByShortId(documentId)
                 .orElseThrow(() -> new ResourceNotFoundException("KYC document not found"));
         if (!doc.getKycCase().getId().equals(kycCase.getId())) {
             throw new ResourceNotFoundException("KYC document not found");
@@ -308,7 +309,7 @@ public class ClientKycService {
         Document document = kycDocument.getDocument();
         DocumentType docType = documentTypeRepository.findByCode(kycDocument.getDocumentType()).orElse(null);
         ClientKycDocumentResponse.ClientKycDocumentResponseBuilder builder = ClientKycDocumentResponse.builder()
-                .id(kycDocument.getId())
+                .id(kycDocument.getShortId())
                 .documentCode(document.getCode())
                 .documentType(kycDocument.getDocumentType())
                 .documentNumber(kycDocument.getDocumentNumber())

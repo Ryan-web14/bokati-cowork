@@ -55,4 +55,19 @@ class KycDocumentDuplicatesCleanupIT extends PostgresIntegrationTestBase {
         assertThat(jdbc.queryForList("SELECT kyc_document_id FROM kyc_document_ocr_result ORDER BY id", Long.class))
                 .containsExactly(10L);
     }
+
+    @Autowired private com.sni.bokaticowork.features.document.kyc.repository.KycDocumentRepository kycDocumentRepository;
+
+    @Test
+    @DisplayName("Le numero court d'une piece est obligatoire, alimente par sa sequence, et recherchable")
+    void shortIdIsFedByASequence() {
+        java.util.Map<String, Object> column = new JdbcTemplate(dataSource).queryForMap("""
+                SELECT is_nullable, column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'kyc_document' AND column_name = 'short_id'
+                """);
+        assertThat(column.get("is_nullable")).isEqualTo("NO");
+        assertThat(String.valueOf(column.get("column_default"))).contains("kyc_document_short_id_seq");
+        assertThat(kycDocumentRepository.findByShortId(-1L)).isEmpty();
+    }
 }
