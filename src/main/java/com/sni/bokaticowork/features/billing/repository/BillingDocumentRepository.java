@@ -57,6 +57,54 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                                                @Param("receivableTypes") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentType> receivableTypes,
                                                @Param("excludedStatuses") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus> excludedStatuses);
 
+    /**
+     * L'etat de compte d'une organisation · ses propres documents et les factures de membres qui
+     * lui sont reliees, emis sur la periode, plus tout ce qui reste du quelle que soit sa date.
+     * Les brouillons n'en font pas partie : ils n'ont ete presentes a personne.
+     */
+    @Query("""
+            SELECT d FROM BillingDocument d
+            WHERE ((d.customerType = 'CUSTOMER' AND d.customerCode = :companyCode)
+                   OR d.companyCustomerCode = :companyCode)
+              AND d.documentType IN :types
+              AND d.status <> com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus.DRAFT
+              AND ((d.issueDate >= :from AND d.issueDate <= :to)
+                   OR (d.documentType IN :receivableTypes AND d.balanceDue > 0 AND d.status NOT IN :closedStatuses))
+            ORDER BY d.issueDate ASC, d.id ASC
+            """)
+    java.util.List<BillingDocument> findCompanyStatementDocuments(@Param("companyCode") String companyCode,
+                                                                 @Param("from") java.time.LocalDate from,
+                                                                 @Param("to") java.time.LocalDate to,
+                                                                 @Param("types") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentType> types,
+                                                                 @Param("receivableTypes") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentType> receivableTypes,
+                                                                 @Param("closedStatuses") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus> closedStatuses);
+
+    /** L'etat de compte d'un membre · memes regles, toutes ses factures, reliees ou non. */
+    @Query("""
+            SELECT d FROM BillingDocument d
+            WHERE d.customerType = 'MEMBER' AND d.customerCode = :memberCode
+              AND d.documentType IN :types
+              AND d.status <> com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus.DRAFT
+              AND ((d.issueDate >= :from AND d.issueDate <= :to)
+                   OR (d.documentType IN :receivableTypes AND d.balanceDue > 0 AND d.status NOT IN :closedStatuses))
+            ORDER BY d.issueDate ASC, d.id ASC
+            """)
+    java.util.List<BillingDocument> findMemberStatementDocuments(@Param("memberCode") String memberCode,
+                                                                @Param("from") java.time.LocalDate from,
+                                                                @Param("to") java.time.LocalDate to,
+                                                                @Param("types") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentType> types,
+                                                                @Param("receivableTypes") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentType> receivableTypes,
+                                                                @Param("closedStatuses") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus> closedStatuses);
+
+    /** Les avoirs emis sur des factures donnees · un avoir de membre ne porte pas l'organisation. */
+    @Query("""
+            SELECT d FROM BillingDocument d
+            WHERE d.documentType = com.sni.bokaticowork.features.billing.enums.BillingDocumentType.CREDIT_NOTE
+              AND d.sourceType = 'INVOICE' AND d.sourceCode IN :invoiceNumbers
+              AND d.status <> com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus.DRAFT
+            """)
+    java.util.List<BillingDocument> findCreditNotesForInvoices(@Param("invoiceNumbers") java.util.Collection<String> invoiceNumbers);
+
     /** Les factures de membres reliees, ou reliables, a une organisation · pour le rattachement des anciennes. */
     @Query("""
             SELECT d FROM BillingDocument d

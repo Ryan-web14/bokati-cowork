@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${'État de compte ' + statement.code()}">État de compte</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 14mm 10mm 14mm 10mm;
+            @bottom-center {
+                content: "Page " counter(page) " sur " counter(pages);
+                font-family: Helvetica, Arial, sans-serif;
+                font-size: 7.6px;
+                color: #1f1430;
+            }
+        }
+        * { box-sizing: border-box; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #1f1430; font-size: 9px; line-height: 1.35; margin: 0; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { border: none; padding: 0; vertical-align: middle; }
+        .brand-logo { height: 34px; width: auto; display: block; }
+        .brand-text { font-size: 18px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+        .doc-type { font-size: 20px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-align: right; }
+        .doc-sub { font-size: 8.6px; text-align: right; margin-top: 3px; }
+        .rule { height: 2px; background: #c9a84c; margin: 8px 0 10px; }
+        .label { font-size: 7.4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;
+                 border-bottom: 1px solid #e6ddea; padding-bottom: 3px; margin: 12px 0 6px; }
+        .who { font-size: 11px; font-weight: 700; }
+        .muted { color: #6b5f78; }
+        .alert { border: 1px solid #b3261e; color: #b3261e; padding: 5px 7px; margin-top: 6px; font-weight: 700; }
+        table.grid { width: 100%; border-collapse: collapse; }
+        table.grid th { background: #f6f2f8; font-size: 7.4px; text-transform: uppercase; letter-spacing: 0.6px;
+                        text-align: left; padding: 4px 5px; border-bottom: 1px solid #e6ddea; }
+        table.grid td { padding: 3.5px 5px; border-bottom: 1px solid #f0eaf3; vertical-align: top; }
+        .num { text-align: right; white-space: nowrap; }
+        .late { color: #b3261e; font-weight: 700; }
+        .out { color: #6b5f78; font-style: italic; }
+        .kpi-table { width: 100%; border-collapse: collapse; }
+        .kpi-table td { width: 25%; border: 1px solid #e6ddea; padding: 6px; vertical-align: top; }
+        .kpi-name { font-size: 7.2px; text-transform: uppercase; letter-spacing: 0.8px; }
+        .kpi-value { font-size: 11.5px; font-weight: 700; margin-top: 2px; }
+        .note { font-size: 7.6px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<table class="header-table">
+    <tr>
+        <td>
+            <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="brand-logo" alt="Logo"/>
+            <div class="brand-text" th:if="${logo == null}">ELLE A OSE</div>
+        </td>
+        <td>
+            <div class="doc-type">État de compte</div>
+            <div class="doc-sub">
+                Du <span th:text="${fmt.date(statement.from())}"></span>
+                au <span th:text="${fmt.date(statement.to())}"></span>
+                · arrêté au <span th:text="${fmt.date(statement.asOf())}"></span>
+            </div>
+        </td>
+    </tr>
+</table>
+<div class="rule"></div>
+
+<div class="label" th:text="${statement.subject().name() == 'COMPANY' ? 'Organisation' : 'Membre'}">Titulaire</div>
+<div class="who" th:text="${statement.name()}">Nom</div>
+<div class="muted">
+    <span th:text="${statement.code()}">Code</span>
+    <span th:if="${statement.billingEmail() != null}"> · <span th:text="${statement.billingEmail()}"></span></span>
+    <span th:if="${statement.paymentTermsDays() != null}"> · paiement à <span th:text="${statement.paymentTermsDays()}"></span> jours</span>
+    <span th:if="${statement.creditLimit() != null}"> · plafond d'encours <span th:text="${fmt.amount(statement.creditLimit(), null)}"></span></span>
+</div>
+<div class="alert" th:if="${statement.blocked()}">
+    Compte bloqué<span th:if="${statement.blockedReason() != null}"> : <span th:text="${statement.blockedReason()}"></span></span>
+</div>
+
+<th:block th:each="t : ${statement.totals()}">
+    <div class="label" th:text="${'Synthèse en ' + t.currency()}">Synthèse</div>
+    <table class="kpi-table">
+        <tr>
+            <td><div class="kpi-name">Facturé sur la période</div><div class="kpi-value" th:text="${fmt.amount(t.invoiced(), t.currency())}"></div></td>
+            <td><div class="kpi-name">Réglé sur ces factures</div><div class="kpi-value" th:text="${fmt.amount(t.paid(), t.currency())}"></div></td>
+            <td><div class="kpi-name">Reste dû</div><div class="kpi-value" th:text="${fmt.amount(t.balanceDue(), t.currency())}"></div></td>
+            <td><div class="kpi-name">Dont en retard</div><div class="kpi-value" th:classappend="${t.overdue().signum() > 0} ? 'late'" th:text="${fmt.amount(t.overdue(), t.currency())}"></div></td>
+        </tr>
+        <tr th:if="${t.creditAvailable().signum() > 0}">
+            <td colspan="2"><div class="kpi-name">Avoirs disponibles</div><div class="kpi-value" th:text="${fmt.amount(t.creditAvailable(), t.currency())}"></div></td>
+            <td colspan="2"><div class="kpi-name">Net à régler</div><div class="kpi-value" th:text="${fmt.amount(t.netBalanceDue(), t.currency())}"></div></td>
+        </tr>
+    </table>
+    <table class="grid" style="margin-top: 6px;">
+        <tr><th>Non échu</th><th class="num">1 à 30 j</th><th class="num">31 à 60 j</th><th class="num">61 à 90 j</th><th class="num">Plus de 90 j</th></tr>
+        <tr>
+            <td th:text="${fmt.amount(t.aging().notDue(), t.currency())}"></td>
+            <td class="num" th:text="${fmt.amount(t.aging().days1To30(), t.currency())}"></td>
+            <td class="num" th:text="${fmt.amount(t.aging().days31To60(), t.currency())}"></td>
+            <td class="num" th:text="${fmt.amount(t.aging().days61To90(), t.currency())}"></td>
+            <td class="num" th:text="${fmt.amount(t.aging().over90(), t.currency())}"></td>
+        </tr>
+    </table>
+</th:block>
+
+<th:block th:if="${statement.accounts().size() > 1}">
+    <div class="label">Par compte</div>
+    <table class="grid">
+        <tr><th>Compte</th><th>Nature</th><th class="num">Documents</th><th class="num">Facturé</th><th class="num">Réglé</th><th class="num">Reste dû</th><th class="num">En retard</th></tr>
+        <tr th:each="a : ${statement.accounts()}">
+            <td><span th:text="${a.accountName()}"></span> <span class="muted" th:text="${'(' + a.accountCode() + ')'}"></span></td>
+            <td th:text="${fmt.account(a.accountType())}"></td>
+            <td class="num" th:text="${a.documentCount()}"></td>
+            <td class="num" th:text="${fmt.amount(a.invoiced(), a.currency())}"></td>
+            <td class="num" th:text="${fmt.amount(a.paid(), a.currency())}"></td>
+            <td class="num" th:text="${fmt.amount(a.balanceDue(), a.currency())}"></td>
+            <td class="num" th:classappend="${a.overdue().signum() > 0} ? 'late'" th:text="${fmt.amount(a.overdue(), a.currency())}"></td>
+        </tr>
+    </table>
+</th:block>
+
+<div class="label">Détail des documents</div>
+<table class="grid">
+    <tr><th>Document</th><th>Émission</th><th>Échéance</th><th>Compte</th><th>Statut</th><th class="num">Total</th><th class="num">Réglé</th><th class="num">Reste dû</th></tr>
+    <tr th:if="${statement.lines().isEmpty()}"><td colspan="8" class="muted">Aucun document sur la période, et rien ne reste dû.</td></tr>
+    <tr th:each="l : ${statement.lines()}" th:classappend="${!l.inPeriod()} ? 'out'">
+        <td><span th:text="${l.documentNumber()}"></span><br/><span class="muted" th:text="${fmt.type(l.documentType())}"></span></td>
+        <td th:text="${fmt.date(l.issueDate())}"></td>
+        <td th:text="${fmt.date(l.dueDate())}"></td>
+        <td th:text="${l.accountName()}"></td>
+        <td>
+            <span th:text="${fmt.status(l.status())}"></span>
+            <span class="late" th:if="${l.daysOverdue() > 0}" th:text="${'· ' + l.daysOverdue() + ' j de retard'}"></span>
+        </td>
+        <td class="num" th:text="${fmt.amount(l.totalAmount(), l.currency())}"></td>
+        <td class="num" th:text="${fmt.amount(l.paidAmount(), l.currency())}"></td>
+        <td class="num" th:text="${fmt.amount(l.balanceDue(), l.currency())}"></td>
+    </tr>
+</table>
+
+<div class="note muted">
+    Les lignes en italique ont été émises avant la période et restent dues à la date de l'état.
+    Les factures de membres reliées après coup gardent leur document d'origine, au nom du membre.
+    État produit le <span th:text="${fmt.date(generatedAt)}"></span>.
+</div>
+</body>
+</html>

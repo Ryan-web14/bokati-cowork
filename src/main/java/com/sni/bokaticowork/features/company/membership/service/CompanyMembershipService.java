@@ -276,7 +276,7 @@ public class CompanyMembershipService {
     }
 
     /** L'organisation dont ce membre est gerant · 404 sinon, sans dire si elle existe. */
-    private Customer ownedCompany(Member owner, String customerId) {
+    public Customer ownedCompany(Member owner, String customerId) {
         Customer company = customerRepository.findByCustomerId(customerId == null ? "" : customerId.trim())
                 .filter(c -> !c.isDeleted() && c.getType() == CustomerType.COMPANY)
                 .orElseThrow(() -> new ResourceNotFoundException("Organisation introuvable"));

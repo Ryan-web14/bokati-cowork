@@ -260,7 +260,7 @@ public class ClientBillingService {
         return document.status() != BillingDocumentStatus.DRAFT;
     }
 
-    private ClientInvoiceSummaryResponse toSummary(BillingDocumentResponse d) {
+    public ClientInvoiceSummaryResponse toSummary(BillingDocumentResponse d) {
         return ClientInvoiceSummaryResponse.builder()
                 .documentNumber(d.documentNumber())
                 .documentType(d.documentType())
@@ -280,7 +280,7 @@ public class ClientBillingService {
                 .build();
     }
 
-    private ClientInvoiceResponse toDetail(BillingDocumentResponse d) {
+    public ClientInvoiceResponse toDetail(BillingDocumentResponse d) {
         return ClientInvoiceResponse.builder()
                 .documentNumber(d.documentNumber())
                 .documentType(d.documentType())
