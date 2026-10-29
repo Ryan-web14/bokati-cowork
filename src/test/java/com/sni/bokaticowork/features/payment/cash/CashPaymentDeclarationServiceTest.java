@@ -155,7 +155,8 @@ class CashPaymentDeclarationServiceTest {
                 null, // originalDocumentType
                 null, // creditNoteReason
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, status), // receivable
-                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, balanceDue) // customerImpact
+                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, balanceDue), // customerImpact
+                null, null, null // organisation reliee
         );
     }
 

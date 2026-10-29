@@ -87,6 +87,26 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
         assertThat(linkRepository.findByShortId(-1L)).isEmpty();
     }
 
+    @Test
+    @DisplayName("Facture reliee : nom de l'organisation fige une fois scellee, lien modifiable pour rattacher")
+    void companyLinkOnInvoices() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        String trigger = jdbc.queryForObject(
+                "SELECT prosrc FROM pg_proc WHERE proname = 'fn_billing_document_check_immutable'", String.class);
+        assertThat(trigger).contains("company_name").contains("company_identifiers_json")
+                .doesNotContain("company_customer_code").doesNotContain("company_link_source");
+        assertThat(column(jdbc, "booking", "billing_company_code")).isNotEmpty();
+        assertThat(column(jdbc, "billable_item", "billing_company_code")).isNotEmpty();
+
+        Set<BillingDocumentStatus> excluded = EnumSet.noneOf(BillingDocumentStatus.class);
+        excluded.addAll(BillingReceivables.NOT_ISSUED);
+        excluded.addAll(BillingReceivables.SETTLED);
+        assertThat(documentRepository.sumCompanyOutstanding("CUS-NONE", BillingReceivables.RECEIVABLE_TYPES, excluded))
+                .isEqualByComparingTo("0");
+        assertThat(documentRepository.findMemberInvoicesBetween("MBR-NONE", java.time.LocalDate.of(2026, 1, 1),
+                java.time.LocalDate.of(2026, 12, 31), BillingReceivables.RECEIVABLE_TYPES)).isEmpty();
+    }
+
     private static Map<String, Object> column(JdbcTemplate jdbc, String table, String name) {
         return jdbc.queryForList("""
                 SELECT is_nullable, column_default FROM information_schema.columns

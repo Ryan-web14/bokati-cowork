@@ -157,7 +157,10 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 document.getCreditNoteReason(),
                 BillingReceivables.receivable(document.getDocumentType(), document.getStatus()),
                 BillingReceivables.customerImpact(document.getDocumentType(), document.getStatus(),
-                        document.getBalanceDue(), document.getTotalAmount())
+                        document.getBalanceDue(), document.getTotalAmount()),
+                document.getCompanyCustomerCode(),
+                document.getCompanyName(),
+                document.getCompanyLinkSource()
         );
     }
 

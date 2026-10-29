@@ -40,6 +40,40 @@ public record CreateBillingDocumentRequest(
         String deliveryAddressJson,
         String language,
         java.math.BigDecimal exchangeRate,
-        @Valid CreateEarlyPaymentDiscountRequest earlyPaymentDiscount
+        @Valid CreateEarlyPaymentDiscountRequest earlyPaymentDiscount,
+        /**
+         * L'organisation pour le compte de laquelle un membre est facture · vide : selon le mode de
+         * son rattachement (automatique ou pour le membre seul) ; {@code NONE} : le membre seul,
+         * meme en mode automatique ; un code client : cette organisation, a laquelle le membre doit
+         * etre rattache.
+         */
+        String companyCustomerCode
 ) {
+    /** Le membre seul, explicitement · ignore le mode automatique de son rattachement. */
+    public static final String NO_COMPANY = "NONE";
+
+    @com.fasterxml.jackson.annotation.JsonCreator
+    public CreateBillingDocumentRequest {
+    }
+
+    /** Sans organisation precisee · la facture suit le mode du rattachement du membre. */
+    public CreateBillingDocumentRequest(BillingDocumentType documentType, String customerType, String customerCode,
+                                        String customerName, String customerEmail, String customerPhone,
+                                        String billingAddressJson, String sourceType, String sourceCode, String title,
+                                        String description, String terms, String currency, LocalDate issueDate,
+                                        LocalDate dueDate, String metadataJson,
+                                        List<CreateBillingDocumentLineRequest> lines,
+                                        List<CreateBillingDocumentDiscountRequest> discounts,
+                                        List<CreateBillingDocumentClauseRequest> clauses, String paymentReference,
+                                        String paymentInstructions, String bankDetailsJson,
+                                        CreateBillingDocumentAdvanceRequest advance, String customerReference,
+                                        String poNumber, String projectCode, String salespersonCode,
+                                        String deliveryAddressJson, String language, java.math.BigDecimal exchangeRate,
+                                        CreateEarlyPaymentDiscountRequest earlyPaymentDiscount) {
+        this(documentType, customerType, customerCode, customerName, customerEmail, customerPhone, billingAddressJson,
+                sourceType, sourceCode, title, description, terms, currency, issueDate, dueDate, metadataJson, lines,
+                discounts, clauses, paymentReference, paymentInstructions, bankDetailsJson, advance, customerReference,
+                poNumber, projectCode, salespersonCode, deliveryAddressJson, language, exchangeRate, earlyPaymentDiscount,
+                null);
+    }
 }

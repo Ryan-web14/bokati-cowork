@@ -319,6 +319,12 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         documentRepository.findByDocumentNumber(document.documentNumber()).ifPresent(entity -> {
             context.setVariable("customerIdentifiers", identifierLines(entity.getCustomerIdentifiersJson(), entity.getCustomerNiu()));
             context.setVariable("customerVatExemptionNote", entity.getCustomerVatExemptionNote());
+            // Organisation reliee des l'emission · imprimee en tete. Une facture reliee apres coup
+            // (ATTACHED) ne change pas : son document emis ne portait pas l'organisation.
+            if ("AT_ISSUE".equals(entity.getCompanyLinkSource()) && StringUtils.hasText(entity.getCompanyName())) {
+                context.setVariable("companyName", entity.getCompanyName());
+                context.setVariable("companyIdentifiers", identifierLines(entity.getCompanyIdentifiersJson(), null));
+            }
         });
         return templateEngine.process("billing/document", context);
     }

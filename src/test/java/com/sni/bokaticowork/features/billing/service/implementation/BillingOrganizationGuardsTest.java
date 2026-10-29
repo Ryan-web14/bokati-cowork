@@ -42,6 +42,8 @@ class BillingOrganizationGuardsTest {
     @Mock private BillingCustomerSnapshotResolver customerSnapshotResolver;
     @Mock private BillingCalculationService calculationService;
     @Mock private BillingDocumentRepository documentRepository;
+    @Mock private com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver billingCompanyResolver;
+    @Mock private OrganizationBillingProfile organizationProfile;
     @InjectMocks private BillingDocumentServiceImpl service;
 
     @AfterEach
@@ -88,7 +90,7 @@ class BillingOrganizationGuardsTest {
     @DisplayName("Plafond d'encours depasse : la facture est refusee")
     void creditLimitIsEnforced() {
         givenOrganization(terms(false, "200000"));
-        when(documentRepository.sumOutstanding(eq("CUSTOMER"), eq("CUS-COM-1"), any(), any())).thenReturn(new BigDecimal("150000"));
+        when(documentRepository.sumCompanyOutstanding(eq("CUS-COM-1"), any(), any())).thenReturn(new BigDecimal("150000"));
 
         assertThatThrownBy(() -> service.create(invoice()))
                 .isInstanceOf(BadRequestException.class)
@@ -99,12 +101,27 @@ class BillingOrganizationGuardsTest {
     @DisplayName("Un super-administrateur passe outre le plafond")
     void superAdminBypassesCreditLimit() {
         givenOrganization(terms(false, "200000"));
-        when(documentRepository.sumOutstanding(anyString(), anyString(), any(), any())).thenReturn(new BigDecimal("150000"));
+        when(documentRepository.sumCompanyOutstanding(anyString(), any(), any())).thenReturn(new BigDecimal("150000"));
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                 "chef", null, List.of(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"))));
 
         // Le plafond ne bloque plus · la suite (numerotation) n'est pas simulee ici et s'arrete plus loin.
         assertThatThrownBy(() -> service.create(invoice()))
                 .isNotInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @DisplayName("Facture de membre pour une organisation bloquee : refusee avec le motif")
+    void memberInvoiceForBlockedCompanyIsRefused() {
+        when(customerSnapshotResolver.resolve(any())).thenReturn(new BillingCustomerSnapshotResolver.CustomerSnapshot(
+                "MEMBER", "MBR-1", "Jean Mbemba", null, null, null, null));
+        com.sni.bokaticowork.features.client.customer.model.Customer company =
+                com.sni.bokaticowork.features.client.customer.model.Customer.builder().customerId("CUS-COM-1").build();
+        when(billingCompanyResolver.resolve("MEMBER", "MBR-1", null)).thenReturn(java.util.Optional.of(company));
+        when(organizationProfile.of(company)).thenReturn(java.util.Optional.of(terms(true, null)));
+
+        assertThatThrownBy(() -> service.create(invoice()))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Impayés de septembre");
     }
 }

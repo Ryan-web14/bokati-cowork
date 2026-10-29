@@ -253,7 +253,14 @@
         <tr>
             <td style="width:54%; padding-right:14px; border-right:1px solid #e6ddea; vertical-align:top;">
                 <div class="info-block-title" th:text="${fmt.partyLabel(document.customerType())}">Client</div>
-                <div class="info-primary" th:text="${document.customerName()}">Client SA</div>
+                <th:block th:if="${companyName != null}">
+                    <div class="info-primary" th:text="${companyName}">SARL Mboté</div>
+                    <div class="info-detail">
+                        <span th:each="identifier : ${companyIdentifiers}"><strong th:text="${identifier.label} + ' :'">NIU :</strong> <span th:text="${identifier.value}"></span><br></span>
+                        <strong>À l'attention de :</strong> <span th:text="${document.customerName()}">Jean Mbemba</span>
+                    </div>
+                </th:block>
+                <div class="info-primary" th:if="${companyName == null}" th:text="${document.customerName()}">Client SA</div>
                 <div class="info-detail">
                     <strong>Type :</strong> <span th:text="${fmt.partyLabel(document.customerType())}">Client</span><br>
                     <strong>Réf. :</strong> <span th:text="${document.customerCode()}">CUS-001</span><br>

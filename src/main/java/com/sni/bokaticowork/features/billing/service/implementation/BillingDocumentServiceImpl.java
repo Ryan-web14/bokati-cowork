@@ -128,6 +128,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @org.springframework.beans.factory.annotation.Value("${bokati.billing.default-currency:XAF}")
     private String defaultCurrency;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
+    private final com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver billingCompanyResolver;
+    private final com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile organizationProfile;
     private final BillingNumberingSupport numberingSupport;
     private final BillingDocumentWriter documentWriter;
     private final BillingLifecycleSupport lifecycleSupport;
@@ -193,6 +195,15 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
      * <p>Seul un super-administrateur passe outre · c'est une decision de credit, pas une erreur
      * de saisie, et elle doit etre prise par quelqu'un qui en repond.</p>
      */
+    private static void ensureNotBlocked(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
+                                         boolean claim) {
+        if (organization != null && claim && organization.blocked()) {
+            throw new BadRequestException("L'organisation " + organization.customerName() + " est bloquée"
+                    + (organization.blockedReason() == null ? "" : " : " + organization.blockedReason())
+                    + ". Aucune facture ne peut lui être émise tant qu'elle n'est pas débloquée.");
+        }
+    }
+
     private void ensureWithinCreditLimit(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
                                          BigDecimal amount) {
         if (organization.creditLimit() == null || isSuperAdmin()) {
@@ -201,7 +212,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         java.util.Set<BillingDocumentStatus> excluded = java.util.EnumSet.noneOf(BillingDocumentStatus.class);
         excluded.addAll(BillingReceivables.NOT_ISSUED);
         excluded.addAll(BillingReceivables.SETTLED);
-        BigDecimal outstanding = documentRepository.sumOutstanding("CUSTOMER", organization.customerCode(),
+        // L'encours de l'organisation compte aussi les factures de ses membres qui lui sont reliees.
+        BigDecimal outstanding = documentRepository.sumCompanyOutstanding(organization.customerCode(),
                 BillingReceivables.RECEIVABLE_TYPES, excluded);
         BigDecimal after = outstanding.add(amount == null ? BigDecimal.ZERO : amount);
         if (after.compareTo(organization.creditLimit()) > 0) {
@@ -261,11 +273,14 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         BillingCustomerSnapshotResolver.CustomerSnapshot customer = customerSnapshotResolver.resolve(request);
         var organization = customer.organization();
         boolean claim = BillingReceivables.RECEIVABLE_TYPES.contains(request.documentType());
-        if (organization != null && claim && organization.blocked()) {
-            throw new BadRequestException("L'organisation " + organization.customerName() + " est bloquée"
-                    + (organization.blockedReason() == null ? "" : " : " + organization.blockedReason())
-                    + ". Aucune facture ne peut lui être émise tant qu'elle n'est pas débloquée.");
-        }
+        ensureNotBlocked(organization, claim);
+        // Une facture de membre peut etre emise pour le compte d'une organisation · selon le mode
+        // de son rattachement, ou le choix fait a la reservation. Elle compte alors dans son encours.
+        com.sni.bokaticowork.features.client.customer.model.Customer billingCompany = billingCompanyResolver
+                .resolve(customer.customerType(), customer.customerCode(), request.companyCustomerCode())
+                .orElse(null);
+        var companyTerms = billingCompany == null ? null : organizationProfile.of(billingCompany).orElse(null);
+        ensureNotBlocked(companyTerms, claim);
         // Une organisation exoneree est facturee hors TVA, quel que soit le prix saisi.
         List<CreateBillingDocumentLineRequest> lines = organization != null && organization.vatExempt()
                 ? calculationService.exempted(request.lines())
@@ -274,7 +289,20 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         if (organization != null && claim) {
             ensureWithinCreditLimit(organization, calculation.totalAmount());
         }
+        if (companyTerms != null && claim) {
+            ensureWithinCreditLimit(companyTerms, calculation.totalAmount());
+        }
         BillingDocument document = buildDocument(request, customer, calculation);
+        if (billingCompany != null) {
+            // L'organisation est imprimee en tete du destinataire, figee comme le reste.
+            document.setCompanyCustomerId(billingCompany.getId());
+            document.setCompanyCustomerCode(billingCompany.getCustomerId());
+            document.setCompanyName(billingCompany.getCompanyName());
+            document.setCompanyIdentifiersJson(companyTerms == null ? null : companyTerms.identifiersJson());
+            document.setCompanyLinkSource("AT_ISSUE");
+            document.setCompanyLinkedAt(java.time.Instant.now());
+            document.setCompanyLinkedBy(currentUserName());
+        }
         BillingDocument saved = documentWriter.save(document, calculation, request.discounts(), request.clauses(), request.advance());
         documentWriter.saveEarlyPaymentDiscount(saved, request.earlyPaymentDiscount());
         eventWriter.write(saved, "BILLING_DOCUMENT_CREATED", null);
@@ -647,7 +675,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 List.of(),
                 defaultInvoiceClauses(),
                 null, null, null, null,
-                null, null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null,
+                // Le choix « pour l'organisation » fait a la source (reservation) · vide, selon le mode.
+                firstItem.getBillingCompanyCode()
         );
         BillingDocumentResponse response = create(createRequest);
         BillingDocument invoice = serviceByNumber(response.documentNumber());

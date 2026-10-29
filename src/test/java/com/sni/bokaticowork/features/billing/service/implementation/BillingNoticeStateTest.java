@@ -40,7 +40,8 @@ class BillingNoticeStateTest {
                 null, null, null, null,
                 null, null, null,
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, status),
-                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, totalAmount));
+                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, totalAmount),
+                null, null, null);
     }
 
     @Test

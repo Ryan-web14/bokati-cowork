@@ -130,6 +130,13 @@ public class Booking {
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
 
+    /**
+     * L'organisation pour le compte de laquelle le membre reserve · choisie a la reservation en
+     * mode « au choix ». Vide : la facture suit le mode du lien (automatique ou pour le membre).
+     */
+    @Column(name = "billing_company_code", length = 300)
+    private String billingCompanyCode;
+
     @Column(name = "check_in_token", unique = true, length = 120)
     private String checkInToken;
 

@@ -421,8 +421,7 @@ public class CompanyAccountService {
     private BigDecimal outstanding(Customer customer) {
         Set<BillingDocumentStatus> excluded = new HashSet<>(BillingReceivables.NOT_ISSUED);
         excluded.addAll(BillingReceivables.SETTLED);
-        return documentRepository.sumOutstanding("CUSTOMER", customer.getCustomerId(),
-                BillingReceivables.RECEIVABLE_TYPES, excluded);
+        return documentRepository.sumCompanyOutstanding(customer.getCustomerId(), BillingReceivables.RECEIVABLE_TYPES, excluded);
     }
 
     private CompanyDtos.CompanyResponse toResponse(Customer customer) {

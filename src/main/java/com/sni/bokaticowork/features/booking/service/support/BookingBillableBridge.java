@@ -56,6 +56,8 @@ public class BookingBillableBridge {
                 .subscriberName(booking.getContactName())
                 .subscriberEmail(booking.getContactEmail())
                 .subscriberPhone(booking.getContactPhone())
+                // Le choix « pour l'organisation » fait a la reservation suit jusqu'a la facture.
+                .billingCompanyCode(booking.getBillingCompanyCode())
                 .description(description)
                 .amount(amount)
                 .currency(booking.getCurrency())

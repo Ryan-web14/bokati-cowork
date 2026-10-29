@@ -42,6 +42,36 @@ public interface BillingDocumentRepository extends JpaRepository<BillingDocument
                                         @Param("excludedStatuses") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus> excludedStatuses);
 
     /**
+     * L'encours d'une organisation · ses propres factures, plus celles de ses membres qui lui sont
+     * reliees. Memes ensembles que {@code BillingReceivables}.
+     */
+    @Query("""
+            SELECT COALESCE(SUM(d.balanceDue), 0)
+            FROM BillingDocument d
+            WHERE ((d.customerType = 'CUSTOMER' AND d.customerCode = :companyCode)
+                   OR d.companyCustomerCode = :companyCode)
+              AND d.documentType IN :receivableTypes
+              AND d.status NOT IN :excludedStatuses
+            """)
+    java.math.BigDecimal sumCompanyOutstanding(@Param("companyCode") String companyCode,
+                                               @Param("receivableTypes") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentType> receivableTypes,
+                                               @Param("excludedStatuses") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus> excludedStatuses);
+
+    /** Les factures de membres reliees, ou reliables, a une organisation · pour le rattachement des anciennes. */
+    @Query("""
+            SELECT d FROM BillingDocument d
+            WHERE d.customerType = 'MEMBER'
+              AND d.customerCode = :memberCode
+              AND d.issueDate >= :from AND d.issueDate <= :to
+              AND d.documentType IN :receivableTypes
+            ORDER BY d.issueDate ASC
+            """)
+    java.util.List<BillingDocument> findMemberInvoicesBetween(@Param("memberCode") String memberCode,
+                                                             @Param("from") java.time.LocalDate from,
+                                                             @Param("to") java.time.LocalDate to,
+                                                             @Param("receivableTypes") java.util.Collection<com.sni.bokaticowork.features.billing.enums.BillingDocumentType> receivableTypes);
+
+    /**
      * Charge le document sous verrou exclusif, pour serialiser les mutations de
      * {@code paid_amount} / {@code balance_due} / {@code status}.
      * <p>

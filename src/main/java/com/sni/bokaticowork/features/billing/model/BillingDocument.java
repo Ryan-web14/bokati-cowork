@@ -308,6 +308,32 @@ public class BillingDocument {
     @Column(name = "customer_vat_exemption_note", length = 500)
     private String customerVatExemptionNote;
 
+    // ── Organisation pour le compte de laquelle un membre est facture ────────────
+
+    /** L'organisation reliee a une facture de membre · elle en porte l'encours. */
+    @Column(name = "company_customer_id")
+    private Long companyCustomerId;
+
+    @Column(name = "company_customer_code", length = 300)
+    private String companyCustomerCode;
+
+    /** Imprime en tete du destinataire · vide pour une facture reliee apres coup. */
+    @Column(name = "company_name", length = 255)
+    private String companyName;
+
+    @Column(name = "company_identifiers_json", columnDefinition = "TEXT")
+    private String companyIdentifiersJson;
+
+    /** {@code AT_ISSUE} (emise ainsi, imprimee) ou {@code ATTACHED} (ancienne facture reliee, document inchange). */
+    @Column(name = "company_link_source", length = 20)
+    private String companyLinkSource;
+
+    @Column(name = "company_linked_at")
+    private java.time.Instant companyLinkedAt;
+
+    @Column(name = "company_linked_by", length = 150)
+    private String companyLinkedBy;
+
     // ── Lien document-correctif ─────────────────────────────────────────────────
 
     /** Numéro du document d'origine corrigé par cet avoir ou cette facture rectificative. */

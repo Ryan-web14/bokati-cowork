@@ -89,6 +89,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingPricingCalculator pricingCalculator;
     private final BookingResourceGuard resourceGuard;
     private final BookingEntitlementBridge entitlementBridge;
+    private final com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver billingCompanyResolver;
     private final BookingEventWriter eventWriter;
     private final BookingPolicyEnforcer policyEnforcer;
     private final BookingBillableBridge billableBridge;
@@ -177,6 +178,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setContactName(identity.contactName());
         booking.setContactEmail(identity.contactEmail());
         booking.setContactPhone(identity.contactPhone());
+        booking.setBillingCompanyCode(billingCompany(request.billingCompanyCode(), identity));
         booking.setCheckInToken(generateCheckInToken());
 
         BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
@@ -1144,7 +1146,9 @@ public class BookingServiceImpl implements BookingService {
                 // Chaque occurrence herite de l'unite imposee · sinon la premiere serait facturee
                 // en demi-journee et les suivantes a l'heure, pour des creneaux identiques.
                 base.bookingUnit(),
-                base.participants()
+                base.participants(),
+                // Le choix « pour l'organisation » vaut pour chaque occurrence.
+                base.billingCompanyCode()
         );
     }
 
@@ -1187,6 +1191,26 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getForService(bookingNumber);
         booking.setCsatScore(score);
         bookingRepository.save(booking);
+    }
+
+    /**
+     * L'organisation choisie « pour son compte » · verifiee des la reservation, pas a la facture.
+     *
+     * <p>Un membre qui n'y est pas rattache est refuse ici, avant que la reservation n'existe :
+     * sinon elle passerait, et sa facture echouerait plus tard, a la confirmation.</p>
+     */
+    private String billingCompany(String requested, BookingIdentityResolver.ResolvedBookingIdentity identity) {
+        if (!StringUtils.hasText(requested)) {
+            return null;
+        }
+        String code = requested.trim();
+        if (com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver.NO_COMPANY.equalsIgnoreCase(code)) {
+            return com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver.NO_COMPANY;
+        }
+        String ownerType = identity.ownerType() == null ? null : identity.ownerType().name();
+        return billingCompanyResolver.resolve(ownerType, identity.ownerCode(), code)
+                .map(com.sni.bokaticowork.features.client.customer.model.Customer::getCustomerId)
+                .orElse(null);
     }
 
     private static String generateCheckInToken() {

@@ -35,4 +35,10 @@ public class ClientCreateBookingRequest {
 
     @Valid
     private List<BookingParticipantRequest> participants;
+
+    /**
+     * Le code de l'organisation pour le compte de laquelle le membre reserve, en mode « au choix ».
+     * Vide : pour lui-meme (ou pour son organisation si son lien est en mode automatique).
+     */
+    private String billingCompanyCode;
 }
