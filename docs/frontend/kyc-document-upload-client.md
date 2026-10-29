@@ -152,6 +152,15 @@ BACK upload returns `400` if FRONT has not been uploaded yet.
 
 ---
 
+> **Identifiant d'une pièce.** Le champ `id` d'une pièce est un **numéro court** (1, 2, 3…),
+> lisible tel quel par JavaScript. C'est lui qu'on passe dans `/portal/kyc/documents/{id}`,
+> `/download`, la mise à jour et la suppression. L'ancien identifiant à 19 chiffres était arrondi
+> par le navigateur et donnait un 404.
+>
+> **Dossier complet.** Tant que le dossier est `APPROVED`, `SUBMITTED` ou `UNDER_REVIEW`,
+> `/portal/kyc/requirements` renvoie `[]` : plus rien à fournir. Les pièces exigées reviennent
+> dès que le dossier est rouvert.
+
 ## 5. List My Documents
 
 ```
