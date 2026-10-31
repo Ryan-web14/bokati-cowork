@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,7 +25,8 @@ import java.util.List;
  * L'abonnement partage dans le portail · le gerant attribue et ajuste les places, chaque
  * collaborateur voit ce qu'il peut prendre.
  *
- * <p>Les regles de repartition et le nombre de places restent a l'administration.</p>
+ * <p>Le gerant regle aussi la repartition de chaque droit et son nombre de places, sous le
+ * plafond vendu que fixe l'administration.</p>
  */
 @RestController
 @RequiredArgsConstructor
@@ -54,6 +56,23 @@ public class ClientCompanySharingController {
     @GetMapping(ApiPath.V1 + "/client/companies/{customerId}/subscriptions/{subscriptionNumber}/sharing")
     public ResponseEntity<SharingDtos.SharingView> view(@PathVariable String customerId, @PathVariable String subscriptionNumber) {
         return ResponseEntity.ok(service.view(owned(customerId), subscriptionNumber));
+    }
+
+    @PutMapping(ApiPath.V1 + "/client/companies/{customerId}/subscriptions/{subscriptionNumber}/sharing/{entitlementCode}")
+    @Audited(module = "COMPANY", action = "SHARING_RULE_PORTAL", ressource = "subscription_entitlement_sharing")
+    public ResponseEntity<SharingDtos.SharingView> setRule(@PathVariable String customerId, @PathVariable String subscriptionNumber,
+                                                           @PathVariable String entitlementCode,
+                                                           @Valid @RequestBody SharingDtos.RuleRequest request) {
+        Member owner = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(service.setRule(membershipService.ownedCompany(owner, customerId), subscriptionNumber,
+                entitlementCode, request, owner.getMemberId()));
+    }
+
+    @PatchMapping(ApiPath.V1 + "/client/companies/{customerId}/subscriptions/{subscriptionNumber}/max-seats")
+    @Audited(module = "COMPANY", action = "SHARING_MAX_SEATS_PORTAL", ressource = "subscription")
+    public ResponseEntity<SharingDtos.SharingView> setMaxSeats(@PathVariable String customerId, @PathVariable String subscriptionNumber,
+                                                               @Valid @RequestBody SharingDtos.MaxSeatsRequest request) {
+        return ResponseEntity.ok(service.setMaxSeatsByOwner(owned(customerId), subscriptionNumber, request.maxSeats()));
     }
 
     @PostMapping(ApiPath.V1 + "/client/companies/{customerId}/subscriptions/{subscriptionNumber}/seats")

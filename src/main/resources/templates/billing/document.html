@@ -598,6 +598,48 @@
         <div class="made-by">Engineered by SNI</div>
     </div>
 
+    <!-- ANNEXE · consommation par collaborateur, figee a l'emission. Elle renseigne, elle ne
+         facture pas : les depassements ont leurs propres factures. -->
+    <div th:if="${usageAnnex != null}" style="page-break-before: always;">
+        <div class="section-label" th:text="|Annexe · ${usageAnnex.title()}|">Annexe</div>
+        <div class="detail-block">
+            <span th:text="|Abonnement ${usageAnnex.subscriptionNumber()} · période du ${fmt.date(usageAnnex.periodStart())} au ${fmt.date(usageAnnex.periodEnd())}|">Période</span>
+        </div>
+        <table class="lines">
+            <thead>
+                <tr>
+                    <th style="width:24%;">Collaborateur</th>
+                    <th style="width:22%;">Droit</th>
+                    <th class="r" style="width:10%;">Sa part</th>
+                    <th class="r" style="width:10%;">Pot commun</th>
+                    <th class="r" style="width:10%;">Total pris</th>
+                    <th class="r" style="width:10%;">Dépassement</th>
+                    <th class="r" style="width:14%;">Montant dépassé</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="row : ${usageAnnex.rows()}">
+                    <td>
+                        <div class="line-name" th:text="${row.memberName()}">Jean Mbemba</div>
+                        <div class="line-sub" th:text="${row.memberId()}">MBR-1</div>
+                    </td>
+                    <td>
+                        <div th:text="${row.entitlementName() != null ? row.entitlementName() : row.entitlementCode()}">Salle</div>
+                        <div class="line-sub" th:if="${row.unit()}" th:text="${row.unit()}">HOUR</div>
+                    </td>
+                    <td class="r num" th:text="${fmt.quantity(row.fromQuota())}">0</td>
+                    <td class="r num" th:text="${fmt.quantity(row.fromPool())}">0</td>
+                    <td class="r num" th:text="${fmt.quantity(row.consumed())}">0</td>
+                    <td class="r num" th:text="${fmt.quantity(row.overage())}">0</td>
+                    <td class="r num" th:text="${fmt.amount(row.overageAmount())}">0</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="line-sub" style="margin-top:6px;">
+            Les dépassements figurent pour mémoire : ils ont été facturés à l'organisation sur des factures distinctes.
+        </div>
+    </div>
+
 </div>
 </body>
 </html>

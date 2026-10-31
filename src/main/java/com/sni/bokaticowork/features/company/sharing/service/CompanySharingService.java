@@ -47,8 +47,8 @@ import java.util.Map;
  * que chacun a pris.
  *
  * <p>Les methodes recoivent l'organisation deja verifiee : par l'administration (code), ou par le
- * portail du gerant (lien OWNER actif). Les regles et le nombre de places sont reserves a
- * l'administration ; le gerant attribue, ajuste et libere les places.</p>
+ * portail du gerant (lien OWNER actif). L'administration fixe le plafond de places vendu ; le
+ * gerant regle la repartition, son nombre de places sous ce plafond, et attribue les places.</p>
  */
 @Slf4j
 @Service
@@ -117,7 +117,7 @@ public class CompanySharingService {
         return seats;
     }
 
-    // ── Regles (administration) ──────────────────────────────────────────────
+    // ── Regles (administration et gerant) ────────────────────────────────────
 
     public SharingDtos.SharingView setRule(Customer company, String subscriptionNumber, String entitlementCode,
                                            SharingDtos.RuleRequest request, String actor) {
@@ -134,15 +134,36 @@ public class CompanySharingService {
         return view(company, subscription);
     }
 
+    /** L'administration · plafond vendu et nombre de places ensemble. */
     public SharingDtos.SharingView setMaxSeats(Customer company, String subscriptionNumber, Integer maxSeats) {
-        Subscription subscription = subscription(company, subscriptionNumber);
+        Subscription subscription = seatRepository.lockSubscription(subscription(company, subscriptionNumber).getId()).orElseThrow();
+        ensureSeatsFit(subscription, maxSeats);
+        subscription.setSeatCeiling(maxSeats);
+        subscription.setMaxSeats(maxSeats);
+        subscriptionRepository.save(subscription);
+        return view(company, subscription);
+    }
+
+    /** Le gerant · son nombre de places, sans depasser le plafond vendu. Vide = le plafond. */
+    public SharingDtos.SharingView setMaxSeatsByOwner(Customer company, String subscriptionNumber, Integer maxSeats) {
+        Subscription subscription = seatRepository.lockSubscription(subscription(company, subscriptionNumber).getId()).orElseThrow();
+        Integer ceiling = subscription.getSeatCeiling();
+        Integer wanted = maxSeats == null ? ceiling : maxSeats;
+        if (ceiling != null && wanted > ceiling) {
+            throw new BadRequestException("L'abonnement compte " + ceiling + " places au plus : pour en avoir davantage,"
+                    + " contactez l'administration.");
+        }
+        ensureSeatsFit(subscription, wanted);
+        subscription.setMaxSeats(wanted);
+        subscriptionRepository.save(subscription);
+        return view(company, subscription);
+    }
+
+    private void ensureSeatsFit(Subscription subscription, Integer maxSeats) {
         long active = seatRepository.countActive(subscription.getId());
         if (maxSeats != null && maxSeats < active) {
             throw new BadRequestException(active + " places sont occupées : libérez-en avant de descendre à " + maxSeats + ".");
         }
-        subscription.setMaxSeats(maxSeats);
-        subscriptionRepository.save(subscription);
-        return view(company, subscription);
     }
 
     // ── Places (administration et gerant) ────────────────────────────────────
@@ -318,7 +339,7 @@ public class CompanySharingService {
         return new SharingDtos.SubscriptionSummary(subscription.getSubscriptionNumber(), planName,
                 subscription.getStatus() == null ? null : subscription.getStatus().name(),
                 subscription.getCurrentPeriodStart(), subscription.getCurrentPeriodEnd(), subscription.getMaxSeats(),
-                seatRepository.countActive(subscription.getId()));
+                subscription.getSeatCeiling(), seatRepository.countActive(subscription.getId()));
     }
 
     /** L'abonnement, s'il est bien celui de l'organisation · 404 sinon. */

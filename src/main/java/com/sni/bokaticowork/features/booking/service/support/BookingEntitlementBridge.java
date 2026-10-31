@@ -200,7 +200,7 @@ public class BookingEntitlementBridge {
         // faisait sortir processUsage des sa premiere ligne, donc aucune politique consultee,
         // aucune charge creee, aucune facture emise. Les heures supplementaires etaient consommees
         // et offertes.
-        boolean onSeat = booking.getEntitlementOwnerType() != null;
+        boolean forCompany = booking.getEntitlementOwnerType() != null;
         usageRecordService.record(new CreateUsageRecordRequest(
                 entitlementOwnerType(booking),
                 entitlementOwnerCode(booking),
@@ -215,8 +215,10 @@ public class BookingEntitlementBridge {
                 booking.getCurrency(),
                 Instant.now(),
                 booking.getMetadataJson(),
-                onSeat ? booking.getOwnerType().name() : null,
-                onSeat ? booking.getOwnerCode() : null
+                forCompany ? booking.getOwnerType().name() : null,
+                forCompany ? booking.getOwnerCode() : null,
+                forCompany ? scopeType(booking) : null,
+                forCompany ? scopeNumber(booking) : null
         ));
         return true;
     }
@@ -231,7 +233,25 @@ public class BookingEntitlementBridge {
         }
     }
 
-    /** Le titulaire du droit · l'organisation quand la reservation est prise sur une place. */
+    /**
+     * Sur un droit de l'organisation, l'operation ne vise que l'abonnement de la place, ou le pass
+     * partage · pas les autres droits de meme code qu'elle detient.
+     */
+    static String scopeType(Booking booking) {
+        if (StringUtils.hasText(booking.getPassNumber())) {
+            return EntitlementOperationRequest.SCOPE_PASS;
+        }
+        return StringUtils.hasText(booking.getSubscriptionNumber()) ? EntitlementOperationRequest.SCOPE_SUBSCRIPTION : null;
+    }
+
+    static String scopeNumber(Booking booking) {
+        if (StringUtils.hasText(booking.getPassNumber())) {
+            return booking.getPassNumber();
+        }
+        return StringUtils.hasText(booking.getSubscriptionNumber()) ? booking.getSubscriptionNumber() : null;
+    }
+
+    /** Le titulaire du droit · l'organisation quand la reservation est prise sur une place ou un pass partage. */
     static com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType entitlementOwnerType(Booking booking) {
         return booking.getEntitlementOwnerType() != null ? booking.getEntitlementOwnerType() : booking.getOwnerType();
     }
@@ -267,7 +287,15 @@ public class BookingEntitlementBridge {
                 booking.getBookingNumber(),
                 "booking:" + booking.getBookingNumber() + ":" + action,
                 reason,
-                holdUntil
+                holdUntil,
+                forCompany(booking) ? booking.getOwnerType().name() : null,
+                forCompany(booking) ? booking.getOwnerCode() : null,
+                forCompany(booking) ? scopeType(booking) : null,
+                forCompany(booking) ? scopeNumber(booking) : null
         );
+    }
+
+    private static boolean forCompany(Booking booking) {
+        return booking.getEntitlementOwnerType() != null;
     }
 }

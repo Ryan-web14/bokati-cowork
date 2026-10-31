@@ -48,6 +48,7 @@ class CompanyMembershipServiceTest {
     @Mock private MemberRepository memberRepository;
     @Mock private CustomerService customerService;
     @Mock private com.sni.bokaticowork.features.company.sharing.service.CompanySharingService sharingService;
+    @Mock private com.sni.bokaticowork.features.company.sharing.service.CompanyPassSharingService passSharingService;
     @InjectMocks private CompanyMembershipService service;
 
     private Customer acme;

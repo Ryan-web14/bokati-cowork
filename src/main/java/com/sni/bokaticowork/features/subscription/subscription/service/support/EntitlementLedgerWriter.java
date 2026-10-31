@@ -24,6 +24,20 @@ public class EntitlementLedgerWriter {
                       String referenceId,
                       String idempotencyKey,
                       String reason) {
+        write(grant, transactionType, quantity, before, after, referenceType, referenceId, idempotencyKey, reason, null, null);
+    }
+
+    public void write(EntitlementGrant grant,
+                      EntitlementTransactionType transactionType,
+                      BigDecimal quantity,
+                      BigDecimal before,
+                      BigDecimal after,
+                      String referenceType,
+                      String referenceId,
+                      String idempotencyKey,
+                      String reason,
+                      String beneficiaryType,
+                      String beneficiaryCode) {
         ledgerRepository.save(EntitlementLedger.builder()
                 .grant(grant)
                 .transactionType(transactionType)
@@ -34,6 +48,8 @@ public class EntitlementLedgerWriter {
                 .referenceId(referenceId)
                 .idempotencyKey(idempotencyKey)
                 .reason(reason)
+                .beneficiaryType(beneficiaryType)
+                .beneficiaryCode(beneficiaryCode)
                 .build());
     }
 }

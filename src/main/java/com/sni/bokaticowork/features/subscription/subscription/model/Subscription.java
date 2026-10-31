@@ -64,6 +64,10 @@ public class Subscription {
     @Column(name = "max_seats")
     private Integer maxSeats;
 
+    /** Plafond de places vendu, fixe par l'administration · le gerant regle maxSeats en dessous. Vide = sans plafond. */
+    @Column(name = "seat_ceiling")
+    private Integer seatCeiling;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", foreignKey = @ForeignKey(name = "fk_subscription_member"))
     @NotFound(action = NotFoundAction.IGNORE)

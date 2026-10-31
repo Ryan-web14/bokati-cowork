@@ -29,4 +29,15 @@ public interface SubscriptionOverageChargeRepository extends JpaRepository<Subsc
                                            @Param("ownerType") String ownerType,
                                            @Param("ownerCode") String ownerCode,
                                            @Param("entitlementCode") String entitlementCode);
+
+    /** Les depassements des collaborateurs sur un abonnement, entre deux instants · pour l'annexe de facture. */
+    @Query("""
+            SELECT c FROM SubscriptionOverageCharge c JOIN FETCH c.usageRecord u
+            WHERE c.subscription.id = :subscriptionId
+              AND u.beneficiaryCode IS NOT NULL
+              AND u.occurredAt >= :from AND u.occurredAt < :to
+            """)
+    List<SubscriptionOverageCharge> findBeneficiaryCharges(@Param("subscriptionId") Long subscriptionId,
+                                                           @Param("from") java.time.Instant from,
+                                                           @Param("to") java.time.Instant to);
 }

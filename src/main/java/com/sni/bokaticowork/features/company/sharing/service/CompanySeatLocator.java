@@ -64,18 +64,35 @@ public class CompanySeatLocator {
         if (byCompany.isEmpty()) {
             return List.of();
         }
+        return choose(byCompany, requested, automaticCompany(memberId.trim()), "une place sur l'abonnement");
+    }
+
+    /** L'organisation dont le lien est en mode automatique · vide s'il n'y en a pas. */
+    String automaticCompany(String memberId) {
+        return billingCompanyResolver.resolve("MEMBER", memberId, null)
+                .map(c -> c.getCustomerId().toUpperCase()).orElse(null);
+    }
+
+    /**
+     * Le choix de l'organisation, commun aux places et aux passes partages.
+     *
+     * @param byCompany ce qui est utilisable, par code d'organisation en majuscules
+     * @param what      ce que le membre a, pour le message de refus
+     */
+    public static <T> List<T> choose(Map<String, List<T>> byCompany, String requested, String automatic, String what) {
+        if (byCompany.isEmpty()) {
+            return List.of();
+        }
         if (requested != null) {
             return byCompany.getOrDefault(requested.toUpperCase(), List.of());
         }
-        String automatic = billingCompanyResolver.resolve("MEMBER", memberId.trim(), null)
-                .map(c -> c.getCustomerId().toUpperCase()).orElse(null);
         if (automatic != null && byCompany.containsKey(automatic)) {
             return byCompany.get(automatic);
         }
         if (byCompany.size() == 1) {
             return byCompany.values().iterator().next();
         }
-        throw new BadRequestException("Vous avez une place sur l'abonnement de plusieurs organisations ("
+        throw new BadRequestException("Vous avez " + what + " de plusieurs organisations ("
                 + String.join(", ", byCompany.keySet())
                 + ") : choisissez celle pour laquelle vous réservez (billingCompanyCode).");
     }

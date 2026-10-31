@@ -64,6 +64,11 @@ class BillingDocumentPdfLinesRenderTest {
     }
 
     private String render(List<BillingDocumentLineResponse> lines) {
+        return render(lines, null);
+    }
+
+    private String render(List<BillingDocumentLineResponse> lines,
+                          com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex annex) {
         BigDecimal total = new BigDecimal("25000");
         BillingDocumentResponse document = new BillingDocumentResponse(
                 "INV-2026-000042", BillingDocumentType.INVOICE, BillingDocumentStatus.SENT,
@@ -91,6 +96,7 @@ class BillingDocumentPdfLinesRenderTest {
         context.setVariable("qrCode", null);
         context.setVariable("payments", List.of());
         context.setVariable("logo", null);
+        context.setVariable("usageAnnex", annex);
         return engine.process("billing/document", context);
     }
 
@@ -132,6 +138,27 @@ class BillingDocumentPdfLinesRenderTest {
 
         // 30 000 / 3 = 10 000 HT l'unite, et le brut affiche reste 30 000.
         assertThat(linesBlockOf(html)).contains("10 000").contains("30 000");
+    }
+
+    @Test
+    @DisplayName("L'annexe de consommation s'imprime en page séparée, collaborateur par collaborateur")
+    void theUsageAnnexIsPrinted() throws Exception {
+        var annex = new com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex(
+                "Consommation par collaborateur", "SUB-ACME", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31), "XAF",
+                List.of(new com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.Row(
+                        "MBR-1", "Jean Mbemba", "SALLE_H", "Salle de réunion", "HOUR",
+                        new BigDecimal("5"), new BigDecimal("4"), new BigDecimal("9"), new BigDecimal("2"), new BigDecimal("10000"))));
+        // Figee en JSON a la creation, relue a l'impression · le passage aller-retour ne perd rien.
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        var reread = mapper.readValue(mapper.writeValueAsString(annex),
+                com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.class);
+        assertThat(reread).isEqualTo(annex);
+
+        String html = render(List.of(line(1, "Abonnement Équipe", "1", "100000", "84746", true)), reread);
+
+        assertThat(html).contains("Annexe · Consommation par collaborateur").contains("Jean Mbemba")
+                .contains("Salle de réunion").contains("Sa part").contains("page-break-before");
+        assertThat(render(List.of(line(1, "Bureau", "1", "10000", "10000", true)))).doesNotContain("Annexe ·");
     }
 
     private SpringTemplateEngine engine() {

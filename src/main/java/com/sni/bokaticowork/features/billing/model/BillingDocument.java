@@ -324,6 +324,10 @@ public class BillingDocument {
     @Column(name = "company_identifiers_json", columnDefinition = "TEXT")
     private String companyIdentifiersJson;
 
+    /** Annexe de consommation par collaborateur, figee a la creation · voir {@code InvoiceUsageAnnex}. */
+    @Column(name = "usage_annex_json", columnDefinition = "TEXT")
+    private String usageAnnexJson;
+
     /** {@code AT_ISSUE} (emise ainsi, imprimee) ou {@code ATTACHED} (ancienne facture reliee, document inchange). */
     @Column(name = "company_link_source", length = 20)
     private String companyLinkSource;

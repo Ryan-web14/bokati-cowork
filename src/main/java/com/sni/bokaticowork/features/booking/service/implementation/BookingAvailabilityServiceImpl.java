@@ -71,7 +71,7 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
         if (request.paymentMode() != null && request.paymentMode().usesEntitlement()) {
             try {
                 var identity = identityResolver.resolve(request.identityLookup());
-                paymentContextResolver.resolve(request.paymentMode(), identity, resource);
+                paymentContextResolver.resolve(request.paymentMode(), identity, resource, request.billingCompanyCode());
             } catch (ResourceNotFoundException | BadRequestException ex) {
                 // Slot is available but payment context is missing · return clear payment error
                 return unavailableResponse(resource, request, quantity, ex.getMessage());

@@ -160,6 +160,38 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
         assertThat(bookingRepository.findFutureBookingNumbersOnSeats(java.util.List.of(-1L), java.time.LocalDateTime.now())).isEmpty();
     }
 
+    @Autowired private com.sni.bokaticowork.features.subscription.subscription.pass.repository.PassBeneficiaryRepository beneficiaryRepository;
+    @Autowired private com.sni.bokaticowork.features.subscription.repository.EntitlementGrantRepository grantRepository;
+    @Autowired private com.sni.bokaticowork.features.subscription.repository.EntitlementLedgerRepository ledgerRepository;
+    @Autowired private com.sni.bokaticowork.features.subscription.overage.repository.SubscriptionOverageChargeRepository chargeRepository;
+
+    @Test
+    @DisplayName("Passes partages, beneficiaire sur le journal, plafond de places et annexe : colonnes et requetes")
+    void passSharingAndAnnexRun() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        assertThat(column(jdbc, "pass_beneficiary", "short_id").get("is_nullable")).isEqualTo("NO");
+        assertThat(column(jdbc, "entitlement_ledger", "beneficiary_code")).isNotEmpty();
+        assertThat(column(jdbc, "entitlement_reservation", "beneficiary_code")).isNotEmpty();
+        assertThat(column(jdbc, "subscription", "seat_ceiling")).isNotEmpty();
+        assertThat(column(jdbc, "billing_document", "usage_annex_json")).isNotEmpty();
+        String trigger = jdbc.queryForObject(
+                "SELECT prosrc FROM pg_proc WHERE proname = 'fn_billing_document_check_immutable'", String.class);
+        assertThat(trigger).contains("usage_annex_json").contains("company_identifiers_json");
+
+        var customer = com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.CUSTOMER;
+        assertThat(beneficiaryRepository.findOpenAccesses("MEMBER", "MBR-NONE", customer)).isEmpty();
+        assertThat(beneficiaryRepository.findOpenAccessesWithOwner("MEMBER", "MBR-NONE", customer, "CUS-NONE")).isEmpty();
+        assertThat(beneficiaryRepository.findByShortId(-1L)).isEmpty();
+        assertThat(grantRepository.findUsableGrantOnPassForResource(-1L, null, null, java.time.Instant.now())).isEmpty();
+        assertThat(grantRepository.findAllByPassId(-1L)).isEmpty();
+        assertThat(ledgerRepository.sumConsumedByBeneficiaryOnPass(-1L)).isEmpty();
+        assertThat(bookingRepository.findFutureBookingNumbersOnPass("PAS-NONE", "MBR-NONE", java.time.LocalDateTime.now())).isEmpty();
+        java.time.LocalDate november = java.time.LocalDate.of(2026, 11, 1);
+        assertThat(seatUsageRepository.findConsumedInPeriod(-1L, november)).isEmpty();
+        assertThat(seatUsageRepository.findLastPeriodBefore(-1L, november, november.minusMonths(13))).isNull();
+        assertThat(chargeRepository.findBeneficiaryCharges(-1L, java.time.Instant.EPOCH, java.time.Instant.now())).isEmpty();
+    }
+
     private static Map<String, Object> column(JdbcTemplate jdbc, String table, String name) {
         return jdbc.queryForList("""
                 SELECT is_nullable, column_default FROM information_schema.columns

@@ -36,6 +36,11 @@ public class PassBeneficiary {
     @Column(name = "id")
     private Long id;
 
+    /** Expose comme {@code id} par l'API · l'identifiant genere depasse ce que lit JavaScript. */
+    @org.hibernate.annotations.Generated
+    @Column(name = "short_id", insertable = false, updatable = false)
+    private Long shortId;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pass_id", nullable = false)
     private Pass pass;

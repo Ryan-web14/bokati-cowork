@@ -171,4 +171,31 @@ class CompanySharingServiceTest {
         assertThatThrownBy(() -> service.view(acme, "SUB-ACME"))
                 .isInstanceOf(com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException.class);
     }
+
+    @Test
+    @DisplayName("Le gerant regle ses places sous le plafond vendu, pas au-dessus")
+    void ownerSeatsStayUnderCeiling() {
+        subscription.setSeatCeiling(10);
+        subscription.setMaxSeats(10);
+        when(seats.countActive(10L)).thenReturn(2L);
+
+        service.setMaxSeatsByOwner(acme, "SUB-ACME", 4);
+        assertThat(subscription.getMaxSeats()).isEqualTo(4);
+
+        assertThatThrownBy(() -> service.setMaxSeatsByOwner(acme, "SUB-ACME", 12))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("administration");
+        assertThatThrownBy(() -> service.setMaxSeatsByOwner(acme, "SUB-ACME", 1))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("occupées");
+
+        service.setMaxSeatsByOwner(acme, "SUB-ACME", null);
+        assertThat(subscription.getMaxSeats()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("L'administration fixe ensemble le plafond vendu et le nombre de places")
+    void adminSetsCeiling() {
+        service.setMaxSeats(acme, "SUB-ACME", 6);
+        assertThat(subscription.getSeatCeiling()).isEqualTo(6);
+        assertThat(subscription.getMaxSeats()).isEqualTo(6);
+    }
 }

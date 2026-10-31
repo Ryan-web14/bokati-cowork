@@ -148,11 +148,12 @@ public class ClientPortalBookingService {
                 null,
                 null,
                 null,
-                null,
+                request.getPaymentMode(),
                 request.getStartedAt(),
                 request.getEndedAt(),
                 request.getQuantity(),
-                null
+                null,
+                request.getBillingCompanyCode()
         );
         BookingAvailabilityResponse result = bookingAvailabilityService.check(req);
         if (result.available() && subscriberAccess.isDenied(member, request.getResourceCode(),

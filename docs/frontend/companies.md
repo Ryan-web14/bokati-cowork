@@ -316,7 +316,8 @@ est facturée, dépassement compris (la ligne de dépassement nomme le collabora
 ### Réservation par un collaborateur
 
 En mode abonnement, la réservation cherche d'abord les droits du membre lui-même, puis ceux des
-organisations où il a une place active (lien actif, abonnement actif sur sa période). Quand
+organisations où il a une place active (lien actif, abonnement actif sur sa période). Les
+organisations ne sont consultées que si ses propres droits ne couvrent pas la réservation. Quand
 plusieurs organisations sont possibles :
 
 1. celle passée dans `billingCompanyCode` (`NONE` : aucune) ;
@@ -337,7 +338,9 @@ réponse), pas annulées.
 | Administration | `GET /companies/{customerId}/subscriptions` | abonnements ouverts de l'organisation, places occupées |
 | Administration | `GET /companies/{customerId}/subscriptions/{n}/sharing` | règles, droits reçus et restants, places et consommation |
 | Administration | `PUT /companies/{customerId}/subscriptions/{n}/sharing/{entitlementCode}` | règle d'un droit `{ mode, defaultQuota, seatCap }` |
-| Administration | `PATCH /companies/{customerId}/subscriptions/{n}/max-seats` | nombre de places au plus `{ maxSeats }` (vide = sans limite) |
+| Administration | `PATCH /companies/{customerId}/subscriptions/{n}/max-seats` | plafond de places vendu et nombre de places `{ maxSeats }` (vide = sans limite) |
+| Gérant | `PUT /client/companies/{customerId}/subscriptions/{n}/sharing/{entitlementCode}` | règle d'un droit, comme l'administration |
+| Gérant | `PATCH /client/companies/{customerId}/subscriptions/{n}/max-seats` | son nombre de places `{ maxSeats }`, au plus le plafond vendu (vide = le plafond) |
 | Administration et gérant | `POST .../subscriptions/{n}/seats` | attribue une place `{ memberId, allowances? }` à un membre rattaché |
 | Administration et gérant | `PATCH .../subscriptions/{n}/seats/{seatId}` | change part et plafond `{ allowances: [{ entitlementCode, quota, cap }] }` |
 | Administration et gérant | `POST .../subscriptions/{n}/seats/{seatId}/release` | libère la place `{ reason? }` |
@@ -345,8 +348,9 @@ réponse), pas annulées.
 | Gérant | `GET /client/companies/{customerId}/usage` | consommation par collaborateur, tous abonnements ouverts |
 | Collaborateur | `GET /client/me/entitlements` | ses places : sa part, ce qui en reste, son plafond, le pot et le solde de l'organisation |
 
-Côté gérant, les chemins commencent par `/client/companies/{customerId}` ; les règles et le
-nombre de places restent à l'administration. `seatId` est le numéro court de la place.
+Côté gérant, les chemins commencent par `/client/companies/{customerId}`. Le gérant règle la
+répartition et son nombre de places ; seul l'administration fixe le plafond vendu (`seatCeiling`
+dans le résumé de l'abonnement). `seatId` est le numéro court de la place.
 
 Extrait de `sharing` :
 
@@ -362,6 +366,69 @@ Extrait de `sharing` :
   "seats": [{
     "id": 12, "memberId": "MBR-...", "memberName": "Jean Mbemba",
     "entitlements": [{ "entitlementCode": "SALLE_H", "quota": 5, "quotaUsed": 5, "quotaRemaining": 0, "cap": 12, "used": 9 }]
+  }]
+}
+```
+
+### Vérifier avant de réserver
+
+`POST /bookings/check-availability` (administration) et `POST /client/bookings/availability`
+(portail) acceptent `paymentMode` (`SUBSCRIPTION` ou `PASS`) et `billingCompanyCode`. Avec un mode,
+la réponse dit aussi si un droit couvre la réservation, en appliquant le même choix
+d'organisation que la réservation : un membre placé chez deux organisations passe
+`billingCompanyCode` pour ne pas lire « choisissez ».
+
+### Bénéficiaire et ciblage
+
+Sur un droit de l'organisation, la retenue et chaque ligne du journal des droits portent le
+collaborateur (`beneficiaryType`, `beneficiaryCode`). La retenue ne vise que l'abonnement de sa
+place, ou le pass partagé : les autres abonnements et passes de l'organisation portant le même
+droit ne sont pas touchés. Le dépassement suit la politique de cet abonnement-là.
+
+### Annexe de facture
+
+La facture de renouvellement d'un abonnement d'organisation porte, en page séparée, une annexe
+« Consommation par collaborateur » sur la période qui vient de s'achever : par collaborateur et par
+droit, ce qui a été pris sur sa part, sur le pot commun, le total, et les dépassements pour mémoire
+(déjà facturés à l'organisation, chacun sur sa facture). L'annexe est figée à la création de la
+facture et scellée avec elle : une réimpression montre la même. Pas d'annexe si personne n'a
+consommé sur la période.
+
+## Passes d'organisation partagés
+
+L'organisation détient le pass (`ownerType = CUSTOMER`, son code) et ses droits. L'administration
+ou le gérant ouvre l'accès à un collaborateur rattaché ; il réserve alors en mode `PASS`, le droit
+est décompté sur ce pass chez l'organisation, et il reste noté comme bénéficiaire.
+
+- La réservation essaie d'abord les passes du membre, puis ceux d'une organisation dont il est
+  bénéficiaire. Le choix entre organisations suit la règle des places (`billingCompanyCode`, lien
+  automatique, seule organisation, sinon 400).
+- Un accès sert si le lien est actif, le pass actif dans sa validité, et l'accès ouvert : sa
+  période (`validFrom`, `validUntil`) et ses passages (`maxUses`, comptés au contrôle d'entrée).
+- Un accès retiré puis rouvert reprend la même ligne, compteur remis à zéro.
+- La fin du rattachement retire tous ses accès aux passes de l'organisation. Ses réservations à
+  venir sur ces passes sont signalées (`warning`), pas annulées.
+- Un pass n'a pas de dépassement : au-delà de son solde, la réservation est refusée.
+
+| Qui | Méthode et chemin | Effet |
+| --- | --- | --- |
+| Administration | `GET /companies/{customerId}/passes` | passes non clos de l'organisation, nombre d'accès ouverts |
+| Administration | `GET /companies/{customerId}/passes/{passNumber}/beneficiaries` | droits du pass, accès et consommation par collaborateur |
+| Administration | `POST /companies/{customerId}/passes/{passNumber}/beneficiaries` | ouvre l'accès `{ memberId, maxUses?, validFrom?, validUntil? }` |
+| Administration | `POST /companies/{customerId}/passes/{passNumber}/beneficiaries/{id}/revoke` | retire l'accès `{ reason? }` |
+| Gérant | les mêmes sous `/client/companies/{customerId}/passes...` | comme l'administration |
+| Collaborateur | `GET /client/me/company-passes` | les passes de ses organisations auxquels il a accès, et ce qu'il en reste |
+
+`id` est le numéro court de l'accès. Extrait de `beneficiaries` :
+
+```json
+{
+  "companyCustomerCode": "CUS-COM-...",
+  "pass": { "passNumber": "PAS-...", "name": "Carnet 20 h", "status": "ACTIVE", "beneficiaries": 3 },
+  "entitlements": [{ "entitlementCode": "SALLE_H", "unit": "HOUR", "unlimited": false, "granted": 20, "remaining": 11 }],
+  "beneficiaries": [{
+    "id": 4, "memberId": "MBR-...", "memberName": "Jean Mbemba", "open": true, "maxUses": 10, "usedCount": 2,
+    "consumption": [{ "entitlementCode": "SALLE_H", "consumed": 6 }]
   }]
 }
 ```

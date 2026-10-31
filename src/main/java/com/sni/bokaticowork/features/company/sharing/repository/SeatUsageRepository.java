@@ -49,4 +49,22 @@ public interface SeatUsageRepository extends JpaRepository<SeatUsage, Long> {
               AND u.status <> com.sni.bokaticowork.features.company.sharing.model.SeatUsage.Status.RELEASED
             """)
     List<SeatUsage> findPeriodUsage(@Param("subscriptionId") Long subscriptionId, @Param("period") LocalDate period);
+
+    /** Ce qui a ete consomme sur l'abonnement pendant une periode · reservations closes seulement. */
+    @Query("""
+            SELECT u FROM SeatUsage u
+            WHERE u.subscriptionId = :subscriptionId AND u.periodStart = :period
+              AND u.status = com.sni.bokaticowork.features.company.sharing.model.SeatUsage.Status.CONSUMED
+            ORDER BY u.memberCode, u.entitlementCode
+            """)
+    List<SeatUsage> findConsumedInPeriod(@Param("subscriptionId") Long subscriptionId, @Param("period") LocalDate period);
+
+    /** Le debut de la derniere periode consommee avant une date · la periode qui vient de s'achever. */
+    @Query("""
+            SELECT MAX(u.periodStart) FROM SeatUsage u
+            WHERE u.subscriptionId = :subscriptionId AND u.periodStart < :before AND u.periodStart >= :notBefore
+              AND u.status = com.sni.bokaticowork.features.company.sharing.model.SeatUsage.Status.CONSUMED
+            """)
+    LocalDate findLastPeriodBefore(@Param("subscriptionId") Long subscriptionId, @Param("before") LocalDate before,
+                                   @Param("notBefore") LocalDate notBefore);
 }

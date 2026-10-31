@@ -61,7 +61,12 @@ public abstract class UsageRecordMapperDecorator implements UsageRecordMapper {
                 referenceType,
                 referenceId,
                 "USAGE:" + referenceType + ":" + referenceId + ":" + entitlementCode,
-                "usage record"
+                "usage record",
+                null,
+                trim(request.beneficiaryType()),
+                trim(request.beneficiaryCode()),
+                trim(request.scopeType()),
+                trim(request.scopeNumber())
         );
     }
 

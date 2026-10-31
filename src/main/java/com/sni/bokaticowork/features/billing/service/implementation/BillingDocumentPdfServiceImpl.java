@@ -319,6 +319,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         documentRepository.findByDocumentNumber(document.documentNumber()).ifPresent(entity -> {
             context.setVariable("customerIdentifiers", identifierLines(entity.getCustomerIdentifiersJson(), entity.getCustomerNiu()));
             context.setVariable("customerVatExemptionNote", entity.getCustomerVatExemptionNote());
+            context.setVariable("usageAnnex", usageAnnex(entity.getUsageAnnexJson(), document.documentNumber()));
             // Organisation reliee des l'emission · imprimee en tete. Une facture reliee apres coup
             // (ATTACHED) ne change pas : son document emis ne portait pas l'organisation.
             if ("AT_ISSUE".equals(entity.getCompanyLinkSource()) && StringUtils.hasText(entity.getCompanyName())) {
@@ -327,6 +328,19 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             }
         });
         return templateEngine.process("billing/document", context);
+    }
+
+    /** L'annexe figee a la creation · une annexe illisible ne fait pas echouer le PDF, il sort sans. */
+    private com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex usageAnnex(String json, String documentNumber) {
+        if (!StringUtils.hasText(json)) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(json, com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.class);
+        } catch (Exception ex) {
+            log.warn("Facture {} · annexe de consommation illisible, imprimee sans : {}", documentNumber, ex.getMessage());
+            return null;
+        }
     }
 
     private String renderCreditNoteHtml(BillingDocumentResponse document) {

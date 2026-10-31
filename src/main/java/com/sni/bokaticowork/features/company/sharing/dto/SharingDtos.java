@@ -52,6 +52,7 @@ public final class SharingDtos {
                                       LocalDate periodStart,
                                       LocalDate periodEnd,
                                       Integer maxSeats,
+                                      Integer seatCeiling,
                                       long activeSeats) {
     }
 

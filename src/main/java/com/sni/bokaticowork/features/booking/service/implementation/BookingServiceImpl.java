@@ -180,8 +180,9 @@ public class BookingServiceImpl implements BookingService {
         booking.setContactEmail(identity.contactEmail());
         booking.setContactPhone(identity.contactPhone());
         booking.setBillingCompanyCode(billingCompany(request.billingCompanyCode(), identity));
-        if (paymentContext.onSeat()) {
-            // Le droit est celui de l'organisation : decompte chez elle, le membre reste le beneficiaire.
+        if (paymentContext.forCompany()) {
+            // Le droit est celui de l'organisation (place ou pass partage) : decompte chez elle, le
+            // membre reste le beneficiaire.
             booking.setEntitlementOwnerType(paymentContext.entitlementOwnerType());
             booking.setEntitlementOwnerCode(paymentContext.entitlementOwnerCode());
             booking.setSubscriptionSeatId(paymentContext.seatId());

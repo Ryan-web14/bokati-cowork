@@ -296,4 +296,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
             """)
     java.util.List<String> findFutureBookingNumbersOnSeats(@org.springframework.data.repository.query.Param("seatIds") java.util.Collection<Long> seatIds,
                                                            @org.springframework.data.repository.query.Param("now") java.time.LocalDateTime now);
+
+    /** Les reservations a venir d'une personne sur un pass · a signaler quand son acces est revoque. */
+    @Query("""
+            SELECT b.bookingNumber FROM Booking b
+            WHERE b.passNumber = :passNumber
+              AND b.ownerCode = :ownerCode
+              AND b.startedAt > :now
+              AND b.status IN (com.sni.bokaticowork.features.booking.enums.BookingStatus.PENDING_APPROVAL,
+                               com.sni.bokaticowork.features.booking.enums.BookingStatus.PENDING_PAYMENT,
+                               com.sni.bokaticowork.features.booking.enums.BookingStatus.CONFIRMED)
+            ORDER BY b.startedAt ASC
+            """)
+    java.util.List<String> findFutureBookingNumbersOnPass(@org.springframework.data.repository.query.Param("passNumber") String passNumber,
+                                                          @org.springframework.data.repository.query.Param("ownerCode") String ownerCode,
+                                                          @org.springframework.data.repository.query.Param("now") java.time.LocalDateTime now);
 }

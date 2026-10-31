@@ -144,6 +144,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final FiscalHashService fiscalHashService;
     private final FiscalSignatureService fiscalSignatureService;
     private final MemberInAppNotifier memberInAppNotifier;
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.service.support.InvoiceAnnexProvider> annexProviders;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -681,12 +682,37 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         );
         BillingDocumentResponse response = create(createRequest);
         BillingDocument invoice = serviceByNumber(response.documentNumber());
+        attachUsageAnnex(invoice, billableItems);
         billableItems.forEach(item -> {
             item.setInvoiceId(invoice.getId());
             item.setStatus(BillableItemStatus.INVOICED);
             billableItemRepository.save(item);
         });
         return mapper.toResponse(invoice);
+    }
+
+    /**
+     * L'annexe de consommation, figee sur le brouillon · elle est scellee avec la facture a
+     * l'emission. Une annexe qui echoue ne bloque pas la facture : elle sort sans.
+     */
+    private void attachUsageAnnex(BillingDocument invoice, List<BillableItem> items) {
+        try {
+            annexProviders.orderedStream()
+                    .map(provider -> provider.annexFor(items))
+                    .filter(java.util.Objects::nonNull)
+                    .filter(annex -> annex.rows() != null && !annex.rows().isEmpty())
+                    .findFirst()
+                    .ifPresent(annex -> {
+                        try {
+                            invoice.setUsageAnnexJson(objectMapper.writeValueAsString(annex));
+                            documentRepository.save(invoice);
+                        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+                            throw new IllegalStateException(ex);
+                        }
+                    });
+        } catch (RuntimeException ex) {
+            log.warn("Facture {} · annexe de consommation non jointe : {}", invoice.getDocumentNumber(), ex.getMessage());
+        }
     }
 
     @Override

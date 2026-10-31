@@ -102,7 +102,11 @@ public class SubscriptionOverageServiceImpl implements SubscriptionOverageServic
             return OverageBillingResult.none();
         }
 
-        Subscription subscription = subscriptionRepository.findCurrentActive(request.ownerType().name(), request.ownerCode().trim(), LocalDate.now())
+        // Le droit vient d'un abonnement designe (la place d'un collaborateur) · c'est sa politique
+        // qui s'applique, pas celle d'un autre abonnement de l'organisation.
+        Subscription subscription = (EntitlementOperationRequest.SCOPE_SUBSCRIPTION.equals(operation.scopeType())
+                ? subscriptionRepository.findBySubscriptionNumber(operation.scopeNumber())
+                : subscriptionRepository.findCurrentActive(request.ownerType().name(), request.ownerCode().trim(), LocalDate.now()))
                 .orElseThrow(() -> new ConflictException("entitlement", "insufficient balance and no active subscription for overage billing"));
         SubscriptionOveragePolicy policy = policyRepository.findActivePolicy(subscription.getPlanVersion().getId(), request.entitlementCode().trim())
                 .orElseThrow(() -> new ConflictException("entitlement", "insufficient balance and no overage policy"));
@@ -121,7 +125,12 @@ public class SubscriptionOverageServiceImpl implements SubscriptionOverageServic
                     operation.referenceType(),
                     operation.referenceId(),
                     operation.idempotencyKey() + ":PARTIAL",
-                    "partial entitlement consumption before overage"
+                    "partial entitlement consumption before overage",
+                    null,
+                    operation.beneficiaryType(),
+                    operation.beneficiaryCode(),
+                    operation.scopeType(),
+                    operation.scopeNumber()
             ));
         }
 

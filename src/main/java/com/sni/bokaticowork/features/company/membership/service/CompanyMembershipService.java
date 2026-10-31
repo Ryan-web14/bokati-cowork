@@ -47,6 +47,7 @@ public class CompanyMembershipService {
     private final MemberRepository memberRepository;
     private final CustomerService customerService;
     private final com.sni.bokaticowork.features.company.sharing.service.CompanySharingService sharingService;
+    private final com.sni.bokaticowork.features.company.sharing.service.CompanyPassSharingService passSharingService;
 
     // ── Administration ───────────────────────────────────────────────────────
 
@@ -124,9 +125,13 @@ public class CompanyMembershipService {
         Member member = link.getMember();
         // Ses places sur les abonnements de l'organisation se ferment avec le lien · ses reservations
         // a venir sur ces places sont signalees, pas annulees.
-        List<String> future = sharingService.releaseSeatsOnLinkEnd(company, member, "Fin du rattachement : " + reason.trim());
+        // Ses acces aux passes de l'organisation sont revoques de meme.
+        List<String> future = new java.util.ArrayList<>(
+                sharingService.releaseSeatsOnLinkEnd(company, member, "Fin du rattachement : " + reason.trim()));
+        future.addAll(passSharingService.revokeOnLinkEnd(company, member, "Fin du rattachement : " + reason.trim(), actor));
         String seatWarning = future.isEmpty() ? null
-                : "Réservations à venir prises sur l'abonnement de l'organisation, à traiter : " + String.join(", ", future) + ".";
+                : "Réservations à venir prises sur l'abonnement ou les passes de l'organisation, à traiter : "
+                + String.join(", ", future) + ".";
         if (member.getCustomer() == null || !company.getId().equals(member.getCustomer().getId())) {
             return toResponse(link, false, seatWarning);
         }
