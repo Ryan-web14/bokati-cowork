@@ -161,6 +161,22 @@ class BillingDocumentPdfLinesRenderTest {
         assertThat(render(List.of(line(1, "Bureau", "1", "10000", "10000", true)))).doesNotContain("Annexe ·");
     }
 
+    @Test
+    @DisplayName("Annexe d'un pass : ni part, ni pot, ni dépassement, seul le total pris")
+    void thePassAnnexShowsTotalsOnly() {
+        var annex = new com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex(
+                "Consommation par collaborateur", "PAS-ACME", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31), "XAF",
+                List.of(new com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.Row(
+                        "MBR-1", "Jean Mbemba", "SALLE_H", "Salle de réunion", "HOUR",
+                        BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("6"), BigDecimal.ZERO, BigDecimal.ZERO)),
+                com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.KIND_PASS);
+
+        String html = render(List.of(line(1, "Pass Carnet", "1", "50000", "42373", true)), annex);
+
+        assertThat(html).contains("Pass PAS-ACME").contains("Jean Mbemba").contains("Total pris")
+                .doesNotContain("Sa part").doesNotContain("Montant dépassé");
+    }
+
     private SpringTemplateEngine engine() {
         FileTemplateResolver resolver = new FileTemplateResolver();
         resolver.setPrefix("src/main/resources/templates/");

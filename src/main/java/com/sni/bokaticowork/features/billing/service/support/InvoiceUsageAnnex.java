@@ -12,11 +12,25 @@ import java.util.List;
  * facture emise montre la meme annexe.</p>
  */
 public record InvoiceUsageAnnex(String title,
+                                /** Le numero de l'abonnement, ou du pass, dont la consommation est detaillee. */
                                 String subscriptionNumber,
                                 LocalDate periodStart,
                                 LocalDate periodEnd,
                                 String currency,
-                                List<Row> rows) {
+                                List<Row> rows,
+                                /** {@code PASS} : pas de part ni de pot, seul le total pris compte · vide, un abonnement. */
+                                String kind) {
+
+    public static final String KIND_PASS = "PASS";
+
+    public InvoiceUsageAnnex(String title, String subscriptionNumber, LocalDate periodStart, LocalDate periodEnd,
+                             String currency, List<Row> rows) {
+        this(title, subscriptionNumber, periodStart, periodEnd, currency, rows, null);
+    }
+
+    public boolean pass() {
+        return KIND_PASS.equals(kind);
+    }
 
     /**
      * @param fromQuota      pris sur la part nominative de la place

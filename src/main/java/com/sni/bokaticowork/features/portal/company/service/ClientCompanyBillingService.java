@@ -39,8 +39,8 @@ import java.time.LocalDate;
  *
  * <p>Seul un gerant actif y accede ; pour tout autre membre l'organisation n'existe pas (404).
  * Une facture qui n'est ni a l'organisation ni reliee a elle repond aussi 404, sans dire qu'elle
- * existe. Le reglement se fait par mobile money ou par annonce d'especes ; le portefeuille de
- * l'organisation arrive avec la tranche 5, et le portefeuille personnel du gerant ne paie pas
+ * existe. Le reglement se fait par mobile money, par annonce d'especes, ou par le portefeuille de
+ * l'organisation ({@code CompanyWalletService}) ; le portefeuille personnel du gerant ne paie pas
  * pour l'organisation.</p>
  */
 @Service

@@ -394,6 +394,13 @@ droit, ce qui a été pris sur sa part, sur le pot commun, le total, et les dép
 facture et scellée avec elle : une réimpression montre la même. Pas d'annexe si personne n'a
 consommé sur la période.
 
+La facture de renouvellement d'un pass d'organisation porte la même annexe, réduite au total pris
+par chaque bénéficiaire (un pass n'a ni part, ni pot, ni dépassement). La période écoulée va du
+début de la facturation précédente du pass (émission ou renouvellement) jusqu'au renouvellement.
+
+L'annexe se lit dans sa propre transaction : si cette lecture échoue, la facture sort sans annexe
+au lieu d'échouer avec elle.
+
 ## Passes d'organisation partagés
 
 L'organisation détient le pass (`ownerType = CUSTOMER`, son code) et ses droits. L'administration
@@ -417,7 +424,12 @@ est décompté sur ce pass chez l'organisation, et il reste noté comme bénéfi
 | Administration | `POST /companies/{customerId}/passes/{passNumber}/beneficiaries` | ouvre l'accès `{ memberId, maxUses?, validFrom?, validUntil? }` |
 | Administration | `POST /companies/{customerId}/passes/{passNumber}/beneficiaries/{id}/revoke` | retire l'accès `{ reason? }` |
 | Gérant | les mêmes sous `/client/companies/{customerId}/passes...` | comme l'administration |
+| Gérant | `POST /client/companies/{customerId}/passes/purchase` | achète un pass du catalogue au nom de l'organisation `{ planCode, passType, name, idempotencyKey }` |
 | Collaborateur | `GET /client/me/company-passes` | les passes de ses organisations auxquels il a accès, et ce qu'il en reste |
+
+Un pass acheté par le gérant est au nom de l'organisation et facturé à elle. Il s'active au
+paiement de sa facture, réglée par les moyens de l'organisation : mobile money, espèces, ou son
+portefeuille (`POST /client/companies/{customerId}/invoices/{n}/pay/...`).
 
 `id` est le numéro court de l'accès. Extrait de `beneficiaries` :
 
@@ -430,5 +442,75 @@ est décompté sur ce pass chez l'organisation, et il reste noté comme bénéfi
     "id": 4, "memberId": "MBR-...", "memberName": "Jean Mbemba", "open": true, "maxUses": 10, "usedCount": 2,
     "consumption": [{ "entitlementCode": "SALLE_H", "consumed": 6 }]
   }]
+}
+```
+
+## Portefeuille de l'organisation
+
+L'organisation a son portefeuille (`ownerType = CUSTOMER`, un par devise, `XAF` par défaut), avec les
+règles de plafonds et de sécurité d'un portefeuille de membre. Une recharge produit un reçu, pas une
+facture.
+
+- **Recharge.** Le gérant recharge par mobile money depuis son portail. L'administration saisit les
+  espèces reçues à l'accueil ou un virement constaté (`method` `CASH` ou `BANK_TRANSFER`) ; au-delà du
+  seuil des actions d'administration, une seconde personne valide.
+- **Code secret.** Le gérant fixe le code du portefeuille de l'organisation ; il le donne quand il
+  règle lui-même une facture avec ce portefeuille.
+- **Ce que chacun voit.** Le gérant voit le solde, les mouvements (avec le collaborateur de chaque
+  dépense) et les validations en attente. Un collaborateur ne voit que son autorisation et ses
+  propres dépenses, jamais le solde.
+
+### Dépenses autorisées
+
+Le gérant (ou l'administration) autorise un collaborateur rattaché à dépenser sur le portefeuille.
+
+| Champ | Rôle |
+| --- | --- |
+| `operations` | `BOOKING`, `SUBSCRIPTION`, `PASS`, `INVOICE_PAYMENT`, `MARKETPLACE` (tranche 7) |
+| `maxPerTransaction`, `maxPerDay`, `maxPerMonth` | plafonds, chacun facultatif |
+| `approvalAbove` | au-delà, la dépense attend la validation du gérant (vide : jamais) |
+| `validFrom`, `validUntil`, `status` | période ; `ACTIVE`, `SUSPENDED` ou `REVOKED` |
+
+- Le collaborateur règle une facture de l'organisation, ou reliée à elle. L'opération se lit sur la
+  facture : réservation, abonnement (dépassement compris), pass, sinon facture.
+- Sans autorisation en vigueur couvrant l'opération, ou au-delà d'un plafond, refus (400) ; le
+  message dit lequel bloque. Les plafonds du jour et du mois comptent les dépenses réglées et
+  celles qui attendent.
+- Au-delà de `approvalAbove`, la dépense attend (`PENDING_APPROVAL`) : les fonds sont retenus sur le
+  portefeuille et le gérant est prévenu. Il accepte ou refuse ; le collaborateur peut retirer sa
+  demande. Sans réponse sous 48 heures, elle est annulée (`EXPIRED`) et les fonds rendus. Une seule
+  demande en attente par facture.
+- À l'acceptation, la facture est réglée pour ce qu'elle doit encore ; déjà réglée entre-temps, rien
+  n'est prélevé.
+- Le paiement crée une intention au nom de l'organisation, la facture en source ; le collaborateur
+  est noté comme celui qui a dépensé (`spentByMember`, et auteur de l'écriture du portefeuille).
+- La fin du rattachement suspend ses autorisations et annule ses demandes en attente.
+- Une autorisation suspendue ou révoquée annule les demandes en attente du collaborateur.
+
+| Qui | Méthode et chemin | Effet |
+| --- | --- | --- |
+| Administration | `GET /companies/{customerId}/wallet?currency=` | solde, mouvements avec le collaborateur, validations en attente |
+| Administration | `GET /companies/{customerId}/wallet/spends?status=` | les dépenses |
+| Administration | `POST /companies/{customerId}/wallet/top-ups` | `{ amount, currency?, method, reference?, reason }` |
+| Administration et gérant | `GET`, `POST /companies/{customerId}/spending-authorizations` | autorisations ; crée `{ memberId, operations, maxPerTransaction?, maxPerDay?, maxPerMonth?, approvalAbove?, validFrom?, validUntil?, currency? }` |
+| Administration et gérant | `PATCH /companies/{customerId}/spending-authorizations/{id}` | remplace opérations, plafonds et période ; `status` et `reason` facultatifs |
+| Gérant | `GET /client/companies/{customerId}/wallet` (et `/wallet/spends`) | comme l'administration |
+| Gérant | `POST /client/companies/{customerId}/wallet/top-ups` | mobile money `{ amount, phoneNumber, correspondent }` |
+| Gérant | `POST /client/companies/{customerId}/wallet/security/pin` | `{ currentPin?, newPin }` |
+| Gérant | `POST /client/companies/{customerId}/invoices/{n}/pay/wallet` | règle avec le portefeuille `{ pin? }` |
+| Gérant | `GET /client/companies/{customerId}/approvals` | dépenses en attente |
+| Gérant | `POST /client/companies/{customerId}/approvals/{id}/approve`, `/reject` | accepte, ou refuse `{ reason? }` |
+| Collaborateur | `GET /client/me/company-wallets` | ses autorisations et ses dépenses |
+| Collaborateur | `POST /client/me/company-wallets/{customerId}/invoices/{n}/pay` | règle avec le portefeuille de l'organisation |
+| Collaborateur | `POST /client/me/company-wallets/{customerId}/spends/{id}/cancel` | retire sa demande en attente |
+
+Côté gérant, les autorisations sont sous `/client/companies/{customerId}/spending-authorizations`.
+`id` est le numéro court de l'autorisation ou de la dépense. Le résultat d'un règlement :
+
+```json
+{
+  "spend": { "id": 12, "memberId": "MBR-...", "operation": "BOOKING", "amount": 80000, "currency": "XAF",
+             "documentNumber": "INV-...", "status": "PENDING_APPROVAL", "expiresAt": "2026-11-02T10:00:00Z" },
+  "message": "Au-delà de 50000 XAF, la dépense attend la validation du gérant. ..."
 }
 ```

@@ -30,6 +30,7 @@ public class ClientCompanyPassController {
     private final ClientContextService clientContextService;
     private final CompanyMembershipService membershipService;
     private final CompanyPassSharingService service;
+    private final com.sni.bokaticowork.features.portal.subscription.service.ClientCatalogService catalogService;
 
     /** Les passes de mes organisations auxquels j'ai acces. */
     @GetMapping(ApiPath.V1 + "/client/me/company-passes")
@@ -40,6 +41,18 @@ public class ClientCompanyPassController {
     @GetMapping(ApiPath.V1 + "/client/companies/{customerId}/passes")
     public ResponseEntity<List<PassSharingDtos.PassSummary>> list(@PathVariable String customerId) {
         return ResponseEntity.ok(service.passes(owned(customerId)));
+    }
+
+    /**
+     * Le gerant achete un pass du catalogue au nom de l'organisation · la facture est a elle, et se
+     * regle par ses moyens (mobile money, especes, portefeuille de l'organisation).
+     */
+    @PostMapping(ApiPath.V1 + "/client/companies/{customerId}/passes/purchase")
+    @Audited(module = "COMPANY", action = "COMPANY_PASS_PURCHASE_PORTAL", ressource = "subscription_pass")
+    public ResponseEntity<com.sni.bokaticowork.features.subscription.subscription.dto.response.PassResponse> purchase(
+            @PathVariable String customerId,
+            @Valid @RequestBody com.sni.bokaticowork.features.portal.subscription.dto.request.ClientPurchasePassRequest request) {
+        return ResponseEntity.ok(catalogService.purchasePassForCompany(owned(customerId), request));
     }
 
     @GetMapping(ApiPath.V1 + "/client/companies/{customerId}/passes/{passNumber}/beneficiaries")

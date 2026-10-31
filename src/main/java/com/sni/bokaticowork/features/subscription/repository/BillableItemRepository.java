@@ -35,4 +35,13 @@ public interface BillableItemRepository extends JpaRepository<BillableItem, Long
                                             @Param("subscriberCode") String subscriberCode);
 
     Page<BillableItem> findAllByStatus(BillableItemStatus status, Pageable pageable);
+
+    /** Le debut de la periode facturee precedente d'un pass · celle qui s'acheve a son renouvellement. */
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT MAX(b.billingPeriodStart) FROM BillableItem b
+            WHERE b.sourceId = :passNumber AND b.sourceType IN ('PASS_SETUP', 'PASS_RENEWAL')
+              AND b.billingPeriodStart < :before
+            """)
+    java.time.LocalDate findPreviousPassPeriodStart(@org.springframework.data.repository.query.Param("passNumber") String passNumber,
+                                                    @org.springframework.data.repository.query.Param("before") java.time.LocalDate before);
 }

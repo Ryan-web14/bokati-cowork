@@ -192,6 +192,41 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
         assertThat(chargeRepository.findBeneficiaryCharges(-1L, java.time.Instant.EPOCH, java.time.Instant.now())).isEmpty();
     }
 
+    @Autowired private com.sni.bokaticowork.features.company.wallet.repository.SpendingAuthorizationRepository authorizationRepository;
+    @Autowired private com.sni.bokaticowork.features.company.wallet.repository.CompanyWalletSpendRepository spendRepository;
+
+    @Test
+    @DisplayName("Portefeuille de l'organisation : autorisations, depenses et leurs requetes")
+    void companyWalletRuns() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        assertThat(column(jdbc, "wallet_spending_authorization", "short_id").get("is_nullable")).isEqualTo("NO");
+        assertThat(column(jdbc, "wallet_company_spend", "spent_by_member").get("is_nullable")).isEqualTo("NO");
+        java.util.List<String> indexes = jdbc.queryForList(
+                "SELECT indexname FROM pg_indexes WHERE tablename IN ('wallet_spending_authorization', 'wallet_company_spend')", String.class);
+        assertThat(indexes).contains("uk_wallet_spending_authorization_open", "uk_wallet_company_spend_pending_document");
+
+        java.time.Instant now = java.time.Instant.now();
+        var page = org.springframework.data.domain.PageRequest.of(0, 5);
+        assertThat(authorizationRepository.findAllOfCompany("CUS-NONE")).isEmpty();
+        assertThat(authorizationRepository.findOpen(-1L, "MBR-NONE")).isEmpty();
+        assertThat(authorizationRepository.findOpenOfMember("MBR-NONE")).isEmpty();
+        assertThat(authorizationRepository.findActiveOfMemberInCompany("MBR-NONE", "CUS-NONE")).isEmpty();
+        assertThat(authorizationRepository.findByShortId(-1L)).isEmpty();
+        assertThat(spendRepository.sumEngagedSince(-1L, "MBR-NONE", now)).isEqualByComparingTo("0");
+        assertThat(spendRepository.findOfWallet(-1L, null, page)).isEmpty();
+        assertThat(spendRepository.findOfWallet(-1L, com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.PENDING_APPROVAL, page)).isEmpty();
+        assertThat(spendRepository.findOfMember(-1L, "MBR-NONE", page)).isEmpty();
+        assertThat(spendRepository.findExpiredPending(now, page)).isEmpty();
+        assertThat(spendRepository.findPendingOfMemberInCompany("CUS-NONE", "MBR-NONE")).isEmpty();
+        assertThat(spendRepository.existsPendingForDocument("INV-NONE")).isFalse();
+        assertThat(spendRepository.findByIntentNumbers(java.util.List.of("INT-NONE"))).isEmpty();
+        assertThat(spendRepository.lockByShortId(-1L)).isEmpty();
+        assertThat(billableItemRepository.findPreviousPassPeriodStart("PAS-NONE", java.time.LocalDate.of(2026, 11, 1))).isNull();
+        assertThat(ledgerRepository.sumConsumedByBeneficiaryOnPassBetween(-1L, java.time.Instant.EPOCH, now)).isEmpty();
+    }
+
+    @Autowired private com.sni.bokaticowork.features.subscription.repository.BillableItemRepository billableItemRepository;
+
     private static Map<String, Object> column(JdbcTemplate jdbc, String table, String name) {
         return jdbc.queryForList("""
                 SELECT is_nullable, column_default FROM information_schema.columns

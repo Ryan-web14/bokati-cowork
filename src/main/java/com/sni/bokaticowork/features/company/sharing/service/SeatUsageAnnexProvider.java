@@ -50,6 +50,8 @@ public class SeatUsageAnnexProvider implements InvoiceAnnexProvider {
     private final EntitlementDefinitionRepository definitionRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true,
+            propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public InvoiceUsageAnnex annexFor(List<BillableItem> items) {
         if (items == null) {
             return null;
