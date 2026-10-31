@@ -130,6 +130,36 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
                 .ifPresent(company -> assertThat(service.company(company.getCustomerId(), from, to).totals()).isNotNull());
     }
 
+    @Autowired private com.sni.bokaticowork.features.company.sharing.repository.CompanySeatRepository seatRepository;
+    @Autowired private com.sni.bokaticowork.features.company.sharing.repository.SeatUsageRepository seatUsageRepository;
+    @Autowired private com.sni.bokaticowork.features.company.sharing.repository.EntitlementSharingRepository sharingRepository;
+    @Autowired private com.sni.bokaticowork.features.company.sharing.repository.SeatAllowanceRepository allowanceRepository;
+    @Autowired private com.sni.bokaticowork.features.booking.repository.BookingRepository bookingRepository;
+
+    @Test
+    @DisplayName("Abonnement partage : colonnes, numero court des places et requetes")
+    void sharedSubscriptionRuns() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        assertThat(column(jdbc, "subscription_seat", "short_id").get("is_nullable")).isEqualTo("NO");
+        assertThat(column(jdbc, "booking", "subscription_seat_id")).isNotEmpty();
+        assertThat(column(jdbc, "usage_record", "beneficiary_code")).isNotEmpty();
+
+        java.time.LocalDate period = java.time.LocalDate.of(2026, 10, 1);
+        assertThat(seatRepository.findActiveCompanySeatsOfMember("MBR-NONE")).isEmpty();
+        assertThat(seatRepository.findActiveSeatsOfMemberInCompany("MBR-NONE", "CUS-NONE")).isEmpty();
+        assertThat(seatRepository.findActiveBySubscription(-1L)).isEmpty();
+        assertThat(seatRepository.findOpenCompanySubscriptions("CUS-NONE")).isEmpty();
+        assertThat(seatRepository.countActive(-1L)).isZero();
+        assertThat(seatRepository.lockSubscription(-1L)).isEmpty();
+        assertThat(seatUsageRepository.sumSeatQuota(-1L, "X", period)).isEqualByComparingTo("0");
+        assertThat(seatUsageRepository.sumSeatTotal(-1L, "X", period)).isEqualByComparingTo("0");
+        assertThat(seatUsageRepository.sumPool(-1L, "X", period)).isEqualByComparingTo("0");
+        assertThat(seatUsageRepository.findPeriodUsage(-1L, period)).isEmpty();
+        assertThat(sharingRepository.findAllBySubscription_Id(-1L)).isEmpty();
+        assertThat(allowanceRepository.findAllBySeat_IdIn(java.util.List.of(-1L))).isEmpty();
+        assertThat(bookingRepository.findFutureBookingNumbersOnSeats(java.util.List.of(-1L), java.time.LocalDateTime.now())).isEmpty();
+    }
+
     private static Map<String, Object> column(JdbcTemplate jdbc, String table, String name) {
         return jdbc.queryForList("""
                 SELECT is_nullable, column_default FROM information_schema.columns

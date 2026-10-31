@@ -46,6 +46,7 @@ public class CompanyMembershipService {
     private final CustomerRepository customerRepository;
     private final MemberRepository memberRepository;
     private final CustomerService customerService;
+    private final com.sni.bokaticowork.features.company.sharing.service.CompanySharingService sharingService;
 
     // ── Administration ───────────────────────────────────────────────────────
 
@@ -121,8 +122,13 @@ public class CompanyMembershipService {
         linkRepository.save(link);
 
         Member member = link.getMember();
+        // Ses places sur les abonnements de l'organisation se ferment avec le lien · ses reservations
+        // a venir sur ces places sont signalees, pas annulees.
+        List<String> future = sharingService.releaseSeatsOnLinkEnd(company, member, "Fin du rattachement : " + reason.trim());
+        String seatWarning = future.isEmpty() ? null
+                : "Réservations à venir prises sur l'abonnement de l'organisation, à traiter : " + String.join(", ", future) + ".";
         if (member.getCustomer() == null || !company.getId().equals(member.getCustomer().getId())) {
-            return toResponse(link, false, null);
+            return toResponse(link, false, seatWarning);
         }
         try {
             Customer personal = personalCustomer(member);
@@ -130,12 +136,13 @@ public class CompanyMembershipService {
             memberRepository.save(member);
             log.info("Membre {} · fin du lien avec {}, payeur par defaut repasse sur {}",
                     member.getMemberId(), company.getCustomerId(), personal.getCustomerId());
-            return toResponse(link, true, null);
+            return toResponse(link, true, seatWarning);
         } catch (RuntimeException ex) {
             // Le lien est bien termine ; seul le payeur reste a corriger, et on le dit.
             log.warn("Membre {} · fiche personnelle impossible a creer : {}", member.getMemberId(), ex.getMessage());
             return toResponse(link, false, "Le lien est terminé, mais le payeur par défaut du membre est toujours "
-                    + company.getCompanyName() + " : " + ex.getMessage() + ". À corriger sur la fiche du membre.");
+                    + company.getCompanyName() + " : " + ex.getMessage() + ". À corriger sur la fiche du membre."
+                    + (seatWarning == null ? "" : " " + seatWarning));
         }
     }
 

@@ -101,7 +101,7 @@ class BookingEntitlementBridgeTest {
     @Test
     void shouldRefuseAnUnknownEntitlementCode() {
         BookingEntitlementBridge bridge =
-                new BookingEntitlementBridge(entitlementService, usageRecordService, definitionRepository, subscriptionRepository, overageGuard);
+                new BookingEntitlementBridge(entitlementService, usageRecordService, definitionRepository, subscriptionRepository, overageGuard, null);
         lenient().when(definitionRepository.findByCodeIgnoreCase("ENT-ABSENT")).thenReturn(Optional.empty());
 
         Booking booking = Booking.builder()
@@ -116,7 +116,7 @@ class BookingEntitlementBridgeTest {
     private BookingEntitlementBridge.Charge charge(EntitlementUnit unit, int minutes,
                                                    ResourceBookingUnit bookingUnit, int places) {
         BookingEntitlementBridge bridge =
-                new BookingEntitlementBridge(entitlementService, usageRecordService, definitionRepository, subscriptionRepository, overageGuard);
+                new BookingEntitlementBridge(entitlementService, usageRecordService, definitionRepository, subscriptionRepository, overageGuard, null);
         lenient().when(definitionRepository.findByCodeIgnoreCase("ENT-TEST"))
                 .thenReturn(Optional.of(EntitlementDefinition.builder()
                         .code("ENT-TEST").unit(unit).build()));

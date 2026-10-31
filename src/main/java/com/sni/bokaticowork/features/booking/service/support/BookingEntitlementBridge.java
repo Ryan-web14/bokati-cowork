@@ -45,6 +45,7 @@ public class BookingEntitlementBridge {
     private final EntitlementDefinitionRepository definitionRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final BookingOverageGuard overageGuard;
+    private final com.sni.bokaticowork.features.company.sharing.service.SeatEntitlementGate seatGate;
 
     /**
      * Ce qu'une reservation retire au droit, exprime dans l'unite de celui-ci.
@@ -106,8 +107,14 @@ public class BookingEntitlementBridge {
         if (!StringUtils.hasText(booking.getEntitlementCode())) {
             throw new BadRequestException("Entitlement code is required for subscription or pass booking");
         }
-        EntitlementOperationRequest request = operation(booking, charge(booking).quantity(), "reserve",
+        BigDecimal quantity = charge(booking).quantity();
+        EntitlementOperationRequest request = operation(booking, quantity, "reserve",
                 "Booking confirmed", holdUntil(booking));
+        // Sur la place d'un collaborateur, sa part, son plafond et le pot commun passent d'abord.
+        if (booking.getSubscriptionSeatId() != null) {
+            seatGate.reserve(booking.getSubscriptionSeatId(), booking.getEntitlementCode(), REFERENCE_TYPE,
+                    booking.getBookingNumber(), quantity);
+        }
         // On demande avant d'agir · rattraper le refus ne suffisait pas, l'exception levee par le
         // service des droits avait deja condamne la transaction de la reservation, et le
         // depassement echouait a la validation.
@@ -163,6 +170,10 @@ public class BookingEntitlementBridge {
         }
         Charge charge = charge(booking);
         EntitlementOperationRequest request = operation(booking, charge.quantity(), "consume", "Booking completed", null);
+        if (booking.getSubscriptionSeatId() != null) {
+            seatGate.consume(booking.getSubscriptionSeatId(), booking.getEntitlementCode(), REFERENCE_TYPE,
+                    booking.getBookingNumber(), charge.quantity());
+        }
         boolean overage = false;
         if (entitlementService.coverable(request)) {
             entitlementService.consume(request);
@@ -189,9 +200,10 @@ public class BookingEntitlementBridge {
         // faisait sortir processUsage des sa premiere ligne, donc aucune politique consultee,
         // aucune charge creee, aucune facture emise. Les heures supplementaires etaient consommees
         // et offertes.
+        boolean onSeat = booking.getEntitlementOwnerType() != null;
         usageRecordService.record(new CreateUsageRecordRequest(
-                booking.getOwnerType(),
-                booking.getOwnerCode(),
+                entitlementOwnerType(booking),
+                entitlementOwnerCode(booking),
                 booking.getEntitlementCode(),
                 charge.quantity(),
                 charge.unit(),
@@ -202,7 +214,9 @@ public class BookingEntitlementBridge {
                 null,
                 booking.getCurrency(),
                 Instant.now(),
-                booking.getMetadataJson()
+                booking.getMetadataJson(),
+                onSeat ? booking.getOwnerType().name() : null,
+                onSeat ? booking.getOwnerCode() : null
         ));
         return true;
     }
@@ -212,6 +226,18 @@ public class BookingEntitlementBridge {
             return;
         }
         entitlementService.release(operation(booking, charge(booking).quantity(), "release", "Booking cancelled"));
+        if (booking.getSubscriptionSeatId() != null) {
+            seatGate.release(booking.getSubscriptionSeatId(), booking.getEntitlementCode(), REFERENCE_TYPE, booking.getBookingNumber());
+        }
+    }
+
+    /** Le titulaire du droit · l'organisation quand la reservation est prise sur une place. */
+    static com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType entitlementOwnerType(Booking booking) {
+        return booking.getEntitlementOwnerType() != null ? booking.getEntitlementOwnerType() : booking.getOwnerType();
+    }
+
+    static String entitlementOwnerCode(Booking booking) {
+        return booking.getEntitlementOwnerType() != null ? booking.getEntitlementOwnerCode() : booking.getOwnerCode();
     }
 
     private long minutes(Booking booking) {
@@ -233,8 +259,8 @@ public class BookingEntitlementBridge {
     private EntitlementOperationRequest operation(Booking booking, BigDecimal quantity, String action, String reason,
                                                   Instant holdUntil) {
         return new EntitlementOperationRequest(
-                booking.getOwnerType(),
-                booking.getOwnerCode(),
+                entitlementOwnerType(booking),
+                entitlementOwnerCode(booking),
                 booking.getEntitlementCode(),
                 quantity,
                 REFERENCE_TYPE,

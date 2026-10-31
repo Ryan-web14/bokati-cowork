@@ -21,6 +21,17 @@ public record CreateUsageRecordRequest(
         BigDecimal billableAmount,
         String currency,
         Instant occurredAt,
-        String metadataJson
+        String metadataJson,
+        /** Qui a consomme quand ce n'est pas le titulaire · vide sinon. */
+        String beneficiaryType,
+        String beneficiaryCode
 ) {
+
+    public CreateUsageRecordRequest(SubscriberType ownerType, String ownerCode, String entitlementCode, BigDecimal quantity,
+                                    EntitlementUnit unit, String referenceType, String referenceId, Boolean consumeEntitlement,
+                                    Boolean billable, BigDecimal billableAmount, String currency, Instant occurredAt,
+                                    String metadataJson) {
+        this(ownerType, ownerCode, entitlementCode, quantity, unit, referenceType, referenceId, consumeEntitlement,
+                billable, billableAmount, currency, occurredAt, metadataJson, null, null);
+    }
 }

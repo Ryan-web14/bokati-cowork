@@ -60,6 +60,10 @@ public class Subscription {
     @Column(name = "subscriber_code", nullable = false, length = 120)
         private String subscriberCode;
 
+    /** Nombre de places au plus quand l'abonnement est partage · vide = sans limite. */
+    @Column(name = "max_seats")
+    private Integer maxSeats;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", foreignKey = @ForeignKey(name = "fk_subscription_member"))
     @NotFound(action = NotFoundAction.IGNORE)

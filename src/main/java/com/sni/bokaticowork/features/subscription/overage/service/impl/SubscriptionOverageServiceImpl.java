@@ -138,7 +138,9 @@ public class SubscriptionOverageServiceImpl implements SubscriptionOverageServic
                 .sourceId(request.referenceId().trim())
                 .subscriberType(request.ownerType())
                 .subscriberCode(request.ownerCode().trim())
-                .description("Usage overage - " + request.entitlementCode().trim())
+                // Le depassement d'une place est facture a l'organisation · la ligne nomme le collaborateur.
+                .description("Usage overage - " + request.entitlementCode().trim()
+                        + (StringUtils.hasText(request.beneficiaryCode()) ? " · " + request.beneficiaryCode().trim() : ""))
                 .amount(amount)
                 .currency(policy.getCurrency())
                 .status(BillableItemStatus.PENDING)

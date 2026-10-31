@@ -101,7 +101,7 @@ class BookingWalletPaymentModeTest {
     @Test
     void walletBookingResolvesToADirectContextWithoutLookingForAnEntitlement() {
         BookingPaymentContextResolver resolver =
-                new BookingPaymentContextResolver(subscriptionRepository, grantRepository, null, overageGuard);
+                new BookingPaymentContextResolver(subscriptionRepository, grantRepository, null, overageGuard, null);
 
         BookingPaymentContextResolver.BookingPaymentContext context =
                 resolver.resolve(BookingPaymentMode.WALLET, null, null);

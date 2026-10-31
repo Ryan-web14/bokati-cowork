@@ -159,7 +159,8 @@ public class BookingServiceImpl implements BookingService {
         BookingIdentityResolver.ResolvedBookingIdentity identity = suppliedIdentity == null
                 ? identityResolver.resolve(request.identityLookup())
                 : suppliedIdentity;
-        BookingPaymentContextResolver.BookingPaymentContext paymentContext = paymentContextResolver.resolve(request.paymentMode(), identity, resource);
+        BookingPaymentContextResolver.BookingPaymentContext paymentContext = paymentContextResolver.resolve(
+                request.paymentMode(), identity, resource, request.billingCompanyCode());
         BookingPolicyEnforcer.EffectivePolicy effectivePolicy = policyEnforcer.enforce(identity.ownerType(), identity.ownerCode(), resource, request.startedAt(), request.endedAt());
 
         Booking booking = bookingMapper.toEntity(request);
@@ -179,6 +180,15 @@ public class BookingServiceImpl implements BookingService {
         booking.setContactEmail(identity.contactEmail());
         booking.setContactPhone(identity.contactPhone());
         booking.setBillingCompanyCode(billingCompany(request.billingCompanyCode(), identity));
+        if (paymentContext.onSeat()) {
+            // Le droit est celui de l'organisation : decompte chez elle, le membre reste le beneficiaire.
+            booking.setEntitlementOwnerType(paymentContext.entitlementOwnerType());
+            booking.setEntitlementOwnerCode(paymentContext.entitlementOwnerCode());
+            booking.setSubscriptionSeatId(paymentContext.seatId());
+            if (booking.getBillingCompanyCode() == null) {
+                booking.setBillingCompanyCode(paymentContext.entitlementOwnerCode());
+            }
+        }
         booking.setCheckInToken(generateCheckInToken());
 
         BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
