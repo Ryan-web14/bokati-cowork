@@ -137,6 +137,10 @@ public class Booking {
     @Column(name = "billing_company_code", length = 300)
     private String billingCompanyCode;
 
+    /** Le membre de l'equipe qui a reserve hors preavis · vide pour une reservation ordinaire. */
+    @Column(name = "policy_override_by", length = 150)
+    private String policyOverrideBy;
+
     /**
      * Titulaire du droit consomme quand ce n'est pas le titulaire de la reservation · l'organisation
      * dont le collaborateur occupe une place. Vide = le droit est celui de la reservation.

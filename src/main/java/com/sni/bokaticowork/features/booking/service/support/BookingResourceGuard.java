@@ -20,8 +20,24 @@ public class BookingResourceGuard {
 
     private final BookingRepository bookingRepository;
     private final ResourceSlotPolicy slotPolicy;
+    private final com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride;
+
+    /** Repli pour les tests qui construisent le controle sans elle · 31 jours, la valeur par defaut. */
+    private com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride() {
+        return staffOverride != null ? staffOverride : new com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride(31);
+    }
 
     public void validateBookable(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt, int quantity) {
+        validateBookable(resource, startedAt, endedAt, quantity, false);
+    }
+
+    /**
+     * @param staffOverride reservation de l'equipe autorisee par la politique · le preavis ne
+     *                      s'applique pas, un debut passe est admis dans la limite de
+     *                      {@code bokati.booking.staff.max-backdate-days}
+     */
+    public void validateBookable(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt, int quantity,
+                                 boolean staffOverride) {
         validateRange(startedAt, endedAt);
         slotPolicy.assertAligned(resource, startedAt, endedAt);
         if (!Boolean.TRUE.equals(resource.getBookingEnabled()) || !Boolean.TRUE.equals(resource.getActive())) {
@@ -44,7 +60,7 @@ public class BookingResourceGuard {
         } else if (quantity > resource.resolveBookableSlots()) {
             throw new ConflictException("booking", "requested quantity exceeds resource bookable slots");
         }
-        validatePolicy(resource.getResourcePolicy(), startedAt, endedAt);
+        validatePolicy(resource.getResourcePolicy(), startedAt, endedAt, staffOverride);
     }
 
     public void validateNoSingleCapacityConflict(Resource resource, LocalDateTime startedAt, LocalDateTime endedAt, String excludedBookingNumber) {
@@ -73,7 +89,17 @@ public class BookingResourceGuard {
         }
     }
 
-    private void validatePolicy(ResourcePolicy policy, LocalDateTime startedAt, LocalDateTime endedAt) {
+    private void validatePolicy(ResourcePolicy policy, LocalDateTime startedAt, LocalDateTime endedAt, boolean staffOverride) {
+        LocalDateTime now = LocalDateTime.now();
+        if (staffOverride) {
+            if (startedAt.isBefore(staffOverride().earliestStart(now))) {
+                throw new BadRequestException("Une reservation saisie apres coup ne remonte pas au-dela de "
+                        + staffOverride().maxBackdateDays() + " jours.");
+            }
+        } else if (startedAt.isBefore(now)) {
+            // Sans politique, rien n'empechait de reserver dans le passe.
+            throw new ConflictException("booking", "the requested start time is in the past");
+        }
         if (policy == null) {
             return;
         }
@@ -84,7 +110,7 @@ public class BookingResourceGuard {
         if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
             throw new ConflictException("booking", "requested duration exceeds resource policy maximum");
         }
-        if (startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
+        if (!staffOverride && startedAt.isBefore(now.plusMinutes(policy.getMinBookingNoticeMinutes()))) {
             throw new ConflictException("booking", "minimum booking notice is not respected");
         }
     }

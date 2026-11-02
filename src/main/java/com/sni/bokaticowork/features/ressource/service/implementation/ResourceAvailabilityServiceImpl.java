@@ -56,6 +56,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     private final ResourceClosureRepository closureRepository;
     private final ResourceService resourceService;
     private final ResourceSlotPolicy slotPolicy;
+    private final com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride;
     private final ResourceBulkExecutor bulkExecutor;
 
     /** Borne d'un appel groupe · une plage d'un mois produit deja ~384 creneaux par ressource. */
@@ -191,11 +192,14 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         int normalizedDuration = normalizeDurationMinutes(resource, durationMinutes);
         validateSearchWindow(startedAt, endedAt, normalizedDuration);
         // Une recherche que la politique n'autorise pas ne rend pas d'erreur : elle ne rend rien.
-        // Demander les creneaux du jour sur une ressource a preavis long repondait 409, ce qui est
-        // indiscernable d'une panne cote client alors qu'il n'y a simplement aucune place.
-        if (policyViolation(resource, startedAt, startedAt.plusMinutes(normalizedDuration)) != null) {
+        // Seule la duree se juge ici. Le preavis se juge creneau par creneau plus bas : le juger sur
+        // le debut de la plage cherchee (le matin, pour la journee) vidait toute la journee des que
+        // ce debut etait passe, alors que les creneaux de l'apres-midi etaient libres.
+        if (durationViolation(resource, normalizedDuration) != null) {
             return List.of();
         }
+        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getResourcePolicy()).isPresent();
+        LocalDateTime earliestStaffStart = staff ? staffOverride.earliestStart(LocalDateTime.now()) : LocalDateTime.now();
 
         // Sans le droit aux soirees, un creneau d'abonnes n'existe pas · une fenetre qui le
         // traverserait n'est donc pas contigue, et n'est pas proposee.
@@ -212,10 +216,12 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             if (!isContiguous(candidate)) {
                 continue;
             }
-            if (!respectsBookingNotice(resource, candidate.getFirst().getStartedAt())) {
+            // L'equipe reserve hors preavis, y compris sur des creneaux passes restes libres.
+            if (staff ? candidate.getFirst().getStartedAt().isBefore(earliestStaffStart)
+                    : !respectsBookingNotice(resource, candidate.getFirst().getStartedAt())) {
                 continue;
             }
-            if (!allReservable(candidate, normalizedQuantity, resource)) {
+            if (!allReservable(candidate, normalizedQuantity, resource, staff)) {
                 continue;
             }
 
@@ -248,7 +254,17 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         Resource resource = resourceService.getResourceForService(request.getResourceCode().trim());
         slotPolicy.assertAligned(resource, request.getStartedAt(), request.getEndedAt());
         assertResourceBookable(resource);
-        assertPolicyAllowsWindow(resource, request.getStartedAt(), request.getEndedAt());
+        boolean staff = request.isStaffOverride()
+                && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(resource.getResourcePolicy());
+        if (staff) {
+            String violation = durationViolation(resource,
+                    Math.toIntExact(Duration.between(request.getStartedAt(), request.getEndedAt()).toMinutes()));
+            if (violation != null) {
+                throw new ConflictException("resource availability", violation);
+            }
+        } else {
+            assertPolicyAllowsWindow(resource, request.getStartedAt(), request.getEndedAt());
+        }
 
         if (closureRepository.existsActiveOverlap(resource, request.getStartedAt(), request.getEndedAt())) {
             throw new ConflictException("resource reservation", "the requested range overlaps an active closure");
@@ -257,7 +273,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         List<ResourceAvailability> slots = availabilityRepository.lockAllSlotsInRange(resource, request.getStartedAt(), request.getEndedAt());
         assertExactRequestedCoverage(slots, request.getStartedAt(), request.getEndedAt());
 
-        if (!allReservable(slots, request.getQuantity(), resource)) {
+        if (!allReservable(slots, request.getQuantity(), resource, staff)) {
             throw new ConflictException("resource reservation", "insufficient remaining availability for the requested range");
         }
 
@@ -338,6 +354,21 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         }
         if (startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
             return "the requested start time violates the minimum booking notice";
+        }
+        return null;
+    }
+
+    /** La duree seule, au regard de la politique · le motif du refus, ou {@code null}. */
+    private String durationViolation(Resource resource, int requestedMinutes) {
+        ResourcePolicy policy = resource.getResourcePolicy();
+        if (policy == null) {
+            return null;
+        }
+        if (requestedMinutes < policy.getMinBookingDurationMinutes()) {
+            return "the requested duration is below the policy minimum";
+        }
+        if (requestedMinutes > policy.getMaxBookingDurationMinutes()) {
+            return "the requested duration exceeds the policy maximum";
         }
         return null;
     }
@@ -480,10 +511,18 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
      * occupe deja une partie, ce qui n'a pas de sens quand on loue la piece.</p>
      */
     private boolean allReservable(List<ResourceAvailability> slots, int quantity, Resource resource) {
+        return allReservable(slots, quantity, resource, false);
+    }
+
+    /**
+     * @param staff reservation de l'equipe · un creneau ferme par le temps sans avoir ete pris
+     *              compte encore, pas un creneau desactive a la main
+     */
+    private boolean allReservable(List<ResourceAvailability> slots, int quantity, Resource resource, boolean staff) {
         boolean whole = resource != null && resource.isWholeResourceBooking();
         return slots.stream().allMatch(slot ->
-                Boolean.TRUE.equals(slot.getActive())
-                        && Boolean.TRUE.equals(slot.getAvailable())
+                ((Boolean.TRUE.equals(slot.getActive()) && Boolean.TRUE.equals(slot.getAvailable()))
+                        || (staff && slot.getExpiredAt() != null))
                         && slot.getRemainingCapacity() != null
                         && (whole
                         ? slot.getRemainingCapacity().equals(slot.getTotalCapacity())
@@ -590,9 +629,14 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
             return;
         }
 
+        java.time.Instant expiredAt = java.time.Instant.now();
         expiredSlots.forEach(slot -> {
             slot.setAvailable(Boolean.FALSE);
             slot.setActive(Boolean.FALSE);
+            // Ferme par le temps · un creneau reste libre peut encore servir a l'equipe.
+            if (slot.getExpiredAt() == null) {
+                slot.setExpiredAt(expiredAt);
+            }
         });
         availabilityRepository.saveAll(expiredSlots);
     }

@@ -64,6 +64,7 @@ public class SubscriptionLifecycleOperator {
     private final MemberInAppNotifier memberInAppNotifier;
     private final WalletHoldRepository walletHoldRepository;
     private final WalletHoldService walletHoldService;
+    private final SubscriptionDepositSettlement depositSettlement;
     private final BillingDocumentRepository billingDocumentRepository;
     private final KycCaseRepository kycCaseRepository;
     private final OutboxService outboxService;
@@ -193,27 +194,24 @@ public class SubscriptionLifecycleOperator {
         return saved;
     }
 
+    /**
+     * Le depot de garantie a l'annulation · rendu, puis employe a regler les impayes de l'abonne,
+     * voir {@link SubscriptionDepositSettlement}. Un echec laisse le depot retenu, a traiter par
+     * l'administration, sans faire echouer l'annulation.
+     */
     private void releaseDepositHold(Subscription subscription) {
-        List<WalletHold> activeHolds = walletHoldRepository.findAllByStatusAndSourceTypeAndSourceCode(
-                "ACTIVE", "SUBSCRIPTION", subscription.getSubscriptionNumber());
-        if (activeHolds.isEmpty()) {
+        if (walletHoldRepository.findAllByStatusAndSourceTypeAndSourceCode(
+                "ACTIVE", "SUBSCRIPTION", subscription.getSubscriptionNumber()).isEmpty()) {
             return;
         }
-        boolean hasUnpaidInvoices = !billingDocumentRepository.findRecoverableDocuments(
-                subscription.getSubscriberType().name(), subscription.getSubscriberCode()).isEmpty();
-        for (WalletHold hold : activeHolds) {
-            try {
-                if (hasUnpaidInvoices) {
-                    walletHoldService.capture(hold.getHoldNumber(), "SYSTEM");
-                    eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_CANCELLED,
-                            com.sni.bokaticowork.core.utils.json.JsonPayload.of("depositHold", hold.getHoldNumber(), "action", "CAPTURED",
-                                    "reason", "outstanding invoices on cancellation"));
-                } else {
-                    walletHoldService.release(hold.getHoldNumber(), "SYSTEM");
-                }
-            } catch (Exception ex) {
-                log.warn("Failed to release/capture deposit hold {} for subscription {}", hold.getHoldNumber(), subscription.getSubscriptionNumber(), ex);
+        try {
+            for (SubscriptionDepositSettlement.Outcome outcome : depositSettlement.settle(subscription.getSubscriptionNumber(),
+                    subscription.getSubscriberType().name(), subscription.getSubscriberCode())) {
+                eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_CANCELLED, outcome.toJson());
             }
+        } catch (Exception ex) {
+            log.error("Abonnement {} · depot de garantie non regle a l'annulation, il reste retenu : {}",
+                    subscription.getSubscriptionNumber(), ex.getMessage(), ex);
         }
     }
 

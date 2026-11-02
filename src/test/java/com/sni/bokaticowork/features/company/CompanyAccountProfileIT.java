@@ -232,6 +232,15 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
 
     @Autowired private com.sni.bokaticowork.features.subscription.repository.BillableItemRepository billableItemRepository;
 
+    @Test
+    @DisplayName("Reservation de l'equipe : derogation par politique, creneaux fermes par le temps, auteur de la derogation")
+    void staffBookingColumns() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        assertThat(column(jdbc, "resource_policy", "staff_override_allowed").get("is_nullable")).isEqualTo("NO");
+        assertThat(column(jdbc, "resource_availability", "expired_at")).isNotEmpty();
+        assertThat(column(jdbc, "booking", "policy_override_by")).isNotEmpty();
+    }
+
     private static Map<String, Object> column(JdbcTemplate jdbc, String table, String name) {
         return jdbc.queryForList("""
                 SELECT is_nullable, column_default FROM information_schema.columns

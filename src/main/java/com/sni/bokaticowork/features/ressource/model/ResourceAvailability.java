@@ -65,6 +65,13 @@ public class ResourceAvailability {
     @Builder.Default
     private Boolean subscribersOnly = Boolean.FALSE;
 
+    /**
+     * Ferme par le temps, sans avoir ete pris · un tel creneau peut encore servir a une
+     * reservation saisie apres coup par l'equipe. Vide pour un creneau desactive a la main.
+     */
+    @Column(name = "expired_at")
+    private java.time.Instant expiredAt;
+
     @Version
     @Column(name = "version", nullable = false)
     @Builder.Default

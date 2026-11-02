@@ -48,7 +48,7 @@ class WholeResourceBookingTest {
     private final ResourceSlotPolicy slotPolicy = new ResourceSlotPolicy();
 
     private BookingResourceGuard guard() {
-        return new BookingResourceGuard(bookingRepository, slotPolicy);
+        return new BookingResourceGuard(bookingRepository, slotPolicy, null);
     }
 
     // -------------------------------------------------------------------------------------

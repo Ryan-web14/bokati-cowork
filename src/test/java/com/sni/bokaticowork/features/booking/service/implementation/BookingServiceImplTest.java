@@ -45,7 +45,8 @@ class BookingServiceImplTest {
             null,
             null,
             null
-    );
+    ,
+            null);
 
     @Test
     void shouldMarkSubscriptionResourceLineAsCoveredBySubscription() {

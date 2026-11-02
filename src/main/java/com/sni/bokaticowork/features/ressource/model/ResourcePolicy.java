@@ -51,6 +51,14 @@ public class ResourcePolicy {
     @Builder.Default
     private Boolean active = Boolean.TRUE;
 
+    /**
+     * Un membre de l'equipe peut-il reserver hors preavis · vrai sauf pour les politiques qui
+     * l'interdisent (stricte, evenementielle). Voir {@code StaffBookingOverride}.
+     */
+    @Column(name = "staff_override_allowed", nullable = false)
+    @Builder.Default
+    private Boolean staffOverrideAllowed = Boolean.TRUE;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

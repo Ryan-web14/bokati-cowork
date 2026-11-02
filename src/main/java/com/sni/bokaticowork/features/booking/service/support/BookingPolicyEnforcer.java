@@ -37,6 +37,16 @@ public class BookingPolicyEnforcer {
     @Lazy private final SupportTicketService supportTicketService;
 
     public EffectivePolicy enforce(SubscriberType ownerType, String ownerCode, Resource resource, LocalDateTime startedAt, LocalDateTime endedAt) {
+        return enforce(ownerType, ownerCode, resource, startedAt, endedAt, false);
+    }
+
+    /**
+     * @param staffOverride reservation de l'equipe hors preavis · le preavis de l'audience ne
+     *                      s'applique pas, ni l'approbation : c'est l'equipe qui reserve. Les
+     *                      plafonds de nombre et de duree restent.
+     */
+    public EffectivePolicy enforce(SubscriberType ownerType, String ownerCode, Resource resource, LocalDateTime startedAt,
+                                   LocalDateTime endedAt, boolean staffOverride) {
         BookingAudiencePolicy policy = policyRepository.findEffective(
                 ownerType.name(),
                 resource.getResourceType() == null ? null : resource.getResourceType().getCode(),
@@ -62,7 +72,8 @@ public class BookingPolicyEnforcer {
         if (policy.getMaxBookingDurationMinutes() != null && minutes > policy.getMaxBookingDurationMinutes()) {
             throw new ConflictException("booking policy", "audience maximum booking duration exceeded");
         }
-        if (policy.getMinBookingNoticeMinutes() != null && startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
+        if (!staffOverride && policy.getMinBookingNoticeMinutes() != null
+                && startedAt.isBefore(LocalDateTime.now().plusMinutes(policy.getMinBookingNoticeMinutes()))) {
             throw new ConflictException("booking policy", "audience minimum booking notice is not respected");
         }
         checkLimit(policy.getMaxActiveBookings(), extraActive, bookingRepository.countActiveForOwner(ownerType.name(), ownerCode), "active booking quota exceeded");
@@ -84,7 +95,7 @@ public class BookingPolicyEnforcer {
             }
         }
 
-        return new EffectivePolicy(Boolean.TRUE.equals(policy.getApprovalRequired()));
+        return new EffectivePolicy(!staffOverride && Boolean.TRUE.equals(policy.getApprovalRequired()));
     }
 
     private void createNoShowTicket(SubscriberType ownerType, String ownerCode, long noShows) {
