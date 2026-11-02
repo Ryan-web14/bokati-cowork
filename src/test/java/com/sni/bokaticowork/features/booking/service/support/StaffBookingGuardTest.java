@@ -40,7 +40,7 @@ class StaffBookingGuardTest {
     void clientKeepsNotice() {
         assertThatThrownBy(() -> guard.validateBookable(resource(), hour.minusHours(2), hour.minusHours(1), 1))
                 .isInstanceOf(ConflictException.class).hasMessageContaining("past");
-        assertThatThrownBy(() -> guard.validateBookable(resource(), hour.plusMinutes(30), hour.plusMinutes(60), 1))
+        assertThatThrownBy(() -> guard.validateBookable(resource(), hour.plusHours(1), hour.plusHours(2), 1))
                 .isInstanceOf(ConflictException.class).hasMessageContaining("notice");
     }
 
