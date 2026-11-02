@@ -30,7 +30,8 @@ public interface CompanyWalletSpendRepository extends JpaRepository<CompanyWalle
             WHERE s.walletId = :walletId AND lower(s.spentByMember) = lower(:memberCode)
               AND s.createdAt >= :since
               AND s.status IN (com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.EXECUTED,
-                               com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.PENDING_APPROVAL)
+                               com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.PENDING_APPROVAL,
+                               com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.HELD)
             """)
     BigDecimal sumEngagedSince(@Param("walletId") Long walletId, @Param("memberCode") String memberCode,
                                @Param("since") Instant since);
@@ -75,6 +76,30 @@ public interface CompanyWalletSpendRepository extends JpaRepository<CompanyWalle
               AND s.status = com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.PENDING_APPROVAL
             """)
     boolean existsPendingForDocument(@Param("documentNumber") String documentNumber);
+
+    /** Les codes a usage unique echus sans avoir ete saisis. */
+    @Query("""
+            SELECT s FROM CompanyWalletSpend s
+            WHERE s.status = com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.AWAITING_OTP
+              AND s.otpExpiresAt <= :now
+            ORDER BY s.otpExpiresAt ASC
+            """)
+    List<CompanyWalletSpend> findExpiredOtp(@Param("now") Instant now, org.springframework.data.domain.Pageable pageable);
+
+    /** La retenue d'une reservation prepayee sur le portefeuille de l'organisation. */
+    @Query("""
+            SELECT s FROM CompanyWalletSpend s
+            WHERE s.holdNumber = :holdNumber
+              AND s.status = com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.HELD
+            """)
+    Optional<CompanyWalletSpend> findHeldByHold(@Param("holdNumber") String holdNumber);
+
+    @Query("""
+            SELECT s FROM CompanyWalletSpend s
+            WHERE s.bookingNumber = :bookingNumber
+              AND s.status = com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status.HELD
+            """)
+    List<CompanyWalletSpend> findHeldByBooking(@Param("bookingNumber") String bookingNumber);
 
     @Query("SELECT s FROM CompanyWalletSpend s WHERE s.intentNumber IN :numbers")
     List<CompanyWalletSpend> findByIntentNumbers(@Param("numbers") Collection<String> numbers);

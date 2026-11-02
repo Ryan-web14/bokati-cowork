@@ -78,6 +78,12 @@ public class BookingWalletSettlementSupport {
     private final WalletHoldService walletHoldService;
     private final WalletService walletService;
     private final PaymentService paymentService;
+    /**
+     * Le portefeuille de l'organisation, quand le membre reserve pour elle et y est autorise · vide
+     * dans les tests qui ne le fournissent pas, le portefeuille personnel paie alors.
+     */
+    @org.springframework.context.annotation.Lazy
+    private final com.sni.bokaticowork.features.company.wallet.service.CompanyWalletService companyWalletService;
 
     @Value("${bokati.booking.wallet.settlement-delay-minutes:1}")
     private int settlementDelayMinutes;
@@ -106,11 +112,14 @@ public class BookingWalletSettlementSupport {
             return;
         }
 
-        WalletResponse wallet = walletService.getOrCreate(
-                booking.getOwnerType().name(), booking.getOwnerCode(), booking.getCurrency());
+        // Reservee pour une organisation qui y autorise le membre : son portefeuille a elle paie.
+        var funding = companyFunding(booking, amount);
+        String walletNumber = funding.isPresent() ? funding.get().wallet().getWalletNumber()
+                : walletService.getOrCreate(booking.getOwnerType().name(), booking.getOwnerCode(), booking.getCurrency()).walletNumber();
+        com.sni.bokaticowork.features.payment.dto.response.WalletHoldResponse created;
         try {
-            walletHoldService.create(new CreateWalletHoldRequest(
-                    wallet.walletNumber(),
+            created = walletHoldService.create(new CreateWalletHoldRequest(
+                    walletNumber,
                     amount,
                     HOLD_SOURCE_TYPE,
                     booking.getBookingNumber(),
@@ -118,12 +127,16 @@ public class BookingWalletSettlementSupport {
                     SYSTEM_ACTOR
             ));
         } catch (BadRequestException ex) {
-            throw new BadRequestException("Solde du portefeuille insuffisant pour cette reservation · "
+            throw new BadRequestException("Solde du portefeuille " + (funding.isPresent() ? "de l'organisation " : "")
+                    + "insuffisant pour cette reservation · "
                     + amount.stripTrailingZeros().toPlainString() + " " + booking.getCurrency() + " requis");
+        }
+        if (funding.isPresent()) {
+            companyWalletService.recordBookingHold(funding.get(), booking.getBookingNumber(), amount, created.holdNumber());
         }
         log.info("Reservation {} · {} {} bloques sur le portefeuille {} en attente de reglement",
                 booking.getBookingNumber(), amount.stripTrailingZeros().toPlainString(),
-                booking.getCurrency(), wallet.walletNumber());
+                booking.getCurrency(), walletNumber);
     }
 
     /**
@@ -140,6 +153,9 @@ public class BookingWalletSettlementSupport {
      * a aucun, ce qui est le cas des reservations reglees autrement ou deja debitees.
      */
     public void release(Booking booking, String reason) {
+        if (companyWalletService != null) {
+            companyWalletService.cancelBookingHold(booking.getBookingNumber(), reason);
+        }
         for (WalletHold hold : activeHolds(booking.getBookingNumber())) {
             walletHoldService.release(hold.getHoldNumber(), SYSTEM_ACTOR);
             log.info("Reservation {} · blocage {} rendu au portefeuille · {}",
@@ -201,6 +217,16 @@ public class BookingWalletSettlementSupport {
             return;
         }
 
+        if (companyWalletService != null && companyWalletService.isCompanyBookingHold(holdNumber)) {
+            // Retenue sur le portefeuille de l'organisation · reglee par lui, au nom de l'organisation,
+            // le membre note comme celui qui a depense.
+            walletHoldService.release(holdNumber, SYSTEM_ACTOR);
+            companyWalletService.settleBookingHold(holdNumber, invoice.getDocumentNumber(), invoice.getBalanceDue());
+            log.info("Reservation {} · blocage {} debite sur le portefeuille de l'organisation, facture {}",
+                    booking.getBookingNumber(), holdNumber, invoice.getDocumentNumber());
+            return;
+        }
+
         walletHoldService.release(holdNumber, SYSTEM_ACTOR);
 
         PaymentIntentResponse intent = paymentService.createIntentFromBillingDocument(
@@ -218,8 +244,22 @@ public class BookingWalletSettlementSupport {
     // -----------------------------------------------------------------------------------------
 
     private void releaseOrphan(WalletHold hold, String reason) {
+        if (companyWalletService != null && hold.getSourceCode() != null) {
+            companyWalletService.cancelBookingHold(hold.getSourceCode(), reason);
+        }
         walletHoldService.release(hold.getHoldNumber(), SYSTEM_ACTOR);
         log.info("Blocage {} rendu au portefeuille sans debit · {}", hold.getHoldNumber(), reason);
+    }
+
+    /** Le portefeuille de l'organisation pour laquelle le membre reserve, s'il y est autorise. */
+    private java.util.Optional<com.sni.bokaticowork.features.company.wallet.service.CompanyWalletService.BookingFunding> companyFunding(
+            Booking booking, BigDecimal amount) {
+        if (companyWalletService == null || booking.getOwnerType() != com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.MEMBER
+                || !StringUtils.hasText(booking.getBillingCompanyCode())) {
+            return java.util.Optional.empty();
+        }
+        return companyWalletService.bookingFunding(booking.getOwnerCode(), booking.getBillingCompanyCode(),
+                booking.getCurrency(), amount);
     }
 
     private BillingDocument invoiceOf(Booking booking) {

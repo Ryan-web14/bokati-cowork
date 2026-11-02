@@ -486,6 +486,36 @@ Le gérant (ou l'administration) autorise un collaborateur rattaché à dépense
   est noté comme celui qui a dépensé (`spentByMember`, et auteur de l'écriture du portefeuille).
 - La fin du rattachement suspend ses autorisations et annule ses demandes en attente.
 - Une autorisation suspendue ou révoquée annule les demandes en attente du collaborateur.
+- Le gérant reçoit un e-mail (et une notification dans le portail) à chaque demande de validation ;
+  le collaborateur, à chaque décision ou annulation.
+
+### Codes
+
+- **Code de dépense du collaborateur.** Le code du portefeuille reste celui du gérant. Chaque
+  collaborateur autorisé pose son propre code (`POST /client/me/company-wallets/{customerId}/pin`,
+  `{ currentPin?, newPin }`). Il est exigé quand la règle de sécurité du portefeuille demande un
+  code pour payer une facture ; il se passe dans `{ pin }` du règlement. Mêmes règles qu'un code de
+  portefeuille : longueur de la règle, ni répétition ni suite, blocage après trop d'essais
+  (`maxFailedAttempts`, `lockoutMinutes` de la règle). Le gérant ou l'administration l'efface
+  (`.../spending-authorizations/{id}/pin/reset`) ; le collaborateur en pose alors un nouveau sans
+  l'ancien. `pinSet` dans l'autorisation dit s'il en a un.
+- **Code à usage unique.** Au-delà du seuil OTP de la règle de sécurité du portefeuille, le
+  règlement (collaborateur ou gérant) ne prélève rien : il répond `AWAITING_OTP` et un code de six
+  chiffres part par e-mail à celui qui paie. Il se saisit sous 10 minutes, trois essais au plus
+  (`.../spends/{id}/confirm`, `{ code }`) ; ensuite la dépense suit son cours (validation du gérant
+  au-delà du seuil, sinon règlement). Échu ou après trois erreurs, la dépense expire et il faut
+  recommencer.
+
+### Réservation prépayée pour l'organisation
+
+Une réservation en mode `WALLET` faite pour une organisation (`billingCompanyCode`) puise dans le
+portefeuille de l'organisation quand le membre y a une autorisation en vigueur couvrant `BOOKING`.
+Les plafonds s'appliquent et la retenue compte dedans (`HELD`) jusqu'au règlement de la facture,
+au nom de l'organisation. Au-delà du seuil de validation, le prépaiement est refusé (une
+réservation ne peut pas attendre le gérant pour être confirmée) : réserver en paiement direct puis
+régler la facture avec le portefeuille de l'organisation. Sans autorisation, rien ne change : le
+portefeuille personnel du membre paie. Une réservation annulée rend la retenue et annule la
+dépense.
 
 | Qui | Méthode et chemin | Effet |
 | --- | --- | --- |
@@ -498,10 +528,14 @@ Le gérant (ou l'administration) autorise un collaborateur rattaché à dépense
 | Gérant | `POST /client/companies/{customerId}/wallet/top-ups` | mobile money `{ amount, phoneNumber, correspondent }` |
 | Gérant | `POST /client/companies/{customerId}/wallet/security/pin` | `{ currentPin?, newPin }` |
 | Gérant | `POST /client/companies/{customerId}/invoices/{n}/pay/wallet` | règle avec le portefeuille `{ pin? }` |
+| Gérant | `POST /client/companies/{customerId}/wallet/spends/{id}/confirm` | saisit le code à usage unique `{ code }` |
+| Administration et gérant | `POST .../spending-authorizations/{id}/pin/reset` | efface le code de dépense du collaborateur |
 | Gérant | `GET /client/companies/{customerId}/approvals` | dépenses en attente |
 | Gérant | `POST /client/companies/{customerId}/approvals/{id}/approve`, `/reject` | accepte, ou refuse `{ reason? }` |
 | Collaborateur | `GET /client/me/company-wallets` | ses autorisations et ses dépenses |
-| Collaborateur | `POST /client/me/company-wallets/{customerId}/invoices/{n}/pay` | règle avec le portefeuille de l'organisation |
+| Collaborateur | `POST /client/me/company-wallets/{customerId}/invoices/{n}/pay` | règle avec le portefeuille de l'organisation `{ pin? }` |
+| Collaborateur | `POST /client/me/company-wallets/{customerId}/spends/{id}/confirm` | saisit le code à usage unique `{ code }` |
+| Collaborateur | `POST /client/me/company-wallets/{customerId}/pin` | pose ou change son code de dépense |
 | Collaborateur | `POST /client/me/company-wallets/{customerId}/spends/{id}/cancel` | retire sa demande en attente |
 
 Côté gérant, les autorisations sont sous `/client/companies/{customerId}/spending-authorizations`.

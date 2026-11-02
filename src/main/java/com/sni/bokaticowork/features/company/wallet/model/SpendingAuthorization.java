@@ -86,6 +86,20 @@ public class SpendingAuthorization {
     @Column(name = "status_reason", length = 500)
     private String statusReason;
 
+    /** Le code de depense du collaborateur · son empreinte seulement. */
+    @Column(name = "pin_hash", length = 100)
+    private String pinHash;
+
+    @Column(name = "pin_set_at")
+    private Instant pinSetAt;
+
+    @Builder.Default
+    @Column(name = "pin_failed_attempts", nullable = false)
+    private Integer pinFailedAttempts = 0;
+
+    @Column(name = "pin_locked_until")
+    private Instant pinLockedUntil;
+
     @Column(name = "created_by", length = 150)
     private String createdBy;
 

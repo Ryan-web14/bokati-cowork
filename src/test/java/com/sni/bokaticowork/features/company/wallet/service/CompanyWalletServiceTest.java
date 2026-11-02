@@ -56,6 +56,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -85,10 +87,14 @@ class CompanyWalletServiceTest {
     private final CustomerMemberLinkRepository links = mock(CustomerMemberLinkRepository.class);
     private final SequenceGeneratorFacade sequences = mock(SequenceGeneratorFacade.class);
     private final MemberInAppNotifier notifier = mock(MemberInAppNotifier.class);
+    private final com.sni.bokaticowork.features.payment.security.service.WalletSecurityService security =
+            mock(com.sni.bokaticowork.features.payment.security.service.WalletSecurityService.class);
+    private final CompanySpendCodeGuard codeGuard = mock(CompanySpendCodeGuard.class);
+    private final CompanyWalletMailer mailer = mock(CompanyWalletMailer.class);
     private final CompanyWalletService service = new CompanyWalletService(walletService, wallets, ledger, holds, holdService,
             mock(WalletAdminActionService.class), mock(WalletTopUpService.class), mock(WalletMerchantPaymentGuard.class),
-            payments, documents, authorizations, spends, customers, members, links, sequences, notifier,
-            Clock.fixed(NOW, ZoneId.of("Africa/Brazzaville")), "XAF", Duration.ofHours(48));
+            payments, documents, authorizations, spends, customers, members, links, sequences, notifier, security, codeGuard,
+            mailer, Clock.fixed(NOW, ZoneId.of("Africa/Brazzaville")), "XAF", Duration.ofHours(48));
 
     private Customer acme;
     private Member jean;
@@ -126,6 +132,9 @@ class CompanyWalletServiceTest {
         PaymentTransactionResponse transaction = transaction("TXN-1");
         when(payments.createIntent(any())).thenReturn(intent);
         when(payments.payWithWallet(eq("INT-1"), any())).thenReturn(transaction);
+        verdict(false, false);
+        when(security.policyFor(any())).thenReturn(new com.sni.bokaticowork.features.payment.security.model.WalletSecurityPolicy());
+        when(codeGuard.hash(anyString())).thenReturn("hash");
     }
 
     private static Member member(String id, String first, String last) {
@@ -170,12 +179,12 @@ class CompanyWalletServiceTest {
     @DisplayName("Sans autorisation, ou pour une operation qu'elle ne couvre pas : refus")
     void refusesWithoutAuthorization() {
         invoice("INV-1", "10000", "SUBSCRIPTION_RENEWAL");
-        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-1"))
+        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-1", null))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("ne couvre pas");
 
         when(authorizations.findOpen(50L, "MBR-1")).thenReturn(Optional.empty());
         invoice("INV-2", "10000", "BOOKING");
-        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-2"))
+        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-2", null))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("pas autorisé");
         verify(payments, never()).payWithWallet(any(), any());
     }
@@ -185,13 +194,13 @@ class CompanyWalletServiceTest {
     void capsSayWhichOneBlocks() {
         invoice("INV-1", "30000", "BOOKING");
         authorization.setMaxPerTransaction(new BigDecimal("25000"));
-        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-1"))
+        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-1", null))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("Plafond par paiement");
 
         authorization.setMaxPerTransaction(null);
         authorization.setMaxPerDay(new BigDecimal("50000"));
         when(spends.sumEngagedSince(eq(50L), eq("MBR-1"), any())).thenReturn(new BigDecimal("25000"));
-        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-1"))
+        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-1", null))
                 .isInstanceOf(BadRequestException.class).hasMessageContaining("Plafond du jour");
     }
 
@@ -200,7 +209,7 @@ class CompanyWalletServiceTest {
     void paysAtOnceUnderThreshold() {
         invoice("INV-1", "10000", "BOOKING");
 
-        var result = service.payAsCollaborator(jean, "CUS-COM-1", "INV-1");
+        var result = service.payAsCollaborator(jean, "CUS-COM-1", "INV-1", null);
 
         assertThat(result.spend().status()).isEqualTo(CompanyWalletSpend.Status.EXECUTED);
         ArgumentCaptor<CreatePaymentIntentRequest> intent = ArgumentCaptor.forClass(CreatePaymentIntentRequest.class);
@@ -223,13 +232,14 @@ class CompanyWalletServiceTest {
         invoice("INV-1", "80000", "BOOKING");
         authorization.setApprovalAbove(new BigDecimal("50000"));
 
-        var result = service.payAsCollaborator(jean, "CUS-COM-1", "INV-1");
+        var result = service.payAsCollaborator(jean, "CUS-COM-1", "INV-1", null);
 
         assertThat(result.spend().status()).isEqualTo(CompanyWalletSpend.Status.PENDING_APPROVAL);
         assertThat(result.spend().expiresAt()).isEqualTo(NOW.plus(Duration.ofHours(48)));
         verify(ledger).placeHold(eq(wallet), eq(new BigDecimal("80000")), eq("COMPANY_SPEND"), eq("INV-1"), eq("HLD-1"), eq("MBR-1"), any());
         verify(holds).save(any(WalletHold.class));
         verify(notifier).notify(eq("COMPANY_SPEND_APPROVAL_REQUESTED"), any(), any(), eq("mbr-9@acme.cg"), any(), eq("MBR-9"), any(), any());
+        verify(mailer).notify(eq(owner), anyString(), anyString(), eq("INV-1"), anyString());
         verify(payments, never()).payWithWallet(any(), any());
     }
 
@@ -294,7 +304,7 @@ class CompanyWalletServiceTest {
         when(foreign.status()).thenReturn(BillingDocumentStatus.SENT);
         when(documents.get("INV-X")).thenReturn(foreign);
 
-        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-X"))
+        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-X", null))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -309,5 +319,100 @@ class CompanyWalletServiceTest {
         assertThat(CompanyWalletService.operationOf(documents.get("C"))).isEqualTo(SpendOperation.PASS);
         invoice("D", "1", "MANUAL");
         assertThat(CompanyWalletService.operationOf(documents.get("D"))).isEqualTo(SpendOperation.INVOICE_PAYMENT);
+    }
+
+    private void verdict(boolean pinRequired, boolean otpRequired) {
+        when(security.evaluate(any(), any(), any())).thenReturn(
+                new com.sni.bokaticowork.features.payment.security.service.WalletSecurityService.SecurityVerdict(
+                        pinRequired, false, otpRequired, null));
+    }
+
+    @Test
+    @DisplayName("La regle exige un code : celui du collaborateur, pas celui du gerant")
+    void collaboratorUsesOwnCode() {
+        invoice("INV-1", "10000", "BOOKING");
+        verdict(true, false);
+        when(codeGuard.verifyPin(eq(70L), any(), anyInt(), anyLong(), any()))
+                .thenReturn(new CompanySpendCodeGuard.Check(CompanySpendCodeGuard.Verdict.NO_CODE, 0, null));
+        assertThatThrownBy(() -> service.payAsCollaborator(jean, "CUS-COM-1", "INV-1", null))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("code de dépense");
+
+        when(codeGuard.verifyPin(eq(70L), eq("2580"), anyInt(), anyLong(), any()))
+                .thenReturn(new CompanySpendCodeGuard.Check(CompanySpendCodeGuard.Verdict.OK, 5, null));
+        assertThat(service.payAsCollaborator(jean, "CUS-COM-1", "INV-1", "2580").spend().status())
+                .isEqualTo(CompanyWalletSpend.Status.EXECUTED);
+    }
+
+    @Test
+    @DisplayName("Au-dela du seuil de securite : un code a usage unique part par e-mail, rien n'est preleve avant sa saisie")
+    void oneTimeCodeBeforePaying() {
+        invoice("INV-1", "10000", "BOOKING");
+        verdict(false, true);
+
+        var result = service.payAsCollaborator(jean, "CUS-COM-1", "INV-1", null);
+
+        assertThat(result.spend().status()).isEqualTo(CompanyWalletSpend.Status.AWAITING_OTP);
+        verify(mailer).oneTimeCode(eq(jean), org.mockito.ArgumentMatchers.matches("\\d{6}"), anyString(), eq(10L), eq("INV-1"));
+        verify(payments, never()).payWithWallet(any(), any());
+
+        CompanyWalletSpend awaiting = CompanyWalletSpend.builder().id(81L).shortId(9L).walletId(50L).companyCode("CUS-COM-1")
+                .spentByMember("MBR-1").operation(SpendOperation.BOOKING).amount(new BigDecimal("10000")).currency("XAF")
+                .documentNumber("INV-1").status(CompanyWalletSpend.Status.AWAITING_OTP).build();
+        when(spends.findByShortId(9L)).thenReturn(Optional.of(awaiting));
+        when(spends.lockByShortId(9L)).thenReturn(Optional.of(awaiting));
+        when(codeGuard.verifyOtp(eq(9L), eq("000000"), any()))
+                .thenReturn(new CompanySpendCodeGuard.Check(CompanySpendCodeGuard.Verdict.WRONG, 2, null));
+        assertThatThrownBy(() -> service.confirmAsCollaborator(jean, "CUS-COM-1", 9L, "000000"))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("2 essai");
+        when(codeGuard.verifyOtp(eq(9L), eq("123456"), any()))
+                .thenReturn(new CompanySpendCodeGuard.Check(CompanySpendCodeGuard.Verdict.OK, 0, null));
+
+        service.confirmAsCollaborator(jean, "CUS-COM-1", 9L, "123456");
+
+        assertThat(awaiting.getStatus()).isEqualTo(CompanyWalletSpend.Status.EXECUTED);
+        verify(payments).payWithWallet(eq("INT-1"), any());
+    }
+
+    @Test
+    @DisplayName("Reservation pour l'organisation : son portefeuille paie si le membre y est autorise, sinon le sien")
+    void bookingFunding() {
+        assertThat(service.bookingFunding("MBR-1", "CUS-COM-1", "XAF", new BigDecimal("10000"))).isPresent();
+
+        authorization.setOperations(EnumSet.of(SpendOperation.INVOICE_PAYMENT));
+        assertThat(service.bookingFunding("MBR-1", "CUS-COM-1", "XAF", new BigDecimal("10000"))).isEmpty();
+
+        authorization.setOperations(EnumSet.of(SpendOperation.BOOKING));
+        authorization.setApprovalAbove(new BigDecimal("5000"));
+        assertThatThrownBy(() -> service.bookingFunding("MBR-1", "CUS-COM-1", "XAF", new BigDecimal("10000")))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("paiement direct");
+        assertThat(service.bookingFunding("MBR-1", "NONE", "XAF", new BigDecimal("10000"))).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reglement d'une reservation prepayee : au nom de l'organisation, sur sa facture")
+    void settlesBookingHold() {
+        CompanyWalletSpend held = CompanyWalletSpend.builder().id(82L).shortId(10L).walletId(50L).companyCode("CUS-COM-1")
+                .spentByMember("MBR-1").operation(SpendOperation.BOOKING).amount(new BigDecimal("12000")).currency("XAF")
+                .bookingNumber("BKG-1").holdNumber("HLD-7").status(CompanyWalletSpend.Status.HELD).build();
+        when(spends.findHeldByHold("HLD-7")).thenReturn(Optional.of(held));
+
+        service.settleBookingHold("HLD-7", "INV-9", new BigDecimal("10000"));
+
+        assertThat(held.getStatus()).isEqualTo(CompanyWalletSpend.Status.EXECUTED);
+        assertThat(held.getDocumentNumber()).isEqualTo("INV-9");
+        assertThat(held.getAmount()).isEqualByComparingTo("10000");
+        ArgumentCaptor<CreatePaymentIntentRequest> intent = ArgumentCaptor.forClass(CreatePaymentIntentRequest.class);
+        verify(payments).createIntent(intent.capture());
+        assertThat(intent.getValue().customerCode()).isEqualTo("CUS-COM-1");
+        assertThat(intent.getValue().sourceCode()).isEqualTo("INV-9");
+    }
+
+    @Test
+    @DisplayName("Un code de depense trop simple est refuse")
+    void trivialCodesAreRefused() {
+        assertThatThrownBy(() -> CompanyWalletService.assertAcceptablePin("1111", 4)).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> CompanyWalletService.assertAcceptablePin("1234", 4)).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> CompanyWalletService.assertAcceptablePin("98765", 4)).isInstanceOf(BadRequestException.class);
+        CompanyWalletService.assertAcceptablePin("2580", 4);
     }
 }

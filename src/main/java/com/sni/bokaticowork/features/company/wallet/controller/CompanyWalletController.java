@@ -79,6 +79,15 @@ public class CompanyWalletController {
                 actor(authentication)));
     }
 
+    @org.springframework.web.bind.annotation.PostMapping("/spending-authorizations/{authorizationId}/pin/reset")
+    @Audited(module = "COMPANY", action = "SPENDING_PIN_RESET", ressource = "wallet_spending_authorization")
+    public ResponseEntity<CompanyWalletDtos.AuthorizationView> resetPin(@PathVariable String customerId,
+                                                                        @PathVariable Long authorizationId,
+                                                                        Authentication authentication) {
+        return ResponseEntity.ok(service.resetCollaboratorPin(sharingService.company(customerId), authorizationId,
+                actor(authentication)));
+    }
+
     private static String actor(Authentication authentication) {
         return authentication == null ? "SYSTEM" : authentication.getName();
     }

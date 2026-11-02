@@ -85,6 +85,26 @@ public class ClientCompanyWalletController {
                 request == null ? null : request.pin()));
     }
 
+    /** Le gerant saisit le code a usage unique recu par e-mail pour un reglement au-dela du seuil. */
+    @PostMapping(ApiPath.V1 + "/client/companies/{customerId}/wallet/spends/{spendId}/confirm")
+    @Audited(module = "COMPANY", action = "COMPANY_SPEND_CONFIRM_OWNER", ressource = "wallet_company_spend")
+    public ResponseEntity<CompanyWalletDtos.SpendResult> confirmAsOwner(@PathVariable String customerId, @PathVariable Long spendId,
+                                                                        @Valid @RequestBody CompanyWalletDtos.ConfirmRequest request) {
+        Member owner = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(service.confirmAsOwner(membershipService.ownedCompany(owner, customerId), owner, spendId,
+                request.code()));
+    }
+
+    /** Efface le code de depense d'un collaborateur · il en pose un nouveau sans l'ancien. */
+    @PostMapping(ApiPath.V1 + "/client/companies/{customerId}/spending-authorizations/{authorizationId}/pin/reset")
+    @Audited(module = "COMPANY", action = "SPENDING_PIN_RESET_PORTAL", ressource = "wallet_spending_authorization")
+    public ResponseEntity<CompanyWalletDtos.AuthorizationView> resetPin(@PathVariable String customerId,
+                                                                        @PathVariable Long authorizationId) {
+        Member owner = clientContextService.getAuthenticatedMember();
+        return ResponseEntity.ok(service.resetCollaboratorPin(membershipService.ownedCompany(owner, customerId), authorizationId,
+                owner.getMemberId()));
+    }
+
     @GetMapping(ApiPath.V1 + "/client/companies/{customerId}/spending-authorizations")
     public ResponseEntity<List<CompanyWalletDtos.AuthorizationView>> authorizations(@PathVariable String customerId) {
         return ResponseEntity.ok(service.authorizations(owned(customerId)));
@@ -140,8 +160,27 @@ public class ClientCompanyWalletController {
     /** Regle une facture de l'organisation, ou reliee a elle, avec son portefeuille. */
     @PostMapping(ApiPath.V1 + "/client/me/company-wallets/{customerId}/invoices/{documentNumber}/pay")
     @Audited(module = "COMPANY", action = "COMPANY_WALLET_PAY_COLLABORATOR", ressource = "billing_document")
-    public ResponseEntity<CompanyWalletDtos.SpendResult> pay(@PathVariable String customerId, @PathVariable String documentNumber) {
-        return ResponseEntity.ok(service.payAsCollaborator(clientContextService.getAuthenticatedMember(), customerId, documentNumber));
+    public ResponseEntity<CompanyWalletDtos.SpendResult> pay(@PathVariable String customerId, @PathVariable String documentNumber,
+                                                             @RequestBody(required = false) CompanyWalletDtos.PayRequest request) {
+        return ResponseEntity.ok(service.payAsCollaborator(clientContextService.getAuthenticatedMember(), customerId, documentNumber,
+                request == null ? null : request.pin()));
+    }
+
+    /** Saisit le code a usage unique recu par e-mail pour un reglement au-dela du seuil. */
+    @PostMapping(ApiPath.V1 + "/client/me/company-wallets/{customerId}/spends/{spendId}/confirm")
+    @Audited(module = "COMPANY", action = "COMPANY_SPEND_CONFIRM", ressource = "wallet_company_spend")
+    public ResponseEntity<CompanyWalletDtos.SpendResult> confirm(@PathVariable String customerId, @PathVariable Long spendId,
+                                                                 @Valid @RequestBody CompanyWalletDtos.ConfirmRequest request) {
+        return ResponseEntity.ok(service.confirmAsCollaborator(clientContextService.getAuthenticatedMember(), customerId, spendId,
+                request.code()));
+    }
+
+    /** Pose ou change mon code de depense sur le portefeuille de l'organisation. */
+    @PostMapping(ApiPath.V1 + "/client/me/company-wallets/{customerId}/pin")
+    @Audited(module = "COMPANY", action = "SPENDING_PIN_SET", ressource = "wallet_spending_authorization")
+    public ResponseEntity<Void> setMyPin(@PathVariable String customerId, @Valid @RequestBody SetWalletPinRequest request) {
+        service.setCollaboratorPin(clientContextService.getAuthenticatedMember(), customerId, request.currentPin(), request.newPin());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping(ApiPath.V1 + "/client/me/company-wallets/{customerId}/spends/{spendId}/cancel")

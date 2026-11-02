@@ -76,6 +76,7 @@ public final class CompanyWalletDtos {
                                     SpendingAuthorization.Status status,
                                     String statusReason,
                                     boolean inForce,
+                                    boolean pinSet,
                                     BigDecimal engagedToday,
                                     BigDecimal engagedThisMonth,
                                     String createdBy,
@@ -132,7 +133,12 @@ public final class CompanyWalletDtos {
     public record DecisionRequest(@Size(max = 500) String reason) {
     }
 
+    /** @param pin le code de depense du collaborateur, ou celui du portefeuille pour le gerant */
     public record PayRequest(String pin) {
+    }
+
+    /** Le code a usage unique recu par e-mail. */
+    public record ConfirmRequest(@NotBlank @Size(max = 12) String code) {
     }
 
     /** Le resultat d'un reglement · execute aussitot, ou en attente du gerant. */

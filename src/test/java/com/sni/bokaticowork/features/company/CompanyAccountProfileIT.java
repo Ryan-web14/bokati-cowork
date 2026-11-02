@@ -221,6 +221,11 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
         assertThat(spendRepository.existsPendingForDocument("INV-NONE")).isFalse();
         assertThat(spendRepository.findByIntentNumbers(java.util.List.of("INT-NONE"))).isEmpty();
         assertThat(spendRepository.lockByShortId(-1L)).isEmpty();
+        assertThat(column(jdbc, "wallet_company_spend", "document_number").get("is_nullable")).isEqualTo("YES");
+        assertThat(column(jdbc, "wallet_spending_authorization", "pin_hash")).isNotEmpty();
+        assertThat(spendRepository.findExpiredOtp(now, page)).isEmpty();
+        assertThat(spendRepository.findHeldByHold("WH-NONE")).isEmpty();
+        assertThat(spendRepository.findHeldByBooking("BKG-NONE")).isEmpty();
         assertThat(billableItemRepository.findPreviousPassPeriodStart("PAS-NONE", java.time.LocalDate.of(2026, 11, 1))).isNull();
         assertThat(ledgerRepository.sumConsumedByBeneficiaryOnPassBetween(-1L, java.time.Instant.EPOCH, now)).isEmpty();
     }

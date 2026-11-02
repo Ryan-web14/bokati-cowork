@@ -34,7 +34,13 @@ import java.time.Instant;
 @AllArgsConstructor
 public class CompanyWalletSpend {
 
-    public enum Status { PENDING_APPROVAL, EXECUTED, REJECTED, EXPIRED, CANCELLED }
+    public enum Status {
+        /** Code a usage unique envoye · rien n'est retenu tant qu'il n'est pas saisi. */
+        AWAITING_OTP,
+        /** Fonds retenus pour une reservation prepayee · regles avec sa facture. */
+        HELD,
+        PENDING_APPROVAL, EXECUTED, REJECTED, EXPIRED, CANCELLED
+    }
 
     @Id
     @IdGeneration
@@ -69,8 +75,22 @@ public class CompanyWalletSpend {
     @Column(name = "currency", nullable = false, length = 3)
     private String currency;
 
-    @Column(name = "document_number", nullable = false, length = 120)
+    /** La facture reglee · vide tant qu'une reservation prepayee n'a pas la sienne. */
+    @Column(name = "document_number", length = 120)
     private String documentNumber;
+
+    @Column(name = "booking_number", length = 120)
+    private String bookingNumber;
+
+    @Column(name = "otp_hash", length = 100)
+    private String otpHash;
+
+    @Column(name = "otp_expires_at")
+    private Instant otpExpiresAt;
+
+    @Builder.Default
+    @Column(name = "otp_attempts", nullable = false)
+    private Integer otpAttempts = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
