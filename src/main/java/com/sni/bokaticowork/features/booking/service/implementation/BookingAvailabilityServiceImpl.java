@@ -33,15 +33,21 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
     private final BookingPricingCalculator pricingCalculator;
     private final BookingIdentityResolver identityResolver;
     private final BookingPaymentContextResolver paymentContextResolver;
+    private final com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride;
 
     @Override
     public BookingAvailabilityResponse check(BookingAvailabilityRequest request) {
         Resource resource = resourceService.getResourceForService(request.resourceCode().trim());
         int quantity = request.quantity() == null ? 1 : request.quantity();
 
+        // L'equipe verifie comme elle reservera : hors preavis, creneaux passes compris, sauf si la
+        // politique de la ressource l'interdit. Sans cela, la verification refusait ce que la
+        // reservation de l'equipe accepte ensuite.
+        boolean staff = staffOverride != null && staffOverride.actorFor(resource.getResourcePolicy()).isPresent();
+
         // Step 1: check physical slot availability · if this fails the slot is truly occupied
         try {
-            resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity);
+            resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity, staff);
             resourceGuard.validateNoSingleCapacityConflict(resource, request.startedAt(), request.endedAt(), null);
         } catch (BadRequestException | ConflictException | ResourceNotFoundException ex) {
             return unavailableResponse(resource, request, quantity, ex.getMessage());
@@ -81,7 +87,9 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
         // Step 4: pricing and success response
         try {
             BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
-            String message = "Disponible";
+            String message = staff && request.startedAt().isBefore(java.time.LocalDateTime.now().plusMinutes(noticeMinutes(resource)))
+                    ? "Disponible · réservation de l'équipe hors préavis"
+                    : "Disponible";
             if (request.paymentMode() == BookingPaymentMode.SUBSCRIPTION) {
                 message = "Disponible · couvert par abonnement";
             } else if (request.paymentMode() == BookingPaymentMode.PASS) {
@@ -123,5 +131,10 @@ public class BookingAvailabilityServiceImpl implements BookingAvailabilityServic
                 "XAF",
                 message
         );
+    }
+
+    private static long noticeMinutes(Resource resource) {
+        return resource.getResourcePolicy() == null || resource.getResourcePolicy().getMinBookingNoticeMinutes() == null
+                ? 0 : resource.getResourcePolicy().getMinBookingNoticeMinutes();
     }
 }
