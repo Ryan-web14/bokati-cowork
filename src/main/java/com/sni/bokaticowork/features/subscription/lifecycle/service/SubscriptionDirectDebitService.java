@@ -230,7 +230,7 @@ public class SubscriptionDirectDebitService {
             mandate.setConsecutiveFailures(0);
             mandate.setLastDebitAt(Instant.now());
             eventWriter.writeEvent(subscription, SubscriptionEventType.DIRECT_DEBIT_SUCCEEDED,
-                    "{\"invoice\":\"" + invoiceNumber + "\",\"amount\":" + amount.toPlainString() + "}");
+                    com.sni.bokaticowork.core.utils.json.JsonPayload.of("invoice", invoiceNumber, "amount", amount));
             graceService.exit(subscription, "Prélèvement réussi · " + invoiceNumber);
         } else {
             mandate.setConsecutiveFailures(mandate.getConsecutiveFailures() + 1);
@@ -238,7 +238,7 @@ public class SubscriptionDirectDebitService {
                 mandate.setStatus(SubscriptionDebitMandate.Status.SUSPENDED);
             }
             eventWriter.writeEvent(subscription, SubscriptionEventType.DIRECT_DEBIT_FAILED,
-                    "{\"invoice\":\"" + invoiceNumber + "\",\"status\":\"" + status + "\"}");
+                    com.sni.bokaticowork.core.utils.json.JsonPayload.of("invoice", invoiceNumber, "status", String.valueOf(status)));
             notifyFailure(subscription, mandate, attempt);
             graceService.enter(subscription, "Prélèvement " + status + " · " + invoiceNumber);
         }

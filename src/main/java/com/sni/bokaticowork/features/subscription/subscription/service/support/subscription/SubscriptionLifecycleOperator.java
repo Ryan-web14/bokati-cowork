@@ -206,7 +206,8 @@ public class SubscriptionLifecycleOperator {
                 if (hasUnpaidInvoices) {
                     walletHoldService.capture(hold.getHoldNumber(), "SYSTEM");
                     eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_CANCELLED,
-                            "Deposit hold " + hold.getHoldNumber() + " captured to cover outstanding invoices on cancellation");
+                            com.sni.bokaticowork.core.utils.json.JsonPayload.of("depositHold", hold.getHoldNumber(), "action", "CAPTURED",
+                                    "reason", "outstanding invoices on cancellation"));
                 } else {
                     walletHoldService.release(hold.getHoldNumber(), "SYSTEM");
                 }
@@ -290,8 +291,7 @@ public class SubscriptionLifecycleOperator {
         subscription.setEndNoticeStage(null);
         subscriptionRepository.save(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED,
-                "{\"realignedOn\":\"" + paidOn + "\",\"previousPeriodEnd\":\""
-                        + (previousEnd == null ? "" : previousEnd) + "\",\"newPeriodEnd\":\"" + newEnd + "\"}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("realignedOn", paidOn, "previousPeriodEnd", previousEnd, "newPeriodEnd", newEnd));
         log.info("Abonnement {} · regle le {}, periode recalee du {} au {}",
                 subscription.getSubscriptionNumber(), paidOn, paidOn, newEnd);
         return true;
@@ -355,7 +355,7 @@ public class SubscriptionLifecycleOperator {
         List<Subscription> subscriptions = subscriptionRepository.findActiveSubscriptionsWithoutGrants();
         subscriptions.forEach(subscription -> {
             entitlementService.grantForSubscription(subscription);
-            eventWriter.writeEvent(subscription, SubscriptionEventType.ENTITLEMENTS_GRANTED, "{\"source\":\"INTEGRITY_WORKER\"}");
+            eventWriter.writeEvent(subscription, SubscriptionEventType.ENTITLEMENTS_GRANTED, com.sni.bokaticowork.core.utils.json.JsonPayload.of("source", "INTEGRITY_WORKER"));
         });
         return subscriptions.size();
     }

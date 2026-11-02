@@ -101,7 +101,7 @@ public class PassLifecycleOperator {
                 .transactionType("CANCELLED")
                 .referenceType("PASS")
                 .referenceId(pass.getPassNumber())
-                .payloadJson(StringUtils.hasText(reason) ? "{\"reason\":\"" + reason.trim().replace("\"", "'") + "\"}" : null)
+                .payloadJson(StringUtils.hasText(reason) ? com.sni.bokaticowork.core.utils.json.JsonPayload.of("reason", reason.trim()) : null)
                 .build());
         // Notification after all business logic
         emailNotifier.notifyCancelled(pass, reason);

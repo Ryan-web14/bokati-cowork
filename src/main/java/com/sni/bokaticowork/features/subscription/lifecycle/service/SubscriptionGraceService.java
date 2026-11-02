@@ -57,7 +57,7 @@ public class SubscriptionGraceService {
         statusManager.changeStatus(subscription, SubscriptionStatus.GRACE_PERIOD, reason, "SYSTEM");
         subscriptionRepository.save(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.GRACE_PERIOD_ENTERED,
-                "{\"reason\":\"" + reason.replace("\"", "'") + "\",\"suspensionInDays\":" + policy.getSuspensionAfterGraceDays() + "}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("reason", reason, "suspensionInDays", policy.getSuspensionAfterGraceDays()));
         notify(subscription, "SUBSCRIPTION_GRACE_PERIOD", "Échéance impayée · votre abonnement " + subscription.getSubscriptionNumber(),
                 Map.of("daysBeforeSuspension", String.valueOf(policy.getSuspensionAfterGraceDays())));
         log.info("Abonnement {} · tolerance ({}), suspension dans {} jours", subscription.getSubscriptionNumber(), reason,

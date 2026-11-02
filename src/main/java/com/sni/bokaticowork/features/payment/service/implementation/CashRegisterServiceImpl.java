@@ -678,11 +678,16 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private String automaticMetadata(PaymentTransaction transaction) {
         String provider = trim(transaction.getProvider());
         String providerReference = trim(transaction.getProviderReference());
-        return "{\"automaticCashSession\":true"
-                + ",\"paymentMethod\":\"" + transaction.getPaymentMethod().name() + "\""
-                + (provider == null ? "" : ",\"provider\":\"" + provider + "\"")
-                + (providerReference == null ? "" : ",\"providerReference\":\"" + providerReference + "\"")
-                + "}";
+        java.util.Map<String, Object> metadata = new java.util.LinkedHashMap<>();
+        metadata.put("automaticCashSession", true);
+        metadata.put("paymentMethod", transaction.getPaymentMethod().name());
+        if (provider != null) {
+            metadata.put("provider", provider);
+        }
+        if (providerReference != null) {
+            metadata.put("providerReference", providerReference);
+        }
+        return com.sni.bokaticowork.core.utils.json.JsonPayload.of(metadata);
     }
 
     private CashSession requireOpenSession(String sessionNumber) {

@@ -134,7 +134,7 @@ public class SubscriptionEndNoticeService {
         subscription.setEndNoticeStage(null);
         subscriptionRepository.save(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_CANCELLED,
-                "{\"periodEnd\":\"" + periodEnd + "\",\"cause\":\"TERM_REACHED\"}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("periodEnd", periodEnd, "cause", "TERM_REACHED"));
         publish(subscription, "SUBSCRIPTION_ENDED",
                 "Votre abonnement " + subscription.getSubscriptionNumber() + " a pris fin",
                 Map.of("periodEnd", periodEnd.toString()));

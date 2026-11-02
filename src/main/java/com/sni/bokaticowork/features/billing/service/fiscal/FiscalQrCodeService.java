@@ -48,13 +48,12 @@ public class FiscalQrCodeService {
      * Les 16 premiers caractères du hash et de la signature suffisent à la vérification visuelle.
      */
     private String buildFiscalPayload(BillingDocumentResponse doc) {
-        return String.format(
-                "{\"n\":\"%s\",\"d\":\"%s\",\"t\":%s,\"h\":\"%s\",\"s\":\"%s\"}",
-                doc.fiscalNumber(),
-                doc.fiscalDate() != null ? doc.fiscalDate() : "",
-                doc.totalAmount() != null ? doc.totalAmount().toPlainString() : "0",
-                abbrev(doc.currentHash(), 16),
-                abbrev(doc.fiscalSignature(), 16)
+        return com.sni.bokaticowork.core.utils.json.JsonPayload.of(
+                "n", doc.fiscalNumber(),
+                "d", doc.fiscalDate() != null ? String.valueOf(doc.fiscalDate()) : "",
+                "t", doc.totalAmount() != null ? doc.totalAmount() : java.math.BigDecimal.ZERO,
+                "h", abbrev(doc.currentHash(), 16),
+                "s", abbrev(doc.fiscalSignature(), 16)
         );
     }
 

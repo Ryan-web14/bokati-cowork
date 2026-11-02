@@ -159,7 +159,7 @@ public class BillingAutoInvoiceService {
                     "originalSourceCode", nullSafe(intent.getSourceCode())
             ));
         } catch (JsonProcessingException ex) {
-            return "{\"generatedFrom\":\"PAYMENT_TRANSACTION\"}";
+            return com.sni.bokaticowork.core.utils.json.JsonPayload.of("generatedFrom", "PAYMENT_TRANSACTION");
         }
     }
 

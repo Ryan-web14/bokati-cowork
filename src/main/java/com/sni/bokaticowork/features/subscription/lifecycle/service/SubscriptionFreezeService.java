@@ -88,7 +88,7 @@ public class SubscriptionFreezeService {
         }
         SubscriptionFreeze saved = freezeRepository.save(freeze);
         eventWriter.writeEvent(subscription, SubscriptionEventType.FREEZE_STARTED,
-                "{\"until\":\"" + until + "\",\"days\":" + days + ",\"fee\":" + fee.toPlainString() + ",\"usedThisYear\":" + (lastYear.size() + 1) + "}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("until", until, "days", days, "fee", fee, "usedThisYear", lastYear.size() + 1));
         log.info("Abonnement {} · gel {} jours jusqu'au {} (frais {})", subscription.getSubscriptionNumber(), days, until, fee);
         return saved;
     }

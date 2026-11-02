@@ -182,7 +182,7 @@ public class SubscriptionOverageServiceImpl implements SubscriptionOverageServic
                 .amount(result.billableItem().getAmount())
                 .currency(result.billableItem().getCurrency())
                 .build());
-        timelineService.write(result.subscription(), SubscriptionTimelineEventType.OVERAGE_BILLED, "USAGE", usage.getUsageNumber(), "Overage billed", usage.getEntitlementCode(), "{\"chargeNumber\":\"" + charge.getChargeNumber() + "\"}");
+        timelineService.write(result.subscription(), SubscriptionTimelineEventType.OVERAGE_BILLED, "USAGE", usage.getUsageNumber(), "Overage billed", usage.getEntitlementCode(), com.sni.bokaticowork.core.utils.json.JsonPayload.of("chargeNumber", charge.getChargeNumber()));
         return charge;
     }
 

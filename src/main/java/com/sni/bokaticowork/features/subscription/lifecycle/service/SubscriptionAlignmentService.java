@@ -100,7 +100,7 @@ public class SubscriptionAlignmentService {
                             "Raccordement des échéances · " + days + " jour(s) jusqu'au " + target, bridging, end.plusDays(1), target);
                 }
                 eventWriter.writeEvent(subscription, SubscriptionEventType.DATES_ALIGNED,
-                        "{\"from\":\"" + end + "\",\"to\":\"" + target + "\",\"bridging\":" + bridging.toPlainString() + ",\"by\":\"" + actor + "\"}");
+                        com.sni.bokaticowork.core.utils.json.JsonPayload.of("from", end, "to", target, "bridging", bridging, "by", actor));
             }
             lines.add(new Line(subscription.getSubscriptionNumber(), end, target, days, bridging, true, simulateOnly ? "simulation" : "alignée"));
             total = total.add(bridging);

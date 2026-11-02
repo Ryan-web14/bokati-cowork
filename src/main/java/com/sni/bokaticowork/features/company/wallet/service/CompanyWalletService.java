@@ -767,7 +767,7 @@ public class CompanyWalletService {
      * portefeuille. Le collaborateur est celui qui a depense, sur l'ecriture et dans l'intention.
      */
     private void execute(CompanyWalletSpend spend, WalletAccount wallet, BigDecimal amount, String spentBy) {
-        String metadata = "{\"companySpend\":" + spend.getShortId() + ",\"spentByMember\":\"" + spentBy.replace("\"", "") + "\"}";
+        String metadata = com.sni.bokaticowork.core.utils.json.JsonPayload.of("companySpend", spend.getShortId(), "spentByMember", spentBy);
         PaymentIntentResponse intent = paymentService.createIntent(new CreatePaymentIntentRequest(OWNER_TYPE,
                 spend.getCompanyCode(), amount, wallet.getCurrency(), INTENT_PURPOSE, BILLING_DOCUMENT_SOURCE,
                 spend.getDocumentNumber(), "COMPANY_SPEND:" + spend.getId(), null, metadata));

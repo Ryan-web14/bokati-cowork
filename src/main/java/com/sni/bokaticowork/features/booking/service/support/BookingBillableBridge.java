@@ -174,7 +174,7 @@ public class BookingBillableBridge {
         try {
             return objectMapper.writeValueAsString(metadata);
         } catch (JsonProcessingException e) {
-            return "{\"paymentMode\":\"" + booking.getPaymentMode().name() + "\"}";
+            return com.sni.bokaticowork.core.utils.json.JsonPayload.of("paymentMode", booking.getPaymentMode().name());
         }
     }
 }

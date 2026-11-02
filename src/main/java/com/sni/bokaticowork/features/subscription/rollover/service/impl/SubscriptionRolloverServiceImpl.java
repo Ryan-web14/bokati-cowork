@@ -92,7 +92,7 @@ public class SubscriptionRolloverServiceImpl implements SubscriptionRolloverServ
                 .entitlementCode(source.getEntitlementDefinition().getCode())
                 .quantity(quantity)
                 .build());
-        timelineService.write(subscription, SubscriptionTimelineEventType.ROLLOVER_APPLIED, "ENTITLEMENT_GRANT", rolloverGrant.getGrantNumber(), "Rollover applied", source.getEntitlementDefinition().getCode(), "{\"rolloverNumber\":\"" + record.getRolloverNumber() + "\"}");
+        timelineService.write(subscription, SubscriptionTimelineEventType.ROLLOVER_APPLIED, "ENTITLEMENT_GRANT", rolloverGrant.getGrantNumber(), "Rollover applied", source.getEntitlementDefinition().getCode(), com.sni.bokaticowork.core.utils.json.JsonPayload.of("rolloverNumber", record.getRolloverNumber()));
     }
 
     private RolloverRecordResponse toResponse(SubscriptionRolloverRecord record) {

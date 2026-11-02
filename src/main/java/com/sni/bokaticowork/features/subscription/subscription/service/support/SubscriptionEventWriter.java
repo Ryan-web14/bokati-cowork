@@ -9,6 +9,7 @@ import com.sni.bokaticowork.features.subscription.repository.SubscriptionEventRe
 import com.sni.bokaticowork.features.subscription.repository.SubscriptionStatusHistoryRepository;
 import com.sni.bokaticowork.features.subscription.timeline.enums.SubscriptionTimelineEventType;
 import com.sni.bokaticowork.features.subscription.timeline.service.SubscriptionTimelineService;
+import com.sni.bokaticowork.core.utils.json.JsonPayload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,11 +36,12 @@ public class SubscriptionEventWriter {
                 subscription.getSubscriptionNumber(),
                 "Subscription status changed",
                 from + " -> " + to,
-                "{\"reason\":\"" + sanitize(reason) + "\",\"actor\":\"" + sanitize(actor) + "\"}"
+                JsonPayload.of("reason", reason == null ? "" : reason, "actor", actor == null ? "" : actor)
         );
     }
 
-    public void writeEvent(Subscription subscription, SubscriptionEventType eventType, String payload) {
+    public void writeEvent(Subscription subscription, SubscriptionEventType eventType, String rawPayload) {
+        String payload = jsonPayload(rawPayload);
         eventRepository.save(SubscriptionEvent.builder()
                 .subscription(subscription)
                 .eventType(eventType)
@@ -64,7 +66,21 @@ public class SubscriptionEventWriter {
         }
     }
 
-    private String sanitize(String value) {
-        return value == null ? "" : value.replace("\"", "'");
+    /**
+     * Le contenu de l'evenement · un JSON bien forme, produit par {@link JsonPayload}, ou rien.
+     *
+     * <p>Les colonnes sont en {@code jsonb} : un contenu mal forme y etait refuse au moment
+     * d'ecrire, et l'operation entiere echouait (l'annulation d'un abonnement l'a montre). Il est
+     * refuse ici, avec un message qui dit lequel, plutot que dans la base.</p>
+     */
+    String jsonPayload(String payload) {
+        if (payload == null || payload.isBlank()) {
+            return null;
+        }
+        if (!JsonPayload.isValid(payload)) {
+            throw new IllegalArgumentException("Contenu d'evenement d'abonnement mal forme, a produire avec JsonPayload : "
+                    + (payload.length() > 120 ? payload.substring(0, 120) + "..." : payload));
+        }
+        return payload;
     }
 }

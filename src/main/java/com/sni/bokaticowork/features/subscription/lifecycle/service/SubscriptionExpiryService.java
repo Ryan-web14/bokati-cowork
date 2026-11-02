@@ -114,7 +114,7 @@ public class SubscriptionExpiryService {
             statusManager.changeStatus(subscription, SubscriptionStatus.EXPIRED, reason, "SYSTEM");
             subscriptionRepository.save(subscription);
             eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_EXPIRED,
-                    "{\"periodEnd\":\"" + periodEnd + "\",\"daysOverdue\":" + days + "}");
+                    com.sni.bokaticowork.core.utils.json.JsonPayload.of("periodEnd", periodEnd, "daysOverdue", days));
             log.info("Abonnement {} · ferme, periode echue le {} depuis {} jours",
                     subscription.getSubscriptionNumber(), periodEnd, days);
             return Outcome.EXPIRED;
