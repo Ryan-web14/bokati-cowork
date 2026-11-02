@@ -7,6 +7,12 @@ public interface BillingDocumentPdfService {
     byte[] generatePdf(String documentNumber);
 
     /**
+     * La version d'impression de l'administration · l'original puis son duplicata, tamponne
+     * « DUPLICATA », dans un meme PDF. Le portail et les e-mails servent {@link #generatePdf}.
+     */
+    byte[] generateAdminPdf(String documentNumber);
+
+    /**
      * Compare un fichier a la version canonique du document · repond a la seule question qui
      * compte dans un litige : « ce fichier est-il celui que vous avez emis ? »
      */

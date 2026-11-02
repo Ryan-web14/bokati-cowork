@@ -27,7 +27,8 @@ public class PaymentReceiptController {
     @GetMapping("/transactions/{transactionNumber}/receipt/pdf")
     public ResponseEntity<byte[]> pdfByTransaction(@PathVariable String transactionNumber) {
         PaymentReceiptResponse receipt = paymentReceiptService.getByTransactionNumber(transactionNumber);
-        byte[] pdf = paymentReceiptService.generatePdfByTransactionNumber(transactionNumber);
+        // L'administration imprime l'original et son duplicata · le portail sert l'exemplaire unique.
+        byte[] pdf = paymentReceiptService.generateAdminPdfByTransactionNumber(transactionNumber);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + receipt.receiptNumber() + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)
@@ -41,7 +42,7 @@ public class PaymentReceiptController {
 
     @GetMapping("/receipts/{receiptNumber}/pdf")
     public ResponseEntity<byte[]> pdfByReceipt(@PathVariable String receiptNumber) {
-        byte[] pdf = paymentReceiptService.generatePdfByReceiptNumber(receiptNumber);
+        byte[] pdf = paymentReceiptService.generateAdminPdfByReceiptNumber(receiptNumber);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + receiptNumber + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)

@@ -119,6 +119,12 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         }
     }
 
+    @Override
+    @Transactional
+    public byte[] generateAdminPdf(String documentNumber) {
+        return com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(generatePdf(documentNumber));
+    }
+
     /**
      * Compare un fichier a la version canonique du document.
      *

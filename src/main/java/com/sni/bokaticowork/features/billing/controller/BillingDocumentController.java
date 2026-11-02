@@ -314,7 +314,8 @@ public class BillingDocumentController {
 
     @GetMapping("/documents/{documentNumber}/pdf")
     public ResponseEntity<byte[]> pdf(@PathVariable String documentNumber) {
-        byte[] pdf = billingDocumentPdfService.generatePdf(documentNumber);
+        // L'administration imprime l'original et son duplicata · le portail sert l'exemplaire unique.
+        byte[] pdf = billingDocumentPdfService.generateAdminPdf(documentNumber);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + documentNumber + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)
