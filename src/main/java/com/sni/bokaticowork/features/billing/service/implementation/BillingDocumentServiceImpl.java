@@ -1587,7 +1587,38 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         } else {
             document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
         }
+        syncAdvance(document);
         return documentRepository.save(document);
+    }
+
+    /**
+     * L'acompte suit ce qui est paye sur la facture · en attente, partiellement regle, ou regle.
+     *
+     * <p>Un paiement partiel laissait l'acompte « en attente » meme quand il le couvrait : seul le
+     * parcours devis puis facture le marquait regle. Un acompte annule n'est pas touche.</p>
+     */
+    void syncAdvance(BillingDocument document) {
+        advanceRepository.findByDocument(document).ifPresent(advance -> {
+            BillingAdvanceStatus status = advanceStatus(advance.getStatus(), advance.getComputedAmount(), document.getPaidAmount());
+            if (status == advance.getStatus()) {
+                return;
+            }
+            advance.setStatus(status);
+            advance.setPaidAt(status == BillingAdvanceStatus.PAID
+                    ? (advance.getPaidAt() != null ? advance.getPaidAt() : Instant.now()) : null);
+            advanceRepository.save(advance);
+        });
+    }
+
+    static BillingAdvanceStatus advanceStatus(BillingAdvanceStatus current, BigDecimal advanceAmount, BigDecimal paidAmount) {
+        if (current == BillingAdvanceStatus.CANCELLED || advanceAmount == null || advanceAmount.signum() <= 0) {
+            return current;
+        }
+        BigDecimal paid = paidAmount == null ? BigDecimal.ZERO : paidAmount;
+        if (paid.signum() <= 0) {
+            return BillingAdvanceStatus.PENDING;
+        }
+        return paid.compareTo(advanceAmount) >= 0 ? BillingAdvanceStatus.PAID : BillingAdvanceStatus.PARTIALLY_PAID;
     }
 
     @Override
@@ -1608,6 +1639,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         } else if (document.getBalanceDue().signum() > 0) {
             document.setStatus(BillingDocumentStatus.PARTIALLY_PAID);
         }
+        syncAdvance(document);
         return documentRepository.save(document);
     }
 

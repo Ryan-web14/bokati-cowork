@@ -647,6 +647,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             if (status == null) return EMPTY_VALUE;
             return switch (status) {
                 case PENDING -> "En attente";
+                case PARTIALLY_PAID -> "Partiellement réglé";
                 case PAID -> "Réglé";
                 case CANCELLED -> "Annulé";
             };
