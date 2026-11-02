@@ -40,7 +40,7 @@ public class EntitlementGrantBalanceOperator {
 
         if (balanceReader.hasUnlimitedGrant(grants)) {
             EntitlementGrant grant = firstUnlimited(grants);
-            ledgerWriter.write(grant, type, request.quantity(), null, null, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+            ledgerWriter.write(grant, type, request.quantity(), null, null, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason(), request.beneficiaryType(), request.beneficiaryCode());
             return new EntitlementOperationResponse(true, request.entitlementCode(), request.quantity(), null, "Unlimited entitlement applied");
         }
 
@@ -62,7 +62,7 @@ public class EntitlementGrantBalanceOperator {
                 grant.setStatus(EntitlementGrantStatus.DEPLETED);
             }
             grantRepository.save(grant);
-            ledgerWriter.write(grant, type, debit, before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+            ledgerWriter.write(grant, type, debit, before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason(), request.beneficiaryType(), request.beneficiaryCode());
             quotaAlertService.checkAndAlert(grant, after);
             remainingToDebit = remainingToDebit.subtract(debit);
         }
@@ -83,7 +83,7 @@ public class EntitlementGrantBalanceOperator {
 
         EntitlementGrant grant = grantRepository.findLockedById(grants.get(0).getId()).orElseThrow();
         if (Boolean.TRUE.equals(grant.getUnlimited())) {
-            ledgerWriter.write(grant, type, request.quantity(), null, null, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+            ledgerWriter.write(grant, type, request.quantity(), null, null, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason(), request.beneficiaryType(), request.beneficiaryCode());
             return new EntitlementOperationResponse(true, request.entitlementCode(), request.quantity(), null, "Unlimited entitlement credited");
         }
 
@@ -92,7 +92,7 @@ public class EntitlementGrantBalanceOperator {
         grant.setQuantityRemaining(after);
         grant.setStatus(EntitlementGrantStatus.ACTIVE);
         grantRepository.save(grant);
-        ledgerWriter.write(grant, type, request.quantity(), before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+        ledgerWriter.write(grant, type, request.quantity(), before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason(), request.beneficiaryType(), request.beneficiaryCode());
 
         return new EntitlementOperationResponse(true, request.entitlementCode(), request.quantity(), after, type.name() + " completed");
     }

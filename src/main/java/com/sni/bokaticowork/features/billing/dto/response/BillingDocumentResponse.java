@@ -100,6 +100,13 @@ public record BillingDocumentResponse(
          * soient les types et les etats presents. Additionner {@code balanceDue} ne le donne pas :
          * un brouillon et un avoir y portent un montant qui n'est pas une dette.</p>
          */
-        BigDecimal customerImpact
+        BigDecimal customerImpact,
+        // -- Organisation pour le compte de laquelle un membre est facture ------------------
+        /** L'organisation reliee · elle porte l'encours de la facture. Vide sinon. */
+        String companyCustomerCode,
+        /** Imprime en tete du destinataire · vide pour une facture reliee apres coup. */
+        String companyName,
+        /** {@code AT_ISSUE} (emise ainsi) ou {@code ATTACHED} (ancienne facture reliee). */
+        String companyLinkSource
 ) {
 }

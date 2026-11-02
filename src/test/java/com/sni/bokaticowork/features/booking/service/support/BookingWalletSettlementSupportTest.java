@@ -76,6 +76,8 @@ class BookingWalletSettlementSupportTest {
     private WalletService walletService;
     @Mock
     private PaymentService paymentService;
+    @Mock
+    private com.sni.bokaticowork.features.company.wallet.service.CompanyWalletService companyWalletService;
 
     @InjectMocks
     private BookingWalletSettlementSupport support;
@@ -229,6 +231,53 @@ class BookingWalletSettlementSupportTest {
     }
 
     // -------------------------------------------------------------------------------------
+
+    // -------------------------------------------------------------------------------------
+    // Portefeuille de l'organisation
+    // -------------------------------------------------------------------------------------
+
+    @Test
+    void holdsOnTheCompanyWalletWhenTheMemberIsAuthorised() {
+        Booking booking = booking(BookingStatus.PENDING_PAYMENT, new BigDecimal("25000"));
+        booking.setBillingCompanyCode("CUS-COM-1");
+        com.sni.bokaticowork.features.payment.model.WalletAccount companyWallet =
+                com.sni.bokaticowork.features.payment.model.WalletAccount.builder().id(50L).walletNumber("WAL-ACME")
+                        .ownerType("CUSTOMER").ownerCode("CUS-COM-1").currency("XAF").build();
+        var funding = new com.sni.bokaticowork.features.company.wallet.service.CompanyWalletService.BookingFunding(
+                companyWallet, 70L, "CUS-COM-1", "MEM-0001");
+        when(companyWalletService.bookingFunding("MEM-0001", "CUS-COM-1", "XAF", new BigDecimal("25000")))
+                .thenReturn(Optional.of(funding));
+        var created = org.mockito.Mockito.mock(com.sni.bokaticowork.features.payment.dto.response.WalletHoldResponse.class);
+        when(created.holdNumber()).thenReturn("WH-ACME");
+        when(walletHoldService.create(any())).thenReturn(created);
+
+        support.hold(booking);
+
+        verify(walletHoldService).create(holdCaptor.capture());
+        assertEquals("WAL-ACME", holdCaptor.getValue().walletNumber());
+        verify(companyWalletService).recordBookingHold(funding, BOOKING_NUMBER, new BigDecimal("25000"), "WH-ACME");
+    }
+
+    @Test
+    void settlesACompanyHoldThroughTheCompanyWallet() {
+        givenActiveHold();
+        givenBooking(BookingStatus.PENDING_PAYMENT);
+        givenInvoice(new BigDecimal("25000"));
+        when(companyWalletService.isCompanyBookingHold(HOLD_NUMBER)).thenReturn(true);
+
+        support.settle(HOLD_NUMBER);
+
+        verify(walletHoldService).release(HOLD_NUMBER, "SYSTEM");
+        verify(companyWalletService).settleBookingHold(HOLD_NUMBER, "INV-0001", new BigDecimal("25000"));
+        verify(paymentService, never()).payWithWallet(any(), any());
+    }
+
+    @Test
+    void cancellingTheBookingCancelsTheCompanySpend() {
+        support.release(booking(BookingStatus.CANCELLED, new BigDecimal("25000")), "annulation");
+
+        verify(companyWalletService).cancelBookingHold(BOOKING_NUMBER, "annulation");
+    }
 
     private void givenActiveHold() {
         when(walletHoldRepository.findByHoldNumber(HOLD_NUMBER)).thenReturn(Optional.of(activeHold()));

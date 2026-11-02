@@ -177,7 +177,7 @@ public class SubscriptionQuoteService {
         Subscription subscription = creationOperator.create(new CreateSubscriptionRequest(
                 quote.getPlanVersion().getPlan().getCode(), String.valueOf(quote.getPlanVersion().getId()), quote.getBillingCycle(),
                 quote.getSubscriberType(), quote.getSubscriberCode(), start, true,
-                "{\"quoteNumber\":\"" + quote.getQuoteNumber() + "\"}", false));
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("quoteNumber", quote.getQuoteNumber()), false));
         quote.setStatus(SubscriptionQuote.Status.CONVERTED);
         quote.setAcceptedAt(Instant.now());
         quote.setAcceptedBy(acceptedBy);

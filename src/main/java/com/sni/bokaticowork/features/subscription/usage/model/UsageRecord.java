@@ -73,6 +73,13 @@ public class UsageRecord {
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt;
 
+    /** Qui a consomme, quand ce n'est pas le titulaire · le collaborateur d'une organisation. */
+    @Column(name = "beneficiary_type", length = 60)
+    private String beneficiaryType;
+
+    @Column(name = "beneficiary_code", length = 120)
+    private String beneficiaryCode;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;

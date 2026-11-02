@@ -72,6 +72,13 @@ public class EntitlementReservation {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
+    /** Le collaborateur qui profite du droit de son organisation · vide quand c'est le titulaire. */
+    @Column(name = "beneficiary_type", length = 60)
+    private String beneficiaryType;
+
+    @Column(name = "beneficiary_code", length = 120)
+    private String beneficiaryCode;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

@@ -56,6 +56,7 @@ public class DunningRunner {
     private final SubscriptionRepository subscriptionRepository;
     private final OutboxService outboxService;
     private final MemberInAppNotifier inAppNotifier;
+    private final com.sni.bokaticowork.features.client.customer.repository.CustomerRepository customerRepository;
     private final SubscriptionGraceService graceService;
     private final @Lazy SubscriptionLifecycleOperator lifecycleOperator;
 
@@ -198,6 +199,15 @@ public class DunningRunner {
             payload.put("tone", step.getPolicy().getTone().name());
             outboxService.publish("BILLING_DUNNING_" + step.getAction().name(), "BILLING_DOCUMENT", document.getDocumentNumber(), payload);
             delivered = true;
+            // Une facture de membre reliee a une organisation compte dans l'encours de celle-ci :
+            // c'est elle qui regle, elle recoit la relance. Le membre garde la sienne.
+            String companyEmail = companyBillingEmail(document);
+            if (companyEmail != null && !companyEmail.equalsIgnoreCase(email)) {
+                Map<String, Object> companyPayload = new HashMap<>(payload);
+                companyPayload.put("recipientEmail", companyEmail);
+                outboxService.publish("BILLING_DUNNING_" + step.getAction().name(), "BILLING_DOCUMENT",
+                        document.getDocumentNumber() + ":company", companyPayload);
+            }
         }
         if ("MEMBER".equalsIgnoreCase(document.getCustomerType()) && StringUtils.hasText(email)) {
             try {
@@ -209,6 +219,17 @@ public class DunningRunner {
             }
         }
         return delivered;
+    }
+
+    /** Le courriel de facturation de l'organisation reliee a la facture, s'il y en a une. */
+    private String companyBillingEmail(BillingDocument document) {
+        if (!StringUtils.hasText(document.getCompanyCustomerCode())) {
+            return null;
+        }
+        return customerRepository.findByCustomerId(document.getCompanyCustomerCode())
+                .map(company -> StringUtils.hasText(company.getBillingEmail()) ? company.getBillingEmail() : company.getEmail())
+                .filter(StringUtils::hasText)
+                .orElse(null);
     }
 
     private static Map<String, String> variables(BillingDocument document, DunningStep step, Subscription subscription) {

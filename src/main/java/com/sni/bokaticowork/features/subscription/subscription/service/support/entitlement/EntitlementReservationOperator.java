@@ -45,7 +45,7 @@ public class EntitlementReservationOperator {
         if (balanceReader.hasUnlimitedGrant(grants)) {
             EntitlementGrant grant = firstUnlimited(grants);
             reservationRepository.save(toReservation(request, grant, request.quantity()));
-            ledgerWriter.write(grant, EntitlementTransactionType.RESERVE, request.quantity(), null, null, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+            ledgerWriter.write(grant, EntitlementTransactionType.RESERVE, request.quantity(), null, null, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason(), request.beneficiaryType(), request.beneficiaryCode());
             return new EntitlementOperationResponse(true, request.entitlementCode(), request.quantity(), null, "Unlimited entitlement reserved");
         }
 
@@ -68,7 +68,7 @@ public class EntitlementReservationOperator {
             }
             grantRepository.save(grant);
             reservationRepository.save(toReservation(request, grant, reserved));
-            ledgerWriter.write(grant, EntitlementTransactionType.RESERVE, reserved, before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+            ledgerWriter.write(grant, EntitlementTransactionType.RESERVE, reserved, before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason(), request.beneficiaryType(), request.beneficiaryCode());
             quotaAlertService.checkAndAlert(grant, after);
             remainingToReserve = remainingToReserve.subtract(reserved);
         }
@@ -101,7 +101,9 @@ public class EntitlementReservationOperator {
                     request.referenceType(),
                     request.referenceId(),
                     request.idempotencyKey(),
-                    request.reason()
+                    request.reason(),
+                    reservation.getBeneficiaryType(),
+                    reservation.getBeneficiaryCode()
             );
         });
         return new EntitlementOperationResponse(true, request.entitlementCode(), request.quantity(), null, "Reserved entitlement consumed");
@@ -144,9 +146,11 @@ public class EntitlementReservationOperator {
                 grant.setQuantityRemaining(after);
                 grant.setStatus(EntitlementGrantStatus.ACTIVE);
                 grantRepository.save(grant);
-                ledgerWriter.write(grant, EntitlementTransactionType.RELEASE, reservation.getQuantity(), before, after, "WORKER", "RESERVATION_EXPIRY", null, "reservation expired");
+                ledgerWriter.write(grant, EntitlementTransactionType.RELEASE, reservation.getQuantity(), before, after, "WORKER", "RESERVATION_EXPIRY", null, "reservation expired",
+                        reservation.getBeneficiaryType(), reservation.getBeneficiaryCode());
             } else {
-                ledgerWriter.write(grant, EntitlementTransactionType.RELEASE, reservation.getQuantity(), null, null, "WORKER", "RESERVATION_EXPIRY", null, "reservation expired");
+                ledgerWriter.write(grant, EntitlementTransactionType.RELEASE, reservation.getQuantity(), null, null, "WORKER", "RESERVATION_EXPIRY", null, "reservation expired",
+                        reservation.getBeneficiaryType(), reservation.getBeneficiaryCode());
             }
         });
         return reservations.size();
@@ -172,9 +176,9 @@ public class EntitlementReservationOperator {
                 grant.setQuantityRemaining(after);
                 grant.setStatus(EntitlementGrantStatus.ACTIVE);
                 grantRepository.save(grant);
-                ledgerWriter.write(grant, EntitlementTransactionType.RELEASE, reservation.getQuantity(), before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+                ledgerWriter.write(grant, EntitlementTransactionType.RELEASE, reservation.getQuantity(), before, after, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason(), request.beneficiaryType(), request.beneficiaryCode());
             } else {
-                ledgerWriter.write(grant, EntitlementTransactionType.RELEASE, reservation.getQuantity(), null, null, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason());
+                ledgerWriter.write(grant, EntitlementTransactionType.RELEASE, reservation.getQuantity(), null, null, request.referenceType(), request.referenceId(), request.idempotencyKey(), request.reason(), request.beneficiaryType(), request.beneficiaryCode());
             }
             released = released.add(reservation.getQuantity());
         }
@@ -205,6 +209,8 @@ public class EntitlementReservationOperator {
                 .quantity(quantity)
                 .referenceType(request.referenceType())
                 .referenceId(request.referenceId())
+                .beneficiaryType(request.beneficiaryType())
+                .beneficiaryCode(request.beneficiaryCode())
                 .status(EntitlementReservationStatus.ACTIVE)
                 .expiresAt(request.holdUntil() != null ? request.holdUntil() : Instant.now().plusSeconds(900))
                 .build();

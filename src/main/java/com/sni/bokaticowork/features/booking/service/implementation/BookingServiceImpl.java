@@ -89,6 +89,7 @@ public class BookingServiceImpl implements BookingService {
     private final BookingPricingCalculator pricingCalculator;
     private final BookingResourceGuard resourceGuard;
     private final BookingEntitlementBridge entitlementBridge;
+    private final com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver billingCompanyResolver;
     private final BookingEventWriter eventWriter;
     private final BookingPolicyEnforcer policyEnforcer;
     private final BookingBillableBridge billableBridge;
@@ -98,6 +99,7 @@ public class BookingServiceImpl implements BookingService {
     private final TaskManagementService taskManagementService;
     private final BookingCheckInProperties checkInProperties;
     private final MemberInAppNotifier memberInAppNotifier;
+    private final com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride staffOverride;
 
     @Value("${bokati.task.booking-prep-hours:2}")
     private int bookingPrepHours;
@@ -154,12 +156,18 @@ public class BookingServiceImpl implements BookingService {
 
         Resource resource = resourceService.getResourceForService(request.resourceCode().trim());
         int quantity = request.quantity() == null ? 1 : request.quantity();
-        resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity);
+        // Saisie par l'equipe (administration, gerance, operations) hors du portail : le preavis de
+        // la ressource ne s'applique pas, sauf si sa politique l'interdit (stricte, evenementielle).
+        String staffActor = staffOverride == null ? null
+                : staffOverride.actorFor(resource.getResourcePolicy()).orElse(null);
+        resourceGuard.validateBookable(resource, request.startedAt(), request.endedAt(), quantity, staffActor != null);
         BookingIdentityResolver.ResolvedBookingIdentity identity = suppliedIdentity == null
                 ? identityResolver.resolve(request.identityLookup())
                 : suppliedIdentity;
-        BookingPaymentContextResolver.BookingPaymentContext paymentContext = paymentContextResolver.resolve(request.paymentMode(), identity, resource);
-        BookingPolicyEnforcer.EffectivePolicy effectivePolicy = policyEnforcer.enforce(identity.ownerType(), identity.ownerCode(), resource, request.startedAt(), request.endedAt());
+        BookingPaymentContextResolver.BookingPaymentContext paymentContext = paymentContextResolver.resolve(
+                request.paymentMode(), identity, resource, request.billingCompanyCode());
+        BookingPolicyEnforcer.EffectivePolicy effectivePolicy = policyEnforcer.enforce(identity.ownerType(), identity.ownerCode(),
+                resource, request.startedAt(), request.endedAt(), staffActor != null);
 
         Booking booking = bookingMapper.toEntity(request);
         String resourceTypeName = resource.getResourceType() != null ? resource.getResourceType().getName() : "RES";
@@ -177,7 +185,19 @@ public class BookingServiceImpl implements BookingService {
         booking.setContactName(identity.contactName());
         booking.setContactEmail(identity.contactEmail());
         booking.setContactPhone(identity.contactPhone());
+        booking.setBillingCompanyCode(billingCompany(request.billingCompanyCode(), identity));
+        if (paymentContext.forCompany()) {
+            // Le droit est celui de l'organisation (place ou pass partage) : decompte chez elle, le
+            // membre reste le beneficiaire.
+            booking.setEntitlementOwnerType(paymentContext.entitlementOwnerType());
+            booking.setEntitlementOwnerCode(paymentContext.entitlementOwnerCode());
+            booking.setSubscriptionSeatId(paymentContext.seatId());
+            if (booking.getBillingCompanyCode() == null) {
+                booking.setBillingCompanyCode(paymentContext.entitlementOwnerCode());
+            }
+        }
         booking.setCheckInToken(generateCheckInToken());
+        booking.setPolicyOverrideBy(staffActor);
 
         BookingPricingCalculator.Price price = pricingCalculator.calculate(resource, request.startedAt(), request.endedAt(), quantity, request.bookingUnit());
         booking.setBookingUnit(price.unit());
@@ -200,7 +220,13 @@ public class BookingServiceImpl implements BookingService {
         writeHistory(booking, null, BookingStatus.DRAFT, null, "Booking created");
         eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking created", "Booking was created", null);
 
-        if (effectivePolicy.approvalRequired()) {
+        if (staffActor != null && !request.startedAt().isAfter(LocalDateTime.now())) {
+            // Debut deja passe : le client a occupe la ressource, la reservation est saisie apres
+            // coup. Confirmee aussitot, facture comprise · il ne reste que le paiement.
+            booking = confirmInternal(booking, new BookingStatusChangeRequest(staffActor,
+                    "Reservation saisie par l'equipe apres le debut", Boolean.FALSE));
+            booking = progressStaffBooking(booking, staffActor);
+        } else if (effectivePolicy.approvalRequired()) {
             writeHistory(booking, BookingStatus.DRAFT, BookingStatus.PENDING_APPROVAL, null, "Approval required");
             eventWriter.write(booking, BookingEventType.BOOKING_CREATED, "Booking pending approval", "Booking requires approval", null);
         } else if (awaitsPayment) {
@@ -651,11 +677,38 @@ public class BookingServiceImpl implements BookingService {
         return eventRepository.findByBookingId(booking.getId()).stream().map(bookingMapper::toResponse).toList();
     }
 
+    /**
+     * Une reservation de l'equipe dont le debut est passe · close si toute la plage est passee,
+     * en cours sinon. Sans cela, le balayage des absences la marquait absente faute de pointage.
+     */
+    private Booking progressStaffBooking(Booking booking, String staffActor) {
+        if (booking.getStatus() != BookingStatus.CONFIRMED) {
+            return booking;
+        }
+        Instant startedAt = booking.getStartedAt().atZone(ZoneId.systemDefault()).toInstant();
+        booking.setStartedEventAt(startedAt);
+        if (!booking.getEndedAt().isAfter(LocalDateTime.now())) {
+            return completeInternal(booking, new BookingStatusChangeRequest(staffActor,
+                    "Reservation passee saisie par l'equipe · faite, reste le paiement", Boolean.FALSE));
+        }
+        BookingStatus from = booking.getStatus();
+        booking.setStatus(BookingStatus.IN_PROGRESS);
+        booking = bookingRepository.save(booking);
+        writeHistory(booking, from, BookingStatus.IN_PROGRESS, staffActor, "Reservation en cours saisie par l'equipe");
+        eventWriter.write(booking, BookingEventType.BOOKING_STARTED, "Booking started", "Booking is in progress", null);
+        return booking;
+    }
+
     private Booking confirmInternal(Booking booking, BookingStatusChangeRequest request) {
         if (booking.getStatus() != BookingStatus.DRAFT && booking.getStatus() != BookingStatus.PENDING_PAYMENT) {
             throw new ConflictException("booking", "expected status DRAFT or PENDING_PAYMENT but was " + booking.getStatus());
         }
-        resourceGuard.validateBookable(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity());
+        // Une reservation saisie par l'equipe hors preavis le reste a sa confirmation, meme quand
+        // celle-ci vient du paiement, sans personne de l'equipe derriere.
+        resourceGuard.validateBookable(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getQuantity(),
+                StringUtils.hasText(booking.getPolicyOverrideBy())
+                        && com.sni.bokaticowork.features.ressource.service.support.StaffBookingOverride.allowedBy(
+                        booking.getResource().getResourcePolicy()));
         resourceGuard.validateNoSingleCapacityConflict(booking.getResource(), booking.getStartedAt(), booking.getEndedAt(), booking.getBookingNumber());
         boolean confirmedFromHold = confirmHoldIfPresent(booking);
         if (!confirmedFromHold) {
@@ -822,6 +875,7 @@ public class BookingServiceImpl implements BookingService {
 
     private void reserveResource(Booking booking) {
         resourceAvailabilityService.reserve(ReserveResourceAvailabilityRequest.builder()
+                .staffOverride(StringUtils.hasText(booking.getPolicyOverrideBy()))
                 .resourceCode(booking.getResource().getCode())
                 .startedAt(booking.getStartedAt())
                 .endedAt(booking.getEndedAt())
@@ -1144,7 +1198,9 @@ public class BookingServiceImpl implements BookingService {
                 // Chaque occurrence herite de l'unite imposee · sinon la premiere serait facturee
                 // en demi-journee et les suivantes a l'heure, pour des creneaux identiques.
                 base.bookingUnit(),
-                base.participants()
+                base.participants(),
+                // Le choix « pour l'organisation » vaut pour chaque occurrence.
+                base.billingCompanyCode()
         );
     }
 
@@ -1187,6 +1243,26 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getForService(bookingNumber);
         booking.setCsatScore(score);
         bookingRepository.save(booking);
+    }
+
+    /**
+     * L'organisation choisie « pour son compte » · verifiee des la reservation, pas a la facture.
+     *
+     * <p>Un membre qui n'y est pas rattache est refuse ici, avant que la reservation n'existe :
+     * sinon elle passerait, et sa facture echouerait plus tard, a la confirmation.</p>
+     */
+    private String billingCompany(String requested, BookingIdentityResolver.ResolvedBookingIdentity identity) {
+        if (!StringUtils.hasText(requested)) {
+            return null;
+        }
+        String code = requested.trim();
+        if (com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver.NO_COMPANY.equalsIgnoreCase(code)) {
+            return com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver.NO_COMPANY;
+        }
+        String ownerType = identity.ownerType() == null ? null : identity.ownerType().name();
+        return billingCompanyResolver.resolve(ownerType, identity.ownerCode(), code)
+                .map(com.sni.bokaticowork.features.client.customer.model.Customer::getCustomerId)
+                .orElse(null);
     }
 
     private static String generateCheckInToken() {

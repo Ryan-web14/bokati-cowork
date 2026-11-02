@@ -281,6 +281,28 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         }
     }
 
+    /** Libelle et valeur de chaque identifiant fige · le NIU seul pour une facture plus ancienne. */
+    List<Map<String, String>> identifierLines(String identifiersJson, String customerNiu) {
+        List<Map<String, String>> lines = new ArrayList<>();
+        if (StringUtils.hasText(identifiersJson)) {
+            try {
+                for (JsonNode node : objectMapper.readTree(identifiersJson)) {
+                    String label = node.path("label").asText("");
+                    String value = node.path("value").asText("");
+                    if (StringUtils.hasText(value)) {
+                        lines.add(Map.of("label", StringUtils.hasText(label) ? label : "Identifiant", "value", value));
+                    }
+                }
+            } catch (Exception ex) {
+                log.warn("Identifiants du destinataire illisibles · non imprimes : {}", ex.getMessage());
+            }
+        }
+        if (lines.isEmpty() && StringUtils.hasText(customerNiu)) {
+            lines.add(Map.of("label", "NIU", "value", customerNiu.trim()));
+        }
+        return lines;
+    }
+
     private String renderHtml(BillingDocumentResponse document) {
         if (BillingDocumentType.CREDIT_NOTE.equals(document.documentType())) {
             return renderCreditNoteHtml(document);
@@ -292,7 +314,33 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         context.setVariable("qrCode", generateQrCode(document));
         context.setVariable("payments", fetchPaymentInfos(document.documentNumber()));
         context.setVariable("logo", brandLogo.base64());
+        // Les identifiants saisis sur la fiche de l'organisation et sa mention d'exoneration,
+        // figes a l'emission · seuls ceux-la s'impriment.
+        documentRepository.findByDocumentNumber(document.documentNumber()).ifPresent(entity -> {
+            context.setVariable("customerIdentifiers", identifierLines(entity.getCustomerIdentifiersJson(), entity.getCustomerNiu()));
+            context.setVariable("customerVatExemptionNote", entity.getCustomerVatExemptionNote());
+            context.setVariable("usageAnnex", usageAnnex(entity.getUsageAnnexJson(), document.documentNumber()));
+            // Organisation reliee des l'emission · imprimee en tete. Une facture reliee apres coup
+            // (ATTACHED) ne change pas : son document emis ne portait pas l'organisation.
+            if ("AT_ISSUE".equals(entity.getCompanyLinkSource()) && StringUtils.hasText(entity.getCompanyName())) {
+                context.setVariable("companyName", entity.getCompanyName());
+                context.setVariable("companyIdentifiers", identifierLines(entity.getCompanyIdentifiersJson(), null));
+            }
+        });
         return templateEngine.process("billing/document", context);
+    }
+
+    /** L'annexe figee a la creation · une annexe illisible ne fait pas echouer le PDF, il sort sans. */
+    private com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex usageAnnex(String json, String documentNumber) {
+        if (!StringUtils.hasText(json)) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(json, com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.class);
+        } catch (Exception ex) {
+            log.warn("Facture {} · annexe de consommation illisible, imprimee sans : {}", documentNumber, ex.getMessage());
+            return null;
+        }
     }
 
     private String renderCreditNoteHtml(BillingDocumentResponse document) {

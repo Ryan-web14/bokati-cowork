@@ -148,7 +148,7 @@ public class SubscriptionTerminationService {
                 "Préavis de résiliation · effet le " + preview.effectiveDate(), actor);
         subscriptionRepository.save(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.TERMINATION_REQUESTED,
-                "{\"code\":\"" + saved.getTerminationCode() + "\",\"effectiveDate\":\"" + saved.getEffectiveDate() + "\",\"fee\":" + saved.getFeeAmount().toPlainString() + "}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("code", saved.getTerminationCode(), "effectiveDate", saved.getEffectiveDate(), "fee", saved.getFeeAmount()));
         notify(saved, "SUBSCRIPTION_TERMINATION_REQUESTED", "Votre demande de résiliation " + saved.getTerminationCode());
         log.info("Abonnement {} · preavis {} pose, effet le {}, frais {}", subscription.getSubscriptionNumber(),
                 saved.getTerminationCode(), saved.getEffectiveDate(), saved.getFeeAmount());
@@ -193,7 +193,7 @@ public class SubscriptionTerminationService {
             termination.setBridgingBillableNumber(billable);
         }
         eventWriter.writeEvent(subscription, SubscriptionEventType.TERMINATION_ACCEPTED,
-                "{\"code\":\"" + termination.getTerminationCode() + "\",\"fee\":" + fee.toPlainString() + ",\"bridging\":" + bridging.toPlainString() + "}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("code", termination.getTerminationCode(), "fee", fee, "bridging", bridging));
         notify(termination, "SUBSCRIPTION_TERMINATION_ACCEPTED", "Résiliation acceptée · effet le " + termination.getEffectiveDate());
         return terminationRepository.save(termination);
     }
@@ -218,7 +218,7 @@ public class SubscriptionTerminationService {
             statusManager.changeStatus(subscription, SubscriptionStatus.ACTIVE, "Préavis retiré", actor);
             subscriptionRepository.save(subscription);
         }
-        eventWriter.writeEvent(subscription, SubscriptionEventType.TERMINATION_RETRACTED, "{\"code\":\"" + terminationCode + "\"}");
+        eventWriter.writeEvent(subscription, SubscriptionEventType.TERMINATION_RETRACTED, com.sni.bokaticowork.core.utils.json.JsonPayload.of("code", terminationCode));
         return terminationRepository.save(termination);
     }
 

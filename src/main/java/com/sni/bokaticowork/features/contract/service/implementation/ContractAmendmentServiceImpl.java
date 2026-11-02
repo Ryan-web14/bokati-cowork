@@ -92,7 +92,7 @@ public class ContractAmendmentServiceImpl implements ContractAmendmentService {
         auditEventService.record(contractCode, amendment.getCode(), "AMENDMENT_PROPOSED",
                 proposedBy, "USER", null,
                 "Avenant proposé : " + request.getDescription(),
-                "{\"amendmentCode\":\"" + amendment.getCode() + "\"}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("amendmentCode", amendment.getCode()));
         return toResponse(amendment);
     }
 
@@ -175,10 +175,10 @@ public class ContractAmendmentServiceImpl implements ContractAmendmentService {
                 ? request.getJustification() : "Avenant signé et appliqué";
         auditEventService.record(amendment.getOriginalContractCode(), amendmentCode,
                 "AMENDMENT_SIGNED", actorId, "USER", null, justification,
-                "{\"amendmentCode\":\"" + amendmentCode + "\",\"signedAt\":\"" + now + "\"}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("amendmentCode", amendmentCode, "signedAt", String.valueOf(now)));
         auditEventService.record(amendment.getOriginalContractCode(), null,
                 "CONTRACT_AMENDED", actorId, "USER", null, justification,
-                "{\"amendmentCode\":\"" + amendmentCode + "\",\"previousStatus\":\"ACTIVE\"}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("amendmentCode", amendmentCode, "previousStatus", "ACTIVE"));
         return toResponse(amendment);
     }
 

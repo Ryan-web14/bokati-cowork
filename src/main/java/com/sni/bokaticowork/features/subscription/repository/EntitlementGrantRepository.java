@@ -208,6 +208,45 @@ public interface EntitlementGrantRepository extends JpaRepository<EntitlementGra
                                                               @Param("resourceGroupCode") String resourceGroupCode,
                                                               @Param("now") Instant now);
 
+    /** Le droit utilisable d'un pass donne pour la ressource · le pass d'une organisation, pour un beneficiaire. */
+    @Query(nativeQuery = true, value = """
+            SELECT eg.*
+            FROM entitlement_grant eg
+            JOIN entitlement_definition ed ON ed.id = eg.entitlement_definition_id
+            JOIN subscription_pass sp ON sp.id = eg.pass_id
+            LEFT JOIN resource_type rt ON rt.id = ed.resource_type_id
+            LEFT JOIN resource_group rg ON rg.id = ed.resource_group_id
+            WHERE eg.pass_id = :passId
+              AND eg.owner_type = sp.owner_type
+              AND eg.owner_code = sp.owner_code
+              AND eg.status = 'ACTIVE'
+              AND eg.valid_from <= :now
+              AND (eg.valid_until IS NULL OR eg.valid_until >= :now)
+              AND (eg.unlimited = true OR eg.quantity_remaining > 0)
+              AND sp.status = 'ACTIVE'
+              AND sp.valid_from <= :now
+              AND (sp.valid_until IS NULL OR sp.valid_until >= :now)
+              AND (sp.max_uses IS NULL OR sp.used_count < sp.max_uses)
+              AND ed.active = true
+              AND ed.deleted = false
+              AND (ed.resource_type_id IS NULL OR rt.code = :resourceTypeCode)
+              AND (ed.resource_group_id IS NULL OR rg.code = :resourceGroupCode)
+            ORDER BY
+              CASE WHEN ed.resource_group_id IS NULL THEN 0 ELSE 2 END DESC,
+              CASE WHEN ed.resource_type_id IS NULL THEN 0 ELSE 1 END DESC,
+              eg.priority ASC,
+              eg.valid_until ASC NULLS LAST,
+              eg.created_at ASC
+            LIMIT 1
+            """)
+    Optional<EntitlementGrant> findUsableGrantOnPassForResource(@Param("passId") Long passId,
+                                                                @Param("resourceTypeCode") String resourceTypeCode,
+                                                                @Param("resourceGroupCode") String resourceGroupCode,
+                                                                @Param("now") Instant now);
+
+    @Query(nativeQuery = true, value = "SELECT * FROM entitlement_grant WHERE pass_id = :passId ORDER BY created_at ASC")
+    List<EntitlementGrant> findAllByPassId(@Param("passId") Long passId);
+
     @Query(nativeQuery = true, value = """
             SELECT eg.*
             FROM entitlement_grant eg

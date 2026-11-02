@@ -39,6 +39,7 @@ class SubscriberAccessTest {
     @Mock private SubscriptionRepository subscriptionRepository;
     @Mock private ResourceAvailabilityService availabilityService;
     @Mock private com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository memberRepository;
+    @Mock private com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository linkRepository;
     @InjectMocks private SubscriberAccess access;
 
     private Member member;
@@ -100,5 +101,16 @@ class SubscriberAccessTest {
 
         assertThatCode(() -> access.assertMayBook(member, "RES-1", EVENING, EVENING.plusHours(1)))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("L'abonnement d'une organisation de rattachement couvre le membre")
+    void linkedCompanySubscriptionCounts() {
+        when(memberRepository.findCustomerIdByMemberId("MBR-1")).thenReturn(java.util.Optional.of("CUS-PERSO"));
+        when(linkRepository.findActiveCompanyCodes("MBR-1")).thenReturn(List.of("CUS-COM-9"));
+        when(subscriptionRepository.findAllCurrentActive(eq("CUSTOMER"), eq("CUS-COM-9"), any()))
+                .thenReturn(List.of(new com.sni.bokaticowork.features.subscription.subscription.model.Subscription()));
+
+        org.assertj.core.api.Assertions.assertThat(access.isSubscriber(member)).isTrue();
     }
 }

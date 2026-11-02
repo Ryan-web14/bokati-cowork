@@ -73,6 +73,11 @@ public class SecurityConfig {
                                 .maxAgeInSeconds(31536000)))
                 .authorizeHttpRequests(auth -> {
                         auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                        // Le renvoi interne vers /error apres une erreur ne porte plus d'authentification
+                        // (API sans session) : refuse, il transformait toute erreur, 404 ou 500 compris,
+                        // en 401 « Authentication is required ». La reponse d'erreur de Spring n'expose
+                        // ni message ni trace ; seul le vrai statut revient au client.
+                        auth.dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll();
                         // Token-gated, view-only document preview reachable without a bearer so
                         // browsers can load images directly (<img src>). The endpoint itself
                         // requires a valid signed ?token= (see /preview-token); plain /preview and

@@ -44,8 +44,29 @@ public record CreateBookingRequest(
         String notes,
         String metadataJson,
         ResourceBookingUnit bookingUnit,
-        @Valid List<BookingParticipantRequest> participants
+        @Valid List<BookingParticipantRequest> participants,
+        /**
+         * L'organisation pour le compte de laquelle le membre reserve · le choix « pour
+         * l'organisation » du mode au choix. Vide : la facture suit le mode du rattachement.
+         */
+        String billingCompanyCode
 ) {
+        @com.fasterxml.jackson.annotation.JsonCreator
+        public CreateBookingRequest {
+        }
+
+        /** Sans organisation choisie · la facture suit le mode du rattachement du membre. */
+        public CreateBookingRequest(String resourceCode, String memberId, String customerId, String businessCode,
+                                    String email, String phone, Boolean walkIn, String contactName, String contactEmail,
+                                    String contactPhone, String idempotencyKey, String holdNumber, LocalDateTime startedAt,
+                                    LocalDateTime endedAt, Integer quantity, BookingPaymentMode paymentMode,
+                                    Boolean confirmImmediately, Boolean sendEmail, String notes, String metadataJson,
+                                    ResourceBookingUnit bookingUnit, List<BookingParticipantRequest> participants) {
+                this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
+                        contactPhone, idempotencyKey, holdNumber, startedAt, endedAt, quantity, paymentMode,
+                        confirmImmediately, sendEmail, notes, metadataJson, bookingUnit, participants, null);
+        }
+
         public BookingIdentityLookup identityLookup() {
                 return new BookingIdentityLookup(memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail, contactPhone);
         }

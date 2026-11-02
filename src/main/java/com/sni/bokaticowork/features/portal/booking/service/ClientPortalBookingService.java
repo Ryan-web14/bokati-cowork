@@ -91,7 +91,9 @@ public class ClientPortalBookingService {
                 // Aucune unite imposee : cote client, le tarif se deduit de la duree, point.
                 // ClientCreateBookingRequest ne porte volontairement aucun champ correspondant.
                 null,
-                request.getParticipants()
+                request.getParticipants(),
+                // « Pour mon organisation » · le membre doit y etre rattache, sinon refus.
+                request.getBillingCompanyCode()
         );
         return toDetailResponse(bookingService.create(req));
     }
@@ -146,11 +148,12 @@ public class ClientPortalBookingService {
                 null,
                 null,
                 null,
-                null,
+                request.getPaymentMode(),
                 request.getStartedAt(),
                 request.getEndedAt(),
                 request.getQuantity(),
-                null
+                null,
+                request.getBillingCompanyCode()
         );
         BookingAvailabilityResponse result = bookingAvailabilityService.check(req);
         if (result.available() && subscriberAccess.isDenied(member, request.getResourceCode(),

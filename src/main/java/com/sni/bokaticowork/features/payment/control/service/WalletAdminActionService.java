@@ -110,7 +110,7 @@ public class WalletAdminActionService {
                 .reference(trim(request.reference()))
                 .reason(request.reason().trim())
                 .requestedBy(requestedBy.trim())
-                .payloadJson(request.until() == null ? null : "{\"until\":\"" + request.until() + "\"}")
+                .payloadJson(request.until() == null ? null : com.sni.bokaticowork.core.utils.json.JsonPayload.of("until", String.valueOf(request.until())))
                 .build();
 
         if (requiresSecondApproval(wallet, request)) {

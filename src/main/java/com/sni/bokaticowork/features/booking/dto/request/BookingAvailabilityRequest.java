@@ -26,8 +26,23 @@ public record BookingAvailabilityRequest(
         @Min(1) Integer quantity,
 
         /** Voir {@link CreateBookingRequest#bookingUnit()} · ici pour que le devis annonce ce qui sera facture. */
-        ResourceBookingUnit bookingUnit
+        ResourceBookingUnit bookingUnit,
+
+        /**
+         * L'organisation pour laquelle le membre reserve · voir {@link CreateBookingRequest#billingCompanyCode()}.
+         * Sert au choix de la place ou du pass d'organisation quand il en a plusieurs.
+         */
+        String billingCompanyCode
 ) {
+        public BookingAvailabilityRequest(String resourceCode, String memberId, String customerId, String businessCode,
+                                          String email, String phone, Boolean walkIn, String contactName,
+                                          String contactEmail, String contactPhone, BookingPaymentMode paymentMode,
+                                          LocalDateTime startedAt, LocalDateTime endedAt, Integer quantity,
+                                          ResourceBookingUnit bookingUnit) {
+                this(resourceCode, memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail,
+                        contactPhone, paymentMode, startedAt, endedAt, quantity, bookingUnit, null);
+        }
+
         public BookingIdentityLookup identityLookup() {
                 return new BookingIdentityLookup(memberId, customerId, businessCode, email, phone, walkIn, contactName, contactEmail, contactPhone);
         }

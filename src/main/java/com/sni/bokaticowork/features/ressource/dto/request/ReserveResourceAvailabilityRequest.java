@@ -25,6 +25,17 @@ public class ReserveResourceAvailabilityRequest {
     @NotNull
     private Integer quantity;
 
+    /**
+     * Reservation de l'equipe hors preavis · creneaux du jour ou passes et restes libres. Interne :
+     * jamais lu dans un corps de requete, seule la reservation le pose.
+     */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private boolean staffOverride;
+
+    public ReserveResourceAvailabilityRequest(String resourceCode, LocalDateTime startedAt, LocalDateTime endedAt, Integer quantity) {
+        this(resourceCode, startedAt, endedAt, quantity, false);
+    }
+
     public static ReserveResourceAvailabilityRequestBuilder builder() {
         return new ReserveResourceAvailabilityRequestBuilder();
     }
@@ -34,6 +45,12 @@ public class ReserveResourceAvailabilityRequest {
         private LocalDateTime startedAt;
         private LocalDateTime endedAt;
         private Integer quantity;
+        private boolean staffOverride;
+
+        public ReserveResourceAvailabilityRequestBuilder staffOverride(boolean staffOverride) {
+            this.staffOverride = staffOverride;
+            return this;
+        }
 
         public ReserveResourceAvailabilityRequestBuilder resourceCode(String resourceCode) {
             this.resourceCode = resourceCode;
@@ -56,7 +73,7 @@ public class ReserveResourceAvailabilityRequest {
         }
 
         public ReserveResourceAvailabilityRequest build() {
-            return new ReserveResourceAvailabilityRequest(resourceCode, startedAt, endedAt, quantity);
+            return new ReserveResourceAvailabilityRequest(resourceCode, startedAt, endedAt, quantity, staffOverride);
         }
     }
 }

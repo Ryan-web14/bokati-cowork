@@ -129,6 +129,44 @@ public class BillingCalculationService {
         );
     }
 
+    /**
+     * Les lignes d'une facture pour une organisation exoneree de TVA · sans TVA ni centime.
+     *
+     * <p>Un prix saisi TTC est d'abord ramene a son HT : l'organisation exoneree paie le prix hors
+     * taxe, pas le prix TTC rebaptise HT. Un prix saisi HT reste tel quel. Les lignes deja non
+     * taxables ne changent pas.</p>
+     */
+    public List<CreateBillingDocumentLineRequest> exempted(List<CreateBillingDocumentLineRequest> lines) {
+        if (lines == null) {
+            return null;
+        }
+        BillingTaxRuleResolver.TaxProfile taxProfile = taxRuleResolver.defaultTaxProfile();
+        List<CreateBillingDocumentLineRequest> exempted = new ArrayList<>();
+        for (CreateBillingDocumentLineRequest line : lines) {
+            boolean taxable = line.taxable() == null || line.taxable();
+            if (!taxable) {
+                exempted.add(line);
+                continue;
+            }
+            BigDecimal unitPrice = line.unitPrice();
+            BigDecimal discountAmount = line.discountAmount();
+            if (Boolean.TRUE.equals(line.taxIncluded())) {
+                BigDecimal factor = taxFactor(
+                        line.vatRate() == null ? taxProfile.vatRate() : line.vatRate(),
+                        line.additionalCentRate() == null ? taxProfile.additionalCentRate() : line.additionalCentRate());
+                unitPrice = unitPrice == null ? null : money(unitPrice.divide(factor, 8, RoundingMode.HALF_UP));
+                discountAmount = discountAmount == null ? null : money(discountAmount.divide(factor, 8, RoundingMode.HALF_UP));
+            }
+            exempted.add(new CreateBillingDocumentLineRequest(
+                    line.lineOrder(), line.lineType(), line.itemCode(), line.description(), line.detailedDescription(),
+                    line.quantity(), unitPrice, line.discountRate(), discountAmount,
+                    Boolean.FALSE, Boolean.FALSE, null, null,
+                    line.sourceType(), line.sourceCode(), line.unit(), line.externalReference(), line.notes(),
+                    line.optional(), line.category()));
+        }
+        return exempted;
+    }
+
     /** Valeurs reprises du catalogue quand la ligne ne les precise pas. */
     private record CatalogDefaults(String category, String unit) {
         static final CatalogDefaults NONE = new CatalogDefaults(null, null);

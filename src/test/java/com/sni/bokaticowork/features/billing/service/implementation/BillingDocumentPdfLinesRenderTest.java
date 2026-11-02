@@ -64,6 +64,11 @@ class BillingDocumentPdfLinesRenderTest {
     }
 
     private String render(List<BillingDocumentLineResponse> lines) {
+        return render(lines, null);
+    }
+
+    private String render(List<BillingDocumentLineResponse> lines,
+                          com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex annex) {
         BigDecimal total = new BigDecimal("25000");
         BillingDocumentResponse document = new BillingDocumentResponse(
                 "INV-2026-000042", BillingDocumentType.INVOICE, BillingDocumentStatus.SENT,
@@ -80,7 +85,8 @@ class BillingDocumentPdfLinesRenderTest {
                 null, null, null, null,
                 null, null, null,
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT),
-                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT, total, total));
+                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, BillingDocumentStatus.SENT, total, total),
+                null, null, null);
 
         Context context = new Context(Locale.FRANCE);
         context.setVariable("document", document);
@@ -90,6 +96,7 @@ class BillingDocumentPdfLinesRenderTest {
         context.setVariable("qrCode", null);
         context.setVariable("payments", List.of());
         context.setVariable("logo", null);
+        context.setVariable("usageAnnex", annex);
         return engine.process("billing/document", context);
     }
 
@@ -131,6 +138,43 @@ class BillingDocumentPdfLinesRenderTest {
 
         // 30 000 / 3 = 10 000 HT l'unite, et le brut affiche reste 30 000.
         assertThat(linesBlockOf(html)).contains("10 000").contains("30 000");
+    }
+
+    @Test
+    @DisplayName("L'annexe de consommation s'imprime en page séparée, collaborateur par collaborateur")
+    void theUsageAnnexIsPrinted() throws Exception {
+        var annex = new com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex(
+                "Consommation par collaborateur", "SUB-ACME", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31), "XAF",
+                List.of(new com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.Row(
+                        "MBR-1", "Jean Mbemba", "SALLE_H", "Salle de réunion", "HOUR",
+                        new BigDecimal("5"), new BigDecimal("4"), new BigDecimal("9"), new BigDecimal("2"), new BigDecimal("10000"))));
+        // Figee en JSON a la creation, relue a l'impression · le passage aller-retour ne perd rien.
+        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+        var reread = mapper.readValue(mapper.writeValueAsString(annex),
+                com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.class);
+        assertThat(reread).isEqualTo(annex);
+
+        String html = render(List.of(line(1, "Abonnement Équipe", "1", "100000", "84746", true)), reread);
+
+        assertThat(html).contains("Annexe · Consommation par collaborateur").contains("Jean Mbemba")
+                .contains("Salle de réunion").contains("Sa part").contains("page-break-before");
+        assertThat(render(List.of(line(1, "Bureau", "1", "10000", "10000", true)))).doesNotContain("Annexe ·");
+    }
+
+    @Test
+    @DisplayName("Annexe d'un pass : ni part, ni pot, ni dépassement, seul le total pris")
+    void thePassAnnexShowsTotalsOnly() {
+        var annex = new com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex(
+                "Consommation par collaborateur", "PAS-ACME", LocalDate.of(2026, 10, 1), LocalDate.of(2026, 10, 31), "XAF",
+                List.of(new com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.Row(
+                        "MBR-1", "Jean Mbemba", "SALLE_H", "Salle de réunion", "HOUR",
+                        BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("6"), BigDecimal.ZERO, BigDecimal.ZERO)),
+                com.sni.bokaticowork.features.billing.service.support.InvoiceUsageAnnex.KIND_PASS);
+
+        String html = render(List.of(line(1, "Pass Carnet", "1", "50000", "42373", true)), annex);
+
+        assertThat(html).contains("Pass PAS-ACME").contains("Jean Mbemba").contains("Total pris")
+                .doesNotContain("Sa part").doesNotContain("Montant dépassé");
     }
 
     private SpringTemplateEngine engine() {

@@ -28,10 +28,25 @@ public class BookingPaymentContextResolver {
     private final EntitlementGrantRepository grantRepository;
     private final @Lazy EntitlementService entitlementService;
     private final BookingOverageGuard overageGuard;
+    private final com.sni.bokaticowork.features.company.sharing.service.CompanySeatLocator seatLocator;
+    private final com.sni.bokaticowork.features.company.sharing.service.CompanyPassLocator passLocator;
 
     public BookingPaymentContext resolve(BookingPaymentMode paymentMode,
                                          BookingIdentityResolver.ResolvedBookingIdentity identity,
                                          Resource resource) {
+        return resolve(paymentMode, identity, resource, null);
+    }
+
+    /**
+     * Le contexte de paiement · d'abord les droits du titulaire, puis ceux des organisations ou un
+     * membre occupe une place.
+     *
+     * @param requestedCompanyCode l'organisation choisie a la reservation, {@code NONE} pour aucune
+     */
+    public BookingPaymentContext resolve(BookingPaymentMode paymentMode,
+                                         BookingIdentityResolver.ResolvedBookingIdentity identity,
+                                         Resource resource,
+                                         String requestedCompanyCode) {
         if (paymentMode == null || paymentMode.isPayable()) {
             return BookingPaymentContext.direct();
         }
@@ -47,9 +62,6 @@ public class BookingPaymentContextResolver {
 
         if (paymentMode == BookingPaymentMode.SUBSCRIPTION) {
             List<Subscription> subscriptions = subscriptionRepository.findAllCurrentActive(ownerType, ownerCode, LocalDate.now());
-            if (subscriptions.isEmpty()) {
-                throw new ResourceNotFoundException("No active subscription found for booking owner");
-            }
             for (Subscription subscription : subscriptions) {
                 Optional<EntitlementGrant> grant = usableSubscriptionGrant(ownerType, ownerCode, subscription, resourceTypeCode, resourceGroupCode, now);
                 if (grant.isPresent()) {
@@ -58,6 +70,25 @@ public class BookingPaymentContextResolver {
                             null,
                             grant.get().getEntitlementDefinition().getCode()
                     );
+                }
+            }
+            // Les places du membre sur l'abonnement d'une organisation · consultees seulement quand
+            // ses propres droits ne couvrent pas la reservation. Les lire avant faisait demander le
+            // choix d'une organisation a un membre que son propre abonnement couvrait.
+            List<com.sni.bokaticowork.features.subscription.seat.model.SubscriptionSeat> seats =
+                    seatLocator != null && identity.ownerType() == com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.MEMBER
+                            ? seatLocator.usableSeats(ownerCode, requestedCompanyCode)
+                            : List.of();
+            if (subscriptions.isEmpty() && seats.isEmpty()) {
+                throw new ResourceNotFoundException("No active subscription found for booking owner");
+            }
+            for (var seat : seats) {
+                Subscription subscription = seat.getSubscription();
+                String companyCode = subscription.getSubscriberCode();
+                Optional<EntitlementGrant> grant = usableSubscriptionGrant(subscription.getSubscriberType().name(), companyCode,
+                        subscription, resourceTypeCode, resourceGroupCode, now);
+                if (grant.isPresent()) {
+                    return BookingPaymentContext.seat(subscription, seat, grant.get().getEntitlementDefinition().getCode());
                 }
             }
 
@@ -77,6 +108,16 @@ public class BookingPaymentContextResolver {
                     return new BookingPaymentContext(subscription.getSubscriptionNumber(), null, entitlementCode);
                 }
             }
+            for (var seat : seats) {
+                Subscription subscription = seat.getSubscription();
+                Optional<EntitlementGrant> exhausted = grantRepository.findSubscriptionGrantIgnoringBalance(
+                        subscription.getSubscriberType().name(), subscription.getSubscriberCode(), subscription.getId(),
+                        resourceTypeCode, resourceGroupCode, now);
+                if (exhausted.isPresent()
+                        && overageGuard.allows(subscription.getPlanVersion(), exhausted.get().getEntitlementDefinition().getCode())) {
+                    return BookingPaymentContext.seat(subscription, seat, exhausted.get().getEntitlementDefinition().getCode());
+                }
+            }
 
             throw new ResourceNotFoundException(
                     "No active subscription with a matching entitlement found for resource type="
@@ -85,14 +126,29 @@ public class BookingPaymentContextResolver {
         }
 
         if (paymentMode == BookingPaymentMode.PASS) {
-            EntitlementGrant grant = grantRepository.findUsablePassGrantForResource(
-                            ownerType, ownerCode, resourceTypeCode, resourceGroupCode, now)
-                    .orElseThrow(() -> new ResourceNotFoundException("No usable pass entitlement found for this resource"));
-            return new BookingPaymentContext(
-                    null,
-                    grant.getPass().getPassNumber(),
-                    grant.getEntitlementDefinition().getCode()
-            );
+            Optional<EntitlementGrant> own = grantRepository.findUsablePassGrantForResource(
+                    ownerType, ownerCode, resourceTypeCode, resourceGroupCode, now);
+            if (own.isPresent()) {
+                return new BookingPaymentContext(
+                        null,
+                        own.get().getPass().getPassNumber(),
+                        own.get().getEntitlementDefinition().getCode()
+                );
+            }
+            // Puis les passes d'une organisation dont le membre est beneficiaire · le droit est
+            // decompte chez elle.
+            if (passLocator != null && identity.ownerType() == com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.MEMBER) {
+                for (var access : passLocator.usableAccesses(ownerCode, requestedCompanyCode)) {
+                    var pass = access.getPass();
+                    Optional<EntitlementGrant> grant = grantRepository.findUsableGrantOnPassForResource(
+                            pass.getId(), resourceTypeCode, resourceGroupCode, now);
+                    if (grant.isPresent()) {
+                        return new BookingPaymentContext(null, pass.getPassNumber(),
+                                grant.get().getEntitlementDefinition().getCode(), pass.getOwnerType(), pass.getOwnerCode(), null);
+                    }
+                }
+            }
+            throw new ResourceNotFoundException("No usable pass entitlement found for this resource");
         }
 
         throw new BadRequestException("Unsupported booking payment mode");
@@ -115,13 +171,40 @@ public class BookingPaymentContextResolver {
                 ownerType, ownerCode, subscription.getId(), resourceTypeCode, resourceGroupCode, Instant.now());
     }
 
+    /**
+     * @param entitlementOwnerType titulaire du droit quand ce n'est pas celui de la reservation · l'organisation
+     * @param seatId               la place du membre sur l'abonnement de l'organisation
+     */
     public record BookingPaymentContext(
             String subscriptionNumber,
             String passNumber,
-            String entitlementCode
+            String entitlementCode,
+            com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType entitlementOwnerType,
+            String entitlementOwnerCode,
+            Long seatId
     ) {
+        public BookingPaymentContext(String subscriptionNumber, String passNumber, String entitlementCode) {
+            this(subscriptionNumber, passNumber, entitlementCode, null, null, null);
+        }
+
         public static BookingPaymentContext direct() {
             return new BookingPaymentContext(null, null, null);
+        }
+
+        static BookingPaymentContext seat(Subscription subscription,
+                                          com.sni.bokaticowork.features.subscription.seat.model.SubscriptionSeat seat,
+                                          String entitlementCode) {
+            return new BookingPaymentContext(subscription.getSubscriptionNumber(), null, entitlementCode,
+                    subscription.getSubscriberType(), subscription.getSubscriberCode(), seat.getId());
+        }
+
+        public boolean onSeat() {
+            return seatId != null;
+        }
+
+        /** Le droit est-il celui d'une organisation · place sur son abonnement, ou pass partage. */
+        public boolean forCompany() {
+            return entitlementOwnerCode != null;
         }
     }
 }

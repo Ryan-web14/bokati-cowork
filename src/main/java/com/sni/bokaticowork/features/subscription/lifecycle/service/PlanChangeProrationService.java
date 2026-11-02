@@ -103,8 +103,8 @@ public class PlanChangeProrationService {
             }
         }
         eventWriter.writeEvent(subscription, SubscriptionEventType.PLAN_CHANGED,
-                "{\"change\":\"" + change.getChangeNumber() + "\",\"policy\":\"" + preview.policy() + "\",\"amount\":" + preview.amount().toPlainString()
-                        + ",\"credit\":" + preview.credit() + "}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("change", change.getChangeNumber(), "policy", String.valueOf(preview.policy()),
+                        "amount", preview.amount(), "credit", preview.credit()));
         log.info("Abonnement {} · changement {} applique · prorata {} {} {}", subscription.getSubscriptionNumber(), change.getChangeNumber(),
                 preview.policy(), preview.amount(), preview.credit() ? "crédité" : "facturé");
         return preview;

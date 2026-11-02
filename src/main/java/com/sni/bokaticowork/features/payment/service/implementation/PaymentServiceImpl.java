@@ -405,7 +405,7 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             return objectMapper.writeValueAsString(meta);
         } catch (JsonProcessingException ex) {
-            return "{\"operator\":\"" + request.correspondent().providerCode() + "\"}";
+            return com.sni.bokaticowork.core.utils.json.JsonPayload.of("operator", request.correspondent().providerCode());
         }
     }
 
@@ -734,7 +734,7 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             return objectMapper.writeValueAsString(payload);
         } catch (JsonProcessingException ex) {
-            return "{\"recovery\":true}";
+            return com.sni.bokaticowork.core.utils.json.JsonPayload.of("recovery", true);
         }
     }
 
@@ -938,7 +938,7 @@ public class PaymentServiceImpl implements PaymentService {
         try {
             return objectMapper.writeValueAsString(Map.of("originalTransactionNumber", originalTransactionNumber));
         } catch (JsonProcessingException e) {
-            return "{\"originalTransactionNumber\":\"" + originalTransactionNumber + "\"}";
+            return com.sni.bokaticowork.core.utils.json.JsonPayload.of("originalTransactionNumber", originalTransactionNumber);
         }
     }
 

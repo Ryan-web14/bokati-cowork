@@ -28,6 +28,7 @@ import com.sni.bokaticowork.features.billing.dto.response.CustomerStatementRespo
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceStatus;
 import com.sni.bokaticowork.features.billing.enums.BillingAdvanceType;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
+import com.sni.bokaticowork.features.billing.service.support.BillingReceivables;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.enums.BillingLineType;
 import com.sni.bokaticowork.features.billing.model.BillingDocumentAdvance;
@@ -127,6 +128,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @org.springframework.beans.factory.annotation.Value("${bokati.billing.default-currency:XAF}")
     private String defaultCurrency;
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
+    private final com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver billingCompanyResolver;
+    private final com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile organizationProfile;
     private final BillingNumberingSupport numberingSupport;
     private final BillingDocumentWriter documentWriter;
     private final BillingLifecycleSupport lifecycleSupport;
@@ -141,6 +144,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final FiscalHashService fiscalHashService;
     private final FiscalSignatureService fiscalSignatureService;
     private final MemberInAppNotifier memberInAppNotifier;
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.service.support.InvoiceAnnexProvider> annexProviders;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -186,6 +190,48 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 blocked);
     }
 
+    /**
+     * Refuse une facture qui ferait depasser a l'organisation son plafond d'encours.
+     *
+     * <p>Seul un super-administrateur passe outre · c'est une decision de credit, pas une erreur
+     * de saisie, et elle doit etre prise par quelqu'un qui en repond.</p>
+     */
+    private static void ensureNotBlocked(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
+                                         boolean claim) {
+        if (organization != null && claim && organization.blocked()) {
+            throw new BadRequestException("L'organisation " + organization.customerName() + " est bloquée"
+                    + (organization.blockedReason() == null ? "" : " : " + organization.blockedReason())
+                    + ". Aucune facture ne peut lui être émise tant qu'elle n'est pas débloquée.");
+        }
+    }
+
+    private void ensureWithinCreditLimit(com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile.Terms organization,
+                                         BigDecimal amount) {
+        if (organization.creditLimit() == null || isSuperAdmin()) {
+            return;
+        }
+        java.util.Set<BillingDocumentStatus> excluded = java.util.EnumSet.noneOf(BillingDocumentStatus.class);
+        excluded.addAll(BillingReceivables.NOT_ISSUED);
+        excluded.addAll(BillingReceivables.SETTLED);
+        // L'encours de l'organisation compte aussi les factures de ses membres qui lui sont reliees.
+        BigDecimal outstanding = documentRepository.sumCompanyOutstanding(organization.customerCode(),
+                BillingReceivables.RECEIVABLE_TYPES, excluded);
+        BigDecimal after = outstanding.add(amount == null ? BigDecimal.ZERO : amount);
+        if (after.compareTo(organization.creditLimit()) > 0) {
+            throw new BadRequestException("Plafond d'encours dépassé pour " + organization.customerName()
+                    + " : encours " + outstanding.stripTrailingZeros().toPlainString()
+                    + ", plafond " + organization.creditLimit().stripTrailingZeros().toPlainString()
+                    + ". Un super-administrateur peut émettre la facture malgré tout.");
+        }
+    }
+
+    private boolean isSuperAdmin() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_SUPER_ADMIN".equals(a.getAuthority()) || "SUPER_ADMIN".equals(a.getAuthority()));
+    }
+
     /** Auteur d'une derogation · le nom du principal, ou SYSTEM hors contexte authentifie. */
     private String currentUserName() {
         var authentication = org.springframework.security.core.context.SecurityContextHolder
@@ -226,8 +272,38 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     @Override
     public BillingDocumentResponse create(CreateBillingDocumentRequest request) {
         BillingCustomerSnapshotResolver.CustomerSnapshot customer = customerSnapshotResolver.resolve(request);
-        BillingCalculationService.CalculatedDocument calculation = calculationService.calculate(request.lines(), request.discounts());
+        var organization = customer.organization();
+        boolean claim = BillingReceivables.RECEIVABLE_TYPES.contains(request.documentType());
+        ensureNotBlocked(organization, claim);
+        // Une facture de membre peut etre emise pour le compte d'une organisation · selon le mode
+        // de son rattachement, ou le choix fait a la reservation. Elle compte alors dans son encours.
+        com.sni.bokaticowork.features.client.customer.model.Customer billingCompany = billingCompanyResolver
+                .resolve(customer.customerType(), customer.customerCode(), request.companyCustomerCode())
+                .orElse(null);
+        var companyTerms = billingCompany == null ? null : organizationProfile.of(billingCompany).orElse(null);
+        ensureNotBlocked(companyTerms, claim);
+        // Une organisation exoneree est facturee hors TVA, quel que soit le prix saisi.
+        List<CreateBillingDocumentLineRequest> lines = organization != null && organization.vatExempt()
+                ? calculationService.exempted(request.lines())
+                : request.lines();
+        BillingCalculationService.CalculatedDocument calculation = calculationService.calculate(lines, request.discounts());
+        if (organization != null && claim) {
+            ensureWithinCreditLimit(organization, calculation.totalAmount());
+        }
+        if (companyTerms != null && claim) {
+            ensureWithinCreditLimit(companyTerms, calculation.totalAmount());
+        }
         BillingDocument document = buildDocument(request, customer, calculation);
+        if (billingCompany != null) {
+            // L'organisation est imprimee en tete du destinataire, figee comme le reste.
+            document.setCompanyCustomerId(billingCompany.getId());
+            document.setCompanyCustomerCode(billingCompany.getCustomerId());
+            document.setCompanyName(billingCompany.getCompanyName());
+            document.setCompanyIdentifiersJson(companyTerms == null ? null : companyTerms.identifiersJson());
+            document.setCompanyLinkSource("AT_ISSUE");
+            document.setCompanyLinkedAt(java.time.Instant.now());
+            document.setCompanyLinkedBy(currentUserName());
+        }
         BillingDocument saved = documentWriter.save(document, calculation, request.discounts(), request.clauses(), request.advance());
         documentWriter.saveEarlyPaymentDiscount(saved, request.earlyPaymentDiscount());
         eventWriter.write(saved, "BILLING_DOCUMENT_CREATED", null);
@@ -600,16 +676,43 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 List.of(),
                 defaultInvoiceClauses(),
                 null, null, null, null,
-                null, null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null,
+                // Le choix « pour l'organisation » fait a la source (reservation) · vide, selon le mode.
+                firstItem.getBillingCompanyCode()
         );
         BillingDocumentResponse response = create(createRequest);
         BillingDocument invoice = serviceByNumber(response.documentNumber());
+        attachUsageAnnex(invoice, billableItems);
         billableItems.forEach(item -> {
             item.setInvoiceId(invoice.getId());
             item.setStatus(BillableItemStatus.INVOICED);
             billableItemRepository.save(item);
         });
         return mapper.toResponse(invoice);
+    }
+
+    /**
+     * L'annexe de consommation, figee sur le brouillon · elle est scellee avec la facture a
+     * l'emission. Une annexe qui echoue ne bloque pas la facture : elle sort sans.
+     */
+    private void attachUsageAnnex(BillingDocument invoice, List<BillableItem> items) {
+        try {
+            annexProviders.orderedStream()
+                    .map(provider -> provider.annexFor(items))
+                    .filter(java.util.Objects::nonNull)
+                    .filter(annex -> annex.rows() != null && !annex.rows().isEmpty())
+                    .findFirst()
+                    .ifPresent(annex -> {
+                        try {
+                            invoice.setUsageAnnexJson(objectMapper.writeValueAsString(annex));
+                            documentRepository.save(invoice);
+                        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+                            throw new IllegalStateException(ex);
+                        }
+                    });
+        } catch (RuntimeException ex) {
+            log.warn("Facture {} · annexe de consommation non jointe : {}", invoice.getDocumentNumber(), ex.getMessage());
+        }
     }
 
     @Override
@@ -1766,6 +1869,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // Le commercial reste vide quand personne n'est rattache. « SYSTEM » s'imprimait tel quel
         // sur la facture du client, en face du libelle « Commercial ».
         String salespersonCode = emptyToNull(request.salespersonCode());
+        var organization = customer.organization();
+        LocalDate issueDate = request.issueDate() == null ? LocalDate.now() : request.issueDate();
+        // L'echeance de la fiche s'applique quand la facture n'en fixe pas.
+        LocalDate dueDate = request.dueDate() != null ? request.dueDate()
+                : organization != null && organization.paymentTermsDays() != null
+                ? issueDate.plusDays(organization.paymentTermsDays()) : null;
         return BillingDocument.builder()
                 .documentNumber(documentNumber)
                 .documentType(request.documentType())
@@ -1791,8 +1900,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 .totalAmount(calculation.totalAmount())
                 .paidAmount(BigDecimal.ZERO)
                 .balanceDue(calculation.totalAmount())
-                .issueDate(request.issueDate() == null ? LocalDate.now() : request.issueDate())
-                .dueDate(request.dueDate())
+                .issueDate(issueDate)
+                .dueDate(dueDate)
+                // Seuls les identifiants saisis sur la fiche sont figes, et seuls ceux-la s'impriment.
+                .customerNiu(organization == null ? null : organization.niu())
+                .customerIdentifiersJson(organization == null ? null : organization.identifiersJson())
+                .customerVatExemptionNote(organization == null ? null : organization.vatExemptionNote())
                 .customerReference(customerReference)
                 .poNumber(poNumber)
                 .projectCode(projectCode)

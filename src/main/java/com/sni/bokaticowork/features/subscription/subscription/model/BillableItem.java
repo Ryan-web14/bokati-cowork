@@ -93,6 +93,10 @@ public class BillableItem {
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
 
+    /** L'organisation choisie a la source (reservation) · reprise par la facture. */
+    @Column(name = "billing_company_code", length = 300)
+    private String billingCompanyCode;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

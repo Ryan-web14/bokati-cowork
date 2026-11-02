@@ -102,7 +102,11 @@ public class SubscriptionOverageServiceImpl implements SubscriptionOverageServic
             return OverageBillingResult.none();
         }
 
-        Subscription subscription = subscriptionRepository.findCurrentActive(request.ownerType().name(), request.ownerCode().trim(), LocalDate.now())
+        // Le droit vient d'un abonnement designe (la place d'un collaborateur) · c'est sa politique
+        // qui s'applique, pas celle d'un autre abonnement de l'organisation.
+        Subscription subscription = (EntitlementOperationRequest.SCOPE_SUBSCRIPTION.equals(operation.scopeType())
+                ? subscriptionRepository.findBySubscriptionNumber(operation.scopeNumber())
+                : subscriptionRepository.findCurrentActive(request.ownerType().name(), request.ownerCode().trim(), LocalDate.now()))
                 .orElseThrow(() -> new ConflictException("entitlement", "insufficient balance and no active subscription for overage billing"));
         SubscriptionOveragePolicy policy = policyRepository.findActivePolicy(subscription.getPlanVersion().getId(), request.entitlementCode().trim())
                 .orElseThrow(() -> new ConflictException("entitlement", "insufficient balance and no overage policy"));
@@ -121,7 +125,12 @@ public class SubscriptionOverageServiceImpl implements SubscriptionOverageServic
                     operation.referenceType(),
                     operation.referenceId(),
                     operation.idempotencyKey() + ":PARTIAL",
-                    "partial entitlement consumption before overage"
+                    "partial entitlement consumption before overage",
+                    null,
+                    operation.beneficiaryType(),
+                    operation.beneficiaryCode(),
+                    operation.scopeType(),
+                    operation.scopeNumber()
             ));
         }
 
@@ -138,7 +147,9 @@ public class SubscriptionOverageServiceImpl implements SubscriptionOverageServic
                 .sourceId(request.referenceId().trim())
                 .subscriberType(request.ownerType())
                 .subscriberCode(request.ownerCode().trim())
-                .description("Usage overage - " + request.entitlementCode().trim())
+                // Le depassement d'une place est facture a l'organisation · la ligne nomme le collaborateur.
+                .description("Usage overage - " + request.entitlementCode().trim()
+                        + (StringUtils.hasText(request.beneficiaryCode()) ? " · " + request.beneficiaryCode().trim() : ""))
                 .amount(amount)
                 .currency(policy.getCurrency())
                 .status(BillableItemStatus.PENDING)
@@ -171,7 +182,7 @@ public class SubscriptionOverageServiceImpl implements SubscriptionOverageServic
                 .amount(result.billableItem().getAmount())
                 .currency(result.billableItem().getCurrency())
                 .build());
-        timelineService.write(result.subscription(), SubscriptionTimelineEventType.OVERAGE_BILLED, "USAGE", usage.getUsageNumber(), "Overage billed", usage.getEntitlementCode(), "{\"chargeNumber\":\"" + charge.getChargeNumber() + "\"}");
+        timelineService.write(result.subscription(), SubscriptionTimelineEventType.OVERAGE_BILLED, "USAGE", usage.getUsageNumber(), "Overage billed", usage.getEntitlementCode(), com.sni.bokaticowork.core.utils.json.JsonPayload.of("chargeNumber", charge.getChargeNumber()));
         return charge;
     }
 

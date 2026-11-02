@@ -44,6 +44,30 @@ public class ClientBillingController {
 
     private final ClientContextService clientContextService;
     private final ClientBillingService clientBillingService;
+    private final com.sni.bokaticowork.features.company.statement.service.AccountStatementService statementService;
+    private final com.sni.bokaticowork.features.company.statement.service.AccountStatementExporter statementExporter;
+
+    // ── Etat de compte ───────────────────────────────────────────────────────
+
+    /** Mon etat de compte · mes factures, separees entre mon compte et chaque organisation reliee. */
+    @GetMapping("/statement")
+    public ResponseEntity<com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Statement> statement(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(statementService.member(clientContextService.getAuthenticatedMember(), from, to));
+    }
+
+    @GetMapping("/statement.pdf")
+    public ResponseEntity<byte[]> statementPdf(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        var statement = statementService.member(clientContextService.getAuthenticatedMember(), from, to);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""
+                        + com.sni.bokaticowork.features.company.statement.service.AccountStatementExporter.fileName(statement, "pdf") + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(statementExporter.pdf(statement));
+    }
 
     // ── Invoices ─────────────────────────────────────────────────────────────
 

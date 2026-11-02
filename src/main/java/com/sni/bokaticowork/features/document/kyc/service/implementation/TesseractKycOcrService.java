@@ -302,7 +302,7 @@ public class TesseractKycOcrService implements KycOcrService {
             payload.put("rawText", rawText);
             return objectMapper.writeValueAsString(payload);
         } catch (Exception ex) {
-            return "{\"provider\":\"TESSERACT\",\"status\":\"" + status + "\"}";
+            return com.sni.bokaticowork.core.utils.json.JsonPayload.of("provider", "TESSERACT", "status", String.valueOf(status));
         }
     }
 }

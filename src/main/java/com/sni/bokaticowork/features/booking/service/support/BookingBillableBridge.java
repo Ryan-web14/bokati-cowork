@@ -56,6 +56,8 @@ public class BookingBillableBridge {
                 .subscriberName(booking.getContactName())
                 .subscriberEmail(booking.getContactEmail())
                 .subscriberPhone(booking.getContactPhone())
+                // Le choix « pour l'organisation » fait a la reservation suit jusqu'a la facture.
+                .billingCompanyCode(booking.getBillingCompanyCode())
                 .description(description)
                 .amount(amount)
                 .currency(booking.getCurrency())
@@ -172,7 +174,7 @@ public class BookingBillableBridge {
         try {
             return objectMapper.writeValueAsString(metadata);
         } catch (JsonProcessingException e) {
-            return "{\"paymentMode\":\"" + booking.getPaymentMode().name() + "\"}";
+            return com.sni.bokaticowork.core.utils.json.JsonPayload.of("paymentMode", booking.getPaymentMode().name());
         }
     }
 }

@@ -296,6 +296,48 @@ public class BillingDocument {
     @Column(name = "customer_category", length = 40)
     private String customerCategory;
 
+    /**
+     * Les identifiants saisis sur la fiche de l'organisation, figes a l'emission ·
+     * {@code [{"type":"RCCM","label":"RCCM","value":"CG-PNR-01-2017-A11-00472"}]}. Seuls ceux
+     * qui sont saisis y figurent, et seuls ceux-la sont imprimes.
+     */
+    @Column(name = "customer_identifiers_json", columnDefinition = "TEXT")
+    private String customerIdentifiersJson;
+
+    /** La mention d'exoneration de TVA de l'organisation, imprimee sur sa facture. */
+    @Column(name = "customer_vat_exemption_note", length = 500)
+    private String customerVatExemptionNote;
+
+    // ── Organisation pour le compte de laquelle un membre est facture ────────────
+
+    /** L'organisation reliee a une facture de membre · elle en porte l'encours. */
+    @Column(name = "company_customer_id")
+    private Long companyCustomerId;
+
+    @Column(name = "company_customer_code", length = 300)
+    private String companyCustomerCode;
+
+    /** Imprime en tete du destinataire · vide pour une facture reliee apres coup. */
+    @Column(name = "company_name", length = 255)
+    private String companyName;
+
+    @Column(name = "company_identifiers_json", columnDefinition = "TEXT")
+    private String companyIdentifiersJson;
+
+    /** Annexe de consommation par collaborateur, figee a la creation · voir {@code InvoiceUsageAnnex}. */
+    @Column(name = "usage_annex_json", columnDefinition = "TEXT")
+    private String usageAnnexJson;
+
+    /** {@code AT_ISSUE} (emise ainsi, imprimee) ou {@code ATTACHED} (ancienne facture reliee, document inchange). */
+    @Column(name = "company_link_source", length = 20)
+    private String companyLinkSource;
+
+    @Column(name = "company_linked_at")
+    private java.time.Instant companyLinkedAt;
+
+    @Column(name = "company_linked_by", length = 150)
+    private String companyLinkedBy;
+
     // ── Lien document-correctif ─────────────────────────────────────────────────
 
     /** Numéro du document d'origine corrigé par cet avoir ou cette facture rectificative. */

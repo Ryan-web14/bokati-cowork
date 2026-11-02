@@ -40,6 +40,17 @@ public class SubscriptionSeat {
     @Column(name = "member_code", nullable = false, length = 120)
     private String memberCode;
 
+    /** Expose comme {@code id} par l'API · l'identifiant genere depasse ce que lit JavaScript. */
+    @org.hibernate.annotations.Generated
+    @Column(name = "short_id", insertable = false, updatable = false)
+    private Long shortId;
+
+    @Column(name = "removed_reason", length = 500)
+    private String removedReason;
+
+    @Column(name = "assigned_by", length = 150)
+    private String assignedBy;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 40)
     private SeatRole role;

@@ -196,12 +196,7 @@ public class PassAlertService {
     }
 
     private String payload(Pass pass, String key, String value) {
-        return "{\"passNumber\":\"" + pass.getPassNumber() + "\""
-                + ",\"passName\":\"" + escape(pass.getName()) + "\""
-                + ",\"" + key + "\":\"" + escape(value) + "\"}";
-    }
-
-    private String escape(String value) {
-        return value == null ? "" : value.replace("\\", "\\\\").replace("\"", "\\\"");
+        return com.sni.bokaticowork.core.utils.json.JsonPayload.of("passNumber", pass.getPassNumber(), "passName", pass.getName() == null ? "" : pass.getName(),
+                key, value == null ? "" : value);
     }
 }

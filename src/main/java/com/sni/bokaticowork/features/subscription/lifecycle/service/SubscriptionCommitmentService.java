@@ -94,7 +94,7 @@ public class SubscriptionCommitmentService {
         commitment.setCreatedBy(actor);
         SubscriptionCommitment saved = commitmentRepository.save(commitment);
         eventWriter.writeEvent(subscription, SubscriptionEventType.COMMITMENT_SET,
-                "{\"months\":" + spec.commitmentMonths() + ",\"until\":\"" + saved.getCommitmentEnd() + "\",\"source\":\"" + source + "\"}");
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("months", spec.commitmentMonths(), "until", saved.getCommitmentEnd(), "source", String.valueOf(source)));
         return saved;
     }
 
@@ -115,7 +115,7 @@ public class SubscriptionCommitmentService {
     public void release(Subscription subscription, String actor) {
         commitmentRepository.findBySubscription_Id(subscription.getId()).ifPresent(c -> {
             commitmentRepository.delete(c);
-            eventWriter.writeEvent(subscription, SubscriptionEventType.COMMITMENT_SET, "{\"released\":true,\"by\":\"" + actor + "\"}");
+            eventWriter.writeEvent(subscription, SubscriptionEventType.COMMITMENT_SET, com.sni.bokaticowork.core.utils.json.JsonPayload.of("released", true, "by", actor));
         });
     }
 
@@ -155,11 +155,11 @@ public class SubscriptionCommitmentService {
                 c.setCommitmentEnd(start.plusMonths(c.getCommitmentMonths()).minusDays(1));
                 commitmentRepository.save(c);
                 eventWriter.writeEvent(subscription, SubscriptionEventType.COMMITMENT_SET,
-                        "{\"months\":" + c.getCommitmentMonths() + ",\"until\":\"" + c.getCommitmentEnd() + "\",\"source\":\"ROLLOVER\"}");
+                        com.sni.bokaticowork.core.utils.json.JsonPayload.of("months", c.getCommitmentMonths(), "until", c.getCommitmentEnd(), "source", "ROLLOVER"));
                 rolled++;
             } else {
                 commitmentRepository.delete(c);
-                eventWriter.writeEvent(subscription, SubscriptionEventType.COMMITMENT_SET, "{\"ended\":\"" + c.getCommitmentEnd() + "\"}");
+                eventWriter.writeEvent(subscription, SubscriptionEventType.COMMITMENT_SET, com.sni.bokaticowork.core.utils.json.JsonPayload.of("ended", c.getCommitmentEnd()));
             }
         }
         return rolled;

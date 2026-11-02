@@ -46,13 +46,12 @@ public class EntitlementQuotaAlertListener {
     }
 
     private String buildPayload(EntitlementQuotaThresholdEvent event) {
-        return String.format(
-                "{\"grantNumber\":\"%s\",\"entitlementCode\":\"%s\",\"threshold\":%d,\"remaining\":%s,\"quantityGranted\":%s}",
-                event.grantNumber(),
-                event.entitlementCode(),
-                event.threshold(),
-                event.quantityRemaining(),
-                event.quantityGranted()
+        return com.sni.bokaticowork.core.utils.json.JsonPayload.of(
+                "grantNumber", event.grantNumber(),
+                "entitlementCode", event.entitlementCode(),
+                "threshold", event.threshold(),
+                "remaining", event.quantityRemaining(),
+                "quantityGranted", event.quantityGranted()
         );
     }
 }

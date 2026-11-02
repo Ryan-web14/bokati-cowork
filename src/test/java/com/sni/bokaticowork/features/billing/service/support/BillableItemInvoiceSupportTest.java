@@ -257,7 +257,8 @@ class BillableItemInvoiceSupportTest {
                 null, null, null,
                 // ce que le document pese sur le solde du client
                 BillingReceivables.receivable(BillingDocumentType.INVOICE, status),
-                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, balanceDue)
+                BillingReceivables.customerImpact(BillingDocumentType.INVOICE, status, balanceDue, balanceDue),
+                null, null, null
         );
     }
 }

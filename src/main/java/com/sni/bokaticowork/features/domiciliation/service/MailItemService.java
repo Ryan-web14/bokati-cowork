@@ -277,7 +277,7 @@ public class MailItemService {
                 subscription.getSubscriberType(), subscription.getSubscriberCode(),
                 definition.getUsageEntitlementCode(), quantity, EntitlementUnit.CREDIT,
                 "MAIL_ITEM", item.getItemNumber(), false, true, amount, definition.getCurrency(),
-                Instant.now(), "{\"what\":\"" + what.replace("\"", "'") + "\"}"));
+                Instant.now(), com.sni.bokaticowork.core.utils.json.JsonPayload.of("what", what)));
         item.setBillable(true);
         item.setBilledAmount((item.getBilledAmount() == null ? BigDecimal.ZERO : item.getBilledAmount()).add(amount));
         item.setUsageNumber(usage == null ? item.getUsageNumber() : usage.usageNumber());

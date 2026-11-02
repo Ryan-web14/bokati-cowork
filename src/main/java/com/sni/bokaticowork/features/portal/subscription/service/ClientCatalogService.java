@@ -85,6 +85,19 @@ public class ClientCatalogService {
 
     @Transactional
     public PassResponse purchasePass(Member member, ClientPurchasePassRequest request) {
+        return purchasePass(SubscriberType.MEMBER, member.getMemberId(), request);
+    }
+
+    /**
+     * Le gerant achete un pass au nom de son organisation · elle le detient, elle est facturee, et il
+     * ouvre ensuite l'acces a ses collaborateurs. L'organisation est deja verifiee par l'appelant.
+     */
+    public PassResponse purchasePassForCompany(com.sni.bokaticowork.features.client.customer.model.Customer company,
+                                               ClientPurchasePassRequest request) {
+        return purchasePass(SubscriberType.CUSTOMER, company.getCustomerId(), request);
+    }
+
+    private PassResponse purchasePass(SubscriberType ownerType, String ownerCode, ClientPurchasePassRequest request) {
         PlanResponse plan = catalogService.getPlan(request.planCode());
         if (!Boolean.TRUE.equals(plan.visible()) || plan.status() != PlanStatus.ACTIVE) {
             throw new ResourceNotFoundException("Plan not found");
@@ -96,8 +109,8 @@ public class ClientCatalogService {
 
         CreatePassRequest createRequest = new CreatePassRequest(
                 request.passType(),
-                SubscriberType.MEMBER,
-                member.getMemberId(),
+                ownerType,
+                ownerCode,
                 null,
                 Long.valueOf(activeVersion.id()),
                 request.name(),
