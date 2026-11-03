@@ -234,7 +234,8 @@ public class DomiciliationController {
     @PostMapping("/domiciliation/mail/{itemNumber}/collect")
     public ResponseEntity<MailItemView> collect(@PathVariable String itemNumber, @Valid @RequestBody CollectRequest request, Authentication authentication) {
         return ResponseEntity.ok(MailItemView.of(mailItemService.collect(itemNumber,
-                new MailItemService.Collection(request.collectedBy(), request.collectorIdDocument(), request.collectorSignatureUrl()), actor(authentication))));
+                new MailItemService.Collection(request.collectedBy(), request.collectorIdDocument(), request.collectorSignatureUrl(),
+                        request.collectorMemberId()), actor(authentication))));
     }
 
     @PostMapping("/domiciliation/mail/{itemNumber}/forward")

@@ -68,6 +68,8 @@ public class CompanySharingService {
     private final EntitlementGrantRepository grantRepository;
     private final BookingRepository bookingRepository;
     private final SeatEntitlementGate gate;
+    /** Le collaborateur place devient beneficiaire du contrat de l'abonnement · absent dans certains tests. */
+    private final com.sni.bokaticowork.features.company.contracts.CompanyContractsService contractsService;
 
     // ── Lecture ──────────────────────────────────────────────────────────────
 
@@ -198,6 +200,9 @@ public class CompanySharingService {
                 .assignedBy(actor)
                 .build());
         applyAllowances(subscription, seat, request.allowances());
+        if (contractsService != null) {
+            contractsService.addBeneficiary(subscription.getContractCode(), member);
+        }
         return view(company, subscription);
     }
 
@@ -233,6 +238,9 @@ public class CompanySharingService {
         seat.setRemovedAt(Instant.now());
         seat.setRemovedReason(reason);
         seatRepository.save(seat);
+        if (contractsService != null) {
+            contractsService.removeBeneficiary(seat.getSubscription().getContractCode(), seat.getMemberCode());
+        }
         List<String> future = bookingRepository.findFutureBookingNumbersOnSeats(List.of(seat.getId()), LocalDateTime.now());
         String warning = null;
         if (!future.isEmpty()) {

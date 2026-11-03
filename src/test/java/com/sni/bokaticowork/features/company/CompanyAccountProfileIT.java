@@ -240,6 +240,7 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
         assertThat(column(jdbc, "resource_availability", "expired_at")).isNotEmpty();
         assertThat(column(jdbc, "booking", "policy_override_by")).isNotEmpty();
         assertThat(cashSessionRepository.findOpenSessionNumbersOpenedBefore(java.time.Instant.EPOCH)).isEmpty();
+        assertThat(column(jdbc, "mail_item", "collected_by_member")).isNotEmpty();
     }
 
     @Autowired private com.sni.bokaticowork.features.payment.repository.CashSessionRepository cashSessionRepository;
