@@ -882,6 +882,9 @@ public class CompanyWalletService {
                 if (source.startsWith("SUBSCRIPTION") || source.startsWith("USAGE_OVERAGE")) {
                     return SpendOperation.SUBSCRIPTION;
                 }
+                if (source.startsWith("MARKETPLACE")) {
+                    return SpendOperation.MARKETPLACE;
+                }
             }
         }
         String documentSource = invoice.sourceType() == null ? "" : invoice.sourceType().toUpperCase(Locale.ROOT);
