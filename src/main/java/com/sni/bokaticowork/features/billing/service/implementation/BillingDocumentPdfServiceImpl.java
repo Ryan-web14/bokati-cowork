@@ -119,6 +119,12 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         }
     }
 
+    @Override
+    @Transactional
+    public byte[] generateAdminPdf(String documentNumber) {
+        return com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(generatePdf(documentNumber));
+    }
+
     /**
      * Compare un fichier a la version canonique du document.
      *
@@ -641,6 +647,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             if (status == null) return EMPTY_VALUE;
             return switch (status) {
                 case PENDING -> "En attente";
+                case PARTIALLY_PAID -> "Partiellement réglé";
                 case PAID -> "Réglé";
                 case CANCELLED -> "Annulé";
             };

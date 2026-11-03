@@ -199,6 +199,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (variance.signum() == 0) {
             session.setStatus(CashSessionStatus.CLOSED);
             session.setClosedAt(now);
+            finalized(session.getSessionNumber(), false, null, null);
         } else {
             session.setStatus(CashSessionStatus.CLOSING_REVIEW);
         }
@@ -234,6 +235,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         session.setStatus(CashSessionStatus.CLOSED);
         session.setClosedAt(Instant.now());
         CashSession saved = sessionRepository.save(session);
+        finalized(saved.getSessionNumber(), false, "Écart validé par " + saved.getReviewedBy(), null);
         emailNotifier.notifyUser(
                 saved.getOpenedBy(),
                 "Écart de caisse validé · " + saved.getSessionNumber(),
@@ -511,8 +513,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
         BigDecimal expectedAfter = money(summarySupport.expectedClosingAmount(session));
         if (expectedAfter.compareTo(autoLimit()) >= 0) {
-            closeAutomaticSession(session, expectedAfter);
-            openAutomaticSession(register, transaction.getPaymentMethod());
+            closeAutomaticSession(session, expectedAfter, "Cloture automatique: seuil de session atteint");
+            CashSession next = openAutomaticSession(register, transaction.getPaymentMethod());
+            finalized(session.getSessionNumber(), true, "seuil de la session atteint", next.getSessionNumber());
         }
     }
 
@@ -562,8 +565,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .orElseGet(() -> openAutomaticSession(register, method));
         BigDecimal currentTotal = money(summarySupport.expectedClosingAmount(session));
         if (currentTotal.signum() > 0 && currentTotal.add(nextAmount).compareTo(autoLimit()) > 0) {
-            closeAutomaticSession(session, currentTotal);
-            return openAutomaticSession(register, method);
+            closeAutomaticSession(session, currentTotal, "Cloture automatique: seuil de session atteint");
+            CashSession next = openAutomaticSession(register, method);
+            finalized(session.getSessionNumber(), true, "seuil de la session atteint", next.getSessionNumber());
+            return next;
         }
         return session;
     }
@@ -578,7 +583,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .build());
     }
 
-    private void closeAutomaticSession(CashSession session, BigDecimal expectedAmount) {
+    private void closeAutomaticSession(CashSession session, BigDecimal expectedAmount, String reason) {
         Instant now = Instant.now();
         BigDecimal counted = money(expectedAmount);
         session.setClosedBy(SYSTEM_ACTOR);
@@ -586,11 +591,70 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         session.setExpectedClosingAmount(counted);
         session.setCountedClosingAmount(counted);
         session.setVarianceAmount(BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP));
-        session.setVarianceReason("Cloture automatique: seuil de session atteint");
+        session.setVarianceReason(reason);
         session.setClosingRequestedAt(now);
         session.setClosedAt(now);
         session.setStatus(CashSessionStatus.CLOSED);
         sessionRepository.save(session);
+    }
+
+    /**
+     * Fin de mois · une session laissee ouverte est close par le systeme et remplacee.
+     *
+     * <p>Personne n'a compte les especes : la session est close au montant attendu, sans ecart
+     * declare, et ce montant devient le fonds de caisse de la session suivante, ouverte au nom du
+     * meme caissier. Le rapport de cloture part a l'administration, a la gerance et au responsable
+     * de la caisse, qui peuvent faire compter. Une caisse automatique est close et rouverte de la
+     * meme facon, sans report : ses fonds ne sont pas des especes.</p>
+     */
+    @Override
+    public CashSessionResponse closeForMonthEnd(String sessionNumber) {
+        CashSession session = requireOpenSession(sessionNumber);
+        CashRegister register = session.getCashRegister();
+        BigDecimal expected = money(summarySupport.expectedClosingAmount(session));
+        String cause = "fin de mois, session laissée ouverte";
+        if (Boolean.TRUE.equals(register.getSystemManaged())) {
+            closeAutomaticSession(session, expected, "Cloture automatique: fin de mois");
+            CashSession next = openAutomaticSession(register, register.getRestrictedToMethod());
+            finalized(session.getSessionNumber(), true, cause, next.getSessionNumber());
+            return mapper.toCashSessionResponse(next);
+        }
+        Instant now = Instant.now();
+        session.setClosedBy(SYSTEM_ACTOR);
+        session.setClosingAmount(expected);
+        session.setExpectedClosingAmount(expected);
+        // Rien n'a ete compte · ni montant compte, ni ecart, plutot qu'un ecart nul invente.
+        session.setCountedClosingAmount(null);
+        session.setVarianceAmount(null);
+        session.setVarianceReason("Clôture automatique de fin de mois : session laissée ouverte, espèces non comptées,"
+                + " montant attendu reporté sur la session suivante");
+        session.setClosingRequestedAt(now);
+        session.setClosedAt(now);
+        session.setStatus(CashSessionStatus.CLOSED);
+        sessionRepository.saveAndFlush(session);
+
+        CashSession next = sessionRepository.save(CashSession.builder()
+                .sessionNumber(sequenceGenerator.next("cash_session"))
+                .cashRegister(register)
+                .status(CashSessionStatus.OPEN)
+                .openedBy(session.getOpenedBy())
+                .openingAmount(expected)
+                .build());
+        if (expected.signum() > 0) {
+            saveMovement(next, CashMovementType.OPENING_FLOAT, expected, CashDocumentType.CASH_VOUCHER,
+                    next.getSessionNumber(), "OPENING_FLOAT", "CASH_SESSION", session.getSessionNumber(),
+                    "INTERNAL", register.getBusinessEntityCode(), register.getName(),
+                    "Report de la session " + session.getSessionNumber() + " (clôture de fin de mois)", SYSTEM_ACTOR, null);
+        }
+        finalized(session.getSessionNumber(), true, cause, next.getSessionNumber());
+        eventPublisher.publishEvent(new com.sni.bokaticowork.features.payment.service.support.CashSessionClosedEvent(session.getSessionNumber()));
+        return mapper.toCashSessionResponse(next);
+    }
+
+    /** La session est close pour de bon · le rapport part apres validation en base. */
+    private void finalized(String sessionNumber, boolean bySystem, String cause, String renewedAs) {
+        eventPublisher.publishEvent(new com.sni.bokaticowork.features.payment.service.support.CashSessionFinalizedEvent(
+                sessionNumber, bySystem, cause, renewedAs));
     }
 
     private BigDecimal autoLimit() {

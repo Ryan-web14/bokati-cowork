@@ -239,7 +239,10 @@ class CompanyAccountProfileIT extends PostgresIntegrationTestBase {
         assertThat(column(jdbc, "resource_policy", "staff_override_allowed").get("is_nullable")).isEqualTo("NO");
         assertThat(column(jdbc, "resource_availability", "expired_at")).isNotEmpty();
         assertThat(column(jdbc, "booking", "policy_override_by")).isNotEmpty();
+        assertThat(cashSessionRepository.findOpenSessionNumbersOpenedBefore(java.time.Instant.EPOCH)).isEmpty();
     }
+
+    @Autowired private com.sni.bokaticowork.features.payment.repository.CashSessionRepository cashSessionRepository;
 
     private static Map<String, Object> column(JdbcTemplate jdbc, String table, String name) {
         return jdbc.queryForList("""

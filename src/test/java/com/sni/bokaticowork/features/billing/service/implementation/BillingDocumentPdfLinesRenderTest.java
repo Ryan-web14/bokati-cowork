@@ -177,6 +177,38 @@ class BillingDocumentPdfLinesRenderTest {
                 .doesNotContain("Sa part").doesNotContain("Montant dépassé");
     }
 
+    @Test
+    @DisplayName("Version d'administration : la facture rendue, puis son duplicata, dans un meme PDF")
+    void adminCopyRendersOriginalAndDuplicate() throws Exception {
+        String html = render(List.of(line(1, "Salle de réunion", "2", "10000", "20000", true)));
+        org.jsoup.nodes.Document xhtml = org.jsoup.Jsoup.parse(html);
+        xhtml.outputSettings().syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
+                .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml).prettyPrint(false);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        com.openhtmltopdf.pdfboxout.PdfRendererBuilder builder = new com.openhtmltopdf.pdfboxout.PdfRendererBuilder();
+        builder.useFastMode();
+        builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(xhtml), null);
+        builder.toStream(out);
+        builder.run();
+
+        byte[] both = com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(out.toByteArray());
+
+        String target = System.getenv("DUPLICATE_PDF_OUT");
+        if (target != null) {
+            java.nio.file.Files.write(java.nio.file.Path.of(target), both);
+        }
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.pdmodel.PDDocument.load(both)) {
+            int pages = document.getNumberOfPages();
+            assertThat(pages % 2).isZero();
+            org.apache.pdfbox.text.PDFTextStripper stripper = new org.apache.pdfbox.text.PDFTextStripper();
+            stripper.setEndPage(pages / 2);
+            assertThat(stripper.getText(document)).doesNotContain("DUPLICATA");
+            stripper.setStartPage(pages / 2 + 1);
+            stripper.setEndPage(pages);
+            assertThat(stripper.getText(document)).contains("DUPLICATA").contains("INV-2026-000042");
+        }
+    }
+
     private SpringTemplateEngine engine() {
         FileTemplateResolver resolver = new FileTemplateResolver();
         resolver.setPrefix("src/main/resources/templates/");

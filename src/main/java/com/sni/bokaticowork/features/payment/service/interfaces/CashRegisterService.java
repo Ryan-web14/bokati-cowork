@@ -33,6 +33,14 @@ public interface CashRegisterService {
                                                         String openedBy, String closedBy, String searchText, Pageable pageable);
     CashSessionResponse closeSession(String sessionNumber, CloseCashSessionRequest request);
     CashSessionResponse approveVariance(String sessionNumber, ApproveCashVarianceRequest request);
+
+    /**
+     * Clot par le systeme une session laissee ouverte d'un mois sur l'autre, et en rouvre une pour
+     * le meme caissier · le montant attendu y est reporte en fonds de caisse.
+     *
+     * @return la session ouverte a sa suite
+     */
+    CashSessionResponse closeForMonthEnd(String sessionNumber);
     CashSessionSummaryResponse sessionSummary(String sessionNumber);
     CashMovementResponse createMovement(String sessionNumber, CreateCashMovementRequest request);
     CashMovementResponse createEntryVoucher(String sessionNumber, CreateCashVoucherRequest request);

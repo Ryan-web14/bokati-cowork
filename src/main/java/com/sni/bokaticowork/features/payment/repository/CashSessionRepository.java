@@ -74,6 +74,16 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
             """)
     Optional<CashSession> findBlockingSessionByCashRegisterId(@Param("cashRegisterId") Long cashRegisterId);
 
+    /** Les sessions encore ouvertes, ouvertes avant cet instant · la cloture de fin de mois. */
+    @Query(nativeQuery = true, value = """
+            SELECT session_number
+            FROM cash_session
+            WHERE status = 'OPEN'
+              AND opened_at < :cutoff
+            ORDER BY opened_at ASC
+            """)
+    java.util.List<String> findOpenSessionNumbersOpenedBefore(@Param("cutoff") java.time.Instant cutoff);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM cash_session
