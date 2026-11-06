@@ -30,6 +30,8 @@ public class ContractAmendmentController {
 
     private final ContractAmendmentService amendmentService;
     private final ContractAuditEventService auditEventService;
+    private final com.sni.bokaticowork.features.contract.service.interfaces.ContractService contractService;
+    private final com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory versionHistory;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -47,6 +49,13 @@ public class ContractAmendmentController {
     public ResponseEntity<List<ContractAmendmentResponse>> listByContract(
             @PathVariable String contractCode) {
         return ResponseEntity.ok(amendmentService.listByContract(contractCode));
+    }
+
+    /** L'original, puis chaque avenant et chaque extension de date · la derniere version est en vigueur. */
+    @GetMapping(ApiPath.V1 + "/contracts/{contractCode}/versions")
+    public ResponseEntity<List<com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version>> versions(
+            @PathVariable String contractCode) {
+        return ResponseEntity.ok(versionHistory.of(contractService.serviceByCode(contractCode)));
     }
 
     @GetMapping(ApiPath.V1 + "/contracts/{contractCode}/audit-events")

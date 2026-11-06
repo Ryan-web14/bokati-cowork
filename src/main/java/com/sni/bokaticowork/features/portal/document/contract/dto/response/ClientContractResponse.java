@@ -29,4 +29,6 @@ public class ClientContractResponse {
     private boolean canDownloadPdf;
     private Instant createdAt;
     private Instant updatedAt;
+    /** L'original, puis ses avenants et ses extensions de date · la derniere est en vigueur. */
+    private java.util.List<com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version> versions;
 }

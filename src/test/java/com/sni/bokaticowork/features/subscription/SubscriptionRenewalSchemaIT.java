@@ -39,6 +39,8 @@ class SubscriptionRenewalSchemaIT extends PostgresIntegrationTestBase {
 
         assertThat(subscriptionRepository.findWithPendingRenewal()).isEmpty();
         assertThat(subscriptionRepository.findIdsWithContractBehindPeriod()).isEmpty();
+        assertThat(subscriptionRepository.findContractCodesOfOpenSubscriptions()).isEmpty();
+        assertThat(subscriptionRepository.findExpiredContractCodesOfOpenSubscriptions()).isEmpty();
         assertThat(subscriptionRepository.findActiveWithRenewalUnpaidSince(Instant.now())).isEmpty();
         assertThat(subscriptionRepository.findEndedPeriodsStillOpen(LocalDate.now())).isEmpty();
         assertThat(attemptRepository.existsBySubscriptionIdAndInvoiceNumber(-1L, "FAC-NONE")).isFalse();

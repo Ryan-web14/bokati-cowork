@@ -69,8 +69,20 @@ public class ContractServiceImpl implements ContractService {
             contract.setStatus(ContractStatus.ACTIVE);
         }
         contractRepository.save(contract);
-        auditEventService.record(contractCode, null, "CONTRACT_TERM_EXTENDED", null, "SYSTEM", null, reason,
+        auditEventService.record(contractCode, null, com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.TERM_EXTENDED_EVENT, null, "SYSTEM", null, reason,
                 com.sni.bokaticowork.core.utils.json.JsonPayload.of("previousEndDate", previousEndDate, "newEndDate", newEndDate));
+        return true;
+    }
+
+    @Override
+    public boolean reopenExpired(String contractCode, String reason) {
+        Contract contract = contractRepository.findByContractCode(contractCode).orElse(null);
+        if (contract == null || contract.getStatus() != ContractStatus.EXPIRED) {
+            return false;
+        }
+        contract.setStatus(ContractStatus.ACTIVE);
+        contractRepository.save(contract);
+        auditEventService.record(contractCode, null, "CONTRACT_REOPENED", null, "SYSTEM", null, reason, null);
         return true;
     }
 

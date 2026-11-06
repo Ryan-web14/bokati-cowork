@@ -30,6 +30,9 @@ public interface ContractService {
      * donc pas d'avenant. Rend si la date a bouge : un contrat clos ou deja plus long reste tel quel.
      */
     boolean extendEndDate(String contractCode, java.time.LocalDate newEndDate, String reason);
+
+    /** Remet en vigueur un contrat marque echu a tort · rend s'il l'etait. */
+    boolean reopenExpired(String contractCode, String reason);
     void delete(String contractCode);
     Contract serviceByCode(String contractCode);
 }

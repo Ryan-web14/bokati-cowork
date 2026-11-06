@@ -195,6 +195,24 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
             """)
     List<Long> findIdsWithContractBehindPeriod();
 
+    /** Les contrats portes par un abonnement qui n'a pas pris fin · ils n'expirent pas d'eux-memes. */
+    @Query(nativeQuery = true, value = """
+            SELECT DISTINCT contract_code FROM subscription
+            WHERE contract_code IS NOT NULL AND status NOT IN ('CANCELLED', 'EXPIRED')
+            """)
+    List<String> findContractCodesOfOpenSubscriptions();
+
+    /** Les contrats marques echus alors que leur abonnement court encore. */
+    @Query(nativeQuery = true, value = """
+            SELECT DISTINCT c.contract_code
+            FROM subscription s
+            JOIN contract_record c ON c.contract_code = s.contract_code
+            WHERE s.status NOT IN ('CANCELLED', 'EXPIRED')
+              AND c.status = 'EXPIRED'
+              AND c.deleted = false
+            """)
+    List<String> findExpiredContractCodesOfOpenSubscriptions();
+
     /** Les abonnements dont un renouvellement attend son reglement. */
     @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE pending_renewal_invoice IS NOT NULL")
     List<Subscription> findWithPendingRenewal();

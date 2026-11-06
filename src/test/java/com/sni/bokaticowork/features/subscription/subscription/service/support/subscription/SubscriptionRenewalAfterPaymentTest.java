@@ -360,6 +360,16 @@ class SubscriptionRenewalAfterPaymentTest {
     }
 
     @Test
+    @DisplayName("Un contrat marque echu alors que l'abonnement court est remis en vigueur, facture impayee ou non")
+    void expiredContractIsReopened() {
+        when(subscriptionRepository.findExpiredContractCodesOfOpenSubscriptions()).thenReturn(java.util.List.of("CTR-1"));
+
+        operator.catchUpContractTerms();
+
+        verify(contractService).reopenExpired(eq("CTR-1"), anyString());
+    }
+
+    @Test
     @DisplayName("Un contrat deja a jour n'appelle aucun avenant")
     void contractUpToDateIsLeftAlone() {
         LocalDate periodEnd = today.plusDays(40);

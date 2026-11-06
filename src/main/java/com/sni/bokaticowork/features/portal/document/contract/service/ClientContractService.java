@@ -39,6 +39,7 @@ public class ClientContractService {
     private final ContractPartyRepository contractPartyRepository;
     private final DocumentService documentService;
     private final DocumentSignatureService documentSignatureService;
+    private final com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory versionHistory;
 
     @Transactional(readOnly = true)
     public PaginatedResponse<ClientContractSummaryResponse> listContracts(Member member, Pageable pageable) {
@@ -63,6 +64,19 @@ public class ClientContractService {
             throw new BadRequestException("No PDF is available for this contract yet");
         }
         return documentService.getFileWithMeta(docCode);
+    }
+
+    /** Le PDF d'un avenant du contrat · jamais celui d'un autre contrat. */
+    @Transactional(readOnly = true)
+    public DocumentFileResult downloadAmendmentPdf(Member member, String contractCode, String amendmentCode) {
+        Contract contract = resolveOwnedContract(member, contractCode);
+        String documentCode = versionHistory.of(contract).stream()
+                .filter(version -> amendmentCode.equals(version.amendmentCode()))
+                .map(com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version::documentCode)
+                .filter(StringUtils::hasText)
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("No PDF is available for this amendment yet"));
+        return documentService.getFileWithMeta(documentCode);
     }
 
     @Transactional
@@ -174,6 +188,7 @@ public class ClientContractService {
                 .canDownloadPdf(canDownload)
                 .createdAt(contract.getCreatedAt())
                 .updatedAt(contract.getUpdatedAt())
+                .versions(versionHistory.of(contract))
                 .build();
     }
 }

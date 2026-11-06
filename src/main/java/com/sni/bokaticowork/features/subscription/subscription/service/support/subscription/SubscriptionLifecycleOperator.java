@@ -484,6 +484,7 @@ public class SubscriptionLifecycleOperator {
      * l'ecart, jusqu'a la fin de la periode en cours. Aucun nouveau contrat n'est cree.
      */
     public int catchUpContractTerms() {
+        reopenExpiredContracts();
         int caughtUp = 0;
         for (Long subscriptionId : subscriptionRepository.findIdsWithContractBehindPeriod()) {
             try {
@@ -494,6 +495,17 @@ public class SubscriptionLifecycleOperator {
             }
         }
         return caughtUp;
+    }
+
+    /** Un contrat marque echu alors que l'abonnement court, y compris en attente d'un paiement. */
+    private void reopenExpiredContracts() {
+        for (String contractCode : subscriptionRepository.findExpiredContractCodesOfOpenSubscriptions()) {
+            try {
+                contractService.reopenExpired(contractCode, "Abonnement en cours");
+            } catch (Exception ex) {
+                log.error("Contrat {} · remise en vigueur impossible, reprise au prochain passage", contractCode, ex);
+            }
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
