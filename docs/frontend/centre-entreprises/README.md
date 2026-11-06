@@ -30,3 +30,4 @@ Le plan d'ensemble est dans
 | [13-caisses-fin-de-mois.md](./13-caisses-fin-de-mois.md) | Clôture et renouvellement automatiques des caisses, rapport de clôture |
 | [14-acomptes.md](./14-acomptes.md) | Le statut d'un acompte suit le paiement de sa facture (`PARTIALLY_PAID`) |
 | [15-erreurs-api.md](./15-erreurs-api.md) | Une erreur garde son statut : un `401` ne veut plus dire qu'une chose |
+| [16-renouvellement-abonnement.md](./16-renouvellement-abonnement.md) | Renouvellement effectif au paiement, prélèvement ou notification, avenant et extension du contrat |

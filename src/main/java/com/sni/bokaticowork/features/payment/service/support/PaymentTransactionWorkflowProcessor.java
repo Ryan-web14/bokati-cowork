@@ -152,6 +152,10 @@ public class PaymentTransactionWorkflowProcessor {
     private void handleSucceededTransaction(PaymentTransaction transaction, TransactionContextResolver.SourceView source) {
         if ("SUBSCRIPTION".equalsIgnoreCase(source.type())) {
             Subscription subscription = subscriptionService.getForService(source.code());
+            // La facture de renouvellement est soldee · la periode payee commence ici.
+            if (subscriptionService.applyPaidRenewal(source.code(), "Paiement " + transaction.getTransactionNumber())) {
+                return;
+            }
             if (subscription.getStatus() == SubscriptionStatus.GRACE_PERIOD) {
                 // Un paiement pendant la tolerance rend les droits sans intervention
                 graceService.exit(subscription, "Paiement " + transaction.getTransactionNumber());

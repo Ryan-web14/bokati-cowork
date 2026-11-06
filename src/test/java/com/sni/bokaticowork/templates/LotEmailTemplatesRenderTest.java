@@ -34,7 +34,7 @@ class LotEmailTemplatesRenderTest {
             "wallet-status-changed", "wallet-security-event", "wallet-kyc-documents-requested", "wallet-treasury-alert",
             "domiciliation-activated", "domiciliation-registration-rejected", "domiciliation-certificate-issued",
             "domiciliation-certificate-expiring", "domiciliation-fiscal-lost", "domiciliation-terminated", "domiciliation-administration-notice",
-            "mail-item-event", "subscription-grace-period", "subscription-termination", "subscription-direct-debit-failed",
+            "mail-item-event", "subscription-grace-period", "subscription-renewal-payment-due", "subscription-termination", "subscription-direct-debit-failed",
             "subscription-quote-sent", "billing-dunning", "billing-dunning-handover", "mobile-money-deposit-unresolved",
             "mobile-money-deposit-failed", "mobile-money-deposit-pending-review", "self-service-payment-received",
             "cash-payment-declared", "cash-payment-confirmed", "cash-payment-declaration-expired",
@@ -76,6 +76,9 @@ class LotEmailTemplatesRenderTest {
     void lifecycleTemplatesCarryTheirFacts() {
         assertThat(render("subscription-grace-period", model("subscriptionNumber", "SUB-1", "daysBeforeSuspension", "14")))
                 .contains("SUB-1").contains("14");
+        assertThat(render("subscription-renewal-payment-due", model("subscriptionNumber", "SUB-1", "invoiceNumber", "FAC-9",
+                "amount", "50000", "currency", "XAF", "periodStart", "2026-12-01", "periodEnd", "2026-12-31")))
+                .contains("SUB-1").contains("FAC-9").contains("50000 XAF").contains("2026-12-01 au 2026-12-31");
         String accepted = render("subscription-termination", model("eventType", "SUBSCRIPTION_TERMINATION_ACCEPTED", "subscriptionNumber", "SUB-1",
                 "terminationCode", "TRM-2026-00003", "effectiveDate", "2026-10-31", "feeAmount", "60000"));
         assertThat(accepted).contains("acceptée").contains("TRM-2026-00003").contains("2026-10-31").contains("60000");

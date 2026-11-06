@@ -2,11 +2,8 @@ package com.sni.bokaticowork.core.outbox.service.implementation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.outbox.model.OutboxEvent;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxEventProcessor;
-import com.sni.bokaticowork.features.contract.dto.request.ContractAmendmentVariableRequest;
-import com.sni.bokaticowork.features.contract.dto.request.ProposeAmendmentRequest;
 import com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse;
 import com.sni.bokaticowork.features.contract.service.interfaces.ContractAmendmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -15,8 +12,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
 
+/**
+ * Le renouvellement paye d'un abonnement prolonge son contrat, par un avenant du meme contrat.
+ *
+ * <p>L'avenant est applique aussitot : la reconduction est prevue au contrat, elle n'appelle ni
+ * examen ni signature. Son PDF suit ; un PDF manque ne remet pas la prolongation en cause, il se
+ * regenere depuis la fiche de l'avenant.</p>
+ */
 @Slf4j
 @Component
 public class ContractRenewalAmendmentOutboxEventProcessor implements OutboxEventProcessor {
@@ -39,71 +43,35 @@ public class ContractRenewalAmendmentOutboxEventProcessor implements OutboxEvent
     public void process(OutboxEvent event) {
         JsonNode payload = readPayload(event);
 
-        String contractCode       = payload.path("contractCode").asText(null);
+        String contractCode = payload.path("contractCode").asText(null);
         String subscriptionNumber = payload.path("subscriptionNumber").asText("?");
-        String newPeriodStart     = payload.path("newPeriodStart").asText(null);
-        String newPeriodEnd       = payload.path("newPeriodEnd").asText(null);
-        String nextBillingDate    = payload.path("nextBillingDate").asText(null);
-        String previousPeriodStart = payload.path("previousPeriodStart").asText(null);
-        String previousPeriodEnd   = payload.path("previousPeriodEnd").asText(null);
+        LocalDate newStart = date(payload, "newPeriodStart");
+        LocalDate newEnd = date(payload, "newPeriodEnd");
 
-        if (!StringUtils.hasText(contractCode) || !StringUtils.hasText(newPeriodStart)) {
+        if (!StringUtils.hasText(contractCode) || newStart == null || newEnd == null) {
             throw new IllegalStateException(
                     "CONTRACT_RENEWAL_AMENDMENT_REQUESTED payload incomplet: " + event.getPayload());
         }
 
-        LocalDate effectiveDate = LocalDate.parse(newPeriodStart);
-        String description = String.format(
-                "Renouvellement de l'abonnement %s · nouvelle période du %s au %s",
-                subscriptionNumber, newPeriodStart, valueOrDash(newPeriodEnd));
-
-        ProposeAmendmentRequest proposeRequest = new ProposeAmendmentRequest();
-        proposeRequest.setDescription(description);
-        proposeRequest.setEffectiveDate(effectiveDate);
-
-        ContractAmendmentResponse amendment;
-        try {
-            amendment = contractAmendmentService.propose(contractCode, null, proposeRequest);
-        } catch (BadRequestException ex) {
-            if (ex.getMessage() != null && ex.getMessage().contains("avenant est déjà en cours")) {
-                log.info("Renouvellement avenant ignoré pour contrat {} ({}): {}", contractCode, subscriptionNumber, ex.getMessage());
-                return;
-            }
-            throw ex;
+        Optional<ContractAmendmentResponse> amendment = contractAmendmentService.applyRenewal(contractCode,
+                new ContractAmendmentService.RenewalTerms(subscriptionNumber, date(payload, "previousPeriodStart"),
+                        date(payload, "previousPeriodEnd"), newStart, newEnd, date(payload, "nextBillingDate")));
+        if (amendment.isEmpty()) {
+            log.info("Renouvellement de {} · contrat {} sans avenant", subscriptionNumber, contractCode);
+            return;
         }
-
-        List<ContractAmendmentVariableRequest> variables = buildPeriodVariables(
-                previousPeriodStart, previousPeriodEnd,
-                newPeriodStart, newPeriodEnd, nextBillingDate);
-
-        contractAmendmentService.setVariables(amendment.getCode(), variables);
-        contractAmendmentService.submitForReview(amendment.getCode());
-
-        log.info("Avenant de renouvellement {} créé pour contrat {} ({})",
-                amendment.getCode(), contractCode, subscriptionNumber);
+        String amendmentCode = amendment.get().getCode();
+        log.info("Avenant de renouvellement {} applique au contrat {} ({})", amendmentCode, contractCode, subscriptionNumber);
+        try {
+            contractAmendmentService.generatePdf(amendmentCode, null);
+        } catch (RuntimeException ex) {
+            log.warn("Avenant {} · PDF non genere, a relancer depuis sa fiche : {}", amendmentCode, ex.getMessage());
+        }
     }
 
-    private List<ContractAmendmentVariableRequest> buildPeriodVariables(
-            String prevStart, String prevEnd,
-            String newStart, String newEnd, String nextBilling) {
-
-        return List.of(
-                variable("periode_debut",           prevStart,   newStart),
-                variable("periode_fin",             prevEnd,     newEnd),
-                variable("prochaine_facturation",   null,        valueOrDash(nextBilling))
-        );
-    }
-
-    private ContractAmendmentVariableRequest variable(String key, String previousValue, String newValue) {
-        ContractAmendmentVariableRequest req = new ContractAmendmentVariableRequest();
-        req.setVariableKey(key);
-        req.setPreviousValue(StringUtils.hasText(previousValue) ? previousValue : null);
-        req.setNewValue(StringUtils.hasText(newValue) ? newValue : "-");
-        return req;
-    }
-
-    private String valueOrDash(String value) {
-        return StringUtils.hasText(value) ? value : "-";
+    private static LocalDate date(JsonNode payload, String field) {
+        String value = payload.path(field).asText(null);
+        return StringUtils.hasText(value) ? LocalDate.parse(value) : null;
     }
 
     private JsonNode readPayload(OutboxEvent event) {

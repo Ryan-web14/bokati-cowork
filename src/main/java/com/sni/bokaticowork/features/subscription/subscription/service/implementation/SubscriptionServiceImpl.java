@@ -167,6 +167,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
+    public boolean applyPaidRenewal(String subscriptionNumber, String reason) {
+        return lifecycleOperator.applyPaidRenewal(getForService(subscriptionNumber), reason);
+    }
+
+    @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public int cancelEndedSubscriptions() {
         return lifecycleOperator.cancelEndedSubscriptions();

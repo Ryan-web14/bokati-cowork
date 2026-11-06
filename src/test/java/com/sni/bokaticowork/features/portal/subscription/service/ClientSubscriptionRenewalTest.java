@@ -53,7 +53,7 @@ class ClientSubscriptionRenewalTest {
                 "COWORK", "Bureau partagé", 1, status,
                 LocalDate.now().minusMonths(1), periodEnd.minusMonths(1), periodEnd,
                 periodEnd.plusDays(1), false, null, "XAF",
-                null, null, null, false, null, null, null, null, null);
+                null, null, null, false, null, null, null, null, null, null, null, null);
     }
 
     private void current(SubscriptionResponse subscription) {

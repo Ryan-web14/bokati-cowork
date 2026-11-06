@@ -146,6 +146,12 @@ public class SubscriptionDirectDebitService {
         return mandateRepository.findBySubscription_IdOrderByCreatedAtDesc(subscription(subscriptionNumber).getId());
     }
 
+    /** Un prelevement a-t-il ete tente pour cette facture · l'abonne sait alors deja quoi faire. */
+    @Transactional(readOnly = true)
+    public boolean attempted(Long subscriptionId, String invoiceNumber) {
+        return attemptRepository.existsBySubscriptionIdAndInvoiceNumber(subscriptionId, invoiceNumber);
+    }
+
     @Transactional(readOnly = true)
     public List<SubscriptionDebitAttempt> attempts(String subscriptionNumber) {
         return attemptRepository.findBySubscriptionIdOrderByExecutedAtDesc(subscription(subscriptionNumber).getId());
@@ -231,7 +237,10 @@ public class SubscriptionDirectDebitService {
             mandate.setLastDebitAt(Instant.now());
             eventWriter.writeEvent(subscription, SubscriptionEventType.DIRECT_DEBIT_SUCCEEDED,
                     com.sni.bokaticowork.core.utils.json.JsonPayload.of("invoice", invoiceNumber, "amount", amount));
-            graceService.exit(subscription, "Prélèvement réussi · " + invoiceNumber);
+            // Un renouvellement en attente prend effet juste apres, sur la facture relue a neuf.
+            if (subscription.getPendingRenewalInvoice() == null) {
+                graceService.exit(subscription, "Prélèvement réussi · " + invoiceNumber);
+            }
         } else {
             mandate.setConsecutiveFailures(mandate.getConsecutiveFailures() + 1);
             if (mandate.getConsecutiveFailures() >= MAX_CONSECUTIVE_FAILURES) {
@@ -240,7 +249,10 @@ public class SubscriptionDirectDebitService {
             eventWriter.writeEvent(subscription, SubscriptionEventType.DIRECT_DEBIT_FAILED,
                     com.sni.bokaticowork.core.utils.json.JsonPayload.of("invoice", invoiceNumber, "status", String.valueOf(status)));
             notifyFailure(subscription, mandate, attempt);
-            graceService.enter(subscription, "Prélèvement " + status + " · " + invoiceNumber);
+            // Un renouvellement en attente decide ensuite : avant la fin de la periode, rien ne presse.
+            if (subscription.getPendingRenewalInvoice() == null) {
+                graceService.enter(subscription, "Prélèvement " + status + " · " + invoiceNumber);
+            }
         }
         mandateRepository.save(mandate);
         log.info("Abonnement {} · prelevement {} · {} ({})", subscription.getSubscriptionNumber(), invoiceNumber, status, message);

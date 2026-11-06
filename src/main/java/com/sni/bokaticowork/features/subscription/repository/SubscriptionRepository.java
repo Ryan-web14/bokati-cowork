@@ -144,7 +144,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM subscription
-            WHERE status IN ('ACTIVE', 'TRIALING', 'GRACE_PERIOD', 'PAST_DUE')
+            WHERE (status IN ('ACTIVE', 'TRIALING', 'GRACE_PERIOD', 'PAST_DUE')
+                   OR (status = 'SUSPENDED' AND pending_renewal_invoice IS NOT NULL))
               AND current_period_end IS NOT NULL
               AND current_period_end < :today
               AND auto_renew = true
@@ -166,8 +167,13 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
               AND bd.balance_due > 0
               AND bd.status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
               AND bi.created_at < :unpaidSince
+              AND (s.pending_renewal_invoice IS NULL OR s.current_period_end < CURRENT_DATE)
             """)
     List<Subscription> findActiveWithRenewalUnpaidSince(@Param("unpaidSince") Instant unpaidSince);
+
+    /** Les abonnements dont un renouvellement attend son reglement. */
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE pending_renewal_invoice IS NOT NULL")
+    List<Subscription> findWithPendingRenewal();
 
     @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE status = :status ORDER BY updated_at ASC")
     List<Subscription> findAllByStatus(@Param("status") String status);

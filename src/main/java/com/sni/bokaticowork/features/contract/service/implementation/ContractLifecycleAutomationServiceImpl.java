@@ -57,7 +57,7 @@ public class ContractLifecycleAutomationServiceImpl implements ContractLifecycle
         int processed = 0;
         LocalDate today = LocalDate.now();
         List<Contract> contracts = contractRepository.findAllByStatusInAndEndDateBeforeAndDeletedFalse(
-                List.of(ContractStatus.ACTIVE, ContractStatus.SUSPENDED),
+                List.of(ContractStatus.ACTIVE, ContractStatus.SUSPENDED, ContractStatus.AMENDED),
                 today
         );
         for (Contract contract : contracts) {

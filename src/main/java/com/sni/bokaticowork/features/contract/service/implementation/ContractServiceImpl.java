@@ -50,6 +50,29 @@ public class ContractServiceImpl implements ContractService {
     private final CustomerService customerService;
     private final BusinessService businessService;
     private final ContractMapper mapper;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.contract.service.interfaces.ContractAuditEventService auditEventService;
+
+    @Override
+    public boolean extendEndDate(String contractCode, LocalDate newEndDate, String reason) {
+        Contract contract = contractRepository.findByContractCode(contractCode).orElse(null);
+        if (contract == null || newEndDate == null
+                || contract.getStatus() == ContractStatus.TERMINATED || contract.getStatus() == ContractStatus.CANCELLED) {
+            return false;
+        }
+        LocalDate previousEndDate = contract.getEndDate();
+        if (previousEndDate != null && !newEndDate.isAfter(previousEndDate)) {
+            return false;
+        }
+        contract.setEndDate(newEndDate);
+        contract.setExpiryAlertSentDays(null);
+        if (contract.getStatus() == ContractStatus.EXPIRED && !newEndDate.isBefore(LocalDate.now())) {
+            contract.setStatus(ContractStatus.ACTIVE);
+        }
+        contractRepository.save(contract);
+        auditEventService.record(contractCode, null, "CONTRACT_TERM_EXTENDED", null, "SYSTEM", null, reason,
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("previousEndDate", previousEndDate, "newEndDate", newEndDate));
+        return true;
+    }
 
     @Override
     public ContractResponse create(CreateContractRequest request) {

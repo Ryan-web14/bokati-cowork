@@ -139,6 +139,17 @@ class SubscriptionDirectDebitServiceTest {
     }
 
     @Test
+    void aPendingRenewalDecidesItsOwnStatus() {
+        subscription.setPendingRenewalInvoice("INV-1");
+        wallet.setAvailableBalance(new BigDecimal("1000"));
+
+        service.collect(1L, "INV-1").orElseThrow();
+
+        verify(graceService, never()).enter(any(), anyString());
+        verify(graceService, never()).exit(any(), anyString());
+    }
+
+    @Test
     void insufficientBalanceIsWrittenNotAttemptedAndOpensGrace() {
         wallet.setAvailableBalance(new BigDecimal("1000"));
 
