@@ -132,7 +132,12 @@ public class SupportDtos {
             Instant updatedAt,
             List<TicketMessageResponse> messages,
             List<AttachmentResponse> attachments,
-            List<String> tags
+            List<String> tags,
+            /** Toujours renseignes · une liste ne porte ni {@code messages} ni {@code attachments}. */
+            int messageCount,
+            int attachmentCount,
+            @com.fasterxml.jackson.annotation.JsonIgnore int visibleMessageCount,
+            @com.fasterxml.jackson.annotation.JsonIgnore int visibleAttachmentCount
     ) {}
 
     public record SupportMetricsResponse(

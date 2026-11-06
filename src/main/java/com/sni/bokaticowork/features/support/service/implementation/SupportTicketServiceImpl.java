@@ -37,6 +37,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -49,6 +51,8 @@ import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +63,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class SupportTicketServiceImpl implements SupportTicketService {
+
+    /** Au-dela, un texte n'est plus accepte, et un message existant ne s'affiche plus · 200 000 caracteres. */
+    static final int MAX_MESSAGE_LENGTH = 200_000;
+    private static final int LIST_DESCRIPTION_LENGTH = 2_000;
+    private static final long[] NO_COUNT = {0, 0};
 
     private final SupportTicketRepository ticketRepository;
     private final TicketMessageRepository messageRepository;
@@ -86,6 +95,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
             throw new BadRequestException("Ticket title is required");
         }
         assertOwnerNotSuppressed(request.ownerType(), request.ownerCode());
+        ensureStorable(request.description());
         TicketPriority priority = request.priority() == null ? TicketPriority.MEDIUM : request.priority();
         SupportTicket ticket = SupportTicket.builder()
                 .ticketNumber("TCK-" + Instant.now().toEpochMilli())
@@ -141,19 +151,18 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                                                            String searchText, Pageable pageable) {
         String text = StringUtils.hasText(searchText) ? searchText.trim() : null;
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        return new PaginatedResponse<>(
-                ticketRepository.search(
-                                status != null ? status.name() : null,
-                                assignedTo,
-                                ownerType, ownerCode,
-                                category != null ? category.name() : null,
-                                priority != null ? priority.name() : null,
-                                StringUtils.hasText(relatedType) ? relatedType.trim() : null,
-                                StringUtils.hasText(relatedCode) ? relatedCode.trim() : null,
-                                Boolean.TRUE.equals(overdueOnly),
-                                Instant.now(),
-                                text, unsortedPageable)
-                        .map(this::toResponse));
+        Page<SupportTicket> page = ticketRepository.search(
+                status != null ? status.name() : null,
+                assignedTo,
+                ownerType, ownerCode,
+                category != null ? category.name() : null,
+                priority != null ? priority.name() : null,
+                StringUtils.hasText(relatedType) ? relatedType.trim() : null,
+                StringUtils.hasText(relatedCode) ? relatedCode.trim() : null,
+                Boolean.TRUE.equals(overdueOnly),
+                Instant.now(),
+                text, unsortedPageable);
+        return new PaginatedResponse<>(new PageImpl<>(toSummaries(page.getContent()), unsortedPageable, page.getTotalElements()));
     }
 
     // ── Lecture ───────────────────────────────────────────────────
@@ -560,10 +569,8 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         Double avgCsat = ticketRepository.avgCsatScoreByOwner(ownerType, ownerCode);
         Double roundedCsat = avgCsat != null ? Math.round(avgCsat * 10.0) / 10.0 : null;
         boolean atRisk = openTickets >= 3 || slaBreaches > 0 || (roundedCsat != null && roundedCsat < 3.0);
-        List<SupportTicketResponse> recentTickets = ticketRepository
-                .findTop5ByOwnerTypeAndOwnerCodeOrderByCreatedAtDesc(ownerType, ownerCode).stream()
-                .map(this::toResponse)
-                .toList();
+        List<SupportTicketResponse> recentTickets = toSummaries(ticketRepository
+                .findTop5ByOwnerTypeAndOwnerCodeOrderByCreatedAtDesc(ownerType, ownerCode));
         return new OwnerTicketSummaryResponse(ownerType, ownerCode, openTickets, slaBreaches, roundedCsat, atRisk, recentTickets);
     }
 
@@ -571,9 +578,67 @@ public class SupportTicketServiceImpl implements SupportTicketService {
 
     private SupportTicketResponse toResponse(SupportTicket ticket) {
         return mapper.toResponse(ticket,
-                messageRepository.findAllByTicketOrderByCreatedAtAsc(ticket),
+                messageRepository.findViewsByTicket(ticket.getId(), MAX_MESSAGE_LENGTH).stream().map(SupportTicketServiceImpl::messageResponse).toList(),
                 attachmentRepository.findAllByTicketAndActiveTrueOrderByCreatedAtAsc(ticket),
                 ticketTagRepository.findAllByTicketOrderByCreatedAtAsc(ticket));
+    }
+
+    private static TicketMessageResponse messageResponse(TicketMessageRepository.MessageView view) {
+        String content = view.content() != null ? view.content()
+                : "[Message trop volumineux pour être affiché : " + view.contentLength() + " caractères]";
+        return new TicketMessageResponse(view.id(), view.senderType(), view.senderId(), view.senderName(), content,
+                view.internal(), view.createdAt());
+    }
+
+    /**
+     * Une page de tickets · sans leurs fils, qui n'y servent pas.
+     *
+     * <p>La liste chargeait tous les messages et toutes les pieces jointes de chaque ticket, une
+     * requete par ticket, pour les renvoyer au navigateur qui n'en affiche rien. Vingt tickets aux
+     * longs messages suffisaient a remplir le tas du dyno, et l'application tombait
+     * ({@code OutOfMemoryError}) a chaque ouverture de la page.</p>
+     */
+    private List<SupportTicketResponse> toSummaries(List<SupportTicket> tickets) {
+        if (tickets.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = tickets.stream().map(SupportTicket::getId).toList();
+        Map<Long, long[]> messages = counts(messageRepository.countByTickets(ids));
+        Map<Long, long[]> attachments = counts(attachmentRepository.countActiveByTickets(ids));
+        Map<Long, List<String>> tags = new HashMap<>();
+        ticketTagRepository.findAllByTicketIds(ids).forEach(link ->
+                tags.computeIfAbsent(link.getTicket().getId(), id -> new ArrayList<>()).add(link.getTag().getName()));
+        return tickets.stream().map(ticket -> {
+            long[] messageCounts = messages.getOrDefault(ticket.getId(), NO_COUNT);
+            long[] attachmentCounts = attachments.getOrDefault(ticket.getId(), NO_COUNT);
+            return mapper.toSummary(ticket, descriptionPreview(ticket.getDescription()),
+                    tags.getOrDefault(ticket.getId(), List.of()),
+                    (int) messageCounts[0], (int) attachmentCounts[0], (int) messageCounts[1], (int) attachmentCounts[1]);
+        }).toList();
+    }
+
+    private static Map<Long, long[]> counts(List<Object[]> rows) {
+        Map<Long, long[]> counts = new HashMap<>();
+        for (Object[] row : rows) {
+            counts.put((Long) row[0], new long[]{((Number) row[1]).longValue(), ((Number) row[2]).longValue()});
+        }
+        return counts;
+    }
+
+    /** Une description courte passe telle quelle · une longue, en texte brut et coupee. */
+    private String descriptionPreview(String description) {
+        if (description == null || description.length() <= LIST_DESCRIPTION_LENGTH) {
+            return description;
+        }
+        String text = richTextSupport.toPlainText(description);
+        return text.length() <= LIST_DESCRIPTION_LENGTH ? text : text.substring(0, LIST_DESCRIPTION_LENGTH) + "…";
+    }
+
+    private static void ensureStorable(String content) {
+        if (content != null && content.length() > MAX_MESSAGE_LENGTH) {
+            throw new BadRequestException("Ce texte est trop long (" + content.length() + " caractères, "
+                    + MAX_MESSAGE_LENGTH + " au plus). Joignez les images et les documents en pièce jointe.");
+        }
     }
 
     private SupportTicket getTicket(String ticketNumber) {
@@ -591,6 +656,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
     private TicketMessage saveMessage(SupportTicket ticket, TicketSenderType senderType,
                                       String senderId, String senderName,
                                       String message, boolean internal, String externalMessageId) {
+        ensureStorable(message);
         return messageRepository.save(TicketMessage.builder()
                 .ticket(ticket)
                 .senderType(senderType)
