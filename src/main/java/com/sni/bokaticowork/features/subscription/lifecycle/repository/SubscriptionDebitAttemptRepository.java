@@ -15,4 +15,6 @@ import java.util.Optional;
 public interface SubscriptionDebitAttemptRepository extends JpaRepository<SubscriptionDebitAttempt, Long> {
 
     List<SubscriptionDebitAttempt> findBySubscriptionIdOrderByExecutedAtDesc(Long subscriptionId);
+
+    boolean existsBySubscriptionIdAndInvoiceNumber(Long subscriptionId, String invoiceNumber);
 }

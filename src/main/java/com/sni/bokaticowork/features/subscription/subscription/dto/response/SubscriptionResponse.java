@@ -32,6 +32,10 @@ public record SubscriptionResponse(
         LocalDate pauseUntil,
         String contractCode,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        /** La facture a regler pour que le renouvellement prenne effet · vide si rien n'attend. */
+        String pendingRenewalInvoice,
+        LocalDate pendingRenewalStart,
+        LocalDate pendingRenewalEnd
 ) {
 }

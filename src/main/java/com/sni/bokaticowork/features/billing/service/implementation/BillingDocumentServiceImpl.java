@@ -1391,6 +1391,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
      */
     @Override
     public BillingDocumentResponse refundCreditNoteToWallet(String creditNoteNumber, String reason) {
+        return refundCreditNoteToWallet(creditNoteNumber, reason, null, null);
+    }
+
+    @Override
+    public BillingDocumentResponse refundCreditNoteToWallet(String creditNoteNumber, String reason,
+                                                            String walletOwnerType, String walletOwnerCode) {
         BillingDocument creditNote = serviceByNumber(creditNoteNumber);
 
         if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE) {
@@ -1412,7 +1418,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // Les portefeuilles sont uniques par proprietaire et devise depuis V206 · demander celui
         // de la devise de l'avoir donne donc le bon compte, sans conversion implicite.
         var wallet = walletService.serviceWallet(
-                walletService.getOrCreate(creditNote.getCustomerType(), creditNote.getCustomerCode(),
+                walletService.getOrCreate(
+                        StringUtils.hasText(walletOwnerType) ? walletOwnerType : creditNote.getCustomerType(),
+                        StringUtils.hasText(walletOwnerCode) ? walletOwnerCode : creditNote.getCustomerCode(),
                         creditNote.getCurrency()).walletNumber());
 
         String motive = StringUtils.hasText(reason)

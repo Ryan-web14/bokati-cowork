@@ -62,7 +62,7 @@ class CompanySharingServiceTest {
     private final BookingRepository bookings = mock(BookingRepository.class);
     private final SeatEntitlementGate gate = new SeatEntitlementGate(seats, rules, allowances, usages, grants);
     private final CompanySharingService service = new CompanySharingService(customers, members, links, subscriptions,
-            legacySeats, seats, rules, allowances, usages, grants, bookings, gate);
+            legacySeats, seats, rules, allowances, usages, grants, bookings, gate, null);
 
     private Customer acme;
     private Subscription subscription;

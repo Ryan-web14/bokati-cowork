@@ -51,6 +51,8 @@ public class ContractAmendmentServiceImpl implements ContractAmendmentService {
             AmendmentStatus.DRAFT, AmendmentStatus.UNDER_REVIEW, AmendmentStatus.PENDING_SIGNATURE
     );
 
+    private static final String RENEWAL_DESCRIPTION = "Renouvellement de l'abonnement ";
+
     private final ContractAmendmentRepository amendmentRepository;
     private final ContractAmendmentSectionRepository sectionRepository;
     private final ContractAmendmentVariableRepository variableRepository;
@@ -164,9 +166,10 @@ public class ContractAmendmentServiceImpl implements ContractAmendmentService {
         amendmentRepository.save(amendment);
 
         Contract contract = contractService.serviceByCode(amendment.getOriginalContractCode());
-        if (contract.getStatus() != ContractStatus.ACTIVE && contract.getStatus() != ContractStatus.SUSPENDED) {
+        if (contract.getStatus() != ContractStatus.ACTIVE && contract.getStatus() != ContractStatus.SUSPENDED
+                && contract.getStatus() != ContractStatus.AMENDED) {
             throw new BadRequestException(
-                    "Le contrat original doit être ACTIVE ou SUSPENDED pour appliquer un avenant. Statut : " + contract.getStatus());
+                    "Le contrat original doit être ACTIVE, SUSPENDED ou AMENDED pour appliquer un avenant. Statut : " + contract.getStatus());
         }
         contract.setStatus(ContractStatus.AMENDED);
         contractRepository.save(contract);
@@ -180,6 +183,80 @@ public class ContractAmendmentServiceImpl implements ContractAmendmentService {
                 "CONTRACT_AMENDED", actorId, "USER", null, justification,
                 com.sni.bokaticowork.core.utils.json.JsonPayload.of("amendmentCode", amendmentCode, "previousStatus", "ACTIVE"));
         return toResponse(amendment);
+    }
+
+    @Override
+    public java.util.Optional<ContractAmendmentResponse> applyRenewal(String contractCode, RenewalTerms terms) {
+        Contract contract = contractService.serviceByCode(contractCode);
+        switch (contract.getStatus()) {
+            case TERMINATED, CANCELLED -> {
+                return java.util.Optional.empty();
+            }
+            case DRAFT, GENERATED, UNDER_REVIEW, AWAITING_SIGNATURE -> {
+                // Pas encore signe · il n'y a rien a amender, le contrat naitra avec la bonne date.
+                contractService.extendEndDate(contractCode, terms.newEnd(), renewalDescription(terms));
+                return java.util.Optional.empty();
+            }
+            default -> { /* contrat en vigueur, ou echu en attendant le paiement */ }
+        }
+        List<ContractAmendment> applied = amendmentRepository.findAllByOriginalContractCodeAndStatusIn(
+                contractCode, List.of(AmendmentStatus.ACTIVE));
+        for (ContractAmendment existing : applied) {
+            if (terms.newStart().equals(existing.getEffectiveDate())) {
+                // Evenement rejoue · cette periode a deja son avenant.
+                return java.util.Optional.of(toResponse(existing));
+            }
+        }
+        // Les avenants de renouvellement d'avant, restes en examen, ne bloquent plus celui-ci.
+        for (ContractAmendment stale : amendmentRepository.findAllByOriginalContractCodeAndStatusIn(contractCode, OPEN_STATUSES)) {
+            if (stale.getProposedBy() == null && stale.getDescription().startsWith(RENEWAL_DESCRIPTION)) {
+                stale.setStatus(AmendmentStatus.CANCELLED);
+                stale.setCancellationReason("Remplacé par l'avenant du renouvellement payé");
+                amendmentRepository.save(stale);
+            }
+        }
+
+        Instant now = Instant.now();
+        LocalDate previousEndDate = contract.getEndDate();
+        ContractAmendment amendment = amendmentRepository.save(ContractAmendment.builder()
+                .code(sequenceGenerator.next("AMENDMENT", LocalDate.now()))
+                .originalContract(contract)
+                .originalContractCode(contractCode)
+                .status(AmendmentStatus.ACTIVE)
+                .description(renewalDescription(terms))
+                .proposedAt(now)
+                .effectiveDate(terms.newStart())
+                .signedAt(now)
+                .activatedAt(now)
+                .build());
+        saveVariable(amendment, "periode_debut", terms.previousStart(), terms.newStart());
+        saveVariable(amendment, "periode_fin", terms.previousEnd(), terms.newEnd());
+        saveVariable(amendment, "prochaine_facturation", null, terms.nextBillingDate());
+
+        contract.setEndDate(terms.newEnd());
+        contract.setExpiryAlertSentDays(null);
+        contract.setStatus(ContractStatus.AMENDED);
+        contractRepository.save(contract);
+        auditEventService.record(contractCode, amendment.getCode(), "AMENDMENT_RENEWAL_APPLIED", null, "SYSTEM", null,
+                amendment.getDescription(),
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("subscriptionNumber", terms.subscriptionNumber(),
+                        "previousEndDate", previousEndDate, "newEndDate", terms.newEnd()));
+        return java.util.Optional.of(toResponse(amendment));
+    }
+
+    private void saveVariable(ContractAmendment amendment, String key, LocalDate previousValue, LocalDate newValue) {
+        variableRepository.save(ContractAmendmentVariable.builder()
+                .amendment(amendment)
+                .amendmentCode(amendment.getCode())
+                .variableKey(key)
+                .previousValue(previousValue == null ? null : previousValue.toString())
+                .newValue(newValue == null ? "-" : newValue.toString())
+                .build());
+    }
+
+    private static String renewalDescription(RenewalTerms terms) {
+        return RENEWAL_DESCRIPTION + terms.subscriptionNumber() + " · nouvelle période du " + terms.newStart()
+                + " au " + terms.newEnd();
     }
 
     @Override

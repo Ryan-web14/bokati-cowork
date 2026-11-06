@@ -75,6 +75,7 @@ public class CompanyAccountService {
     private final BillingDocumentRepository documentRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository linkRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     // ── Creation ─────────────────────────────────────────────────────────────
 
@@ -172,6 +173,9 @@ public class CompanyAccountService {
         legal.setUpdated_by(actor);
         businessRepository.save(legal);
         customerRepository.save(customer);
+        // Les domiciliations en cours relisent la fiche · le contrat et l'attestation suivante l'impriment.
+        eventPublisher.publishEvent(new com.sni.bokaticowork.features.company.service.support.CompanyLegalCardChangedEvent(
+                customer.getCustomerId()));
         return toResponse(customer);
     }
 

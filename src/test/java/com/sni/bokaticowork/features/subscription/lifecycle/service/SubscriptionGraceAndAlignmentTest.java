@@ -63,7 +63,7 @@ class SubscriptionGraceAndAlignmentTest {
     @BeforeEach
     void setUp() {
         grace = new SubscriptionGraceService(subscriptionRepository, historyRepository, policyService, statusManager, eventWriter, outboxService, lifecycleOperator);
-        alignment = new SubscriptionAlignmentService(subscriptionRepository, policyService, new ProrationCalculator(), billingSupport, eventWriter);
+        alignment = new SubscriptionAlignmentService(subscriptionRepository, policyService, new ProrationCalculator(), billingSupport, eventWriter, org.mockito.Mockito.mock(com.sni.bokaticowork.features.contract.service.interfaces.ContractService.class));
         active = Subscription.builder().id(1L).subscriptionNumber("SUB-1").status(SubscriptionStatus.ACTIVE).subscriberType(SubscriberType.BUSINESS_ENTITY)
                 .subscriberCode("BIZ-1").billingCycle(BillingCycle.MONTHLY).currentPeriodStart(today.minusDays(9)).currentPeriodEnd(today.plusDays(20))
                 .totalAmount(new BigDecimal("30000")).build();

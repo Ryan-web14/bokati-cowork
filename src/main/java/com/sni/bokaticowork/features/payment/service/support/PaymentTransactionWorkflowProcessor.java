@@ -58,6 +58,7 @@ public class PaymentTransactionWorkflowProcessor {
     private final com.sni.bokaticowork.features.subscription.subscription.service.support.pass.PassRenewalOperator passRenewalOperator;
     private final com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionGraceService graceService;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService marketplaceOrderService;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -151,6 +152,10 @@ public class PaymentTransactionWorkflowProcessor {
     private void handleSucceededTransaction(PaymentTransaction transaction, TransactionContextResolver.SourceView source) {
         if ("SUBSCRIPTION".equalsIgnoreCase(source.type())) {
             Subscription subscription = subscriptionService.getForService(source.code());
+            // La facture de renouvellement est soldee · la periode payee commence ici.
+            if (subscriptionService.applyPaidRenewal(source.code(), "Paiement " + transaction.getTransactionNumber())) {
+                return;
+            }
             if (subscription.getStatus() == SubscriptionStatus.GRACE_PERIOD) {
                 // Un paiement pendant la tolerance rend les droits sans intervention
                 graceService.exit(subscription, "Paiement " + transaction.getTransactionNumber());
@@ -194,7 +199,41 @@ public class PaymentTransactionWorkflowProcessor {
 
         if ("BOOKING".equalsIgnoreCase(source.type())) {
             confirmBookingIfFullyPaid(transaction, source.code());
+            return;
         }
+
+        if (com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService.SOURCE_TYPE.equalsIgnoreCase(source.type())) {
+            syncMarketplaceOrderAfterCommit(source.code());
+        }
+    }
+
+    /**
+     * La commande lit le solde de sa facture · elle le fait une fois ce reglement valide, dans sa
+     * propre transaction, pour qu'un incident sur la commande ne defasse pas le paiement. Le passage
+     * periodique rattrape ce qui manquerait ici.
+     */
+    private void syncMarketplaceOrderAfterCommit(String orderNumber) {
+        if (marketplaceOrderService == null) {
+            return;
+        }
+        Runnable sync = () -> {
+            try {
+                marketplaceOrderService.sync(orderNumber);
+            } catch (Exception ex) {
+                log.warn("Marketplace order {} not synced after payment · retried by the worker: {}", orderNumber, ex.getMessage());
+            }
+        };
+        if (!org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            sync.run();
+            return;
+        }
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        sync.run();
+                    }
+                });
     }
 
     private void confirmBookingIfFullyPaid(PaymentTransaction transaction, String bookingNumber) {

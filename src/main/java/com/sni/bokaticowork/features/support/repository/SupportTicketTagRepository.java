@@ -14,6 +14,10 @@ import java.util.Optional;
 public interface SupportTicketTagRepository extends JpaRepository<SupportTicketTag, Long> {
     List<SupportTicketTag> findAllByTicketOrderByCreatedAtAsc(SupportTicket ticket);
 
+    /** Les etiquettes d'une page de tickets, en une requete. */
+    @Query("SELECT stt FROM SupportTicketTag stt JOIN FETCH stt.tag WHERE stt.ticket.id IN :ticketIds ORDER BY stt.createdAt ASC")
+    List<SupportTicketTag> findAllByTicketIds(@Param("ticketIds") java.util.Collection<Long> ticketIds);
+
     Optional<SupportTicketTag> findByTicketAndTag(SupportTicket ticket, SupportTag tag);
 
     boolean existsByTicketAndTag(SupportTicket ticket, SupportTag tag);

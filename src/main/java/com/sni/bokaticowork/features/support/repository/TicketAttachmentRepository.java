@@ -12,5 +12,14 @@ public interface TicketAttachmentRepository extends JpaRepository<TicketAttachme
 
     List<TicketAttachment> findAllByTicketAndActiveTrueOrderByCreatedAtAsc(SupportTicket ticket);
 
+    /** Pour une page de tickets · ticket, pieces jointes, pieces visibles du client. */
+    @org.springframework.data.jpa.repository.Query("""
+            SELECT a.ticket.id, COUNT(a), SUM(CASE WHEN a.internal = true THEN 0 ELSE 1 END)
+            FROM TicketAttachment a
+            WHERE a.active = true AND a.ticket.id IN :ticketIds
+            GROUP BY a.ticket.id
+            """)
+    List<Object[]> countActiveByTickets(@org.springframework.data.repository.query.Param("ticketIds") java.util.Collection<Long> ticketIds);
+
     Optional<TicketAttachment> findByIdAndTicket(Long id, SupportTicket ticket);
 }

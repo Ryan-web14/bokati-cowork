@@ -67,8 +67,8 @@ Ouvert dans les **sept jours** qui précèdent la fin, c'est-à-dire à partir d
 un `400` dit à quelle date ce sera possible. Reconduire un abonnement qui court encore un mois
 avancerait sa période sans raison, et le client paierait une échéance qu'il ne devait pas encore.
 
-La réponse porte la période reconduite **et la facture de renouvellement**, pour que l'écran
-propose de la régler dans le même mouvement. Sans elle, le client devait aller la chercher dans sa
+La réponse porte l'abonnement **et la facture de renouvellement**, pour que l'écran propose de la
+régler dans le même mouvement : la période ne sera reconduite qu'au paiement. Sans elle, le client devait aller la chercher dans sa
 liste de factures, et beaucoup repartaient sans payer.
 
 Les avis de J-7, J-3 et du jour même deviennent donc actionnables : ils disent quoi faire, et le
@@ -76,8 +76,14 @@ client peut le faire.
 
 **Renouveler emet une facture** · c'est le renouvellement qui facture, jamais l'avis. Les avis
 disent quoi faire, ils n'engagent rien : personne ne recoit de facture pour une periode qu'il n'a
-pas demandee. `PATCH /subscriptions/{n}/renew` fait avancer la periode et emet la facture de
-renouvellement, comme pour une reconduction automatique.
+pas demandee. `PATCH /subscriptions/{n}/renew` emet la facture de renouvellement, comme une
+reconduction automatique. **La periode n'avance qu'au paiement** : la facture et la periode a venir
+attendent sur l'abonnement (`pending_renewal_invoice`, `_start`, `_end`), et
+`SubscriptionLifecycleOperator.applyPaidRenewal` fait tout prendre effet d'un coup : periode, statut
+actif, droits, avenant du contrat. Le paiement l'appelle ; le balayage des echeances rattrape celui
+qui aurait echoue. Sans mandat de prelevement, rien n'est debite : l'abonne recoit
+`SUBSCRIPTION_RENEWAL_PAYMENT_DUE`. Periode finie et facture due, il passe en `GRACE_PERIOD`, et
+`SubscriptionExpiryService` prend aussi les abonnements `SUSPENDED` dont un renouvellement attend.
 
 **Un avis ne part qu'une fois.** Le balayage passe toutes les heures ; `subscription.end_notice_stage`
 retient le jalon le plus urgent deja envoye (7, puis 3, puis 0). Un renouvellement le remet a nul,

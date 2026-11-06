@@ -43,7 +43,10 @@ public abstract class SubscriptionLifecycleMapperDecorator implements Subscripti
                 subscription.getPauseUntil(),
                 subscription.getContractCode(),
                 subscription.getCreatedAt(),
-                subscription.getUpdatedAt()
+                subscription.getUpdatedAt(),
+                subscription.getPendingRenewalInvoice(),
+                subscription.getPendingRenewalStart(),
+                subscription.getPendingRenewalEnd()
         );
     }
 

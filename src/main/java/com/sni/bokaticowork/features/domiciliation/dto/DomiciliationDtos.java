@@ -95,7 +95,8 @@ public final class DomiciliationDtos {
 
     public record OpenContractRequest(
             @NotBlank String subscriptionNumber,
-            @NotBlank String legalName, String legalForm, String registrationNumber, String taxNumber, String legalRepresentativeName,
+            // Pour une organisation, lus sur sa fiche · ne servent qu'a completer une fiche vide.
+            String legalName, String legalForm, String registrationNumber, String taxNumber, String legalRepresentativeName,
             @NotBlank String addressCode, String suiteNumber,
             @NotNull BillingCycle billingCycle, Integer commitmentMonths, Integer noticePeriodDays, LocalDate startDate,
             DomiciliationContract.MailForwardingMode mailForwardingMode
@@ -176,7 +177,13 @@ public final class DomiciliationDtos {
     public record ScanRequest(@NotBlank String scanDocumentCode) {
     }
 
-    public record CollectRequest(@NotBlank String collectedBy, String collectorIdDocument, String collectorSignatureUrl) {
+    /**
+     * @param collectorMemberId le membre qui retire, pour une organisation domiciliee · son gerant ou
+     *                          un membre autorise a retirer le courrier ; son nom tient alors lieu de
+     *                          {@code collectedBy}
+     */
+    public record CollectRequest(String collectedBy, String collectorIdDocument, String collectorSignatureUrl,
+                                 String collectorMemberId) {
     }
 
     public record ForwardRequest(String trackingNumber, BigDecimal transportCost) {
@@ -190,13 +197,13 @@ public final class DomiciliationDtos {
                                MailItem.Status status, String scanDocumentCode, Instant notifiedAt, Instant collectedAt,
                                String collectedBy, String collectorIdDocument, String handedOverBy, Instant forwardedAt,
                                String forwardingTrackingNumber, BigDecimal forwardingCost, LocalDate storageDeadline,
-                               Boolean billable, BigDecimal billedAmount, String notes) {
+                               Boolean billable, BigDecimal billedAmount, String notes, String collectedByMember) {
         public static MailItemView of(MailItem m) {
             return new MailItemView(m.getItemNumber(), m.getContract().getContractNumber(), m.getMailType(), m.getSenderName(),
                     m.getSenderReference(), m.getReceivedAt(), m.getReceivedBy(), m.getWeightGrams(), m.getDimensions(), m.getStatus(),
                     m.getScanDocumentCode(), m.getNotifiedAt(), m.getCollectedAt(), m.getCollectedBy(), m.getCollectorIdDocument(),
                     m.getHandedOverBy(), m.getForwardedAt(), m.getForwardingTrackingNumber(), m.getForwardingCost(),
-                    m.getStorageDeadline(), m.getBillable(), m.getBilledAmount(), m.getNotes());
+                    m.getStorageDeadline(), m.getBillable(), m.getBilledAmount(), m.getNotes(), m.getCollectedByMember());
         }
     }
 

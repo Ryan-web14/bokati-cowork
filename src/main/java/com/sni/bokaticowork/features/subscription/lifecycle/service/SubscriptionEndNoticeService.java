@@ -60,6 +60,7 @@ public class SubscriptionEndNoticeService {
     private final SubscriptionEventWriter eventWriter;
     private final OutboxService outboxService;
     private final @Lazy SubscriptionEndNoticeService self;
+    private final @Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionLifecycleOperator lifecycleOperator;
 
     /** Ce qu'une passe a donne · avis envoyes, abonnements clos. */
     public record Sweep(int noticed, int cancelled) {
@@ -129,6 +130,9 @@ public class SubscriptionEndNoticeService {
     private Outcome cancel(Subscription subscription, LocalDate periodEnd) {
         String reason = "Abonnement arrivé à son terme le " + periodEnd + " · non renouvelé";
         statusManager.changeStatus(subscription, SubscriptionStatus.CANCELLED, reason, "SYSTEM");
+        if (lifecycleOperator != null) {
+            lifecycleOperator.dropPendingRenewal(subscription, reason);
+        }
         subscription.setCancelledAt(Instant.now());
         subscription.setCancellationReason(reason);
         subscription.setEndNoticeStage(null);

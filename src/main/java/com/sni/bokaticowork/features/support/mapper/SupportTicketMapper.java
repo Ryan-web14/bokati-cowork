@@ -16,12 +16,32 @@ import java.util.List;
 @Component
 public class SupportTicketMapper {
 
-    public SupportTicketResponse toResponse(SupportTicket ticket, List<TicketMessage> messages,
+    /** Le ticket complet, avec son fil et ses pieces jointes. */
+    public SupportTicketResponse toResponse(SupportTicket ticket, List<TicketMessageResponse> messages,
                                              List<TicketAttachment> attachments, List<SupportTicketTag> tags) {
+        List<AttachmentResponse> files = attachments.stream().map(this::toAttachmentResponse).toList();
+        return response(ticket, ticket.getDescription(), messages, files, tags.stream().map(t -> t.getTag().getName()).toList(),
+                messages.size(), files.size(),
+                (int) messages.stream().filter(message -> !Boolean.TRUE.equals(message.internal())).count(),
+                (int) files.stream().filter(file -> !Boolean.TRUE.equals(file.internal())).count());
+    }
+
+    /** Une ligne de liste · ni fil, ni pieces jointes, seulement leur nombre. */
+    public SupportTicketResponse toSummary(SupportTicket ticket, String description, List<String> tags,
+                                           int messageCount, int attachmentCount,
+                                           int visibleMessageCount, int visibleAttachmentCount) {
+        return response(ticket, description, List.of(), List.of(), tags, messageCount, attachmentCount,
+                visibleMessageCount, visibleAttachmentCount);
+    }
+
+    private SupportTicketResponse response(SupportTicket ticket, String description, List<TicketMessageResponse> messages,
+                                           List<AttachmentResponse> attachments, List<String> tags,
+                                           int messageCount, int attachmentCount,
+                                           int visibleMessageCount, int visibleAttachmentCount) {
         return new SupportTicketResponse(
                 ticket.getTicketNumber(),
                 ticket.getTitle(),
-                ticket.getDescription(),
+                description,
                 ticket.getStatus(),
                 ticket.getPriority(),
                 ticket.getCategory(),
@@ -46,9 +66,13 @@ public class SupportTicketMapper {
                 ticket.getEscalationReason(),
                 ticket.getCreatedAt(),
                 ticket.getUpdatedAt(),
-                messages == null ? List.of() : messages.stream().map(this::toMessageResponse).toList(),
-                attachments == null ? List.of() : attachments.stream().map(this::toAttachmentResponse).toList(),
-                tags == null ? List.of() : tags.stream().map(t -> t.getTag().getName()).toList()
+                messages,
+                attachments,
+                tags,
+                messageCount,
+                attachmentCount,
+                visibleMessageCount,
+                visibleAttachmentCount
         );
     }
 

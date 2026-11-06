@@ -40,6 +40,11 @@ public class CompanyWalletMailer {
         send(recipient, subject, message, reference, portalPath, EmailPriority.NORMAL);
     }
 
+    /** Une alerte a une adresse sans compte membre · l'equipe d'exploitation, par exemple. */
+    public void notifyAddress(String email, String name, String subject, String message, String reference) {
+        send(email, name, subject, message, reference, null, EmailPriority.NORMAL);
+    }
+
     /** Le code a usage unique · prioritaire, il expire vite. */
     public void oneTimeCode(Member recipient, String code, String what, long validMinutes, String reference) {
         send(recipient, "Votre code de confirmation : " + code,
@@ -51,11 +56,18 @@ public class CompanyWalletMailer {
 
     private void send(Member recipient, String subject, String message, String reference, String portalPath,
                       EmailPriority priority) {
-        if (recipient == null || !StringUtils.hasText(recipient.getEmail())) {
+        if (recipient == null) {
             return;
         }
-        String to = recipient.getEmail().trim();
-        String name = recipient.getDisplayName();
+        send(recipient.getEmail(), recipient.getDisplayName(), subject, message, reference, portalPath, priority);
+    }
+
+    private void send(String email, String name, String subject, String message, String reference, String portalPath,
+                      EmailPriority priority) {
+        if (!StringUtils.hasText(email)) {
+            return;
+        }
+        String to = email.trim();
         Runnable dispatch = () -> {
             try {
                 Context ctx = new Context(Locale.FRENCH);

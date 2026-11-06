@@ -62,6 +62,8 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
     private final ContractEmailNotifier contractEmailNotifier;
     private final ContractTemplateRepository contractTemplateRepository;
     private final Locale appLocale;
+    /** La fiche legale d'une organisation cliente · vide dans les tests qui ne la fournissent pas. */
+    private final com.sni.bokaticowork.features.company.service.support.CompanyLegalCard companyLegalCard;
 
     @Override
     @Transactional(readOnly = true)
@@ -171,6 +173,10 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         context.setVariable("ownerPhone", ownerView.phone());
         context.setVariable("ownerRccm", ownerView.rccm());
         context.setVariable("ownerAddress", ownerView.address());
+        context.setVariable("ownerNiu", ownerView.niu());
+        context.setVariable("ownerLegalForm", ownerView.legalForm());
+        context.setVariable("ownerRepresentative", ownerView.representative());
+        context.setVariable("ownerRepresentativeTitle", ownerView.representativeTitle());
         context.setVariable("business", business);
         context.setVariable("clauses", resolvedClauses);
         context.setVariable("variables", enrichedVars);
@@ -203,6 +209,13 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         putIfNotBlank(vars, "clientEmail",     owner.email());
         putIfNotBlank(vars, "clientPhone",     owner.phone());
         putIfNotBlank(vars, "clientCode",      owner.code());
+        // La fiche legale de l'organisation · lue, plus ressaisie.
+        putIfNotBlank(vars, "clientRccm",      owner.rccm());
+        putIfNotBlank(vars, "clientNiu",       owner.niu());
+        putIfNotBlank(vars, "clientLegalForm", owner.legalForm());
+        putIfNotBlank(vars, "clientAddress",   owner.address());
+        putIfNotBlank(vars, "clientRepresentative", owner.representative());
+        putIfNotBlank(vars, "clientRepresentativeTitle", owner.representativeTitle());
         putIfNotBlank(vars, "startDate",       request.getStartDate()     != null ? request.getStartDate().toString()     : null);
         putIfNotBlank(vars, "endDate",         request.getEndDate()       != null ? request.getEndDate().toString()       : null);
         putIfNotBlank(vars, "effectiveDate",   request.getEffectiveDate() != null ? request.getEffectiveDate().toString() : null);
@@ -291,18 +304,27 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
         return switch (ownerType) {
             case MEMBER -> {
                 Member member = memberService.getByMemberIdForService(ownerCode.trim());
-                yield new OwnerView(member.getMemberId(), member.getDisplayName().trim(), member.getEmail(), member.getPhone(), null, null);
+                yield new OwnerView(member.getMemberId(), member.getDisplayName().trim(), member.getEmail(), member.getPhone(), null, null,
+                        null, null, null, null);
             }
             case CUSTOMER -> {
                 Customer customer = customerService.getCustomerForService(ownerCode.trim());
                 String name = customer.getCompanyName() != null && !customer.getCompanyName().isBlank()
                         ? customer.getCompanyName()
                         : ((customer.getFirstname() == null ? "" : customer.getFirstname()) + " " + (customer.getLastname() == null ? "" : customer.getLastname())).trim();
-                yield new OwnerView(customer.getCustomerId(), name, customer.getEmail(), customer.getPhone(), null, null);
+                var card = companyLegalCard == null ? java.util.Optional.<com.sni.bokaticowork.features.company.service.support.CompanyLegalCard.Card>empty() : companyLegalCard.of(customer);
+                if (card.isPresent()) {
+                    var c = card.get();
+                    yield new OwnerView(customer.getCustomerId(), c.name(), customer.getEmail(), customer.getPhone(), c.rccm(), c.address(),
+                            c.niu(), c.legalForm(), c.representativeName(), c.representativeTitle());
+                }
+                yield new OwnerView(customer.getCustomerId(), name, customer.getEmail(), customer.getPhone(), null, null,
+                        null, null, null, null);
             }
             case BUSINESS -> {
                 BusinessEntity biz = businessService.serviceBusinessByCode(ownerCode.trim());
-                yield new OwnerView(biz.getCode(), biz.getName(), biz.getEmail(), biz.getPhone(), biz.getRccmNumber(), formatAddress(biz.getAddress()));
+                yield new OwnerView(biz.getCode(), biz.getName(), biz.getEmail(), biz.getPhone(), biz.getRccmNumber(), formatAddress(biz.getAddress()),
+                        biz.getNiuNumber(), biz.getLegalForm(), biz.getLegalRepresentativeName(), biz.getLegalRepresentativeTitle());
             }
             default -> throw new BadRequestException("Unsupported contract owner type: " + ownerType);
         };
@@ -361,7 +383,8 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
     private record ContractTemplateDescriptor(String code, String name, String description) {
     }
 
-    private record OwnerView(String code, String name, String email, String phone, String rccm, String address) {
+    private record OwnerView(String code, String name, String email, String phone, String rccm, String address,
+                             String niu, String legalForm, String representative, String representativeTitle) {
     }
 
 }

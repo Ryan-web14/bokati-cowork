@@ -52,7 +52,7 @@ class SubscriptionEndNoticeServiceTest {
     @BeforeEach
     void setUp() {
         service = new SubscriptionEndNoticeService(subscriptionRepository, statusManager, eventWriter,
-                outboxService, null);
+                outboxService, null, null);
         ReflectionTestUtils.setField(service, "self", service);
     }
 

@@ -98,6 +98,10 @@ public class MailItem {
     @Column(name = "collected_by")
     private String collectedBy;
 
+    /** Le membre qui a retire le pli, quand il en est un · pour une organisation domiciliee. */
+    @Column(name = "collected_by_member", length = 120)
+    private String collectedByMember;
+
     @Column(name = "collector_id_document", length = 120)
     private String collectorIdDocument;
 
