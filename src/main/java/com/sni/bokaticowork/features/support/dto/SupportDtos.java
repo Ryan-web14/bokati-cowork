@@ -114,6 +114,8 @@ public class SupportDtos {
             String contactName,
             String contactEmail,
             String contactPhone,
+            /** En texte · l'ecran l'affiche comme tel, et JavaScript arrondirait un long identifiant. */
+            @com.fasterxml.jackson.databind.annotation.JsonSerialize(using = com.fasterxml.jackson.databind.ser.std.ToStringSerializer.class)
             Long assignedTo,
             String relatedType,
             String relatedCode,

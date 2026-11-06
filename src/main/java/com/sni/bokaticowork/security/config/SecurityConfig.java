@@ -142,14 +142,26 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        return corsSource(corsAllowedOrigins);
+    }
+
+    /**
+     * L'API se passe de cookies, sauf {@code /ws} · le client SockJS envoie ses requetes avec les
+     * identifiants, et le navigateur rejette toute reponse qui ne les autorise pas. Cette regle
+     * passe avant celle de SockJS, qui ne double pas un en-tete deja pose.
+     */
+    static CorsConfigurationSource corsSource(String allowedOrigins) {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(CorsOrigins.parse(corsAllowedOrigins));
+        config.setAllowedOriginPatterns(CorsOrigins.parse(allowedOrigins));
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("*"));
         config.setAllowCredentials(false);
         config.setMaxAge(3600L);
+        CorsConfiguration webSocket = new CorsConfiguration(config);
+        webSocket.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/ws/**", webSocket);
         source.registerCorsConfiguration("/**", config);
         return source;
     }
