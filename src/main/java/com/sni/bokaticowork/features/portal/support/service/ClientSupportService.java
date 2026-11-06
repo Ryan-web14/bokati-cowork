@@ -166,7 +166,11 @@ public class ClientSupportService {
                 ticket.attachments() == null ? null : ticket.attachments().stream()
                         .filter(attachment -> !Boolean.TRUE.equals(attachment.internal()))
                         .toList(),
-                ticket.tags());
+                ticket.tags(),
+                ticket.visibleMessageCount(),
+                ticket.visibleAttachmentCount(),
+                ticket.visibleMessageCount(),
+                ticket.visibleAttachmentCount());
     }
 
     private void verifyOwnership(Member member, SupportTicketResponse ticket) {

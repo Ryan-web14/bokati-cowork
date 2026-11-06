@@ -102,7 +102,7 @@ OPEN ──assign──> IN_PROGRESS ──message client──> WAITING_CLIENT
 | Méthode | Chemin | Autorité | Description |
 |---|---|---|---|
 | POST | `/support/tickets` | `SUPPORT:WRITE` | Créer un ticket |
-| GET | `/support/tickets` | `SUPPORT:READ` | Recherche paginée (filtres ci-dessous) |
+| GET | `/support/tickets` | `SUPPORT:READ` | Recherche paginée (filtres ci-dessous) : `messages` et `attachments` y sont vides, `messageCount` et `attachmentCount` donnent leur nombre, une description longue est coupée. Le fil complet est sur le détail. |
 | GET | `/support/tickets/{ticketNumber}` | `SUPPORT:READ` | Détail d'un ticket |
 | GET | `/support/tickets/{ticketNumber}/timeline` | `SUPPORT:READ` | Historique d'événements |
 | PATCH | `/support/tickets/{ticketNumber}/assign` | `SUPPORT:ASSIGN` | Assigner à un agent |

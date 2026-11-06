@@ -26,7 +26,7 @@ class ClientSupportViewTest {
                         new TicketMessageResponse(2L, null, "AG-7", "Agent", "Client deja relance trois fois", true, now)),
                 List.of(new AttachmentResponse(1L, "capture.png", "image/png", 10L, false, null, now),
                         new AttachmentResponse(2L, "note-interne.pdf", "application/pdf", 10L, true, 7L, now)),
-                List.of("wifi"));
+                List.of("wifi"), 2, 2, 1, 1);
 
         SupportTicketResponse clientView = ClientSupportService.clientView(staffView);
 
@@ -36,5 +36,8 @@ class ClientSupportViewTest {
         assertThat(clientView.escalationReason()).isNull();
         assertThat(clientView.title()).isEqualTo("Wifi");
         assertThat(clientView.tags()).containsExactly("wifi");
+        // Le client ne doit pas deviner qu'il existe des notes internes.
+        assertThat(clientView.messageCount()).isEqualTo(1);
+        assertThat(clientView.attachmentCount()).isEqualTo(1);
     }
 }
