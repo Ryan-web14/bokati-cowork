@@ -67,7 +67,7 @@ OPEN ──assign──> IN_PROGRESS ──message client──> WAITING_CLIENT
   "contactName": "Jeanne Dupont",
   "contactEmail": "jeanne@example.com",
   "contactPhone": "+243...",
-  "assignedTo": 12,
+  "assignedTo": "12",
   "relatedType": "BOOKING",
   "relatedCode": "BK-2026-000789",
   "firstResponseDueAt": "2026-06-08T10:00:00Z",
