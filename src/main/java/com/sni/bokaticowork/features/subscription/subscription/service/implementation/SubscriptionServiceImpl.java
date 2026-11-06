@@ -181,4 +181,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public int repairActiveSubscriptionsWithoutGrants() {
         return lifecycleOperator.repairActiveSubscriptionsWithoutGrants();
     }
+
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    public int catchUpContractTerms() {
+        return lifecycleOperator.catchUpContractTerms();
+    }
 }

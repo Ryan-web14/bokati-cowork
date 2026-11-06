@@ -479,6 +479,57 @@ public class SubscriptionLifecycleOperator {
     }
 
     /**
+     * Rattrape les contrats restes derriere leur abonnement · renouveles quand le contrat ne suivait
+     * pas, ils ont expire alors que l'abonnement court. Un seul avenant du meme contrat couvre tout
+     * l'ecart, jusqu'a la fin de la periode en cours. Aucun nouveau contrat n'est cree.
+     */
+    public int catchUpContractTerms() {
+        int caughtUp = 0;
+        for (Long subscriptionId : subscriptionRepository.findIdsWithContractBehindPeriod()) {
+            try {
+                self.catchUpContractTerm(subscriptionId);
+                caughtUp++;
+            } catch (Exception ex) {
+                log.error("Abonnement {} · contrat non rattrape, repris au prochain passage", subscriptionId, ex);
+            }
+        }
+        return caughtUp;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void catchUpContractTerm(Long subscriptionId) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
+        if (subscription == null) {
+            return;
+        }
+        Contract contract = contractService.serviceByCode(subscription.getContractCode());
+        LocalDate contractEnd = contract.getEndDate();
+        if (contractEnd == null || !subscription.getCurrentPeriodEnd().isAfter(contractEnd)) {
+            return;
+        }
+        requestRenewalAmendment(subscription, contract.getStartDate(), contractEnd, contractEnd.plusDays(1),
+                subscription.getCurrentPeriodEnd(), subscription.getNextBillingDate());
+    }
+
+    private void requestRenewalAmendment(Subscription subscription, LocalDate previousStart, LocalDate previousEnd,
+                                         LocalDate newStart, LocalDate newEnd, LocalDate nextBilling) {
+        outboxService.publish(
+                "CONTRACT_RENEWAL_AMENDMENT_REQUESTED",
+                "SUBSCRIPTION",
+                subscription.getSubscriptionNumber(),
+                Map.of(
+                        "contractCode", subscription.getContractCode(),
+                        "subscriptionNumber", subscription.getSubscriptionNumber(),
+                        "previousPeriodStart", previousStart != null ? previousStart.toString() : "",
+                        "previousPeriodEnd",   previousEnd   != null ? previousEnd.toString()   : "",
+                        "newPeriodStart",  newStart.toString(),
+                        "newPeriodEnd",    newEnd.toString(),
+                        "nextBillingDate", nextBilling != null ? nextBilling.toString() : ""
+                )
+        );
+    }
+
+    /**
      * Emet la facture de la periode a venir · rien d'autre ne bouge tant qu'elle n'est pas payee.
      *
      * <p>La periode, les droits et le contrat n'avancent qu'au reglement ({@link #applyPaidRenewal}).
@@ -552,20 +603,7 @@ public class SubscriptionLifecycleOperator {
         notifyInApp(subscription, SubscriptionEventType.SUBSCRIPTION_RENEWED);
 
         if (StringUtils.hasText(subscription.getContractCode())) {
-            outboxService.publish(
-                    "CONTRACT_RENEWAL_AMENDMENT_REQUESTED",
-                    "SUBSCRIPTION",
-                    subscription.getSubscriptionNumber(),
-                    Map.of(
-                            "contractCode", subscription.getContractCode(),
-                            "subscriptionNumber", subscription.getSubscriptionNumber(),
-                            "previousPeriodStart", previousPeriodStart != null ? previousPeriodStart.toString() : "",
-                            "previousPeriodEnd",   previousPeriodEnd   != null ? previousPeriodEnd.toString()   : "",
-                            "newPeriodStart",  start.toString(),
-                            "newPeriodEnd",    newEnd.toString(),
-                            "nextBillingDate", nextBilling != null ? nextBilling.toString() : ""
-                    )
-            );
+            requestRenewalAmendment(subscription, previousPeriodStart, previousPeriodEnd, start, newEnd, nextBilling);
         }
         // Notification after all business logic and outbox events
         try {

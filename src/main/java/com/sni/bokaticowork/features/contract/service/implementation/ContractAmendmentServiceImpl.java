@@ -202,8 +202,9 @@ public class ContractAmendmentServiceImpl implements ContractAmendmentService {
         List<ContractAmendment> applied = amendmentRepository.findAllByOriginalContractCodeAndStatusIn(
                 contractCode, List.of(AmendmentStatus.ACTIVE));
         for (ContractAmendment existing : applied) {
-            if (terms.newStart().equals(existing.getEffectiveDate())) {
-                // Evenement rejoue · cette periode a deja son avenant.
+            if (terms.newStart().equals(existing.getEffectiveDate())
+                    && contract.getEndDate() != null && !contract.getEndDate().isBefore(terms.newEnd())) {
+                // Evenement rejoue · cette periode a deja son avenant, et les dates ont suivi.
                 return java.util.Optional.of(toResponse(existing));
             }
         }

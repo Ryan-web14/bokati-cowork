@@ -171,6 +171,30 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
             """)
     List<Subscription> findActiveWithRenewalUnpaidSince(@Param("unpaidSince") Instant unpaidSince);
 
+    /**
+     * Les abonnements paies dont le contrat s'arrete avant la periode en cours · renouveles avant que
+     * le contrat ne suive. Une echeance impayee les ecarte : le contrat ne se prolonge que sur du paye.
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT s.id
+            FROM subscription s
+            JOIN contract_record c ON c.contract_code = s.contract_code
+            WHERE s.status IN ('ACTIVE', 'GRACE_PERIOD', 'PAST_DUE', 'PAUSED', 'PENDING_TERMINATION')
+              AND s.pending_renewal_invoice IS NULL
+              AND s.current_period_end > c.end_date
+              AND c.deleted = false
+              AND c.status NOT IN ('TERMINATED', 'CANCELLED')
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM billable_item bi
+                  JOIN billing_document bd ON bd.id = bi.invoice_id
+                  WHERE bi.source_id = s.subscription_number
+                    AND bi.source_type = 'SUBSCRIPTION_RENEWAL'
+                    AND bd.balance_due > 0
+                    AND bd.status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE'))
+            """)
+    List<Long> findIdsWithContractBehindPeriod();
+
     /** Les abonnements dont un renouvellement attend son reglement. */
     @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE pending_renewal_invoice IS NOT NULL")
     List<Subscription> findWithPendingRenewal();

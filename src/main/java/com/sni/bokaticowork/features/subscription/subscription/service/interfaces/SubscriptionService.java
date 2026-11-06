@@ -60,4 +60,7 @@ public interface SubscriptionService {
     int cancelEndedSubscriptions();
 
     int repairActiveSubscriptionsWithoutGrants();
+
+    /** Prolonge par avenant les contrats restes derriere leur abonnement · rend combien. */
+    int catchUpContractTerms();
 }

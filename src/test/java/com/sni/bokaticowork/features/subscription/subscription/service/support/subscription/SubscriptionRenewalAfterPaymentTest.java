@@ -337,6 +337,42 @@ class SubscriptionRenewalAfterPaymentTest {
     }
 
     @Test
+    @DisplayName("Rattrapage : un contrat echu sur un abonnement qui court recoit un avenant unique jusqu'a la fin de periode")
+    void expiredContractIsCaughtUp() {
+        LocalDate periodEnd = today.plusDays(40);
+        Subscription subscription = subscription(periodEnd, SubscriptionStatus.ACTIVE);
+        LocalDate contractEnd = today.minusDays(50);
+        com.sni.bokaticowork.features.contract.model.Contract contract = com.sni.bokaticowork.features.contract.model.Contract.builder()
+                .contractCode("CTR-1").startDate(contractEnd.minusMonths(1)).endDate(contractEnd)
+                .status(com.sni.bokaticowork.features.contract.enums.ContractStatus.EXPIRED).build();
+        when(contractService.serviceByCode("CTR-1")).thenReturn(contract);
+        when(subscriptionRepository.findIdsWithContractBehindPeriod()).thenReturn(java.util.List.of(1L));
+
+        assertThat(operator.catchUpContractTerms()).isEqualTo(1);
+
+        ArgumentCaptor<Map<String, Object>> payload = payloadCaptor();
+        verify(outboxService).publish(eq("CONTRACT_RENEWAL_AMENDMENT_REQUESTED"), eq("SUBSCRIPTION"), eq("SUB-1"), payload.capture());
+        assertThat(payload.getValue()).containsEntry("contractCode", "CTR-1")
+                .containsEntry("previousPeriodEnd", contractEnd.toString())
+                .containsEntry("newPeriodStart", contractEnd.plusDays(1).toString())
+                .containsEntry("newPeriodEnd", periodEnd.toString());
+        verify(subscriptionRepository, never()).save(subscription);
+    }
+
+    @Test
+    @DisplayName("Un contrat deja a jour n'appelle aucun avenant")
+    void contractUpToDateIsLeftAlone() {
+        LocalDate periodEnd = today.plusDays(40);
+        subscription(periodEnd, SubscriptionStatus.ACTIVE);
+        when(contractService.serviceByCode("CTR-1")).thenReturn(com.sni.bokaticowork.features.contract.model.Contract.builder()
+                .contractCode("CTR-1").endDate(periodEnd).build());
+
+        operator.catchUpContractTerm(1L);
+
+        verify(outboxService, never()).publish(anyString(), anyString(), anyString(), any());
+    }
+
+    @Test
     @DisplayName("Une extension en cours de periode porte la date de fin du contrat, sans avenant")
     void extensionFollowsOnContract() {
         LocalDate periodStart = today.minusDays(10);

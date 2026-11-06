@@ -77,3 +77,8 @@ Le contrat reste le même : aucun nouveau contrat n'est créé.
 
 Une facture de renouvellement déjà émise avant cette version garde l'ancienne règle : sa période a
 déjà avancé, et son paiement fait seulement sortir de la tolérance.
+
+Les contrats restés derrière leur abonnement sont rattrapés automatiquement toutes les 30 minutes :
+un seul avenant du même contrat couvre tout l'écart, jusqu'à la fin de la période en cours, et un
+contrat échu redevient en vigueur (`AMENDED`). Aucun nouveau contrat n'est créé. Un abonnement qui a
+une facture de renouvellement impayée attend son paiement.
