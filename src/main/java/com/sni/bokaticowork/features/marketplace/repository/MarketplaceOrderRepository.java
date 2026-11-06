@@ -57,4 +57,19 @@ public interface MarketplaceOrderRepository extends JpaRepository<MarketplaceOrd
             ORDER BY o.placedAt ASC
             """)
     List<String> findPendingNumbers(Pageable pageable);
+
+    /** Les commandes reglees dont un article n'est pas encore sorti du stock. */
+    @Query("""
+            SELECT DISTINCT o.orderNumber FROM MarketplaceOrder o JOIN o.lines l
+            WHERE o.status = com.sni.bokaticowork.features.marketplace.model.MarketplaceOrder.Status.PAID
+              AND l.stockReservationCode IS NOT NULL AND l.stockConsumedAt IS NULL
+            """)
+    List<String> findStockPendingNumbers(Pageable pageable);
+
+    @Query("""
+            SELECT DISTINCT o FROM MarketplaceOrder o JOIN o.lines l
+            WHERE o.status = com.sni.bokaticowork.features.marketplace.model.MarketplaceOrder.Status.PAID
+              AND l.stockReservationCode IS NOT NULL AND l.stockConsumedAt IS NULL
+            """)
+    List<MarketplaceOrder> findStockPending(Pageable pageable);
 }

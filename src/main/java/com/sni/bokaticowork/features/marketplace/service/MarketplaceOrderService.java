@@ -14,23 +14,23 @@ import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
 import com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver;
+import com.sni.bokaticowork.features.company.wallet.repository.CompanyWalletSpendRepository;
 import com.sni.bokaticowork.features.company.wallet.service.CompanyWalletMailer;
-import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemRepository;
-import com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockReservationRequest;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.InventoryConsumptionService;
-import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockService;
 import com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos;
 import com.sni.bokaticowork.features.marketplace.model.MarketplaceOffer;
 import com.sni.bokaticowork.features.marketplace.model.MarketplaceOrder;
 import com.sni.bokaticowork.features.marketplace.model.MarketplaceOrderLine;
 import com.sni.bokaticowork.features.marketplace.repository.MarketplaceOrderRepository;
+import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
 import com.sni.bokaticowork.features.subscription.repository.BillableItemRepository;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillableItemStatus;
 import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
+import com.sni.bokaticowork.security.admin.role.repository.RoleUserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,20 +50,29 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Les commandes de la marketplace · du panier au retrait a l'accueil.
  *
- * <p>Validee, une commande fige ses prix, retient le stock de ses articles et emet sa facture, au
- * nom du membre ou de l'organisation qui paie. Elle a {@link #paymentWindow} pour etre reglee :
- * au-dela, et sans aucun reglement, le stock est rendu et la facture annulee. Reglee, le stock sort ;
- * il ne reste qu'a la remettre au comptoir.</p>
+ * <p>Validee, une commande fige ses prix, retient le stock de ses articles et emet sa facture, pour
+ * le membre ou l'organisation qui paie. Elle a {@link #paymentWindow} pour etre soldee : au-dela, ce
+ * qui a deja ete regle est rembourse, le stock est rendu et la facture annulee. Un paiement en cours
+ * ou une depense en attente du gerant suspend l'echeance, le temps d'etre tranche. Reglee, le stock
+ * sort ; il ne reste qu'a la remettre au comptoir.</p>
  *
- * <p>Une commande payee ne s'annule que par l'administration : un avoir constate le remboursement,
- * reverse au portefeuille du payeur, et ce qui n'a pas ete remis revient en stock.</p>
+ * <p>Une sortie de stock qui echoue ne remet pas le reglement en cause : la commande reste reglee,
+ * l'administration est prevenue, la sortie est reessayee a chaque passage, et la commande ne se
+ * remet pas tant qu'elle n'a pas abouti.</p>
+ *
+ * <p>Une commande reglee, meme en partie, ne s'annule que par l'administration : un avoir constate
+ * le remboursement, reverse au portefeuille du payeur, et ce qui n'a pas ete remis revient en
+ * stock.</p>
  */
 @Slf4j
 @Service
@@ -72,20 +81,27 @@ public class MarketplaceOrderService {
     public static final String SOURCE_TYPE = "MARKETPLACE_ORDER";
     private static final String SYSTEM_ACTOR = "SYSTEM_MARKETPLACE";
     private static final String PORTAL_PATH = "/marketplace/orders";
+    private static final String COMPANY_WALLET_OWNER = "CUSTOMER";
+    private static final List<String> ALERTED_ROLES = List.of("SUPER_ADMIN", "ADMIN", "MANAGER");
+    /** Au-dela, un paiement reste sans reponse de l'operateur · il ne retient plus la commande. */
+    private static final Duration IN_FLIGHT_WINDOW = Duration.ofHours(1);
+    private static final int STOCK_ERROR_LENGTH = 500;
 
     private final MarketplaceOrderRepository orderRepository;
     private final MarketplaceCatalogService catalog;
     private final MemberRepository memberRepository;
     private final MemberBillingCompanyResolver billingCompanyResolver;
     private final InventoryConsumptionService consumptionService;
-    private final StockService stockService;
-    private final InventoryItemRepository itemRepository;
+    private final MarketplaceStockGateway stockGateway;
     private final BillableItemRepository billableItemRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final BillableItemInvoiceSupport invoiceSupport;
     private final BillingDocumentService billingDocumentService;
     private final BillingDocumentRepository billingDocumentRepository;
     private final BillingEmailService billingEmailService;
+    private final CompanyWalletSpendRepository spendRepository;
+    private final PaymentTransactionRepository transactionRepository;
+    private final RoleUserRepository roleUserRepository;
     private final CompanyWalletMailer mailer;
     private final MemberInAppNotifier inAppNotifier;
     private final Clock clock;
@@ -94,41 +110,48 @@ public class MarketplaceOrderService {
     @Autowired
     public MarketplaceOrderService(MarketplaceOrderRepository orderRepository, MarketplaceCatalogService catalog,
                                    MemberRepository memberRepository, MemberBillingCompanyResolver billingCompanyResolver,
-                                   InventoryConsumptionService consumptionService, StockService stockService,
-                                   InventoryItemRepository itemRepository, BillableItemRepository billableItemRepository,
+                                   InventoryConsumptionService consumptionService, MarketplaceStockGateway stockGateway,
+                                   BillableItemRepository billableItemRepository,
                                    SequenceGeneratorFacade sequenceGenerator, @Lazy BillableItemInvoiceSupport invoiceSupport,
                                    @Lazy BillingDocumentService billingDocumentService,
                                    BillingDocumentRepository billingDocumentRepository,
-                                   @Lazy BillingEmailService billingEmailService, CompanyWalletMailer mailer,
+                                   @Lazy BillingEmailService billingEmailService,
+                                   CompanyWalletSpendRepository spendRepository,
+                                   PaymentTransactionRepository transactionRepository,
+                                   RoleUserRepository roleUserRepository, CompanyWalletMailer mailer,
                                    MemberInAppNotifier inAppNotifier,
                                    @Value("${bokati.marketplace.payment-window-minutes:30}") long paymentWindowMinutes) {
-        this(orderRepository, catalog, memberRepository, billingCompanyResolver, consumptionService, stockService,
-                itemRepository, billableItemRepository, sequenceGenerator, invoiceSupport, billingDocumentService,
-                billingDocumentRepository, billingEmailService, mailer, inAppNotifier, Clock.systemDefaultZone(),
+        this(orderRepository, catalog, memberRepository, billingCompanyResolver, consumptionService, stockGateway,
+                billableItemRepository, sequenceGenerator, invoiceSupport, billingDocumentService,
+                billingDocumentRepository, billingEmailService, spendRepository, transactionRepository,
+                roleUserRepository, mailer, inAppNotifier, Clock.systemDefaultZone(),
                 Duration.ofMinutes(paymentWindowMinutes));
     }
 
     MarketplaceOrderService(MarketplaceOrderRepository orderRepository, MarketplaceCatalogService catalog,
                             MemberRepository memberRepository, MemberBillingCompanyResolver billingCompanyResolver,
-                            InventoryConsumptionService consumptionService, StockService stockService,
-                            InventoryItemRepository itemRepository, BillableItemRepository billableItemRepository,
+                            InventoryConsumptionService consumptionService, MarketplaceStockGateway stockGateway,
+                            BillableItemRepository billableItemRepository,
                             SequenceGeneratorFacade sequenceGenerator, BillableItemInvoiceSupport invoiceSupport,
                             BillingDocumentService billingDocumentService, BillingDocumentRepository billingDocumentRepository,
-                            BillingEmailService billingEmailService, CompanyWalletMailer mailer,
-                            MemberInAppNotifier inAppNotifier, Clock clock, Duration paymentWindow) {
+                            BillingEmailService billingEmailService, CompanyWalletSpendRepository spendRepository,
+                            PaymentTransactionRepository transactionRepository, RoleUserRepository roleUserRepository,
+                            CompanyWalletMailer mailer, MemberInAppNotifier inAppNotifier, Clock clock, Duration paymentWindow) {
         this.orderRepository = orderRepository;
         this.catalog = catalog;
         this.memberRepository = memberRepository;
         this.billingCompanyResolver = billingCompanyResolver;
         this.consumptionService = consumptionService;
-        this.stockService = stockService;
-        this.itemRepository = itemRepository;
+        this.stockGateway = stockGateway;
         this.billableItemRepository = billableItemRepository;
         this.sequenceGenerator = sequenceGenerator;
         this.invoiceSupport = invoiceSupport;
         this.billingDocumentService = billingDocumentService;
         this.billingDocumentRepository = billingDocumentRepository;
         this.billingEmailService = billingEmailService;
+        this.spendRepository = spendRepository;
+        this.transactionRepository = transactionRepository;
+        this.roleUserRepository = roleUserRepository;
         this.mailer = mailer;
         this.inAppNotifier = inAppNotifier;
         this.clock = clock;
@@ -233,7 +256,7 @@ public class MarketplaceOrderService {
         order.setTotalAmount(total);
 
         // Le stock se retient sans echeance : c'est la commande qui expire, et rend alors ce qu'elle
-        // retenait. Un reglement partiel arrive pendant le delai garde ainsi son stock.
+        // retenait. Un paiement qui suspend l'echeance garde ainsi son stock.
         for (MarketplaceOrderLine line : order.getLines()) {
             if (line.getOffer().getKind() == MarketplaceOffer.Kind.PRODUCT) {
                 line.setStockReservationCode(reserve(orderNumber, member, line));
@@ -286,15 +309,21 @@ public class MarketplaceOrderService {
     // ------------------------------------------------------------------ reglement, retrait, expiration
 
     /**
-     * Fait avancer une commande en attente de reglement · reglee, son stock sort ; echue sans
-     * aucun reglement, elle expire. Appele apres chaque paiement et a chaque passage periodique.
+     * Fait avancer une commande · soldee, son stock sort ; echue, elle expire ; reglee, la sortie de
+     * stock restee en echec est reessayee. Appele apres chaque paiement et a chaque passage periodique.
      *
      * @return la commande a-t-elle change
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean sync(String orderNumber) {
         MarketplaceOrder order = orderRepository.lockByOrderNumber(orderNumber).orElse(null);
-        if (order == null || order.getStatus() != MarketplaceOrder.Status.PENDING_PAYMENT) {
+        if (order == null) {
+            return false;
+        }
+        if (order.getStatus() == MarketplaceOrder.Status.PAID) {
+            return retryStock(order);
+        }
+        if (order.getStatus() != MarketplaceOrder.Status.PENDING_PAYMENT) {
             return false;
         }
         BillingDocument invoice = invoice(order);
@@ -302,30 +331,18 @@ public class MarketplaceOrderService {
             markPaid(order);
             return true;
         }
-        if (order.getExpiresAt() != null && !order.getExpiresAt().isAfter(clock.instant())) {
-            if (invoice != null && paidOn(invoice).signum() > 0) {
-                // Un reglement partiel est arrive · la commande attend la suite, rien n'est rendu.
-                return false;
-            }
-            release(order);
-            cancelInvoice(order, "Commande " + orderNumber + " non réglée dans le délai");
-            order.setStatus(MarketplaceOrder.Status.EXPIRED);
-            order.setCancelledAt(clock.instant());
-            order.setCancelledBy(SYSTEM_ACTOR);
-            order.setCancellationReason("Non réglée dans le délai de " + paymentWindow.toMinutes() + " minutes");
-            orderRepository.save(order);
-            buyer(order).ifPresent(member -> tell(member, order, "MARKETPLACE_ORDER_EXPIRED",
-                    "Commande " + orderNumber + " annulée",
-                    "Votre commande " + orderNumber + " n'a pas été réglée dans le délai : elle est annulée et sa"
-                            + " facture avec elle."));
-            return true;
+        if (order.getExpiresAt() == null || order.getExpiresAt().isAfter(clock.instant()) || paymentUnderway(order)) {
+            return false;
         }
-        return false;
+        expire(order, invoice);
+        return true;
     }
 
     @Transactional(readOnly = true)
-    public List<String> pendingNumbers(int limit) {
-        return orderRepository.findPendingNumbers(PageRequest.of(0, limit));
+    public List<String> numbersToSync(int limit) {
+        List<String> numbers = new ArrayList<>(orderRepository.findPendingNumbers(PageRequest.of(0, limit)));
+        numbers.addAll(orderRepository.findStockPendingNumbers(PageRequest.of(0, limit)));
+        return numbers;
     }
 
     /** Remise au comptoir · une commande reglee seulement. */
@@ -342,6 +359,12 @@ public class MarketplaceOrderService {
         if (order.getStatus() != MarketplaceOrder.Status.PAID) {
             throw new BadRequestException("La commande " + orderNumber + " ne se remet pas : elle est "
                     + label(order.getStatus()) + ".");
+        }
+        issueStock(order);
+        if (stockPending(order)) {
+            throw new BadRequestException("La commande " + orderNumber + " ne se remet pas encore : la sortie de stock de "
+                    + String.join(", ", pendingTitles(order)) + " n'a pas abouti. Corrigez le stock de l'emplacement,"
+                    + " puis recommencez.");
         }
         order.setStatus(MarketplaceOrder.Status.FULFILLED);
         order.setFulfilledAt(clock.instant());
@@ -381,9 +404,9 @@ public class MarketplaceOrderService {
     }
 
     /**
-     * L'administration annule · non reglee, la facture est annulee ; reglee, un avoir rembourse le
-     * payeur sur son portefeuille. Ce qui n'a pas ete remis revient en stock, ce qui l'a ete sur
-     * demande seulement.
+     * L'administration annule · sans reglement, la facture est annulee ; avec, un avoir rembourse le
+     * payeur sur son portefeuille, et une facture restee en partie due est annulee aussi. Ce qui n'a
+     * pas ete remis revient en stock, ce qui l'a ete sur demande seulement.
      */
     @Transactional
     public MarketplaceDtos.OrderView cancelByStaff(String orderNumber, MarketplaceDtos.CancelRequest request, String actor) {
@@ -396,8 +419,7 @@ public class MarketplaceOrderService {
                     markPaid(order);
                     refundAndCancel(order, reason, actor, true);
                 } else if (invoice != null && paidOn(invoice).signum() > 0) {
-                    throw new BadRequestException("La commande " + orderNumber + " est partiellement réglée : "
-                            + "remboursez d'abord le paiement reçu, puis annulez-la.");
+                    refundAndCancel(order, reason, actor, true);
                 } else {
                     cancelUnpaid(order, reason, actor);
                 }
@@ -435,6 +457,12 @@ public class MarketplaceOrderService {
         return orderRepository.search(status, PageRequest.of(0, limit)).stream().map(this::view).toList();
     }
 
+    /** Les commandes reglees qui attendent une correction du stock. */
+    @Transactional(readOnly = true)
+    public List<MarketplaceDtos.OrderView> stockPending(int limit) {
+        return orderRepository.findStockPending(PageRequest.of(0, limit)).stream().map(this::view).toList();
+    }
+
     @Transactional(readOnly = true)
     public MarketplaceDtos.OrderView get(String orderNumber) {
         return view(orderRepository.findByOrderNumber(orderNumber)
@@ -444,31 +472,82 @@ public class MarketplaceOrderService {
     // ------------------------------------------------------------------ interne
 
     private void markPaid(MarketplaceOrder order) {
-        for (MarketplaceOrderLine line : order.getLines()) {
-            if (!StringUtils.hasText(line.getStockReservationCode())) {
-                continue;
-            }
-            try {
-                consumptionService.consumeBusinessReservation(line.getStockReservationCode(), SYSTEM_ACTOR);
-            } catch (RuntimeException ex) {
-                // Le client a paye · la commande avance, le stock se regularise a la main.
-                log.warn("Commande {} · sortie de stock de {} impossible, a regulariser : {}",
-                        order.getOrderNumber(), line.getStockReservationCode(), ex.getMessage());
-            }
-        }
         order.setStatus(MarketplaceOrder.Status.PAID);
         order.setPaidAt(clock.instant());
         order.setExpiresAt(null);
+        issueStock(order);
         orderRepository.save(order);
         buyer(order).ifPresent(member -> tell(member, order, "MARKETPLACE_ORDER_PAID",
                 "Commande " + order.getOrderNumber() + " réglée",
                 "Votre commande " + order.getOrderNumber() + " est réglée. Elle vous attend à l'accueil."));
     }
 
+    /** Sort du stock ce qui doit l'etre · la premiere fois qu'une ligne echoue, l'equipe est prevenue. */
+    private void issueStock(MarketplaceOrder order) {
+        List<String> newFailures = new ArrayList<>();
+        for (MarketplaceOrderLine line : order.getLines()) {
+            if (!toIssue(line)) {
+                continue;
+            }
+            try {
+                line.setStockReservationCode(stockGateway.issue(stockLine(order, line, SYSTEM_ACTOR)));
+                line.setStockConsumedAt(clock.instant());
+                line.setStockError(null);
+            } catch (RuntimeException ex) {
+                log.warn("Commande {} · sortie de stock de {} impossible, reessayee au prochain passage : {}",
+                        order.getOrderNumber(), line.getStockReservationCode(), ex.getMessage());
+                if (line.getStockError() == null) {
+                    newFailures.add(line.getTitle());
+                }
+                line.setStockError(stockError(ex));
+            }
+        }
+        if (!newFailures.isEmpty()) {
+            alertStaff(order, "Commande " + order.getOrderNumber() + " : sortie de stock à régulariser",
+                    "La commande " + order.getOrderNumber() + " est réglée, mais la sortie de stock de "
+                            + String.join(", ", newFailures) + " n'a pas abouti. Corrigez le stock de l'emplacement :"
+                            + " la sortie est reprise automatiquement, et la commande ne peut pas être remise avant.");
+        }
+    }
+
+    private boolean retryStock(MarketplaceOrder order) {
+        if (!stockPending(order)) {
+            return false;
+        }
+        issueStock(order);
+        orderRepository.save(order);
+        return !stockPending(order);
+    }
+
+    /** Un paiement lance ou une depense soumise au gerant se tranche avant que la commande n'expire. */
+    private boolean paymentUnderway(MarketplaceOrder order) {
+        String invoiceNumber = order.getInvoiceNumber();
+        return StringUtils.hasText(invoiceNumber)
+                && (spendRepository.existsPendingForDocument(invoiceNumber)
+                || transactionRepository.existsInFlightForDocument(invoiceNumber, clock.instant().minus(IN_FLIGHT_WINDOW)));
+    }
+
+    private void expire(MarketplaceOrder order, BillingDocument invoice) {
+        String orderNumber = order.getOrderNumber();
+        String motive = "Commande " + orderNumber + " non réglée dans le délai";
+        BigDecimal refunded = refundPaid(order, invoice, motive);
+        cancelInvoice(order, motive);
+        order.setStatus(MarketplaceOrder.Status.EXPIRED);
+        order.setCancelledAt(clock.instant());
+        order.setCancelledBy(SYSTEM_ACTOR);
+        order.setCancellationReason("Non réglée dans le délai de " + paymentWindow.toMinutes() + " minutes");
+        orderRepository.save(order);
+        giveBack(order, SYSTEM_ACTOR);
+        buyer(order).ifPresent(member -> tell(member, order, "MARKETPLACE_ORDER_EXPIRED",
+                "Commande " + orderNumber + " annulée",
+                "Votre commande " + orderNumber + " n'a pas été soldée dans le délai : elle est annulée et sa"
+                        + " facture avec elle." + refundSentence(order, refunded)));
+    }
+
     private void cancelUnpaid(MarketplaceOrder order, String reason, String actor) {
-        release(order);
         cancelInvoice(order, "Annulation commande " + order.getOrderNumber() + " · " + reason);
         close(order, reason, actor);
+        giveBack(order, actor);
         buyer(order).ifPresent(member -> tell(member, order, "MARKETPLACE_ORDER_CANCELLED",
                 "Commande " + order.getOrderNumber() + " annulée",
                 "Votre commande " + order.getOrderNumber() + " est annulée, sa facture avec elle."));
@@ -476,25 +555,46 @@ public class MarketplaceOrderService {
 
     private void refundAndCancel(MarketplaceOrder order, String reason, String actor, boolean returnToStock) {
         BillingDocument invoice = invoice(order);
-        BigDecimal paid = invoice == null ? BigDecimal.ZERO : paidOn(invoice);
-        if (paid.signum() > 0) {
-            String motive = "Annulation commande " + order.getOrderNumber() + " · " + reason;
-            BillingDocumentResponse creditNote = billingDocumentService.createCreditNote(invoice.getDocumentNumber(),
-                    new CreateCreditNoteRequest(paid, motive, Boolean.FALSE, Boolean.TRUE, null));
-            billingDocumentService.refundCreditNoteToWallet(creditNote.documentNumber(), motive);
-            order.setCreditNoteNumber(creditNote.documentNumber());
-        }
-        if (returnToStock) {
-            restock(order, actor);
+        boolean balanceLeft = invoice != null && !settled(invoice);
+        String motive = "Annulation commande " + order.getOrderNumber() + " · " + reason;
+        BigDecimal refunded = refundPaid(order, invoice, motive);
+        if (balanceLeft) {
+            // L'avoir couvre ce qui a ete regle · il reste a annuler ce qui n'a jamais ete paye.
+            cancelInvoice(order, motive);
         }
         close(order, reason, actor);
-        String paidText = paid.stripTrailingZeros().toPlainString() + " " + order.getCurrency();
+        if (returnToStock) {
+            giveBack(order, actor);
+        }
         buyer(order).ifPresent(member -> tell(member, order, "MARKETPLACE_ORDER_REFUNDED",
                 "Commande " + order.getOrderNumber() + " annulée et remboursée",
-                "Votre commande " + order.getOrderNumber() + " est annulée. "
-                        + (paid.signum() > 0 ? paidText + " sont reversés au portefeuille "
-                        + (order.getBillingCompanyCode() == null ? "de votre compte." : "de l'organisation qui a payé.")
-                        : "")));
+                "Votre commande " + order.getOrderNumber() + " est annulée." + refundSentence(order, refunded)));
+    }
+
+    /** Constate par un avoir ce qui a ete regle, et le reverse au portefeuille du payeur. */
+    private BigDecimal refundPaid(MarketplaceOrder order, BillingDocument invoice, String motive) {
+        BigDecimal paid = invoice == null ? BigDecimal.ZERO : paidOn(invoice);
+        if (paid.signum() <= 0) {
+            return BigDecimal.ZERO;
+        }
+        BillingDocumentResponse creditNote = billingDocumentService.createCreditNote(invoice.getDocumentNumber(),
+                new CreateCreditNoteRequest(paid, motive, Boolean.FALSE, Boolean.TRUE, null));
+        // La facture reste au nom du membre, reliee a l'organisation : l'avoir aussi. C'est donc ici
+        // que se decide le portefeuille, pour que l'argent de l'organisation lui revienne.
+        boolean company = StringUtils.hasText(order.getBillingCompanyCode());
+        billingDocumentService.refundCreditNoteToWallet(creditNote.documentNumber(), motive,
+                company ? COMPANY_WALLET_OWNER : null, company ? order.getBillingCompanyCode() : null);
+        order.setCreditNoteNumber(creditNote.documentNumber());
+        return paid;
+    }
+
+    private static String refundSentence(MarketplaceOrder order, BigDecimal refunded) {
+        if (refunded.signum() <= 0) {
+            return "";
+        }
+        return " " + refunded.stripTrailingZeros().toPlainString() + " " + order.getCurrency()
+                + " sont reversés au portefeuille "
+                + (StringUtils.hasText(order.getBillingCompanyCode()) ? "de l'organisation." : "de votre compte.");
     }
 
     private void close(MarketplaceOrder order, String reason, String actor) {
@@ -504,6 +604,67 @@ public class MarketplaceOrderService {
         order.setCancellationReason(reason);
         order.setExpiresAt(null);
         orderRepository.save(order);
+    }
+
+    /**
+     * Rend le stock, une fois tout le reste fait · un retour impossible (article suivi par lot ou
+     * numero de serie, periode close) n'empeche pas le remboursement : l'equipe le saisit a la main.
+     */
+    private void giveBack(MarketplaceOrder order, String actor) {
+        List<String> failures = new ArrayList<>();
+        for (MarketplaceOrderLine line : order.getLines()) {
+            if (!StringUtils.hasText(line.getStockReservationCode())) {
+                continue;
+            }
+            try {
+                stockGateway.giveBack(stockLine(order, line, actor));
+            } catch (RuntimeException ex) {
+                log.warn("Commande {} · retour en stock de {} impossible : {}", order.getOrderNumber(),
+                        line.getStockReservationCode(), ex.getMessage());
+                line.setStockError(stockError(ex));
+                failures.add(line.getTitle());
+            }
+        }
+        if (!failures.isEmpty()) {
+            orderRepository.save(order);
+            alertStaff(order, "Commande " + order.getOrderNumber() + " : retour en stock à saisir",
+                    "La commande " + order.getOrderNumber() + " est annulée, mais " + String.join(", ", failures)
+                            + " n'a pas pu revenir en stock automatiquement. Saisissez le retour à la main.");
+        }
+    }
+
+    private static MarketplaceStockGateway.StockLine stockLine(MarketplaceOrder order, MarketplaceOrderLine line, String actor) {
+        MarketplaceOffer offer = line.getOffer();
+        return new MarketplaceStockGateway.StockLine(line.getStockReservationCode(), offer.getInventoryItemCode(),
+                offer.getLocationCode(), BigDecimal.valueOf(line.getQuantity()), order.getOrderNumber(), actor);
+    }
+
+    private static boolean toIssue(MarketplaceOrderLine line) {
+        return StringUtils.hasText(line.getStockReservationCode()) && line.getStockConsumedAt() == null;
+    }
+
+    private static boolean stockPending(MarketplaceOrder order) {
+        return order.getLines().stream().anyMatch(MarketplaceOrderService::toIssue);
+    }
+
+    private static List<String> pendingTitles(MarketplaceOrder order) {
+        return order.getLines().stream().filter(MarketplaceOrderService::toIssue).map(MarketplaceOrderLine::getTitle).toList();
+    }
+
+    private static String stockError(RuntimeException ex) {
+        String message = String.valueOf(ex.getMessage());
+        return message.length() <= STOCK_ERROR_LENGTH ? message : message.substring(0, STOCK_ERROR_LENGTH);
+    }
+
+    private void alertStaff(MarketplaceOrder order, String subject, String message) {
+        Set<String> recipients = new LinkedHashSet<>();
+        for (String role : ALERTED_ROLES) {
+            roleUserRepository.findEnabledHolderEmails(role).stream()
+                    .filter(StringUtils::hasText)
+                    .map(email -> email.trim().toLowerCase(Locale.ROOT))
+                    .forEach(recipients::add);
+        }
+        recipients.forEach(email -> mailer.notifyAddress(email, "Équipe", subject, message, order.getOrderNumber()));
     }
 
     private String reserve(String orderNumber, Member member, MarketplaceOrderLine line) {
@@ -516,41 +677,6 @@ public class MarketplaceOrderService {
         reservation.setReferenceCode(orderNumber);
         reservation.setReservedBy(member.getMemberId());
         return consumptionService.reserveForBusinessEvent(reservation).getReservationCode();
-    }
-
-    private void release(MarketplaceOrder order) {
-        for (MarketplaceOrderLine line : order.getLines()) {
-            if (!StringUtils.hasText(line.getStockReservationCode())) {
-                continue;
-            }
-            try {
-                consumptionService.releaseBusinessReservation(line.getStockReservationCode());
-            } catch (RuntimeException ex) {
-                log.warn("Commande {} · retenue de stock {} deja levee : {}", order.getOrderNumber(),
-                        line.getStockReservationCode(), ex.getMessage());
-            }
-        }
-    }
-
-    /** Ce qui est deja sorti revient a l'emplacement d'ou il etait parti. */
-    private void restock(MarketplaceOrder order, String actor) {
-        for (MarketplaceOrderLine line : order.getLines()) {
-            MarketplaceOffer offer = line.getOffer();
-            if (offer.getKind() != MarketplaceOffer.Kind.PRODUCT || !StringUtils.hasText(line.getStockReservationCode())) {
-                continue;
-            }
-            StockInRequest back = new StockInRequest();
-            back.setItemCode(offer.getInventoryItemCode());
-            back.setLocationCode(offer.getLocationCode());
-            back.setQuantity(BigDecimal.valueOf(line.getQuantity()));
-            back.setUnitCost(itemRepository.findByItemCode(offer.getInventoryItemCode())
-                    .map(item -> item.getDefaultCost()).orElse(null));
-            back.setReferenceType(StockReferenceType.POS_SALE);
-            back.setReferenceCode(order.getOrderNumber());
-            back.setReason("Retour · annulation de la commande " + order.getOrderNumber());
-            back.setPerformedBy(actor);
-            stockService.receive(back);
-        }
     }
 
     /** La facture n'existe pour un autre fil qu'une fois la transaction validee. */
@@ -648,7 +774,7 @@ public class MarketplaceOrderService {
 
     private MarketplaceDtos.OrderView emptyCart(Member member) {
         return new MarketplaceDtos.OrderView(null, null, MarketplaceOrder.Status.CART, member.getMemberId(), null, "XAF",
-                BigDecimal.ZERO, null, null, null, null, null, null, null, null, null, null, null, null, List.of());
+                BigDecimal.ZERO, null, null, null, null, null, null, null, null, null, null, null, null, false, List.of());
     }
 
     MarketplaceDtos.OrderView view(MarketplaceOrder order) {
@@ -667,7 +793,7 @@ public class MarketplaceOrderService {
             }
             lines.add(new MarketplaceDtos.LineView(line.getShortId(), offer.getShortId(), offer.getKind(),
                     cart ? offer.getTitle() : line.getTitle(), offer.getImageUrl(), line.getQuantity(), unitPrice, amount,
-                    cart ? catalog.availableOf(offer) : null));
+                    cart ? catalog.availableOf(offer) : null, line.getStockError()));
         }
         BigDecimal balanceDue = null;
         if (!cart) {
@@ -678,6 +804,6 @@ public class MarketplaceOrderService {
                 cart ? total : order.getTotalAmount(), order.getInvoiceNumber(), balanceDue, order.getExpiresAt(),
                 order.getPlacedAt(), order.getPaidAt(), order.getFulfilledAt(), order.getFulfilledBy(),
                 order.getCollectedBy(), order.getCancelledAt(), order.getCancelledBy(), order.getCancellationReason(),
-                order.getCreditNoteNumber(), lines);
+                order.getCreditNoteNumber(), order.getStatus() == MarketplaceOrder.Status.PAID && stockPending(order), lines);
     }
 }

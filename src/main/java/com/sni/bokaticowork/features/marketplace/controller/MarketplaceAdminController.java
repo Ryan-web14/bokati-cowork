@@ -78,8 +78,10 @@ public class MarketplaceAdminController {
     @GetMapping("/orders")
     @PreAuthorize(DESK_ROLES)
     public ResponseEntity<List<MarketplaceDtos.OrderView>> orders(@RequestParam(required = false) MarketplaceOrder.Status status,
+                                                                  @RequestParam(defaultValue = "false") boolean stockPending,
                                                                   @RequestParam(defaultValue = "100") int limit) {
-        return ResponseEntity.ok(orders.search(status, Math.min(Math.max(limit, 1), 500)));
+        int bounded = Math.min(Math.max(limit, 1), 500);
+        return ResponseEntity.ok(stockPending ? orders.stockPending(bounded) : orders.search(status, bounded));
     }
 
     @GetMapping("/orders/{orderNumber}")

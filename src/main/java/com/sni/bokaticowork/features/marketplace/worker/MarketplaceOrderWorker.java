@@ -7,8 +7,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * Fait avancer les commandes en attente de reglement · reglees par un chemin qui ne previent pas
- * la commande (caisse, portefeuille de l'organisation), ou echues sans reglement.
+ * Fait avancer les commandes · reglees par un chemin qui ne previent pas la commande (caisse,
+ * portefeuille de l'organisation), echues, ou dont un article reste a sortir du stock.
  *
  * <p>Une transaction par commande · un echec n'arrete pas le lot.</p>
  */
@@ -24,7 +24,7 @@ public class MarketplaceOrderWorker {
     @Scheduled(fixedDelayString = "${bokati.marketplace.sync-delay-ms:60000}", initialDelayString = "${bokati.marketplace.sync-initial-delay-ms:60000}")
     public void syncPendingOrders() {
         int changed = 0;
-        for (String orderNumber : orderService.pendingNumbers(BATCH)) {
+        for (String orderNumber : orderService.numbersToSync(BATCH)) {
             try {
                 if (orderService.sync(orderNumber)) {
                     changed++;
@@ -34,7 +34,7 @@ public class MarketplaceOrderWorker {
             }
         }
         if (changed > 0) {
-            log.info("{} commande(s) de la marketplace reglee(s) ou expiree(s)", changed);
+            log.info("{} commande(s) de la marketplace mise(s) a jour", changed);
         }
     }
 }

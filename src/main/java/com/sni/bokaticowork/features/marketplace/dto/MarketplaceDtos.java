@@ -98,8 +98,8 @@ public final class MarketplaceDtos {
     }
 
     /**
-     * @param returnToStock une commande deja remise revient-elle en stock · une commande payee et
-     *                      non remise y revient toujours
+     * @param returnToStock une commande deja remise revient-elle en stock · une commande non remise
+     *                      y revient toujours
      */
     public record CancelRequest(@NotBlank @Size(max = 500) String reason, Boolean returnToStock) {
     }
@@ -115,11 +115,13 @@ public final class MarketplaceDtos {
                            int quantity,
                            BigDecimal unitPrice,
                            BigDecimal amount,
-                           BigDecimal available) {
+                           BigDecimal available,
+                           String stockError) {
     }
 
     /**
      * @param invoiceBalanceDue ce qu'il reste a regler sur la facture · vide pour un panier
+     * @param stockPending      reglee, un article n'est pas encore sorti du stock : la remise attend
      */
     public record OrderView(Long id,
                             String orderNumber,
@@ -140,6 +142,7 @@ public final class MarketplaceDtos {
                             String cancelledBy,
                             String cancellationReason,
                             String creditNoteNumber,
+                            boolean stockPending,
                             List<LineView> lines) {
     }
 }

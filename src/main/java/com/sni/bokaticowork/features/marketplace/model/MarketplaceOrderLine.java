@@ -64,6 +64,14 @@ public class MarketplaceOrderLine {
     @Column(name = "stock_reservation_code", length = 120)
     private String stockReservationCode;
 
+    /** La sortie de stock a abouti · vide tant qu'elle reste a faire. */
+    @Column(name = "stock_consumed_at")
+    private Instant stockConsumedAt;
+
+    /** Pourquoi le stock n'a pas pu bouger · l'administration est prevenue, la sortie est reessayee. */
+    @Column(name = "stock_error", length = 500)
+    private String stockError;
+
     @Column(name = "billable_number", length = 120)
     private String billableNumber;
 

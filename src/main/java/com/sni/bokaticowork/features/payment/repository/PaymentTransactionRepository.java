@@ -13,6 +13,20 @@ import java.math.BigDecimal;
 @Repository
 public interface PaymentTransactionRepository extends JpaRepository<PaymentTransaction, Long> {
 
+    /**
+     * Un paiement de cette facture a-t-il ete lance depuis cet instant, sans etre encore tranche ·
+     * un mobile money attend la reponse de l'operateur.
+     */
+    @Query("""
+            SELECT COUNT(t) > 0 FROM PaymentTransaction t
+            WHERE t.paymentIntent.sourceType = 'BILLING_DOCUMENT'
+              AND t.paymentIntent.sourceCode = :documentNumber
+              AND t.status IN (com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.PENDING,
+                               com.sni.bokaticowork.features.payment.enums.PaymentTransactionStatus.PROCESSING)
+              AND t.createdAt >= :since
+            """)
+    boolean existsInFlightForDocument(@Param("documentNumber") String documentNumber, @Param("since") java.time.Instant since);
+
     @Query(nativeQuery = true, value = "SELECT * FROM payment_transaction WHERE transaction_number = :transactionNumber")
     Optional<PaymentTransaction> findByTransactionNumber(@Param("transactionNumber") String transactionNumber);
 

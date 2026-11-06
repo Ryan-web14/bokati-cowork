@@ -14,20 +14,20 @@ import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository;
 import com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver;
+import com.sni.bokaticowork.features.company.wallet.repository.CompanyWalletSpendRepository;
 import com.sni.bokaticowork.features.company.wallet.service.CompanyWalletMailer;
-import com.sni.bokaticowork.features.inventory.catalog.repository.InventoryItemRepository;
-import com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockReservationRequest;
 import com.sni.bokaticowork.features.inventory.stock.dto.response.StockReservationResponse;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.service.interfaces.InventoryConsumptionService;
-import com.sni.bokaticowork.features.inventory.stock.service.interfaces.StockService;
 import com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos;
 import com.sni.bokaticowork.features.marketplace.model.MarketplaceOffer;
 import com.sni.bokaticowork.features.marketplace.model.MarketplaceOrder;
 import com.sni.bokaticowork.features.marketplace.model.MarketplaceOrderLine;
 import com.sni.bokaticowork.features.marketplace.repository.MarketplaceOrderRepository;
+import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
+import com.sni.bokaticowork.security.admin.role.repository.RoleUserRepository;
 import com.sni.bokaticowork.features.subscription.repository.BillableItemRepository;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +51,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -69,16 +71,19 @@ class MarketplaceOrderServiceTest {
     private final MemberRepository members = mock(MemberRepository.class);
     private final MemberBillingCompanyResolver companyResolver = mock(MemberBillingCompanyResolver.class);
     private final InventoryConsumptionService consumption = mock(InventoryConsumptionService.class);
-    private final StockService stock = mock(StockService.class);
-    private final InventoryItemRepository items = mock(InventoryItemRepository.class);
+    private final MarketplaceStockGateway stock = mock(MarketplaceStockGateway.class);
     private final BillableItemRepository billables = mock(BillableItemRepository.class);
     private final SequenceGeneratorFacade sequences = mock(SequenceGeneratorFacade.class);
     private final BillableItemInvoiceSupport invoicing = mock(BillableItemInvoiceSupport.class);
     private final BillingDocumentService billing = mock(BillingDocumentService.class);
     private final BillingDocumentRepository documents = mock(BillingDocumentRepository.class);
+    private final CompanyWalletSpendRepository spends = mock(CompanyWalletSpendRepository.class);
+    private final PaymentTransactionRepository transactions = mock(PaymentTransactionRepository.class);
+    private final RoleUserRepository roleUsers = mock(RoleUserRepository.class);
+    private final CompanyWalletMailer mailer = mock(CompanyWalletMailer.class);
     private final MarketplaceOrderService service = new MarketplaceOrderService(orders, catalog, members, companyResolver,
-            consumption, stock, items, billables, sequences, invoicing, billing, documents, mock(BillingEmailService.class),
-            mock(CompanyWalletMailer.class), mock(MemberInAppNotifier.class), Clock.fixed(NOW, ZoneOffset.UTC),
+            consumption, stock, billables, sequences, invoicing, billing, documents, mock(BillingEmailService.class),
+            spends, transactions, roleUsers, mailer, mock(MemberInAppNotifier.class), Clock.fixed(NOW, ZoneOffset.UTC),
             Duration.ofMinutes(30));
 
     private Member awa;
@@ -113,6 +118,8 @@ class MarketplaceOrderServiceTest {
         when(orders.save(any(MarketplaceOrder.class))).thenAnswer(call -> call.getArgument(0));
         StockReservationResponse reservation = StockReservationResponse.builder().reservationCode("RSV-1").build();
         when(consumption.reserveForBusinessEvent(any())).thenReturn(reservation);
+        when(stock.issue(any())).thenReturn("RSV-1");
+        when(roleUsers.findEnabledHolderEmails("ADMIN")).thenReturn(List.of("admin@sni-cg.com"));
     }
 
     private MarketplaceOrder cart() {
@@ -139,6 +146,12 @@ class MarketplaceOrderServiceTest {
         BillingDocument invoice = BillingDocument.builder().documentNumber("FAC-1").paidAmount(BigDecimal.valueOf(paid))
                 .balanceDue(BigDecimal.valueOf(balance)).totalAmount(BigDecimal.valueOf(4000)).build();
         when(documents.findByDocumentNumber("FAC-1")).thenReturn(Optional.of(invoice));
+    }
+
+    private void creditNote() {
+        BillingDocumentResponse creditNote = mock(BillingDocumentResponse.class);
+        when(creditNote.documentNumber()).thenReturn("AV-1");
+        when(billing.createCreditNote(eq("FAC-1"), any())).thenReturn(creditNote);
     }
 
     @Test
@@ -192,38 +205,105 @@ class MarketplaceOrderServiceTest {
 
         assertThat(service.sync("MKC-2026-000001")).isTrue();
 
-        verify(consumption).consumeBusinessReservation(eq("RSV-1"), anyString());
+        ArgumentCaptor<MarketplaceStockGateway.StockLine> line = ArgumentCaptor.forClass(MarketplaceStockGateway.StockLine.class);
+        verify(stock).issue(line.capture());
+        assertThat(line.getValue().reservationCode()).isEqualTo("RSV-1");
         assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.PAID);
         assertThat(order.getPaidAt()).isEqualTo(NOW);
         assertThat(order.getExpiresAt()).isNull();
+        assertThat(order.getLines().getFirst().getStockConsumedAt()).isEqualTo(NOW);
     }
 
     @Test
-    @DisplayName("Echue sans reglement : stock rendu, facture annulee · echue mais en partie reglee : elle attend")
+    @DisplayName("Sortie de stock en echec : la commande reste reglee, l'equipe est prevenue une fois, la remise attend, le passage suivant reprend")
+    void stockFailureIsRetried() {
+        MarketplaceOrder order = placed(MarketplaceOrder.Status.PENDING_PAYMENT);
+        invoice(4000, 0);
+        when(stock.issue(any())).thenThrow(new BadRequestException("Insufficient stock on hand"));
+
+        assertThat(service.sync("MKC-2026-000001")).isTrue();
+
+        MarketplaceOrderLine coffeeLine = order.getLines().getFirst();
+        assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.PAID);
+        assertThat(coffeeLine.getStockConsumedAt()).isNull();
+        assertThat(coffeeLine.getStockError()).contains("Insufficient");
+        assertThat(service.view(order).stockPending()).isTrue();
+
+        assertThatThrownBy(() -> service.fulfil("MKC-2026-000001", null, "accueil"))
+                .isInstanceOf(BadRequestException.class).hasMessageContaining("sortie de stock");
+        assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.PAID);
+
+        assertThat(service.sync("MKC-2026-000001")).isFalse();
+        verify(mailer).notifyAddress(eq("admin@sni-cg.com"), anyString(), anyString(), anyString(), eq("MKC-2026-000001"));
+
+        org.mockito.Mockito.reset(stock);
+        when(stock.issue(any())).thenReturn("RSV-1");
+        assertThat(service.sync("MKC-2026-000001")).isTrue();
+
+        assertThat(coffeeLine.getStockConsumedAt()).isEqualTo(NOW);
+        assertThat(coffeeLine.getStockError()).isNull();
+        assertThat(service.view(order).stockPending()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Echue sans reglement : stock rendu, facture annulee")
     void expiry() {
         MarketplaceOrder order = placed(MarketplaceOrder.Status.PENDING_PAYMENT);
         order.setExpiresAt(NOW.minusSeconds(1));
-        invoice(1000, 3000);
-
-        assertThat(service.sync("MKC-2026-000001")).isFalse();
-        verify(consumption, never()).releaseBusinessReservation(anyString());
-
         invoice(0, 4000);
+
         assertThat(service.sync("MKC-2026-000001")).isTrue();
 
-        verify(consumption).releaseBusinessReservation("RSV-1");
+        verify(stock).giveBack(any());
         verify(billing).cancelAndArchive(eq("FAC-1"), anyString());
+        verify(billing, never()).createCreditNote(anyString(), any());
         assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.EXPIRED);
     }
 
     @Test
-    @DisplayName("Annulation d'une commande payee : avoir valide, reverse au portefeuille, articles remis en stock")
+    @DisplayName("Echue en partie reglee : ce qui a ete regle est rembourse, le reste annule, le stock rendu")
+    void expiryRefundsPartialPayment() {
+        MarketplaceOrder order = placed(MarketplaceOrder.Status.PENDING_PAYMENT);
+        order.setExpiresAt(NOW.minusSeconds(1));
+        invoice(1000, 3000);
+        creditNote();
+
+        assertThat(service.sync("MKC-2026-000001")).isTrue();
+
+        ArgumentCaptor<CreateCreditNoteRequest> request = ArgumentCaptor.forClass(CreateCreditNoteRequest.class);
+        verify(billing).createCreditNote(eq("FAC-1"), request.capture());
+        assertThat(request.getValue().amount()).isEqualByComparingTo("1000");
+        verify(billing).refundCreditNoteToWallet(eq("AV-1"), anyString(), isNull(), isNull());
+        verify(billing).cancelAndArchive(eq("FAC-1"), anyString());
+        verify(stock).giveBack(any());
+        assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.EXPIRED);
+        assertThat(order.getCreditNoteNumber()).isEqualTo("AV-1");
+    }
+
+    @Test
+    @DisplayName("Echue, mais un paiement est en cours ou une depense attend le gerant : l'echeance est suspendue")
+    void expiryWaitsForPaymentUnderway() {
+        MarketplaceOrder order = placed(MarketplaceOrder.Status.PENDING_PAYMENT);
+        order.setExpiresAt(NOW.minusSeconds(1));
+        invoice(0, 4000);
+
+        when(transactions.existsInFlightForDocument(eq("FAC-1"), eq(NOW.minus(Duration.ofHours(1))))).thenReturn(true);
+        assertThat(service.sync("MKC-2026-000001")).isFalse();
+
+        when(transactions.existsInFlightForDocument(eq("FAC-1"), any())).thenReturn(false);
+        when(spends.existsPendingForDocument("FAC-1")).thenReturn(true);
+        assertThat(service.sync("MKC-2026-000001")).isFalse();
+
+        assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.PENDING_PAYMENT);
+        verify(stock, never()).giveBack(any());
+    }
+
+    @Test
+    @DisplayName("Annulation d'une commande payee : avoir valide, reverse au portefeuille du membre, articles remis en stock")
     void staffCancelsPaidOrder() {
         MarketplaceOrder order = placed(MarketplaceOrder.Status.PAID);
         invoice(4000, 0);
-        BillingDocumentResponse creditNote = mock(BillingDocumentResponse.class);
-        when(creditNote.documentNumber()).thenReturn("AV-1");
-        when(billing.createCreditNote(eq("FAC-1"), any())).thenReturn(creditNote);
+        creditNote();
 
         service.cancelByStaff("MKC-2026-000001", new MarketplaceDtos.CancelRequest("Rupture fournisseur", null), "admin@sni");
 
@@ -232,15 +312,60 @@ class MarketplaceOrderServiceTest {
         assertThat(request.getValue().amount()).isEqualByComparingTo("4000");
         assertThat(request.getValue().applyImmediately()).isFalse();
         assertThat(request.getValue().validateImmediately()).isTrue();
-        verify(billing).refundCreditNoteToWallet(eq("AV-1"), anyString());
-        ArgumentCaptor<StockInRequest> back = ArgumentCaptor.forClass(StockInRequest.class);
-        verify(stock).receive(back.capture());
-        assertThat(back.getValue().getItemCode()).isEqualTo("ITM-CAFE");
-        assertThat(back.getValue().getLocationCode()).isEqualTo("LOC-ACCUEIL");
-        assertThat(back.getValue().getQuantity()).isEqualByComparingTo("2");
+        verify(billing).refundCreditNoteToWallet(eq("AV-1"), anyString(), isNull(), isNull());
+        verify(billing, never()).cancelAndArchive(anyString(), anyString());
+        ArgumentCaptor<MarketplaceStockGateway.StockLine> back = ArgumentCaptor.forClass(MarketplaceStockGateway.StockLine.class);
+        verify(stock).giveBack(back.capture());
+        assertThat(back.getValue().itemCode()).isEqualTo("ITM-CAFE");
+        assertThat(back.getValue().locationCode()).isEqualTo("LOC-ACCUEIL");
+        assertThat(back.getValue().quantity()).isEqualByComparingTo("2");
         assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.CANCELLED);
         assertThat(order.getCreditNoteNumber()).isEqualTo("AV-1");
         assertThat(order.getCancelledBy()).isEqualTo("admin@sni");
+    }
+
+    @Test
+    @DisplayName("Commande payee par l'organisation : le remboursement va au portefeuille de l'organisation, pas a celui du membre")
+    void refundGoesToThePayingCompany() {
+        MarketplaceOrder order = placed(MarketplaceOrder.Status.PAID);
+        order.setBillingCompanyCode("CUS-COM-1");
+        invoice(4000, 0);
+        creditNote();
+
+        service.cancelByStaff("MKC-2026-000001", new MarketplaceDtos.CancelRequest("Erreur de commande", null), "admin@sni");
+
+        verify(billing).refundCreditNoteToWallet(eq("AV-1"), anyString(), eq("CUSTOMER"), eq("CUS-COM-1"));
+    }
+
+    @Test
+    @DisplayName("L'administration annule une commande en partie reglee : remboursement, reste de la facture annule, stock rendu")
+    void staffCancelsPartiallyPaidOrder() {
+        MarketplaceOrder order = placed(MarketplaceOrder.Status.PENDING_PAYMENT);
+        invoice(1500, 2500);
+        creditNote();
+
+        service.cancelByStaff("MKC-2026-000001", new MarketplaceDtos.CancelRequest("Client absent", null), "admin@sni");
+
+        verify(billing).refundCreditNoteToWallet(eq("AV-1"), anyString(), isNull(), isNull());
+        verify(billing).cancelAndArchive(eq("FAC-1"), anyString());
+        verify(stock).giveBack(any());
+        assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("Un retour en stock impossible n'empeche pas le remboursement : l'equipe est prevenue")
+    void refundSurvivesStockReturnFailure() {
+        MarketplaceOrder order = placed(MarketplaceOrder.Status.PAID);
+        invoice(4000, 0);
+        creditNote();
+        doThrow(new BadRequestException("Serial numbers are required")).when(stock).giveBack(any());
+
+        service.cancelByStaff("MKC-2026-000001", new MarketplaceDtos.CancelRequest("Rupture", null), "admin@sni");
+
+        verify(billing).refundCreditNoteToWallet(eq("AV-1"), anyString(), isNull(), isNull());
+        assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.CANCELLED);
+        assertThat(order.getLines().getFirst().getStockError()).contains("Serial");
+        verify(mailer).notifyAddress(eq("admin@sni-cg.com"), anyString(), anyString(), anyString(), eq("MKC-2026-000001"));
     }
 
     @Test
@@ -248,14 +373,12 @@ class MarketplaceOrderServiceTest {
     void fulfilledOrderStaysOutOfStock() {
         placed(MarketplaceOrder.Status.FULFILLED);
         invoice(4000, 0);
-        BillingDocumentResponse creditNote = mock(BillingDocumentResponse.class);
-        when(creditNote.documentNumber()).thenReturn("AV-1");
-        when(billing.createCreditNote(eq("FAC-1"), any())).thenReturn(creditNote);
+        creditNote();
 
         service.cancelByStaff("MKC-2026-000001", new MarketplaceDtos.CancelRequest("Produit défectueux", false), "admin@sni");
 
-        verify(billing).refundCreditNoteToWallet(eq("AV-1"), anyString());
-        verify(stock, never()).receive(any());
+        verify(billing).refundCreditNoteToWallet(eq("AV-1"), anyString(), isNull(), isNull());
+        verify(stock, never()).giveBack(any());
     }
 
     @Test
@@ -269,7 +392,7 @@ class MarketplaceOrderServiceTest {
         invoice(0, 4000);
         service.cancelByMember(awa, "MKC-2026-000001", null);
 
-        verify(consumption).releaseBusinessReservation("RSV-1");
+        verify(stock).giveBack(any());
         verify(billing).cancelAndArchive(eq("FAC-1"), anyString());
         assertThat(order.getStatus()).isEqualTo(MarketplaceOrder.Status.CANCELLED);
     }

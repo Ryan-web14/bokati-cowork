@@ -49,13 +49,13 @@ du stock disponible. Mettre une quantité à `0` retire la ligne.
 
 À la validation (`checkout`) :
 
-- le payeur est choisi par `billingCompanyCode` :
+- l'organisation qui paie est choisie par `billingCompanyCode` :
   - le code d'une organisation à laquelle le membre est rattaché ;
   - `NONE` pour le membre seul ;
   - vide pour l'organisation de son lien automatique, s'il en a une ;
 - le stock des articles est retenu, sans échéance propre : c'est la commande qui expire ;
-- une facture est émise au nom du payeur, une ligne par article ou prestation, avec
-  `sourceType = MARKETPLACE_ORDER` ;
+- une facture est émise au nom du membre, reliée à l'organisation si elle paie, une ligne par
+  article ou prestation, avec `sourceType = MARKETPLACE_ORDER` ;
 - la commande passe en `PENDING_PAYMENT`. Elle a 30 minutes pour être réglée
   (`bokati.marketplace.payment-window-minutes`) ; `expiresAt` donne l'échéance.
 
@@ -77,33 +77,61 @@ ou portefeuille de l'organisation. Sur le portefeuille de l'organisation, la dé
 | --- | --- |
 | `CART` | le panier |
 | `PENDING_PAYMENT` | validée, facture à régler (`invoiceBalanceDue` dans la vue) |
-| `PAID` | réglée, le stock est sorti, elle attend son retrait |
+| `PAID` | réglée, elle attend son retrait (`stockPending: true` si un article n'est pas encore sorti du stock) |
 | `FULFILLED` | remise à l'accueil (`fulfilledBy`, `collectedBy`) |
 | `CANCELLED` | annulée (`cancelledBy`, `cancellationReason`, `creditNoteNumber` si remboursée) |
-| `EXPIRED` | non réglée à temps : stock rendu, facture annulée |
+| `EXPIRED` | non soldée à temps : déjà réglé remboursé, stock rendu, facture annulée |
 
 La commande passe en `PAID` dès que le paiement en ligne réussit. Un passage chaque minute
 rattrape les autres règlements (caisse, portefeuille de l'organisation) et expire les commandes
 échues.
 
-Une commande échue mais déjà réglée en partie n'expire pas : elle garde son stock et attend la
-suite du règlement.
+À l'échéance :
+
+- sans règlement, le stock est rendu et la facture annulée ;
+- réglée en partie, le montant reçu est remboursé par un avoir, reversé au portefeuille du payeur ;
+  le reste de la facture est annulé et le stock rendu (`creditNoteNumber` renseigné) ;
+- un paiement en cours (réponse de l'opérateur mobile money attendue, depuis moins d'une heure) ou
+  une dépense en attente du gérant suspend l'échéance, le temps qu'ils soient tranchés. `expiresAt`
+  peut donc être dépassé sur une commande encore `PENDING_PAYMENT`.
+
+### Sortie de stock
+
+Le règlement n'est jamais remis en cause par le stock. Si la sortie d'un article échoue (stock
+réel insuffisant à l'emplacement, par exemple) :
+
+- la commande est bien `PAID`, avec `stockPending: true` et le motif dans `lines[].stockError` ;
+- les comptes `SUPER_ADMIN`, `ADMIN` et `MANAGER` reçoivent un e-mail ;
+- la sortie est reprise à chaque passage : une fois le stock corrigé, elle aboutit seule ;
+- la remise au comptoir est refusée tant que la sortie n'a pas abouti.
+
+À afficher côté administration : un badge sur `stockPending`, et le bouton de remise désactivé.
+La liste à traiter s'obtient par `GET /marketplace/orders?stockPending=true`.
 
 Le membre est prévenu par e-mail et dans le portail à chaque étape : validée, réglée, remise,
 annulée ou expirée.
 
 ## Retrait et annulation
 
-- **Retrait :** `fulfil` n'accepte qu'une commande réglée. `collectedBy` est facultatif ; à
-  défaut, le nom de l'acheteur est retenu.
-- **Annulation par le membre :** seulement une commande non réglée, sans aucun règlement reçu. Le
-  stock est rendu et la facture annulée.
+- **Retrait :** `fulfil` n'accepte qu'une commande réglée dont les articles sont sortis du stock.
+  `collectedBy` est facultatif ; à défaut, le nom de l'acheteur est retenu.
+- **Annulation par le membre :** seulement une commande sans aucun règlement reçu. Le stock est
+  rendu et la facture annulée.
 - **Annulation par l'administration :**
   - **non réglée :** comme le membre ;
-  - **réglée :** un avoir du montant payé est validé puis reversé au portefeuille du payeur (le
-    membre ou l'organisation), et les articles reviennent à leur emplacement ;
-  - **déjà remise :** même remboursement, mais retour en stock seulement si `returnToStock: true` ;
-  - **en partie réglée :** refusée. Remboursez d'abord le paiement reçu.
+  - **réglée :** un avoir du montant payé est validé puis reversé au portefeuille du payeur, et les
+    articles reviennent à leur emplacement ;
+  - **en partie réglée :** même remboursement du montant reçu, le reste de la facture est annulé et
+    le stock rendu ;
+  - **déjà remise :** même remboursement, mais retour en stock seulement si `returnToStock: true`.
+
+Le payeur remboursé est l'organisation dès que la commande lui est facturée
+(`billingCompanyCode` renseigné), quel que soit le moyen de paiement ; sinon le membre. L'avoir
+reste au nom du membre, comme la facture.
+
+Un retour en stock impossible (article suivi par lot ou numéro de série, période close) n'empêche
+pas le remboursement : la commande est annulée, le motif reste dans `lines[].stockError`, et
+l'équipe reçoit un e-mail pour saisir le retour à la main.
 
 | Qui | Méthode et chemin | Effet |
 | --- | --- | --- |
@@ -111,5 +139,6 @@ annulée ou expirée.
 | Membre | `POST /client/marketplace/orders/{orderNumber}/cancel` `{reason?}` | renonce à une commande non réglée |
 | Gérant | `GET /client/companies/{customerId}/marketplace/orders` | les commandes que l'organisation paie |
 | Admin, manager, agent | `GET /marketplace/orders?status=&limit=`, `/orders/{orderNumber}` | les commandes |
+| Admin, manager, agent | `GET /marketplace/orders?stockPending=true` | les commandes réglées dont le stock est à corriger |
 | Admin, manager, agent | `POST /marketplace/orders/{orderNumber}/fulfil` `{collectedBy?}` | remise au comptoir |
 | Admin, manager | `POST /marketplace/orders/{orderNumber}/cancel` `{reason, returnToStock?}` | annule, rembourse si réglée |
