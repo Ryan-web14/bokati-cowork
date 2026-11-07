@@ -48,7 +48,7 @@ api.listen(8099, () => {
     if (req.url.startsWith('/__open')) {
       const to = new URL(req.url, 'http://x').searchParams.get('to') || '/';
       res.writeHead(200, { 'content-type': 'text/html' });
-      res.end(`<script>sessionStorage.setItem('bokati-console-session', JSON.stringify({accessToken:'t',refreshToken:'r',email:'admin@local',roles:['ROLE_SUPER_ADMIN']}));location.replace('/#${to}')</script>`);
+      res.end(`<script>sessionStorage.setItem('bokati-console-session', JSON.stringify({accessToken:'t',refreshToken:'r',email:'admin@local',roles:Array.from({length:190},(_,i)=>'PERMISSION_'+i)}));location.replace('/#${to}')</script>`);
       return;
     }
     handler(req, res);

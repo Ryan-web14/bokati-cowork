@@ -55,6 +55,11 @@ async function loadSpec() {
   return true;
 }
 
+// Un compte peut porter des centaines de droits · repliés, ils laissent la place au menu.
+function rights(roles) {
+  return roles.length > 0 && h('details', { cls: 'side-rights' }, h('summary', {}, `${roles.length} droit(s)`), h('div', { cls: 'side-user' }, roles.join(', ')));
+}
+
 function sidebar(active) {
   const list = h('div', { cls: 'side-scroll' });
   const link = (href, label, count) => h('a', { href, cls: href === active ? 'active' : '' }, h('span', {}, label), count !== undefined && h('span', { cls: 'count' }, count));
@@ -63,7 +68,7 @@ function sidebar(active) {
     const screens = SCREENS.filter(([, label]) => match(label));
     const groups = [...new Set(modules.map((module) => module.group))];
     clear(list).append(
-      screens.length > 0 && h('div', { cls: 'side-group' }, 'Écrans dédiés'),
+      ...(screens.length > 0 ? [h('div', { cls: 'side-group' }, 'Écrans dédiés')] : []),
       ...screens.map(([id, label]) => link(`#/s/${id}`, label)),
       ...groups.flatMap((group) => {
         const items = modules.filter((module) => module.group === group && (match(module.label) || match(module.key)));
@@ -76,7 +81,7 @@ function sidebar(active) {
   return h('nav', { cls: 'side' },
     h('div', { cls: 'side-head' }, h('div', { cls: 'side-title' }, 'Console de test'),
       h('div', { cls: 'side-user' }, session.get()?.email || ''),
-      h('div', { cls: 'side-user' }, (session.get()?.roles || []).join(', '))),
+      rights(session.get()?.roles || [])),
     h('div', { cls: 'side-search' }, search),
     list,
     h('div', { cls: 'side-foot' }, h('button', { type: 'button', cls: 'ghost small', onClick: async () => { await logout(); loginScreen(); } }, 'Se déconnecter')));
