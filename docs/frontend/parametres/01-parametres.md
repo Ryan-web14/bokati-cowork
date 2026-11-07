@@ -60,5 +60,14 @@ Choisir le champ selon `type` : interrupteur pour `BOOLEAN`, plage `HH:mm-HH:mm`
 
 ## Prise d'effet
 
-Pris en compte aussitôt (`LIVE`) : le délai de paiement de la marketplace et les horaires globaux.
+Pris en compte aussitôt (`LIVE`) :
+
+| Réglage | Clé | Effet |
+| --- | --- | --- |
+| Délai de paiement d'une commande | `bokati.marketplace.payment-window-minutes` | commandes validées ensuite |
+| Horaires globaux | `bokati.resource.availability.generation.*-hours` | créneaux générés ensuite |
+| Rétroaction d'une réservation de l'équipe | `bokati.booking.staff.max-backdate-days` | réservations suivantes |
+| Délai de validation d'une dépense | `bokati.company.wallet.approval-hours` | dépenses suivantes, pas celles en attente |
+| Fermeture automatique du support | `bokati.support.auto-close-delay-days` | prochain passage, au plus une heure après |
+
 Tous les autres sont lus au démarrage (`RESTART`) : un redémarrage de l'application les applique.

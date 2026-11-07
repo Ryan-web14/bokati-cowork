@@ -236,6 +236,7 @@ class CompanyWalletServiceTest {
 
         assertThat(result.spend().status()).isEqualTo(CompanyWalletSpend.Status.PENDING_APPROVAL);
         assertThat(result.spend().expiresAt()).isEqualTo(NOW.plus(Duration.ofHours(48)));
+        assertThat(result.spend().expiresAt()).isEqualTo(NOW.plus(Duration.ofHours(48)));
         verify(ledger).placeHold(eq(wallet), eq(new BigDecimal("80000")), eq("COMPANY_SPEND"), eq("INV-1"), eq("HLD-1"), eq("MBR-1"), any());
         verify(holds).save(any(WalletHold.class));
         verify(notifier).notify(eq("COMPANY_SPEND_APPROVAL_REQUESTED"), any(), any(), eq("mbr-9@acme.cg"), any(), eq("MBR-9"), any(), any());

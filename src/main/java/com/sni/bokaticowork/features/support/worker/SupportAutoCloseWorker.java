@@ -22,26 +22,30 @@ import java.util.List;
 public class SupportAutoCloseWorker {
 
     private final SupportTicketRepository ticketRepository;
-    private final SupportTicketEventWriter eventWriter;
+    private static final String DELAY_KEY = "bokati.support.auto-close-delay-days";
 
-    @Value("${bokati.support.auto-close-delay-days:5}")
+    private final SupportTicketEventWriter eventWriter;
+    private final com.sni.bokaticowork.core.settings.platform.PlatformSettings settings;
+
+    @Value("${" + DELAY_KEY + ":5}")
     private int autoCloseDays;
 
     @Scheduled(fixedDelayString = "${bokati.support.auto-close-check-delay-ms:3600000}")
     @Transactional
     public void closeStaleResolvedTickets() {
-        Instant cutoff = Instant.now().minus(autoCloseDays, ChronoUnit.DAYS);
+        long delayDays = settings.number(DELAY_KEY, autoCloseDays);
+        Instant cutoff = Instant.now().minus(delayDays, ChronoUnit.DAYS);
         List<SupportTicket> candidates = ticketRepository.findAutoCloseCandidates(cutoff);
         if (candidates.isEmpty()) return;
 
-        log.info("Auto-close worker: {} ticket(s) RESOLVED sans réponse client depuis {} jours", candidates.size(), autoCloseDays);
+        log.info("Auto-close worker: {} ticket(s) RESOLVED sans réponse client depuis {} jours", candidates.size(), delayDays);
         for (SupportTicket ticket : candidates) {
             try {
                 ticket.setStatus(TicketStatus.CLOSED);
                 ticket.setClosedAt(Instant.now());
                 ticketRepository.save(ticket);
                 eventWriter.writeSystem(ticket, TicketEventType.AUTO_CLOSED,
-                        "Ticket clôturé automatiquement après " + autoCloseDays + " jour(s) sans réponse client suite à la résolution");
+                        "Ticket clôturé automatiquement après " + delayDays + " jour(s) sans réponse client suite à la résolution");
                 log.info("Ticket {} auto-fermé (résolu le {})", ticket.getTicketNumber(), ticket.getResolvedAt());
             } catch (Exception ex) {
                 log.error("Erreur auto-fermeture ticket {}", ticket.getTicketNumber(), ex);

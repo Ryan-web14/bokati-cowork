@@ -86,7 +86,7 @@ bokati.billing.workers.payment-reminder-max	BILLING	INTEGER	RESTART	3	Nombre max
 bokati.billing.workers.schedule-overdue-delay-ms	BILLING	INTEGER	RESTART	3600000	Cadence du suivi des échéanciers (ms)
 bokati.booking.lifecycle.worker-delay-ms	BOOKING	INTEGER	RESTART	60000	Cadence du suivi des réservations (ms)
 bokati.booking.no-show.worker-delay-ms	BOOKING	INTEGER	RESTART	60000	Cadence du suivi des absences (ms)
-bokati.booking.staff.max-backdate-days	BOOKING	INTEGER	RESTART	31	Rétroaction d'une réservation de l'équipe (jours)
+bokati.booking.staff.max-backdate-days	BOOKING	INTEGER	LIVE	31	Rétroaction d'une réservation de l'équipe (jours)
 bokati.booking.virtual-room.base-url	BOOKING	TEXT	RESTART	https://meet.jit.si	Adresse des salles virtuelles
 bokati.booking.waitlist.offer-ttl-minutes	BOOKING	INTEGER	RESTART	30	Durée d'une offre de liste d'attente (minutes)
 bokati.booking.waitlist.worker-delay-ms	BOOKING	INTEGER	RESTART	300000	Cadence de la liste d'attente (ms)
@@ -94,7 +94,7 @@ bokati.booking.wallet.hold-grace-minutes	BOOKING	INTEGER	RESTART	60	Grâce de re
 bokati.booking.wallet.settlement-delay-minutes	BOOKING	INTEGER	RESTART	1	Délai de règlement sur portefeuille (minutes)
 bokati.booking.wallet.worker-delay-ms	BOOKING	INTEGER	RESTART	15000	Cadence des retenues de réservation (ms)
 bokati.company.wallet.approval-expiry-delay-ms	COMPANIES	INTEGER	RESTART	600000	Cadence d'expiration des validations (ms)
-bokati.company.wallet.approval-hours	COMPANIES	INTEGER	RESTART	48	Délai de validation d'une dépense (heures)
+bokati.company.wallet.approval-hours	COMPANIES	INTEGER	LIVE	48	Délai de validation d'une dépense (heures)
 bokati.company.wallet.currency	COMPANIES	TEXT	RESTART	XAF	Devise du portefeuille d'organisation
 bokati.compliance.case.due-hours.critical	COMPLIANCE	INTEGER	RESTART	24	Délai d'un dossier critique (heures)
 bokati.compliance.case.due-hours.high	COMPLIANCE	INTEGER	RESTART	72	Délai d'un dossier élevé (heures)
@@ -194,7 +194,7 @@ bokati.subscription.workers.reservation-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	RE
 bokati.subscription.workers.rollover-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	900000	Cadence des reports de droits (ms)
 bokati.support.admin-email	SUPPORT	EMAIL	RESTART	supportela@elleaose.com	Adresse de l'administration
 bokati.support.auto-close-check-delay-ms	SUPPORT	INTEGER	RESTART	3600000	Cadence de fermeture automatique (ms)
-bokati.support.auto-close-delay-days	SUPPORT	INTEGER	RESTART	5	Fermeture automatique après (jours)
+bokati.support.auto-close-delay-days	SUPPORT	INTEGER	LIVE	5	Fermeture automatique après (jours)
 bokati.support.csat-check-delay-ms	SUPPORT	INTEGER	RESTART	3600000	Cadence des enquêtes de satisfaction (ms)
 bokati.support.inbound-poll-delay-ms	SUPPORT	INTEGER	RESTART	60000	Cadence de lecture de la boîte support (ms)
 bokati.support.manager-email	SUPPORT	EMAIL	RESTART	supportela@elleaose.com	Adresse du responsable
