@@ -24,4 +24,17 @@ public class SubscriptionIntegrityWorker {
             log.error("SubscriptionIntegrityWorker failed: {}", ex.getMessage(), ex);
         }
     }
+
+    @Scheduled(fixedDelayString = "${bokati.subscription.workers.integrity-delay-ms:1800000}",
+            initialDelayString = "${bokati.subscription.workers.contract-catch-up-initial-delay-ms:120000}")
+    public void catchUpContractTerms() {
+        try {
+            int caughtUp = subscriptionService.catchUpContractTerms();
+            if (caughtUp > 0) {
+                log.info("{} contrat(s) d'abonnement prolonge(s) par avenant", caughtUp);
+            }
+        } catch (Exception ex) {
+            log.error("Rattrapage des contrats d'abonnement impossible : {}", ex.getMessage(), ex);
+        }
+    }
 }

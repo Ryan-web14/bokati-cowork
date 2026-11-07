@@ -43,6 +43,7 @@ public class CompanyContractsService {
     private final DomiciliationContractRepository domiciliationRepository;
     private final DocumentService documentService;
     private final CompanyLegalCard legalCard;
+    private final com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory versionHistory;
 
     public record AmendmentView(String code, String status, String description, LocalDate effectiveDate, Instant signedAt,
                                 boolean hasDocument) {
@@ -53,7 +54,8 @@ public class CompanyContractsService {
 
     public record ContractView(String contractCode, String title, String templateCode, String status, LocalDate startDate,
                                LocalDate endDate, Instant signedAt, boolean hasDocument, List<PartyView> parties,
-                               List<AmendmentView> amendments) {
+                               List<AmendmentView> amendments,
+                               List<com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version> versions) {
     }
 
     public record SignatoryView(String name, String title, String email, String memberId, boolean legalRepresentative) {
@@ -141,7 +143,7 @@ public class CompanyContractsService {
         return new ContractView(contract.getContractCode(), contract.getTitle(), contract.getTemplateCode(),
                 contract.getStatus() == null ? null : contract.getStatus().name(), contract.getStartDate(), contract.getEndDate(),
                 contract.getSignedAt(), StringUtils.hasText(contract.getSignedDocumentCode()) || StringUtils.hasText(contract.getDraftDocumentCode()),
-                parties, amendments);
+                parties, amendments, versionHistory.of(contract));
     }
 
     private static AmendmentView amendment(ContractAmendment amendment) {

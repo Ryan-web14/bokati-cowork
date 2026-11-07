@@ -64,6 +64,18 @@ class ContractTermExtensionTest {
     }
 
     @Test
+    @DisplayName("Remise en vigueur : seul un contrat echu est concerne")
+    void reopensOnlyExpired() {
+        Contract expired = contract(ContractStatus.EXPIRED, LocalDate.now().minusDays(2));
+        assertThat(service.reopenExpired("CTR-1", "Abonnement en cours")).isTrue();
+        assertThat(expired.getStatus()).isEqualTo(ContractStatus.ACTIVE);
+
+        Contract terminated = contract(ContractStatus.TERMINATED, LocalDate.now().minusDays(2));
+        assertThat(service.reopenExpired("CTR-1", "Abonnement en cours")).isFalse();
+        assertThat(terminated.getStatus()).isEqualTo(ContractStatus.TERMINATED);
+    }
+
+    @Test
     @DisplayName("Jamais de raccourcissement · un contrat clos ne bouge pas")
     void neverShortensNorTouchesClosed() {
         contract(ContractStatus.ACTIVE, LocalDate.now().plusDays(30));

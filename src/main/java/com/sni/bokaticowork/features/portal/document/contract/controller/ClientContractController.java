@@ -57,6 +57,17 @@ public class ClientContractController {
                 .body(result.content());
     }
 
+    @GetMapping("/{contractCode}/amendments/{amendmentCode}/pdf")
+    public ResponseEntity<byte[]> downloadAmendmentPdf(@PathVariable String contractCode, @PathVariable String amendmentCode) {
+        Member member = clientContextService.getAuthenticatedMember();
+        DocumentFileResult result = clientContractService.downloadAmendmentPdf(member, contractCode, amendmentCode);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + result.fileName() + "\"")
+                .contentType(MediaType.parseMediaType(result.mimeType()))
+                .body(result.content());
+    }
+
     @PostMapping("/{contractCode}/sign")
     public ResponseEntity<ClientContractResponse> signContract(
             @PathVariable String contractCode,

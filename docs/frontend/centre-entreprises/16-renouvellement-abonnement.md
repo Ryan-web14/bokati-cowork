@@ -64,12 +64,37 @@ Le contrat reste le même : aucun nouveau contrat n'est créé.
 | Contrat pas encore signé | `endDate` est repoussée, sans avenant |
 | Contrat résilié ou annulé | rien |
 
+Le contrat reste un seul et même contrat tant que l'abonnement n'a pas pris fin : il n'expire pas, et
+il garde toute son histoire.
+
+### Versions du contrat
+
+`GET /contracts/{code}/versions` donne l'historique du contrat, du plus ancien au plus récent. La
+dernière ligne est la version en vigueur. Le même tableau est dans `versions` sur la fiche de contrat
+d'une organisation (`GET /companies/{id}/contracts`) et sur le détail du portail
+(`GET /client/documents/contracts/{code}`).
+
+| Champ | Sens |
+| --- | --- |
+| `version` | 1 pour l'original, puis +1 à chaque changement |
+| `kind` | `ORIGINAL`, `AMENDMENT` (avenant) ou `EXTENSION` (date repoussée sans avenant) |
+| `amendmentCode` | le code de l'avenant, vide sinon |
+| `description` | l'objet de l'avenant ou le motif de l'extension |
+| `effectiveDate` | la date d'effet |
+| `previousEndDate`, `endDate` | la fin du contrat avant et après ce changement |
+| `at` | quand il a été appliqué |
+| `documentCode` | le PDF de cette version, vide pour une extension |
+
+Le PDF d'un avenant se télécharge dans le portail par
+`GET /client/documents/contracts/{code}/amendments/{amendmentCode}/pdf`.
+
 - Les avenants se lisent sur `GET /contracts/{code}/amendments` (voir
   [09-contrats-domiciliation.md](./09-contrats-domiciliation.md)). Celui d'un renouvellement porte les
   variables `periode_debut`, `periode_fin` et `prochaine_facturation`, avec l'ancienne et la nouvelle
   valeur, et son PDF est généré.
-- Un contrat arrivé à son terme pendant l'attente du paiement passe `EXPIRED`, puis redevient en
-  vigueur avec l'avenant.
+- Un contrat ne passe jamais `EXPIRED` tant que son abonnement n'a pas pris fin, même pendant
+  l'attente d'un paiement. Sa date de fin peut alors être dépassée de quelques jours. Il suit
+  l'abonnement quand celui-ci prend fin.
 - Un contrat `AMENDED` arrive désormais à expiration et se résilie comme un contrat actif.
 - Les anciens avenants de renouvellement restés en examen sont annulés au prochain renouvellement.
 
@@ -77,3 +102,9 @@ Le contrat reste le même : aucun nouveau contrat n'est créé.
 
 Une facture de renouvellement déjà émise avant cette version garde l'ancienne règle : sa période a
 déjà avancé, et son paiement fait seulement sortir de la tolérance.
+
+Les contrats restés derrière leur abonnement sont rattrapés automatiquement toutes les 30 minutes :
+un contrat marqué `EXPIRED` alors que l'abonnement court redevient en vigueur, et un seul avenant du
+même contrat couvre tout l'écart, jusqu'à la fin de la période en cours. Aucun nouveau contrat n'est
+créé. Avec une facture de renouvellement impayée, le contrat redevient en vigueur, mais l'avenant et
+ses dates attendent le paiement.

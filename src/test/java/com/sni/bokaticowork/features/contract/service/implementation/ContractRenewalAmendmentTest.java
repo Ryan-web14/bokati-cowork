@@ -101,10 +101,23 @@ class ContractRenewalAmendmentTest {
         ContractAmendment existing = ContractAmendment.builder().code("AVN-0").originalContractCode("CTR-1")
                 .status(AmendmentStatus.ACTIVE).effectiveDate(TERMS.newStart()).description("x").build();
         when(amendments.findAllByOriginalContractCodeAndStatusIn("CTR-1", List.of(AmendmentStatus.ACTIVE))).thenReturn(List.of(existing));
+        contract.setEndDate(TERMS.newEnd());
 
         assertThat(service.applyRenewal("CTR-1", TERMS)).isPresent();
 
         verify(amendments, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Un ancien avenant signe a la main sans bouger les dates n'empeche pas le rattrapage")
+    void signedAmendmentWithoutDatesDoesNotBlock() {
+        ContractAmendment signed = ContractAmendment.builder().code("AVN-0").originalContractCode("CTR-1")
+                .status(AmendmentStatus.ACTIVE).effectiveDate(TERMS.newStart()).description("x").build();
+        when(amendments.findAllByOriginalContractCodeAndStatusIn("CTR-1", List.of(AmendmentStatus.ACTIVE))).thenReturn(List.of(signed));
+
+        assertThat(service.applyRenewal("CTR-1", TERMS)).isPresent();
+
+        assertThat(contract.getEndDate()).isEqualTo(TERMS.newEnd());
     }
 
     @Test
