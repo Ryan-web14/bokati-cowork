@@ -124,11 +124,29 @@ class BillingDocumentPdfLinesRenderTest {
     }
 
     @Test
-    @DisplayName("Une prestation exonérée se voit encore · elle le dit dans son libellé")
-    void anExemptLineStaysVisible() {
-        String html = render(List.of(line(1, "Prestation exonérée", "1", "10000", "10000", false)));
+    @DisplayName("Une ligne sans TVA ne porte aucune mention · son TTC égale son HT")
+    void aLineWithoutVatCarriesNoMention() {
+        String html = render(List.of(line(1, "Prestation", "1", "10000", "10000", false)));
 
-        assertThat(html).contains("Exonéré");
+        assertThat(html).doesNotContain("Exonéré");
+        assertThat(linesBlockOf(html)).contains("10 000");
+    }
+
+    @Test
+    @DisplayName("Chaque ligne donne son montant TTC, après le HT")
+    void everyLineShowsItsAmountIncludingTax() {
+        BillingDocumentLineResponse base = line(1, "Bureau partagé", "2", "10000", "20000", true);
+        BillingDocumentLineResponse taxed = new BillingDocumentLineResponse(
+                base.lineOrder(), base.lineType(), base.itemCode(), base.category(), base.description(), base.detailedDescription(),
+                base.quantity(), base.unit(), base.unitPrice(), base.discountRate(), base.discountAmount(), base.taxable(),
+                base.taxIncluded(), base.vatRate(), base.additionalCentRate(), base.subtotalAmount(), base.taxableAmount(),
+                new BigDecimal("3600"), base.additionalCentAmount(), new BigDecimal("3600"), new BigDecimal("23600"),
+                base.sourceType(), base.sourceCode(), base.externalReference(), base.notes(), base.optional());
+
+        String linesBlock = linesBlockOf(render(List.of(taxed)));
+
+        assertThat(linesBlock).contains("Net HT").contains("Total TTC");
+        assertThat(linesBlock).contains("20 000").contains("23 600");
     }
 
     @Test
