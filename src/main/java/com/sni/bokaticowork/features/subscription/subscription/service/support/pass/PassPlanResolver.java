@@ -21,14 +21,14 @@ public class PassPlanResolver {
     private final PassPlanVersionRepository passVersionRepository;
     private final PassPlanPriceRepository passPriceRepository;
 
-    public PassPlanVersion resolveVersion(String planCode, Long versionId) {
+    public PassPlanVersion resolveVersion(String planCode, String versionCode) {
         PassPlan plan = passPlansRepository.findByCode(planCode.trim().toUpperCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Pass plan not found: " + planCode));
         if (plan.getStatus() != PlanStatus.ACTIVE) {
             throw new BadRequestException("Pass plan " + planCode + " is not active");
         }
-        if (versionId != null) {
-            return passVersionRepository.findById(versionId)
+        if (org.springframework.util.StringUtils.hasText(versionCode)) {
+            return passVersionRepository.findByVersionCode(versionCode.trim().toUpperCase())
                     .filter(v -> v.getPlan().getId().equals(plan.getId()))
                     .filter(v -> v.getStatus() == PlanStatus.ACTIVE)
                     .orElseThrow(() -> new ResourceNotFoundException("Pass plan version not found"));
