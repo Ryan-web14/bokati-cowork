@@ -130,13 +130,6 @@
         /* L'unite se lit avec la quantite, pas comme une annotation · meme corps, teinte plus
            douce, et une vraie espace pour que "2 h" ne se lise pas "2h". */
         .line-unit { color: #1f1430; font-weight: 400; }
-        /* Meme forme que la categorie · une mention qui qualifie la prestation, pas une valeur. */
-        .line-exempt {
-            display: inline-block; white-space: nowrap;
-            font-size: 7.2px; font-weight: 700; letter-spacing: .4px;
-            text-transform: uppercase; color: #1f1430; background: #f4efe2;
-            border: 0.5px solid #c9a84c; border-radius: 2px; padding: 1px 4px; margin-right: 4px;
-        }
         .line-discount { color: #1f1430; font-weight: 700; }
         /* Mention secondaire d'une remise : le montant accorde en TTC, sous le libelle. */
         .disc-note { font-size: 7.6px; color: #6B6478; font-weight: 400; margin-top: 1px; }
@@ -350,12 +343,13 @@
         <thead>
             <tr>
                 <th style="width:4%; text-align:center;">#</th>
-                <th style="width:37%;">Désignation</th>
-                <th class="r" style="width:10%;">Qté</th>
+                <th style="width:30%;">Désignation</th>
+                <th class="r" style="width:8%;">Qté</th>
                 <th class="r" style="width:12%;">P.U. HT</th>
                 <th class="r" style="width:12%;">Brut HT</th>
-                <th class="r" style="width:11%;">Remise</th>
-                <th class="r" style="width:14%;">Net HT</th>
+                <th class="r" style="width:10%;">Remise</th>
+                <th class="r" style="width:12%;">Net HT</th>
+                <th class="r" style="width:12%;">Total TTC</th>
             </tr>
         </thead>
         <tbody>
@@ -367,11 +361,6 @@
                          chaque poste. -->
                     <div class="line-name">
                         <span class="line-category" th:if="${line.category()}" th:text="${line.category()}">Catégorie</span>
-                        <!-- La colonne « TVA » repetait le meme taux sur chaque ligne alors que le
-                             recapitulatif le porte deja. Seule l'exoneration apprend quelque chose,
-                             et elle se dit ici : sans cela, une prestation exoneree ne se verrait
-                             plus du tout. -->
-                        <span class="line-exempt" th:if="${line.taxable() != null and !line.taxable()}">Exonéré</span>
                         <span th:text="${line.description()}">Service</span>
                         <span th:if="${line.optional()}" class="line-sub" style="margin-left:4px;">(option)</span>
                     </div>
@@ -405,9 +394,9 @@
                     <span class="muted"
                           th:unless="${line.discountAmount() != null and line.discountAmount().signum() > 0}"> · </span>
                 </td>
-                <!-- Brut barre au-dessus du net des qu'une remise s'applique · la deduction se
-                     lit sans calcul, et le montant facture reste celui mis en avant. -->
-                <td class="r num col-amt" th:text="${fmt.amount(fmt.netHt(line))}">0</td>
+                <td class="r num" th:text="${fmt.amount(fmt.netHt(line))}">0</td>
+                <!-- Le montant facture de la ligne · sans TVA, il egale le net HT. -->
+                <td class="r num col-amt" th:text="${fmt.amount(fmt.totalTtc(line))}">0</td>
             </tr>
         </tbody>
     </table>

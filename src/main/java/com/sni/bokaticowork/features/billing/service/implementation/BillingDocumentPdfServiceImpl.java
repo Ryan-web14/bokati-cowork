@@ -519,6 +519,11 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
          * <p>En divisant le brut HT par la quantite, la colonne est HT par construction et reste
          * coherente avec celle d'a cote, quel que soit le mode de saisie.</p>
          */
+        /** Le montant facture de la ligne, taxes comprises · sans TVA, il egale le net HT. */
+        public java.math.BigDecimal totalTtc(BillingDocumentLineResponse line) {
+            return line == null || line.totalAmount() == null ? netHt(line) : line.totalAmount();
+        }
+
         public java.math.BigDecimal unitPriceHt(BillingDocumentLineResponse line) {
             if (line == null) {
                 return java.math.BigDecimal.ZERO;
