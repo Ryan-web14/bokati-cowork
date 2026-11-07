@@ -86,6 +86,17 @@ public class GlobalExceptionHandler {
                 "Access denied.", request, ex, null));
     }
 
+    /**
+     * Le refus d'une methode protegee ({@code @PreAuthorize}) · il traverse le controleur, le filtre
+     * de securite ne le voit donc pas, et sans cette regle il finissait en 500.
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<Object> handleMethodAccessDenied(org.springframework.security.access.AccessDeniedException ex,
+                                                           HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.ACCESS_DENIED, HttpStatus.FORBIDDEN,
+                "Access denied.", request, ex, null));
+    }
+
     @ExceptionHandler(BadCredentialException.class)
     public ResponseEntity<Object> handleBadCredential(BadCredentialException ex, HttpServletRequest request) {
         return respond(errorResponse.build(ErrorCode.INVALID_CREDENTIALS, HttpStatus.UNAUTHORIZED,

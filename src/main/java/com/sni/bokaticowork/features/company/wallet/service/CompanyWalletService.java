@@ -109,12 +109,15 @@ public class CompanyWalletService {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final MemberInAppNotifier inAppNotifier;
     private final com.sni.bokaticowork.features.payment.security.service.WalletSecurityService securityService;
+    private static final String APPROVAL_HOURS_KEY = "bokati.company.wallet.approval-hours";
+
     private final CompanySpendCodeGuard codeGuard;
     private final CompanyWalletMailer mailer;
     private final java.security.SecureRandom random = new java.security.SecureRandom();
     private final Clock clock;
     private final String defaultCurrency;
     private final Duration approvalWindow;
+    private com.sni.bokaticowork.core.settings.platform.PlatformSettings settings;
 
     @org.springframework.beans.factory.annotation.Autowired
     public CompanyWalletService(WalletService walletService, WalletAccountRepository walletRepository,
@@ -129,7 +132,7 @@ public class CompanyWalletService {
                                 com.sni.bokaticowork.features.payment.security.service.WalletSecurityService securityService,
                                 CompanySpendCodeGuard codeGuard, CompanyWalletMailer mailer,
                                 @Value("${bokati.company.wallet.currency:XAF}") String defaultCurrency,
-                                @Value("${bokati.company.wallet.approval-hours:48}") long approvalHours) {
+                                @Value("${" + APPROVAL_HOURS_KEY + ":48}") long approvalHours) {
         this(walletService, walletRepository, ledgerService, holdRepository, holdService, adminActionService, topUpService,
                 paymentGuard, paymentService, billingDocumentService, authorizationRepository, spendRepository,
                 customerRepository, memberRepository, linkRepository, sequenceGenerator, inAppNotifier, securityService,
@@ -380,14 +383,14 @@ public class CompanyWalletService {
         if (authorization != null && authorization.getApprovalAbove() != null
                 && spend.getAmount().compareTo(authorization.getApprovalAbove()) > 0) {
             spend.setStatus(CompanyWalletSpend.Status.PENDING_APPROVAL);
-            spend.setExpiresAt(clock.instant().plus(approvalWindow));
+            spend.setExpiresAt(clock.instant().plus(approvalWindow()));
             spend.setHoldNumber(hold(wallet, spend, member.getMemberId()));
             spendRepository.saveAndFlush(spend);
             notifyOwners(company, spend, member);
             return new CompanyWalletDtos.SpendResult(spendView(spend, new HashMap<>()),
                     "Au-delà de " + plain(authorization.getApprovalAbove()) + " " + spend.getCurrency()
                             + ", la dépense attend la validation du gérant. Les fonds sont réservés ; sans réponse sous "
-                            + approvalWindow.toHours() + " heures, elle est annulée.");
+                            + approvalWindow().toHours() + " heures, elle est annulée.");
         }
         spend.setStatus(CompanyWalletSpend.Status.EXECUTED);
         spendRepository.saveAndFlush(spend);
@@ -420,6 +423,17 @@ public class CompanyWalletService {
             return awaitOtp(spend, owner, company);
         }
         return proceed(spend, null, wallet, owner, company);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setSettings(com.sni.bokaticowork.core.settings.platform.PlatformSettings settings) {
+        this.settings = settings;
+    }
+
+    /** Le delai en vigueur · un changement vaut pour les depenses suivantes, pas pour celles en attente. */
+    private Duration approvalWindow() {
+        return settings == null ? approvalWindow
+                : Duration.ofHours(settings.number(APPROVAL_HOURS_KEY, approvalWindow.toHours()));
     }
 
     /** Le collaborateur saisit le code a usage unique recu par e-mail. */
@@ -754,7 +768,7 @@ public class CompanyWalletService {
         }
         releaseHold(spend, "SYSTEM");
         decide(spend, CompanyWalletSpend.Status.EXPIRED, "SYSTEM", "Sans réponse du gérant sous "
-                + approvalWindow.toHours() + " heures");
+                + approvalWindow().toHours() + " heures");
         notifySpender(spend, "Votre dépense sur la facture " + spend.getDocumentNumber()
                 + " n'a pas été validée à temps : elle est annulée.");
         return true;
@@ -967,7 +981,7 @@ public class CompanyWalletService {
         String message = spender.getDisplayName() + " demande à régler la facture " + spend.getDocumentNumber() + " ("
                 + plain(spend.getAmount()) + " " + spend.getCurrency() + ") avec le portefeuille de " + company.getCompanyName()
                 + ". Les fonds sont réservés. Acceptez ou refusez la dépense depuis votre portail ; sans réponse sous "
-                + approvalWindow.toHours() + " heures, elle est annulée.";
+                + approvalWindow().toHours() + " heures, elle est annulée.";
         for (CustomerMemberLink link : linkRepository.findAllByCustomerAndStatusOrderByStartedAtDesc(company, MemberLinkStatus.ACTIVE)) {
             if (link.getRole() != MemberLinkRole.OWNER || link.getMember() == null) {
                 continue;

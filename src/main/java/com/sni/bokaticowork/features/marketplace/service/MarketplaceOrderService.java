@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.marketplace.service;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.features.billing.dto.request.CreateCreditNoteRequest;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
@@ -79,6 +80,7 @@ import java.util.Set;
 public class MarketplaceOrderService {
 
     public static final String SOURCE_TYPE = "MARKETPLACE_ORDER";
+    private static final String PAYMENT_WINDOW_KEY = "bokati.marketplace.payment-window-minutes";
     private static final String SYSTEM_ACTOR = "SYSTEM_MARKETPLACE";
     private static final String PORTAL_PATH = "/marketplace/orders";
     private static final String COMPANY_WALLET_OWNER = "CUSTOMER";
@@ -105,6 +107,7 @@ public class MarketplaceOrderService {
     private final CompanyWalletMailer mailer;
     private final MemberInAppNotifier inAppNotifier;
     private final Clock clock;
+    private final PlatformSettings settings;
     private final Duration paymentWindow;
 
     @Autowired
@@ -119,12 +122,12 @@ public class MarketplaceOrderService {
                                    CompanyWalletSpendRepository spendRepository,
                                    PaymentTransactionRepository transactionRepository,
                                    RoleUserRepository roleUserRepository, CompanyWalletMailer mailer,
-                                   MemberInAppNotifier inAppNotifier,
-                                   @Value("${bokati.marketplace.payment-window-minutes:30}") long paymentWindowMinutes) {
+                                   MemberInAppNotifier inAppNotifier, PlatformSettings settings,
+                                   @Value("${" + PAYMENT_WINDOW_KEY + ":30}") long paymentWindowMinutes) {
         this(orderRepository, catalog, memberRepository, billingCompanyResolver, consumptionService, stockGateway,
                 billableItemRepository, sequenceGenerator, invoiceSupport, billingDocumentService,
                 billingDocumentRepository, billingEmailService, spendRepository, transactionRepository,
-                roleUserRepository, mailer, inAppNotifier, Clock.systemDefaultZone(),
+                roleUserRepository, mailer, inAppNotifier, settings, Clock.systemDefaultZone(),
                 Duration.ofMinutes(paymentWindowMinutes));
     }
 
@@ -136,7 +139,8 @@ public class MarketplaceOrderService {
                             BillingDocumentService billingDocumentService, BillingDocumentRepository billingDocumentRepository,
                             BillingEmailService billingEmailService, CompanyWalletSpendRepository spendRepository,
                             PaymentTransactionRepository transactionRepository, RoleUserRepository roleUserRepository,
-                            CompanyWalletMailer mailer, MemberInAppNotifier inAppNotifier, Clock clock, Duration paymentWindow) {
+                            CompanyWalletMailer mailer, MemberInAppNotifier inAppNotifier, PlatformSettings settings,
+                            Clock clock, Duration paymentWindow) {
         this.orderRepository = orderRepository;
         this.catalog = catalog;
         this.memberRepository = memberRepository;
@@ -155,7 +159,14 @@ public class MarketplaceOrderService {
         this.mailer = mailer;
         this.inAppNotifier = inAppNotifier;
         this.clock = clock;
+        this.settings = settings;
         this.paymentWindow = paymentWindow;
+    }
+
+    /** Le delai en vigueur · un changement dans les parametres vaut pour les commandes suivantes. */
+    private Duration paymentWindow() {
+        return settings == null ? paymentWindow
+                : Duration.ofMinutes(settings.number(PAYMENT_WINDOW_KEY, paymentWindow.toMinutes()));
     }
 
     // ------------------------------------------------------------------ panier
@@ -295,13 +306,13 @@ public class MarketplaceOrderService {
         order.setInvoiceNumber(invoice.documentNumber());
         order.setStatus(MarketplaceOrder.Status.PENDING_PAYMENT);
         order.setPlacedAt(now);
-        order.setExpiresAt(now.plus(paymentWindow));
+        order.setExpiresAt(now.plus(paymentWindow()));
         MarketplaceOrder saved = orderRepository.saveAndFlush(order);
 
         sendInvoiceAfterCommit(invoice.documentNumber());
         tell(member, saved, "MARKETPLACE_ORDER_PLACED", "Commande " + orderNumber + " validée",
                 "Votre commande " + orderNumber + " est validée. Réglez la facture " + invoice.documentNumber()
-                        + " dans les " + paymentWindow.toMinutes() + " minutes : passé ce délai, elle est annulée et"
+                        + " dans les " + paymentWindow().toMinutes() + " minutes : passé ce délai, elle est annulée et"
                         + " les articles sont remis en vente.");
         return view(saved);
     }
@@ -535,7 +546,7 @@ public class MarketplaceOrderService {
         order.setStatus(MarketplaceOrder.Status.EXPIRED);
         order.setCancelledAt(clock.instant());
         order.setCancelledBy(SYSTEM_ACTOR);
-        order.setCancellationReason("Non réglée dans le délai de " + paymentWindow.toMinutes() + " minutes");
+        order.setCancellationReason("Non réglée dans le délai imparti");
         orderRepository.save(order);
         giveBack(order, SYSTEM_ACTOR);
         buyer(order).ifPresent(member -> tell(member, order, "MARKETPLACE_ORDER_EXPIRED",
