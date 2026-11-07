@@ -33,6 +33,10 @@ public class PassPlanVersion {
     @Column(name = "version_number", nullable = false)
     private Integer versionNumber;
 
+    /** Le code de la version · c'est lui qui circule, son identifiant ne tient pas dans un nombre JavaScript. */
+    @Column(name = "version_code", nullable = false, length = 120)
+    private String versionCode;
+
     @Column(name = "name", nullable = false)
     private String name;
 

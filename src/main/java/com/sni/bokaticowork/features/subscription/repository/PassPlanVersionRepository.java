@@ -14,6 +14,8 @@ public interface PassPlanVersionRepository extends JpaRepository<PassPlanVersion
 
     Optional<PassPlanVersion> findFirstByPlanAndStatusOrderByVersionNumberDesc(PassPlan plan, PlanStatus status);
 
+    Optional<PassPlanVersion> findByVersionCode(String versionCode);
+
     List<PassPlanVersion> findAllByPlanOrderByVersionNumberDesc(PassPlan plan);
 
     int countByPlan(PassPlan plan);

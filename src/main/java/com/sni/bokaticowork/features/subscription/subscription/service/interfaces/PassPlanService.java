@@ -24,19 +24,19 @@ public interface PassPlanService {
 
     PassPlanDtos.PassPlanVersionResponse createVersion(String planCode, PassPlanDtos.CreatePassPlanVersionRequest request);
 
-    PassPlanDtos.PassPlanVersionResponse getVersion(Long versionId);
+    PassPlanDtos.PassPlanVersionResponse getVersion(String versionCode);
 
     List<PassPlanDtos.PassPlanVersionResponse> listVersions(String planCode);
 
-    PassPlanDtos.PassPlanVersionResponse publishVersion(Long versionId);
+    PassPlanDtos.PassPlanVersionResponse publishVersion(String versionCode);
 
-    PassPlanDtos.PassPlanPriceResponse setPrice(Long versionId, PassPlanDtos.SetPassPlanPriceRequest request);
+    PassPlanDtos.PassPlanPriceResponse setPrice(String versionCode, PassPlanDtos.SetPassPlanPriceRequest request);
 
-    List<PassPlanDtos.PassPlanPriceResponse> listPrices(Long versionId);
+    List<PassPlanDtos.PassPlanPriceResponse> listPrices(String versionCode);
 
-    PassPlanDtos.PassPlanEntitlementResponse addEntitlement(Long versionId, PassPlanDtos.AddPassPlanEntitlementRequest request);
+    PassPlanDtos.PassPlanEntitlementResponse addEntitlement(String versionCode, PassPlanDtos.AddPassPlanEntitlementRequest request);
 
-    void removeEntitlement(Long entitlementId);
+    void removeEntitlement(String versionCode, String entitlementCode);
 
-    List<PassPlanDtos.PassPlanEntitlementResponse> listEntitlements(Long versionId);
+    List<PassPlanDtos.PassPlanEntitlementResponse> listEntitlements(String versionCode);
 }
