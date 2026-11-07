@@ -49,7 +49,7 @@ final class PlatformSettingValidator {
             }
             case TIME -> time(definition, value);
             case TIME_RANGE -> timeRange(definition, value);
-            case TEXT -> { /* tout texte, y compris vide */ }
+            case TEXT, ENUM -> { /* tout texte, y compris vide · une liste est controlee par son module */ }
         }
         return value;
     }

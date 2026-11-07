@@ -43,6 +43,7 @@ public class PlatformSettingsAdminService {
     private final SettingsAuditLogsRepository auditRepository;
     private final PlatformSettings settings;
     private final ConfigurableEnvironment environment;
+    private final List<PlatformSettingProvider> providers;
     private final Clock clock = Clock.systemUTC();
 
     /**
@@ -51,10 +52,12 @@ public class PlatformSettingsAdminService {
      * @param modified       une valeur a ete enregistree depuis l'administration
      * @param configured     un secret est renseigne sur le serveur · jamais sa valeur
      * @param restartPending enregistree, elle attend le prochain redemarrage
+     * @param options        les valeurs permises d'une liste de choix
      */
     public record SettingView(String key, String label, SettingDomain domain, PlatformSettingCatalog.Type type,
                               PlatformSettingCatalog.Effect effect, String value, String defaultValue, boolean modified,
-                              boolean editable, Boolean configured, boolean restartPending, String updatedBy, Instant updatedAt) {
+                              boolean editable, Boolean configured, boolean restartPending, String updatedBy, Instant updatedAt,
+                              List<String> options) {
     }
 
     public record DomainView(SettingDomain domain, String label, boolean adminEditable, int settings) {
@@ -68,7 +71,8 @@ public class PlatformSettingsAdminService {
         return Arrays.stream(SettingDomain.values())
                 .filter(domain -> mayAccess(domain, authentication))
                 .map(domain -> new DomainView(domain, domain.label(), domain.adminEditable(),
-                        (int) PlatformSettingCatalog.all().stream().filter(definition -> definition.domain() == domain).count()))
+                        (int) PlatformSettingCatalog.all().stream().filter(definition -> definition.domain() == domain).count()
+                                + (int) provided().stream().filter(setting -> setting.definition().domain() == domain).count()))
                 .toList();
     }
 
@@ -76,16 +80,26 @@ public class PlatformSettingsAdminService {
     public List<SettingView> list(SettingDomain domain, Authentication authentication) {
         Map<String, PlatformSetting> stored = repository.findAll().stream()
                 .collect(Collectors.toMap(PlatformSetting::getKey, Function.identity()));
-        return PlatformSettingCatalog.all().stream()
+        List<SettingView> views = new ArrayList<>(PlatformSettingCatalog.all().stream()
                 .filter(definition -> domain == null || definition.domain() == domain)
                 .filter(definition -> mayAccess(definition.domain(), authentication))
                 .map(definition -> view(definition, stored.get(definition.key())))
-                .toList();
+                .toList());
+        provided().stream()
+                .filter(setting -> domain == null || setting.definition().domain() == domain)
+                .filter(setting -> mayAccess(setting.definition().domain(), authentication))
+                .map(PlatformSettingsAdminService::view)
+                .forEach(views::add);
+        return views;
     }
 
     @Transactional
     public SettingView update(String key, String rawValue, String reason, Authentication authentication) {
         PlatformSettingCatalog.Definition definition = editable(key, authentication);
+        PlatformSettingProvider provider = providerOf(key);
+        if (provider != null) {
+            return updateProvided(provider, definition, rawValue, reason, authentication);
+        }
         String value = PlatformSettingValidator.validated(definition, rawValue);
         PlatformSetting stored = repository.findById(key).orElse(null);
         String previous = stored != null ? stored.getValue() : defaultValue(definition);
@@ -105,6 +119,10 @@ public class PlatformSettingsAdminService {
     @Transactional
     public SettingView reset(String key, String reason, Authentication authentication) {
         PlatformSettingCatalog.Definition definition = editable(key, authentication);
+        PlatformSettingProvider provider = providerOf(key);
+        if (provider != null) {
+            return updateProvided(provider, definition, definition.defaultValue(), reason, authentication);
+        }
         repository.findById(key).ifPresent(stored -> {
             audit(key, stored.getValue(), defaultValue(definition), reason, authentication);
             repository.delete(stored);
@@ -125,6 +143,36 @@ public class PlatformSettingsAdminService {
         return changes;
     }
 
+    private SettingView updateProvided(PlatformSettingProvider provider, PlatformSettingCatalog.Definition definition,
+                                       String value, String reason, Authentication authentication) {
+        String previous = provided(provider, definition.key()).value();
+        provider.update(definition.key(), value);
+        PlatformSettingProvider.ProvidedSetting updated = provided(provider, definition.key());
+        audit(definition.key(), previous, updated.value(), reason, authentication);
+        return view(updated);
+    }
+
+    private static PlatformSettingProvider.ProvidedSetting provided(PlatformSettingProvider provider, String key) {
+        return provider.settings().stream().filter(setting -> setting.definition().key().equals(key)).findFirst().orElseThrow();
+    }
+
+    private List<PlatformSettingProvider.ProvidedSetting> provided() {
+        return providers.stream().flatMap(provider -> provider.settings().stream()).toList();
+    }
+
+    private PlatformSettingProvider providerOf(String key) {
+        return providers.stream()
+                .filter(provider -> provider.settings().stream().anyMatch(setting -> setting.definition().key().equals(key)))
+                .findFirst().orElse(null);
+    }
+
+    private static SettingView view(PlatformSettingProvider.ProvidedSetting setting) {
+        PlatformSettingCatalog.Definition definition = setting.definition();
+        return new SettingView(definition.key(), definition.label(), definition.domain(), definition.type(), definition.effect(),
+                setting.value(), definition.defaultValue(), !Objects.equals(setting.value(), definition.defaultValue()), true,
+                null, false, null, null, setting.options());
+    }
+
     private PlatformSettingCatalog.Definition editable(String key, Authentication authentication) {
         PlatformSettingCatalog.Definition definition = definition(key);
         if (!mayAccess(definition.domain(), authentication)) {
@@ -133,8 +181,10 @@ public class PlatformSettingsAdminService {
         return definition;
     }
 
-    private static PlatformSettingCatalog.Definition definition(String key) {
+    private PlatformSettingCatalog.Definition definition(String key) {
         return PlatformSettingCatalog.find(key)
+                .or(() -> provided().stream().map(PlatformSettingProvider.ProvidedSetting::definition)
+                        .filter(definition -> definition.key().equals(key)).findFirst())
                 .orElseThrow(() -> new ResourceNotFoundException("Paramètre inconnu : " + key));
     }
 
@@ -171,13 +221,13 @@ public class PlatformSettingsAdminService {
         boolean secret = definition.type() == PlatformSettingCatalog.Type.SECRET;
         if (secret) {
             return new SettingView(definition.key(), definition.label(), definition.domain(), definition.type(), definition.effect(),
-                    null, null, false, false, StringUtils.hasText(fileValue(definition.key())), false, null, null);
+                    null, null, false, false, StringUtils.hasText(fileValue(definition.key())), false, null, null, List.of());
         }
         String fallback = defaultValue(definition);
         String value = stored != null ? stored.getValue() : fallback;
         return new SettingView(definition.key(), definition.label(), definition.domain(), definition.type(), definition.effect(),
                 value, fallback, stored != null, true, null, restartPending(definition, value),
-                stored == null ? null : stored.getUpdatedBy(), stored == null ? null : stored.getUpdatedAt());
+                stored == null ? null : stored.getUpdatedBy(), stored == null ? null : stored.getUpdatedAt(), List.of());
     }
 
     /** La valeur voulue n'est pas celle que l'application a lue en demarrant. */

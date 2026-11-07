@@ -75,6 +75,32 @@ class PlatformSettingsSchemaIT extends PostgresIntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Les permissions des pass plans existent et vont aux administrateurs et aux roles equivalents")
+    void passPlanPermissionsAreGranted() {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        assertThat(jdbc.queryForObject(
+                "SELECT COUNT(*) FROM permission WHERE name IN ('PASS_PLAN_READ', 'PASS_PLAN_WRITE', 'PASS_WRITE') AND is_active = TRUE",
+                Integer.class)).isEqualTo(3);
+        assertThat(jdbc.queryForObject("SELECT COUNT(DISTINCT id) FROM permission", Integer.class))
+                .isEqualTo(jdbc.queryForObject("SELECT COUNT(*) FROM permission", Integer.class));
+        assertThat(jdbc.queryForList("""
+                SELECT r.name FROM role r
+                JOIN role_permission rp ON rp.role_id = r.id AND rp.is_active = TRUE
+                JOIN permission p ON p.id = rp.permission_id
+                WHERE p.name = 'PASS_PLAN_READ'
+                """, String.class)).contains("SUPER_ADMIN", "ADMIN");
+        Integer missed = jdbc.queryForObject("""
+                SELECT COUNT(*) FROM role_permission holder
+                JOIN permission source ON source.id = holder.permission_id AND source.name = 'SUBSCRIPTION_READ'
+                WHERE holder.is_active = TRUE AND NOT EXISTS (
+                    SELECT 1 FROM role_permission rp
+                    JOIN permission p ON p.id = rp.permission_id AND p.name = 'PASS_PLAN_READ'
+                    WHERE rp.role_id = holder.role_id AND rp.is_active = TRUE)
+                """, Integer.class);
+        assertThat(missed).isZero();
+    }
+
+    @Test
     @DisplayName("Une base injoignable laisse la configuration telle quelle")
     void unreachableDatabaseDoesNotStopTheStart() throws SQLException {
         MockEnvironment environment = new MockEnvironment();

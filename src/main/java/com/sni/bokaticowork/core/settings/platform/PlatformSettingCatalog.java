@@ -22,7 +22,7 @@ public final class PlatformSettingCatalog {
     private static final String RESOURCE = "settings/platform-settings.tsv";
     private static final Map<String, Definition> DEFINITIONS = load();
 
-    public enum Type { TEXT, EMAIL, INTEGER, DECIMAL, BOOLEAN, CRON, TIME, TIME_RANGE, SECRET }
+    public enum Type { TEXT, EMAIL, INTEGER, DECIMAL, BOOLEAN, CRON, TIME, TIME_RANGE, ENUM, SECRET }
 
     /** {@code LIVE} : pris en compte aussitot · {@code RESTART} : au prochain redemarrage. */
     public enum Effect { LIVE, RESTART }

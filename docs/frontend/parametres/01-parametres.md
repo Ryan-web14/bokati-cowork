@@ -42,6 +42,7 @@ La clé contient des points : `PUT /admin/settings/bokati.marketplace.payment-wi
 | `modified` | une valeur a été enregistrée depuis l'administration |
 | `restartPending` | enregistrée, elle attend le redémarrage : à afficher |
 | `editable` | `false` pour un secret |
+| `options` | les choix d'un réglage `ENUM`, à afficher en liste |
 | `configured` | pour un secret seulement : renseigné ou non sur le serveur |
 | `updatedBy`, `updatedAt` | le dernier auteur |
 
@@ -71,3 +72,16 @@ Pris en compte aussitôt (`LIVE`) :
 | Fermeture automatique du support | `bokati.support.auto-close-delay-days` | prochain passage, au plus une heure après |
 
 Tous les autres sont lus au démarrage (`RESTART`) : un redémarrage de l'application les applique.
+
+## Politique d'abonnement
+
+Ses 13 réglages sont dans le domaine `SUBSCRIPTIONS`, sous les clés `subscription.policy.*` : prorata,
+préavis, rupture d'engagement, gel, tolérance, suspension, expiration, validité des devis. Ils
+prennent effet aussitôt et sont tracés comme les autres, avec les mêmes droits. Le type `ENUM`
+s'affiche avec `options`.
+
+`early-termination-fixed-fee` accepte une valeur vide : il n'y a alors pas de montant fixe, ce qui est
+refusé si la formule est `FIXED_FEE`.
+
+`GET` et `PUT /subscriptions/lifecycle/policy` restent disponibles, mais un `PUT` à cette adresse
+n'écrit rien au journal : le nouvel écran doit passer par `/admin/settings`.

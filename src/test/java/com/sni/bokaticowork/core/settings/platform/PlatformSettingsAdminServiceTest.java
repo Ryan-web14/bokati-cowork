@@ -44,10 +44,27 @@ class PlatformSettingsAdminServiceTest {
     private final PlatformSettings settings = mock(PlatformSettings.class);
     private final StandardEnvironment environment = new StandardEnvironment();
     private final PlatformSettingsAdminService service =
-            new PlatformSettingsAdminService(repository, audit, settings, environment);
+            new PlatformSettingsAdminService(repository, audit, settings, environment, List.of(new PolicyStub()));
 
     private final Authentication superAdmin = user("root@sni", "ROLE_SUPER_ADMIN");
     private final Authentication admin = user("admin@sni", "ROLE_ADMIN");
+
+    /** Un module qui garde sa table · les droits et le journal restent ceux des parametres. */
+    private static final class PolicyStub implements PlatformSettingProvider {
+        private String grace = "1";
+
+        @Override
+        public List<ProvidedSetting> settings() {
+            return List.of(new ProvidedSetting(new PlatformSettingCatalog.Definition("subscription.policy.grace-period-days",
+                    SettingDomain.SUBSCRIPTIONS, PlatformSettingCatalog.Type.INTEGER, PlatformSettingCatalog.Effect.LIVE, "1", "Tolérance"),
+                    grace, List.of()));
+        }
+
+        @Override
+        public void update(String key, String value) {
+            grace = value;
+        }
+    }
 
     private static Authentication user(String name, String role) {
         return new UsernamePasswordAuthenticationToken(name, "x", AuthorityUtils.createAuthorityList(role));
@@ -149,6 +166,25 @@ class PlatformSettingsAdminServiceTest {
         verify(audit).save(log.capture());
         assertThat(log.getValue().getOldValue()).isEqualTo("45");
         assertThat(log.getValue().getNewValue()).isEqualTo("30");
+    }
+
+    @Test
+    @DisplayName("Un reglage de module suit les memes droits et le meme journal, et se remet a zero")
+    void providedSettingsShareRightsAndJournal() {
+        PlatformSettingsAdminService.SettingView view = service.update("subscription.policy.grace-period-days", "3", "Essai", admin);
+
+        assertThat(view.value()).isEqualTo("3");
+        assertThat(view.modified()).isTrue();
+        assertThat(view.effect()).isEqualTo(PlatformSettingCatalog.Effect.LIVE);
+        ArgumentCaptor<SettingsAuditLogs> log = ArgumentCaptor.forClass(SettingsAuditLogs.class);
+        verify(audit).save(log.capture());
+        assertThat(log.getValue().getOldValue()).isEqualTo("1");
+        assertThat(log.getValue().getNewValue()).isEqualTo("3");
+        verify(repository, never()).save(any());
+
+        assertThat(service.list(SettingDomain.SUBSCRIPTIONS, admin))
+                .anyMatch(setting -> setting.key().equals("subscription.policy.grace-period-days"));
+        assertThat(service.reset("subscription.policy.grace-period-days", null, admin).value()).isEqualTo("1");
     }
 
     @Test
