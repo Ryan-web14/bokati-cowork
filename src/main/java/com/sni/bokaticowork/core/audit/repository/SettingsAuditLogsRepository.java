@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface SettingsAuditLogsRepository extends JpaRepository<SettingsAuditLogs, Long>, JpaSpecificationExecutor<SettingsAuditLogs> {
+
+    java.util.List<SettingsAuditLogs> findBySettingKeyOrderByChangedAtDesc(String settingKey, org.springframework.data.domain.Pageable pageable);
 }

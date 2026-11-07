@@ -83,7 +83,7 @@ class MarketplaceOrderServiceTest {
     private final CompanyWalletMailer mailer = mock(CompanyWalletMailer.class);
     private final MarketplaceOrderService service = new MarketplaceOrderService(orders, catalog, members, companyResolver,
             consumption, stock, billables, sequences, invoicing, billing, documents, mock(BillingEmailService.class),
-            spends, transactions, roleUsers, mailer, mock(MemberInAppNotifier.class), Clock.fixed(NOW, ZoneOffset.UTC),
+            spends, transactions, roleUsers, mailer, mock(MemberInAppNotifier.class), null, Clock.fixed(NOW, ZoneOffset.UTC),
             Duration.ofMinutes(30));
 
     private Member awa;
