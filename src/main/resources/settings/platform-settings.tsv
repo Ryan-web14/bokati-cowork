@@ -22,6 +22,15 @@ app.ged.filing.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Classement automatique de 
 app.ged.filing.batch-size	DOCUMENTS	INTEGER	RESTART	1000	Documents rangés par passage du classement GED
 app.ged.filing.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	120000	Délai avant le premier classement GED (ms)
 app.ged.filing.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du classement GED (ms)
+app.ged.text.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Lecture du texte des fichiers GED (recherche) active
+app.ged.text.batch-size	DOCUMENTS	INTEGER	RESTART	20	Fichiers GED lus par passage
+app.ged.text.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	180000	Délai avant la première lecture des fichiers GED (ms)
+app.ged.text.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	60000	Cadence de lecture des fichiers GED (ms)
+app.ged.text.ocr-enabled	DOCUMENTS	BOOLEAN	RESTART	true	OCR des scans et images de la GED
+app.ged.text.max-ocr-pages	DOCUMENTS	INTEGER	RESTART	30	Pages lues par OCR au plus, par fichier GED
+app.ged.text.max-chars	DOCUMENTS	INTEGER	RESTART	300000	Caractères gardés au plus, par fichier GED
+app.ged.text.ocr-language	DOCUMENTS	TEXT	RESTART	fra+eng	Langues de l'OCR de la GED (Tesseract)
+app.ged.text.ocr-data-path	DOCUMENTS	TEXT	RESTART		Dossier des langues Tesseract (tessdata) pour la GED
 app.documents.preview-token.secret	DOCUMENTS	SECRET	RESTART		Secret des liens d'aperçu
 app.documents.preview-token.ttl-seconds	DOCUMENTS	INTEGER	RESTART	300	Validité d'un lien d'aperçu (secondes)
 app.documents.public-preview-enabled	DOCUMENTS	BOOLEAN	RESTART	false	Aperçu public des documents

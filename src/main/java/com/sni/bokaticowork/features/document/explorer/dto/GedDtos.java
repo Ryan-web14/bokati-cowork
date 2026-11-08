@@ -83,6 +83,36 @@ public final class GedDtos {
     /** Une reprise du classement : rangés, sautés (sans place possible), restant sans dossier. */
     public record GedFilingResult(int filed, int skipped, long remaining) {}
 
+    // Texte et recherche (lot 3) ----------------------------------------------------------------
+
+    /**
+     * Le texte lu dans un fichier.
+     *
+     * <p>{@code status} : {@code PENDING} (pas encore lu), {@code DONE}, {@code EMPTY} (rien a lire,
+     * page blanche), {@code UNSUPPORTED} (format non lu), {@code FAILED} (voir {@code error}).
+     * {@code method} : {@code TEXT_LAYER} (PDF numerique), {@code OCR} (scan, image), {@code MIXED},
+     * {@code PLAIN} (texte, CSV), {@code OFFICE}. {@code upToDate} est faux quand une nouvelle
+     * version attend sa lecture.</p>
+     */
+    public record GedFileText(String code, String status, String method, Integer pageCount, Integer ocrPages,
+                              int length, boolean truncated, Instant extractedAt, String error,
+                              boolean upToDate, String content) {}
+
+    /**
+     * Un resultat de recherche. {@code snippet} : un extrait du contenu, les mots trouves entre
+     * {@code ⟦} et {@code ⟧} (a afficher en texte, jamais en HTML) ; vide si seul le nom correspond.
+     * {@code location} : le chemin du dossier, « Membres / Awa Ndoye · MBR-12 / KYC ».
+     */
+    public record GedSearchHit(GedItem item, String snippet, double rank, String location) {}
+
+    public record GedSearchResult(String query, String folderCode, List<GedSearchHit> hits,
+                                  int page, int size, long totalElements, int totalPages) {}
+
+    /** L'avancement de la lecture des fichiers : en attente, et par etat. */
+    public record GedTextStatus(long pending, java.util.Map<String, Long> byStatus) {}
+
+    public record GedTextRunResult(int processed, int done, int empty, int unsupported, int failed, long remaining) {}
+
     /** Un lot de la corbeille : ce qui a ete supprime ensemble, et se restaure ensemble. */
     public record GedTrashBatch(String batch, Instant trashedAt, Long trashedBy, long folders, long documents, List<GedItem> items) {}
 }

@@ -14,7 +14,12 @@ import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSelectionR
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashBatch;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFileText;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSearchResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTextRunResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTextStatus;
 import com.sni.bokaticowork.features.document.explorer.service.GedExplorerService;
+import com.sni.bokaticowork.features.document.explorer.service.GedTextService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,7 +42,8 @@ import java.util.List;
  * L'explorateur de fichiers de la GED, pour le back-office.
  *
  * <p>Droits : lecture {@code DOCUMENT:READ}, depot {@code DOCUMENT:UPLOAD}, tout le reste
- * {@code DOCUMENT:WRITE} (voir {@code AdminApiAuthorizationManager}).</p>
+ * {@code DOCUMENT:WRITE} (voir {@code AdminApiAuthorizationManager}). La numerisation est un
+ * depot : {@code DOCUMENT:UPLOAD}.</p>
  */
 @RestController
 @RequestMapping(ApiPath.V1 + "/ged")
@@ -45,6 +51,7 @@ import java.util.List;
 public class GedExplorerController {
 
     private final GedExplorerService service;
+    private final GedTextService textService;
 
     /** Le contenu d'un dossier (ou de la racine sans {@code folderCode}) : dossiers puis fichiers. */
     @GetMapping("/items")
@@ -128,5 +135,61 @@ public class GedExplorerController {
     @PostMapping("/trash/{batch}/restore")
     public ResponseEntity<GedTrashResult> restore(@PathVariable String batch) {
         return ResponseEntity.ok(service.restore(batch));
+    }
+
+    // Numerisation, texte et recherche (lot 3) ---------------------------------------------------
+
+    /**
+     * Numerise un document papier : les pages (photos ou images de scanner, dans l'ordre d'envoi)
+     * deviennent un seul PDF dans le dossier. Le PDF est ensuite lu par OCR pour la recherche.
+     * Taille totale limitee a 10 Mo par requete : photos en JPEG.
+     */
+    @PostMapping(value = "/scans", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<GedItem> scan(
+            @RequestPart("pages") List<MultipartFile> pages,
+            @RequestParam(required = false) String folderCode,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String documentTypeCode,
+            @RequestParam(required = false) DocumentOwnerType ownerType,
+            @RequestParam(required = false) String ownerCode) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.scan(pages, folderCode, title, documentTypeCode, ownerType, ownerCode));
+    }
+
+    /**
+     * Cherche dans le contenu et le nom des fichiers ; sous un dossier et ses sous-dossiers avec
+     * {@code folderCode}. Syntaxe : mots, {@code "expression exacte"}, {@code -exclu}, {@code or}.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<GedSearchResult> search(
+            @RequestParam String q,
+            @RequestParam(required = false) String folderCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(textService.search(q, folderCode, page, size));
+    }
+
+    /** Le texte lu dans un fichier (couche texte, OCR ou bureautique) et l'etat de sa lecture. */
+    @GetMapping("/files/{code}/text")
+    public ResponseEntity<GedFileText> fileText(@PathVariable String code) {
+        return ResponseEntity.ok(textService.fileText(code));
+    }
+
+    /** Relit un fichier tout de suite ; l'OCR d'un long scan peut prendre une minute. */
+    @PostMapping("/files/{code}/text/refresh")
+    public ResponseEntity<GedFileText> refreshText(@PathVariable String code) {
+        return ResponseEntity.ok(textService.refresh(code));
+    }
+
+    /** Fichiers en attente de lecture, et nombre de fichiers par etat de lecture. */
+    @GetMapping("/text/status")
+    public ResponseEntity<GedTextStatus> textStatus() {
+        return ResponseEntity.ok(textService.status());
+    }
+
+    /** Lit tout de suite un lot de fichiers en attente (la lecture tourne aussi seule, chaque minute). */
+    @PostMapping("/text/run")
+    public ResponseEntity<GedTextRunResult> runText(@RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(textService.runPending(limit));
     }
 }

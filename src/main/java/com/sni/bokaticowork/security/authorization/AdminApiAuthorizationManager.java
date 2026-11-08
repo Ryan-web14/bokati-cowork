@@ -249,7 +249,7 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         // Explorateur de la GED : lire, deposer, puis tout le reste (ranger, renommer, corbeille).
         if (path.startsWith("/ged/") || path.equals("/ged")) {
             if (HttpMethod.GET.matches(method)) return permission("DOCUMENT", "READ");
-            if (path.equals("/ged/files") && HttpMethod.POST.matches(method)) return permission("DOCUMENT", "UPLOAD");
+            if ((path.equals("/ged/files") || path.equals("/ged/scans")) && HttpMethod.POST.matches(method)) return permission("DOCUMENT", "UPLOAD");
             return permission("DOCUMENT", "WRITE");
         }
         if (path.startsWith("/review")) {

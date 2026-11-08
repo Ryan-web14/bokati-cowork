@@ -1,12 +1,14 @@
 # Explorateur de la GED
 
-> Chantier GED, lots 1 et 2. Routes exactes et champs JSON : [routes/GedExplorerController.md](../routes/GedExplorerController.md). Règles communes : [README racine](../../README.md). Fonctionnement général des documents : [README du module](../README.md).
+> Chantier GED, lots 1, 2 et 3. Routes exactes et champs JSON : [routes/GedExplorerController.md](../routes/GedExplorerController.md). Règles communes : [README racine](../../README.md). Fonctionnement général des documents : [README du module](../README.md).
 
 ## En bref
 
 La GED se consulte comme un explorateur de fichiers : une arborescence à gauche, le contenu du dossier ouvert à droite (sous-dossiers puis fichiers), un fil d'Ariane, et les gestes habituels (créer un dossier, déposer des fichiers ou un dossier entier, renommer, déplacer, copier, mettre à la corbeille, restaurer).
 
 Elle n'est plus réservée au KYC : on y conserve tout document de l'organisation (courrier numérisé, statuts, PDF à archiver, tableur, document Word). Les documents produits par les autres modules (pièces KYC, contrats, domiciliation) s'y rangent tout seuls dans un plan de classement.
+
+On y numérise aussi le papier (photos ou images de scanner assemblées en un PDF), et l'on cherche dans le **contenu** des fichiers : le texte des PDF, des scans (par OCR), des images et des documents bureautiques est lu par le serveur.
 
 Back-office uniquement.
 
@@ -27,8 +29,8 @@ Les éléments se désignent par leur `code` (texte) : jamais d'identifiant num�
 
 ```
 ┌───────────────────────┬────────────────────────────────────────────────────────────┐
-│ Arborescence          │ Accueil › Administratif › Courriers          [Rechercher] │
-│ (GET /ged/tree)       │ [Nouveau dossier] [Déposer] [Déposer un dossier] [Corbeille]
+│ Arborescence          │ Accueil › Administratif › Courriers  [🔍 Rechercher partout]│
+│ (GET /ged/tree)       │ [Nouveau dossier] [Déposer] [Déposer un dossier] [Numériser] [Corbeille]
 │                       │ ┌────┬──────────────────────┬────────────┬───────┬────────┐ │
 │ ▸ Administratif       │ │    │ Nom                  │ Modifié    │ Taille│ Type   │ │
 │   ▸ Courriers         │ │ 📁 │ 2025                 │ 03/11/2026 │       │ dossier│ │
@@ -103,6 +105,53 @@ Les éléments se désignent par leur `code` (texte) : jamais d'identifiant num�
 
 Il n'y a pas encore de suppression définitive ni de vidage de la corbeille : ils viendront avec les règles de conservation (lot 5).
 
+### Numériser un document papier
+
+`POST /sni/api/v1/ged/scans`, en `multipart/form-data` :
+
+| Partie | Rôle |
+| --- | --- |
+| `pages` | Les images des pages, **dans l'ordre** : photos (JPEG), PNG, TIFF (un TIFF de plusieurs pages en donne plusieurs), GIF, BMP. |
+| `folderCode` | Le dossier de destination ; absent : la racine. |
+| `title` | Facultatif : le nom du PDF (`.pdf` ajouté s'il manque). Sans titre : « Numérisation du 08-11-2026 14h05.pdf ». |
+| `documentTypeCode`, `ownerType`, `ownerCode` | Comme le dépôt : sans eux, document général interne. |
+
+- Réponse `201` : l'élément créé (un seul PDF, une page A4 par image, en paysage si l'image est plus large que haute). `400` si une page n'est pas une image lisible, en citant son numéro.
+- L'écran : une zone « Numériser » qui ouvre l'appareil photo sur mobile (`<input type="file" accept="image/*" capture="environment" multiple>`) ou accepte les images d'un scanner, une vignette par page, réordonnables par glisser-déposer, une corbeille par page, puis « Créer le PDF ».
+- **Taille** : 10 Mo par requête, pages comprises. Réduire chaque photo avant l'envoi (canvas, 1600 px de large, JPEG qualité 0,8 : environ 300 Ko la page) ; une vingtaine de pages tient alors en une requête.
+- Le PDF est ensuite lu par OCR, comme tout dépôt (voir plus bas) : il devient cherchable une à deux minutes après.
+
+### Chercher dans les fichiers
+
+`GET /sni/api/v1/ged/search?q=echeance bail&folderCode=FLD...&page=0&size=20`
+
+- Cherche dans le **contenu** et le **nom** des fichiers, sans tenir compte des accents ni des majuscules, avec les variantes du français (« facture » trouve « factures »). Au moins deux caractères (`400` sinon).
+- Syntaxe d'un moteur de recherche : `contrat bail` (les deux mots), `"bail commercial"` (expression exacte), `-brouillon` (exclure), `devis or facture` (l'un ou l'autre).
+- Avec `folderCode` : le dossier et tous ses sous-dossiers ; sans : toute la GED. Les fichiers à la corbeille n'apparaissent pas.
+- Réponse : `hits`, `totalElements`, `totalPages`. Chaque résultat donne `item` (le fichier, comme dans le contenu d'un dossier), `location` (« Membres / Awa Ndoye · MBR-000012 / KYC »), `rank` et `snippet`.
+- `snippet` est un extrait du contenu, les mots trouvés entre `⟦` et `⟧`. **L'afficher en texte, jamais en HTML** : découper la chaîne sur ces deux caractères et mettre les morceaux trouvés dans des `<mark>` créés par le code (le texte vient de fichiers déposés). `snippet` est vide quand seul le nom correspond.
+- Un nom de fichier qui contient la saisie passe devant. Clic sur un résultat : ouvrir son dossier (`item.folderCode`) en sélectionnant le fichier, ou l'aperçu.
+- Le champ de recherche du dossier ouvert (`GET /ged/items?search=`) reste un filtre sur le **nom** dans ce seul dossier ; la recherche plein texte est un écran de résultats à part.
+
+### Le texte d'un fichier
+
+Le serveur lit chaque fichier après son dépôt, en tâche de fond (toutes les minutes, 20 fichiers par passage ; les fichiers existants sont repris au démarrage) :
+
+| Fichier | Lecture (`method`) |
+| --- | --- |
+| PDF numérique | sa couche texte (`TEXT_LAYER`) |
+| PDF scanné, image, TIFF | OCR (`OCR`), 30 pages au plus par fichier |
+| PDF mêlant les deux | `MIXED` |
+| TXT, CSV | le contenu (`PLAIN`) |
+| Word, Excel, PowerPoint, OpenDocument récents | le texte du document (`OFFICE`) |
+| `.doc`, `.xls`, `.ppt` anciens | non lu (`UNSUPPORTED`) : seul leur nom se cherche |
+
+- `GET /sni/api/v1/ged/files/{code}/text` : `status` (`PENDING` pas encore lu, `DONE`, `EMPTY` rien à lire, `UNSUPPORTED`, `FAILED`), `method`, `pageCount`, `ocrPages`, `length`, `truncated` (texte coupé à 300 000 caractères), `extractedAt`, `error` (cause d'un échec, ou pages scannées non lues), `upToDate` (faux quand une nouvelle version attend sa lecture) et `content`. À montrer dans un onglet « Texte » de l'aperçu, avec un bouton « Copier le texte ».
+- `POST /sni/api/v1/ged/files/{code}/text/refresh` : relit le fichier tout de suite et rend le même objet. L'OCR prend 2 à 3 secondes par page : prévoir un indicateur d'attente.
+- `GET /sni/api/v1/ged/text/status` : `pending` (fichiers en attente) et `byStatus` (`{ "DONE": 120, "FAILED": 2, ... }`), pour un bandeau « Indexation : 37 fichiers en attente ».
+- `POST /sni/api/v1/ged/text/run?limit=20` : lit un lot tout de suite (`processed`, `done`, `empty`, `unsupported`, `failed`, `remaining`).
+- Un échec est retenté seul après six heures, trois fois au plus ; « Relire » le retente aussitôt.
+
 ## Le classement automatique
 
 Tout document créé avec un propriétaire est rangé dès sa création, s'il n'a pas été déposé dans un dossier choisi :
@@ -125,8 +174,9 @@ Contrats | Facturation | Commercial | Équipements / <année>     (documents rat
 | Action | Droit |
 | --- | --- |
 | Parcourir, arborescence, corbeille (lecture) | `DOCUMENT:READ` |
-| Déposer (`POST /ged/files`) | `DOCUMENT:UPLOAD` |
-| Créer, renommer, déplacer, copier, corbeille, restaurer, lancer le classement | `DOCUMENT:WRITE` |
+| Chercher, lire le texte d'un fichier, état de la lecture | `DOCUMENT:READ` |
+| Déposer (`POST /ged/files`), numériser (`POST /ged/scans`) | `DOCUMENT:UPLOAD` |
+| Créer, renommer, déplacer, copier, corbeille, restaurer, lancer le classement, relire un fichier, lancer la lecture | `DOCUMENT:WRITE` |
 
 ## Ce que l'écran ne doit pas envoyer
 
@@ -135,6 +185,8 @@ Les corps sont stricts : n'envoyer que les champs listés ci-dessus. Pas de `kin
 ## Limites connues
 
 - Les droits par dossier (`/document-permissions`) sont enregistrés mais pas encore appliqués : tout compte qui a `DOCUMENT:READ` voit toute l'arborescence (lot 4).
-- Pas de recherche dans le contenu des fichiers ni d'OCR hors KYC (lot 3).
+- La recherche ne tient pas encore compte des droits par dossier (lot 4) : elle voit ce que voit l'explorateur.
+- L'OCR exige Tesseract sur le serveur. En production il est coupé par défaut (`GED_OCR_ENABLED=false`) : les scans y sont alors en `FAILED` (« OCR désactivé »), les PDF numériques et les fichiers bureautiques restent lus et cherchables.
+- Le PDF d'une numérisation contient les images des pages, pas de couche texte : son texte est dans la GED (recherche, onglet « Texte »), pas dans le fichier téléchargé.
 - Les PDF des factures et avoirs sont conservés par le module de facturation, pas dans la GED : ils n'apparaissent pas dans « Facturation ».
 - Les anciens écrans des dossiers (`/document-folders/**`) restent en place et exigent `ADMIN:ACCESS` ; l'explorateur passe par `/ged/**`.

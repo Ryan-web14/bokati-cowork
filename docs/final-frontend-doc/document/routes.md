@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-162 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+168 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -117,11 +117,17 @@
 | POST | `/sni/api/v1/ged/copy` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-copy) |
 | POST | `/sni/api/v1/ged/files` | DOCUMENT:UPLOAD | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-files) |
 | PATCH | `/sni/api/v1/ged/files/{code}` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-patch-sni-api-v1-ged-files-code) |
+| GET | `/sni/api/v1/ged/files/{code}/text` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-files-code-text) |
+| POST | `/sni/api/v1/ged/files/{code}/text/refresh` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-files-code-text-refresh) |
 | POST | `/sni/api/v1/ged/filing/run` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-filing-run) |
 | POST | `/sni/api/v1/ged/folders` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-folders) |
 | PATCH | `/sni/api/v1/ged/folders/{code}` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-patch-sni-api-v1-ged-folders-code) |
 | GET | `/sni/api/v1/ged/items` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-items) |
 | POST | `/sni/api/v1/ged/move` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-move) |
+| POST | `/sni/api/v1/ged/scans` | DOCUMENT:UPLOAD | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-scans) |
+| GET | `/sni/api/v1/ged/search` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-search) |
+| POST | `/sni/api/v1/ged/text/run` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-text-run) |
+| GET | `/sni/api/v1/ged/text/status` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-text-status) |
 | GET | `/sni/api/v1/ged/trash` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-trash) |
 | POST | `/sni/api/v1/ged/trash` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash) |
 | POST | `/sni/api/v1/ged/trash/{batch}/restore` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash-batch-restore) |

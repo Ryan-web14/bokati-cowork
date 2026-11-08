@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [document](../README.md) · 12 route(s).
+Module [document](../README.md) · 18 route(s).
 
 ## Routes
 
@@ -41,6 +41,30 @@ Module [document](../README.md) · 12 route(s).
 - Réponse : `GedDtos.GedItem`
 - Modèles : [GedDtos.GedItem](#m-GedDtos-GedItem), [GedDtos.GedRenameRequest](#m-GedDtos-GedRenameRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `renameFile`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-ged-files-code-text"></a>
+### GET /sni/api/v1/ged/files/{code}/text
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Réponse : `GedDtos.GedFileText`
+- Modèles : [GedDtos.GedFileText](#m-GedDtos-GedFileText)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `fileText`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-ged-files-code-text-refresh"></a>
+### POST /sni/api/v1/ged/files/{code}/text/refresh
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
+- Réponse : `GedDtos.GedFileText`
+- Modèles : [GedDtos.GedFileText](#m-GedDtos-GedFileText)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `refreshText`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -105,6 +129,59 @@ Module [document](../README.md) · 12 route(s).
 - Réponse : `vide`
 - Modèles : [GedDtos.GedMoveRequest](#m-GedDtos-GedMoveRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `move`
+
+<a id="r-post-sni-api-v1-ged-scans"></a>
+### POST /sni/api/v1/ged/scans
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:UPLOAD`
+- Envoi : `multipart/form-data`
+- Réponse : `GedDtos.GedItem`
+- Modèles : [GedDtos.GedItem](#m-GedDtos-GedItem), [DocumentOwnerType](#m-DocumentOwnerType)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `scan`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `pages` | partie multipart | `List<MultipartFile>` | oui |  |
+| `folderCode` | requête | `String` |  |  |
+| `title` | requête | `String` |  |  |
+| `documentTypeCode` | requête | `String` |  |  |
+| `ownerType` | requête | `DocumentOwnerType` |  |  |
+| `ownerCode` | requête | `String` |  |  |
+
+<a id="r-get-sni-api-v1-ged-search"></a>
+### GET /sni/api/v1/ged/search
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Réponse : `GedDtos.GedSearchResult`
+- Modèles : [GedDtos.GedSearchResult](#m-GedDtos-GedSearchResult)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `search`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `q` | requête | `String` | oui |  |
+| `folderCode` | requête | `String` |  |  |
+| `page` | requête | `int` |  | 0 |
+| `size` | requête | `int` |  | 20 |
+
+<a id="r-post-sni-api-v1-ged-text-run"></a>
+### POST /sni/api/v1/ged/text/run
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE`
+- Réponse : `GedDtos.GedTextRunResult`
+- Modèles : [GedDtos.GedTextRunResult](#m-GedDtos-GedTextRunResult)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `runText`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `limit` | requête | `int` |  | 20 |
+
+<a id="r-get-sni-api-v1-ged-text-status"></a>
+### GET /sni/api/v1/ged/text/status
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Réponse : `GedDtos.GedTextStatus`
+- Modèles : [GedDtos.GedTextStatus](#m-GedDtos-GedTextStatus)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `textStatus`
 
 <a id="r-get-sni-api-v1-ged-trash"></a>
 ### GET /sni/api/v1/ged/trash
@@ -203,6 +280,23 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `name` | texte | oui | longueur min `1` |
 
+<a id="m-GedDtos-GedFileText"></a>
+#### GedDtos.GedFileText
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `code` | texte |  |  |
+| `status` | texte |  |  |
+| `method` | texte |  |  |
+| `pageCount` | entier |  |  |
+| `ocrPages` | entier |  |  |
+| `length` | entier |  |  |
+| `truncated` | booléen |  |  |
+| `extractedAt` | date-heure ISO 8601 UTC |  |  |
+| `error` | texte |  |  |
+| `upToDate` | booléen |  |  |
+| `content` | texte |  |  |
+
 <a id="m-GedDtos-GedFilingResult"></a>
 #### GedDtos.GedFilingResult
 
@@ -241,6 +335,39 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `documentCodes` | texte[] |  |  |
 | `folderCodes` | texte[] |  |  |
 | `targetFolderCode` | texte |  |  |
+
+<a id="m-GedDtos-GedSearchResult"></a>
+#### GedDtos.GedSearchResult
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `query` | texte |  |  |
+| `folderCode` | texte |  |  |
+| `hits` | [GedDtos.GedSearchHit](#m-GedDtos-GedSearchHit)[] |  |  |
+| `page` | entier |  |  |
+| `size` | entier |  |  |
+| `totalElements` | entier int64 ⚠ |  |  |
+| `totalPages` | entier |  |  |
+
+<a id="m-GedDtos-GedTextRunResult"></a>
+#### GedDtos.GedTextRunResult
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `processed` | entier |  |  |
+| `done` | entier |  |  |
+| `empty` | entier |  |  |
+| `unsupported` | entier |  |  |
+| `failed` | entier |  |  |
+| `remaining` | entier int64 ⚠ |  |  |
+
+<a id="m-GedDtos-GedTextStatus"></a>
+#### GedDtos.GedTextStatus
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `pending` | entier int64 ⚠ |  |  |
+| `byStatus` | objet { clé : entier int64 ⚠ } |  |  |
 
 <a id="m-GedDtos-GedTrashBatch"></a>
 #### GedDtos.GedTrashBatch
@@ -321,3 +448,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `totalPages` | entier |  |  |
 | `folderCount` | entier int64 ⚠ |  |  |
 | `fileCount` | entier int64 ⚠ |  |  |
+
+<a id="m-GedDtos-GedSearchHit"></a>
+#### GedDtos.GedSearchHit
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `item` | [GedDtos.GedItem](#m-GedDtos-GedItem) |  |  |
+| `snippet` | texte |  |  |
+| `rank` | nombre décimal |  |  |
+| `location` | texte |  |  |

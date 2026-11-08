@@ -34,6 +34,7 @@ import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResul
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadFailure;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult;
 import com.sni.bokaticowork.features.document.explorer.repository.GedExplorerQueries;
+import com.sni.bokaticowork.features.document.explorer.text.GedScanAssembler;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -72,6 +73,8 @@ public class GedExplorerService {
     public static final String GENERAL_TYPE = "GENERAL";
     private static final int MAX_PAGE_SIZE = 200;
     private static final int TRASH_BATCHES = 100;
+    private static final java.time.format.DateTimeFormatter SCAN_NAME =
+            java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy HH'h'mm");
 
     private final GedExplorerQueries queries;
     private final DocumentFolderRepository folderRepository;
@@ -219,6 +222,48 @@ public class GedExplorerService {
             }
         }
         return new GedUploadResult(uploaded, failed);
+    }
+
+    /**
+     * Numerise un document papier : les pages recues (photos ou images de scanner, dans l'ordre)
+     * deviennent un seul PDF, depose dans le dossier puis lu par OCR pour la recherche.
+     *
+     * <p>Sans titre, le document s'appelle « Numérisation du 08-11-2026 14h05.pdf ». Sans type ni
+     * proprietaire, c'est un document general interne, comme un depot.</p>
+     */
+    public GedItem scan(List<MultipartFile> pages, String folderCode, String title,
+                        String documentTypeCode, DocumentOwnerType ownerType, String ownerCode) {
+        if (pages == null || pages.isEmpty()) {
+            throw new BadRequestException("Aucune page reçue.");
+        }
+        byte[] pdf;
+        try {
+            List<GedScanAssembler.ScanPage> scanPages = new ArrayList<>();
+            for (MultipartFile page : pages) {
+                scanPages.add(new GedScanAssembler.ScanPage(page.getBytes(), page.getOriginalFilename()));
+            }
+            pdf = GedScanAssembler.toPdf(scanPages);
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException(ex.getMessage());
+        } catch (java.io.IOException ex) {
+            throw new BadRequestException("Les pages n'ont pas pu être assemblées : " + ex.getMessage());
+        }
+        String targetCode = StringUtils.hasText(folderCode) ? transactionTemplate.execute(status -> folder(folderCode).getCode()) : null;
+        String name = StringUtils.hasText(title) ? title.trim()
+                : "Numérisation du " + SCAN_NAME.format(java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Brazzaville")));
+        name = name.replaceAll("[\\\\/:*?\"<>|]", "-");
+        if (!name.toLowerCase(Locale.ROOT).endsWith(".pdf")) {
+            name = name + ".pdf";
+        }
+        String fileName = name;
+        DocumentUploadMetadataRequest metadata = new DocumentUploadMetadataRequest();
+        metadata.setOwnerType(ownerType == null ? DocumentOwnerType.INTERNAL : ownerType);
+        metadata.setOwnerCode(ownerCode);
+        metadata.setDocumentTypeCode(StringUtils.hasText(documentTypeCode) ? documentTypeCode : GENERAL_TYPE);
+        metadata.setTitle(transactionTemplate.execute(status -> freeTitle(targetCode, fileName)));
+        metadata.setFolderCode(targetCode);
+        DocumentResponse created = documentService.createGeneratedDocument(metadata, fileName, "application/pdf", pdf);
+        return transactionTemplate.execute(status -> fileItem(document(created.getCode())));
     }
 
     /** Copie des fichiers ; chaque copie est un document general interne, independant de l'original. */
@@ -502,7 +547,8 @@ public class GedExplorerService {
                 null, null, null, null, null, null, null, null, null, folder.getSystemKey() != null, null, null)).toList();
     }
 
-    private GedItem fileItem(Document document) {
+    /** Un fichier tel que l'explorateur le montre ; aussi pour les resultats de recherche. */
+    public GedItem fileItem(Document document) {
         DocumentResponse response = documentMapper.toResponse(document);
         return new GedItem(
                 com.sni.bokaticowork.features.document.explorer.dto.GedDtos.FILE,
