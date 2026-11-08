@@ -1,0 +1,95 @@
+{
+ "module": "verify",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/verify/doc/{documentNumber}",
+   "package": "features.verify",
+   "controller": "VerifyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/verify/VerifyController.java",
+   "handler": "verifyDocument",
+   "declaredIn": "VerifyController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "k",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/verify/doc/{documentNumber}/compare",
+   "package": "features.verify",
+   "controller": "VerifyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/verify/VerifyController.java",
+   "handler": "compareDocument",
+   "declaredIn": "VerifyController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/verify/receipt/{receiptNumber}",
+   "package": "features.verify",
+   "controller": "VerifyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/verify/VerifyController.java",
+   "handler": "verifyReceipt",
+   "declaredIn": "VerifyController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "receiptNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "k",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  }
+ ],
+ "schemas": {},
+ "enums": {},
+ "names": {}
+}

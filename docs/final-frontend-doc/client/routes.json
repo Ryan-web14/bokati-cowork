@@ -1,0 +1,1420 @@
+{
+ "module": "client",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/customers",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "list",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "summary",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<?>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/customers",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "create",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CUSTOMER_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.customer.dto.request.CustomerRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.customer.dto.response.CustomerResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/customers/by-email",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "getByEmail",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "email",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.customer.dto.response.CustomerResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/customers/search/basic",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "basicSearch",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "type",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.client.customer.dto.response.CustomerSummaryresponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/customers/summary",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "listSummary",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.client.customer.dto.response.CustomerSummaryresponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/customers/summary/all",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "listAllSummary",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.client.customer.dto.response.CustomerSummaryresponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/customers/{customerId}",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "delete",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/customers/{customerId}",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "getByCustomerId",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.customer.dto.response.CustomerResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/customers/{customerId}",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "update",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.customer.dto.request.CustomerRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/customers/{customerId}/status",
+   "package": "features.client.customer.controller",
+   "controller": "CustomerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/customer/controller/CustomerController.java",
+   "handler": "changeStatus",
+   "declaredIn": "CustomerController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CUSTOMER_CHANGE_STATUS",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.customer.dto.request.ChangeCustomerStatusRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "list",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "customerId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "summary",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<Object>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/members",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "create",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/members/admin/create",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "createByAdmin",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_ADMIN_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/by-email",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "getByEmail",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "email",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/me/profile",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "getMyProfile",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberProfileResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/members/me/profile",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "updateMyProfile",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_MY_PROFILE_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberProfileRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberProfileResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/members/portal/complete",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "completePortalRegistration",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_COMPLETE_PORTAL_REGISTRATION",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.provisioning.dto.request.PortalMemberActivationRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/members/search",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "search",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.repository.specification.criteria.MemberSearchCriteria",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.client.member.dto.response.MemberSummaryResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/search/basic",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "basicSearch",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.client.member.dto.response.MemberSummaryResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/search/by-name",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "basicSearch",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.client.member.dto.response.MemberSummaryResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/summary",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "listSummary",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.client.member.dto.response.MemberSummaryResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/summary/all",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "listAllSummary",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.client.member.dto.response.MemberSummaryResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/members/{id}",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "archive",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "purge",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<?>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/{id}",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "get",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/members/{id}",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "update",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/members/{id}/kyc-grace-period",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "setKycGracePeriod",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.dto.request.KycGracePeriodRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/members/{id}/portal-access/disable",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "disablePortalAccess",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_DISABLE_PORTAL_ACCESS",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/members/{id}/portal-access/enable",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "enablePortalAccess",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_ENABLE_PORTAL_ACCESS",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/{id}/profile",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "getProfile",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberProfileResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/members/{id}/profile",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "updateProfile",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_PROFILE_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberProfileRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberProfileResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/members/{id}/status",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "changeStatus",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_CHANGE_STATUS",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.dto.request.UpdateStatusRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/members/{id}/transfer-customer",
+   "package": "features.client.member.controller",
+   "controller": "MemberController",
+   "source": "src/main/java/com/sni/bokaticowork/features/client/member/controller/MemberController.java",
+   "handler": "transferCustomer",
+   "declaredIn": "MemberController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_TRANSFER_CUSTOMER",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.client.member.dto.request.TransferMemberCustomerRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.client.member.dto.response.MemberResponse>"
+  }
+ ],
+ "schemas": {
+  "CustomerResponse": {
+   "type": "object",
+   "properties": {
+    "customerId": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "companyName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "billingEmail": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.response.AddressResponse"
+    },
+    "status": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string"
+    }
+   }
+  },
+  "CustomerRequest": {
+   "required": [
+    "phone",
+    "type"
+   ],
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "companyName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "billingEmail": {
+     "type": "string",
+     "format": "email"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "type": "string"
+    },
+    "phoneCountry": {
+     "type": "string"
+    }
+   }
+  },
+  "CustomerSummaryresponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "displayName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   }
+  },
+  "ChangeCustomerStatusRequest": {
+   "required": [
+    "status"
+   ],
+   "type": "object",
+   "properties": {
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "PENDING",
+      "INACTIVE",
+      "SUSPENDED",
+      "ARCHIVED"
+     ]
+    }
+   }
+  },
+  "MemberResponse": {
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "userId": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "fullname": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "portalAccess": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CreateMemberRequest": {
+   "required": [
+    "email",
+    "phone"
+   ],
+   "type": "object",
+   "properties": {
+    "existingCustomerId": {
+     "maxLength": 300,
+     "minLength": 0,
+     "type": "string"
+    },
+    "customerType": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "firstname": {
+     "maxLength": 350,
+     "minLength": 0,
+     "type": "string"
+    },
+    "lastname": {
+     "maxLength": 350,
+     "minLength": 0,
+     "type": "string"
+    },
+    "email": {
+     "maxLength": 250,
+     "minLength": 0,
+     "type": "string",
+     "format": "email"
+    },
+    "phone": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "phoneCountry": {
+     "maxLength": 10,
+     "minLength": 0,
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "password": {
+     "maxLength": 45,
+     "minLength": 0,
+     "type": "string"
+    },
+    "companyName": {
+     "type": "string"
+    },
+    "billingEmail": {
+     "maxLength": 250,
+     "minLength": 0,
+     "type": "string",
+     "format": "email"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    },
+    "birthDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "gender": {
+     "maxLength": 20,
+     "minLength": 0,
+     "type": "string"
+    },
+    "preferredCommunicationChannel": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "generatePassword": {
+     "type": "boolean"
+    }
+   }
+  },
+  "MemberProfileResponse": {
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "type": "string"
+    },
+    "firstName": {
+     "type": "string"
+    },
+    "lastName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "type": "string"
+    },
+    "birthDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "jobTitle": {
+     "type": "string"
+    },
+    "companyRole": {
+     "type": "string"
+    },
+    "address": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "country": {
+     "type": "string"
+    }
+   }
+  },
+  "UpdateMemberProfileRequest": {
+   "type": "object",
+   "properties": {
+    "birthDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "jobTitle": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "companyRole": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "address": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "city": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "country": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "PortalMemberActivationRequest": {
+   "required": [
+    "email"
+   ],
+   "type": "object",
+   "properties": {
+    "email": {
+     "minLength": 1,
+     "type": "string",
+     "format": "email"
+    }
+   }
+  },
+  "MemberSummaryResponse": {
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "fullName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsapp_phone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "portalAccess": {
+     "type": "boolean"
+    }
+   }
+  },
+  "MemberSearchCriteria": {
+   "type": "object",
+   "properties": {
+    "query": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "PENDING",
+      "UNDER_REVIEW",
+      "PENDING_CORRECTION",
+      "REJECTED",
+      "INACTIVE",
+      "SUSPENDED",
+      "ARCHIVED"
+     ]
+    },
+    "portalAccess": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateMemberRequest": {
+   "type": "object",
+   "properties": {
+    "firstname": {
+     "maxLength": 350,
+     "minLength": 0,
+     "type": "string"
+    },
+    "lastname": {
+     "maxLength": 350,
+     "minLength": 0,
+     "type": "string"
+    },
+    "email": {
+     "maxLength": 250,
+     "minLength": 0,
+     "type": "string",
+     "format": "email"
+    },
+    "phone": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "phoneCountry": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "KycGracePeriodRequest": {
+   "required": [
+    "gracePeriodDays"
+   ],
+   "type": "object",
+   "properties": {
+    "gracePeriodDays": {
+     "maximum": 365,
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "UpdateStatusRequest": {
+   "type": "object",
+   "properties": {
+    "status": {
+     "type": "string"
+    }
+   }
+  },
+  "TransferMemberCustomerRequest": {
+   "required": [
+    "customerId"
+   ],
+   "type": "object",
+   "properties": {
+    "customerId": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "AddressResponse": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "country": {
+     "type": "string"
+    },
+    "fullAddress": {
+     "type": "string"
+    }
+   }
+  },
+  "AddressRequest": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "countryCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  }
+ },
+ "enums": {},
+ "names": {
+  "CustomerResponse": "com.sni.bokaticowork.features.client.customer.dto.response.CustomerResponse",
+  "CustomerRequest": "com.sni.bokaticowork.features.client.customer.dto.request.CustomerRequest",
+  "CustomerSummaryresponse": "com.sni.bokaticowork.features.client.customer.dto.response.CustomerSummaryresponse",
+  "ChangeCustomerStatusRequest": "com.sni.bokaticowork.features.client.customer.dto.request.ChangeCustomerStatusRequest",
+  "MemberResponse": "com.sni.bokaticowork.features.client.member.dto.response.MemberResponse",
+  "CreateMemberRequest": "com.sni.bokaticowork.features.client.member.dto.request.CreateMemberRequest",
+  "MemberProfileResponse": "com.sni.bokaticowork.features.client.member.dto.response.MemberProfileResponse",
+  "UpdateMemberProfileRequest": "com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberProfileRequest",
+  "PortalMemberActivationRequest": "com.sni.bokaticowork.security.admin.provisioning.dto.request.PortalMemberActivationRequest",
+  "MemberSummaryResponse": "com.sni.bokaticowork.features.client.member.dto.response.MemberSummaryResponse",
+  "MemberSearchCriteria": "com.sni.bokaticowork.features.client.member.repository.specification.criteria.MemberSearchCriteria",
+  "UpdateMemberRequest": "com.sni.bokaticowork.features.client.member.dto.request.UpdateMemberRequest",
+  "KycGracePeriodRequest": "com.sni.bokaticowork.features.client.member.dto.request.KycGracePeriodRequest",
+  "UpdateStatusRequest": "com.sni.bokaticowork.features.client.member.dto.request.UpdateStatusRequest",
+  "TransferMemberCustomerRequest": "com.sni.bokaticowork.features.client.member.dto.request.TransferMemberCustomerRequest",
+  "AddressResponse": "com.sni.bokaticowork.core.baseClasses.dto.response.AddressResponse",
+  "AddressRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+ }
+}

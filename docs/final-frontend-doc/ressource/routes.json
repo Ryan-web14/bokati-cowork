@@ -1,0 +1,3824 @@
+{
+ "module": "ressource",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/occupied-slots",
+   "package": "features.ressource.controller",
+   "controller": "AdminResourceCalendarController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/AdminResourceCalendarController.java",
+   "handler": "occupiedSlots",
+   "declaredIn": "AdminResourceCalendarController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDateTime"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.ressource.dto.response.ResourceOccupiedSlotResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/{resourceCode}/calendar/admin",
+   "package": "features.ressource.controller",
+   "controller": "AdminResourceCalendarController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/AdminResourceCalendarController.java",
+   "handler": "calendar",
+   "declaredIn": "AdminResourceCalendarController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.AdminResourceCalendarResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/resources/{resourceCode}/calendar",
+   "package": "features.ressource.controller",
+   "controller": "PublicResourceCalendarController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/PublicResourceCalendarController.java",
+   "handler": "calendar",
+   "declaredIn": "PublicResourceCalendarController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-amenities",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAmenitiesController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAmenitiesController.java",
+   "handler": "list",
+   "declaredIn": "ResourceAmenitiesController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=name,ASC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-amenities",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAmenitiesController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAmenitiesController.java",
+   "handler": "create",
+   "declaredIn": "ResourceAmenitiesController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_AMENITY_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.CreateAmenityRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-amenities/search",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAmenitiesController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAmenitiesController.java",
+   "handler": "search",
+   "declaredIn": "ResourceAmenitiesController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-amenities/search/basic",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAmenitiesController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAmenitiesController.java",
+   "handler": "basicSearch",
+   "declaredIn": "ResourceAmenitiesController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resource-amenities/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAmenitiesController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAmenitiesController.java",
+   "handler": "delete",
+   "declaredIn": "ResourceAmenitiesController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-amenities/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAmenitiesController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAmenitiesController.java",
+   "handler": "get",
+   "declaredIn": "ResourceAmenitiesController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/resource-amenities/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAmenitiesController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAmenitiesController.java",
+   "handler": "update",
+   "declaredIn": "ResourceAmenitiesController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_AMENITY_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateAmenityRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-availabilities",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAvailabilityController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java",
+   "handler": "list",
+   "declaredIn": "ResourceAvailabilityController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=50, sort=startedAt,ASC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-availabilities",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAvailabilityController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java",
+   "handler": "create",
+   "declaredIn": "ResourceAvailabilityController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_AVAILABILITY_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceAvailabilityRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-availabilities/bulk",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAvailabilityController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java",
+   "handler": "createBulk",
+   "declaredIn": "ResourceAvailabilityController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourceAvailabilityRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-availabilities/grouped",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAvailabilityController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java",
+   "handler": "listGroupedByResource",
+   "declaredIn": "ResourceAvailabilityController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityGroupResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resource-availabilities/release",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAvailabilityController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java",
+   "handler": "release",
+   "declaredIn": "ResourceAvailabilityController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_AVAILABILITY_RELEASE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-availabilities/remaining-slots",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAvailabilityController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java",
+   "handler": "remaining",
+   "declaredIn": "ResourceAvailabilityController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "startedAt",
+     "required": false,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "endedAt",
+     "required": false,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "durationMinutes",
+     "required": false,
+     "type": "Integer"
+    },
+    {
+     "in": "query",
+     "name": "quantity",
+     "required": false,
+     "default": "1",
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-availabilities/reserve",
+   "package": "features.ressource.controller",
+   "controller": "ResourceAvailabilityController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceAvailabilityController.java",
+   "handler": "reserve",
+   "declaredIn": "ResourceAvailabilityController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_AVAILABILITY_RESERVE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-closures",
+   "package": "features.ressource.controller",
+   "controller": "ResourceClosureController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceClosureController.java",
+   "handler": "list",
+   "declaredIn": "ResourceClosureController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-closures",
+   "package": "features.ressource.controller",
+   "controller": "ResourceClosureController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceClosureController.java",
+   "handler": "create",
+   "declaredIn": "ResourceClosureController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_CLOSURE_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceClosureRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resource-closures/{id}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceClosureController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceClosureController.java",
+   "handler": "delete",
+   "declaredIn": "ResourceClosureController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-closures/{id}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceClosureController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceClosureController.java",
+   "handler": "get",
+   "declaredIn": "ResourceClosureController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resource-closures/{id}/active",
+   "package": "features.ressource.controller",
+   "controller": "ResourceClosureController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceClosureController.java",
+   "handler": "updateActive",
+   "declaredIn": "ResourceClosureController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_CLOSURE_UPDATE_ACTIVE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateActiveRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "list",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "summary",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "query",
+     "name": "typeCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "groupCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "policyCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<?>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resources",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "create",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.ResourceRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resources/amenities/link",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "linkAmenity",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_LINK_AMENITY",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.LinkAmenityToResourceRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resources/search",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "search",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.repository.specification.criteria.ResourceSearchCriteria",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceSummaryResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/search/basic",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "basicSearch",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.ressource.dto.response.ResourceSummaryResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resources/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "delete",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "get",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/resources/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "update",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourceRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resources/{code}/active",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "updateActive",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_UPDATE_ACTIVE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateActiveRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/{code}/amenities",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "listAmenities",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resources/{code}/amenities/{amenityCode}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "unlinkAmenity",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "amenityCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resources/{code}/booking-enabled",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "updateBookingEnabled",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_UPDATE_BOOKING_ENABLED",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateBookingEnabledRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resources/{code}/classification",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "changeClassification",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_CHANGE_CLASSIFICATION",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.ChangeTypeRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resources/{code}/display-order",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "updateDisplayOrder",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_UPDATE_DISPLAY_ORDER",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateDisplayOrderRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resources/{code}/portal-visible",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "updatePortalVisible",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_UPDATE_PORTAL_VISIBLE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdatePortalVisibleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resources/{code}/status",
+   "package": "features.ressource.controller",
+   "controller": "ResourceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceController.java",
+   "handler": "updateStatus",
+   "declaredIn": "ResourceController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_UPDATE_STATUS",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.ressource.enums.ResourceStatus"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-groups",
+   "package": "features.ressource.controller",
+   "controller": "ResourceGroupController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceGroupController.java",
+   "handler": "list",
+   "declaredIn": "ResourceGroupController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-groups",
+   "package": "features.ressource.controller",
+   "controller": "ResourceGroupController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceGroupController.java",
+   "handler": "create",
+   "declaredIn": "ResourceGroupController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_GROUP_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceGroupRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-groups/search",
+   "package": "features.ressource.controller",
+   "controller": "ResourceGroupController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceGroupController.java",
+   "handler": "search",
+   "declaredIn": "ResourceGroupController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-groups/search/basic",
+   "package": "features.ressource.controller",
+   "controller": "ResourceGroupController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceGroupController.java",
+   "handler": "basicSearch",
+   "declaredIn": "ResourceGroupController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resource-groups/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceGroupController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceGroupController.java",
+   "handler": "delete",
+   "declaredIn": "ResourceGroupController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-groups/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceGroupController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceGroupController.java",
+   "handler": "get",
+   "declaredIn": "ResourceGroupController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/resource-groups/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceGroupController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceGroupController.java",
+   "handler": "update",
+   "declaredIn": "ResourceGroupController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_GROUP_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourceGroupRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resources/{resourceCode}/opening-hours",
+   "package": "features.ressource.controller",
+   "controller": "ResourceOpeningHoursController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceOpeningHoursController.java",
+   "handler": "clear",
+   "declaredIn": "ResourceOpeningHoursController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "RESOURCE:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.service.support.ResourceOpeningHoursService.View>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/{resourceCode}/opening-hours",
+   "package": "features.ressource.controller",
+   "controller": "ResourceOpeningHoursController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceOpeningHoursController.java",
+   "handler": "get",
+   "declaredIn": "ResourceOpeningHoursController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.service.support.ResourceOpeningHoursService.View>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/resources/{resourceCode}/opening-hours",
+   "package": "features.ressource.controller",
+   "controller": "ResourceOpeningHoursController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceOpeningHoursController.java",
+   "handler": "replace",
+   "declaredIn": "ResourceOpeningHoursController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "body": {
+    "type": "List<com.sni.bokaticowork.features.ressource.service.support.ResourceOpeningHoursService.Range>",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.service.support.ResourceOpeningHoursService.View>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resources/{resourceCode}/photos",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePhotoController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePhotoController.java",
+   "handler": "list",
+   "declaredIn": "ResourcePhotoController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:GALLERY"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.ressource.dto.response.ResourcePhotoResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resources/{resourceCode}/photos",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePhotoController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePhotoController.java",
+   "handler": "add",
+   "declaredIn": "ResourcePhotoController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('RESOURCE:GALLERY','RESOURCE_GALLERY')",
+    "kind": "admin",
+    "permission": "RESOURCE:GALLERY"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.ResourcePhotoRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePhotoResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resources/{resourceCode}/photos/{id}",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePhotoController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePhotoController.java",
+   "handler": "delete",
+   "declaredIn": "ResourcePhotoController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('RESOURCE:GALLERY','RESOURCE_GALLERY')",
+    "kind": "admin",
+    "permission": "RESOURCE:GALLERY"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resources/{resourceCode}/photos/{id}",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePhotoController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePhotoController.java",
+   "handler": "update",
+   "declaredIn": "ResourcePhotoController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('RESOURCE:GALLERY','RESOURCE_GALLERY')",
+    "kind": "admin",
+    "permission": "RESOURCE:GALLERY"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.ResourcePhotoRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePhotoResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-policies",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "list",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourcePolicyResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-policies",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "create",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_POLICY_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePolicyRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-policies/search",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "search",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourcePolicyResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-policies/search/basic",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "basicSearch",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourcePolicyResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resource-policies/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "delete",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-policies/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "get",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePolicyResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/resource-policies/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "update",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_POLICY_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourcePolicyRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resource-policies/{code}/allow-cancellation",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "updateCancellationPolicy",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_POLICY_UPDATE_CANCELLATION",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "allowed",
+     "required": true,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resource-policies/{code}/status",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePolicyController.java",
+   "handler": "updateStatus",
+   "declaredIn": "ResourcePolicyController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_POLICY_UPDATE_STATUS",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "active",
+     "required": true,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "list",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "create",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_PRICING_RULE_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePricingRuleRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules/bulk",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "createBulk",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourcePricingRuleRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules/bulk/preview",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "previewBulk",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourcePricingRuleRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules/quote",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "quote",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "bookingUnit",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "startedAt",
+     "required": true,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "endedAt",
+     "required": true,
+     "type": "LocalDateTime"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules/{id}",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "delete",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules/{id}",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "get",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse>"
+  },
+  {
+   "methods": [
+    "PATCH",
+    "PUT"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules/{id}",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "update",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourcePricingRuleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/resource-pricing-rules/{id}/active",
+   "package": "features.ressource.controller",
+   "controller": "ResourcePricingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourcePricingRuleController.java",
+   "handler": "updateActive",
+   "declaredIn": "ResourcePricingRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:PRICE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_PRICING_RULE_UPDATE_ACTIVE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "active",
+     "required": true,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-types",
+   "package": "features.ressource.controller",
+   "controller": "ResourceTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceTypeController.java",
+   "handler": "list",
+   "declaredIn": "ResourceTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/resource-types",
+   "package": "features.ressource.controller",
+   "controller": "ResourceTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceTypeController.java",
+   "handler": "create",
+   "declaredIn": "ResourceTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_TYPE_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceTypeRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-types/search",
+   "package": "features.ressource.controller",
+   "controller": "ResourceTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceTypeController.java",
+   "handler": "search",
+   "declaredIn": "ResourceTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-types/search/basic",
+   "package": "features.ressource.controller",
+   "controller": "ResourceTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceTypeController.java",
+   "handler": "basicSearch",
+   "declaredIn": "ResourceTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/resource-types/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceTypeController.java",
+   "handler": "delete",
+   "declaredIn": "ResourceTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/resource-types/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceTypeController.java",
+   "handler": "get",
+   "declaredIn": "ResourceTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/resource-types/{code}",
+   "package": "features.ressource.controller",
+   "controller": "ResourceTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/ressource/controller/ResourceTypeController.java",
+   "handler": "update",
+   "declaredIn": "ResourceTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "RESOURCE:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "RESOURCE_TYPE_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourceTypeRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  }
+ ],
+ "schemas": {
+  "ResourceOccupiedSlotResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "slotDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "usedCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "occupancyRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "occupancyLevel": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "AdminResourceCalendarResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "days": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.AdminResourceCalendarResponse.Day"
+     }
+    }
+   }
+  },
+  "PublicResourceCalendarResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "days": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Day"
+     }
+    }
+   }
+  },
+  "AmenityResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "optional": {
+     "type": "boolean"
+    },
+    "extraPrice": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "CreateAmenityRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateAmenityRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourceAvailabilityResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "slotDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "available": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "subscribersOnly": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CreateResourceAvailabilityRequest": {
+   "required": [
+    "endedAt",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "capacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "slotDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "BulkResourceOperationResponse": {
+   "type": "object",
+   "properties": {
+    "processed": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "skipped": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "results": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse.Entry"
+     }
+    }
+   }
+  },
+  "BulkCreateResourceAvailabilityRequest": {
+   "required": [
+    "endedAt",
+    "resourceCodes",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCodes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "capacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "slotDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ResourceAvailabilityGroupResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "availabilities": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityResponse"
+     }
+    }
+   }
+  },
+  "ReleaseResourceAvailabilityRequest": {
+   "required": [
+    "endedAt",
+    "quantity",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ResourceAvailabilityWindowResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "durationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "slotCount": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ReserveResourceAvailabilityRequest": {
+   "required": [
+    "endedAt",
+    "quantity",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ResourceClosureResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CreateResourceClosureRequest": {
+   "required": [
+    "endedAt",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateActiveRequest": {
+   "required": [
+    "active"
+   ],
+   "type": "object",
+   "properties": {
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourceRequest": {
+   "required": [
+    "name",
+    "typeId"
+   ],
+   "type": "object",
+   "properties": {
+    "typeId": {
+     "type": "string"
+    },
+    "groupId": {
+     "type": "string"
+    },
+    "policyId": {
+     "type": "string"
+    },
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "capacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "zone": {
+     "type": "string"
+    },
+    "locationLabel": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "bookingEnabled": {
+     "type": "boolean"
+    },
+    "portalVisible": {
+     "type": "boolean"
+    }
+   }
+  },
+  "LinkAmenityToResourceRequest": {
+   "required": [
+    "amenityCode",
+    "resourceCode"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "amenityCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "optional": {
+     "type": "boolean"
+    },
+    "extraPrice": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ResourceSummaryResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "typeCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "bookingEnabled": {
+     "type": "boolean"
+    },
+    "portalVisible": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourceSearchCriteria": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "typeId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "groupId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "policyId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "type": "string"
+    },
+    "zone": {
+     "type": "string"
+    },
+    "locationLabel": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "INACTIVE",
+      "MAINTENANCE",
+      "OUT_OF_SERVICE",
+      "ARCHIVED"
+     ]
+    },
+    "portalVisible": {
+     "type": "boolean"
+    },
+    "bookingEnabled": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "minCapacity": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ResourceResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "typeCode": {
+     "type": "string"
+    },
+    "groupCode": {
+     "type": "string"
+    },
+    "policyCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "capacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "zone": {
+     "type": "string"
+    },
+    "locationLabel": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "bookingEnabled": {
+     "type": "boolean"
+    },
+    "portalVisible": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "slotDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "UpdateResourceRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "capacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "zone": {
+     "type": "string"
+    },
+    "floorLabel": {
+     "type": "string"
+    },
+    "locationLabel": {
+     "type": "string"
+    },
+    "bookingEnabled": {
+     "type": "boolean"
+    },
+    "portalVisible": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateBookingEnabledRequest": {
+   "required": [
+    "bookingEnabled"
+   ],
+   "type": "object",
+   "properties": {
+    "bookingEnabled": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ChangeTypeRequest": {
+   "required": [
+    "typeId"
+   ],
+   "type": "object",
+   "properties": {
+    "typeId": {
+     "type": "string"
+    },
+    "groupId": {
+     "type": "string"
+    },
+    "policyId": {
+     "type": "string"
+    }
+   }
+  },
+  "UpdateDisplayOrderRequest": {
+   "required": [
+    "displayOrder"
+   ],
+   "type": "object",
+   "properties": {
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "UpdatePortalVisibleRequest": {
+   "required": [
+    "visible"
+   ],
+   "type": "object",
+   "properties": {
+    "visible": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourceGroupResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "portalVisible": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CreateResourceGroupRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "portalVisible": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateResourceGroupRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "portalVisible": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourceOpeningHoursService.View": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "custom": {
+     "type": "boolean"
+    },
+    "hours": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.service.support.ResourceOpeningHoursService.Range"
+     }
+    }
+   }
+  },
+  "ResourceOpeningHoursService.Range": {
+   "type": "object",
+   "properties": {
+    "dayOfWeek": {
+     "type": "string",
+     "enum": [
+      "MONDAY",
+      "TUESDAY",
+      "WEDNESDAY",
+      "THURSDAY",
+      "FRIDAY",
+      "SATURDAY",
+      "SUNDAY"
+     ]
+    },
+    "open": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "close": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    }
+   }
+  },
+  "ResourcePhotoResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "documentCode": {
+     "type": "string"
+    },
+    "caption": {
+     "type": "string"
+    },
+    "cover": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourcePhotoRequest": {
+   "required": [
+    "documentCode"
+   ],
+   "type": "object",
+   "properties": {
+    "documentCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "caption": {
+     "type": "string"
+    },
+    "cover": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourcePolicyResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "minBookingDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minBookingNoticeMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "cancellationNoticeMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "allowCancellation": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CreateResourcePolicyRequest": {
+   "required": [
+    "maxBookingDurationMinutes",
+    "minBookingDurationMinutes",
+    "minBookingNoticeMinutes",
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "minBookingDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minBookingNoticeMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "cancellationNoticeMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "allowCancellation": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateResourcePolicyRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "minBookingDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minBookingNoticeMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "cancellationNoticeMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "allowCancellation": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourcePricingRuleResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "bookingUnit": {
+     "type": "string"
+    },
+    "price": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "label": {
+     "type": "string"
+    },
+    "dayOfWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "startsAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "endsAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "adjustmentType": {
+     "type": "string"
+    },
+    "adjustmentValue": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "lastMinuteMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "priority": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CreateResourcePricingRuleRequest": {
+   "required": [
+    "bookingUnit",
+    "price",
+    "resourceCode"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "bookingUnit": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "price": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "label": {
+     "type": "string"
+    },
+    "dayOfWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "startsAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "endsAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "adjustmentType": {
+     "type": "string"
+    },
+    "adjustmentValue": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "lastMinuteMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "priority": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BulkCreateResourcePricingRuleRequest": {
+   "required": [
+    "bookingUnit",
+    "price",
+    "resourceCodes"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCodes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "bookingUnit": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "price": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "label": {
+     "type": "string"
+    },
+    "dayOfWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "startsAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "endsAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "adjustmentType": {
+     "type": "string"
+    },
+    "adjustmentValue": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "lastMinuteMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "priority": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "PricingRuleConflictPreviewResponse": {
+   "type": "object",
+   "properties": {
+    "resourcesInspected": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "resourcesWithOverlap": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "strictDuplicates": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "results": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse.ResourcePreview"
+     }
+    }
+   }
+  },
+  "ResourcePriceQuoteResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "bookingUnit": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "basePrice": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "finalPrice": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "appliedRuleId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "appliedRuleLabel": {
+     "type": "string"
+    },
+    "adjustmentType": {
+     "type": "string"
+    },
+    "adjustmentValue": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "UpdateResourcePricingRuleRequest": {
+   "type": "object",
+   "properties": {
+    "bookingUnit": {
+     "type": "string"
+    },
+    "price": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "label": {
+     "type": "string"
+    },
+    "dayOfWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "startsAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "endsAt": {
+     "$ref": "#/components/schemas/java.time.LocalTime"
+    },
+    "adjustmentType": {
+     "type": "string"
+    },
+    "adjustmentValue": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "lastMinuteMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "priority": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ResourceTypeResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "bookableSlots": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "CreateResourceTypeRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "bookableSlots": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "UpdateResourceTypeRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "bookableSlots": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "AdminResourceCalendarResponse.Day": {
+   "type": "object",
+   "properties": {
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalSlots": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "availableSlots": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "occupiedSlots": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "usedCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "occupancyRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "occupancyLevel": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "windows": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.AdminResourceCalendarResponse.Window"
+     }
+    }
+   }
+  },
+  "PublicResourceCalendarResponse.Day": {
+   "type": "object",
+   "properties": {
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalSlots": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "availableSlots": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string"
+    },
+    "windows": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Window"
+     }
+    }
+   }
+  },
+  "BulkResourceOperationResponse.Entry": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "detail": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "LocalTime": {
+   "type": "object",
+   "properties": {
+    "hour": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minute": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "second": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "nano": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "PricingRuleConflictPreviewResponse.ResourcePreview": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "duplicate": {
+     "type": "boolean"
+    },
+    "overlapping": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse.CompetingRule"
+     }
+    }
+   }
+  },
+  "AdminResourceCalendarResponse.Window": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "slotDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "usedCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "occupancyRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "occupancyLevel": {
+     "type": "string"
+    },
+    "available": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "subscribersOnly": {
+     "type": "boolean"
+    }
+   }
+  },
+  "PublicResourceCalendarResponse.Window": {
+   "type": "object",
+   "properties": {
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "slotDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "available": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "subscribersOnly": {
+     "type": "boolean"
+    }
+   }
+  },
+  "PricingRuleConflictPreviewResponse.CompetingRule": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "label": {
+     "type": "string"
+    },
+    "price": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "priority": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "dayOfWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "startsAt": {
+     "type": "string"
+    },
+    "endsAt": {
+     "type": "string"
+    },
+    "wins": {
+     "type": "boolean"
+    }
+   }
+  }
+ },
+ "enums": {
+  "ResourceStatus": [
+   "ACTIVE",
+   "INACTIVE",
+   "MAINTENANCE",
+   "OUT_OF_SERVICE",
+   "ARCHIVED"
+  ]
+ },
+ "names": {
+  "ResourceOccupiedSlotResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceOccupiedSlotResponse",
+  "AdminResourceCalendarResponse": "com.sni.bokaticowork.features.ressource.dto.response.AdminResourceCalendarResponse",
+  "PublicResourceCalendarResponse": "com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse",
+  "AmenityResponse": "com.sni.bokaticowork.features.ressource.dto.response.AmenityResponse",
+  "CreateAmenityRequest": "com.sni.bokaticowork.features.ressource.dto.request.CreateAmenityRequest",
+  "UpdateAmenityRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateAmenityRequest",
+  "ResourceAvailabilityResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityResponse",
+  "CreateResourceAvailabilityRequest": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceAvailabilityRequest",
+  "BulkResourceOperationResponse": "com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse",
+  "BulkCreateResourceAvailabilityRequest": "com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourceAvailabilityRequest",
+  "ResourceAvailabilityGroupResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityGroupResponse",
+  "ReleaseResourceAvailabilityRequest": "com.sni.bokaticowork.features.ressource.dto.request.ReleaseResourceAvailabilityRequest",
+  "ResourceAvailabilityWindowResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceAvailabilityWindowResponse",
+  "ReserveResourceAvailabilityRequest": "com.sni.bokaticowork.features.ressource.dto.request.ReserveResourceAvailabilityRequest",
+  "ResourceClosureResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceClosureResponse",
+  "CreateResourceClosureRequest": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceClosureRequest",
+  "UpdateActiveRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateActiveRequest",
+  "ResourceRequest": "com.sni.bokaticowork.features.ressource.dto.request.ResourceRequest",
+  "LinkAmenityToResourceRequest": "com.sni.bokaticowork.features.ressource.dto.request.LinkAmenityToResourceRequest",
+  "ResourceSummaryResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceSummaryResponse",
+  "ResourceSearchCriteria": "com.sni.bokaticowork.features.ressource.repository.specification.criteria.ResourceSearchCriteria",
+  "ResourceResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceResponse",
+  "UpdateResourceRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourceRequest",
+  "UpdateBookingEnabledRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateBookingEnabledRequest",
+  "ChangeTypeRequest": "com.sni.bokaticowork.features.ressource.dto.request.ChangeTypeRequest",
+  "UpdateDisplayOrderRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateDisplayOrderRequest",
+  "UpdatePortalVisibleRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdatePortalVisibleRequest",
+  "ResourceStatus": "com.sni.bokaticowork.features.ressource.enums.ResourceStatus",
+  "ResourceGroupResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceGroupResponse",
+  "CreateResourceGroupRequest": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceGroupRequest",
+  "UpdateResourceGroupRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourceGroupRequest",
+  "ResourceOpeningHoursService.View": "com.sni.bokaticowork.features.ressource.service.support.ResourceOpeningHoursService.View",
+  "ResourceOpeningHoursService.Range": "com.sni.bokaticowork.features.ressource.service.support.ResourceOpeningHoursService.Range",
+  "ResourcePhotoResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourcePhotoResponse",
+  "ResourcePhotoRequest": "com.sni.bokaticowork.features.ressource.dto.request.ResourcePhotoRequest",
+  "ResourcePolicyResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourcePolicyResponse",
+  "CreateResourcePolicyRequest": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePolicyRequest",
+  "UpdateResourcePolicyRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourcePolicyRequest",
+  "ResourcePricingRuleResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourcePricingRuleResponse",
+  "CreateResourcePricingRuleRequest": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourcePricingRuleRequest",
+  "BulkCreateResourcePricingRuleRequest": "com.sni.bokaticowork.features.ressource.dto.request.BulkCreateResourcePricingRuleRequest",
+  "PricingRuleConflictPreviewResponse": "com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse",
+  "ResourcePriceQuoteResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourcePriceQuoteResponse",
+  "UpdateResourcePricingRuleRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourcePricingRuleRequest",
+  "ResourceTypeResponse": "com.sni.bokaticowork.features.ressource.dto.response.ResourceTypeResponse",
+  "CreateResourceTypeRequest": "com.sni.bokaticowork.features.ressource.dto.request.CreateResourceTypeRequest",
+  "UpdateResourceTypeRequest": "com.sni.bokaticowork.features.ressource.dto.request.UpdateResourceTypeRequest",
+  "AdminResourceCalendarResponse.Day": "com.sni.bokaticowork.features.ressource.dto.response.AdminResourceCalendarResponse.Day",
+  "PublicResourceCalendarResponse.Day": "com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Day",
+  "BulkResourceOperationResponse.Entry": "com.sni.bokaticowork.features.ressource.dto.response.BulkResourceOperationResponse.Entry",
+  "LocalTime": "java.time.LocalTime",
+  "PricingRuleConflictPreviewResponse.ResourcePreview": "com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse.ResourcePreview",
+  "AdminResourceCalendarResponse.Window": "com.sni.bokaticowork.features.ressource.dto.response.AdminResourceCalendarResponse.Window",
+  "PublicResourceCalendarResponse.Window": "com.sni.bokaticowork.features.ressource.dto.response.PublicResourceCalendarResponse.Window",
+  "PricingRuleConflictPreviewResponse.CompetingRule": "com.sni.bokaticowork.features.ressource.dto.response.PricingRuleConflictPreviewResponse.CompetingRule"
+ }
+}

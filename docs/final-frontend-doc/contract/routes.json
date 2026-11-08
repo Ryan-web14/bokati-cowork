@@ -1,0 +1,3538 @@
+{
+ "module": "contract",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "getByCode",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/approve",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "approveReview",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ReviewAmendmentRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reviewedBy",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/cancel",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "cancel",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.CancelAmendmentRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "actorId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/generate-pdf",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "generatePdf",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "uploadedBy",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/preview",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "previewHtml",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "produces": [
+    "text/html"
+   ],
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<String>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/reject",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "rejectReview",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ReviewAmendmentRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reviewedBy",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/sections",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "listSections",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentSectionResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/sections",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "addSection",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ContractAmendmentSectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentSectionResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/sections/{sectionId}",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "removeSection",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "sectionId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/sections/{sectionId}",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "updateSection",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ContractAmendmentSectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "sectionId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentSectionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/sign",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "sign",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.SignAmendmentRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "actorId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/submit",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "submitForReview",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/variables",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "listVariables",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentVariableResponse>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/amendments/{amendmentCode}/variables",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "setVariables",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "List<com.sni.bokaticowork.features.contract.dto.request.ContractAmendmentVariableRequest>",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "amendmentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentVariableResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/amendments",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "listByContract",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/amendments",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "propose",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ProposeAmendmentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "proposedBy",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/audit-events",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "getAuditTrail",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.contract.dto.response.ContractAuditEventResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/versions",
+   "package": "features.contract.controller",
+   "controller": "ContractAmendmentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractAmendmentController.java",
+   "handler": "versions",
+   "declaredIn": "ContractAmendmentController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contracts",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "list",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "businessCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "templateCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contracts",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "create",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.CreateContractRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contracts/generate",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "generate",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_GENERATE_DRAFT",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.GenerateContractRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contracts/preview",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "preview",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.GenerateContractRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractPreviewResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contracts/templates",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "listTemplates",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contracts/templates-drafting",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "getTemplateDraftingReference",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Object>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "delete",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "getByCode",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "update",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.UpdateContractRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/activate",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "activate",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_ACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/approve",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "approveReview",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reviewedBy",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "comment",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/cancel",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "cancel",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_CANCEL",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/generate-draft",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "generateFromContract",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_GENERATE_DRAFT_FROM_RECORD",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.GenerateStoredContractDraftRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/reject-review",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "rejectReview",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reviewedBy",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "comment",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/signed-document",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "markSigned",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_MARK_SIGNED",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.AttachContractDocumentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/status",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "updateStatus",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_STATUS_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.UpdateContractStatusRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/suspend",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "suspend",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_SUSPEND",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/terminate",
+   "package": "features.contract.controller",
+   "controller": "ContractController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractController.java",
+   "handler": "terminate",
+   "declaredIn": "ContractController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_TERMINATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contract-drafts",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "list",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.contract.enums.ContractDraftStatus"
+    },
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.contract.dto.response.ContractDraftResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-drafts",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "create",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_DRAFT_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.CreateContractDraftRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractDraftResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-drafts/from-template/{templateCode}",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "createFromTemplate",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_DRAFT_CREATE_FROM_TEMPLATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.CreateContractDraftRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "templateCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractDraftResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contract-drafts/search",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "search",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.contract.dto.response.ContractDraftResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "delete",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "getByCode",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractDraftResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "update",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_DRAFT_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.UpdateContractDraftRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractDraftResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}/generate",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "generatePdf",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_DRAFT_GENERATE_PDF",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.PreviewContractDraftRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "uploadedBy",
+     "required": false,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}/preview",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "preview",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.PreviewContractDraftRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractPreviewResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}/sections",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "addSection",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ContractDraftSectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractDraftSectionResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}/sections/{sectionId}",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "removeSection",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "sectionId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}/sections/{sectionId}",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "updateSection",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ContractDraftSectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "sectionId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractDraftSectionResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/contract-drafts/{code}/status",
+   "package": "features.contract.controller",
+   "controller": "ContractDraftController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractDraftController.java",
+   "handler": "updateStatus",
+   "declaredIn": "ContractDraftController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.contract.enums.ContractDraftStatus"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractDraftResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contracts/{contractCode}/request-signing",
+   "package": "features.contract.controller",
+   "controller": "ContractSigningController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractSigningController.java",
+   "handler": "requestSigning",
+   "declaredIn": "ContractSigningController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.RequestContractSigningRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractSigningResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/contracts/sign/{token}",
+   "package": "features.contract.controller",
+   "controller": "ContractSigningController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractSigningController.java",
+   "handler": "getSigningDetails",
+   "declaredIn": "ContractSigningController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "token",
+     "required": true,
+     "type": "UUID"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractSigningResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/contracts/sign/{token}",
+   "package": "features.contract.controller",
+   "controller": "ContractSigningController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractSigningController.java",
+   "handler": "sign",
+   "declaredIn": "ContractSigningController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.SignContractRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "token",
+     "required": true,
+     "type": "UUID"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractSigningResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contract-templates",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "list",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-templates",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "create",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_TEMPLATE_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.CreateContractTemplateRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contract-templates/category/{category}",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "listByCategory",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "category",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contract-templates/search",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "search",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "delete",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "getByCode",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "update",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CONTRACT_TEMPLATE_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.UpdateContractTemplateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}/duplicate",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "duplicate",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}/preview",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "preview",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "Map<String, String>",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractPreviewResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}/sections",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "listSections",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateSectionResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}/sections",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "addSection",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ContractDraftSectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateSectionResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}/sections/{sectionId}",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "removeSection",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "sectionId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/contract-templates/{code}/sections/{sectionId}",
+   "package": "features.contract.controller",
+   "controller": "ContractTemplateController",
+   "source": "src/main/java/com/sni/bokaticowork/features/contract/controller/ContractTemplateController.java",
+   "handler": "updateSection",
+   "declaredIn": "ContractTemplateController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.contract.dto.request.ContractDraftSectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "sectionId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.contract.dto.response.ContractTemplateSectionResponse>"
+  }
+ ],
+ "schemas": {
+  "ContractAmendmentResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "originalContractCode": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "UNDER_REVIEW",
+      "PENDING_SIGNATURE",
+      "ACTIVE",
+      "REJECTED",
+      "CANCELLED"
+     ]
+    },
+    "description": {
+     "type": "string"
+    },
+    "proposedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "proposedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "draftDocumentCode": {
+     "type": "string"
+    },
+    "signedDocumentCode": {
+     "type": "string"
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "activatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "reviewComment": {
+     "type": "string"
+    },
+    "rejectionReason": {
+     "type": "string"
+    },
+    "cancellationReason": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sections": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentSectionResponse"
+     }
+    },
+    "variableChanges": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentVariableResponse"
+     }
+    }
+   }
+  },
+  "ReviewAmendmentRequest": {
+   "type": "object",
+   "properties": {
+    "comment": {
+     "type": "string"
+    }
+   }
+  },
+  "CancelAmendmentRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "ownerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "KYC",
+      "LEGAL",
+      "SYSTEM",
+      "FINANCIAL",
+      "ASSET",
+      "OTHER"
+     ]
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "spaceReferenceCode": {
+     "type": "string"
+    },
+    "folderCode": {
+     "type": "string"
+    },
+    "folderName": {
+     "type": "string"
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "fileName": {
+     "type": "string"
+    },
+    "fileUrl": {
+     "type": "string"
+    },
+    "previewUrl": {
+     "type": "string"
+    },
+    "downloadUrl": {
+     "type": "string"
+    },
+    "fileSize": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "mimeType": {
+     "type": "string"
+    },
+    "checksumSha256": {
+     "type": "string"
+    },
+    "currentVersionNumber": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "UPLOADED",
+      "PENDING_REVIEW",
+      "NEEDS_CORRECTION",
+      "APPROVED",
+      "REJECTED",
+      "SIGNED",
+      "EXPIRED",
+      "ARCHIVED",
+      "SUPERSEDED"
+     ]
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "expiryDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "uploadedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "uploadedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "versions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse"
+     }
+    },
+    "tags": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse"
+     }
+    },
+    "metadata": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "ContractAmendmentSectionResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "action": {
+     "type": "string",
+     "enum": [
+      "ADD",
+      "MODIFY",
+      "REMOVE"
+     ]
+    },
+    "targetSectionRef": {
+     "type": "string"
+    },
+    "sectionType": {
+     "type": "string",
+     "enum": [
+      "PREAMBLE",
+      "ARTICLE",
+      "CLAUSE",
+      "SIGNATURE_BLOCK",
+      "ANNEXE"
+     ]
+    },
+    "title": {
+     "type": "string"
+    },
+    "content": {
+     "type": "string"
+    },
+    "sectionOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ContractAmendmentSectionRequest": {
+   "required": [
+    "action"
+   ],
+   "type": "object",
+   "properties": {
+    "action": {
+     "type": "string",
+     "enum": [
+      "ADD",
+      "MODIFY",
+      "REMOVE"
+     ]
+    },
+    "targetSectionRef": {
+     "type": "string"
+    },
+    "sectionType": {
+     "type": "string",
+     "enum": [
+      "PREAMBLE",
+      "ARTICLE",
+      "CLAUSE",
+      "SIGNATURE_BLOCK",
+      "ANNEXE"
+     ]
+    },
+    "title": {
+     "type": "string"
+    },
+    "content": {
+     "type": "string"
+    },
+    "sectionOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "SignAmendmentRequest": {
+   "type": "object",
+   "properties": {
+    "signedDocumentCode": {
+     "type": "string"
+    },
+    "justification": {
+     "type": "string"
+    }
+   }
+  },
+  "ContractAmendmentVariableResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "variableKey": {
+     "type": "string"
+    },
+    "previousValue": {
+     "type": "string"
+    },
+    "newValue": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ContractAmendmentVariableRequest": {
+   "required": [
+    "newValue",
+    "variableKey"
+   ],
+   "type": "object",
+   "properties": {
+    "variableKey": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "previousValue": {
+     "type": "string"
+    },
+    "newValue": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "ProposeAmendmentRequest": {
+   "required": [
+    "description"
+   ],
+   "type": "object",
+   "properties": {
+    "description": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "ContractAuditEventResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "contractCode": {
+     "type": "string"
+    },
+    "amendmentCode": {
+     "type": "string"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "actorId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "actorType": {
+     "type": "string"
+    },
+    "actorName": {
+     "type": "string"
+    },
+    "occurredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "previousHash": {
+     "type": "string"
+    },
+    "eventHash": {
+     "type": "string"
+    },
+    "payload": {
+     "type": "string"
+    },
+    "justification": {
+     "type": "string"
+    }
+   }
+  },
+  "ContractVersionHistory.Version": {
+   "type": "object",
+   "properties": {
+    "version": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "ORIGINAL",
+      "AMENDMENT",
+      "EXTENSION"
+     ]
+    },
+    "amendmentCode": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "previousEndDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "documentCode": {
+     "type": "string"
+    }
+   }
+  },
+  "ContractResponse": {
+   "type": "object",
+   "properties": {
+    "contractCode": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "templateCode": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "GENERATED",
+      "UNDER_REVIEW",
+      "AWAITING_SIGNATURE",
+      "SIGNED",
+      "ACTIVE",
+      "SUSPENDED",
+      "AMENDED",
+      "EXPIRED",
+      "TERMINATED",
+      "CANCELLED"
+     ]
+    },
+    "renewalType": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "FIXED_TERM",
+      "AUTO_RENEW"
+     ]
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "activatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "terminatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "terminationReason": {
+     "type": "string"
+    },
+    "draftDocumentCode": {
+     "type": "string"
+    },
+    "signedDocumentCode": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "parties": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.response.ContractPartyResponse"
+     }
+    }
+   }
+  },
+  "CreateContractRequest": {
+   "required": [
+    "createdBy",
+    "ownerCode",
+    "ownerType",
+    "templateCode",
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "templateCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "renewalType": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "FIXED_TERM",
+      "AUTO_RENEW"
+     ]
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "parties": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.request.ContractPartyRequest"
+     }
+    }
+   }
+  },
+  "GenerateContractRequest": {
+   "required": [
+    "ownerCode",
+    "ownerType",
+    "templateCode",
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "templateCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "uploadedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "signatoryName": {
+     "type": "string"
+    },
+    "signatoryRole": {
+     "type": "string"
+    },
+    "clauses": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "variables": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "ContractPreviewResponse": {
+   "type": "object",
+   "properties": {
+    "templateCode": {
+     "type": "string"
+    },
+    "html": {
+     "type": "string"
+    }
+   }
+  },
+  "ContractTemplateResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "version": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "category": {
+     "type": "string"
+    },
+    "htmlContent": {
+     "type": "string"
+    },
+    "cssContent": {
+     "type": "string"
+    },
+    "headerHtml": {
+     "type": "string"
+    },
+    "footerHtml": {
+     "type": "string"
+    },
+    "variableDefinitions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.model.TemplateVariableDefinition"
+     }
+    },
+    "sections": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.response.ContractTemplateSectionResponse"
+     }
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "UpdateContractRequest": {
+   "type": "object",
+   "properties": {
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "templateCode": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "renewalType": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "FIXED_TERM",
+      "AUTO_RENEW"
+     ]
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "parties": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.request.ContractPartyRequest"
+     }
+    }
+   }
+  },
+  "GenerateStoredContractDraftRequest": {
+   "required": [
+    "uploadedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "uploadedBy": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "AttachContractDocumentRequest": {
+   "required": [
+    "documentCode"
+   ],
+   "type": "object",
+   "properties": {
+    "documentCode": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "UpdateContractStatusRequest": {
+   "required": [
+    "status"
+   ],
+   "type": "object",
+   "properties": {
+    "status": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "ContractDraftResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "templateCode": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "cssContent": {
+     "type": "string"
+    },
+    "headerHtml": {
+     "type": "string"
+    },
+    "footerHtml": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFTING",
+      "READY",
+      "GENERATED"
+     ]
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sections": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.response.ContractDraftSectionResponse"
+     }
+    }
+   }
+  },
+  "CreateContractDraftRequest": {
+   "required": [
+    "createdBy",
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "templateCode": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "cssContent": {
+     "type": "string"
+    },
+    "headerHtml": {
+     "type": "string"
+    },
+    "footerHtml": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "sections": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.request.ContractDraftSectionRequest"
+     }
+    }
+   }
+  },
+  "UpdateContractDraftRequest": {
+   "type": "object",
+   "properties": {
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "cssContent": {
+     "type": "string"
+    },
+    "headerHtml": {
+     "type": "string"
+    },
+    "footerHtml": {
+     "type": "string"
+    },
+    "sections": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.dto.request.ContractDraftSectionRequest"
+     }
+    }
+   }
+  },
+  "PreviewContractDraftRequest": {
+   "type": "object",
+   "properties": {
+    "variables": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "ContractDraftSectionResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "title": {
+     "type": "string"
+    },
+    "content": {
+     "type": "string"
+    },
+    "sectionType": {
+     "type": "string",
+     "enum": [
+      "PREAMBLE",
+      "ARTICLE",
+      "CLAUSE",
+      "SIGNATURE_BLOCK",
+      "ANNEXE"
+     ]
+    },
+    "sectionOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ContractDraftSectionRequest": {
+   "required": [
+    "content",
+    "sectionType"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "type": "string"
+    },
+    "content": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "sectionType": {
+     "type": "string",
+     "enum": [
+      "PREAMBLE",
+      "ARTICLE",
+      "CLAUSE",
+      "SIGNATURE_BLOCK",
+      "ANNEXE"
+     ]
+    },
+    "sectionOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ContractSigningResponse": {
+   "type": "object",
+   "properties": {
+    "token": {
+     "type": "string",
+     "format": "uuid"
+    },
+    "contractCode": {
+     "type": "string"
+    },
+    "contractTitle": {
+     "type": "string"
+    },
+    "signerEmail": {
+     "type": "string"
+    },
+    "signerName": {
+     "type": "string"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "revoked": {
+     "type": "boolean"
+    }
+   }
+  },
+  "RequestContractSigningRequest": {
+   "type": "object",
+   "properties": {
+    "signerEmail": {
+     "type": "string",
+     "format": "email"
+    },
+    "signerName": {
+     "type": "string"
+    }
+   }
+  },
+  "SignContractRequest": {
+   "type": "object",
+   "properties": {
+    "accepted": {
+     "type": "boolean"
+    },
+    "consentText": {
+     "type": "string"
+    }
+   }
+  },
+  "CreateContractTemplateRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string"
+    },
+    "htmlContent": {
+     "type": "string"
+    },
+    "cssContent": {
+     "type": "string"
+    },
+    "headerHtml": {
+     "type": "string"
+    },
+    "footerHtml": {
+     "type": "string"
+    },
+    "variableDefinitions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.model.TemplateVariableDefinition"
+     }
+    }
+   }
+  },
+  "UpdateContractTemplateRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "language": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string"
+    },
+    "htmlContent": {
+     "type": "string"
+    },
+    "cssContent": {
+     "type": "string"
+    },
+    "headerHtml": {
+     "type": "string"
+    },
+    "footerHtml": {
+     "type": "string"
+    },
+    "variableDefinitions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.model.TemplateVariableDefinition"
+     }
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ContractTemplateSectionResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "templateCode": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "content": {
+     "type": "string"
+    },
+    "sectionType": {
+     "type": "string",
+     "enum": [
+      "PREAMBLE",
+      "ARTICLE",
+      "CLAUSE",
+      "SIGNATURE_BLOCK",
+      "ANNEXE"
+     ]
+    },
+    "sectionOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DocumentVersionResponse": {
+   "type": "object",
+   "properties": {
+    "versionNumber": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "storageProvider": {
+     "type": "string"
+    },
+    "storagePath": {
+     "type": "string"
+    },
+    "previewUrl": {
+     "type": "string"
+    },
+    "downloadUrl": {
+     "type": "string"
+    },
+    "originalFileName": {
+     "type": "string"
+    },
+    "storedFileName": {
+     "type": "string"
+    },
+    "mimeTypeDeclared": {
+     "type": "string"
+    },
+    "mimeTypeDetected": {
+     "type": "string"
+    },
+    "fileExtension": {
+     "type": "string"
+    },
+    "checksumSha256": {
+     "type": "string"
+    },
+    "fileSizeBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "uploadStatus": {
+     "type": "string",
+     "enum": [
+      "PENDING_SCAN",
+      "READY",
+      "QUARANTINED",
+      "REJECTED",
+      "DELETED"
+     ]
+    },
+    "antivirusStatus": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "CLEAN",
+      "INFECTED",
+      "ERROR"
+     ]
+    },
+    "uploadedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "uploadedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "current": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DocumentTagResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "color": {
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ContractPartyResponse": {
+   "type": "object",
+   "properties": {
+    "partyType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "partyCode": {
+     "type": "string"
+    },
+    "displayName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "BENEFICIARY",
+      "OPERATOR",
+      "SIGNATORY",
+      "BILLING_CONTACT"
+     ]
+    },
+    "signOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "mustSign": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ContractPartyRequest": {
+   "required": [
+    "displayName",
+    "partyCode",
+    "partyType",
+    "role"
+   ],
+   "type": "object",
+   "properties": {
+    "partyType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "partyCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "displayName": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "BENEFICIARY",
+      "OPERATOR",
+      "SIGNATORY",
+      "BILLING_CONTACT"
+     ]
+    },
+    "signOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "mustSign": {
+     "type": "boolean"
+    }
+   }
+  },
+  "TemplateVariableDefinition": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "defaultValue": {
+     "type": "string"
+    },
+    "source": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    }
+   }
+  }
+ },
+ "enums": {
+  "DocumentOwnerType": [
+   "CUSTOMER",
+   "MEMBER",
+   "BUSINESS",
+   "CONTRACT",
+   "INVOICE",
+   "PAYMENT",
+   "PROPOSAL",
+   "ASSET"
+  ],
+  "ContractDraftStatus": [
+   "DRAFTING",
+   "READY",
+   "GENERATED"
+  ]
+ },
+ "names": {
+  "ContractAmendmentResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentResponse",
+  "ReviewAmendmentRequest": "com.sni.bokaticowork.features.contract.dto.request.ReviewAmendmentRequest",
+  "CancelAmendmentRequest": "com.sni.bokaticowork.features.contract.dto.request.CancelAmendmentRequest",
+  "DocumentResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse",
+  "ContractAmendmentSectionResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentSectionResponse",
+  "ContractAmendmentSectionRequest": "com.sni.bokaticowork.features.contract.dto.request.ContractAmendmentSectionRequest",
+  "SignAmendmentRequest": "com.sni.bokaticowork.features.contract.dto.request.SignAmendmentRequest",
+  "ContractAmendmentVariableResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractAmendmentVariableResponse",
+  "ContractAmendmentVariableRequest": "com.sni.bokaticowork.features.contract.dto.request.ContractAmendmentVariableRequest",
+  "ProposeAmendmentRequest": "com.sni.bokaticowork.features.contract.dto.request.ProposeAmendmentRequest",
+  "ContractAuditEventResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractAuditEventResponse",
+  "ContractVersionHistory.Version": "com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version",
+  "ContractResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractResponse",
+  "DocumentOwnerType": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType",
+  "CreateContractRequest": "com.sni.bokaticowork.features.contract.dto.request.CreateContractRequest",
+  "GenerateContractRequest": "com.sni.bokaticowork.features.contract.dto.request.GenerateContractRequest",
+  "ContractPreviewResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractPreviewResponse",
+  "ContractTemplateResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractTemplateResponse",
+  "UpdateContractRequest": "com.sni.bokaticowork.features.contract.dto.request.UpdateContractRequest",
+  "GenerateStoredContractDraftRequest": "com.sni.bokaticowork.features.contract.dto.request.GenerateStoredContractDraftRequest",
+  "AttachContractDocumentRequest": "com.sni.bokaticowork.features.contract.dto.request.AttachContractDocumentRequest",
+  "UpdateContractStatusRequest": "com.sni.bokaticowork.features.contract.dto.request.UpdateContractStatusRequest",
+  "ContractDraftResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractDraftResponse",
+  "ContractDraftStatus": "com.sni.bokaticowork.features.contract.enums.ContractDraftStatus",
+  "CreateContractDraftRequest": "com.sni.bokaticowork.features.contract.dto.request.CreateContractDraftRequest",
+  "UpdateContractDraftRequest": "com.sni.bokaticowork.features.contract.dto.request.UpdateContractDraftRequest",
+  "PreviewContractDraftRequest": "com.sni.bokaticowork.features.contract.dto.request.PreviewContractDraftRequest",
+  "ContractDraftSectionResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractDraftSectionResponse",
+  "ContractDraftSectionRequest": "com.sni.bokaticowork.features.contract.dto.request.ContractDraftSectionRequest",
+  "ContractSigningResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractSigningResponse",
+  "RequestContractSigningRequest": "com.sni.bokaticowork.features.contract.dto.request.RequestContractSigningRequest",
+  "SignContractRequest": "com.sni.bokaticowork.features.contract.dto.request.SignContractRequest",
+  "CreateContractTemplateRequest": "com.sni.bokaticowork.features.contract.dto.request.CreateContractTemplateRequest",
+  "UpdateContractTemplateRequest": "com.sni.bokaticowork.features.contract.dto.request.UpdateContractTemplateRequest",
+  "ContractTemplateSectionResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractTemplateSectionResponse",
+  "DocumentVersionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse",
+  "DocumentTagResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse",
+  "ContractPartyResponse": "com.sni.bokaticowork.features.contract.dto.response.ContractPartyResponse",
+  "ContractPartyRequest": "com.sni.bokaticowork.features.contract.dto.request.ContractPartyRequest",
+  "TemplateVariableDefinition": "com.sni.bokaticowork.features.contract.model.TemplateVariableDefinition"
+ }
+}

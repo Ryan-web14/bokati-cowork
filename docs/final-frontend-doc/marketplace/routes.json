@@ -1,0 +1,906 @@
+{
+ "module": "marketplace",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/marketplace/offers",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "offers",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER') or hasRole('OPERATIONS_AGENT')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "published",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/marketplace/offers",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "create",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/marketplace/offers/{id}",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "offer",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER') or hasRole('OPERATIONS_AGENT')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/marketplace/offers/{id}",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "update",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferUpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/marketplace/offers/{id}/publish",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "publish",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/marketplace/offers/{id}/unpublish",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "unpublish",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/marketplace/orders",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "orders",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER') or hasRole('OPERATIONS_AGENT')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.marketplace.model.MarketplaceOrder.Status"
+    },
+    {
+     "in": "query",
+     "name": "stockPending",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "100",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/marketplace/orders/{orderNumber}",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "order",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER') or hasRole('OPERATIONS_AGENT')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "orderNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/marketplace/orders/{orderNumber}/cancel",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "cancel",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.CancelRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "orderNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/marketplace/orders/{orderNumber}/fulfil",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceAdminController.java",
+   "handler": "fulfil",
+   "declaredIn": "MarketplaceAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER') or hasRole('OPERATIONS_AGENT')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.FulfilRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "orderNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/companies/{customerId}/marketplace/orders",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "companyOrders",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "100",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/marketplace/cart",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "cart",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/marketplace/cart/checkout",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "checkout",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.CheckoutRequest",
+    "required": false
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/marketplace/cart/lines",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "addLine",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.CartLineRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/client/marketplace/cart/lines/{lineId}",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "removeLine",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "lineId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/client/marketplace/cart/lines/{lineId}",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "updateLine",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.CartQuantityRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "lineId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/marketplace/offers",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "offers",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/marketplace/orders",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "myOrders",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "50",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/marketplace/orders/{orderNumber}",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "myOrder",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "orderNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/marketplace/orders/{orderNumber}/cancel",
+   "package": "features.marketplace.controller",
+   "controller": "MarketplaceClientController",
+   "source": "src/main/java/com/sni/bokaticowork/features/marketplace/controller/MarketplaceClientController.java",
+   "handler": "cancel",
+   "declaredIn": "MarketplaceClientController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.MemberCancelRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "orderNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView>"
+  }
+ ],
+ "schemas": {
+  "MarketplaceDtos.OfferView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "offerCode": {
+     "type": "string"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "PRODUCT",
+      "SERVICE"
+     ]
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "imageUrl": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string"
+    },
+    "price": {
+     "type": "number"
+    },
+    "ownPrice": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "available": {
+     "type": "number"
+    },
+    "maxPerOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "published": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "inventoryItemCode": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "serviceItemCode": {
+     "type": "string"
+    }
+   }
+  },
+  "MarketplaceDtos.OfferRequest": {
+   "required": [
+    "kind"
+   ],
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "PRODUCT",
+      "SERVICE"
+     ]
+    },
+    "inventoryItemCode": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "serviceItemCode": {
+     "type": "string"
+    },
+    "title": {
+     "maxLength": 200,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "imageUrl": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "category": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "price": {
+     "type": "number"
+    },
+    "currency": {
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    },
+    "maxPerOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "MarketplaceDtos.OfferUpdateRequest": {
+   "type": "object",
+   "properties": {
+    "title": {
+     "maxLength": 200,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "imageUrl": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "category": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "price": {
+     "type": "number"
+    },
+    "resetPrice": {
+     "type": "boolean"
+    },
+    "maxPerOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "clearMaxPerOrder": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "MarketplaceDtos.OrderView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "orderNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "CART",
+      "PENDING_PAYMENT",
+      "PAID",
+      "FULFILLED",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    },
+    "buyerMemberCode": {
+     "type": "string"
+    },
+    "billingCompanyCode": {
+     "type": "string"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "invoiceNumber": {
+     "type": "string"
+    },
+    "invoiceBalanceDue": {
+     "type": "number"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "placedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "paidAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fulfilledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fulfilledBy": {
+     "type": "string"
+    },
+    "collectedBy": {
+     "type": "string"
+    },
+    "cancelledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "cancelledBy": {
+     "type": "string"
+    },
+    "cancellationReason": {
+     "type": "string"
+    },
+    "creditNoteNumber": {
+     "type": "string"
+    },
+    "stockPending": {
+     "type": "boolean"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.LineView"
+     }
+    }
+   }
+  },
+  "MarketplaceDtos.CancelRequest": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "returnToStock": {
+     "type": "boolean"
+    }
+   }
+  },
+  "MarketplaceDtos.FulfilRequest": {
+   "type": "object",
+   "properties": {
+    "collectedBy": {
+     "maxLength": 200,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "MarketplaceDtos.CheckoutRequest": {
+   "type": "object",
+   "properties": {
+    "billingCompanyCode": {
+     "type": "string"
+    }
+   }
+  },
+  "MarketplaceDtos.CartLineRequest": {
+   "required": [
+    "offerId",
+    "quantity"
+   ],
+   "type": "object",
+   "properties": {
+    "offerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "quantity": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "MarketplaceDtos.CartQuantityRequest": {
+   "required": [
+    "quantity"
+   ],
+   "type": "object",
+   "properties": {
+    "quantity": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "MarketplaceDtos.MemberCancelRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "MarketplaceDtos.LineView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "offerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "PRODUCT",
+      "SERVICE"
+     ]
+    },
+    "title": {
+     "type": "string"
+    },
+    "imageUrl": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "available": {
+     "type": "number"
+    },
+    "stockError": {
+     "type": "string"
+    }
+   }
+  }
+ },
+ "enums": {
+  "MarketplaceOrder.Status": [
+   "CART",
+   "PENDING_PAYMENT",
+   "PAID",
+   "FULFILLED",
+   "CANCELLED",
+   "EXPIRED"
+  ]
+ },
+ "names": {
+  "MarketplaceDtos.OfferView": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferView",
+  "MarketplaceDtos.OfferRequest": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferRequest",
+  "MarketplaceDtos.OfferUpdateRequest": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OfferUpdateRequest",
+  "MarketplaceDtos.OrderView": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.OrderView",
+  "MarketplaceOrder.Status": "com.sni.bokaticowork.features.marketplace.model.MarketplaceOrder.Status",
+  "MarketplaceDtos.CancelRequest": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.CancelRequest",
+  "MarketplaceDtos.FulfilRequest": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.FulfilRequest",
+  "MarketplaceDtos.CheckoutRequest": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.CheckoutRequest",
+  "MarketplaceDtos.CartLineRequest": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.CartLineRequest",
+  "MarketplaceDtos.CartQuantityRequest": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.CartQuantityRequest",
+  "MarketplaceDtos.MemberCancelRequest": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.MemberCancelRequest",
+  "MarketplaceDtos.LineView": "com.sni.bokaticowork.features.marketplace.dto.MarketplaceDtos.LineView"
+ }
+}

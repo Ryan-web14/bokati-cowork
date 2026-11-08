@@ -1,0 +1,1365 @@
+{
+ "module": "parametres",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/{memberId}/settings",
+   "package": "core.settings.userSettings.controller",
+   "controller": "MemberSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/userSettings/controller/MemberSettingsController.java",
+   "handler": "get",
+   "declaredIn": "MemberSettingsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.settings.userSettings.dto.response.MemberSettingsResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/members/{memberId}/settings",
+   "package": "core.settings.userSettings.controller",
+   "controller": "MemberSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/userSettings/controller/MemberSettingsController.java",
+   "handler": "update",
+   "declaredIn": "MemberSettingsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_SETTINGS_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateMemberSettingsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.settings.userSettings.dto.response.MemberSettingsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/{memberId}/settings/notifications",
+   "package": "core.settings.userSettings.controller",
+   "controller": "MemberSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/userSettings/controller/MemberSettingsController.java",
+   "handler": "notifications",
+   "declaredIn": "MemberSettingsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.settings.userSettings.dto.response.NotificationPreferenceResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/members/{memberId}/settings/notifications",
+   "package": "core.settings.userSettings.controller",
+   "controller": "MemberSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/userSettings/controller/MemberSettingsController.java",
+   "handler": "updateNotification",
+   "declaredIn": "MemberSettingsController",
+   "access": {
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "MEMBER_NOTIFICATION_PREFERENCE_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateNotificationPreferenceRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.settings.userSettings.dto.response.NotificationPreferenceResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/settings",
+   "package": "core.settings.platform",
+   "controller": "PlatformSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsController.java",
+   "handler": "list",
+   "declaredIn": "PlatformSettingsController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "domain",
+     "required": false,
+     "type": "com.sni.bokaticowork.core.settings.platform.SettingDomain"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.SettingView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/settings/domains",
+   "package": "core.settings.platform",
+   "controller": "PlatformSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsController.java",
+   "handler": "domains",
+   "declaredIn": "PlatformSettingsController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.DomainView>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/settings/{key}",
+   "package": "core.settings.platform",
+   "controller": "PlatformSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsController.java",
+   "handler": "reset",
+   "declaredIn": "PlatformSettingsController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "key",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.SettingView>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/admin/settings/{key}",
+   "package": "core.settings.platform",
+   "controller": "PlatformSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsController.java",
+   "handler": "update",
+   "declaredIn": "PlatformSettingsController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.settings.platform.PlatformSettingsController.UpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "key",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.SettingView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/settings/{key}/history",
+   "package": "core.settings.platform",
+   "controller": "PlatformSettingsController",
+   "source": "src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettingsController.java",
+   "handler": "history",
+   "declaredIn": "PlatformSettingsController",
+   "access": {
+    "preAuthorize": "hasRole('SUPER_ADMIN') or hasRole('ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "key",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.ChangeView>>"
+  }
+ ],
+ "schemas": {
+  "MemberSettingsResponse": {
+   "type": "object",
+   "properties": {
+    "langage": {
+     "type": "string"
+    },
+    "timeZone": {
+     "type": "string"
+    },
+    "showNameOnDisplay": {
+     "type": "boolean"
+    },
+    "showEmail": {
+     "type": "boolean"
+    },
+    "showPhone": {
+     "type": "boolean"
+    },
+    "billingPref": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.response.BillingPreferencesResponse"
+    },
+    "walletPref": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.response.WalletPreferencesResponse"
+    },
+    "notificationPref": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.response.NotificationPreferenceResponse"
+     }
+    }
+   }
+  },
+  "UpdateMemberSettingsRequest": {
+   "type": "object",
+   "properties": {
+    "langage": {
+     "type": "string"
+    },
+    "timeZone": {
+     "type": "string"
+    },
+    "showNameOnDisplay": {
+     "type": "boolean"
+    },
+    "showEmail": {
+     "type": "boolean"
+    },
+    "showPhone": {
+     "type": "boolean"
+    },
+    "billingPref": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.request.BillingPreferences"
+    },
+    "walletPref": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.request.WalletPreferencesRequest"
+    },
+    "notificationPref": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.model.NotificationPreferences"
+     }
+    }
+   }
+  },
+  "NotificationPreferenceResponse": {
+   "type": "object",
+   "properties": {
+    "preferenceName": {
+     "type": "string"
+    },
+    "preferenceDescription": {
+     "type": "string"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "channel": {
+     "type": "string"
+    },
+    "enabled": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateNotificationPreferenceRequest": {
+   "type": "object",
+   "properties": {
+    "eventType": {
+     "type": "string",
+     "enum": [
+      "BOOKING_CONFIRMED",
+      "BOOKING_CANCELLED",
+      "BOOKING_REMINDER",
+      "BOOKING_FAILED",
+      "INVOICE_ISSUED",
+      "PAYMENT_RECEIVED",
+      "PAYMENT_FAILED"
+     ]
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "SMS",
+      "WHATSAPP",
+      "IN_APP",
+      "PUSH",
+      "EMAIL"
+     ]
+    },
+    "enabled": {
+     "type": "boolean"
+    }
+   }
+  },
+  "PlatformSettingsAdminService.SettingView": {
+   "type": "object",
+   "properties": {
+    "key": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "domain": {
+     "type": "string",
+     "enum": [
+      "BOOKING",
+      "RESOURCES",
+      "SUBSCRIPTIONS",
+      "PASSES",
+      "MARKETPLACE",
+      "PROMOTIONS",
+      "DOMICILIATION",
+      "CONTRACTS",
+      "SUPPORT",
+      "TASKS",
+      "CRM",
+      "EVENTS",
+      "PORTAL",
+      "COMPANIES",
+      "WALLET",
+      "PAYMENT",
+      "BILLING",
+      "COMPLIANCE",
+      "DOCUMENTS",
+      "LOCALE",
+      "SECURITY",
+      "NOTIFICATIONS",
+      "WEBHOOKS",
+      "OUTBOX",
+      "GRAPH_API",
+      "WEBSOCKET",
+      "ENVIRONMENT"
+     ]
+    },
+    "type": {
+     "type": "string",
+     "enum": [
+      "TEXT",
+      "EMAIL",
+      "INTEGER",
+      "DECIMAL",
+      "BOOLEAN",
+      "CRON",
+      "TIME",
+      "TIME_RANGE",
+      "ENUM",
+      "SECRET"
+     ]
+    },
+    "effect": {
+     "type": "string",
+     "enum": [
+      "LIVE",
+      "RESTART"
+     ]
+    },
+    "value": {
+     "type": "string"
+    },
+    "defaultValue": {
+     "type": "string"
+    },
+    "modified": {
+     "type": "boolean"
+    },
+    "editable": {
+     "type": "boolean"
+    },
+    "configured": {
+     "type": "boolean"
+    },
+    "restartPending": {
+     "type": "boolean"
+    },
+    "updatedBy": {
+     "type": "string"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "options": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "PlatformSettingsAdminService.DomainView": {
+   "type": "object",
+   "properties": {
+    "domain": {
+     "type": "string",
+     "enum": [
+      "BOOKING",
+      "RESOURCES",
+      "SUBSCRIPTIONS",
+      "PASSES",
+      "MARKETPLACE",
+      "PROMOTIONS",
+      "DOMICILIATION",
+      "CONTRACTS",
+      "SUPPORT",
+      "TASKS",
+      "CRM",
+      "EVENTS",
+      "PORTAL",
+      "COMPANIES",
+      "WALLET",
+      "PAYMENT",
+      "BILLING",
+      "COMPLIANCE",
+      "DOCUMENTS",
+      "LOCALE",
+      "SECURITY",
+      "NOTIFICATIONS",
+      "WEBHOOKS",
+      "OUTBOX",
+      "GRAPH_API",
+      "WEBSOCKET",
+      "ENVIRONMENT"
+     ]
+    },
+    "label": {
+     "type": "string"
+    },
+    "adminEditable": {
+     "type": "boolean"
+    },
+    "settings": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "PlatformSettingsController.UpdateRequest": {
+   "type": "object",
+   "properties": {
+    "value": {
+     "type": "string"
+    },
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "PlatformSettingsAdminService.ChangeView": {
+   "type": "object",
+   "properties": {
+    "oldValue": {
+     "type": "string"
+    },
+    "newValue": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "changedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "BillingPreferencesResponse": {
+   "type": "object",
+   "properties": {
+    "billingEntityType": {
+     "type": "string"
+    },
+    "billingCompanyName": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "billingEmail": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "billlingAddress": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "WalletPreferencesResponse": {
+   "type": "object",
+   "properties": {
+    "autoTopupEnabled": {
+     "type": "boolean"
+    },
+    "autoTopupThreshold": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "autoTopupAmount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "spendingDailyLimit": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "spendingWeeklyLimit": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "BillingPreferences": {
+   "type": "object",
+   "properties": {
+    "billingEntityType": {
+     "type": "string",
+     "enum": [
+      "COMPANY",
+      "PERSONAL"
+     ]
+    },
+    "billingCompanyName": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "billingEmail": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "billlingAddress": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "WalletPreferencesRequest": {
+   "type": "object",
+   "properties": {
+    "autoTopupEnabled": {
+     "type": "boolean"
+    },
+    "autoTopupThreshold": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "autoTopupAmount": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "spendingDailyLimit": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    },
+    "spendingWeeklyLimit": {
+     "minimum": 0,
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "NotificationPreferences": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "member": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.client.member.model.Member"
+    },
+    "eventType": {
+     "type": "string",
+     "enum": [
+      "BOOKING_CONFIRMED",
+      "BOOKING_CANCELLED",
+      "BOOKING_REMINDER",
+      "BOOKING_FAILED",
+      "INVOICE_ISSUED",
+      "PAYMENT_RECEIVED",
+      "PAYMENT_FAILED"
+     ]
+    },
+    "notificationChannel": {
+     "type": "string",
+     "enum": [
+      "SMS",
+      "WHATSAPP",
+      "IN_APP",
+      "PUSH",
+      "EMAIL"
+     ]
+    },
+    "enabled": {
+     "type": "boolean"
+    },
+    "preferenceName": {
+     "type": "string"
+    },
+    "preferenceDescription": {
+     "type": "string"
+    }
+   }
+  },
+  "Member": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "customer": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.client.customer.model.Customer"
+    },
+    "user": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.user.model.Users"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "PENDING",
+      "UNDER_REVIEW",
+      "PENDING_CORRECTION",
+      "REJECTED",
+      "INACTIVE",
+      "SUSPENDED",
+      "ARCHIVED"
+     ]
+    },
+    "portalAccess": {
+     "type": "boolean"
+    },
+    "portalActivatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "kycGracePeriodEndAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "avatarUrl": {
+     "type": "string"
+    },
+    "createByAdmin": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "deleted": {
+     "type": "boolean"
+    },
+    "displayName": {
+     "type": "string"
+    }
+   }
+  },
+  "Customer": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string",
+     "enum": [
+      "PERSON",
+      "COMPANY"
+     ]
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "companyName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "billingEmail": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.model.Address"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "PENDING",
+      "INACTIVE",
+      "SUSPENDED",
+      "ARCHIVED"
+     ]
+    },
+    "businessEntity": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.model.BusinessEntity"
+    },
+    "paymentTermsDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "creditLimit": {
+     "type": "number"
+    },
+    "billingAddress": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.model.Address"
+    },
+    "website": {
+     "type": "string"
+    },
+    "defaultInvoiceLinkMode": {
+     "type": "string",
+     "enum": [
+      "AUTOMATIC",
+      "ON_CHOICE"
+     ]
+    },
+    "blockedReason": {
+     "type": "string"
+    },
+    "blockedBy": {
+     "type": "string"
+    },
+    "blockedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "deleted": {
+     "type": "boolean"
+    },
+    "member": {
+     "type": "boolean"
+    }
+   }
+  },
+  "Users": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "userId": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "passwordHash": {
+     "type": "string"
+    },
+    "lastLogin": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "deleted": {
+     "type": "boolean"
+    },
+    "isAccountExpired": {
+     "type": "boolean"
+    },
+    "isAccountLocked": {
+     "type": "boolean"
+    },
+    "isAccountEnabled": {
+     "type": "boolean"
+    },
+    "failedLoginAttempts": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "pendingEmail": {
+     "type": "string"
+    },
+    "emailVerifiedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "emailVerifiedBy": {
+     "type": "string"
+    },
+    "roleUsers": {
+     "uniqueItems": true,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.role.model.RoleUser"
+     }
+    }
+   }
+  },
+  "Address": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "country": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.model.Country"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    }
+   }
+  },
+  "BusinessEntity": {
+   "required": [
+    "legalForm"
+   ],
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "legalForm": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "niuNumber": {
+     "maxLength": 18,
+     "minLength": 0,
+     "type": "string"
+    },
+    "rccmNumber": {
+     "type": "string"
+    },
+    "organizationType": {
+     "type": "string",
+     "enum": [
+      "SOCIETE",
+      "ETABLISSEMENT",
+      "ENTREPRENEUR_INDIVIDUEL",
+      "PROFESSION_LIBERALE",
+      "ASSOCIATION",
+      "ONG",
+      "INSTITUTION_PUBLIQUE"
+     ]
+    },
+    "legalRepresentativeName": {
+     "type": "string"
+    },
+    "legalRepresentativeTitle": {
+     "type": "string"
+    },
+    "vatRegime": {
+     "type": "string",
+     "enum": [
+      "SUBJECT",
+      "EXEMPT"
+     ]
+    },
+    "vatExemptionNote": {
+     "type": "string"
+    },
+    "taxId": {
+     "type": "string"
+    },
+    "activity": {
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.model.Address"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "baseCurrency": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.model.Currency"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "INACTIVE",
+      "DELETED",
+      "BLOCKED"
+     ]
+    },
+    "deleted": {
+     "type": "boolean"
+    },
+    "operator": {
+     "type": "boolean"
+    },
+    "created_by": {
+     "type": "string"
+    },
+    "updated_by": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    }
+   }
+  },
+  "RoleUser": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.role.embedded.RoleUserId"
+    },
+    "role": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.role.model.Role"
+    },
+    "users": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.user.model.Users"
+    },
+    "assignedBy": {
+     "type": "string"
+    },
+    "assignedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    }
+   }
+  },
+  "Country": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "type": "string"
+    },
+    "countryCode": {
+     "maxLength": 3,
+     "minLength": 2,
+     "type": "string"
+    },
+    "defaultCurrency": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.model.Currency"
+    },
+    "phoneCode": {
+     "type": "string"
+    },
+    "isOhadaMember": {
+     "type": "boolean"
+    },
+    "deleted": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    }
+   }
+  },
+  "Currency": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "currencyCode": {
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    },
+    "currencyName": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    }
+   }
+  },
+  "RoleUserId": {
+   "type": "object",
+   "properties": {
+    "userId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "roleId": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "Role": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "maxLength": 250,
+     "minLength": 0,
+     "pattern": "^[A-Z_]+$",
+     "type": "string"
+    },
+    "displayName": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "isSystemRole": {
+     "type": "boolean"
+    },
+    "version": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "isActive": {
+     "type": "boolean"
+    },
+    "rolePermissions": {
+     "uniqueItems": true,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.role.model.RolePermission"
+     }
+    }
+   }
+  },
+  "RolePermission": {
+   "type": "object",
+   "properties": {
+    "role": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.role.model.Role"
+    },
+    "permission": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.role.model.Permission"
+    },
+    "created_by": {
+     "type": "string"
+    },
+    "isActive": {
+     "type": "boolean"
+    },
+    "id": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.security.admin.role.embedded.RolePermissionId"
+    }
+   }
+  },
+  "Permission": {
+   "required": [
+    "action",
+    "displayName",
+    "module",
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "maxLength": 100,
+     "minLength": 0,
+     "pattern": "^[A-Z_]+$",
+     "type": "string"
+    },
+    "displayName": {
+     "maxLength": 100,
+     "minLength": 0,
+     "type": "string"
+    },
+    "module": {
+     "maxLength": 50,
+     "minLength": 0,
+     "type": "string"
+    },
+    "action": {
+     "maxLength": 60,
+     "minLength": 0,
+     "type": "string"
+    },
+    "isSystemPermission": {
+     "type": "boolean"
+    },
+    "isActive": {
+     "type": "boolean"
+    },
+    "fullPermissionName": {
+     "type": "string"
+    }
+   }
+  },
+  "RolePermissionId": {
+   "type": "object",
+   "properties": {
+    "roleId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "permissionId": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  }
+ },
+ "enums": {
+  "SettingDomain": [
+   "BOOKING",
+   "RESOURCES",
+   "SUBSCRIPTIONS",
+   "PASSES",
+   "MARKETPLACE",
+   "PROMOTIONS",
+   "DOMICILIATION",
+   "CONTRACTS",
+   "SUPPORT",
+   "TASKS",
+   "CRM",
+   "EVENTS",
+   "PORTAL",
+   "COMPANIES",
+   "WALLET",
+   "PAYMENT",
+   "BILLING",
+   "COMPLIANCE",
+   "DOCUMENTS",
+   "LOCALE",
+   "SECURITY",
+   "NOTIFICATIONS",
+   "WEBHOOKS",
+   "OUTBOX",
+   "GRAPH_API",
+   "WEBSOCKET",
+   "ENVIRONMENT"
+  ]
+ },
+ "names": {
+  "MemberSettingsResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.MemberSettingsResponse",
+  "UpdateMemberSettingsRequest": "com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateMemberSettingsRequest",
+  "NotificationPreferenceResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.NotificationPreferenceResponse",
+  "UpdateNotificationPreferenceRequest": "com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateNotificationPreferenceRequest",
+  "PlatformSettingsAdminService.SettingView": "com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.SettingView",
+  "SettingDomain": "com.sni.bokaticowork.core.settings.platform.SettingDomain",
+  "PlatformSettingsAdminService.DomainView": "com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.DomainView",
+  "PlatformSettingsController.UpdateRequest": "com.sni.bokaticowork.core.settings.platform.PlatformSettingsController.UpdateRequest",
+  "PlatformSettingsAdminService.ChangeView": "com.sni.bokaticowork.core.settings.platform.PlatformSettingsAdminService.ChangeView",
+  "BillingPreferencesResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.BillingPreferencesResponse",
+  "WalletPreferencesResponse": "com.sni.bokaticowork.core.settings.userSettings.dto.response.WalletPreferencesResponse",
+  "BillingPreferences": "com.sni.bokaticowork.core.settings.userSettings.dto.request.BillingPreferences",
+  "WalletPreferencesRequest": "com.sni.bokaticowork.core.settings.userSettings.dto.request.WalletPreferencesRequest",
+  "NotificationPreferences": "com.sni.bokaticowork.core.settings.userSettings.model.NotificationPreferences",
+  "Member": "com.sni.bokaticowork.features.client.member.model.Member",
+  "Customer": "com.sni.bokaticowork.features.client.customer.model.Customer",
+  "Users": "com.sni.bokaticowork.security.admin.user.model.Users",
+  "Address": "com.sni.bokaticowork.core.baseClasses.model.Address",
+  "BusinessEntity": "com.sni.bokaticowork.features.company.model.BusinessEntity",
+  "RoleUser": "com.sni.bokaticowork.security.admin.role.model.RoleUser",
+  "Country": "com.sni.bokaticowork.core.baseClasses.model.Country",
+  "Currency": "com.sni.bokaticowork.core.baseClasses.model.Currency",
+  "RoleUserId": "com.sni.bokaticowork.security.admin.role.embedded.RoleUserId",
+  "Role": "com.sni.bokaticowork.security.admin.role.model.Role",
+  "RolePermission": "com.sni.bokaticowork.security.admin.role.model.RolePermission",
+  "Permission": "com.sni.bokaticowork.security.admin.role.model.Permission",
+  "RolePermissionId": "com.sni.bokaticowork.security.admin.role.embedded.RolePermissionId"
+ }
+}

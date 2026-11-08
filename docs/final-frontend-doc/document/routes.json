@@ -1,0 +1,7421 @@
+{
+ "module": "document",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "list",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=uploadedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/access-logs/by-user",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "accessLogsByUser",
+   "declaredIn": "DocumentController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "userId",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=accessedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAccessLogResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/analytics",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "analytics",
+   "declaredIn": "DocumentController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "space",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    },
+    {
+     "in": "query",
+     "name": "months",
+     "required": false,
+     "default": "12",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAnalyticsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/dashboard",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "dashboard",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "space",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/export/csv",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "exportCsv",
+   "declaredIn": "DocumentController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "space",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    },
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentCategory"
+    },
+    {
+     "in": "query",
+     "name": "tags",
+     "required": false,
+     "type": "List<String>"
+    },
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "statuses",
+     "required": false,
+     "type": "List<com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus>"
+    },
+    {
+     "in": "query",
+     "name": "uploadedAfter",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "uploadedBefore",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/folder",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "folder",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/import-zip",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "importZip",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "params": [
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    },
+    {
+     "in": "query-object",
+     "name": "metadata",
+     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.BatchUploadMetadataRequest"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.ZipImportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/search",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "search",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "space",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    },
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentCategory"
+    },
+    {
+     "in": "query",
+     "name": "tags",
+     "required": false,
+     "type": "List<String>"
+    },
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "statuses",
+     "required": false,
+     "type": "List<com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus>"
+    },
+    {
+     "in": "query",
+     "name": "expiresInDays",
+     "required": false,
+     "type": "Integer"
+    },
+    {
+     "in": "query",
+     "name": "isExpired",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "uploadedAfter",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "uploadedBefore",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "metaKey",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "metaValue",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=uploadedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/upload",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "upload",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_UPLOAD",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "query-object",
+     "name": "metadata",
+     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentUploadMetadataRequest"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/upload-batch",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "uploadBatch",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "params": [
+    {
+     "in": "multipart",
+     "name": "files",
+     "required": true,
+     "type": "List<MultipartFile>"
+    },
+    {
+     "in": "query-object",
+     "name": "metadata",
+     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.BatchUploadMetadataRequest"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "getByCode",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}/access-logs",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "accessLogs",
+   "declaredIn": "DocumentController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=accessedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAccessLogResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/approve",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "approve",
+   "declaredIn": "DocumentController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_APPROVE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/archive",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "archive",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}/download",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "download",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/lock",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "lock",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}/preview",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "preview",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}/preview-token",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "previewToken",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Object>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/reject",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "reject",
+   "declaredIn": "DocumentController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_REJECT",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/replace",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "replace",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_REPLACE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/request-correction",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "requestCorrection",
+   "declaredIn": "DocumentController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentCorrectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}/signed-preview",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "signedPreview",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "token",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/unlock",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "unlock",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}/versions",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "listVersions",
+   "declaredIn": "DocumentController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/versions/{versionNumber}/restore",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentController.java",
+   "handler": "restoreVersion",
+   "declaredIn": "DocumentController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "versionNumber",
+     "required": true,
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-folders",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "create",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateFolderRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.FolderDetailResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-folders/roots",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "roots",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "space",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.FolderDetailResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/document-folders/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "delete",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-folders/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "getByCode",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.FolderDetailResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/document-folders/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "update",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.UpdateFolderRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.FolderDetailResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-folders/{code}/breadcrumb",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "breadcrumb",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.BreadcrumbItem>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-folders/{code}/children",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "children",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.FolderDetailResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-folders/{code}/documents",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "documents",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=uploadedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-folders/{code}/move",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "move",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.MoveFolderRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.FolderDetailResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-folders/{code}/tree",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "tree",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderTreeNode>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-folders/{documentCode}/move-document",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentFolderController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentFolderController.java",
+   "handler": "moveDocument",
+   "declaredIn": "DocumentFolderController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.MoveDocumentToFolderRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/document-permissions",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentPermissionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java",
+   "handler": "revoke",
+   "declaredIn": "DocumentPermissionController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "targetType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "targetCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "granteeType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "granteeId",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "permission",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-permissions",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentPermissionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java",
+   "handler": "list",
+   "declaredIn": "DocumentPermissionController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "targetType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "targetCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentPermissionResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-permissions",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentPermissionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java",
+   "handler": "grant",
+   "declaredIn": "DocumentPermissionController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.GrantPermissionRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentPermissionResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-permissions/effective",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentPermissionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentPermissionController.java",
+   "handler": "effective",
+   "declaredIn": "DocumentPermissionController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "userId",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Set<String>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-requirements",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentRequirementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentRequirementController.java",
+   "handler": "list",
+   "declaredIn": "DocumentRequirementController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-requirements",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentRequirementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentRequirementController.java",
+   "handler": "create",
+   "declaredIn": "DocumentRequirementController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_REQUIREMENT_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentRequirementRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/document-requirements/{id}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentRequirementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentRequirementController.java",
+   "handler": "delete",
+   "declaredIn": "DocumentRequirementController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_REQUIREMENT_DELETE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-requirements/{id}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentRequirementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentRequirementController.java",
+   "handler": "get",
+   "declaredIn": "DocumentRequirementController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/document-requirements/{id}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentRequirementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentRequirementController.java",
+   "handler": "update",
+   "declaredIn": "DocumentRequirementController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_REQUIREMENT_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentRequirementRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/document-requirements/{id}/activate",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentRequirementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentRequirementController.java",
+   "handler": "activate",
+   "declaredIn": "DocumentRequirementController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_REQUIREMENT_ACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/document-requirements/{id}/deactivate",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentRequirementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentRequirementController.java",
+   "handler": "deactivate",
+   "declaredIn": "DocumentRequirementController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_REQUIREMENT_DEACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-retention-policies",
+   "package": "features.document.retention.controller",
+   "controller": "DocumentRetentionPolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java",
+   "handler": "list",
+   "declaredIn": "DocumentRetentionPolicyController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.retention.dto.response.DocumentRetentionPolicyResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-retention-policies",
+   "package": "features.document.retention.controller",
+   "controller": "DocumentRetentionPolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java",
+   "handler": "create",
+   "declaredIn": "DocumentRetentionPolicyController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.retention.dto.request.DocumentRetentionPolicyRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.retention.dto.response.DocumentRetentionPolicyResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/document-retention-policies/{code}",
+   "package": "features.document.retention.controller",
+   "controller": "DocumentRetentionPolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java",
+   "handler": "deactivate",
+   "declaredIn": "DocumentRetentionPolicyController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-retention-policies/{code}",
+   "package": "features.document.retention.controller",
+   "controller": "DocumentRetentionPolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java",
+   "handler": "getByCode",
+   "declaredIn": "DocumentRetentionPolicyController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.retention.dto.response.DocumentRetentionPolicyResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/document-retention-policies/{code}",
+   "package": "features.document.retention.controller",
+   "controller": "DocumentRetentionPolicyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/retention/controller/DocumentRetentionPolicyController.java",
+   "handler": "update",
+   "declaredIn": "DocumentRetentionPolicyController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.retention.dto.request.DocumentRetentionPolicyRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.retention.dto.response.DocumentRetentionPolicyResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/review/queue",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentReviewQueueController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentReviewQueueController.java",
+   "handler": "globalQueue",
+   "declaredIn": "DocumentReviewQueueController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('DOCUMENT:REVIEW','DOCUMENT_REVIEW')",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/review/{space}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentReviewQueueController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentReviewQueueController.java",
+   "handler": "spaceQueue",
+   "declaredIn": "DocumentReviewQueueController",
+   "access": {
+    "preAuthorize": "@docSpaceSecurity.canReview(authentication, #space)",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "space",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/review/{space}/bulk-approve",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentReviewQueueController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentReviewQueueController.java",
+   "handler": "bulkApprove",
+   "declaredIn": "DocumentReviewQueueController",
+   "access": {
+    "preAuthorize": "@docSpaceSecurity.canReview(authentication, #space)",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentBulkApproveRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "space",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/review/{space}/bulk-reject",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentReviewQueueController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentReviewQueueController.java",
+   "handler": "bulkReject",
+   "declaredIn": "DocumentReviewQueueController",
+   "access": {
+    "preAuthorize": "@docSpaceSecurity.canReview(authentication, #space)",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentBulkRejectRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "space",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/review/{space}/bulk-request-correction",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentReviewQueueController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentReviewQueueController.java",
+   "handler": "bulkRequestCorrection",
+   "declaredIn": "DocumentReviewQueueController",
+   "access": {
+    "preAuthorize": "@docSpaceSecurity.canReview(authentication, #space)",
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentBulkCorrectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "space",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-folders/{folderCode}/share",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentShareController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java",
+   "handler": "shareFolder",
+   "declaredIn": "DocumentShareController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateShareLinkRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "folderCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.ShareLinkResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/share",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentShareController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java",
+   "handler": "shareDocument",
+   "declaredIn": "DocumentShareController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateShareLinkRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.ShareLinkResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/shares",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentShareController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java",
+   "handler": "listByDocument",
+   "declaredIn": "DocumentShareController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.ShareLinkResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/shares/{token}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentShareController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java",
+   "handler": "revoke",
+   "declaredIn": "DocumentShareController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/shares/{token}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentShareController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentShareController.java",
+   "handler": "access",
+   "declaredIn": "DocumentShareController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "password",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.ShareLinkResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/signatures",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSignatureController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSignatureController.java",
+   "handler": "list",
+   "declaredIn": "DocumentSignatureController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentSignatureResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/signatures",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSignatureController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSignatureController.java",
+   "handler": "requestSignature",
+   "declaredIn": "DocumentSignatureController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateDocumentSignatureRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentSignatureResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/signatures/{signatureId}/sign",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSignatureController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSignatureController.java",
+   "handler": "sign",
+   "declaredIn": "DocumentSignatureController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.SignDocumentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "signatureId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentSignatureResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/administrative/dashboard",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "adminDashboard",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/administrative/documents",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "listAdministrative",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "statuses",
+     "required": false,
+     "type": "List<com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus>"
+    },
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=uploadedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/spaces/administrative/documents/upload",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "uploadAdministrative",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "SPACE_ADMIN_UPLOAD",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "query-object",
+     "name": "request",
+     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.SpaceDocumentUploadRequest"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/assets/dashboard",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "assetDashboard",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/assets/documents",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "listAssets",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "statuses",
+     "required": false,
+     "type": "List<com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus>"
+    },
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=uploadedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/spaces/assets/documents/upload",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "uploadAsset",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "SPACE_ASSET_UPLOAD",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "query-object",
+     "name": "request",
+     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.SpaceDocumentUploadRequest"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/contracts/dashboard",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "contractDashboard",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/contracts/documents",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "listContracts",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "statuses",
+     "required": false,
+     "type": "List<com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus>"
+    },
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=uploadedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/spaces/contracts/documents/upload",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "uploadContract",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "SPACE_CONTRACT_UPLOAD",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "query-object",
+     "name": "request",
+     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.SpaceDocumentUploadRequest"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/financial/dashboard",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "financialDashboard",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/financial/documents",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "listFinancial",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "statuses",
+     "required": false,
+     "type": "List<com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus>"
+    },
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "uploadedAfter",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "uploadedBefore",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=uploadedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/spaces/financial/documents/upload",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "uploadFinancial",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "SPACE_FINANCIAL_UPLOAD",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "query-object",
+     "name": "request",
+     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.SpaceDocumentUploadRequest"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/general/dashboard",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "generalDashboard",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/spaces/general/documents",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "listGeneral",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "statuses",
+     "required": false,
+     "type": "List<com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus>"
+    },
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=uploadedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/spaces/general/documents/upload",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentSpaceController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentSpaceController.java",
+   "handler": "uploadGeneral",
+   "declaredIn": "DocumentSpaceController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "SPACE_GENERAL_UPLOAD",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "query-object",
+     "name": "request",
+     "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.SpaceDocumentUploadRequest"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-tags",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "listTags",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "space",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-tags",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "createTag",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/document-tags/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "deleteTag",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-tags/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "getTag",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/document-tags/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "updateTag",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagUpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}/metadata",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "getMetadata",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, String>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/documents/{code}/metadata",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "setMetadata",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "body": {
+    "type": "Map<String, String>",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, String>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/documents/{code}/metadata/{key}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "deleteMetadataKey",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "key",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{code}/tags",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "getDocumentTags",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{code}/tags",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "assignTags",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagAssignRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/documents/{code}/tags/{tagCode}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTagController.java",
+   "handler": "removeTag",
+   "declaredIn": "DocumentTagController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "tagCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-types",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java",
+   "handler": "list",
+   "declaredIn": "DocumentTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-types",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java",
+   "handler": "create",
+   "declaredIn": "DocumentTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_TYPE_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTypeRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/document-types/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java",
+   "handler": "delete",
+   "declaredIn": "DocumentTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_TYPE_DELETE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-types/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java",
+   "handler": "get",
+   "declaredIn": "DocumentTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/document-types/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java",
+   "handler": "update",
+   "declaredIn": "DocumentTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_TYPE_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTypeRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/document-types/{code}/activate",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java",
+   "handler": "activate",
+   "declaredIn": "DocumentTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_TYPE_ACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/document-types/{code}/deactivate",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java",
+   "handler": "deactivate",
+   "declaredIn": "DocumentTypeController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "DOCUMENT_TYPE_DEACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-types/{code}/upload-config",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentTypeController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentTypeController.java",
+   "handler": "uploadConfig",
+   "declaredIn": "DocumentTypeController",
+   "access": {
+    "kind": "authenticated"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentUploadConfigResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-workflows",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "list",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "activeOnly",
+     "required": false,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/document-workflows",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "create",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateWorkflowRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-workflows/my-pending",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "myPending",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/document-workflows/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "delete",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/document-workflows/{code}",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "getByCode",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/start-workflow",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "startWorkflow",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "workflowCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/workflow/approve",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "approve",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.WorkflowActionRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/workflow/reject",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "reject",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:REVIEW"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.documentMaster.dto.request.WorkflowActionRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/documents/{documentCode}/workflow/status",
+   "package": "features.document.documentMaster.controller",
+   "controller": "DocumentWorkflowController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/documentMaster/controller/DocumentWorkflowController.java",
+   "handler": "status",
+   "declaredIn": "DocumentWorkflowController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "list",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "submittedAfter",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "submittedBefore",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "reviewedBy",
+     "required": false,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "pendingReviewOnly",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "expiringWithinDays",
+     "required": false,
+     "type": "Integer"
+    },
+    {
+     "in": "query",
+     "name": "riskLevel",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.kyc.KycRiskLevel"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=startedAt,ASC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "create",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_CASE_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/dashboard",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "dashboard",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/expiring-soon",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "expiringSoon",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "days",
+     "required": false,
+     "default": "30",
+     "type": "Integer"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/my-queue",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "myQueue",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "userId",
+     "required": false,
+     "type": "Long"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "getByCode",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/approve",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "approve",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:APPROVE"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_CASE_APPROVE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/assign",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "assign",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycAssignRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/documents/bulk-approve",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "caseBulkApprove",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_CASE_BULK_APPROVE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkApproveRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/documents/bulk-reject",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "caseBulkReject",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_CASE_BULK_REJECT",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkRejectRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/documents/request-correction",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "caseCorrectionRequest",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseCorrectionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/expiry-status",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "expiryStatus",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycExpiryDocumentStatus>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/export/pdf",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "exportPdf",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "includeInternalNotes",
+     "required": false,
+     "default": "true",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/missing-requirements",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "missingRequirements",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/notes",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "notes",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/notes",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "addNote",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseNoteRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/reject",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "reject",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:REJECT"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_CASE_REJECT",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/requirements",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "listCaseRequirements",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseRequirementResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/requirements",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "addCaseRequirement",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseRequirementRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseRequirementResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/requirements/{documentTypeCode}",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "removeCaseRequirement",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "documentTypeCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/review-queue",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "caseReviewQueue",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/risk-level",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "riskLevel",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycRiskLevelRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/submit",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "submit",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_CASE_SUBMIT",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cases/{code}/timeline",
+   "package": "features.document.kyc.controller",
+   "controller": "KycController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycController.java",
+   "handler": "timeline",
+   "declaredIn": "KycController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycTimelineEntryResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cross-validation-rules",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCrossValidationRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCrossValidationRuleController.java",
+   "handler": "list",
+   "declaredIn": "KycCrossValidationRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "activeOnly",
+     "required": false,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycCrossValidationRuleResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/cross-validation-rules",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCrossValidationRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCrossValidationRuleController.java",
+   "handler": "create",
+   "declaredIn": "KycCrossValidationRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCrossValidationRuleRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCrossValidationRuleResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/kyc/cross-validation-rules/{id}",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCrossValidationRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCrossValidationRuleController.java",
+   "handler": "delete",
+   "declaredIn": "KycCrossValidationRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/cross-validation-rules/{id}",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCrossValidationRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCrossValidationRuleController.java",
+   "handler": "getById",
+   "declaredIn": "KycCrossValidationRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCrossValidationRuleResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/kyc/cross-validation-rules/{id}",
+   "package": "features.document.kyc.controller",
+   "controller": "KycCrossValidationRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycCrossValidationRuleController.java",
+   "handler": "update",
+   "declaredIn": "KycCrossValidationRuleController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCrossValidationRuleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycCrossValidationRuleResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/documents/admin/upload",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentAdminController.java",
+   "handler": "upload",
+   "declaredIn": "KycDocumentAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "documentTypeCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "side",
+     "required": false,
+     "default": "FRONT",
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "documentNumber",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "issueDate",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "expiryDate",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/kyc/documents/admin/{kycDocumentId}/details",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentAdminController.java",
+   "handler": "updateDetails",
+   "declaredIn": "KycDocumentAdminController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycDocumentDetailsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "kycDocumentId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/documents/approved",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "approved",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:APPROVE"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/documents/bulk-approve",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "bulkApprove",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_DOCUMENT_BULK_APPROVE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkApproveRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/documents/bulk-desapprove",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "bulkReject",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_DOCUMENT_BULK_REJECT",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/documents/bulk-disapprove",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "bulkReject",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_DOCUMENT_BULK_REJECT",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/kyc/documents/bulk-reject",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "bulkReject",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "KYC_DOCUMENT_BULK_REJECT",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/documents/desapproved",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "rejected",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/documents/disapproved",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "rejected",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/documents/rejected",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "rejected",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:REJECT"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/documents/review-queue",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "reviewQueue",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/documents/reviewed",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "reviewed",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/kyc/documents/{documentCode}/ocr-result",
+   "package": "features.document.kyc.controller",
+   "controller": "KycDocumentReviewController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/kyc/controller/KycDocumentReviewController.java",
+   "handler": "ocrResult",
+   "declaredIn": "KycDocumentReviewController",
+   "access": {
+    "kind": "admin",
+    "permission": "KYC:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentOcrResultResponse>"
+  }
+ ],
+ "schemas": {
+  "DocumentResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "ownerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "KYC",
+      "LEGAL",
+      "SYSTEM",
+      "FINANCIAL",
+      "ASSET",
+      "OTHER"
+     ]
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "spaceReferenceCode": {
+     "type": "string"
+    },
+    "folderCode": {
+     "type": "string"
+    },
+    "folderName": {
+     "type": "string"
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "fileName": {
+     "type": "string"
+    },
+    "fileUrl": {
+     "type": "string"
+    },
+    "previewUrl": {
+     "type": "string"
+    },
+    "downloadUrl": {
+     "type": "string"
+    },
+    "fileSize": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "mimeType": {
+     "type": "string"
+    },
+    "checksumSha256": {
+     "type": "string"
+    },
+    "currentVersionNumber": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "UPLOADED",
+      "PENDING_REVIEW",
+      "NEEDS_CORRECTION",
+      "APPROVED",
+      "REJECTED",
+      "SIGNED",
+      "EXPIRED",
+      "ARCHIVED",
+      "SUPERSEDED"
+     ]
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "expiryDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "uploadedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "uploadedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "versions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse"
+     }
+    },
+    "tags": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse"
+     }
+    },
+    "metadata": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "DocumentAccessLogResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentCode": {
+     "type": "string"
+    },
+    "userId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "action": {
+     "type": "string"
+    },
+    "accessedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "ipAddress": {
+     "type": "string"
+    },
+    "userAgent": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentAnalyticsResponse": {
+   "type": "object",
+   "properties": {
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "periodMonths": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalDocuments": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pendingReview": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "needsCorrection": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "expiredDocuments": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "byStatus": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "bySpace": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "byCategory": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "correctionRate30d": {
+     "type": "number",
+     "format": "double"
+    },
+    "rejectionRate30d": {
+     "type": "number",
+     "format": "double"
+    },
+    "avgReviewTimeHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "uploadsByMonth": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAnalyticsResponse.PeriodCount"
+     }
+    },
+    "approvalsByMonth": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAnalyticsResponse.PeriodCount"
+     }
+    },
+    "rejectionsByMonth": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAnalyticsResponse.PeriodCount"
+     }
+    },
+    "correctionsByMonth": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAnalyticsResponse.PeriodCount"
+     }
+    }
+   }
+  },
+  "DocumentDashboardResponse": {
+   "type": "object",
+   "properties": {
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "total": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "byStatus": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "byCategory": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "pendingReviewOlderThan48h": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "needsCorrectionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "expiringIn30Days": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "rejectionRate30d": {
+     "type": "number"
+    },
+    "avgReviewTimeHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "topTags": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse.TagCount"
+     }
+    }
+   }
+  },
+  "DocumentFolderResponse": {
+   "type": "object",
+   "properties": {
+    "owner": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderResponse.OwnerInfo"
+    },
+    "spaces": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderResponse.SpaceFolder"
+     }
+    },
+    "missingRequirements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus"
+     }
+    },
+    "expiringSoon": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse"
+     }
+    }
+   }
+  },
+  "ZipImportResponse": {
+   "type": "object",
+   "properties": {
+    "totalFiles": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "succeeded": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "failed": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "foldersCreated": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "items": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.ZipImportResponse.ZipImportItem"
+     }
+    }
+   }
+  },
+  "BatchUploadMetadataRequest": {
+   "required": [
+    "documentTypeCode",
+    "ownerCode",
+    "ownerType"
+   ],
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "documentTypeCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "folderCode": {
+     "type": "string"
+    },
+    "referenceCode": {
+     "type": "string"
+    },
+    "tagCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "DocumentUploadMetadataRequest": {
+   "required": [
+    "documentTypeCode",
+    "ownerCode",
+    "ownerType",
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "documentTypeCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "expiryDate": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "DocumentBulkActionResponse": {
+   "type": "object",
+   "properties": {
+    "total": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "succeeded": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "failed": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "results": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkItemResult"
+     }
+    }
+   }
+  },
+  "DocumentReviewDecisionRequest": {
+   "required": [
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "comment": {
+     "type": "string"
+    },
+    "rejectionReasonCode": {
+     "type": "string"
+    },
+    "rejectionReasonDetail": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentCorrectionRequest": {
+   "required": [
+    "correctionNote",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "correctionNote": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "comment": {
+     "type": "string"
+    },
+    "deadlineDays": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "DocumentVersionResponse": {
+   "type": "object",
+   "properties": {
+    "versionNumber": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "storageProvider": {
+     "type": "string"
+    },
+    "storagePath": {
+     "type": "string"
+    },
+    "previewUrl": {
+     "type": "string"
+    },
+    "downloadUrl": {
+     "type": "string"
+    },
+    "originalFileName": {
+     "type": "string"
+    },
+    "storedFileName": {
+     "type": "string"
+    },
+    "mimeTypeDeclared": {
+     "type": "string"
+    },
+    "mimeTypeDetected": {
+     "type": "string"
+    },
+    "fileExtension": {
+     "type": "string"
+    },
+    "checksumSha256": {
+     "type": "string"
+    },
+    "fileSizeBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "uploadStatus": {
+     "type": "string",
+     "enum": [
+      "PENDING_SCAN",
+      "READY",
+      "QUARANTINED",
+      "REJECTED",
+      "DELETED"
+     ]
+    },
+    "antivirusStatus": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "CLEAN",
+      "INFECTED",
+      "ERROR"
+     ]
+    },
+    "uploadedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "uploadedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "current": {
+     "type": "boolean"
+    }
+   }
+  },
+  "FolderDetailResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "parentCode": {
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "ownerName": {
+     "type": "string"
+    },
+    "path": {
+     "type": "string"
+    },
+    "depth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "color": {
+     "type": "string"
+    },
+    "icon": {
+     "type": "string"
+    },
+    "childrenCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentsCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdByEmail": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CreateFolderRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "parentCode": {
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "color": {
+     "type": "string"
+    },
+    "icon": {
+     "type": "string"
+    }
+   }
+  },
+  "UpdateFolderRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "color": {
+     "type": "string"
+    },
+    "icon": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "BreadcrumbItem": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "depth": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "MoveFolderRequest": {
+   "type": "object",
+   "properties": {
+    "targetParentCode": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentFolderTreeNode": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "icon": {
+     "type": "string"
+    },
+    "color": {
+     "type": "string"
+    },
+    "depth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "documentsCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "children": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderTreeNode"
+     }
+    }
+   }
+  },
+  "MoveDocumentToFolderRequest": {
+   "type": "object",
+   "properties": {
+    "folderCode": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentPermissionResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "targetType": {
+     "type": "string"
+    },
+    "targetId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "targetCode": {
+     "type": "string"
+    },
+    "granteeType": {
+     "type": "string"
+    },
+    "granteeId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "granteeEmail": {
+     "type": "string"
+    },
+    "permission": {
+     "type": "string"
+    },
+    "grantedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "grantedByEmail": {
+     "type": "string"
+    },
+    "grantedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "GrantPermissionRequest": {
+   "required": [
+    "granteeId",
+    "granteeType",
+    "permission",
+    "targetCode",
+    "targetType"
+   ],
+   "type": "object",
+   "properties": {
+    "targetType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "targetCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "granteeType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "granteeId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "permission": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "DocumentRequirementResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "businessLegalForm": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DocumentRequirementRequest": {
+   "required": [
+    "documentTypeCode",
+    "ownerType"
+   ],
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "documentTypeCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "businessLegalForm": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DocumentRetentionPolicyResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "retentionDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "retentionReference": {
+     "type": "string",
+     "enum": [
+      "UPLOAD_DATE",
+      "EXPIRY_DATE"
+     ]
+    },
+    "action": {
+     "type": "string",
+     "enum": [
+      "ARCHIVE",
+      "PURGE_FLAG"
+     ]
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "DocumentRetentionPolicyRequest": {
+   "required": [
+    "code",
+    "name",
+    "retentionDays"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "retentionDays": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "retentionReference": {
+     "type": "string",
+     "enum": [
+      "UPLOAD_DATE",
+      "EXPIRY_DATE"
+     ]
+    },
+    "action": {
+     "type": "string",
+     "enum": [
+      "ARCHIVE",
+      "PURGE_FLAG"
+     ]
+    }
+   }
+  },
+  "DocumentBulkApproveRequest": {
+   "required": [
+    "codes",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "codes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "comment": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentBulkRejectRequest": {
+   "required": [
+    "codes",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "codes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "rejectionReasonCode": {
+     "type": "string"
+    },
+    "rejectionReasonDetail": {
+     "type": "string"
+    },
+    "comment": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentBulkCorrectionRequest": {
+   "required": [
+    "codes",
+    "correctionNote",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "codes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "correctionNote": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "deadlineDays": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ShareLinkResponse": {
+   "type": "object",
+   "properties": {
+    "token": {
+     "type": "string"
+    },
+    "shareUrl": {
+     "type": "string"
+    },
+    "documentCode": {
+     "type": "string"
+    },
+    "folderCode": {
+     "type": "string"
+    },
+    "allowDownload": {
+     "type": "boolean"
+    },
+    "passwordProtected": {
+     "type": "boolean"
+    },
+    "maxAccessCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "accessCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdByEmail": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CreateShareLinkRequest": {
+   "required": [
+    "expiresInHours"
+   ],
+   "type": "object",
+   "properties": {
+    "expiresInHours": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "password": {
+     "type": "string"
+    },
+    "allowDownload": {
+     "type": "boolean"
+    },
+    "maxAccessCount": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "DocumentSignatureResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentCode": {
+     "type": "string"
+    },
+    "signerType": {
+     "type": "string"
+    },
+    "signerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "signerName": {
+     "type": "string"
+    },
+    "signerEmail": {
+     "type": "string"
+    },
+    "signatureStatus": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "SIGNED",
+      "DECLINED",
+      "EXPIRED"
+     ]
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "ipAddress": {
+     "type": "string"
+    },
+    "userAgent": {
+     "type": "string"
+    }
+   }
+  },
+  "CreateDocumentSignatureRequest": {
+   "required": [
+    "signerId",
+    "signerName",
+    "signerType"
+   ],
+   "type": "object",
+   "properties": {
+    "signerType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "signerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "signerName": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "signerEmail": {
+     "type": "string",
+     "format": "email"
+    }
+   }
+  },
+  "SignDocumentRequest": {
+   "type": "object",
+   "properties": {
+    "accepted": {
+     "type": "boolean"
+    },
+    "signatureData": {
+     "type": "string"
+    }
+   }
+  },
+  "SpaceDocumentUploadRequest": {
+   "required": [
+    "documentTypeCode",
+    "ownerCode",
+    "ownerType",
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "documentTypeCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "expiryDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "referenceCode": {
+     "type": "string"
+    },
+    "folderCode": {
+     "type": "string"
+    },
+    "tagCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "metadata": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "DocumentTagResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "color": {
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DocumentTagRequest": {
+   "required": [
+    "code",
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 80,
+     "minLength": 0,
+     "pattern": "^[a-z0-9-]+$",
+     "type": "string"
+    },
+    "label": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "color": {
+     "pattern": "^#[0-9A-Fa-f]{6}$",
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    }
+   }
+  },
+  "DocumentTagUpdateRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "color": {
+     "pattern": "^#[0-9A-Fa-f]{6}$",
+     "type": "string"
+    }
+   }
+  },
+  "DocumentTagAssignRequest": {
+   "required": [
+    "tagCodes"
+   ],
+   "type": "object",
+   "properties": {
+    "tagCodes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "DocumentTypeResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "KYC",
+      "LEGAL",
+      "SYSTEM",
+      "FINANCIAL",
+      "ASSET",
+      "OTHER"
+     ]
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "description": {
+     "type": "string"
+    },
+    "helpText": {
+     "type": "string"
+    },
+    "documentDetails": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "requiresExpiryDate": {
+     "type": "boolean"
+    },
+    "requiresIssueDate": {
+     "type": "boolean"
+    },
+    "requiresDocumentNumber": {
+     "type": "boolean"
+    },
+    "requiresReview": {
+     "type": "boolean"
+    },
+    "autoApprove": {
+     "type": "boolean"
+    },
+    "autoApproveAfterDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "requiresSignature": {
+     "type": "boolean"
+    },
+    "multipleAllowed": {
+     "type": "boolean"
+    },
+    "requiresBackSide": {
+     "type": "boolean"
+    },
+    "allowedMimeTypes": {
+     "type": "string"
+    },
+    "maxFileSizeBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DocumentTypeRequest": {
+   "required": [
+    "category",
+    "code",
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "KYC",
+      "LEGAL",
+      "SYSTEM",
+      "FINANCIAL",
+      "ASSET",
+      "OTHER"
+     ]
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "description": {
+     "type": "string"
+    },
+    "helpText": {
+     "type": "string"
+    },
+    "documentDetails": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "requiresExpiryDate": {
+     "type": "boolean"
+    },
+    "requiresIssueDate": {
+     "type": "boolean"
+    },
+    "requiresDocumentNumber": {
+     "type": "boolean"
+    },
+    "requiresReview": {
+     "type": "boolean"
+    },
+    "autoApprove": {
+     "type": "boolean"
+    },
+    "autoApproveAfterDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "requiresSignature": {
+     "type": "boolean"
+    },
+    "multipleAllowed": {
+     "type": "boolean"
+    },
+    "requiresBackSide": {
+     "type": "boolean"
+    },
+    "allowedMimeTypes": {
+     "type": "string"
+    },
+    "maxFileSizeBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DocumentUploadConfigResponse": {
+   "type": "object",
+   "properties": {
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "helpText": {
+     "type": "string"
+    },
+    "requiresDocumentNumber": {
+     "type": "boolean"
+    },
+    "requiresIssueDate": {
+     "type": "boolean"
+    },
+    "requiresExpiryDate": {
+     "type": "boolean"
+    },
+    "requiresBackSide": {
+     "type": "boolean"
+    },
+    "allowedMimeTypes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "maxFileSizeBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "category": {
+     "type": "string"
+    }
+   }
+  },
+  "WorkflowResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "workflowType": {
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "steps": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowResponse.StepResponse"
+     }
+    }
+   }
+  },
+  "CreateWorkflowRequest": {
+   "required": [
+    "name",
+    "steps"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "workflowType": {
+     "type": "string"
+    },
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "steps": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateWorkflowRequest.WorkflowStepRequest"
+     }
+    }
+   }
+  },
+  "WorkflowInstanceResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "workflowCode": {
+     "type": "string"
+    },
+    "workflowName": {
+     "type": "string"
+    },
+    "documentCode": {
+     "type": "string"
+    },
+    "documentTitle": {
+     "type": "string"
+    },
+    "currentStep": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "currentStepName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "completedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "actions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse.ActionResponse"
+     }
+    }
+   }
+  },
+  "WorkflowActionRequest": {
+   "type": "object",
+   "properties": {
+    "comment": {
+     "type": "string"
+    }
+   }
+  },
+  "KycCaseResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "ownerName": {
+     "type": "string"
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "NOT_STARTED",
+      "IN_PROGRESS",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "APPROVED",
+      "REJECTED",
+      "PENDING_CORRECTION",
+      "RENEWAL_REQUIRED",
+      "EXPIRED"
+     ]
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "submittedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "completedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "reviewedByEmail": {
+     "type": "string"
+    },
+    "reviewedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "decisionComment": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "assignedToEmail": {
+     "type": "string"
+    },
+    "assignedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "slaDeadline": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastReminderSentAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "reminderCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "riskLevel": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "VERY_HIGH"
+     ]
+    },
+    "kycLevel": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "complete": {
+     "type": "boolean"
+    },
+    "approved": {
+     "type": "boolean"
+    },
+    "missingDocumentTypeCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "requirements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus"
+     }
+    },
+    "documents": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse"
+     }
+    }
+   }
+  },
+  "CreateKycCaseRequest": {
+   "required": [
+    "ownerCode",
+    "ownerType"
+   ],
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "ownerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "documentTypeCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "KycDashboardResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "summary": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "sla": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.SlaMetrics"
+    },
+    "expiringSoon": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.ExpiringSoonMetrics"
+    },
+    "byOwnerType": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.OwnerTypeMetrics"
+     }
+    },
+    "recentActivity": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.ActivityMetrics"
+     }
+    }
+   }
+  },
+  "KycDecisionRequest": {
+   "required": [
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "comment": {
+     "type": "string"
+    }
+   }
+  },
+  "KycAssignRequest": {
+   "type": "object",
+   "properties": {
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "email": {
+     "type": "string"
+    }
+   }
+  },
+  "KycBulkActionResponse": {
+   "type": "object",
+   "properties": {
+    "processed": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "succeeded": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "failed": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "results": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkItemResult"
+     }
+    }
+   }
+  },
+  "KycCaseBulkApproveRequest": {
+   "required": [
+    "documentCodes",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "documentCodes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycCaseBulkRejectRequest": {
+   "required": [
+    "items",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "items": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectItemRequest"
+     }
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycDocumentResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentCode": {
+     "type": "string"
+    },
+    "documentType": {
+     "type": "string"
+    },
+    "ownerName": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "fileName": {
+     "type": "string"
+    },
+    "fileSize": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "mimeType": {
+     "type": "string"
+    },
+    "previewUrl": {
+     "type": "string"
+    },
+    "downloadUrl": {
+     "type": "string"
+    },
+    "requiresBackSide": {
+     "type": "boolean"
+    },
+    "backDocumentCode": {
+     "type": "string"
+    },
+    "backFileName": {
+     "type": "string"
+    },
+    "backFileSize": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "backMimeType": {
+     "type": "string"
+    },
+    "backPreviewUrl": {
+     "type": "string"
+    },
+    "backDownloadUrl": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "expiryDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "VERIFIED",
+      "REJECTED",
+      "EXPIRED"
+     ]
+    },
+    "uploadedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "uploadedByEmail": {
+     "type": "string"
+    },
+    "uploadedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "KycCaseCorrectionRequest": {
+   "required": [
+    "correctionNote",
+    "documentCode",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "documentCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "correctionNote": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "deadlineDays": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "KycExpiryDocumentStatus": {
+   "type": "object",
+   "properties": {
+    "documentCode": {
+     "type": "string"
+    },
+    "documentType": {
+     "type": "string"
+    },
+    "expiryDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "daysUntilExpiry": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "expired": {
+     "type": "boolean"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "VERIFIED",
+      "REJECTED",
+      "EXPIRED"
+     ]
+    }
+   }
+  },
+  "KycRequirementStatus": {
+   "type": "object",
+   "properties": {
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "requiresBackSide": {
+     "type": "boolean"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "VERIFIED",
+      "REJECTED",
+      "EXPIRED"
+     ]
+    },
+    "documentCode": {
+     "type": "string"
+    },
+    "backDocumentCode": {
+     "type": "string"
+    }
+   }
+  },
+  "KycCaseNoteResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "kycCaseCode": {
+     "type": "string"
+    },
+    "content": {
+     "type": "string"
+    },
+    "authorId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "authorEmail": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "internal": {
+     "type": "boolean"
+    }
+   }
+  },
+  "KycCaseNoteRequest": {
+   "required": [
+    "authorId",
+    "content"
+   ],
+   "type": "object",
+   "properties": {
+    "content": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "authorId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "internal": {
+     "type": "boolean"
+    }
+   }
+  },
+  "KycCaseRequirementResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "kycCaseCode": {
+     "type": "string"
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "requiresBackSide": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "KycCaseRequirementRequest": {
+   "required": [
+    "documentTypeCode"
+   ],
+   "type": "object",
+   "properties": {
+    "documentTypeCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    }
+   }
+  },
+  "KycRiskLevelRequest": {
+   "required": [
+    "riskLevel"
+   ],
+   "type": "object",
+   "properties": {
+    "riskLevel": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "VERY_HIGH"
+     ]
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "comment": {
+     "type": "string"
+    }
+   }
+  },
+  "KycTimelineEntryResponse": {
+   "type": "object",
+   "properties": {
+    "timestamp": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "action": {
+     "type": "string"
+    },
+    "actor": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    }
+   }
+  },
+  "KycCrossValidationRuleResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentTypeCode1": {
+     "type": "string"
+    },
+    "documentTypeCode2": {
+     "type": "string"
+    },
+    "fieldToCompare": {
+     "type": "string"
+    },
+    "blocking": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "KycCrossValidationRuleRequest": {
+   "required": [
+    "documentTypeCode1",
+    "documentTypeCode2",
+    "fieldToCompare"
+   ],
+   "type": "object",
+   "properties": {
+    "documentTypeCode1": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "documentTypeCode2": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "fieldToCompare": {
+     "maxLength": 80,
+     "minLength": 0,
+     "type": "string"
+    },
+    "blocking": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "KycDocumentDetailsRequest": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "expiryDate": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "KycBulkApproveRequest": {
+   "required": [
+    "documentIds",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "documentIds": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycBulkRejectRequest": {
+   "required": [
+    "items",
+    "reviewedBy"
+   ],
+   "type": "object",
+   "properties": {
+    "items": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectItemRequest"
+     }
+    },
+    "reviewedBy": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycDocumentOcrResultResponse": {
+   "type": "object",
+   "properties": {
+    "documentCode": {
+     "type": "string"
+    },
+    "extractedFirstName": {
+     "type": "string"
+    },
+    "extractedLastName": {
+     "type": "string"
+    },
+    "extractedDateOfBirth": {
+     "type": "string",
+     "format": "date"
+    },
+    "extractedExpiryDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "extractedDocumentNumber": {
+     "type": "string"
+    },
+    "extractedNationality": {
+     "type": "string"
+    },
+    "confidenceScore": {
+     "type": "number"
+    },
+    "rawOcrJson": {
+     "type": "string"
+    },
+    "processedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DocumentAnalyticsResponse.PeriodCount": {
+   "type": "object",
+   "properties": {
+    "period": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "DocumentDashboardResponse.TagCount": {
+   "type": "object",
+   "properties": {
+    "tagCode": {
+     "type": "string"
+    },
+    "tagLabel": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "DocumentFolderResponse.OwnerInfo": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentFolderResponse.SpaceFolder": {
+   "type": "object",
+   "properties": {
+    "space": {
+     "type": "string",
+     "enum": [
+      "KYC_SPACE",
+      "CONTRACT_SPACE",
+      "FINANCIAL_SPACE",
+      "ASSET_SPACE",
+      "ADMINISTRATIVE",
+      "GENERIC"
+     ]
+    },
+    "totalDocuments": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "approvedDocuments": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completionRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "documents": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse"
+     }
+    }
+   }
+  },
+  "ZipImportResponse.ZipImportItem": {
+   "type": "object",
+   "properties": {
+    "originalPath": {
+     "type": "string"
+    },
+    "documentCode": {
+     "type": "string"
+    },
+    "folderCode": {
+     "type": "string"
+    },
+    "success": {
+     "type": "boolean"
+    },
+    "error": {
+     "type": "string"
+    }
+   }
+  },
+  "DocumentBulkItemResult": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "WorkflowResponse.StepResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "stepOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "stepName": {
+     "type": "string"
+    },
+    "approverType": {
+     "type": "string"
+    },
+    "approverValue": {
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "autoApproveDays": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "CreateWorkflowRequest.WorkflowStepRequest": {
+   "required": [
+    "approverType",
+    "approverValue",
+    "stepName"
+   ],
+   "type": "object",
+   "properties": {
+    "stepName": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "approverType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "approverValue": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "required": {
+     "type": "boolean"
+    },
+    "autoApproveDays": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "WorkflowInstanceResponse.ActionResponse": {
+   "type": "object",
+   "properties": {
+    "stepOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "stepName": {
+     "type": "string"
+    },
+    "action": {
+     "type": "string"
+    },
+    "actorId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "actorEmail": {
+     "type": "string"
+    },
+    "actedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "comment": {
+     "type": "string"
+    }
+   }
+  },
+  "KycDashboardResponse.SlaMetrics": {
+   "type": "object",
+   "properties": {
+    "casesReviewedWithin24h": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "casesExceeding48h": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "avgReviewTimeHours": {
+     "type": "number"
+    }
+   }
+  },
+  "KycDashboardResponse.ExpiringSoonMetrics": {
+   "type": "object",
+   "properties": {
+    "within7Days": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "within30Days": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "within60Days": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycDashboardResponse.OwnerTypeMetrics": {
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "CUSTOMER",
+      "MEMBER",
+      "BUSINESS",
+      "CONTRACT",
+      "INVOICE",
+      "PAYMENT",
+      "PROPOSAL",
+      "ASSET"
+     ]
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pendingReview": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "KycDashboardResponse.ActivityMetrics": {
+   "type": "object",
+   "properties": {
+    "action": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "period": {
+     "type": "string"
+    }
+   }
+  },
+  "KycBulkItemResult": {
+   "type": "object",
+   "properties": {
+    "documentCode": {
+     "type": "string"
+    },
+    "success": {
+     "type": "boolean"
+    },
+    "error": {
+     "type": "string"
+    }
+   }
+  },
+  "KycBulkRejectItemRequest": {
+   "required": [
+    "documentCode",
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "documentCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  }
+ },
+ "enums": {
+  "DocumentOwnerType": [
+   "CUSTOMER",
+   "MEMBER",
+   "BUSINESS",
+   "CONTRACT",
+   "INVOICE",
+   "PAYMENT",
+   "PROPOSAL",
+   "ASSET"
+  ],
+  "DocumentSpace": [
+   "KYC_SPACE",
+   "CONTRACT_SPACE",
+   "FINANCIAL_SPACE",
+   "ASSET_SPACE",
+   "ADMINISTRATIVE",
+   "GENERIC"
+  ],
+  "DocumentCategory": [
+   "KYC",
+   "LEGAL",
+   "SYSTEM",
+   "FINANCIAL",
+   "ASSET",
+   "OTHER"
+  ],
+  "DocumentStatus": [
+   "DRAFT",
+   "UPLOADED",
+   "PENDING_REVIEW",
+   "NEEDS_CORRECTION",
+   "APPROVED",
+   "REJECTED",
+   "SIGNED",
+   "EXPIRED",
+   "ARCHIVED",
+   "SUPERSEDED"
+  ],
+  "KycRiskLevel": [
+   "LOW",
+   "MEDIUM",
+   "HIGH",
+   "VERY_HIGH"
+  ]
+ },
+ "names": {
+  "DocumentResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse",
+  "DocumentOwnerType": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType",
+  "DocumentAccessLogResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAccessLogResponse",
+  "DocumentAnalyticsResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAnalyticsResponse",
+  "DocumentSpace": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentSpace",
+  "DocumentDashboardResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse",
+  "DocumentCategory": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentCategory",
+  "DocumentStatus": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatus",
+  "DocumentFolderResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderResponse",
+  "ZipImportResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.ZipImportResponse",
+  "BatchUploadMetadataRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.BatchUploadMetadataRequest",
+  "DocumentUploadMetadataRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentUploadMetadataRequest",
+  "DocumentBulkActionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkActionResponse",
+  "DocumentReviewDecisionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentReviewDecisionRequest",
+  "DocumentCorrectionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentCorrectionRequest",
+  "DocumentVersionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse",
+  "FolderDetailResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.FolderDetailResponse",
+  "CreateFolderRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateFolderRequest",
+  "UpdateFolderRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.UpdateFolderRequest",
+  "BreadcrumbItem": "com.sni.bokaticowork.features.document.documentMaster.dto.response.BreadcrumbItem",
+  "MoveFolderRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.MoveFolderRequest",
+  "DocumentFolderTreeNode": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderTreeNode",
+  "MoveDocumentToFolderRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.MoveDocumentToFolderRequest",
+  "DocumentPermissionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentPermissionResponse",
+  "GrantPermissionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.GrantPermissionRequest",
+  "DocumentRequirementResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentRequirementResponse",
+  "DocumentRequirementRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentRequirementRequest",
+  "DocumentRetentionPolicyResponse": "com.sni.bokaticowork.features.document.retention.dto.response.DocumentRetentionPolicyResponse",
+  "DocumentRetentionPolicyRequest": "com.sni.bokaticowork.features.document.retention.dto.request.DocumentRetentionPolicyRequest",
+  "DocumentBulkApproveRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentBulkApproveRequest",
+  "DocumentBulkRejectRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentBulkRejectRequest",
+  "DocumentBulkCorrectionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentBulkCorrectionRequest",
+  "ShareLinkResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.ShareLinkResponse",
+  "CreateShareLinkRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateShareLinkRequest",
+  "DocumentSignatureResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentSignatureResponse",
+  "CreateDocumentSignatureRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateDocumentSignatureRequest",
+  "SignDocumentRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.SignDocumentRequest",
+  "SpaceDocumentUploadRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.SpaceDocumentUploadRequest",
+  "DocumentTagResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTagResponse",
+  "DocumentTagRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagRequest",
+  "DocumentTagUpdateRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagUpdateRequest",
+  "DocumentTagAssignRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTagAssignRequest",
+  "DocumentTypeResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentTypeResponse",
+  "DocumentTypeRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentTypeRequest",
+  "DocumentUploadConfigResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentUploadConfigResponse",
+  "WorkflowResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowResponse",
+  "CreateWorkflowRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateWorkflowRequest",
+  "WorkflowInstanceResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse",
+  "WorkflowActionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.WorkflowActionRequest",
+  "KycCaseResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse",
+  "KycRiskLevel": "com.sni.bokaticowork.features.document.kyc.KycRiskLevel",
+  "CreateKycCaseRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest",
+  "KycDashboardResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse",
+  "KycDecisionRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycDecisionRequest",
+  "KycAssignRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycAssignRequest",
+  "KycBulkActionResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkActionResponse",
+  "KycCaseBulkApproveRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkApproveRequest",
+  "KycCaseBulkRejectRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseBulkRejectRequest",
+  "KycDocumentResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentResponse",
+  "KycCaseCorrectionRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseCorrectionRequest",
+  "KycExpiryDocumentStatus": "com.sni.bokaticowork.features.document.kyc.dto.response.KycExpiryDocumentStatus",
+  "KycRequirementStatus": "com.sni.bokaticowork.features.document.kyc.dto.response.KycRequirementStatus",
+  "KycCaseNoteResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseNoteResponse",
+  "KycCaseNoteRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseNoteRequest",
+  "KycCaseRequirementResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseRequirementResponse",
+  "KycCaseRequirementRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCaseRequirementRequest",
+  "KycRiskLevelRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycRiskLevelRequest",
+  "KycTimelineEntryResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycTimelineEntryResponse",
+  "KycCrossValidationRuleResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycCrossValidationRuleResponse",
+  "KycCrossValidationRuleRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycCrossValidationRuleRequest",
+  "KycDocumentDetailsRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycDocumentDetailsRequest",
+  "KycBulkApproveRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkApproveRequest",
+  "KycBulkRejectRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectRequest",
+  "KycDocumentOcrResultResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDocumentOcrResultResponse",
+  "DocumentAnalyticsResponse.PeriodCount": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentAnalyticsResponse.PeriodCount",
+  "DocumentDashboardResponse.TagCount": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentDashboardResponse.TagCount",
+  "DocumentFolderResponse.OwnerInfo": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderResponse.OwnerInfo",
+  "DocumentFolderResponse.SpaceFolder": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderResponse.SpaceFolder",
+  "ZipImportResponse.ZipImportItem": "com.sni.bokaticowork.features.document.documentMaster.dto.response.ZipImportResponse.ZipImportItem",
+  "DocumentBulkItemResult": "com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentBulkItemResult",
+  "WorkflowResponse.StepResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowResponse.StepResponse",
+  "CreateWorkflowRequest.WorkflowStepRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateWorkflowRequest.WorkflowStepRequest",
+  "WorkflowInstanceResponse.ActionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse.ActionResponse",
+  "KycDashboardResponse.SlaMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.SlaMetrics",
+  "KycDashboardResponse.ExpiringSoonMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.ExpiringSoonMetrics",
+  "KycDashboardResponse.OwnerTypeMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.OwnerTypeMetrics",
+  "KycDashboardResponse.ActivityMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.ActivityMetrics",
+  "KycBulkItemResult": "com.sni.bokaticowork.features.document.kyc.dto.response.KycBulkItemResult",
+  "KycBulkRejectItemRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.KycBulkRejectItemRequest"
+ }
+}

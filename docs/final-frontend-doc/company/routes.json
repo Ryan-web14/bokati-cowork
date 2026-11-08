@@ -1,0 +1,4207 @@
+{
+ "module": "company",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/statement",
+   "package": "features.company.statement.controller",
+   "controller": "AccountStatementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/statement/controller/AccountStatementController.java",
+   "handler": "company",
+   "declaredIn": "AccountStatementController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Statement>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/statement.csv",
+   "package": "features.company.statement.controller",
+   "controller": "AccountStatementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/statement/controller/AccountStatementController.java",
+   "handler": "companyCsv",
+   "declaredIn": "AccountStatementController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<String>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/statement.pdf",
+   "package": "features.company.statement.controller",
+   "controller": "AccountStatementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/statement/controller/AccountStatementController.java",
+   "handler": "companyPdf",
+   "declaredIn": "AccountStatementController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/{memberId}/statement",
+   "package": "features.company.statement.controller",
+   "controller": "AccountStatementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/statement/controller/AccountStatementController.java",
+   "handler": "member",
+   "declaredIn": "AccountStatementController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Statement>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/{memberId}/statement.csv",
+   "package": "features.company.statement.controller",
+   "controller": "AccountStatementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/statement/controller/AccountStatementController.java",
+   "handler": "memberCsv",
+   "declaredIn": "AccountStatementController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<String>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/{memberId}/statement.pdf",
+   "package": "features.company.statement.controller",
+   "controller": "AccountStatementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/statement/controller/AccountStatementController.java",
+   "handler": "memberPdf",
+   "declaredIn": "AccountStatementController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "LocalDate"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "LocalDate"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/businesses",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "listBusinesses",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/businesses",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "createBusiness",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "BUSINESS_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.dto.request.BusinessEntityRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/businesses/by-name",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "getBusinessByName",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/businesses/paged",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "listBusinessesPaged",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/businesses/search",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "search",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.dto.request.BusinessSearchCriteria",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/businesses/search/basic",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "basicSearch",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/businesses/{code}",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "deleteBusiness",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/businesses/{code}",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "getBusiness",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/businesses/{code}",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "updateBusiness",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "BUSINESS_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.dto.request.BusinessEntityRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/businesses/{code}/address",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "updateBusinessAddress",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "BUSINESS_UPDATE_ADDRESS",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/businesses/{code}/operator",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "designateOperatingBusiness",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "BUSINESS_DESIGNATE_OPERATOR",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/businesses/{code}/status",
+   "package": "features.company.controller",
+   "controller": "BusinessController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/controller/BusinessController.java",
+   "handler": "updateBusinessStatus",
+   "declaredIn": "BusinessController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "BUSINESS_UPDATE_STATUS",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.dto.request.UpdateBusinessStatusRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "search",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanySummary>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "create",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CreateCompanyRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "get",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/billing",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "updateBilling",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.UpdateBillingRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/block",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "block",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.BlockRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/contact",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "updateContact",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.UpdateContactRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/legal",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "updateLegal",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.UpdateLegalRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/legal-profile",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "linkLegalProfile",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.LinkLegalProfileRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/unblock",
+   "package": "features.company.account.controller",
+   "controller": "CompanyAccountController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/account/controller/CompanyAccountController.java",
+   "handler": "unblock",
+   "declaredIn": "CompanyAccountController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/companies/{customerId}/contracts",
+   "package": "features.company.contracts",
+   "controller": "CompanyContractsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/contracts/CompanyContractsController.java",
+   "handler": "ownerList",
+   "declaredIn": "CompanyContractsController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.contracts.CompanyContractsService.CompanyContracts>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/companies/{customerId}/contracts/{contractCode}/pdf",
+   "package": "features.company.contracts",
+   "controller": "CompanyContractsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/contracts/CompanyContractsController.java",
+   "handler": "ownerPdf",
+   "declaredIn": "CompanyContractsController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/contracts",
+   "package": "features.company.contracts",
+   "controller": "CompanyContractsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/contracts/CompanyContractsController.java",
+   "handler": "list",
+   "declaredIn": "CompanyContractsController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.contracts.CompanyContractsService.CompanyContracts>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/contracts/{contractCode}/pdf",
+   "package": "features.company.contracts",
+   "controller": "CompanyContractsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/contracts/CompanyContractsController.java",
+   "handler": "pdf",
+   "declaredIn": "CompanyContractsController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "contractCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/documents/company-links",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyInvoiceLinkController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyInvoiceLinkController.java",
+   "handler": "link",
+   "declaredIn": "CompanyInvoiceLinkController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.membership.service.CompanyInvoiceLinkService.LinkRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.membership.service.CompanyInvoiceLinkService.Result>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/billing/documents/company-links/preview",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyInvoiceLinkController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyInvoiceLinkController.java",
+   "handler": "preview",
+   "declaredIn": "CompanyInvoiceLinkController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.membership.service.CompanyInvoiceLinkService.LinkRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.membership.service.CompanyInvoiceLinkService.Result>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/billing/documents/{documentNumber}/company-link",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyInvoiceLinkController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyInvoiceLinkController.java",
+   "handler": "unlink",
+   "declaredIn": "CompanyInvoiceLinkController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "BILLING:CANCEL"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/invoice-link-mode",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyMembershipController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyMembershipController.java",
+   "handler": "setDefaultMode",
+   "declaredIn": "CompanyMembershipController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.CompanyModeRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.enums.InvoiceLinkMode>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/customers/{customerId}/members",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyMembershipController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyMembershipController.java",
+   "handler": "list",
+   "declaredIn": "CompanyMembershipController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.LinkResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/customers/{customerId}/members",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyMembershipController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyMembershipController.java",
+   "handler": "link",
+   "declaredIn": "CompanyMembershipController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "CLIENT:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.LinkMemberRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.LinkResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/customers/{customerId}/members/{linkId}",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyMembershipController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyMembershipController.java",
+   "handler": "update",
+   "declaredIn": "CompanyMembershipController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "CLIENT:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.UpdateLinkRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "linkId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.LinkResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/customers/{customerId}/members/{linkId}/end",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyMembershipController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyMembershipController.java",
+   "handler": "end",
+   "declaredIn": "CompanyMembershipController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "CLIENT:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.EndLinkRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "linkId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.LinkResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/members/{memberId}/companies",
+   "package": "features.company.membership.controller",
+   "controller": "CompanyMembershipController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/membership/controller/CompanyMembershipController.java",
+   "handler": "companiesOf",
+   "declaredIn": "CompanyMembershipController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "CLIENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.LinkResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/passes",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanyPassSharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanyPassSharingController.java",
+   "handler": "list",
+   "declaredIn": "CompanyPassSharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.PassSummary>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/passes/{passNumber}/beneficiaries",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanyPassSharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanyPassSharingController.java",
+   "handler": "view",
+   "declaredIn": "CompanyPassSharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "passNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.PassView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/passes/{passNumber}/beneficiaries",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanyPassSharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanyPassSharingController.java",
+   "handler": "add",
+   "declaredIn": "CompanyPassSharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.AddBeneficiaryRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "passNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.PassView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/passes/{passNumber}/beneficiaries/{accessId}/revoke",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanyPassSharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanyPassSharingController.java",
+   "handler": "revoke",
+   "declaredIn": "CompanyPassSharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.RevokeBeneficiaryRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "passNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "accessId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.RevokeResult>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/subscriptions",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanySharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanySharingController.java",
+   "handler": "list",
+   "declaredIn": "CompanySharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SubscriptionSummary>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/subscriptions/{subscriptionNumber}/max-seats",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanySharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanySharingController.java",
+   "handler": "setMaxSeats",
+   "declaredIn": "CompanySharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.MaxSeatsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SharingView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/subscriptions/{subscriptionNumber}/seats",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanySharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanySharingController.java",
+   "handler": "assign",
+   "declaredIn": "CompanySharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.AssignSeatRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SharingView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/subscriptions/{subscriptionNumber}/seats/{seatId}",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanySharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanySharingController.java",
+   "handler": "update",
+   "declaredIn": "CompanySharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.UpdateSeatRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "seatId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SharingView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/subscriptions/{subscriptionNumber}/seats/{seatId}/release",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanySharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanySharingController.java",
+   "handler": "release",
+   "declaredIn": "CompanySharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.ReleaseSeatRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "seatId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.ReleaseResult>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/subscriptions/{subscriptionNumber}/sharing",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanySharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanySharingController.java",
+   "handler": "view",
+   "declaredIn": "CompanySharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SharingView>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/subscriptions/{subscriptionNumber}/sharing/{entitlementCode}",
+   "package": "features.company.sharing.controller",
+   "controller": "CompanySharingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/sharing/controller/CompanySharingController.java",
+   "handler": "setRule",
+   "declaredIn": "CompanySharingController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.RuleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "entitlementCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SharingView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/spending-authorizations",
+   "package": "features.company.wallet.controller",
+   "controller": "CompanyWalletController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/wallet/controller/CompanyWalletController.java",
+   "handler": "authorizations",
+   "declaredIn": "CompanyWalletController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/spending-authorizations",
+   "package": "features.company.wallet.controller",
+   "controller": "CompanyWalletController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/wallet/controller/CompanyWalletController.java",
+   "handler": "authorize",
+   "declaredIn": "CompanyWalletController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/spending-authorizations/{authorizationId}",
+   "package": "features.company.wallet.controller",
+   "controller": "CompanyWalletController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/wallet/controller/CompanyWalletController.java",
+   "handler": "update",
+   "declaredIn": "CompanyWalletController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationUpdateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "authorizationId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/spending-authorizations/{authorizationId}/pin/reset",
+   "package": "features.company.wallet.controller",
+   "controller": "CompanyWalletController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/wallet/controller/CompanyWalletController.java",
+   "handler": "resetPin",
+   "declaredIn": "CompanyWalletController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "authorizationId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/wallet",
+   "package": "features.company.wallet.controller",
+   "controller": "CompanyWalletController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/wallet/controller/CompanyWalletController.java",
+   "handler": "wallet",
+   "declaredIn": "CompanyWalletController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "currency",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.WalletView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/wallet/spends",
+   "package": "features.company.wallet.controller",
+   "controller": "CompanyWalletController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/wallet/controller/CompanyWalletController.java",
+   "handler": "spends",
+   "declaredIn": "CompanyWalletController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "currency",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.SpendView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/companies/{customerId}/wallet/top-ups",
+   "package": "features.company.wallet.controller",
+   "controller": "CompanyWalletController",
+   "source": "src/main/java/com/sni/bokaticowork/features/company/wallet/controller/CompanyWalletController.java",
+   "handler": "topUp",
+   "declaredIn": "CompanyWalletController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('MANAGER')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AdminTopUpRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AdminTopUpResult>"
+  }
+ ],
+ "schemas": {
+  "StatementDtos.Statement": {
+   "type": "object",
+   "properties": {
+    "subject": {
+     "type": "string",
+     "enum": [
+      "COMPANY",
+      "MEMBER"
+     ]
+    },
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "billingEmail": {
+     "type": "string"
+    },
+    "from": {
+     "type": "string",
+     "format": "date"
+    },
+    "to": {
+     "type": "string",
+     "format": "date"
+    },
+    "asOf": {
+     "type": "string",
+     "format": "date"
+    },
+    "creditLimit": {
+     "type": "number"
+    },
+    "paymentTermsDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "blocked": {
+     "type": "boolean"
+    },
+    "blockedReason": {
+     "type": "string"
+    },
+    "totals": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Totals"
+     }
+    },
+    "accounts": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.statement.dto.StatementDtos.AccountBreakdown"
+     }
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Line"
+     }
+    }
+   }
+  },
+  "BusinessEntityResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "legalForm": {
+     "type": "string"
+    },
+    "niuNumber": {
+     "type": "string"
+    },
+    "rccmNumber": {
+     "type": "string"
+    },
+    "taxId": {
+     "type": "string"
+    },
+    "activity": {
+     "type": "string"
+    },
+    "baseCurrencyCode": {
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.response.AddressResponse"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    }
+   }
+  },
+  "BusinessEntityRequest": {
+   "required": [
+    "baseCurrencyCode",
+    "legalForm",
+    "name",
+    "phone",
+    "rccmNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "legalForm": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "niuNumber": {
+     "type": "string"
+    },
+    "rccmNumber": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "taxId": {
+     "type": "string"
+    },
+    "activity": {
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    },
+    "phone": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "baseCurrencyCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "BusinessSearchCriteria": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "legalForm": {
+     "type": "string"
+    },
+    "niuNumber": {
+     "type": "string"
+    },
+    "rccmNumber": {
+     "type": "string"
+    },
+    "taxId": {
+     "type": "string"
+    },
+    "activity": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "baseCurrencyCode": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   }
+  },
+  "AddressRequest": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "countryCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "UpdateBusinessStatusRequest": {
+   "required": [
+    "status"
+   ],
+   "type": "object",
+   "properties": {
+    "status": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "CompanyDtos.CompanySummary": {
+   "type": "object",
+   "properties": {
+    "customerId": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "organizationType": {
+     "type": "string",
+     "enum": [
+      "SOCIETE",
+      "ETABLISSEMENT",
+      "ENTREPRENEUR_INDIVIDUEL",
+      "PROFESSION_LIBERALE",
+      "ASSOCIATION",
+      "ONG",
+      "INSTITUTION_PUBLIQUE"
+     ]
+    },
+    "niu": {
+     "type": "string"
+    },
+    "rccm": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "outstanding": {
+     "type": "number"
+    }
+   }
+  },
+  "CompanyDtos.CompanyResponse": {
+   "type": "object",
+   "properties": {
+    "customerId": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "organizationType": {
+     "type": "string",
+     "enum": [
+      "SOCIETE",
+      "ETABLISSEMENT",
+      "ENTREPRENEUR_INDIVIDUEL",
+      "PROFESSION_LIBERALE",
+      "ASSOCIATION",
+      "ONG",
+      "INSTITUTION_PUBLIQUE"
+     ]
+    },
+    "organizationTypeLabel": {
+     "type": "string"
+    },
+    "legalForm": {
+     "type": "string"
+    },
+    "activity": {
+     "type": "string"
+    },
+    "identifiers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.account.dto.CompanyDtos.IdentifierResponse"
+     }
+    },
+    "suggestedIdentifiers": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "NIU",
+       "RCCM",
+       "ORDRE_PROFESSIONNEL",
+       "RECEPISSE",
+       "AGREMENT",
+       "ACTE_CREATION",
+       "CODE_ADMINISTRATIF",
+       "AUTRE"
+      ]
+     }
+    },
+    "legalRepresentativeName": {
+     "type": "string"
+    },
+    "legalRepresentativeTitle": {
+     "type": "string"
+    },
+    "vatRegime": {
+     "type": "string",
+     "enum": [
+      "SUBJECT",
+      "EXEMPT"
+     ]
+    },
+    "vatExemptionNote": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "billingEmail": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "website": {
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.account.dto.CompanyDtos.AddressResponse"
+    },
+    "billingAddress": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.account.dto.CompanyDtos.AddressResponse"
+    },
+    "paymentTermsDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "creditLimit": {
+     "type": "number"
+    },
+    "outstanding": {
+     "type": "number"
+    },
+    "status": {
+     "type": "string"
+    },
+    "blockedReason": {
+     "type": "string"
+    },
+    "blockedBy": {
+     "type": "string"
+    },
+    "blockedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "membersCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activeSubscriptions": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CompanyDtos.CreateCompanyRequest": {
+   "required": [
+    "name",
+    "organizationType",
+    "phone"
+   ],
+   "type": "object",
+   "properties": {
+    "organizationType": {
+     "type": "string",
+     "enum": [
+      "SOCIETE",
+      "ETABLISSEMENT",
+      "ENTREPRENEUR_INDIVIDUEL",
+      "PROFESSION_LIBERALE",
+      "ASSOCIATION",
+      "ONG",
+      "INSTITUTION_PUBLIQUE"
+     ]
+    },
+    "name": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "legalForm": {
+     "type": "string"
+    },
+    "activity": {
+     "type": "string"
+    },
+    "identifiers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.account.dto.CompanyDtos.IdentifierRequest"
+     }
+    },
+    "legalRepresentativeName": {
+     "type": "string"
+    },
+    "legalRepresentativeTitle": {
+     "type": "string"
+    },
+    "vatRegime": {
+     "type": "string",
+     "enum": [
+      "SUBJECT",
+      "EXEMPT"
+     ]
+    },
+    "vatExemptionNote": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    },
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "billingEmail": {
+     "type": "string",
+     "format": "email"
+    },
+    "phone": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "website": {
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    },
+    "billingAddress": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    },
+    "paymentTermsDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "creditLimit": {
+     "type": "number"
+    },
+    "currencyCode": {
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    }
+   }
+  },
+  "CompanyDtos.UpdateBillingRequest": {
+   "type": "object",
+   "properties": {
+    "billingEmail": {
+     "type": "string",
+     "format": "email"
+    },
+    "billingAddress": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    },
+    "paymentTermsDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "creditLimit": {
+     "type": "number"
+    },
+    "removeCreditLimit": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CompanyDtos.BlockRequest": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "CompanyDtos.UpdateContactRequest": {
+   "type": "object",
+   "properties": {
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "website": {
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    }
+   }
+  },
+  "CompanyDtos.UpdateLegalRequest": {
+   "type": "object",
+   "properties": {
+    "organizationType": {
+     "type": "string",
+     "enum": [
+      "SOCIETE",
+      "ETABLISSEMENT",
+      "ENTREPRENEUR_INDIVIDUEL",
+      "PROFESSION_LIBERALE",
+      "ASSOCIATION",
+      "ONG",
+      "INSTITUTION_PUBLIQUE"
+     ]
+    },
+    "name": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "legalForm": {
+     "type": "string"
+    },
+    "activity": {
+     "type": "string"
+    },
+    "identifiers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.account.dto.CompanyDtos.IdentifierRequest"
+     }
+    },
+    "legalRepresentativeName": {
+     "type": "string"
+    },
+    "legalRepresentativeTitle": {
+     "type": "string"
+    },
+    "vatRegime": {
+     "type": "string",
+     "enum": [
+      "SUBJECT",
+      "EXEMPT"
+     ]
+    },
+    "vatExemptionNote": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "CompanyDtos.LinkLegalProfileRequest": {
+   "required": [
+    "businessCode"
+   ],
+   "type": "object",
+   "properties": {
+    "businessCode": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "CompanyContractsService.CompanyContracts": {
+   "type": "object",
+   "properties": {
+    "companyCustomerCode": {
+     "type": "string"
+    },
+    "signatories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.contracts.CompanyContractsService.SignatoryView"
+     }
+    },
+    "contracts": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.contracts.CompanyContractsService.ContractView"
+     }
+    },
+    "domiciliations": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView"
+     }
+    }
+   }
+  },
+  "CompanyInvoiceLinkService.Result": {
+   "type": "object",
+   "properties": {
+    "companyCustomerCode": {
+     "type": "string"
+    },
+    "companyName": {
+     "type": "string"
+    },
+    "eligible": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "linked": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "eligibleBalance": {
+     "type": "number"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.membership.service.CompanyInvoiceLinkService.Line"
+     }
+    }
+   }
+  },
+  "CompanyInvoiceLinkService.LinkRequest": {
+   "required": [
+    "companyCustomerCode"
+   ],
+   "type": "object",
+   "properties": {
+    "companyCustomerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "documentNumbers": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "from": {
+     "type": "string",
+     "format": "date"
+    },
+    "to": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "MembershipDtos.CompanyModeRequest": {
+   "required": [
+    "mode"
+   ],
+   "type": "object",
+   "properties": {
+    "mode": {
+     "type": "string",
+     "enum": [
+      "AUTOMATIC",
+      "ON_CHOICE"
+     ]
+    }
+   }
+  },
+  "MembershipDtos.LinkResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "companyName": {
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "memberName": {
+     "type": "string"
+    },
+    "memberEmail": {
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "OWNER",
+      "EMPLOYEE"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "ENDED"
+     ]
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "endedReason": {
+     "type": "string"
+    },
+    "invoiceLinkMode": {
+     "type": "string",
+     "enum": [
+      "AUTOMATIC",
+      "ON_CHOICE"
+     ]
+    },
+    "effectiveInvoiceLinkMode": {
+     "type": "string",
+     "enum": [
+      "AUTOMATIC",
+      "ON_CHOICE"
+     ]
+    },
+    "canSign": {
+     "type": "boolean"
+    },
+    "canCollectMail": {
+     "type": "boolean"
+    },
+    "payerChanged": {
+     "type": "boolean"
+    },
+    "warning": {
+     "type": "string"
+    }
+   }
+  },
+  "MembershipDtos.LinkMemberRequest": {
+   "required": [
+    "memberId",
+    "role"
+   ],
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "OWNER",
+      "EMPLOYEE"
+     ]
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "invoiceLinkMode": {
+     "type": "string",
+     "enum": [
+      "AUTOMATIC",
+      "ON_CHOICE"
+     ]
+    },
+    "canSign": {
+     "type": "boolean"
+    },
+    "canCollectMail": {
+     "type": "boolean"
+    }
+   }
+  },
+  "MembershipDtos.UpdateLinkRequest": {
+   "type": "object",
+   "properties": {
+    "role": {
+     "type": "string",
+     "enum": [
+      "OWNER",
+      "EMPLOYEE"
+     ]
+    },
+    "invoiceLinkMode": {
+     "type": "string",
+     "enum": [
+      "AUTOMATIC",
+      "ON_CHOICE"
+     ]
+    },
+    "useCompanyDefaultMode": {
+     "type": "boolean"
+    },
+    "canSign": {
+     "type": "boolean"
+    },
+    "canCollectMail": {
+     "type": "boolean"
+    }
+   }
+  },
+  "MembershipDtos.EndLinkRequest": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "PassSharingDtos.PassSummary": {
+   "type": "object",
+   "properties": {
+    "passNumber": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "passType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "maxUses": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "usedCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "beneficiaries": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "PassSharingDtos.PassView": {
+   "type": "object",
+   "properties": {
+    "companyCustomerCode": {
+     "type": "string"
+    },
+    "pass": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.PassSummary"
+    },
+    "entitlements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.PassEntitlement"
+     }
+    },
+    "beneficiaries": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.BeneficiaryView"
+     }
+    }
+   }
+  },
+  "PassSharingDtos.AddBeneficiaryRequest": {
+   "required": [
+    "memberId"
+   ],
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "maxUses": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "PassSharingDtos.RevokeResult": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "futureBookings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "warning": {
+     "type": "string"
+    }
+   }
+  },
+  "PassSharingDtos.RevokeBeneficiaryRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "SharingDtos.SubscriptionSummary": {
+   "type": "object",
+   "properties": {
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "planName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "periodStart": {
+     "type": "string",
+     "format": "date"
+    },
+    "periodEnd": {
+     "type": "string",
+     "format": "date"
+    },
+    "maxSeats": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "seatCeiling": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "activeSeats": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "SharingDtos.SharingView": {
+   "type": "object",
+   "properties": {
+    "companyCustomerCode": {
+     "type": "string"
+    },
+    "subscription": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SubscriptionSummary"
+    },
+    "entitlements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.EntitlementView"
+     }
+    },
+    "seats": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SeatView"
+     }
+    }
+   }
+  },
+  "SharingDtos.MaxSeatsRequest": {
+   "type": "object",
+   "properties": {
+    "maxSeats": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "SharingDtos.AssignSeatRequest": {
+   "required": [
+    "memberId"
+   ],
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "allowances": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.AllowanceRequest"
+     }
+    }
+   }
+  },
+  "SharingDtos.UpdateSeatRequest": {
+   "type": "object",
+   "properties": {
+    "allowances": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.AllowanceRequest"
+     }
+    }
+   }
+  },
+  "SharingDtos.ReleaseResult": {
+   "type": "object",
+   "properties": {
+    "seatId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "futureBookings": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "warning": {
+     "type": "string"
+    }
+   }
+  },
+  "SharingDtos.ReleaseSeatRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "SharingDtos.RuleRequest": {
+   "required": [
+    "mode"
+   ],
+   "type": "object",
+   "properties": {
+    "mode": {
+     "type": "string",
+     "enum": [
+      "POOL",
+      "QUOTA",
+      "QUOTA_AND_POOL"
+     ]
+    },
+    "defaultQuota": {
+     "type": "number"
+    },
+    "seatCap": {
+     "type": "number"
+    }
+   }
+  },
+  "CompanyWalletDtos.AuthorizationView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "companyCustomerCode": {
+     "type": "string"
+    },
+    "walletNumber": {
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "memberName": {
+     "type": "string"
+    },
+    "operations": {
+     "uniqueItems": true,
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "BOOKING",
+       "SUBSCRIPTION",
+       "PASS",
+       "INVOICE_PAYMENT",
+       "MARKETPLACE"
+      ]
+     }
+    },
+    "maxPerTransaction": {
+     "type": "number"
+    },
+    "maxPerDay": {
+     "type": "number"
+    },
+    "maxPerMonth": {
+     "type": "number"
+    },
+    "approvalAbove": {
+     "type": "number"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "SUSPENDED",
+      "REVOKED"
+     ]
+    },
+    "statusReason": {
+     "type": "string"
+    },
+    "inForce": {
+     "type": "boolean"
+    },
+    "pinSet": {
+     "type": "boolean"
+    },
+    "engagedToday": {
+     "type": "number"
+    },
+    "engagedThisMonth": {
+     "type": "number"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CompanyWalletDtos.AuthorizationRequest": {
+   "required": [
+    "memberId",
+    "operations"
+   ],
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "operations": {
+     "minItems": 1,
+     "uniqueItems": true,
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "BOOKING",
+       "SUBSCRIPTION",
+       "PASS",
+       "INVOICE_PAYMENT",
+       "MARKETPLACE"
+      ]
+     }
+    },
+    "maxPerTransaction": {
+     "type": "number"
+    },
+    "maxPerDay": {
+     "type": "number"
+    },
+    "maxPerMonth": {
+     "type": "number"
+    },
+    "approvalAbove": {
+     "type": "number"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "currency": {
+     "type": "string"
+    }
+   }
+  },
+  "CompanyWalletDtos.AuthorizationUpdateRequest": {
+   "required": [
+    "operations"
+   ],
+   "type": "object",
+   "properties": {
+    "operations": {
+     "minItems": 1,
+     "uniqueItems": true,
+     "type": "array",
+     "items": {
+      "type": "string",
+      "enum": [
+       "BOOKING",
+       "SUBSCRIPTION",
+       "PASS",
+       "INVOICE_PAYMENT",
+       "MARKETPLACE"
+      ]
+     }
+    },
+    "maxPerTransaction": {
+     "type": "number"
+    },
+    "maxPerDay": {
+     "type": "number"
+    },
+    "maxPerMonth": {
+     "type": "number"
+    },
+    "approvalAbove": {
+     "type": "number"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "SUSPENDED",
+      "REVOKED"
+     ]
+    },
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "CompanyWalletDtos.WalletView": {
+   "type": "object",
+   "properties": {
+    "companyCustomerCode": {
+     "type": "string"
+    },
+    "wallet": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.WalletResponse"
+    },
+    "entries": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.EntryView"
+     }
+    },
+    "pendingApprovals": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.SpendView"
+     }
+    }
+   }
+  },
+  "CompanyWalletDtos.SpendView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "memberName": {
+     "type": "string"
+    },
+    "operation": {
+     "type": "string",
+     "enum": [
+      "BOOKING",
+      "SUBSCRIPTION",
+      "PASS",
+      "INVOICE_PAYMENT",
+      "MARKETPLACE"
+     ]
+    },
+    "amount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "AWAITING_OTP",
+      "HELD",
+      "PENDING_APPROVAL",
+      "EXECUTED",
+      "REJECTED",
+      "EXPIRED",
+      "CANCELLED"
+     ]
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "transactionNumber": {
+     "type": "string"
+    },
+    "decidedBy": {
+     "type": "string"
+    },
+    "decidedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "decisionReason": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CompanyWalletDtos.AdminTopUpResult": {
+   "type": "object",
+   "properties": {
+    "actionNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "walletNumber": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   }
+  },
+  "CompanyWalletDtos.AdminTopUpRequest": {
+   "required": [
+    "amount",
+    "method",
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "amount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "method": {
+     "type": "string",
+     "enum": [
+      "CASH",
+      "BANK_TRANSFER"
+     ]
+    },
+    "reference": {
+     "maxLength": 180,
+     "minLength": 0,
+     "type": "string"
+    },
+    "reason": {
+     "maxLength": 500,
+     "minLength": 5,
+     "type": "string"
+    }
+   }
+  },
+  "StatementDtos.Totals": {
+   "type": "object",
+   "properties": {
+    "currency": {
+     "type": "string"
+    },
+    "invoiced": {
+     "type": "number"
+    },
+    "paid": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "overdue": {
+     "type": "number"
+    },
+    "creditAvailable": {
+     "type": "number"
+    },
+    "netBalanceDue": {
+     "type": "number"
+    },
+    "openInvoices": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "overdueInvoices": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "aging": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Aging"
+    }
+   }
+  },
+  "StatementDtos.AccountBreakdown": {
+   "type": "object",
+   "properties": {
+    "accountType": {
+     "type": "string",
+     "enum": [
+      "COMPANY",
+      "MEMBER",
+      "PERSONAL"
+     ]
+    },
+    "accountCode": {
+     "type": "string"
+    },
+    "accountName": {
+     "type": "string"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "invoiced": {
+     "type": "number"
+    },
+    "paid": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "overdue": {
+     "type": "number"
+    },
+    "documentCount": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "StatementDtos.Line": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "documentType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "dueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "accountType": {
+     "type": "string",
+     "enum": [
+      "COMPANY",
+      "MEMBER",
+      "PERSONAL"
+     ]
+    },
+    "accountCode": {
+     "type": "string"
+    },
+    "accountName": {
+     "type": "string"
+    },
+    "companyLinkSource": {
+     "type": "string"
+    },
+    "companyCustomerCode": {
+     "type": "string"
+    },
+    "companyName": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "paidAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "impact": {
+     "type": "number"
+    },
+    "daysOverdue": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "inPeriod": {
+     "type": "boolean"
+    }
+   }
+  },
+  "AddressResponse": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "country": {
+     "type": "string"
+    },
+    "fullAddress": {
+     "type": "string"
+    }
+   }
+  },
+  "CompanyDtos.IdentifierResponse": {
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "NIU",
+      "RCCM",
+      "ORDRE_PROFESSIONNEL",
+      "RECEPISSE",
+      "AGREMENT",
+      "ACTE_CREATION",
+      "CODE_ADMINISTRATIF",
+      "AUTRE"
+     ]
+    },
+    "label": {
+     "type": "string"
+    },
+    "value": {
+     "type": "string"
+    },
+    "format": {
+     "type": "string"
+    }
+   }
+  },
+  "CompanyDtos.AddressResponse": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "country": {
+     "type": "string"
+    }
+   }
+  },
+  "CompanyDtos.IdentifierRequest": {
+   "required": [
+    "type",
+    "value"
+   ],
+   "type": "object",
+   "properties": {
+    "type": {
+     "type": "string",
+     "enum": [
+      "NIU",
+      "RCCM",
+      "ORDRE_PROFESSIONNEL",
+      "RECEPISSE",
+      "AGREMENT",
+      "ACTE_CREATION",
+      "CODE_ADMINISTRATIF",
+      "AUTRE"
+     ]
+    },
+    "label": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "value": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "CompanyContractsService.SignatoryView": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "legalRepresentative": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CompanyContractsService.ContractView": {
+   "type": "object",
+   "properties": {
+    "contractCode": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "templateCode": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "hasDocument": {
+     "type": "boolean"
+    },
+    "parties": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.contracts.CompanyContractsService.PartyView"
+     }
+    },
+    "amendments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.contracts.CompanyContractsService.AmendmentView"
+     }
+    },
+    "versions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version"
+     }
+    }
+   }
+  },
+  "DomiciliationDtos.ContractView": {
+   "type": "object",
+   "properties": {
+    "contractNumber": {
+     "type": "string"
+    },
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "serviceNumber": {
+     "type": "string"
+    },
+    "legalName": {
+     "type": "string"
+    },
+    "legalForm": {
+     "type": "string"
+    },
+    "registrationNumber": {
+     "type": "string"
+    },
+    "taxNumber": {
+     "type": "string"
+    },
+    "legalRepresentativeName": {
+     "type": "string"
+    },
+    "addressCode": {
+     "type": "string"
+    },
+    "addressLabel": {
+     "type": "string"
+    },
+    "suiteNumber": {
+     "type": "string"
+    },
+    "billingCycle": {
+     "type": "string",
+     "enum": [
+      "ONE_TIME",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "QUARTERLY",
+      "YEARLY"
+     ]
+    },
+    "commitmentMonths": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "fiscalAddressEligible": {
+     "type": "boolean"
+    },
+    "fiscalAddressGrantedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fiscalAddressRevokedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fiscalAddressRevocationReason": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "PENDING_DOCUMENTS",
+      "PENDING_SIGNATURE",
+      "PENDING_REGISTRATION",
+      "ACTIVE",
+      "SUSPENDED",
+      "TERMINATED",
+      "EXPIRED"
+     ]
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "noticePeriodDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "contractDocumentCode": {
+     "type": "string"
+    },
+    "signedDocumentCode": {
+     "type": "string"
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "certificateDocumentCode": {
+     "type": "string"
+    },
+    "certificateScope": {
+     "type": "string",
+     "enum": [
+      "COMMERCIAL",
+      "FISCAL"
+     ]
+    },
+    "certificateIssuedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "certificateValidUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "certificateInForce": {
+     "type": "boolean"
+    },
+    "certificateRevokedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "certificateRevocationReason": {
+     "type": "string"
+    },
+    "mailForwardingMode": {
+     "type": "string",
+     "enum": [
+      "HOLD",
+      "FORWARD",
+      "SCAN_AND_FORWARD",
+      "SCAN_ONLY"
+     ]
+    },
+    "terminatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "terminationReason": {
+     "type": "string"
+    },
+    "retainDocumentsUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CompanyInvoiceLinkService.Line": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "memberName": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "status": {
+     "type": "string"
+    },
+    "eligible": {
+     "type": "boolean"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "PassSharingDtos.PassEntitlement": {
+   "type": "object",
+   "properties": {
+    "entitlementCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "unit": {
+     "type": "string"
+    },
+    "unlimited": {
+     "type": "boolean"
+    },
+    "granted": {
+     "type": "number"
+    },
+    "remaining": {
+     "type": "number"
+    }
+   }
+  },
+  "PassSharingDtos.BeneficiaryView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "memberName": {
+     "type": "string"
+    },
+    "open": {
+     "type": "boolean"
+    },
+    "maxUses": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "usedCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "addedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "addedBy": {
+     "type": "string"
+    },
+    "revokedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "revokedReason": {
+     "type": "string"
+    },
+    "consumption": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.BeneficiaryConsumption"
+     }
+    }
+   }
+  },
+  "SharingDtos.EntitlementView": {
+   "type": "object",
+   "properties": {
+    "entitlementCode": {
+     "type": "string"
+    },
+    "entitlementName": {
+     "type": "string"
+    },
+    "unit": {
+     "type": "string"
+    },
+    "mode": {
+     "type": "string",
+     "enum": [
+      "POOL",
+      "QUOTA",
+      "QUOTA_AND_POOL"
+     ]
+    },
+    "defaultQuota": {
+     "type": "number"
+    },
+    "seatCap": {
+     "type": "number"
+    },
+    "unlimited": {
+     "type": "boolean"
+    },
+    "granted": {
+     "type": "number"
+    },
+    "remaining": {
+     "type": "number"
+    },
+    "distributedQuotas": {
+     "type": "number"
+    },
+    "poolSize": {
+     "type": "number"
+    },
+    "poolUsed": {
+     "type": "number"
+    }
+   }
+  },
+  "SharingDtos.SeatView": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "memberName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "assignedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "assignedBy": {
+     "type": "string"
+    },
+    "entitlements": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SeatEntitlement"
+     }
+    }
+   }
+  },
+  "SharingDtos.AllowanceRequest": {
+   "required": [
+    "entitlementCode"
+   ],
+   "type": "object",
+   "properties": {
+    "entitlementCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "quota": {
+     "type": "number"
+    },
+    "cap": {
+     "type": "number"
+    }
+   }
+  },
+  "WalletResponse": {
+   "type": "object",
+   "properties": {
+    "walletNumber": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "SUSPENDED",
+      "LOCKED",
+      "CLOSED",
+      "UNDER_REVIEW"
+     ]
+    },
+    "availableBalance": {
+     "type": "number"
+    },
+    "ledgerBalance": {
+     "type": "number"
+    },
+    "heldBalance": {
+     "type": "number"
+    },
+    "openedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "closedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CompanyWalletDtos.EntryView": {
+   "type": "object",
+   "properties": {
+    "transactionNumber": {
+     "type": "string"
+    },
+    "direction": {
+     "type": "string",
+     "enum": [
+      "DEBIT",
+      "CREDIT"
+     ]
+    },
+    "entryType": {
+     "type": "string",
+     "enum": [
+      "ADMIN_TOPUP",
+      "TOPUP",
+      "TRANSFER_IN",
+      "TRANSFER_OUT",
+      "TRANSFER_FEE",
+      "ADMIN_DEBIT",
+      "PAYMENT",
+      "REFUND",
+      "REVERSAL",
+      "HOLD",
+      "HOLD_RELEASE",
+      "ADJUSTMENT",
+      "CASHBACK",
+      "PROMOTIONAL_CREDIT",
+      "OVERPAYMENT_CREDIT"
+     ]
+    },
+    "amount": {
+     "type": "number"
+    },
+    "balanceAfter": {
+     "type": "number"
+    },
+    "reference": {
+     "type": "string"
+    },
+    "spentByMember": {
+     "type": "string"
+    },
+    "spentByName": {
+     "type": "string"
+    },
+    "documentNumber": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "StatementDtos.Aging": {
+   "type": "object",
+   "properties": {
+    "notDue": {
+     "type": "number"
+    },
+    "days1To30": {
+     "type": "number"
+    },
+    "days31To60": {
+     "type": "number"
+    },
+    "days61To90": {
+     "type": "number"
+    },
+    "over90": {
+     "type": "number"
+    }
+   }
+  },
+  "CompanyContractsService.PartyView": {
+   "type": "object",
+   "properties": {
+    "role": {
+     "type": "string"
+    },
+    "partyType": {
+     "type": "string"
+    },
+    "partyCode": {
+     "type": "string"
+    },
+    "displayName": {
+     "type": "string"
+    },
+    "mustSign": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CompanyContractsService.AmendmentView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "hasDocument": {
+     "type": "boolean"
+    }
+   }
+  },
+  "ContractVersionHistory.Version": {
+   "type": "object",
+   "properties": {
+    "version": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "kind": {
+     "type": "string",
+     "enum": [
+      "ORIGINAL",
+      "AMENDMENT",
+      "EXTENSION"
+     ]
+    },
+    "amendmentCode": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "previousEndDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "at": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "documentCode": {
+     "type": "string"
+    }
+   }
+  },
+  "PassSharingDtos.BeneficiaryConsumption": {
+   "type": "object",
+   "properties": {
+    "entitlementCode": {
+     "type": "string"
+    },
+    "consumed": {
+     "type": "number"
+    }
+   }
+  },
+  "SharingDtos.SeatEntitlement": {
+   "type": "object",
+   "properties": {
+    "entitlementCode": {
+     "type": "string"
+    },
+    "quota": {
+     "type": "number"
+    },
+    "quotaUsed": {
+     "type": "number"
+    },
+    "quotaRemaining": {
+     "type": "number"
+    },
+    "cap": {
+     "type": "number"
+    },
+    "used": {
+     "type": "number"
+    }
+   }
+  }
+ },
+ "enums": {
+  "InvoiceLinkMode": [
+   "AUTOMATIC",
+   "ON_CHOICE"
+  ],
+  "CompanyWalletSpend.Status": [
+   "AWAITING_OTP",
+   "HELD",
+   "PENDING_APPROVAL",
+   "EXECUTED",
+   "REJECTED",
+   "EXPIRED",
+   "CANCELLED"
+  ]
+ },
+ "names": {
+  "StatementDtos.Statement": "com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Statement",
+  "BusinessEntityResponse": "com.sni.bokaticowork.features.company.dto.response.BusinessEntityResponse",
+  "BusinessEntityRequest": "com.sni.bokaticowork.features.company.dto.request.BusinessEntityRequest",
+  "BusinessSearchCriteria": "com.sni.bokaticowork.features.company.dto.request.BusinessSearchCriteria",
+  "AddressRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest",
+  "UpdateBusinessStatusRequest": "com.sni.bokaticowork.features.company.dto.request.UpdateBusinessStatusRequest",
+  "CompanyDtos.CompanySummary": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanySummary",
+  "CompanyDtos.CompanyResponse": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CompanyResponse",
+  "CompanyDtos.CreateCompanyRequest": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.CreateCompanyRequest",
+  "CompanyDtos.UpdateBillingRequest": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.UpdateBillingRequest",
+  "CompanyDtos.BlockRequest": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.BlockRequest",
+  "CompanyDtos.UpdateContactRequest": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.UpdateContactRequest",
+  "CompanyDtos.UpdateLegalRequest": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.UpdateLegalRequest",
+  "CompanyDtos.LinkLegalProfileRequest": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.LinkLegalProfileRequest",
+  "CompanyContractsService.CompanyContracts": "com.sni.bokaticowork.features.company.contracts.CompanyContractsService.CompanyContracts",
+  "CompanyInvoiceLinkService.Result": "com.sni.bokaticowork.features.company.membership.service.CompanyInvoiceLinkService.Result",
+  "CompanyInvoiceLinkService.LinkRequest": "com.sni.bokaticowork.features.company.membership.service.CompanyInvoiceLinkService.LinkRequest",
+  "InvoiceLinkMode": "com.sni.bokaticowork.features.company.enums.InvoiceLinkMode",
+  "MembershipDtos.CompanyModeRequest": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.CompanyModeRequest",
+  "MembershipDtos.LinkResponse": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.LinkResponse",
+  "MembershipDtos.LinkMemberRequest": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.LinkMemberRequest",
+  "MembershipDtos.UpdateLinkRequest": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.UpdateLinkRequest",
+  "MembershipDtos.EndLinkRequest": "com.sni.bokaticowork.features.company.membership.dto.MembershipDtos.EndLinkRequest",
+  "PassSharingDtos.PassSummary": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.PassSummary",
+  "PassSharingDtos.PassView": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.PassView",
+  "PassSharingDtos.AddBeneficiaryRequest": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.AddBeneficiaryRequest",
+  "PassSharingDtos.RevokeResult": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.RevokeResult",
+  "PassSharingDtos.RevokeBeneficiaryRequest": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.RevokeBeneficiaryRequest",
+  "SharingDtos.SubscriptionSummary": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SubscriptionSummary",
+  "SharingDtos.SharingView": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SharingView",
+  "SharingDtos.MaxSeatsRequest": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.MaxSeatsRequest",
+  "SharingDtos.AssignSeatRequest": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.AssignSeatRequest",
+  "SharingDtos.UpdateSeatRequest": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.UpdateSeatRequest",
+  "SharingDtos.ReleaseResult": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.ReleaseResult",
+  "SharingDtos.ReleaseSeatRequest": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.ReleaseSeatRequest",
+  "SharingDtos.RuleRequest": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.RuleRequest",
+  "CompanyWalletDtos.AuthorizationView": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationView",
+  "CompanyWalletDtos.AuthorizationRequest": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationRequest",
+  "CompanyWalletDtos.AuthorizationUpdateRequest": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AuthorizationUpdateRequest",
+  "CompanyWalletDtos.WalletView": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.WalletView",
+  "CompanyWalletDtos.SpendView": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.SpendView",
+  "CompanyWalletSpend.Status": "com.sni.bokaticowork.features.company.wallet.model.CompanyWalletSpend.Status",
+  "CompanyWalletDtos.AdminTopUpResult": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AdminTopUpResult",
+  "CompanyWalletDtos.AdminTopUpRequest": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.AdminTopUpRequest",
+  "StatementDtos.Totals": "com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Totals",
+  "StatementDtos.AccountBreakdown": "com.sni.bokaticowork.features.company.statement.dto.StatementDtos.AccountBreakdown",
+  "StatementDtos.Line": "com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Line",
+  "AddressResponse": "com.sni.bokaticowork.core.baseClasses.dto.response.AddressResponse",
+  "CompanyDtos.IdentifierResponse": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.IdentifierResponse",
+  "CompanyDtos.AddressResponse": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.AddressResponse",
+  "CompanyDtos.IdentifierRequest": "com.sni.bokaticowork.features.company.account.dto.CompanyDtos.IdentifierRequest",
+  "CompanyContractsService.SignatoryView": "com.sni.bokaticowork.features.company.contracts.CompanyContractsService.SignatoryView",
+  "CompanyContractsService.ContractView": "com.sni.bokaticowork.features.company.contracts.CompanyContractsService.ContractView",
+  "DomiciliationDtos.ContractView": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView",
+  "CompanyInvoiceLinkService.Line": "com.sni.bokaticowork.features.company.membership.service.CompanyInvoiceLinkService.Line",
+  "PassSharingDtos.PassEntitlement": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.PassEntitlement",
+  "PassSharingDtos.BeneficiaryView": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.BeneficiaryView",
+  "SharingDtos.EntitlementView": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.EntitlementView",
+  "SharingDtos.SeatView": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SeatView",
+  "SharingDtos.AllowanceRequest": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.AllowanceRequest",
+  "WalletResponse": "com.sni.bokaticowork.features.payment.dto.response.WalletResponse",
+  "CompanyWalletDtos.EntryView": "com.sni.bokaticowork.features.company.wallet.dto.CompanyWalletDtos.EntryView",
+  "StatementDtos.Aging": "com.sni.bokaticowork.features.company.statement.dto.StatementDtos.Aging",
+  "CompanyContractsService.PartyView": "com.sni.bokaticowork.features.company.contracts.CompanyContractsService.PartyView",
+  "CompanyContractsService.AmendmentView": "com.sni.bokaticowork.features.company.contracts.CompanyContractsService.AmendmentView",
+  "ContractVersionHistory.Version": "com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory.Version",
+  "PassSharingDtos.BeneficiaryConsumption": "com.sni.bokaticowork.features.company.sharing.dto.PassSharingDtos.BeneficiaryConsumption",
+  "SharingDtos.SeatEntitlement": "com.sni.bokaticowork.features.company.sharing.dto.SharingDtos.SeatEntitlement"
+ }
+}
