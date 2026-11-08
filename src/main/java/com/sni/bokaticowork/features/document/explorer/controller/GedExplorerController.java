@@ -5,6 +5,7 @@ import com.sni.bokaticowork.features.document.documentMaster.dto.response.Docume
 import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCopyRequest;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCreateFolderRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFilingResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedListing;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedMoveRequest;
@@ -116,6 +117,12 @@ public class GedExplorerController {
     @GetMapping("/trash")
     public ResponseEntity<List<GedTrashBatch>> trashContent() {
         return ResponseEntity.ok(service.trashContent());
+    }
+
+    /** Range dans le plan de classement les documents encore sans dossier (la reprise tourne aussi seule, chaque heure). */
+    @PostMapping("/filing/run")
+    public ResponseEntity<GedFilingResult> runFiling(@RequestParam(defaultValue = "1000") int limit) {
+        return ResponseEntity.ok(service.fileUnfiled(limit));
     }
 
     @PostMapping("/trash/{batch}/restore")

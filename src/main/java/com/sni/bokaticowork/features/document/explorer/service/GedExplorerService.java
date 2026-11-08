@@ -22,6 +22,7 @@ import com.sni.bokaticowork.features.document.documentMaster.service.implementat
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentService;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCopyRequest;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCreateFolderRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFilingResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderRef;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedListing;
@@ -79,6 +80,7 @@ public class GedExplorerService {
     private final DocumentService documentService;
     private final DocumentMapper documentMapper;
     private final TransactionTemplate transactionTemplate;
+    private final GedAutoFiler autoFiler;
 
     // Lecture -----------------------------------------------------------------------------------
 
@@ -281,6 +283,42 @@ public class GedExplorerService {
         }
     }
 
+    // Classement --------------------------------------------------------------------------------
+
+    /**
+     * Range dans le plan les documents encore sans dossier, au plus {@code limit} par appel.
+     *
+     * <p>Sans risque a rejouer : un document deja range n'est pas touche, et un document place a la
+     * main entre-temps reste ou il est. Un document qui ne peut pas etre classe (proprietaire
+     * introuvable) est saute et compte dans {@code skipped}.</p>
+     */
+    public GedFilingResult fileUnfiled(int limit) {
+        int max = Math.max(1, Math.min(limit, 5000));
+        int filed = 0;
+        int skipped = 0;
+        long cursor = 0;
+        while (filed + skipped < max) {
+            long after = cursor;
+            int batch = Math.min(200, max - filed - skipped);
+            List<Long> ids = transactionTemplate.execute(status -> queries.unfiledDocumentIds(after, batch));
+            if (ids == null || ids.isEmpty()) {
+                break;
+            }
+            for (Long id : ids) {
+                cursor = id;
+                Boolean done = transactionTemplate.execute(status -> {
+                    Document document = documentRepository.findById(id).orElse(null);
+                    Long folderId = document == null ? null : autoFiler.folderIdFor(document);
+                    return folderId != null && queries.fileDocument(id, folderId) > 0;
+                });
+                if (Boolean.TRUE.equals(done)) filed++;
+                else skipped++;
+            }
+        }
+        long remaining = transactionTemplate.execute(status -> queries.countUnfiled());
+        return new GedFilingResult(filed, skipped, remaining);
+    }
+
     // Corbeille ---------------------------------------------------------------------------------
 
     /**
@@ -294,7 +332,10 @@ public class GedExplorerService {
         Set<Long> folderIds = new LinkedHashSet<>();
         for (String code : orEmpty(request.folderCodes())) {
             DocumentFolder folder = folder(code);
-            folderRepository.findAllByPathStartingWith(folder.getPath()).forEach(item -> folderIds.add(item.getId()));
+            for (DocumentFolder item : folderRepository.findAllByPathStartingWith(folder.getPath())) {
+                DocumentFolderService.requireUserFolder(item);
+                folderIds.add(item.getId());
+            }
         }
         List<Document> documents = new ArrayList<>(queries.filesIn(folderIds));
         for (String code : orEmpty(request.documentCodes())) {
@@ -458,7 +499,7 @@ public class GedExplorerService {
                 folder.getCreatedAt(), folder.getUpdatedAt(),
                 children.getOrDefault(folder.getId(), 0L), documents.getOrDefault(folder.getId(), 0L),
                 folder.getColor(), folder.getIcon(),
-                null, null, null, null, null, null, null, null, null, false, null, null)).toList();
+                null, null, null, null, null, null, null, null, null, folder.getSystemKey() != null, null, null)).toList();
     }
 
     private GedItem fileItem(Document document) {

@@ -98,6 +98,31 @@ public class GedExplorerQueries {
         return query.setParameter("name", name.toLowerCase()).setMaxResults(1).getResultList().stream().findFirst();
     }
 
+    // Classement --------------------------------------------------------------------------------
+
+    private static final String UNFILED = "d.folder IS NULL AND d.ownerType <> "
+            + "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType.INTERNAL";
+
+    /** Les documents sans dossier qui ont une place dans le plan, a partir d'un curseur. */
+    public List<Long> unfiledDocumentIds(long afterId, int limit) {
+        return entityManager.createQuery("SELECT d.id FROM Document d WHERE " + UNFILED + " AND d.id > :after ORDER BY d.id", Long.class)
+                .setParameter("after", afterId)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+    public long countUnfiled() {
+        return entityManager.createQuery("SELECT COUNT(d) FROM Document d WHERE " + UNFILED, Long.class).getSingleResult();
+    }
+
+    /** Range un document, sauf s'il a ete place entre-temps. */
+    public int fileDocument(Long documentId, Long folderId) {
+        return entityManager.createNativeQuery("UPDATE document SET folder_id = :folder WHERE id = :id AND folder_id IS NULL")
+                .setParameter("folder", folderId)
+                .setParameter("id", documentId)
+                .executeUpdate();
+    }
+
     // Corbeille ---------------------------------------------------------------------------------
 
     /** Les lots de la corbeille, du plus recent au plus ancien. */

@@ -91,6 +91,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentSignatureRepository signatureRepository;
     private final DocumentMapper mapper;
     private final DocumentFolderRepository folderRepository;
+    private final com.sni.bokaticowork.features.document.explorer.service.GedAutoFiler autoFiler;
 
     @Value("${app.document.default-expiry-years:5}")
     private Integer defaultExpiryYears;
@@ -126,6 +127,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .build();
 
         documentRepository.save(document);
+        autoFiler.file(document);
         createVersion(document, uploadedBy, metadata.getTitle(), metadata.getDocumentNumber(), file, inspection);
         attachKycDocumentIfNeeded(document, owner, metadata);
         kycAutomationService.syncFromDocumentUpload(document);
@@ -168,6 +170,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .build();
 
         documentRepository.save(document);
+        autoFiler.file(document);
         createVersionFromBytes(document, uploadedBy, originalFileName, content, inspection);
         attachKycDocumentIfNeeded(document, owner, metadata);
         kycAutomationService.syncFromDocumentUpload(document);

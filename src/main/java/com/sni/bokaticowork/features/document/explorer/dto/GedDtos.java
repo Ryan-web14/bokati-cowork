@@ -26,7 +26,8 @@ public final class GedDtos {
      * <p>Pour un dossier, seuls les champs communs et {@code childrenCount}, {@code documentsCount},
      * {@code color}, {@code icon} sont remplis. Pour un fichier, les champs de fichier.
      * {@code protectedItem} vaut vrai pour un document produit par un autre module (piece KYC,
-     * contrat, facture) : il se range et se renomme, mais ne part pas a la corbeille d'ici.</p>
+     * contrat, facture) : il se range et se renomme, mais ne part pas a la corbeille d'ici. Pour un
+     * dossier, il signale un dossier du plan de classement : ni renomme, ni deplace, ni supprime.</p>
      */
     public record GedItem(
             String kind,
@@ -78,6 +79,9 @@ public final class GedDtos {
     public record GedCopyRequest(List<String> documentCodes, String targetFolderCode) {}
 
     public record GedTrashResult(String batch, long folders, long documents) {}
+
+    /** Une reprise du classement : rangés, sautés (sans place possible), restant sans dossier. */
+    public record GedFilingResult(int filed, int skipped, long remaining) {}
 
     /** Un lot de la corbeille : ce qui a ete supprime ensemble, et se restaure ensemble. */
     public record GedTrashBatch(String batch, Instant trashedAt, Long trashedBy, long folders, long documents, List<GedItem> items) {}

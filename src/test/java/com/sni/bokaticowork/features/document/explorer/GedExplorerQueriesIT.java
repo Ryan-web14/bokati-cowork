@@ -137,4 +137,43 @@ class GedExplorerQueriesIT extends PostgresIntegrationTestBase {
         assertThat(documents.findById(inside).orElseThrow().getTrashBatch()).isNull();
         assertThat(queries.folderNameTakenAmongAlive(null, "archives ged")).isTrue();
     }
+
+    @Test
+    @DisplayName("La cle systeme d'un dossier du plan est unique, et la reprise ne range que les documents sans dossier")
+    void filingQueries() {
+        long plan = folder(null, "Membres GED");
+        entityManager.createNativeQuery("UPDATE document_folder SET system_key = 'test:plan' WHERE id = :id")
+                .setParameter("id", plan).executeUpdate();
+        long other = folder(null, "Doublon");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> {
+            entityManager.createNativeQuery("UPDATE document_folder SET system_key = 'test:plan' WHERE id = :id")
+                    .setParameter("id", other).executeUpdate();
+            entityManager.flush();
+        }).isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    @DisplayName("La reprise lit les documents sans dossier a partir d'un curseur, et ne deplace pas un document deja range")
+    void unfiledDocuments() {
+        long placed = folder(null, "Deja range");
+        long member = IDS.incrementAndGet();
+        entityManager.createNativeQuery("""
+                INSERT INTO document (id, code, owner_type, owner_id, category, document_type_id, title, file_url,
+                                      status, uploaded_at, updated_at, correction_count, space, deleted)
+                SELECT :id, :code, 'MEMBER', 12, 'OTHER', t.id, 'piece', 'member/12', 'APPROVED',
+                       now(), now(), 0, 'GENERIC', FALSE
+                FROM document_type t WHERE t.code = 'GENERAL'
+                """).setParameter("id", member).setParameter("code", "DOC-" + member).executeUpdate();
+        long internal = file(null, "interne.pdf");
+        entityManager.flush();
+
+        List<Long> ids = queries.unfiledDocumentIds(member - 1, 50);
+        assertThat(ids).contains(member).doesNotContain(internal);
+        assertThat(queries.unfiledDocumentIds(member, 50)).doesNotContain(member);
+
+        assertThat(queries.fileDocument(member, placed)).isEqualTo(1);
+        assertThat(queries.fileDocument(member, placed)).isZero();
+        entityManager.clear();
+        assertThat(documents.findById(member).orElseThrow().getFolder().getId()).isEqualTo(placed);
+    }
 }

@@ -18,6 +18,10 @@ app.document.storage.provider	DOCUMENTS	TEXT	RESTART	filesystem	Fournisseur de s
 app.document.storage.root-path	DOCUMENTS	TEXT	RESTART	storage/documents	Dossier racine du stockage
 app.document.worker.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Traitement des documents actif
 app.document.worker.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du traitement des documents (ms)
+app.ged.filing.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Classement automatique de la GED actif
+app.ged.filing.batch-size	DOCUMENTS	INTEGER	RESTART	1000	Documents rangés par passage du classement GED
+app.ged.filing.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	120000	Délai avant le premier classement GED (ms)
+app.ged.filing.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du classement GED (ms)
 app.documents.preview-token.secret	DOCUMENTS	SECRET	RESTART		Secret des liens d'aperçu
 app.documents.preview-token.ttl-seconds	DOCUMENTS	INTEGER	RESTART	300	Validité d'un lien d'aperçu (secondes)
 app.documents.public-preview-enabled	DOCUMENTS	BOOLEAN	RESTART	false	Aperçu public des documents

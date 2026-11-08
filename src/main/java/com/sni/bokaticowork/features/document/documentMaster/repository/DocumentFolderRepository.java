@@ -15,6 +15,8 @@ public interface DocumentFolderRepository extends JpaRepository<DocumentFolder, 
 
     Optional<DocumentFolder> findByCode(String code);
 
+    Optional<DocumentFolder> findBySystemKey(String systemKey);
+
     List<DocumentFolder> findAllByParentAndDeletedFalseOrderBySortOrderAscNameAsc(DocumentFolder parent);
 
     List<DocumentFolder> findAllByParentIsNullAndSpaceAndDeletedFalseOrderBySortOrderAscNameAsc(DocumentSpace space);
