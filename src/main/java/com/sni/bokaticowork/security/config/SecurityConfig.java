@@ -88,6 +88,7 @@ public class SecurityConfig {
                         }
                         // Une seule liste, partagee avec JWTFilter · voir PublicPaths.
                         auth.requestMatchers(PublicPaths.patterns()).permitAll();
+                        auth.requestMatchers(HttpMethod.GET, PublicPaths.readPatterns()).permitAll();
                         auth.requestMatchers(ApiPath.V1 + "/client/**").access(clientPortalAuthorizationManager);
                         // Alias of the client KYC endpoints for the portal frontend.
                         auth.requestMatchers(ApiPath.V1 + "/portal/kyc", ApiPath.V1 + "/portal/kyc/**").access(clientPortalAuthorizationManager);

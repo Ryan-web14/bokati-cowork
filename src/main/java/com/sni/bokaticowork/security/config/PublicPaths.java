@@ -68,7 +68,17 @@ public final class PublicPaths {
     /** Catalogue et referentiels · consultables par construction. */
     public static final List<String> CATALOGUE = List.of(
             ApiPath.V1 + "/client/catalog/plans",
-            ApiPath.V1 + "/client/catalog/plans/**",
+            ApiPath.V1 + "/client/catalog/plans/**"
+    );
+
+    /**
+     * Referentiels ouverts en lecture seulement · le GET est public, les autres verbes non.
+     *
+     * <p>La liste des pays sert a l'inscription, donc sans compte. Elle figurait dans
+     * {@link #CATALOGUE}, ouverte a tous les verbes : creer, modifier ou supprimer un pays se
+     * faisait sans jeton. L'ecriture repasse par {@code AdminApiAuthorizationManager}.</p>
+     */
+    public static final List<String> PUBLIC_READS = List.of(
             ApiPath.V1 + "/countries"
     );
 
@@ -99,12 +109,28 @@ public final class PublicPaths {
     private PublicPaths() {
     }
 
-    /** Le chemin demande est-il public · meme reponse pour la configuration et pour le filtre. */
+    /** Le chemin est-il public pour tous les verbes · ne tient pas compte de {@link #PUBLIC_READS}. */
     public static boolean matches(String uri) {
+        return matchesAny(ALL, uri);
+    }
+
+    /** Le chemin est-il public pour ce verbe · meme reponse pour la configuration et pour le filtre. */
+    public static boolean matches(String method, String uri) {
+        if (matches(uri)) {
+            return true;
+        }
+        return "GET".equalsIgnoreCase(method) && matchesAny(PUBLIC_READS, uri);
+    }
+
+    public static boolean matches(HttpServletRequest request) {
+        return request != null && matches(request.getMethod(), request.getRequestURI());
+    }
+
+    private static boolean matchesAny(List<String> patterns, String uri) {
         if (uri == null) {
             return false;
         }
-        for (String pattern : ALL) {
+        for (String pattern : patterns) {
             if (MATCHER.match(pattern, uri)) {
                 return true;
             }
@@ -112,12 +138,13 @@ public final class PublicPaths {
         return false;
     }
 
-    public static boolean matches(HttpServletRequest request) {
-        return request != null && matches(request.getRequestURI());
-    }
-
-    /** Les motifs, pour les passer tels quels a la configuration de securite. */
+    /** Les motifs ouverts a tous les verbes, pour les passer tels quels a la configuration de securite. */
     public static String[] patterns() {
         return ALL.toArray(String[]::new);
+    }
+
+    /** Les motifs ouverts au seul GET, pour la configuration de securite. */
+    public static String[] readPatterns() {
+        return PUBLIC_READS.toArray(String[]::new);
     }
 }
