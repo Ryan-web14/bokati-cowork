@@ -206,16 +206,49 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public LoginResponse validateOttLogin(ValidateOttRequest ottRequest, HttpServletRequest request) {
 
-        String email = oneTimeTokenService.validateOneTimeToken(ottRequest.getOttToken(), ottRequest.getVerificationToken()).get(true);
-
-        if(email.isEmpty()){
+        // Un code faux ou echu ne porte pas de cle true · get(true) rendait null, puis
+        // email.isEmpty() levait une NullPointerException et la reponse etait un 500.
+        String email;
+        try {
+            email = oneTimeTokenService.validateOneTimeToken(ottRequest.getOttToken(), ottRequest.getVerificationToken()).get(true);
+        } catch (JwtException e) {
             throw new BadCredentialException("Invalid token");
         }
 
+        if(email == null || email.isEmpty()){
+            throw new BadCredentialException("Invalid token");
+        }
+
+        // Memes refus que la connexion par mot de passe, et avant la verification du portail :
+        // celle-ci reactive et deverrouille le compte d'un membre non actif, elle ne doit pas
+        // rouvrir un compte verrouille ou desactive.
+        UserPrincipal principal;
+        try {
+            principal = (UserPrincipal) userDetailService.loadUserByUsername(email);
+        } catch (UsernameNotFoundException e) {
+            throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
+        }
+        assertAccountUsable(principal);
+
         userProvisioningService.completePortalVerification(email, "OTT_VERIFICATION");
-        UserPrincipal principal = (UserPrincipal) userDetailService.loadUserByUsername(email);
+        principal = (UserPrincipal) userDetailService.loadUserByUsername(email);
 
         return authenticationAndCreateSesison(principal, request);
+    }
+
+    /**
+     * Les controles d'etat du compte que le fournisseur d'authentification applique a la
+     * connexion par mot de passe · verrou d'abord, puis desactivation et expiration.
+     */
+    private void assertAccountUsable(UserPrincipal principal) {
+        if (!principal.isAccountNonLocked()) {
+            log.warn("Login attempt on locked account: {}", principal.getUsername());
+            throw new AccountLockedException("Your account is locked. Use the unlock-account flow to regain access.");
+        }
+        if (!principal.isEnabled() || !principal.isAccountNonExpired() || !principal.isCredentialsNonExpired()) {
+            log.warn("Login attempt on disabled or expired account: {}", principal.getUsername());
+            throw new BadCredentialException(INVALID_CREDENTIALS_MESSAGE);
+        }
     }
 
     @Override

@@ -131,6 +131,49 @@ class AdminApiAuthorizationManagerTest {
                 .isEqualTo("ADMIN:ACCESS");
     }
 
+    @Test
+    void shouldRequireTheKycDecisionPermissionsForBulkReviews() {
+        // Regression : seuls /approve et /reject etaient reconnus. Les validations et refus en
+        // masse tombaient sur KYC:READ, un simple droit de lecture suffisait a les decider.
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/documents/bulk-approve"))
+                .isEqualTo("KYC:APPROVE");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/cases/KYC-1/documents/bulk-approve"))
+                .isEqualTo("KYC:APPROVE");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/documents/bulk-reject"))
+                .isEqualTo("KYC:REJECT");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/documents/bulk-disapprove"))
+                .isEqualTo("KYC:REJECT");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/documents/bulk-desapprove"))
+                .isEqualTo("KYC:REJECT");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/cases/KYC-1/documents/bulk-reject"))
+                .isEqualTo("KYC:REJECT");
+        assertThat(requiredPermissionFor("GET", BASE + "/kyc/documents/review-queue"))
+                .isEqualTo("KYC:READ");
+    }
+
+    @Test
+    void shouldRequireTheExportPermissionForEveryReportDownload() {
+        // Regression : la regle attendait .csv ou /export, or les rapports se telechargent par
+        // /csv et /pdf. REPORT:VIEW suffisait donc a exporter.
+        List<String> exports = List.of(
+                "/reports/activity/csv", "/reporting/activity/csv",
+                "/reports/activity/pdf", "/reporting/activity/pdf",
+                "/reports/debt-recovery/csv", "/reporting/debt-recovery/csv",
+                "/reports/debt-recovery/pdf", "/reporting/debt-recovery/pdf",
+                "/reports/finance/dashboard/pdf", "/reporting/dashboard/pdf", "/reporting/finance/dashboard/pdf",
+                "/reports/member-profile/12/pdf", "/reporting/member-profile/12/pdf",
+                "/reports/occupancy/pdf", "/reporting/occupancy/pdf",
+                "/reports/resource-utilization/pdf", "/reporting/resource-utilization/pdf",
+                "/reports/stock-valuation/pdf", "/reporting/stock-valuation/pdf",
+                "/reports/subscriptions/pdf", "/reporting/subscriptions/pdf");
+        for (String export : exports) {
+            assertThat(requiredPermissionFor("GET", BASE + export)).as(export).isEqualTo("REPORT:EXPORT");
+        }
+        assertThat(requiredPermissionFor("GET", BASE + "/reports/activity")).isEqualTo("REPORT:VIEW");
+        assertThat(requiredPermissionFor("GET", BASE + "/reporting/finance/dashboard")).isEqualTo("REPORT:VIEW");
+        assertThat(requiredPermissionFor("GET", BASE + "/analytics/overview")).isEqualTo("REPORT:VIEW");
+    }
+
     /** Renvoie la permission exigee en refusant l'appel avec un compte sans aucune permission. */
     private String requiredPermissionFor(String method, String uri) {
         MockHttpServletRequest request = new MockHttpServletRequest(method, uri);

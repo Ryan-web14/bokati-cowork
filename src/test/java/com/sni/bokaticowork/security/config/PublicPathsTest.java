@@ -54,11 +54,23 @@ class PublicPathsTest {
     @DisplayName("Les trois chemins qui manquaient au filtre sont désormais couverts")
     @ValueSource(strings = {
             ApiPath.V1 + "/admin/provisioning/bootstrap-admin",
-            ApiPath.V1 + "/public/events/EVT-1",
-            ApiPath.V1 + "/countries"
+            ApiPath.V1 + "/public/events/EVT-1"
     })
     void thePathsMissingFromTheFilterAreNowCovered(String uri) {
         assertThat(PublicPaths.matches(uri)).isTrue();
+    }
+
+    @Test
+    @DisplayName("La liste des pays est publique en lecture seulement")
+    void countriesArePublicForReadingOnly() {
+        String countries = ApiPath.V1 + "/countries";
+        assertThat(PublicPaths.matches("GET", countries)).isTrue();
+        assertThat(PublicPaths.matches("POST", countries)).isFalse();
+        assertThat(PublicPaths.matches("PUT", countries + "/CG")).isFalse();
+        assertThat(PublicPaths.matches("DELETE", countries + "/CG")).isFalse();
+        // Sans verbe, seul ce qui est ouvert a tous les verbes passe.
+        assertThat(PublicPaths.matches(countries)).isFalse();
+        assertThat(PublicPaths.readPatterns()).containsExactlyElementsOf(PublicPaths.PUBLIC_READS);
     }
 
     @ParameterizedTest
