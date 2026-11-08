@@ -303,6 +303,8 @@ public class PlanDerivationService {
         }
         derivation.setApprovedBy(StringUtils.hasText(acceptedBy) ? acceptedBy.trim() : "STAFF");
         derivation.setApprovedAt(Instant.now());
+        // La base n'admet un visa par le demandeur lui-meme que pour cette source
+        derivation.setApprovalSource("QUOTE");
         apply(derivation);
         return loaded(derivationRepository.save(derivation));
     }

@@ -72,7 +72,7 @@ public class PlanDerivationController {
                                  String reasonDetails, LocalDate effectiveFrom, LocalDate effectiveTo,
                                  PlanDerivation.RenewalBehaviour renewalBehaviour, Integer revertAfterPeriods, Integer periodsApplied,
                                  Boolean promotionsAllowed, BigDecimal totalImpactAmount, BigDecimal discountPercent, String currency,
-                                 String requestedBy, String approvedBy, Instant approvedAt, String rejectionReason,
+                                 String requestedBy, String approvedBy, Instant approvedAt, String approvalSource, String rejectionReason,
                                  Instant appliedAt, Instant endedAt, Long supersedesDerivationId, String batchCode, Instant createdAt) {
         static DerivationView of(PlanDerivation d) {
             return new DerivationView(d.getDerivationCode(), d.getSubscription().getSubscriptionNumber(),
@@ -82,7 +82,7 @@ public class PlanDerivationController {
                     d.getStatus(), d.getReason(), d.getReasonDetails(), d.getEffectiveFrom(), d.getEffectiveTo(),
                     d.getRenewalBehaviour(), d.getRevertAfterPeriods(), d.getPeriodsApplied(), d.getPromotionsAllowed(),
                     d.getTotalImpactAmount(), d.getDiscountPercent(), d.getCurrency(), d.getRequestedBy(), d.getApprovedBy(),
-                    d.getApprovedAt(), d.getRejectionReason(), d.getAppliedAt(), d.getEndedAt(), d.getSupersedesDerivationId(),
+                    d.getApprovedAt(), d.getApprovalSource(), d.getRejectionReason(), d.getAppliedAt(), d.getEndedAt(), d.getSupersedesDerivationId(),
                     d.getBatchCode(), d.getCreatedAt());
         }
     }

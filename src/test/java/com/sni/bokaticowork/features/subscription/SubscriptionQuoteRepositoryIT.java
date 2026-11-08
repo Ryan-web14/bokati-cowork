@@ -84,4 +84,20 @@ class SubscriptionQuoteRepositoryIT extends PostgresIntegrationTestBase {
         assertThat(derivations.findByDerivationCode("DRV-INCONNU")).isEmpty();
         assertThat(derivations.findByBatchCodeOrderByCreatedAtAsc("LOT-INCONNU")).isEmpty();
     }
+
+    @Test
+    @DisplayName("La base admet le visa d'une derivation par son demandeur pour un devis accepte, et seulement pour lui")
+    void fourEyesRuleLetsAQuoteAcceptanceThrough() {
+        String rule = (String) entityManager.createNativeQuery("""
+                SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'ck_plan_derivation_four_eyes'
+                """).getSingleResult();
+        assertThat(rule).contains("approved_by IS NULL", "approved_by", "requested_by", "approval_source", "'QUOTE'");
+        // La regle elle-meme, evaluee comme la base l'evalue
+        String check = "SELECT (CAST(:approved AS text) IS NULL OR CAST(:approved AS text) <> 'alice' OR CAST(:source AS text) = 'QUOTE')";
+        assertThat(entityManager.createNativeQuery(check).setParameter("approved", "alice").setParameter("source", "QUOTE")
+                .getSingleResult()).isEqualTo(true);
+        Object direct = entityManager.createNativeQuery(check).setParameter("approved", "alice").setParameter("source", null)
+                .getSingleResult();
+        assertThat(direct).isNotEqualTo(true);
+    }
 }
