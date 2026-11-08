@@ -70,7 +70,19 @@ public class SubscriptionCreationOperator {
     private final SubscriptionPricingBridge pricingBridge;
     private final com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionCommitmentService commitmentService;
 
+    /**
+     * Un prix negocie (devis accepte) : il remplace le tarif du catalogue des la creation, pour la
+     * premiere facture, les montants de l'abonnement et ses notifications. Ni promotion ni code de
+     * reduction ne s'y ajoutent : le prix negocie est deja la concession.
+     */
+    public record NegotiatedPrice(BigDecimal amount, BigDecimal setupFee) {
+    }
+
     public Subscription create(CreateSubscriptionRequest request) {
+        return create(request, null);
+    }
+
+    public Subscription create(CreateSubscriptionRequest request, NegotiatedPrice negotiated) {
         PlanVersion planVersion = planResolver.resolvePlanVersion(request.planCode(), request.planVersionId());
         PlanPrice price = planResolver.resolvePrice(planVersion, request.billingCycle());
         SubscriptionOwnerResolver.Owner owner = ownerResolver.resolve(request.subscriberType(), request.subscriberCode());
@@ -88,21 +100,25 @@ public class SubscriptionCreationOperator {
 
         // La remise s'applique avant la taxe : celle-ci porte sur ce que le client paie reellement,
         // pas sur un tarif catalogue qu'il ne paie jamais.
-        SubscriptionPricingBridge.PricedSubscription priced = pricingBridge.price(
+        SubscriptionPricingBridge.PricedSubscription priced = negotiated != null ? null : pricingBridge.price(
                 request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
                 planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
                 price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
                 price.getCurrency(), price.getAmount(), price.getSetupFee(),
                 request.couponCodesOrEmpty(), true);
+        BigDecimal recurringAmount = negotiated != null ? negotiated.amount() : priced.recurringAmount();
+        BigDecimal setupFee = negotiated != null
+                ? (negotiated.setupFee() == null ? BigDecimal.ZERO : negotiated.setupFee())
+                : priced.setupFee();
 
         // Premiere facture : periode, frais d'entree et caution
         PlanPriceAmountCalculator.Amounts priceAmounts = priceCalculator.compute(
-                priced.recurringAmount(), priced.setupFee(), price.getDepositAmount(), price.getTaxIncluded());
+                recurringAmount, setupFee, price.getDepositAmount(), price.getTaxIncluded());
         // L'abonnement garde le prix de la periode seul, comme apres un changement de plan ou une
         // derivation · le renouvellement, la proration, le gel et la resiliation le lisent comme
         // tel. Y laisser frais d'entree et caution les refacturait a chaque renouvellement.
         PlanPriceAmountCalculator.Amounts periodAmounts = priceCalculator.compute(
-                priced.recurringAmount(), java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, price.getTaxIncluded());
+                recurringAmount, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, price.getTaxIncluded());
 
         Subscription subscription = Subscription.builder()
                 .subscriptionNumber(subscriptionNumber)
@@ -132,7 +148,7 @@ public class SubscriptionCreationOperator {
                 .subscription(saved)
                 .planVersion(planVersion)
                 .quantity(1)
-                .unitPrice(price.getAmount())
+                .unitPrice(negotiated != null ? negotiated.amount() : price.getAmount())
                 .currency(price.getCurrency())
                 .startDate(startDate)
                 .status(saved.getStatus())
@@ -144,10 +160,10 @@ public class SubscriptionCreationOperator {
         commitmentService.setFromPlan(saved, price.getCommitmentMonths());
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
-        billingSupport.createSubscriptionSetupItems(saved, priced.recurringAmount(), priced.setupFee(),
+        billingSupport.createSubscriptionSetupItems(saved, recurringAmount, setupFee,
                 price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount(),
                 priceAmounts.total());
-        pricingBridge.confirm(priced, request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
+        if (priced != null) pricingBridge.confirm(priced, request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
                 planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
                 price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
                 price.getCurrency(), request.couponCodesOrEmpty(),

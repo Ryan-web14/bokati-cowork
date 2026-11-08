@@ -161,6 +161,10 @@ public class SubscriptionQuoteService {
     /**
      * Accepte et convertit · l'abonnement est cree, la derivation posee si le prix est negocie,
      * l'engagement pose si le devis en porte un.
+     *
+     * <p>Un prix negocie vaut des la creation : premiere facture, montants de l'abonnement et
+     * notifications portent le prix du devis, pas celui du catalogue. L'acceptation vaut visa :
+     * la derivation est appliquee aussitot, meme quand sa remise demande un visa.</p>
      */
     @Transactional
     public SubscriptionQuote accept(String quoteNumber, String acceptedBy) {
@@ -177,7 +181,9 @@ public class SubscriptionQuoteService {
         Subscription subscription = creationOperator.create(new CreateSubscriptionRequest(
                 quote.getPlanVersion().getPlan().getCode(), String.valueOf(quote.getPlanVersion().getId()), quote.getBillingCycle(),
                 quote.getSubscriberType(), quote.getSubscriberCode(), start, true,
-                com.sni.bokaticowork.core.utils.json.JsonPayload.of("quoteNumber", quote.getQuoteNumber()), false));
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("quoteNumber", quote.getQuoteNumber()), false),
+                // Le devis fixe le prix et les frais d'entree, negocies ou non : le client paie ce qu'il a lu
+                new SubscriptionCreationOperator.NegotiatedPrice(quote.getQuotedPrice(), quote.getSetupFee()));
         quote.setStatus(SubscriptionQuote.Status.CONVERTED);
         quote.setAcceptedAt(Instant.now());
         quote.setAcceptedBy(acceptedBy);
@@ -185,6 +191,9 @@ public class SubscriptionQuoteService {
 
         if (quote.negotiated()) {
             PlanDerivation derivation = derivationService.create(subscription, derivationSpec(quote), quote.getPreparedBy(), null);
+            if (derivation.getStatus() == PlanDerivation.Status.PENDING_APPROVAL) {
+                derivation = derivationService.approveFromQuote(derivation.getDerivationCode(), acceptedBy);
+            }
             quote.setDerivationCode(derivation.getDerivationCode());
         }
         if (quote.getCommitmentMonths() != null && quote.getCommitmentMonths() > 0) {

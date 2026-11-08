@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.subscription.derivation.repository;
 import com.sni.bokaticowork.features.subscription.derivation.model.PlanDerivation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,16 +17,23 @@ import java.util.Optional;
 @Repository
 public interface PlanDerivationRepository extends JpaRepository<PlanDerivation, Long> {
 
+    /** Abonnement et versions lus avec la derivation : sa vue les lit hors transaction (open-in-view coupe). */
+    @EntityGraph(attributePaths = {"subscription", "sourcePlanVersion", "sourcePlanVersion.plan", "derivedPlanVersion"})
     Optional<PlanDerivation> findByDerivationCode(String derivationCode);
 
+    @EntityGraph(attributePaths = {"subscription", "sourcePlanVersion", "sourcePlanVersion.plan", "derivedPlanVersion"})
     Optional<PlanDerivation> findFirstBySubscription_IdAndStatus(Long subscriptionId, PlanDerivation.Status status);
 
+    @EntityGraph(attributePaths = {"subscription", "sourcePlanVersion", "sourcePlanVersion.plan", "derivedPlanVersion"})
     List<PlanDerivation> findBySubscription_IdOrderByCreatedAtDesc(Long subscriptionId);
 
+    @EntityGraph(attributePaths = {"subscription", "sourcePlanVersion", "sourcePlanVersion.plan", "derivedPlanVersion"})
     Page<PlanDerivation> findByStatusInOrderByCreatedAtDesc(Collection<PlanDerivation.Status> statuses, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"subscription", "sourcePlanVersion", "sourcePlanVersion.plan", "derivedPlanVersion"})
     Page<PlanDerivation> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"subscription", "sourcePlanVersion", "sourcePlanVersion.plan", "derivedPlanVersion"})
     List<PlanDerivation> findByBatchCodeOrderByCreatedAtAsc(String batchCode);
 
     List<PlanDerivation> findByStatus(PlanDerivation.Status status);

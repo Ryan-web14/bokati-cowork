@@ -271,7 +271,7 @@ public class PlanDerivationService {
         if (!preview.requiresApproval()) {
             apply(derivation);
         }
-        return derivation;
+        return loaded(derivation);
     }
 
     /** Approuve · par un autre que le demandeur · et applique. */
@@ -287,7 +287,24 @@ public class PlanDerivationService {
         derivation.setApprovedBy(approvedBy.trim());
         derivation.setApprovedAt(Instant.now());
         apply(derivation);
-        return derivationRepository.save(derivation);
+        return loaded(derivationRepository.save(derivation));
+    }
+
+    /**
+     * Le visa d'un devis accepte : l'admin qui accepte un prix negocie le vise, meme s'il a
+     * prepare le devis (choix du 2026-11-08). La regle des quatre yeux reste entiere pour les
+     * derivations posees directement sur un abonnement.
+     */
+    @Transactional
+    public PlanDerivation approveFromQuote(String derivationCode, String acceptedBy) {
+        PlanDerivation derivation = get(derivationCode);
+        if (derivation.getStatus() != PlanDerivation.Status.PENDING_APPROVAL) {
+            return loaded(derivation);
+        }
+        derivation.setApprovedBy(StringUtils.hasText(acceptedBy) ? acceptedBy.trim() : "STAFF");
+        derivation.setApprovedAt(Instant.now());
+        apply(derivation);
+        return loaded(derivationRepository.save(derivation));
     }
 
     @Transactional
@@ -305,7 +322,7 @@ public class PlanDerivationService {
         PlanVersion derived = derivation.getDerivedPlanVersion();
         derived.setStatus(PlanStatus.ARCHIVED);
         planVersionRepository.save(derived);
-        return derivationRepository.save(derivation);
+        return loaded(derivationRepository.save(derivation));
     }
 
     /**
@@ -373,7 +390,7 @@ public class PlanDerivationService {
         active.setEndedAt(Instant.now());
         active.setReasonDetails(join(active.getReasonDetails(), "Fin · " + because));
         log.info("Abonnement {} · retour au catalogue ({})", subscription.getSubscriptionNumber(), because);
-        return derivationRepository.save(active);
+        return loaded(derivationRepository.save(active));
     }
 
     /**
@@ -443,6 +460,20 @@ public class PlanDerivationService {
         return statuses == null || statuses.isEmpty()
                 ? derivationRepository.findAllByOrderByCreatedAtDesc(pageable)
                 : derivationRepository.findByStatusInOrderByCreatedAtDesc(statuses, pageable);
+    }
+
+    /**
+     * Charge ce que la vue d'une derivation lit (abonnement, versions, plan) : le controleur la
+     * construit apres la transaction, sans open-in-view.
+     */
+    private static PlanDerivation loaded(PlanDerivation derivation) {
+        org.hibernate.Hibernate.initialize(derivation.getSubscription());
+        org.hibernate.Hibernate.initialize(derivation.getSourcePlanVersion());
+        if (derivation.getSourcePlanVersion() != null) {
+            org.hibernate.Hibernate.initialize(derivation.getSourcePlanVersion().getPlan());
+        }
+        org.hibernate.Hibernate.initialize(derivation.getDerivedPlanVersion());
+        return derivation;
     }
 
     public record ConcessionLine(String requestedBy, PlanDerivation.Reason reason, long count, BigDecimal totalImpact) {

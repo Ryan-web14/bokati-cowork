@@ -116,4 +116,26 @@ class SubscriptionCreationAmountsTest {
                 argThat(v -> v.compareTo(new BigDecimal("50000")) == 0),
                 argThat(v -> v.compareTo(new BigDecimal("192680")) == 0));
     }
+
+    @Test
+    void aNegotiatedPriceReplacesTheCatalogueFromTheStart() {
+        Subscription created = operator.create(new CreateSubscriptionRequest("PLAN", null, BillingCycle.MONTHLY,
+                SubscriberType.MEMBER, "MBR-1", LocalDate.of(2026, 11, 1), true, null, false),
+                new SubscriptionCreationOperator.NegotiatedPrice(new BigDecimal("80000"), BigDecimal.ZERO));
+
+        // Periode au prix du devis : 80 000 HT, taxes 15 120
+        assertThat(created.getSubtotalAmount()).isEqualByComparingTo("80000");
+        assertThat(created.getTotalAmount()).isEqualByComparingTo("95120");
+        // Premiere facture au prix du devis, sans frais d'entree (le devis les a retires), caution gardee
+        verify(billingSupport).createSubscriptionSetupItems(eq(created),
+                argThat(v -> v.compareTo(new BigDecimal("80000")) == 0),
+                argThat(v -> v.signum() == 0),
+                argThat(v -> v.compareTo(new BigDecimal("50000")) == 0),
+                argThat(v -> v.compareTo(new BigDecimal("145120")) == 0));
+        // Ni promotion ni coupon par-dessus un prix negocie
+        verify(pricingBridge, org.mockito.Mockito.never()).price(anyString(), anyString(), any(), any(), any(), any(), anyString(),
+                any(), any(), anyList(), anyBoolean());
+        // L'email de creation lit les montants de l'abonnement : ceux du devis
+        verify(emailNotifier).notify(eq(created), any());
+    }
 }

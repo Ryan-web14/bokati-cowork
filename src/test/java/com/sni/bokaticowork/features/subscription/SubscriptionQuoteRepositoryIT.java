@@ -27,6 +27,7 @@ class SubscriptionQuoteRepositoryIT extends PostgresIntegrationTestBase {
 
     @Autowired private EntityManager entityManager;
     @Autowired private SubscriptionQuoteRepository quotes;
+    @Autowired private com.sni.bokaticowork.features.subscription.derivation.repository.PlanDerivationRepository derivations;
 
     @Test
     @DisplayName("Un devis s'enregistre avec ses services en JSON, et se relit avec son plan deja charge")
@@ -72,5 +73,15 @@ class SubscriptionQuoteRepositoryIT extends PostgresIntegrationTestBase {
 
         SubscriptionQuote ofSubscriber = quotes.findBySubscriberTypeAndSubscriberCodeOrderByCreatedAtDesc(SubscriberType.MEMBER, "MBR-IT").getFirst();
         assertThat(Hibernate.isInitialized(ofSubscriber.getPlanVersion().getPlan())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Les listes de derivations s'executent avec abonnement et versions charges")
+    void derivationQueriesLoadWhatTheViewReads() {
+        var pending = java.util.List.of(com.sni.bokaticowork.features.subscription.derivation.model.PlanDerivation.Status.PENDING_APPROVAL);
+        assertThat(derivations.findByStatusInOrderByCreatedAtDesc(pending, PageRequest.of(0, 20)).getContent()).isEmpty();
+        assertThat(derivations.findAllByOrderByCreatedAtDesc(PageRequest.of(0, 20)).getContent()).isEmpty();
+        assertThat(derivations.findByDerivationCode("DRV-INCONNU")).isEmpty();
+        assertThat(derivations.findByBatchCodeOrderByCreatedAtAsc("LOT-INCONNU")).isEmpty();
     }
 }
