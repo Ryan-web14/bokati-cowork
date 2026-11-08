@@ -35,6 +35,8 @@ public class PaymentTransactionWorkflowOutboxEventProcessor implements OutboxEve
         JsonNode payload = readPayload(event);
         String transactionNumber = payload.path("transactionNumber").asText(null);
         String statusRaw = payload.path("status").asText(null);
+        // Absent des evenements anterieurs · ils gardent le comportement d'origine.
+        boolean fullRefund = payload.path("fullRefund").asBoolean(true);
 
         if (transactionNumber == null || statusRaw == null) {
             throw new IllegalStateException(
@@ -49,7 +51,7 @@ public class PaymentTransactionWorkflowOutboxEventProcessor implements OutboxEve
         }
 
         log.info("Processing payment workflow via outbox: transaction={} status={}", transactionNumber, status);
-        processor.process(new PaymentTransactionWorkflowEvent(transactionNumber, status));
+        processor.process(new PaymentTransactionWorkflowEvent(transactionNumber, status, fullRefund));
     }
 
     private JsonNode readPayload(OutboxEvent event) {

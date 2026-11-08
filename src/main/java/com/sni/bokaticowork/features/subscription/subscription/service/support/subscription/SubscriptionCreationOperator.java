@@ -95,8 +95,14 @@ public class SubscriptionCreationOperator {
                 price.getCurrency(), price.getAmount(), price.getSetupFee(),
                 request.couponCodesOrEmpty(), true);
 
+        // Premiere facture : periode, frais d'entree et caution
         PlanPriceAmountCalculator.Amounts priceAmounts = priceCalculator.compute(
                 priced.recurringAmount(), priced.setupFee(), price.getDepositAmount(), price.getTaxIncluded());
+        // L'abonnement garde le prix de la periode seul, comme apres un changement de plan ou une
+        // derivation · le renouvellement, la proration, le gel et la resiliation le lisent comme
+        // tel. Y laisser frais d'entree et caution les refacturait a chaque renouvellement.
+        PlanPriceAmountCalculator.Amounts periodAmounts = priceCalculator.compute(
+                priced.recurringAmount(), java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, price.getTaxIncluded());
 
         Subscription subscription = Subscription.builder()
                 .subscriptionNumber(subscriptionNumber)
@@ -114,9 +120,9 @@ public class SubscriptionCreationOperator {
                 .autoRenew(request.autoRenew() == null || request.autoRenew())
                 .billingCycle(price.getBillingCycle())
                 .currency(price.getCurrency())
-                .subtotalAmount(priceAmounts.subtotal())
-                .taxAmount(priceAmounts.tax())
-                .totalAmount(priceAmounts.total())
+                .subtotalAmount(periodAmounts.subtotal())
+                .taxAmount(periodAmounts.tax())
+                .totalAmount(periodAmounts.total())
                 .metadataJson(trim(request.metadataJson()))
                 .build();
 
@@ -139,14 +145,15 @@ public class SubscriptionCreationOperator {
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
         billingSupport.createSubscriptionSetupItems(saved, priced.recurringAmount(), priced.setupFee(),
-                price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount());
+                price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount(),
+                priceAmounts.total());
         pricingBridge.confirm(priced, request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
                 planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
                 price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
                 price.getCurrency(), request.couponCodesOrEmpty(),
                 DiscountDocumentType.SUBSCRIPTION, saved.getSubscriptionNumber(), "SYSTEM");
 
-        if (saved.getTotalAmount().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
+        if (priceAmounts.total().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
             lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");
         } else {
             // Pas d'auto-activation · envoyer l'email de création en attente de paiement

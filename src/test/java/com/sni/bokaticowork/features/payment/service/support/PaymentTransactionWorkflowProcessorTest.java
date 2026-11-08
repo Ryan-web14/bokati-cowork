@@ -169,6 +169,38 @@ class PaymentTransactionWorkflowProcessorTest {
         verify(passService, never()).cancel(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
     }
 
+    /**
+     * Un remboursement partiel previent le client mais ne doit annuler ni la facture, ni
+     * l'abonnement, ni le contrat · seul un remboursement total le fait.
+     */
+    @Test
+    void shouldNotCancelAnythingAfterPartialRefund() {
+        PaymentIntent intent = PaymentIntent.builder()
+                .intentNumber("INT-005")
+                .sourceType("BILLING_DOCUMENT")
+                .sourceCode("INV-005")
+                .build();
+        PaymentTransaction transaction = PaymentTransaction.builder()
+                .transactionNumber("TXN-005")
+                .paymentIntent(intent)
+                .paymentMethod(PaymentMethod.CASH)
+                .amount(new BigDecimal("30.0000"))
+                .status(PaymentTransactionStatus.REFUNDED)
+                .paidAt(Instant.parse("2026-04-27T11:00:00Z"))
+                .build();
+
+        when(transactionRepository.findByTransactionNumber("TXN-005")).thenReturn(Optional.of(transaction));
+        when(contextResolver.resolveSource("BILLING_DOCUMENT", "INV-005"))
+                .thenReturn(new TransactionContextResolver.SourceView("SUBSCRIPTION", "SUB-005", "Abonnement SUB-005", true));
+
+        processor.process(new PaymentTransactionWorkflowEvent("TXN-005", PaymentTransactionStatus.REFUNDED, false));
+
+        verify(billingDocumentService, never()).cancelAndArchive(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+        verify(subscriptionService, never()).cancel(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
+        verify(contractService, never()).terminate(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+        verify(refundEmailNotifier).notify(transaction);
+    }
+
     @Test
     void shouldSystemCancelBookingAfterReverse() {
         PaymentIntent intent = PaymentIntent.builder()

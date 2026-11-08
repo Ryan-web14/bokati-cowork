@@ -32,7 +32,15 @@ public class PassBillingSupport {
     }
 
     public BillingDocumentResponse createAndInvoice(Pass pass, String sourceType) {
-        if (pass.getTotalAmount() == null || pass.getTotalAmount().signum() <= 0) return null;
+        return createAndInvoice(pass, sourceType, pass.getTotalAmount());
+    }
+
+    /**
+     * @param amount montant facture · le total du pass a l'emission, le prix de la periode seul
+     *               au renouvellement (ni frais d'entree ni caution)
+     */
+    public BillingDocumentResponse createAndInvoice(Pass pass, String sourceType, java.math.BigDecimal amount) {
+        if (amount == null || amount.signum() <= 0) return null;
         PassPlanVersion version = pass.getPassVersion();
         String description = "Émission du pass " + pass.getPassNumber()
                 + " · " + pass.getName()
@@ -45,7 +53,7 @@ public class PassBillingSupport {
                 .subscriberType(pass.getOwnerType())
                 .subscriberCode(pass.getOwnerCode())
                 .description(description)
-                .amount(pass.getTotalAmount())
+                .amount(amount)
                 .currency(pass.getCurrency())
                 .billingPeriodStart(toLocalDate(pass.getValidFrom()))
                 .billingPeriodEnd(toLocalDate(pass.getValidUntil()))
