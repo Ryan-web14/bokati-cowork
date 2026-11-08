@@ -103,7 +103,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `id` | entier int64 ⚠ |  |  |
-| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET` |  |  |
+| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
 | `documentTypeCode` | texte |  |  |
 | `documentTypeName` | texte |  |  |
 | `customerType` | texte |  |  |
@@ -114,14 +114,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-DocumentOwnerType"></a>
 #### DocumentOwnerType
 
-Énumération : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`
+Énumération : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL`
 
 <a id="m-DocumentRequirementRequest"></a>
 #### DocumentRequirementRequest
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET` | oui |  |
+| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` | oui |  |
 | `documentTypeCode` | texte | oui | longueur min `1` |
 | `documentTypeName` | texte |  |  |
 | `customerType` | texte |  |  |

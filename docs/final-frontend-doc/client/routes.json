@@ -591,6 +591,13 @@
     },
     {
      "in": "query",
+     "name": "confirm",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "query",
      "name": "reason",
      "required": false,
      "type": "String"

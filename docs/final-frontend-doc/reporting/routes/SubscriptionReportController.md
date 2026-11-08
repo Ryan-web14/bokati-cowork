@@ -22,7 +22,7 @@ Module [reporting](../README.md) · 4 route(s).
 <a id="r-get-sni-api-v1-reporting-subscriptions-pdf"></a>
 ### GET /sni/api/v1/reporting/subscriptions/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/SubscriptionReportController.java`, méthode `subscriptionReportPdf`
 
@@ -47,7 +47,7 @@ Module [reporting](../README.md) · 4 route(s).
 <a id="r-get-sni-api-v1-reports-subscriptions-pdf"></a>
 ### GET /sni/api/v1/reports/subscriptions/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/SubscriptionReportController.java`, méthode `subscriptionReportPdf`
 

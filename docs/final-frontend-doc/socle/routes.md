@@ -18,7 +18,7 @@
 | POST | `/sni/api/v1/admin/outbox-events/{id}/requeue` | SYSTEM:SETTINGS | [AdminOutboxController](routes/AdminOutboxController.md#r-post-sni-api-v1-admin-outbox-events-id-requeue) |
 | GET | `/sni/api/v1/admin/settings-audit-logs` | SYSTEM:AUDIT | [AdminSettingsAuditController](routes/AdminSettingsAuditController.md#r-get-sni-api-v1-admin-settings-audit-logs) |
 | GET | `/sni/api/v1/countries` | public | [CountryController](routes/CountryController.md#r-get-sni-api-v1-countries) |
-| POST | `/sni/api/v1/countries` | public | [CountryController](routes/CountryController.md#r-post-sni-api-v1-countries) |
+| POST | `/sni/api/v1/countries` | SYSTEM:SETTINGS | [CountryController](routes/CountryController.md#r-post-sni-api-v1-countries) |
 | GET | `/sni/api/v1/countries/by-phone-code` | SYSTEM:SETTINGS | [CountryController](routes/CountryController.md#r-get-sni-api-v1-countries-by-phone-code) |
 | GET | `/sni/api/v1/countries/phone-codes` | SYSTEM:SETTINGS | [CountryController](routes/CountryController.md#r-get-sni-api-v1-countries-phone-codes) |
 | DELETE | `/sni/api/v1/countries/{countryCode}` | SYSTEM:SETTINGS | [CountryController](routes/CountryController.md#r-delete-sni-api-v1-countries-countrycode) |

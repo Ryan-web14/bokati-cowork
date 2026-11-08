@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-150 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+162 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -114,6 +114,18 @@
 | POST | `/sni/api/v1/documents/{documentCode}/workflow/approve` | DOCUMENT:REVIEW | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-post-sni-api-v1-documents-documentcode-workflow-approve) |
 | POST | `/sni/api/v1/documents/{documentCode}/workflow/reject` | DOCUMENT:REVIEW | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-post-sni-api-v1-documents-documentcode-workflow-reject) |
 | GET | `/sni/api/v1/documents/{documentCode}/workflow/status` | DOCUMENT:READ | [DocumentWorkflowController](routes/DocumentWorkflowController.md#r-get-sni-api-v1-documents-documentcode-workflow-status) |
+| POST | `/sni/api/v1/ged/copy` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-copy) |
+| POST | `/sni/api/v1/ged/files` | DOCUMENT:UPLOAD | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-files) |
+| PATCH | `/sni/api/v1/ged/files/{code}` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-patch-sni-api-v1-ged-files-code) |
+| POST | `/sni/api/v1/ged/filing/run` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-filing-run) |
+| POST | `/sni/api/v1/ged/folders` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-folders) |
+| PATCH | `/sni/api/v1/ged/folders/{code}` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-patch-sni-api-v1-ged-folders-code) |
+| GET | `/sni/api/v1/ged/items` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-items) |
+| POST | `/sni/api/v1/ged/move` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-move) |
+| GET | `/sni/api/v1/ged/trash` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-trash) |
+| POST | `/sni/api/v1/ged/trash` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash) |
+| POST | `/sni/api/v1/ged/trash/{batch}/restore` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash-batch-restore) |
+| GET | `/sni/api/v1/ged/tree` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-tree) |
 | GET | `/sni/api/v1/kyc/cases` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases) |
 | POST | `/sni/api/v1/kyc/cases` | KYC:READ | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases) |
 | GET | `/sni/api/v1/kyc/cases/dashboard` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-dashboard) |
@@ -122,8 +134,8 @@
 | GET | `/sni/api/v1/kyc/cases/{code}` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code) |
 | POST | `/sni/api/v1/kyc/cases/{code}/approve` | KYC:APPROVE | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-approve) |
 | PATCH | `/sni/api/v1/kyc/cases/{code}/assign` | KYC:READ | [KycController](routes/KycController.md#r-patch-sni-api-v1-kyc-cases-code-assign) |
-| POST | `/sni/api/v1/kyc/cases/{code}/documents/bulk-approve` | KYC:READ | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-documents-bulk-approve) |
-| POST | `/sni/api/v1/kyc/cases/{code}/documents/bulk-reject` | KYC:READ | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-documents-bulk-reject) |
+| POST | `/sni/api/v1/kyc/cases/{code}/documents/bulk-approve` | KYC:APPROVE | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-documents-bulk-approve) |
+| POST | `/sni/api/v1/kyc/cases/{code}/documents/bulk-reject` | KYC:REJECT | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-documents-bulk-reject) |
 | POST | `/sni/api/v1/kyc/cases/{code}/documents/request-correction` | KYC:READ | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases-code-documents-request-correction) |
 | GET | `/sni/api/v1/kyc/cases/{code}/expiry-status` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code-expiry-status) |
 | GET | `/sni/api/v1/kyc/cases/{code}/export/pdf` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-code-export-pdf) |
@@ -146,10 +158,10 @@
 | POST | `/sni/api/v1/kyc/documents/admin/upload` | KYC:READ | [KycDocumentAdminController](routes/KycDocumentAdminController.md#r-post-sni-api-v1-kyc-documents-admin-upload) |
 | PATCH | `/sni/api/v1/kyc/documents/admin/{kycDocumentId}/details` | KYC:READ | [KycDocumentAdminController](routes/KycDocumentAdminController.md#r-patch-sni-api-v1-kyc-documents-admin-kycdocumentid-details) |
 | GET | `/sni/api/v1/kyc/documents/approved` | KYC:APPROVE | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-get-sni-api-v1-kyc-documents-approved) |
-| POST | `/sni/api/v1/kyc/documents/bulk-approve` | KYC:READ | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-approve) |
-| POST | `/sni/api/v1/kyc/documents/bulk-desapprove` | KYC:READ | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-desapprove) |
-| POST | `/sni/api/v1/kyc/documents/bulk-disapprove` | KYC:READ | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-disapprove) |
-| POST | `/sni/api/v1/kyc/documents/bulk-reject` | KYC:READ | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-reject) |
+| POST | `/sni/api/v1/kyc/documents/bulk-approve` | KYC:APPROVE | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-approve) |
+| POST | `/sni/api/v1/kyc/documents/bulk-desapprove` | KYC:REJECT | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-desapprove) |
+| POST | `/sni/api/v1/kyc/documents/bulk-disapprove` | KYC:REJECT | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-disapprove) |
+| POST | `/sni/api/v1/kyc/documents/bulk-reject` | KYC:REJECT | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-reject) |
 | GET | `/sni/api/v1/kyc/documents/desapproved` | KYC:READ | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-get-sni-api-v1-kyc-documents-desapproved) |
 | GET | `/sni/api/v1/kyc/documents/disapproved` | KYC:READ | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-get-sni-api-v1-kyc-documents-disapproved) |
 | GET | `/sni/api/v1/kyc/documents/rejected` | KYC:REJECT | [KycDocumentReviewController](routes/KycDocumentReviewController.md#r-get-sni-api-v1-kyc-documents-rejected) |

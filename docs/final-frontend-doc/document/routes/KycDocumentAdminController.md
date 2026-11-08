@@ -75,7 +75,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-DocumentOwnerType"></a>
 #### DocumentOwnerType
 
-Énumération : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`
+Énumération : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL`
 
 <a id="m-KycDocumentDetailsRequest"></a>
 #### KycDocumentDetailsRequest

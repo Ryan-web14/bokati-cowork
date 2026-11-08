@@ -112,7 +112,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-post-sni-api-v1-kyc-cases-code-documents-bulk-approve"></a>
 ### POST /sni/api/v1/kyc/cases/{code}/documents/bulk-approve
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:APPROVE`
 - En-tête `Idempotency-Key` : conseillé (opération `KYC_CASE_BULK_APPROVE`, voir le README racine)
 - Corps JSON (obligatoire) : `KycCaseBulkApproveRequest`
 - Réponse : `KycBulkActionResponse`
@@ -126,7 +126,7 @@ Module [document](../README.md) · 24 route(s).
 <a id="r-post-sni-api-v1-kyc-cases-code-documents-bulk-reject"></a>
 ### POST /sni/api/v1/kyc/cases/{code}/documents/bulk-reject
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:REJECT`
 - En-tête `Idempotency-Key` : conseillé (opération `KYC_CASE_BULK_REJECT`, voir le README racine)
 - Corps JSON (obligatoire) : `KycCaseBulkRejectRequest`
 - Réponse : `KycBulkActionResponse`
@@ -324,7 +324,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `code` | texte |  |  |
 | `ownerName` | texte |  |  |
 | `ownerCode` | texte |  |  |
-| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET` |  |  |
+| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
 | `ownerId` | entier int64 ⚠ |  |  |
 | `status` | enum : `NOT_STARTED`, `IN_PROGRESS`, `SUBMITTED`, `UNDER_REVIEW`, `APPROVED`, `REJECTED`, `PENDING_CORRECTION`, `RENEWAL_REQUIRED`, `EXPIRED` |  |  |
 | `startedAt` | date-heure ISO 8601 UTC |  |  |
@@ -351,7 +351,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 <a id="m-DocumentOwnerType"></a>
 #### DocumentOwnerType
 
-Énumération : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`
+Énumération : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL`
 
 <a id="m-KycRiskLevel"></a>
 #### KycRiskLevel
@@ -363,7 +363,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET` | oui |  |
+| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` | oui |  |
 | `ownerCode` | texte | oui | longueur min `1` |
 | `documentTypeCodes` | texte[] |  |  |
 
@@ -571,7 +571,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET` |  |  |
+| `ownerType` | enum : `CUSTOMER`, `MEMBER`, `BUSINESS`, `CONTRACT`, `INVOICE`, `PAYMENT`, `PROPOSAL`, `ASSET`, `INTERNAL` |  |  |
 | `count` | entier int64 ⚠ |  |  |
 | `pendingReview` | entier int64 ⚠ |  |  |
 

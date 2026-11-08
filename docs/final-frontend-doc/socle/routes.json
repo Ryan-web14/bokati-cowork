@@ -420,7 +420,8 @@
    "handler": "createCountry",
    "declaredIn": "CountryController",
    "access": {
-    "kind": "public"
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
    },
    "idempotency": {
     "header": "Idempotency-Key",

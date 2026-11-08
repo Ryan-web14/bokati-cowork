@@ -62,7 +62,7 @@
    "declaredIn": "ActivityReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -111,7 +111,7 @@
    "declaredIn": "ActivityReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -209,7 +209,7 @@
    "declaredIn": "ActivityReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -258,7 +258,7 @@
    "declaredIn": "ActivityReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -332,7 +332,7 @@
    "declaredIn": "DebtRecoveryReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -357,7 +357,7 @@
    "declaredIn": "DebtRecoveryReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -407,7 +407,7 @@
    "declaredIn": "DebtRecoveryReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -432,7 +432,7 @@
    "declaredIn": "DebtRecoveryReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -600,7 +600,7 @@
    "declaredIn": "FinancialReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -785,7 +785,7 @@
    "declaredIn": "FinancialReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1054,7 +1054,7 @@
    "declaredIn": "FinancialReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1162,7 +1162,7 @@
    "declaredIn": "MemberProfileReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1210,7 +1210,7 @@
    "declaredIn": "MemberProfileReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1276,7 +1276,7 @@
    "declaredIn": "OccupancyReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1360,7 +1360,7 @@
    "declaredIn": "OccupancyReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1444,7 +1444,7 @@
    "declaredIn": "ResourceUtilizationReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1528,7 +1528,7 @@
    "declaredIn": "ResourceUtilizationReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1595,7 +1595,7 @@
    "declaredIn": "StockValuationReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1645,7 +1645,7 @@
    "declaredIn": "StockValuationReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1702,7 +1702,7 @@
    "declaredIn": "SubscriptionReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {
@@ -1766,7 +1766,7 @@
    "declaredIn": "SubscriptionReportController",
    "access": {
     "kind": "admin",
-    "permission": "REPORT:VIEW"
+    "permission": "REPORT:EXPORT"
    },
    "params": [
     {

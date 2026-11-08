@@ -148,6 +148,7 @@ Module [client](../README.md) · 22 route(s).
 | --- | --- | --- | --- | --- |
 | `id` | chemin | `String` | oui |  |
 | `purge` | requête | `boolean` |  | false |
+| `confirm` | requête | `boolean` |  | false |
 | `reason` | requête | `String` |  |  |
 
 <a id="r-get-sni-api-v1-members-id"></a>

@@ -62,7 +62,7 @@ Module [reporting](../README.md) · 18 route(s).
 <a id="r-get-sni-api-v1-reporting-dashboard-pdf"></a>
 ### GET /sni/api/v1/reporting/dashboard/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java`, méthode `dashboardPdf`
 
@@ -129,7 +129,7 @@ Module [reporting](../README.md) · 18 route(s).
 <a id="r-get-sni-api-v1-reporting-finance-dashboard-pdf"></a>
 ### GET /sni/api/v1/reporting/finance/dashboard/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java`, méthode `dashboardPdf`
 
@@ -226,7 +226,7 @@ Module [reporting](../README.md) · 18 route(s).
 <a id="r-get-sni-api-v1-reports-finance-dashboard-pdf"></a>
 ### GET /sni/api/v1/reports/finance/dashboard/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java`, méthode `dashboardPdf`
 

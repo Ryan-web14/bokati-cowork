@@ -3188,6 +3188,344 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/copy",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "copy",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCopyRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/files",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "upload",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:UPLOAD"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "params": [
+    {
+     "in": "multipart",
+     "name": "files",
+     "required": true,
+     "type": "List<MultipartFile>"
+    },
+    {
+     "in": "query",
+     "name": "folderCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "relativePaths",
+     "required": false,
+     "type": "List<String>"
+    },
+    {
+     "in": "query",
+     "name": "documentTypeCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/ged/files/{code}",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "renameFile",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRenameRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/filing/run",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "runFiling",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "1000",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFilingResult>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/folders",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "createFolder",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCreateFolderRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/ged/folders/{code}",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "renameFolder",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRenameRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/ged/items",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "items",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "folderCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "search",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "sort",
+     "required": false,
+     "default": "name",
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "direction",
+     "required": false,
+     "default": "asc",
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "50",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedListing>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/move",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "move",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedMoveRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/ged/trash",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "trashContent",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashBatch>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/trash",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "trash",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSelectionRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/trash/{batch}/restore",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "restore",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "batch",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/ged/tree",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "tree",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderTreeNode>>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/kyc/cases",
@@ -3459,7 +3797,7 @@
    "declaredIn": "KycController",
    "access": {
     "kind": "admin",
-    "permission": "KYC:READ"
+    "permission": "KYC:APPROVE"
    },
    "idempotency": {
     "header": "Idempotency-Key",
@@ -3492,7 +3830,7 @@
    "declaredIn": "KycController",
    "access": {
     "kind": "admin",
-    "permission": "KYC:READ"
+    "permission": "KYC:REJECT"
    },
    "idempotency": {
     "header": "Idempotency-Key",
@@ -4140,7 +4478,7 @@
    "declaredIn": "KycDocumentReviewController",
    "access": {
     "kind": "admin",
-    "permission": "KYC:READ"
+    "permission": "KYC:APPROVE"
    },
    "idempotency": {
     "header": "Idempotency-Key",
@@ -4166,7 +4504,7 @@
    "declaredIn": "KycDocumentReviewController",
    "access": {
     "kind": "admin",
-    "permission": "KYC:READ"
+    "permission": "KYC:REJECT"
    },
    "idempotency": {
     "header": "Idempotency-Key",
@@ -4192,7 +4530,7 @@
    "declaredIn": "KycDocumentReviewController",
    "access": {
     "kind": "admin",
-    "permission": "KYC:READ"
+    "permission": "KYC:REJECT"
    },
    "idempotency": {
     "header": "Idempotency-Key",
@@ -4218,7 +4556,7 @@
    "declaredIn": "KycDocumentReviewController",
    "access": {
     "kind": "admin",
-    "permission": "KYC:READ"
+    "permission": "KYC:REJECT"
    },
    "idempotency": {
     "header": "Idempotency-Key",
@@ -4370,7 +4708,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "category": {
@@ -4749,7 +5088,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -4788,7 +5128,6 @@
   "DocumentUploadMetadataRequest": {
    "required": [
     "documentTypeCode",
-    "ownerCode",
     "ownerType",
     "title"
    ],
@@ -4804,11 +5143,11 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
-     "minLength": 1,
      "type": "string"
     },
     "documentTypeCode": {
@@ -4832,6 +5171,9 @@
     "expiryDate": {
      "type": "string",
      "format": "date"
+    },
+    "folderCode": {
+     "type": "string"
     }
    }
   },
@@ -5013,7 +5355,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerId": {
@@ -5102,7 +5445,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -5291,7 +5635,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "documentTypeCode": {
@@ -5331,7 +5676,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "documentTypeCode": {
@@ -5717,7 +6063,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -5897,7 +6244,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "description": {
@@ -5989,7 +6337,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "description": {
@@ -6220,6 +6569,273 @@
     }
    }
   },
+  "GedDtos.GedUploadResult": {
+   "type": "object",
+   "properties": {
+    "uploaded": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem"
+     }
+    },
+    "failed": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadFailure"
+     }
+    }
+   }
+  },
+  "GedDtos.GedCopyRequest": {
+   "type": "object",
+   "properties": {
+    "documentCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "targetFolderCode": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedItem": {
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string"
+    },
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "folderCode": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "childrenCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documentsCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "color": {
+     "type": "string"
+    },
+    "icon": {
+     "type": "string"
+    },
+    "fileName": {
+     "type": "string"
+    },
+    "extension": {
+     "type": "string"
+    },
+    "mimeType": {
+     "type": "string"
+    },
+    "size": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "status": {
+     "type": "string"
+    },
+    "documentTypeCode": {
+     "type": "string"
+    },
+    "documentTypeName": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "version": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "protectedItem": {
+     "type": "boolean"
+    },
+    "previewUrl": {
+     "type": "string"
+    },
+    "downloadUrl": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedRenameRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedFilingResult": {
+   "type": "object",
+   "properties": {
+    "filed": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "skipped": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "remaining": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "GedDtos.GedCreateFolderRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "parentCode": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "color": {
+     "type": "string"
+    },
+    "icon": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedListing": {
+   "type": "object",
+   "properties": {
+    "folder": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderRef"
+    },
+    "breadcrumb": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.documentMaster.dto.response.BreadcrumbItem"
+     }
+    },
+    "items": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem"
+     }
+    },
+    "page": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPage"
+    }
+   }
+  },
+  "GedDtos.GedMoveRequest": {
+   "type": "object",
+   "properties": {
+    "documentCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "folderCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "targetFolderCode": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedTrashBatch": {
+   "type": "object",
+   "properties": {
+    "batch": {
+     "type": "string"
+    },
+    "trashedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "trashedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "folders": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documents": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "items": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem"
+     }
+    }
+   }
+  },
+  "GedDtos.GedTrashResult": {
+   "type": "object",
+   "properties": {
+    "batch": {
+     "type": "string"
+    },
+    "folders": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "documents": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "GedDtos.GedSelectionRequest": {
+   "type": "object",
+   "properties": {
+    "documentCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "folderCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
   "KycCaseResponse": {
    "type": "object",
    "properties": {
@@ -6242,7 +6858,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerId": {
@@ -6368,7 +6985,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -7009,7 +7627,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "code": {
@@ -7175,6 +7794,60 @@
     }
    }
   },
+  "GedDtos.GedUploadFailure": {
+   "type": "object",
+   "properties": {
+    "fileName": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedFolderRef": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "parentCode": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedPage": {
+   "type": "object",
+   "properties": {
+    "page": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "size": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalElements": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalPages": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "folderCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "fileCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
   "KycDashboardResponse.SlaMetrics": {
    "type": "object",
    "properties": {
@@ -7221,7 +7894,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "count": {
@@ -7290,7 +7964,8 @@
    "INVOICE",
    "PAYMENT",
    "PROPOSAL",
-   "ASSET"
+   "ASSET",
+   "INTERNAL"
   ],
   "DocumentSpace": [
    "KYC_SPACE",
@@ -7377,6 +8052,17 @@
   "CreateWorkflowRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateWorkflowRequest",
   "WorkflowInstanceResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse",
   "WorkflowActionRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.WorkflowActionRequest",
+  "GedDtos.GedUploadResult": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult",
+  "GedDtos.GedCopyRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCopyRequest",
+  "GedDtos.GedItem": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem",
+  "GedDtos.GedRenameRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRenameRequest",
+  "GedDtos.GedFilingResult": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFilingResult",
+  "GedDtos.GedCreateFolderRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCreateFolderRequest",
+  "GedDtos.GedListing": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedListing",
+  "GedDtos.GedMoveRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedMoveRequest",
+  "GedDtos.GedTrashBatch": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashBatch",
+  "GedDtos.GedTrashResult": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult",
+  "GedDtos.GedSelectionRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSelectionRequest",
   "KycCaseResponse": "com.sni.bokaticowork.features.document.kyc.dto.response.KycCaseResponse",
   "KycRiskLevel": "com.sni.bokaticowork.features.document.kyc.KycRiskLevel",
   "CreateKycCaseRequest": "com.sni.bokaticowork.features.document.kyc.dto.request.CreateKycCaseRequest",
@@ -7411,6 +8097,9 @@
   "WorkflowResponse.StepResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowResponse.StepResponse",
   "CreateWorkflowRequest.WorkflowStepRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateWorkflowRequest.WorkflowStepRequest",
   "WorkflowInstanceResponse.ActionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse.ActionResponse",
+  "GedDtos.GedUploadFailure": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadFailure",
+  "GedDtos.GedFolderRef": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderRef",
+  "GedDtos.GedPage": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPage",
   "KycDashboardResponse.SlaMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.SlaMetrics",
   "KycDashboardResponse.ExpiringSoonMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.ExpiringSoonMetrics",
   "KycDashboardResponse.OwnerTypeMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.OwnerTypeMetrics",

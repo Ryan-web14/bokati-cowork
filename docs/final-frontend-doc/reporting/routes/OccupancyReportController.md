@@ -24,7 +24,7 @@ Module [reporting](../README.md) · 4 route(s).
 <a id="r-get-sni-api-v1-reporting-occupancy-pdf"></a>
 ### GET /sni/api/v1/reporting/occupancy/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/OccupancyReportController.java`, méthode `occupancyPdf`
 
@@ -53,7 +53,7 @@ Module [reporting](../README.md) · 4 route(s).
 <a id="r-get-sni-api-v1-reports-occupancy-pdf"></a>
 ### GET /sni/api/v1/reports/occupancy/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/OccupancyReportController.java`, méthode `occupancyPdf`
 

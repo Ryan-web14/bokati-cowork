@@ -21,7 +21,7 @@ Module [reporting](../README.md) · 6 route(s).
 <a id="r-get-sni-api-v1-reporting-debt-recovery-csv"></a>
 ### GET /sni/api/v1/reporting/debt-recovery/csv
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java`, méthode `debtRecoveryCsv`
 
@@ -32,7 +32,7 @@ Module [reporting](../README.md) · 6 route(s).
 <a id="r-get-sni-api-v1-reporting-debt-recovery-pdf"></a>
 ### GET /sni/api/v1/reporting/debt-recovery/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java`, méthode `debtRecoveryPdf`
 
@@ -55,7 +55,7 @@ Module [reporting](../README.md) · 6 route(s).
 <a id="r-get-sni-api-v1-reports-debt-recovery-csv"></a>
 ### GET /sni/api/v1/reports/debt-recovery/csv
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java`, méthode `debtRecoveryCsv`
 
@@ -66,7 +66,7 @@ Module [reporting](../README.md) · 6 route(s).
 <a id="r-get-sni-api-v1-reports-debt-recovery-pdf"></a>
 ### GET /sni/api/v1/reports/debt-recovery/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java`, méthode `debtRecoveryPdf`
 

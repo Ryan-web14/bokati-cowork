@@ -17,7 +17,7 @@ Module [socle](../README.md) · 7 route(s).
 <a id="r-post-sni-api-v1-countries"></a>
 ### POST /sni/api/v1/countries
 
-- Accès : public, sans jeton
+- Accès : back-office : rôle d'administration et droit `SYSTEM:SETTINGS`
 - En-tête `Idempotency-Key` : conseillé (opération `COUNTRY_CREATE`, voir le README racine)
 - Corps JSON (obligatoire) : `CountryRequest`
 - Réponse : `vide`

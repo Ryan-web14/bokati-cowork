@@ -17,7 +17,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-kyc-documents-bulk-approve"></a>
 ### POST /sni/api/v1/kyc/documents/bulk-approve
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:APPROVE`
 - En-tête `Idempotency-Key` : conseillé (opération `KYC_DOCUMENT_BULK_APPROVE`, voir le README racine)
 - Corps JSON (obligatoire) : `KycBulkApproveRequest`
 - Réponse : `KycBulkActionResponse`
@@ -27,7 +27,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-kyc-documents-bulk-desapprove"></a>
 ### POST /sni/api/v1/kyc/documents/bulk-desapprove
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:REJECT`
 - En-tête `Idempotency-Key` : conseillé (opération `KYC_DOCUMENT_BULK_REJECT`, voir le README racine)
 - Corps JSON (obligatoire) : `KycBulkRejectRequest`
 - Réponse : `KycBulkActionResponse`
@@ -37,7 +37,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-kyc-documents-bulk-disapprove"></a>
 ### POST /sni/api/v1/kyc/documents/bulk-disapprove
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:REJECT`
 - En-tête `Idempotency-Key` : conseillé (opération `KYC_DOCUMENT_BULK_REJECT`, voir le README racine)
 - Corps JSON (obligatoire) : `KycBulkRejectRequest`
 - Réponse : `KycBulkActionResponse`
@@ -47,7 +47,7 @@ Module [document](../README.md) · 11 route(s).
 <a id="r-post-sni-api-v1-kyc-documents-bulk-reject"></a>
 ### POST /sni/api/v1/kyc/documents/bulk-reject
 
-- Accès : back-office : rôle d'administration et droit `KYC:READ`
+- Accès : back-office : rôle d'administration et droit `KYC:REJECT`
 - En-tête `Idempotency-Key` : conseillé (opération `KYC_DOCUMENT_BULK_REJECT`, voir le README racine)
 - Corps JSON (obligatoire) : `KycBulkRejectRequest`
 - Réponse : `KycBulkActionResponse`

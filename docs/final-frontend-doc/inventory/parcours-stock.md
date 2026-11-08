@@ -115,7 +115,7 @@ Chaque action renvoie le lot et recalcule le disponible du niveau concerné.
 
 ## Numéros de série
 
-`GET /sni/api/v1/inventory/stock/sni/api/v1/inventory/items/{itemCode}/serials?locationCode=&status=` (chemin anormal mais réel, écart 1 du [README](README.md#écarts-relevés)). Liste des numéros avec `status`, `locationCode`, `receivedAt`, `issuedAt`. Sert à proposer les numéros `AVAILABLE` d'un emplacement dans les formulaires de sortie et de transfert.
+`GET /sni/api/v1/inventory/items/{itemCode}/serials?locationCode=&status=`. Liste des numéros avec `status`, `locationCode`, `receivedAt`, `issuedAt`. Sert à proposer les numéros `AVAILABLE` d'un emplacement dans les formulaires de sortie et de transfert.
 
 ## Traçabilité d'un lot
 

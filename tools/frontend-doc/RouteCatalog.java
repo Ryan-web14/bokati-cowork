@@ -90,6 +90,7 @@ public class RouteCatalog {
         catalog.put("routes", routes);
         catalog.put("adminRealmRoles", new TreeSet<>(SecurityRoles.ADMIN_REALM));
         catalog.put("publicPatterns", PublicPaths.patterns());
+        catalog.put("publicReadPatterns", PublicPaths.readPatterns());
         catalog.put("schemas", schemas);
         catalog.put("enums", enums);
         ObjectMapper writer = Json.mapper().copy().enable(SerializationFeature.INDENT_OUTPUT);
@@ -154,7 +155,7 @@ public class RouteCatalog {
         if (guard != null) access.put("preAuthorize", guard.value());
         String sample = path.replaceAll("\\{[^}]+}", "x1");
         String v1 = ApiPath.V1;
-        if (PublicPaths.matches(sample) || ("GET".equals(verb) && MATCHER.match(v1 + "/documents/*/signed-preview", sample))) {
+        if (PublicPaths.matches(verb, sample) || ("GET".equals(verb) && MATCHER.match(v1 + "/documents/*/signed-preview", sample))) {
             access.put("kind", "public");
         } else if (sample.startsWith(v1 + "/client/") || sample.equals(v1 + "/client")
                 || sample.equals(v1 + "/portal/kyc") || sample.startsWith(v1 + "/portal/kyc/")) {

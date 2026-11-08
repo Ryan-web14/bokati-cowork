@@ -4584,42 +4584,6 @@
   },
   {
    "methods": [
-    "GET"
-   ],
-   "path": "/sni/api/v1/inventory/stock/sni/api/v1/inventory/items/{itemCode}/serials",
-   "package": "features.inventory.stock.controller",
-   "controller": "StockController",
-   "source": "src/main/java/com/sni/bokaticowork/features/inventory/stock/controller/StockController.java",
-   "handler": "serials",
-   "declaredIn": "StockController",
-   "access": {
-    "kind": "admin",
-    "permission": "INVENTORY:READ"
-   },
-   "params": [
-    {
-     "in": "path",
-     "name": "itemCode",
-     "required": true,
-     "type": "String"
-    },
-    {
-     "in": "query",
-     "name": "locationCode",
-     "required": false,
-     "type": "String"
-    },
-    {
-     "in": "query",
-     "name": "status",
-     "required": false,
-     "type": "com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus"
-    }
-   ],
-   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.stock.dto.response.InventorySerialResponse>>"
-  },
-  {
-   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/inventory/stock/transfer",
@@ -4884,6 +4848,42 @@
     }
    ],
    "response": "ResponseEntity<BigDecimal>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/inventory/items/{itemCode}/serials",
+   "package": "features.inventory.stock.controller",
+   "controller": "StockSerialController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/stock/controller/StockSerialController.java",
+   "handler": "serials",
+   "declaredIn": "StockSerialController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "locationCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.stock.dto.response.InventorySerialResponse>>"
   },
   {
    "methods": [
@@ -9089,41 +9089,6 @@
     }
    }
   },
-  "InventorySerialResponse": {
-   "type": "object",
-   "properties": {
-    "itemCode": {
-     "type": "string"
-    },
-    "locationCode": {
-     "type": "string"
-    },
-    "serialNumber": {
-     "type": "string"
-    },
-    "status": {
-     "type": "string",
-     "enum": [
-      "AVAILABLE",
-      "ISSUED",
-      "TRANSFERRED",
-      "LOST",
-      "DAMAGED"
-     ]
-    },
-    "lotNumber": {
-     "type": "string"
-    },
-    "receivedAt": {
-     "type": "string",
-     "format": "date-time"
-    },
-    "issuedAt": {
-     "type": "string",
-     "format": "date-time"
-    }
-   }
-  },
   "StockTransferRequest": {
    "required": [
     "fromLocationCode",
@@ -9364,6 +9329,41 @@
     },
     "factor": {
      "type": "number"
+    }
+   }
+  },
+  "InventorySerialResponse": {
+   "type": "object",
+   "properties": {
+    "itemCode": {
+     "type": "string"
+    },
+    "locationCode": {
+     "type": "string"
+    },
+    "serialNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "AVAILABLE",
+      "ISSUED",
+      "TRANSFERRED",
+      "LOST",
+      "DAMAGED"
+     ]
+    },
+    "lotNumber": {
+     "type": "string"
+    },
+    "receivedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "issuedAt": {
+     "type": "string",
+     "format": "date-time"
     }
    }
   },
@@ -10679,14 +10679,14 @@
   "StockReservationResponse": "com.sni.bokaticowork.features.inventory.stock.dto.response.StockReservationResponse",
   "StockReservationStatus": "com.sni.bokaticowork.features.inventory.stock.enums.StockReservationStatus",
   "StockReservationRequest": "com.sni.bokaticowork.features.inventory.stock.dto.request.StockReservationRequest",
-  "InventorySerialResponse": "com.sni.bokaticowork.features.inventory.stock.dto.response.InventorySerialResponse",
-  "InventorySerialStatus": "com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus",
   "StockTransferRequest": "com.sni.bokaticowork.features.inventory.stock.dto.request.StockTransferRequest",
   "StockLotResponse": "com.sni.bokaticowork.features.inventory.stock.dto.response.StockLotResponse",
   "StockLotCreateRequest": "com.sni.bokaticowork.features.inventory.stock.dto.request.StockLotCreateRequest",
   "StockPickingSuggestionResponse": "com.sni.bokaticowork.features.inventory.stock.dto.response.StockPickingSuggestionResponse",
   "InventoryUnitConversionResponse": "com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryUnitConversionResponse",
   "InventoryUnitConversionRequest": "com.sni.bokaticowork.features.inventory.catalog.dto.request.InventoryUnitConversionRequest",
+  "InventorySerialResponse": "com.sni.bokaticowork.features.inventory.stock.dto.response.InventorySerialResponse",
+  "InventorySerialStatus": "com.sni.bokaticowork.features.inventory.stock.enums.InventorySerialStatus",
   "LotBlockRequest": "com.sni.bokaticowork.features.inventory.stock.dto.request.LotBlockRequest",
   "LotQuarantineRequest": "com.sni.bokaticowork.features.inventory.stock.dto.request.LotQuarantineRequest",
   "LotReleaseRequest": "com.sni.bokaticowork.features.inventory.stock.dto.request.LotReleaseRequest",

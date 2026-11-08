@@ -161,7 +161,6 @@
 | POST | `/sni/api/v1/inventory/stock/reservations` | INVENTORY:CREATE | [StockController](routes/StockController.md#r-post-sni-api-v1-inventory-stock-reservations) |
 | PATCH | `/sni/api/v1/inventory/stock/reservations/{reservationCode}/consume` | INVENTORY:UPDATE | [StockController](routes/StockController.md#r-patch-sni-api-v1-inventory-stock-reservations-reservationcode-consume) |
 | PATCH | `/sni/api/v1/inventory/stock/reservations/{reservationCode}/release` | INVENTORY:UPDATE | [StockController](routes/StockController.md#r-patch-sni-api-v1-inventory-stock-reservations-reservationcode-release) |
-| GET | `/sni/api/v1/inventory/stock/sni/api/v1/inventory/items/{itemCode}/serials` | INVENTORY:READ | [StockController](routes/StockController.md#r-get-sni-api-v1-inventory-stock-sni-api-v1-inventory-items-itemcode-serials) |
 | POST | `/sni/api/v1/inventory/stock/transfer` | INVENTORY:CREATE | [StockController](routes/StockController.md#r-post-sni-api-v1-inventory-stock-transfer) |
 | GET | `/sni/api/v1/inventory/items/{itemCode}/lots` | INVENTORY:READ | [StockLotController](routes/StockLotController.md#r-get-sni-api-v1-inventory-items-itemcode-lots) |
 | POST | `/sni/api/v1/inventory/items/{itemCode}/lots` | INVENTORY:CREATE | [StockLotController](routes/StockLotController.md#r-post-sni-api-v1-inventory-items-itemcode-lots) |
@@ -170,6 +169,7 @@
 | POST | `/sni/api/v1/inventory/stock/planning/unit-conversions` | INVENTORY:CREATE | [StockPlanningController](routes/StockPlanningController.md#r-post-sni-api-v1-inventory-stock-planning-unit-conversions) |
 | GET | `/sni/api/v1/inventory/stock/planning/unit-conversions/{itemCode}` | INVENTORY:READ | [StockPlanningController](routes/StockPlanningController.md#r-get-sni-api-v1-inventory-stock-planning-unit-conversions-itemcode) |
 | GET | `/sni/api/v1/inventory/stock/planning/unit-conversions/{itemCode}/convert` | INVENTORY:READ | [StockPlanningController](routes/StockPlanningController.md#r-get-sni-api-v1-inventory-stock-planning-unit-conversions-itemcode-convert) |
+| GET | `/sni/api/v1/inventory/items/{itemCode}/serials` | INVENTORY:READ | [StockSerialController](routes/StockSerialController.md#r-get-sni-api-v1-inventory-items-itemcode-serials) |
 | GET | `/sni/api/v1/inventory/stock/lots/immobilised` | INVENTORY:READ | [StockTraceabilityController](routes/StockTraceabilityController.md#r-get-sni-api-v1-inventory-stock-lots-immobilised) |
 | PATCH | `/sni/api/v1/inventory/stock/lots/{lotId}/block` | INVENTORY:UPDATE | [StockTraceabilityController](routes/StockTraceabilityController.md#r-patch-sni-api-v1-inventory-stock-lots-lotid-block) |
 | PATCH | `/sni/api/v1/inventory/stock/lots/{lotId}/quarantine` | INVENTORY:UPDATE | [StockTraceabilityController](routes/StockTraceabilityController.md#r-patch-sni-api-v1-inventory-stock-lots-lotid-quarantine) |

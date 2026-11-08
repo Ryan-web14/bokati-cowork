@@ -81,7 +81,7 @@
 
 Au choix :
 - unitaire : `POST /sni/api/v1/documents/{documentCode}/approve` avec `{ "reviewedBy": "…" }` (droit `DOCUMENT:REVIEW`, voir [parcours-revue.md](parcours-revue.md#approuver-un-document)) ;
-- en masse : `POST /sni/api/v1/kyc/documents/bulk-approve` ([route](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-approve)) avec `{ "documentIds": ["DOC…"], "reviewedBy": "…" }` (malgré son nom, `documentIds` attend des **codes** de documents), ou par dossier `POST /sni/api/v1/kyc/cases/{code}/documents/bulk-approve` avec `{ "documentCodes": [...], "reviewedBy": "…" }` (les codes étrangers au dossier sont signalés en échec). Droit `KYC:READ`, `Idempotency-Key` conseillé.
+- en masse : `POST /sni/api/v1/kyc/documents/bulk-approve` ([route](routes/KycDocumentReviewController.md#r-post-sni-api-v1-kyc-documents-bulk-approve)) avec `{ "documentIds": ["DOC…"], "reviewedBy": "…" }` (malgré son nom, `documentIds` attend des **codes** de documents), ou par dossier `POST /sni/api/v1/kyc/cases/{code}/documents/bulk-approve` avec `{ "documentCodes": [...], "reviewedBy": "…" }` (les codes étrangers au dossier sont signalés en échec). Droit `KYC:APPROVE`, `Idempotency-Key` conseillé.
 
 Réponse en masse `KycBulkActionResponse` : `processed`, `succeeded`, `failed`, `results[]` (`documentCode`, `success`, `error`). Chaque pièce est traitée dans sa propre transaction.
 

@@ -25,7 +25,7 @@ Module [reporting](../README.md) · 6 route(s).
 <a id="r-get-sni-api-v1-reporting-activity-csv"></a>
 ### GET /sni/api/v1/reporting/activity/csv
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java`, méthode `activityReportCsv`
 
@@ -40,7 +40,7 @@ Module [reporting](../README.md) · 6 route(s).
 <a id="r-get-sni-api-v1-reporting-activity-pdf"></a>
 ### GET /sni/api/v1/reporting/activity/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java`, méthode `activityReportPdf`
 
@@ -71,7 +71,7 @@ Module [reporting](../README.md) · 6 route(s).
 <a id="r-get-sni-api-v1-reports-activity-csv"></a>
 ### GET /sni/api/v1/reports/activity/csv
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java`, méthode `activityReportCsv`
 
@@ -86,7 +86,7 @@ Module [reporting](../README.md) · 6 route(s).
 <a id="r-get-sni-api-v1-reports-activity-pdf"></a>
 ### GET /sni/api/v1/reports/activity/pdf
 
-- Accès : back-office : rôle d'administration et droit `REPORT:VIEW`
+- Accès : back-office : rôle d'administration et droit `REPORT:EXPORT`
 - Réponse : `fichier (octets)`
 - Code : `src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java`, méthode `activityReportPdf`
 

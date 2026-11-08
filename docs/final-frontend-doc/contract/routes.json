@@ -2022,7 +2022,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "category": {
@@ -2420,7 +2421,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -2537,7 +2539,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -2602,7 +2605,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -2832,7 +2836,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -2905,7 +2910,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -2954,7 +2960,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "ownerCode": {
@@ -3362,7 +3369,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "partyCode": {
@@ -3414,7 +3422,8 @@
       "INVOICE",
       "PAYMENT",
       "PROPOSAL",
-      "ASSET"
+      "ASSET",
+      "INTERNAL"
      ]
     },
     "partyCode": {
@@ -3485,7 +3494,8 @@
    "INVOICE",
    "PAYMENT",
    "PROPOSAL",
-   "ASSET"
+   "ASSET",
+   "INTERNAL"
   ],
   "ContractDraftStatus": [
    "DRAFTING",
