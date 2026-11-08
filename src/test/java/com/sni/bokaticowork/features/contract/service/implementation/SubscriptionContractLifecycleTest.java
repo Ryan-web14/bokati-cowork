@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.subscription.repository.SubscriptionReposit
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,11 +18,13 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -71,5 +74,29 @@ class SubscriptionContractLifecycleTest {
         service.processScheduledTransitions();
 
         assertThat(free.getStatus()).isEqualTo(ContractStatus.EXPIRED);
+    }
+
+    @Test
+    @DisplayName("AUTO_RENEW hors abonnement : un contrat successeur est cree avant que l ancien n expire")
+    void autoRenewCreatesSuccessorBeforeExpiry() {
+        Contract renewable = contract("CTR-AUTO");
+        // Le depot filtre sur le statut courant, comme la requete reelle
+        when(contracts.findAllByStatusInAndEndDateBeforeAndDeletedFalse(anyList(), any())).thenAnswer(inv -> {
+            List<ContractStatus> statuses = inv.getArgument(0);
+            return statuses.contains(renewable.getStatus()) ? List.of(renewable) : List.of();
+        });
+        when(sequences.next(any(), any())).thenReturn("CTR-NEXT");
+
+        service.processScheduledTransitions();
+
+        ArgumentCaptor<Contract> saved = ArgumentCaptor.forClass(Contract.class);
+        verify(contracts, atLeastOnce()).save(saved.capture());
+        List<Contract> successors = new ArrayList<>(saved.getAllValues().stream()
+                .filter(c -> "CTR-AUTO".equals(c.getRenewedFromCode())).toList());
+        assertThat(successors).hasSize(1);
+        assertThat(successors.get(0).getStatus()).isEqualTo(ContractStatus.DRAFT);
+        assertThat(successors.get(0).getContractCode()).isEqualTo("CTR-NEXT");
+        verify(outbox).publish(org.mockito.ArgumentMatchers.eq("CONTRACT_AUTO_RENEWED"), any(), any(), any());
+        assertThat(renewable.getStatus()).isEqualTo(ContractStatus.EXPIRED);
     }
 }

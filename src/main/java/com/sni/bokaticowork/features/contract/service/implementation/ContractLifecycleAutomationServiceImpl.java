@@ -36,7 +36,12 @@ public class ContractLifecycleAutomationServiceImpl implements ContractLifecycle
 
     @Override
     public int processScheduledTransitions() {
-        return autoActivateContracts() + autoExpireContracts() + autoRenewContracts() + alertExpiringContracts();
+        // La reconduction passe avant l'expiration : elle cherche les contrats ACTIVE echus,
+        // que l'expiration ferait passer en EXPIRED. L'ancien contrat expire ensuite dans le meme passage.
+        int activated = autoActivateContracts();
+        int renewed = autoRenewContracts();
+        int expired = autoExpireContracts();
+        return activated + renewed + expired + alertExpiringContracts();
     }
 
     private int autoActivateContracts() {
