@@ -373,9 +373,17 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             if (!remainingLines.isEmpty()) {
                 List<CreateBillingDocumentLineRequest> lineRequests = remainingLines.stream()
                         .map(this::toCreateLineRequest).toList();
+                // Sans remises dans la demande, celles en base restent · le recalcul les compte,
+                // sinon le total ignorait des remises toujours affichees sur le document.
+                List<CreateBillingDocumentDiscountRequest> effectiveDiscounts = request.discounts() != null
+                        ? request.discounts()
+                        : discountRepository.findAllByDocumentOrderByIdAsc(document).stream()
+                                .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(),
+                                        d.getDiscountType(), d.getValue(), d.getSourceType(), d.getSourceCode()))
+                                .toList();
                 BillingCalculationService.CalculatedDocument recalc = calculationService.calculate(
                         lineRequests,
-                        request.discounts() != null ? request.discounts() : List.of()
+                        effectiveDiscounts
                 );
                 document.setSubtotalAmount(recalc.subtotalAmount());
                 document.setDiscountAmount(recalc.discountAmount());
@@ -386,14 +394,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 document.setTotalAmount(recalc.totalAmount());
                 document.setBalanceDue(recalc.totalAmount().subtract(document.getPaidAmount()));
 
-                // Rebuild discounts, clauses and taxes
-                if (request.discounts() != null) {
-                    documentWriter.save(document, recalc, request.discounts(), List.of(), null);
-                }
-                if (request.clauses() != null) {
-                    taxRepository.deleteAllByDocument(document);
-                    documentWriter.save(document, recalc, List.of(), request.clauses(), null);
-                }
+                // Remises, taxes et clauses reecrites sans toucher aux lignes, deja en base
+                documentWriter.rewriteDetails(document, recalc, request.discounts(), request.clauses());
             }
         }
 
