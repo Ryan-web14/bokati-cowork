@@ -194,7 +194,11 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("RESOURCE", actionFor("RESOURCE", method));
         }
         if (path.startsWith("/analytics") || path.startsWith("/reports") || path.startsWith("/reporting")) {
-            return path.endsWith(".csv") || path.contains("/export")
+            // Les rapports se telechargent par un suffixe /csv ou /pdf : la regle n'attendait que
+            // .csv et /export, REPORT:VIEW suffisait donc a exporter.
+            return path.endsWith(".csv") || path.endsWith("/csv")
+                    || path.endsWith(".pdf") || path.endsWith("/pdf")
+                    || path.contains("/export")
                     ? permission("REPORT", "EXPORT")
                     : permission("REPORT", "VIEW");
         }
