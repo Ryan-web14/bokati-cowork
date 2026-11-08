@@ -159,8 +159,13 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("CLIENT", actionFor("CLIENT", method));
         }
         if (path.startsWith("/kyc")) {
-            if (path.contains("/approve")) return permission("KYC", "APPROVE");
-            if (path.contains("/reject")) return permission("KYC", "REJECT");
+            // Les decisions en masse (bulk-approve, bulk-reject et ses alias) ne contiennent ni
+            // /approve ni /reject : elles tombaient sur KYC:READ, une lecture suffisait a valider.
+            if (path.contains("/approve") || path.contains("/bulk-approve")) return permission("KYC", "APPROVE");
+            if (path.contains("/reject") || path.contains("/bulk-reject")
+                    || path.contains("/bulk-disapprove") || path.contains("/bulk-desapprove")) {
+                return permission("KYC", "REJECT");
+            }
             return permission("KYC", "READ");
         }
         if (path.startsWith("/documents")) {
@@ -189,7 +194,11 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("RESOURCE", actionFor("RESOURCE", method));
         }
         if (path.startsWith("/analytics") || path.startsWith("/reports") || path.startsWith("/reporting")) {
-            return path.endsWith(".csv") || path.contains("/export")
+            // Les rapports se telechargent par un suffixe /csv ou /pdf : la regle n'attendait que
+            // .csv et /export, REPORT:VIEW suffisait donc a exporter.
+            return path.endsWith(".csv") || path.endsWith("/csv")
+                    || path.endsWith(".pdf") || path.endsWith("/pdf")
+                    || path.contains("/export")
                     ? permission("REPORT", "EXPORT")
                     : permission("REPORT", "VIEW");
         }
@@ -236,6 +245,12 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/businesses") || path.startsWith("/document-types")
                 || path.startsWith("/document-requirements") || path.startsWith("/document-retention-policies")) {
             return permission("SYSTEM", "SETTINGS");
+        }
+        // Explorateur de la GED : lire, deposer, puis tout le reste (ranger, renommer, corbeille).
+        if (path.startsWith("/ged/") || path.equals("/ged")) {
+            if (HttpMethod.GET.matches(method)) return permission("DOCUMENT", "READ");
+            if ((path.equals("/ged/files") || path.equals("/ged/scans")) && HttpMethod.POST.matches(method)) return permission("DOCUMENT", "UPLOAD");
+            return permission("DOCUMENT", "WRITE");
         }
         if (path.startsWith("/review")) {
             return permission("DOCUMENT", "REVIEW");

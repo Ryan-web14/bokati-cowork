@@ -90,6 +90,7 @@ public class SubscriptionQuote {
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "services_json", columnDefinition = "jsonb")
     private String servicesJson;
 

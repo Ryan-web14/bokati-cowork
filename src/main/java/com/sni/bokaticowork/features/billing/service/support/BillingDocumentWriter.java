@@ -63,6 +63,40 @@ public class BillingDocumentWriter {
         return saved;
     }
 
+    /**
+     * Reecrit le detail d'un document deja enregistre apres un recalcul de ses totaux · taxes,
+     * remises et clauses, jamais les lignes.
+     *
+     * <p>La mise a jour d'un brouillon rappelait {@link #save}, qui reenregistre toutes les lignes
+     * recalculees comme nouvelles et ajoute les taxes sans retirer les anciennes : lignes et taxes
+     * se dupliquaient a chaque modification. Les lignes sont deja en base, a jour.</p>
+     *
+     * @param discounts nouvelles remises, a enregistrer (les anciennes sont deja supprimees) ·
+     *                  {@code null} garde les remises en base et ne met a jour que leur montant
+     * @param clauses   nouvelles clauses, a enregistrer · {@code null} garde celles en base
+     */
+    public void rewriteDetails(BillingDocument document,
+                               BillingCalculationService.CalculatedDocument calculation,
+                               List<CreateBillingDocumentDiscountRequest> discounts,
+                               List<CreateBillingDocumentClauseRequest> clauses) {
+        if (discounts != null) {
+            saveDiscounts(document, discounts, calculation.discountAmounts());
+        } else {
+            List<BillingDocumentDiscount> existing = discountRepository.findAllByDocumentOrderByIdAsc(document);
+            List<BigDecimal> amounts = calculation.discountAmounts();
+            for (int i = 0; i < existing.size(); i++) {
+                BillingDocumentDiscount discount = existing.get(i);
+                discount.setAmount(amounts != null && i < amounts.size() ? amounts.get(i) : BigDecimal.ZERO);
+                discountRepository.save(discount);
+            }
+        }
+        taxRepository.deleteAllByDocument(document);
+        saveTaxes(document, calculation);
+        if (clauses != null) {
+            saveClauses(document, clauses);
+        }
+    }
+
     public void saveEarlyPaymentDiscount(BillingDocument document, CreateEarlyPaymentDiscountRequest request) {
         if (request == null) {
             return;

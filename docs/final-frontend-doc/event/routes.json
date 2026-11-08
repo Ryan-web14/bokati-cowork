@@ -1,0 +1,368 @@
+{
+ "module": "event",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/event-registrations",
+   "package": "features.event.controller",
+   "controller": "EventRegistrationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/event/controller/EventRegistrationController.java",
+   "handler": "search",
+   "declaredIn": "EventRegistrationController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "eventCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.event.enums.RegistrationStatus"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventRegistrationResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/event-registrations/{id}",
+   "package": "features.event.controller",
+   "controller": "EventRegistrationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/event/controller/EventRegistrationController.java",
+   "handler": "get",
+   "declaredIn": "EventRegistrationController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventRegistrationResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/event-registrations/{id}/reject",
+   "package": "features.event.controller",
+   "controller": "EventRegistrationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/event/controller/EventRegistrationController.java",
+   "handler": "reject",
+   "declaredIn": "EventRegistrationController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:CONVERT','CRM_CONVERT')",
+    "kind": "admin",
+    "permission": "CRM:CONVERT"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.RejectEventRegistrationRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventRegistrationResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/event-registrations/{id}/validate",
+   "package": "features.event.controller",
+   "controller": "EventRegistrationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/event/controller/EventRegistrationController.java",
+   "handler": "validate",
+   "declaredIn": "EventRegistrationController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:CONVERT','CRM_CONVERT')",
+    "kind": "admin",
+    "permission": "CRM:CONVERT"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventRegistrationResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/events/{eventCode}",
+   "package": "features.event.controller",
+   "controller": "PublicEventController",
+   "source": "src/main/java/com/sni/bokaticowork/features/event/controller/PublicEventController.java",
+   "handler": "getEvent",
+   "declaredIn": "PublicEventController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "eventCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventSummaryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/events/{eventCode}/registrations",
+   "package": "features.event.controller",
+   "controller": "PublicEventController",
+   "source": "src/main/java/com/sni/bokaticowork/features/event/controller/PublicEventController.java",
+   "handler": "register",
+   "declaredIn": "PublicEventController",
+   "access": {
+    "kind": "public"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "EVENT_REGISTRATION_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.PublicEventRegistrationRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "eventCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventRegistrationResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/opening",
+   "package": "features.event.controller",
+   "controller": "PublicOpeningController",
+   "source": "src/main/java/com/sni/bokaticowork/features/event/controller/PublicOpeningController.java",
+   "handler": "getOpeningEvent",
+   "declaredIn": "PublicOpeningController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventSummaryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/opening/registrations",
+   "package": "features.event.controller",
+   "controller": "PublicOpeningController",
+   "source": "src/main/java/com/sni/bokaticowork/features/event/controller/PublicOpeningController.java",
+   "handler": "register",
+   "declaredIn": "PublicOpeningController",
+   "access": {
+    "kind": "public"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "OPENING_REGISTRATION_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.PublicEventRegistrationRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventRegistrationResponse>"
+  }
+ ],
+ "schemas": {
+  "EventRegistrationDtos.EventRegistrationResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "registrationNumber": {
+     "type": "string"
+    },
+    "eventCode": {
+     "type": "string"
+    },
+    "eventName": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "fullName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING_VALIDATION",
+      "VALIDATED",
+      "REJECTED"
+     ]
+    },
+    "rejectionReason": {
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "EventRegistrationDtos.RejectEventRegistrationRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "EventRegistrationDtos.EventSummaryResponse": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "eventDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "EventRegistrationDtos.PublicEventRegistrationRequest": {
+   "required": [
+    "email",
+    "firstname",
+    "lastname",
+    "phone"
+   ],
+   "type": "object",
+   "properties": {
+    "firstname": {
+     "maxLength": 180,
+     "minLength": 0,
+     "type": "string"
+    },
+    "lastname": {
+     "maxLength": 180,
+     "minLength": 0,
+     "type": "string"
+    },
+    "phone": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "email": {
+     "maxLength": 250,
+     "minLength": 0,
+     "type": "string",
+     "format": "email"
+    }
+   }
+  }
+ },
+ "enums": {
+  "RegistrationStatus": [
+   "PENDING_VALIDATION",
+   "VALIDATED",
+   "REJECTED"
+  ]
+ },
+ "names": {
+  "EventRegistrationDtos.EventRegistrationResponse": "com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventRegistrationResponse",
+  "RegistrationStatus": "com.sni.bokaticowork.features.event.enums.RegistrationStatus",
+  "EventRegistrationDtos.RejectEventRegistrationRequest": "com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.RejectEventRegistrationRequest",
+  "EventRegistrationDtos.EventSummaryResponse": "com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventSummaryResponse",
+  "EventRegistrationDtos.PublicEventRegistrationRequest": "com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.PublicEventRegistrationRequest"
+ }
+}

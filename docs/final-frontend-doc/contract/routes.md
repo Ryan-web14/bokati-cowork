@@ -1,0 +1,73 @@
+# contract : routes
+
+> Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
+
+65 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+
+| Verbe | Chemin | Accès | Détail |
+| --- | --- | --- | --- |
+| GET | `/sni/api/v1/amendments/{amendmentCode}` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-get-sni-api-v1-amendments-amendmentcode) |
+| POST | `/sni/api/v1/amendments/{amendmentCode}/approve` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-post-sni-api-v1-amendments-amendmentcode-approve) |
+| POST | `/sni/api/v1/amendments/{amendmentCode}/cancel` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-post-sni-api-v1-amendments-amendmentcode-cancel) |
+| POST | `/sni/api/v1/amendments/{amendmentCode}/generate-pdf` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-post-sni-api-v1-amendments-amendmentcode-generate-pdf) |
+| GET | `/sni/api/v1/amendments/{amendmentCode}/preview` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-get-sni-api-v1-amendments-amendmentcode-preview) |
+| POST | `/sni/api/v1/amendments/{amendmentCode}/reject` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-post-sni-api-v1-amendments-amendmentcode-reject) |
+| GET | `/sni/api/v1/amendments/{amendmentCode}/sections` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-get-sni-api-v1-amendments-amendmentcode-sections) |
+| POST | `/sni/api/v1/amendments/{amendmentCode}/sections` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-post-sni-api-v1-amendments-amendmentcode-sections) |
+| DELETE | `/sni/api/v1/amendments/{amendmentCode}/sections/{sectionId}` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-delete-sni-api-v1-amendments-amendmentcode-sections-sectionid) |
+| PUT | `/sni/api/v1/amendments/{amendmentCode}/sections/{sectionId}` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-put-sni-api-v1-amendments-amendmentcode-sections-sectionid) |
+| POST | `/sni/api/v1/amendments/{amendmentCode}/sign` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-post-sni-api-v1-amendments-amendmentcode-sign) |
+| POST | `/sni/api/v1/amendments/{amendmentCode}/submit` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-post-sni-api-v1-amendments-amendmentcode-submit) |
+| GET | `/sni/api/v1/amendments/{amendmentCode}/variables` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-get-sni-api-v1-amendments-amendmentcode-variables) |
+| PUT | `/sni/api/v1/amendments/{amendmentCode}/variables` | ADMIN:ACCESS | [ContractAmendmentController](routes/ContractAmendmentController.md#r-put-sni-api-v1-amendments-amendmentcode-variables) |
+| GET | `/sni/api/v1/contracts/{contractCode}/amendments` | BILLING:READ | [ContractAmendmentController](routes/ContractAmendmentController.md#r-get-sni-api-v1-contracts-contractcode-amendments) |
+| POST | `/sni/api/v1/contracts/{contractCode}/amendments` | BILLING:CREATE | [ContractAmendmentController](routes/ContractAmendmentController.md#r-post-sni-api-v1-contracts-contractcode-amendments) |
+| GET | `/sni/api/v1/contracts/{contractCode}/audit-events` | BILLING:READ | [ContractAmendmentController](routes/ContractAmendmentController.md#r-get-sni-api-v1-contracts-contractcode-audit-events) |
+| GET | `/sni/api/v1/contracts/{contractCode}/versions` | BILLING:READ | [ContractAmendmentController](routes/ContractAmendmentController.md#r-get-sni-api-v1-contracts-contractcode-versions) |
+| GET | `/sni/api/v1/contracts` | BILLING:READ | [ContractController](routes/ContractController.md#r-get-sni-api-v1-contracts) |
+| POST | `/sni/api/v1/contracts` | BILLING:CREATE | [ContractController](routes/ContractController.md#r-post-sni-api-v1-contracts) |
+| POST | `/sni/api/v1/contracts/generate` | BILLING:CREATE | [ContractController](routes/ContractController.md#r-post-sni-api-v1-contracts-generate) |
+| POST | `/sni/api/v1/contracts/preview` | BILLING:CREATE | [ContractController](routes/ContractController.md#r-post-sni-api-v1-contracts-preview) |
+| GET | `/sni/api/v1/contracts/templates` | BILLING:READ | [ContractController](routes/ContractController.md#r-get-sni-api-v1-contracts-templates) |
+| GET | `/sni/api/v1/contracts/templates-drafting` | BILLING:READ | [ContractController](routes/ContractController.md#r-get-sni-api-v1-contracts-templates-drafting) |
+| DELETE | `/sni/api/v1/contracts/{contractCode}` | BILLING:UPDATE | [ContractController](routes/ContractController.md#r-delete-sni-api-v1-contracts-contractcode) |
+| GET | `/sni/api/v1/contracts/{contractCode}` | BILLING:READ | [ContractController](routes/ContractController.md#r-get-sni-api-v1-contracts-contractcode) |
+| PUT | `/sni/api/v1/contracts/{contractCode}` | BILLING:UPDATE | [ContractController](routes/ContractController.md#r-put-sni-api-v1-contracts-contractcode) |
+| PATCH | `/sni/api/v1/contracts/{contractCode}/activate` | BILLING:UPDATE | [ContractController](routes/ContractController.md#r-patch-sni-api-v1-contracts-contractcode-activate) |
+| POST | `/sni/api/v1/contracts/{contractCode}/approve` | BILLING:CREATE | [ContractController](routes/ContractController.md#r-post-sni-api-v1-contracts-contractcode-approve) |
+| PATCH | `/sni/api/v1/contracts/{contractCode}/cancel` | BILLING:UPDATE | [ContractController](routes/ContractController.md#r-patch-sni-api-v1-contracts-contractcode-cancel) |
+| POST | `/sni/api/v1/contracts/{contractCode}/generate-draft` | BILLING:CREATE | [ContractController](routes/ContractController.md#r-post-sni-api-v1-contracts-contractcode-generate-draft) |
+| POST | `/sni/api/v1/contracts/{contractCode}/reject-review` | BILLING:CREATE | [ContractController](routes/ContractController.md#r-post-sni-api-v1-contracts-contractcode-reject-review) |
+| PATCH | `/sni/api/v1/contracts/{contractCode}/signed-document` | BILLING:UPDATE | [ContractController](routes/ContractController.md#r-patch-sni-api-v1-contracts-contractcode-signed-document) |
+| PATCH | `/sni/api/v1/contracts/{contractCode}/status` | BILLING:UPDATE | [ContractController](routes/ContractController.md#r-patch-sni-api-v1-contracts-contractcode-status) |
+| PATCH | `/sni/api/v1/contracts/{contractCode}/suspend` | BILLING:UPDATE | [ContractController](routes/ContractController.md#r-patch-sni-api-v1-contracts-contractcode-suspend) |
+| PATCH | `/sni/api/v1/contracts/{contractCode}/terminate` | BILLING:UPDATE | [ContractController](routes/ContractController.md#r-patch-sni-api-v1-contracts-contractcode-terminate) |
+| GET | `/sni/api/v1/contract-drafts` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-get-sni-api-v1-contract-drafts) |
+| POST | `/sni/api/v1/contract-drafts` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-post-sni-api-v1-contract-drafts) |
+| POST | `/sni/api/v1/contract-drafts/from-template/{templateCode}` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-post-sni-api-v1-contract-drafts-from-template-templatecode) |
+| GET | `/sni/api/v1/contract-drafts/search` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-get-sni-api-v1-contract-drafts-search) |
+| DELETE | `/sni/api/v1/contract-drafts/{code}` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-delete-sni-api-v1-contract-drafts-code) |
+| GET | `/sni/api/v1/contract-drafts/{code}` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-get-sni-api-v1-contract-drafts-code) |
+| PUT | `/sni/api/v1/contract-drafts/{code}` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-put-sni-api-v1-contract-drafts-code) |
+| POST | `/sni/api/v1/contract-drafts/{code}/generate` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-post-sni-api-v1-contract-drafts-code-generate) |
+| POST | `/sni/api/v1/contract-drafts/{code}/preview` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-post-sni-api-v1-contract-drafts-code-preview) |
+| POST | `/sni/api/v1/contract-drafts/{code}/sections` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-post-sni-api-v1-contract-drafts-code-sections) |
+| DELETE | `/sni/api/v1/contract-drafts/{code}/sections/{sectionId}` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-delete-sni-api-v1-contract-drafts-code-sections-sectionid) |
+| PUT | `/sni/api/v1/contract-drafts/{code}/sections/{sectionId}` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-put-sni-api-v1-contract-drafts-code-sections-sectionid) |
+| PATCH | `/sni/api/v1/contract-drafts/{code}/status` | ADMIN:ACCESS | [ContractDraftController](routes/ContractDraftController.md#r-patch-sni-api-v1-contract-drafts-code-status) |
+| POST | `/sni/api/v1/contracts/{contractCode}/request-signing` | BILLING:CREATE | [ContractSigningController](routes/ContractSigningController.md#r-post-sni-api-v1-contracts-contractcode-request-signing) |
+| GET | `/sni/api/v1/public/contracts/sign/{token}` | public | [ContractSigningController](routes/ContractSigningController.md#r-get-sni-api-v1-public-contracts-sign-token) |
+| POST | `/sni/api/v1/public/contracts/sign/{token}` | public | [ContractSigningController](routes/ContractSigningController.md#r-post-sni-api-v1-public-contracts-sign-token) |
+| GET | `/sni/api/v1/contract-templates` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-get-sni-api-v1-contract-templates) |
+| POST | `/sni/api/v1/contract-templates` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-post-sni-api-v1-contract-templates) |
+| GET | `/sni/api/v1/contract-templates/category/{category}` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-get-sni-api-v1-contract-templates-category-category) |
+| GET | `/sni/api/v1/contract-templates/search` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-get-sni-api-v1-contract-templates-search) |
+| DELETE | `/sni/api/v1/contract-templates/{code}` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-delete-sni-api-v1-contract-templates-code) |
+| GET | `/sni/api/v1/contract-templates/{code}` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-get-sni-api-v1-contract-templates-code) |
+| PUT | `/sni/api/v1/contract-templates/{code}` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-put-sni-api-v1-contract-templates-code) |
+| POST | `/sni/api/v1/contract-templates/{code}/duplicate` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-post-sni-api-v1-contract-templates-code-duplicate) |
+| POST | `/sni/api/v1/contract-templates/{code}/preview` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-post-sni-api-v1-contract-templates-code-preview) |
+| GET | `/sni/api/v1/contract-templates/{code}/sections` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-get-sni-api-v1-contract-templates-code-sections) |
+| POST | `/sni/api/v1/contract-templates/{code}/sections` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-post-sni-api-v1-contract-templates-code-sections) |
+| DELETE | `/sni/api/v1/contract-templates/{code}/sections/{sectionId}` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-delete-sni-api-v1-contract-templates-code-sections-sectionid) |
+| PUT | `/sni/api/v1/contract-templates/{code}/sections/{sectionId}` | ADMIN:ACCESS | [ContractTemplateController](routes/ContractTemplateController.md#r-put-sni-api-v1-contract-templates-code-sections-sectionid) |

@@ -1,0 +1,963 @@
+{
+ "module": "task",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/tasks",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "search",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:READ','TASK_READ')",
+    "kind": "admin",
+    "permission": "TASK:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.task.enums.TaskStatus"
+    },
+    {
+     "in": "query",
+     "name": "assignedTo",
+     "required": false,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "priority",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.task.enums.TaskPriority"
+    },
+    {
+     "in": "query",
+     "name": "sourceType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/tasks",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "create",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.task.dto.TaskDtos.CreateTaskRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/tasks/board",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "board",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:READ','TASK_READ')",
+    "kind": "admin",
+    "permission": "TASK:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "assignedTo",
+     "required": false,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "priority",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.task.enums.TaskPriority"
+    },
+    {
+     "in": "query",
+     "name": "sourceType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskKanbanBoardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/tasks/due-today",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "dueToday",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:READ','TASK_READ')",
+    "kind": "admin",
+    "permission": "TASK:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/tasks/metrics",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "metrics",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:READ','TASK_READ')",
+    "kind": "admin",
+    "permission": "TASK:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskMetricsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/tasks/{id}",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "get",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:READ','TASK_READ')",
+    "kind": "admin",
+    "permission": "TASK:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/tasks/{id}",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "update",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.task.dto.TaskDtos.UpdateTaskRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/tasks/{id}/archive",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "archive",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/tasks/{id}/assign",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "assign",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:ASSIGN','TASK_ASSIGN')",
+    "kind": "admin",
+    "permission": "TASK:ASSIGN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.task.dto.TaskDtos.AssignTaskRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/tasks/{id}/checklist",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "addChecklistItem",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/tasks/{id}/checklist/{itemId}",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "removeChecklistItem",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "path",
+     "name": "itemId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/tasks/{id}/checklist/{itemId}",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "updateChecklistItem",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.task.dto.TaskDtos.UpdateChecklistItemRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "path",
+     "name": "itemId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/tasks/{id}/comments",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "comment",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.task.dto.TaskDtos.AddTaskCommentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/tasks/{id}/complete",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "complete",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/tasks/{id}/status",
+   "package": "features.task.controller",
+   "controller": "TaskManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/task/controller/TaskManagementController.java",
+   "handler": "updateStatus",
+   "declaredIn": "TaskManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "TASK:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.task.dto.TaskDtos.UpdateTaskStatusRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  }
+ ],
+ "schemas": {
+  "TaskDtos.TaskResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "ARCHIVED"
+     ]
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "dueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "recurrence": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "AFTER_BOOKING"
+     ]
+    },
+    "parentTaskId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checklist": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistResponse"
+     }
+    },
+    "comments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.task.dto.TaskDtos.TaskCommentResponse"
+     }
+    }
+   }
+  },
+  "TaskDtos.CreateTaskRequest": {
+   "required": [
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "dueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "recurrence": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "AFTER_BOOKING"
+     ]
+    },
+    "checklist": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistRequest"
+     }
+    }
+   }
+  },
+  "TaskDtos.TaskKanbanBoardResponse": {
+   "type": "object",
+   "properties": {
+    "columns": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.task.dto.TaskDtos.TaskKanbanColumnResponse"
+     }
+    },
+    "totalTasks": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "overdueTasks": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "TaskDtos.TaskMetricsResponse": {
+   "type": "object",
+   "properties": {
+    "totalTasks": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "openTasks": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "inProgressTasks": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completedTasks": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledTasks": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "archivedTasks": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "overdueTasks": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completionRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "avgCompletionHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "byPriority": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "bySourceType": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    }
+   }
+  },
+  "TaskDtos.UpdateTaskRequest": {
+   "type": "object",
+   "properties": {
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "dueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "recurrence": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "AFTER_BOOKING"
+     ]
+    }
+   }
+  },
+  "TaskDtos.AssignTaskRequest": {
+   "type": "object",
+   "properties": {
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "TaskDtos.ChecklistRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "completed": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "TaskDtos.UpdateChecklistItemRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "completed": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "TaskDtos.AddTaskCommentRequest": {
+   "required": [
+    "comment"
+   ],
+   "type": "object",
+   "properties": {
+    "authorId": {
+     "type": "string"
+    },
+    "authorName": {
+     "type": "string"
+    },
+    "comment": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "TaskDtos.UpdateTaskStatusRequest": {
+   "required": [
+    "status"
+   ],
+   "type": "object",
+   "properties": {
+    "status": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "ARCHIVED"
+     ]
+    }
+   }
+  },
+  "TaskDtos.ChecklistResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "label": {
+     "type": "string"
+    },
+    "completed": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "TaskDtos.TaskCommentResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "authorId": {
+     "type": "string"
+    },
+    "authorName": {
+     "type": "string"
+    },
+    "comment": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "TaskDtos.TaskKanbanColumnResponse": {
+   "type": "object",
+   "properties": {
+    "status": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "ARCHIVED"
+     ]
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cards": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.task.dto.TaskDtos.TaskKanbanCardResponse"
+     }
+    }
+   }
+  },
+  "TaskDtos.TaskKanbanCardResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "title": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "ARCHIVED"
+     ]
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "recurrence": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "AFTER_BOOKING"
+     ]
+    },
+    "parentTaskId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "dueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "completedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checklistTotal": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "checklistDone": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "commentCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "overdue": {
+     "type": "boolean"
+    }
+   }
+  }
+ },
+ "enums": {
+  "TaskStatus": [
+   "OPEN",
+   "IN_PROGRESS",
+   "COMPLETED",
+   "CANCELLED",
+   "ARCHIVED"
+  ],
+  "TaskPriority": [
+   "LOW",
+   "MEDIUM",
+   "HIGH",
+   "URGENT"
+  ]
+ },
+ "names": {
+  "TaskDtos.TaskResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse",
+  "TaskStatus": "com.sni.bokaticowork.features.task.enums.TaskStatus",
+  "TaskPriority": "com.sni.bokaticowork.features.task.enums.TaskPriority",
+  "TaskDtos.CreateTaskRequest": "com.sni.bokaticowork.features.task.dto.TaskDtos.CreateTaskRequest",
+  "TaskDtos.TaskKanbanBoardResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.TaskKanbanBoardResponse",
+  "TaskDtos.TaskMetricsResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.TaskMetricsResponse",
+  "TaskDtos.UpdateTaskRequest": "com.sni.bokaticowork.features.task.dto.TaskDtos.UpdateTaskRequest",
+  "TaskDtos.AssignTaskRequest": "com.sni.bokaticowork.features.task.dto.TaskDtos.AssignTaskRequest",
+  "TaskDtos.ChecklistRequest": "com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistRequest",
+  "TaskDtos.UpdateChecklistItemRequest": "com.sni.bokaticowork.features.task.dto.TaskDtos.UpdateChecklistItemRequest",
+  "TaskDtos.AddTaskCommentRequest": "com.sni.bokaticowork.features.task.dto.TaskDtos.AddTaskCommentRequest",
+  "TaskDtos.UpdateTaskStatusRequest": "com.sni.bokaticowork.features.task.dto.TaskDtos.UpdateTaskStatusRequest",
+  "TaskDtos.ChecklistResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistResponse",
+  "TaskDtos.TaskCommentResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.TaskCommentResponse",
+  "TaskDtos.TaskKanbanColumnResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.TaskKanbanColumnResponse",
+  "TaskDtos.TaskKanbanCardResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.TaskKanbanCardResponse"
+ }
+}

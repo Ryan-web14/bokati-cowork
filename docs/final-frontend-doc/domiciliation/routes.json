@@ -1,0 +1,2092 @@
+{
+ "module": "domiciliation",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/companies/{customerId}/domiciliation",
+   "package": "features.domiciliation.controller",
+   "controller": "ClientDomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/ClientDomiciliationController.java",
+   "handler": "companyDomiciliation",
+   "declaredIn": "ClientDomiciliationController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "customerId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/domiciliation/contracts",
+   "package": "features.domiciliation.controller",
+   "controller": "ClientDomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/ClientDomiciliationController.java",
+   "handler": "contracts",
+   "declaredIn": "ClientDomiciliationController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/domiciliation/contracts/{contractNumber}",
+   "package": "features.domiciliation.controller",
+   "controller": "ClientDomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/ClientDomiciliationController.java",
+   "handler": "contract",
+   "declaredIn": "ClientDomiciliationController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/domiciliation/contracts/{contractNumber}/certificate",
+   "package": "features.domiciliation.controller",
+   "controller": "ClientDomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/ClientDomiciliationController.java",
+   "handler": "certificate",
+   "declaredIn": "ClientDomiciliationController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/domiciliation/contracts/{contractNumber}/document",
+   "package": "features.domiciliation.controller",
+   "controller": "ClientDomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/ClientDomiciliationController.java",
+   "handler": "contractDocument",
+   "declaredIn": "ClientDomiciliationController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/domiciliation/contracts/{contractNumber}/mail",
+   "package": "features.domiciliation.controller",
+   "controller": "ClientDomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/ClientDomiciliationController.java",
+   "handler": "mail",
+   "declaredIn": "ClientDomiciliationController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/domiciliation/contracts/{contractNumber}/mail/{itemNumber}/trail",
+   "package": "features.domiciliation.controller",
+   "controller": "ClientDomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/ClientDomiciliationController.java",
+   "handler": "mailTrail",
+   "declaredIn": "ClientDomiciliationController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "itemNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailEventView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/catalogue",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "catalogue",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "includeInactive",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ServiceDefinitionView>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/services/catalogue",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "saveDefinition",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ServiceDefinitionRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ServiceDefinitionView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/addresses",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "addresses",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.AddressView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/addresses",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "registerAddress",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RegisterAddressRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.AddressView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/addresses/{code}",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "updateAddress",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.UpdateAddressRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.AddressView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "contracts",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "List<com.sni.bokaticowork.features.domiciliation.model.DomiciliationContract.Status>"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "open",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.OpenContractRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "contract",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/certificate",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "certificate",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.CertificateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/commitment",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "commitment",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.CommitmentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/mail",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "contractMail",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/mail",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "receiveMail",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ReceiveMailRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/prepare",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "prepare",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/registration/confirm",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "confirmRegistration",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ConfirmRegistrationRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/registration/reject",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "rejectRegistration",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RejectRegistrationRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RegistrationView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/registration/submit",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "submitRegistration",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubmitRegistrationRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RegistrationView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/registrations",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "registrations",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RegistrationView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/signed",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "signed",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SignedRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/contracts/{contractNumber}/terminate",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "terminate",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.TerminateRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "contractNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/mail/pending",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "pendingMail",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/mail/{itemNumber}",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "mailItem",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/mail/{itemNumber}/collect",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "collect",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.CollectRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/mail/{itemNumber}/destroy",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "destroy",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/mail/{itemNumber}/forward",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "forward",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ForwardRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/mail/{itemNumber}/return",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "returnMail",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ReasonRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/mail/{itemNumber}/scan",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "scan",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ScanRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/mail/{itemNumber}/trail",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "mailTrail",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "itemNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailEventView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/registrations/in-progress",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "registrationsInProgress",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RegistrationView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/domiciliation/registry",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "registry",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "produces": [
+    "text/csv"
+   ],
+   "params": [],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/subscribed/{serviceNumber}/suspend",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "suspend",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ReasonRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "serviceNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubscriptionServiceView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/subscribed/{serviceNumber}/terminate",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "terminateService",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "serviceNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubscriptionServiceView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/services/subscriptions/{subscriptionNumber}",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "ofSubscription",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubscriptionServiceView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/services/subscriptions/{subscriptionNumber}",
+   "package": "features.domiciliation.controller",
+   "controller": "DomiciliationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/domiciliation/controller/DomiciliationController.java",
+   "handler": "subscribe",
+   "declaredIn": "DomiciliationController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubscribeServiceRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "subscriptionNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubscriptionServiceView>"
+  }
+ ],
+ "schemas": {
+  "DomiciliationDtos.ContractView": {
+   "type": "object",
+   "properties": {
+    "contractNumber": {
+     "type": "string"
+    },
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "serviceNumber": {
+     "type": "string"
+    },
+    "legalName": {
+     "type": "string"
+    },
+    "legalForm": {
+     "type": "string"
+    },
+    "registrationNumber": {
+     "type": "string"
+    },
+    "taxNumber": {
+     "type": "string"
+    },
+    "legalRepresentativeName": {
+     "type": "string"
+    },
+    "addressCode": {
+     "type": "string"
+    },
+    "addressLabel": {
+     "type": "string"
+    },
+    "suiteNumber": {
+     "type": "string"
+    },
+    "billingCycle": {
+     "type": "string",
+     "enum": [
+      "ONE_TIME",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "QUARTERLY",
+      "YEARLY"
+     ]
+    },
+    "commitmentMonths": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "fiscalAddressEligible": {
+     "type": "boolean"
+    },
+    "fiscalAddressGrantedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fiscalAddressRevokedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fiscalAddressRevocationReason": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "PENDING_DOCUMENTS",
+      "PENDING_SIGNATURE",
+      "PENDING_REGISTRATION",
+      "ACTIVE",
+      "SUSPENDED",
+      "TERMINATED",
+      "EXPIRED"
+     ]
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "noticePeriodDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "contractDocumentCode": {
+     "type": "string"
+    },
+    "signedDocumentCode": {
+     "type": "string"
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "certificateDocumentCode": {
+     "type": "string"
+    },
+    "certificateScope": {
+     "type": "string",
+     "enum": [
+      "COMMERCIAL",
+      "FISCAL"
+     ]
+    },
+    "certificateIssuedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "certificateValidUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "certificateInForce": {
+     "type": "boolean"
+    },
+    "certificateRevokedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "certificateRevocationReason": {
+     "type": "string"
+    },
+    "mailForwardingMode": {
+     "type": "string",
+     "enum": [
+      "HOLD",
+      "FORWARD",
+      "SCAN_AND_FORWARD",
+      "SCAN_ONLY"
+     ]
+    },
+    "terminatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "terminationReason": {
+     "type": "string"
+    },
+    "retainDocumentsUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DomiciliationDtos.MailItemView": {
+   "type": "object",
+   "properties": {
+    "itemNumber": {
+     "type": "string"
+    },
+    "contractNumber": {
+     "type": "string"
+    },
+    "mailType": {
+     "type": "string",
+     "enum": [
+      "LETTER",
+      "REGISTERED_LETTER",
+      "PARCEL",
+      "ADMINISTRATIVE",
+      "LEGAL_NOTICE",
+      "OTHER"
+     ]
+    },
+    "senderName": {
+     "type": "string"
+    },
+    "senderReference": {
+     "type": "string"
+    },
+    "receivedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "receivedBy": {
+     "type": "string"
+    },
+    "weightGrams": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "dimensions": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "RECEIVED",
+      "NOTIFIED",
+      "SCANNED",
+      "COLLECTED",
+      "FORWARDED",
+      "RETURNED",
+      "DESTROYED"
+     ]
+    },
+    "scanDocumentCode": {
+     "type": "string"
+    },
+    "notifiedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "collectedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "collectedBy": {
+     "type": "string"
+    },
+    "collectorIdDocument": {
+     "type": "string"
+    },
+    "handedOverBy": {
+     "type": "string"
+    },
+    "forwardedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "forwardingTrackingNumber": {
+     "type": "string"
+    },
+    "forwardingCost": {
+     "type": "number"
+    },
+    "storageDeadline": {
+     "type": "string",
+     "format": "date"
+    },
+    "billable": {
+     "type": "boolean"
+    },
+    "billedAmount": {
+     "type": "number"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "collectedByMember": {
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.MailEventView": {
+   "type": "object",
+   "properties": {
+    "eventType": {
+     "type": "string"
+    },
+    "actor": {
+     "type": "string"
+    },
+    "details": {
+     "type": "string"
+    },
+    "occurredAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DomiciliationDtos.ServiceDefinitionView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "serviceCategory": {
+     "type": "string",
+     "enum": [
+      "DOMICILIATION",
+      "MAIL_HANDLING",
+      "PHONE_ANSWERING",
+      "STORAGE",
+      "MEETING_ROOM",
+      "COWORKING_ACCESS",
+      "PRIVATE_OFFICE",
+      "ADMIN_SUPPORT",
+      "LEGAL_SUPPORT",
+      "ACCOUNTING_SUPPORT",
+      "IT_SUPPORT",
+      "EVENT_SPACE",
+      "PARKING",
+      "LOCKER",
+      "OTHER"
+     ]
+    },
+    "deliveryMode": {
+     "type": "string",
+     "enum": [
+      "CONTINUOUS",
+      "ON_DEMAND",
+      "SCHEDULED",
+      "METERED"
+     ]
+    },
+    "requiresContract": {
+     "type": "boolean"
+    },
+    "requiresKycLevel": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "requiresPhysicalResource": {
+     "type": "boolean"
+    },
+    "hasRegulatoryObligations": {
+     "type": "boolean"
+    },
+    "defaultBillingCycle": {
+     "type": "string",
+     "enum": [
+      "ONE_TIME",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "QUARTERLY",
+      "YEARLY"
+     ]
+    },
+    "defaultNoticePeriodDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "defaultCommitmentMonths": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "usageEntitlementCode": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DomiciliationDtos.ServiceDefinitionRequest": {
+   "required": [
+    "code",
+    "name",
+    "serviceCategory"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "serviceCategory": {
+     "type": "string",
+     "enum": [
+      "DOMICILIATION",
+      "MAIL_HANDLING",
+      "PHONE_ANSWERING",
+      "STORAGE",
+      "MEETING_ROOM",
+      "COWORKING_ACCESS",
+      "PRIVATE_OFFICE",
+      "ADMIN_SUPPORT",
+      "LEGAL_SUPPORT",
+      "ACCOUNTING_SUPPORT",
+      "IT_SUPPORT",
+      "EVENT_SPACE",
+      "PARKING",
+      "LOCKER",
+      "OTHER"
+     ]
+    },
+    "deliveryMode": {
+     "type": "string",
+     "enum": [
+      "CONTINUOUS",
+      "ON_DEMAND",
+      "SCHEDULED",
+      "METERED"
+     ]
+    },
+    "requiresContract": {
+     "type": "boolean"
+    },
+    "requiresKycLevel": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "requiresPhysicalResource": {
+     "type": "boolean"
+    },
+    "hasRegulatoryObligations": {
+     "type": "boolean"
+    },
+    "defaultBillingCycle": {
+     "type": "string",
+     "enum": [
+      "ONE_TIME",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "QUARTERLY",
+      "YEARLY"
+     ]
+    },
+    "defaultNoticePeriodDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "defaultCommitmentMonths": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "usageEntitlementCode": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DomiciliationDtos.AddressView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "countryCode": {
+     "type": "string"
+    },
+    "fiscalCapable": {
+     "type": "boolean"
+    },
+    "maxOccupants": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "occupants": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "notes": {
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.RegisterAddressRequest": {
+   "required": [
+    "address",
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "label": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    },
+    "fiscalCapable": {
+     "type": "boolean"
+    },
+    "maxOccupants": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "notes": {
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.UpdateAddressRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "fiscalCapable": {
+     "type": "boolean"
+    },
+    "maxOccupants": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "notes": {
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.OpenContractRequest": {
+   "required": [
+    "addressCode",
+    "billingCycle",
+    "subscriptionNumber"
+   ],
+   "type": "object",
+   "properties": {
+    "subscriptionNumber": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "legalName": {
+     "type": "string"
+    },
+    "legalForm": {
+     "type": "string"
+    },
+    "registrationNumber": {
+     "type": "string"
+    },
+    "taxNumber": {
+     "type": "string"
+    },
+    "legalRepresentativeName": {
+     "type": "string"
+    },
+    "addressCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "suiteNumber": {
+     "type": "string"
+    },
+    "billingCycle": {
+     "type": "string",
+     "enum": [
+      "ONE_TIME",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "QUARTERLY",
+      "YEARLY"
+     ]
+    },
+    "commitmentMonths": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "noticePeriodDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "mailForwardingMode": {
+     "type": "string",
+     "enum": [
+      "HOLD",
+      "FORWARD",
+      "SCAN_AND_FORWARD",
+      "SCAN_ONLY"
+     ]
+    }
+   }
+  },
+  "DomiciliationDtos.CertificateRequest": {
+   "required": [
+    "scope"
+   ],
+   "type": "object",
+   "properties": {
+    "scope": {
+     "type": "string",
+     "enum": [
+      "COMMERCIAL",
+      "FISCAL"
+     ]
+    }
+   }
+  },
+  "DomiciliationDtos.CommitmentRequest": {
+   "type": "object",
+   "properties": {
+    "billingCycle": {
+     "type": "string",
+     "enum": [
+      "ONE_TIME",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "QUARTERLY",
+      "YEARLY"
+     ]
+    },
+    "commitmentMonths": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "DomiciliationDtos.ReceiveMailRequest": {
+   "required": [
+    "mailType"
+   ],
+   "type": "object",
+   "properties": {
+    "mailType": {
+     "type": "string",
+     "enum": [
+      "LETTER",
+      "REGISTERED_LETTER",
+      "PARCEL",
+      "ADMINISTRATIVE",
+      "LEGAL_NOTICE",
+      "OTHER"
+     ]
+    },
+    "senderName": {
+     "type": "string"
+    },
+    "senderReference": {
+     "type": "string"
+    },
+    "weightGrams": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "dimensions": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.ConfirmRegistrationRequest": {
+   "required": [
+    "administrationReference",
+    "registeredDocumentCode"
+   ],
+   "type": "object",
+   "properties": {
+    "administrationReference": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "registrationDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date"
+    },
+    "receiptDocumentCode": {
+     "type": "string"
+    },
+    "registeredDocumentCode": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.RegistrationView": {
+   "type": "object",
+   "properties": {
+    "registrationNumber": {
+     "type": "string"
+    },
+    "contractNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "SUBMITTED",
+      "REGISTERED",
+      "REJECTED"
+     ]
+    },
+    "submittedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "submittedBy": {
+     "type": "string"
+    },
+    "administrationOffice": {
+     "type": "string"
+    },
+    "administrationReference": {
+     "type": "string"
+    },
+    "registrationDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "stampDutyAmount": {
+     "type": "number"
+    },
+    "registrationFeeAmount": {
+     "type": "number"
+    },
+    "totalDutyAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "paidBy": {
+     "type": "string",
+     "enum": [
+      "COMPANY",
+      "CLIENT"
+     ]
+    },
+    "rebilled": {
+     "type": "boolean"
+    },
+    "receiptDocumentCode": {
+     "type": "string"
+    },
+    "registeredDocumentCode": {
+     "type": "string"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date"
+    },
+    "rejectionReason": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DomiciliationDtos.RejectRegistrationRequest": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.SubmitRegistrationRequest": {
+   "type": "object",
+   "properties": {
+    "administrationOffice": {
+     "type": "string"
+    },
+    "stampDutyAmount": {
+     "type": "number"
+    },
+    "registrationFeeAmount": {
+     "type": "number"
+    },
+    "paidBy": {
+     "type": "string",
+     "enum": [
+      "COMPANY",
+      "CLIENT"
+     ]
+    },
+    "rebilled": {
+     "type": "boolean"
+    }
+   }
+  },
+  "DomiciliationDtos.SignedRequest": {
+   "required": [
+    "signedDocumentCode"
+   ],
+   "type": "object",
+   "properties": {
+    "signedDocumentCode": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.TerminateRequest": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "effectiveDate": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "DomiciliationDtos.CollectRequest": {
+   "type": "object",
+   "properties": {
+    "collectedBy": {
+     "type": "string"
+    },
+    "collectorIdDocument": {
+     "type": "string"
+    },
+    "collectorSignatureUrl": {
+     "type": "string"
+    },
+    "collectorMemberId": {
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.ReasonRequest": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.ForwardRequest": {
+   "type": "object",
+   "properties": {
+    "trackingNumber": {
+     "type": "string"
+    },
+    "transportCost": {
+     "type": "number"
+    }
+   }
+  },
+  "DomiciliationDtos.ScanRequest": {
+   "required": [
+    "scanDocumentCode"
+   ],
+   "type": "object",
+   "properties": {
+    "scanDocumentCode": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "DomiciliationDtos.SubscriptionServiceView": {
+   "type": "object",
+   "properties": {
+    "serviceNumber": {
+     "type": "string"
+    },
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "serviceCode": {
+     "type": "string"
+    },
+    "serviceName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "ACTIVE",
+      "SUSPENDED",
+      "TERMINATED"
+     ]
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "activatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "suspendedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "terminatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "DomiciliationDtos.SubscribeServiceRequest": {
+   "required": [
+    "serviceCode"
+   ],
+   "type": "object",
+   "properties": {
+    "serviceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "metadataJson": {
+     "type": "string"
+    }
+   }
+  },
+  "AddressRequest": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "countryCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  }
+ },
+ "enums": {
+  "DomiciliationContract.Status": [
+   "DRAFT",
+   "PENDING_DOCUMENTS",
+   "PENDING_SIGNATURE",
+   "PENDING_REGISTRATION",
+   "ACTIVE",
+   "SUSPENDED",
+   "TERMINATED",
+   "EXPIRED"
+  ]
+ },
+ "names": {
+  "DomiciliationDtos.ContractView": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ContractView",
+  "DomiciliationDtos.MailItemView": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailItemView",
+  "DomiciliationDtos.MailEventView": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.MailEventView",
+  "DomiciliationDtos.ServiceDefinitionView": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ServiceDefinitionView",
+  "DomiciliationDtos.ServiceDefinitionRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ServiceDefinitionRequest",
+  "DomiciliationDtos.AddressView": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.AddressView",
+  "DomiciliationDtos.RegisterAddressRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RegisterAddressRequest",
+  "DomiciliationDtos.UpdateAddressRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.UpdateAddressRequest",
+  "DomiciliationContract.Status": "com.sni.bokaticowork.features.domiciliation.model.DomiciliationContract.Status",
+  "DomiciliationDtos.OpenContractRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.OpenContractRequest",
+  "DomiciliationDtos.CertificateRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.CertificateRequest",
+  "DomiciliationDtos.CommitmentRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.CommitmentRequest",
+  "DomiciliationDtos.ReceiveMailRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ReceiveMailRequest",
+  "DomiciliationDtos.ConfirmRegistrationRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ConfirmRegistrationRequest",
+  "DomiciliationDtos.RegistrationView": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RegistrationView",
+  "DomiciliationDtos.RejectRegistrationRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.RejectRegistrationRequest",
+  "DomiciliationDtos.SubmitRegistrationRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubmitRegistrationRequest",
+  "DomiciliationDtos.SignedRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SignedRequest",
+  "DomiciliationDtos.TerminateRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.TerminateRequest",
+  "DomiciliationDtos.CollectRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.CollectRequest",
+  "DomiciliationDtos.ReasonRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ReasonRequest",
+  "DomiciliationDtos.ForwardRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ForwardRequest",
+  "DomiciliationDtos.ScanRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.ScanRequest",
+  "DomiciliationDtos.SubscriptionServiceView": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubscriptionServiceView",
+  "DomiciliationDtos.SubscribeServiceRequest": "com.sni.bokaticowork.features.domiciliation.dto.DomiciliationDtos.SubscribeServiceRequest",
+  "AddressRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+ }
+}

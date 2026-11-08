@@ -87,9 +87,10 @@ public class PaymentTransactionWorkflowProcessor {
             return;
         }
         if (event.status() == PaymentTransactionStatus.REFUNDED || event.status() == PaymentTransactionStatus.REVERSED) {
-            // Business logic first
+            // Business logic first · seul un remboursement total annule les factures et ce
+            // qu'elles reglaient. Un remboursement partiel ne fait que prevenir le client.
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
-            if (StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
+            if (event.fullRefund() && StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
                 handleRefundedTransaction(transaction, source);
             }
             // Notification after business logic

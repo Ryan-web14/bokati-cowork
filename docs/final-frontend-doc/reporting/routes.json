@@ -1,0 +1,3444 @@
+{
+ "module": "reporting",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/activity",
+   "package": "features.reporting.controller",
+   "controller": "ActivityReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java",
+   "handler": "activityReport",
+   "declaredIn": "ActivityReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "compareWithPrevious",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/activity/csv",
+   "package": "features.reporting.controller",
+   "controller": "ActivityReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java",
+   "handler": "activityReportCsv",
+   "declaredIn": "ActivityReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "compareWithPrevious",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/activity/pdf",
+   "package": "features.reporting.controller",
+   "controller": "ActivityReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java",
+   "handler": "activityReportPdf",
+   "declaredIn": "ActivityReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "compareWithPrevious",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/activity",
+   "package": "features.reporting.controller",
+   "controller": "ActivityReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java",
+   "handler": "activityReport",
+   "declaredIn": "ActivityReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "compareWithPrevious",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/activity/csv",
+   "package": "features.reporting.controller",
+   "controller": "ActivityReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java",
+   "handler": "activityReportCsv",
+   "declaredIn": "ActivityReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "compareWithPrevious",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/activity/pdf",
+   "package": "features.reporting.controller",
+   "controller": "ActivityReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ActivityReportController.java",
+   "handler": "activityReportPdf",
+   "declaredIn": "ActivityReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "compareWithPrevious",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/debt-recovery",
+   "package": "features.reporting.controller",
+   "controller": "DebtRecoveryReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java",
+   "handler": "debtRecovery",
+   "declaredIn": "DebtRecoveryReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "sortBy",
+     "required": false,
+     "default": "age",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/debt-recovery/csv",
+   "package": "features.reporting.controller",
+   "controller": "DebtRecoveryReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java",
+   "handler": "debtRecoveryCsv",
+   "declaredIn": "DebtRecoveryReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "sortBy",
+     "required": false,
+     "default": "age",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/debt-recovery/pdf",
+   "package": "features.reporting.controller",
+   "controller": "DebtRecoveryReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java",
+   "handler": "debtRecoveryPdf",
+   "declaredIn": "DebtRecoveryReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "sortBy",
+     "required": false,
+     "default": "age",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/debt-recovery",
+   "package": "features.reporting.controller",
+   "controller": "DebtRecoveryReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java",
+   "handler": "debtRecovery",
+   "declaredIn": "DebtRecoveryReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "sortBy",
+     "required": false,
+     "default": "age",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/debt-recovery/csv",
+   "package": "features.reporting.controller",
+   "controller": "DebtRecoveryReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java",
+   "handler": "debtRecoveryCsv",
+   "declaredIn": "DebtRecoveryReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "sortBy",
+     "required": false,
+     "default": "age",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/debt-recovery/pdf",
+   "package": "features.reporting.controller",
+   "controller": "DebtRecoveryReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/DebtRecoveryReportController.java",
+   "handler": "debtRecoveryPdf",
+   "declaredIn": "DebtRecoveryReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "sortBy",
+     "required": false,
+     "default": "age",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/aging",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "aging",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/cash-flow",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "cashFlow",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.CashFlowReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/cash-registers",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "cashRegisters",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.CashRegisterReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/dashboard",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "dashboard",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/dashboard/pdf",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "dashboardPdf",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/finance/aging",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "aging",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/finance/cash-flow",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "cashFlow",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.CashFlowReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/finance/cash-registers",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "cashRegisters",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.CashRegisterReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/finance/dashboard",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "dashboard",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/finance/dashboard/pdf",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "dashboardPdf",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/finance/payments",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "payments",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/payments",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "payments",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/finance/aging",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "aging",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/finance/cash-flow",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "cashFlow",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.CashFlowReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/finance/cash-registers",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "cashRegisters",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.CashRegisterReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/finance/dashboard",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "dashboard",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/finance/dashboard/pdf",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "dashboardPdf",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/finance/payments",
+   "package": "features.reporting.controller",
+   "controller": "FinancialReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/FinancialReportController.java",
+   "handler": "payments",
+   "declaredIn": "FinancialReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/member-profile/{memberId}",
+   "package": "features.reporting.controller",
+   "controller": "MemberProfileReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/MemberProfileReportController.java",
+   "handler": "memberProfile",
+   "declaredIn": "MemberProfileReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/member-profile/{memberId}/pdf",
+   "package": "features.reporting.controller",
+   "controller": "MemberProfileReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/MemberProfileReportController.java",
+   "handler": "memberProfilePdf",
+   "declaredIn": "MemberProfileReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/member-profile/{memberId}",
+   "package": "features.reporting.controller",
+   "controller": "MemberProfileReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/MemberProfileReportController.java",
+   "handler": "memberProfile",
+   "declaredIn": "MemberProfileReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/member-profile/{memberId}/pdf",
+   "package": "features.reporting.controller",
+   "controller": "MemberProfileReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/MemberProfileReportController.java",
+   "handler": "memberProfilePdf",
+   "declaredIn": "MemberProfileReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/occupancy",
+   "package": "features.reporting.controller",
+   "controller": "OccupancyReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/OccupancyReportController.java",
+   "handler": "occupancy",
+   "declaredIn": "OccupancyReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.OccupancyReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/occupancy/pdf",
+   "package": "features.reporting.controller",
+   "controller": "OccupancyReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/OccupancyReportController.java",
+   "handler": "occupancyPdf",
+   "declaredIn": "OccupancyReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/occupancy",
+   "package": "features.reporting.controller",
+   "controller": "OccupancyReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/OccupancyReportController.java",
+   "handler": "occupancy",
+   "declaredIn": "OccupancyReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.OccupancyReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/occupancy/pdf",
+   "package": "features.reporting.controller",
+   "controller": "OccupancyReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/OccupancyReportController.java",
+   "handler": "occupancyPdf",
+   "declaredIn": "OccupancyReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/resource-utilization",
+   "package": "features.reporting.controller",
+   "controller": "ResourceUtilizationReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ResourceUtilizationReportController.java",
+   "handler": "resourceUtilization",
+   "declaredIn": "ResourceUtilizationReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/resource-utilization/pdf",
+   "package": "features.reporting.controller",
+   "controller": "ResourceUtilizationReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ResourceUtilizationReportController.java",
+   "handler": "resourceUtilizationPdf",
+   "declaredIn": "ResourceUtilizationReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/resource-utilization",
+   "package": "features.reporting.controller",
+   "controller": "ResourceUtilizationReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ResourceUtilizationReportController.java",
+   "handler": "resourceUtilization",
+   "declaredIn": "ResourceUtilizationReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/resource-utilization/pdf",
+   "package": "features.reporting.controller",
+   "controller": "ResourceUtilizationReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/ResourceUtilizationReportController.java",
+   "handler": "resourceUtilizationPdf",
+   "declaredIn": "ResourceUtilizationReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/stock-valuation",
+   "package": "features.reporting.controller",
+   "controller": "StockValuationReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/StockValuationReportController.java",
+   "handler": "stockValuation",
+   "declaredIn": "StockValuationReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "inactiveDays",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/stock-valuation/pdf",
+   "package": "features.reporting.controller",
+   "controller": "StockValuationReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/StockValuationReportController.java",
+   "handler": "stockValuationPdf",
+   "declaredIn": "StockValuationReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "inactiveDays",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/stock-valuation",
+   "package": "features.reporting.controller",
+   "controller": "StockValuationReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/StockValuationReportController.java",
+   "handler": "stockValuation",
+   "declaredIn": "StockValuationReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "inactiveDays",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/stock-valuation/pdf",
+   "package": "features.reporting.controller",
+   "controller": "StockValuationReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/StockValuationReportController.java",
+   "handler": "stockValuationPdf",
+   "declaredIn": "StockValuationReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "inactiveDays",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/subscriptions",
+   "package": "features.reporting.controller",
+   "controller": "SubscriptionReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/SubscriptionReportController.java",
+   "handler": "subscriptionReport",
+   "declaredIn": "SubscriptionReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "months",
+     "required": false,
+     "default": "12",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "renewalDays",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reporting/subscriptions/pdf",
+   "package": "features.reporting.controller",
+   "controller": "SubscriptionReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/SubscriptionReportController.java",
+   "handler": "subscriptionReportPdf",
+   "declaredIn": "SubscriptionReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "months",
+     "required": false,
+     "default": "12",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "renewalDays",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/subscriptions",
+   "package": "features.reporting.controller",
+   "controller": "SubscriptionReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/SubscriptionReportController.java",
+   "handler": "subscriptionReport",
+   "declaredIn": "SubscriptionReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "months",
+     "required": false,
+     "default": "12",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "renewalDays",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/subscriptions/pdf",
+   "package": "features.reporting.controller",
+   "controller": "SubscriptionReportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/reporting/controller/SubscriptionReportController.java",
+   "handler": "subscriptionReportPdf",
+   "declaredIn": "SubscriptionReportController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:EXPORT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "months",
+     "required": false,
+     "default": "12",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "renewalDays",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  }
+ ],
+ "schemas": {
+  "ActivityReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "bookings": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.BookingSection"
+    },
+    "invoices": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.InvoiceSection"
+    },
+    "payments": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.PaymentSection"
+    },
+    "subscriptions": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.SubscriptionSection"
+    },
+    "stock": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.StockSection"
+    },
+    "contracts": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.ContractSection"
+    },
+    "members": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.MemberSection"
+    },
+    "support": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.SupportSection"
+    }
+   }
+  },
+  "DebtRecoveryReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "totalOutstanding": {
+     "type": "number"
+    },
+    "totalInvoices": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "aging": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.AgingSummary"
+    },
+    "unpaidInvoices": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.UnpaidInvoice"
+     }
+    }
+   }
+  },
+  "reporting.dto.response.BillingAgingReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "totalOutstanding": {
+     "type": "number"
+    },
+    "totalInvoices": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "current": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse.AgingBucket"
+    },
+    "days1to30": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse.AgingBucket"
+    },
+    "days31to60": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse.AgingBucket"
+    },
+    "days61to90": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse.AgingBucket"
+    },
+    "over90": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse.AgingBucket"
+    }
+   }
+  },
+  "CashFlowReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalInflows": {
+     "type": "number"
+    },
+    "totalOutflows": {
+     "type": "number"
+    },
+    "netCashFlow": {
+     "type": "number"
+    },
+    "byMovementType": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.CashFlowReportResponse.CashFlowByType"
+     }
+    },
+    "dailySeries": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.CashFlowReportResponse.DailyCashFlowEntry"
+     }
+    }
+   }
+  },
+  "CashRegisterReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalCashIn": {
+     "type": "number"
+    },
+    "totalCashOut": {
+     "type": "number"
+    },
+    "netFlow": {
+     "type": "number"
+    },
+    "registers": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.CashRegisterReportResponse.RegisterSummary"
+     }
+    }
+   }
+  },
+  "FinancialDashboardResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "invoiceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalInvoiced": {
+     "type": "number"
+    },
+    "totalPaid": {
+     "type": "number"
+    },
+    "totalOutstanding": {
+     "type": "number"
+    },
+    "overdueCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "overdueAmount": {
+     "type": "number"
+    },
+    "collectionRate": {
+     "type": "number"
+    },
+    "totalVat": {
+     "type": "number"
+    },
+    "totalAdditionalCent": {
+     "type": "number"
+    },
+    "totalDiscounts": {
+     "type": "number"
+    },
+    "cancelledInvoiceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "revenueBySource": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse.RevenueBySource"
+     }
+    },
+    "payments": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse.PaymentSummary"
+    }
+   }
+  },
+  "PaymentSourceReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalReceived": {
+     "type": "number"
+    },
+    "totalTransactions": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "byMethod": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse.MethodBreakdown"
+     }
+    },
+    "dailySeries": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse.DailyPaymentEntry"
+     }
+    }
+   }
+  },
+  "MemberProfileReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "member": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.MemberInfo"
+    },
+    "subscriptions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.SubscriptionSummary"
+     }
+    },
+    "bookings": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.BookingSummary"
+     }
+    },
+    "invoices": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.InvoiceSummary"
+     }
+    },
+    "payments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.PaymentSummary"
+     }
+    },
+    "wallet": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.WalletInfo"
+    },
+    "contracts": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.ContractSummary"
+     }
+    },
+    "tickets": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.TicketSummary"
+     }
+    }
+   }
+  },
+  "OccupancyReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "periodDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalBookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "overallOccupancyRate": {
+     "type": "number"
+    },
+    "byResourceType": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.OccupancyReportResponse.ResourceTypeOccupancy"
+     }
+    },
+    "byResource": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.OccupancyReportResponse.ResourceOccupancy"
+     }
+    }
+   }
+  },
+  "ResourceUtilizationReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "periodDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "overallOccupancyRate": {
+     "type": "number"
+    },
+    "resources": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse.ResourceUtilization"
+     }
+    },
+    "hourlyHeatmap": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse.HourlyHeatmap"
+     }
+    },
+    "underutilized": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse.UnderutilizedResource"
+     }
+    }
+   }
+  },
+  "StockValuationReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "totalValue": {
+     "type": "number"
+    },
+    "totalItems": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalLocations": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "byCategory": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse.CategoryValuation"
+     }
+    },
+    "byLocation": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse.LocationValuation"
+     }
+    },
+    "lowStockItems": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse.LowStockItem"
+     }
+    },
+    "deadStockItems": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse.DeadStockItem"
+     }
+    }
+   }
+  },
+  "SubscriptionReportResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "totalActive": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "currentMrr": {
+     "type": "number"
+    },
+    "mrrTrend": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.MrrDataPoint"
+     }
+    },
+    "activeByPlan": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.PlanDistribution"
+     }
+    },
+    "churnTrend": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.ChurnDataPoint"
+     }
+    },
+    "upcomingRenewals": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.UpcomingRenewal"
+     }
+    },
+    "revenueByPlan": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.PlanRevenue"
+     }
+    }
+   }
+  },
+  "ActivityReportResponse.BookingSection": {
+   "type": "object",
+   "properties": {
+    "totalCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "confirmedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalRevenue": {
+     "type": "number"
+    },
+    "totalBookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "variation": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation"
+    }
+   }
+  },
+  "ActivityReportResponse.InvoiceSection": {
+   "type": "object",
+   "properties": {
+    "totalCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalInvoiced": {
+     "type": "number"
+    },
+    "totalPaid": {
+     "type": "number"
+    },
+    "totalOutstanding": {
+     "type": "number"
+    },
+    "overdueCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "variation": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation"
+    }
+   }
+  },
+  "ActivityReportResponse.PaymentSection": {
+   "type": "object",
+   "properties": {
+    "transactionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalReceived": {
+     "type": "number"
+    },
+    "cashAmount": {
+     "type": "number"
+    },
+    "walletAmount": {
+     "type": "number"
+    },
+    "mobileMoneyAmount": {
+     "type": "number"
+    },
+    "bankTransferAmount": {
+     "type": "number"
+    },
+    "cardAmount": {
+     "type": "number"
+    },
+    "variation": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation"
+    }
+   }
+  },
+  "ActivityReportResponse.SubscriptionSection": {
+   "type": "object",
+   "properties": {
+    "activeCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "newCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "renewedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "variation": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation"
+    }
+   }
+  },
+  "ActivityReportResponse.StockSection": {
+   "type": "object",
+   "properties": {
+    "inboundMovements": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "outboundMovements": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "inboundValue": {
+     "type": "number"
+    },
+    "outboundValue": {
+     "type": "number"
+    },
+    "variation": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation"
+    }
+   }
+  },
+  "ActivityReportResponse.ContractSection": {
+   "type": "object",
+   "properties": {
+    "signedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "expiredCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activeCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "variation": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation"
+    }
+   }
+  },
+  "ActivityReportResponse.MemberSection": {
+   "type": "object",
+   "properties": {
+    "totalActive": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "newCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "variation": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation"
+    }
+   }
+  },
+  "ActivityReportResponse.SupportSection": {
+   "type": "object",
+   "properties": {
+    "openedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resolvedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "closedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "highPriorityCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "variation": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation"
+    }
+   }
+  },
+  "DebtRecoveryReportResponse.AgingSummary": {
+   "type": "object",
+   "properties": {
+    "current": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.AgingBucket"
+    },
+    "days1to30": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.AgingBucket"
+    },
+    "days31to60": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.AgingBucket"
+    },
+    "days61to90": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.AgingBucket"
+    },
+    "days90plus": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.AgingBucket"
+    }
+   }
+  },
+  "DebtRecoveryReportResponse.UnpaidInvoice": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerEmail": {
+     "type": "string"
+    },
+    "customerPhone": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "dueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "paidAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "agingDays": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "agingBucket": {
+     "type": "string"
+    }
+   }
+  },
+  "reporting.dto.response.BillingAgingReportResponse.AgingBucket": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "percentage": {
+     "type": "number"
+    }
+   }
+  },
+  "CashFlowReportResponse.CashFlowByType": {
+   "type": "object",
+   "properties": {
+    "movementType": {
+     "type": "string"
+    },
+    "direction": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "CashFlowReportResponse.DailyCashFlowEntry": {
+   "type": "object",
+   "properties": {
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "inflows": {
+     "type": "number"
+    },
+    "outflows": {
+     "type": "number"
+    },
+    "net": {
+     "type": "number"
+    }
+   }
+  },
+  "CashRegisterReportResponse.RegisterSummary": {
+   "type": "object",
+   "properties": {
+    "registerCode": {
+     "type": "string"
+    },
+    "registerName": {
+     "type": "string"
+    },
+    "sessionsCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "openingAmount": {
+     "type": "number"
+    },
+    "cashIn": {
+     "type": "number"
+    },
+    "cashOut": {
+     "type": "number"
+    },
+    "netFlow": {
+     "type": "number"
+    },
+    "totalVariance": {
+     "type": "number"
+    },
+    "movementsCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "FinancialDashboardResponse.RevenueBySource": {
+   "type": "object",
+   "properties": {
+    "sourceType": {
+     "type": "string"
+    },
+    "invoiceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalInvoiced": {
+     "type": "number"
+    },
+    "totalPaid": {
+     "type": "number"
+    },
+    "outstandingAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "FinancialDashboardResponse.PaymentSummary": {
+   "type": "object",
+   "properties": {
+    "transactionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalReceived": {
+     "type": "number"
+    },
+    "cashAmount": {
+     "type": "number"
+    },
+    "walletAmount": {
+     "type": "number"
+    },
+    "mobileMoneyAmount": {
+     "type": "number"
+    },
+    "bankTransferAmount": {
+     "type": "number"
+    },
+    "cardAmount": {
+     "type": "number"
+    },
+    "chequeAmount": {
+     "type": "number"
+    },
+    "failedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pendingCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "PaymentSourceReportResponse.MethodBreakdown": {
+   "type": "object",
+   "properties": {
+    "method": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "percentage": {
+     "type": "number"
+    }
+   }
+  },
+  "PaymentSourceReportResponse.DailyPaymentEntry": {
+   "type": "object",
+   "properties": {
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "cash": {
+     "type": "number"
+    },
+    "wallet": {
+     "type": "number"
+    },
+    "mobileMoney": {
+     "type": "number"
+    },
+    "bankTransfer": {
+     "type": "number"
+    },
+    "card": {
+     "type": "number"
+    },
+    "cheque": {
+     "type": "number"
+    },
+    "total": {
+     "type": "number"
+    }
+   }
+  },
+  "MemberProfileReportResponse.MemberInfo": {
+   "type": "object",
+   "properties": {
+    "memberCode": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "jobTitle": {
+     "type": "string"
+    },
+    "companyRole": {
+     "type": "string"
+    },
+    "birthDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "city": {
+     "type": "string"
+    },
+    "country": {
+     "type": "string"
+    },
+    "photoUrl": {
+     "type": "string"
+    },
+    "portalAccess": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "MemberProfileReportResponse.SubscriptionSummary": {
+   "type": "object",
+   "properties": {
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "planName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "billingCycle": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "currentPeriodEnd": {
+     "type": "string",
+     "format": "date"
+    },
+    "autoRenew": {
+     "type": "boolean"
+    }
+   }
+  },
+  "MemberProfileReportResponse.BookingSummary": {
+   "type": "object",
+   "properties": {
+    "bookingNumber": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "durationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    }
+   }
+  },
+  "MemberProfileReportResponse.InvoiceSummary": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "paidAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "issueDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "dueDate": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "MemberProfileReportResponse.PaymentSummary": {
+   "type": "object",
+   "properties": {
+    "transactionNumber": {
+     "type": "string"
+    },
+    "paymentMethod": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "paidAt": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "MemberProfileReportResponse.WalletInfo": {
+   "type": "object",
+   "properties": {
+    "walletNumber": {
+     "type": "string"
+    },
+    "availableBalance": {
+     "type": "number"
+    },
+    "ledgerBalance": {
+     "type": "number"
+    },
+    "heldBalance": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    }
+   }
+  },
+  "MemberProfileReportResponse.ContractSummary": {
+   "type": "object",
+   "properties": {
+    "contractCode": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "startDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "renewalType": {
+     "type": "string"
+    },
+    "signedAt": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "MemberProfileReportResponse.TicketSummary": {
+   "type": "object",
+   "properties": {
+    "ticketNumber": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "priority": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date"
+    },
+    "resolvedAt": {
+     "type": "string",
+     "format": "date"
+    }
+   }
+  },
+  "OccupancyReportResponse.ResourceTypeOccupancy": {
+   "type": "object",
+   "properties": {
+    "typeCode": {
+     "type": "string"
+    },
+    "typeName": {
+     "type": "string"
+    },
+    "resourceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalBookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalRevenue": {
+     "type": "number"
+    },
+    "occupancyRate": {
+     "type": "number"
+    }
+   }
+  },
+  "OccupancyReportResponse.ResourceOccupancy": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "typeCode": {
+     "type": "string"
+    },
+    "typeName": {
+     "type": "string"
+    },
+    "bookingCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "availableMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "occupancyRate": {
+     "type": "number"
+    },
+    "revenue": {
+     "type": "number"
+    }
+   }
+  },
+  "ResourceUtilizationReportResponse.ResourceUtilization": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "resourceType": {
+     "type": "string"
+    },
+    "totalBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "morningBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "afternoonBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "eveningBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "availableMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "occupancyRate": {
+     "type": "number"
+    },
+    "totalRevenue": {
+     "type": "number"
+    },
+    "revenuePerHour": {
+     "type": "number"
+    }
+   }
+  },
+  "ResourceUtilizationReportResponse.HourlyHeatmap": {
+   "type": "object",
+   "properties": {
+    "hour": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "bookingCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "percentage": {
+     "type": "number"
+    }
+   }
+  },
+  "ResourceUtilizationReportResponse.UnderutilizedResource": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "resourceType": {
+     "type": "string"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "occupancyRate": {
+     "type": "number"
+    },
+    "totalRevenue": {
+     "type": "number"
+    }
+   }
+  },
+  "StockValuationReportResponse.CategoryValuation": {
+   "type": "object",
+   "properties": {
+    "categoryCode": {
+     "type": "string"
+    },
+    "categoryName": {
+     "type": "string"
+    },
+    "itemCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalQuantity": {
+     "type": "number"
+    },
+    "totalValue": {
+     "type": "number"
+    },
+    "percentage": {
+     "type": "number"
+    }
+   }
+  },
+  "StockValuationReportResponse.LocationValuation": {
+   "type": "object",
+   "properties": {
+    "locationCode": {
+     "type": "string"
+    },
+    "locationName": {
+     "type": "string"
+    },
+    "locationType": {
+     "type": "string"
+    },
+    "itemCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalQuantity": {
+     "type": "number"
+    },
+    "totalValue": {
+     "type": "number"
+    },
+    "percentage": {
+     "type": "number"
+    }
+   }
+  },
+  "StockValuationReportResponse.LowStockItem": {
+   "type": "object",
+   "properties": {
+    "itemCode": {
+     "type": "string"
+    },
+    "itemName": {
+     "type": "string"
+    },
+    "categoryName": {
+     "type": "string"
+    },
+    "quantityAvailable": {
+     "type": "number"
+    },
+    "reorderPoint": {
+     "type": "number"
+    },
+    "reorderQuantity": {
+     "type": "number"
+    }
+   }
+  },
+  "StockValuationReportResponse.DeadStockItem": {
+   "type": "object",
+   "properties": {
+    "itemCode": {
+     "type": "string"
+    },
+    "itemName": {
+     "type": "string"
+    },
+    "categoryName": {
+     "type": "string"
+    },
+    "locationName": {
+     "type": "string"
+    },
+    "quantityOnHand": {
+     "type": "number"
+    },
+    "stockValue": {
+     "type": "number"
+    },
+    "lastMovementDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "daysSinceLastMovement": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "SubscriptionReportResponse.MrrDataPoint": {
+   "type": "object",
+   "properties": {
+    "month": {
+     "type": "string",
+     "format": "date"
+    },
+    "mrr": {
+     "type": "number"
+    },
+    "activeCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "SubscriptionReportResponse.PlanDistribution": {
+   "type": "object",
+   "properties": {
+    "planName": {
+     "type": "string"
+    },
+    "subscriptionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "percentage": {
+     "type": "number"
+    }
+   }
+  },
+  "SubscriptionReportResponse.ChurnDataPoint": {
+   "type": "object",
+   "properties": {
+    "month": {
+     "type": "string",
+     "format": "date"
+    },
+    "cancelledCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "churnRate": {
+     "type": "number"
+    }
+   }
+  },
+  "SubscriptionReportResponse.UpcomingRenewal": {
+   "type": "object",
+   "properties": {
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "subscriberCode": {
+     "type": "string"
+    },
+    "subscriberType": {
+     "type": "string"
+    },
+    "planName": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "currentPeriodEnd": {
+     "type": "string",
+     "format": "date"
+    },
+    "daysUntilRenewal": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "SubscriptionReportResponse.PlanRevenue": {
+   "type": "object",
+   "properties": {
+    "planName": {
+     "type": "string"
+    },
+    "subscriptionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalRevenue": {
+     "type": "number"
+    },
+    "percentage": {
+     "type": "number"
+    }
+   }
+  },
+  "ActivityReportResponse.Variation": {
+   "type": "object",
+   "properties": {
+    "previousValue": {
+     "type": "number"
+    },
+    "currentValue": {
+     "type": "number"
+    },
+    "changePercent": {
+     "type": "number"
+    }
+   }
+  },
+  "DebtRecoveryReportResponse.AgingBucket": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "invoiceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "averageAmount": {
+     "type": "number"
+    },
+    "percentage": {
+     "type": "number"
+    }
+   }
+  }
+ },
+ "enums": {},
+ "names": {
+  "ActivityReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse",
+  "DebtRecoveryReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse",
+  "reporting.dto.response.BillingAgingReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse",
+  "CashFlowReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.CashFlowReportResponse",
+  "CashRegisterReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.CashRegisterReportResponse",
+  "FinancialDashboardResponse": "com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse",
+  "PaymentSourceReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse",
+  "MemberProfileReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse",
+  "OccupancyReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.OccupancyReportResponse",
+  "ResourceUtilizationReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse",
+  "StockValuationReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse",
+  "SubscriptionReportResponse": "com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse",
+  "ActivityReportResponse.BookingSection": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.BookingSection",
+  "ActivityReportResponse.InvoiceSection": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.InvoiceSection",
+  "ActivityReportResponse.PaymentSection": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.PaymentSection",
+  "ActivityReportResponse.SubscriptionSection": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.SubscriptionSection",
+  "ActivityReportResponse.StockSection": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.StockSection",
+  "ActivityReportResponse.ContractSection": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.ContractSection",
+  "ActivityReportResponse.MemberSection": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.MemberSection",
+  "ActivityReportResponse.SupportSection": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.SupportSection",
+  "DebtRecoveryReportResponse.AgingSummary": "com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.AgingSummary",
+  "DebtRecoveryReportResponse.UnpaidInvoice": "com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.UnpaidInvoice",
+  "reporting.dto.response.BillingAgingReportResponse.AgingBucket": "com.sni.bokaticowork.features.reporting.dto.response.BillingAgingReportResponse.AgingBucket",
+  "CashFlowReportResponse.CashFlowByType": "com.sni.bokaticowork.features.reporting.dto.response.CashFlowReportResponse.CashFlowByType",
+  "CashFlowReportResponse.DailyCashFlowEntry": "com.sni.bokaticowork.features.reporting.dto.response.CashFlowReportResponse.DailyCashFlowEntry",
+  "CashRegisterReportResponse.RegisterSummary": "com.sni.bokaticowork.features.reporting.dto.response.CashRegisterReportResponse.RegisterSummary",
+  "FinancialDashboardResponse.RevenueBySource": "com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse.RevenueBySource",
+  "FinancialDashboardResponse.PaymentSummary": "com.sni.bokaticowork.features.reporting.dto.response.FinancialDashboardResponse.PaymentSummary",
+  "PaymentSourceReportResponse.MethodBreakdown": "com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse.MethodBreakdown",
+  "PaymentSourceReportResponse.DailyPaymentEntry": "com.sni.bokaticowork.features.reporting.dto.response.PaymentSourceReportResponse.DailyPaymentEntry",
+  "MemberProfileReportResponse.MemberInfo": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.MemberInfo",
+  "MemberProfileReportResponse.SubscriptionSummary": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.SubscriptionSummary",
+  "MemberProfileReportResponse.BookingSummary": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.BookingSummary",
+  "MemberProfileReportResponse.InvoiceSummary": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.InvoiceSummary",
+  "MemberProfileReportResponse.PaymentSummary": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.PaymentSummary",
+  "MemberProfileReportResponse.WalletInfo": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.WalletInfo",
+  "MemberProfileReportResponse.ContractSummary": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.ContractSummary",
+  "MemberProfileReportResponse.TicketSummary": "com.sni.bokaticowork.features.reporting.dto.response.MemberProfileReportResponse.TicketSummary",
+  "OccupancyReportResponse.ResourceTypeOccupancy": "com.sni.bokaticowork.features.reporting.dto.response.OccupancyReportResponse.ResourceTypeOccupancy",
+  "OccupancyReportResponse.ResourceOccupancy": "com.sni.bokaticowork.features.reporting.dto.response.OccupancyReportResponse.ResourceOccupancy",
+  "ResourceUtilizationReportResponse.ResourceUtilization": "com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse.ResourceUtilization",
+  "ResourceUtilizationReportResponse.HourlyHeatmap": "com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse.HourlyHeatmap",
+  "ResourceUtilizationReportResponse.UnderutilizedResource": "com.sni.bokaticowork.features.reporting.dto.response.ResourceUtilizationReportResponse.UnderutilizedResource",
+  "StockValuationReportResponse.CategoryValuation": "com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse.CategoryValuation",
+  "StockValuationReportResponse.LocationValuation": "com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse.LocationValuation",
+  "StockValuationReportResponse.LowStockItem": "com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse.LowStockItem",
+  "StockValuationReportResponse.DeadStockItem": "com.sni.bokaticowork.features.reporting.dto.response.StockValuationReportResponse.DeadStockItem",
+  "SubscriptionReportResponse.MrrDataPoint": "com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.MrrDataPoint",
+  "SubscriptionReportResponse.PlanDistribution": "com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.PlanDistribution",
+  "SubscriptionReportResponse.ChurnDataPoint": "com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.ChurnDataPoint",
+  "SubscriptionReportResponse.UpcomingRenewal": "com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.UpcomingRenewal",
+  "SubscriptionReportResponse.PlanRevenue": "com.sni.bokaticowork.features.reporting.dto.response.SubscriptionReportResponse.PlanRevenue",
+  "ActivityReportResponse.Variation": "com.sni.bokaticowork.features.reporting.dto.response.ActivityReportResponse.Variation",
+  "DebtRecoveryReportResponse.AgingBucket": "com.sni.bokaticowork.features.reporting.dto.response.DebtRecoveryReportResponse.AgingBucket"
+ }
+}

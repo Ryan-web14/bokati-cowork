@@ -1,0 +1,731 @@
+{
+ "module": "analytics",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/analytics/comparison",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "comparison",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "compareWithPrevious",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/analytics/live",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "live",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.analytics.dto.AnalyticsLiveResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/analytics/overview",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "overview",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/analytics/top-owners",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "topOwners",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "10",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.analytics.dto.TopOwnerResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/analytics/top-resources",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "topResources",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "10",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.analytics.dto.TopResourceResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/analytics/trends/bookings",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "bookingTrend",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "groupBy",
+     "required": false,
+     "default": "day",
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.analytics.dto.BookingTrendResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/attendance/summary",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "attendance",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.BookingMetrics>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/reports/financial/summary",
+   "package": "features.analytics.controller",
+   "controller": "AnalyticsController",
+   "source": "src/main/java/com/sni/bokaticowork/features/analytics/controller/AnalyticsController.java",
+   "handler": "financial",
+   "declaredIn": "AnalyticsController",
+   "access": {
+    "kind": "admin",
+    "permission": "REPORT:VIEW"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "fromDate",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "toDate",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.FinancialMetrics>"
+  }
+ ],
+ "schemas": {
+  "AnalyticsComparisonResponse": {
+   "type": "object",
+   "properties": {
+    "current": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse"
+    },
+    "previous": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse"
+    },
+    "revenue": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse.Variation"
+    },
+    "paid": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse.Variation"
+    },
+    "bookings": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse.Variation"
+    },
+    "activeSubscriptions": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse.Variation"
+    }
+   }
+  },
+  "AnalyticsLiveResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "activeBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "checkedInBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "occupiedResources": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalBookableResources": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "occupancyRate": {
+     "type": "number"
+    },
+    "availableResources": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pendingApproval": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "upcomingNextHour": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activeHolds": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "bookingsToday": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "revenueToday": {
+     "type": "number"
+    },
+    "avgBookingAmount": {
+     "type": "number"
+    },
+    "bookedMinutesToday": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledToday": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "noShowToday": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "checkInsToday": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "newMembersToday": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "AnalyticsOverviewResponse": {
+   "type": "object",
+   "properties": {
+    "generatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "fromDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "toDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "financial": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.FinancialMetrics"
+    },
+    "payment": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.PaymentMetrics"
+    },
+    "wallet": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.WalletMetrics"
+    },
+    "booking": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.BookingMetrics"
+    },
+    "subscription": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.SubscriptionMetrics"
+    },
+    "customer": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.CustomerMetrics"
+    },
+    "inventory": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.InventoryMetrics"
+    }
+   }
+  },
+  "TopOwnerResponse": {
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "ownerName": {
+     "type": "string"
+    },
+    "bookingCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "confirmedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "revenue": {
+     "type": "number"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "TopResourceResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "resourceTypeCode": {
+     "type": "string"
+    },
+    "resourceTypeName": {
+     "type": "string"
+    },
+    "resourceGroupCode": {
+     "type": "string"
+    },
+    "resourceGroupName": {
+     "type": "string"
+    },
+    "bookingCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "confirmedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "revenue": {
+     "type": "number"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "BookingTrendResponse": {
+   "type": "object",
+   "properties": {
+    "date": {
+     "type": "string",
+     "format": "date"
+    },
+    "bookingCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "confirmedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "revenue": {
+     "type": "number"
+    }
+   }
+  },
+  "AnalyticsOverviewResponse.BookingMetrics": {
+   "type": "object",
+   "properties": {
+    "bookingCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "confirmedBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completedBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "noShowBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "bookingRevenue": {
+     "type": "number"
+    },
+    "bookedMinutes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "participantCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "AnalyticsOverviewResponse.FinancialMetrics": {
+   "type": "object",
+   "properties": {
+    "invoiceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "invoicedAmount": {
+     "type": "number"
+    },
+    "paidAmount": {
+     "type": "number"
+    },
+    "outstandingAmount": {
+     "type": "number"
+    },
+    "overdueInvoiceCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "quotationCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "quotedAmount": {
+     "type": "number"
+    },
+    "vatAmount": {
+     "type": "number"
+    },
+    "additionalCentAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "AnalyticsComparisonResponse.Variation": {
+   "type": "object",
+   "properties": {
+    "current": {
+     "type": "number"
+    },
+    "previous": {
+     "type": "number"
+    },
+    "percentChange": {
+     "type": "number"
+    }
+   }
+  },
+  "AnalyticsOverviewResponse.PaymentMetrics": {
+   "type": "object",
+   "properties": {
+    "transactionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "succeededAmount": {
+     "type": "number"
+    },
+    "cashAmount": {
+     "type": "number"
+    },
+    "walletAmount": {
+     "type": "number"
+    },
+    "mobileMoneyAmount": {
+     "type": "number"
+    },
+    "bankTransferAmount": {
+     "type": "number"
+    },
+    "cardAmount": {
+     "type": "number"
+    },
+    "failedTransactionCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pendingTransactionCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "AnalyticsOverviewResponse.WalletMetrics": {
+   "type": "object",
+   "properties": {
+    "walletCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "availableBalance": {
+     "type": "number"
+    },
+    "heldBalance": {
+     "type": "number"
+    },
+    "credits": {
+     "type": "number"
+    },
+    "debits": {
+     "type": "number"
+    }
+   }
+  },
+  "AnalyticsOverviewResponse.SubscriptionMetrics": {
+   "type": "object",
+   "properties": {
+    "activeSubscriptions": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pendingSubscriptions": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "suspendedSubscriptions": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activePasses": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "monthlyRecurringRevenue": {
+     "type": "number"
+    },
+    "billableUsageQuantity": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "AnalyticsOverviewResponse.CustomerMetrics": {
+   "type": "object",
+   "properties": {
+    "customerCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "memberCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activeMembers": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "guestBookingCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "AnalyticsOverviewResponse.InventoryMetrics": {
+   "type": "object",
+   "properties": {
+    "itemCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "stockValue": {
+     "type": "number"
+    },
+    "lowStockAlerts": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "openPurchaseOrders": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  }
+ },
+ "enums": {},
+ "names": {
+  "AnalyticsComparisonResponse": "com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse",
+  "AnalyticsLiveResponse": "com.sni.bokaticowork.features.analytics.dto.AnalyticsLiveResponse",
+  "AnalyticsOverviewResponse": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse",
+  "TopOwnerResponse": "com.sni.bokaticowork.features.analytics.dto.TopOwnerResponse",
+  "TopResourceResponse": "com.sni.bokaticowork.features.analytics.dto.TopResourceResponse",
+  "BookingTrendResponse": "com.sni.bokaticowork.features.analytics.dto.BookingTrendResponse",
+  "AnalyticsOverviewResponse.BookingMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.BookingMetrics",
+  "AnalyticsOverviewResponse.FinancialMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.FinancialMetrics",
+  "AnalyticsComparisonResponse.Variation": "com.sni.bokaticowork.features.analytics.dto.AnalyticsComparisonResponse.Variation",
+  "AnalyticsOverviewResponse.PaymentMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.PaymentMetrics",
+  "AnalyticsOverviewResponse.WalletMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.WalletMetrics",
+  "AnalyticsOverviewResponse.SubscriptionMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.SubscriptionMetrics",
+  "AnalyticsOverviewResponse.CustomerMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.CustomerMetrics",
+  "AnalyticsOverviewResponse.InventoryMetrics": "com.sni.bokaticowork.features.analytics.dto.AnalyticsOverviewResponse.InventoryMetrics"
+ }
+}

@@ -128,7 +128,7 @@ class SubscriptionQuoteServiceTest {
 
         assertThrows(ConflictException.class, () -> service.accept("QTE-2026-00001", "MBR-1"));
         assertEquals(SubscriptionQuote.Status.EXPIRED, quote.getStatus());
-        verify(creationOperator, never()).create(any());
+        verify(creationOperator, never()).create(any(), any());
     }
 
     @Test
@@ -136,7 +136,7 @@ class SubscriptionQuoteServiceTest {
         SubscriptionQuote quote = service.create(request(new BigDecimal("90000"), 12, null), "alice");
         when(quoteRepository.findByQuoteNumber("QTE-2026-00001")).thenReturn(Optional.of(quote));
         Subscription created = Subscription.builder().id(50L).subscriptionNumber("SUB-50").build();
-        when(creationOperator.create(any())).thenReturn(created);
+        when(creationOperator.create(any(), any())).thenReturn(created);
         when(derivationService.create(eq(created), any(), eq("alice"), any()))
                 .thenReturn(PlanDerivation.builder().derivationCode("DRV-2026-00007").status(PlanDerivation.Status.ACTIVE).build());
 
@@ -147,7 +147,10 @@ class SubscriptionQuoteServiceTest {
         assertEquals("DRV-2026-00007", converted.getDerivationCode());
 
         ArgumentCaptor<CreateSubscriptionRequest> request = ArgumentCaptor.forClass(CreateSubscriptionRequest.class);
-        verify(creationOperator).create(request.capture());
+        ArgumentCaptor<SubscriptionCreationOperator.NegotiatedPrice> negotiated = ArgumentCaptor.forClass(SubscriptionCreationOperator.NegotiatedPrice.class);
+        verify(creationOperator).create(request.capture(), negotiated.capture());
+        // L'abonnement nait au prix du devis : premiere facture, montants et notifications
+        assertEquals(0, new BigDecimal("90000").compareTo(negotiated.getValue().amount()));
         assertEquals("FLEX", request.getValue().planCode());
         assertEquals("10", request.getValue().planVersionId());
         assertFalse(request.getValue().autoActivate(), "le devis ne paie pas · l'activation attend le paiement");
@@ -161,10 +164,28 @@ class SubscriptionQuoteServiceTest {
     }
 
     @Test
+    void acceptanceIsTheVisaOfANegotiatedPrice() {
+        SubscriptionQuote quote = service.create(request(new BigDecimal("60000"), null, null), "alice");
+        when(quoteRepository.findByQuoteNumber("QTE-2026-00001")).thenReturn(Optional.of(quote));
+        Subscription created = Subscription.builder().id(50L).subscriptionNumber("SUB-50").build();
+        when(creationOperator.create(any(), any())).thenReturn(created);
+        when(derivationService.create(eq(created), any(), eq("alice"), any()))
+                .thenReturn(PlanDerivation.builder().derivationCode("DRV-2026-00008").status(PlanDerivation.Status.PENDING_APPROVAL).build());
+        when(derivationService.approveFromQuote("DRV-2026-00008", "alice"))
+                .thenReturn(PlanDerivation.builder().derivationCode("DRV-2026-00008").status(PlanDerivation.Status.ACTIVE).build());
+
+        // La meme personne a prepare et accepte : l'acceptation vaut visa
+        SubscriptionQuote converted = service.accept("QTE-2026-00001", "alice");
+
+        verify(derivationService).approveFromQuote("DRV-2026-00008", "alice");
+        assertEquals("DRV-2026-00008", converted.getDerivationCode());
+    }
+
+    @Test
     void cataloguePriceQuoteCreatesNoDerivation() {
         SubscriptionQuote quote = service.create(request(null, null, null), "alice");
         when(quoteRepository.findByQuoteNumber("QTE-2026-00001")).thenReturn(Optional.of(quote));
-        when(creationOperator.create(any())).thenReturn(Subscription.builder().id(50L).subscriptionNumber("SUB-50").build());
+        when(creationOperator.create(any(), any())).thenReturn(Subscription.builder().id(50L).subscriptionNumber("SUB-50").build());
 
         service.accept("QTE-2026-00001", "MBR-1");
 

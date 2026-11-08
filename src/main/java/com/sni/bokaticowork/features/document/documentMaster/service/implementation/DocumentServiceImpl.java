@@ -21,10 +21,12 @@ import com.sni.bokaticowork.features.document.documentMaster.dto.response.Docume
 import com.sni.bokaticowork.features.document.documentMaster.enums.*;
 import com.sni.bokaticowork.features.document.documentMaster.mapper.interfaces.DocumentMapper;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
+import com.sni.bokaticowork.features.document.documentMaster.model.DocumentFolder;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentReview;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentSignature;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentType;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentVersion;
+import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentFolderRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentMetadataRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentRepository;
 import com.sni.bokaticowork.features.document.documentMaster.repository.DocumentReviewRepository;
@@ -88,6 +90,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentRejectionCascadeService rejectionCascadeService;
     private final DocumentSignatureRepository signatureRepository;
     private final DocumentMapper mapper;
+    private final DocumentFolderRepository folderRepository;
+    private final com.sni.bokaticowork.features.document.explorer.service.GedAutoFiler autoFiler;
 
     @Value("${app.document.default-expiry-years:5}")
     private Integer defaultExpiryYears;
@@ -98,6 +102,8 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentType documentType = documentType(metadata.getDocumentTypeCode());
         OwnerResolution owner = resolveOwner(metadata.getOwnerType(), metadata.getOwnerCode());
 
+        assertOwnerFitsType(documentType, owner);
+        DocumentFolder folder = targetFolder(metadata.getFolderCode());
         applyDefaultExpiryDate(metadata, documentType);
         validateDocumentMetadata(metadata, documentType, file.getSize());
         enforceMultipleAllowed(documentType, owner);
@@ -117,9 +123,11 @@ public class DocumentServiceImpl implements DocumentService {
                 .expiryDate(metadata.getExpiryDate())
                 .uploadedBy(uploadedBy)
                 .space(deriveSpace(owner.ownerType(), documentType.getCategory()))
+                .folder(folder)
                 .build();
 
         documentRepository.save(document);
+        autoFiler.file(document);
         createVersion(document, uploadedBy, metadata.getTitle(), metadata.getDocumentNumber(), file, inspection);
         attachKycDocumentIfNeeded(document, owner, metadata);
         kycAutomationService.syncFromDocumentUpload(document);
@@ -133,6 +141,8 @@ public class DocumentServiceImpl implements DocumentService {
         DocumentType documentType = documentType(metadata.getDocumentTypeCode());
         OwnerResolution owner = resolveOwner(metadata.getOwnerType(), metadata.getOwnerCode());
 
+        assertOwnerFitsType(documentType, owner);
+        DocumentFolder folder = targetFolder(metadata.getFolderCode());
         applyDefaultExpiryDate(metadata, documentType);
         validateDocumentMetadata(metadata, documentType, content.length);
         List<String> allowedMimeTypes = parseAllowedMimeTypes(documentType.getAllowedMimeTypes());
@@ -156,9 +166,11 @@ public class DocumentServiceImpl implements DocumentService {
                 .expiryDate(metadata.getExpiryDate())
                 .uploadedBy(uploadedBy)
                 .space(deriveSpace(owner.ownerType(), documentType.getCategory()))
+                .folder(folder)
                 .build();
 
         documentRepository.save(document);
+        autoFiler.file(document);
         createVersionFromBytes(document, uploadedBy, originalFileName, content, inspection);
         attachKycDocumentIfNeeded(document, owner, metadata);
         kycAutomationService.syncFromDocumentUpload(document);
@@ -413,7 +425,7 @@ public class DocumentServiceImpl implements DocumentService {
         });
 
         int nextVersion = document.getCurrentVersionNumber() == null ? 1 : document.getCurrentVersionNumber() + 1;
-        String ownerFolder = document.getOwnerType().name().toLowerCase(Locale.ROOT) + "/" + document.getOwnerId();
+        String ownerFolder = storageFolder(document);
         DocumentStorageService.StoredDocument stored = storageService.store(ownerFolder, document.getCode(), nextVersion, file);
 
         DocumentVersion version = DocumentVersion.builder()
@@ -459,7 +471,7 @@ public class DocumentServiceImpl implements DocumentService {
         });
 
         int nextVersion = document.getCurrentVersionNumber() == null ? 1 : document.getCurrentVersionNumber() + 1;
-        String ownerFolder = document.getOwnerType().name().toLowerCase(Locale.ROOT) + "/" + document.getOwnerId();
+        String ownerFolder = storageFolder(document);
         DocumentStorageService.StoredDocument stored = storageService.storeBytes(ownerFolder, document.getCode(), nextVersion, originalFileName, content);
 
         DocumentVersion version = DocumentVersion.builder()
@@ -644,6 +656,9 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private OwnerResolution resolveOwner(DocumentOwnerType ownerType, String ownerCode) {
+        if (ownerType == DocumentOwnerType.INTERNAL) {
+            return new OwnerResolution(DocumentOwnerType.INTERNAL, null);
+        }
         if (ownerType == null || !StringUtils.hasText(ownerCode)) {
             throw new BadRequestException("Document owner is required");
         }
@@ -670,6 +685,27 @@ public class DocumentServiceImpl implements DocumentService {
                 }
             }
         };
+    }
+
+    /** Une piece KYC prouve l'identite de quelqu'un : elle ne peut pas etre un document interne. */
+    private void assertOwnerFitsType(DocumentType documentType, OwnerResolution owner) {
+        if (owner.ownerType() == DocumentOwnerType.INTERNAL && documentType.getCategory() == DocumentCategory.KYC) {
+            throw new BadRequestException("Une pièce KYC doit appartenir à un membre, un client ou une entreprise.");
+        }
+    }
+
+    private DocumentFolder targetFolder(String folderCode) {
+        if (!StringUtils.hasText(folderCode)) {
+            return null;
+        }
+        return folderRepository.findByCode(folderCode.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Folder not found: " + folderCode));
+    }
+
+    /** Le classement physique du stockage : par proprietaire, ou dans « internal » sans proprietaire. */
+    private String storageFolder(Document document) {
+        String type = document.getOwnerType().name().toLowerCase(Locale.ROOT);
+        return document.getOwnerId() == null ? type : type + "/" + document.getOwnerId();
     }
 
     private List<String> parseAllowedMimeTypes(String csv) {

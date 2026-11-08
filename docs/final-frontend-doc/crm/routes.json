@@ -1,0 +1,1940 @@
+{
+ "module": "crm",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/analytics",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "analytics",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.CrmAnalyticsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/board",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "board",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "assignedTo",
+     "required": false,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "source",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.crm.enums.LeadSource"
+    },
+    {
+     "in": "query",
+     "name": "interest",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.crm.enums.LeadInterest"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.KanbanBoardResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/leads",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "search",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "stage",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.crm.enums.LeadStage"
+    },
+    {
+     "in": "query",
+     "name": "assignedTo",
+     "required": false,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "source",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.crm.enums.LeadSource"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/crm/leads",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "create",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.CreateLeadRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/leads/number/{leadNumber}",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "getByNumber",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "leadNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/leads/{id}",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "get",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/crm/leads/{id}",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "update",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.UpdateLeadRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/crm/leads/{id}/activities",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "activity",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.AddLeadActivityRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/crm/leads/{id}/convert",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "convert",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:CONVERT','CRM_CONVERT')",
+    "kind": "admin",
+    "permission": "CRM:CONVERT"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.ConvertLeadRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/crm/leads/{id}/generate-quote",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "generateQuote",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.GenerateQuoteRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, String>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/crm/leads/{id}/opportunities",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "createOpportunity",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.CreateOpportunityRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.OpportunityResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/crm/leads/{id}/qualify",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "qualify",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/crm/leads/{id}/stage",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "stage",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.UpdateLeadStageRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/metrics",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "metrics",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.CrmMetricsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/opportunities",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "opportunities",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "stage",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.crm.enums.OpportunityStage"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.crm.dto.CrmDtos.OpportunityResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/crm/opportunities/{id}/stage",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "opportunityStage",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.UpdateOpportunityStageRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.OpportunityResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/pipeline",
+   "package": "features.crm.controller",
+   "controller": "CrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/CrmController.java",
+   "handler": "pipeline",
+   "declaredIn": "CrmController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.CrmDtos.PipelineResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/proposals",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "list",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.crm.enums.ProposalStatus"
+    },
+    {
+     "in": "query",
+     "name": "opportunityId",
+     "required": false,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/crm/proposals",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "create",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.CreateProposalRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/proposals/number/{proposalNumber}",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "getByNumber",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "proposalNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/crm/proposals/{id}",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "get",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:READ','CRM_READ')",
+    "kind": "admin",
+    "permission": "CRM:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/crm/proposals/{id}",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "update",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.UpdateProposalRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/crm/proposals/{id}/accept",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "accept",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/crm/proposals/{id}/lines",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "addLine",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.AddProposalLineRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/crm/proposals/{id}/lines/{lineId}",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "removeLine",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "path",
+     "name": "lineId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/crm/proposals/{id}/lines/{lineId}",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "updateLine",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.UpdateProposalLineRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    },
+    {
+     "in": "path",
+     "name": "lineId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/crm/proposals/{id}/reject",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "reject",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.RejectProposalRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/crm/proposals/{id}/send",
+   "package": "features.crm.controller",
+   "controller": "ProposalController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/ProposalController.java",
+   "handler": "send",
+   "declaredIn": "ProposalController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('CRM:WRITE','CRM_WRITE')",
+    "kind": "admin",
+    "permission": "CRM:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/crm/leads",
+   "package": "features.crm.controller",
+   "controller": "PublicCrmController",
+   "source": "src/main/java/com/sni/bokaticowork/features/crm/controller/PublicCrmController.java",
+   "handler": "submitContactForm",
+   "declaredIn": "PublicCrmController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.crm.dto.CrmDtos.CreateLeadRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, String>>"
+  }
+ ],
+ "schemas": {
+  "CrmDtos.CrmAnalyticsResponse": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "to": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "totalCreated": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalWon": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalLost": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "conversionRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "avgDaysToWin": {
+     "type": "number",
+     "format": "double"
+    },
+    "bySource": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "byStage": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "pipelineValue": {
+     "type": "number"
+    }
+   }
+  },
+  "CrmDtos.KanbanBoardResponse": {
+   "type": "object",
+   "properties": {
+    "columns": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.crm.dto.CrmDtos.KanbanColumnResponse"
+     }
+    },
+    "totalLeads": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalPipelineValue": {
+     "type": "number"
+    }
+   }
+  },
+  "CrmDtos.LeadResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "leadNumber": {
+     "type": "string"
+    },
+    "fullName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "company": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "source": {
+     "type": "string",
+     "enum": [
+      "WEBSITE",
+      "REFERRAL",
+      "COLD_CALL",
+      "TRADE_SHOW",
+      "PARTNER",
+      "SOCIAL_MEDIA",
+      "EVENT",
+      "OTHER"
+     ]
+    },
+    "interest": {
+     "type": "string",
+     "enum": [
+      "WORKSPACE",
+      "MEETING_ROOM",
+      "VIRTUAL_OFFICE",
+      "DOMICILIATION",
+      "DAY_PASS",
+      "DEDICATED_DESK",
+      "PRIVATE_OFFICE",
+      "OTHER"
+     ]
+    },
+    "stage": {
+     "type": "string",
+     "enum": [
+      "NEW",
+      "CONTACTED",
+      "QUALIFIED",
+      "PROPOSAL_SENT",
+      "WON",
+      "LOST"
+     ]
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "probability": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "scoredProbability": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "expectedCloseDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "convertedOwnerType": {
+     "type": "string"
+    },
+    "convertedOwnerCode": {
+     "type": "string"
+    },
+    "lostReason": {
+     "type": "string"
+    },
+    "lastActivityAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "activities": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadActivityResponse"
+     }
+    }
+   }
+  },
+  "CrmDtos.CreateLeadRequest": {
+   "required": [
+    "fullName"
+   ],
+   "type": "object",
+   "properties": {
+    "fullName": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "company": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "source": {
+     "type": "string",
+     "enum": [
+      "WEBSITE",
+      "REFERRAL",
+      "COLD_CALL",
+      "TRADE_SHOW",
+      "PARTNER",
+      "SOCIAL_MEDIA",
+      "EVENT",
+      "OTHER"
+     ]
+    },
+    "interest": {
+     "type": "string",
+     "enum": [
+      "WORKSPACE",
+      "MEETING_ROOM",
+      "VIRTUAL_OFFICE",
+      "DOMICILIATION",
+      "DAY_PASS",
+      "DEDICATED_DESK",
+      "PRIVATE_OFFICE",
+      "OTHER"
+     ]
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "probability": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "expectedCloseDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "CrmDtos.UpdateLeadRequest": {
+   "type": "object",
+   "properties": {
+    "fullName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "company": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "source": {
+     "type": "string",
+     "enum": [
+      "WEBSITE",
+      "REFERRAL",
+      "COLD_CALL",
+      "TRADE_SHOW",
+      "PARTNER",
+      "SOCIAL_MEDIA",
+      "EVENT",
+      "OTHER"
+     ]
+    },
+    "interest": {
+     "type": "string",
+     "enum": [
+      "WORKSPACE",
+      "MEETING_ROOM",
+      "VIRTUAL_OFFICE",
+      "DOMICILIATION",
+      "DAY_PASS",
+      "DEDICATED_DESK",
+      "PRIVATE_OFFICE",
+      "OTHER"
+     ]
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "probability": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "expectedCloseDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "CrmDtos.AddLeadActivityRequest": {
+   "required": [
+    "activityType"
+   ],
+   "type": "object",
+   "properties": {
+    "activityType": {
+     "type": "string",
+     "enum": [
+      "CALL",
+      "EMAIL",
+      "MEETING",
+      "VISIT",
+      "NOTE"
+     ]
+    },
+    "subject": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "performedBy": {
+     "type": "string"
+    },
+    "performedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CrmDtos.ConvertLeadRequest": {
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerCode": {
+     "type": "string"
+    }
+   }
+  },
+  "CrmDtos.GenerateQuoteRequest": {
+   "required": [
+    "currency"
+   ],
+   "type": "object",
+   "properties": {
+    "currency": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "performedBy": {
+     "type": "string"
+    }
+   }
+  },
+  "CrmDtos.OpportunityResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "opportunityNumber": {
+     "type": "string"
+    },
+    "leadId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "leadNumber": {
+     "type": "string"
+    },
+    "leadFullName": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "probability": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "stage": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "NEGOTIATION",
+      "PROPOSAL_SENT",
+      "WON",
+      "LOST"
+     ]
+    },
+    "expectedCloseDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "wonAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lostAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lostReason": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CrmDtos.CreateOpportunityRequest": {
+   "required": [
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "probability": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "expectedCloseDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "notes": {
+     "type": "string"
+    }
+   }
+  },
+  "CrmDtos.UpdateLeadStageRequest": {
+   "type": "object",
+   "properties": {
+    "stage": {
+     "type": "string",
+     "enum": [
+      "NEW",
+      "CONTACTED",
+      "QUALIFIED",
+      "PROPOSAL_SENT",
+      "WON",
+      "LOST"
+     ]
+    },
+    "lostReason": {
+     "type": "string"
+    }
+   }
+  },
+  "CrmDtos.CrmMetricsResponse": {
+   "type": "object",
+   "properties": {
+    "totalLeads": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "newLeads": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "wonLeads": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lostLeads": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activeLeads": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pipelineValue": {
+     "type": "number"
+    },
+    "conversionRate": {
+     "type": "number",
+     "format": "double"
+    }
+   }
+  },
+  "CrmDtos.UpdateOpportunityStageRequest": {
+   "required": [
+    "stage"
+   ],
+   "type": "object",
+   "properties": {
+    "stage": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "NEGOTIATION",
+      "PROPOSAL_SENT",
+      "WON",
+      "LOST"
+     ]
+    },
+    "lostReason": {
+     "type": "string"
+    }
+   }
+  },
+  "CrmDtos.PipelineResponse": {
+   "type": "object",
+   "properties": {
+    "stages": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse"
+      }
+     }
+    }
+   }
+  },
+  "ProposalDtos.ProposalResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "proposalNumber": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "opportunityId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "leadId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "recipientType": {
+     "type": "string"
+    },
+    "recipientCode": {
+     "type": "string"
+    },
+    "recipientName": {
+     "type": "string"
+    },
+    "recipientEmail": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "SENT",
+      "VIEWED",
+      "ACCEPTED",
+      "REJECTED",
+      "EXPIRED",
+      "CONVERTED"
+     ]
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "subtotalAmount": {
+     "type": "number"
+    },
+    "taxAmount": {
+     "type": "number"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "internalNotes": {
+     "type": "string"
+    },
+    "convertedInvoiceNumber": {
+     "type": "string"
+    },
+    "convertedContractCode": {
+     "type": "string"
+    },
+    "convertedSubscriptionNumber": {
+     "type": "string"
+    },
+    "convertedPassNumber": {
+     "type": "string"
+    },
+    "sentAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "viewedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "acceptedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "rejectedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "rejectionReason": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalLineResponse"
+     }
+    }
+   }
+  },
+  "ProposalDtos.CreateProposalRequest": {
+   "required": [
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "opportunityId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "leadId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "recipientType": {
+     "type": "string"
+    },
+    "recipientCode": {
+     "type": "string"
+    },
+    "recipientName": {
+     "type": "string"
+    },
+    "recipientEmail": {
+     "type": "string"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "internalNotes": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "ProposalDtos.UpdateProposalRequest": {
+   "type": "object",
+   "properties": {
+    "title": {
+     "type": "string"
+    },
+    "recipientName": {
+     "type": "string"
+    },
+    "recipientEmail": {
+     "type": "string"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "internalNotes": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "ProposalDtos.AddProposalLineRequest": {
+   "required": [
+    "label",
+    "unitPrice"
+   ],
+   "type": "object",
+   "properties": {
+    "label": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "serviceType": {
+     "type": "string"
+    },
+    "serviceRefCode": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "number"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "discountPercent": {
+     "type": "number"
+    },
+    "taxRate": {
+     "type": "number"
+    },
+    "taxIncluded": {
+     "type": "boolean"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "currency": {
+     "type": "string"
+    }
+   }
+  },
+  "ProposalDtos.UpdateProposalLineRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "number"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "discountPercent": {
+     "type": "number"
+    },
+    "taxRate": {
+     "type": "number"
+    },
+    "taxIncluded": {
+     "type": "boolean"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ProposalDtos.RejectProposalRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "CrmDtos.KanbanColumnResponse": {
+   "type": "object",
+   "properties": {
+    "stage": {
+     "type": "string",
+     "enum": [
+      "NEW",
+      "CONTACTED",
+      "QUALIFIED",
+      "PROPOSAL_SENT",
+      "WON",
+      "LOST"
+     ]
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "cards": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.crm.dto.CrmDtos.KanbanCardResponse"
+     }
+    }
+   }
+  },
+  "CrmDtos.LeadActivityResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activityType": {
+     "type": "string",
+     "enum": [
+      "CALL",
+      "EMAIL",
+      "MEETING",
+      "VISIT",
+      "NOTE"
+     ]
+    },
+    "subject": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "performedBy": {
+     "type": "string"
+    },
+    "performedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ProposalDtos.ProposalLineResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "serviceType": {
+     "type": "string"
+    },
+    "serviceRefCode": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "number"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "discountPercent": {
+     "type": "number"
+    },
+    "taxRate": {
+     "type": "number"
+    },
+    "taxIncluded": {
+     "type": "boolean"
+    },
+    "subtotalAmount": {
+     "type": "number"
+    },
+    "taxAmount": {
+     "type": "number"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    }
+   }
+  },
+  "CrmDtos.KanbanCardResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "leadNumber": {
+     "type": "string"
+    },
+    "fullName": {
+     "type": "string"
+    },
+    "company": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "stage": {
+     "type": "string",
+     "enum": [
+      "NEW",
+      "CONTACTED",
+      "QUALIFIED",
+      "PROPOSAL_SENT",
+      "WON",
+      "LOST"
+     ]
+    },
+    "source": {
+     "type": "string",
+     "enum": [
+      "WEBSITE",
+      "REFERRAL",
+      "COLD_CALL",
+      "TRADE_SHOW",
+      "PARTNER",
+      "SOCIAL_MEDIA",
+      "EVENT",
+      "OTHER"
+     ]
+    },
+    "interest": {
+     "type": "string",
+     "enum": [
+      "WORKSPACE",
+      "MEETING_ROOM",
+      "VIRTUAL_OFFICE",
+      "DOMICILIATION",
+      "DAY_PASS",
+      "DEDICATED_DESK",
+      "PRIVATE_OFFICE",
+      "OTHER"
+     ]
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "probability": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "score": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lastActivityAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "activityCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  }
+ },
+ "enums": {
+  "LeadSource": [
+   "WEBSITE",
+   "REFERRAL",
+   "COLD_CALL",
+   "TRADE_SHOW",
+   "PARTNER",
+   "SOCIAL_MEDIA",
+   "EVENT",
+   "OTHER"
+  ],
+  "LeadInterest": [
+   "WORKSPACE",
+   "MEETING_ROOM",
+   "VIRTUAL_OFFICE",
+   "DOMICILIATION",
+   "DAY_PASS",
+   "DEDICATED_DESK",
+   "PRIVATE_OFFICE",
+   "OTHER"
+  ],
+  "LeadStage": [
+   "NEW",
+   "CONTACTED",
+   "QUALIFIED",
+   "PROPOSAL_SENT",
+   "WON",
+   "LOST"
+  ],
+  "OpportunityStage": [
+   "OPEN",
+   "NEGOTIATION",
+   "PROPOSAL_SENT",
+   "WON",
+   "LOST"
+  ],
+  "ProposalStatus": [
+   "DRAFT",
+   "SENT",
+   "VIEWED",
+   "ACCEPTED",
+   "REJECTED",
+   "EXPIRED",
+   "CONVERTED"
+  ]
+ },
+ "names": {
+  "CrmDtos.CrmAnalyticsResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.CrmAnalyticsResponse",
+  "CrmDtos.KanbanBoardResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.KanbanBoardResponse",
+  "LeadSource": "com.sni.bokaticowork.features.crm.enums.LeadSource",
+  "LeadInterest": "com.sni.bokaticowork.features.crm.enums.LeadInterest",
+  "CrmDtos.LeadResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadResponse",
+  "LeadStage": "com.sni.bokaticowork.features.crm.enums.LeadStage",
+  "CrmDtos.CreateLeadRequest": "com.sni.bokaticowork.features.crm.dto.CrmDtos.CreateLeadRequest",
+  "CrmDtos.UpdateLeadRequest": "com.sni.bokaticowork.features.crm.dto.CrmDtos.UpdateLeadRequest",
+  "CrmDtos.AddLeadActivityRequest": "com.sni.bokaticowork.features.crm.dto.CrmDtos.AddLeadActivityRequest",
+  "CrmDtos.ConvertLeadRequest": "com.sni.bokaticowork.features.crm.dto.CrmDtos.ConvertLeadRequest",
+  "CrmDtos.GenerateQuoteRequest": "com.sni.bokaticowork.features.crm.dto.CrmDtos.GenerateQuoteRequest",
+  "CrmDtos.OpportunityResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.OpportunityResponse",
+  "CrmDtos.CreateOpportunityRequest": "com.sni.bokaticowork.features.crm.dto.CrmDtos.CreateOpportunityRequest",
+  "CrmDtos.UpdateLeadStageRequest": "com.sni.bokaticowork.features.crm.dto.CrmDtos.UpdateLeadStageRequest",
+  "CrmDtos.CrmMetricsResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.CrmMetricsResponse",
+  "OpportunityStage": "com.sni.bokaticowork.features.crm.enums.OpportunityStage",
+  "CrmDtos.UpdateOpportunityStageRequest": "com.sni.bokaticowork.features.crm.dto.CrmDtos.UpdateOpportunityStageRequest",
+  "CrmDtos.PipelineResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.PipelineResponse",
+  "ProposalDtos.ProposalResponse": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalResponse",
+  "ProposalStatus": "com.sni.bokaticowork.features.crm.enums.ProposalStatus",
+  "ProposalDtos.CreateProposalRequest": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.CreateProposalRequest",
+  "ProposalDtos.UpdateProposalRequest": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.UpdateProposalRequest",
+  "ProposalDtos.AddProposalLineRequest": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.AddProposalLineRequest",
+  "ProposalDtos.UpdateProposalLineRequest": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.UpdateProposalLineRequest",
+  "ProposalDtos.RejectProposalRequest": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.RejectProposalRequest",
+  "CrmDtos.KanbanColumnResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.KanbanColumnResponse",
+  "CrmDtos.LeadActivityResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.LeadActivityResponse",
+  "ProposalDtos.ProposalLineResponse": "com.sni.bokaticowork.features.crm.dto.ProposalDtos.ProposalLineResponse",
+  "CrmDtos.KanbanCardResponse": "com.sni.bokaticowork.features.crm.dto.CrmDtos.KanbanCardResponse"
+ }
+}

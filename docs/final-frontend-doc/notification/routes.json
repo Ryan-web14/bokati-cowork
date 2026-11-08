@@ -1,0 +1,1072 @@
+{
+ "module": "notification",
+ "routes": [
+  {
+   "methods": [
+    "PATCH",
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/notifications/read-all",
+   "package": "features.notification.controller",
+   "controller": "AdminNotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/AdminNotificationController.java",
+   "handler": "markAllRead",
+   "declaredIn": "AdminNotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/notifications/unread",
+   "package": "features.notification.controller",
+   "controller": "AdminNotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/AdminNotificationController.java",
+   "handler": "listUnread",
+   "declaredIn": "AdminNotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.notification.dto.response.NotificationMessageResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/notifications/unread-count",
+   "package": "features.notification.controller",
+   "controller": "AdminNotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/AdminNotificationController.java",
+   "handler": "countUnread",
+   "declaredIn": "AdminNotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Long>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/notifications/{notificationNumber}/read",
+   "package": "features.notification.controller",
+   "controller": "AdminNotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/AdminNotificationController.java",
+   "handler": "markAsRead",
+   "declaredIn": "AdminNotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "notificationNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.NotificationMessageResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/notifications",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "list",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.notification.enums.NotificationDeliveryStatus"
+    },
+    {
+     "in": "query",
+     "name": "channel",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.notification.enums.NotificationChannel"
+    },
+    {
+     "in": "query",
+     "name": "eventType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "recipientEmail",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "search",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<Page<com.sni.bokaticowork.features.notification.dto.response.NotificationMessageResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/notifications",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "send",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.notification.dto.request.SendNotificationRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "CompletableFuture<ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.NotificationDispatchResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/notifications/events",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "publish",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.notification.dto.request.PublishNotificationEventRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/notifications/mark-all-read",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "markAllRead",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/notifications/templates",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "templates",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "channel",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.notification.enums.NotificationChannel"
+    },
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "type": "Boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.notification.dto.response.NotificationTemplateResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/notifications/templates",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "upsertTemplate",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.notification.dto.request.NotificationTemplateRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.NotificationTemplateResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/notifications/test/email",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "testEmail",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.notification.dto.request.TestEmailRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/notifications/test/notification",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "testNotification",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.notification.dto.request.TestNotificationRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "CompletableFuture<ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.NotificationDispatchResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/notifications/unread",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "unread",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.notification.dto.response.NotificationMessageResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/notifications/{notificationNumber}/read",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "markAsRead",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "notificationNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.NotificationMessageResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/notifications/{notificationNumber}/retry",
+   "package": "features.notification.controller",
+   "controller": "NotificationController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/NotificationController.java",
+   "handler": "retry",
+   "declaredIn": "NotificationController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "notificationNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.NotificationMessageResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/webhook-deliveries",
+   "package": "features.notification.controller",
+   "controller": "WebhookController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/WebhookController.java",
+   "handler": "deliveries",
+   "declaredIn": "WebhookController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.notification.enums.NotificationDeliveryStatus"
+    },
+    {
+     "in": "query",
+     "name": "endpointCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "eventType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<Page<com.sni.bokaticowork.features.notification.dto.response.WebhookDeliveryResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/webhook-deliveries/{deliveryNumber}/retry",
+   "package": "features.notification.controller",
+   "controller": "WebhookController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/WebhookController.java",
+   "handler": "retry",
+   "declaredIn": "WebhookController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "deliveryNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.WebhookDeliveryResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/webhook-endpoints",
+   "package": "features.notification.controller",
+   "controller": "WebhookController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/WebhookController.java",
+   "handler": "list",
+   "declaredIn": "WebhookController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "search",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.notification.dto.response.WebhookEndpointResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/webhook-endpoints",
+   "package": "features.notification.controller",
+   "controller": "WebhookController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/WebhookController.java",
+   "handler": "create",
+   "declaredIn": "WebhookController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.notification.dto.request.WebhookEndpointRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.WebhookEndpointResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/webhook-endpoints/{endpointCode}/activate",
+   "package": "features.notification.controller",
+   "controller": "WebhookController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/WebhookController.java",
+   "handler": "activate",
+   "declaredIn": "WebhookController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "endpointCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.WebhookEndpointResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/webhook-endpoints/{endpointCode}/deactivate",
+   "package": "features.notification.controller",
+   "controller": "WebhookController",
+   "source": "src/main/java/com/sni/bokaticowork/features/notification/controller/WebhookController.java",
+   "handler": "deactivate",
+   "declaredIn": "WebhookController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "endpointCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.notification.dto.response.WebhookEndpointResponse>"
+  }
+ ],
+ "schemas": {
+  "NotificationMessageResponse": {
+   "type": "object",
+   "properties": {
+    "notificationNumber": {
+     "type": "string"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "aggregateType": {
+     "type": "string"
+    },
+    "aggregateId": {
+     "type": "string"
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "EMAIL",
+      "IN_APP",
+      "WEBHOOK"
+     ]
+    },
+    "recipientType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS",
+      "ADMIN",
+      "GUEST",
+      "SYSTEM"
+     ]
+    },
+    "recipientCode": {
+     "type": "string"
+    },
+    "recipientEmail": {
+     "type": "string"
+    },
+    "recipientName": {
+     "type": "string"
+    },
+    "subject": {
+     "type": "string"
+    },
+    "templateCode": {
+     "type": "string"
+    },
+    "templateName": {
+     "type": "string"
+    },
+    "payloadJson": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "PROCESSING",
+      "SENT",
+      "DELIVERED",
+      "FAILED",
+      "CANCELLED",
+      "SKIPPED"
+     ]
+    },
+    "attempts": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "availableAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sentAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "readAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastError": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "NotificationDispatchResponse": {
+   "type": "object",
+   "properties": {
+    "notificationNumber": {
+     "type": "string"
+    },
+    "webhookDeliveries": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "SendNotificationRequest": {
+   "required": [
+    "channel",
+    "eventType"
+   ],
+   "type": "object",
+   "properties": {
+    "eventType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "aggregateType": {
+     "type": "string"
+    },
+    "aggregateId": {
+     "type": "string"
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "EMAIL",
+      "IN_APP",
+      "WEBHOOK"
+     ]
+    },
+    "recipientType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS",
+      "ADMIN",
+      "GUEST",
+      "SYSTEM"
+     ]
+    },
+    "recipientCode": {
+     "type": "string"
+    },
+    "recipientEmail": {
+     "type": "string"
+    },
+    "recipientName": {
+     "type": "string"
+    },
+    "subject": {
+     "type": "string"
+    },
+    "templateCode": {
+     "type": "string"
+    },
+    "templateName": {
+     "type": "string"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    },
+    "availableAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "PublishNotificationEventRequest": {
+   "required": [
+    "aggregateId",
+    "aggregateType",
+    "eventType"
+   ],
+   "type": "object",
+   "properties": {
+    "eventType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "aggregateType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "aggregateId": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    }
+   }
+  },
+  "NotificationTemplateResponse": {
+   "type": "object",
+   "properties": {
+    "templateCode": {
+     "type": "string"
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "EMAIL",
+      "IN_APP",
+      "WEBHOOK"
+     ]
+    },
+    "subject": {
+     "type": "string"
+    },
+    "templateName": {
+     "type": "string"
+    },
+    "bodyTemplate": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "adminOnly": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "NotificationTemplateRequest": {
+   "required": [
+    "channel",
+    "templateCode"
+   ],
+   "type": "object",
+   "properties": {
+    "templateCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "channel": {
+     "type": "string",
+     "enum": [
+      "EMAIL",
+      "IN_APP",
+      "WEBHOOK"
+     ]
+    },
+    "subject": {
+     "type": "string"
+    },
+    "templateName": {
+     "type": "string"
+    },
+    "bodyTemplate": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "adminOnly": {
+     "type": "boolean"
+    }
+   }
+  },
+  "EmailDeliveryResponse": {
+   "type": "object",
+   "properties": {
+    "emailNumber": {
+     "type": "string"
+    },
+    "provider": {
+     "type": "string"
+    },
+    "fromEmail": {
+     "type": "string"
+    },
+    "recipientEmail": {
+     "type": "string"
+    },
+    "subject": {
+     "type": "string"
+    },
+    "bodyType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "QUEUED",
+      "SENDING",
+      "SENT",
+      "FAILED"
+     ]
+    },
+    "attempts": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastError": {
+     "type": "string"
+    },
+    "relatedType": {
+     "type": "string"
+    },
+    "relatedCode": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sentAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "failedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "TestEmailRequest": {
+   "required": [
+    "to"
+   ],
+   "type": "object",
+   "properties": {
+    "to": {
+     "minLength": 1,
+     "type": "string",
+     "format": "email"
+    },
+    "subject": {
+     "type": "string"
+    },
+    "content": {
+     "type": "string"
+    },
+    "html": {
+     "type": "boolean"
+    }
+   }
+  },
+  "TestNotificationRequest": {
+   "required": [
+    "to"
+   ],
+   "type": "object",
+   "properties": {
+    "to": {
+     "minLength": 1,
+     "type": "string",
+     "format": "email"
+    },
+    "recipientName": {
+     "type": "string"
+    },
+    "subject": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    }
+   }
+  },
+  "WebhookDeliveryResponse": {
+   "type": "object",
+   "properties": {
+    "deliveryNumber": {
+     "type": "string"
+    },
+    "endpointCode": {
+     "type": "string"
+    },
+    "endpointName": {
+     "type": "string"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "aggregateType": {
+     "type": "string"
+    },
+    "aggregateId": {
+     "type": "string"
+    },
+    "payloadJson": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "PROCESSING",
+      "SENT",
+      "DELIVERED",
+      "FAILED",
+      "CANCELLED",
+      "SKIPPED"
+     ]
+    },
+    "attempts": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "availableAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "deliveredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "httpStatus": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastError": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "WebhookEndpointResponse": {
+   "type": "object",
+   "properties": {
+    "endpointCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string"
+    },
+    "eventTypes": {
+     "uniqueItems": true,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "WebhookEndpointRequest": {
+   "required": [
+    "name",
+    "url"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "url": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "secret": {
+     "type": "string"
+    },
+    "eventTypes": {
+     "uniqueItems": true,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  }
+ },
+ "enums": {
+  "NotificationDeliveryStatus": [
+   "PENDING",
+   "PROCESSING",
+   "SENT",
+   "DELIVERED",
+   "FAILED",
+   "CANCELLED",
+   "SKIPPED"
+  ],
+  "NotificationChannel": [
+   "EMAIL",
+   "IN_APP",
+   "WEBHOOK"
+  ]
+ },
+ "names": {
+  "NotificationMessageResponse": "com.sni.bokaticowork.features.notification.dto.response.NotificationMessageResponse",
+  "NotificationDeliveryStatus": "com.sni.bokaticowork.features.notification.enums.NotificationDeliveryStatus",
+  "NotificationChannel": "com.sni.bokaticowork.features.notification.enums.NotificationChannel",
+  "NotificationDispatchResponse": "com.sni.bokaticowork.features.notification.dto.response.NotificationDispatchResponse",
+  "SendNotificationRequest": "com.sni.bokaticowork.features.notification.dto.request.SendNotificationRequest",
+  "PublishNotificationEventRequest": "com.sni.bokaticowork.features.notification.dto.request.PublishNotificationEventRequest",
+  "NotificationTemplateResponse": "com.sni.bokaticowork.features.notification.dto.response.NotificationTemplateResponse",
+  "NotificationTemplateRequest": "com.sni.bokaticowork.features.notification.dto.request.NotificationTemplateRequest",
+  "EmailDeliveryResponse": "com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse",
+  "TestEmailRequest": "com.sni.bokaticowork.features.notification.dto.request.TestEmailRequest",
+  "TestNotificationRequest": "com.sni.bokaticowork.features.notification.dto.request.TestNotificationRequest",
+  "WebhookDeliveryResponse": "com.sni.bokaticowork.features.notification.dto.response.WebhookDeliveryResponse",
+  "WebhookEndpointResponse": "com.sni.bokaticowork.features.notification.dto.response.WebhookEndpointResponse",
+  "WebhookEndpointRequest": "com.sni.bokaticowork.features.notification.dto.request.WebhookEndpointRequest"
+ }
+}

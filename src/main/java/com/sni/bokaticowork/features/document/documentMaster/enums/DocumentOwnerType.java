@@ -8,5 +8,7 @@ public enum DocumentOwnerType {
     INVOICE,
     PAYMENT,
     PROPOSAL,
-    ASSET
+    ASSET,
+    /** Document de l'organisation elle-meme (courrier numerise, piece administrative) : aucun proprietaire. */
+    INTERNAL
 }

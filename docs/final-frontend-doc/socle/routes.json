@@ -1,0 +1,1625 @@
+{
+ "module": "socle",
+ "routes": [
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/addresses",
+   "package": "core.baseClasses.controller",
+   "controller": "AddressController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/AddressController.java",
+   "handler": "create",
+   "declaredIn": "AddressController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.AddressResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/addresses/{id}",
+   "package": "core.baseClasses.controller",
+   "controller": "AddressController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/AddressController.java",
+   "handler": "delete",
+   "declaredIn": "AddressController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/addresses/{id}",
+   "package": "core.baseClasses.controller",
+   "controller": "AddressController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/AddressController.java",
+   "handler": "get",
+   "declaredIn": "AddressController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.AddressResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/addresses/{id}",
+   "package": "core.baseClasses.controller",
+   "controller": "AddressController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/AddressController.java",
+   "handler": "update",
+   "declaredIn": "AddressController",
+   "access": {
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.AddressResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/audit-logs",
+   "package": "core.audit.controller",
+   "controller": "AdminAuditController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/controller/AdminAuditController.java",
+   "handler": "list",
+   "declaredIn": "AdminAuditController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "module",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "action",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "actorEmail",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.core.audit.enums.AuditStatus"
+    },
+    {
+     "in": "query",
+     "name": "createdFrom",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "createdTo",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.model.AuditLog>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/idempotency-records",
+   "package": "core.idempotency.controller",
+   "controller": "AdminIdempotencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/idempotency/controller/AdminIdempotencyController.java",
+   "handler": "list",
+   "declaredIn": "AdminIdempotencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "operation",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "idempotencyKey",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.core.idempotency.enums.IdempotencyStatus"
+    },
+    {
+     "in": "query",
+     "name": "createdFrom",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "createdTo",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.idempotency.model.IdempotencyRecord>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/outbox-events",
+   "package": "core.outbox.controller",
+   "controller": "AdminOutboxController",
+   "source": "src/main/java/com/sni/bokaticowork/core/outbox/controller/AdminOutboxController.java",
+   "handler": "list",
+   "declaredIn": "AdminOutboxController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "eventType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "aggregateType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "aggregateId",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.core.outbox.enums.OutboxEventStatus"
+    },
+    {
+     "in": "query",
+     "name": "createdFrom",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "createdTo",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.outbox.model.OutboxEvent>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/outbox-events/process",
+   "package": "core.outbox.controller",
+   "controller": "AdminOutboxController",
+   "source": "src/main/java/com/sni/bokaticowork/core/outbox/controller/AdminOutboxController.java",
+   "handler": "process",
+   "declaredIn": "AdminOutboxController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "batchSize",
+     "required": false,
+     "default": "25",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/outbox-events/requeue-failed",
+   "package": "core.outbox.controller",
+   "controller": "AdminOutboxController",
+   "source": "src/main/java/com/sni/bokaticowork/core/outbox/controller/AdminOutboxController.java",
+   "handler": "requeueFailed",
+   "declaredIn": "AdminOutboxController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "aggregateType",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/outbox-events/{id}/requeue",
+   "package": "core.outbox.controller",
+   "controller": "AdminOutboxController",
+   "source": "src/main/java/com/sni/bokaticowork/core/outbox/controller/AdminOutboxController.java",
+   "handler": "requeue",
+   "declaredIn": "AdminOutboxController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/settings-audit-logs",
+   "package": "core.audit.controller",
+   "controller": "AdminSettingsAuditController",
+   "source": "src/main/java/com/sni/bokaticowork/core/audit/controller/AdminSettingsAuditController.java",
+   "handler": "list",
+   "declaredIn": "AdminSettingsAuditController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:AUDIT"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "settingKey",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "changedBy",
+     "required": false,
+     "type": "Long"
+    },
+    {
+     "in": "query",
+     "name": "changedFrom",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "changedTo",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=changedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.audit.model.SettingsAuditLogs>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/countries",
+   "package": "core.baseClasses.controller",
+   "controller": "CountryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CountryController.java",
+   "handler": "getAllCountries",
+   "declaredIn": "CountryController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [],
+   "response": "ResponseEntity<Collection<com.sni.bokaticowork.core.baseClasses.dto.response.CountryResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/countries",
+   "package": "core.baseClasses.controller",
+   "controller": "CountryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CountryController.java",
+   "handler": "createCountry",
+   "declaredIn": "CountryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "COUNTRY_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.CountryRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/countries/by-phone-code",
+   "package": "core.baseClasses.controller",
+   "controller": "CountryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CountryController.java",
+   "handler": "getCountryByPhoneCode",
+   "declaredIn": "CountryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "phoneCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CountryResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/countries/phone-codes",
+   "package": "core.baseClasses.controller",
+   "controller": "CountryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CountryController.java",
+   "handler": "phoneCodes",
+   "declaredIn": "CountryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<Collection<com.sni.bokaticowork.core.baseClasses.service.interfaces.CountryService.PhoneCodeEntry>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/countries/{countryCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CountryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CountryController.java",
+   "handler": "deleteCountry",
+   "declaredIn": "CountryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "countryCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/countries/{countryCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CountryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CountryController.java",
+   "handler": "getCountryByCode",
+   "declaredIn": "CountryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "countryCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CountryResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/countries/{countryCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CountryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CountryController.java",
+   "handler": "updateCountry",
+   "declaredIn": "CountryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "COUNTRY_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.CountryRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "countryCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CountryResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/currencies",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "getAllCurrencies",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/currencies",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "createCurrency",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CURRENCY_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.CurrencyRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/currencies/all",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "getAllCurrenciesLegacy",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/currencies/{currencyCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "deleteCurrency",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "currencyCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/currencies/{currencyCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "getCurrencyByCode",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "currencyCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/currencies/{currencyCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "updateCurrency",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CURRENCY_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.CurrencyRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "currencyCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/currency",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "getAllCurrencies",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/currency",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "createCurrency",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CURRENCY_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.CurrencyRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/currency/all",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "getAllCurrenciesLegacy",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/currency/{currencyCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "deleteCurrency",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "currencyCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/currency/{currencyCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "getCurrencyByCode",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "currencyCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/currency/{currencyCode}",
+   "package": "core.baseClasses.controller",
+   "controller": "CurrencyController",
+   "source": "src/main/java/com/sni/bokaticowork/core/baseClasses/controller/CurrencyController.java",
+   "handler": "updateCurrency",
+   "declaredIn": "CurrencyController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "CURRENCY_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.baseClasses.dto.request.CurrencyRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "currencyCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/maintenance/purge-data",
+   "package": "core.maintenance",
+   "controller": "DataPurgeController",
+   "source": "src/main/java/com/sni/bokaticowork/core/maintenance/DataPurgeController.java",
+   "handler": "purgeAllData",
+   "declaredIn": "DataPurgeController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('ROLE_ADMIN', 'ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "confirm",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Object>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/email-deliveries",
+   "package": "core.communication.mailService.controller",
+   "controller": "EmailDeliveryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/mailService/controller/EmailDeliveryController.java",
+   "handler": "list",
+   "declaredIn": "EmailDeliveryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.core.communication.mailService.enums.EmailDeliveryStatus"
+    },
+    {
+     "in": "query",
+     "name": "provider",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "recipientEmail",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "relatedType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "relatedCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "createdFrom",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "createdTo",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/email-deliveries/{emailNumber}",
+   "package": "core.communication.mailService.controller",
+   "controller": "EmailDeliveryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/mailService/controller/EmailDeliveryController.java",
+   "handler": "get",
+   "declaredIn": "EmailDeliveryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "emailNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/email-deliveries/{emailNumber}/retry",
+   "package": "core.communication.mailService.controller",
+   "controller": "EmailDeliveryController",
+   "source": "src/main/java/com/sni/bokaticowork/core/communication/mailService/controller/EmailDeliveryController.java",
+   "handler": "retry",
+   "declaredIn": "EmailDeliveryController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "emailNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/maintenance/members/purge-batch",
+   "package": "core.maintenance",
+   "controller": "MemberPurgeController",
+   "source": "src/main/java/com/sni/bokaticowork/core/maintenance/MemberPurgeController.java",
+   "handler": "purgeBatch",
+   "declaredIn": "MemberPurgeController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('ROLE_ADMIN', 'ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.core.maintenance.MemberPurgeController.BatchPurgeRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "confirm",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.maintenance.MemberPurgeService.BatchPurgeReport>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/maintenance/members/purge-candidates",
+   "package": "core.maintenance",
+   "controller": "MemberPurgeController",
+   "source": "src/main/java/com/sni/bokaticowork/core/maintenance/MemberPurgeController.java",
+   "handler": "candidates",
+   "declaredIn": "MemberPurgeController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('ROLE_ADMIN', 'ADMIN')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "createdBefore",
+     "required": true,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "200",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.core.maintenance.MemberPurgeService.MemberCandidate>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/maintenance/members/{memberCode}",
+   "package": "core.maintenance",
+   "controller": "MemberPurgeController",
+   "source": "src/main/java/com/sni/bokaticowork/core/maintenance/MemberPurgeController.java",
+   "handler": "purge",
+   "declaredIn": "MemberPurgeController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('ROLE_ADMIN', 'ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "confirm",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<?>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/maintenance/members/{memberCode}/purge-preview",
+   "package": "core.maintenance",
+   "controller": "MemberPurgeController",
+   "source": "src/main/java/com/sni/bokaticowork/core/maintenance/MemberPurgeController.java",
+   "handler": "preview",
+   "declaredIn": "MemberPurgeController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('ROLE_ADMIN', 'ADMIN')",
+    "kind": "admin",
+    "permission": "ADMIN:ACCESS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "memberCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.maintenance.MemberPurgeService.PurgeReport>"
+  }
+ ],
+ "schemas": {
+  "AddressResponse": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "country": {
+     "type": "string"
+    },
+    "fullAddress": {
+     "type": "string"
+    }
+   }
+  },
+  "AddressRequest": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "countryCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "AuditLog": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "actorId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "actorEmail": {
+     "type": "string"
+    },
+    "action": {
+     "type": "string"
+    },
+    "ressource": {
+     "type": "string"
+    },
+    "auditStatus": {
+     "type": "string",
+     "enum": [
+      "SUCCESS",
+      "FAILURE"
+     ]
+    },
+    "module": {
+     "type": "string"
+    },
+    "ipAddress": {
+     "type": "string"
+    },
+    "userAgent": {
+     "type": "string"
+    },
+    "sessionId": {
+     "type": "string"
+    },
+    "errorCode": {
+     "type": "string"
+    },
+    "errorMessage": {
+     "type": "string"
+    },
+    "metadata": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    },
+    "diff": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "object"
+     }
+    }
+   }
+  },
+  "IdempotencyRecord": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "operation": {
+     "type": "string"
+    },
+    "idempotencyKey": {
+     "type": "string"
+    },
+    "requestHash": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PROCESSING",
+      "COMPLETED",
+      "FAILED"
+     ]
+    },
+    "responseBody": {
+     "type": "string"
+    },
+    "errorBody": {
+     "type": "string"
+    },
+    "completedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "OutboxEvent": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "eventType": {
+     "type": "string"
+    },
+    "aggregateType": {
+     "type": "string"
+    },
+    "aggregateId": {
+     "type": "string"
+    },
+    "payload": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "PROCESSING",
+      "PUBLISHED",
+      "FAILED",
+      "DEAD"
+     ]
+    },
+    "attemptCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "availableAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastError": {
+     "type": "string"
+    },
+    "publishedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "SettingsAuditLogs": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "settingKey": {
+     "type": "string"
+    },
+    "oldValue": {
+     "type": "string"
+    },
+    "newValue": {
+     "type": "string"
+    },
+    "changedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "changedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "CountryResponse": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "countryCode": {
+     "type": "string"
+    },
+    "phoneCode": {
+     "type": "string"
+    },
+    "defaultCurrency": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse"
+    },
+    "ohadaMember": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CountryRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "countryCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    },
+    "currencyCode": {
+     "type": "string"
+    },
+    "phoneCode": {
+     "type": "string"
+    },
+    "isOhadaMember": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CountryService.PhoneCodeEntry": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "countryCode": {
+     "type": "string"
+    },
+    "phoneCode": {
+     "type": "string"
+    }
+   }
+  },
+  "CurrencyResponse": {
+   "type": "object",
+   "properties": {
+    "currencyCode": {
+     "type": "string"
+    },
+    "currencyName": {
+     "type": "string"
+    }
+   }
+  },
+  "CurrencyRequest": {
+   "type": "object",
+   "properties": {
+    "currencyCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    },
+    "currencyName": {
+     "type": "string"
+    }
+   }
+  },
+  "EmailDeliveryResponse": {
+   "type": "object",
+   "properties": {
+    "emailNumber": {
+     "type": "string"
+    },
+    "provider": {
+     "type": "string"
+    },
+    "fromEmail": {
+     "type": "string"
+    },
+    "recipientEmail": {
+     "type": "string"
+    },
+    "subject": {
+     "type": "string"
+    },
+    "bodyType": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "QUEUED",
+      "SENDING",
+      "SENT",
+      "FAILED"
+     ]
+    },
+    "attempts": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastError": {
+     "type": "string"
+    },
+    "relatedType": {
+     "type": "string"
+    },
+    "relatedCode": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sentAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "failedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "MemberPurgeService.BatchPurgeReport": {
+   "type": "object",
+   "properties": {
+    "membersPurged": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "rowsAffected": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "reports": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.maintenance.MemberPurgeService.PurgeReport"
+     }
+    }
+   }
+  },
+  "MemberPurgeController.BatchPurgeRequest": {
+   "required": [
+    "memberCodes"
+   ],
+   "type": "object",
+   "properties": {
+    "memberCodes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "MemberPurgeService.MemberCandidate": {
+   "type": "object",
+   "properties": {
+    "memberCode": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "MemberPurgeService.PurgeReport": {
+   "type": "object",
+   "properties": {
+    "memberCode": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "dryRun": {
+     "type": "boolean"
+    },
+    "rowsAffected": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "rowsByTable": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int32"
+     }
+    },
+    "skippedTables": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "durationMs": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  }
+ },
+ "enums": {
+  "AuditStatus": [
+   "SUCCESS",
+   "FAILURE"
+  ],
+  "IdempotencyStatus": [
+   "PROCESSING",
+   "COMPLETED",
+   "FAILED"
+  ],
+  "OutboxEventStatus": [
+   "PENDING",
+   "PROCESSING",
+   "PUBLISHED",
+   "FAILED",
+   "DEAD"
+  ],
+  "EmailDeliveryStatus": [
+   "QUEUED",
+   "SENDING",
+   "SENT",
+   "FAILED"
+  ]
+ },
+ "names": {
+  "AddressResponse": "com.sni.bokaticowork.core.baseClasses.dto.response.AddressResponse",
+  "AddressRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest",
+  "AuditLog": "com.sni.bokaticowork.core.audit.model.AuditLog",
+  "AuditStatus": "com.sni.bokaticowork.core.audit.enums.AuditStatus",
+  "IdempotencyRecord": "com.sni.bokaticowork.core.idempotency.model.IdempotencyRecord",
+  "IdempotencyStatus": "com.sni.bokaticowork.core.idempotency.enums.IdempotencyStatus",
+  "OutboxEvent": "com.sni.bokaticowork.core.outbox.model.OutboxEvent",
+  "OutboxEventStatus": "com.sni.bokaticowork.core.outbox.enums.OutboxEventStatus",
+  "SettingsAuditLogs": "com.sni.bokaticowork.core.audit.model.SettingsAuditLogs",
+  "CountryResponse": "com.sni.bokaticowork.core.baseClasses.dto.response.CountryResponse",
+  "CountryRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.CountryRequest",
+  "CountryService.PhoneCodeEntry": "com.sni.bokaticowork.core.baseClasses.service.interfaces.CountryService.PhoneCodeEntry",
+  "CurrencyResponse": "com.sni.bokaticowork.core.baseClasses.dto.response.CurrencyResponse",
+  "CurrencyRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.CurrencyRequest",
+  "EmailDeliveryResponse": "com.sni.bokaticowork.core.communication.mailService.dto.response.EmailDeliveryResponse",
+  "EmailDeliveryStatus": "com.sni.bokaticowork.core.communication.mailService.enums.EmailDeliveryStatus",
+  "MemberPurgeService.BatchPurgeReport": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.BatchPurgeReport",
+  "MemberPurgeController.BatchPurgeRequest": "com.sni.bokaticowork.core.maintenance.MemberPurgeController.BatchPurgeRequest",
+  "MemberPurgeService.MemberCandidate": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.MemberCandidate",
+  "MemberPurgeService.PurgeReport": "com.sni.bokaticowork.core.maintenance.MemberPurgeService.PurgeReport"
+ }
+}

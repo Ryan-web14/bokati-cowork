@@ -1,0 +1,2773 @@
+{
+ "module": "booking",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "list",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "resourceCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.booking.enums.BookingStatus"
+    },
+    {
+     "in": "query",
+     "name": "startedFrom",
+     "required": false,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "query",
+     "name": "startedTo",
+     "required": false,
+     "type": "LocalDateTime"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=startedAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "create",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/cancellation-policy",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "cancellationPolicy",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CANCEL"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/check-availability",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "checkAvailability",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/check-in/qr/{checkInToken}",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "checkInByToken",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CHECKIN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingCheckRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "checkInToken",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/holds",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "createHold",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingHoldRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingHoldResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/holds/expire-due",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "expireHolds",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "100",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<Integer>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/holds/{holdNumber}/release",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "releaseHold",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "holdNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingHoldResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/metrics/overview",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "metrics",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingMetricsOverviewResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/notifications/dispatch-due",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "dispatchDueNotifications",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "100",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<Integer>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/policies",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "listPolicies",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingAudiencePolicyResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/policies",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "createPolicy",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingAudiencePolicyRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingAudiencePolicyResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/quota-overrides",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "listQuotaOverrides",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/quota-overrides",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "createQuotaOverride",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingQuotaOverrideRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/recurring",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "createRecurring",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.CreateRecurringBookingRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/repair",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "repair",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "100",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingRepairResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/search",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "basicSearch",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/suggestions",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "suggestions",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "get",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/approve",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "approve",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingApprovalRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/cancel",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "cancel",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CANCEL"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/change-resource",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "changeResource",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingChangeResourceRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/check-in",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "checkIn",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CHECKIN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingCheckRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/check-out",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "checkOut",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CHECKIN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingCheckRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/complete",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "complete",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/confirm",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "confirm",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/early-check-in",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "earlyCheckIn",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingCheckRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/events",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "events",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingEventResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/history",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "history",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingStatusHistoryResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/no-show",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "noShow",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CANCEL"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/notifications/reminder",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "queueReminder",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "minutesBefore",
+     "required": false,
+     "default": "30",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<Integer>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/participants",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "addParticipant",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingParticipantResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/participants/{participantId}",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "removeParticipant",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "participantId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingParticipantResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/reject",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "reject",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CANCEL"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingApprovalRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/reschedule",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "reschedule",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingRescheduleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/start",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "start",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/{bookingNumber}/transfer",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "transfer",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.BookingTransferRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/waitlist",
+   "package": "features.booking.controller",
+   "controller": "BookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java",
+   "handler": "list",
+   "declaredIn": "BookingWaitlistController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.booking.enums.BookingWaitlistStatus"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/waitlist",
+   "package": "features.booking.controller",
+   "controller": "BookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java",
+   "handler": "join",
+   "declaredIn": "BookingWaitlistController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.JoinBookingWaitlistRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/waitlist/expire-offers",
+   "package": "features.booking.controller",
+   "controller": "BookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java",
+   "handler": "expireOffers",
+   "declaredIn": "BookingWaitlistController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "100",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<Integer>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/waitlist/promote-available",
+   "package": "features.booking.controller",
+   "controller": "BookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java",
+   "handler": "promoteAvailable",
+   "declaredIn": "BookingWaitlistController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "100",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<Integer>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/bookings/waitlist/{id}/cancel",
+   "package": "features.booking.controller",
+   "controller": "BookingWaitlistController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingWaitlistController.java",
+   "handler": "cancel",
+   "declaredIn": "BookingWaitlistController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CANCEL"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/bookings/check-in/scan",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "confirmScanCheckIn",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "checkInToken",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/bookings/check-in/scan/{checkInToken}",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "scanCheckIn",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "checkInToken",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/bookings/check-in/scanner-setup",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "scannerSetupPage",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/bookings/check-in/scanner-setup",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "scannerSetup",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "setupKey",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/bookings/check-in/scanner-verify",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "scannerVerify",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "checkInToken",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "adminCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/bookings/check-in/self",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "clientSelfCheckIn",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "produces": [
+    "application/json"
+   ],
+   "params": [
+    {
+     "in": "query",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "lat",
+     "required": false,
+     "type": "Double"
+    },
+    {
+     "in": "query",
+     "name": "lng",
+     "required": false,
+     "type": "Double"
+    }
+   ],
+   "response": "ResponseEntity<Map<String, Object>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/bookings/csat/{bookingNumber}",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "recordCsat",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "score",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/bookings/{bookingNumber}",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "view",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/bookings/{bookingNumber}/confirmation.pdf",
+   "package": "features.booking.controller",
+   "controller": "PublicBookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/PublicBookingController.java",
+   "handler": "confirmationPdf",
+   "declaredIn": "PublicBookingController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "bookingNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  }
+ ],
+ "schemas": {
+  "BookingResponse": {
+   "type": "object",
+   "properties": {
+    "bookingNumber": {
+     "type": "string"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "resourceTypeCode": {
+     "type": "string"
+    },
+    "resourceGroupCode": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string"
+    },
+    "contactPhone": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "PENDING_APPROVAL",
+      "PENDING_PAYMENT",
+      "REJECTED",
+      "CONFIRMED",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "NO_SHOW",
+      "EXPIRED"
+     ]
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "durationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "bookingUnit": {
+     "type": "string",
+     "enum": [
+      "HOUR",
+      "HALF_DAY",
+      "DAY",
+      "WEEK",
+      "MONTH"
+     ]
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "paymentStatus": {
+     "type": "string",
+     "enum": [
+      "COVERED",
+      "PENDING",
+      "PAID",
+      "CANCELLED"
+     ]
+    },
+    "paymentStatusLabel": {
+     "type": "string"
+    },
+    "subscriptionNumber": {
+     "type": "string"
+    },
+    "passNumber": {
+     "type": "string"
+    },
+    "entitlementCode": {
+     "type": "string"
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "subtotalAmount": {
+     "type": "number"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "metadataJson": {
+     "type": "string"
+    },
+    "checkInToken": {
+     "type": "string"
+    },
+    "checkInQrValue": {
+     "type": "string"
+    },
+    "virtualMeetingUrl": {
+     "type": "string"
+    },
+    "confirmedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "completedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "cancelledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lines": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingLineResponse"
+     }
+    },
+    "participants": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingParticipantResponse"
+     }
+    },
+    "resourceCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "wholeResourceBooking": {
+     "type": "boolean"
+    },
+    "seatsLabel": {
+     "type": "string"
+    }
+   }
+  },
+  "CreateBookingRequest": {
+   "required": [
+    "endedAt",
+    "paymentMode",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "walkIn": {
+     "type": "boolean"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string",
+     "format": "email"
+    },
+    "contactPhone": {
+     "type": "string"
+    },
+    "idempotencyKey": {
+     "type": "string"
+    },
+    "holdNumber": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "confirmImmediately": {
+     "type": "boolean"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "metadataJson": {
+     "type": "string"
+    },
+    "bookingUnit": {
+     "type": "string",
+     "enum": [
+      "HOUR",
+      "HALF_DAY",
+      "DAY",
+      "WEEK",
+      "MONTH"
+     ]
+    },
+    "participants": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest"
+     }
+    },
+    "billingCompanyCode": {
+     "type": "string"
+    }
+   }
+  },
+  "CancellationPolicyResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "hoursBeforeStart": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "refundPercentage": {
+     "type": "number"
+    },
+    "ruleOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingAvailabilityResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "durationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "available": {
+     "type": "boolean"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "bookingUnit": {
+     "type": "string",
+     "enum": [
+      "HOUR",
+      "HALF_DAY",
+      "DAY",
+      "WEEK",
+      "MONTH"
+     ]
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingAvailabilityRequest": {
+   "required": [
+    "endedAt",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "walkIn": {
+     "type": "boolean"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string",
+     "format": "email"
+    },
+    "contactPhone": {
+     "type": "string"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "bookingUnit": {
+     "type": "string",
+     "enum": [
+      "HOUR",
+      "HALF_DAY",
+      "DAY",
+      "WEEK",
+      "MONTH"
+     ]
+    },
+    "billingCompanyCode": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingCheckRequest": {
+   "type": "object",
+   "properties": {
+    "actor": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingHoldResponse": {
+   "type": "object",
+   "properties": {
+    "holdNumber": {
+     "type": "string"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "CONFIRMED",
+      "RELEASED",
+      "EXPIRED"
+     ]
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CreateBookingHoldRequest": {
+   "required": [
+    "endedAt",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "walkIn": {
+     "type": "boolean"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string",
+     "format": "email"
+    },
+    "contactPhone": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "ttlMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "idempotencyKey": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingMetricsOverviewResponse": {
+   "type": "object",
+   "properties": {
+    "draftBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "pendingApprovalBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "confirmedBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completedBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "cancelledBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "noShowBookings": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activeHolds": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "confirmedAmount": {
+     "type": "number"
+    },
+    "completedAmount": {
+     "type": "number"
+    }
+   }
+  },
+  "BookingAudiencePolicyResponse": {
+   "type": "object",
+   "properties": {
+    "policyNumber": {
+     "type": "string"
+    },
+    "audienceType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "resourceTypeCode": {
+     "type": "string"
+    },
+    "resourceGroupCode": {
+     "type": "string"
+    },
+    "approvalRequired": {
+     "type": "boolean"
+    },
+    "maxActiveBookings": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingsPerDay": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingsPerWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingsPerMonth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxNoShowsPerMonth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minBookingNoticeMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CreateBookingAudiencePolicyRequest": {
+   "required": [
+    "audienceType"
+   ],
+   "type": "object",
+   "properties": {
+    "audienceType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "resourceTypeCode": {
+     "type": "string"
+    },
+    "resourceGroupCode": {
+     "type": "string"
+    },
+    "approvalRequired": {
+     "type": "boolean"
+    },
+    "maxActiveBookings": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingsPerDay": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingsPerWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingsPerMonth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxNoShowsPerMonth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "minBookingNoticeMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxBookingDurationMinutes": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingQuotaOverrideResponse": {
+   "type": "object",
+   "properties": {
+    "overrideNumber": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "extraActiveBookings": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerDay": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerMonth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "approvedBy": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "CreateBookingQuotaOverrideRequest": {
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "extraActiveBookings": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerDay": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerWeek": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "extraBookingsPerMonth": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "approvedBy": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "CreateRecurringBookingRequest": {
+   "required": [
+    "booking",
+    "frequency"
+   ],
+   "type": "object",
+   "properties": {
+    "booking": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.CreateBookingRequest"
+    },
+    "frequency": {
+     "type": "string",
+     "enum": [
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY"
+     ]
+    },
+    "intervalValue": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "occurrences": {
+     "maximum": 60,
+     "minimum": 2,
+     "type": "integer",
+     "format": "int32"
+    },
+    "endDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "excludedDates": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "format": "date"
+     }
+    }
+   }
+  },
+  "BookingRepairResponse": {
+   "type": "object",
+   "properties": {
+    "inspected": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "repaired": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "failed": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "BookingSuggestionResponse": {
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "remainingCapacity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "estimatedAmount": {
+     "type": "number"
+    },
+    "reason": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingApprovalRequest": {
+   "type": "object",
+   "properties": {
+    "actor": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingStatusChangeRequest": {
+   "type": "object",
+   "properties": {
+    "changedBy": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingChangeResourceRequest": {
+   "required": [
+    "newResourceCode"
+   ],
+   "type": "object",
+   "properties": {
+    "newResourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "actor": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingEventResponse": {
+   "type": "object",
+   "properties": {
+    "eventNumber": {
+     "type": "string"
+    },
+    "bookingNumber": {
+     "type": "string"
+    },
+    "eventType": {
+     "type": "string",
+     "enum": [
+      "BOOKING_CREATED",
+      "BOOKING_HOLD_CREATED",
+      "BOOKING_HOLD_EXPIRED",
+      "BOOKING_CONFIRMED",
+      "BOOKING_APPROVED",
+      "BOOKING_REJECTED",
+      "BOOKING_STARTED",
+      "BOOKING_CHECKED_IN",
+      "BOOKING_CHECKED_OUT",
+      "BOOKING_COMPLETED",
+      "BOOKING_CANCELLED",
+      "BOOKING_NO_SHOW",
+      "RESOURCE_RESERVED",
+      "RESOURCE_RELEASED",
+      "ENTITLEMENT_RESERVED",
+      "ENTITLEMENT_CONSUMED",
+      "ENTITLEMENT_RELEASED",
+      "USAGE_RECORDED",
+      "EMAIL_QUEUED",
+      "EMAIL_SENT",
+      "EMAIL_FAILED",
+      "REPAIR_APPLIED",
+      "QUOTA_OVERRIDE_APPLIED",
+      "BOOKING_RESCHEDULED",
+      "BOOKING_TRANSFERRED",
+      "BOOKING_RESOURCE_CHANGED"
+     ]
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "payloadJson": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "BookingStatusHistoryResponse": {
+   "type": "object",
+   "properties": {
+    "fromStatus": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "PENDING_APPROVAL",
+      "PENDING_PAYMENT",
+      "REJECTED",
+      "CONFIRMED",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "NO_SHOW",
+      "EXPIRED"
+     ]
+    },
+    "toStatus": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "PENDING_APPROVAL",
+      "PENDING_PAYMENT",
+      "REJECTED",
+      "CONFIRMED",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "NO_SHOW",
+      "EXPIRED"
+     ]
+    },
+    "changedBy": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "changedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "BookingParticipantResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "memberCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "HOST",
+      "GUEST",
+      "ORGANIZER",
+      "MEMBER"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "INVITED",
+      "CONFIRMED",
+      "DECLINED",
+      "REMOVED"
+     ]
+    }
+   }
+  },
+  "BookingParticipantRequest": {
+   "type": "object",
+   "properties": {
+    "memberCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "role": {
+     "type": "string",
+     "enum": [
+      "HOST",
+      "GUEST",
+      "ORGANIZER",
+      "MEMBER"
+     ]
+    }
+   }
+  },
+  "BookingRescheduleRequest": {
+   "required": [
+    "newEndedAt",
+    "newStartedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "newStartedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "newEndedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "actor": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingTransferRequest": {
+   "required": [
+    "newOwnerCode",
+    "newOwnerType"
+   ],
+   "type": "object",
+   "properties": {
+    "newOwnerType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "newOwnerCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "newContactName": {
+     "type": "string"
+    },
+    "newContactEmail": {
+     "type": "string"
+    },
+    "newContactPhone": {
+     "type": "string"
+    },
+    "actor": {
+     "type": "string"
+    },
+    "note": {
+     "type": "string"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    }
+   }
+  },
+  "BookingWaitlistEntryResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resourceCode": {
+     "type": "string"
+    },
+    "resourceName": {
+     "type": "string"
+    },
+    "ownerType": {
+     "type": "string",
+     "enum": [
+      "MEMBER",
+      "CUSTOMER",
+      "BUSINESS_ENTITY"
+     ]
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string"
+    },
+    "contactPhone": {
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "WAITING",
+      "OFFERED",
+      "BOOKED",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    },
+    "offeredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "alternatives": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse"
+     }
+    }
+   }
+  },
+  "JoinBookingWaitlistRequest": {
+   "required": [
+    "endedAt",
+    "paymentMode",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "identityLookup": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.BookingIdentityLookup"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    }
+   }
+  },
+  "BookingLineResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "lineType": {
+     "type": "string",
+     "enum": [
+      "RESOURCE",
+      "ENTITLEMENT",
+      "BILLABLE"
+     ]
+    },
+    "description": {
+     "type": "string"
+    },
+    "quantity": {
+     "type": "number"
+    },
+    "unit": {
+     "type": "string",
+     "enum": [
+      "HOUR",
+      "HALF_DAY",
+      "DAY",
+      "WEEK",
+      "MONTH"
+     ]
+    },
+    "unitPrice": {
+     "type": "number"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "entitlementCode": {
+     "type": "string"
+    },
+    "billableNumber": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingIdentityLookup": {
+   "type": "object",
+   "properties": {
+    "memberId": {
+     "type": "string"
+    },
+    "customerId": {
+     "type": "string"
+    },
+    "businessCode": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "walkIn": {
+     "type": "boolean"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string"
+    },
+    "contactPhone": {
+     "type": "string"
+    }
+   }
+  }
+ },
+ "enums": {
+  "SubscriberType": [
+   "MEMBER",
+   "CUSTOMER",
+   "BUSINESS_ENTITY"
+  ],
+  "BookingStatus": [
+   "DRAFT",
+   "PENDING_APPROVAL",
+   "PENDING_PAYMENT",
+   "REJECTED",
+   "CONFIRMED",
+   "IN_PROGRESS",
+   "COMPLETED",
+   "CANCELLED",
+   "NO_SHOW",
+   "EXPIRED"
+  ],
+  "BookingWaitlistStatus": [
+   "WAITING",
+   "OFFERED",
+   "BOOKED",
+   "CANCELLED",
+   "EXPIRED"
+  ]
+ },
+ "names": {
+  "BookingResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingResponse",
+  "SubscriberType": "com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType",
+  "BookingStatus": "com.sni.bokaticowork.features.booking.enums.BookingStatus",
+  "CreateBookingRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingRequest",
+  "CancellationPolicyResponse": "com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse",
+  "BookingAvailabilityResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse",
+  "BookingAvailabilityRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest",
+  "BookingCheckRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingCheckRequest",
+  "BookingHoldResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingHoldResponse",
+  "CreateBookingHoldRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingHoldRequest",
+  "BookingMetricsOverviewResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingMetricsOverviewResponse",
+  "BookingAudiencePolicyResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingAudiencePolicyResponse",
+  "CreateBookingAudiencePolicyRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingAudiencePolicyRequest",
+  "BookingQuotaOverrideResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingQuotaOverrideResponse",
+  "CreateBookingQuotaOverrideRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingQuotaOverrideRequest",
+  "CreateRecurringBookingRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateRecurringBookingRequest",
+  "BookingRepairResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingRepairResponse",
+  "BookingSuggestionResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingSuggestionResponse",
+  "BookingApprovalRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingApprovalRequest",
+  "BookingStatusChangeRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingStatusChangeRequest",
+  "BookingChangeResourceRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingChangeResourceRequest",
+  "BookingEventResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingEventResponse",
+  "BookingStatusHistoryResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingStatusHistoryResponse",
+  "BookingParticipantResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingParticipantResponse",
+  "BookingParticipantRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest",
+  "BookingRescheduleRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingRescheduleRequest",
+  "BookingTransferRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingTransferRequest",
+  "BookingWaitlistEntryResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingWaitlistEntryResponse",
+  "BookingWaitlistStatus": "com.sni.bokaticowork.features.booking.enums.BookingWaitlistStatus",
+  "JoinBookingWaitlistRequest": "com.sni.bokaticowork.features.booking.dto.request.JoinBookingWaitlistRequest",
+  "BookingLineResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingLineResponse",
+  "BookingIdentityLookup": "com.sni.bokaticowork.features.booking.dto.request.BookingIdentityLookup"
+ }
+}
