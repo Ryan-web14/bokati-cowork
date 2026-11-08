@@ -159,8 +159,13 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("CLIENT", actionFor("CLIENT", method));
         }
         if (path.startsWith("/kyc")) {
-            if (path.contains("/approve")) return permission("KYC", "APPROVE");
-            if (path.contains("/reject")) return permission("KYC", "REJECT");
+            // Les decisions en masse (bulk-approve, bulk-reject et ses alias) ne contiennent ni
+            // /approve ni /reject : elles tombaient sur KYC:READ, une lecture suffisait a valider.
+            if (path.contains("/approve") || path.contains("/bulk-approve")) return permission("KYC", "APPROVE");
+            if (path.contains("/reject") || path.contains("/bulk-reject")
+                    || path.contains("/bulk-disapprove") || path.contains("/bulk-desapprove")) {
+                return permission("KYC", "REJECT");
+            }
             return permission("KYC", "READ");
         }
         if (path.startsWith("/documents")) {

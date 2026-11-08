@@ -131,6 +131,26 @@ class AdminApiAuthorizationManagerTest {
                 .isEqualTo("ADMIN:ACCESS");
     }
 
+    @Test
+    void shouldRequireTheKycDecisionPermissionsForBulkReviews() {
+        // Regression : seuls /approve et /reject etaient reconnus. Les validations et refus en
+        // masse tombaient sur KYC:READ, un simple droit de lecture suffisait a les decider.
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/documents/bulk-approve"))
+                .isEqualTo("KYC:APPROVE");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/cases/KYC-1/documents/bulk-approve"))
+                .isEqualTo("KYC:APPROVE");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/documents/bulk-reject"))
+                .isEqualTo("KYC:REJECT");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/documents/bulk-disapprove"))
+                .isEqualTo("KYC:REJECT");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/documents/bulk-desapprove"))
+                .isEqualTo("KYC:REJECT");
+        assertThat(requiredPermissionFor("POST", BASE + "/kyc/cases/KYC-1/documents/bulk-reject"))
+                .isEqualTo("KYC:REJECT");
+        assertThat(requiredPermissionFor("GET", BASE + "/kyc/documents/review-queue"))
+                .isEqualTo("KYC:READ");
+    }
+
     /** Renvoie la permission exigee en refusant l'appel avec un compte sans aucune permission. */
     private String requiredPermissionFor(String method, String uri) {
         MockHttpServletRequest request = new MockHttpServletRequest(method, uri);
