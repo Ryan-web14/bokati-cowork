@@ -118,4 +118,27 @@ class MobileMoneyRefundSafetyTest {
 
         verify(allocationService).reverseAllocations(original, new BigDecimal("10"));
     }
+
+    @Test
+    @DisplayName("Un remboursement partiel publie un evenement marque partiel, un remboursement total un evenement total")
+    void partialRefundIsFlaggedInTheWorkflowEvent() {
+        original.setPaymentMethod(PaymentMethod.CASH);
+        original.setProviderReference(null);
+
+        service.refund("TXN-1", new RefundPaymentRequest(new BigDecimal("4"), "Geste commercial", "admin@x.com"));
+        verify(outboxService).publish(org.mockito.ArgumentMatchers.eq("PAYMENT_TRANSACTION_WORKFLOW"), anyString(), anyString(),
+                org.mockito.ArgumentMatchers.argThat(payload -> Boolean.FALSE.equals(((java.util.Map<?, ?>) payload).get("fullRefund"))));
+        org.assertj.core.api.Assertions.assertThat(original.getStatus()).isEqualTo(PaymentTransactionStatus.SUCCEEDED);
+    }
+
+    @Test
+    @DisplayName("Le remboursement qui solde la transaction publie un evenement total")
+    void fullRefundIsFlaggedInTheWorkflowEvent() {
+        original.setPaymentMethod(PaymentMethod.CASH);
+        original.setProviderReference(null);
+
+        service.refund("TXN-1", request());
+        verify(outboxService).publish(org.mockito.ArgumentMatchers.eq("PAYMENT_TRANSACTION_WORKFLOW"), anyString(), anyString(),
+                org.mockito.ArgumentMatchers.argThat(payload -> Boolean.TRUE.equals(((java.util.Map<?, ?>) payload).get("fullRefund"))));
+    }
 }

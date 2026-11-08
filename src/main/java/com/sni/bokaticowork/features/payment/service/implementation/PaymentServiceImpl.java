@@ -915,7 +915,7 @@ public class PaymentServiceImpl implements PaymentService {
             intentRepository.save(intent);
         }
 
-        publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus());
+        publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus(), fullyRefunded);
         return mapper.toTransactionResponse(refund);
     }
 
@@ -988,7 +988,7 @@ public class PaymentServiceImpl implements PaymentService {
                         ? PaymentIntentStatus.REFUNDED : PaymentIntentStatus.REVERSED);
                 intentRepository.save(intent);
             }
-            publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus());
+            publishTransactionWorkflow(refund.getTransactionNumber(), refund.getStatus(), fullyRefunded);
             return mapper.toTransactionResponse(refund);
         }
 
@@ -1061,6 +1061,16 @@ public class PaymentServiceImpl implements PaymentService {
                 "PAYMENT",
                 transactionNumber,
                 java.util.Map.of("transactionNumber", transactionNumber, "status", status.name())
+        );
+    }
+
+    /** Remboursement · fullRefund dit s'il solde la transaction d'origine, seul cas qui annule factures et droits. */
+    private void publishTransactionWorkflow(String transactionNumber, PaymentTransactionStatus status, boolean fullRefund) {
+        outboxService.publish(
+                "PAYMENT_TRANSACTION_WORKFLOW",
+                "PAYMENT",
+                transactionNumber,
+                java.util.Map.of("transactionNumber", transactionNumber, "status", status.name(), "fullRefund", fullRefund)
         );
     }
 
