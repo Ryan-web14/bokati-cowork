@@ -31,6 +31,16 @@ public abstract class DocumentMapperDecorator implements DocumentMapper {
             response.setDocumentTypeCode(document.getDocumentType().getCode());
             response.setDocumentTypeName(document.getDocumentType().getName());
         }
+        // Le dossier de la GED : sans lui, la fiche ne dit pas ou le document est range.
+        // Le dossier est charge a la demande : hors transaction, la fiche reste servie sans lui.
+        if (document.getFolder() != null) {
+            try {
+                response.setFolderCode(document.getFolder().getCode());
+                response.setFolderName(document.getFolder().getName());
+            } catch (org.hibernate.LazyInitializationException ignored) {
+                // Appel hors session : le dossier n'est pas lisible ici.
+            }
+        }
         if (StringUtils.hasText(document.getCode()) && StringUtils.hasText(document.getFileUrl())) {
             String previewUrl = documentPreviewUrl(document.getCode());
             response.setPreviewUrl(previewUrl);

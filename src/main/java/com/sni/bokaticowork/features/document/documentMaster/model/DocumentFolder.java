@@ -84,6 +84,16 @@ public class DocumentFolder {
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
 
+    /** Mis a la corbeille de la GED : restaurable avec les autres elements du meme lot. */
+    @Column(name = "trashed_at")
+    private Instant trashedAt;
+
+    @Column(name = "trashed_by")
+    private Long trashedBy;
+
+    @Column(name = "trash_batch", length = 40)
+    private String trashBatch;
+
     @PrePersist
     public void prePersist() {
         Instant now = Instant.now();

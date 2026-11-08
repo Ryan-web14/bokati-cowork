@@ -237,6 +237,12 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
                 || path.startsWith("/document-requirements") || path.startsWith("/document-retention-policies")) {
             return permission("SYSTEM", "SETTINGS");
         }
+        // Explorateur de la GED : lire, deposer, puis tout le reste (ranger, renommer, corbeille).
+        if (path.startsWith("/ged/") || path.equals("/ged")) {
+            if (HttpMethod.GET.matches(method)) return permission("DOCUMENT", "READ");
+            if (path.equals("/ged/files") && HttpMethod.POST.matches(method)) return permission("DOCUMENT", "UPLOAD");
+            return permission("DOCUMENT", "WRITE");
+        }
         if (path.startsWith("/review")) {
             return permission("DOCUMENT", "REVIEW");
         }

@@ -13,7 +13,7 @@ public class DocumentUploadMetadataRequest {
     @NotNull
     private DocumentOwnerType ownerType;
 
-    @NotBlank
+    /** Obligatoire, sauf pour un document {@code INTERNAL}. */
     private String ownerCode;
 
     @NotBlank
@@ -29,4 +29,7 @@ public class DocumentUploadMetadataRequest {
     private LocalDate issueDate;
 
     private LocalDate expiryDate;
+
+    /** Dossier de la GED ou ranger le document, facultatif. */
+    private String folderCode;
 }

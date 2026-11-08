@@ -32,7 +32,7 @@ class DocumentReviewReversalTest {
 
     private final DocumentServiceImpl service = new DocumentServiceImpl(
             null, null, null, null, null, null, null, null, null, null, null,
-            null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, null, null, null);
 
     private void review(DocumentStatus current, DocumentStatus decision) {
         Document document = Document.builder().code("DOC-202607-000035").status(current).build();
