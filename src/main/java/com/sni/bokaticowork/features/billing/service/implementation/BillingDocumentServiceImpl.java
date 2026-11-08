@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.billing.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
@@ -1374,7 +1375,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             validate(creditDoc.getDocumentNumber());
         }
         if (Boolean.TRUE.equals(request.applyImmediately())) {
-            applyCreditNote(creditDoc.getDocumentNumber());
+            applyCreditNote(creditDoc.getDocumentNumber(), false);
         }
         return get(creditDoc.getDocumentNumber());
     }
@@ -1445,9 +1446,29 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     @Override
     public BillingDocumentResponse applyCreditNote(String creditNoteNumber) {
-        BillingDocument creditNote = serviceByNumber(creditNoteNumber);
+        return applyCreditNote(creditNoteNumber, true);
+    }
+
+    /**
+     * @param requireSealed vrai pour l'imputation demandee par l'API · meme regle que l'imputation
+     *                      sur une autre facture et le reversement au portefeuille, un avoir non
+     *                      scelle n'a pas de valeur. L'imputation immediate a la creation
+     *                      (applyImmediately) garde son comportement d'origine.
+     */
+    private BillingDocumentResponse applyCreditNote(String creditNoteNumber, boolean requireSealed) {
+        // Sous verrou · deux imputations simultanees lisaient toutes deux l'avoir non consomme
+        // et reglaient deux fois la facture.
+        BillingDocument creditNote = lockedByNumber(creditNoteNumber);
         if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE || !"INVOICE".equalsIgnoreCase(creditNote.getSourceType())) {
             throw new BadRequestException("Credit note is not linked to an invoice");
+        }
+        if (requireSealed && !Boolean.TRUE.equals(creditNote.getLocked())) {
+            throw new ConflictException("credit_note",
+                    "l'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre impute");
+        }
+        // Un avoir consomme (ISSUED) ne s'impute plus
+        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
+            throw new ConflictException("credit_note", "l'avoir " + creditNoteNumber + " a deja ete consomme");
         }
         BillingDocument invoice = applyPayment(creditNote.getSourceCode(), creditNote.getTotalAmount());
         creditNote.setStatus(BillingDocumentStatus.ISSUED);
@@ -1803,7 +1824,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     @Override
     public BillingDocumentResponse applyCreditNoteToInvoice(String creditNoteNumber, String targetInvoiceNumber) {
-        BillingDocument creditNote = serviceByNumber(creditNoteNumber);
+        // Sous verrou, comme applyCreditNote · sinon deux imputations concurrentes passent le controle de statut.
+        BillingDocument creditNote = lockedByNumber(creditNoteNumber);
         BillingDocument targetInvoice = serviceByNumber(targetInvoiceNumber);
 
         if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE) {
