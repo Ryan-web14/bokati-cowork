@@ -121,7 +121,13 @@ public class CouponService {
     /** Codes dont un abonné dispose aujourd'hui, pour les lui montrer avant qu'il ait à en saisir un. */
     @Transactional(readOnly = true)
     public List<Coupon> availableFor(String subscriberType, String subscriberCode) {
-        return couponRepository.findAvailableFor(subscriberType, subscriberCode, Instant.now());
+        List<Coupon> available = couponRepository.findAvailableFor(subscriberType, subscriberCode, Instant.now());
+        // Requete native, sans graphe : promotion et lot charges ici, CouponResponse.from les lit hors transaction
+        available.forEach(coupon -> {
+            org.hibernate.Hibernate.initialize(coupon.getPromotion());
+            org.hibernate.Hibernate.initialize(coupon.getBatch());
+        });
+        return available;
     }
 
     // -----------------------------------------------------------------------------------------

@@ -20,6 +20,8 @@ public class PassStatusHistory {
     @IdGeneration
     private Long id;
 
+    // Rendu tel quel par PassController : le pass y figure sans ses liens paresseux, lus hors transaction
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"subscription", "planVersion", "passVersion", "hibernateLazyInitializer", "handler"})
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pass_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_pass_status_history_pass"))

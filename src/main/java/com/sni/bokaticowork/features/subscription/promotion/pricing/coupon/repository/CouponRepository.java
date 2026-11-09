@@ -2,6 +2,7 @@ package com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.repo
 
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.model.Coupon;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,8 @@ import java.util.Optional;
 
 public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
+    /** Promotion et lot lus avec le coupon : CouponResponse.from les lit hors transaction. */
+    @EntityGraph(attributePaths = {"promotion", "batch"})
     @Query("SELECT c FROM Coupon c WHERE lower(c.code) = lower(:code)")
     Optional<Coupon> findByCode(@Param("code") String code);
 

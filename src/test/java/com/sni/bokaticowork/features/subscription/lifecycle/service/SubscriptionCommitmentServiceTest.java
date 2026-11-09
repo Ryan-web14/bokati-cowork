@@ -155,4 +155,18 @@ class SubscriptionCommitmentServiceTest {
         assertEquals(LocalDate.of(2026, 12, 31), rolling.getCommitmentEnd());
         verify(commitmentRepository).delete(falling);
     }
+
+    @Test
+    void setRereadsTheSubscriptionItReceivesSoTheViewNeverMeetsADetachedProxy() {
+        // L'abonnement recu vient du controleur, lu dans une autre transaction
+        Subscription reread = Subscription.builder().id(1L).subscriptionNumber("SUB-1").status(SubscriptionStatus.ACTIVE)
+                .startDate(LocalDate.of(2026, 1, 1)).billingCycle(BillingCycle.MONTHLY).build();
+        when(subscriptionRepository.findById(1L)).thenReturn(Optional.of(reread));
+
+        SubscriptionCommitment c = service.set(subscription, new SubscriptionCommitmentService.Spec(12, null, null, null, null, null),
+                SubscriptionCommitment.Source.MANUAL, "alice");
+
+        assertSame(reread, c.getSubscription());
+        verify(eventWriter).writeEvent(org.mockito.ArgumentMatchers.same(reread), any(), any());
+    }
 }
