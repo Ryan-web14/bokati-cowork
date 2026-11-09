@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{fragments/page :: pagehead('Vérification indisponible · Elle A Osé')}"></head>
+<body>
+<main class="page">
+  <div th:replace="~{fragments/page :: brand}"></div>
+  <div th:replace="~{fragments/page :: brand-rule}"></div>
+
+  <p class="state ko">Indisponible</p>
+  <h1>La vérification n'a pas pu aboutir</h1>
+  <p class="lede">Une erreur de notre côté empêche de vérifier cette référence pour le moment. Cela ne dit rien du document : réessayez dans quelques minutes, ou contactez-nous en citant le code ci-dessous.</p>
+
+  <dl class="rows">
+    <div><dt>Type recherché</dt><dd th:text="${type}">Type</dd></div>
+    <div><dt>Référence</dt><dd class="mono" th:text="${ref}">REF</dd></div>
+    <div><dt>Code d'incident</dt><dd class="mono" th:text="${incident}">INCIDENT</dd></div>
+  </dl>
+
+  <div th:replace="~{fragments/page :: foot('Elle A Osé · Pointe-Noire')}"></div>
+</main>
+</body>
+</html>

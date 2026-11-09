@@ -112,8 +112,9 @@ class LazyViewGraphsIT extends PostgresIntegrationTestBase {
         assertThat(Hibernate.isInitialized(history.getFirst().getPass())).isTrue();
         entityManager.clear();
 
-        String json = JsonMapper.builder().build().writeValueAsString(events.getFirst());
-        assertThat(json).contains("\"passNumber\":\"PAS-IT-LAZY\"").doesNotContain("\"subscription\"");
-        assertThat(JsonMapper.builder().build().writeValueAsString(history.getFirst())).contains("PAS-IT-LAZY");
+        // Les routes rendent des vues : le numero du pass, sans son abonnement ni ses versions
+        String json = JsonMapper.builder().build().writeValueAsString(
+                com.sni.bokaticowork.features.subscription.subscription.controller.PassController.PassEventView.of("PAS-IT-LAZY", events.getFirst()));
+        assertThat(json).contains("\"passNumber\":\"PAS-IT-LAZY\"", "\"eventType\":\"PASS_CREATED\"").doesNotContain("\"subscription\"");
     }
 }
