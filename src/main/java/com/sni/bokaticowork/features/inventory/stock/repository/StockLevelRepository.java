@@ -6,6 +6,7 @@ import com.sni.bokaticowork.features.inventory.stock.model.StockLevel;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -40,6 +41,8 @@ public interface StockLevelRepository extends JpaRepository<StockLevel, Long> {
             """)
     List<StockLevel> findAllByItemIdOrderByQuantityAvailableAsc(@Param("itemId") Long itemId);
 
+    /** L'emplacement est charge avec le niveau : la suggestion de prelevement le lit hors transaction. */
+    @EntityGraph(attributePaths = "location")
     List<StockLevel> findAllByItemAndQuantityAvailableGreaterThanOrderByQuantityAvailableDesc(InventoryItem item, java.math.BigDecimal quantity);
 
     @Query("""

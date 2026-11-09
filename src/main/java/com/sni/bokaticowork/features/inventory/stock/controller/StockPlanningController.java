@@ -78,13 +78,13 @@ public class StockPlanningController {
         conversion.setToUnitCode(to);
         conversion.setFactor(request.getFactor());
         conversion.setActive(true);
-        return ResponseEntity.ok(toResponse(conversionRepository.save(conversion)));
+        return ResponseEntity.ok(toResponse(conversionRepository.save(conversion), item));
     }
 
     @GetMapping("/unit-conversions/{itemCode}")
     public ResponseEntity<List<InventoryUnitConversionResponse>> conversions(@PathVariable String itemCode) {
         InventoryItem item = itemLookupService.findByItemCodeOrThrow(itemCode);
-        return ResponseEntity.ok(conversionRepository.findAllByItemAndActiveTrue(item).stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(conversionRepository.findAllByItemAndActiveTrue(item).stream().map(conversion -> toResponse(conversion, item)).toList());
     }
 
     @GetMapping("/unit-conversions/{itemCode}/convert")
@@ -99,9 +99,13 @@ public class StockPlanningController {
         return ResponseEntity.ok(quantity.multiply(conversion.getFactor()));
     }
 
-    private InventoryUnitConversionResponse toResponse(InventoryUnitConversion conversion) {
+    /**
+     * Le code article vient de l'article deja lu : l'article de la conversion est un proxy
+     * hors transaction, le lire ici tombait en 500.
+     */
+    private InventoryUnitConversionResponse toResponse(InventoryUnitConversion conversion, InventoryItem item) {
         return InventoryUnitConversionResponse.builder()
-                .itemCode(conversion.getItem().getItemCode())
+                .itemCode(item.getItemCode())
                 .fromUnitCode(conversion.getFromUnitCode())
                 .toUnitCode(conversion.getToUnitCode())
                 .factor(conversion.getFactor())
