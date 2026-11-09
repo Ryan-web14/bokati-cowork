@@ -14,7 +14,15 @@ import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSelectionR
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashBatch;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDestructionCandidate;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDocumentsDecision;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFileText;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHold;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHoldRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPurgeResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedQuotaRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedReasonRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUsage;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrantRequest;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRestrictRequest;
@@ -28,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -57,6 +66,9 @@ public class GedExplorerController {
 
     private final GedExplorerService service;
     private final GedTextService textService;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedHoldService holdService;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedPurgeService purgeService;
+    private final com.sni.bokaticowork.features.document.retention.service.interfaces.DocumentRetentionService retentionService;
 
     /** Le contenu d'un dossier (ou de la racine sans {@code folderCode}) : dossiers puis fichiers. */
     @GetMapping("/items")
@@ -245,5 +257,81 @@ public class GedExplorerController {
     @PostMapping("/files/{code}/unlock")
     public ResponseEntity<GedItem> unlock(@PathVariable String code) {
         return ResponseEntity.ok(service.unlock(code));
+    }
+
+    // Conservation, gel juridique, destruction, quotas (lot 5) ---------------------------------------
+    // Ce qui detruit ou fige des documents est reserve aux administrateurs.
+
+    /** Les gels juridiques ; {@code active=false} : aussi ceux qui sont leves. */
+    @GetMapping("/holds")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<List<GedHold>> holds(@RequestParam(defaultValue = "true") boolean active) {
+        return ResponseEntity.ok(holdService.list(active));
+    }
+
+    /** Gele un dossier (et tout son contenu, present et a venir) ou un fichier. */
+    @PostMapping("/holds")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedHold> placeHold(@Valid @RequestBody GedHoldRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(holdService.place(request));
+    }
+
+    @PostMapping("/holds/{code}/release")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedHold> releaseHold(@PathVariable String code, @Valid @RequestBody GedReasonRequest request) {
+        return ResponseEntity.ok(holdService.release(code, request.reason()));
+    }
+
+    /** Detruit definitivement un lot de la corbeille ; ce qui est gele est epargne. */
+    @PostMapping("/trash/{batch}/purge")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedPurgeResult> purgeBatch(@PathVariable String batch, @Valid @RequestBody GedReasonRequest request) {
+        return ResponseEntity.ok(service.purgeBatch(batch, request.reason()));
+    }
+
+    /** Vide la corbeille des lots supprimes depuis plus de {@code olderThanDays} jours (0 : tout). */
+    @PostMapping("/trash/empty")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedPurgeResult> emptyTrash(@RequestParam(defaultValue = "0") int olderThanDays,
+                                                     @Valid @RequestBody GedReasonRequest request) {
+        return ResponseEntity.ok(purgeService.emptyTrash(olderThanDays, request.reason()));
+    }
+
+    /** Les fichiers marques « a detruire » par une regle de conservation. */
+    @GetMapping("/retention/due")
+    public ResponseEntity<List<GedDestructionCandidate>> destructionDue(@RequestParam(defaultValue = "200") int limit) {
+        return ResponseEntity.ok(service.destructionDue(limit));
+    }
+
+    @PostMapping("/retention/destroy")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedPurgeResult> destroy(@Valid @RequestBody GedDocumentsDecision request) {
+        return ResponseEntity.ok(service.destroy(request.documentCodes(), request.reason()));
+    }
+
+    /** Garde des fichiers marques « a detruire » : ils sortent des regles de conservation. */
+    @PostMapping("/retention/keep")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<java.util.Map<String, Integer>> keep(@Valid @RequestBody GedDocumentsDecision request) {
+        return ResponseEntity.ok(java.util.Map.of("kept", service.keep(request.documentCodes(), request.reason())));
+    }
+
+    /** Applique tout de suite les regles de conservation (elles tournent aussi chaque nuit). */
+    @PostMapping("/retention/run")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<java.util.Map<String, Integer>> runRetention() {
+        return ResponseEntity.ok(java.util.Map.of("applied", retentionService.applyPolicies()));
+    }
+
+    /** L'espace occupe par un dossier (ou toute la GED) et ses quotas. */
+    @GetMapping("/usage")
+    public ResponseEntity<GedUsage> usage(@RequestParam(required = false) String folderCode) {
+        return ResponseEntity.ok(service.usage(folderCode));
+    }
+
+    @PutMapping("/folders/{code}/quota")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedUsage> setQuota(@PathVariable String code, @RequestBody GedQuotaRequest request) {
+        return ResponseEntity.ok(service.setQuota(code, request.quotaBytes()));
     }
 }

@@ -115,6 +115,10 @@ public class DocumentFolder {
     @Column(name = "restricted_by")
     private Long restrictedBy;
 
+    /** Quota d'espace du dossier, sous-dossiers compris, en octets ; vide : pas de limite. */
+    @Column(name = "quota_bytes")
+    private Long quotaBytes;
+
     @PrePersist
     public void prePersist() {
         Instant now = Instant.now();

@@ -45,6 +45,8 @@ Object.assign(routes, {
   'GET /sni/api/v1/ged/search': { query: 'bail', totalElements: 1, hits: [{ item: { name: 'scan-0042.pdf' }, location: 'Juridique / Baux', snippet: '...Contrat de ⟦bail⟧ commercial, ⟦Echeance⟧ du loyer...', rank: 1.2 }] },
   'GET /sni/api/v1/ged/folders/FLD-1/access': { folderCode: 'FLD-1', restricted: true, restrictedAt: '2026-11-09T10:00:00Z', restrictedBy: 'admin@local', systemFolder: false, inheritedFrom: [], myLevel: 'ADMIN', canManage: true,
     grants: [{ granteeType: 'USER', grantee: 'admin@local', level: 'ADMIN', grantedAt: '2026-11-09T10:00:00Z' }, { granteeType: 'ROLE', grantee: 'STAFF', granteeLabel: 'Personnel', level: 'DOWNLOAD', grantedBy: 'admin@local', grantedAt: '2026-11-09T10:05:00Z' }] },
+  'GET /sni/api/v1/ged/holds': [{ code: 'GEL-7F3A21C0', targetType: 'FOLDER', targetName: 'Litige Dupont', reason: 'Contentieux Dupont', reference: 'RG 26/0142', placedBy: 'admin@local', placedAt: '2026-11-09T09:00:00Z', active: true }],
+  'GET /sni/api/v1/ged/retention/due': [{ item: { code: 'DOC-9', name: 'courrier-2015.pdf', held: false }, policyCode: 'COURRIERS-5-ANS', dueAt: '2026-11-09T02:30:00Z', location: 'Courriers' }],
   'GET /sni/api/v1/ged/text/status': { pending: 3, byStatus: { DONE: 40, UNSUPPORTED: 2 } },
   'GET /sni/api/v1/ged/trash': [{ batch: 'b1', trashedAt: '2026-11-08T10:00:00Z', folders: 1, documents: 3, items: [{ name: 'Archives 2019' }] }],
 });

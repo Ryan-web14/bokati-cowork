@@ -125,7 +125,7 @@ public class GedExplorerQueries {
 
     // Corbeille ---------------------------------------------------------------------------------
 
-    /** Les lots de la corbeille, du plus recent au plus ancien. */
+    /** Les lots de la corbeille, du plus recent au plus ancien ; ce qui est detruit n'y figure plus. */
     @SuppressWarnings("unchecked")
     public List<Object[]> trashBatches(int limit) {
         return entityManager.createNativeQuery("""
@@ -134,10 +134,10 @@ public class GedExplorerQueries {
                        SUM(CASE WHEN kind = 'FILE' THEN 1 ELSE 0 END) AS files
                 FROM (
                     SELECT trash_batch AS batch, trashed_at, trashed_by, 'FOLDER' AS kind
-                    FROM document_folder WHERE trash_batch IS NOT NULL AND deleted = TRUE
+                    FROM document_folder WHERE trash_batch IS NOT NULL AND deleted = TRUE AND purged_at IS NULL
                     UNION ALL
                     SELECT trash_batch, trashed_at, trashed_by, 'FILE'
-                    FROM document WHERE trash_batch IS NOT NULL AND deleted = TRUE
+                    FROM document WHERE trash_batch IS NOT NULL AND deleted = TRUE AND purged_at IS NULL
                 ) t
                 GROUP BY batch
                 ORDER BY MIN(trashed_at) DESC
@@ -153,7 +153,7 @@ public class GedExplorerQueries {
         return entityManager.createNativeQuery("""
                 SELECT f.id, f.code, f.name, f.parent_id, f.trashed_at, f.updated_at, f.color, f.icon
                 FROM document_folder f
-                WHERE f.trash_batch = :batch AND f.deleted = TRUE
+                WHERE f.trash_batch = :batch AND f.deleted = TRUE AND f.purged_at IS NULL
                   AND (f.parent_id IS NULL OR f.parent_id NOT IN (
                         SELECT p.id FROM document_folder p WHERE p.trash_batch = :batch))
                 ORDER BY LOWER(f.name)
@@ -168,7 +168,7 @@ public class GedExplorerQueries {
         return entityManager.createNativeQuery("""
                 SELECT d.id, d.code, d.title, d.folder_id, d.trashed_at, d.updated_at, d.file_name, d.mime_type, d.file_size
                 FROM document d
-                WHERE d.trash_batch = :batch AND d.deleted = TRUE
+                WHERE d.trash_batch = :batch AND d.deleted = TRUE AND d.purged_at IS NULL
                   AND (d.folder_id IS NULL OR d.folder_id NOT IN (
                         SELECT p.id FROM document_folder p WHERE p.trash_batch = :batch))
                 ORDER BY LOWER(d.title)
@@ -206,11 +206,11 @@ public class GedExplorerQueries {
     public long[] restore(String batch) {
         int folders = entityManager.createNativeQuery("""
                 UPDATE document_folder SET deleted = FALSE, trashed_at = NULL, trashed_by = NULL, trash_batch = NULL
-                WHERE trash_batch = :batch AND deleted = TRUE
+                WHERE trash_batch = :batch AND deleted = TRUE AND purged_at IS NULL
                 """).setParameter("batch", batch).executeUpdate();
         int files = entityManager.createNativeQuery("""
                 UPDATE document SET deleted = FALSE, trashed_at = NULL, trashed_by = NULL, trash_batch = NULL
-                WHERE trash_batch = :batch AND deleted = TRUE
+                WHERE trash_batch = :batch AND deleted = TRUE AND purged_at IS NULL
                 """).setParameter("batch", batch).executeUpdate();
         return new long[]{folders, files};
     }

@@ -53,7 +53,9 @@ public final class GedDtos {
             String previewUrl,
             String downloadUrl,
             boolean restricted,
-            GedLock lock
+            GedLock lock,
+            boolean held,
+            Instant destructionDueAt
     ) {}
 
     /**
@@ -149,6 +151,42 @@ public final class GedDtos {
     public record GedTextStatus(long pending, java.util.Map<String, Long> byStatus) {}
 
     public record GedTextRunResult(int processed, int done, int empty, int unsupported, int failed, long remaining) {}
+
+    // Conservation, gel juridique, quotas (lot 5) ----------------------------------------------------
+
+    /** Poser un gel : {@code targetType} FOLDER (le dossier et tout son contenu) ou DOCUMENT. */
+    public record GedHoldRequest(@NotBlank String targetType, @NotBlank String targetCode, @NotBlank String reason,
+                                 String reference) {}
+
+    public record GedReasonRequest(@NotBlank String reason) {}
+
+    /** Un gel juridique ; {@code active} tant qu'il n'est pas leve. */
+    public record GedHold(String code, String targetType, String targetCode, String targetName, String reason,
+                          String reference, String placedBy, Instant placedAt, String releasedBy, Instant releasedAt,
+                          String releaseReason, boolean active) {}
+
+    /**
+     * Le resultat d'une destruction : lots, dossiers et fichiers detruits, fichiers effaces du
+     * stockage, fichiers epargnes car geles, et echecs (le fichier reste entier).
+     */
+    public record GedPurgeResult(int batches, int folders, int documents, int filesErased, int heldSkipped, int failed) {}
+
+    /** Un fichier marque « a detruire » par une regle de conservation. */
+    public record GedDestructionCandidate(GedItem item, String policyCode, Instant dueAt, String location) {}
+
+    public record GedDocumentsDecision(@jakarta.validation.constraints.NotEmpty List<String> documentCodes,
+                                       @NotBlank String reason) {}
+
+    /**
+     * L'espace d'un dossier (sous-dossiers et corbeille compris, toutes versions) ou de la GED.
+     * {@code remainingBytes} : ce qu'il reste sous le quota le plus serre du chemin,
+     * {@code limitingFolderCode} : le dossier qui porte ce quota ; vides sans quota.
+     */
+    public record GedUsage(String folderCode, String folderName, long usedBytes, long files, Long quotaBytes,
+                           Long remainingBytes, String limitingFolderCode, long totalUsedBytes, Long totalQuotaBytes) {}
+
+    /** Fixer le quota d'un dossier en octets ; vide ou 0 : le retirer. */
+    public record GedQuotaRequest(Long quotaBytes) {}
 
     /** Un lot de la corbeille : ce qui a ete supprime ensemble, et se restaure ensemble. */
     public record GedTrashBatch(String batch, Instant trashedAt, Long trashedBy, long folders, long documents, List<GedItem> items) {}

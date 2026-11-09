@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-175 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+186 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -127,18 +127,29 @@
 | GET | `/sni/api/v1/ged/folders/{code}/access` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-folders-code-access) |
 | DELETE | `/sni/api/v1/ged/folders/{code}/grants` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-delete-sni-api-v1-ged-folders-code-grants) |
 | PUT | `/sni/api/v1/ged/folders/{code}/grants` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-put-sni-api-v1-ged-folders-code-grants) |
+| PUT | `/sni/api/v1/ged/folders/{code}/quota` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-put-sni-api-v1-ged-folders-code-quota) |
 | POST | `/sni/api/v1/ged/folders/{code}/restrict` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-folders-code-restrict) |
 | POST | `/sni/api/v1/ged/folders/{code}/unrestrict` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-folders-code-unrestrict) |
+| GET | `/sni/api/v1/ged/holds` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-holds) |
+| POST | `/sni/api/v1/ged/holds` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-holds) |
+| POST | `/sni/api/v1/ged/holds/{code}/release` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-holds-code-release) |
 | GET | `/sni/api/v1/ged/items` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-items) |
 | POST | `/sni/api/v1/ged/move` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-move) |
+| POST | `/sni/api/v1/ged/retention/destroy` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-retention-destroy) |
+| GET | `/sni/api/v1/ged/retention/due` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-retention-due) |
+| POST | `/sni/api/v1/ged/retention/keep` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-retention-keep) |
+| POST | `/sni/api/v1/ged/retention/run` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-retention-run) |
 | POST | `/sni/api/v1/ged/scans` | DOCUMENT:UPLOAD | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-scans) |
 | GET | `/sni/api/v1/ged/search` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-search) |
 | POST | `/sni/api/v1/ged/text/run` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-text-run) |
 | GET | `/sni/api/v1/ged/text/status` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-text-status) |
 | GET | `/sni/api/v1/ged/trash` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-trash) |
 | POST | `/sni/api/v1/ged/trash` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash) |
+| POST | `/sni/api/v1/ged/trash/empty` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash-empty) |
+| POST | `/sni/api/v1/ged/trash/{batch}/purge` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash-batch-purge) |
 | POST | `/sni/api/v1/ged/trash/{batch}/restore` | DOCUMENT:WRITE | [GedExplorerController](routes/GedExplorerController.md#r-post-sni-api-v1-ged-trash-batch-restore) |
 | GET | `/sni/api/v1/ged/tree` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-tree) |
+| GET | `/sni/api/v1/ged/usage` | DOCUMENT:READ | [GedExplorerController](routes/GedExplorerController.md#r-get-sni-api-v1-ged-usage) |
 | GET | `/sni/api/v1/kyc/cases` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases) |
 | POST | `/sni/api/v1/kyc/cases` | KYC:READ | [KycController](routes/KycController.md#r-post-sni-api-v1-kyc-cases) |
 | GET | `/sni/api/v1/kyc/cases/dashboard` | KYC:READ | [KycController](routes/KycController.md#r-get-sni-api-v1-kyc-cases-dashboard) |

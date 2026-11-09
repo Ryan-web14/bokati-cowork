@@ -93,6 +93,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentFolderRepository folderRepository;
     private final com.sni.bokaticowork.features.document.explorer.service.GedAutoFiler autoFiler;
     private final DocumentLockService lockService;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.document.explorer.lifecycle.GedHoldService holdService;
 
     @Value("${app.document.default-expiry-years:5}")
     private Integer defaultExpiryYears;
@@ -183,8 +184,9 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponse replace(String documentCode, MultipartFile file) {
         Long uploadedBy = currentUserId();
         Document document = serviceDocument(documentCode);
-        // Un document verrouille par quelqu'un d'autre ne se remplace pas
+        // Un document verrouille par quelqu'un d'autre, ou sous gel juridique, ne se remplace pas
         lockService.assertEditable(document);
+        holdService.assertNotHeld(document, "remplace");
         List<String> allowedMimeTypes = parseAllowedMimeTypes(document.getDocumentType().getAllowedMimeTypes());
         DocumentSecurityService.SecurityInspection inspection = securityService.inspect(file, allowedMimeTypes);
 
@@ -304,6 +306,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponse restoreVersion(String documentCode, Integer versionNumber) {
         Document document = serviceDocument(documentCode);
         lockService.assertEditable(document);
+        holdService.assertNotHeld(document, "restaure dans une autre version");
         DocumentVersion target = documentVersionRepository.findByDocumentAndVersionNumber(document, versionNumber)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Version " + versionNumber + " not found for document " + documentCode));
@@ -357,6 +360,7 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponse archive(String documentCode, String reason) {
         Document document = serviceDocument(documentCode);
         lockService.assertEditable(document);
+        holdService.assertNotHeld(document, "archive");
         if (document.getStatus() == DocumentStatus.ARCHIVED) {
             throw new BadRequestException("Document is already archived");
         }

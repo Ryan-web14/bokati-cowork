@@ -63,6 +63,7 @@ public class DocumentController {
     private final DocumentAccessTokenService accessTokenService;
     /** Les dossiers restreints de la GED valent aussi ici : sans quoi ces routes les contourneraient. */
     private final GedAccessService gedAccess;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedQuotaService gedQuota;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Audited(module = "DOCUMENT", action = "UPLOAD", ressource = "document")
@@ -80,6 +81,7 @@ public class DocumentController {
             @PathVariable String code,
             @RequestPart("file") MultipartFile file) {
         gedAccess.requireDocumentCode(code, GedAccessLevel.EDIT);
+        gedQuota.assertRoomForDocument(code, file.getSize());
         return ResponseEntity.ok(service.replace(code, file));
     }
 

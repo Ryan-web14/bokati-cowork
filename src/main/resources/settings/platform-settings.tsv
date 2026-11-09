@@ -31,6 +31,10 @@ app.ged.text.max-ocr-pages	DOCUMENTS	INTEGER	RESTART	30	Pages lues par OCR au pl
 app.ged.text.max-chars	DOCUMENTS	INTEGER	RESTART	300000	Caractères gardés au plus, par fichier GED
 app.ged.text.ocr-language	DOCUMENTS	TEXT	RESTART	fra+eng	Langues de l'OCR de la GED (Tesseract)
 app.ged.text.ocr-data-path	DOCUMENTS	TEXT	RESTART		Dossier des langues Tesseract (tessdata) pour la GED
+app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	RESTART	true	Vidage automatique de la corbeille GED
+app.ged.trash.retention-days	DOCUMENTS	INTEGER	RESTART	30	Jours en corbeille GED avant destruction
+app.ged.trash.purge-cron	DOCUMENTS	CRON	RESTART	0 15 3 * * *	Heure du vidage de la corbeille GED
+app.ged.quota.total-bytes	DOCUMENTS	INTEGER	RESTART	0	Quota d'espace de toute la GED en octets (0 : aucun)
 app.referral.share-url-template	ENVIRONMENT	TEXT	RESTART	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
 app.documents.preview-token.secret	DOCUMENTS	SECRET	RESTART		Secret des liens d'aperçu
 app.documents.preview-token.ttl-seconds	DOCUMENTS	INTEGER	RESTART	300	Validité d'un lien d'aperçu (secondes)

@@ -148,6 +148,18 @@ public class Document {
     @Column(name = "trash_batch", length = 40)
     private String trashBatch;
 
+    /** Marque par une regle de conservation « a detruire » : en attente de la confirmation d'un administrateur. */
+    @Column(name = "destruction_due_at")
+    private Instant destructionDueAt;
+
+    @Column(name = "destruction_policy_code", length = 100)
+    private String destructionPolicyCode;
+
+    /** Garde par decision d'un administrateur : les regles de conservation ne le touchent plus. */
+    @Column(name = "retention_exempt", nullable = false)
+    @Builder.Default
+    private Boolean retentionExempt = Boolean.FALSE;
+
     @PrePersist
     public void prePersist() {
         Instant now = Instant.now();

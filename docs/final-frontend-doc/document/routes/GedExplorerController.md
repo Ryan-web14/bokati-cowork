@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [document](../README.md) · 25 route(s).
+Module [document](../README.md) · 36 route(s).
 
 ## Routes
 
@@ -168,6 +168,19 @@ Module [document](../README.md) · 25 route(s).
 | --- | --- | --- | --- | --- |
 | `code` | chemin | `String` | oui |  |
 
+<a id="r-put-sni-api-v1-ged-folders-code-quota"></a>
+### PUT /sni/api/v1/ged/folders/{code}/quota
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Corps JSON (obligatoire) : `GedDtos.GedQuotaRequest`
+- Réponse : `GedDtos.GedUsage`
+- Modèles : [GedDtos.GedUsage](#m-GedDtos-GedUsage), [GedDtos.GedQuotaRequest](#m-GedDtos-GedQuotaRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `setQuota`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
 <a id="r-post-sni-api-v1-ged-folders-code-restrict"></a>
 ### POST /sni/api/v1/ged/folders/{code}/restrict
 
@@ -188,6 +201,40 @@ Module [document](../README.md) · 25 route(s).
 - Réponse : `GedDtos.GedFolderAccess`
 - Modèles : [GedDtos.GedFolderAccess](#m-GedDtos-GedFolderAccess)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `unrestrict`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `code` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-ged-holds"></a>
+### GET /sni/api/v1/ged/holds
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Réponse : `List<GedDtos.GedHold>`
+- Modèles : [GedDtos.GedHold](#m-GedDtos-GedHold)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `holds`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `active` | requête | `boolean` |  | true |
+
+<a id="r-post-sni-api-v1-ged-holds"></a>
+### POST /sni/api/v1/ged/holds
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Corps JSON (obligatoire) : `GedDtos.GedHoldRequest`
+- Réponse : `GedDtos.GedHold`
+- Modèles : [GedDtos.GedHold](#m-GedDtos-GedHold), [GedDtos.GedHoldRequest](#m-GedDtos-GedHoldRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `placeHold`
+
+<a id="r-post-sni-api-v1-ged-holds-code-release"></a>
+### POST /sni/api/v1/ged/holds/{code}/release
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Corps JSON (obligatoire) : `GedDtos.GedReasonRequest`
+- Réponse : `GedDtos.GedHold`
+- Modèles : [GedDtos.GedHold](#m-GedDtos-GedHold), [GedDtos.GedReasonRequest](#m-GedDtos-GedReasonRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `releaseHold`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -218,6 +265,43 @@ Module [document](../README.md) · 25 route(s).
 - Réponse : `vide`
 - Modèles : [GedDtos.GedMoveRequest](#m-GedDtos-GedMoveRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `move`
+
+<a id="r-post-sni-api-v1-ged-retention-destroy"></a>
+### POST /sni/api/v1/ged/retention/destroy
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Corps JSON (obligatoire) : `GedDtos.GedDocumentsDecision`
+- Réponse : `GedDtos.GedPurgeResult`
+- Modèles : [GedDtos.GedPurgeResult](#m-GedDtos-GedPurgeResult), [GedDtos.GedDocumentsDecision](#m-GedDtos-GedDocumentsDecision)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `destroy`
+
+<a id="r-get-sni-api-v1-ged-retention-due"></a>
+### GET /sni/api/v1/ged/retention/due
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Réponse : `List<GedDtos.GedDestructionCandidate>`
+- Modèles : [GedDtos.GedDestructionCandidate](#m-GedDtos-GedDestructionCandidate)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `destructionDue`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `limit` | requête | `int` |  | 200 |
+
+<a id="r-post-sni-api-v1-ged-retention-keep"></a>
+### POST /sni/api/v1/ged/retention/keep
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Corps JSON (obligatoire) : `GedDtos.GedDocumentsDecision`
+- Réponse : `Map<String, Integer>`
+- Modèles : [GedDtos.GedDocumentsDecision](#m-GedDtos-GedDocumentsDecision)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `keep`
+
+<a id="r-post-sni-api-v1-ged-retention-run"></a>
+### POST /sni/api/v1/ged/retention/run
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Réponse : `Map<String, Integer>`
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `runRetention`
 
 <a id="r-post-sni-api-v1-ged-scans"></a>
 ### POST /sni/api/v1/ged/scans
@@ -289,6 +373,32 @@ Module [document](../README.md) · 25 route(s).
 - Modèles : [GedDtos.GedTrashResult](#m-GedDtos-GedTrashResult), [GedDtos.GedSelectionRequest](#m-GedDtos-GedSelectionRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `trash`
 
+<a id="r-post-sni-api-v1-ged-trash-empty"></a>
+### POST /sni/api/v1/ged/trash/empty
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Corps JSON (obligatoire) : `GedDtos.GedReasonRequest`
+- Réponse : `GedDtos.GedPurgeResult`
+- Modèles : [GedDtos.GedPurgeResult](#m-GedDtos-GedPurgeResult), [GedDtos.GedReasonRequest](#m-GedDtos-GedReasonRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `emptyTrash`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `olderThanDays` | requête | `int` |  | 0 |
+
+<a id="r-post-sni-api-v1-ged-trash-batch-purge"></a>
+### POST /sni/api/v1/ged/trash/{batch}/purge
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:WRITE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN')`
+- Corps JSON (obligatoire) : `GedDtos.GedReasonRequest`
+- Réponse : `GedDtos.GedPurgeResult`
+- Modèles : [GedDtos.GedPurgeResult](#m-GedDtos-GedPurgeResult), [GedDtos.GedReasonRequest](#m-GedDtos-GedReasonRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `purgeBatch`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `batch` | chemin | `String` | oui |  |
+
 <a id="r-post-sni-api-v1-ged-trash-batch-restore"></a>
 ### POST /sni/api/v1/ged/trash/{batch}/restore
 
@@ -308,6 +418,18 @@ Module [document](../README.md) · 25 route(s).
 - Réponse : `List<DocumentFolderTreeNode>`
 - Modèles : [DocumentFolderTreeNode](#m-DocumentFolderTreeNode)
 - Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `tree`
+
+<a id="r-get-sni-api-v1-ged-usage"></a>
+### GET /sni/api/v1/ged/usage
+
+- Accès : back-office : rôle d'administration et droit `DOCUMENT:READ`
+- Réponse : `GedDtos.GedUsage`
+- Modèles : [GedDtos.GedUsage](#m-GedDtos-GedUsage)
+- Code : `src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java`, méthode `usage`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `folderCode` | requête | `String` |  |  |
 
 ## Modèles
 
@@ -363,6 +485,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `downloadUrl` | texte |  |  |
 | `restricted` | booléen |  |  |
 | `lock` | [GedDtos.GedLock](#m-GedDtos-GedLock) |  |  |
+| `held` | booléen |  |  |
+| `destructionDueAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-GedDtos-GedRenameRequest"></a>
 #### GedDtos.GedRenameRequest
@@ -432,12 +556,69 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `grantee` | texte | oui | longueur min `1` |
 | `level` | enum : `NONE`, `READ`, `DOWNLOAD`, `EDIT`, `DELETE`, `ADMIN` | oui |  |
 
+<a id="m-GedDtos-GedUsage"></a>
+#### GedDtos.GedUsage
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `folderCode` | texte |  |  |
+| `folderName` | texte |  |  |
+| `usedBytes` | entier int64 ⚠ |  |  |
+| `files` | entier int64 ⚠ |  |  |
+| `quotaBytes` | entier int64 ⚠ |  |  |
+| `remainingBytes` | entier int64 ⚠ |  |  |
+| `limitingFolderCode` | texte |  |  |
+| `totalUsedBytes` | entier int64 ⚠ |  |  |
+| `totalQuotaBytes` | entier int64 ⚠ |  |  |
+
+<a id="m-GedDtos-GedQuotaRequest"></a>
+#### GedDtos.GedQuotaRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `quotaBytes` | entier int64 ⚠ |  |  |
+
 <a id="m-GedDtos-GedRestrictRequest"></a>
 #### GedDtos.GedRestrictRequest
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
 | `grants` | [GedDtos.GedGrantRequest](#m-GedDtos-GedGrantRequest)[] |  |  |
+
+<a id="m-GedDtos-GedHold"></a>
+#### GedDtos.GedHold
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `code` | texte |  |  |
+| `targetType` | texte |  |  |
+| `targetCode` | texte |  |  |
+| `targetName` | texte |  |  |
+| `reason` | texte |  |  |
+| `reference` | texte |  |  |
+| `placedBy` | texte |  |  |
+| `placedAt` | date-heure ISO 8601 UTC |  |  |
+| `releasedBy` | texte |  |  |
+| `releasedAt` | date-heure ISO 8601 UTC |  |  |
+| `releaseReason` | texte |  |  |
+| `active` | booléen |  |  |
+
+<a id="m-GedDtos-GedHoldRequest"></a>
+#### GedDtos.GedHoldRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `targetType` | texte | oui | longueur min `1` |
+| `targetCode` | texte | oui | longueur min `1` |
+| `reason` | texte | oui | longueur min `1` |
+| `reference` | texte |  |  |
+
+<a id="m-GedDtos-GedReasonRequest"></a>
+#### GedDtos.GedReasonRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `reason` | texte | oui | longueur min `1` |
 
 <a id="m-GedDtos-GedListing"></a>
 #### GedDtos.GedListing
@@ -458,6 +639,36 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `documentCodes` | texte[] |  |  |
 | `folderCodes` | texte[] |  |  |
 | `targetFolderCode` | texte |  |  |
+
+<a id="m-GedDtos-GedPurgeResult"></a>
+#### GedDtos.GedPurgeResult
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `batches` | entier |  |  |
+| `folders` | entier |  |  |
+| `documents` | entier |  |  |
+| `filesErased` | entier |  |  |
+| `heldSkipped` | entier |  |  |
+| `failed` | entier |  |  |
+
+<a id="m-GedDtos-GedDocumentsDecision"></a>
+#### GedDtos.GedDocumentsDecision
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `documentCodes` | texte[] | oui | éléments min `1` |
+| `reason` | texte | oui | longueur min `1` |
+
+<a id="m-GedDtos-GedDestructionCandidate"></a>
+#### GedDtos.GedDestructionCandidate
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `item` | [GedDtos.GedItem](#m-GedDtos-GedItem) |  |  |
+| `policyCode` | texte |  |  |
+| `dueAt` | date-heure ISO 8601 UTC |  |  |
+| `location` | texte |  |  |
 
 <a id="m-GedDtos-GedSearchResult"></a>
 #### GedDtos.GedSearchResult

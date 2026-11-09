@@ -31,6 +31,10 @@ public class DocumentRetentionPolicy {
     @Column(name = "name", nullable = false, length = 200)
     private String name;
 
+    /** Dossier de la GED vise, sous-dossiers compris ; vide : tous les dossiers. */
+    @Column(name = "folder_id")
+    private Long folderId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "space", length = 50)
     private DocumentSpace space;

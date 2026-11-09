@@ -404,13 +404,93 @@ export async function gedScreen(root) {
     ['Corbeille', async (body) => {
       const load = async () => {
         const batches = await must('GET', `${V1}/ged/trash`);
-        clear(body).append(table(batches.map((batch) => ({ ...batch, items: (batch.items || []).map((item) => item.name).join(', ') })), {
-          columns: ['trashedAt', 'folders', 'documents', 'items'],
-          empty: 'La corbeille est vide.',
-          actions: (batch) => action('Restaurer', async () => { await must('POST', `${V1}/ged/trash/${key(batch.batch)}/restore`); await load(); }, { cls: 'small' }),
-        }));
+        clear(body).append(
+          h('p', { cls: 'hint' }, 'Les éléments sont détruits définitivement 30 jours après leur suppression.'),
+          action('Vider toute la corbeille', async () => {
+            const why = prompt('Destruction définitive et irréversible. Motif ?');
+            if (!why) return;
+            const result = await must('POST', `${V1}/ged/trash/empty`, { query: { olderThanDays: 0 }, body: { reason: why } });
+            body.prepend(notice('ok', `${result.documents} fichier(s) détruit(s), ${result.heldSkipped} épargné(s) (gel), ${result.failed} échec(s)`));
+            await load();
+          }, { cls: 'ghost small' }),
+          table(batches.map((batch) => ({ ...batch, items: (batch.items || []).map((item) => item.name).join(', ') })), {
+            columns: ['trashedAt', 'folders', 'documents', 'items'],
+            empty: 'La corbeille est vide.',
+            actions: (batch) => h('span', {},
+              action('Restaurer', async () => { await must('POST', `${V1}/ged/trash/${key(batch.batch)}/restore`); await load(); }, { cls: 'small' }),
+              action('Détruire', async () => {
+                const why = prompt('Destruction définitive et irréversible. Motif ?');
+                if (!why) return;
+                await must('POST', `${V1}/ged/trash/${key(batch.batch)}/purge`, { body: { reason: why } });
+                await load();
+              }, { cls: 'ghost small' })),
+          }));
       };
       await load();
+    }],
+    ['Conservation', async (body) => {
+      const holds = h('div', {});
+      const due = h('div', {});
+      const usage = h('div', {});
+      const loadHolds = async () => {
+        const list = await must('GET', `${V1}/ged/holds`, { query: { active: false } });
+        clear(holds).append(h('h2', {}, 'Gels juridiques'), table(list, {
+          columns: ['code', 'targetType', 'targetName', 'reason', 'reference', 'placedBy', 'placedAt', 'active', 'releasedAt'],
+          empty: 'Aucun gel.',
+          actions: (hold) => hold.active && action('Lever', async () => {
+            const why = prompt('Motif de la levée');
+            if (!why) return;
+            await must('POST', `${V1}/ged/holds/${key(hold.code)}/release`, { body: { reason: why } });
+            await loadHolds();
+          }, { cls: 'ghost small' }),
+        }));
+        const type = h('select', {}, ['FOLDER', 'DOCUMENT'].map((value) => h('option', { value }, value === 'FOLDER' ? 'Dossier' : 'Fichier')));
+        const code = input({ placeholder: 'FLD-... ou DOC-...' });
+        const reason = input({ placeholder: 'Contentieux, contrôle fiscal...' });
+        const reference = input({ placeholder: 'Référence (facultatif)' });
+        holds.append(h('div', { cls: 'card row', style: 'align-items:flex-end' }, field('Cible', type), field('Code', code),
+          h('div', { cls: 'grow' }, field('Motif', reason)), field('Référence', reference),
+          action('Geler', async () => {
+            await must('POST', `${V1}/ged/holds`, { body: { targetType: type.value, targetCode: code.value, reason: reason.value, reference: valueOf(reference) } });
+            await loadHolds();
+          })));
+      };
+      const loadDue = async () => {
+        const list = await must('GET', `${V1}/ged/retention/due`);
+        const rows = list.map((line) => ({ code: line.item.code, name: line.item.name, policyCode: line.policyCode, dueAt: line.dueAt, held: line.item.held, location: line.location }));
+        const decide = (verb, label) => action(label, async () => {
+          const codes = rows.filter((row) => !row.held).map((row) => row.code);
+          if (codes.length === 0) return;
+          const why = prompt(`${label} ${codes.length} fichier(s). Motif ?`);
+          if (!why) return;
+          await must('POST', `${V1}/ged/retention/${verb}`, { body: { documentCodes: codes, reason: why } });
+          await loadDue();
+        }, { cls: 'ghost small' });
+        clear(due).append(h('h2', {}, 'À détruire'),
+          h('div', { cls: 'row' }, action('Appliquer les règles maintenant', async () => {
+            const run = await must('POST', `${V1}/ged/retention/run`);
+            due.prepend(notice('ok', `${run.applied} fichier(s) traité(s)`));
+            await loadDue();
+          }, { cls: 'ghost small' }), rows.length > 0 ? decide('destroy', 'Détruire tout') : '', rows.length > 0 ? decide('keep', 'Garder tout') : ''),
+          table(rows, { columns: ['name', 'policyCode', 'dueAt', 'held', 'location'], empty: 'Rien à détruire.' }));
+      };
+      const loadUsage = async () => {
+        const folderCode = input({ placeholder: 'Code du dossier (vide : toute la GED)' });
+        const quota = input({ type: 'number', placeholder: 'Quota en octets' });
+        const out = h('div', {});
+        clear(usage).append(h('h2', {}, 'Espace et quotas'),
+          h('div', { cls: 'card row', style: 'align-items:flex-end' }, field('Dossier', folderCode),
+            action('Voir', async () => clear(out).append(keyValues(await must('GET', `${V1}/ged/usage`, { query: { folderCode: valueOf(folderCode) } })))),
+            field('Quota', quota),
+            action('Fixer le quota', async () => {
+              clear(out).append(keyValues(await must('PUT', `${V1}/ged/folders/${key(folderCode.value)}/quota`, { body: { quotaBytes: quota.value ? Number(quota.value) : null } })));
+            }, { cls: 'ghost' })),
+          out);
+      };
+      body.append(holds, due, usage);
+      await loadHolds();
+      await loadDue();
+      await loadUsage();
     }],
   ]);
 }

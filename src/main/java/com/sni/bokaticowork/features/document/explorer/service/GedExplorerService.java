@@ -91,6 +91,9 @@ public class GedExplorerService {
     private final GedAutoFiler autoFiler;
     private final GedAccessService access;
     private final DocumentLockService lockService;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedHoldService holdService;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedQuotaService quotaService;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedPurgeService purgeService;
 
     // Lecture -----------------------------------------------------------------------------------
 
@@ -129,7 +132,8 @@ public class GedExplorerService {
                 : List.of();
 
         List<GedItem> items = new ArrayList<>(folderItems(folderSlice));
-        files.forEach(document -> items.add(fileItem(document)));
+        Set<Long> held = holdService.heldDocumentIds(files.stream().map(Document::getId).toList());
+        files.forEach(document -> items.add(fileItem(document, held.contains(document.getId()))));
 
         GedFolderRef ref = folder == null ? null
                 : new GedFolderRef(folder.getCode(), folder.getName(), folder.getParent() == null ? null : folder.getParent().getCode());
@@ -239,6 +243,8 @@ public class GedExplorerService {
                 metadata.setDocumentTypeCode(StringUtils.hasText(documentTypeCode) ? documentTypeCode : GENERAL_TYPE);
                 metadata.setTitle(transactionTemplate.execute(status -> freeTitle(targetCode, fileName)));
                 metadata.setFolderCode(targetCode);
+                transactionTemplate.executeWithoutResult(status ->
+                        quotaService.assertRoom(targetCode == null ? null : folder(targetCode), file.getSize()));
                 DocumentResponse created = documentService.upload(metadata, file);
                 uploaded.add(transactionTemplate.execute(status -> fileItem(document(created.getCode()))));
             } catch (RuntimeException failure) {
@@ -286,6 +292,8 @@ public class GedExplorerService {
         metadata.setDocumentTypeCode(StringUtils.hasText(documentTypeCode) ? documentTypeCode : GENERAL_TYPE);
         metadata.setTitle(transactionTemplate.execute(status -> freeTitle(targetCode, fileName)));
         metadata.setFolderCode(targetCode);
+        transactionTemplate.executeWithoutResult(status ->
+                quotaService.assertRoom(targetCode == null ? null : folder(targetCode), pdf.length));
         DocumentResponse created = documentService.createGeneratedDocument(metadata, fileName, "application/pdf", pdf);
         return transactionTemplate.execute(status -> fileItem(document(created.getCode())));
     }
@@ -312,6 +320,8 @@ public class GedExplorerService {
                 metadata.setDocumentTypeCode(GENERAL_TYPE);
                 metadata.setTitle(transactionTemplate.execute(status -> freeTitle(targetCode, title)));
                 metadata.setFolderCode(targetCode);
+                transactionTemplate.executeWithoutResult(status ->
+                        quotaService.assertRoom(targetCode == null ? null : folder(targetCode), file.content().length));
                 DocumentResponse created = documentService.createGeneratedDocument(
                         metadata, file.fileName(), file.mimeType(), file.content());
                 copied.add(transactionTemplate.execute(status -> fileItem(document(created.getCode()))));
@@ -387,6 +397,100 @@ public class GedExplorerService {
     @Transactional
     public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess revoke(String code, String granteeType, String grantee) {
         return access.revoke(folder(code), granteeType, grantee);
+    }
+
+    // Destruction, conservation, quotas (lot 5) ---------------------------------------------------
+
+    /** Detruit definitivement un lot de la corbeille ; il faut pouvoir supprimer a son emplacement d'origine. */
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPurgeResult purgeBatch(String batch, String reason) {
+        transactionTemplate.executeWithoutResult(status -> {
+            List<Object[]> topFolders = queries.trashedTopFolders(batch);
+            List<Object[]> topFiles = queries.trashedTopFiles(batch);
+            if (topFolders.isEmpty() && topFiles.isEmpty()) {
+                throw new ResourceNotFoundException("Rien à détruire pour ce lot.");
+            }
+            topFolders.forEach(folder -> requireDeleteOn(((Number) folder[0]).longValue()));
+            topFiles.forEach(file -> requireDeleteOn(file[3] == null ? null : ((Number) file[3]).longValue()));
+        });
+        return purgeService.purgeBatch(batch, reason);
+    }
+
+    /** Les fichiers « a detruire » visibles de la personne, du plus ancien marquage au plus recent. */
+    @Transactional(readOnly = true)
+    public List<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDestructionCandidate> destructionDue(int limit) {
+        Set<Long> hidden = access.hiddenFolderIds();
+        List<Document> due = documentRepository.findAll(
+                (root, query, cb) -> cb.isNotNull(root.get("destructionDueAt")),
+                org.springframework.data.domain.PageRequest.of(0, Math.max(1, Math.min(limit, 500)),
+                        org.springframework.data.domain.Sort.by("destructionDueAt").ascending())).getContent();
+        Set<Long> held = holdService.heldDocumentIds(due.stream().map(Document::getId).toList());
+        return due.stream().filter(document -> GedAccessService.visible(document.getFolder(), hidden))
+                .map(document -> new com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDestructionCandidate(
+                        fileItem(document, held.contains(document.getId())), document.getDestructionPolicyCode(),
+                        document.getDestructionDueAt(), location(document.getFolder())))
+                .toList();
+    }
+
+    /** Confirme la destruction de fichiers marques « a detruire » ; un fichier gele est epargne. */
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPurgeResult destroy(List<String> codes, String reason) {
+        List<Long> ids = transactionTemplate.execute(status -> orEmpty(codes).stream().map(code -> {
+            Document document = document(code);
+            access.requireDocument(document, GedAccessLevel.DELETE);
+            if (document.getDestructionDueAt() == null) {
+                throw new BadRequestException("« " + document.getTitle() + " » n'est pas marqué à détruire : "
+                        + "mettez-le à la corbeille pour le supprimer.");
+            }
+            return document.getId();
+        }).toList());
+        return purgeService.purgeDocuments(ids, reason);
+    }
+
+    /** Garde des fichiers marques « a detruire » : ils sortent des regles de conservation. */
+    @Transactional
+    public int keep(List<String> codes, String reason) {
+        int kept = 0;
+        for (String code : orEmpty(codes)) {
+            Document document = document(code);
+            access.requireDocument(document, GedAccessLevel.DELETE);
+            document.setDestructionDueAt(null);
+            document.setDestructionPolicyCode(null);
+            document.setRetentionExempt(true);
+            document.setDescription(join(document.getDescription(), "Conservé : " + reason.trim()));
+            documentRepository.save(document);
+            kept++;
+        }
+        return kept;
+    }
+
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUsage usage(String folderCode) {
+        DocumentFolder folder = StringUtils.hasText(folderCode) ? folder(folderCode) : null;
+        if (folder != null) {
+            access.require(folder, GedAccessLevel.READ);
+        }
+        return quotaService.usage(folder);
+    }
+
+    @Transactional
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUsage setQuota(String code, Long quotaBytes) {
+        DocumentFolder folder = folder(code);
+        access.require(folder, GedAccessLevel.ADMIN);
+        quotaService.setQuota(folder, quotaBytes);
+        return quotaService.usage(folder);
+    }
+
+    private String location(DocumentFolder folder) {
+        if (folder == null) {
+            return null;
+        }
+        List<Long> ids = GedAccessService.pathIds(folder.getPath());
+        Map<Long, String> names = new HashMap<>();
+        folderRepository.findAllById(ids).forEach(f -> names.put(f.getId(), f.getName()));
+        return String.join(" / ", ids.stream().map(names::get).filter(java.util.Objects::nonNull).toList());
+    }
+
+    private static String join(String existing, String addition) {
+        return StringUtils.hasText(existing) ? existing + "\n" + addition : addition;
     }
 
     // Verrou ------------------------------------------------------------------------------------
@@ -483,6 +587,20 @@ public class GedExplorerService {
         for (Document document : documents) {
             lockService.assertEditable(document);
         }
+        // Un gel juridique empeche toute suppression de ce qu'il couvre
+        Set<Long> held = holdService.heldDocumentIds(documents.stream().map(Document::getId).toList());
+        if (!held.isEmpty()) {
+            List<String> titles = documents.stream().filter(document -> held.contains(document.getId()))
+                    .map(Document::getTitle).distinct().limit(5).toList();
+            throw new ConflictException("legal-hold", "la sélection contient des fichiers sous gel juridique, qui ne se "
+                    + "suppriment pas : " + String.join(", ", titles));
+        }
+        for (String code : orEmpty(request.folderCodes())) {
+            if (holdService.isFolderHeld(folder(code))) {
+                throw new ConflictException("legal-hold", "le dossier « " + folder(code).getName()
+                        + " » est sous gel juridique : il ne se supprime pas");
+            }
+        }
         if (folderIds.isEmpty() && documents.isEmpty()) {
             throw new BadRequestException("Rien à mettre à la corbeille.");
         }
@@ -516,7 +634,7 @@ public class GedExplorerService {
                 items.add(new GedItem(com.sni.bokaticowork.features.document.explorer.dto.GedDtos.FOLDER,
                         (String) folder[1], (String) folder[2], null, null, instant(folder[5]),
                         null, null, (String) folder[6], (String) folder[7],
-                        null, null, null, null, null, null, null, null, null, false, null, null, false, null));
+                        null, null, null, null, null, null, null, null, null, false, null, null, false, null, false, null));
             }
             for (Object[] file : queries.trashedTopFiles(batch)) {
                 if (!access.levelOnFolderId(file[3] == null ? null : ((Number) file[3]).longValue()).atLeast(GedAccessLevel.READ)) {
@@ -526,7 +644,7 @@ public class GedExplorerService {
                         (String) file[1], (String) file[2], null, null, instant(file[5]),
                         null, null, null, null, (String) file[6], extension((String) file[6]), (String) file[7],
                         file[8] == null ? null : ((Number) file[8]).longValue(),
-                        null, null, null, null, null, false, null, null, false, null));
+                        null, null, null, null, null, false, null, null, false, null, false, null));
             }
             if (items.isEmpty()) {
                 continue;
@@ -678,11 +796,16 @@ public class GedExplorerService {
                 children.getOrDefault(folder.getId(), 0L), documents.getOrDefault(folder.getId(), 0L),
                 folder.getColor(), folder.getIcon(),
                 null, null, null, null, null, null, null, null, null, folder.getSystemKey() != null, null, null,
-                Boolean.TRUE.equals(folder.getRestricted()), null)).toList();
+                Boolean.TRUE.equals(folder.getRestricted()), null, holdService.isFolderHeld(folder), null)).toList();
     }
 
     /** Un fichier tel que l'explorateur le montre ; aussi pour les resultats de recherche. */
     public GedItem fileItem(Document document) {
+        return fileItem(document, holdService.isHeld(document));
+    }
+
+    /** Pour une liste : le gel a ete lu pour toute la page en une requete. */
+    public GedItem fileItem(Document document, boolean held) {
         DocumentResponse response = documentMapper.toResponse(document);
         return new GedItem(
                 com.sni.bokaticowork.features.document.explorer.dto.GedDtos.FILE,
@@ -700,7 +823,9 @@ public class GedExplorerService {
                 response == null ? null : response.getPreviewUrl(),
                 response == null ? null : response.getDownloadUrl(),
                 false,
-                lockOf(document));
+                lockOf(document),
+                held,
+                document.getDestructionDueAt());
     }
 
     private GedLock lockOf(Document document) {
