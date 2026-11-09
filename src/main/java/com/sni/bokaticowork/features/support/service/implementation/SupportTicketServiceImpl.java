@@ -236,9 +236,9 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         boolean isInternal = Boolean.TRUE.equals(request.internal());
         // L'agent connecte signe son message si l'ecran ne l'a pas fait : son e-mail et son nom
         Users agent = senderType == TicketSenderType.AGENT ? currentUser() : null;
-        String senderId = StringUtils.hasText(request.senderId()) ? request.senderId().trim()
+        String senderId = StringUtils.hasText(request.effectiveSenderId()) ? request.effectiveSenderId().trim()
                 : agent == null ? null : agent.getEmail();
-        String senderName = StringUtils.hasText(request.senderName()) ? request.senderName().trim()
+        String senderName = StringUtils.hasText(request.effectiveSenderName()) ? request.effectiveSenderName().trim()
                 : agent == null ? null : displayName(agent);
 
         boolean wasClosedBeforeMessage = senderType == TicketSenderType.CLIENT

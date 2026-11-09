@@ -430,6 +430,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `senderName` | texte |  |  |
 | `content` | texte | oui | longueur min `1` |
 | `internal` | booléen |  |  |
+| `authorId` | texte |  |  |
+| `authorName` | texte |  |  |
 
 <a id="m-KnowledgeDtos-KnowledgeArticleResponse"></a>
 #### KnowledgeDtos.KnowledgeArticleResponse

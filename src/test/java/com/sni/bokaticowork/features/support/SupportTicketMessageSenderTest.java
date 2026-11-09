@@ -98,4 +98,17 @@ class SupportTicketMessageSenderTest {
         assertThat(saved().getSenderId()).isEqualTo("agent-7");
         assertThat(saved().getSenderName()).isEqualTo("Equipe accueil");
     }
+
+    @Test
+    @DisplayName("authorId et authorName, envoyes par l'ecran, valent senderId et senderName")
+    void authorFieldsAreAccepted() {
+        try {
+            service.addMessage("TCK-1", new AddTicketMessageRequest(null, null, null, "<p>bonjour</p>", false,
+                    "support@sni-cg.com", "Equipe support"));
+        } catch (RuntimeException ignored) {
+            // idem
+        }
+        assertThat(saved().getSenderId()).isEqualTo("support@sni-cg.com");
+        assertThat(saved().getSenderName()).isEqualTo("Equipe support");
+    }
 }

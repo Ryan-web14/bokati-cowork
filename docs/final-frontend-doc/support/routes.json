@@ -2300,6 +2300,12 @@
     },
     "internal": {
      "type": "boolean"
+    },
+    "authorId": {
+     "type": "string"
+    },
+    "authorName": {
+     "type": "string"
     }
    }
   },
