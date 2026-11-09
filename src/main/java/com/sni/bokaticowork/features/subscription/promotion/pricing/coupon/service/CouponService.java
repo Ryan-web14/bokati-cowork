@@ -5,6 +5,7 @@ import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.subscription.promotion.enums.PromotionStatus;
 import com.sni.bokaticowork.features.subscription.promotion.model.Promotion;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponResponse;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.enums.CouponKind;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.enums.CouponReservationStatus;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.enums.CouponStatus;
@@ -116,6 +117,16 @@ public class CouponService {
     @Transactional(readOnly = true)
     public Optional<Coupon> find(String code) {
         return StringUtils.hasText(code) ? couponRepository.findByCode(code.trim()) : Optional.empty();
+    }
+
+    /**
+     * Un code vu par l'administration, construit dans la transaction : la vue lit la promotion et
+     * le lot, et sans open-in-view une lecture paresseuse apres coup tomberait en erreur.
+     */
+    @Transactional(readOnly = true)
+    public CouponResponse view(String code) {
+        return find(code).map(CouponResponse::from)
+                .orElseThrow(() -> new ResourceNotFoundException("Code " + code + " introuvable"));
     }
 
     /** Codes dont un abonné dispose aujourd'hui, pour les lui montrer avant qu'il ait à en saisir un. */
