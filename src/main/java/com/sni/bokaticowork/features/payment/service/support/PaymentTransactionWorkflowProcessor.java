@@ -59,6 +59,7 @@ public class PaymentTransactionWorkflowProcessor {
     private final com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionGraceService graceService;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService marketplaceOrderService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -84,6 +85,9 @@ public class PaymentTransactionWorkflowProcessor {
             }
             // Notifications only after all business logic is complete
             sendPaidBillingDocumentEmails(transaction);
+            // Parrainage : traite apres la validation du paiement, jamais dans sa transaction
+            eventPublisher.publishEvent(new com.sni.bokaticowork.features.subscription.promotion.pricing.referral.event.RefereePaidEvent(
+                    intent.getCustomerType(), intent.getCustomerCode(), transaction.getTransactionNumber()));
             return;
         }
         if (event.status() == PaymentTransactionStatus.REFUNDED || event.status() == PaymentTransactionStatus.REVERSED) {

@@ -61,6 +61,8 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
     private final JWTService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final com.sni.bokaticowork.security.registration.EmailDomainPolicy emailDomainPolicy;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.promotion.pricing.referral.service.ReferralProgramService referralProgramService;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.promotion.pricing.referral.service.ReferralService referralService;
 
     /**
      * Le delai pendant lequel un jeton tout juste consomme peut revenir sans alerte.
@@ -281,6 +283,11 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
         // Avant toute ecriture · une adresse reservee ou jetable ne recevra jamais le code de
         // verification, et le compte resterait la, inutile.
         emailDomainPolicy.assertAcceptable(request.getEmail());
+        String referralCode = org.springframework.util.StringUtils.hasText(request.getReferralCode())
+                ? request.getReferralCode().trim() : null;
+        if (referralCode != null) {
+            referralProgramService.requireUsableCode(referralCode);
+        }
         CreateMemberRequest createReq = CreateMemberRequest.builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
@@ -296,7 +303,12 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
                 .preferredCommunicationChannel(request.getPreferredCommunicationChannel())
                 .generatePassword(false)
                 .build();
-        userProvisioningService.registerMemberFromPortal(createReq);
+        var member = userProvisioningService.registerMemberFromPortal(createReq);
+        if (referralCode != null) {
+            // Le filleul est enregistre ; la recompense attend la regle du programme (premier
+            // paiement par defaut), rien n'est accorde ici
+            referralService.register(referralCode, "MEMBER", member.getMemberId());
+        }
         Users user = userService.getUserByEmailForService(request.getEmail());
         String verificationToken = oneTimeTokenService.generateOneTimeToken(user);
         return OttResponse.builder()

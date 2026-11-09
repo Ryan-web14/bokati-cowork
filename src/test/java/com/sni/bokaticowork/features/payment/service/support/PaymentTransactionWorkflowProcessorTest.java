@@ -72,6 +72,9 @@ class PaymentTransactionWorkflowProcessorTest {
     @Mock
     private com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private PaymentTransactionWorkflowProcessor processor;
 
@@ -79,6 +82,8 @@ class PaymentTransactionWorkflowProcessorTest {
     void shouldActivatePendingSubscriptionAfterSuccessfulFullyPaidInvoiceTransaction() {
         PaymentIntent intent = PaymentIntent.builder()
                 .intentNumber("INT-001")
+                .customerType("MEMBER")
+                .customerCode("MBR-7")
                 .sourceType("BILLING_DOCUMENT")
                 .sourceCode("INV-001")
                 .status(PaymentIntentStatus.SUCCEEDED)
@@ -123,6 +128,9 @@ class PaymentTransactionWorkflowProcessorTest {
                                 && Boolean.FALSE.equals(request.cancelAtPeriodEnd())
                                 && request.reason().contains("TXN-001"))
         );
+        // Le parrainage du payeur se qualifie apres la validation du paiement, hors de sa transaction
+        verify(eventPublisher).publishEvent(new com.sni.bokaticowork.features.subscription.promotion.pricing.referral.event.RefereePaidEvent(
+                "MEMBER", "MBR-7", "TXN-001"));
     }
 
     @Test

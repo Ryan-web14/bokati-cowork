@@ -233,7 +233,8 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("refund")) return permission("PAYMENT", "REFUND");
             return permission("PAYMENT", HttpMethod.GET.matches(method) ? "READ" : "PROCESS");
         }
-        if (path.startsWith("/promotions")) {
+        // Coupons et parrainages sont des promotions : memes droits
+        if (path.startsWith("/promotions") || path.startsWith("/coupons") || path.startsWith("/referrals")) {
             return permission("BILLING", actionFor("BILLING", method));
         }
         if (path.startsWith("/contracts")) {
