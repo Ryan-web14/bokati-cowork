@@ -4,6 +4,9 @@ import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.subscription.promotion.model.Promotion;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponBatchRevocation;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponBatchView;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponLineView;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.enums.CouponKind;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.enums.CouponStatus;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.model.Coupon;
@@ -13,6 +16,8 @@ import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.repos
 import com.sni.bokaticowork.features.subscription.promotion.repository.PromotionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -20,8 +25,10 @@ import org.springframework.util.StringUtils;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -125,14 +132,180 @@ public class CouponBatchService {
     public Coupon revoke(String code, String reason, String revokedBy) {
         Coupon coupon = couponRepository.findByCode(code)
                 .orElseThrow(() -> new ResourceNotFoundException("Code " + code + " introuvable"));
-        coupon.setStatus(CouponStatus.REVOKED);
-        coupon.setRevokedAt(Instant.now());
-        coupon.setRevokedReason(reason);
-        coupon.setRevokedBy(revokedBy);
+        markRevoked(coupon, reason, revokedBy, Instant.now());
         return couponRepository.save(coupon);
     }
 
+    /**
+     * Revoque d'un geste les codes encore utilisables d'un lot, typiquement quand un partenariat
+     * s'arrete ou qu'un paquet de flyers est perdu.
+     *
+     * <p>Les codes deja revoques gardent leur motif d'origine, et ceux qui ont servi jusqu'au bout
+     * ou qui ont expire sont laisses tels quels : les revoquer reecrirait l'histoire de la campagne,
+     * et un code consomme doit rester reconnu comme consomme.</p>
+     */
+    @Transactional
+    public CouponBatchRevocation revokeBatch(String batchCode, String reason, String revokedBy) {
+        if (!StringUtils.hasText(reason)) {
+            throw new BadRequestException("Le motif de la révocation est obligatoire");
+        }
+        CouponBatch batch = batch(batchCode);
+        List<Coupon> coupons = couponRepository.findAllByBatchIdOrderByCode(batch.getId());
+        Instant now = Instant.now();
+        int revoked = 0;
+        int alreadyRevoked = 0;
+        int exhausted = 0;
+        int expired = 0;
+        List<Coupon> changed = new ArrayList<>();
+        for (Coupon coupon : coupons) {
+            if (coupon.getStatus() == CouponStatus.REVOKED) {
+                alreadyRevoked++;
+            } else if (isExhausted(coupon)) {
+                exhausted++;
+            } else if (coupon.getStatus() == CouponStatus.EXPIRED) {
+                expired++;
+            } else {
+                markRevoked(coupon, reason, revokedBy, now);
+                changed.add(coupon);
+                revoked++;
+            }
+        }
+        couponRepository.saveAll(changed);
+        log.info("Lot {} · {} codes revoques, {} deja revoques, {} epuises, {} expires",
+                batch.getBatchCode(), revoked, alreadyRevoked, exhausted, expired);
+        return new CouponBatchRevocation(batch.getBatchCode(), coupons.size(), revoked, alreadyRevoked, exhausted, expired);
+    }
+
     // -----------------------------------------------------------------------------------------
+    // Consultation
+    // -----------------------------------------------------------------------------------------
+
+    /** Les lots, du plus recent au plus ancien, chacun avec ses compteurs vivants. */
+    @Transactional(readOnly = true)
+    public Page<CouponBatchView> list(String promotionCode, Pageable pageable) {
+        Page<CouponBatch> batches = StringUtils.hasText(promotionCode)
+                ? batchRepository.findRecentByPromotionCode(promotionCode.trim(), pageable)
+                : batchRepository.findRecent(pageable);
+        Map<Long, CouponBatchView.Counts> counts = counts(batches.getContent().stream().map(CouponBatch::getId).toList());
+        return batches.map(batch -> CouponBatchView.of(batch, counts.get(batch.getId())));
+    }
+
+    /** Un lot et ou en est sa campagne, lu dans la transaction qui charge sa promotion. */
+    @Transactional(readOnly = true)
+    public CouponBatchView view(String batchCode) {
+        CouponBatch batch = batch(batchCode);
+        return CouponBatchView.of(batch, counts(List.of(batch.getId())).get(batch.getId()));
+    }
+
+    /** Les codes d'un lot, page par page, eventuellement restreints a un statut. */
+    @Transactional(readOnly = true)
+    public Page<CouponLineView> coupons(String batchCode, CouponStatus status, Pageable pageable) {
+        CouponBatch batch = batch(batchCode);
+        Page<Coupon> page = status == null
+                ? couponRepository.findPageByBatchId(batch.getId(), pageable)
+                : couponRepository.findPageByBatchIdAndStatus(batch.getId(), status, pageable);
+        return page.map(CouponLineView::of);
+    }
+
+    /**
+     * Tous les codes d'un lot en CSV, pour les remettre a un partenaire ou a l'imprimeur.
+     *
+     * <p>Point-virgule et marque d'ordre en tete, comme les autres exports : c'est ce qu'Excel
+     * attend en francais pour ouvrir le fichier sans assistant d'import.</p>
+     */
+    @Transactional(readOnly = true)
+    public String exportCsv(String batchCode) {
+        CouponBatch batch = batch(batchCode);
+        return toCsv(couponRepository.findAllByBatchIdOrderByCode(batch.getId()));
+    }
+
+    static String toCsv(List<Coupon> coupons) {
+        StringBuilder csv = new StringBuilder("﻿");
+        csv.append("Code;Statut;Type;Titulaire type;Titulaire code;Utilisations max;Utilisations;Retenues;"
+                + "Valide du;Valide au;Emis le;Revoque le;Motif de revocation\n");
+        for (Coupon coupon : coupons) {
+            csv.append(cell(coupon.getCode())).append(';')
+                    .append(value(coupon.getStatus())).append(';')
+                    .append(value(coupon.getCouponKind())).append(';')
+                    .append(cell(coupon.getAssignedToType())).append(';')
+                    .append(cell(coupon.getAssignedToCode())).append(';')
+                    .append(value(coupon.effectiveMaxRedemptions())).append(';')
+                    .append(value(coupon.getRedemptionCount())).append(';')
+                    .append(value(coupon.getReservedCount())).append(';')
+                    .append(value(coupon.getValidFrom())).append(';')
+                    .append(value(coupon.getValidUntil())).append(';')
+                    .append(value(coupon.getIssuedAt())).append(';')
+                    .append(value(coupon.getRevokedAt())).append(';')
+                    .append(cell(coupon.getRevokedReason())).append('\n');
+        }
+        return csv.toString();
+    }
+
+    /** Une cellule CSV · guillemets doubles, et pas de formule interpretable par un tableur. */
+    static String cell(String value) {
+        if (value == null) {
+            return "";
+        }
+        String safe = value;
+        if (!safe.isEmpty() && "=+-@\t\r".indexOf(safe.charAt(0)) >= 0) {
+            safe = "'" + safe;
+        }
+        return "\"" + safe.replace("\"", "\"\"") + "\"";
+    }
+
+    // -----------------------------------------------------------------------------------------
+
+    private CouponBatch batch(String batchCode) {
+        if (!StringUtils.hasText(batchCode)) {
+            throw new ResourceNotFoundException("Lot introuvable");
+        }
+        return batchRepository.findByBatchCode(batchCode.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Lot " + batchCode + " introuvable"));
+    }
+
+    /** La regle d'une revocation, la meme pour un code seul et pour un lot entier. */
+    private static void markRevoked(Coupon coupon, String reason, String revokedBy, Instant now) {
+        coupon.setStatus(CouponStatus.REVOKED);
+        coupon.setRevokedAt(now);
+        coupon.setRevokedReason(reason);
+        coupon.setRevokedBy(revokedBy);
+    }
+
+    /**
+     * Un code a servi jusqu'au bout. Les retenues en cours ne comptent pas : un panier abandonne
+     * rendra son code, qui doit donc pouvoir etre revoque.
+     */
+    static boolean isExhausted(Coupon coupon) {
+        if (coupon.getStatus() == CouponStatus.USED) {
+            return true;
+        }
+        Integer ceiling = coupon.effectiveMaxRedemptions();
+        return ceiling != null && coupon.getRedemptionCount() != null && coupon.getRedemptionCount() >= ceiling;
+    }
+
+    private Map<Long, CouponBatchView.Counts> counts(List<Long> batchIds) {
+        Map<Long, CouponBatchView.Counts> result = new HashMap<>();
+        if (batchIds.isEmpty()) {
+            return result;
+        }
+        for (CouponRepository.BatchStatusCount row : couponRepository.countByStatusForBatches(batchIds)) {
+            CouponBatchView.Counts current = result.getOrDefault(row.getBatchId(), CouponBatchView.Counts.empty());
+            Map<CouponStatus, Long> byStatus = current.byStatus();
+            byStatus.merge(row.getStatus(), longOf(row.getCouponCount()), Long::sum);
+            result.put(row.getBatchId(), new CouponBatchView.Counts(byStatus,
+                    current.redemptions() + longOf(row.getRedemptions()),
+                    current.reserved() + longOf(row.getReserved())));
+        }
+        return result;
+    }
+
+    private static long longOf(Number number) {
+        return number == null ? 0L : number.longValue();
+    }
+
+    private static String value(Object value) {
+        return value == null ? "" : value.toString();
+    }
 
     private String uniqueCode(CouponBatch batch, Set<String> produced) {
         for (int attempt = 0; attempt < MAX_ATTEMPTS_PER_CODE; attempt++) {
