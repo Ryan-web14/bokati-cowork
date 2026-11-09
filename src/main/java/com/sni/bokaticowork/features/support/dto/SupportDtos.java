@@ -114,12 +114,11 @@ public class SupportDtos {
             String contactName,
             String contactEmail,
             String contactPhone,
-            /** En texte · JavaScript arrondirait un long identifiant. L'annotation est celle de Jackson 3, qui sert les reponses : celle de Jackson 2 serait ignoree. */
-            @tools.jackson.databind.annotation.JsonSerialize(using = tools.jackson.databind.ser.std.ToStringSerializer.class)
-            Long assignedTo,
-            /** L'agent assigne, lisible : son e-mail et son nom (vides si personne n'est assigne). */
-            String assignedToEmail,
-            String assignedToName,
+            /**
+             * L'agent assigne, par son courriel : lisible a l'ecran, et utilisable tel quel pour
+             * filtrer la file ou reassigner. Vide si personne n'est assigne.
+             */
+            String assignedTo,
             String relatedType,
             String relatedCode,
             Instant firstResponseDueAt,

@@ -811,7 +811,7 @@
      "in": "query",
      "name": "assignedTo",
      "required": false,
-     "type": "Long"
+     "type": "String"
     },
     {
      "in": "query",
@@ -1570,13 +1570,6 @@
      "type": "string"
     },
     "assignedTo": {
-     "type": "string",
-     "description": "nombre envoyé en texte"
-    },
-    "assignedToEmail": {
-     "type": "string"
-    },
-    "assignedToName": {
      "type": "string"
     },
     "relatedType": {

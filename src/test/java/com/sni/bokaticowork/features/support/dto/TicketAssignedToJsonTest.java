@@ -21,19 +21,20 @@ class TicketAssignedToJsonTest {
 
     private static final JsonMapper JSON = JsonMapper.builder().build();
 
-    private static SupportDtos.SupportTicketResponse ticket(Long assignedTo) {
+    private static SupportDtos.SupportTicketResponse ticket(String assignedTo) {
         return new SupportDtos.SupportTicketResponse("TCK-1", "Wifi", null, null, null, null, null, null, null, null, null,
-                assignedTo, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                assignedTo, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 List.of(), List.of(), List.of(), 0, 0, 0, 0);
     }
 
     @Test
-    @DisplayName("assignedTo sort en texte, sans perdre les chiffres d'un long identifiant")
+    @DisplayName("assignedTo sort en texte : le courriel de l'agent")
     void assignedToIsAString() {
-        JsonNode json = JSON.valueToTree(ticket(7291495199787880448L));
+        JsonNode json = JSON.valueToTree(ticket("support@sni-cg.com"));
 
         assertThat(json.get("assignedTo").isString()).isTrue();
-        assertThat(json.get("assignedTo").asString()).isEqualTo("7291495199787880448");
+        assertThat(json.get("assignedTo").asString()).isEqualTo("support@sni-cg.com");
+        assertThat(json.has("assignedToEmail")).isFalse();
     }
 
     @Test

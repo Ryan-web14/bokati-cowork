@@ -724,6 +724,20 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         return get(ticketNumber);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Long agentId(String emailOrId) {
+        if (!StringUtils.hasText(emailOrId)) {
+            return null;
+        }
+        // Un agent inconnu ne filtre sur rien de vrai : la file rendue est vide, pas complete
+        try {
+            return resolveAssignedTo(new AssignTicketRequest(emailOrId));
+        } catch (RuntimeException ex) {
+            return -1L;
+        }
+    }
+
     private Long resolveAssignedTo(AssignTicketRequest request) {
         if (request == null || !StringUtils.hasText(request.assignedTo())) {
             return null;

@@ -44,7 +44,7 @@ public class SupportTicketMapper {
                                            List<AttachmentResponse> attachments, List<String> tags,
                                            int messageCount, int attachmentCount,
                                            int visibleMessageCount, int visibleAttachmentCount) {
-        // L'agent assigne, pour l'afficher par son nom et pas par un identifiant
+        // L'agent assigne, rendu par son courriel et pas par un identifiant
         com.sni.bokaticowork.security.admin.user.model.Users assignee = ticket.getAssignedTo() == null ? null
                 : userRepository.findById(ticket.getAssignedTo()).orElse(null);
         return new SupportTicketResponse(
@@ -59,9 +59,8 @@ public class SupportTicketMapper {
                 ticket.getContactName(),
                 ticket.getContactEmail(),
                 ticket.getContactPhone(),
-                ticket.getAssignedTo(),
-                assignee == null ? null : assignee.getEmail(),
-                assignee == null ? null : displayName(assignee),
+                assignee != null ? assignee.getEmail()
+                        : ticket.getAssignedTo() == null ? null : String.valueOf(ticket.getAssignedTo()),
                 ticket.getRelatedType(),
                 ticket.getRelatedCode(),
                 ticket.getFirstResponseDueAt(),
@@ -85,13 +84,6 @@ public class SupportTicketMapper {
                 visibleMessageCount,
                 visibleAttachmentCount
         );
-    }
-
-    /** « Prenom Nom », ou l'e-mail a defaut. */
-    private static String displayName(com.sni.bokaticowork.security.admin.user.model.Users user) {
-        String name = ((user.getFirstname() == null ? "" : user.getFirstname().trim()) + " "
-                + (user.getLastname() == null ? "" : user.getLastname().trim())).trim();
-        return name.isEmpty() ? user.getEmail() : name;
     }
 
     public AttachmentResponse toAttachmentResponse(TicketAttachment attachment) {

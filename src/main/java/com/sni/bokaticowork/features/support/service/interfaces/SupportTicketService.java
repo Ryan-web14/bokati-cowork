@@ -14,6 +14,9 @@ import java.util.List;
 public interface SupportTicketService {
     SupportTicketResponse create(CreateTicketRequest request);
     SupportTicketResponse createFromAutomation(CreateTicketRequest request);
+    /** L'identifiant d'un agent designe par son courriel ou son identifiant ; vide : aucun filtre. */
+    Long agentId(String emailOrId);
+
     PaginatedResponse<SupportTicketResponse> search(TicketStatus status, Long assignedTo,
                                                     String ownerType, String ownerCode,
                                                     TicketCategory category, TicketPriority priority,
