@@ -42,6 +42,7 @@ public class CompanyContractsService {
     private final ContractAmendmentRepository amendmentRepository;
     private final DomiciliationContractRepository domiciliationRepository;
     private final DocumentService documentService;
+    private final com.sni.bokaticowork.features.client.customer.repository.CustomerRepository customerRepository;
     private final CompanyLegalCard legalCard;
     private final com.sni.bokaticowork.features.contract.service.support.ContractVersionHistory versionHistory;
 
@@ -66,7 +67,8 @@ public class CompanyContractsService {
     }
 
     @Transactional(readOnly = true)
-    public CompanyContracts list(Customer company) {
+    public CompanyContracts list(Customer detached) {
+        Customer company = attached(detached);
         List<ContractView> contracts = contractRepository
                 .findAllByOwnerTypeAndOwnerCode(DocumentOwnerType.CUSTOMER, company.getCustomerId(), Pageable.unpaged())
                 .stream().map(this::view).toList();
@@ -82,7 +84,7 @@ public class CompanyContractsService {
     /** Le document du contrat, signe ou a defaut genere · 404 s'il n'est pas a l'organisation. */
     @Transactional(readOnly = true)
     public byte[] document(Customer company, String contractCode) {
-        Contract contract = owned(company, contractCode);
+        Contract contract = owned(attached(company), contractCode);
         String code = StringUtils.hasText(contract.getSignedDocumentCode()) ? contract.getSignedDocumentCode()
                 : contract.getDraftDocumentCode();
         if (!StringUtils.hasText(code)) {
@@ -150,6 +152,15 @@ public class CompanyContractsService {
         return new AmendmentView(amendment.getCode(), amendment.getStatus() == null ? null : amendment.getStatus().name(),
                 amendment.getDescription(), amendment.getEffectiveDate(), amendment.getSignedAt(),
                 StringUtils.hasText(amendment.getSignedDocumentCode()) || StringUtils.hasText(amendment.getDraftDocumentCode()));
+    }
+
+    /**
+     * L'organisation recue est lue hors de cette transaction (par le controleur) : relue ici, ses
+     * liens paresseux (entite juridique, representant) se chargent au lieu de lever
+     * LazyInitializationException sans open-in-view.
+     */
+    private Customer attached(Customer company) {
+        return company.getId() == null ? company : customerRepository.findById(company.getId()).orElse(company);
     }
 
     private Contract owned(Customer company, String contractCode) {
