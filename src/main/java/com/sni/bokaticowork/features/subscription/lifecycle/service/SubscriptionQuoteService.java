@@ -113,6 +113,8 @@ public class SubscriptionQuoteService {
         if (outlook.blockingReason() != null) {
             throw new ConflictException("quote", outlook.blockingReason());
         }
+        // Version lue par son id : son plan reste un proxy, que la vue du devis lit hors transaction
+        org.hibernate.Hibernate.initialize(saved.getPlanVersion().getPlan());
         return saved;
     }
 

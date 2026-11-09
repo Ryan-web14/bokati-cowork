@@ -5,6 +5,7 @@ import com.sni.bokaticowork.features.client.member.model.Member;
 import com.sni.bokaticowork.features.company.enums.InvoiceLinkMode;
 import com.sni.bokaticowork.features.company.enums.MemberLinkStatus;
 import com.sni.bokaticowork.features.company.membership.model.CustomerMemberLink;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,6 +25,8 @@ public interface CustomerMemberLinkRepository extends JpaRepository<CustomerMemb
 
     List<CustomerMemberLink> findAllByMemberOrderByStartedAtDesc(Member member);
 
+    /** L'organisation est lue avec le lien : ses lecteurs hors transaction (acces a la domiciliation) lisent son code. */
+    @EntityGraph(attributePaths = "customer")
     List<CustomerMemberLink> findAllByMemberAndStatusOrderByStartedAtDesc(Member member, MemberLinkStatus status);
 
     Optional<CustomerMemberLink> findByCustomerAndMemberAndStatus(Customer customer, Member member, MemberLinkStatus status);

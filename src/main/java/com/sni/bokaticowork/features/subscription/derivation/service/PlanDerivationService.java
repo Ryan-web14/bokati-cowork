@@ -640,7 +640,10 @@ public class PlanDerivationService {
             throw new BadRequestException("Le plancher ne peut pas être négatif");
         }
         version.setFloorPrice(floorPrice);
-        return planVersionRepository.save(version);
+        PlanVersion saved = planVersionRepository.save(version);
+        // Le controleur lit le code du plan hors transaction
+        org.hibernate.Hibernate.initialize(saved.getPlan());
+        return saved;
     }
 
     private PlanPrice priceFor(PlanVersion version, BillingCycle cycle) {
