@@ -234,15 +234,21 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         SupportTicket ticket = getTicket(ticketNumber);
         TicketSenderType senderType = request.senderType() == null ? TicketSenderType.AGENT : request.senderType();
         boolean isInternal = Boolean.TRUE.equals(request.internal());
+        // L'agent connecte signe son message si l'ecran ne l'a pas fait : son e-mail et son nom
+        Users agent = senderType == TicketSenderType.AGENT ? currentUser() : null;
+        String senderId = StringUtils.hasText(request.senderId()) ? request.senderId().trim()
+                : agent == null ? null : agent.getEmail();
+        String senderName = StringUtils.hasText(request.senderName()) ? request.senderName().trim()
+                : agent == null ? null : displayName(agent);
 
         boolean wasClosedBeforeMessage = senderType == TicketSenderType.CLIENT
                 && ticket.getStatus() == TicketStatus.CLOSED;
 
-        TicketMessage message = saveMessage(ticket, senderType, request.senderId(),
-                request.senderName(), request.content(), isInternal, null);
+        TicketMessage message = saveMessage(ticket, senderType, senderId,
+                senderName, request.content(), isInternal, null);
 
         eventWriter.write(ticket, TicketEventType.MESSAGE_ADDED,
-                senderType.name(), request.senderId(),
+                senderType.name(), senderId,
                 (isInternal ? "Note interne ajoutée" : "Message ajouté") + " par " + senderType);
 
         // #2 WAITING_CLIENT: agent replied publicly → waiting for client response
@@ -263,7 +269,7 @@ public class SupportTicketServiceImpl implements SupportTicketService {
                 ticket.setClosedAt(null);
                 ticket.setResolvedAt(null);
                 ticketRepository.save(ticket);
-                eventWriter.write(ticket, TicketEventType.REOPENED, "CLIENT", request.senderId(),
+                eventWriter.write(ticket, TicketEventType.REOPENED, "CLIENT", senderId,
                         "Ticket réouvert suite à une réponse client");
                 emailService.sendTicketReopened(ticket);
             } else {
@@ -724,17 +730,48 @@ public class SupportTicketServiceImpl implements SupportTicketService {
         }
         String value = request.assignedTo().trim();
         if (value.matches("\\d+")) {
+            long id;
             try {
-                return Long.parseLong(value);
+                id = Long.parseLong(value);
             } catch (NumberFormatException ex) {
                 throw new BadRequestException("Assigned agent id is invalid");
             }
+            // Un identifiant arrondi par JavaScript ne designe personne : sans ce controle, il
+            // s'enregistrait et le ticket restait assigne a un agent inexistant
+            if (!userExists(id)) {
+                throw new ResourceNotFoundException("Aucun utilisateur ne porte l'identifiant " + value
+                        + " : assignez plutôt par e-mail");
+            }
+            return id;
         }
         if (!value.contains("@")) {
             throw new BadRequestException("Assigned agent must be a user id or email");
         }
         Users user = userService.getUserByEmailForService(value);
         return user.getId();
+    }
+
+    private boolean userExists(long id) {
+        try {
+            return userService.getUserByIdForService(id) != null;
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    private Users currentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+            return principal.getUser();
+        }
+        return null;
+    }
+
+    /** « Prenom Nom », ou l'e-mail a defaut. */
+    private static String displayName(Users user) {
+        String name = ((user.getFirstname() == null ? "" : user.getFirstname().trim()) + " "
+                + (user.getLastname() == null ? "" : user.getLastname().trim())).trim();
+        return name.isEmpty() ? user.getEmail() : name;
     }
 
     private String currentUserId() {

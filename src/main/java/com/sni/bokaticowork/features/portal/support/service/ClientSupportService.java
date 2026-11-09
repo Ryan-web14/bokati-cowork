@@ -154,7 +154,7 @@ public class ClientSupportService {
                 ticket.ticketNumber(), ticket.title(), ticket.description(), ticket.status(), ticket.priority(),
                 ticket.category(), ticket.ownerType(), ticket.ownerCode(), ticket.contactName(),
                 ticket.contactEmail(), ticket.contactPhone(),
-                null,
+                null, null, null,
                 ticket.relatedType(), ticket.relatedCode(), ticket.firstResponseDueAt(), ticket.resolutionDueAt(),
                 ticket.firstRespondedAt(), ticket.resolvedAt(), ticket.closedAt(), ticket.csatScore(),
                 ticket.csatComment(), ticket.csatSubmittedAt(), ticket.escalationLevel(), ticket.escalatedAt(),

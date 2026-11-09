@@ -53,6 +53,9 @@ public class SupportInboundEmailWorker {
     @Value("${bokati.support.sender-email:supportela@elleaose.com}")
     private String supportInbox;
 
+    @Value("${bokati.support.manager-email:}")
+    private String managerEmail;
+
     @Scheduled(fixedDelayString = "${bokati.support.inbound-poll-delay-ms:60000}")
     public void pollInbox() {
         try {
@@ -103,6 +106,14 @@ public class SupportInboundEmailWorker {
         }
         if (!StringUtils.hasText(senderName)) senderName = senderEmail;
 
+        // Les courriels de la plateforme (nouveau message, delai depasse...) partent de cette boite
+        // et y reviennent quand elle en est aussi destinataire : sans ce filtre, ils s'ajoutaient
+        // au ticket comme des messages du client.
+        if (isOwnMailbox(senderEmail)) {
+            log.debug("Inbound email for ticket {} comes from our own mailbox {} · skipping", ticketNumber, senderEmail);
+            return;
+        }
+
         String bodyText = extractReplyText(msg);
         if (!StringUtils.hasText(bodyText)) {
             log.debug("Inbound email for ticket {} has empty body after extraction, skipping", ticketNumber);
@@ -124,6 +135,14 @@ public class SupportInboundEmailWorker {
         } catch (Exception ex) {
             log.error("Failed to process email reply to ticket {} from {}: {}", ticketNumber, senderEmail, ex.getMessage(), ex);
         }
+    }
+
+    public boolean isOwnMailbox(String senderEmail) {
+        if (!StringUtils.hasText(senderEmail)) {
+            return false;
+        }
+        String sender = senderEmail.trim();
+        return sender.equalsIgnoreCase(supportInbox) || (StringUtils.hasText(managerEmail) && sender.equalsIgnoreCase(managerEmail.trim()));
     }
 
     // ── Attachments (#5) ─────────────────────────────────────────────

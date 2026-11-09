@@ -23,7 +23,7 @@ class TicketAssignedToJsonTest {
 
     private static SupportDtos.SupportTicketResponse ticket(Long assignedTo) {
         return new SupportDtos.SupportTicketResponse("TCK-1", "Wifi", null, null, null, null, null, null, null, null, null,
-                assignedTo, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                assignedTo, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 List.of(), List.of(), List.of(), 0, 0, 0, 0);
     }
 

@@ -1573,6 +1573,12 @@
      "type": "string",
      "description": "nombre envoyé en texte"
     },
+    "assignedToEmail": {
+     "type": "string"
+    },
+    "assignedToName": {
+     "type": "string"
+    },
     "relatedType": {
      "type": "string"
     },
