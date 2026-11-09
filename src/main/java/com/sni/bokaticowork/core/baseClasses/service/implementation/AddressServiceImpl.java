@@ -12,11 +12,18 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
+/**
+ * Le pays d'une adresse est paresseux, et la projection comme la mise a jour le lisent : sans
+ * transaction ici, la lecture d'une adresse tombait en 500 (open-in-view coupe), et la mise a
+ * jour n'etait jamais ecrite, faute de session pour la detecter.
+ */
 @RequiredArgsConstructor
 @Service
 @Slf4j
+@Transactional
 public class AddressServiceImpl implements AddressService {
 
     private final AddressMapper addressMapper;
@@ -50,6 +57,7 @@ public class AddressServiceImpl implements AddressService {
         return addressMapper.mapAddressUpdate(obj, request);
     }
 
+    @Transactional(readOnly = true)
     public AddressResponse getAddressById(long id){
         return addressMapper.toDTO(addressRepo.findById(id)
                 .orElseThrow(()-> new ResourceNotFoundException("Address with id " + id + " not found")));
