@@ -19,7 +19,10 @@ Les actions agissent sur cette base.
 ## Ce qu'elle contient
 
 - **Écrans dédiés** : paramètres, horaires des ressources, marketplace (administration et portail),
-  contrats et versions, renouvellement d'abonnement.
+  contrats et versions, renouvellement d'abonnement, lots de coupons (générer, suivre, exporter en CSV,
+  révoquer), parrainage côté administration (programmes, liens des parrains, parrainages, page publique
+  d'un lien) et côté portail (son lien, ses parrainages : se connecter avec un membre), explorateur de la
+  GED (parcourir, déposer, numériser, chercher dans le contenu, corbeille).
 - **Tous les modules** : le menu se construit à la connexion depuis `/v3/api-docs`. Chaque module liste
   ses routes, avec un formulaire généré et sa réponse en tableau, en fiche ou en JSON. Les listes se
   lisent à l'ouverture.

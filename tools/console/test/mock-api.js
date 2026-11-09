@@ -32,6 +32,21 @@ const routes = {
     { version: 3, kind: 'EXTENSION', description: 'Reprise après une pause', previousEndDate: '2026-11-30', endDate: '2026-12-31', at: '2026-11-20T08:00:00Z' }],
 };
 
+Object.assign(routes, {
+  'GET /sni/api/v1/coupons/batches': { data: [{ batchCode: 'CPB-2026-0001', name: 'Partenariat rentree', promotionCode: 'PROMO-RENTREE', couponKind: 'SINGLE_USE', totalCoupons: 3, totalRedemptions: 1, validUntil: '2026-12-31T23:00:00Z', createdAt: '2026-11-09T10:00:00Z' }], pageable: { page: 0, totalPages: 1, totalElements: 1 } },
+  'GET /sni/api/v1/coupons/batches/CPB-2026-0001': { batchCode: 'CPB-2026-0001', name: 'Partenariat rentree', promotionCode: 'PROMO-RENTREE', promotionName: 'Rentree -20 %', couponKind: 'SINGLE_USE', totalCoupons: 3, countsByStatus: { ACTIVE: 1, USED: 1, EXPIRED: 0, REVOKED: 1 }, totalRedemptions: 1, totalReserved: 0 },
+  'GET /sni/api/v1/coupons/batches/CPB-2026-0001/coupons': { data: [{ code: 'RENTREE-7K2P', status: 'ACTIVE', redemptionCount: 0, maxRedemptions: 1, reservedCount: 0 }, { code: 'RENTREE-Q8XZ', status: 'USED', redemptionCount: 1, maxRedemptions: 1 }, { code: 'RENTREE-M3TT', status: 'REVOKED', revokedReason: 'Fuite' }], pageable: { page: 0, totalPages: 1, totalElements: 3 } },
+  'GET /sni/api/v1/referrals/programs': [{ code: 'AMI-2026', name: 'Parrainez un ami', status: 'ACTIVE', open: true, qualificationRule: 'FIRST_PAYMENT', links: 4, maxReferralsPerReferrer: 10 }],
+  'GET /sni/api/v1/referrals': { data: [{ referralNumber: 'PAR-202611-000001', programCode: 'AMI-2026', referrerCode: 'MBR-1', refereeCode: 'MBR-9', status: 'PENDING', registeredAt: '2026-11-09T09:00:00Z' }], pageable: { page: 0, totalPages: 1, totalElements: 1 } },
+  'GET /sni/api/v1/client/referrals/programs': [{ code: 'AMI-2026', name: 'Parrainez un ami', description: 'Invitez un ami au coworking.', referrerPromotion: { code: 'P1', name: '5 000 XAF sur votre portefeuille' }, refereePromotion: { code: 'P2', name: '-20 % sur le premier mois' }, qualificationRule: 'FIRST_PAYMENT', myLinkUrl: 'https://elleaose.com/inscription?parrain=K7P2QX' }],
+  'GET /sni/api/v1/client/referrals/links': [{ code: 'K7P2QX', programName: 'Parrainez un ami', clickCount: 12, signupCount: 2, active: true, url: 'https://elleaose.com/inscription?parrain=K7P2QX' }],
+  'GET /sni/api/v1/client/referrals': [{ referralNumber: 'PAR-202611-000001', programName: 'Parrainez un ami', friend: 'Jean M.', status: 'REWARDED', registeredAt: '2026-11-01T09:00:00Z', rewardGranted: true, rewardAmount: 5000, currency: 'XAF' }],
+  'GET /sni/api/v1/ged/items': { folder: null, breadcrumb: [], items: [{ kind: 'FOLDER', code: 'FLD-1', name: 'Membres', documentsCount: 12, protectedItem: true }, { kind: 'FILE', code: 'DOC-1', name: 'statuts.pdf', size: 220000, mimeType: 'application/pdf', updatedAt: '2026-11-05T10:00:00Z' }], page: { totalElements: 2 } },
+  'GET /sni/api/v1/ged/search': { query: 'bail', totalElements: 1, hits: [{ item: { name: 'scan-0042.pdf' }, location: 'Juridique / Baux', snippet: '...Contrat de ⟦bail⟧ commercial, ⟦Echeance⟧ du loyer...', rank: 1.2 }] },
+  'GET /sni/api/v1/ged/text/status': { pending: 3, byStatus: { DONE: 40, UNSUPPORTED: 2 } },
+  'GET /sni/api/v1/ged/trash': [{ batch: 'b1', trashedAt: '2026-11-08T10:00:00Z', folders: 1, documents: 3, items: [{ name: 'Archives 2019' }] }],
+});
+
 const api = http.createServer((req, res) => {
   const key = `${req.method} ${req.url.split('?')[0]}`;
   const found = routes[key];
