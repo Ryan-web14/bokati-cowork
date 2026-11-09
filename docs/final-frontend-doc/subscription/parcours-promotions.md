@@ -23,13 +23,24 @@ Pas de route de modification, de pause ni d'archivage.
 
 ## Coupons
 
-Écran : onglet « Codes » d'une promotion (droit `ADMIN:ACCESS`).
+Écran : onglet « Codes » d'une promotion, droits de la facturation (`BILLING:READ` pour lire, `BILLING:CREATE` pour générer, révoquer ou retenir).
 
-1. Générer un lot : `POST /sni/api/v1/coupons/batches?createdBy=...` ([route](routes/CouponController.md#r-post-sni-api-v1-coupons-batches)) avec `promotionCode`, `name`, `couponKind` (`SINGLE_USE`, `MULTI_USE`, `UNIQUE_PER_SUBSCRIBER`) obligatoires, `quantity` (1 à 50 000), `codePrefix`, `codeLength` (6 à 32), `maxRedemptionsPerCoupon`, `validFrom`, `validUntil` (pas avant le début), `channel`. Réponse `{ "batchCode", "generated", "promotionCode" }`. Les codes générés ne sont pas renvoyés par cette route.
-2. Codes disponibles pour un souscripteur : `GET /sni/api/v1/coupons/available?subscriberType=...&subscriberCode=...` (un coupon nominatif n'apparaît qu'à son titulaire). Réponse `CouponResponse[]` : `code`, promotion, `couponKind`, `status`, `remainingUses`, validité.
-3. Retenir un code pour un panier (guichet) : `POST /sni/api/v1/coupons/{code}/reserve?cartReference=...&subscriberType=...&subscriberCode=...&reservedBy=...`. Le code est retenu 30 minutes (`expiresAt`), sans être consommé ; une même référence de panier prolonge sa retenue. Un code refusé renvoie `400` avec son motif en français ; un code inconnu `404` `Ce code est introuvable`.
-4. Rendre les codes d'un panier abandonné ou modifié : `DELETE /sni/api/v1/coupons/reservations?cartReference=...&reason=...` rend `{ "released": n }`. Les retenues expirées sont rendues seules toutes les 2 minutes.
-5. Révoquer un code : `POST /sni/api/v1/coupons/{code}/revoke?reason=...&revokedBy=...` (`reason` obligatoire).
+**Générer et suivre un lot**
+
+1. Générer : `POST /sni/api/v1/coupons/batches?createdBy=...` ([route](routes/CouponController.md#r-post-sni-api-v1-coupons-batches)) avec `promotionCode`, `name`, `couponKind` (`SINGLE_USE`, `MULTI_USE`, `UNIQUE_PER_SUBSCRIBER`) obligatoires, `quantity` (1 à 50 000), `codePrefix`, `codeLength` (6 à 32), `maxRedemptionsPerCoupon`, `validFrom`, `validUntil` (pas avant le début), `channel`. Réponse `{ "batchCode", "generated", "promotionCode", "batch" }`, `batch` étant la vue du lot ci-dessous. Afficher ensuite la page du lot.
+2. Liste des lots : `GET /sni/api/v1/coupons/batches?promotionCode=...&page=0&size=20` (taille au plus 100), du plus récent au plus ancien, `promotionCode` facultatif. Chaque lot (`CouponBatchView`) : `batchCode`, `name`, `description`, `promotionCode`, `promotionName`, `couponKind`, `codePrefix`, `codeLength`, `requestedQuantity`, `generatedQuantity`, `maxRedemptionsPerCoupon`, `validFrom`, `validUntil`, `channel`, `createdAt`, `createdBy`, `totalCoupons`, `countsByStatus` (toujours les quatre clés `ACTIVE`, `USED`, `EXPIRED`, `REVOKED`), `totalRedemptions`, `totalReserved`. Les compteurs sont calculés sur les codes eux-mêmes, à jour.
+3. Un lot : `GET /sni/api/v1/coupons/batches/{batchCode}` (`404` s'il n'existe pas).
+4. Les codes du lot : `GET /sni/api/v1/coupons/batches/{batchCode}/coupons?status=...&page=0&size=50` (taille au plus 500), triés par code, `status` facultatif. Chaque ligne : `code`, `status`, `couponKind`, `assignedToType`, `assignedToCode`, `maxRedemptions` (plafond effectif : 1 pour un code à usage unique), `redemptionCount`, `reservedCount`, `validFrom`, `validUntil`, `issuedAt`, `revokedAt`, `revokedReason`.
+5. Exporter les codes pour un partenaire : `GET /sni/api/v1/coupons/batches/{batchCode}/export` télécharge `coupons-<batchCode>.csv` (UTF-8 avec BOM, séparateur `;`, s'ouvre dans Excel). Colonnes : Code, Statut, Type, Titulaire type, Titulaire code, Utilisations max, Utilisations, Retenues, Valide du, Valide au, Émis le, Révoqué le, Motif de révocation. Le fichier demande le jeton : le télécharger par `fetch` puis l'offrir en `blob:`.
+6. Révoquer tout un lot : `POST /sni/api/v1/coupons/batches/{batchCode}/revoke?reason=...&revokedBy=...` (`reason` obligatoire, `400` sinon). Rend `{ "batchCode", "total", "revoked", "alreadyRevoked", "exhausted", "expired" }`. Les codes déjà révoqués gardent leur motif ; les codes épuisés ou expirés ne sont pas touchés ; un code seulement retenu dans un panier est révoqué.
+
+**Un code**
+
+7. Consulter : `GET /sni/api/v1/coupons/{code}` (`CouponResponse`, `404` s'il n'existe pas).
+8. Codes disponibles pour un souscripteur : `GET /sni/api/v1/coupons/available?subscriberType=...&subscriberCode=...` (un coupon nominatif n'apparaît qu'à son titulaire). Réponse `CouponResponse[]` : `code`, promotion, `couponKind`, `status`, `remainingUses`, validité.
+9. Retenir un code pour un panier (guichet) : `POST /sni/api/v1/coupons/{code}/reserve?cartReference=...&subscriberType=...&subscriberCode=...&reservedBy=...`. Le code est retenu 30 minutes (`expiresAt`), sans être consommé ; une même référence de panier prolonge sa retenue. Un code refusé renvoie `400` avec son motif en français ; un code inconnu `404` `Ce code est introuvable`.
+10. Rendre les codes d'un panier abandonné ou modifié : `DELETE /sni/api/v1/coupons/reservations?cartReference=...&reason=...` rend `{ "released": n }`. Les retenues expirées sont rendues seules toutes les 2 minutes.
+11. Révoquer un code : `POST /sni/api/v1/coupons/{code}/revoke?reason=...&revokedBy=...` (`reason` obligatoire).
 
 ## Bénéficiaires nominatifs d'une promotion
 
@@ -45,13 +56,38 @@ Il n'y a pas de route pour lister les bénéficiaires.
 
 ## Parrainage
 
-Routes en `ADMIN:ACCESS`. Les programmes (`programCode`, règle de qualification, promotions du parrain et du filleul) ne se créent par aucune route : ils doivent exister en base.
+Un **programme** dit ce que gagnent le parrain et le filleul (deux promotions : crédit de portefeuille ou remise) et quand (`qualificationRule`). Chaque parrain a **un lien** par programme : un code court et une adresse à partager. Le filleul s'inscrit avec ce code ; son **parrainage** se qualifie selon la règle, et les récompenses sont alors accordées.
 
-1. Obtenir le lien d'un parrain : `GET /sni/api/v1/referrals/links?programCode=...&referrerType=...&referrerCode=...` : créé au besoin, un seul par parrain et par programme. Réponse `{ "code", "clickCount", "signupCount" }`.
-2. Compter un clic : `POST /sni/api/v1/referrals/links/{linkCode}/clicks` (`204`).
-3. Inscrire un filleul : `POST /sni/api/v1/referrals` avec `linkCode`, `refereeType`, `refereeCode`. Réponse `{ "referralNumber", "status" }`. Refus en `400` : lien inactif, programme fermé, auto-parrainage, filleul déjà parrainé sur ce programme.
-4. Qualification : immédiate si le programme se qualifie à l'inscription (`SIGNUP`) ; par le worker quotidien (2 h 30) pour l'ancienneté (`TENURE_REACHED`) ; la règle `FIRST_PAYMENT` n'est déclenchée par aucun code. À la qualification, le filleul puis le parrain (dans la limite du plafond du programme) reçoivent leur récompense : crédit de portefeuille, ou inscription comme bénéficiaire nominatif de la promotion du programme. Statut `REWARDED` si une récompense a été accordée.
-5. Écarter : `POST /sni/api/v1/referrals/{referralNumber}/reject?reason=...` ; impossible une fois récompensé (`400`).
+### Back-office : programmes (droits `BILLING:*`)
+
+1. Créer : `POST /sni/api/v1/referrals/programs` avec `code` (mis en majuscules, unique, `409` sinon), `name`, et facultatifs `description`, `validFrom`, `validUntil`, `referrerPromotionCode` (récompense du parrain), `refereePromotionCode` (récompense du filleul), `qualificationRule` (`FIRST_PAYMENT` par défaut, `SIGNUP`, `TENURE_REACHED`), `qualificationDelayDays` (obligatoire pour `TENURE_REACHED`), `maxReferralsPerReferrer` (plafond des récompenses du parrain), `currency` (`XAF` par défaut). Au moins une des deux promotions est obligatoire (`400`). Le programme naît en brouillon (`DRAFT`). Réponse `201` `ProgramView`.
+2. `ProgramView` : `code`, `name`, `description`, `status` (`DRAFT`, `ACTIVE`, `PAUSED`, `ENDED`), `open` (ouvert à cet instant), `validFrom`, `validUntil`, `referrerPromotion` et `refereePromotion` (`{ code, name, description }` ou `null`), `qualificationRule`, `qualificationDelayDays`, `maxReferralsPerReferrer`, `currency`, `links` (nombre de liens), `referralsByStatus` (`PENDING`, `QUALIFIED`, `REWARDED`, `REJECTED`), `createdAt`, `createdBy`, `updatedAt`.
+3. Lister : `GET /sni/api/v1/referrals/programs`. Un programme : `GET .../programs/{code}`.
+4. Modifier : `PUT .../programs/{code}`, même corps (le `code` du corps est ignoré). Nom, description, dates, plafond et devise changent à tout moment ; règle et récompenses seulement en brouillon (`400` ensuite : les parrainages en cours ont été promis avec elles). Un programme clos ne se modifie plus.
+5. Piloter : `POST .../programs/{code}/activate` (depuis le brouillon ou une pause ; `400` sans récompense ou si la date de fin est passée), `.../pause` (plus de nouveaux parrainages, ceux en cours se qualifient toujours), `.../end` (définitif ; la date de fin devient maintenant).
+
+### Back-office : liens et parrainages
+
+6. Créer le lien d'un parrain : `POST /sni/api/v1/referrals/links` avec `programCode`, `referrerType` (`MEMBER`, `CUSTOMER`...), `referrerCode`. Rend le lien existant s'il en a déjà un (un seul par parrain et par programme). Un membre inconnu : `404` ; un programme clos : `400`. L'ancienne forme `GET /referrals/links?programCode=&referrerType=&referrerCode=` fait la même chose.
+7. `LinkView` : `code`, `url` (l'adresse à partager), `programCode`, `programName`, `programOpen`, `referrerType`, `referrerCode`, `clickCount`, `signupCount`, `active`, `createdAt`.
+8. Liens d'un programme : `GET .../programs/{code}/links?page=0&size=20`. Couper un lien (abus) : `POST /referrals/links/{linkCode}/deactivate`, le rouvrir : `.../activate` ; les parrainages déjà enregistrés suivent leur cours.
+9. Parrainages : `GET /sni/api/v1/referrals?programCode=...&status=...&referrerCode=...&page=0&size=20` (filtres facultatifs, du plus récent au plus ancien). Un parrainage : `GET /referrals/{referralNumber}`. `ReferralView` : `referralNumber`, `programCode`, `programName`, `linkCode`, parrain et filleul (`...Type`, `...Code`), `status`, `registeredAt`, `qualifiedAt`, `rejectedAt`, `rejectionReason`, récompenses du parrain et du filleul (`...RewardGranted`, `...RewardAmount` pour un crédit de portefeuille, `...RewardedAt`), `currency`.
+10. Inscrire un filleul à la main (filleul déjà client) : `POST /sni/api/v1/referrals` avec `linkCode`, `refereeType`, `refereeCode`. Réponse `{ "referralNumber", "status" }`. Refus en `400` : lien inactif, programme fermé, auto-parrainage, filleul déjà parrainé sur ce programme.
+11. Écarter : `POST /referrals/{referralNumber}/reject?reason=...` ; impossible une fois récompensé (`400`).
+
+### Espace client : « Parrainer un ami »
+
+12. Programmes ouverts : `GET /sni/api/v1/client/referrals/programs` : `code`, `name`, `description`, `validUntil`, ce que gagne le membre (`referrerPromotion`) et son ami (`refereePromotion`), `qualificationRule` (afficher « dès que votre ami a réglé son premier achat » pour `FIRST_PAYMENT`), `qualificationDelayDays`, `maxReferralsPerReferrer`, et `myLinkCode` / `myLinkUrl` si le membre a déjà son lien.
+13. Obtenir son lien : `POST /sni/api/v1/client/referrals/links` avec `{ "programCode" }` ; le même lien à chaque appel. Rend `LinkView` : afficher `url` avec « Copier » et « Partager » (`navigator.share` sur mobile, WhatsApp), et le code seul pour une saisie à la main. `400` si le programme n'est pas ouvert. Le membre est toujours le parrain : le corps ne désigne personne d'autre.
+14. Ses liens et leurs statistiques : `GET /sni/api/v1/client/referrals/links` (`clickCount`, `signupCount`).
+15. Ses parrainages : `GET /sni/api/v1/client/referrals` : `referralNumber`, `programName`, `friend` (prénom et initiale du nom de l'ami, « Awa N. »), `status` (afficher « Inscrit », « Validé », « Récompensé », « Écarté »), `registeredAt`, `qualifiedAt`, `rewardGranted`, `rewardAmount`, `currency`. Seule la récompense du parrain y figure.
+
+### Page publique du lien et inscription
+
+16. L'adresse partagée mène à la page d'inscription du portail avec le code : `https://elleaose.com/inscription?parrain=K7P2QX` par défaut. Le modèle se règle par `app.referral.share-url-template` (`{code}` y est remplacé) : il doit pointer vers la route d'inscription réelle du frontend.
+17. À l'arrivée, sans connexion : `GET /sni/api/v1/public/referrals/{code}` rend toujours `200` avec `code`, `valid`, `reason` (pourquoi le code ne sert pas : inconnu, lien coupé, programme fermé), `programName`, `programDescription`, `refereePromotion` (ce que gagne la personne invitée) et `referrerFirstName` (« Awa vous invite »). Compter la visite : `POST /sni/api/v1/public/referrals/{code}/clicks` (`204`, une fois par visite).
+18. S'inscrire : `POST /sni/api/v1/auth/register` avec le champ facultatif `referralCode`. Le code est vérifié **avant** la création du compte : un code inutilisable renvoie `400` « Code de parrainage refusé : ... » et rien n'est créé ; proposer de corriger ou d'effacer le code. Avec un code valable, le filleul est enregistré à la création du compte.
+19. Qualification : `SIGNUP` à l'inscription ; `FIRST_PAYMENT` au premier paiement réussi du filleul (traité juste après la validation du paiement, sans jamais le bloquer) ; `TENURE_REACHED` par le traitement quotidien (2 h 30). Le filleul puis le parrain, dans la limite du plafond du programme, reçoivent alors leur récompense : crédit de portefeuille, ou inscription comme bénéficiaire nominatif de la promotion. Statut `REWARDED` si une récompense a été accordée.
 
 ## Simuler un prix en back-office
 

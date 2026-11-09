@@ -181,6 +181,74 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/client/referrals",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ClientReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ClientReferralController.java",
+   "handler": "referrals",
+   "declaredIn": "ClientReferralController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.MyReferralView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/referrals/links",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ClientReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ClientReferralController.java",
+   "handler": "links",
+   "declaredIn": "ClientReferralController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/referrals/links",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ClientReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ClientReferralController.java",
+   "handler": "link",
+   "declaredIn": "ClientReferralController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ClientLinkRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/referrals/programs",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ClientReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ClientReferralController.java",
+   "handler": "programs",
+   "declaredIn": "ClientReferralController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.OpenProgramView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/coupons/available",
    "package": "features.subscription.promotion.pricing.coupon.controller",
    "controller": "CouponController",
@@ -189,7 +257,7 @@
    "declaredIn": "CouponController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:READ"
    },
    "params": [
     {
@@ -209,6 +277,44 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/coupons/batches",
+   "package": "features.subscription.promotion.pricing.coupon.controller",
+   "controller": "CouponController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/coupon/controller/CouponController.java",
+   "handler": "batches",
+   "declaredIn": "CouponController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "promotionCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponBatchView>>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/coupons/batches",
@@ -219,7 +325,7 @@
    "declaredIn": "CouponController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:CREATE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CreateCouponBatchRequest",
@@ -237,6 +343,134 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/coupons/batches/{batchCode}",
+   "package": "features.subscription.promotion.pricing.coupon.controller",
+   "controller": "CouponController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/coupon/controller/CouponController.java",
+   "handler": "batch",
+   "declaredIn": "CouponController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "batchCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponBatchView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/coupons/batches/{batchCode}/coupons",
+   "package": "features.subscription.promotion.pricing.coupon.controller",
+   "controller": "CouponController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/coupon/controller/CouponController.java",
+   "handler": "batchCoupons",
+   "declaredIn": "CouponController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "batchCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.enums.CouponStatus"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "50",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponLineView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/coupons/batches/{batchCode}/export",
+   "package": "features.subscription.promotion.pricing.coupon.controller",
+   "controller": "CouponController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/coupon/controller/CouponController.java",
+   "handler": "exportBatch",
+   "declaredIn": "CouponController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "batchCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<String>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/coupons/batches/{batchCode}/revoke",
+   "package": "features.subscription.promotion.pricing.coupon.controller",
+   "controller": "CouponController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/coupon/controller/CouponController.java",
+   "handler": "revokeBatch",
+   "declaredIn": "CouponController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "batchCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "reason",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "revokedBy",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponBatchRevocation>"
+  },
+  {
+   "methods": [
     "DELETE"
    ],
    "path": "/sni/api/v1/coupons/reservations",
@@ -247,7 +481,7 @@
    "declaredIn": "CouponController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:UPDATE"
    },
    "params": [
     {
@@ -267,6 +501,30 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/coupons/{code}",
+   "package": "features.subscription.promotion.pricing.coupon.controller",
+   "controller": "CouponController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/coupon/controller/CouponController.java",
+   "handler": "coupon",
+   "declaredIn": "CouponController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponResponse>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/coupons/{code}/reserve",
@@ -277,7 +535,7 @@
    "declaredIn": "CouponController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:CREATE"
    },
    "params": [
     {
@@ -325,7 +583,7 @@
    "declaredIn": "CouponController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:CREATE"
    },
    "params": [
     {
@@ -2224,6 +2482,102 @@
   },
   {
    "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/referrals/{code}",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "PublicReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/PublicReferralController.java",
+   "handler": "link",
+   "declaredIn": "PublicReferralController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.PublicLinkView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/public/referrals/{code}/clicks",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "PublicReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/PublicReferralController.java",
+   "handler": "click",
+   "declaredIn": "PublicReferralController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/referrals",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "referrals",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "programCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.enums.ReferralStatus"
+    },
+    {
+     "in": "query",
+     "name": "referrerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ReferralView>>"
+  },
+  {
+   "methods": [
     "POST"
    ],
    "path": "/sni/api/v1/referrals",
@@ -2234,7 +2588,7 @@
    "declaredIn": "ReferralController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:CREATE"
    },
    "body": {
     "type": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.controller.ReferralController.RegisterReferralRequest",
@@ -2255,7 +2609,7 @@
    "declaredIn": "ReferralController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:READ"
    },
    "params": [
     {
@@ -2277,7 +2631,52 @@
      "type": "String"
     }
    ],
-   "response": "ResponseEntity<Map<String, Object>>"
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/referrals/links",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "createLink",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/referrals/links/{linkCode}/activate",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "activateLink",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "linkCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkView>"
   },
   {
    "methods": [
@@ -2291,7 +2690,7 @@
    "declaredIn": "ReferralController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:CREATE"
    },
    "params": [
     {
@@ -2307,6 +2706,254 @@
    "methods": [
     "POST"
    ],
+   "path": "/sni/api/v1/referrals/links/{linkCode}/deactivate",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "deactivateLink",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "linkCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/referrals/programs",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "programs",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/referrals/programs",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "createProgram",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/referrals/programs/{code}",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "program",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramView>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/referrals/programs/{code}",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "updateProgram",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/referrals/programs/{code}/activate",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "activate",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/referrals/programs/{code}/end",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "end",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/referrals/programs/{code}/links",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "programLinks",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/referrals/programs/{code}/pause",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "pause",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:CREATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/referrals/{referralNumber}",
+   "package": "features.subscription.promotion.pricing.referral.controller",
+   "controller": "ReferralController",
+   "source": "src/main/java/com/sni/bokaticowork/features/subscription/promotion/pricing/referral/controller/ReferralController.java",
+   "handler": "referral",
+   "declaredIn": "ReferralController",
+   "access": {
+    "kind": "admin",
+    "permission": "BILLING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "referralNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ReferralView>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
    "path": "/sni/api/v1/referrals/{referralNumber}/reject",
    "package": "features.subscription.promotion.pricing.referral.controller",
    "controller": "ReferralController",
@@ -2315,7 +2962,7 @@
    "declaredIn": "ReferralController",
    "access": {
     "kind": "admin",
-    "permission": "ADMIN:ACCESS"
+    "permission": "BILLING:CREATE"
    },
    "params": [
     {
@@ -5241,6 +5888,145 @@
     }
    }
   },
+  "ReferralDtos.MyReferralView": {
+   "type": "object",
+   "properties": {
+    "referralNumber": {
+     "type": "string"
+    },
+    "programName": {
+     "type": "string"
+    },
+    "friend": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "QUALIFIED",
+      "REWARDED",
+      "REJECTED"
+     ]
+    },
+    "registeredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "qualifiedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "rewardGranted": {
+     "type": "boolean"
+    },
+    "rewardAmount": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    }
+   }
+  },
+  "ReferralDtos.LinkView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "url": {
+     "type": "string"
+    },
+    "programCode": {
+     "type": "string"
+    },
+    "programName": {
+     "type": "string"
+    },
+    "programOpen": {
+     "type": "boolean"
+    },
+    "referrerType": {
+     "type": "string"
+    },
+    "referrerCode": {
+     "type": "string"
+    },
+    "clickCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "signupCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ReferralDtos.ClientLinkRequest": {
+   "required": [
+    "programCode"
+   ],
+   "type": "object",
+   "properties": {
+    "programCode": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "ReferralDtos.OpenProgramView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "referrerPromotion": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.PromotionRef"
+    },
+    "refereePromotion": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.PromotionRef"
+    },
+    "qualificationRule": {
+     "type": "string",
+     "enum": [
+      "SIGNUP",
+      "FIRST_PAYMENT",
+      "TENURE_REACHED"
+     ]
+    },
+    "qualificationDelayDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxReferralsPerReferrer": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "myLinkCode": {
+     "type": "string"
+    },
+    "myLinkUrl": {
+     "type": "string"
+    }
+   }
+  },
   "CouponResponse": {
    "type": "object",
    "properties": {
@@ -5287,6 +6073,90 @@
     },
     "batchCode": {
      "type": "string"
+    }
+   }
+  },
+  "CouponBatchView": {
+   "type": "object",
+   "properties": {
+    "batchCode": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "promotionCode": {
+     "type": "string"
+    },
+    "promotionName": {
+     "type": "string"
+    },
+    "couponKind": {
+     "type": "string",
+     "enum": [
+      "SINGLE_USE",
+      "MULTI_USE",
+      "UNIQUE_PER_SUBSCRIBER"
+     ]
+    },
+    "codePrefix": {
+     "type": "string"
+    },
+    "codeLength": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "requestedQuantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "generatedQuantity": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxRedemptionsPerCoupon": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "channel": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "totalCoupons": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "countsByStatus": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "totalRedemptions": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalReserved": {
+     "type": "integer",
+     "format": "int64"
     }
    }
   },
@@ -5343,6 +6213,96 @@
     },
     "channel": {
      "type": "string"
+    }
+   }
+  },
+  "CouponLineView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "ACTIVE",
+      "USED",
+      "EXPIRED",
+      "REVOKED"
+     ]
+    },
+    "couponKind": {
+     "type": "string",
+     "enum": [
+      "SINGLE_USE",
+      "MULTI_USE",
+      "UNIQUE_PER_SUBSCRIBER"
+     ]
+    },
+    "assignedToType": {
+     "type": "string"
+    },
+    "assignedToCode": {
+     "type": "string"
+    },
+    "maxRedemptions": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "redemptionCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "reservedCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "issuedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "revokedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "revokedReason": {
+     "type": "string"
+    }
+   }
+  },
+  "CouponBatchRevocation": {
+   "type": "object",
+   "properties": {
+    "batchCode": {
+     "type": "string"
+    },
+    "total": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "revoked": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "alreadyRevoked": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "exhausted": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "expired": {
+     "type": "integer",
+     "format": "int32"
     }
    }
   },
@@ -7022,6 +7982,108 @@
     }
    }
   },
+  "ReferralDtos.PublicLinkView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "valid": {
+     "type": "boolean"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "programName": {
+     "type": "string"
+    },
+    "programDescription": {
+     "type": "string"
+    },
+    "refereePromotion": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.PromotionRef"
+    },
+    "referrerFirstName": {
+     "type": "string"
+    }
+   }
+  },
+  "ReferralDtos.ReferralView": {
+   "type": "object",
+   "properties": {
+    "referralNumber": {
+     "type": "string"
+    },
+    "programCode": {
+     "type": "string"
+    },
+    "programName": {
+     "type": "string"
+    },
+    "linkCode": {
+     "type": "string"
+    },
+    "referrerType": {
+     "type": "string"
+    },
+    "referrerCode": {
+     "type": "string"
+    },
+    "refereeType": {
+     "type": "string"
+    },
+    "refereeCode": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "PENDING",
+      "QUALIFIED",
+      "REWARDED",
+      "REJECTED"
+     ]
+    },
+    "registeredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "qualifiedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "rejectedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "rejectionReason": {
+     "type": "string"
+    },
+    "referrerRewardGranted": {
+     "type": "boolean"
+    },
+    "referrerRewardAmount": {
+     "type": "number"
+    },
+    "referrerRewardedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "refereeRewardGranted": {
+     "type": "boolean"
+    },
+    "refereeRewardAmount": {
+     "type": "number"
+    },
+    "refereeRewardedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "currency": {
+     "type": "string"
+    }
+   }
+  },
   "ReferralController.RegisterReferralRequest": {
    "required": [
     "linkCode",
@@ -7040,6 +8102,163 @@
     },
     "refereeCode": {
      "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "ReferralDtos.LinkRequest": {
+   "required": [
+    "programCode",
+    "referrerCode",
+    "referrerType"
+   ],
+   "type": "object",
+   "properties": {
+    "programCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "referrerType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "referrerCode": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "ReferralDtos.ProgramView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "ACTIVE",
+      "PAUSED",
+      "ENDED"
+     ]
+    },
+    "open": {
+     "type": "boolean"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "referrerPromotion": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.PromotionRef"
+    },
+    "refereePromotion": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.PromotionRef"
+    },
+    "qualificationRule": {
+     "type": "string",
+     "enum": [
+      "SIGNUP",
+      "FIRST_PAYMENT",
+      "TENURE_REACHED"
+     ]
+    },
+    "qualificationDelayDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxReferralsPerReferrer": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "links": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "referralsByStatus": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "ReferralDtos.ProgramRequest": {
+   "required": [
+    "code",
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "maxLength": 100,
+     "minLength": 0,
+     "type": "string"
+    },
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "referrerPromotionCode": {
+     "type": "string"
+    },
+    "refereePromotionCode": {
+     "type": "string"
+    },
+    "qualificationRule": {
+     "type": "string",
+     "enum": [
+      "SIGNUP",
+      "FIRST_PAYMENT",
+      "TENURE_REACHED"
+     ]
+    },
+    "qualificationDelayDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "maxReferralsPerReferrer": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "currency": {
      "type": "string"
     }
    }
@@ -10092,6 +11311,20 @@
     }
    }
   },
+  "ReferralDtos.PromotionRef": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    }
+   }
+  },
   "PassEntitlementRequest": {
    "required": [
     "entitlementCode"
@@ -10541,6 +11774,12 @@
    "CUSTOMER",
    "BUSINESS_ENTITY"
   ],
+  "CouponStatus": [
+   "ACTIVE",
+   "USED",
+   "EXPIRED",
+   "REVOKED"
+  ],
   "EntitlementGrantStatus": [
    "ACTIVE",
    "RESERVED",
@@ -10595,6 +11834,12 @@
    "PAUSED",
    "EXPIRED",
    "ARCHIVED"
+  ],
+  "ReferralStatus": [
+   "PENDING",
+   "QUALIFIED",
+   "REWARDED",
+   "REJECTED"
   ],
   "SubscriptionAddonStatus": [
    "ACTIVE",
@@ -10766,8 +12011,16 @@
   "EffectivePrice": "com.sni.bokaticowork.features.subscription.promotion.pricing.engine.EffectivePrice",
   "ClientPricingController.CatalogueRequest": "com.sni.bokaticowork.features.subscription.promotion.pricing.controller.ClientPricingController.CatalogueRequest",
   "ClientPromotionView": "com.sni.bokaticowork.features.subscription.promotion.pricing.dto.ClientPromotionView",
+  "ReferralDtos.MyReferralView": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.MyReferralView",
+  "ReferralDtos.LinkView": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkView",
+  "ReferralDtos.ClientLinkRequest": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ClientLinkRequest",
+  "ReferralDtos.OpenProgramView": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.OpenProgramView",
   "CouponResponse": "com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponResponse",
+  "CouponBatchView": "com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponBatchView",
   "CreateCouponBatchRequest": "com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CreateCouponBatchRequest",
+  "CouponLineView": "com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponLineView",
+  "CouponStatus": "com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.enums.CouponStatus",
+  "CouponBatchRevocation": "com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.dto.CouponBatchRevocation",
   "EntitlementGrantResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.EntitlementGrantResponse",
   "EntitlementGrantStatus": "com.sni.bokaticowork.features.subscription.subscription.enums.EntitlementGrantStatus",
   "EntitlementOperationResponse": "com.sni.bokaticowork.features.subscription.subscription.dto.response.EntitlementOperationResponse",
@@ -10818,7 +12071,13 @@
   "CreatePromotionRequest": "com.sni.bokaticowork.features.subscription.promotion.dto.CreatePromotionRequest",
   "CouponRedemptionResponse": "com.sni.bokaticowork.features.subscription.promotion.dto.CouponRedemptionResponse",
   "RedeemPromotionRequest": "com.sni.bokaticowork.features.subscription.promotion.dto.RedeemPromotionRequest",
+  "ReferralDtos.PublicLinkView": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.PublicLinkView",
+  "ReferralDtos.ReferralView": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ReferralView",
+  "ReferralStatus": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.enums.ReferralStatus",
   "ReferralController.RegisterReferralRequest": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.controller.ReferralController.RegisterReferralRequest",
+  "ReferralDtos.LinkRequest": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.LinkRequest",
+  "ReferralDtos.ProgramView": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramView",
+  "ReferralDtos.ProgramRequest": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.ProgramRequest",
   "SubscriptionAddonResponse": "com.sni.bokaticowork.features.subscription.addon.dto.SubscriptionAddonResponse",
   "SubscriptionAddonStatus": "com.sni.bokaticowork.features.subscription.addon.enums.SubscriptionAddonStatus",
   "CreateSubscriptionAddonRequest": "com.sni.bokaticowork.features.subscription.addon.dto.CreateSubscriptionAddonRequest",
@@ -10896,6 +12155,7 @@
   "PricingResult.PriceOverride": "com.sni.bokaticowork.features.subscription.promotion.pricing.engine.PricingResult.PriceOverride",
   "PricingSimulationRequest.Line": "com.sni.bokaticowork.features.subscription.promotion.pricing.dto.PricingSimulationRequest.Line",
   "PriceableRef": "com.sni.bokaticowork.features.subscription.promotion.pricing.engine.PriceableRef",
+  "ReferralDtos.PromotionRef": "com.sni.bokaticowork.features.subscription.promotion.pricing.referral.dto.ReferralDtos.PromotionRef",
   "PassEntitlementRequest": "com.sni.bokaticowork.features.subscription.subscription.dto.request.PassEntitlementRequest",
   "PlanDerivationBatchService.Line": "com.sni.bokaticowork.features.subscription.derivation.service.PlanDerivationBatchService.Line",
   "PlanDerivationService.DeltaLine": "com.sni.bokaticowork.features.subscription.derivation.service.PlanDerivationService.DeltaLine",
