@@ -2,14 +2,14 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-1567 routes dans 198 contrôleurs.
+1574 routes dans 198 contrôleurs.
 
 | Module | Routes | Back-office | Portail membre | Publiques | Fonctionnement |
 | --- | --- | --- | --- | --- | --- |
 | [subscription](subscription/routes.md) | 195 | 184 | 9 | 2 | [README](subscription/README.md) |
 | [portal](portal/routes.md) | 189 | 0 | 187 | 2 | [README](portal/README.md) |
 | [inventory](inventory/routes.md) | 176 | 176 | 0 | 0 | [README](inventory/README.md) |
-| [document](document/routes.md) | 168 | 164 | 0 | 3 | [README](document/README.md) |
+| [document](document/routes.md) | 175 | 171 | 0 | 3 | [README](document/README.md) |
 | [payment](payment/routes.md) | 135 | 125 | 0 | 10 | [README](payment/README.md) |
 | [ressource](ressource/routes.md) | 77 | 76 | 0 | 1 | [README](ressource/README.md) |
 | [billing](billing/routes.md) | 70 | 68 | 0 | 2 | [README](billing/README.md) |

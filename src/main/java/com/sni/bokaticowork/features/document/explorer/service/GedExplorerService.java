@@ -33,7 +33,12 @@ import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashBatch
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadFailure;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult;
+import com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel;
+import com.sni.bokaticowork.features.document.explorer.access.GedAccessService;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedAccessSummary;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedLock;
 import com.sni.bokaticowork.features.document.explorer.repository.GedExplorerQueries;
+import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentLockService;
 import com.sni.bokaticowork.features.document.explorer.text.GedScanAssembler;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +89,8 @@ public class GedExplorerService {
     private final DocumentMapper documentMapper;
     private final TransactionTemplate transactionTemplate;
     private final GedAutoFiler autoFiler;
+    private final GedAccessService access;
+    private final DocumentLockService lockService;
 
     // Lecture -----------------------------------------------------------------------------------
 
@@ -95,6 +102,10 @@ public class GedExplorerService {
     @Transactional(readOnly = true)
     public GedListing list(String folderCode, String search, String sort, String direction, int page, int size) {
         DocumentFolder folder = StringUtils.hasText(folderCode) ? folder(folderCode) : null;
+        if (folder != null) {
+            access.require(folder, GedAccessLevel.READ);
+        }
+        Set<Long> hidden = access.hiddenFolderIds();
         String needle = StringUtils.hasText(search) ? search.trim() : null;
         String sortKey = sort == null ? "name" : sort;
         boolean descending = "desc".equalsIgnoreCase(direction);
@@ -102,7 +113,9 @@ public class GedExplorerService {
         int pageNumber = Math.max(0, page);
         int offset = pageNumber * pageSize;
 
-        List<DocumentFolder> folders = queries.folders(folder, needle, "updatedAt".equals(sortKey), descending);
+        // Un sous-dossier restreint auquel la personne n'a pas droit n'apparait pas
+        List<DocumentFolder> folders = queries.folders(folder, needle, "updatedAt".equals(sortKey), descending).stream()
+                .filter(child -> !hidden.contains(child.getId())).toList();
         long fileCount = queries.countFiles(folder, needle);
         long total = folders.size() + fileCount;
 
@@ -122,14 +135,19 @@ public class GedExplorerService {
                 : new GedFolderRef(folder.getCode(), folder.getName(), folder.getParent() == null ? null : folder.getParent().getCode());
         List<BreadcrumbItem> breadcrumb = folder == null ? List.of() : folderService.getBreadcrumb(folder.getCode());
         int totalPages = (int) Math.max(1, (total + pageSize - 1) / pageSize);
+        GedAccessLevel level = access.levelOn(folder);
         return new GedListing(ref, breadcrumb, items,
-                new GedPage(pageNumber, pageSize, total, totalPages, folders.size(), fileCount));
+                new GedPage(pageNumber, pageSize, total, totalPages, folders.size(), fileCount),
+                new GedAccessSummary(level, level.atLeast(GedAccessLevel.DOWNLOAD), level.atLeast(GedAccessLevel.EDIT),
+                        level.atLeast(GedAccessLevel.DELETE), level.atLeast(GedAccessLevel.ADMIN)));
     }
 
     /** Toute l'arborescence, pour le panneau de gauche. */
     @Transactional(readOnly = true)
     public List<DocumentFolderTreeNode> tree() {
-        List<DocumentFolder> all = folderRepository.findAll();
+        Set<Long> hidden = access.hiddenFolderIds();
+        List<DocumentFolder> all = folderRepository.findAll().stream()
+                .filter(folder -> GedAccessService.visible(folder, hidden)).toList();
         List<Long> ids = all.stream().map(DocumentFolder::getId).toList();
         Map<Long, Long> documents = queries.documentCounts(ids);
         Map<Long, List<DocumentFolder>> byParent = new HashMap<>();
@@ -147,6 +165,9 @@ public class GedExplorerService {
     // Dossiers ----------------------------------------------------------------------------------
 
     public GedItem createFolder(GedCreateFolderRequest request) {
+        if (StringUtils.hasText(request.parentCode())) {
+            transactionTemplate.executeWithoutResult(status -> access.require(folder(request.parentCode()), GedAccessLevel.EDIT));
+        }
         CreateFolderRequest create = new CreateFolderRequest();
         create.setName(request.name());
         create.setParentCode(StringUtils.hasText(request.parentCode()) ? request.parentCode().trim() : null);
@@ -159,6 +180,7 @@ public class GedExplorerService {
     }
 
     public GedItem renameFolder(String code, String name) {
+        transactionTemplate.executeWithoutResult(status -> access.require(folder(code), GedAccessLevel.EDIT));
         UpdateFolderRequest update = new UpdateFolderRequest();
         update.setName(name);
         folderService.update(code, update);
@@ -170,6 +192,8 @@ public class GedExplorerService {
     @Transactional
     public GedItem renameFile(String code, String name) {
         Document document = document(code);
+        access.requireDocument(document, GedAccessLevel.EDIT);
+        lockService.assertEditable(document);
         String title = name.trim();
         if (!title.equalsIgnoreCase(document.getTitle()) && queries.titleTaken(document.getFolder(), title)) {
             throw new ConflictException("Un fichier porte déjà ce nom dans ce dossier.");
@@ -197,7 +221,7 @@ public class GedExplorerService {
         if (relativePaths != null && !relativePaths.isEmpty() && relativePaths.size() != files.size()) {
             throw new BadRequestException("relativePaths doit donner un chemin par fichier.");
         }
-        String rootCode = StringUtils.hasText(folderCode) ? transactionTemplate.execute(status -> folder(folderCode).getCode()) : null;
+        String rootCode = StringUtils.hasText(folderCode) ? transactionTemplate.execute(status -> editable(folderCode).getCode()) : null;
         Map<String, String> createdFolders = new HashMap<>();
         List<GedItem> uploaded = new ArrayList<>();
         List<GedUploadFailure> failed = new ArrayList<>();
@@ -248,7 +272,7 @@ public class GedExplorerService {
         } catch (java.io.IOException ex) {
             throw new BadRequestException("Les pages n'ont pas pu être assemblées : " + ex.getMessage());
         }
-        String targetCode = StringUtils.hasText(folderCode) ? transactionTemplate.execute(status -> folder(folderCode).getCode()) : null;
+        String targetCode = StringUtils.hasText(folderCode) ? transactionTemplate.execute(status -> editable(folderCode).getCode()) : null;
         String name = StringUtils.hasText(title) ? title.trim()
                 : "Numérisation du " + SCAN_NAME.format(java.time.ZonedDateTime.now(java.time.ZoneId.of("Africa/Brazzaville")));
         name = name.replaceAll("[\\\\/:*?\"<>|]", "-");
@@ -273,12 +297,14 @@ public class GedExplorerService {
             throw new BadRequestException("Aucun fichier à copier.");
         }
         String targetCode = StringUtils.hasText(request.targetFolderCode())
-                ? transactionTemplate.execute(status -> folder(request.targetFolderCode()).getCode())
+                ? transactionTemplate.execute(status -> editable(request.targetFolderCode()).getCode())
                 : null;
         List<GedItem> copied = new ArrayList<>();
         List<GedUploadFailure> failed = new ArrayList<>();
         for (String code : codes) {
             try {
+                // Copier, c'est lire : il faut pouvoir ouvrir l'original
+                transactionTemplate.executeWithoutResult(status -> access.requireDocument(document(code), GedAccessLevel.DOWNLOAD));
                 DocumentFileResult file = documentService.getFileWithMeta(code);
                 String title = transactionTemplate.execute(status -> document(code).getTitle());
                 DocumentUploadMetadataRequest metadata = new DocumentUploadMetadataRequest();
@@ -300,8 +326,12 @@ public class GedExplorerService {
     @Transactional
     public void move(GedMoveRequest request) {
         DocumentFolder target = StringUtils.hasText(request.targetFolderCode()) ? folder(request.targetFolderCode()) : null;
+        if (target != null) {
+            access.require(target, GedAccessLevel.EDIT);
+        }
         for (String code : orEmpty(request.folderCodes())) {
             DocumentFolder moved = folder(code);
+            access.require(moved, GedAccessLevel.EDIT);
             if (target != null && target.getId().equals(moved.getId())) {
                 throw new BadRequestException("Un dossier ne peut pas être déplacé dans lui-même.");
             }
@@ -316,6 +346,8 @@ public class GedExplorerService {
         }
         for (String code : orEmpty(request.documentCodes())) {
             Document document = document(code);
+            access.requireDocument(document, GedAccessLevel.EDIT);
+            lockService.assertEditable(document);
             boolean sameFolder = target == null ? document.getFolder() == null
                     : document.getFolder() != null && target.getId().equals(document.getFolder().getId());
             if (sameFolder) {
@@ -326,6 +358,63 @@ public class GedExplorerService {
             document.setUpdatedAt(Instant.now());
             documentRepository.save(document);
         }
+    }
+
+    // Acces des dossiers -------------------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess folderAccess(String code) {
+        return access.access(folder(code));
+    }
+
+    @Transactional
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess restrict(
+            String code, List<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrantRequest> grants) {
+        return access.restrict(folder(code), grants);
+    }
+
+    @Transactional
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess unrestrict(String code) {
+        return access.unrestrict(folder(code));
+    }
+
+    @Transactional
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess grant(
+            String code, com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrantRequest request) {
+        return access.grant(folder(code), request);
+    }
+
+    @Transactional
+    public com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess revoke(String code, String granteeType, String grantee) {
+        return access.revoke(folder(code), granteeType, grantee);
+    }
+
+    // Verrou ------------------------------------------------------------------------------------
+
+    /**
+     * Verrouille un fichier pour le modifier sans etre derange ({@code hours} : 1 par defaut, 24
+     * au plus). Le poser de nouveau le prolonge.
+     */
+    @Transactional
+    public GedItem lock(String code, Integer hours) {
+        Document document = document(code);
+        access.requireDocument(document, GedAccessLevel.EDIT);
+        lockService.lock(document, hours == null ? DocumentLockService.DEFAULT_DURATION : java.time.Duration.ofHours(hours));
+        return fileItem(document);
+    }
+
+    /** Leve le verrou : celui qui l'a pose, un administrateur, ou le gestionnaire du dossier restreint. */
+    @Transactional
+    public GedItem unlock(String code) {
+        Document document = document(code);
+        GedAccessLevel level = access.levelOn(document.getFolder());
+        if (!level.atLeast(GedAccessLevel.READ)) {
+            throw new ResourceNotFoundException("Fichier introuvable : " + code);
+        }
+        boolean folderManager = document.getFolder() != null && Boolean.TRUE.equals(access.isRestrictedPath(document.getFolder()))
+                && level.atLeast(GedAccessLevel.ADMIN);
+        lockService.unlock(document, folderManager || isAdministrator());
+        return fileItem(document);
     }
 
     // Classement --------------------------------------------------------------------------------
@@ -379,12 +468,20 @@ public class GedExplorerService {
             DocumentFolder folder = folder(code);
             for (DocumentFolder item : folderRepository.findAllByPathStartingWith(folder.getPath())) {
                 DocumentFolderService.requireUserFolder(item);
+                // Chaque sous-dossier compte : un sous-dossier restreint ne part pas avec son parent
+                // si la personne n'a pas le droit de le supprimer
+                access.require(item, GedAccessLevel.DELETE);
                 folderIds.add(item.getId());
             }
         }
         List<Document> documents = new ArrayList<>(queries.filesIn(folderIds));
         for (String code : orEmpty(request.documentCodes())) {
-            documents.add(document(code));
+            Document document = document(code);
+            access.requireDocument(document, GedAccessLevel.DELETE);
+            documents.add(document);
+        }
+        for (Document document : documents) {
+            lockService.assertEditable(document);
         }
         if (folderIds.isEmpty() && documents.isEmpty()) {
             throw new BadRequestException("Rien à mettre à la corbeille.");
@@ -412,17 +509,27 @@ public class GedExplorerService {
             String batch = (String) row[0];
             List<GedItem> items = new ArrayList<>();
             for (Object[] folder : queries.trashedTopFolders(batch)) {
+                // Un dossier restreint supprime reste invisible a qui n'y avait pas droit
+                if (!access.levelOnFolderId(((Number) folder[0]).longValue()).atLeast(GedAccessLevel.READ)) {
+                    continue;
+                }
                 items.add(new GedItem(com.sni.bokaticowork.features.document.explorer.dto.GedDtos.FOLDER,
                         (String) folder[1], (String) folder[2], null, null, instant(folder[5]),
                         null, null, (String) folder[6], (String) folder[7],
-                        null, null, null, null, null, null, null, null, null, false, null, null));
+                        null, null, null, null, null, null, null, null, null, false, null, null, false, null));
             }
             for (Object[] file : queries.trashedTopFiles(batch)) {
+                if (!access.levelOnFolderId(file[3] == null ? null : ((Number) file[3]).longValue()).atLeast(GedAccessLevel.READ)) {
+                    continue;
+                }
                 items.add(new GedItem(com.sni.bokaticowork.features.document.explorer.dto.GedDtos.FILE,
                         (String) file[1], (String) file[2], null, null, instant(file[5]),
                         null, null, null, null, (String) file[6], extension((String) file[6]), (String) file[7],
                         file[8] == null ? null : ((Number) file[8]).longValue(),
-                        null, null, null, null, null, false, null, null));
+                        null, null, null, null, null, false, null, null, false, null));
+            }
+            if (items.isEmpty()) {
+                continue;
             }
             batches.add(new GedTrashBatch(batch, instant(row[1]), row[2] == null ? null : ((Number) row[2]).longValue(),
                     ((Number) row[3]).longValue(), ((Number) row[4]).longValue(), items));
@@ -445,9 +552,11 @@ public class GedExplorerService {
         }
         for (Object[] folder : topFolders) {
             requireAliveParent(folder[3]);
+            requireDeleteOn(((Number) folder[0]).longValue());
         }
         for (Object[] file : topFiles) {
             requireAliveParent(file[3]);
+            requireDeleteOn(file[3] == null ? null : ((Number) file[3]).longValue());
         }
         for (Object[] folder : topFolders) {
             Long id = ((Number) folder[0]).longValue();
@@ -462,6 +571,30 @@ public class GedExplorerService {
     }
 
     // Aides -------------------------------------------------------------------------------------
+
+    private void requireDeleteOn(Long folderId) {
+        GedAccessLevel level = access.levelOnFolderId(folderId);
+        if (!level.atLeast(GedAccessLevel.READ)) {
+            throw new ResourceNotFoundException("Rien à restaurer pour ce lot.");
+        }
+        if (!level.atLeast(GedAccessLevel.DELETE)) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException(
+                    "Ce lot vient d'un dossier restreint : il faut le droit « supprimer » pour le restaurer.");
+        }
+    }
+
+    /** Un dossier ou l'on va deposer : il faut le droit de modifier. */
+    private DocumentFolder editable(String code) {
+        DocumentFolder folder = folder(code);
+        access.require(folder, GedAccessLevel.EDIT);
+        return folder;
+    }
+
+    private static boolean isAdministrator() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()) || "ROLE_SUPER_ADMIN".equals(a.getAuthority()));
+    }
 
     private void requireAliveParent(Object parentId) {
         if (parentId != null && !queries.folderAlive(((Number) parentId).longValue())) {
@@ -544,7 +677,8 @@ public class GedExplorerService {
                 folder.getCreatedAt(), folder.getUpdatedAt(),
                 children.getOrDefault(folder.getId(), 0L), documents.getOrDefault(folder.getId(), 0L),
                 folder.getColor(), folder.getIcon(),
-                null, null, null, null, null, null, null, null, null, folder.getSystemKey() != null, null, null)).toList();
+                null, null, null, null, null, null, null, null, null, folder.getSystemKey() != null, null, null,
+                Boolean.TRUE.equals(folder.getRestricted()), null)).toList();
     }
 
     /** Un fichier tel que l'explorateur le montre ; aussi pour les resultats de recherche. */
@@ -564,7 +698,17 @@ public class GedExplorerService {
                 document.getCurrentVersionNumber(),
                 !gedOwned(document),
                 response == null ? null : response.getPreviewUrl(),
-                response == null ? null : response.getDownloadUrl());
+                response == null ? null : response.getDownloadUrl(),
+                false,
+                lockOf(document));
+    }
+
+    private GedLock lockOf(Document document) {
+        if (!DocumentLockService.active(document)) {
+            return null;
+        }
+        return new GedLock(lockService.lockerName(document), document.getLockedAt(), document.getLockExpiresAt(),
+                document.getLockedBy().equals(currentUserId()));
     }
 
     private DocumentFolderTreeNode node(DocumentFolder folder, Map<Long, List<DocumentFolder>> byParent, Map<Long, Long> documents) {

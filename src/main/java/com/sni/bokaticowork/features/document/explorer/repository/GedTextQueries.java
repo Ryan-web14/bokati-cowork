@@ -123,6 +123,12 @@ public class GedTextQueries {
      */
     @SuppressWarnings("unchecked")
     public List<Object[]> search(String text, String folderPath, int offset, int limit) {
+        return search(text, folderPath, java.util.Set.of(), offset, limit);
+    }
+
+    /** {@code hiddenFolders} : dossiers restreints caches a la personne ; leur contenu est exclu. */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> search(String text, String folderPath, java.util.Set<Long> hiddenFolders, int offset, int limit) {
         Query query = entityManager.createNativeQuery("""
                 SELECT d.id,
                        COALESCE(ts_rank_cd(t.search_vector, q.query), 0)
@@ -132,17 +138,22 @@ public class GedTextQueries {
                 CROSS JOIN (SELECT websearch_to_tsquery('french', normalize_text(:text)) AS query,
                                    '%' || normalize_text(:text) || '%' AS pattern) q
                 WHERE d.deleted = FALSE
-                """ + folderFilter(folderPath) + """
+                """ + folderFilter(folderPath) + hiddenFilter(hiddenFolders) + """
                   AND (t.search_vector @@ q.query OR normalize_text(d.title) LIKE q.pattern
                        OR normalize_text(d.file_name) LIKE q.pattern)
                 ORDER BY rank DESC, d.updated_at DESC, d.id DESC
                 OFFSET :offset LIMIT :limit
                 """);
         bind(query, text, folderPath);
+        bindHidden(query, hiddenFolders);
         return query.setParameter("offset", offset).setParameter("limit", limit).getResultList();
     }
 
     public long countSearch(String text, String folderPath) {
+        return countSearch(text, folderPath, java.util.Set.of());
+    }
+
+    public long countSearch(String text, String folderPath, java.util.Set<Long> hiddenFolders) {
         Query query = entityManager.createNativeQuery("""
                 SELECT COUNT(*)
                 FROM document d
@@ -150,11 +161,12 @@ public class GedTextQueries {
                 CROSS JOIN (SELECT websearch_to_tsquery('french', normalize_text(:text)) AS query,
                                    '%' || normalize_text(:text) || '%' AS pattern) q
                 WHERE d.deleted = FALSE
-                """ + folderFilter(folderPath) + """
+                """ + folderFilter(folderPath) + hiddenFilter(hiddenFolders) + """
                   AND (t.search_vector @@ q.query OR normalize_text(d.title) LIKE q.pattern
                        OR normalize_text(d.file_name) LIKE q.pattern)
                 """);
         bind(query, text, folderPath);
+        bindHidden(query, hiddenFolders);
         return ((Number) query.getSingleResult()).longValue();
     }
 
@@ -175,6 +187,20 @@ public class GedTextQueries {
         return folderPath == null ? "" : """
                   AND d.folder_id IN (SELECT f.id FROM document_folder f WHERE f.path LIKE :folderPath AND f.deleted = FALSE)
                 """;
+    }
+
+    /** Exclut ce qui se trouve sous un dossier cache : son chemin commence par celui du dossier. */
+    private static String hiddenFilter(java.util.Set<Long> hiddenFolders) {
+        return hiddenFolders == null || hiddenFolders.isEmpty() ? "" : """
+                  AND NOT EXISTS (SELECT 1 FROM document_folder df JOIN document_folder hf ON df.path LIKE hf.path || '%'
+                                  WHERE df.id = d.folder_id AND hf.id IN (:hiddenFolders))
+                """;
+    }
+
+    private static void bindHidden(Query query, java.util.Set<Long> hiddenFolders) {
+        if (hiddenFolders != null && !hiddenFolders.isEmpty()) {
+            query.setParameter("hiddenFolders", hiddenFolders);
+        }
     }
 
     private static void bind(Query query, String text, String folderPath) {

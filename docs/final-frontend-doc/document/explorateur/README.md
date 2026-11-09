@@ -1,6 +1,6 @@
 # Explorateur de la GED
 
-> Chantier GED, lots 1, 2 et 3. Routes exactes et champs JSON : [routes/GedExplorerController.md](../routes/GedExplorerController.md). Règles communes : [README racine](../../README.md). Fonctionnement général des documents : [README du module](../README.md).
+> Chantier GED, lots 1 à 4. Routes exactes et champs JSON : [routes/GedExplorerController.md](../routes/GedExplorerController.md). Règles communes : [README racine](../../README.md). Fonctionnement général des documents : [README du module](../README.md).
 
 ## En bref
 
@@ -152,6 +152,69 @@ Le serveur lit chaque fichier après son dépôt, en tâche de fond (toutes les 
 - `POST /sni/api/v1/ged/text/run?limit=20` : lit un lot tout de suite (`processed`, `done`, `empty`, `unsupported`, `failed`, `remaining`).
 - Un échec est retenté seul après six heures, trois fois au plus ; « Relire » le retente aussitôt.
 
+## Dossiers restreints et verrou (lot 4)
+
+### Le principe
+
+- Un dossier **ouvert** (le cas par défaut) suit les droits généraux : tout compte qui a `DOCUMENT:READ` le voit, comme avant.
+- Un dossier **restreint**, et tout ce qu'il contient, n'est accessible qu'aux personnes et aux rôles qui y ont un droit. Pour les autres, il **n'existe pas** :
+  - il disparaît du contenu de son dossier parent, de l'arborescence, de la recherche et de la corbeille ;
+  - l'ouvrir par son code rend `404`, pas `403`, pour ne pas révéler son existence.
+- Les niveaux sont cumulatifs, chacun comprend ceux qui le précèdent :
+
+| Niveau | Permet |
+| --- | --- |
+| `READ` | voir le dossier et la liste de ses fichiers |
+| `DOWNLOAD` | ouvrir, télécharger, prévisualiser un fichier, lire son texte |
+| `EDIT` | déposer, numériser, créer un sous-dossier, renommer, déplacer, copier vers ce dossier, verrouiller |
+| `DELETE` | mettre à la corbeille et restaurer |
+| `ADMIN` | gérer l'accès : restreindre, rouvrir, donner et retirer des droits |
+
+- Les niveaux s'ajoutent aux droits généraux, ils ne les remplacent pas : déposer demande toujours `DOCUMENT:UPLOAD`, modifier `DOCUMENT:WRITE`.
+- Quand plusieurs dossiers restreints se suivent sur le chemin, il faut un droit sur **chacun**, et le plus faible l'emporte. Exemple : le rôle RH a `READ` sur « Direction » et `DOWNLOAD` sur « Direction / Paie » ; dans « Paie », il ne peut que voir.
+- Un droit se donne à un **utilisateur** (désigné par son e-mail) ou à un **rôle** (désigné par son nom, `STAFF`, `ADMIN`...).
+- Un super administrateur voit tout.
+- Les dossiers du plan de classement (`Membres`, `Clients`...) ne se restreignent pas : les modules KYC et contrats y rangent et y lisent. On peut restreindre un sous-dossier créé à la main dedans.
+- Les mêmes règles s'appliquent aux routes `/documents/**` (consultation, téléchargement, aperçu, remplacement, versions, archivage) et `/document-folders/**` : elles ne contournent pas un dossier restreint.
+
+### L'écran « Accès » d'un dossier
+
+1. Lire : `GET /sni/api/v1/ged/folders/{code}/access`. La réponse donne :
+   - `restricted` ;
+   - `restrictedAt`, `restrictedBy` ;
+   - `systemFolder` : vrai pour un dossier du plan, qui ne se restreint pas, masquer « Restreindre » ;
+   - `inheritedFrom` : les dossiers restreints au-dessus, à afficher (« Aussi restreint par Direction ») ;
+   - `grants` : la liste des droits, chacun avec `granteeType` (`USER` ou `ROLE`), `grantee` (e-mail ou nom du rôle), `granteeLabel` (libellé du rôle), `level`, `grantedAt`, `grantedBy` ;
+   - `myLevel` ;
+   - `canManage` : afficher les boutons de gestion seulement s'il est vrai.
+2. Restreindre : `POST .../folders/{code}/restrict`, corps facultatif `{ "grants": [{ "granteeType": "ROLE", "grantee": "STAFF", "level": "DOWNLOAD" }] }`.
+   - La personne qui restreint reçoit `ADMIN`, pour ne pas s'enfermer dehors.
+   - `400` sur un dossier du plan.
+3. Donner ou changer un droit : `PUT .../folders/{code}/grants` avec `{ "granteeType", "grantee", "level" }`.
+   - Un bénéficiaire n'a qu'un niveau par dossier : le nouveau remplace l'ancien.
+   - `404` si l'e-mail ou le rôle est inconnu.
+   - `400` si le dossier n'est pas restreint.
+4. Retirer : `DELETE .../folders/{code}/grants?granteeType=USER&grantee=alice@exemple.cg`. Le dernier droit `ADMIN` ne se retire pas (`409`) : le donner d'abord à quelqu'un d'autre.
+5. Rouvrir à tous : `POST .../folders/{code}/unrestrict`. Tous les droits du dossier sont effacés.
+6. Les quatre écritures demandent `ADMIN` sur le dossier (`403` sinon) et `DOCUMENT:WRITE`. Elles rendent toutes l'accès à jour, sous la même forme que la lecture.
+
+Dans les listes :
+- un dossier restreint porte `restricted: true` : afficher un cadenas ;
+- `GET /ged/items` rend `access` (`level`, `canDownload`, `canEdit`, `canDelete`, `canManage`) pour le dossier ouvert : griser les actions non permises ;
+- un refus d'action rend `403` avec un message qui dit le niveau manquant : « il faut le droit "modifier" (vous avez "voir") ».
+
+### Verrouiller un fichier
+
+- Verrouiller : `POST /sni/api/v1/ged/files/{code}/lock?hours=1`.
+  - 1 heure par défaut, 24 au plus.
+  - Le reposer prolonge le verrou.
+  - Il faut le niveau `EDIT`.
+- Déverrouiller : `POST /sni/api/v1/ged/files/{code}/unlock`. C'est possible pour celui qui l'a posé, pour un administrateur, et pour le gestionnaire (`ADMIN`) du dossier restreint qui contient le fichier.
+- Tant que le verrou court, personne d'autre ne peut remplacer le fichier, restaurer une version, l'archiver, le renommer, le déplacer ou le mettre à la corbeille. Ces actions rendent `409` « « statuts.pdf » est verrouillé par alice@exemple.cg jusqu'au 09/11/2026 18h30 ».
+- Le fichier reste lisible et téléchargeable par tous ceux qui y ont droit.
+- Le verrou expire seul.
+- Chaque fichier des listes porte `lock` (`lockedBy`, `lockedAt`, `expiresAt`, `mine`) ou `null` : afficher un cadenas avec le nom et l'échéance, et « Déverrouiller » si `mine`.
+
 ## Le classement automatique
 
 Tout document créé avec un propriétaire est rangé dès sa création, s'il n'a pas été déposé dans un dossier choisi :
@@ -177,6 +240,9 @@ Contrats | Facturation | Commercial | Équipements / <année>     (documents rat
 | Chercher, lire le texte d'un fichier, état de la lecture | `DOCUMENT:READ` |
 | Déposer (`POST /ged/files`), numériser (`POST /ged/scans`) | `DOCUMENT:UPLOAD` |
 | Créer, renommer, déplacer, copier, corbeille, restaurer, lancer le classement, relire un fichier, lancer la lecture | `DOCUMENT:WRITE` |
+| Gérer l'accès d'un dossier, verrouiller, déverrouiller | `DOCUMENT:WRITE` |
+
+Dans un dossier restreint, le niveau du dossier s'ajoute à ces droits : voir le tableau des niveaux plus haut.
 
 ## Ce que l'écran ne doit pas envoyer
 
@@ -184,9 +250,9 @@ Les corps sont stricts : n'envoyer que les champs listés ci-dessus. Pas de `kin
 
 ## Limites connues
 
-- Les droits par dossier (`/document-permissions`) sont enregistrés mais pas encore appliqués : tout compte qui a `DOCUMENT:READ` voit toute l'arborescence (lot 4).
-- La recherche ne tient pas encore compte des droits par dossier (lot 4) : elle voit ce que voit l'explorateur.
+- Les droits se posent sur des dossiers, pas sur un fichier isolé : pour un fichier confidentiel, le ranger dans un dossier restreint. Les anciens droits sur un document (`/document-permissions`, cible `DOCUMENT`) ne sont pas appliqués.
+- Dans `/documents` (liste et recherche), les documents cachés sont retirés de la page après coup : une page peut compter moins de lignes que `size`, et `totalElements` les compte encore.
 - L'OCR exige Tesseract sur le serveur. En production il est coupé par défaut (`GED_OCR_ENABLED=false`) : les scans y sont alors en `FAILED` (« OCR désactivé »), les PDF numériques et les fichiers bureautiques restent lus et cherchables.
 - Le PDF d'une numérisation contient les images des pages, pas de couche texte : son texte est dans la GED (recherche, onglet « Texte »), pas dans le fichier téléchargé.
 - Les PDF des factures et avoirs sont conservés par le module de facturation, pas dans la GED : ils n'apparaissent pas dans « Facturation ».
-- Les anciens écrans des dossiers (`/document-folders/**`) restent en place et exigent `ADMIN:ACCESS` ; l'explorateur passe par `/ged/**`.
+- Les anciens écrans des dossiers (`/document-folders/**`) restent en place et exigent `ADMIN:ACCESS` ; l'explorateur passe par `/ged/**`. Les dossiers restreints y sont aussi appliqués.

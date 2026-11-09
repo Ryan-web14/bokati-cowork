@@ -57,6 +57,7 @@ public class GedTextService {
     private final GedExplorerService explorerService;
     private final TransactionTemplate transactionTemplate;
     private final GedTextExtractor extractor;
+    private final com.sni.bokaticowork.features.document.explorer.access.GedAccessService access;
 
     public GedTextService(GedTextQueries queries,
                           DocumentRepository documentRepository,
@@ -66,6 +67,7 @@ public class GedTextService {
                           GedExplorerService explorerService,
                           TransactionTemplate transactionTemplate,
                           GedOcrEngine ocrEngine,
+                          com.sni.bokaticowork.features.document.explorer.access.GedAccessService access,
                           @Value("${app.ged.text.ocr-enabled:true}") boolean ocrEnabled,
                           @Value("${app.ged.text.max-ocr-pages:30}") int maxOcrPages,
                           @Value("${app.ged.text.max-chars:300000}") int maxChars) {
@@ -76,6 +78,7 @@ public class GedTextService {
         this.storageService = storageService;
         this.explorerService = explorerService;
         this.transactionTemplate = transactionTemplate;
+        this.access = access;
         GedOcrEngine engine = ocrEnabled ? ocrEngine : page -> {
             throw new GedOcrEngine.OcrUnavailableException("OCR désactivé (app.ged.text.ocr-enabled)", null);
         };
@@ -153,6 +156,7 @@ public class GedTextService {
     @Transactional(readOnly = true)
     public GedFileText fileText(String code) {
         Document document = document(code);
+        access.requireDocument(document, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.DOWNLOAD);
         return queries.textOf(document.getId())
                 .map(row -> {
                     Integer version = row[9] == null ? null : ((Number) row[9]).intValue();
@@ -166,7 +170,11 @@ public class GedTextService {
 
     /** Relit un fichier tout de suite, sans attendre le travailleur (apres l'installation de l'OCR par exemple). */
     public GedFileText refresh(String code) {
-        Long id = transactionTemplate.execute(status -> document(code).getId());
+        Long id = transactionTemplate.execute(status -> {
+            Document document = document(code);
+            access.requireDocument(document, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.EDIT);
+            return document.getId();
+        });
         index(id);
         return transactionTemplate.execute(status -> fileText(code));
     }
@@ -189,12 +197,16 @@ public class GedTextService {
         DocumentFolder folder = StringUtils.hasText(folderCode)
                 ? folderRepository.findByCode(folderCode.trim()).orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable : " + folderCode))
                 : null;
+        if (folder != null) {
+            access.require(folder, com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel.READ);
+        }
+        java.util.Set<Long> hidden = access.hiddenFolderIds();
         String folderPath = folder == null ? null : folder.getPath();
         int pageSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
         int pageNumber = Math.max(0, page);
 
-        long total = queries.countSearch(query, folderPath);
-        List<Object[]> rows = total == 0 ? List.of() : queries.search(query, folderPath, pageNumber * pageSize, pageSize);
+        long total = queries.countSearch(query, folderPath, hidden);
+        List<Object[]> rows = total == 0 ? List.of() : queries.search(query, folderPath, hidden, pageNumber * pageSize, pageSize);
         List<Long> ids = rows.stream().map(row -> ((Number) row[0]).longValue()).toList();
         Map<Long, Document> documents = documentRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(Document::getId, Function.identity()));

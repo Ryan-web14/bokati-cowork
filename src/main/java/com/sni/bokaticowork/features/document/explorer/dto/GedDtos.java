@@ -51,15 +51,52 @@ public final class GedDtos {
             Integer version,
             boolean protectedItem,
             String previewUrl,
-            String downloadUrl
+            String downloadUrl,
+            boolean restricted,
+            GedLock lock
     ) {}
+
+    /**
+     * Le verrou d'un fichier, pose pour le modifier sans etre derange. Tant qu'il court, seul
+     * {@code lockedBy} remplace, renomme, deplace ou supprime le fichier. {@code mine} : c'est vous.
+     */
+    public record GedLock(String lockedBy, Instant lockedAt, Instant expiresAt, boolean mine) {}
+
+    /** Ce que la personne connectee peut faire dans le dossier ouvert (la racine : tout). */
+    public record GedAccessSummary(com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel level,
+                                   boolean canDownload, boolean canEdit, boolean canDelete, boolean canManage) {}
+
+    /**
+     * Un droit sur un dossier restreint. {@code granteeType} : {@code USER} ({@code grantee} est
+     * l'e-mail) ou {@code ROLE} ({@code grantee} est le nom du role, {@code granteeLabel} son libelle).
+     */
+    public record GedGrant(String granteeType, String grantee, String granteeLabel,
+                           com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel level,
+                           Instant grantedAt, String grantedBy) {}
+
+    /** Donner un droit : un utilisateur par son e-mail, un role par son nom. */
+    public record GedGrantRequest(@NotBlank String granteeType, @NotBlank String grantee,
+                                  @jakarta.validation.constraints.NotNull com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel level) {}
+
+    public record GedRestrictRequest(List<@jakarta.validation.Valid GedGrantRequest> grants) {}
+
+    /**
+     * L'acces d'un dossier. {@code inheritedFrom} : les dossiers restreints au-dessus, dont les droits
+     * s'appliquent aussi. {@code systemFolder} : dossier du plan, qui ne se restreint pas.
+     */
+    public record GedFolderAccess(String folderCode, boolean restricted, Instant restrictedAt, String restrictedBy,
+                                  boolean systemFolder, List<GedFolderRef> inheritedFrom, List<GedGrant> grants,
+                                  com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel myLevel,
+                                  boolean canManage) {}
 
     /** Le dossier ouvert ; vide a la racine. */
     public record GedFolderRef(String code, String name, String parentCode) {}
 
     public record GedPage(int page, int size, long totalElements, int totalPages, long folderCount, long fileCount) {}
 
-    public record GedListing(GedFolderRef folder, List<BreadcrumbItem> breadcrumb, List<GedItem> items, GedPage page) {}
+    /** {@code access} : ce que la personne peut faire dans ce dossier, pour griser les actions. */
+    public record GedListing(GedFolderRef folder, List<BreadcrumbItem> breadcrumb, List<GedItem> items, GedPage page,
+                             GedAccessSummary access) {}
 
     public record GedUploadFailure(String fileName, String message) {}
 

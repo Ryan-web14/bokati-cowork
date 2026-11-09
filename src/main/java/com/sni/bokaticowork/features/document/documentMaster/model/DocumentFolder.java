@@ -101,6 +101,20 @@ public class DocumentFolder {
     @Column(name = "system_key", length = 120)
     private String systemKey;
 
+    /**
+     * Acces restreint : le dossier et son contenu ne sont visibles que des personnes et roles qui y
+     * ont un droit. Voir {@code GedAccessService}.
+     */
+    @Column(name = "restricted", nullable = false)
+    @Builder.Default
+    private Boolean restricted = Boolean.FALSE;
+
+    @Column(name = "restricted_at")
+    private java.time.Instant restrictedAt;
+
+    @Column(name = "restricted_by")
+    private Long restrictedBy;
+
     @PrePersist
     public void prePersist() {
         Instant now = Instant.now();

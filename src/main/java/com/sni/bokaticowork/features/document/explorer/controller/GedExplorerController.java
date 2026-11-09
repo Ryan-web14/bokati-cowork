@@ -15,6 +15,9 @@ import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashBatch
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFileText;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrantRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRestrictRequest;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSearchResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTextRunResult;
 import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTextStatus;
@@ -25,10 +28,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -191,5 +196,54 @@ public class GedExplorerController {
     @PostMapping("/text/run")
     public ResponseEntity<GedTextRunResult> runText(@RequestParam(defaultValue = "20") int limit) {
         return ResponseEntity.ok(textService.runPending(limit));
+    }
+
+    // Acces restreint et verrou (lot 4) -------------------------------------------------------------
+
+    /**
+     * L'acces d'un dossier : restreint ou non, droits, dossiers restreints au-dessus, et le niveau
+     * de la personne connectee.
+     */
+    @GetMapping("/folders/{code}/access")
+    public ResponseEntity<GedFolderAccess> folderAccess(@PathVariable String code) {
+        return ResponseEntity.ok(service.folderAccess(code));
+    }
+
+    /**
+     * Restreint un dossier et tout son contenu aux personnes et roles designes. Celui qui le fait
+     * recoit le droit de gerer l'acces. Interdit sur un dossier du plan de classement.
+     */
+    @PostMapping("/folders/{code}/restrict")
+    public ResponseEntity<GedFolderAccess> restrict(@PathVariable String code, @Valid @RequestBody(required = false) GedRestrictRequest request) {
+        return ResponseEntity.ok(service.restrict(code, request == null ? null : request.grants()));
+    }
+
+    /** Rouvre le dossier a tous ceux qui ont les droits generaux ; ses droits sont retires. */
+    @PostMapping("/folders/{code}/unrestrict")
+    public ResponseEntity<GedFolderAccess> unrestrict(@PathVariable String code) {
+        return ResponseEntity.ok(service.unrestrict(code));
+    }
+
+    /** Donne ou change le droit d'un utilisateur (par son e-mail) ou d'un role (par son nom). */
+    @PutMapping("/folders/{code}/grants")
+    public ResponseEntity<GedFolderAccess> grant(@PathVariable String code, @Valid @RequestBody GedGrantRequest request) {
+        return ResponseEntity.ok(service.grant(code, request));
+    }
+
+    @DeleteMapping("/folders/{code}/grants")
+    public ResponseEntity<GedFolderAccess> revoke(@PathVariable String code, @RequestParam String granteeType,
+                                                  @RequestParam String grantee) {
+        return ResponseEntity.ok(service.revoke(code, granteeType, grantee));
+    }
+
+    /** Verrouille un fichier pour le modifier ({@code hours} : 1 par defaut, 24 au plus) ; le reposer le prolonge. */
+    @PostMapping("/files/{code}/lock")
+    public ResponseEntity<GedItem> lock(@PathVariable String code, @RequestParam(required = false) Integer hours) {
+        return ResponseEntity.ok(service.lock(code, hours));
+    }
+
+    @PostMapping("/files/{code}/unlock")
+    public ResponseEntity<GedItem> unlock(@PathVariable String code) {
+        return ResponseEntity.ok(service.unlock(code));
     }
 }

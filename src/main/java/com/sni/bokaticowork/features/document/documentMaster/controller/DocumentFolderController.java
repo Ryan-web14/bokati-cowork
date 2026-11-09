@@ -22,6 +22,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel;
+import com.sni.bokaticowork.features.document.explorer.access.GedAccessService;
+
 import java.util.List;
 
 @RestController
@@ -30,15 +33,19 @@ import java.util.List;
 public class DocumentFolderController {
 
     private final DocumentFolderService service;
+    /** Les dossiers restreints de la GED valent aussi pour ces anciennes routes. */
+    private final GedAccessService gedAccess;
 
     @PostMapping
     @Audited(module = "DOCUMENT", action = "CREATE_FOLDER", ressource = "document_folder")
     public ResponseEntity<FolderDetailResponse> create(@Valid @RequestBody CreateFolderRequest request) {
+        gedAccess.requireFolderCode(request.getParentCode(), GedAccessLevel.EDIT);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
     }
 
     @GetMapping("/{code}")
     public ResponseEntity<FolderDetailResponse> getByCode(@PathVariable String code) {
+        gedAccess.requireFolderCode(code, GedAccessLevel.READ);
         return ResponseEntity.ok(service.getByCode(code));
     }
 
@@ -47,12 +54,14 @@ public class DocumentFolderController {
     public ResponseEntity<FolderDetailResponse> update(
             @PathVariable String code,
             @Valid @RequestBody UpdateFolderRequest request) {
+        gedAccess.requireFolderCode(code, GedAccessLevel.EDIT);
         return ResponseEntity.ok(service.update(code, request));
     }
 
     @DeleteMapping("/{code}")
     @Audited(module = "DOCUMENT", action = "DELETE_FOLDER", ressource = "document_folder")
     public ResponseEntity<Void> delete(@PathVariable String code) {
+        gedAccess.requireFolderCode(code, GedAccessLevel.DELETE);
         service.delete(code);
         return ResponseEntity.noContent().build();
     }
@@ -62,34 +71,40 @@ public class DocumentFolderController {
     public ResponseEntity<FolderDetailResponse> move(
             @PathVariable String code,
             @Valid @RequestBody MoveFolderRequest request) {
+        gedAccess.requireFolderCode(code, GedAccessLevel.EDIT);
+        gedAccess.requireFolderCode(request.getTargetParentCode(), GedAccessLevel.EDIT);
         return ResponseEntity.ok(service.move(code, request));
     }
 
     @GetMapping("/roots")
     public ResponseEntity<List<FolderDetailResponse>> roots(
             @RequestParam(required = false) DocumentSpace space) {
-        return ResponseEntity.ok(service.getRoots(space));
+        return ResponseEntity.ok(gedAccess.withoutHiddenFolders(service.getRoots(space)));
     }
 
     @GetMapping("/{code}/children")
     public ResponseEntity<List<FolderDetailResponse>> children(@PathVariable String code) {
-        return ResponseEntity.ok(service.getChildren(code));
+        gedAccess.requireFolderCode(code, GedAccessLevel.READ);
+        return ResponseEntity.ok(gedAccess.withoutHiddenFolders(service.getChildren(code)));
     }
 
     @GetMapping("/{code}/tree")
     public ResponseEntity<DocumentFolderTreeNode> tree(@PathVariable String code) {
-        return ResponseEntity.ok(service.getTree(code));
+        gedAccess.requireFolderCode(code, GedAccessLevel.READ);
+        return ResponseEntity.ok(gedAccess.withoutHiddenBranches(service.getTree(code)));
     }
 
     @GetMapping("/{code}/documents")
     public ResponseEntity<PaginatedResponse<DocumentResponse>> documents(
             @PathVariable String code,
             @PageableDefault(size = 20, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        gedAccess.requireFolderCode(code, GedAccessLevel.READ);
         return ResponseEntity.ok(service.getDocuments(code, pageable));
     }
 
     @GetMapping("/{code}/breadcrumb")
     public ResponseEntity<List<BreadcrumbItem>> breadcrumb(@PathVariable String code) {
+        gedAccess.requireFolderCode(code, GedAccessLevel.READ);
         return ResponseEntity.ok(service.getBreadcrumb(code));
     }
 
@@ -98,6 +113,8 @@ public class DocumentFolderController {
     public ResponseEntity<DocumentResponse> moveDocument(
             @PathVariable String documentCode,
             @Valid @RequestBody MoveDocumentToFolderRequest request) {
+        gedAccess.requireDocumentCode(documentCode, GedAccessLevel.EDIT);
+        gedAccess.requireFolderCode(request.getFolderCode(), GedAccessLevel.EDIT);
         return ResponseEntity.ok(service.moveDocument(documentCode, request.getFolderCode()));
     }
 }

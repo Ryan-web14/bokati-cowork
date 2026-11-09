@@ -192,7 +192,7 @@ async function programDetail(body, code, back) {
           if (!confirm('Clore définitivement ce programme ?')) return;
           await must('POST', `${V1}/referrals/programs/${key(code)}/end`); await reopen();
         }, { cls: 'ghost' }))),
-    program.status !== 'ENDED' && programForm(program, reopen),
+    program.status !== 'ENDED' ? programForm(program, reopen) : '',
     h('div', { cls: 'card row', style: 'align-items:flex-end' }, h('strong', {}, 'Créer le lien d\'un parrain'),
       field('Type', referrerType), field('Code', referrerCode),
       action('Créer le lien', async () => {
@@ -279,12 +279,51 @@ export async function referralsClientScreen(root) {
 
 // ---- Explorateur de la GED --------------------------------------------------------------------------
 
+const LEVELS = ['READ', 'DOWNLOAD', 'EDIT', 'DELETE', 'ADMIN'];
+
+/** Le panneau d'acces d'un dossier : restreindre, rouvrir, donner et retirer des droits. */
+async function accessPanel(target, folderCode, refresh) {
+  const show = async () => {
+    const view = await must('GET', `${V1}/ged/folders/${key(folderCode)}/access`);
+    const type = h('select', {}, ['USER', 'ROLE'].map((value) => h('option', { value }, value === 'USER' ? 'Utilisateur (e-mail)' : 'Rôle (nom)')));
+    const grantee = input({ placeholder: 'alice@exemple.cg ou STAFF' });
+    const level = h('select', {}, LEVELS.map((value) => h('option', { value }, value)));
+    clear(target).append(h('div', { cls: 'card' },
+      h('h2', {}, `Accès · ${folderCode}`),
+      h('p', {}, view.restricted ? h('span', { cls: 'badge warn' }, 'restreint') : h('span', { cls: 'badge' }, 'ouvert à tous'),
+        ' Votre niveau : ', h('strong', {}, view.myLevel),
+        view.inheritedFrom?.length ? ` · aussi restreint par : ${view.inheritedFrom.map((ref) => ref.name).join(' › ')}` : ''),
+      view.systemFolder && h('p', { cls: 'hint' }, 'Dossier du plan de classement : il ne se restreint pas.'),
+      view.restricted && table(view.grants, {
+        columns: ['granteeType', 'grantee', 'granteeLabel', 'level', 'grantedBy', 'grantedAt'],
+        empty: 'Aucun droit.',
+        actions: (grant) => view.canManage && action('Retirer', async () => {
+          await must('DELETE', `${V1}/ged/folders/${key(folderCode)}/grants`, { query: { granteeType: grant.granteeType, grantee: grant.grantee } });
+          await show();
+        }, { cls: 'ghost small' }),
+      }),
+      view.canManage && h('div', { cls: 'row', style: 'align-items:flex-end;margin-top:8px' },
+        view.restricted && [field('Bénéficiaire', type), field('Qui', grantee), field('Niveau', level),
+          action('Donner', async () => {
+            await must('PUT', `${V1}/ged/folders/${key(folderCode)}/grants`, { body: { granteeType: type.value, grantee: grantee.value, level: level.value } });
+            await show();
+          })],
+        !view.systemFolder && action(view.restricted ? 'Ouvrir à tous' : 'Restreindre', async () => {
+          await must('POST', `${V1}/ged/folders/${key(folderCode)}/${view.restricted ? 'unrestrict' : 'restrict'}`);
+          await show();
+          await refresh();
+        }, { cls: view.restricted ? 'ghost' : '' }))));
+  };
+  await show();
+}
+
 export async function gedScreen(root) {
   root.append(h('h1', {}, 'GED · explorateur'),
     h('p', { cls: 'muted' }, 'Parcourir les dossiers, déposer, numériser, chercher dans le contenu des fichiers, corbeille.'));
   tabs(root, [
     ['Parcourir', async (body) => {
       const view = h('div', {});
+      const panel = h('div', {});
       const open = async (folderCode) => {
         const listing = await must('GET', `${V1}/ged/items`, { query: { folderCode, size: 100 } });
         const files = h('input', { type: 'file', multiple: true });
@@ -306,21 +345,27 @@ export async function gedScreen(root) {
               await open(folderCode);
               if (failures.length) view.prepend(notice('bad', failures.join(' · ')));
             })),
-          table(listing.items || [], {
-            columns: ['kind', 'name', 'updatedAt', 'size', 'mimeType', 'documentsCount', 'protectedItem'],
+          listing.access ? h('p', { cls: 'hint' }, `Votre niveau ici : ${listing.access.level}`) : '',
+          table((listing.items || []).map((item) => ({ ...item, locked: item.lock ? `${item.lock.lockedBy}${item.lock.mine ? ' (vous)' : ''}` : '' })), {
+            columns: ['kind', 'name', 'updatedAt', 'size', 'mimeType', 'documentsCount', 'restricted', 'locked'],
             empty: 'Dossier vide.',
             actions: (item) => item.kind === 'FOLDER'
-              ? h('button', { type: 'button', cls: 'small', onClick: () => open(item.code) }, 'Ouvrir')
+              ? h('span', {}, h('button', { type: 'button', cls: 'small', onClick: () => open(item.code) }, 'Ouvrir'),
+                action('Accès', () => accessPanel(panel, item.code, () => open(folderCode)), { cls: 'ghost small' }))
               : h('span', {},
                 item.downloadUrl && action('Télécharger', async () => save(await call('GET', pathOf(item.downloadUrl)), item.name), { cls: 'ghost small' }),
                 action('Texte', async () => {
                   const text = await must('GET', `${V1}/ged/files/${key(item.code)}/text`);
                   view.append(h('div', { cls: 'card' }, h('h2', {}, `Texte de ${item.name}`), keyValues({ ...text, content: undefined }), h('pre', { cls: 'json' }, text.content || '(pas de texte)')));
                 }, { cls: 'ghost small' }),
+                action(item.lock ? 'Déverrouiller' : 'Verrouiller', async () => {
+                  await must('POST', `${V1}/ged/files/${key(item.code)}/${item.lock ? 'unlock' : 'lock'}`);
+                  await open(folderCode);
+                }, { cls: 'ghost small' }),
                 !item.protectedItem && action('Corbeille', async () => { await must('POST', `${V1}/ged/trash`, { body: { documentCodes: [item.code] } }); await open(folderCode); }, { cls: 'ghost small' })),
           }));
       };
-      body.append(view);
+      body.append(view, panel);
       await open(undefined);
     }],
     ['Rechercher', async (body) => {
