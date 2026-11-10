@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.core.configuration;
 
 import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
+import com.sni.bokaticowork.core.utils.error.ErrorCode;
+import io.jsonwebtoken.ExpiredJwtException;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.service.tokenService.implementation.JWTService;
 import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
@@ -80,9 +82,14 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
         } catch (MessagingException ex) {
             log.warn("CONNECT WebSocket refuse · {}", ex.getMessage());
             throw ex;
+        } catch (ExpiredJwtException ex) {
+            // Cas courant et attendu : l'onglet est reste ouvert, le jeton d'acces a expire. La trame
+            // ERROR porte TOKEN_EXPIRED (meme code que l'API) : le navigateur rafraichit son jeton et
+            // se reconnecte. Pas de cause jointe, ce n'est pas une panne.
+            log.debug("CONNECT WebSocket refuse · jeton expire");
+            throw new MessagingException(ErrorCode.TOKEN_EXPIRED);
         } catch (Exception ex) {
-            // Signature invalide, jeton expire, compte introuvable · on refuse, on ne poursuit pas
-            // sans identite.
+            // Signature invalide, compte introuvable · on refuse, on ne poursuit pas sans identite.
             log.warn("CONNECT WebSocket refuse · {}", ex.getMessage());
             throw new MessagingException("WebSocket authentication failed", ex);
         }
