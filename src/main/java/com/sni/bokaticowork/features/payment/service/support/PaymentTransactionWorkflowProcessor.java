@@ -207,6 +207,12 @@ public class PaymentTransactionWorkflowProcessor {
             return;
         }
 
+        // Facture d'un lot multi-ressources : chacune des reservations qu'elle regle est confirmee.
+        if (TransactionContextResolver.BOOKINGS_SOURCE.equalsIgnoreCase(source.type())) {
+            bookingNumbers(source.code()).forEach(number -> confirmBookingIfFullyPaid(transaction, number));
+            return;
+        }
+
         if (com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService.SOURCE_TYPE.equalsIgnoreCase(source.type())) {
             syncMarketplaceOrderAfterCommit(source.code());
         }
@@ -239,6 +245,14 @@ public class PaymentTransactionWorkflowProcessor {
                         sync.run();
                     }
                 });
+    }
+
+    private static java.util.List<String> bookingNumbers(String codes) {
+        return java.util.Arrays.stream(codes.split(","))
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
     }
 
     private void confirmBookingIfFullyPaid(PaymentTransaction transaction, String bookingNumber) {
@@ -289,6 +303,8 @@ public class PaymentTransactionWorkflowProcessor {
                 closeContractIfPresent(pass.getContractCode(), reason);
             }
             case "BOOKING" -> bookingService.systemCancel(source.code(), reason);
+            case TransactionContextResolver.BOOKINGS_SOURCE ->
+                    bookingNumbers(source.code()).forEach(number -> bookingService.systemCancel(number, reason));
             default -> log.debug("No asynchronous refund workflow configured for source {} {}", source.type(), source.code());
         }
     }

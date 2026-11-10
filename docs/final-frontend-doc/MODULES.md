@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-1585 routes dans 198 contrôleurs.
+1588 routes dans 198 contrôleurs.
 
 | Module | Routes | Back-office | Portail membre | Publiques | Fonctionnement |
 | --- | --- | --- | --- | --- | --- |
@@ -15,8 +15,8 @@
 | [billing](billing/routes.md) | 70 | 68 | 0 | 2 | [README](billing/README.md) |
 | [contract](contract/routes.md) | 65 | 63 | 0 | 2 | [README](contract/README.md) |
 | [company](company/routes.md) | 58 | 56 | 2 | 0 | [README](company/README.md) |
+| [booking](booking/routes.md) | 54 | 45 | 0 | 9 | [README](booking/README.md) |
 | [securite](securite/routes.md) | 54 | 39 | 0 | 13 | [README](securite/README.md) |
-| [booking](booking/routes.md) | 51 | 42 | 0 | 9 | [README](booking/README.md) |
 | [reporting](reporting/routes.md) | 50 | 50 | 0 | 0 | [README](reporting/README.md) |
 | [support](support/routes.md) | 49 | 35 | 13 | 1 | [README](support/README.md) |
 | [domiciliation](domiciliation/routes.md) | 40 | 33 | 7 | 0 | [README](domiciliation/README.md) |

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [booking](../README.md) · 37 route(s).
+Module [booking](../README.md) · 40 route(s).
 
 ## Routes
 
@@ -33,6 +33,40 @@ Module [booking](../README.md) · 37 route(s).
 - Réponse : `BookingResponse`
 - Modèles : [BookingResponse](#m-BookingResponse), [CreateBookingRequest](#m-CreateBookingRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `create`
+
+<a id="r-get-sni-api-v1-bookings-batches"></a>
+### GET /sni/api/v1/bookings/batches
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:READ`
+- Réponse : `PaginatedResponse<BookingBatchResponse.Summary>`
+- Modèles : [PaginatedResponse](#m-PaginatedResponse), [BookingBatchResponse.Summary](#m-BookingBatchResponse-Summary)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `listBatches`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `page` | requête | `int` |  | 0 |
+| `size` | requête | `int` |  | 20 |
+
+<a id="r-post-sni-api-v1-bookings-batches"></a>
+### POST /sni/api/v1/bookings/batches
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:CREATE`
+- Corps JSON (obligatoire) : `CreateBookingBatchRequest`
+- Réponse : `BookingBatchResponse`
+- Modèles : [BookingBatchResponse](#m-BookingBatchResponse), [CreateBookingBatchRequest](#m-CreateBookingBatchRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `createBatch`
+
+<a id="r-get-sni-api-v1-bookings-batches-batchnumber"></a>
+### GET /sni/api/v1/bookings/batches/{batchNumber}
+
+- Accès : back-office : rôle d'administration et droit `BOOKING:READ`
+- Réponse : `BookingBatchResponse`
+- Modèles : [BookingBatchResponse](#m-BookingBatchResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java`, méthode `getBatch`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `batchNumber` | chemin | `String` | oui |  |
 
 <a id="r-get-sni-api-v1-bookings-cancellation-policy"></a>
 ### GET /sni/api/v1/bookings/cancellation-policy
@@ -483,6 +517,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `resourceCapacity` | entier |  |  |
 | `wholeResourceBooking` | booléen |  |  |
 | `seatsLabel` | texte |  |  |
+| `batchNumber` | texte |  |  |
 
 <a id="m-SubscriberType"></a>
 #### SubscriberType
@@ -522,6 +557,51 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `bookingUnit` | enum : `HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH` |  |  |
 | `participants` | [BookingParticipantRequest](#m-BookingParticipantRequest)[] |  |  |
 | `billingCompanyCode` | texte |  |  |
+
+<a id="m-BookingBatchResponse-Summary"></a>
+#### BookingBatchResponse.Summary
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `batchNumber` | texte |  |  |
+| `paymentMode` | enum : `DIRECT`, `WALLET`, `SUBSCRIPTION`, `PASS` |  |  |
+| `billingCompanyCode` | texte |  |  |
+| `bookingCount` | entier |  |  |
+| `memberCount` | entier |  |  |
+| `notes` | texte |  |  |
+| `createdBy` | texte |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |
+
+<a id="m-BookingBatchResponse"></a>
+#### BookingBatchResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `batchNumber` | texte |  |  |
+| `paymentMode` | enum : `DIRECT`, `WALLET`, `SUBSCRIPTION`, `PASS` |  |  |
+| `billingCompanyCode` | texte |  |  |
+| `bookingCount` | entier |  |  |
+| `memberCount` | entier |  |  |
+| `notes` | texte |  |  |
+| `createdBy` | texte |  |  |
+| `createdAt` | date-heure ISO 8601 UTC |  |  |
+| `invoices` | [BookingBatchResponse.BatchInvoice](#m-BookingBatchResponse-BatchInvoice)[] |  |  |
+| `uninvoicedBookingNumbers` | texte[] |  |  |
+| `bookings` | [BookingResponse](#m-BookingResponse)[] |  |  |
+
+<a id="m-CreateBookingBatchRequest"></a>
+#### CreateBookingBatchRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `memberIds` | texte[] |  |  |
+| `lines` | [CreateBookingBatchRequest.Line](#m-CreateBookingBatchRequest-Line)[] | oui | éléments min `0`, éléments max `50` |
+| `paymentMode` | enum : `DIRECT`, `WALLET`, `SUBSCRIPTION`, `PASS` | oui |  |
+| `billingCompanyCode` | texte |  |  |
+| `confirmImmediately` | booléen |  |  |
+| `sendEmail` | booléen |  |  |
+| `notes` | texte |  |  |
+| `idempotencyKey` | texte |  | longueur min `0`, longueur max `180` |
 
 <a id="m-CancellationPolicyResponse"></a>
 #### CancellationPolicyResponse
@@ -861,3 +941,33 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `currency` | texte |  |  |
 | `entitlementCode` | texte |  |  |
 | `billableNumber` | texte |  |  |
+
+<a id="m-BookingBatchResponse-BatchInvoice"></a>
+#### BookingBatchResponse.BatchInvoice
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `documentNumber` | texte |  |  |
+| `status` | enum : `DRAFT`, `ISSUED`, `VALIDATED`, `SENT`, `VIEWED`, `NEGOTIATION`, `ACCEPTED`, `DEPOSIT_REQUESTED`, `DEPOSIT_PAID`, `REJECTED`, `EXPIRED`, `CONVERTED`, `PARTIALLY_PAID`, `PAID`, `OVERDUE`, `CANCELLED`, `VOIDED`, `REFUNDED`, `WRITTEN_OFF` |  |  |
+| `customerType` | texte |  |  |
+| `customerCode` | texte |  |  |
+| `customerName` | texte |  |  |
+| `totalAmount` | nombre décimal |  |  |
+| `paidAmount` | nombre décimal |  |  |
+| `balanceDue` | nombre décimal |  |  |
+| `currency` | texte |  |  |
+| `bookingNumbers` | texte[] |  |  |
+
+<a id="m-CreateBookingBatchRequest-Line"></a>
+#### CreateBookingBatchRequest.Line
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `resourceCode` | texte | oui | longueur min `1` |
+| `startedAt` | date-heure locale sans fuseau | oui |  |
+| `endedAt` | date-heure locale sans fuseau | oui |  |
+| `quantity` | entier |  | min `1` |
+| `bookingUnit` | enum : `HOUR`, `HALF_DAY`, `DAY`, `WEEK`, `MONTH` |  |  |
+| `memberIds` | texte[] |  |  |
+| `notes` | texte |  |  |
+| `participants` | [BookingParticipantRequest](#m-BookingParticipantRequest)[] |  |  |

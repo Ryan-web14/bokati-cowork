@@ -108,6 +108,10 @@ Réservation par l'équipe : un compte `ROLE_SUPER_ADMIN`, `ROLE_ADMIN`, `ROLE_M
 2. Chaque occurrence passe toutes les règles de la création. Si une seule échoue, **aucune** n'est créée (une seule transaction) : afficher l'erreur et proposer d'exclure la date fautive.
 3. Réponse `201` : la liste des réservations créées. `idempotencyKey` et `holdNumber` de l'objet `booking` sont ignorés pour les occurrences.
 
+### Réserver plusieurs ressources pour un ou plusieurs membres
+
+`POST /sni/api/v1/bookings/batches` : plusieurs lignes (ressource et créneau) pour un ou plusieurs membres, tout ou rien, **une seule facture par membre**. Détail complet, corps, erreurs et effets sur le paiement et l'annulation : [reservation-multi-ressources.md](reservation-multi-ressources.md). Chaque réservation porte `batchNumber` (`null` hors lot).
+
 ### Blocage temporaire (hold)
 
 1. `POST /sni/api/v1/bookings/holds` avec `resourceCode`, titulaire, `startedAt`, `endedAt`, `quantity`, `ttlMinutes` (défaut 10), `idempotencyKey` facultatif. Le blocage retire aussitôt la capacité des créneaux.
