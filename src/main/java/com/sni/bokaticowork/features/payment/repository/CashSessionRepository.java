@@ -156,4 +156,9 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
                             @Param("businessEntityCode") String businessEntityCode,
                             @Param("fromDate") java.time.Instant fromDate,
                             @Param("toDate") java.time.Instant toDate);
+
+    /** Sessions d'une caisse dans ces statuts (elements en cours d'un titulaire). */
+    @Query("SELECT s FROM CashSession s WHERE s.cashRegister.registerCode = :registerCode AND s.status IN :statuses ORDER BY s.openedAt ASC")
+    java.util.List<CashSession> findByRegisterCodeAndStatuses(@Param("registerCode") String registerCode,
+                                                              @Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashSessionStatus> statuses);
 }

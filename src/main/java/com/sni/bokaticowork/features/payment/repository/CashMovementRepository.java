@@ -164,4 +164,9 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
     java.util.List<Object[]> registerMetrics(@Param("businessEntityCode") String businessEntityCode,
                                              @Param("fromDate") java.time.Instant fromDate,
                                              @Param("toDate") java.time.Instant toDate);
+
+    /** Mouvements d'une caisse dans ce statut (mouvements en attente de visa d'un titulaire). */
+    @Query("SELECT m FROM CashMovement m WHERE m.cashSession.cashRegister.registerCode = :registerCode AND m.status = :status ORDER BY m.createdAt ASC")
+    java.util.List<CashMovement> findByRegisterCodeAndStatus(@Param("registerCode") String registerCode,
+                                                             @Param("status") com.sni.bokaticowork.features.payment.enums.CashMovementStatus status);
 }

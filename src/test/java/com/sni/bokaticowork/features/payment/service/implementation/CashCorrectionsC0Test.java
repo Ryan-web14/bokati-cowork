@@ -67,6 +67,12 @@ class CashCorrectionsC0Test {
     @Mock private ApplicationEventPublisher eventPublisher;
     @Spy private CashActorResolver actors = new CashActorResolver();
 
+    @org.mockito.Mock
+    private com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard accessGuard;
+
+    @org.mockito.Mock
+    private CashRegisterAdminServiceImpl registerAdmin;
+
     @InjectMocks private CashRegisterServiceImpl service;
 
     /** Mouvements enregistres pendant le test, dans l'ordre, avec un identifiant pose a l'enregistrement. */
@@ -93,8 +99,12 @@ class CashCorrectionsC0Test {
         when(sessionRepository.findBlockingSessionByOpenedBy(anyString())).thenReturn(Optional.empty());
         when(sequenceGenerator.next(anyString())).thenReturn("CSS-1");
         when(sessionRepository.save(any(CashSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(accessGuard.assertCanOpen(any(), anyString(), any(), any(), any()))
+                .thenReturn(new com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.OpeningClearance(null, null, null));
 
         service.openSession(new OpenCashSessionRequest("CSR-1", "quelquun.dautre@elleaose.com", BigDecimal.ZERO));
+
+        verify(accessGuard).assertCanOpen(register, "caissier@elleaose.com", null, null, null);
 
         ArgumentCaptor<CashSession> saved = ArgumentCaptor.forClass(CashSession.class);
         verify(sessionRepository).save(saved.capture());

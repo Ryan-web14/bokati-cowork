@@ -196,6 +196,23 @@ class AdminApiAuthorizationManagerTest {
     }
 
     @Test
+    void shouldProtectTheCashRegisterReferential() {
+        // Lot C1 : la fiche et le cycle de vie relevent de la gestion des caisses, le personnel
+        // (affectations, remises) de la gestion des caissiers.
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1/suspend")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1/close")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1/devices/POS-7")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PUT", BASE + "/cash-registers/reference-lists/VARIANCE_REASON")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PUT", BASE + "/cash-registers/CSR-1/assignments")).isEqualTo("CASH_STAFF:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/CSR-1/emergency-assignments")).isEqualTo("CASH_STAFF:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/CSR-1/responsibility-transfers")).isEqualTo("CASH_STAFF:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/responsibility-transfers/PRC-1/sign")).isEqualTo("CASH_SESSION:OPEN");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/movements/CSM-1/sign")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/CSR-1/history")).isEqualTo("CASH:READ");
+    }
+
+    @Test
     void shouldNotLetACashierWithOnlyTheOldAdjustRightValidateAVariance() {
         List<String> cashier = List.of("ROLE_ADMIN", "CASH_READ", "CASH:READ", "CASH_ADJUST", "CASH:ADJUST",
                 "CASH_SESSION_OPEN", "CASH_SESSION:OPEN", "CASH_SESSION_CLOSE", "CASH_SESSION:CLOSE",

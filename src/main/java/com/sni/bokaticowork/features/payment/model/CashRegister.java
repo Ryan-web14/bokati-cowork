@@ -70,6 +70,70 @@ public class CashRegister {
     @Column(name = "last_anomaly_alert_sent_at")
     private Instant lastAnomalyAlertSentAt;
 
+    // ---- Referentiel (lot C1) ----
+
+    /** Deduit a l'enregistrement si absent : caisse automatique si tenue par le systeme, guichet sinon. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "register_type", nullable = false, length = 20)
+    private com.sni.bokaticowork.features.payment.enums.CashRegisterType registerType;
+
+    /** Statut de la caisse ; {@code active} en est le reflet ({@code ACTIVE} seulement). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    private com.sni.bokaticowork.features.payment.enums.CashRegisterStatus status;
+
+    @Column(name = "status_reason", length = 500)
+    private String statusReason;
+
+    @Column(name = "closed_at")
+    private Instant closedAt;
+
+    /** Caisse qui alimente celle-ci et recoit ses remises ; par defaut la caisse principale du site. */
+    @Column(name = "parent_register_code", length = 100)
+    private String parentRegisterCode;
+
+    /** Moyens acceptes, separes par des virgules (valeurs de {@code PaymentMethod}) ; vide = tous. */
+    @Column(name = "accepted_methods", length = 255)
+    private String acceptedMethods;
+
+    /** Devises acceptees, separees par des virgules ; XAF par defaut. */
+    @Column(name = "accepted_currencies", length = 100)
+    private String acceptedCurrencies;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cap_behavior", length = 10)
+    private com.sni.bokaticowork.features.payment.enums.CashCapBehavior capBehavior;
+
+    @Column(name = "max_out_per_operation", precision = 19, scale = 4)
+    private java.math.BigDecimal maxOutPerOperation;
+
+    @Column(name = "max_out_per_day", precision = 19, scale = 4)
+    private java.math.BigDecimal maxOutPerDay;
+
+    /** Fonds de caisse standard : ce qu'on garde a la cloture, le reste se remet. */
+    @Column(name = "standard_float", precision = 19, scale = 4)
+    private java.math.BigDecimal standardFloat;
+
+    /** Destinataires des alertes, separes par des virgules ; remplace {@code managerEmail}. */
+    @Column(name = "alert_recipients", length = 1000)
+    private String alertRecipients;
+
+    /** Compte de tresorerie (571x) ; vide tant que le socle comptable n'est pas livre. */
+    @Column(name = "treasury_account_number", length = 30)
+    private String treasuryAccountNumber;
+
+    @Column(name = "default_journal_code", length = 30)
+    private String defaultJournalCode;
+
+    @Column(name = "last_count_at")
+    private Instant lastCountAt;
+
+    @Column(name = "last_count_amount", precision = 19, scale = 4)
+    private java.math.BigDecimal lastCountAmount;
+
+    @Column(name = "updated_by", length = 180)
+    private String updatedBy;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -90,10 +154,24 @@ public class CashRegister {
         if (systemManaged == null) {
             systemManaged = false;
         }
+        if (registerType == null) {
+            registerType = Boolean.TRUE.equals(systemManaged)
+                    ? com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC : com.sni.bokaticowork.features.payment.enums.CashRegisterType.COUNTER;
+        }
+        if (status == null) {
+            status = Boolean.FALSE.equals(active) ? com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.SUSPENDED : com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE;
+        }
+        active = status == com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE;
+        if (acceptedCurrencies == null) {
+            acceptedCurrencies = "XAF";
+        }
     }
 
     @PreUpdate
     public void preUpdate() {
         updatedAt = Instant.now();
+        if (status != null) {
+            active = status == com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE;
+        }
     }
 }

@@ -62,7 +62,12 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 cashRegister.getMaxCashAmount(),
                 cashRegister.getManagerEmail(),
                 cashRegister.getCreatedAt(),
-                cashRegister.getUpdatedAt()
+                cashRegister.getUpdatedAt(),
+                cashRegister.getRegisterType(),
+                cashRegister.getStatus(),
+                cashRegister.getParentRegisterCode(),
+                cashRegister.getLastCountAt(),
+                cashRegister.getLastCountAmount()
         );
     }
 

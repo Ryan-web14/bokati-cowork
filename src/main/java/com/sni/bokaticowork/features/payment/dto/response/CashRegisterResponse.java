@@ -18,6 +18,19 @@ public record CashRegisterResponse(
         BigDecimal maxCashAmount,
         String managerEmail,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        com.sni.bokaticowork.features.payment.enums.CashRegisterType registerType,
+        com.sni.bokaticowork.features.payment.enums.CashRegisterStatus status,
+        String parentRegisterCode,
+        Instant lastCountAt,
+        BigDecimal lastCountAmount
 ) {
+    /** Forme historique, sans les champs du referentiel. */
+    public CashRegisterResponse(String registerCode, String name, String locationCode, String businessEntityCode,
+                                String deviceCode, Boolean active, Boolean cashControlEnabled, Boolean systemManaged,
+                                com.sni.bokaticowork.features.payment.enums.PaymentMethod restrictedToMethod, BigDecimal maxCashAmount,
+                                String managerEmail, Instant createdAt, Instant updatedAt) {
+        this(registerCode, name, locationCode, businessEntityCode, deviceCode, active, cashControlEnabled, systemManaged,
+                restrictedToMethod, maxCashAmount, managerEmail, createdAt, updatedAt, null, null, null, null, null);
+    }
 }

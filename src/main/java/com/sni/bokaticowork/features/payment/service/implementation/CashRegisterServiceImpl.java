@@ -72,6 +72,8 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final com.sni.bokaticowork.features.payment.repository.CashMovementAttachmentRepository attachmentRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
+    private final com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard accessGuard;
+    private final CashRegisterAdminServiceImpl registerAdmin;
 
     private static final String CASH_SESSIONS_PATH = "/payments/cash-registers/sessions/";
 
@@ -80,28 +82,64 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Override
     public CashRegisterResponse createRegister(CreateCashRegisterRequest request) {
+        com.sni.bokaticowork.features.payment.enums.CashRegisterType type = request.registerType() == null
+                ? com.sni.bokaticowork.features.payment.enums.CashRegisterType.COUNTER : request.registerType();
+        if (type == com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC) {
+            throw new BadRequestException("Une caisse automatique est creee par le systeme, pas a la main");
+        }
+        // Seuls le libelle et le type se choisissent : le reste est herite du type de caisse ou
+        // deduit du site, et reste modifiable ensuite sur la fiche (lot C1).
+        com.sni.bokaticowork.features.payment.service.support.CashRegisterTypeDefaults.Defaults defaults =
+                com.sni.bokaticowork.features.payment.service.support.CashRegisterTypeDefaults.of(type);
         String businessEntityCode = generateBusinessCode(request.businessEntityCode(), request.name());
         String deviceCode = generateDeviceCode(request.deviceCode(), request.name(), businessEntityCode);
         String registerCode = generateRegisterCode(request.name(), businessEntityCode, deviceCode);
+        String parent = trim(request.parentRegisterCode()) != null ? trim(request.parentRegisterCode())
+                : registerAdmin.defaultParent(type, request.locationCode());
+        CashRegister draft = CashRegister.builder().registerCode(registerCode).build();
+        registerAdmin.validateParent(draft, parent);
+        String acceptedMethods = CashRegisterAdminServiceImpl.joinMethods(request.acceptedMethods() != null
+                ? request.acceptedMethods() : defaults.acceptedMethods());
+        String acceptedCurrencies = CashRegisterAdminServiceImpl.joinCurrencies(request.acceptedCurrencies() != null
+                ? request.acceptedCurrencies() : defaults.acceptedCurrencies());
+        String recipients = CashRegisterAdminServiceImpl.joinEmails(request.alertRecipients());
+        if (recipients == null && StringUtils.hasText(request.managerEmail())) {
+            recipients = request.managerEmail().trim().toLowerCase(Locale.ROOT);
+        }
         CashRegister register = registerRepository.save(CashRegister.builder()
                 .registerCode(registerCode)
                 .name(request.name().trim())
+                .registerType(type)
+                .status(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE)
                 .locationCode(trim(request.locationCode()))
                 .businessEntityCode(businessEntityCode)
                 .deviceCode(deviceCode)
+                .parentRegisterCode(parent)
                 .active(true)
                 .cashControlEnabled(request.cashControlEnabled() == null || request.cashControlEnabled())
                 .maxCashAmount(request.maxCashAmount() == null ? null : money(request.maxCashAmount()))
                 .managerEmail(trim(request.managerEmail()))
+                .acceptedMethods(acceptedMethods)
+                .acceptedCurrencies(acceptedCurrencies == null ? CASH_CURRENCY : acceptedCurrencies)
+                .capBehavior(request.capBehavior() != null ? request.capBehavior() : defaults.capBehavior())
+                .maxOutPerOperation(positiveOrNull(request.maxOutPerOperation() != null ? request.maxOutPerOperation() : defaults.maxOutPerOperation()))
+                .maxOutPerDay(positiveOrNull(request.maxOutPerDay() != null ? request.maxOutPerDay() : defaults.maxOutPerDay()))
+                .standardFloat(positiveOrNull(request.standardFloat()))
+                .alertRecipients(recipients)
+                .updatedBy(actors.current())
                 .build());
+        registerAdmin.initializeRegister(register, request.schedules(), request.holderEmail(), request.backupEmails());
         return mapper.toCashRegisterResponse(register);
+    }
+
+    private BigDecimal positiveOrNull(BigDecimal amount) {
+        return amount == null || amount.signum() <= 0 ? null : money(amount);
     }
 
     @Override
     public CashRegisterResponse activateRegister(String registerCode) {
-        CashRegister register = register(registerCode);
-        register.setActive(true);
-        return mapper.toCashRegisterResponse(registerRepository.save(register));
+        registerAdmin.reactivate(registerCode);
+        return mapper.toCashRegisterResponse(register(registerCode));
     }
 
     @Override
@@ -113,7 +151,14 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         throw new BadRequestException("Cash register has an active session");
                     });
         }
+        // Forme historique de la suspension : sans motif de la liste, la desactivation est tracee comme telle.
+        if (register.getStatus() == com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.CLOSED) {
+            throw new BadRequestException("La caisse " + register.getRegisterCode() + " est fermee");
+        }
+        register.setStatus(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.SUSPENDED);
         register.setActive(false);
+        register.setStatusReason("Desactivation");
+        register.setUpdatedBy(actors.current());
         return mapper.toCashRegisterResponse(registerRepository.save(register));
     }
 
@@ -132,11 +177,12 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Override
     public CashSessionResponse openSession(OpenCashSessionRequest request) {
         CashRegister register = register(request.registerCode());
-        if (!Boolean.TRUE.equals(register.getActive())) {
-            throw new BadRequestException("Cash register is inactive");
-        }
         assertManualEntryAllowed(register);
         String openedBy = actors.resolve(request.openedBy());
+        // Caisse active, personne affectee, poste autorise, horaires (lot C1).
+        com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.OpeningClearance clearance =
+                accessGuard.assertCanOpen(register, openedBy, request.deviceCode(),
+                        request.outOfHoursReasonCode(), request.outOfHoursReasonText());
         sessionRepository.findBlockingSessionByCashRegisterId(register.getId())
                 .ifPresent(session -> {
                     throw new BadRequestException("Cash register already has an active session");
@@ -151,6 +197,8 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .status(CashSessionStatus.OPEN)
                 .openedBy(openedBy)
                 .openingAmount(money(request.openingAmount() == null ? BigDecimal.ZERO : request.openingAmount()))
+                .openedFromDevice(clearance.deviceCode())
+                .outOfHoursReason(clearance.outOfHoursReason())
                 .build());
         if (session.getOpeningAmount().signum() > 0) {
             saveMovement(session, CashMovementType.OPENING_FLOAT, session.getOpeningAmount(), CashDocumentType.CASH_VOUCHER,
@@ -198,6 +246,11 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         session.setVarianceAmount(variance);
         session.setVarianceReason(trim(request.varianceReason()));
         session.setClosingRequestedAt(now);
+        // Dernier comptage de la caisse : il fait foi pour la session suivante et pour sa fermeture (lot C1).
+        CashRegister countedRegister = session.getCashRegister();
+        countedRegister.setLastCountAt(now);
+        countedRegister.setLastCountAmount(counted);
+        registerRepository.save(countedRegister);
         if (variance.signum() == 0) {
             session.setStatus(CashSessionStatus.CLOSED);
             session.setClosedAt(now);
@@ -553,6 +606,14 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         register.setSystemManaged(true);
                         changed = true;
                     }
+                    if (register.getRegisterType() != com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC) {
+                        register.setRegisterType(com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC);
+                        changed = true;
+                    }
+                    if (register.getStatus() != com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE) {
+                        register.setStatus(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE);
+                        changed = true;
+                    }
                     // La restriction n'est posee que si elle manque. La recrire quand elle differe
                     // effacerait le garde au moment meme ou il aurait quelque chose a dire : une
                     // caisse restreinte au portefeuille que l'on retrouve sous le code du mobile
@@ -562,7 +623,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         register.setRestrictedToMethod(exclusiveMethod(method));
                         changed = true;
                     }
-                    return changed ? registerRepository.save(register) : register;
+                    if (changed) {
+                        registerRepository.save(register);
+                    }
+                    return register;
                 })
                 .orElseGet(() -> registerRepository.save(CashRegister.builder()
                         .registerCode(registerCode)
@@ -573,6 +637,8 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         .active(true)
                         .cashControlEnabled(true)
                         .systemManaged(true)
+                        .registerType(com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC)
+                        .status(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE)
                         .restrictedToMethod(exclusiveMethod(method))
                         .maxCashAmount(autoLimit())
                         .build()));

@@ -31,6 +31,14 @@ public class CashSession {
     @Column(name = "status", nullable = false, length = 40)
     private CashSessionStatus status;
 
+    /** Poste depuis lequel la session a ete ouverte (lot C1). */
+    @Column(name = "opened_from_device", length = 120)
+    private String openedFromDevice;
+
+    /** Motif d'une ouverture hors des horaires de la caisse (lot C1). */
+    @Column(name = "out_of_hours_reason", length = 500)
+    private String outOfHoursReason;
+
     @Column(name = "opened_by", nullable = false, length = 120)
     private String openedBy;
 

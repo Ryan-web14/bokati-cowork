@@ -81,6 +81,12 @@ class CashRegisterExclusivityTest {
     private com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors =
             new com.sni.bokaticowork.features.payment.service.support.CashActorResolver();
 
+    @org.mockito.Mock
+    private com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard accessGuard;
+
+    @org.mockito.Mock
+    private CashRegisterAdminServiceImpl registerAdmin;
+
     @InjectMocks
     private CashRegisterServiceImpl service;
 

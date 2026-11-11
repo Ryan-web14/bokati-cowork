@@ -106,22 +106,40 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
      */
     private String cashPermission(String path, String method) {
         if (HttpMethod.GET.matches(method)) return permission("CASH", "READ");
-        if (path.equals("/cash-registers")
-                || path.endsWith("/activate") || path.endsWith("/deactivate")) {
+        if (path.equals("/cash-registers") || path.startsWith("/cash-registers/reference-lists")) {
             return permission("CASH_REGISTER", "MANAGE");
         }
+        // Le titulaire sortant et l'entrant signent eux-memes le PV de remise : un droit de caissier suffit.
+        if (path.startsWith("/cash-registers/responsibility-transfers/") && path.endsWith("/sign")) {
+            return permission("CASH_SESSION", "OPEN");
+        }
         if (path.equals("/cash-registers/sessions")) return permission("CASH_SESSION", "OPEN");
-        if (path.contains("/sessions/") && (path.endsWith("/close") || path.endsWith("/closing-request"))) {
-            return permission("CASH_SESSION", "CLOSE");
+        if (path.startsWith("/cash-registers/sessions/")) {
+            if (path.endsWith("/close") || path.endsWith("/closing-request")) return permission("CASH_SESSION", "CLOSE");
+            if (path.endsWith("/approve-variance")) return permission("CASH_VARIANCE", "DECIDE");
+            return permission("CASH_MOVEMENT", "CREATE");
         }
-        if (path.endsWith("/approve-variance") || path.startsWith("/cash-registers/anomalies")) {
-            return permission("CASH_VARIANCE", "DECIDE");
-        }
+        if (path.startsWith("/cash-registers/anomalies")) return permission("CASH_VARIANCE", "DECIDE");
         if (path.startsWith("/cash-registers/requests/")
                 && (path.endsWith("/approve") || path.endsWith("/reject"))) {
             return permission("CASH_MOVEMENT", "APPROVE");
         }
         if (path.endsWith("/reverse")) return permission("CASH_MOVEMENT", "REVERSE");
+        if (path.startsWith("/cash-registers/movements/") || path.startsWith("/cash-registers/requests/")) {
+            return permission("CASH_MOVEMENT", "CREATE");
+        }
+        // Fiche d'une caisse : /cash-registers/{code} et ses actions de cycle de vie et de personnel.
+        String[] segments = path.substring("/cash-registers/".length()).split("/");
+        if (segments.length == 2 && (segments[1].equals("assignments") || segments[1].equals("emergency-assignments")
+                || segments[1].equals("responsibility-transfers"))) {
+            return permission("CASH_STAFF", "MANAGE");
+        }
+        if ((segments.length == 1 && HttpMethod.PATCH.matches(method))
+                || (segments.length == 2 && (segments[1].equals("activate") || segments[1].equals("deactivate")
+                || segments[1].equals("suspend") || segments[1].equals("reactivate") || segments[1].equals("close")))
+                || (segments.length == 3 && segments[1].equals("devices"))) {
+            return permission("CASH_REGISTER", "MANAGE");
+        }
         return permission("CASH_MOVEMENT", "CREATE");
     }
 

@@ -58,4 +58,12 @@ public interface CashRegisterRepository extends JpaRepository<CashRegister, Long
                               @Param("businessEntityCode") String businessEntityCode,
                               @Param("searchText") String searchText,
                               Pageable pageable);
+
+    // ---- Referentiel (lot C1) ----
+
+    java.util.List<CashRegister> findByLocationCodeOrderByNameAsc(String locationCode);
+
+    java.util.List<CashRegister> findByRegisterCodeIn(java.util.Collection<String> registerCodes);
+
+    java.util.List<CashRegister> findByParentRegisterCode(String parentRegisterCode);
 }

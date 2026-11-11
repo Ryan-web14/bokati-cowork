@@ -58,4 +58,9 @@ public interface CashRequestRepository extends JpaRepository<CashRequest, Long> 
                              @Param("requestedBy") String requestedBy,
                              @Param("searchText") String searchText,
                              Pageable pageable);
+
+    /** Demandes d'une caisse dans ce statut (demandes en attente laissees par un titulaire). */
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM CashRequest r WHERE r.cashSession.cashRegister.registerCode = :registerCode AND r.status = :status ORDER BY r.requestedAt ASC")
+    java.util.List<CashRequest> findByRegisterCodeAndStatus(@org.springframework.data.repository.query.Param("registerCode") String registerCode,
+                                                            @org.springframework.data.repository.query.Param("status") com.sni.bokaticowork.features.payment.enums.CashRequestStatus status);
 }
