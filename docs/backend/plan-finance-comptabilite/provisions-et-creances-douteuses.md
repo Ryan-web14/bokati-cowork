@@ -409,7 +409,7 @@ Liens avec l'existant : `billing_document` (statut `WRITTEN_OFF`, `OVERDUE`), ba
 
 ## 18. Lots et critères d'acceptation
 
-Le volet devient un lot à part, **F19**, détaché de F12 qui garde les produits constatés d'avance, les contrôles de clôture, les à-nouveaux et les états financiers.
+Le volet devient un lot à part, **F19**, détaché de F12 (« Clôture ») qui garde les contrôles de clôture, les à-nouveaux et les états financiers.
 
 | Lot | Contenu | Dépend de | Critère d'acceptation |
 | --- | --- | --- | --- |

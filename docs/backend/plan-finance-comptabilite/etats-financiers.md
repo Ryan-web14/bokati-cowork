@@ -182,7 +182,7 @@ Non retenu (décision 1) mais disponible par paramètre : bilan et compte de ré
 | Tableau des amortissements | Cumul début, dotation, reprises, cumul fin, valeur nette ; plan d'amortissement par bien |
 | État des provisions et dépréciations | Créances douteuses par client, risques ; dotations et reprises |
 | État des créances douteuses | Factures concernées, ancienneté, provision, perte ; tous les états des créances douteuses et des provisions dans [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#11-états) |
-| Produits constatés d'avance | Par facture d'abonnement ou de pass : montant, part reportée, période |
+| Produits constatés d'avance | Par facture d'abonnement ou de pass : montant, part reportée, période ; tous les états dans [produits-et-charges-constates-d-avance.md](produits-et-charges-constates-d-avance.md#10-états) |
 | Charges constatées d'avance, charges à payer, produits à recevoir | Par pièce |
 | Rapprochements bancaires | Par compte : solde banque, solde comptable, suspens des deux côtés |
 | Inventaire de caisse | PV de billetage au 31 décembre par caisse, comparé au solde comptable |
@@ -275,6 +275,7 @@ Les correspondances sont livrées pour le SYSCOHADA révisé et restent **modifi
 | F11 Fiscalité | Déclaration et rapprochement de TVA, CA déclaré |
 | F18 Immobilisations | Fichier des immobilisations, fiche et plan par bien, notes 3A à 3E, dotations prévisionnelles, coût par espace, inventaire physique, rapprochement fichier et comptabilité |
 | F19 Provisions et créances douteuses | Balance âgée avec risque, état des créances douteuses et litigieuses, variation des dépréciations et des provisions, registre des risques, passifs éventuels, pertes sur créances, réintégrations fiscales |
+| F20 Constatations d'avance | Détail du `477` et du `476`, échéancier du chiffre d'affaires à reconnaître, chiffre d'affaires facturé et reconnu, factures à établir et non parvenues, crédits de pass non consommés |
 | F12 Clôture | Table de correspondance, **bilan, compte de résultat, tableau des flux, notes chiffrées et rédactionnelles**, contrôles de cohérence, états d'inventaire, liste de clôture, éditions définitives |
 | **F15 Liasse et gestion** (nouveau) | DSF pré-remplie, passage au résultat fiscal, SIG mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, circularisation |
 

@@ -31,6 +31,7 @@ Conventions :
 13. [Classe 9 : analytique et hors bilan](#13-classe-9--analytique-et-hors-bilan)
 14. [Immobilisations et amortissements](#14-immobilisations-et-amortissements)
 15. [Provisions et créances douteuses](#15-provisions-et-créances-douteuses)
+16. [Produits et charges constatés d'avance, rattachement](#16-produits-et-charges-constatés-davance-rattachement)
 
 ---
 
@@ -137,8 +138,7 @@ Chiffre d'affaires étalé, mode retenu par défaut ([décision 5](README.md#19-
 | Événement | Écriture |
 | --- | --- |
 | Facture d'abonnement ou de pass couvrant une période future | Écriture de vente normale |
-| Fin de mois (worker comptable) | Pour la part de service non encore rendue : D `{PRODUIT}` ; C `477` |
-| Mois suivant | Reprise de la part rendue : D `477` ; C `{PRODUIT}` |
+| Fin de mois (worker comptable) | Ajustement du solde : besoin de `477` recalculé ligne par ligne d'après la période de service ; D `{PRODUIT}` ; C `477` pour la hausse, D `477` ; C `{PRODUIT}` pour la baisse (section 16) |
 | Résiliation avec avoir | Avoir sur la part non rendue, reprise du `477` correspondant |
 
 Sans étalement, seule l'écriture de vente s'applique. Les crédits d'heures ou de réservations consommés ne produisent pas d'écriture.
@@ -198,7 +198,7 @@ Analytique : site, activité et ressource de la réservation.
 | Provision pour créance douteuse | D `6594` ; C `4912` (ou `4911`), après reclassement en `4162` ; voir section 15 |
 | Reprise de provision | D `4912` ; C `7594` |
 | Produits constatés d'avance | voir section 6 |
-| Charges constatées d'avance (abonnement logiciel payé d'avance) | D `476` ; C `{NATURE}`, extourne à l'ouverture |
+| Charges constatées d'avance (loyer, assurance, licence payés d'avance) | Ajustement du solde du `476` chaque mois (section 16) ; en mode `YEAR_END`, D `476` ; C `{NATURE}` puis extourne à l'ouverture |
 | Dotation aux amortissements | D `6812` ou `6813` ; C `28x`, mensuelle par défaut, voir section 14 |
 | Liquidation de TVA | D `4431` ; C `4452`/`4454` ; solde vers `4441` (dette) ou `4449` (crédit) |
 | Solde des comptes d'attente | `471` vers comptes définitifs, à la main |
@@ -276,3 +276,17 @@ Classement, dépréciation, perte et provisions pour risques se suivent facture 
 | `RISK_PROVISION_RELEASED` : reprise utilisée ou non | `OD` | D `19x` ou `499` ; C `7911`, `7591`, `797` ou `86x` |
 | Reclassement long terme vers court terme | `OD` | D `19x` ; C `499` |
 | Dépréciation des stocks | `OD` ou `ST` | D `6593` ; C `39x` ; reprise D `39x` ; C `7593` |
+
+## 16. Produits et charges constatés d'avance, rattachement
+
+Le produit suit la période de service et la charge la période consommée ; chaque ligne a son échéancier, et le `477` comme le `476` égalent à tout moment la somme des restants. Détail, exemples et règles dans [produits-et-charges-constates-d-avance.md](produits-et-charges-constates-d-avance.md#9-écritures). Les comptes `4181` et `408` sont lettrés avec la facture réelle.
+
+| Événement | Journal | Écriture |
+| --- | --- | --- |
+| `REVENUE_DEFERRAL_ADJUSTED` : fin de période, produits | `OD` | Besoin en hausse : D `{PRODUIT}` ; C `477`. En baisse : D `477` ; C `{PRODUIT}`. Détail par ligne, ventilé par compte de produit et section |
+| `EXPENSE_DEFERRAL_ADJUSTED` : fin de période, charges | `OD` | Besoin en hausse : D `476` ; C `{CHARGE}`. En baisse : D `{CHARGE}` ; C `476` |
+| `ACCRUED_REVENUE_POSTED` : factures à établir | `OD` | D `4181` ; C `{PRODUIT}` HT |
+| `ACCRUED_EXPENSE_POSTED` : factures non parvenues | `OD` | D `{CHARGE}` ; D `4452` ou `4454` (si TVA connue) ; C `408` |
+| Extourne des produits à recevoir et des charges à payer | `EXT` ou `OD` | Contre-passation au premier jour de la période suivante |
+| Résiliation sans remboursement | `OD` | La part non rendue sort du `477` vers le compte de produit de résiliation (paramétrable) au calcul suivant |
+| Pass expiré non consommé | `OD` | La part non consommée sort du `477` vers le compte de produit du pass au calcul suivant |
