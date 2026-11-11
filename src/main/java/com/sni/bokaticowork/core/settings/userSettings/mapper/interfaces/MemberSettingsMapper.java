@@ -47,7 +47,7 @@ public interface MemberSettingsMapper {
         if (billing != null) {
             settings.setEntityType(billing.billingEntityType());
             settings.setBillingCompanyName(billing.billingCompanyName());
-            settings.setBillingEmail(billing.billingEmail());
+            settings.setBillingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(billing.billingEmail()));
             settings.setBillingAddress(billing.billlingAddress());
         }
 
