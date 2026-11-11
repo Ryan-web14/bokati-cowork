@@ -10,6 +10,7 @@ Conventions :
 - `{NATURE}` : compte de la nature d'opération choisie.
 - `{PRODUIT}` : compte de produit de la ligne de facture (par type de ligne ou de service du catalogue).
 - Clé d'idempotence : `eventType` + référence. Un même événement ne produit qu'une pièce.
+- **Partie double** : chaque pièce de ce catalogue est équilibrée (total des débits = total des crédits, en XAF). Quand une ligne du tableau ne montre qu'un côté, c'est qu'elle complète une pièce dont les autres lignes sont écrites ailleurs dans la même ligne ou dans l'événement indiqué ; la pièce entière reste équilibrée. Le moteur refuse toute pièce déséquilibrée ([README, section 4.6](README.md#46-partie-double--règles-et-garanties)).
 - Analytique : « héritée » signifie copiée des lignes de la facture concernée.
 
 ## Sommaire
@@ -34,7 +35,7 @@ Conventions :
 | Événement | Fait déclencheur | Journal | Écriture | Analytique |
 | --- | --- | --- | --- | --- |
 | `INVOICE_ISSUED` | Facture émise ou scellée (numéro définitif) | `VT` | D `{CLIENT}` TTC ; C `{PRODUIT}` HT par ligne ; C `4431` TVA par taux | Par ligne : site et activité de la ressource ou du service |
-| `INVOICE_DISCOUNT` | Remise de document, coupon, réduction de parrainage portés sur la facture | `VT` (même pièce) | D compte de réductions sur ventes HT ; la TVA est déjà calculée sur le net | Héritée |
+| `INVOICE_DISCOUNT` | Remise de document, coupon, réduction de parrainage portés sur la facture | `VT` (même pièce) | Dans la pièce de la facture : D compte de réductions sur ventes HT ; le `{PRODUIT}` reste crédité au brut HT, le `{CLIENT}` débité au net TTC, la TVA calculée sur le net. Équilibre : net TTC + réduction = brut HT + TVA | Héritée |
 | `CREDIT_NOTE_ISSUED` | Avoir (annulation partielle d'une réservation de lot, geste commercial, correction) | `VT` | Inverse de la facture au prorata : D `{PRODUIT}`, D `4431` ; C `{CLIENT}` | Héritée de la facture d'origine |
 | `INVOICE_CANCELLED` | Facture annulée avant tout paiement | `VT` | Contre-passation de la pièce `INVOICE_ISSUED` | Héritée |
 | `EARLY_PAYMENT_DISCOUNT` | Escompte de règlement appliqué au paiement | `VT` | D `673` ; D `4431` (TVA sur l'escompte, selon le régime) ; C `{CLIENT}` | Héritée |
@@ -88,8 +89,8 @@ Cas particuliers :
 
 | Cas | Écriture |
 | --- | --- |
-| Paiement sans facture (acompte, intention sur une source non facturée) | C `4191` au lieu de `{CLIENT}` ; à l'émission de la facture, D `4191` ; C `{CLIENT}` |
-| Trop-perçu crédité au portefeuille (`creditOverpayment`) | Dans la même pièce : C `4191` pour l'excédent |
+| Paiement sans facture (acompte, intention sur une source non facturée) | D `{TRESO}` ; C `4191` ; puis à l'émission de la facture, D `4191` ; C `{CLIENT}` |
+| Trop-perçu crédité au portefeuille (`creditOverpayment`) | Une seule pièce : D `{TRESO}` montant reçu ; C `{CLIENT}` montant de la facture ; C `4191` excédent |
 | Facture commune d'un lot multi-ressources | Une seule écriture par paiement ; le lettrage porte la facture commune |
 | Monnaie rendue | Rien de plus : seul le montant encaissé est écrit |
 | Frais opérateur PawaPay | D `631` ; C compte PawaPay (au taux contractuel, ou au relevé) |
@@ -157,7 +158,7 @@ Analytique : site, activité et ressource de la réservation.
 | Commande facturée | `INVOICE_ISSUED` avec ventes de marchandises `701` |
 | Sortie de stock à la livraison | Reprise de `stock_journal_entry` dans le journal `ST` : D `603` ; C `31` (comptes déjà portés par l'inventaire) |
 | Entrée en stock, ajustement d'inventaire | Reprise de `stock_journal_entry` (compte de contrepartie du motif) |
-| Vente pour compte d'un vendeur tiers (si la marketplace en a) | C compte du vendeur `401`/`467` pour sa part ; C `706` pour la commission |
+| Vente pour compte d'un vendeur tiers (si la marketplace en a) | D `{CLIENT}` TTC ; C compte du vendeur `401`/`467` pour sa part ; C `706` pour la commission HT ; C `4431` TVA sur la commission |
 
 ## 9. Demandes de fonds et avances
 
@@ -169,7 +170,7 @@ Analytique : site, activité et ressource de la réservation.
 | Ligne de justification validée | D `{NATURE}` HT ; D `4452`/`4454` TVA ; C `421` bénéficiaire |
 | Reliquat rendu | D `571x` ; C `421` |
 | Complément versé (dépenses supérieures à l'avance) | D `421` ; C `571x`, puis la ligne justifiée solde le `421` |
-| Avance non justifiée au-delà du délai, retenue sur salaire décidée | D `421` reste ouvert ; transmis à la paie (`PA`) |
+| Avance non justifiée au-delà du délai, retenue sur salaire décidée | Aucune écriture à la décision : le `421` reste ouvert. À l'import de paie (`PA`) : D `422` rémunérations dues ; C `421` bénéficiaire |
 | Note de frais remboursée | D `{NATURE}` ; D TVA ; C `571x` (ou `421` puis caisse) |
 | Réalimentation de petite caisse | D petite caisse `571z` ; C caisse principale `571x` ou banque |
 
@@ -179,7 +180,7 @@ Analytique : site, activité et ressource de la réservation.
 | --- | --- |
 | Bordereau de remise d'espèces | D `585` ; C `571x` (déjà via `SAFE_DEPOSIT`) |
 | Crédit en banque de la remise (relevé) | D `521x` ; C `585` |
-| Remise de chèques | Pas d'écriture au bordereau ; le chèque passe `DEPOSITED` |
+| Remise de chèques | Pas d'écriture au bordereau : le chèque reste au `513` jusqu'au relevé ; il passe `DEPOSITED` |
 | Chèque encaissé (relevé) | D `521x` ; C `513` |
 | Chèque rejeté | Contre-passation : D `{CLIENT}` ; C `513` ; frais de rejet D `631` ; C `521x` ; refacturation éventuelle |
 | Reversement PawaPay vers la banque | D `521x` ; C compte PawaPay |

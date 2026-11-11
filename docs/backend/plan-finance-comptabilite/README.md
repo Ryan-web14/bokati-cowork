@@ -47,15 +47,16 @@ Fichiers du dossier :
 ## 1. Principes directeurs
 
 1. **Une seule source de vérité par fait.** Le fait métier (paiement, mouvement de caisse, facture) reste dans son module. L'écriture comptable en est la **traduction**, produite par le module comptable à partir d'un événement. Elle n'est jamais saisie une deuxième fois à la main.
-2. **Rien ne s'efface.** Une écriture validée ne se modifie pas et ne se supprime pas : on la contre-passe. C'est déjà la règle des mouvements de caisse (contre-mouvement), des factures scellées (SEFC) et des écritures de portefeuille ; la comptabilité la reprend.
-3. **Toute écriture a une pièce.** Chaque écriture pointe son justificatif : facture, reçu, bon, procès-verbal, scan. Une écriture sans pièce reste en brouillard et ne se valide pas, sauf les écritures d'inventaire passées par un comptable.
-4. **Le paramétrage décide, pas le code.** Les comptes, journaux, schémas d'écriture, axes analytiques, seuils de validation et plafonds sont des données modifiables par un administrateur finance. Le code fournit des valeurs initiales conformes au SYSCOHADA.
-5. **Asynchrone, idempotent, rattrapable.** Les écritures automatiques passent par l'outbox existante (`core/outbox`). Un échec comptable ne bloque jamais un encaissement : l'événement reste en file, il est visible dans un écran « écritures en échec », et on peut le rejouer. Une même opération ne produit jamais deux écritures (clé d'idempotence = type d'événement + référence).
-6. **La caisse reste simple pour la caissière.** Elle choisit une nature d'opération en langage courant (« achat de fournitures », « avance pour déplacement »). Le logiciel en déduit le compte, le journal par défaut et l'analytique. Elle peut changer le journal, ou en créer un si elle en a le droit.
-7. **Séparation des tâches.** Celui qui demande n'approuve pas, celui qui approuve ne décaisse pas, celui qui décaisse ne valide pas l'écriture. Le logiciel l'impose et l'administrateur peut l'assouplir, avec trace.
-8. **Tout est paramétrable.** Comptes, journaux, schémas, natures, seuils, délais, formulaires, pièces, exports : rien n'est codé en dur (voir [section 20](#20-tout-est-paramétrable)).
-9. **Le moins de saisie possible.** Tout champ que le système peut connaître est déduit (contexte, objet lié, paramétrage), généré (numéros, dates, libellés, totaux, montant en lettres) ou choisi dans une liste préenregistrée ; on ne saisit que ce que personne d'autre ne sait. Règles et inventaire champ par champ pour la caisse dans [caisses-et-sessions.md](caisses-et-sessions.md#21-saisie-minimale--champs-déduits-générés-et-listes) ; la même règle vaut pour les demandes, les justifications et les écritures.
-10. **Conformité.** SYSCOHADA révisé (Acte uniforme OHADA relatif au droit comptable, 2017) : plan de comptes, système normal ou système minimal de trésorerie, états financiers annuels. Conservation des pièces et écritures 10 ans.
+2. **Partie double, sans exception.** Toute écriture, automatique, manuelle, importée, de clôture ou de contre-passation, porte au moins deux lignes, et le total des débits égale le total des crédits. Aucun module n'écrit en partie simple dans la comptabilité générale : la caisse, le portefeuille et le stock restent des registres de gestion, et leur traduction comptable est toujours en partie double. Règles et garanties en [section 4.6](#46-partie-double--règles-et-garanties).
+3. **Rien ne s'efface.** Une écriture validée ne se modifie pas et ne se supprime pas : on la contre-passe. C'est déjà la règle des mouvements de caisse (contre-mouvement), des factures scellées (SEFC) et des écritures de portefeuille ; la comptabilité la reprend.
+4. **Toute écriture a une pièce.** Chaque écriture pointe son justificatif : facture, reçu, bon, procès-verbal, scan. Une écriture sans pièce reste en brouillard et ne se valide pas, sauf les écritures d'inventaire passées par un comptable.
+5. **Le paramétrage décide, pas le code.** Les comptes, journaux, schémas d'écriture, axes analytiques, seuils de validation et plafonds sont des données modifiables par un administrateur finance. Le code fournit des valeurs initiales conformes au SYSCOHADA.
+6. **Asynchrone, idempotent, rattrapable.** Les écritures automatiques passent par l'outbox existante (`core/outbox`). Un échec comptable ne bloque jamais un encaissement : l'événement reste en file, il est visible dans un écran « écritures en échec », et on peut le rejouer. Une même opération ne produit jamais deux écritures (clé d'idempotence = type d'événement + référence).
+7. **La caisse reste simple pour la caissière.** Elle choisit une nature d'opération en langage courant (« achat de fournitures », « avance pour déplacement »). Le logiciel en déduit le compte, le journal par défaut et l'analytique. Elle peut changer le journal, ou en créer un si elle en a le droit.
+8. **Séparation des tâches.** Celui qui demande n'approuve pas, celui qui approuve ne décaisse pas, celui qui décaisse ne valide pas l'écriture. Le logiciel l'impose et l'administrateur peut l'assouplir, avec trace.
+9. **Tout est paramétrable.** Comptes, journaux, schémas, natures, seuils, délais, formulaires, pièces, exports : rien n'est codé en dur (voir [section 20](#20-tout-est-paramétrable)).
+10. **Le moins de saisie possible.** Tout champ que le système peut connaître est déduit (contexte, objet lié, paramétrage), généré (numéros, dates, libellés, totaux, montant en lettres) ou choisi dans une liste préenregistrée ; on ne saisit que ce que personne d'autre ne sait. Règles et inventaire champ par champ pour la caisse dans [caisses-et-sessions.md](caisses-et-sessions.md#21-saisie-minimale--champs-déduits-générés-et-listes) ; la même règle vaut pour les demandes, les justifications et les écritures.
+11. **Conformité.** SYSCOHADA révisé (Acte uniforme OHADA relatif au droit comptable, 2017) : plan de comptes, système normal ou système minimal de trésorerie, états financiers annuels. Conservation des pièces et écritures 10 ans.
 
 ---
 
@@ -136,7 +137,7 @@ PostingEngine
    5. période ouverte ? sinon première période ouverte suivante, avec mention
    6. pièce en BROUILLARD ou VALIDÉE selon le paramétrage du journal
    ▼
-accounting_entry + accounting_entry_line (+ ventilations analytiques)
+acc_entry + acc_entry_line (+ ventilations analytiques)
 ```
 
 Un échec (compte manquant, période close, schéma absent) met l'événement en `FAILED` avec un motif lisible. L'écran « Écritures en attente » permet de corriger le paramétrage puis de rejouer.
@@ -154,6 +155,38 @@ Paramètres `accounting.enabled`, `accounting.analytic.enabled`, `accounting.sta
 - Chargé à l'installation avec le plan SYSCOHADA révisé : classes 1 à 9, comptes principaux et divisionnaires utiles à l'activité. L'administrateur finance l'étend, mais ne supprime pas un compte mouvementé : il le désactive.
 - Champs : numéro, intitulé, classe, nature (bilan / gestion / hors activités ordinaires / analytique), sens normal, **lettrable** oui/non, **compte de tiers** (collectif client, fournisseur, personnel), **compte de trésorerie** (caisse, banque, mobile money), **analytique obligatoire** oui/non (par défaut oui pour les classes 6 et 7), taxe associée, actif oui/non.
 - **Comptes auxiliaires de tiers** : un compte client par membre, client ou organisation (`411` + code), créé à la première écriture ; un compte fournisseur par fournisseur (`401` + code) ; un compte personnel par employé pour les avances (`421` + code).
+
+#### Créer un compte comptable
+
+Les utilisateurs habilités créent de nouveaux comptes à l'écran, sans intervention technique.
+
+1. **Point de départ** : on choisit le **compte parent** dans l'arbre du plan (recherche par numéro ou par mots). Le nouveau compte est un divisionnaire de ce parent.
+2. **Numéro proposé** : le prochain numéro libre sous le parent, à la longueur paramétrée (par exemple `6056` puis `60561`, `60562`...). Il reste modifiable, dans la plage du parent.
+3. **Propriétés héritées du parent**, modifiables avant le premier mouvement : classe, nature, sens normal, lettrable, compte de tiers, compte de trésorerie, analytique obligatoire, taxe associée, poste des états financiers (bilan, compte de résultat, flux, liasse), correspondance dans chaque format d'export (Sage 100, Sage X3, Odoo). L'utilisateur ne saisit que l'**intitulé**.
+4. **Contrôles** :
+   - le numéro est unique et commence par le chiffre de sa classe ;
+   - il se trouve sous un compte existant ;
+   - il ne heurte pas les plages réservées aux comptes auxiliaires ;
+   - un compte de trésorerie a un journal (proposé : création automatique du journal) ;
+   - un compte sans poste d'état financier ne peut pas être créé, ce qui garantit des états complets.
+5. **Nouveau compte principal**, hors des comptes déjà chargés (par exemple un compte à 3 chiffres) : permis seulement s'il figure dans la nomenclature SYSCOHADA de référence livrée avec le logiciel ; sinon, réservé à l'administrateur finance, avec un motif, et signalé à l'expert-comptable.
+6. **Mode de création** (paramètre) :
+   - **immédiat** : le compte est utilisable tout de suite, l'administrateur finance est prévenu ;
+   - **après validation** : le compte est créé inactif jusqu'à la validation.
+7. **Création en contexte** : un compte peut aussi naître d'un autre écran, avec les mêmes règles :
+   - création d'une caisse, d'un compte bancaire ou mobile money (divisionnaire de trésorerie) ;
+   - création d'un journal par une caissière principale (décision 10) ;
+   - création d'une nature d'opération ou d'un poste de dépense ;
+   - création d'un fournisseur, d'un client ou d'un employé (compte auxiliaire, automatique).
+8. **Création en masse** : import CSV ou Excel (numéro, intitulé, parent), contrôlé ligne par ligne avec les mêmes règles ; rapport des lignes refusées.
+
+**Après la création** :
+
+- l'intitulé se modifie à tout moment ;
+- le numéro, la classe, la nature, le caractère lettrable et le caractère de tiers ne changent plus dès qu'une écriture validée porte sur le compte ;
+- un compte mouvementé ne se supprime pas, il se **désactive**. Il garde son historique et ne reçoit plus d'écriture nouvelle ;
+- deux comptes en doublon se **fusionnent** par une écriture de reclassement en partie double (solde de l'un viré à l'autre, puis désactivation), jamais en réécrivant les lignes passées ;
+- chaque création ou modification est historisée : qui, quand, ancienne et nouvelle valeur.
 
 Comptes de départ proposés pour un espace de coworking (valeurs par défaut retenues, ajustables par l'expert-comptable, voir [décision 2](#19-décisions-prises)) :
 
@@ -211,8 +244,8 @@ Règles d'un journal : type, compte de trésorerie de contrepartie (journaux de 
 
 ### 4.4 Pièces et écritures
 
-- **Pièce** (`accounting_entry`) : numéro (`journal-exercice-séquence`), journal, date comptable, date de la pièce justificative, libellé, origine (`MANUAL`, `CASH`, `PLATFORM`, `IMPORT`, `CLOSING`), référence métier (`sourceType` + `sourceCode`), justificatifs (lien vers la GED existante), statut `DRAFT` puis `VALIDATED` puis éventuellement `REVERSED`, auteur, valideur, horodatages, pièce de contre-passation liée.
-- **Ligne** (`accounting_entry_line`) : compte, compte auxiliaire de tiers, libellé, débit, crédit, devise et montant en devise, taux, code de taxe, base taxable, échéance, lettrage, ventilations analytiques.
+- **Pièce** (`acc_entry`) : numéro (`journal-exercice-séquence`), journal, date comptable, date de la pièce justificative, libellé, origine (`MANUAL`, `CASH`, `PLATFORM`, `IMPORT`, `CLOSING`), référence métier (`sourceType` + `sourceCode`), justificatifs (lien vers la GED existante), statut `DRAFT` puis `VALIDATED` puis éventuellement `REVERSED`, auteur, valideur, horodatages, pièce de contre-passation liée.
+- **Ligne** (`acc_entry_line`) : compte, compte auxiliaire de tiers, libellé, débit, crédit, devise et montant en devise, taux, code de taxe, base taxable, échéance, lettrage, ventilations analytiques.
 - **Contrôles à la validation** : pièce équilibrée ; période ouverte ; comptes actifs et autorisés dans le journal ; analytique présente là où elle est obligatoire et ventilée à 100 % ; justificatif présent sauf dispense.
 - **Validation** : rend la pièce immuable et lui attribue son numéro définitif. Le brouillard peut porter un numéro provisoire.
 - **Contre-passation** : pièce inverse datée du jour, liée à l'originale, motif obligatoire.
@@ -235,6 +268,49 @@ analytique:  héritée de la facture imputée, sinon section de la caisse
 
 - Les variables (`{compte du client}`, `{compte de la caisse}`, `{compte de la nature de dépense}`) sont résolues par des **résolveurs** dans le code ; les schémas eux-mêmes sont en base, éditables, versionnés (date d'effet) et testables sur un événement passé (« aperçu de l'écriture »).
 - Le catalogue complet des événements et de leurs écritures est dans [catalogue-ecritures.md](catalogue-ecritures.md).
+
+### 4.6 Partie double : règles et garanties
+
+La comptabilité générale est tenue **en partie double** : chaque opération est enregistrée au débit d'au moins un compte et au crédit d'au moins un autre, pour des montants totaux égaux.
+
+**Règles d'une pièce**
+
+1. Au moins deux lignes. Total des débits égal au total des crédits, **à l'unité près, dans la devise de tenue (XAF)**.
+2. Chaque ligne porte soit un débit, soit un crédit, jamais les deux, jamais un montant négatif. Une ligne à zéro est refusée, sauf pour une écriture d'information explicitement paramétrée.
+3. Opération en devise : l'équilibre se vérifie en XAF. Le montant en devise et le taux sont portés sur la ligne. Un écart de conversion fait l'objet d'une ligne explicite (`676` / `776`), jamais d'un ajustement silencieux.
+4. Arrondis (TVA par taux, prorata, ventilation) : la différence d'arrondi est portée sur une ligne explicite, sur un compte paramétré, sous un plafond paramétré (1 XAF par défaut). Au-delà, la pièce est refusée.
+5. Contre-passation : la pièce inverse reprend chaque ligne en échangeant débit et crédit. Elle est donc équilibrée par construction.
+
+**Garanties dans le logiciel**
+
+1. **Saisie manuelle** : la pièce peut être déséquilibrée tant qu'elle est en brouillard. L'écran affiche en permanence le total des débits, celui des crédits et la différence, et propose la ligne d'équilibre, que l'utilisateur voit et accepte. **Une pièce déséquilibrée ne se valide pas.**
+2. **Écritures automatiques** : le moteur calcule toutes les lignes du schéma puis vérifie l'équilibre **avant** d'enregistrer. Une pièce déséquilibrée n'est jamais enregistrée, et elle n'est jamais équilibrée d'office sur un compte d'attente : l'événement passe en `FAILED` avec le motif « schéma déséquilibré » et la différence. Il est corrigé dans le paramétrage puis rejoué.
+3. **Schémas d'écriture** : un schéma ne s'active qu'après une simulation réussie sur des événements de test et sur des événements réels récents, tous équilibrés. Un schéma modifié repasse la simulation.
+4. **Base de données** :
+   - contraintes sur les lignes : débit et crédit positifs ou nuls, un seul des deux non nul ;
+   - contrôle d'équilibre de la pièce au passage en `VALIDATED`, par un déclencheur, en plus du contrôle applicatif ;
+   - les lignes d'une pièce validée ne peuvent plus être modifiées ni supprimées.
+5. **Imports** (CSV, journal de paie, relevés, reprise) : une pièce importée déséquilibrée est rejetée avec sa différence ; le reste du fichier est traité.
+6. **Exports** : seules des pièces validées, donc équilibrées, sont exportées vers Sage 100, Sage X3, Odoo ou en CSV.
+
+**Contrôles d'équilibre à tous les niveaux**
+
+| Niveau | Contrôle | Quand |
+| --- | --- | --- |
+| Pièce | Débits = crédits | À chaque validation |
+| Journal, période | Total des débits = total des crédits | Contrôle quotidien, et à la clôture de période |
+| Balance générale | Total des débits = total des crédits ; total des soldes débiteurs = total des soldes créditeurs | Contrôle quotidien ; bloquant à la clôture |
+| Comptes collectifs | Solde du collectif (`411`, `401`, `421`, `4191`) = somme des comptes auxiliaires | Contrôle quotidien |
+| Registres de gestion | Solde du `571x` de chaque caisse = solde de la caisse ; `4191` = somme des portefeuilles ; comptes de stock = stock valorisé ; `411` du client = solde de son relevé de compte | Contrôle quotidien ; écart signalé avec ses pièces |
+| Exercice | Bilan équilibré (actif = passif) ; résultat du bilan = résultat du compte de résultat ; à-nouveaux = soldes de clôture | À la clôture d'exercice |
+
+Un contrôle en échec est une alerte bloquante pour la clôture. Elle est visible sur le tableau de bord comptable, avec les pièces en cause.
+
+**Ce qui n'est pas en partie double, et pourquoi**
+
+- **Comptabilité analytique** : c'est une ventilation des lignes de charges et de produits, pas une seconde comptabilité. Son équilibre se contrôle par rapprochement : la somme des ventilations d'une ligne vaut 100 % de la ligne ; le total analytique d'une période égale le total des comptes de classes 6 et 7 concernés. Si l'expert-comptable le demande, un mode « analytique en classe 9 » tenu en partie double peut être activé (paramètre), avec des comptes réfléchis à arrêter avec lui.
+- **Budget et engagements budgétaires** : ce sont des montants de gestion, hors comptabilité générale ; ils ne produisent pas d'écriture tant que la dépense n'est pas réalisée.
+- **Engagements hors bilan** : tenus dans un registre ([financement-engagements-paie.md](financement-engagements-paie.md#3-registre-des-engagements-hors-bilan)) ; en option, chaque engagement est aussi écrit en partie double sur des comptes de classe 9 et leur contrepartie, numéros à valider avec l'expert-comptable.
 
 ---
 
@@ -507,7 +583,10 @@ Tables nouvelles (préfixe `acc_` pour la comptabilité, `cash_` pour la trésor
 
 | Table | Champs principaux |
 | --- | --- |
-| `acc_account` | number, label, class_code, nature, normal_side, reconcilable, third_party_type, treasury, analytic_required, tax_code, active |
+| `acc_account` | number, label, parent_number, class_code, nature, normal_side, reconcilable, third_party_type, treasury, analytic_required, tax_code, statement_line_code, active, status (`PENDING_APPROVAL`, `ACTIVE`, `INACTIVE`, `MERGED`), merged_into, created_by, approved_by |
+| `acc_account_history` | account_number, field, old_value, new_value, changed_by, changed_at |
+| `acc_account_export_mapping` | account_number, export_format, target_account |
+| `acc_reference_chart` | number, label, class_code : nomenclature SYSCOHADA de référence, en lecture |
 | `acc_third_party_account` | account_number, party_type (MEMBER, CUSTOMER, BUSINESS, SUPPLIER, EMPLOYEE), party_code, label |
 | `acc_fiscal_year` | code, start_date, end_date, status, closed_at, closed_by |
 | `acc_period` | fiscal_year_id, code (AAAA-MM), start_date, end_date, status |
@@ -561,6 +640,8 @@ Colonnes ajoutées à `cash_movement` : voir 7.1. À `payment_transaction` : `ac
 | `ACCOUNTING_ENTRY:CREATE`, `:VALIDATE`, `:REVERSE` | Comptable ; validation par un second comptable au-delà d'un seuil |
 | `ACCOUNTING_PERIOD:LOCK`, `:CLOSE` | Responsable financier |
 | `ACCOUNTING_SETTINGS:MANAGE` | Administrateur finance (plan, schémas, natures, axes) |
+| `ACCOUNTING_ACCOUNT:CREATE` | Comptable, administrateur finance : créer un compte divisionnaire ; caissière principale : seulement un divisionnaire de trésorerie en créant un journal |
+| `ACCOUNTING_ACCOUNT:MANAGE` | Administrateur finance : nouveau compte principal, validation des comptes créés, désactivation, fusion |
 | `ACCOUNTING_REPORT:READ` | Direction, comptable, expert-comptable (lecture seule) |
 | `BANK_RECONCILIATION:MANAGE` | Comptable |
 
@@ -587,8 +668,8 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 
 | Lot | Contenu | Dépend de | Critère d'acceptation |
 | --- | --- | --- | --- |
-| **F1. Socle comptable** | Plan de comptes SYSCOHADA chargé, exercices et périodes, journaux, pièces et lignes, saisie manuelle, validation, contre-passation, brouillard, journal, grand livre, balance | | Une écriture manuelle se saisit, se valide, apparaît dans la balance équilibrée ; une période close refuse toute écriture |
-| **F2. Moteur d'imputation** | Événements comptables par l'outbox, registre d'idempotence, schémas en base, résolveurs, écran des écritures en échec, aperçu d'écriture | F1 | Rejouer un événement ne double pas l'écriture ; un compte manquant met l'événement en échec sans bloquer le paiement |
+| **F1. Socle comptable** | Plan de comptes SYSCOHADA chargé, exercices et périodes, journaux, pièces et lignes, saisie manuelle, validation, contre-passation, brouillard, journal, grand livre, balance | | Une écriture manuelle se saisit, se valide, apparaît dans la balance équilibrée ; une pièce déséquilibrée ne se valide pas, même en contournant l'écran (contrôle en base) ; un compte créé sous un parent hérite de ses propriétés et de son poste d'état financier ; une période close refuse toute écriture |
+| **F2. Moteur d'imputation** | Événements comptables par l'outbox, registre d'idempotence, schémas en base, résolveurs, écran des écritures en échec, aperçu d'écriture | F1 | Rejouer un événement ne double pas l'écriture ; un compte manquant met l'événement en échec sans bloquer le paiement ; un schéma déséquilibré ne s'active pas, et un événement qui produirait une pièce déséquilibrée passe en échec sans rien enregistrer |
 | **F3. Trésorerie et caisse comptable** | Comptes de trésorerie, journal par caisse, natures d'opération, enrichissement des mouvements, choix et création de journal par la caissière, écritures de tous les mouvements, écarts de clôture | F2 | Chaque mouvement de caisse produit sa pièce dans le journal choisi ; le solde comptable d'une caisse égale son solde opérationnel |
 | **F4. Encaissements et ventes** | Écritures des factures, avoirs, encaissements par moyen, remboursements, portefeuille, comptes clients auxiliaires, lettrage automatique | F2 | Une facture payée en espèces laisse le compte client soldé et lettré ; `4191` égale la somme des soldes de portefeuille |
 | **F5. Demandes et état de besoin** | État de besoin, nouvelle demande de fonds multi-lignes, champs automatiques, circuit multi-niveaux, décaissement distinct, notifications, nouvelles pièces | F3 | Un employé sans session crée une demande ; elle traverse deux niveaux de validation ; la caissière la décaisse avec signature ; la pièce sort avec son imputation |
@@ -646,7 +727,8 @@ Règle de conception de tous les lots : **aucune valeur métier n'est codée en 
 | Domaine | Ce qui se paramètre |
 | --- | --- |
 | Général | Activation de la comptabilité, de l'analytique, du budget ; régime (normal, SMT) ; date de bascule et de reprise ; devise de tenue ; multi-société |
-| Plan de comptes | Comptes, intitulés, nature, lettrable, tiers, trésorerie, analytique obligatoire, taxe associée, actif ; règles de création des comptes auxiliaires (préfixe, longueur) |
+| Plan de comptes | Comptes, intitulés, nature, lettrable, tiers, trésorerie, analytique obligatoire, taxe associée, actif ; création de comptes (qui, mode immédiat ou après validation, longueur des numéros, plages réservées) ; règles de création des comptes auxiliaires (préfixe, longueur) |
+| Partie double | Compte et plafond des écarts d'arrondi, comptes d'écart de conversion, analytique en classe 9 (oui/non), engagements hors bilan en classe 9 (oui/non) ; l'équilibre lui-même n'est pas paramétrable |
 | Exercices et périodes | Début et durée d'exercice, découpage, verrouillage automatique après N jours, synchronisation avec la clôture de facturation |
 | Journaux | Code, type, compte de trésorerie, numérotation, validation automatique ou brouillard, caisses autorisées, comptes autorisés, qui peut créer (et mode immédiat ou après validation) |
 | Schémas d'écriture | Pour chaque événement : conditions, journal, lignes, comptes, analytique ; versionnés avec date d'effet ; activation par famille d'événements |
