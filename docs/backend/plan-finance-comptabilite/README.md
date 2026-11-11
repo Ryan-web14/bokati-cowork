@@ -8,7 +8,7 @@ Fichiers du dossier :
 
 | Fichier | Contenu |
 | --- | --- |
-| [README.md](README.md) | Ce plan : existant, cible, modules, données, droits, découpage en lots, questions à trancher. |
+| [README.md](README.md) | Ce plan : existant, cible, modules, données, droits, découpage en lots, décisions prises, paramétrage. |
 | [catalogue-ecritures.md](catalogue-ecritures.md) | Pour chaque événement de la plateforme, l'écriture produite (journal, comptes au débit et au crédit, analytique). |
 | [pieces-comptables.md](pieces-comptables.md) | Les pièces émises (bon d'entrée, bon de sortie, bon de décaissement, état de besoin, fiche de justification, procès-verbaux...) : champs, champs automatiques, signatures, numérotation. |
 | [demandes-et-justification.md](demandes-et-justification.md) | Le nouveau circuit des demandes de fonds (état de besoin, demande, validation, décaissement) et la justification des dépenses une par une. |
@@ -35,7 +35,8 @@ Fichiers du dossier :
 16. [Droits et séparation des tâches](#16-droits-et-séparation-des-tâches)
 17. [Bascule et reprise de l'historique](#17-bascule-et-reprise-de-lhistorique)
 18. [Découpage en lots](#18-découpage-en-lots)
-19. [Questions à trancher](#19-questions-à-trancher)
+19. [Décisions prises](#19-décisions-prises)
+20. [Tout est paramétrable](#20-tout-est-paramétrable)
 
 ---
 
@@ -48,7 +49,8 @@ Fichiers du dossier :
 5. **Asynchrone, idempotent, rattrapable.** Les écritures automatiques passent par l'outbox existante (`core/outbox`). Un échec comptable ne bloque jamais un encaissement : l'événement reste en file, il est visible dans un écran « écritures en échec », et on peut le rejouer. Une même opération ne produit jamais deux écritures (clé d'idempotence = type d'événement + référence).
 6. **La caisse reste simple pour la caissière.** Elle choisit une nature d'opération en langage courant (« achat de fournitures », « avance pour déplacement »). Le logiciel en déduit le compte, le journal par défaut et l'analytique. Elle peut changer le journal, ou en créer un si elle en a le droit.
 7. **Séparation des tâches.** Celui qui demande n'approuve pas, celui qui approuve ne décaisse pas, celui qui décaisse ne valide pas l'écriture. Le logiciel l'impose et l'administrateur peut l'assouplir, avec trace.
-8. **Conformité.** SYSCOHADA révisé (Acte uniforme OHADA relatif au droit comptable, 2017) : plan de comptes, système normal ou système minimal de trésorerie, états financiers annuels. Conservation des pièces et écritures 10 ans.
+8. **Tout est paramétrable.** Comptes, journaux, schémas, natures, seuils, délais, formulaires, pièces, exports : rien n'est codé en dur (voir [section 20](#20-tout-est-paramétrable)).
+9. **Conformité.** SYSCOHADA révisé (Acte uniforme OHADA relatif au droit comptable, 2017) : plan de comptes, système normal ou système minimal de trésorerie, états financiers annuels. Conservation des pièces et écritures 10 ans.
 
 ---
 
@@ -147,7 +149,7 @@ Paramètres `accounting.enabled`, `accounting.analytic.enabled`, `accounting.sta
 - Champs : numéro, intitulé, classe, nature (bilan / gestion / hors activités ordinaires / analytique), sens normal, **lettrable** oui/non, **compte de tiers** (collectif client, fournisseur, personnel), **compte de trésorerie** (caisse, banque, mobile money), **analytique obligatoire** oui/non (par défaut oui pour les classes 6 et 7), taxe associée, actif oui/non.
 - **Comptes auxiliaires de tiers** : un compte client par membre, client ou organisation (`411` + code), créé à la première écriture ; un compte fournisseur par fournisseur (`401` + code) ; un compte personnel par employé pour les avances (`421` + code).
 
-Comptes de départ proposés pour un espace de coworking (à valider avec l'expert-comptable, voir [section 19](#19-questions-à-trancher)) :
+Comptes de départ proposés pour un espace de coworking (valeurs par défaut retenues, ajustables par l'expert-comptable, voir [décision 2](#19-décisions-prises)) :
 
 | Usage | Compte SYSCOHADA proposé |
 | --- | --- |
@@ -433,7 +435,7 @@ Toute transaction de la plateforme produit une écriture. Le catalogue complet e
 
 **Contrôles automatiques** quotidiens : balance équilibrée ; comptes d'attente non soldés depuis plus de N jours ; écarts entre le solde comptable d'une caisse et son solde opérationnel ; événements comptables en échec ; avances en retard de justification ; chèques reçus non remis ; écarts entre le grand livre du portefeuille et `4191`.
 
-**Exports** : CSV et Excel de tous les états ; fichier des écritures au format d'import d'un logiciel comptable du marché (format à choisir) ; archive annuelle (écritures, pièces, états) pour la conservation de 10 ans.
+**Exports** : CSV et Excel de tous les états ; fichier des écritures aux formats d'import **Sage 100, Sage X3 et Odoo**, plus un CSV générique, avec table de correspondance des comptes et journaux par format ; archive annuelle (écritures, pièces, états) pour la conservation de 10 ans.
 
 ---
 
@@ -466,7 +468,7 @@ Toute transaction de la plateforme produit une écriture. Le catalogue complet e
 
 ### 14.3 À prendre en compte
 
-1. **Multi-organisation** : `business_entity_code` existe sur les caisses ; décider si chaque entité a sa propre comptabilité (plan, journaux, exercices) ou si une seule société tient tout (voir 19).
+1. **Multi-organisation** : une seule comptabilité au départ, mais toutes les tables comptables portent un `company_code` pour ouvrir plus tard une comptabilité par organisation sans migration lourde (décision 3).
 2. **Multi-devises** : espèces en XAF seulement aujourd'hui ; prévoir devise et taux sur les lignes, et les écarts de change (`676` / `776`).
 3. **Hors ligne** : une caisse qui perd le réseau ; à défaut d'un mode déconnecté, une procédure papier avec numérotation de secours et saisie différée marquée.
 4. **Performance** : index sur (compte, date) et (journal, période) ; soldes mensuels pré-calculés par compte, mis à jour à la validation, pour la balance et le grand livre.
@@ -546,9 +548,9 @@ Règles imposées : le demandeur n'approuve pas sa demande ; l'approbateur ne d�
 
 ## 17. Bascule et reprise de l'historique
 
-1. **Date de bascule** choisie (début d'exercice recommandé).
+1. **Date de bascule** : au plus tôt, dès le socle prêt (décision 6).
 2. **À-nouveaux** : balance d'ouverture fournie par l'expert-comptable, importée dans `AN` ; soldes clients par facture ouverte (pour le lettrage) ; soldes des portefeuilles vers `4191` ; soldes des caisses au dernier comptage.
-3. **Reprise facultative** des événements de la plateforme entre le début d'exercice et la bascule : le moteur peut rejouer les faits passés (transactions, factures, mouvements) dans un mode « reprise » qui produit des écritures en brouillard, à valider en bloc après contrôle.
+3. **Reprise depuis le 1er janvier 2026** (décision 6) des événements de la plateforme entre le début d'exercice et la bascule : le moteur peut rejouer les faits passés (transactions, factures, mouvements) dans un mode « reprise » qui produit des écritures en brouillard, à valider en bloc après contrôle.
 4. **Anciennes demandes** (`cash_request`) : consultables en lecture ; celles en `PENDING` à la bascule sont migrées en nouvelles demandes `SOUMISE`.
 5. **Natures d'opération** : correspondance proposée depuis les `flowCategory` existantes (requête des valeurs distinctes), validée à la main.
 6. **Période de double tenue** d'un mois : export vers l'outil actuel de l'expert-comptable et comparaison des balances.
@@ -574,23 +576,55 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 | **F11. Fiscalité** | Comptes de taxe, exigibilité, déclaration de TVA, liquidation | F4 | L'état de TVA d'un mois égale la somme des TVA des factures scellées du mois |
 | **F12. Abonnements et clôture** | Produits constatés d'avance, créances douteuses, contrôles de clôture, à-nouveaux, états financiers SYSCOHADA | F4, F11 | La clôture d'un exercice de test produit bilan, compte de résultat et à-nouveaux équilibrés |
 | **F13. Achats, budget, immobilisations** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, budget et engagements, immobilisations et amortissements | F5, F9 | Une demande au-delà du budget restant est signalée ; une immobilisation génère son plan d'amortissement |
-| **F14. Exports et bascule** | Exports pour l'expert-comptable, archive annuelle, outils de reprise et d'à-nouveaux | F1 à F4 | La balance exportée se réimporte sans écart dans l'outil de l'expert-comptable |
+| **F14. Exports et bascule** | Exports pour l'expert-comptable, archive annuelle, outils de reprise et d'à-nouveaux | F1 à F4 | La balance exportée se réimporte sans écart dans Sage 100, Sage X3 et Odoo |
 
 Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F10, F11, F12, F13, F14.
 
 ---
 
-## 19. Questions à trancher
+## 19. Décisions prises
 
-À valider avec la direction et l'expert-comptable avant le lot F1 :
+Réponses de la direction (11/11/2026). **Chaque décision est une valeur par défaut, modifiable dans le paramétrage** (voir [section 20](#20-tout-est-paramétrable)) ; aucune n'est codée en dur.
 
-1. **Régime SYSCOHADA** : système normal ou système minimal de trésorerie (selon le chiffre d'affaires) ? Cela fixe les états financiers à produire.
-2. **Plan de comptes** : validation de la table de la [section 4.1](#41-plan-de-comptes), en particulier les comptes du mobile money, des portefeuilles électroniques (`4191` ou un compte dédié) et des écarts de caisse.
-3. **Une ou plusieurs comptabilités** : chaque organisation (`business_entity`) est-elle une société distincte avec sa propre comptabilité ?
-4. **TVA** : régime d'exigibilité (débits ou encaissements), taux et centimes additionnels applicables, activités exonérées.
-5. **Reconnaissance du chiffre d'affaires** des abonnements et pass : à la facture ou étalée sur la période de service (produits constatés d'avance) ?
-6. **Date de bascule** et reprise ou non de l'historique de l'exercice en cours.
-7. **Seuils** : montants des niveaux de validation, plafond des dépenses directes au guichet, délai de justification des avances, seuil de double comptage.
-8. **Écarts de caisse** : passés en charges ou produits, ou imputés au caissier ?
-9. **Logiciel de l'expert-comptable** et son format d'import.
-10. **Création de journal par la caissière** : quels profils, et le journal créé est-il utilisable aussitôt ou après validation de l'administrateur finance ?
+| # | Sujet | Décision | Paramètre |
+| --- | --- | --- | --- |
+| 1 | Régime SYSCOHADA | **Système normal** : bilan, compte de résultat, tableau des flux de trésorerie, notes annexes ; comptabilité d'engagement | `accounting.regime = NORMAL` (`SMT` reste disponible) |
+| 2 | Plan de comptes | **Proposition par défaut** de la [section 4.1](#41-plan-de-comptes) chargée comme valeurs initiales, modifiable à l'écran ; l'expert-comptable ajuste ensuite | Plan de comptes, comptes par défaut des natures et des schémas |
+| 3 | Sociétés | **Une seule comptabilité aujourd'hui, multi-société prévue** : toutes les tables comptables portent dès le départ un identifiant de société (`company_code`), une seule société est créée ; les organisations et sites sont des axes analytiques | `accounting.multi-company.enabled = false` |
+| 4 | TVA | **À confirmer avec l'expert-comptable** : le moteur gère l'exigibilité sur les débits et sur les encaissements | `accounting.vat.chargeability = INVOICE | PAYMENT`, taux dans `TaxRule` |
+| 5 | Abonnements, pass, domiciliation | **Chiffre d'affaires étalé** sur la période de service : produits constatés d'avance (`477`) en fin de mois, repris au fil du service | `accounting.revenue.deferral = MONTHLY` (`NONE`, `YEAR_END` disponibles) |
+| 6 | Bascule | **Au plus tôt, avec reprise** : bascule dès que le socle est prêt ; les faits depuis le 1er janvier 2026 sont rejoués en brouillard, contrôlés puis validés en bloc ; à-nouveaux au 1er janvier 2026 depuis la balance de l'expert-comptable | `accounting.start-date`, `accounting.replay-from = 2026-01-01` |
+| 7 | Validation des demandes | **3 niveaux** : jusqu'à 50 000 XAF chef de service ; jusqu'à 500 000 XAF + responsable financier ; au-delà + direction. Le demandeur ne valide jamais sa propre demande | Grille de validation (montant, nature, type, niveaux, rôles) |
+| 7b | Plafond de dépense directe au guichet | **50 000 XAF** : en dessous, bon de sortie direct sur pièce ; au-dessus, demande de fonds obligatoire | Plafond par caisse et par nature |
+| 7c | Justification des avances | **7 jours** après la fin de la mission ou l'achat ; relances ; **nouvelle avance bloquée** en cas de retard | Délai par type de demande, mode `BLOCK` ou `ALERT` |
+| 8 | Écarts de caisse | **Au cas par cas** : à l'approbation, le responsable choisit charge/produit (`658`/`758`) ou imputation au caissier (`421`) | Comptes d'écart, choix proposé par défaut |
+| 9 | Exports | **Sage 100, Sage X3, Odoo et CSV** | Format d'export choisi à l'export ; correspondance des comptes et journaux par format |
+| 10 | Création de journal | **Caissières principales**, journal **utilisable aussitôt** ; l'administrateur finance est prévenu et peut le désactiver | Droit `ACCOUNTING_JOURNAL:CREATE`, mode `IMMEDIATE` ou `AFTER_APPROVAL` |
+
+Reste à confirmer avec l'expert-comptable : régime d'exigibilité et taux de TVA (4), ajustements du plan de comptes (2), balance d'ouverture au 1er janvier 2026 (6).
+
+## 20. Tout est paramétrable
+
+Règle de conception de tous les lots : **aucune valeur métier n'est codée en dur**. Le code fournit des valeurs initiales conformes aux décisions ci-dessus ; un administrateur finance les change à l'écran, sans redéploiement, avec historique (qui, quand, ancienne et nouvelle valeur) et date d'effet quand le changement touche des écritures.
+
+| Domaine | Ce qui se paramètre |
+| --- | --- |
+| Général | Activation de la comptabilité, de l'analytique, du budget ; régime (normal, SMT) ; date de bascule et de reprise ; devise de tenue ; multi-société |
+| Plan de comptes | Comptes, intitulés, nature, lettrable, tiers, trésorerie, analytique obligatoire, taxe associée, actif ; règles de création des comptes auxiliaires (préfixe, longueur) |
+| Exercices et périodes | Début et durée d'exercice, découpage, verrouillage automatique après N jours, synchronisation avec la clôture de facturation |
+| Journaux | Code, type, compte de trésorerie, numérotation, validation automatique ou brouillard, caisses autorisées, comptes autorisés, qui peut créer (et mode immédiat ou après validation) |
+| Schémas d'écriture | Pour chaque événement : conditions, journal, lignes, comptes, analytique ; versionnés avec date d'effet ; activation par famille d'événements |
+| Natures d'opération | Libellé, famille, sens, compte, TVA, justificatif exigé et délai, section par défaut, plafond, demande préalable, journal par défaut |
+| Analytique | Axes, sections, obligation par compte et par axe, clés de répartition, règles automatiques |
+| Fiscalité | Taux et règles (`TaxRule`), comptes de taxe, exigibilité, exonérations |
+| Produits constatés d'avance | Mode (mensuel, en clôture, aucun), comptes, types de produits concernés |
+| Caisses et trésorerie | Types de caisse, comptes et journaux liés, plafonds, comportement au plafond (alerte ou blocage), coupures du billetage, clôture à l'aveugle, seuil de double comptage, comptes d'écart et choix par défaut |
+| Demandes de fonds | Types disponibles, formulaires (champs visibles et obligatoires par type), grille de validation (seuils, niveaux, rôles), délégation, délais de rappel et d'escalade, expiration d'une demande approuvée, plafond de dépense directe, barèmes de mission |
+| Avances et justification | Délai par type, relances (jours et destinataires), blocage ou alerte, natures dispensées de pièce et leur plafond |
+| Pièces comptables | Préfixes et format des numéros, mentions, signatures demandées, logo et en-tête par organisation, mention de duplicata |
+| Notifications | Événements notifiés, destinataires, canaux |
+| Exports | Formats (Sage 100, Sage X3, Odoo, CSV), correspondance des comptes et journaux vers le logiciel cible, séparateurs et encodage |
+| Contrôles | Seuils des anomalies, ancienneté tolérée des comptes d'attente, contrôles quotidiens actifs |
+| Droits | Rôles et permissions de la [section 16](#16-droits-et-séparation-des-tâches), dérogations à la séparation des tâches |
+
+Écran unique « Paramètres finance », organisé par ces domaines, avec recherche, aide en ligne sur chaque paramètre et export/import de la configuration (pour passer d'un environnement de test à la production).

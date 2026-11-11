@@ -88,7 +88,7 @@ Améliorations d'usage :
 
 ### 4.3 Validation
 
-- **Niveaux** déterminés par le montant total, la nature et le type, d'après une grille paramétrable. Exemple :
+- **Niveaux** déterminés par le montant total, la nature et le type, d'après une grille paramétrable. Grille retenue par défaut ([décision 7](README.md#19-décisions-prises)) :
 
   | Montant | Niveaux |
   | --- | --- |
@@ -160,9 +160,9 @@ Ce qui reste à justifier se recalcule en direct : **avance**, moins **justifié
 
 ### 5.4 Délais et relances
 
-- Délai de justification par type (ex. 7 jours après la fin de la mission, 3 jours pour un achat ponctuel).
+- Délai de justification paramétrable par type ; **7 jours** par défaut après la fin de la mission ou l'achat ([décision 7c](README.md#19-décisions-prises)).
 - Relances automatiques au bénéficiaire à J-1, J+0, J+3, puis à son responsable.
-- **Blocage** : aucune nouvelle avance pour une personne qui a une avance en retard (paramétrable : alerte ou blocage).
+- **Blocage** par défaut : aucune nouvelle avance pour une personne qui a une avance en retard (paramétrable : alerte ou blocage).
 - Anomalie de caisse ajoutée au détecteur existant : « avance non justifiée depuis plus de N jours ».
 
 ### 5.5 États de suivi

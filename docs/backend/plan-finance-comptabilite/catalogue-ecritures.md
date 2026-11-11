@@ -127,7 +127,7 @@ L'avoir qui accompagne le remboursement (annulation de réservation) est écrit 
 
 ## 6. Abonnements, pass, domiciliation
 
-Si le chiffre d'affaires est étalé ([question 5](README.md#19-questions-à-trancher)) :
+Chiffre d'affaires étalé, mode retenu par défaut ([décision 5](README.md#19-décisions-prises), paramétrable) :
 
 | Événement | Écriture |
 | --- | --- |
