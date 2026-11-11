@@ -16,7 +16,7 @@ Tout ce que le module comptable doit produire : livres, balances, relevés de co
 10. [Piste d'audit et contrôle fiscal](#10-piste-daudit-et-contrôle-fiscal)
 11. [Données et paramétrage](#11-données-et-paramétrage)
 12. [Place dans les lots](#12-place-dans-les-lots)
-13. [Points à confirmer](#13-points-à-confirmer)
+13. [Décisions](#13-décisions)
 
 ---
 
@@ -26,7 +26,7 @@ Tout ce que le module comptable doit produire : livres, balances, relevés de co
 | --- | --- |
 | Période | À une date (bilan, balance à date) ou sur une période (mois, trimestre, exercice, dates libres) |
 | Provisoire ou définitif | **Provisoire** : à tout moment, en option avec le brouillard, avec la mention « PROVISOIRE ». **Définitif** : seulement sur des périodes closes ; l'état est figé (PDF et données archivés, empreinte SHA-256), daté et numéroté, et se réimprime à l'identique |
-| Comparatif | Colonne N-1 sur tous les états financiers et de gestion ; pour 2026, le N-1 (2025) vient de la balance fournie par l'expert-comptable |
+| Comparatif | Colonne N-1 sur tous les états financiers et de gestion. 2026 est le **premier exercice** (décision 12) : la colonne N-1 est vide avec la mention « premier exercice », elle se remplit à partir de 2027 |
 | Filtres | Société (prévu pour le multi-société), journal, compte ou plage de comptes, tiers, section analytique, site, devise |
 | Niveau de détail | Comptes à 2, 3, 4 chiffres ou détaillés ; avec ou sans comptes auxiliaires ; avec ou sans comptes à solde nul |
 | Formats | Écran (avec renvoi de chaque montant vers les écritures qui le composent), PDF, Excel, CSV |
@@ -157,7 +157,7 @@ Non retenu (décision 1) mais disponible par paramètre : bilan et compte de ré
 
 ## 5. Liasse fiscale (DSF)
 
-- Au Congo, les états financiers se déposent sous forme de **Déclaration statistique et fiscale (DSF)**, liasse commune aux pays OHADA. Elle comprend la fiche d'identification, les états financiers, les notes et les tableaux fiscaux.
+- La liasse suit le **modèle SYSCOHADA commun** aux pays qui appliquent ce système (décision 11) : fiche d'identification, états financiers, notes et tableaux fiscaux. Le modèle commun est livré ; les éventuelles variantes nationales (Congo ou autre pays, si l'activité s'étend) se règlent en paramétrage.
 - Le logiciel produit la liasse **pré-remplie** : identification de l'entreprise (fiche société paramétrée : RCCM, NIU, activité, dirigeants, effectifs), états de la section 4, notes chiffrées, tableaux fiscaux disponibles.
 - Formats : PDF conforme au modèle, et Excel au format du modèle officiel pour import ou télédéclaration.
 - Le modèle de liasse (rubriques, codes, mise en page) est **une donnée paramétrable et versionnée**, pour suivre les mises à jour de l'administration sans développement.
@@ -244,7 +244,8 @@ Ces états rejoignent le module `reporting` existant (rapports d'activité et fi
 | `acc_statement_mapping` | Correspondance poste et comptes : plage ou liste de comptes, sens retenu (solde débiteur, créditeur, net), colonne (brut, amortissement, net), règle des soldes inversés |
 | `acc_cash_flow_code` | Codes de flux pour le tableau des flux, portés par les natures et les schémas |
 | `acc_generated_report` | États définitifs : type, période, version du modèle, fichier, données figées (jsonb), empreinte, auteur, date |
-| `acc_note_text` | Textes des notes rédactionnelles par exercice |
+| `acc_note_text` | Textes des notes rédactionnelles par exercice : note, texte, statut (brouillon, validé), auteur, validé par |
+| `acc_confirmation_request` | Circularisation : tiers, solde à date, lettre envoyée, réponse, écart, statut |
 | `acc_tax_adjustment` | Tableau de passage au résultat fiscal |
 | `acc_company_profile` | Fiche d'identification pour la liasse (si non couverte par l'existant) |
 
@@ -268,9 +269,11 @@ Les correspondances sont livrées pour le SYSCOHADA révisé et restent **modifi
 
 ---
 
-## 13. Points à confirmer
+## 13. Décisions
 
-1. **DSF** : modèle en vigueur au Congo pour l'exercice 2026, mode de dépôt (papier, Excel, télédéclaration) et format attendu.
-2. **Balance 2025** pour le comparatif N-1, et détail des immobilisations existantes (valeur, date, durée) pour reprendre les amortissements.
-3. **Commissaire aux comptes** : y en a-t-il un ? Si oui, le logiciel prévoit son accès en lecture et la circularisation.
-4. **Notes rédactionnelles** : rédigées dans le logiciel, ou chez l'expert-comptable à partir des exports ?
+| Sujet | Décision |
+| --- | --- |
+| Liasse | Modèle SYSCOHADA commun, pré-rempli, PDF et Excel ; variantes nationales paramétrables |
+| Exercice 2025 | Aucun : 2026 premier exercice, pas de comparatif N-1 en 2026, pas d'immobilisations antérieures |
+| Commissaire aux comptes | Oui : rôle `AUDITOR` en lecture seule sur la comptabilité, les pièces et les états ; circularisation des soldes clients, fournisseurs, banques et associés (lettres générées, réponses saisies, écarts suivis) ; **dossier de révision** exporté (balance, grands livres, états, rapprochements, PV de caisse, registres) |
+| Notes rédactionnelles | Rédigées dans le logiciel : éditeur par note, modèles de texte, reprise de N-1, validation, intégrées aux états et à la liasse |

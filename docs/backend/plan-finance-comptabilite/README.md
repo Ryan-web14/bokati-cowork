@@ -11,6 +11,8 @@ Fichiers du dossier :
 | [README.md](README.md) | Ce plan : existant, cible, modules, données, droits, découpage en lots, décisions prises, paramétrage. |
 | [catalogue-ecritures.md](catalogue-ecritures.md) | Pour chaque événement de la plateforme, l'écriture produite (journal, comptes au débit et au crédit, analytique). |
 | [etats-financiers.md](etats-financiers.md) | Livres, balances, relevés de compte des tiers, bilan, compte de résultat, tableau des flux, notes annexes, liasse DSF, états d'inventaire, fiscaux, de trésorerie et de gestion ; correspondance comptes vers postes. |
+| [analytique-et-budget.md](analytique-et-budget.md) | Comptabilité analytique, analyse par poste de dépense, gestion budgétaire complète et contrôle budgétaire dans les sorties de fonds et les autres opérations. |
+| [financement-engagements-paie.md](financement-engagements-paie.md) | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre des engagements hors bilan, import du journal de paie. |
 | [pieces-comptables.md](pieces-comptables.md) | Les pièces émises (bon d'entrée, bon de sortie, bon de décaissement, état de besoin, fiche de justification, procès-verbaux...) : champs, champs automatiques, signatures, numérotation. |
 | [demandes-et-justification.md](demandes-et-justification.md) | Le nouveau circuit des demandes de fonds (état de besoin, demande, validation, décaissement) et la justification des dépenses une par une. |
 
@@ -22,7 +24,7 @@ Fichiers du dossier :
 2. [Existant : ce qu'on garde, ce qu'on améliore](#2-existant--ce-quon-garde-ce-quon-améliore)
 3. [Architecture cible](#3-architecture-cible)
 4. [Module comptabilité SYSCOHADA](#4-module-comptabilité-syscohada)
-5. [Comptabilité analytique](#5-comptabilité-analytique)
+5. [Comptabilité analytique et budget](#5-comptabilité-analytique-et-budget)
 6. [Trésorerie et caisses](#6-trésorerie-et-caisses)
 7. [Mouvements de caisse et choix du journal par la caissière](#7-mouvements-de-caisse-et-choix-du-journal-par-la-caissière)
 8. [Sorties et entrées de fonds : typologie](#8-sorties-et-entrées-de-fonds--typologie)
@@ -233,23 +235,27 @@ analytique:  héritée de la facture imputée, sinon section de la caisse
 
 ---
 
-## 5. Comptabilité analytique
+## 5. Comptabilité analytique et budget
 
-- **Activation** par paramètre (`accounting.analytic.enabled`). Désactivée, aucun champ analytique n'apparaît, ni à la caisse ni dans les demandes.
-- **Axes** paramétrables, par exemple :
-  - **Site** (déjà présent : `locationCode` des caisses, sites des ressources) ;
-  - **Activité** (bureaux privés, open space, salles de réunion, domiciliation, événements, marketplace) ;
-  - **Centre de coût** (accueil, entretien, informatique, direction) ;
-  - **Projet / événement** (lié au module `event`) ;
-  - **Organisation cliente** pour la rentabilité par grand compte.
-- **Sections** : arborescence par axe (site > étage > espace).
-- **Ventilation** : une ligne d'écriture se ventile sur une ou plusieurs sections par pourcentage ou par montant. Des **clés de répartition** enregistrées (« loyer : 60 % open space, 40 % bureaux ») s'appliquent en un clic.
-- **Règles automatiques** : la ressource réservée donne le site et l'activité ; le type de produit donne l'activité ; la caisse donne le site ; la nature de dépense donne le centre de coût par défaut. La caissière ou le demandeur peut corriger.
-- **Obligation** par compte (classes 6 et 7 par défaut) et par axe (un axe peut être facultatif).
-- **Classe 9** SYSCOHADA : les ventilations restent dans des tables dédiées et ne génèrent pas d'écritures en classe 9 ; un export en classe 9 reste possible pour les cabinets qui la tiennent.
-- **États** : résultat par section, par activité et par site ; coût de revient d'une ressource ; marge par organisation cliente ; budget comparé au réalisé par section.
+Détail complet dans [analytique-et-budget.md](analytique-et-budget.md). En bref :
 
----
+- **Analytique** (activable) :
+  - axes paramétrables (site, activité, centre de coût, **poste de dépense**, projet, ressource, organisation cliente), sections en arbre ;
+  - ventilation de chaque ligne de charge ou de produit, proposée automatiquement (ressource, nature, compte, employé, caisse) ;
+  - clés de répartition et répartition secondaire des centres auxiliaires ;
+  - reclassements tracés.
+- **Analyse par poste de dépense** : chaque nature d'opération porte un poste (loyer, électricité, café, internet, déplacements...). Toutes les dépenses sont donc classées, quel que soit leur chemin (caisse, avance, facture fournisseur, paie, écriture manuelle). Pour chaque poste :
+  - réalisé, budget, N-1 et tendance ;
+  - décomposition par site, fournisseur et demandeur ;
+  - détail jusqu'au justificatif ;
+  - indicateurs rapportés à l'activité (par m², par membre) ;
+  - alertes de dérive.
+- **Budget complet** :
+  - versions et révisions, mensualisation ;
+  - élaboration par centre et circuit de validation ;
+  - virements de crédits, gel, report ;
+  - les quatre montants d'une ligne : budgété, engagé, réalisé, disponible.
+- **Contrôle budgétaire dans les opérations** : l'état de besoin, la demande de fonds (saisie, soumission, approbation qui engage), le décaissement, la justification d'avance, la dépense directe au guichet, la commande et la facture fournisseur, l'écriture manuelle et la paie importée. Chaque ligne budgétaire est **bloquante**, **en alerte** ou **informative**, avec tolérance et dérogation tracée. La pièce imprimée porte le disponible avant et après.
 
 ## 6. Trésorerie et caisses
 
@@ -450,7 +456,7 @@ Résumé ci-dessous ; le détail de chaque état (colonnes, règles de calcul, c
 ### 14.1 À compléter (absent aujourd'hui)
 
 1. **Fournisseurs et achats** : fiche fournisseur, factures fournisseurs, bons de commande issus des états de besoin, échéancier de paiement, retenues.
-2. **Budget** : budget annuel par compte et par section analytique, engagement à l'approbation d'une demande, consommation au décaissement ; alerte ou blocage au dépassement.
+2. **Budget** : gestion complète et contrôle dans chaque opération, voir [analytique-et-budget.md](analytique-et-budget.md#3-gestion-budgétaire).
 3. **Immobilisations** : mobilier, informatique, aménagements de l'espace ; fiche, amortissement linéaire ou dégressif, écritures de dotation, sortie d'actif.
 4. **Dépôts de garantie** : caution à la signature d'un contrat de bureau, restitution ou retenue à la sortie (lien avec le module `contract`).
 5. **Produits constatés d'avance** pour les abonnements, pass et domiciliations facturés d'avance.
@@ -458,7 +464,9 @@ Résumé ci-dessous ; le détail de chaque état (colonnes, règles de calcul, c
 7. **Cycle des chèques** (reçu, remis, encaissé, rejeté) et bordereaux de remise.
 8. **Comptes bancaires et mobile money** comme comptes de trésorerie, relevés, rapprochement.
 9. **Notes de frais** des employés.
-10. **Paie** : hors périmètre ; prévoir l'import d'un journal de paie (`PA`).
+10. **Paie** : import mensuel du journal de paie dans le journal `PA`, voir [financement-engagements-paie.md](financement-engagements-paie.md#4-import-du-journal-de-paie) ; le calcul de la paie reste hors périmètre.
+11. **Emprunts et comptes courants d'associés** : tableaux d'amortissement, écritures d'échéance, intérêts courus, voir [financement-engagements-paie.md](financement-engagements-paie.md).
+12. **Engagements hors bilan** : registre, alertes, note annexe, voir [financement-engagements-paie.md](financement-engagements-paie.md#3-registre-des-engagements-hors-bilan).
 
 ### 14.2 À améliorer (existe mais incomplet)
 
@@ -555,7 +563,7 @@ Règles imposées : le demandeur n'approuve pas sa demande ; l'approbateur ne d�
 ## 17. Bascule et reprise de l'historique
 
 1. **Date de bascule** : au plus tôt, dès le socle prêt (décision 6).
-2. **À-nouveaux** : balance d'ouverture fournie par l'expert-comptable, importée dans `AN` ; soldes clients par facture ouverte (pour le lettrage) ; soldes des portefeuilles vers `4191` ; soldes des caisses au dernier comptage.
+2. **Ouverture** : 2026 est le **premier exercice** (pas d'exercice 2025, décision 12) ; l'ouverture reprend les écritures de constitution (capital, apports, premières immobilisations) fournies par l'expert-comptable, dans `AN` ou `OD` ; soldes clients par facture ouverte (pour le lettrage) ; soldes des portefeuilles vers `4191` ; soldes des caisses au dernier comptage.
 3. **Reprise depuis le 1er janvier 2026** (décision 6) des événements de la plateforme entre le début d'exercice et la bascule : le moteur peut rejouer les faits passés (transactions, factures, mouvements) dans un mode « reprise » qui produit des écritures en brouillard, à valider en bloc après contrôle.
 4. **Anciennes demandes** (`cash_request`) : consultables en lecture ; celles en `PENDING` à la bascule sont migrées en nouvelles demandes `SOUMISE`.
 5. **Natures d'opération** : correspondance proposée depuis les `flowCategory` existantes (requête des valeurs distinctes), validée à la main.
@@ -577,15 +585,17 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 | **F6. Avances et justification** | Avances à justifier, justification ligne par ligne, reliquat et complément, relances, blocage, état des avances | F5 | Une avance de 100 000 justifiée en 3 lignes pour 85 000 se solde par un retour de 15 000 ; `421` du bénéficiaire revient à zéro |
 | **F7. Pièces comptables** | Refonte des gabarits (bons, bon de décaissement, état de besoin, fiche de justification, PV de billetage et de passation, bordereau de remise), montant en lettres, QR, duplicata | F5 | Chaque pièce porte les mentions de [pieces-comptables.md](pieces-comptables.md) |
 | **F8. Sessions améliorées** | Billetage, clôture à l'aveugle, double comptage, passation, remise obligatoire, tableau de trésorerie en temps réel | F3 | Une clôture à l'aveugle ne montre l'attendu qu'après le comptage ; une passation produit son PV |
-| **F9. Analytique** | Axes, sections, ventilation, clés, règles automatiques, obligation par compte, états analytiques | F3, F4 | Avec l'analytique activée, une dépense de classe 6 sans section ne se valide pas ; le résultat par site se calcule |
+| **F9. Analytique** | Axes, sections, ventilation, clés, répartition secondaire, règles automatiques, obligation par compte, reclassements, **postes de dépense** et analyse par poste, tableau de bord des dépenses, états analytiques | F3, F4 | Avec l'analytique activée, une dépense de classe 6 sans section ne se valide pas ; le résultat par site se calcule ; chaque dépense a un poste |
 | **F10. Banque, chèques, mobile money** | Comptes bancaires, cycle des chèques, bordereaux de remise, import de relevés, rapprochement, frais PawaPay | F3, F4 | Un relevé importé se pointe automatiquement à plus de 80 % sur un mois réel |
 | **F11. Fiscalité** | Comptes de taxe, exigibilité, déclaration de TVA, liquidation | F4 | L'état de TVA d'un mois égale la somme des TVA des factures scellées du mois |
 | **F12. Abonnements et clôture** | Produits constatés d'avance, créances douteuses, contrôles de clôture, à-nouveaux, états financiers SYSCOHADA | F4, F11 | La clôture d'un exercice de test produit bilan, compte de résultat et à-nouveaux équilibrés |
-| **F13. Achats, budget, immobilisations** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, budget et engagements, immobilisations et amortissements | F5, F9 | Une demande au-delà du budget restant est signalée ; une immobilisation génère son plan d'amortissement |
+| **F13. Achats et immobilisations** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, immobilisations et amortissements | F5, F9 | Une commande validée engage le budget ; une immobilisation génère son plan d'amortissement |
+| **F16. Budget** | Budgets et versions, mensualisation, élaboration et validation, révisions, virements de crédits, engagements, contrôle budgétaire dans les états de besoin, demandes, décaissements, justifications, dépenses directes, écritures ; dérogations ; suivi, projections, alertes | F5, F6, F9 | Une demande sur une ligne bloquante sans disponible est refusée ou part en validation budgétaire ; un engagement de 100 000 réalisé pour 85 000 libère 15 000 |
+| **F17. Financement, hors bilan, paie** | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre hors bilan, import du journal de paie | F1, F2, F10 | Une échéance d'emprunt s'écrit seule ; un journal de paie importé s'équilibre et solde les avances retenues |
 | **F15. Liasse et états de gestion** | DSF pré-remplie, passage au résultat fiscal, soldes de gestion mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, confirmation de solde | F12 | La DSF d'un exercice de test se remplit sans saisie hors notes rédactionnelles et tableau fiscal |
 | **F14. Exports et bascule** | Exports pour l'expert-comptable, archive annuelle, outils de reprise et d'à-nouveaux | F1 à F4 | La balance exportée se réimporte sans écart dans Sage 100, Sage X3 et Odoo |
 
-Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F10, F11, F12, F13, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
+Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F16 (analytique puis budget, qui s'appuie sur les demandes), F10, F11, F17, F12, F13, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
 
 ---
 
@@ -600,15 +610,23 @@ Réponses de la direction (11/11/2026). **Chaque décision est une valeur par d�
 | 3 | Sociétés | **Une seule comptabilité aujourd'hui, multi-société prévue** : toutes les tables comptables portent dès le départ un identifiant de société (`company_code`), une seule société est créée ; les organisations et sites sont des axes analytiques | `accounting.multi-company.enabled = false` |
 | 4 | TVA | **À confirmer avec l'expert-comptable** : le moteur gère l'exigibilité sur les débits et sur les encaissements | `accounting.vat.chargeability = INVOICE | PAYMENT`, taux dans `TaxRule` |
 | 5 | Abonnements, pass, domiciliation | **Chiffre d'affaires étalé** sur la période de service : produits constatés d'avance (`477`) en fin de mois, repris au fil du service | `accounting.revenue.deferral = MONTHLY` (`NONE`, `YEAR_END` disponibles) |
-| 6 | Bascule | **Au plus tôt, avec reprise** : bascule dès que le socle est prêt ; les faits depuis le 1er janvier 2026 sont rejoués en brouillard, contrôlés puis validés en bloc ; à-nouveaux au 1er janvier 2026 depuis la balance de l'expert-comptable | `accounting.start-date`, `accounting.replay-from = 2026-01-01` |
+| 6 | Bascule | **Au plus tôt, avec reprise** : bascule dès que le socle est prêt ; les faits depuis le 1er janvier 2026 sont rejoués en brouillard, contrôlés puis validés en bloc ; ouverture par les écritures de constitution (2026 est le premier exercice, décision 12) | `accounting.start-date`, `accounting.replay-from = 2026-01-01` |
 | 7 | Validation des demandes | **3 niveaux** : jusqu'à 50 000 XAF chef de service ; jusqu'à 500 000 XAF + responsable financier ; au-delà + direction. Le demandeur ne valide jamais sa propre demande | Grille de validation (montant, nature, type, niveaux, rôles) |
 | 7b | Plafond de dépense directe au guichet | **50 000 XAF** : en dessous, bon de sortie direct sur pièce ; au-dessus, demande de fonds obligatoire | Plafond par caisse et par nature |
 | 7c | Justification des avances | **7 jours** après la fin de la mission ou l'achat ; relances ; **nouvelle avance bloquée** en cas de retard | Délai par type de demande, mode `BLOCK` ou `ALERT` |
 | 8 | Écarts de caisse | **Au cas par cas** : à l'approbation, le responsable choisit charge/produit (`658`/`758`) ou imputation au caissier (`421`) | Comptes d'écart, choix proposé par défaut |
 | 9 | Exports | **Sage 100, Sage X3, Odoo et CSV** | Format d'export choisi à l'export ; correspondance des comptes et journaux par format |
 | 10 | Création de journal | **Caissières principales**, journal **utilisable aussitôt** ; l'administrateur finance est prévenu et peut le désactiver | Droit `ACCOUNTING_JOURNAL:CREATE`, mode `IMMEDIATE` ou `AFTER_APPROVAL` |
+| 11 | Liasse fiscale | **Modèle SYSCOHADA commun** aux pays OHADA, produit pré-rempli ; variantes nationales en paramétrage | Modèle de liasse versionné, pays |
+| 12 | Exercice 2025 | **Aucun** : 2026 est le premier exercice ; pas de colonne N-1 en 2026 (mention « premier exercice ») ; pas d'immobilisations antérieures à reprendre | `accounting.first-fiscal-year = 2026` |
+| 13 | Commissaire aux comptes | **Oui** : accès en lecture seule, circularisation des soldes, dossier de révision exporté | Rôle `AUDITOR`, activé |
+| 14 | Notes annexes rédactionnelles | **Dans le logiciel** : éditeur par note, reprise du texte N-1, intégrées aux états et à la liasse | |
+| 15 | Emprunts et comptes courants d'associés | **Gestion complète** : tableaux d'amortissement, écritures automatiques, intérêts courus, relevés | Comptes, mode de comptabilisation des échéances |
+| 16 | Engagements hors bilan | **Registre** avec alertes et note annexe automatique | Types d'engagement |
+| 17 | Paie | **Import du journal de paie** mensuel avec correspondance des rubriques ; calcul de la paie hors périmètre | Modèles d'import, correspondance rubriques et comptes |
+| 18 | Analytique et budget | **Analytique par poste de dépense** et **budget complet** contrôlé dans chaque sortie de fonds et opération | `accounting.analytic.enabled`, `accounting.budget.enabled`, niveau de contrôle par ligne |
 
-Reste à confirmer avec l'expert-comptable : régime d'exigibilité et taux de TVA (4), ajustements du plan de comptes (2), balance d'ouverture au 1er janvier 2026 (6), et les points des états financiers ([etats-financiers.md, section 13](etats-financiers.md#13-points-à-confirmer)) : modèle et dépôt de la DSF, balance 2025 et immobilisations existantes, commissaire aux comptes, notes rédactionnelles.
+Reste à obtenir de l'expert-comptable : régime d'exigibilité et taux de TVA (4), ajustements du plan de comptes (2), écritures de constitution pour l'ouverture de 2026 (6, 12), et le choix du compte des comptes courants d'associés (bloqués ou non, 15).
 
 ## 20. Tout est paramétrable
 
