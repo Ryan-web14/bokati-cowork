@@ -13,6 +13,7 @@ Fichiers du dossier :
 | [etats-financiers.md](etats-financiers.md) | Livres, balances, relevés de compte des tiers, bilan, compte de résultat, tableau des flux, notes annexes, liasse DSF, états d'inventaire, fiscaux, de trésorerie et de gestion ; correspondance comptes vers postes. |
 | [analytique-et-budget.md](analytique-et-budget.md) | Comptabilité analytique, analyse par poste de dépense, gestion budgétaire complète et contrôle budgétaire dans les sorties de fonds et les autres opérations. |
 | [financement-engagements-paie.md](financement-engagements-paie.md) | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre des engagements hors bilan, import du journal de paie. |
+| [caisses-et-sessions.md](caisses-et-sessions.md) | Le système de caisse complet : défauts de l'existant, référentiel des caisses, cycle de vie des sessions, comptages et billetage, catalogue des opérations, transferts à deux temps, corrections, plafonds et contrôles, états, données, routes, droits, lots C0 à C6. |
 | [pieces-comptables.md](pieces-comptables.md) | Les pièces émises (bon d'entrée, bon de sortie, bon de décaissement, état de besoin, fiche de justification, procès-verbaux...) : champs, champs automatiques, signatures, numérotation. |
 | [demandes-et-justification.md](demandes-et-justification.md) | Le nouveau circuit des demandes de fonds (état de besoin, demande, validation, décaissement) et la justification des dépenses une par une. |
 
@@ -88,6 +89,7 @@ Fichiers du dossier :
 | Avance (`CASH_ADVANCE`) sans suivi de justification | On ne sait pas ce qui reste à justifier, par qui, depuis quand ; pas de restitution du reliquat ni de complément. |
 | Pas d'état de besoin | Le besoin n'est pas exprimé ni chiffré avant la demande d'argent. |
 | Pas de billetage | La clôture saisit un total, pas le détail par coupure ; pas de double comptage. |
+| Acteurs saisis dans les requêtes, droits trop grossiers, solde courant faux, ajustement sans sens, transferts unilatéraux | Détail et correctifs (lot C0) dans [caisses-et-sessions.md](caisses-et-sessions.md#14-défauts-relevés). |
 | Pas de passation entre caissiers | Une session est liée à un caissier ; une relève en cours de journée n'est pas tracée. |
 | Comptes bancaires et mobile money absents | Les remises en banque (`SAFE_DEPOSIT`) sortent de la caisse sans arriver nulle part. |
 | Chèques et virements tenus pour encaissés dès la saisie | Pas d'état « à remettre en banque », « remis », « rejeté ». |
@@ -261,6 +263,8 @@ Détail complet dans [analytique-et-budget.md](analytique-et-budget.md). En bref
 - **Contrôle budgétaire dans les opérations** : l'état de besoin, la demande de fonds (saisie, soumission, approbation qui engage), le décaissement, la justification d'avance, la dépense directe au guichet, la commande et la facture fournisseur, l'écriture manuelle et la paie importée. Chaque ligne budgétaire est **bloquante**, **en alerte** ou **informative**, avec tolérance et dérogation tracée. La pièce imprimée porte le disponible avant et après.
 
 ## 6. Trésorerie et caisses
+
+Le système de caisse complet (référentiel, sessions, comptages, opérations, transferts, contrôles, états, données, routes, droits, lots) est détaillé dans [caisses-et-sessions.md](caisses-et-sessions.md). Cette section en donne le cadre comptable.
 
 ### 6.1 Comptes de trésorerie
 
@@ -559,6 +563,8 @@ Colonnes ajoutées à `cash_movement` : voir 7.1. À `payment_transaction` : `ac
 | `ACCOUNTING_REPORT:READ` | Direction, comptable, expert-comptable (lecture seule) |
 | `BANK_RECONCILIATION:MANAGE` | Comptable |
 
+Les droits propres à la caisse (sessions, écarts, visas, transferts, contre-passations) sont détaillés dans [caisses-et-sessions.md](caisses-et-sessions.md#17-droits).
+
 Règles imposées : le demandeur n'approuve pas sa demande ; l'approbateur ne décaisse pas ; le caissier ne valide pas la justification de sa propre avance ; le comptable qui saisit une écriture manuelle au-delà du seuil ne la valide pas seul. Toute dérogation est tracée.
 
 ---
@@ -587,7 +593,7 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 | **F5. Demandes et état de besoin** | État de besoin, nouvelle demande de fonds multi-lignes, champs automatiques, circuit multi-niveaux, décaissement distinct, notifications, nouvelles pièces | F3 | Un employé sans session crée une demande ; elle traverse deux niveaux de validation ; la caissière la décaisse avec signature ; la pièce sort avec son imputation |
 | **F6. Avances et justification** | Avances à justifier, justification ligne par ligne, reliquat et complément, relances, blocage, état des avances | F5 | Une avance de 100 000 justifiée en 3 lignes pour 85 000 se solde par un retour de 15 000 ; `421` du bénéficiaire revient à zéro |
 | **F7. Pièces comptables** | Refonte des gabarits (bons, bon de décaissement, état de besoin, fiche de justification, PV de billetage et de passation, bordereau de remise), montant en lettres, QR, duplicata | F5 | Chaque pièce porte les mentions de [pieces-comptables.md](pieces-comptables.md) |
-| **F8. Sessions améliorées** | Billetage, clôture à l'aveugle, double comptage, passation, remise obligatoire, tableau de trésorerie en temps réel | F3 | Une clôture à l'aveugle ne montre l'attendu qu'après le comptage ; une passation produit son PV |
+| **F8. Système de caisse complet** | Lots C0 à C6 de [caisses-et-sessions.md](caisses-et-sessions.md#20-découpage-en-lots-et-critères-dacceptation) : correctifs, référentiel des caisses, sessions et comptages, opérations et transferts à deux temps, contrôles, instruments et devises, pilotage | C0 : aucune ; C1 à C6 : C0 (les champs comptables attendent F3) | Ceux de chaque lot C |
 | **F9. Analytique** | Axes, sections, ventilation, clés, répartition secondaire, règles automatiques, obligation par compte, reclassements, **postes de dépense** et analyse par poste, tableau de bord des dépenses, états analytiques | F3, F4 | Avec l'analytique activée, une dépense de classe 6 sans section ne se valide pas ; le résultat par site se calcule ; chaque dépense a un poste |
 | **F10. Banque, chèques, mobile money** | Comptes bancaires, cycle des chèques, bordereaux de remise, import de relevés, rapprochement, frais PawaPay | F3, F4 | Un relevé importé se pointe automatiquement à plus de 80 % sur un mois réel |
 | **F11. Fiscalité** | Comptes de taxe, exigibilité, déclaration de TVA, liquidation | F4 | L'état de TVA d'un mois égale la somme des TVA des factures scellées du mois |
@@ -598,7 +604,7 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 | **F15. Liasse et états de gestion** | DSF pré-remplie, passage au résultat fiscal, soldes de gestion mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, confirmation de solde | F12 | La DSF d'un exercice de test se remplit sans saisie hors notes rédactionnelles et tableau fiscal |
 | **F14. Exports et bascule** | Exports pour l'expert-comptable, archive annuelle, outils de reprise et d'à-nouveaux | F1 à F4 | La balance exportée se réimporte sans écart dans Sage 100, Sage X3 et Odoo |
 
-Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F16 (analytique puis budget, qui s'appuie sur les demandes), F10, F11, F17, F12, F13, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
+Le lot C0 (correctifs de caisse) part tout de suite, indépendamment du reste. Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F16 (analytique puis budget, qui s'appuie sur les demandes), F10, F11, F17, F12, F13, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
 
 ---
 
@@ -647,7 +653,7 @@ Règle de conception de tous les lots : **aucune valeur métier n'est codée en 
 | Analytique | Axes, sections, obligation par compte et par axe, clés de répartition, règles automatiques |
 | Fiscalité | Taux et règles (`TaxRule`), comptes de taxe, exigibilité, exonérations |
 | Produits constatés d'avance | Mode (mensuel, en clôture, aucun), comptes, types de produits concernés |
-| Caisses et trésorerie | Types de caisse, comptes et journaux liés, plafonds, comportement au plafond (alerte ou blocage), coupures du billetage, clôture à l'aveugle, seuil de double comptage, comptes d'écart et choix par défaut |
+| Caisses et trésorerie | Types de caisse, caisse mère et circuits de transfert, comptes et journaux liés, plafonds (détention, par opération, par jour), comportement au plafond (alerte ou blocage), coupures par devise, devises et taux, clôture à l'aveugle, tolérance, seuil de double comptage, double visa, délai de contre-passation, durée de session, politique de fin de mois, transit maximal, fréquence des comptages inopinés, comptes d'écart et choix par défaut ; liste complète dans [caisses-et-sessions.md](caisses-et-sessions.md#18-paramétrage) |
 | Demandes de fonds | Types disponibles, formulaires (champs visibles et obligatoires par type), grille de validation (seuils, niveaux, rôles), délégation, délais de rappel et d'escalade, expiration d'une demande approuvée, plafond de dépense directe, barèmes de mission |
 | Avances et justification | Délai par type, relances (jours et destinataires), blocage ou alerte, natures dispensées de pièce et leur plafond |
 | Pièces comptables | Préfixes et format des numéros, mentions, signatures demandées, logo et en-tête par organisation, mention de duplicata |
