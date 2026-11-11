@@ -10,7 +10,7 @@ Conventions :
 - `{NATURE}` : compte de la nature d'opération choisie.
 - `{PRODUIT}` : compte de produit de la ligne de facture (par type de ligne ou de service du catalogue).
 - Clé d'idempotence : `eventType` + référence. Un même événement ne produit qu'une pièce.
-- **Partie double** : chaque pièce de ce catalogue est équilibrée (total des débits = total des crédits, en XAF). Quand une ligne du tableau ne montre qu'un côté, c'est qu'elle complète une pièce dont les autres lignes sont écrites ailleurs dans la même ligne ou dans l'événement indiqué ; la pièce entière reste équilibrée. Le moteur refuse toute pièce déséquilibrée ([README, section 4.6](README.md#46-partie-double--règles-et-garanties)).
+- **Partie double** : chaque pièce de ce catalogue est équilibrée (total des débits = total des crédits, en XAF). Quand une ligne du tableau ne montre qu'un côté, c'est qu'elle complète une pièce dont les autres lignes sont écrites ailleurs dans la même ligne ou dans l'événement indiqué ; la pièce entière reste équilibrée. Une pièce déséquilibrée, ou dont la contrepartie n'est pas conforme, n'est jamais comptabilisée ni équilibrée d'office : elle est mise en attente d'équilibrage et notifiée ([README, section 4.6](README.md#46-partie-double--règles-et-garanties)).
 - Analytique : « héritée » signifie copiée des lignes de la facture concernée.
 
 ## Sommaire
@@ -27,6 +27,7 @@ Conventions :
 10. [Banque, chèques, mobile money](#10-banque-chèques-mobile-money)
 11. [Clôture et inventaire](#11-clôture-et-inventaire)
 12. [Ce qui ne produit pas d'écriture](#12-ce-qui-ne-produit-pas-décriture)
+13. [Classe 9 : analytique et hors bilan](#13-classe-9--analytique-et-hors-bilan)
 
 ---
 
@@ -210,3 +211,22 @@ Analytique : site, activité et ressource de la réservation.
 - Devis, bon de commande, état de besoin, demande approuvée (hors engagement budgétaire).
 - Report de fonds de caisse en fin de mois.
 - Mouvements `PAYMENT` et `REFUND` de caisse (écrits par l'événement de paiement).
+
+## 13. Classe 9 : analytique et hors bilan
+
+Numéros de comptes proposés, à valider avec l'expert-comptable (décision 20 du plan). Chaque écriture est équilibrée en classe 9 et ne touche pas aux classes 1 à 8.
+
+| Événement | Journal | Écriture |
+| --- | --- | --- |
+| Ligne de charge (classe 6) validée et ventilée | `CAG` | D `93x` centre d'analyse, une ligne par section selon la ventilation ; C `91x` charges réfléchies |
+| Ligne de produit (classe 7) validée et ventilée | `CAG` | D `91x` produits réfléchis ; C `93x` ou `95x` selon l'activité |
+| Répartition secondaire (clé de répartition) | `CAG` | D `93x` sections réceptrices ; C `93x` section répartie |
+| Calcul des coûts | `CAG` | D `95x` coût ; C `93x` centres |
+| Charges non incorporables, charges supplétives | `CAG` | D ou C `97x` ; contrepartie `93x` ou `95x` |
+| Résultat analytique de la période | `CAG` | Solde des `95x` et des produits vers `98x` |
+| Contre-passation d'une pièce générale | `CAG` | Contre-passation de son reflet analytique |
+| Reclassement analytique (changement de section) | `CAG` | D `93x` nouvelle section ; C `93x` ancienne section |
+| Engagement donné inscrit au registre | `HB` | D `90x` engagement donné ; C `90x` contrepartie des engagements donnés |
+| Engagement reçu inscrit au registre | `HB` | D `90x` contrepartie des engagements reçus ; C `90x` engagement reçu |
+| Variation mensuelle d'un engagement de bail | `HB` | Écriture de la variation, dans le sens de l'engagement |
+| Levée ou expiration d'un engagement | `HB` | Contre-passation du solde de l'engagement |

@@ -139,7 +139,8 @@ Les notes sans objet sont marquées « Néant » comme le prévoit la liasse.
 
 ### 4.5 Contrôles de cohérence avant édition définitive
 
-- Balance équilibrée (débit = crédit, à-nouveaux, mouvements, soldes).
+- Balance équilibrée (débit = crédit, à-nouveaux, mouvements, soldes) ; balances analytique et hors bilan de la classe 9 équilibrées.
+- Aucune pièce en attente d'équilibrage datée dans l'exercice.
 - Total actif = total passif.
 - Résultat du bilan = résultat net du compte de résultat.
 - Trésorerie du tableau des flux = trésorerie du bilan.

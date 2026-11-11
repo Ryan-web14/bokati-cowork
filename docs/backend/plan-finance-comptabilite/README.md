@@ -47,7 +47,7 @@ Fichiers du dossier :
 ## 1. Principes directeurs
 
 1. **Une seule source de vérité par fait.** Le fait métier (paiement, mouvement de caisse, facture) reste dans son module. L'écriture comptable en est la **traduction**, produite par le module comptable à partir d'un événement. Elle n'est jamais saisie une deuxième fois à la main.
-2. **Partie double, sans exception.** Toute écriture, automatique, manuelle, importée, de clôture ou de contre-passation, porte au moins deux lignes, et le total des débits égale le total des crédits. Aucun module n'écrit en partie simple dans la comptabilité générale : la caisse, le portefeuille et le stock restent des registres de gestion, et leur traduction comptable est toujours en partie double. Règles et garanties en [section 4.6](#46-partie-double--règles-et-garanties).
+2. **Partie double, sans exception.** Toute écriture, automatique, manuelle, importée, de clôture ou de contre-passation, porte au moins deux lignes, et le total des débits égale le total des crédits : **ce qui est crédité sur un compte est débité sur le bon compte de contrepartie**. La balance est donc **toujours** équilibrée. Une pièce déséquilibrée, ou dont la contrepartie n'est pas la bonne, n'entre pas en comptabilité : elle est **mise de côté en attente d'équilibrage et notifiée**. L'analytique et les engagements hors bilan sont eux aussi tenus en partie double, en classe 9 (décision 20). Aucun module n'écrit en partie simple dans la comptabilité générale : la caisse, le portefeuille et le stock restent des registres de gestion, et leur traduction comptable est toujours en partie double. Règles et garanties en [section 4.6](#46-partie-double--règles-et-garanties).
 3. **Rien ne s'efface.** Une écriture validée ne se modifie pas et ne se supprime pas : on la contre-passe. C'est déjà la règle des mouvements de caisse (contre-mouvement), des factures scellées (SEFC) et des écritures de portefeuille ; la comptabilité la reprend.
 4. **Toute écriture a une pièce.** Chaque écriture pointe son justificatif : facture, reçu, bon, procès-verbal, scan. Une écriture sans pièce reste en brouillard et ne se valide pas, sauf les écritures d'inventaire passées par un comptable.
 5. **Le paramétrage décide, pas le code.** Les comptes, journaux, schémas d'écriture, axes analytiques, seuils de validation et plafonds sont des données modifiables par un administrateur finance. Le code fournit des valeurs initiales conformes au SYSCOHADA.
@@ -140,7 +140,7 @@ PostingEngine
 acc_entry + acc_entry_line (+ ventilations analytiques)
 ```
 
-Un échec (compte manquant, période close, schéma absent) met l'événement en `FAILED` avec un motif lisible. L'écran « Écritures en attente » permet de corriger le paramétrage puis de rejouer.
+Une pièce calculée mais déséquilibrée, à la contrepartie non conforme ou à laquelle il manque un compte est enregistrée **en attente d'équilibrage**, hors balance, et notifiée (événement `UNBALANCED`, voir [section 4.6](#46-partie-double--règles-et-garanties)). Un échec technique (schéma absent, données de l'événement illisibles) met l'événement en `FAILED` avec un motif lisible. L'écran « Écritures en attente » permet de corriger le paramétrage puis de rejouer.
 
 ### 3.3 Activation progressive
 
@@ -244,7 +244,7 @@ Règles d'un journal : type, compte de trésorerie de contrepartie (journaux de 
 
 ### 4.4 Pièces et écritures
 
-- **Pièce** (`acc_entry`) : numéro (`journal-exercice-séquence`), journal, date comptable, date de la pièce justificative, libellé, origine (`MANUAL`, `CASH`, `PLATFORM`, `IMPORT`, `CLOSING`), référence métier (`sourceType` + `sourceCode`), justificatifs (lien vers la GED existante), statut `DRAFT` puis `VALIDATED` puis éventuellement `REVERSED`, auteur, valideur, horodatages, pièce de contre-passation liée.
+- **Pièce** (`acc_entry`) : numéro (`journal-exercice-séquence`), journal, date comptable, date de la pièce justificative, libellé, origine (`MANUAL`, `CASH`, `PLATFORM`, `IMPORT`, `CLOSING`), référence métier (`sourceType` + `sourceCode`), justificatifs (lien vers la GED existante), statut `DRAFT`, `PENDING_BALANCE` (en attente d'équilibrage, hors comptabilité), `VALIDATED`, puis éventuellement `REVERSED`, auteur, valideur, horodatages, pièce de contre-passation liée.
 - **Ligne** (`acc_entry_line`) : compte, compte auxiliaire de tiers, libellé, débit, crédit, devise et montant en devise, taux, code de taxe, base taxable, échéance, lettrage, ventilations analytiques.
 - **Contrôles à la validation** : pièce équilibrée ; période ouverte ; comptes actifs et autorisés dans le journal ; analytique présente là où elle est obligatoire et ventilée à 100 % ; justificatif présent sauf dispense.
 - **Validation** : rend la pièce immuable et lui attribue son numéro définitif. Le brouillard peut porter un numéro provisoire.
@@ -283,34 +283,91 @@ La comptabilité générale est tenue **en partie double** : chaque opération e
 
 **Garanties dans le logiciel**
 
-1. **Saisie manuelle** : la pièce peut être déséquilibrée tant qu'elle est en brouillard. L'écran affiche en permanence le total des débits, celui des crédits et la différence, et propose la ligne d'équilibre, que l'utilisateur voit et accepte. **Une pièce déséquilibrée ne se valide pas.**
-2. **Écritures automatiques** : le moteur calcule toutes les lignes du schéma puis vérifie l'équilibre **avant** d'enregistrer. Une pièce déséquilibrée n'est jamais enregistrée, et elle n'est jamais équilibrée d'office sur un compte d'attente : l'événement passe en `FAILED` avec le motif « schéma déséquilibré » et la différence. Il est corrigé dans le paramétrage puis rejoué.
+1. **La balance est toujours équilibrée.** Seules les pièces validées entrent dans les journaux, le grand livre, la balance, les états et les exports. Une pièce validée est équilibrée par construction (contrôles ci-dessous et contrôle en base). Aucun cas, aucun paramètre, aucun droit ne permet de valider une pièce déséquilibrée.
+2. **Saisie manuelle** : l'écran affiche en permanence le total des débits, celui des crédits et la différence. Il propose la ligne de contrepartie manquante, sur le compte que la règle de contrepartie désigne (voir plus bas), que l'utilisateur voit et accepte. Une pièce enregistrée sans être équilibrée part **en attente d'équilibrage**.
+3. **Écritures automatiques** : le moteur calcule toutes les lignes du schéma puis vérifie l'équilibre et les contreparties **avant** de comptabiliser. Une pièce qui ne passe pas ces contrôles n'est **jamais équilibrée d'office** sur un compte d'attente. Elle est enregistrée **en attente d'équilibrage**, avec les lignes calculées, la différence et le motif (« schéma déséquilibré », « contrepartie non autorisée », « compte manquant »). L'événement passe au statut `UNBALANCED`. Le fait métier (paiement, mouvement de caisse) n'est pas bloqué.
 3. **Schémas d'écriture** : un schéma ne s'active qu'après une simulation réussie sur des événements de test et sur des événements réels récents, tous équilibrés. Un schéma modifié repasse la simulation.
 4. **Base de données** :
    - contraintes sur les lignes : débit et crédit positifs ou nuls, un seul des deux non nul ;
    - contrôle d'équilibre de la pièce au passage en `VALIDATED`, par un déclencheur, en plus du contrôle applicatif ;
    - les lignes d'une pièce validée ne peuvent plus être modifiées ni supprimées.
-5. **Imports** (CSV, journal de paie, relevés, reprise) : une pièce importée déséquilibrée est rejetée avec sa différence ; le reste du fichier est traité.
+5. **Imports** (CSV, journal de paie, relevés, reprise) : une pièce importée déséquilibrée est mise **en attente d'équilibrage**, avec sa différence et la ligne du fichier d'origine ; le reste du fichier est traité.
 6. **Exports** : seules des pièces validées, donc équilibrées, sont exportées vers Sage 100, Sage X3, Odoo ou en CSV.
+
+**Pièces en attente d'équilibrage**
+
+| Point | Règle |
+| --- | --- |
+| Où elles sont | Dans une file à part, statut de pièce `PENDING_BALANCE`. Elles **ne figurent pas** dans les journaux, le grand livre, la balance, les états, les exports ni les soldes : la balance reste équilibrée |
+| Notification | Dès la mise en attente : l'auteur (saisie manuelle, import), les comptables et l'administrateur finance. Le message donne le journal, la date, la différence, le motif et un lien vers la pièce. Un récapitulatif quotidien liste les pièces encore en attente |
+| Écran | « Pièces en attente d'équilibrage » : filtres par journal, période, origine, motif, ancienneté ; vue débit, crédit, différence ; historique des corrections |
+| Correction | Corriger le schéma, puis **régénérer** la pièce depuis l'événement d'origine ; ou compléter la pièce à la main avec la ligne manquante sur le bon compte (droit `ACCOUNTING_ENTRY:BALANCE`). La pièce n'est validée qu'une fois équilibrée et ses contreparties conformes. Chaque correction est tracée (qui, quoi, avant, après) |
+| Relances | Relance de l'auteur et des comptables à J+1, J+3 et J+7 (paramètres), puis escalade au responsable financier |
+| Clôture | Une période ne se verrouille pas et ne se clôt pas tant qu'il reste une pièce en attente datée dans cette période |
+| Abandon | Une pièce en attente sans objet (doublon, import erroné) se rejette avec un motif ; elle reste consultable, l'événement d'origine est marqué `IGNORED` |
+
+**La bonne contrepartie**
+
+L'équilibre ne suffit pas : le débit doit tomber sur le compte qui correspond réellement à l'opération.
+
+1. **Chaque schéma d'écriture fixe sa contrepartie.** Il n'existe aucun compte de contrepartie « par défaut » ou « fourre-tout ». Le compte d'attente `471` n'est utilisé que par les schémas qui le prévoient explicitement : écart de caisse en revue, ajustement de portefeuille en attente de décision.
+2. **Règles de contrepartie** (paramétrables, valeurs initiales SYSCOHADA) :
+   - un journal de trésorerie (caisse `CA-`, banque `BQ-`, mobile money `MM-`) contient obligatoirement une ligne sur **son** compte de trésorerie ;
+   - un journal de ventes contient un compte client (`411` ou `4191`) et des comptes de produits ou de taxe ;
+   - un compte de tiers (`411`, `401`, `421`, `4191`) porte toujours le compte auxiliaire du tiers concerné ;
+   - des paires autorisées par compte : par exemple, une avance au personnel `421` a pour contrepartie un compte de trésorerie ou de charge à la justification, une avance client `4191` un compte de trésorerie ou un compte client.
+3. **Sens anormaux** signalés, et bloquants si le paramétrage le prévoit :
+   - charge (classe 6) au crédit, ou produit (classe 7) au débit, hors avoir, contre-passation, réduction ou transfert de charges ;
+   - compte de caisse qui deviendrait créditeur (une caisse ne peut pas avoir un solde négatif) : bloquant.
+4. Une pièce qui viole une règle de contrepartie bloquante suit le même chemin qu'une pièce déséquilibrée : **en attente, notifiée**, corrigée puis validée.
 
 **Contrôles d'équilibre à tous les niveaux**
 
 | Niveau | Contrôle | Quand |
 | --- | --- | --- |
-| Pièce | Débits = crédits | À chaque validation |
+| Pièce | Débits = crédits ; contreparties conformes | À chaque validation ; sinon mise en attente |
+| Pièces en attente | Nombre, ancienneté, montant des différences | Récapitulatif quotidien ; bloquant à la clôture de leur période |
 | Journal, période | Total des débits = total des crédits | Contrôle quotidien, et à la clôture de période |
-| Balance générale | Total des débits = total des crédits ; total des soldes débiteurs = total des soldes créditeurs | Contrôle quotidien ; bloquant à la clôture |
+| Balance générale (classes 1 à 8) | Total des débits = total des crédits ; total des soldes débiteurs = total des soldes créditeurs | Contrôle quotidien ; bloquant à la clôture |
+| Balance analytique (classe 9, comptes 91 à 99) | Équilibrée en soi ; comptes réfléchis = charges et produits ventilés de la comptabilité générale ; résultat analytique, corrigé des différences de traitement, = résultat de la comptabilité générale | Contrôle quotidien ; bloquant à la clôture si l'analytique est obligatoire |
+| Balance hors bilan (classe 9, comptes 90) | Équilibrée en soi ; soldes = registre des engagements actifs | Contrôle quotidien |
 | Comptes collectifs | Solde du collectif (`411`, `401`, `421`, `4191`) = somme des comptes auxiliaires | Contrôle quotidien |
 | Registres de gestion | Solde du `571x` de chaque caisse = solde de la caisse ; `4191` = somme des portefeuilles ; comptes de stock = stock valorisé ; `411` du client = solde de son relevé de compte | Contrôle quotidien ; écart signalé avec ses pièces |
 | Exercice | Bilan équilibré (actif = passif) ; résultat du bilan = résultat du compte de résultat ; à-nouveaux = soldes de clôture | À la clôture d'exercice |
 
 Un contrôle en échec est une alerte bloquante pour la clôture. Elle est visible sur le tableau de bord comptable, avec les pièces en cause.
 
-**Ce qui n'est pas en partie double, et pourquoi**
+**Classe 9 : analytique et hors bilan en partie double (décision 20)**
 
-- **Comptabilité analytique** : c'est une ventilation des lignes de charges et de produits, pas une seconde comptabilité. Son équilibre se contrôle par rapprochement : la somme des ventilations d'une ligne vaut 100 % de la ligne ; le total analytique d'une période égale le total des comptes de classes 6 et 7 concernés. Si l'expert-comptable le demande, un mode « analytique en classe 9 » tenu en partie double peut être activé (paramètre), avec des comptes réfléchis à arrêter avec lui.
-- **Budget et engagements budgétaires** : ce sont des montants de gestion, hors comptabilité générale ; ils ne produisent pas d'écriture tant que la dépense n'est pas réalisée.
-- **Engagements hors bilan** : tenus dans un registre ([financement-engagements-paie.md](financement-engagements-paie.md#3-registre-des-engagements-hors-bilan)) ; en option, chaque engagement est aussi écrit en partie double sur des comptes de classe 9 et leur contrepartie, numéros à valider avec l'expert-comptable.
+Le SYSCOHADA révisé réserve la classe 9 aux engagements hors bilan et à la comptabilité analytique de gestion. Les deux y sont tenus **en partie double**, dans des journaux à eux, et forment chacun un ensemble fermé et équilibré, distinct des classes 1 à 8.
+
+| Sous-classe | Usage proposé (à valider avec l'expert-comptable) |
+| --- | --- |
+| 90 | Engagements hors bilan : engagements donnés et reçus, chacun avec son compte de contrepartie |
+| 91 | Comptes réfléchis : reflet des charges et des produits de la comptabilité générale |
+| 92 | Reclassements |
+| 93 | Centres d'analyse (sections analytiques, postes analytiques de l'utilisateur) |
+| 94 | Stocks en comptabilité analytique |
+| 95 | Coûts (par activité, par site, par ressource) |
+| 96 | Écarts sur coûts préétablis |
+| 97 | Différences de traitement comptable (charges non incorporables, charges supplétives) |
+| 98 | Résultats analytiques |
+| 99 | Liaisons internes |
+
+- **Analytique** (journal `CAG`) : chaque ligne de classe 6 ou 7 validée produit son reflet en classe 9.
+  - Une charge ventilée donne D centre d'analyse `93x` (une ligne par section, selon la ventilation) ; C compte réfléchi `91x`.
+  - Un produit donne D compte réfléchi `91x` ; C centre ou coût `93x` / `95x`.
+  - Les répartitions secondaires, les calculs de coûts et de résultats analytiques sont des écritures de classe 9 entre `93`, `95`, `96`, `97` et `98`, toutes équilibrées.
+  - Un poste analytique créé par l'utilisateur crée son compte `93x` (section 4.1, création en contexte).
+  - L'écriture analytique se fait **en même temps** que la pièce générale validée ; une ventilation incomplète met la pièce générale en attente (si l'analytique est obligatoire sur le compte).
+- **Hors bilan** (journal `HB`) : chaque engagement du [registre](financement-engagements-paie.md#3-registre-des-engagements-hors-bilan) s'écrit en partie double sur `90x`.
+  - Un engagement donné donne D compte d'engagement donné ; C sa contrepartie. Un engagement reçu donne l'écriture inverse.
+  - La variation mensuelle d'un bail (loyers restant à courir) est une écriture de variation.
+  - La levée ou l'expiration d'un engagement donne la contre-passation du solde.
+  - Le registre reste l'outil de gestion (alertes, documents) ; la classe 90 en est la traduction comptable, rapprochée chaque jour.
+- La classe 9 n'entre ni dans la balance générale (classes 1 à 8), ni dans le bilan, ni dans le compte de résultat. Elle a sa propre balance analytique et sa propre balance hors bilan, toujours équilibrées.
+
+**Seul le budget reste hors partie double** : prévisions, crédits et engagements budgétaires sont des montants de gestion. La dépense réalisée, elle, passe en comptabilité générale et en classe 9 comme toute autre.
 
 ---
 
@@ -572,7 +629,7 @@ Résumé ci-dessous ; le détail de chaque état (colonnes, règles de calcul, c
 4. **Performance** : index sur (compte, date) et (journal, période) ; soldes mensuels pré-calculés par compte, mis à jour à la validation, pour la balance et le grand livre.
 5. **Sécurité** : double visa au-delà de seuils, journal d'audit (module `core/audit`), réimpressions tracées, verrouillage des périodes.
 6. **Ergonomie** : écrans de caisse au clavier, montants en grand, recherche de nature par mots, aperçu de la pièce et de l'écriture avant validation, mobile pour les demandes et les justifications (photo du ticket).
-7. **Notifications** : demande à valider, demande approuvée prête à décaisser, avance à justifier, relance, écart de caisse, écriture en échec.
+7. **Notifications** : demande à valider, demande approuvée prête à décaisser, avance à justifier, relance, écart de caisse, écriture en échec, **pièce en attente d'équilibrage** (immédiate, relances, récapitulatif quotidien).
 8. **Documentation** : chaque lot a son dossier de doc backend et sa doc frontend.
 
 ---
@@ -596,7 +653,9 @@ Tables nouvelles (préfixe `acc_` pour la comptabilité, `cash_` pour la trésor
 | `acc_entry_line` | entry_id, line_no, account_number, third_party_code, label, debit, credit, currency, foreign_amount, rate, tax_code, tax_base, due_date, lettering_code |
 | `acc_lettering` | code, account_number, third_party_code, lettered_at, lettered_by |
 | `acc_posting_rule` | event_type, conditions (jsonb), journal_resolver, lines (jsonb), analytic_resolver, version, effective_from, active |
-| `acc_posting_event` | event_type, reference, payload, status (PENDING, POSTED, FAILED, IGNORED), failure_reason, entry_number, attempts : registre d'idempotence |
+| `acc_posting_event` | event_type, reference, payload, status (PENDING, POSTED, UNBALANCED, FAILED, IGNORED), failure_reason, entry_number, attempts : registre d'idempotence |
+| `acc_pending_entry_log` | entry_number, reason (UNBALANCED, COUNTERPART_NOT_ALLOWED, MISSING_ACCOUNT, ANALYTIC_INCOMPLETE), difference, notified_at, reminders, resolved_by, resolved_at, resolution (REGENERATED, COMPLETED, REJECTED) |
+| `acc_counterpart_rule` | scope (journal, compte, plage), rule_type (REQUIRED_ACCOUNT, ALLOWED_PAIR, ABNORMAL_SIDE, NO_NEGATIVE_BALANCE), parameters (jsonb), blocking, active |
 | `acc_analytic_axis` | code, label, required, active |
 | `acc_analytic_section` | axis_code, code, label, parent_code, active |
 | `acc_analytic_allocation` | entry_line_id, section_code, percentage, amount |
@@ -640,6 +699,7 @@ Colonnes ajoutées à `cash_movement` : voir 7.1. À `payment_transaction` : `ac
 | `ACCOUNTING_ENTRY:CREATE`, `:VALIDATE`, `:REVERSE` | Comptable ; validation par un second comptable au-delà d'un seuil |
 | `ACCOUNTING_PERIOD:LOCK`, `:CLOSE` | Responsable financier |
 | `ACCOUNTING_SETTINGS:MANAGE` | Administrateur finance (plan, schémas, natures, axes) |
+| `ACCOUNTING_ENTRY:BALANCE` | Comptable : compléter ou régénérer une pièce en attente d'équilibrage, la rejeter avec motif |
 | `ACCOUNTING_ACCOUNT:CREATE` | Comptable, administrateur finance : créer un compte divisionnaire ; caissière principale : seulement un divisionnaire de trésorerie en créant un journal |
 | `ACCOUNTING_ACCOUNT:MANAGE` | Administrateur finance : nouveau compte principal, validation des comptes créés, désactivation, fusion |
 | `ACCOUNTING_REPORT:READ` | Direction, comptable, expert-comptable (lecture seule) |
@@ -668,21 +728,21 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 
 | Lot | Contenu | Dépend de | Critère d'acceptation |
 | --- | --- | --- | --- |
-| **F1. Socle comptable** | Plan de comptes SYSCOHADA chargé, exercices et périodes, journaux, pièces et lignes, saisie manuelle, validation, contre-passation, brouillard, journal, grand livre, balance | | Une écriture manuelle se saisit, se valide, apparaît dans la balance équilibrée ; une pièce déséquilibrée ne se valide pas, même en contournant l'écran (contrôle en base) ; un compte créé sous un parent hérite de ses propriétés et de son poste d'état financier ; une période close refuse toute écriture |
-| **F2. Moteur d'imputation** | Événements comptables par l'outbox, registre d'idempotence, schémas en base, résolveurs, écran des écritures en échec, aperçu d'écriture | F1 | Rejouer un événement ne double pas l'écriture ; un compte manquant met l'événement en échec sans bloquer le paiement ; un schéma déséquilibré ne s'active pas, et un événement qui produirait une pièce déséquilibrée passe en échec sans rien enregistrer |
+| **F1. Socle comptable** | Plan de comptes SYSCOHADA chargé, exercices et périodes, journaux, pièces et lignes, saisie manuelle, validation, contre-passation, brouillard, journal, grand livre, balance | | Une écriture manuelle se saisit, se valide, apparaît dans la balance équilibrée ; une pièce déséquilibrée ne se valide pas, même en contournant l'écran (contrôle en base), elle part en attente et l'auteur et les comptables sont notifiés ; la balance reste équilibrée ; un compte créé sous un parent hérite de ses propriétés et de son poste d'état financier ; une période close refuse toute écriture |
+| **F2. Moteur d'imputation** | Événements comptables par l'outbox, registre d'idempotence, schémas en base, résolveurs, écran des écritures en échec, aperçu d'écriture | F1 | Rejouer un événement ne double pas l'écriture ; un compte manquant met l'événement en échec sans bloquer le paiement ; un schéma déséquilibré ne s'active pas ; un événement qui produit une pièce déséquilibrée ou à la contrepartie non conforme la met en attente, notifiée, hors balance, et elle se valide après régénération |
 | **F3. Trésorerie et caisse comptable** | Comptes de trésorerie, journal par caisse, natures d'opération, enrichissement des mouvements, choix et création de journal par la caissière, écritures de tous les mouvements, écarts de clôture | F2 | Chaque mouvement de caisse produit sa pièce dans le journal choisi ; le solde comptable d'une caisse égale son solde opérationnel |
 | **F4. Encaissements et ventes** | Écritures des factures, avoirs, encaissements par moyen, remboursements, portefeuille, comptes clients auxiliaires, lettrage automatique | F2 | Une facture payée en espèces laisse le compte client soldé et lettré ; `4191` égale la somme des soldes de portefeuille |
 | **F5. Demandes et état de besoin** | État de besoin, nouvelle demande de fonds multi-lignes, champs automatiques, circuit multi-niveaux, décaissement distinct, notifications, nouvelles pièces | F3 | Un employé sans session crée une demande ; elle traverse deux niveaux de validation ; la caissière la décaisse avec signature ; la pièce sort avec son imputation |
 | **F6. Avances et justification** | Avances à justifier, justification ligne par ligne, reliquat et complément, relances, blocage, état des avances | F5 | Une avance de 100 000 justifiée en 3 lignes pour 85 000 se solde par un retour de 15 000 ; `421` du bénéficiaire revient à zéro |
 | **F7. Pièces comptables** | Refonte des gabarits (bons, bon de décaissement, état de besoin, fiche de justification, PV de billetage et de passation, bordereau de remise), montant en lettres, QR, duplicata | F5 | Chaque pièce porte les mentions de [pieces-comptables.md](pieces-comptables.md) |
 | **F8. Système de caisse complet** | Lots C0 à C6 de [caisses-et-sessions.md](caisses-et-sessions.md#20-découpage-en-lots-et-critères-dacceptation) : correctifs, référentiel des caisses, sessions et comptages, opérations et transferts à deux temps, contrôles, instruments et devises, pilotage | C0 : aucune ; C1 à C6 : C0 (les champs comptables attendent F3) | Ceux de chaque lot C |
-| **F9. Analytique** | Axes, sections, ventilation, clés, répartition secondaire, règles automatiques, obligation par compte, reclassements, **postes de dépense** et analyse par poste, tableau de bord des dépenses, états analytiques | F3, F4 | Avec l'analytique activée, une dépense de classe 6 sans section ne se valide pas ; le résultat par site se calcule ; chaque dépense a un poste |
+| **F9. Analytique** | Axes, sections, ventilation, clés, répartition secondaire, règles automatiques, obligation par compte, reclassements, **postes de dépense** et analyse par poste, tableau de bord des dépenses, états analytiques, tenue en classe 9 en partie double (journal `CAG`, comptes réfléchis, centres, coûts, résultats analytiques), balance analytique | F3, F4 | Avec l'analytique activée, une dépense de classe 6 sans section ne se valide pas ; le résultat par site se calcule ; chaque dépense a un poste |
 | **F10. Banque, chèques, mobile money** | Comptes bancaires, cycle des chèques, bordereaux de remise, import de relevés, rapprochement, frais PawaPay | F3, F4 | Un relevé importé se pointe automatiquement à plus de 80 % sur un mois réel |
 | **F11. Fiscalité** | Comptes de taxe, exigibilité, déclaration de TVA, liquidation | F4 | L'état de TVA d'un mois égale la somme des TVA des factures scellées du mois |
 | **F12. Abonnements et clôture** | Produits constatés d'avance, créances douteuses, contrôles de clôture, à-nouveaux, états financiers SYSCOHADA | F4, F11 | La clôture d'un exercice de test produit bilan, compte de résultat et à-nouveaux équilibrés |
 | **F13. Achats et immobilisations** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, immobilisations et amortissements | F5, F9 | Une commande validée engage le budget ; une immobilisation génère son plan d'amortissement |
 | **F16. Budget** | Budgets et versions, mensualisation, élaboration et validation, révisions, virements de crédits, engagements, contrôle budgétaire dans les états de besoin, demandes, décaissements, justifications, dépenses directes, écritures ; dérogations ; suivi, projections, alertes | F5, F6, F9 | Une demande sur une ligne bloquante sans disponible est refusée ou part en validation budgétaire ; un engagement de 100 000 réalisé pour 85 000 libère 15 000 |
-| **F17. Financement, hors bilan, paie** | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre hors bilan, import du journal de paie | F1, F2, F10 | Une échéance d'emprunt s'écrit seule ; un journal de paie importé s'équilibre et solde les avances retenues |
+| **F17. Financement, hors bilan, paie** | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre hors bilan et sa tenue en classe 90 (journal `HB`), import du journal de paie | F1, F2, F10 | Une échéance d'emprunt s'écrit seule ; un journal de paie importé s'équilibre et solde les avances retenues |
 | **F15. Liasse et états de gestion** | DSF pré-remplie, passage au résultat fiscal, soldes de gestion mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, confirmation de solde | F12 | La DSF d'un exercice de test se remplit sans saisie hors notes rédactionnelles et tableau fiscal |
 | **F14. Exports et bascule** | Exports pour l'expert-comptable, archive annuelle, outils de reprise et d'à-nouveaux | F1 à F4 | La balance exportée se réimporte sans écart dans Sage 100, Sage X3 et Odoo |
 
@@ -717,8 +777,9 @@ Réponses de la direction (11/11/2026). **Chaque décision est une valeur par d�
 | 17 | Paie | **Import du journal de paie** mensuel avec correspondance des rubriques ; calcul de la paie hors périmètre | Modèles d'import, correspondance rubriques et comptes |
 | 18 | Analytique et budget | **Analytique par poste de dépense** et **budget complet** contrôlé dans chaque sortie de fonds et opération | `accounting.analytic.enabled`, `accounting.budget.enabled`, niveau de contrôle par ligne |
 | 19 | Postes, prévisions, prévu / non prévu | L'utilisateur **définit ses postes analytiques et ses postes budgétaires** ; le budget porte des **prévisions** ; chaque dépense indique si elle **était prévue**, sinon motif obligatoire | Droits de création, validation des postes, motifs de non-prévision, validation supplémentaire du non prévu, seuil de dépassement de prévision |
+| 20 | Partie double et classe 9 | La balance est **toujours équilibrée** ; tout crédit a son débit sur le bon compte ; une pièce déséquilibrée ou à la contrepartie non conforme est **mise en attente d'équilibrage et notifiée**, jamais forcée. L'**analytique** et les **engagements hors bilan** sont tenus **en classe 9**, en partie double | Règles de contrepartie, notifications et relances, comptes de classe 9 |
 
-Reste à obtenir de l'expert-comptable : régime d'exigibilité et taux de TVA (4), ajustements du plan de comptes (2), écritures de constitution pour l'ouverture de 2026 (6, 12), et le choix du compte des comptes courants d'associés (bloqués ou non, 15).
+Reste à obtenir de l'expert-comptable : numéros des comptes de classe 9 (20) ; régime d'exigibilité et taux de TVA (4), ajustements du plan de comptes (2), écritures de constitution pour l'ouverture de 2026 (6, 12), et le choix du compte des comptes courants d'associés (bloqués ou non, 15).
 
 ## 20. Tout est paramétrable
 
@@ -728,7 +789,7 @@ Règle de conception de tous les lots : **aucune valeur métier n'est codée en 
 | --- | --- |
 | Général | Activation de la comptabilité, de l'analytique, du budget ; régime (normal, SMT) ; date de bascule et de reprise ; devise de tenue ; multi-société |
 | Plan de comptes | Comptes, intitulés, nature, lettrable, tiers, trésorerie, analytique obligatoire, taxe associée, actif ; création de comptes (qui, mode immédiat ou après validation, longueur des numéros, plages réservées) ; règles de création des comptes auxiliaires (préfixe, longueur) |
-| Partie double | Compte et plafond des écarts d'arrondi, comptes d'écart de conversion, analytique en classe 9 (oui/non), engagements hors bilan en classe 9 (oui/non) ; l'équilibre lui-même n'est pas paramétrable |
+| Partie double | Compte et plafond des écarts d'arrondi, comptes d'écart de conversion, règles de contrepartie et leur caractère bloquant, destinataires et rythme des notifications et relances des pièces en attente, comptes de classe 9 (analytique et hors bilan) ; **ne sont pas paramétrables** : l'équilibre des pièces, l'exclusion des pièces en attente de la balance, la tenue de l'analytique et du hors bilan en classe 9 |
 | Exercices et périodes | Début et durée d'exercice, découpage, verrouillage automatique après N jours, synchronisation avec la clôture de facturation |
 | Journaux | Code, type, compte de trésorerie, numérotation, validation automatique ou brouillard, caisses autorisées, comptes autorisés, qui peut créer (et mode immédiat ou après validation) |
 | Schémas d'écriture | Pour chaque événement : conditions, journal, lignes, comptes, analytique ; versionnés avec date d'effet ; activation par famille d'événements |
