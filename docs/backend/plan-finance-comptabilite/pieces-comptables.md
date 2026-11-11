@@ -14,6 +14,7 @@ Les pièces sont produites en PDF (Thymeleaf vers OpenHtmlToPDF, comme la factur
 | Montant | En chiffres et **en lettres** (formateur existant `inWords` du reçu), devise |
 | Imputation | Journal, numéro de pièce comptable, comptes au débit et au crédit ; sections analytiques si activées |
 | Références | Demande, état de besoin, facture, fournisseur, mission selon le cas |
+| Budget (si activé) | Poste budgétaire, disponible avant et après ; « Dépense prévue : réf. de la prévision » ou « Dépense non prévue : motif » ; mention de dérogation le cas échéant |
 | Signatures | Cases nommées selon la pièce ; signature électronique horodatée si faite à l'écran, sinon case vide à signer |
 | Vérification | QR vers la page publique de vérification (module `verify`) : numéro, montant, date, statut actuel |
 | Réimpression | Mention « DUPLICATA » avec date de réimpression ; chaque impression est tracée (`printedAt` existe sur le mouvement) |

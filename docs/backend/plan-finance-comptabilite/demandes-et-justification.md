@@ -72,6 +72,8 @@ Le formulaire s'adapte au type choisi en premier (grandes tuiles avec pictogramm
 | Mode de remise | Espèces par défaut ; mobile money marchand ou virement en option |
 | Date souhaitée | Saisi |
 | Budget restant de la section | **Automatique** (si activé) |
+| Poste budgétaire | **Automatique** depuis la nature et le service, modifiable |
+| Dépense prévue ou non prévue | **Prévisions ouvertes proposées** ; sinon « non prévue » avec motif obligatoire (voir [analytique-et-budget.md](analytique-et-budget.md#34-dépense-prévue-ou-non-prévue)) |
 | Avances non soldées du bénéficiaire | **Automatique**, avec alerte ; blocage si l'une dépasse le délai |
 | Plafond applicable et niveau de validation qui sera requis | **Automatique**, affiché avant l'envoi |
 | État de besoin d'origine | **Automatique** si la demande en vient |

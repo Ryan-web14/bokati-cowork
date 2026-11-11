@@ -250,7 +250,10 @@ Détail complet dans [analytique-et-budget.md](analytique-et-budget.md). En bref
   - détail jusqu'au justificatif ;
   - indicateurs rapportés à l'activité (par m², par membre) ;
   - alertes de dérive.
+- **Postes définis par l'utilisateur** : chaque organisation crée ses axes, sections et postes analytiques, ainsi que ses **postes budgétaires** (nomenclature en arbre, reliée aux comptes, postes de dépense et natures). La création se fait depuis un écran dédié ou à la volée depuis une demande, avec validation selon le paramètre.
 - **Budget complet** :
+  - **prévisions** : dépenses attendues, ponctuelles ou récurrentes, avec objet, montant et mois, rattachées à un poste budgétaire ; rappels quand une prévision approche sans demande ;
+  - **dépense prévue ou non prévue** : chaque dépense est liée à une prévision, ou déclarée non prévue avec motif, et éventuellement validée en plus ; états du prévu et du non prévu, qualité de la prévision, réserve pour imprévus ;
   - versions et révisions, mensualisation ;
   - élaboration par centre et circuit de validation ;
   - virements de crédits, gel, report ;
@@ -625,6 +628,7 @@ Réponses de la direction (11/11/2026). **Chaque décision est une valeur par d�
 | 16 | Engagements hors bilan | **Registre** avec alertes et note annexe automatique | Types d'engagement |
 | 17 | Paie | **Import du journal de paie** mensuel avec correspondance des rubriques ; calcul de la paie hors périmètre | Modèles d'import, correspondance rubriques et comptes |
 | 18 | Analytique et budget | **Analytique par poste de dépense** et **budget complet** contrôlé dans chaque sortie de fonds et opération | `accounting.analytic.enabled`, `accounting.budget.enabled`, niveau de contrôle par ligne |
+| 19 | Postes, prévisions, prévu / non prévu | L'utilisateur **définit ses postes analytiques et ses postes budgétaires** ; le budget porte des **prévisions** ; chaque dépense indique si elle **était prévue**, sinon motif obligatoire | Droits de création, validation des postes, motifs de non-prévision, validation supplémentaire du non prévu, seuil de dépassement de prévision |
 
 Reste à obtenir de l'expert-comptable : régime d'exigibilité et taux de TVA (4), ajustements du plan de comptes (2), écritures de constitution pour l'ouverture de 2026 (6, 12), et le choix du compte des comptes courants d'associés (bloqués ou non, 15).
 

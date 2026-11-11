@@ -13,7 +13,7 @@ Les deux sont activables par paramètre (`accounting.analytic.enabled`, `account
 
 1. [Comptabilité analytique](#1-comptabilité-analytique)
 2. [Analyse par poste de dépense](#2-analyse-par-poste-de-dépense)
-3. [Gestion budgétaire](#3-gestion-budgétaire)
+3. [Gestion budgétaire](#3-gestion-budgétaire) (postes budgétaires, prévisions, dépense prévue ou non prévue)
 4. [Contrôle budgétaire dans les opérations](#4-contrôle-budgétaire-dans-les-opérations)
 5. [Suivi, alertes et états](#5-suivi-alertes-et-états)
 6. [Données](#6-données)
@@ -68,6 +68,23 @@ Un **axe** est une façon de découper l'activité ; une **section** est une cas
 | Indicateurs croisés | CA par m² ou par poste de travail, coût par membre actif, avec les données d'occupation des réservations |
 
 Tous les états se filtrent par axe, section (avec ou sans sous-sections) et période, et se comparent au budget de la même section.
+
+### 1.4 Postes analytiques définis par l'utilisateur
+
+Les axes, sections et postes de dépense livrés ne sont qu'un point de départ. **Chaque organisation définit les siens**, sans développement :
+
+- **Écran « Postes analytiques »** : créer, renommer, déplacer dans l'arbre (glisser-déposer), fusionner deux postes (l'historique suit), fermer, rouvrir ; importer et exporter la nomenclature (Excel).
+- **Ce que l'utilisateur définit** : ses **axes** (ajouter un axe « Client institutionnel » ou « Programme »), les **sections** de chaque axe, les **postes de dépense** et leurs familles, le code (proposé automatiquement, modifiable), le libellé, le parent, le responsable, la nature fixe ou variable, les comptes généraux rattachés, les dates de validité, la couleur et l'ordre d'affichage.
+- **Qui peut créer** :
+  - l'administrateur finance ;
+  - les **responsables de centre** dans leur propre branche de l'arbre ;
+  - selon le paramètre, création **immédiate** ou **soumise à validation** du responsable financier.
+- **Création à la volée** : depuis une demande de fonds ou une justification, un utilisateur habilité qui ne trouve pas le bon poste propose « Nouveau poste ». Le poste est créé en **attente de validation** et la dépense y est imputée provisoirement. Si le poste est refusé, le comptable reclasse vers un poste existant.
+- **Garde-fous** :
+  - un poste mouvementé ne se supprime pas, il se ferme ;
+  - une fusion ou un déplacement garde l'historique des états (avec ou sans retraitement des périodes passées, au choix) ;
+  - les doublons de libellé sont signalés.
+- **Lien avec le budget** : un poste analytique se relie à un ou plusieurs **postes budgétaires** ([section 3.2](#32-postes-budgétaires)), pour que le réalisé analytique alimente le suivi budgétaire.
 
 ---
 
@@ -124,7 +141,7 @@ Vue d'ensemble pour la direction :
 | Élément | Règle |
 | --- | --- |
 | Exercice | Un budget par exercice comptable ; plusieurs **versions** (initial, révisé 1, révisé 2...) dont une seule **active** |
-| Ligne budgétaire | Croisement d'un **poste de dépense** (ou compte) et d'une **section** (site, centre de coût, projet), avec un montant annuel |
+| Ligne budgétaire | Croisement d'un **poste budgétaire** ([section 3.2](#32-postes-budgétaires)) et d'une **section** (site, centre de coût, projet), avec un montant annuel |
 | Mensualisation | Répartition du montant annuel par mois : égale, saisonnière (profil enregistré), ou saisie mois par mois |
 | Recettes | Budget de produits par activité et par site (CA attendu), pour le résultat prévisionnel |
 | Investissements | Budget d'investissement séparé (mobilier, informatique, aménagements), suivi par projet |
@@ -133,7 +150,66 @@ Vue d'ensemble pour la direction :
 | Niveau de contrôle | Par ligne : **bloquant**, **alerte** ou **informatif** (voir section 4) |
 | Tolérance | Pourcentage de dépassement toléré avant blocage (ex. 5 %), par ligne ou global |
 
-### 3.2 Élaboration
+### 3.2 Postes budgétaires
+
+Le **poste budgétaire** est l'unité dans laquelle on prévoit et contrôle. Il est défini par l'utilisateur, comme les postes analytiques.
+
+- **Nomenclature budgétaire** en arbre, propre à l'organisation. Exemple :
+  - Fonctionnement > Locaux > Énergie ;
+  - Fonctionnement > Accueil > Consommables ;
+  - Investissement > Aménagement étage 2 ;
+  - Personnel > Missions.
+- **Chaque poste budgétaire** a :
+  - code, libellé, parent, type (charge, produit, investissement, trésorerie) ;
+  - responsable ;
+  - niveau de contrôle et tolérance par défaut ;
+  - **correspondances** vers les comptes généraux, les postes de dépense analytiques et les natures d'opération qui l'alimentent. Ce sont elles qui rangent automatiquement chaque dépense dans le bon poste budgétaire.
+- **Écran de gestion** identique à celui des postes analytiques : création, arbre, fusion, fermeture, import et export Excel ; mêmes règles de droits et de validation.
+- **Consolidation** : le budget, l'engagé et le réalisé d'un poste parent sont la somme de ses enfants. On contrôle au niveau choisi : sur le poste fin (« Électricité ») ou sur le parent (« Énergie »), selon le paramètre du poste.
+- **Reconduction** : la nomenclature d'un exercice est reprise pour le suivant, modifiable.
+
+### 3.3 Prévisions de dépenses
+
+Le budget dit combien ; la **prévision** dit **quoi et quand**. Une prévision est une dépense attendue, identifiée à l'avance, rattachée à un poste budgétaire.
+
+| Champ | Exemple |
+| --- | --- |
+| Poste budgétaire, section | Investissement > Équipement ; site Siège |
+| Objet | « Remplacement du climatiseur salle Kintélé » |
+| Montant prévu | 800 000 XAF |
+| Date ou mois prévu | Mars 2026 |
+| Récurrence | Ponctuelle, ou récurrente (mensuelle, trimestrielle, annuelle) : facture d'électricité, abonnement internet, entretien de la climatisation |
+| Fournisseur pressenti | Facultatif |
+| Responsable | Qui portera la demande |
+| Priorité | Indispensable, importante, souhaitable (utile en cas d'arbitrage) |
+| Statut | Prévue, engagée, réalisée, reportée, annulée |
+
+- La **somme des prévisions** d'un poste se compare à son budget : prévisions supérieures au budget, poste sous-dimensionné ; prévisions inférieures, marge pour l'imprévu, affichée comme telle.
+- La mensualisation du budget peut être **générée à partir des prévisions** (les montants tombent dans les mois prévus, plus une réserve pour l'imprévu répartie selon un profil).
+- **Rappels** : à l'approche du mois prévu, le responsable est invité à lancer la demande (« La prévision Entretien climatisation de mars n'a pas encore de demande »). Une prévision dont la date est passée sans dépense est signalée, puis reportée ou annulée.
+- Les prévisions récurrentes alimentent le **prévisionnel de trésorerie**.
+
+### 3.4 Dépense prévue ou non prévue
+
+Chaque dépense dit **si elle avait été prévue**.
+
+- **À la saisie** d'un état de besoin, d'une demande de fonds, d'une dépense directe au guichet, d'une commande ou d'une facture fournisseur :
+  - le logiciel **propose les prévisions ouvertes** du poste budgétaire concerné (même poste, même section, période proche, montant voisin) ;
+  - l'utilisateur en choisit une : la dépense est **prévue** et liée à sa prévision ;
+  - s'il n'y en a pas, la dépense est **non prévue**.
+- **Une dépense non prévue exige** :
+  - un **motif** choisi dans une liste paramétrable (urgence, panne, opportunité, obligation réglementaire, oubli de prévision, autre) ;
+  - une explication libre ;
+  - selon le paramètre, un **niveau de validation supplémentaire** (responsable du budget ou direction), même si le budget du poste a encore du disponible.
+- **Prévue mais différente** : si le montant dépasse la prévision au-delà d'un seuil (ex. +10 %), l'écart est signalé et motivé ; la dépense reste « prévue » mais marquée « dépassement de prévision ».
+- **Cas des avances** : la prévision est choisie sur la demande ; à la justification, chaque ligne hérite du statut, et une ligne hors objet de la demande est marquée non prévue.
+- **Effet sur la prévision** :
+  - la dépense réalisée passe la prévision à « réalisée » ;
+  - une dépense inférieure libère le reste ;
+  - une prévision récurrente reste ouverte pour l'échéance suivante.
+- **Sur les pièces** : la demande, le bon de décaissement et le bon de sortie portent « Dépense prévue : réf. de la prévision » ou « Dépense non prévue : motif ».
+
+### 3.5 Élaboration
 
 - **Assistant de construction** :
   - partir du réalisé N-1 (ou de rien la première année) ;
@@ -144,14 +220,14 @@ Vue d'ensemble pour la direction :
 - **Circuit de validation du budget** : brouillon, soumis par les responsables de centre, consolidé par le responsable financier, approuvé par la direction, actif. Un budget approuvé ne se modifie plus : on crée une révision.
 - **Budget par centre** : chaque responsable saisit sa partie ; la consolidation montre le total et le résultat prévisionnel.
 
-### 3.3 Vie du budget
+### 3.6 Vie du budget
 
 - **Révision** : nouvelle version, motif, approbation ; l'historique des versions est conservé et comparable.
 - **Virement de crédits** entre lignes (d'un poste sous-consommé vers un poste en tension). C'est une demande avec motif, validée selon les montants. Le total ne change pas, la trace est complète.
 - **Report** de crédits non consommés sur l'exercice suivant : paramétrable, sur décision.
 - **Gel** d'une ligne : plus d'engagement possible.
 
-### 3.4 Les quatre montants d'une ligne
+### 3.7 Les montants d'une ligne
 
 | Montant | Moment | Source |
 | --- | --- | --- |
@@ -159,6 +235,8 @@ Vue d'ensemble pour la direction :
 | **Engagé** | Quand une dépense est décidée mais pas encore payée | Demande de fonds approuvée, commande fournisseur, état de besoin validé (pré-engagement, facultatif) |
 | **Réalisé** | Quand la charge est comptabilisée | Écriture de charge (décaissement direct, justification d'avance validée, facture fournisseur, écriture manuelle) |
 | **Disponible** | À tout instant | Budgété moins engagé non encore réalisé moins réalisé |
+| **Prévu** | Saisie des prévisions | Somme des prévisions ouvertes du poste ; la part du budget non couverte par une prévision est la **réserve pour imprévus** |
+| **Réalisé prévu / non prévu** | À chaque réalisation | Le réalisé est séparé entre dépenses liées à une prévision et dépenses non prévues |
 
 Un engagement est **soldé** quand la dépense correspondante est réalisée. L'écart est libéré : un engagement de 100 000 réalisé pour 85 000 libère 15 000. Un engagement **expire** ou est **annulé** si la demande expire ou est annulée.
 
@@ -173,13 +251,13 @@ Le contrôle se fait **au moment où la dépense est décidée**, pas après. Ch
 | Opération | Ce qui se passe |
 | --- | --- |
 | **État de besoin** | Ligne budgétaire déduite (poste de la nature, section du demandeur). Le disponible s'affiche. **Pré-engagement** facultatif à la validation. |
-| **Demande de fonds : saisie** | Pour chaque ligne : ligne budgétaire, disponible, et ce qui restera après la demande. Indicateur vert (couvert), orange (dans la tolérance), rouge (dépassement). |
+| **Demande de fonds : saisie** | Pour chaque ligne : poste et ligne budgétaires, disponible, et ce qui restera après la demande. Indicateur vert (couvert), orange (dans la tolérance), rouge (dépassement). **Prévisions ouvertes proposées** : en choisir une, ou déclarer la dépense non prévue avec motif ([section 3.4](#34-dépense-prévue-ou-non-prévue)). |
 | **Demande de fonds : soumission** | Ligne **bloquante** et dépassement : soumission refusée, ou acceptée avec **validation budgétaire supplémentaire** (responsable du budget ou direction), selon le paramètre. Ligne en **alerte** : soumission acceptée, alerte au responsable du budget. |
 | **Demande de fonds : approbation** | **Engagement** créé sur la ligne. Le valideur voit l'impact budgétaire avant de décider. |
 | **Décaissement d'une dépense directe** | La charge est réalisée : l'engagement est soldé, le réalisé augmente. |
 | **Décaissement d'une avance** | Rien en réalisé (l'argent est en `421`). L'engagement reste ouvert jusqu'à la justification. |
 | **Justification d'avance** | Chaque ligne validée **réalise** la dépense sur sa ligne budgétaire (qui peut différer de la ligne prévue) ; à la clôture de l'avance, l'engagement est soldé et l'écart libéré. |
-| **Dépense directe au guichet sans demande** (moins de 50 000 XAF) | Contrôle immédiat. Ligne bloquante sans disponible : la caissière ne peut pas décaisser et doit passer par une demande. |
+| **Dépense directe au guichet sans demande** (moins de 50 000 XAF) | Contrôle immédiat. Ligne bloquante sans disponible : la caissière ne peut pas décaisser et doit passer par une demande. Prévue ou non prévue indiqué comme pour une demande. |
 | **Commande fournisseur** | Engagement à la validation de la commande. |
 | **Facture fournisseur** | Réalisé ; solde l'engagement de la commande. |
 | **Écriture manuelle de charge** | Réalisé ; contrôle en alerte seulement (le comptable régularise). |
@@ -214,6 +292,10 @@ Le budget de produits ne bloque rien : il sert au suivi (CA réalisé par activi
 | Engagements ouverts | Demandes approuvées non décaissées, avances non justifiées, commandes non facturées, par ligne |
 | Projection de fin d'exercice | Réalisé plus engagé plus tendance des mois restants, comparé au budget |
 | Historique des versions | Comparaison initial et révisions, virements de crédits |
+| Prévu et non prévu | Par poste budgétaire et par période : réalisé prévu, réalisé non prévu, part du non prévu (%), motifs les plus fréquents, demandeurs ; évolution mensuelle |
+| Suivi des prévisions | Prévisions par statut (prévue, engagée, réalisée, reportée, annulée) ; prévisions échues sans demande ; écarts entre montant prévu et réalisé |
+| Qualité de la prévision | Taux de réalisation des prévisions, écart moyen prévu / réalisé, part des dépenses non prévues par responsable : pour améliorer le budget suivant |
+| Réserve pour imprévus | Par poste : budget non couvert par une prévision, consommé par les dépenses non prévues |
 | Budget de trésorerie | Prévu et réel par mois |
 | Tableau de bord du responsable | Ses lignes, ses alertes, les demandes en attente qui touchent son budget |
 
@@ -223,7 +305,10 @@ Le budget de produits ne bloque rien : il sert au suivi (CA réalisé par activi
 - dépassement ;
 - dérogation accordée ;
 - consommation en avance sur le rythme mensuel prévu ;
-- engagement ancien non soldé.
+- engagement ancien non soldé ;
+- prévision arrivée à échéance sans demande ;
+- part des dépenses non prévues d'un poste qui dépasse un seuil ;
+- réserve pour imprévus épuisée.
 
 ---
 
@@ -237,13 +322,18 @@ Le budget de produits ne bloque rien : il sert au suivi (CA réalisé par activi
 | `acc_allocation_key`, `acc_allocation_key_line` | clé de répartition, sections et pourcentages, date d'effet |
 | `acc_analytic_allocation` | ligne d'écriture, axe, section, pourcentage, montant |
 | `acc_analytic_reclass` | reclassements analytiques tracés |
-| `acc_expense_item` | poste de dépense : code, libellé, famille, nature fixe/variable, responsable, actif |
+| `acc_expense_item` | poste de dépense : code, libellé, famille, parent, nature fixe/variable, responsable, statut (actif, en attente de validation, fermé), créé par, validé par |
 | `acc_expense_item_account` | correspondance poste et comptes |
 | `acc_budget` | exercice, type (charges, produits, investissement, trésorerie), version, statut, motif, approuvé par, approuvé le, active |
-| `acc_budget_line` | budget, poste ou compte, section, montant annuel, niveau de contrôle, tolérance, responsable, gelée |
+| `acc_budget_item` | poste budgétaire : code, libellé, parent, type, responsable, niveau de contrôle, tolérance, niveau de consolidation du contrôle, statut, créé par, validé par |
+| `acc_budget_item_mapping` | poste budgétaire et ce qui l'alimente : comptes, postes de dépense, natures d'opération |
+| `acc_budget_line` | budget, poste budgétaire, section, montant annuel, niveau de contrôle, tolérance, responsable, gelée |
+| `acc_budget_forecast` | prévision : poste budgétaire, section, objet, montant, date ou mois, récurrence, fournisseur pressenti, responsable, priorité, statut |
+| `acc_budget_forecast_occurrence` | échéances d'une prévision récurrente, avec statut et montant réalisé |
+| `acc_unplanned_reason` | motifs de dépense non prévue (paramétrables) |
 | `acc_budget_line_month` | ligne, mois, montant |
 | `acc_budget_commitment` | ligne, source (état de besoin, demande, commande), référence, montant engagé, montant soldé, statut (OPEN, SETTLED, RELEASED, EXPIRED) |
-| `acc_budget_actual` | ligne, écriture, montant : alimenté par la comptabilisation des charges, pour un suivi rapide |
+| `acc_budget_actual` | ligne, écriture, montant, **prévision liée ou motif de non-prévision** : alimenté par la comptabilisation des charges, pour un suivi rapide |
 | `acc_budget_transfer` | ligne source, ligne cible, montant, motif, statut, validations |
 | `acc_budget_override` | dérogation : opération, ligne, dépassement, motif, auteur, date |
 | `acc_budget_profile` | profils de mensualisation |
@@ -257,6 +347,10 @@ Le disponible est calculé à partir de ces tables et mis à jour dans la même 
 | Droit | Qui, par défaut |
 | --- | --- |
 | `ANALYTIC_SETTINGS:MANAGE` | Administrateur finance (axes, sections, règles, clés, postes) |
+| `ANALYTIC_ITEM:CREATE` | Responsables de centre (dans leur branche), avec validation selon le paramètre ; proposition à la volée pour tout demandeur habilité |
+| `BUDGET_ITEM:MANAGE` | Administrateur finance, responsable financier (nomenclature budgétaire) ; responsables de centre dans leur branche, avec validation |
+| `BUDGET_FORECAST:MANAGE` | Responsables de centre (leurs postes), responsable financier |
+| `BUDGET:APPROVE_UNPLANNED` | Responsable du budget, direction (validation supplémentaire d'une dépense non prévue) |
 | `ANALYTIC:RECLASS` | Comptable |
 | `ANALYTIC_REPORT:READ` | Direction, responsables de centre (leurs sections), comptable |
 | `BUDGET:PREPARE` | Responsables de centre (leurs lignes) |
@@ -272,8 +366,8 @@ Le disponible est calculé à partir de ces tables et mis à jour dans la même 
 
 | Lot | Contenu |
 | --- | --- |
-| **F9. Analytique** (enrichi) | Axes et sections, règles automatiques, clés de répartition, répartition secondaire, reclassements, **postes de dépense** reliés aux natures, analyse par poste, tableau de bord des dépenses, états analytiques |
-| **F16. Budget** (nouveau, remplace la partie budget de F13) | Budgets et versions, mensualisation, élaboration et circuit de validation, révisions, virements, engagements, contrôle budgétaire dans les états de besoin, demandes, décaissements, justifications, commandes, factures fournisseurs et écritures ; dérogations ; suivi, projections, alertes |
+| **F9. Analytique** (enrichi) | **Postes analytiques définis par l'utilisateur** (écran de gestion, création à la volée avec validation), axes et sections, règles automatiques, clés de répartition, répartition secondaire, reclassements, **postes de dépense** reliés aux natures, analyse par poste, tableau de bord des dépenses, états analytiques |
+| **F16. Budget** (nouveau, remplace la partie budget de F13) | **Postes budgétaires définis par l'utilisateur** et leurs correspondances, **prévisions** (ponctuelles et récurrentes), **dépense prévue ou non prévue** à chaque saisie avec motif et validation supplémentaire, budgets et versions, mensualisation, élaboration et circuit de validation, révisions, virements, engagements, contrôle budgétaire dans les états de besoin, demandes, décaissements, justifications, commandes, factures fournisseurs et écritures ; dérogations ; suivi, projections, alertes |
 
 Dépendances :
 
