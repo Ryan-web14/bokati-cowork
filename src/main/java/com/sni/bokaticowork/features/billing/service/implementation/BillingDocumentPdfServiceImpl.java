@@ -431,9 +431,14 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
                             depositId = deposit.getDepositId();
                             payerPhone = com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber());
                         }
+                    } else if (tx.getPaymentMethod() == PaymentMethod.MOBILE_MONEY_OFFLINE) {
+                        payerPhone = com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(tx.getPayerPhone());
                     }
                     return new PaymentInfo(
-                            tx.getPaymentMethod() != null ? tx.getPaymentMethod().name() : null,
+                            // Le moyen s'imprime en francais, operateur compris pour un mobile money hors plateforme.
+                            tx.getPaymentMethod() != null
+                                    ? com.sni.bokaticowork.features.payment.service.support.PaymentMethodLabels.label(tx.getPaymentMethod(), tx.getProvider())
+                                    : null,
                             tx.getProvider(),
                             tx.getProviderReference(),
                             depositId,

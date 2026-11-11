@@ -2,9 +2,23 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-Module [payment](../README.md) · 17 route(s).
+Module [payment](../README.md) · 22 route(s).
 
 ## Routes
+
+<a id="r-get-sni-api-v1-payments-billing-documents-documentnumber-cash-change"></a>
+### GET /sni/api/v1/payments/billing-documents/{documentNumber}/cash-change
+
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
+- Réponse : `CashChangeResponse`
+- Modèles : [CashChangeResponse](#m-CashChangeResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java`, méthode `previewDocumentCashChange`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `documentNumber` | chemin | `String` | oui |  |
+| `tenderedAmount` | requête | `BigDecimal` | oui |  |
+| `amount` | requête | `BigDecimal` |  |  |
 
 <a id="r-get-sni-api-v1-payments-intents"></a>
 ### GET /sni/api/v1/payments/intents
@@ -72,6 +86,19 @@ Module [payment](../README.md) · 17 route(s).
 | --- | --- | --- | --- | --- |
 | `intentNumber` | chemin | `String` | oui |  |
 
+<a id="r-post-sni-api-v1-payments-intents-intentnumber-cancel"></a>
+### POST /sni/api/v1/payments/intents/{intentNumber}/cancel
+
+- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- Corps JSON (facultatif) : `CancelPaymentIntentRequest`
+- Réponse : `PaymentIntentResponse`
+- Modèles : [PaymentIntentResponse](#m-PaymentIntentResponse), [CancelPaymentIntentRequest](#m-CancelPaymentIntentRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java`, méthode `cancelIntent`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `intentNumber` | chemin | `String` | oui |  |
+
 <a id="r-patch-sni-api-v1-payments-intents-intentnumber-cash"></a>
 ### PATCH /sni/api/v1/payments/intents/{intentNumber}/cash
 
@@ -84,6 +111,20 @@ Module [payment](../README.md) · 17 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `intentNumber` | chemin | `String` | oui |  |
+
+<a id="r-get-sni-api-v1-payments-intents-intentnumber-cash-change"></a>
+### GET /sni/api/v1/payments/intents/{intentNumber}/cash-change
+
+- Accès : back-office : rôle d'administration et droit `PAYMENT:READ`
+- Réponse : `CashChangeResponse`
+- Modèles : [CashChangeResponse](#m-CashChangeResponse)
+- Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java`, méthode `previewIntentCashChange`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `intentNumber` | chemin | `String` | oui |  |
+| `tenderedAmount` | requête | `BigDecimal` | oui |  |
+| `amount` | requête | `BigDecimal` |  |  |
 
 <a id="r-post-sni-api-v1-payments-intents-intentnumber-link"></a>
 ### POST /sni/api/v1/payments/intents/{intentNumber}/link
@@ -106,6 +147,32 @@ Module [payment](../README.md) · 17 route(s).
 - Réponse : `MobileMoneyDepositResponse`
 - Modèles : [MobileMoneyDepositResponse](#m-MobileMoneyDepositResponse), [InitiateMobileMoneyDepositRequest](#m-InitiateMobileMoneyDepositRequest)
 - Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java`, méthode `initiateMobileMoneyDeposit`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `intentNumber` | chemin | `String` | oui |  |
+
+<a id="r-patch-sni-api-v1-payments-intents-intentnumber-offline"></a>
+### PATCH /sni/api/v1/payments/intents/{intentNumber}/offline
+
+- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- Corps JSON (obligatoire) : `RegisterOfflinePaymentRequest`
+- Réponse : `PaymentTransactionResponse`
+- Modèles : [PaymentTransactionResponse](#m-PaymentTransactionResponse), [RegisterOfflinePaymentRequest](#m-RegisterOfflinePaymentRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java`, méthode `registerOfflinePayment`
+
+| Paramètre | Où | Type | Requis | Défaut |
+| --- | --- | --- | --- | --- |
+| `intentNumber` | chemin | `String` | oui |  |
+
+<a id="r-post-sni-api-v1-payments-intents-intentnumber-relaunch"></a>
+### POST /sni/api/v1/payments/intents/{intentNumber}/relaunch
+
+- Accès : back-office : rôle d'administration et droit `PAYMENT:PROCESS`
+- Corps JSON (facultatif) : `RelaunchPaymentIntentRequest`
+- Réponse : `PaymentIntentResponse`
+- Modèles : [PaymentIntentResponse](#m-PaymentIntentResponse), [RelaunchPaymentIntentRequest](#m-RelaunchPaymentIntentRequest)
+- Code : `src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java`, méthode `relaunchIntent`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
@@ -219,6 +286,18 @@ Module [payment](../README.md) · 17 route(s).
 
 Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
+<a id="m-CashChangeResponse"></a>
+#### CashChangeResponse
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `currency` | texte |  |  |
+| `amountDue` | nombre décimal |  |  |
+| `tenderedAmount` | nombre décimal |  |  |
+| `appliedAmount` | nombre décimal |  |  |
+| `changeAmount` | nombre décimal |  |  |
+| `remainingAfter` | nombre décimal |  |  |
+
 <a id="m-PaymentIntentResponse"></a>
 #### PaymentIntentResponse
 
@@ -251,6 +330,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `idempotencyKey` | texte |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `metadataJson` | texte |  |  |
+| `cancelledAt` | date-heure ISO 8601 UTC |  |  |
+| `cancelledBy` | texte |  |  |
+| `cancellationReason` | texte |  |  |
+| `relaunchCount` | entier |  |  |
+| `lastRelaunchedAt` | date-heure ISO 8601 UTC |  |  |
+| `lastRelaunchedBy` | texte |  |  |
+| `relaunchable` | booléen |  |  |
+| `cancellable` | booléen |  |  |
 
 <a id="m-PaymentIntentStatus"></a>
 #### PaymentIntentStatus
@@ -321,6 +408,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `metadataJson` | texte |  |  |
 
+<a id="m-CancelPaymentIntentRequest"></a>
+#### CancelPaymentIntentRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `reason` | texte |  | longueur min `0`, longueur max `500` |
+
 <a id="m-PaymentTransactionResponse"></a>
 #### PaymentTransactionResponse
 
@@ -328,7 +422,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `transactionNumber` | texte |  |  |
 | `intentNumber` | texte |  |  |
-| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
+| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
 | `provider` | texte |  |  |
 | `providerReference` | texte |  |  |
 | `receiptNumber` | texte |  |  |
@@ -340,6 +434,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `failureReason` | texte |  |  |
 | `metadataJson` | texte |  |  |
 | `channel` | enum : `SELF_SERVICE`, `BACK_OFFICE`, `SYSTEM` |  |  |
+| `paymentMethodLabel` | texte |  |  |
+| `tenderedAmount` | nombre décimal |  |  |
+| `changeAmount` | nombre décimal |  |  |
+| `cashSessionNumber` | texte |  |  |
+| `bankName` | texte |  |  |
+| `payerName` | texte |  |  |
+| `payerPhone` | texte |  |  |
 
 <a id="m-RegisterCashPaymentRequest"></a>
 #### RegisterCashPaymentRequest
@@ -351,6 +452,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `amount` | nombre décimal |  |  |
 | `providerReference` | texte |  |  |
 | `metadataJson` | texte |  |  |
+| `tenderedAmount` | nombre décimal |  |  |
 
 <a id="m-PaymentLinkResponse"></a>
 #### PaymentLinkResponse
@@ -418,6 +520,29 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `amount` | nombre décimal |  |  |
 | `createdBy` | texte |  |  |
 | `metadataJson` | texte |  |  |
+
+<a id="m-RegisterOfflinePaymentRequest"></a>
+#### RegisterOfflinePaymentRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` | oui |  |
+| `amount` | nombre décimal |  |  |
+| `reference` | texte |  | longueur min `0`, longueur max `120` |
+| `bankName` | texte |  | longueur min `0`, longueur max `180` |
+| `payerName` | texte |  | longueur min `0`, longueur max `180` |
+| `payerPhone` | texte |  | longueur min `0`, longueur max `40` |
+| `operator` | enum : `MTN_MOMO`, `AIRTEL_MONEY` |  |  |
+| `cashSessionNumber` | texte |  |  |
+| `receivedBy` | texte |  |  |
+| `metadataJson` | texte |  |  |
+
+<a id="m-RelaunchPaymentIntentRequest"></a>
+#### RelaunchPaymentIntentRequest
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `expiresAt` | date-heure ISO 8601 UTC |  |  |
 
 <a id="m-WalletPaymentRequest"></a>
 #### WalletPaymentRequest

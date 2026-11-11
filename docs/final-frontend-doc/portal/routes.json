@@ -5424,6 +5424,7 @@
       "CASH",
       "WALLET",
       "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
       "BANK_TRANSFER",
       "CARD",
       "CHEQUE",
@@ -5478,6 +5479,27 @@
       "BACK_OFFICE",
       "SYSTEM"
      ]
+    },
+    "paymentMethodLabel": {
+     "type": "string"
+    },
+    "tenderedAmount": {
+     "type": "number"
+    },
+    "changeAmount": {
+     "type": "number"
+    },
+    "cashSessionNumber": {
+     "type": "string"
+    },
+    "bankName": {
+     "type": "string"
+    },
+    "payerName": {
+     "type": "string"
+    },
+    "payerPhone": {
+     "type": "string"
     }
    }
   },
@@ -5586,6 +5608,33 @@
     },
     "metadataJson": {
      "type": "string"
+    },
+    "cancelledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "cancelledBy": {
+     "type": "string"
+    },
+    "cancellationReason": {
+     "type": "string"
+    },
+    "relaunchCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastRelaunchedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastRelaunchedBy": {
+     "type": "string"
+    },
+    "relaunchable": {
+     "type": "boolean"
+    },
+    "cancellable": {
+     "type": "boolean"
     }
    }
   },
@@ -5611,6 +5660,7 @@
       "CASH",
       "WALLET",
       "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
       "BANK_TRANSFER",
       "CARD",
       "CHEQUE",
@@ -5696,6 +5746,21 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.PaymentReceiptAllocationResponse"
      }
+    },
+    "paymentMethodLabel": {
+     "type": "string"
+    },
+    "tenderedAmount": {
+     "type": "number"
+    },
+    "changeAmount": {
+     "type": "number"
+    },
+    "bankName": {
+     "type": "string"
+    },
+    "payerName": {
+     "type": "string"
     }
    }
   },

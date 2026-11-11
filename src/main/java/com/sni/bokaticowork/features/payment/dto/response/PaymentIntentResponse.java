@@ -32,6 +32,17 @@ public record PaymentIntentResponse(
         Instant paymentLinkExpiresAt,
         String idempotencyKey,
         Instant expiresAt,
-        String metadataJson
+        String metadataJson,
+        java.time.Instant cancelledAt,
+        String cancelledBy,
+        String cancellationReason,
+        /** Nombre de relances apres expiration, annulation ou echec. */
+        Integer relaunchCount,
+        java.time.Instant lastRelaunchedAt,
+        String lastRelaunchedBy,
+        /** Vrai si l'intention peut etre relancee maintenant (expiree, annulee ou en echec, et pas entierement payee). */
+        Boolean relaunchable,
+        /** Vrai si l'intention peut etre annulee maintenant (en attente, sans mobile money en cours). */
+        Boolean cancellable
 ) {
 }

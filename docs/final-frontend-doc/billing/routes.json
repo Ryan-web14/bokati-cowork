@@ -2902,7 +2902,6 @@
   },
   "PayInvoiceRequest": {
    "required": [
-    "cashSessionNumber",
     "paymentMethod"
    ],
    "type": "object",
@@ -2913,6 +2912,7 @@
       "CASH",
       "WALLET",
       "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
       "BANK_TRANSFER",
       "CARD",
       "CHEQUE",
@@ -2940,6 +2940,25 @@
     },
     "metadataJson": {
      "type": "string"
+    },
+    "tenderedAmount": {
+     "type": "number"
+    },
+    "bankName": {
+     "type": "string"
+    },
+    "payerName": {
+     "type": "string"
+    },
+    "payerPhone": {
+     "type": "string"
+    },
+    "mobileMoneyOperator": {
+     "type": "string",
+     "enum": [
+      "MTN_MOMO",
+      "AIRTEL_MONEY"
+     ]
     }
    }
   },
@@ -4471,6 +4490,7 @@
       "CASH",
       "WALLET",
       "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
       "BANK_TRANSFER",
       "CARD",
       "CHEQUE",
@@ -4525,6 +4545,27 @@
       "BACK_OFFICE",
       "SYSTEM"
      ]
+    },
+    "paymentMethodLabel": {
+     "type": "string"
+    },
+    "tenderedAmount": {
+     "type": "number"
+    },
+    "changeAmount": {
+     "type": "number"
+    },
+    "cashSessionNumber": {
+     "type": "string"
+    },
+    "bankName": {
+     "type": "string"
+    },
+    "payerName": {
+     "type": "string"
+    },
+    "payerPhone": {
+     "type": "string"
     }
    }
   },

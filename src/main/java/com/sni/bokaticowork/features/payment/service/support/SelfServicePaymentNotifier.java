@@ -137,14 +137,7 @@ public class SelfServicePaymentNotifier {
         if (transaction.getPaymentMethod() == null) {
             return "Paiement";
         }
-        return switch (transaction.getPaymentMethod()) {
-            case MOBILE_MONEY -> "Mobile money";
-            case WALLET -> "Portefeuille";
-            case CARD -> "Carte";
-            case BANK_TRANSFER -> "Virement";
-            case CASH -> "Espèces";
-            default -> transaction.getPaymentMethod().name();
-        };
+        return PaymentMethodLabels.label(transaction.getPaymentMethod(), transaction.getProvider());
     }
 
     private String plain(BigDecimal amount) {

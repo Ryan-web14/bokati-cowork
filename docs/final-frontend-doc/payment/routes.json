@@ -2507,6 +2507,42 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/payments/billing-documents/{documentNumber}/cash-change",
+   "package": "features.payment.controller",
+   "controller": "PaymentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java",
+   "handler": "previewDocumentCashChange",
+   "declaredIn": "PaymentController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "documentNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "tenderedAmount",
+     "required": true,
+     "type": "BigDecimal"
+    },
+    {
+     "in": "query",
+     "name": "amount",
+     "required": false,
+     "type": "BigDecimal"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashChangeResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/payments/intents",
    "package": "features.payment.controller",
    "controller": "PaymentController",
@@ -2673,6 +2709,34 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/payments/intents/{intentNumber}/cancel",
+   "package": "features.payment.controller",
+   "controller": "PaymentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java",
+   "handler": "cancelIntent",
+   "declaredIn": "PaymentController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:PROCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.CancelPaymentIntentRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "intentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse>"
+  },
+  {
+   "methods": [
     "PATCH"
    ],
    "path": "/sni/api/v1/payments/intents/{intentNumber}/cash",
@@ -2698,6 +2762,42 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/payments/intents/{intentNumber}/cash-change",
+   "package": "features.payment.controller",
+   "controller": "PaymentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java",
+   "handler": "previewIntentCashChange",
+   "declaredIn": "PaymentController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "intentNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "tenderedAmount",
+     "required": true,
+     "type": "BigDecimal"
+    },
+    {
+     "in": "query",
+     "name": "amount",
+     "required": false,
+     "type": "BigDecimal"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.CashChangeResponse>"
   },
   {
    "methods": [
@@ -2754,6 +2854,62 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/payments/intents/{intentNumber}/offline",
+   "package": "features.payment.controller",
+   "controller": "PaymentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java",
+   "handler": "registerOfflinePayment",
+   "declaredIn": "PaymentController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:PROCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.RegisterOfflinePaymentRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "intentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/payments/intents/{intentNumber}/relaunch",
+   "package": "features.payment.controller",
+   "controller": "PaymentController",
+   "source": "src/main/java/com/sni/bokaticowork/features/payment/controller/PaymentController.java",
+   "handler": "relaunchIntent",
+   "declaredIn": "PaymentController",
+   "access": {
+    "kind": "admin",
+    "permission": "PAYMENT:PROCESS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.payment.dto.request.RelaunchPaymentIntentRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "intentNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse>"
   },
   {
    "methods": [
@@ -4283,6 +4439,7 @@
       "CASH",
       "WALLET",
       "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
       "BANK_TRANSFER",
       "CARD",
       "CHEQUE",
@@ -5021,6 +5178,12 @@
     "closedAt": {
      "type": "string",
      "format": "date-time"
+    },
+    "nonCashPayments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResponse.NonCashPaymentTotal"
+     }
     }
    }
   },
@@ -6233,6 +6396,29 @@
     }
    }
   },
+  "CashChangeResponse": {
+   "type": "object",
+   "properties": {
+    "currency": {
+     "type": "string"
+    },
+    "amountDue": {
+     "type": "number"
+    },
+    "tenderedAmount": {
+     "type": "number"
+    },
+    "appliedAmount": {
+     "type": "number"
+    },
+    "changeAmount": {
+     "type": "number"
+    },
+    "remainingAfter": {
+     "type": "number"
+    }
+   }
+  },
   "PaymentIntentResponse": {
    "type": "object",
    "properties": {
@@ -6330,6 +6516,33 @@
     },
     "metadataJson": {
      "type": "string"
+    },
+    "cancelledAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "cancelledBy": {
+     "type": "string"
+    },
+    "cancellationReason": {
+     "type": "string"
+    },
+    "relaunchCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastRelaunchedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "lastRelaunchedBy": {
+     "type": "string"
+    },
+    "relaunchable": {
+     "type": "boolean"
+    },
+    "cancellable": {
+     "type": "boolean"
     }
    }
   },
@@ -6496,6 +6709,16 @@
     }
    }
   },
+  "CancelPaymentIntentRequest": {
+   "type": "object",
+   "properties": {
+    "reason": {
+     "maxLength": 500,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
   "PaymentTransactionResponse": {
    "type": "object",
    "properties": {
@@ -6511,6 +6734,7 @@
       "CASH",
       "WALLET",
       "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
       "BANK_TRANSFER",
       "CARD",
       "CHEQUE",
@@ -6565,6 +6789,27 @@
       "BACK_OFFICE",
       "SYSTEM"
      ]
+    },
+    "paymentMethodLabel": {
+     "type": "string"
+    },
+    "tenderedAmount": {
+     "type": "number"
+    },
+    "changeAmount": {
+     "type": "number"
+    },
+    "cashSessionNumber": {
+     "type": "string"
+    },
+    "bankName": {
+     "type": "string"
+    },
+    "payerName": {
+     "type": "string"
+    },
+    "payerPhone": {
+     "type": "string"
     }
    }
   },
@@ -6590,6 +6835,9 @@
     },
     "metadataJson": {
      "type": "string"
+    },
+    "tenderedAmount": {
+     "type": "number"
     }
    }
   },
@@ -6673,6 +6921,76 @@
     },
     "metadataJson": {
      "type": "string"
+    }
+   }
+  },
+  "RegisterOfflinePaymentRequest": {
+   "required": [
+    "paymentMethod"
+   ],
+   "type": "object",
+   "properties": {
+    "paymentMethod": {
+     "type": "string",
+     "enum": [
+      "CASH",
+      "WALLET",
+      "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
+      "BANK_TRANSFER",
+      "CARD",
+      "CHEQUE",
+      "MANUAL_ADJUSTMENT",
+      "CREDIT_NOTE"
+     ]
+    },
+    "amount": {
+     "type": "number"
+    },
+    "reference": {
+     "maxLength": 120,
+     "minLength": 0,
+     "type": "string"
+    },
+    "bankName": {
+     "maxLength": 180,
+     "minLength": 0,
+     "type": "string"
+    },
+    "payerName": {
+     "maxLength": 180,
+     "minLength": 0,
+     "type": "string"
+    },
+    "payerPhone": {
+     "maxLength": 40,
+     "minLength": 0,
+     "type": "string"
+    },
+    "operator": {
+     "type": "string",
+     "enum": [
+      "MTN_MOMO",
+      "AIRTEL_MONEY"
+     ]
+    },
+    "cashSessionNumber": {
+     "type": "string"
+    },
+    "receivedBy": {
+     "type": "string"
+    },
+    "metadataJson": {
+     "type": "string"
+    }
+   }
+  },
+  "RelaunchPaymentIntentRequest": {
+   "type": "object",
+   "properties": {
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
     }
    }
   },
@@ -7025,6 +7343,7 @@
       "CASH",
       "WALLET",
       "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
       "BANK_TRANSFER",
       "CARD",
       "CHEQUE",
@@ -7110,6 +7429,21 @@
      "items": {
       "$ref": "#/components/schemas/com.sni.bokaticowork.features.payment.dto.response.PaymentReceiptAllocationResponse"
      }
+    },
+    "paymentMethodLabel": {
+     "type": "string"
+    },
+    "tenderedAmount": {
+     "type": "number"
+    },
+    "changeAmount": {
+     "type": "number"
+    },
+    "bankName": {
+     "type": "string"
+    },
+    "payerName": {
+     "type": "string"
     }
    }
   },
@@ -7894,6 +8228,38 @@
     "uploadedAt": {
      "type": "string",
      "format": "date-time"
+    }
+   }
+  },
+  "CashSessionSummaryResponse.NonCashPaymentTotal": {
+   "type": "object",
+   "properties": {
+    "paymentMethod": {
+     "type": "string",
+     "enum": [
+      "CASH",
+      "WALLET",
+      "MOBILE_MONEY",
+      "MOBILE_MONEY_OFFLINE",
+      "BANK_TRANSFER",
+      "CARD",
+      "CHEQUE",
+      "MANUAL_ADJUSTMENT",
+      "CREDIT_NOTE"
+     ]
+    },
+    "provider": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "count": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "amount": {
+     "type": "number"
     }
    }
   },
@@ -8710,6 +9076,7 @@
   "MobileMoneyOperationsService.StatusTotal": "com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyOperationsService.StatusTotal",
   "MobileMoneyOperationsService.Detail": "com.sni.bokaticowork.features.payment.service.pawaypay.MobileMoneyOperationsService.Detail",
   "MobileMoneyOperationsController.ResolveRequest": "com.sni.bokaticowork.features.payment.controller.MobileMoneyOperationsController.ResolveRequest",
+  "CashChangeResponse": "com.sni.bokaticowork.features.payment.dto.response.CashChangeResponse",
   "PaymentIntentResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse",
   "PaymentIntentStatus": "com.sni.bokaticowork.features.payment.enums.PaymentIntentStatus",
   "CreatePaymentIntentRequest": "com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentRequest",
@@ -8717,11 +9084,14 @@
   "CreatePaymentIntentForDocumentsRequest": "com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentForDocumentsRequest",
   "PaymentRecoveryResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentRecoveryResponse",
   "CreatePaymentRecoveryIntentRequest": "com.sni.bokaticowork.features.payment.dto.request.CreatePaymentRecoveryIntentRequest",
+  "CancelPaymentIntentRequest": "com.sni.bokaticowork.features.payment.dto.request.CancelPaymentIntentRequest",
   "PaymentTransactionResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse",
   "RegisterCashPaymentRequest": "com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest",
   "PaymentLinkResponse": "com.sni.bokaticowork.features.payment.dto.response.PaymentLinkResponse",
   "CreatePaymentLinkRequest": "com.sni.bokaticowork.features.payment.dto.request.CreatePaymentLinkRequest",
   "InitiateMobileMoneyDepositRequest": "com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest",
+  "RegisterOfflinePaymentRequest": "com.sni.bokaticowork.features.payment.dto.request.RegisterOfflinePaymentRequest",
+  "RelaunchPaymentIntentRequest": "com.sni.bokaticowork.features.payment.dto.request.RelaunchPaymentIntentRequest",
   "WalletPaymentRequest": "com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest",
   "BillingDocumentResponse": "com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse",
   "BillingDocumentType": "com.sni.bokaticowork.features.billing.enums.BillingDocumentType",
@@ -8749,6 +9119,7 @@
   "WalletIntegrityService.IntegrityReport": "com.sni.bokaticowork.features.payment.integrity.service.WalletIntegrityService.IntegrityReport",
   "WalletLimitService.LimitSnapshot": "com.sni.bokaticowork.features.payment.limit.service.WalletLimitService.LimitSnapshot",
   "CashMovementAttachmentResponse": "com.sni.bokaticowork.features.payment.dto.response.CashMovementAttachmentResponse",
+  "CashSessionSummaryResponse.NonCashPaymentTotal": "com.sni.bokaticowork.features.payment.dto.response.CashSessionSummaryResponse.NonCashPaymentTotal",
   "CashRequestResponse.AttachmentRef": "com.sni.bokaticowork.features.payment.dto.response.CashRequestResponse.AttachmentRef",
   "CreateCashRequestRequest.CashRequestAttachmentInput": "com.sni.bokaticowork.features.payment.dto.request.CreateCashRequestRequest.CashRequestAttachmentInput",
   "CashRegisterStatisticsResponse.HourlyVolume": "com.sni.bokaticowork.features.payment.dto.response.CashRegisterStatisticsResponse.HourlyVolume",

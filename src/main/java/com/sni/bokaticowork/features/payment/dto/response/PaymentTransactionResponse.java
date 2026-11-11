@@ -26,6 +26,20 @@ public record PaymentTransactionResponse(
          * {@code BACK_OFFICE} un agent, {@code SYSTEM} une automatisation. Nul pour les
          * transactions anterieures a ce suivi.
          */
-        PaymentChannel channel
+        PaymentChannel channel,
+        /** Le moyen en francais, operateur compris : « Chèque », « Mobile money hors plateforme (MTN MoMo Pay) ». */
+        String paymentMethodLabel,
+        /** Especes : montant tendu par le client, nul si non saisi. */
+        BigDecimal tenderedAmount,
+        /** Especes : monnaie rendue. */
+        BigDecimal changeAmount,
+        /** Session de caisse du guichet qui a saisi le paiement. */
+        String cashSessionNumber,
+        /** Cheque ou virement : banque. */
+        String bankName,
+        /** Tireur, donneur d'ordre ou titulaire du compte mobile money. */
+        String payerName,
+        /** Mobile money hors plateforme : numero du payeur. */
+        String payerPhone
 ) {
 }

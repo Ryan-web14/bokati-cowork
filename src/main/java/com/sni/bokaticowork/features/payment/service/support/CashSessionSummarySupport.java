@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 public class CashSessionSummarySupport {
 
     private final CashMovementRepository movementRepository;
+    private final com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository transactionRepository;
 
     public CashSessionSummaryResponse summarize(CashSession session) {
         Totals totals = totals(session.getId());
@@ -35,8 +36,27 @@ public class CashSessionSummarySupport {
                 session.getVarianceReason(),
                 session.getOpenedAt(),
                 session.getClosingRequestedAt(),
-                session.getClosedAt()
+                session.getClosedAt(),
+                nonCashPayments(session.getSessionNumber())
         );
+    }
+
+    private java.util.List<CashSessionSummaryResponse.NonCashPaymentTotal> nonCashPayments(String sessionNumber) {
+        if (transactionRepository == null || sessionNumber == null) {
+            return java.util.List.of();
+        }
+        return transactionRepository.nonCashTotalsBySession(sessionNumber).stream()
+                .map(row -> {
+                    var method = (com.sni.bokaticowork.features.payment.enums.PaymentMethod) row[0];
+                    String provider = (String) row[1];
+                    return new CashSessionSummaryResponse.NonCashPaymentTotal(
+                            method,
+                            provider,
+                            PaymentMethodLabels.label(method, provider),
+                            row[2] == null ? 0L : ((Number) row[2]).longValue(),
+                            row[3] == null ? BigDecimal.ZERO : new BigDecimal(row[3].toString()));
+                })
+                .toList();
     }
 
     public BigDecimal expectedClosingAmount(CashSession session) {
