@@ -15,6 +15,7 @@ Fichiers du dossier :
 | [financement-engagements-paie.md](financement-engagements-paie.md) | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre des engagements hors bilan, import du journal de paie. |
 | [caisses-et-sessions.md](caisses-et-sessions.md) | Le système de caisse complet : défauts de l'existant, référentiel des caisses, cycle de vie des sessions, titulaire et remplaçants, congés et absences des caissiers, transfert de responsabilité, comptages et billetage, catalogue des opérations, transferts à deux temps, corrections, plafonds et contrôles, états, données, routes, droits, saisie minimale (champs déduits, générés, listes), lots C0 à C6. |
 | [rapprochement-et-comptes-tiers.md](rapprochement-et-comptes-tiers.md) | Rapprochement bancaire complet (relevés, modèles d'import, pointage, règles d'affectation, suspens, état de rapprochement validé) ; compte de chaque tiers, état de compte imprimable, justificatif de solde, dossier de justification de clôture, confirmations de solde. |
+| [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md) | Immobilisations et amortissements : catégories et comptes, fiche du bien pré-remplie, composants, en cours, mise en service, plans linéaire, dégressif et par unités d'œuvre, dotations mensuelles automatiques, dérogatoire, dépréciations, transferts et affectations, sorties et cessions, étiquettes QR et inventaire physique, notes 3A à 3E, contrôles fichier et comptabilité, lot F18. |
 | [pieces-comptables.md](pieces-comptables.md) | Les pièces émises (bon d'entrée, bon de sortie, bon de décaissement, état de besoin, fiche de justification, procès-verbaux...) : champs, champs automatiques, signatures, numérotation. |
 | [demandes-et-justification.md](demandes-et-justification.md) | Le nouveau circuit des demandes de fonds (état de besoin, demande, validation, décaissement) et la justification des dépenses une par une. |
 
@@ -408,6 +409,9 @@ Propriété du compte (section 4.1), valeurs initiales :
 | `411` clients (par auxiliaire) | Facture, avoir, paiement, remboursement, escompte, perte | Numéro de facture porté par l'imputation du paiement (`payment_allocation`), numéro d'avoir |
 | `4191` avances clients | Acompte reçu sans facture, puis son imputation sur la facture | Numéro de transaction de l'acompte |
 | `401` fournisseurs | Facture fournisseur, paiement, avoir fournisseur | Numéro de facture fournisseur |
+| `481` fournisseurs d'investissements | Facture d'immobilisation, acompte imputé, paiement | Numéro de facture fournisseur |
+| `485` créances sur cessions d'immobilisations | Facture de cession, encaissement | Numéro de facture de cession |
+| `275` dépôts et cautionnements versés | Caution versée, restitution, retenue | Numéro du contrat de bail |
 | `421` personnel, avances | Décaissement d'une avance, lignes de justification, reliquat rendu, complément, retenue sur paie | Numéro de la demande de fonds |
 | `422` rémunérations dues | Salaire dû (import de paie), paiement du salaire | Période de paie et employé |
 | `165` dépôts reçus | Caution reçue, restitution, retenue | Numéro du contrat |
@@ -742,7 +746,7 @@ Résumé ci-dessous ; le détail de chaque état (colonnes, règles de calcul, c
 
 1. **Fournisseurs et achats** : fiche fournisseur, factures fournisseurs, bons de commande issus des états de besoin, échéancier de paiement, retenues.
 2. **Budget** : gestion complète et contrôle dans chaque opération, voir [analytique-et-budget.md](analytique-et-budget.md#3-gestion-budgétaire).
-3. **Immobilisations** : mobilier, informatique, aménagements de l'espace ; fiche, amortissement linéaire ou dégressif, écritures de dotation, sortie d'actif.
+3. **Immobilisations** : mobilier, informatique, aménagements de l'espace ; fiche, amortissement linéaire ou dégressif, écritures de dotation, sortie d'actif ; détail dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md).
 4. **Dépôts de garantie** : caution à la signature d'un contrat de bureau, restitution ou retenue à la sortie (lien avec le module `contract`).
 5. **Produits constatés d'avance** pour les abonnements, pass et domiciliations facturés d'avance.
 6. **Créances douteuses** : passage en douteux depuis la relance (module `dunning`), provision, perte définitive (`WRITTEN_OFF` existe déjà côté facture).
@@ -827,7 +831,7 @@ Tables nouvelles (préfixe `acc_` pour la comptabilité, `cash_` pour la trésor
 | `bank_deposit_slip` | bordereau de remise : lignes espèces et chèques |
 | `bank_statement`, `bank_statement_line` | relevés importés et pointage |
 | `supplier`, `supplier_invoice` | lot achats |
-| `fixed_asset`, `depreciation_schedule` | lot immobilisations |
+| `fa_category`, `fixed_asset`, `fixed_asset_value_line`, `depreciation_plan`, `depreciation_schedule`, `fixed_asset_event`, `fixed_asset_disposal`, `fixed_asset_impairment`, `fixed_asset_inventory_campaign`, `fixed_asset_inventory_scan`, `fixed_asset_maintenance` | lot F18, détail dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#14-données) |
 
 Colonnes ajoutées à `cash_movement` : voir 7.1. À `payment_transaction` : `accounting_status`, `accounting_entry_number`. À `billing_document` : idem.
 
@@ -854,6 +858,7 @@ Colonnes ajoutées à `cash_movement` : voir 7.1. À `payment_transaction` : `ac
 | `ACCOUNTING_ENTRY:BALANCE` | Comptable : compléter ou régénérer une pièce en attente d'équilibrage, la rejeter avec motif |
 | `ACCOUNTING_ACCOUNT:CREATE` | Comptable, administrateur finance : créer un compte divisionnaire ; caissière principale : seulement un divisionnaire de trésorerie en créant un journal |
 | `ACCOUNTING_ACCOUNT:MANAGE` | Administrateur finance : nouveau compte principal, validation des comptes créés, désactivation, fusion |
+| `FIXED_ASSET:READ`, `:MANAGE`, `:REVISE`, `:IMPAIR`, `:DISPOSE`, `:DEPRECIATION_RUN`, `:INVENTORY` | Moyens généraux et comptable ; sortie validée par une seconde personne ; détail dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#16-droits) |
 | `ACCOUNTING_REPORT:READ` | Direction, comptable, expert-comptable (lecture seule) |
 | `BANK_RECONCILIATION:MANAGE` | Comptable |
 
@@ -892,13 +897,14 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 | **F10. Banque, chèques, mobile money** | Comptes bancaires, cycle des chèques, bordereaux de remise, import de relevés, rapprochement, frais PawaPay, lettrage des `585`, `513`, `5851` et du compte PawaPay | F3, F4 | Un relevé importé se pointe automatiquement à plus de 80 % sur un mois réel |
 | **F11. Fiscalité** | Comptes de taxe, exigibilité, déclaration de TVA, liquidation | F4 | L'état de TVA d'un mois égale la somme des TVA des factures scellées du mois |
 | **F12. Abonnements et clôture** | Produits constatés d'avance, créances douteuses, contrôles de clôture, à-nouveaux, états financiers SYSCOHADA | F4, F11 | La clôture d'un exercice de test produit bilan, compte de résultat et à-nouveaux équilibrés |
-| **F13. Achats et immobilisations** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, immobilisations et amortissements, lettrage des `401` | F5, F9 | Une commande validée engage le budget ; une immobilisation génère son plan d'amortissement |
+| **F13. Achats** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, lettrage des `401` (les immobilisations passent au lot F18) | F5, F9 | Une commande validée engage le budget ; une immobilisation génère son plan d'amortissement |
 | **F16. Budget** | Budgets et versions, mensualisation, élaboration et validation, révisions, virements de crédits, engagements, contrôle budgétaire dans les états de besoin, demandes, décaissements, justifications, dépenses directes, écritures ; dérogations ; suivi, projections, alertes | F5, F6, F9 | Une demande sur une ligne bloquante sans disponible est refusée ou part en validation budgétaire ; un engagement de 100 000 réalisé pour 85 000 libère 15 000 |
 | **F17. Financement, hors bilan, paie** | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre hors bilan et sa tenue en classe 90 (journal `HB`), import du journal de paie | F1, F2, F10 | Une échéance d'emprunt s'écrit seule ; un journal de paie importé s'équilibre et solde les avances retenues |
+| **F18. Immobilisations et amortissements** | Voir [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#18-lots-et-critères-dacceptation) : fiches pré-remplies, composants, mise en service, plans et dotations mensuelles, dérogatoire, dépréciations, sorties, étiquettes et inventaire physique, notes 3A à 3E | F1, F2, F9, F13 ; F5, F6, F17 | Une facture d'ordinateur crée sa fiche ; la dotation mensuelle va sur la section de la ressource ; le fichier égale les comptes `2x` et `28x`, sinon la clôture est refusée |
 | **F15. Liasse et états de gestion** | DSF pré-remplie, passage au résultat fiscal, soldes de gestion mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, confirmation de solde | F12 | La DSF d'un exercice de test se remplit sans saisie hors notes rédactionnelles et tableau fiscal |
 | **F14. Exports et bascule** | Exports pour l'expert-comptable, archive annuelle, outils de reprise et d'à-nouveaux | F1 à F4 | La balance exportée se réimporte sans écart dans Sage 100, Sage X3 et Odoo |
 
-Le lot C0 (correctifs de caisse) part tout de suite, indépendamment du reste. Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F16 (analytique puis budget, qui s'appuie sur les demandes), F10, F11, F17, F12, F13, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
+Le lot C0 (correctifs de caisse) part tout de suite, indépendamment du reste. Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F16 (analytique puis budget, qui s'appuie sur les demandes), F10, F11, F17, F13, F18, F12, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
 
 ---
 
@@ -944,6 +950,7 @@ Règle de conception de tous les lots : **aucune valeur métier n'est codée en 
 | Partie double | Compte et plafond des écarts d'arrondi, comptes d'écart de conversion, **politique pour une pièce déséquilibrée** (`HOLD` par défaut, `SUSPENSE_ACCOUNT`, `ACCEPT`), globale et par origine et par journal ; compte d'attente d'équilibrage et plafond de différence ; blocage de la clôture de période ; règles de contrepartie et leur caractère bloquant ; destinataires et rythme des notifications et relances ; comptes de classe 9 (analytique et hors bilan) |
 | Numérotation | Format des numéros par journal, longueur, remise à zéro par exercice ou par période, ordre chronologique (`STRICT` ou `PERIOD`), heure du contrôle de continuité ; **ne sont pas paramétrables** : la continuité sans trou, l'attribution à la validation, l'interdiction de modifier ou de réutiliser un numéro |
 | Lettrage | Comptes lettrables et clé de rapprochement par compte, lettrage automatique à la comptabilisation (oui/non par compte), rapprochement nocturne (fenêtre de dates, nombre maximal de lignes combinées, lettrage automatique des correspondances uniques), seuil et comptes d'écart de règlement, motifs de délettrage, délai d'alerte des lignes non lettrées par compte |
+| Immobilisations | Catégories (comptes, durée, mode, coefficient), seuil d'immobilisation, suivi hors comptabilité des petits biens, rythme et heure des dotations, journal, base du prorata, amortissement fiscal, seuils de validation, délais d'alerte, inventaire physique exigé ; liste dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#17-paramétrage) |
 | Exercices et périodes | Début et durée d'exercice, découpage, verrouillage automatique après N jours, synchronisation avec la clôture de facturation |
 | Journaux | Code, type, compte de trésorerie, numérotation, validation automatique ou brouillard, caisses autorisées, comptes autorisés, qui peut créer (et mode immédiat ou après validation) |
 | Schémas d'écriture | Pour chaque événement : conditions, journal, lignes, comptes, analytique ; versionnés avec date d'effet ; activation par famille d'événements |

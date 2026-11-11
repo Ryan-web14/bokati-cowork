@@ -196,9 +196,15 @@ Existe (`payment/receipt.html`). Ajouter le numéro de pièce comptable de l'enc
 | PV de mise sous scellés et d'ouverture du scellé | `PVS` |
 | PV de comptage inopiné | `PCI` |
 | PV de revue d'écart | `PRE` |
+| PV de mise en service d'une immobilisation | `PMS` |
+| Fiche de remise de matériel | `PRM` |
+| PV de sortie d'immobilisation | `PSI` |
+| PV d'inventaire physique des immobilisations | `PIP` |
 
 Les PV de remise de caisse, de clôture d'office, de mise sous scellés, de comptage inopiné et de revue d'écart suivent le modèle du PV de passation (section 8) : caisse, date, comptage par coupure, attendu, écart, motif choisi dans une liste, signatures des deux parties (ou du superviseur et du témoin) ; voir [caisses-et-sessions.md](caisses-et-sessions.md) sections 4.5, 5.6 et 6.1.
 
 Format : `{PREFIX}-{AAAA}{MM}-{SEQ}`, séquence sur 6 chiffres. La continuité est contrôlée chaque nuit et figure dans l'état de continuité des numéros.
 
 Le moteur `core/generator` attribue ses numéros dans une transaction séparée (`REQUIRES_NEW`) : une émission annulée y laisse un trou. Pour ces pièces, la numérotation passe donc par un compteur transactionnel, comme les pièces comptables.
+
+Les pièces des immobilisations (`PMS`, `PRM`, `PSI`, `PIP`) sont décrites dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#13-pièces-émises).

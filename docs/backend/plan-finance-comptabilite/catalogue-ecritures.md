@@ -29,6 +29,7 @@ Conventions :
 11. [Clôture et inventaire](#11-clôture-et-inventaire)
 12. [Ce qui ne produit pas d'écriture](#12-ce-qui-ne-produit-pas-décriture)
 13. [Classe 9 : analytique et hors bilan](#13-classe-9--analytique-et-hors-bilan)
+14. [Immobilisations et amortissements](#14-immobilisations-et-amortissements)
 
 ---
 
@@ -197,7 +198,7 @@ Analytique : site, activité et ressource de la réservation.
 | Reprise de provision | D `491` ; C `7594` |
 | Produits constatés d'avance | voir section 6 |
 | Charges constatées d'avance (abonnement logiciel payé d'avance) | D `476` ; C `{NATURE}`, extourne à l'ouverture |
-| Dotation aux amortissements | D `681` ; C `28x` |
+| Dotation aux amortissements | D `6812` ou `6813` ; C `28x`, mensuelle par défaut, voir section 14 |
 | Liquidation de TVA | D `4431` ; C `4452`/`4454` ; solde vers `4441` (dette) ou `4449` (crédit) |
 | Solde des comptes d'attente | `471` vers comptes définitifs, à la main |
 | Résultat et à-nouveaux | Écritures de clôture et journal `AN` |
@@ -231,3 +232,27 @@ Numéros de comptes proposés, à valider avec l'expert-comptable (décision 20 
 | Engagement reçu inscrit au registre | `HB` | D `90x` contrepartie des engagements reçus ; C `90x` engagement reçu |
 | Variation mensuelle d'un engagement de bail | `HB` | Écriture de la variation, dans le sens de l'engagement |
 | Levée ou expiration d'un engagement | `HB` | Contre-passation du solde de l'engagement |
+
+## 14. Immobilisations et amortissements
+
+Toutes les écritures sur les comptes `2x`, `28x` et `29x` partent d'une fiche d'immobilisation ; détail, exemples chiffrés et cycle de vie dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#10-écritures). Les comptes `481`, `485` et `275` sont lettrés.
+
+| Événement | Journal | Écriture |
+| --- | --- | --- |
+| Facture fournisseur d'immobilisation | `AC` | D compte du bien (ou `239` en cours) HT ; D `4451` TVA récupérable ; C `481` fournisseur d'investissement (lettrable) |
+| Acompte versé sur immobilisation | trésorerie | D `252` (ou `251`) ; C `521x` ou `571x` |
+| Imputation de l'acompte à la facture | `OD` | D `481` ; C `252` |
+| Paiement du fournisseur d'investissement | trésorerie | D `481` (lettré) ; C `521x` ou `571x` |
+| Immobilisation acquise par une avance justifiée | `OD` | D compte du bien ; D `4451` ; C `421` employé (lettré) |
+| Mise en service d'une immobilisation en cours | `OD` | D comptes définitifs par composant ; C `239` |
+| Production immobilisée | `OD` | D compte du bien ; C `721` ou `722` |
+| Dépôt de garantie versé (caution des locaux) | trésorerie | D `275` ; C `521x` ; restitution : écriture inverse, retenue : D `6x` ; C `275` |
+| Location-acquisition | `OD` | D compte du bien ; C `17x` |
+| Subvention d'équipement reçue | trésorerie | D `521x` ; C `14x` ; reprise annuelle D `14x` ; C `799` |
+| Dotation aux amortissements (mensuelle) | `OD` | D `6812` ou `6813` ; C `28x`, ventilée par section |
+| Amortissement dérogatoire | `OD` | D `851` ; C `151` ; reprise D `151` ; C `861` |
+| Dépréciation et reprise | `OD` | D `691x` ; C `29x` ; reprise D `29x` ; C `791x` |
+| Reclassement de compte | `OD` | D nouveau compte ; C ancien, valeur brute et cumul |
+| Sortie de l'actif | `OD` | D `28x` ; D `29x` ; D `811` ou `812` ; C compte du bien |
+| Cession | `VT` | D `485` ; C `821` ou `822` ; C `4431` si TVA |
+| Encaissement du prix de cession | trésorerie | D `521x` ou `571x` ; C `485` (lettré) |
