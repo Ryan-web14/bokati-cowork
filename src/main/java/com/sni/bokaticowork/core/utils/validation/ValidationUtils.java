@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 public class ValidationUtils {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$");
-    private static final Pattern NIU_PATTERN = Pattern.compile("^[PE][0-9]{15}$");
+    private static final Pattern NIU_PATTERN = Pattern.compile("^[PEM][0-9]{15}$");
 
     // Free-text fields such as descriptions: allow any letter, digit, punctuation,
     // symbol and whitespace (including line breaks). Only control characters other

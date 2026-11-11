@@ -63,6 +63,7 @@ public abstract class CustomerMapperDecorator implements CustomerMapper {
 
         customer.setType(parseCustomerType(request.getType()));
         customer.setAddress(addressMapper.toEntity(request.getAddress()));
+        customer.setBillingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(request.getBillingEmail()));
         return customer;
     }
 
@@ -103,7 +104,7 @@ public abstract class CustomerMapperDecorator implements CustomerMapper {
         }
 
         if (hasText(request.getBillingEmail()) && !isSameEmail(customer.getBillingEmail(), request.getBillingEmail())) {
-            customer.setBillingEmail(request.getBillingEmail().trim().toLowerCase(Locale.ROOT));
+            customer.setBillingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(request.getBillingEmail()));
             updated = true;
         }
 
