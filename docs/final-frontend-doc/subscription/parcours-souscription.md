@@ -2,7 +2,7 @@
 
 > Partie de [README.md](README.md). Routes exactes et champs : [routes.md](routes.md). Règles communes : [README racine](../README.md).
 
-Le souscripteur est désigné par un couple `subscriberType` + `subscriberCode` : `MEMBER` + `memberId`, `CUSTOMER` + `customerId`, `BUSINESS_ENTITY` + `code` de l'entreprise. Ces codes viennent des modules [client](../client/README.md) et [company](../company/README.md).
+Le souscripteur est désigné par un couple `subscriberType` + `subscriberCode` : `MEMBER` + `memberId`, `CUSTOMER` + `customerId`, `BUSINESS_ENTITY` + `code` d'une fiche `/businesses` (codes `BIZ-...`). **Une entreprise cliente créée par `/companies` (code `CUS-COM-...`) est un client : `CUSTOMER` + son code.** Envoyée en `BUSINESS_ENTITY`, elle est reconnue et enregistrée en `CUSTOMER` (même chose pour un pass). Ces codes viennent des modules [client](../client/README.md) et [company](../company/README.md).
 
 ## Souscrire directement
 
