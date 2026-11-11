@@ -52,6 +52,9 @@ Tout ce que le module comptable doit produire : livres, balances, relevés de co
 | **Balance âgée** | Créances clients (ou dettes fournisseurs) non lettrées par ancienneté : non échu, 0 à 30, 31 à 60, 61 à 90, plus de 90 jours | Tranches paramétrables ; par client, par organisation |
 | **Balance analytique** | Par section et par compte | Par axe |
 | **Livre de caisse** | Par caisse et par jour : solde d'ouverture, entrées, sorties, solde de clôture, rapproché du billetage | Lien vers les pièces de caisse |
+| **État du lettrage** | Par compte lettrable et par tiers : lignes non lettrées, lettrages partiels et leur reste, ancienneté | Par compte, par tiers, par ancienneté |
+| **Propositions de lettrage** | Rapprochements proposés par le traitement de nuit, avec indice de confiance | À valider ou rejeter |
+| **Journal des lettrages et délettrages** | Qui, quand, lignes, type, écart de règlement généré, motif de délettrage | Piste d'audit |
 | **État des comptes d'attente** | Soldes des `471` et `585` avec ancienneté | Alerte au-delà du délai paramétré |
 
 ---

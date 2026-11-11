@@ -250,7 +250,7 @@ Règles d'un journal : type, compte de trésorerie de contrepartie (journaux de 
 - **Validation** : rend la pièce immuable et lui attribue son numéro définitif. Le brouillard peut porter un numéro provisoire.
 - **Contre-passation** : pièce inverse datée du jour, liée à l'originale, motif obligatoire.
 - **Saisie manuelle** : formulaire en lignes avec équilibrage assisté, modèles d'écritures récurrentes (loyer, abonnements logiciels), import CSV contrôlé.
-- **Lettrage** : manuel et automatique (même référence de facture, même montant), délettrage tracé. Il alimente la balance âgée et le recouvrement.
+- **Lettrage** : rapprochement des lignes qui se soldent sur un compte lettrable ; automatique, proposé ou manuel, total ou partiel, avec écart de règlement ; délettrage tracé. Détail en [section 4.7](#47-lettrage).
 
 ### 4.5 Moteur d'imputation (schémas d'écriture)
 
@@ -368,6 +368,76 @@ Le SYSCOHADA révisé réserve la classe 9 aux engagements hors bilan et à la c
 - La classe 9 n'entre ni dans la balance générale (classes 1 à 8), ni dans le bilan, ni dans le compte de résultat. Elle a sa propre balance analytique et sa propre balance hors bilan, toujours équilibrées.
 
 **Seul le budget reste hors partie double** : prévisions, crédits et engagements budgétaires sont des montants de gestion. La dépense réalisée, elle, passe en comptabilité générale et en classe 9 comme toute autre.
+
+### 4.7 Lettrage
+
+Le lettrage rapproche, sur un même compte lettrable et pour un même tiers, les lignes au débit et au crédit qui se compensent : une facture et son paiement, une avance et sa justification, un transfert envoyé et sa réception. Les lignes rapprochées reçoivent le même **code de lettrage**. Ce qui reste non lettré est exactement ce qui reste dû, à recevoir, à justifier ou en transit.
+
+#### Comptes lettrables
+
+Propriété du compte (section 4.1), valeurs initiales :
+
+| Compte | Ce qui se lettre | Clé de rapprochement automatique |
+| --- | --- | --- |
+| `411` clients (par auxiliaire) | Facture, avoir, paiement, remboursement, escompte, perte | Numéro de facture porté par l'imputation du paiement (`payment_allocation`), numéro d'avoir |
+| `4191` avances clients | Acompte reçu sans facture, puis son imputation sur la facture | Numéro de transaction de l'acompte |
+| `401` fournisseurs | Facture fournisseur, paiement, avoir fournisseur | Numéro de facture fournisseur |
+| `421` personnel, avances | Décaissement d'une avance, lignes de justification, reliquat rendu, complément, retenue sur paie | Numéro de la demande de fonds |
+| `422` rémunérations dues | Salaire dû (import de paie), paiement du salaire | Période de paie et employé |
+| `165` dépôts reçus | Caution reçue, restitution, retenue | Numéro du contrat |
+| `471` comptes d'attente | Écart de caisse en revue, décision d'imputation | Numéro de session de caisse, ou de l'ajustement |
+| `585` virements de fonds | Envoi et réception d'un transfert interne, remise en banque et crédit au relevé | Numéro d'ordre de transfert (`OTI-`), de bordereau (`BRB-`) |
+| `513` chèques à encaisser | Chèque reçu, chèque encaissé ou rejeté | Numéro du chèque |
+| `5851` attente carte, compte PawaPay | Encaissement, reversement de l'opérateur | Référence opérateur, lot de reversement |
+| `90` engagements hors bilan | Inscription, variation, levée | Numéro de l'engagement |
+
+Les comptes de banque `521` ne se lettrent pas : ils se **pointent** sur le relevé (rapprochement bancaire, lot F10). Le pointage a son propre code, distinct du lettrage, et suit les mêmes règles de traçabilité.
+
+#### Lettrage automatique
+
+1. **À la comptabilisation, par référence** : le schéma d'écriture porte la clé de rapprochement (tableau ci-dessus). Dès qu'une pièce validée contient une ligne dont la clé correspond à des lignes non lettrées du même compte et du même tiers, le moteur lettre :
+   - **total** si les montants se soldent ;
+   - **partiel** sinon : paiement partiel, acompte, justification incomplète. Le lettrage partiel garde le montant rapproché de chaque ligne et le reste dû ; il devient total quand le reste est soldé.
+   - Un paiement réparti sur plusieurs factures (lot multi-ressources, facture commune) lettre chaque facture pour la part qui lui est imputée.
+2. **Chaque nuit, par rapprochement de montants**, pour les lignes restées non lettrées :
+   - même compte, même tiers, montants égaux (ou somme de plusieurs lignes égale à une ligne, jusqu'à N lignes, dans une fenêtre de dates) ;
+   - une correspondance unique et exacte est lettrée automatiquement (si le paramétrage le permet) ;
+   - les autres sont **proposées** avec un indice de confiance, et attendent une validation dans l'écran de lettrage.
+3. **Contre-passation** : la pièce d'origine et sa contre-passation se lettrent ensemble. Si la pièce d'origine était lettrée, elle est d'abord délettrée automatiquement. Ainsi, un chèque rejeté rend la facture de nouveau due : la ligne de facture redevient non lettrée.
+
+#### Lettrage manuel
+
+- Écran par compte et par tiers : lignes non lettrées (ou toutes), avec filtres par date, pièce, montant et référence. On coche des lignes ; le total au débit, au crédit et la différence s'affichent en direct.
+- **Différence nulle** : lettrage total.
+- **Différence non nulle** :
+  - **lettrage partiel** : on indique le montant rapproché ; le reste demeure ;
+  - **lettrage avec écart de règlement** : si la différence est sous le seuil paramétré (500 XAF par défaut), le logiciel génère **l'écriture d'écart en partie double** (perte : D `658` ; C `411` ; gain : D `411` ; C `758`), puis lettre le tout. Au-delà du seuil, c'est refusé.
+- **Devises** : l'écart de change constaté au lettrage d'une facture et de son paiement en devise génère l'écriture de change réalisé (`676` / `776`).
+- Le lettrage manuel exige le droit `ACCOUNTING_LETTERING:MANUAL`.
+
+#### Délettrage
+
+- Avec le droit `ACCOUNTING_LETTERING:UNLETTER` et un **motif** choisi dans une liste ; tracé (qui, quand, motif, lignes concernées).
+- Une écriture d'écart de règlement générée au lettrage est contre-passée au délettrage.
+- Dans une période close : réservé au responsable financier.
+- Le délettrage ne modifie jamais une écriture. Il ne change que l'état de rapprochement des lignes.
+
+#### Cohérence avec la facturation et les autres modules
+
+Contrôles quotidiens, avec liste des écarts :
+
+- une facture payée côté facturation doit avoir sa ligne `411` lettrée, et inversement ;
+- une demande d'avance soldée doit avoir son `421` lettré ;
+- un transfert interne reçu doit avoir son `585` lettré ;
+- une ligne `471` ou `585` non lettrée au-delà de N jours est signalée.
+
+La **balance âgée**, les **relevés de compte**, les **relances** (module `dunning`) et la **circularisation** se calculent sur les lignes non lettrées. Une créance lettrée est soldée, partout.
+
+#### Clôture et à-nouveaux
+
+- Pour les comptes lettrables, les à-nouveaux sont **détaillés** : chaque ligne non lettrée (ou son reste, si le lettrage est partiel) est reprise individuellement avec sa référence d'origine. Le lettrage continue donc d'un exercice à l'autre.
+- Les autres comptes reprennent leur solde.
+- État du lettrage à la clôture : lignes non lettrées par compte, ancienneté, lettrages avec écart de l'exercice, délettrages de l'exercice.
 
 ---
 
@@ -651,7 +721,9 @@ Tables nouvelles (préfixe `acc_` pour la comptabilité, `cash_` pour la trésor
 | `acc_journal_register` | journal_code, cash_register_code : caisses autorisées à écrire dans le journal |
 | `acc_entry` | entry_number, journal_code, period_id, entry_date, document_date, label, origin, source_type, source_code, status, posted_by, validated_by, validated_at, reversal_of, attachments |
 | `acc_entry_line` | entry_id, line_no, account_number, third_party_code, label, debit, credit, currency, foreign_amount, rate, tax_code, tax_base, due_date, lettering_code |
-| `acc_lettering` | code, account_number, third_party_code, lettered_at, lettered_by |
+| `acc_lettering` | code (par compte et tiers : `AA`, `AB`...), account_number, third_party_code, kind (`AUTO_REFERENCE`, `AUTO_MATCH`, `MANUAL`), status (`PARTIAL`, `COMPLETE`, `UNLETTERED`), total_debit, total_credit, difference, difference_entry_number, lettered_at, lettered_by, unlettered_at, unlettered_by, unlettering_reason |
+| `acc_lettering_line` | lettering_id, entry_line_id, matched_amount (lettrage partiel) |
+| `acc_lettering_proposal` | account_number, third_party_code, lines, confidence, status (`PROPOSED`, `ACCEPTED`, `REJECTED`), decided_by |
 | `acc_posting_rule` | event_type, conditions (jsonb), journal_resolver, lines (jsonb), analytic_resolver, version, effective_from, active |
 | `acc_posting_event` | event_type, reference, payload, status (PENDING, POSTED, UNBALANCED, FAILED, IGNORED), failure_reason, entry_number, attempts : registre d'idempotence |
 | `acc_pending_entry_log` | entry_number, reason (UNBALANCED, COUNTERPART_NOT_ALLOWED, MISSING_ACCOUNT, ANALYTIC_INCOMPLETE), difference, notified_at, reminders, resolved_by, resolved_at, resolution (REGENERATED, COMPLETED, REJECTED) |
@@ -699,6 +771,8 @@ Colonnes ajoutées à `cash_movement` : voir 7.1. À `payment_transaction` : `ac
 | `ACCOUNTING_ENTRY:CREATE`, `:VALIDATE`, `:REVERSE` | Comptable ; validation par un second comptable au-delà d'un seuil |
 | `ACCOUNTING_PERIOD:LOCK`, `:CLOSE` | Responsable financier |
 | `ACCOUNTING_SETTINGS:MANAGE` | Administrateur finance (plan, schémas, natures, axes) |
+| `ACCOUNTING_LETTERING:MANUAL` | Comptable : lettrer à la main, valider les propositions, lettrer avec écart de règlement |
+| `ACCOUNTING_LETTERING:UNLETTER` | Comptable, avec motif ; responsable financier dans une période close |
 | `ACCOUNTING_ENTRY:BALANCE` | Comptable : compléter ou régénérer une pièce en attente d'équilibrage, la rejeter avec motif |
 | `ACCOUNTING_ACCOUNT:CREATE` | Comptable, administrateur finance : créer un compte divisionnaire ; caissière principale : seulement un divisionnaire de trésorerie en créant un journal |
 | `ACCOUNTING_ACCOUNT:MANAGE` | Administrateur finance : nouveau compte principal, validation des comptes créés, désactivation, fusion |
@@ -728,19 +802,19 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 
 | Lot | Contenu | Dépend de | Critère d'acceptation |
 | --- | --- | --- | --- |
-| **F1. Socle comptable** | Plan de comptes SYSCOHADA chargé, exercices et périodes, journaux, pièces et lignes, saisie manuelle, validation, contre-passation, brouillard, journal, grand livre, balance | | Une écriture manuelle se saisit, se valide, apparaît dans la balance équilibrée ; une pièce déséquilibrée ne se valide pas, même en contournant l'écran (contrôle en base), elle part en attente et l'auteur et les comptables sont notifiés ; la balance reste équilibrée ; un compte créé sous un parent hérite de ses propriétés et de son poste d'état financier ; une période close refuse toute écriture |
+| **F1. Socle comptable** | Plan de comptes SYSCOHADA chargé, exercices et périodes, journaux, pièces et lignes, saisie manuelle, validation, contre-passation, brouillard, journal, grand livre, balance, lettrage manuel (total, partiel, avec écart de règlement), délettrage, à-nouveaux détaillés | | Une écriture manuelle se saisit, se valide, apparaît dans la balance équilibrée ; une pièce déséquilibrée ne se valide pas, même en contournant l'écran (contrôle en base), elle part en attente et l'auteur et les comptables sont notifiés ; la balance reste équilibrée ; un compte créé sous un parent hérite de ses propriétés et de son poste d'état financier ; une période close refuse toute écriture |
 | **F2. Moteur d'imputation** | Événements comptables par l'outbox, registre d'idempotence, schémas en base, résolveurs, écran des écritures en échec, aperçu d'écriture | F1 | Rejouer un événement ne double pas l'écriture ; un compte manquant met l'événement en échec sans bloquer le paiement ; un schéma déséquilibré ne s'active pas ; un événement qui produit une pièce déséquilibrée ou à la contrepartie non conforme la met en attente, notifiée, hors balance, et elle se valide après régénération |
 | **F3. Trésorerie et caisse comptable** | Comptes de trésorerie, journal par caisse, natures d'opération, enrichissement des mouvements, choix et création de journal par la caissière, écritures de tous les mouvements, écarts de clôture | F2 | Chaque mouvement de caisse produit sa pièce dans le journal choisi ; le solde comptable d'une caisse égale son solde opérationnel |
-| **F4. Encaissements et ventes** | Écritures des factures, avoirs, encaissements par moyen, remboursements, portefeuille, comptes clients auxiliaires, lettrage automatique | F2 | Une facture payée en espèces laisse le compte client soldé et lettré ; `4191` égale la somme des soldes de portefeuille |
+| **F4. Encaissements et ventes** | Écritures des factures, avoirs, encaissements par moyen, remboursements, portefeuille, comptes clients auxiliaires, lettrage automatique des `411` et `4191` (par référence, partiel, contre-passation), rapprochement nocturne et propositions, contrôle facturation et lettrage | F2 | Une facture payée en espèces laisse le compte client soldé et lettré ; `4191` égale la somme des soldes de portefeuille |
 | **F5. Demandes et état de besoin** | État de besoin, nouvelle demande de fonds multi-lignes, champs automatiques, circuit multi-niveaux, décaissement distinct, notifications, nouvelles pièces | F3 | Un employé sans session crée une demande ; elle traverse deux niveaux de validation ; la caissière la décaisse avec signature ; la pièce sort avec son imputation |
-| **F6. Avances et justification** | Avances à justifier, justification ligne par ligne, reliquat et complément, relances, blocage, état des avances | F5 | Une avance de 100 000 justifiée en 3 lignes pour 85 000 se solde par un retour de 15 000 ; `421` du bénéficiaire revient à zéro |
+| **F6. Avances et justification** | Avances à justifier, justification ligne par ligne, reliquat et complément, relances, blocage, état des avances, lettrage du `421` par demande | F5 | Une avance de 100 000 justifiée en 3 lignes pour 85 000 se solde par un retour de 15 000 ; `421` du bénéficiaire revient à zéro |
 | **F7. Pièces comptables** | Refonte des gabarits (bons, bon de décaissement, état de besoin, fiche de justification, PV de billetage et de passation, bordereau de remise), montant en lettres, QR, duplicata | F5 | Chaque pièce porte les mentions de [pieces-comptables.md](pieces-comptables.md) |
 | **F8. Système de caisse complet** | Lots C0 à C6 de [caisses-et-sessions.md](caisses-et-sessions.md#20-découpage-en-lots-et-critères-dacceptation) : correctifs, référentiel des caisses, sessions et comptages, opérations et transferts à deux temps, contrôles, instruments et devises, pilotage | C0 : aucune ; C1 à C6 : C0 (les champs comptables attendent F3) | Ceux de chaque lot C |
 | **F9. Analytique** | Axes, sections, ventilation, clés, répartition secondaire, règles automatiques, obligation par compte, reclassements, **postes de dépense** et analyse par poste, tableau de bord des dépenses, états analytiques, tenue en classe 9 en partie double (journal `CAG`, comptes réfléchis, centres, coûts, résultats analytiques), balance analytique | F3, F4 | Avec l'analytique activée, une dépense de classe 6 sans section ne se valide pas ; le résultat par site se calcule ; chaque dépense a un poste |
-| **F10. Banque, chèques, mobile money** | Comptes bancaires, cycle des chèques, bordereaux de remise, import de relevés, rapprochement, frais PawaPay | F3, F4 | Un relevé importé se pointe automatiquement à plus de 80 % sur un mois réel |
+| **F10. Banque, chèques, mobile money** | Comptes bancaires, cycle des chèques, bordereaux de remise, import de relevés, rapprochement, frais PawaPay, lettrage des `585`, `513`, `5851` et du compte PawaPay | F3, F4 | Un relevé importé se pointe automatiquement à plus de 80 % sur un mois réel |
 | **F11. Fiscalité** | Comptes de taxe, exigibilité, déclaration de TVA, liquidation | F4 | L'état de TVA d'un mois égale la somme des TVA des factures scellées du mois |
 | **F12. Abonnements et clôture** | Produits constatés d'avance, créances douteuses, contrôles de clôture, à-nouveaux, états financiers SYSCOHADA | F4, F11 | La clôture d'un exercice de test produit bilan, compte de résultat et à-nouveaux équilibrés |
-| **F13. Achats et immobilisations** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, immobilisations et amortissements | F5, F9 | Une commande validée engage le budget ; une immobilisation génère son plan d'amortissement |
+| **F13. Achats et immobilisations** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, immobilisations et amortissements, lettrage des `401` | F5, F9 | Une commande validée engage le budget ; une immobilisation génère son plan d'amortissement |
 | **F16. Budget** | Budgets et versions, mensualisation, élaboration et validation, révisions, virements de crédits, engagements, contrôle budgétaire dans les états de besoin, demandes, décaissements, justifications, dépenses directes, écritures ; dérogations ; suivi, projections, alertes | F5, F6, F9 | Une demande sur une ligne bloquante sans disponible est refusée ou part en validation budgétaire ; un engagement de 100 000 réalisé pour 85 000 libère 15 000 |
 | **F17. Financement, hors bilan, paie** | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre hors bilan et sa tenue en classe 90 (journal `HB`), import du journal de paie | F1, F2, F10 | Une échéance d'emprunt s'écrit seule ; un journal de paie importé s'équilibre et solde les avances retenues |
 | **F15. Liasse et états de gestion** | DSF pré-remplie, passage au résultat fiscal, soldes de gestion mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, confirmation de solde | F12 | La DSF d'un exercice de test se remplit sans saisie hors notes rédactionnelles et tableau fiscal |
@@ -790,6 +864,7 @@ Règle de conception de tous les lots : **aucune valeur métier n'est codée en 
 | Général | Activation de la comptabilité, de l'analytique, du budget ; régime (normal, SMT) ; date de bascule et de reprise ; devise de tenue ; multi-société |
 | Plan de comptes | Comptes, intitulés, nature, lettrable, tiers, trésorerie, analytique obligatoire, taxe associée, actif ; création de comptes (qui, mode immédiat ou après validation, longueur des numéros, plages réservées) ; règles de création des comptes auxiliaires (préfixe, longueur) |
 | Partie double | Compte et plafond des écarts d'arrondi, comptes d'écart de conversion, règles de contrepartie et leur caractère bloquant, destinataires et rythme des notifications et relances des pièces en attente, comptes de classe 9 (analytique et hors bilan) ; **ne sont pas paramétrables** : l'équilibre des pièces, l'exclusion des pièces en attente de la balance, la tenue de l'analytique et du hors bilan en classe 9 |
+| Lettrage | Comptes lettrables et clé de rapprochement par compte, lettrage automatique à la comptabilisation (oui/non par compte), rapprochement nocturne (fenêtre de dates, nombre maximal de lignes combinées, lettrage automatique des correspondances uniques), seuil et comptes d'écart de règlement, motifs de délettrage, délai d'alerte des lignes non lettrées par compte |
 | Exercices et périodes | Début et durée d'exercice, découpage, verrouillage automatique après N jours, synchronisation avec la clôture de facturation |
 | Journaux | Code, type, compte de trésorerie, numérotation, validation automatique ou brouillard, caisses autorisées, comptes autorisés, qui peut créer (et mode immédiat ou après validation) |
 | Schémas d'écriture | Pour chaque événement : conditions, journal, lignes, comptes, analytique ; versionnés avec date d'effet ; activation par famille d'événements |

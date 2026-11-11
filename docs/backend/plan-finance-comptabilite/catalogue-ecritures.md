@@ -10,6 +10,7 @@ Conventions :
 - `{NATURE}` : compte de la nature d'opération choisie.
 - `{PRODUIT}` : compte de produit de la ligne de facture (par type de ligne ou de service du catalogue).
 - Clé d'idempotence : `eventType` + référence. Un même événement ne produit qu'une pièce.
+- **Lettrage** : chaque ligne sur un compte lettrable porte sa clé de rapprochement (numéro de facture, de demande, d'ordre de transfert, de chèque...) et se lettre automatiquement à la comptabilisation ([README, section 4.7](README.md#47-lettrage)). La mention « lettré » dans les tableaux le rappelle.
 - **Partie double** : chaque pièce de ce catalogue est équilibrée (total des débits = total des crédits, en XAF). Quand une ligne du tableau ne montre qu'un côté, c'est qu'elle complète une pièce dont les autres lignes sont écrites ailleurs dans la même ligne ou dans l'événement indiqué ; la pièce entière reste équilibrée. Une pièce déséquilibrée, ou dont la contrepartie n'est pas conforme, n'est jamais comptabilisée ni équilibrée d'office : elle est mise en attente d'équilibrage et notifiée ([README, section 4.6](README.md#46-partie-double--règles-et-garanties)).
 - Analytique : « héritée » signifie copiée des lignes de la facture concernée.
 
