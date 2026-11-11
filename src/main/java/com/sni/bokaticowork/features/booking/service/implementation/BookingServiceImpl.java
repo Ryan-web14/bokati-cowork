@@ -353,6 +353,12 @@ public class BookingServiceImpl implements BookingService {
             notifyIfRequested(booking, BookingEventType.BOOKING_APPROVED, new BookingStatusChangeRequest(booking.getApprovedBy(), null, request == null ? null : request.sendEmail()));
             booking.setBillableNumber(billableBridge.ensureBillableItem(booking));
             bookingRepository.save(booking);
+            if (billableBridge.invoiceSettled(booking)) {
+                // Reservation d'un lot multi-ressources : la facture commune, ou figurait deja cette
+                // reservation, a ete reglee pendant l'attente d'approbation.
+                return bookingMapper.toResponse(confirmInternal(booking, new BookingStatusChangeRequest(
+                        booking.getApprovedBy(), "Approuvee · facture deja reglee", request == null ? null : request.sendEmail())));
+            }
             return bookingMapper.toResponse(booking);
         }
         booking.setStatus(BookingStatus.DRAFT);
@@ -373,6 +379,14 @@ public class BookingServiceImpl implements BookingService {
         booking.setRejectionReason(request == null ? "Rejected" : reason(request.reason(), "Rejected"));
         booking = bookingRepository.save(booking);
         walletSettlement.release(booking, "reservation refusee");
+        if (StringUtils.hasText(booking.getBatchNumber())) {
+            // Reservation d'un lot : elle figurait deja dans la facture commune, sa part en sort
+            try {
+                cancellationRefundSupport.processRejection(booking);
+            } catch (Exception ex) {
+                log.warn("Failed to remove rejected booking {} from its batch invoice", booking.getBookingNumber(), ex);
+            }
+        }
         writeHistory(booking, from, BookingStatus.REJECTED, booking.getRejectedBy(), booking.getRejectionReason());
         eventWriter.write(booking, BookingEventType.BOOKING_REJECTED, "Booking rejected", booking.getRejectionReason(), null,
                 emailRequested(request == null ? null : request.sendEmail()));

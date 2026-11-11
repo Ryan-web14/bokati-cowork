@@ -19,7 +19,7 @@ Trois publics : le back-office (`/sni/api/v1/support/**`, droits `SUPPORT:READ`,
 | Pièce jointe | `id` numérique (petit) | Rattachée au ticket, éventuellement à un message (côté serveur seulement : la réponse ne dit pas lequel). `internal` la cache au membre. |
 | Étiquette (tag) | son nom normalisé | Minuscules, espaces remplacés par `-` (`"Facture Erronée"` devient `facture-erronée`). Créée à la volée au premier usage. |
 | Événement de chronologie | `id` numérique | Journal lisible du ticket : `GET .../timeline`. |
-| Agent assigné | `assignedTo` : identifiant d'utilisateur (grand entier) | **Arrive en texte** dans `SupportTicketResponse` (ex. `"assignedTo": "703461827364519936"`). Ailleurs (règles de routage, statistiques par agent, `uploadedBy`) il arrive en nombre int64 : voir [Identifiants](../README.md#identifiants--attention-aux-grands-nombres). |
+| Agent assigné | `assignedTo` : **le courriel de l'agent** (ex. `"assignedTo": "support@sni-cg.com"`), vide si personne | À afficher tel quel, à renvoyer tel quel dans le filtre de la file et pour réassigner. Ailleurs (règles de routage, statistiques par agent, `uploadedBy`) il arrive en nombre int64 : voir [Identifiants](../README.md#identifiants--attention-aux-grands-nombres). |
 | Règle de routage | `id` numérique (petit) | Assigne automatiquement un ticket neuf à un agent selon catégorie, priorité, type de propriétaire, type d'objet lié. |
 | Réponse rapide | `id` numérique (petit) | Modèle de texte par catégorie, pour l'agent. |
 | Article de connaissance | `articleCode` (`KB-` + horodatage) côté back-office, `slug` côté portail | `publicVisible` le rend lisible au portail. |
@@ -77,7 +77,7 @@ Pas de statut, trois drapeaux : `active` (faux après `DELETE`), `publicVisible`
 
 ### Back-office : file des tickets
 
-1. `GET /sni/api/v1/support/tickets` ([détail](routes/SupportTicketController.md#r-get-sni-api-v1-support-tickets)) avec les filtres utiles : `status`, `priority`, `category`, `assignedTo` (identifiant d'agent, texte tel que reçu dans un ticket), `ownerType` + `ownerCode`, `relatedType` + `relatedCode`, `overdueOnly=true` (tickets en retard), `searchText` (titre, description, numéro), `page`, `size` (défaut 20).
+1. `GET /sni/api/v1/support/tickets` ([détail](routes/SupportTicketController.md#r-get-sni-api-v1-support-tickets)) avec les filtres utiles : `status`, `priority`, `category`, `assignedTo` (courriel de l'agent tel que reçu dans un ticket, ou son identifiant ; un agent inconnu rend une file vide), `ownerType` + `ownerCode`, `relatedType` + `relatedCode`, `overdueOnly=true` (tickets en retard), `searchText` (titre, description, numéro), `page`, `size` (défaut 20).
 2. La réponse est une page `{ data, pageable }` triée par date de création décroissante. Le paramètre `sort` est ignoré.
 3. Chaque ligne est un résumé : `messages` et `attachments` sont des listes **vides**, `messageCount` et `attachmentCount` donnent les nombres, `description` est coupée à 2 000 caractères (en texte brut si elle était longue).
 4. Afficher en tête les compteurs `GET /sni/api/v1/support/tickets/metrics` (droit `SUPPORT:METRICS`) : `openTickets` (`OPEN` + `IN_PROGRESS`), `overdueFirstResponse`, `overdueResolution`, `resolvedTickets`.
@@ -103,7 +103,7 @@ Pour qu'un membre voie le ticket dans son portail, envoyer exactement `ownerType
 
 1. Charger les modèles : `GET /sni/api/v1/support/quick-replies?category=<catégorie du ticket>`.
 2. Proposer des articles : `GET /sni/api/v1/support/knowledge-base/suggestions?category=...&searchText=...&limit=5`.
-3. `POST /sni/api/v1/support/tickets/{ticketNumber}/messages` ([détail](routes/SupportTicketController.md#r-post-sni-api-v1-support-tickets-ticketnumber-messages)) avec `content` (obligatoire), `internal` (vrai pour une note interne), `senderName` (le nom de l'agent : il apparaît dans le courriel, sinon « Notre équipe ») et `senderId` (le serveur ne le remplit pas). Laisser `senderType` vide (défaut `AGENT`).
+3. `POST /sni/api/v1/support/tickets/{ticketNumber}/messages` ([détail](routes/SupportTicketController.md#r-post-sni-api-v1-support-tickets-ticketnumber-messages)) avec `content` (obligatoire) et `internal` (vrai pour une note interne). Laisser `senderType` vide (défaut `AGENT`). `senderId` et `senderName` sont facultatifs ; `authorId` et `authorName` sont acceptés comme synonymes (`sender*` l'emporte s'il est fourni). Tous vides, le serveur signe le message avec le courriel et le nom de l'agent connecté (le nom apparaît dans le courriel au client). Tout autre champ renvoie `400`.
 4. Effets : `firstRespondedAt` posé au premier message d'agent ; un message public depuis `OPEN` ou `IN_PROGRESS` passe le ticket en `WAITING_CLIENT` et envoie le courriel « Réponse sur votre ticket » à `contactEmail` ; une note interne ne change pas le statut et n'envoie rien.
 5. Réponse `201` : le ticket complet à jour. Remplacer la fiche affichée.
 
@@ -111,9 +111,9 @@ Pour qu'un membre voie le ticket dans son portail, envoyer exactement `ownerType
 
 ### Back-office : assigner
 
-1. `PATCH /sni/api/v1/support/tickets/{ticketNumber}/assign` (droit `SUPPORT:ASSIGN`) avec `{ "assignedTo": "<id ou courriel>" }`. Le champ est un **texte** : l'identifiant d'utilisateur en chiffres, ou son adresse courriel (le serveur retrouve l'utilisateur ; inconnu : erreur). `null` ou vide désassigne.
+1. `PATCH /sni/api/v1/support/tickets/{ticketNumber}/assign` (droit `SUPPORT:ASSIGN`) avec `{ "assignedTo": "<courriel ou id>" }`. **Préférer le courriel** de l'agent : un identifiant lu en nombre par JavaScript est arrondi et ne désigne plus personne. Un identifiant ou un courriel inconnu renvoie `404`. `null` ou vide désassigne.
 2. Un ticket `OPEN` assigné passe en `IN_PROGRESS`. Un changement d'agent écrit un événement `ASSIGNED` et envoie un courriel au nouvel agent.
-3. Réponse : le ticket complet, `assignedTo` en texte.
+3. Réponse : le ticket complet, `assignedTo` étant le courriel de l'agent.
 
 Préférer le courriel de l'agent : il évite la question des grands entiers, et un identifiant numérique n'est pas vérifié (un identifiant inexistant est accepté).
 
@@ -260,7 +260,8 @@ Les énumérations ci-dessus (statut, priorité, catégorie) sont fixes : les co
 
 ### Identifiants d'agent
 
-- `SupportTicketResponse.assignedTo` arrive en texte : le garder tel quel, et le renvoyer tel quel dans le filtre `assignedTo` de la file.
+- `SupportTicketResponse.assignedTo` est le courriel de l'agent : le garder tel quel, et le renvoyer tel quel dans le filtre `assignedTo` de la file et pour réassigner.
+- Réponses par courriel : un client (ou un agent) qui répond à une notification en gardant `TCK-...` dans l'objet voit sa réponse ajoutée au ticket. Les notifications automatiques que la plateforme reçoit dans sa propre boîte sont écartées.
 - `RoutingRuleResponse.assignedTo`, `RoutingRuleRequest.assignedTo`, `CreateTicketTaskRequest.assignedTo`, `AgentWorkloadEntry.agentId`, `AgentPerformanceEntry.agentId`, `AttachmentResponse.uploadedBy`, `KnowledgeArticleResponse.createdBy` et `updatedBy` restent des nombres int64 : lire avec un analyseur qui préserve les grands entiers, et écrire le nombre sans passer par un `number` JavaScript (voir [Identifiants](../README.md#identifiants--attention-aux-grands-nombres)).
 - Les autres `id` du module (messages, pièces jointes, règles, réponses rapides, étiquettes, articles) sont de petites séquences, sans risque d'arrondi.
 

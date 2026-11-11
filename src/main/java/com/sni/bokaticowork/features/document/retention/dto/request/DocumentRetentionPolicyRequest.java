@@ -21,6 +21,9 @@ public class DocumentRetentionPolicyRequest {
 
     private String documentTypeCode;
 
+    /** Code d'un dossier de la GED : la regle ne vise que lui et ses sous-dossiers. */
+    private String folderCode;
+
     @NotNull
     @Min(1)
     private Integer retentionDays;

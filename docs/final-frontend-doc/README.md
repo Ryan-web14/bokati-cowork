@@ -140,6 +140,8 @@ Un trop grand nombre d'appels renvoie `429` avec `{ "errorCode": "TOO_MANY_REQUE
 
 Un canal WebSocket STOMP est ouvert sur `/ws` (avec SockJS). La trame `CONNECT` doit porter l'en-tête `Authorization: Bearer <accessToken>`. Abonnements sur `/topic/...` et `/user/queue/...`, envois sur `/app/...`. Les sujets `/topic/admin/`, `/topic/inventory/` et `/topic/support/` sont réservés au back-office. Les sujets publiés sont décrits dans les README des modules qui les utilisent (`notification`, `support`, `inventory`).
 
+Jeton expiré : si le jeton d'accès a expiré (15 minutes), le serveur refuse le `CONNECT` par une trame `ERROR` dont l'en-tête `message` vaut `TOKEN_EXPIRED`, puis ferme la connexion. Le navigateur doit alors rafraîchir son jeton (`POST /sni/api/v1/auth/refresh`, comme pour un 401 de l'API) et se reconnecter avec le nouveau. Pour éviter ce refus, relire le jeton courant à chaque (re)connexion, dans `beforeConnect` du client STOMP, au lieu de garder celui de la première connexion. Tout autre refus porte un autre message (`WebSocket authentication failed`, `Session revoked`...) : renvoyer alors vers la connexion.
+
 ## Régénérer
 
 Après un changement de routes ou de DTO, relancer la génération décrite dans [tools/frontend-doc/README.md](../../tools/frontend-doc/README.md). Les README rédigés ne sont pas touchés : les relire si le fonctionnement a changé.

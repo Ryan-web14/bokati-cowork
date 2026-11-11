@@ -24,6 +24,8 @@ import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentStatu
 import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentAccessLogServiceImpl;
 import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentBatchService;
 import com.sni.bokaticowork.features.document.documentMaster.service.implementation.DocumentLockService;
+import com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel;
+import com.sni.bokaticowork.features.document.explorer.access.GedAccessService;
 import com.sni.bokaticowork.features.document.documentMaster.service.support.DocumentAccessTokenService;
 import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
 import com.sni.bokaticowork.features.document.documentMaster.service.interfaces.DocumentSearchService;
@@ -59,6 +61,9 @@ public class DocumentController {
     private final DocumentBatchService batchService;
     private final DocumentLockService lockService;
     private final DocumentAccessTokenService accessTokenService;
+    /** Les dossiers restreints de la GED valent aussi ici : sans quoi ces routes les contourneraient. */
+    private final GedAccessService gedAccess;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedQuotaService gedQuota;
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Audited(module = "DOCUMENT", action = "UPLOAD", ressource = "document")
@@ -75,11 +80,14 @@ public class DocumentController {
     public ResponseEntity<DocumentResponse> replace(
             @PathVariable String code,
             @RequestPart("file") MultipartFile file) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.EDIT);
+        gedQuota.assertRoomForDocument(code, file.getSize());
         return ResponseEntity.ok(service.replace(code, file));
     }
 
     @GetMapping("/{code}")
     public ResponseEntity<DocumentResponse> getByCode(@PathVariable String code) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.READ);
         return ResponseEntity.ok(service.getByCode(code));
     }
 
@@ -88,16 +96,18 @@ public class DocumentController {
             @RequestParam(required = false) DocumentOwnerType ownerType,
             @RequestParam(required = false) String ownerCode,
             @PageableDefault(size = 20, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(service.list(ownerType, ownerCode, pageable));
+        return ResponseEntity.ok(gedAccess.withoutHiddenDocuments(service.list(ownerType, ownerCode, pageable)));
     }
 
     @GetMapping("/{code}/versions")
     public ResponseEntity<List<DocumentVersionResponse>> listVersions(@PathVariable String code) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.READ);
         return ResponseEntity.ok(service.listVersions(code));
     }
 
     @GetMapping("/{code}/download")
     public ResponseEntity<byte[]> download(@PathVariable String code, HttpServletRequest request) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.DOWNLOAD);
         DocumentFileResult result = service.getFileWithMeta(code);
         accessLogService.log(code, "DOWNLOAD", clientIp(request), request.getHeader("User-Agent"));
         HttpHeaders headers = new HttpHeaders();
@@ -109,6 +119,7 @@ public class DocumentController {
 
     @GetMapping("/{code}/preview")
     public ResponseEntity<byte[]> preview(@PathVariable String code, HttpServletRequest request) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.DOWNLOAD);
         DocumentFileResult result = service.getFileWithMeta(code);
         accessLogService.log(code, "PREVIEW", clientIp(request), request.getHeader("User-Agent"));
         HttpHeaders headers = new HttpHeaders();
@@ -124,6 +135,8 @@ public class DocumentController {
      */
     @GetMapping("/{code}/preview-token")
     public ResponseEntity<Map<String, Object>> previewToken(@PathVariable String code) {
+        // Le jeton ouvre l'apercu sans autre controle : il ne se delivre qu'a qui peut ouvrir le fichier
+        gedAccess.requireDocumentCode(code, GedAccessLevel.DOWNLOAD);
         DocumentAccessTokenService.IssuedToken issued = accessTokenService.issue(code);
         return ResponseEntity.ok(Map.of(
                 "token", issued.token(),
@@ -183,6 +196,7 @@ public class DocumentController {
     public ResponseEntity<DocumentResponse> restoreVersion(
             @PathVariable String code,
             @PathVariable Integer versionNumber) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.EDIT);
         return ResponseEntity.ok(service.restoreVersion(code, versionNumber));
     }
 
@@ -191,6 +205,7 @@ public class DocumentController {
     public ResponseEntity<DocumentResponse> archive(
             @PathVariable String code,
             @RequestParam(required = false) String reason) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.EDIT);
         return ResponseEntity.ok(service.archive(code, reason));
     }
 
@@ -199,6 +214,7 @@ public class DocumentController {
     @PostMapping("/{code}/lock")
     @Audited(module = "DOCUMENT", action = "LOCK", ressource = "document")
     public ResponseEntity<Void> lock(@PathVariable String code) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.EDIT);
         lockService.lock(code);
         return ResponseEntity.ok().build();
     }
@@ -206,6 +222,7 @@ public class DocumentController {
     @PostMapping("/{code}/unlock")
     @Audited(module = "DOCUMENT", action = "UNLOCK", ressource = "document")
     public ResponseEntity<Void> unlock(@PathVariable String code) {
+        gedAccess.requireDocumentCode(code, GedAccessLevel.READ);
         lockService.unlock(code);
         return ResponseEntity.ok().build();
     }
@@ -246,10 +263,10 @@ public class DocumentController {
             @RequestParam(required = false) String metaKey,
             @RequestParam(required = false) String metaValue,
             @PageableDefault(size = 20, sort = "uploadedAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return ResponseEntity.ok(searchService.search(
+        return ResponseEntity.ok(gedAccess.withoutHiddenDocuments(searchService.search(
                 q, space, category, tags, ownerType, ownerCode,
                 statuses, expiresInDays, isExpired,
-                uploadedAfter, uploadedBefore, metaKey, metaValue, pageable));
+                uploadedAfter, uploadedBefore, metaKey, metaValue, pageable)));
     }
 
     @GetMapping("/dashboard")

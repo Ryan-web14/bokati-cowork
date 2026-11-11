@@ -16,6 +16,7 @@ import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -146,7 +147,7 @@ public class ComplianceCaseService {
         ComplianceCase saved = caseRepository.save(complianceCase);
         auditService.record(actor, null, "CASE_ASSIGNED", SUBJECT_WALLET, saved.getSubjectCode(),
                 before, assignee.trim(), saved.getCaseNumber());
-        return saved;
+        return withWallet(saved);
     }
 
     @Transactional
@@ -181,7 +182,7 @@ public class ComplianceCaseService {
         ComplianceCase saved = caseRepository.save(complianceCase);
         auditService.record(actor, "CASE_ESCALATED", SUBJECT_WALLET, saved.getSubjectCode(),
                 saved.getCaseNumber() + " · vers " + escalatedTo.trim() + " · " + reason.trim());
-        return saved;
+        return withWallet(saved);
     }
 
     // -----------------------------------------------------------------------------------------
@@ -253,7 +254,7 @@ public class ComplianceCaseService {
 
         auditService.record(actor, null, "CASE_CLOSED", SUBJECT_WALLET, saved.getSubjectCode(),
                 before, saved.getStatus().name(), saved.getCaseNumber() + " · " + rationale.trim());
-        return saved;
+        return withWallet(saved);
     }
 
     private void releaseIfUnderReviewForThisOnly(Long walletId) {
@@ -276,13 +277,12 @@ public class ComplianceCaseService {
 
     @Transactional(readOnly = true)
     public ComplianceCase get(String caseNumber) {
-        return caseRepository.findByCaseNumber(caseNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+        return withWallet(find(caseNumber));
     }
 
     @Transactional(readOnly = true)
     public List<ComplianceCaseNote> notes(String caseNumber) {
-        return noteRepository.findByComplianceCase_IdOrderByCreatedAtAsc(get(caseNumber).getId());
+        return noteRepository.findByComplianceCase_IdOrderByCreatedAtAsc(find(caseNumber).getId());
     }
 
     @Transactional(readOnly = true)
@@ -334,8 +334,26 @@ public class ComplianceCaseService {
 
     // -----------------------------------------------------------------------------------------
 
+    private ComplianceCase find(String caseNumber) {
+        return caseRepository.findByCaseNumber(caseNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable"));
+    }
+
+    /**
+     * Le portefeuille du dossier, charge avant de rendre · la vue le lit apres la transaction.
+     *
+     * <p>Pas de graphe sur la recherche par numero : la cloture verrouille ensuite le portefeuille,
+     * et une lecture prealable sans verrou le laisserait perime dans la session.</p>
+     */
+    private static ComplianceCase withWallet(ComplianceCase complianceCase) {
+        if (complianceCase.getWallet() != null) {
+            Hibernate.initialize(complianceCase.getWallet());
+        }
+        return complianceCase;
+    }
+
     private ComplianceCase open(String caseNumber) {
-        ComplianceCase complianceCase = get(caseNumber);
+        ComplianceCase complianceCase = find(caseNumber);
         if (!complianceCase.getStatus().open()) {
             throw new BadRequestException("Ce dossier est clos · un dossier clos ne se rouvre pas, on en ouvre un autre");
         }

@@ -482,7 +482,16 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, trim(createdBy), null);
     }
 
+    /**
+     * Range un paiement de la plateforme (mobile money, portefeuille) dans sa caisse automatique, en
+     * ouvrant une session s'il n'y en a pas.
+     *
+     * <p>Dans sa propre transaction : l'appelant (le traitement d'un paiement confirme) attrape les
+     * erreurs d'ici pour ne pas bloquer la confirmation. Dans la meme transaction, une erreur l'aurait
+     * marquee pour annulation et toute la confirmation (facture, reservation) aurait ete perdue.</p>
+     */
     @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void recordAutomaticPayment(PaymentTransaction transaction) {
         if (transaction == null || transaction.getStatus() != PaymentTransactionStatus.SUCCEEDED) {
             return;
@@ -561,6 +570,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     private CashSession automaticSession(CashRegister register, PaymentMethod method, BigDecimal nextAmount) {
+        registerRepository.lockById(register.getId());
         CashSession session = sessionRepository.findFirstByCashRegisterIdAndStatusForUpdate(register.getId(), CashSessionStatus.OPEN.name())
                 .orElseGet(() -> openAutomaticSession(register, method));
         BigDecimal currentTotal = money(summarySupport.expectedClosingAmount(session));
@@ -752,6 +762,16 @@ public class CashRegisterServiceImpl implements CashRegisterService {
             metadata.put("providerReference", providerReference);
         }
         return com.sni.bokaticowork.core.utils.json.JsonPayload.of(metadata);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void assertCounterSessionOpen(String sessionNumber) {
+        CashSession session = session(sessionNumber);
+        if (session.getStatus() != CashSessionStatus.OPEN) {
+            throw new BadRequestException("La session de caisse " + session.getSessionNumber() + " n'est pas ouverte");
+        }
+        assertManualEntryAllowed(session.getCashRegister());
     }
 
     private CashSession requireOpenSession(String sessionNumber) {

@@ -13,6 +13,7 @@ Le module est découpé en quatre fichiers de parcours :
 | [parcours-paiements.md](parcours-paiements.md) | Intentions (création depuis une ou plusieurs factures, recouvrement global), encaissement en espèces et au portefeuille, remboursement et annulation, reçus, lots de rapprochement. |
 | [parcours-mobile-money.md](parcours-mobile-money.md) | Opérateurs, envoi d'un dépôt, attente du rappel et sondage du statut, lien de paiement et page publique, supervision et résolution, remboursement mobile money, idempotence. |
 | [parcours-caisses.md](parcours-caisses.md) | Caisses, sessions, mouvements, bons, demandes, clôture et écarts, anomalies, statistiques, annonces d'espèces du portail. |
+| [encaissement-guichet.md](encaissement-guichet.md) | Monnaie rendue en espèces (aperçu en direct), chèque, virement, mobile money hors plateforme (MTN MoMo Pay, Airtel Money), caisse automatique du mobile money, annulation et relance d'une intention. |
 | [parcours-portefeuilles.md](parcours-portefeuilles.md) | Portefeuilles, écritures, retenues, actions administratives à double visa, signalements, conformité (dossiers, gels, filtrage, règles), code secret, trésorerie. |
 
 ## Notions
@@ -44,7 +45,7 @@ Résumé ; les tables complètes (statut, signification, entrée, sortie) sont d
 
 | Objet | Statuts réellement atteints | Table complète |
 | --- | --- | --- |
-| Intention | `PENDING` → `PROCESSING` (dépôt en cours) → `SUCCEEDED` ; `EXPIRED` (échéance, worker 5 min) ; `REFUNDED` / `REVERSED` (remboursement total) | [paiements](parcours-paiements.md#intention-paymentintentstatus) |
+| Intention | `PENDING` → `PROCESSING` (dépôt en cours) → `SUCCEEDED` ; `EXPIRED` (échéance, worker 5 min) ; `CANCELLED` (annulée au guichet) ; une intention `EXPIRED`, `CANCELLED` ou `FAILED` se relance en `PENDING` ([guichet](encaissement-guichet.md#5-relancer-une-intention)) ; `REFUNDED` / `REVERSED` (remboursement total) | [paiements](parcours-paiements.md#intention-paymentintentstatus) |
 | Transaction | `PROCESSING` → `SUCCEEDED` / `FAILED` ; `REFUNDED` / `REVERSED` | [paiements](parcours-paiements.md#transaction-paymenttransactionstatus) |
 | Dépôt mobile money (`phase`) | `WAITING_FOR_PAYER`, `CONFIRMING` → `COMPLETED` / `FAILED` / `UNRESOLVED` (24 h sans réponse) | [mobile money](parcours-mobile-money.md#dépôt--status-technique-et-phase-pour-lécran) |
 | Session de caisse | `OPEN` → `CLOSED`, ou `OPEN` → `CLOSING_REVIEW` (écart) → `CLOSED` | [caisses](parcours-caisses.md#session-cashsessionstatus) |

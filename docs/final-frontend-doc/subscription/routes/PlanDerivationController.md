@@ -221,6 +221,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `requestedBy` | texte |  |  |
 | `approvedBy` | texte |  |  |
 | `approvedAt` | date-heure ISO 8601 UTC |  |  |
+| `approvalSource` | texte |  |  |
 | `rejectionReason` | texte |  |  |
 | `appliedAt` | date-heure ISO 8601 UTC |  |  |
 | `endedAt` | date-heure ISO 8601 UTC |  |  |

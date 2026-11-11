@@ -53,6 +53,9 @@ public class SupportInboundEmailWorker {
     @Value("${bokati.support.sender-email:supportela@elleaose.com}")
     private String supportInbox;
 
+    @Value("${bokati.support.manager-email:}")
+    private String managerEmail;
+
     @Scheduled(fixedDelayString = "${bokati.support.inbound-poll-delay-ms:60000}")
     public void pollInbox() {
         try {
@@ -109,6 +112,15 @@ public class SupportInboundEmailWorker {
             return;
         }
 
+        // Les notifications de la plateforme (nouveau message, delai depasse...) partent de cette
+        // boite et y reviennent quand elle en est aussi destinataire : elles s'ajoutaient au ticket
+        // comme des messages du client. Seules elles sont ecartees ; une reponse ecrite par une
+        // personne, depuis n'importe quelle adresse (cette boite comprise), entre dans le ticket.
+        if (isPlatformNotification(senderEmail, bodyText)) {
+            log.debug("Inbound email for ticket {} is one of our own notifications · skipping", ticketNumber);
+            return;
+        }
+
         try {
             // #3 addEmailReply includes deduplication via graphMessageId
             var response = ticketService.addEmailReply(ticketNumber, msgId, senderEmail, senderName, bodyText);
@@ -124,6 +136,27 @@ public class SupportInboundEmailWorker {
         } catch (Exception ex) {
             log.error("Failed to process email reply to ticket {} from {}: {}", ticketNumber, senderEmail, ex.getMessage(), ex);
         }
+    }
+
+    /**
+     * Un courriel automatique de la plateforme : envoye par la boite du support (ou l'adresse du
+     * responsable) et portant le pied des notifications de ticket. Les deux a la fois : un client
+     * qui cite la notification n'est pas ecarte, un agent qui repond depuis la boite non plus.
+     */
+    public boolean isPlatformNotification(String senderEmail, String bodyText) {
+        if (!isOwnMailbox(senderEmail) || !StringUtils.hasText(bodyText)) {
+            return false;
+        }
+        String text = bodyText.toLowerCase(java.util.Locale.ROOT);
+        return text.contains("ticket de référence") && text.contains("votre message sera ajouté à votre ticket");
+    }
+
+    public boolean isOwnMailbox(String senderEmail) {
+        if (!StringUtils.hasText(senderEmail)) {
+            return false;
+        }
+        String sender = senderEmail.trim();
+        return sender.equalsIgnoreCase(supportInbox) || (StringUtils.hasText(managerEmail) && sender.equalsIgnoreCase(managerEmail.trim()));
     }
 
     // ── Attachments (#5) ─────────────────────────────────────────────

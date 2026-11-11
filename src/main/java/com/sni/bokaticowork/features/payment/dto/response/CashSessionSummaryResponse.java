@@ -23,6 +23,21 @@ public record CashSessionSummaryResponse(
         String varianceReason,
         Instant openedAt,
         Instant closingRequestedAt,
-        Instant closedAt
+        Instant closedAt,
+        /**
+         * Paiements saisis a ce guichet qui ne sont pas des especes (cheque, virement, mobile money
+         * hors plateforme...). Hors du compte des especes : ni dans {@code totalPayments} ni dans
+         * {@code expectedClosingAmount}.
+         */
+        java.util.List<NonCashPaymentTotal> nonCashPayments
 ) {
+
+    public record NonCashPaymentTotal(
+            com.sni.bokaticowork.features.payment.enums.PaymentMethod paymentMethod,
+            String provider,
+            String label,
+            long count,
+            BigDecimal amount
+    ) {
+    }
 }

@@ -5,6 +5,7 @@ import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.service.tokenService.implementation.JWTService;
 import com.sni.bokaticowork.security.service.user.CustomUserDetailService;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -111,6 +112,17 @@ class WebSocketAuthInterceptorTest {
 
         assertThatThrownBy(() -> interceptor.preSend(connect("Bearer " + TOKEN), null))
                 .isInstanceOf(MessagingException.class);
+    }
+
+    @Test
+    @DisplayName("Un jeton expiré refuse la connexion avec TOKEN_EXPIRED, sans cause jointe")
+    void anExpiredTokenIsRefusedWithTokenExpired() {
+        when(jwtService.isAccessToken(TOKEN)).thenThrow(new ExpiredJwtException(null, null, "JWT expired"));
+
+        assertThatThrownBy(() -> interceptor.preSend(connect("Bearer " + TOKEN), null))
+                .isInstanceOf(MessagingException.class)
+                .hasMessage("TOKEN_EXPIRED")
+                .hasNoCause();
     }
 
     @Test

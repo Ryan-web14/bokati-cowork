@@ -23,6 +23,7 @@ public class PassRenewalSchedule {
     @IdGeneration
     private Long id;
 
+    // Rendu tel quel par PassController : le pass y figure sans ses liens paresseux, lus hors transaction
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pass_id", nullable = false, unique = true,
             foreignKey = @ForeignKey(name = "fk_pass_renewal_pass"))

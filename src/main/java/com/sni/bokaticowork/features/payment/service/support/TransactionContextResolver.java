@@ -35,6 +35,11 @@ public class TransactionContextResolver {
     private static final String BILLING_DOCUMENT_SOURCE = "BILLING_DOCUMENT";
     private static final String MULTI_BILLING_DOCUMENT_SOURCE = "MULTI_BILLING_DOCUMENT";
     private static final String BILLABLE_ITEM_SOURCE = "BILLABLE_ITEM";
+    /**
+     * Une facture qui regle plusieurs reservations (lot multi-ressources) · le code liste leurs
+     * numeros separes par des virgules. Le paiement confirme chacune, le remboursement les annule.
+     */
+    public static final String BOOKINGS_SOURCE = "BOOKINGS";
 
     private final MemberRepository memberRepository;
     private final CustomerRepository customerRepository;
@@ -98,6 +103,10 @@ public class TransactionContextResolver {
                 SourceKey key = resolvedDistinct.iterator().next();
                 return resolveSource(key.type(), key.code(), 1);
             }
+            if (!resolvedDistinct.isEmpty() && resolvedDistinct.size() == distinct.size()
+                    && resolvedDistinct.stream().allMatch(key -> "BOOKING".equalsIgnoreCase(key.type()))) {
+                return bookingsSource(resolvedDistinct.stream().map(SourceKey::code).toList());
+            }
             return new SourceView("MULTIPLE", document.getDocumentNumber(), "Sources multiples", false);
         }
         return resolveSource(document.getSourceType(), document.getSourceCode(), 1);
@@ -152,6 +161,9 @@ public class TransactionContextResolver {
             }
             return new SourceView(normalizedType, normalizedCode, "Billable items", false);
         }
+        if (BOOKINGS_SOURCE.equalsIgnoreCase(upperType) && StringUtils.hasText(normalizedCode)) {
+            return bookingsSource(splitCodes(normalizedCode));
+        }
         if ("BOOKING".equalsIgnoreCase(upperType) && StringUtils.hasText(normalizedCode)) {
             return bookingRepository.findByBookingNumber(normalizedCode)
                     .map(this::bookingSource)
@@ -190,6 +202,12 @@ public class TransactionContextResolver {
 
     private PartyView businessParty(BusinessEntity businessEntity) {
         return new PartyView("BUSINESS_ENTITY", businessEntity.getCode(), clean(businessEntity.getName()), clean(businessEntity.getEmail()), clean(businessEntity.getPhone()), null, true);
+    }
+
+    private SourceView bookingsSource(List<String> bookingNumbers) {
+        String shown = String.join(", ", bookingNumbers.subList(0, Math.min(3, bookingNumbers.size())));
+        String label = "Reservations " + shown + (bookingNumbers.size() > 3 ? " (+" + (bookingNumbers.size() - 3) + ")" : "");
+        return new SourceView(BOOKINGS_SOURCE, String.join(",", bookingNumbers), label, true);
     }
 
     private SourceView bookingSource(Booking booking) {

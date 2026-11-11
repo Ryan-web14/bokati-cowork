@@ -73,6 +73,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `name` | texte |  |  |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
 | `documentTypeCode` | texte |  |  |
+| `folderCode` | texte |  |  |
+| `folderName` | texte |  |  |
 | `retentionDays` | entier |  |  |
 | `retentionReference` | enum : `UPLOAD_DATE`, `EXPIRY_DATE` |  |  |
 | `action` | enum : `ARCHIVE`, `PURGE_FLAG` |  |  |
@@ -89,6 +91,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `name` | texte | oui | longueur min `1` |
 | `space` | enum : `KYC_SPACE`, `CONTRACT_SPACE`, `FINANCIAL_SPACE`, `ASSET_SPACE`, `ADMINISTRATIVE`, `GENERIC` |  |  |
 | `documentTypeCode` | texte |  |  |
+| `folderCode` | texte |  |  |
 | `retentionDays` | entier | oui | min `1` |
 | `retentionReference` | enum : `UPLOAD_DATE`, `EXPIRY_DATE` |  |  |
 | `action` | enum : `ARCHIVE`, `PURGE_FLAG` |  |  |

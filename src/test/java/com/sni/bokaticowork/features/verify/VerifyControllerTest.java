@@ -118,12 +118,30 @@ class VerifyControllerTest {
 
     @Test
     void shouldRenderNotFoundForAnUnknownReference() {
-        when(billingDocumentService.get(anyString())).thenThrow(new RuntimeException("absent"));
+        when(billingDocumentService.get(anyString()))
+                .thenThrow(new com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException("absent"));
         Model model = new ConcurrentModel();
+        org.springframework.mock.web.MockHttpServletResponse response = new org.springframework.mock.web.MockHttpServletResponse();
 
-        String view = controller.verifyDocument("INV-999", null, model);
+        String view = controller.verifyDocument("INV-999", null, model, response);
 
         assertThat(view).isEqualTo("verify/not-found");
+        assertThat(model.getAttribute("view")).isNull();
+        assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldNotPassAFailureOffAsAnUnknownDocument() {
+        // Une panne affichait « introuvable » : le client concluait a un faux document
+        when(billingDocumentService.get(anyString())).thenThrow(new IllegalStateException("base indisponible"));
+        Model model = new ConcurrentModel();
+        org.springframework.mock.web.MockHttpServletResponse response = new org.springframework.mock.web.MockHttpServletResponse();
+
+        String view = controller.verifyDocument("INV-001", null, model, response);
+
+        assertThat(view).isEqualTo("verify/unavailable");
+        assertThat(response.getStatus()).isEqualTo(500);
+        assertThat((String) model.getAttribute("incident")).hasSize(8);
         assertThat(model.getAttribute("view")).isNull();
     }
 
@@ -139,7 +157,7 @@ class VerifyControllerTest {
 
     private VerificationView render(String prefix) {
         Model model = new ConcurrentModel();
-        controller.verifyDocument("INV-001", prefix, model);
+        controller.verifyDocument("INV-001", prefix, model, new org.springframework.mock.web.MockHttpServletResponse());
         return (VerificationView) model.getAttribute("view");
     }
 

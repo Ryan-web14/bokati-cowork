@@ -201,6 +201,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `birthDate` | date AAAA-MM-JJ |  |  |
 | `gender` | texte |  | longueur min `0`, longueur max `20` |
 | `preferredCommunicationChannel` | texte |  | longueur min `0`, longueur max `30` |
+| `referralCode` | texte |  | longueur min `0`, longueur max `40` |
 
 <a id="m-AddressRequest"></a>
 #### AddressRequest

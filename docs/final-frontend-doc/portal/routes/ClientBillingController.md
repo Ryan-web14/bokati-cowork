@@ -345,7 +345,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `transactionNumber` | texte |  |  |
 | `intentNumber` | texte |  |  |
-| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
+| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
 | `provider` | texte |  |  |
 | `providerReference` | texte |  |  |
 | `receiptNumber` | texte |  |  |
@@ -357,6 +357,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `failureReason` | texte |  |  |
 | `metadataJson` | texte |  |  |
 | `channel` | enum : `SELF_SERVICE`, `BACK_OFFICE`, `SYSTEM` |  |  |
+| `paymentMethodLabel` | texte |  |  |
+| `tenderedAmount` | nombre décimal |  |  |
+| `changeAmount` | nombre décimal |  |  |
+| `cashSessionNumber` | texte |  |  |
+| `bankName` | texte |  |  |
+| `payerName` | texte |  |  |
+| `payerPhone` | texte |  |  |
 
 <a id="m-ClientWalletPinRequest"></a>
 #### ClientWalletPinRequest
@@ -397,6 +404,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `idempotencyKey` | texte |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `metadataJson` | texte |  |  |
+| `cancelledAt` | date-heure ISO 8601 UTC |  |  |
+| `cancelledBy` | texte |  |  |
+| `cancellationReason` | texte |  |  |
+| `relaunchCount` | entier |  |  |
+| `lastRelaunchedAt` | date-heure ISO 8601 UTC |  |  |
+| `lastRelaunchedBy` | texte |  |  |
+| `relaunchable` | booléen |  |  |
+| `cancellable` | booléen |  |  |
 
 <a id="m-PaymentReceiptResponse"></a>
 #### PaymentReceiptResponse
@@ -407,7 +422,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `receiptIssuedAt` | date-heure ISO 8601 UTC |  |  |
 | `transactionNumber` | texte |  |  |
 | `intentNumber` | texte |  |  |
-| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
+| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
 | `transactionStatus` | enum : `PENDING`, `PROCESSING`, `SUCCEEDED`, `FAILED`, `CANCELLED`, `REFUNDED`, `REVERSED` |  |  |
 | `provider` | texte |  |  |
 | `providerReference` | texte |  |  |
@@ -430,6 +445,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `paidAt` | date-heure ISO 8601 UTC |  |  |
 | `receivedBy` | texte |  |  |
 | `allocations` | [PaymentReceiptAllocationResponse](#m-PaymentReceiptAllocationResponse)[] |  |  |
+| `paymentMethodLabel` | texte |  |  |
+| `tenderedAmount` | nombre décimal |  |  |
+| `changeAmount` | nombre décimal |  |  |
+| `bankName` | texte |  |  |
+| `payerName` | texte |  |  |
 
 <a id="m-StatementDtos-Statement"></a>
 #### StatementDtos.Statement

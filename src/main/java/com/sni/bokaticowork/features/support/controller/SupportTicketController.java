@@ -50,7 +50,8 @@ public class SupportTicketController {
     @PreAuthorize("hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')")
     public ResponseEntity<PaginatedResponse<SupportTicketResponse>> search(
             @RequestParam(required = false) TicketStatus status,
-            @RequestParam(required = false) Long assignedTo,
+            /** Courriel de l'agent (tel que recu dans {@code assignedTo}) ou son identifiant. */
+            @RequestParam(required = false) String assignedTo,
             @RequestParam(required = false) String ownerType,
             @RequestParam(required = false) String ownerCode,
             @RequestParam(required = false) TicketCategory category,
@@ -60,7 +61,7 @@ public class SupportTicketController {
             @RequestParam(required = false) Boolean overdueOnly,
             @RequestParam(required = false) String searchText,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(service.search(status, assignedTo, ownerType, ownerCode,
+        return ResponseEntity.ok(service.search(status, service.agentId(assignedTo), ownerType, ownerCode,
                 category, priority, relatedType, relatedCode, overdueOnly, searchText, pageable));
     }
 

@@ -92,6 +92,83 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/bookings/batches",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "listBatches",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "page",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    },
+    {
+     "in": "query",
+     "name": "size",
+     "required": false,
+     "default": "20",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse.Summary>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/bookings/batches",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "createBatch",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/bookings/batches/{batchNumber}",
+   "package": "features.booking.controller",
+   "controller": "BookingController",
+   "source": "src/main/java/com/sni/bokaticowork/features/booking/controller/BookingController.java",
+   "handler": "getBatch",
+   "declaredIn": "BookingController",
+   "access": {
+    "kind": "admin",
+    "permission": "BOOKING:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "batchNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/bookings/cancellation-policy",
    "package": "features.booking.controller",
    "controller": "BookingController",
@@ -1492,6 +1569,9 @@
     },
     "seatsLabel": {
      "type": "string"
+    },
+    "batchNumber": {
+     "type": "string"
     }
    }
   },
@@ -1594,6 +1674,149 @@
      }
     },
     "billingCompanyCode": {
+     "type": "string"
+    }
+   }
+  },
+  "BookingBatchResponse.Summary": {
+   "type": "object",
+   "properties": {
+    "batchNumber": {
+     "type": "string"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "billingCompanyCode": {
+     "type": "string"
+    },
+    "bookingCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "memberCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "BookingBatchResponse": {
+   "type": "object",
+   "properties": {
+    "batchNumber": {
+     "type": "string"
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "billingCompanyCode": {
+     "type": "string"
+    },
+    "bookingCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "memberCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "invoices": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse.BatchInvoice"
+     }
+    },
+    "uninvoicedBookingNumbers": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "bookings": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.response.BookingResponse"
+     }
+    }
+   }
+  },
+  "CreateBookingBatchRequest": {
+   "required": [
+    "lines",
+    "paymentMode"
+   ],
+   "type": "object",
+   "properties": {
+    "memberIds": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "lines": {
+     "maxItems": 50,
+     "minItems": 0,
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest.Line"
+     }
+    },
+    "paymentMode": {
+     "type": "string",
+     "enum": [
+      "DIRECT",
+      "WALLET",
+      "SUBSCRIPTION",
+      "PASS"
+     ]
+    },
+    "billingCompanyCode": {
+     "type": "string"
+    },
+    "confirmImmediately": {
+     "type": "boolean"
+    },
+    "sendEmail": {
+     "type": "boolean"
+    },
+    "notes": {
+     "type": "string"
+    },
+    "idempotencyKey": {
+     "maxLength": 180,
+     "minLength": 0,
      "type": "string"
     }
    }
@@ -2677,6 +2900,117 @@
     }
    }
   },
+  "BookingBatchResponse.BatchInvoice": {
+   "type": "object",
+   "properties": {
+    "documentNumber": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "DRAFT",
+      "ISSUED",
+      "VALIDATED",
+      "SENT",
+      "VIEWED",
+      "NEGOTIATION",
+      "ACCEPTED",
+      "DEPOSIT_REQUESTED",
+      "DEPOSIT_PAID",
+      "REJECTED",
+      "EXPIRED",
+      "CONVERTED",
+      "PARTIALLY_PAID",
+      "PAID",
+      "OVERDUE",
+      "CANCELLED",
+      "VOIDED",
+      "REFUNDED",
+      "WRITTEN_OFF"
+     ]
+    },
+    "customerType": {
+     "type": "string"
+    },
+    "customerCode": {
+     "type": "string"
+    },
+    "customerName": {
+     "type": "string"
+    },
+    "totalAmount": {
+     "type": "number"
+    },
+    "paidAmount": {
+     "type": "number"
+    },
+    "balanceDue": {
+     "type": "number"
+    },
+    "currency": {
+     "type": "string"
+    },
+    "bookingNumbers": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "CreateBookingBatchRequest.Line": {
+   "required": [
+    "endedAt",
+    "resourceCode",
+    "startedAt"
+   ],
+   "type": "object",
+   "properties": {
+    "resourceCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "startedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "endedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "quantity": {
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "bookingUnit": {
+     "type": "string",
+     "enum": [
+      "HOUR",
+      "HALF_DAY",
+      "DAY",
+      "WEEK",
+      "MONTH"
+     ]
+    },
+    "memberIds": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "notes": {
+     "type": "string"
+    },
+    "participants": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest"
+     }
+    }
+   }
+  },
   "BookingIdentityLookup": {
    "type": "object",
    "properties": {
@@ -2741,6 +3075,9 @@
   "SubscriberType": "com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType",
   "BookingStatus": "com.sni.bokaticowork.features.booking.enums.BookingStatus",
   "CreateBookingRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingRequest",
+  "BookingBatchResponse.Summary": "com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse.Summary",
+  "BookingBatchResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse",
+  "CreateBookingBatchRequest": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest",
   "CancellationPolicyResponse": "com.sni.bokaticowork.features.booking.dto.response.CancellationPolicyResponse",
   "BookingAvailabilityResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingAvailabilityResponse",
   "BookingAvailabilityRequest": "com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest",
@@ -2768,6 +3105,8 @@
   "BookingWaitlistStatus": "com.sni.bokaticowork.features.booking.enums.BookingWaitlistStatus",
   "JoinBookingWaitlistRequest": "com.sni.bokaticowork.features.booking.dto.request.JoinBookingWaitlistRequest",
   "BookingLineResponse": "com.sni.bokaticowork.features.booking.dto.response.BookingLineResponse",
+  "BookingBatchResponse.BatchInvoice": "com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse.BatchInvoice",
+  "CreateBookingBatchRequest.Line": "com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest.Line",
   "BookingIdentityLookup": "com.sni.bokaticowork.features.booking.dto.request.BookingIdentityLookup"
  }
 }

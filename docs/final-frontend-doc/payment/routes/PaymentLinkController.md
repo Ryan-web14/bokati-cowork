@@ -54,3 +54,11 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `idempotencyKey` | texte |  |  |
 | `expiresAt` | date-heure ISO 8601 UTC |  |  |
 | `metadataJson` | texte |  |  |
+| `cancelledAt` | date-heure ISO 8601 UTC |  |  |
+| `cancelledBy` | texte |  |  |
+| `cancellationReason` | texte |  |  |
+| `relaunchCount` | entier |  |  |
+| `lastRelaunchedAt` | date-heure ISO 8601 UTC |  |  |
+| `lastRelaunchedBy` | texte |  |  |
+| `relaunchable` | booléen |  |  |
+| `cancellable` | booléen |  |  |

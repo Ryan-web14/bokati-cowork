@@ -63,4 +63,11 @@ public class RegisterMemberRequest {
 
     @Size(max = 30)
     private String preferredCommunicationChannel;
+
+    /**
+     * Code du lien de parrainage suivi, facultatif. Verifie avant la creation du compte : un code
+     * faux ou ferme est refuse (400), il se corrige ou s'efface.
+     */
+    @Size(max = 40)
+    private String referralCode;
 }

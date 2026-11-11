@@ -79,6 +79,9 @@ class BookingWalletSettlementSupportTest {
     @Mock
     private com.sni.bokaticowork.features.company.wallet.service.CompanyWalletService companyWalletService;
 
+    @Mock
+    private com.sni.bokaticowork.features.subscription.repository.BillableItemRepository billableItemRepository;
+
     @InjectMocks
     private BookingWalletSettlementSupport support;
 
@@ -277,6 +280,39 @@ class BookingWalletSettlementSupportTest {
         support.release(booking(BookingStatus.CANCELLED, new BigDecimal("25000")), "annulation");
 
         verify(companyWalletService).cancelBookingHold(BOOKING_NUMBER, "annulation");
+    }
+
+    /**
+     * Facture commune d'un lot multi-ressources : le blocage de la reservation ne regle que sa part,
+     * pas le solde entier qui couvre aussi les autres reservations du membre.
+     */
+    @Test
+    void debitsOnlyTheBookingShareOfABatchInvoice() {
+        givenActiveHold();
+        givenBooking(BookingStatus.CONFIRMED);
+        BillingDocument invoice = new BillingDocument();
+        invoice.setId(9L);
+        invoice.setDocumentNumber("INV-LOT");
+        invoice.setDocumentType(BillingDocumentType.INVOICE);
+        invoice.setSourceCode("BI-0001,BI-0002");
+        invoice.setBalanceDue(new BigDecimal("60000"));
+        when(billingDocumentRepository.findFirstBySourceAndType(anyString(), anyString(), anyString())).thenReturn(Optional.empty());
+        when(billableItemRepository.findByBillableNumber("BI-0001")).thenReturn(Optional.of(
+                com.sni.bokaticowork.features.subscription.subscription.model.BillableItem.builder()
+                        .billableNumber("BI-0001").invoiceId(9L).build()));
+        when(billingDocumentRepository.findById(9L)).thenReturn(Optional.of(invoice));
+        PaymentIntentResponse intent = org.mockito.Mockito.mock(PaymentIntentResponse.class);
+        when(intent.intentNumber()).thenReturn("INT-LOT");
+        when(paymentService.createIntentFromBillingDocument(any())).thenReturn(intent);
+
+        support.settle(HOLD_NUMBER);
+
+        ArgumentCaptor<com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest> request =
+                ArgumentCaptor.forClass(com.sni.bokaticowork.features.payment.dto.request.CreatePaymentIntentFromBillingDocumentRequest.class);
+        verify(paymentService).createIntentFromBillingDocument(request.capture());
+        assertEquals("INV-LOT", request.getValue().documentNumber());
+        assertEquals(0, new BigDecimal("25000").compareTo(request.getValue().amount()));
+        verify(paymentService).payWithWallet(eq("INT-LOT"), any());
     }
 
     private void givenActiveHold() {

@@ -51,15 +51,54 @@ public final class GedDtos {
             Integer version,
             boolean protectedItem,
             String previewUrl,
-            String downloadUrl
+            String downloadUrl,
+            boolean restricted,
+            GedLock lock,
+            boolean held,
+            Instant destructionDueAt
     ) {}
+
+    /**
+     * Le verrou d'un fichier, pose pour le modifier sans etre derange. Tant qu'il court, seul
+     * {@code lockedBy} remplace, renomme, deplace ou supprime le fichier. {@code mine} : c'est vous.
+     */
+    public record GedLock(String lockedBy, Instant lockedAt, Instant expiresAt, boolean mine) {}
+
+    /** Ce que la personne connectee peut faire dans le dossier ouvert (la racine : tout). */
+    public record GedAccessSummary(com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel level,
+                                   boolean canDownload, boolean canEdit, boolean canDelete, boolean canManage) {}
+
+    /**
+     * Un droit sur un dossier restreint. {@code granteeType} : {@code USER} ({@code grantee} est
+     * l'e-mail) ou {@code ROLE} ({@code grantee} est le nom du role, {@code granteeLabel} son libelle).
+     */
+    public record GedGrant(String granteeType, String grantee, String granteeLabel,
+                           com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel level,
+                           Instant grantedAt, String grantedBy) {}
+
+    /** Donner un droit : un utilisateur par son e-mail, un role par son nom. */
+    public record GedGrantRequest(@NotBlank String granteeType, @NotBlank String grantee,
+                                  @jakarta.validation.constraints.NotNull com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel level) {}
+
+    public record GedRestrictRequest(List<@jakarta.validation.Valid GedGrantRequest> grants) {}
+
+    /**
+     * L'acces d'un dossier. {@code inheritedFrom} : les dossiers restreints au-dessus, dont les droits
+     * s'appliquent aussi. {@code systemFolder} : dossier du plan, qui ne se restreint pas.
+     */
+    public record GedFolderAccess(String folderCode, boolean restricted, Instant restrictedAt, String restrictedBy,
+                                  boolean systemFolder, List<GedFolderRef> inheritedFrom, List<GedGrant> grants,
+                                  com.sni.bokaticowork.features.document.explorer.access.GedAccessLevel myLevel,
+                                  boolean canManage) {}
 
     /** Le dossier ouvert ; vide a la racine. */
     public record GedFolderRef(String code, String name, String parentCode) {}
 
     public record GedPage(int page, int size, long totalElements, int totalPages, long folderCount, long fileCount) {}
 
-    public record GedListing(GedFolderRef folder, List<BreadcrumbItem> breadcrumb, List<GedItem> items, GedPage page) {}
+    /** {@code access} : ce que la personne peut faire dans ce dossier, pour griser les actions. */
+    public record GedListing(GedFolderRef folder, List<BreadcrumbItem> breadcrumb, List<GedItem> items, GedPage page,
+                             GedAccessSummary access) {}
 
     public record GedUploadFailure(String fileName, String message) {}
 
@@ -112,6 +151,42 @@ public final class GedDtos {
     public record GedTextStatus(long pending, java.util.Map<String, Long> byStatus) {}
 
     public record GedTextRunResult(int processed, int done, int empty, int unsupported, int failed, long remaining) {}
+
+    // Conservation, gel juridique, quotas (lot 5) ----------------------------------------------------
+
+    /** Poser un gel : {@code targetType} FOLDER (le dossier et tout son contenu) ou DOCUMENT. */
+    public record GedHoldRequest(@NotBlank String targetType, @NotBlank String targetCode, @NotBlank String reason,
+                                 String reference) {}
+
+    public record GedReasonRequest(@NotBlank String reason) {}
+
+    /** Un gel juridique ; {@code active} tant qu'il n'est pas leve. */
+    public record GedHold(String code, String targetType, String targetCode, String targetName, String reason,
+                          String reference, String placedBy, Instant placedAt, String releasedBy, Instant releasedAt,
+                          String releaseReason, boolean active) {}
+
+    /**
+     * Le resultat d'une destruction : lots, dossiers et fichiers detruits, fichiers effaces du
+     * stockage, fichiers epargnes car geles, et echecs (le fichier reste entier).
+     */
+    public record GedPurgeResult(int batches, int folders, int documents, int filesErased, int heldSkipped, int failed) {}
+
+    /** Un fichier marque « a detruire » par une regle de conservation. */
+    public record GedDestructionCandidate(GedItem item, String policyCode, Instant dueAt, String location) {}
+
+    public record GedDocumentsDecision(@jakarta.validation.constraints.NotEmpty List<String> documentCodes,
+                                       @NotBlank String reason) {}
+
+    /**
+     * L'espace d'un dossier (sous-dossiers et corbeille compris, toutes versions) ou de la GED.
+     * {@code remainingBytes} : ce qu'il reste sous le quota le plus serre du chemin,
+     * {@code limitingFolderCode} : le dossier qui porte ce quota ; vides sans quota.
+     */
+    public record GedUsage(String folderCode, String folderName, long usedBytes, long files, Long quotaBytes,
+                           Long remainingBytes, String limitingFolderCode, long totalUsedBytes, Long totalQuotaBytes) {}
+
+    /** Fixer le quota d'un dossier en octets ; vide ou 0 : le retirer. */
+    public record GedQuotaRequest(Long quotaBytes) {}
 
     /** Un lot de la corbeille : ce qui a ete supprime ensemble, et se restaure ensemble. */
     public record GedTrashBatch(String batch, Instant trashedAt, Long trashedBy, long folders, long documents, List<GedItem> items) {}

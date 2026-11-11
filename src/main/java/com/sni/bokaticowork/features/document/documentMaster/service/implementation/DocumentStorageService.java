@@ -96,6 +96,32 @@ public class DocumentStorageService {
         }
     }
 
+    /**
+     * Efface un fichier du stockage, pour une destruction definitive. Un fichier deja absent n'est
+     * pas une erreur : la destruction peut etre rejouee.
+     *
+     * @return vrai si un fichier a ete efface
+     */
+    public boolean delete(String storageProvider, String storagePath) {
+        if (!StringUtils.hasText(storagePath)) {
+            return false;
+        }
+        String effectiveProvider = normalizeProvider(storageProvider);
+        if ("MINIO".equals(effectiveProvider) || "S3".equals(effectiveProvider)) {
+            try {
+                minioClient.removeObject(io.minio.RemoveObjectArgs.builder().bucket(minioBucket).object(storagePath).build());
+                return true;
+            } catch (Exception ex) {
+                throw new BadRequestException("Unable to delete document file in MinIO", ex);
+            }
+        }
+        try {
+            return Files.deleteIfExists(confine(Path.of(storagePath).toAbsolutePath().normalize()));
+        } catch (IOException ex) {
+            throw new BadRequestException("Unable to delete document file", ex);
+        }
+    }
+
     private StoredDocument store(String ownerFolder, String documentCode, int versionNumber, String originalFilename,
                                  InputStream inputStream, long contentLength) {
         String extension = extractExtension(originalFilename);

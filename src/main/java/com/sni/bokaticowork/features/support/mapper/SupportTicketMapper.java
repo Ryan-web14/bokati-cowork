@@ -16,6 +16,12 @@ import java.util.List;
 @Component
 public class SupportTicketMapper {
 
+    private final com.sni.bokaticowork.security.admin.user.repository.UserRepository userRepository;
+
+    public SupportTicketMapper(com.sni.bokaticowork.security.admin.user.repository.UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
     /** Le ticket complet, avec son fil et ses pieces jointes. */
     public SupportTicketResponse toResponse(SupportTicket ticket, List<TicketMessageResponse> messages,
                                              List<TicketAttachment> attachments, List<SupportTicketTag> tags) {
@@ -38,6 +44,9 @@ public class SupportTicketMapper {
                                            List<AttachmentResponse> attachments, List<String> tags,
                                            int messageCount, int attachmentCount,
                                            int visibleMessageCount, int visibleAttachmentCount) {
+        // L'agent assigne, rendu par son courriel et pas par un identifiant
+        com.sni.bokaticowork.security.admin.user.model.Users assignee = ticket.getAssignedTo() == null ? null
+                : userRepository.findById(ticket.getAssignedTo()).orElse(null);
         return new SupportTicketResponse(
                 ticket.getTicketNumber(),
                 ticket.getTitle(),
@@ -50,7 +59,8 @@ public class SupportTicketMapper {
                 ticket.getContactName(),
                 ticket.getContactEmail(),
                 ticket.getContactPhone(),
-                ticket.getAssignedTo(),
+                assignee != null ? assignee.getEmail()
+                        : ticket.getAssignedTo() == null ? null : String.valueOf(ticket.getAssignedTo()),
                 ticket.getRelatedType(),
                 ticket.getRelatedCode(),
                 ticket.getFirstResponseDueAt(),
