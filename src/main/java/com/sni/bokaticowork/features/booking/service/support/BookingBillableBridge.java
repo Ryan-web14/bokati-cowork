@@ -36,6 +36,7 @@ public class BookingBillableBridge {
     private final BillableItemInvoiceSupport billableItemInvoiceSupport;
     private final BillingEmailService billingEmailService;
     private final ObjectMapper objectMapper;
+    private final com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository billingDocumentRepository;
 
     /**
      * Pendant la creation d'un lot multi-ressources, les elements facturables sont mis de cote au
@@ -70,6 +71,23 @@ public class BookingBillableBridge {
             }
         }
         return issued;
+    }
+
+    /**
+     * La facture de la reservation est-elle deja soldee · le cas d'une reservation de lot approuvee
+     * apres que le membre a regle la facture commune.
+     */
+    public boolean invoiceSettled(Booking booking) {
+        if (!StringUtils.hasText(booking.getBillableNumber())) {
+            return false;
+        }
+        return billableItemRepository.findByBillableNumber(booking.getBillableNumber())
+                .map(BillableItem::getInvoiceId)
+                .flatMap(billingDocumentRepository::findById)
+                .map(invoice -> invoice.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus.PAID
+                        || (invoice.getBalanceDue() != null && invoice.getBalanceDue().signum() <= 0
+                        && invoice.getPaidAmount() != null && invoice.getPaidAmount().signum() > 0))
+                .orElse(false);
     }
 
     public String ensureBillableItem(Booking booking) {

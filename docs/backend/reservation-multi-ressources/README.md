@@ -7,7 +7,8 @@ Réserver en une fois plusieurs ressources pour un ou plusieurs membres, avec un
 - Forme : des lignes (ressource et créneau) et des membres par défaut ; une ligne peut porter ses propres membres. Chaque couple ligne et membre est une réservation.
 - Tout ou rien : une seule réservation impossible refuse le lot entier (`ValidationException`, liste dans `errors`).
 - Back-office seulement, pas de portail.
-- `WALLET` refusé : `BookingWalletSettlementSupport` débite la facture de la réservation, solde entier, au règlement de chaque blocage. Avec une facture commune, le premier blocage réglerait toute la facture.
+- `WALLET` accepté : chaque réservation bloque son montant ; au règlement du blocage, `BookingWalletSettlementSupport` retrouve la facture commune (par `billable_item.invoice_id`) et ne crée l'intention de paiement que pour `min(montant du blocage, reste dû)`. Une facture seule garde le règlement du solde entier. Le portefeuille d'organisation limitait déjà le débit au montant de la retenue.
+- Approbation : une réservation `PENDING_APPROVAL` du lot reçoit son élément facturable à la création du lot et entre dans la facture commune. `approve` le reprend (pas de second élément) et confirme aussitôt si `BookingBillableBridge.invoiceSettled` ; `reject` appelle `BookingCancellationRefundSupport.processRejection` : avoir de la part, remboursement de ce qui dépasse le nouveau total, sans politique d'annulation.
 
 ## Schéma
 
@@ -45,14 +46,14 @@ Les réservations seules ne changent pas de chemin (la recherche exacte les trou
 
 ## Limites connues
 
-- Une ressource soumise à approbation : la réservation reste `PENDING_APPROVAL` et sera facturée seule à l'approbation (`uninvoicedBookingNumbers` dans la réponse).
 - Le reste de la facture commune n'est pas recalculé si une réservation change de prix après coup (déplacement, changement de ressource) ; c'était déjà vrai d'une facture seule.
 - Une annonce d'espèces (`CashDeclarationExpiryWorker`) vise une réservation précise ; pas étendue au lot.
 
 ## Tests
 
-- `BookingBatchServiceImplTest` : une facture par membre, membres de ligne, ligne sans membre, tout ou rien, portefeuille refusé, rejeu idempotent.
+- `BookingBatchServiceImplTest` : une facture par membre, membres de ligne, ligne sans membre, tout ou rien, portefeuille accepté, lot trop grand, réservation soumise à approbation facturée avec le lot, rejeu idempotent.
+- `BookingWalletSettlementSupportTest.debitsOnlyTheBookingShareOfABatchInvoice` : le débit au portefeuille se limite à la part de la réservation.
 - `BookingBillableBridgeDeferredTest` : mise de côté en lot, facture immédiate hors lot.
-- `BookingBatchCancellationTest` : avoir de la part, annulation de la dernière, politique sur la part.
+- `BookingBatchCancellationTest` : avoir de la part, annulation de la dernière, politique sur la part, refus remboursé en entier, refus avec règlement partiel.
 - `PaymentTransactionWorkflowProcessorTest` : confirmation et annulation de toutes les réservations d'une facture de lot.
 - `BookingBatchRepositoryIT` (Postgres, migrations prod) : table, colonne, séquence, requêtes.

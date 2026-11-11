@@ -147,7 +147,34 @@ public class BookingCancellationRefundSupport {
      * reservation seule. Quand plus aucune reservation de la facture ne reste et que rien n'a ete
      * encaisse, la facture est annulee.</p>
      */
+    /**
+     * Une reservation de lot refusee a l'approbation : sa part sort de la facture commune. Rien
+     * n'avait ete promis au client, donc pas de politique d'annulation · ce qu'il a deja paye pour
+     * elle lui est rendu en entier.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void processRejection(Booking booking) {
+        if (!org.springframework.util.StringUtils.hasText(booking.getBillableNumber())
+                || !org.springframework.util.StringUtils.hasText(booking.getBatchNumber())) {
+            return;
+        }
+        BillingDocument invoice = groupInvoice(booking);
+        if (invoice == null) {
+            return;
+        }
+        if (invoice.getSourceCode() == null || !invoice.getSourceCode().contains(",")) {
+            // Seule reservation de sa facture · la facture tombe avec elle
+            processCancellation(booking, false);
+            return;
+        }
+        processGroupedCancellation(booking, invoice, false, true);
+    }
+
     private void processGroupedCancellation(Booking booking, BillingDocument invoice, boolean wasActive) {
+        processGroupedCancellation(booking, invoice, wasActive, false);
+    }
+
+    private void processGroupedCancellation(Booking booking, BillingDocument invoice, boolean wasActive, boolean fullRefund) {
         if (!ELIGIBLE_INVOICE_STATUSES.contains(invoice.getStatus())) {
             return;
         }
@@ -169,7 +196,23 @@ public class BookingCancellationRefundSupport {
                     new CreateCreditNoteRequest(share, reason + " · aucun reglement encaisse", true, null, null));
             return;
         }
-        if (!wasActive || share == null || share.signum() <= 0) {
+        if (share == null || share.signum() <= 0) {
+            return;
+        }
+        if (fullRefund) {
+            // L'avoir retire toute la part ; on ne rend que ce qui depasse le nouveau total, un
+            // reglement partiel ayant pu servir aux autres reservations de la facture.
+            String refusal = reason.replace("Annulation", "Refus") + " · retire de la facture";
+            billingDocumentService.createCreditNote(invoice.getDocumentNumber(),
+                    new CreateCreditNoteRequest(share, refusal, true, null, null));
+            BigDecimal total = invoice.getTotalAmount() == null ? share : invoice.getTotalAmount();
+            BigDecimal refund = paidAmount.subtract(total.subtract(share)).min(share);
+            if (refund.signum() > 0) {
+                refundPaidTransactions(invoice.getDocumentNumber(), refund, refusal);
+            }
+            return;
+        }
+        if (!wasActive) {
             return;
         }
 

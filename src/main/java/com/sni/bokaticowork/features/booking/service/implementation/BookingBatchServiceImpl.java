@@ -13,7 +13,7 @@ import com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchReque
 import com.sni.bokaticowork.features.booking.dto.request.CreateBookingRequest;
 import com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse;
 import com.sni.bokaticowork.features.booking.dto.response.BookingResponse;
-import com.sni.bokaticowork.features.booking.enums.BookingPaymentMode;
+import com.sni.bokaticowork.features.booking.enums.BookingStatus;
 import com.sni.bokaticowork.features.booking.mapper.interfaces.BookingMapper;
 import com.sni.bokaticowork.features.booking.model.Booking;
 import com.sni.bokaticowork.features.booking.model.BookingBatch;
@@ -93,13 +93,6 @@ public class BookingBatchServiceImpl implements BookingBatchService {
                 return view(existing);
             }
         }
-        if (request.paymentMode() == BookingPaymentMode.WALLET) {
-            // Le portefeuille debite la facture de chaque reservation au moment de son blocage ; une
-            // facture commune a plusieurs reservations le ferait payer plusieurs fois.
-            throw new BadRequestException("Le portefeuille n'est pas pris en charge pour une réservation multi-ressources : "
-                    + "choisissez DIRECT, SUBSCRIPTION ou PASS, ou réservez une par une.");
-        }
-
         String batchNumber = sequenceGenerator.next("booking_batch");
         List<Planned> planned = plan(request, batchNumber);
 
@@ -114,6 +107,11 @@ public class BookingBatchServiceImpl implements BookingBatchService {
                     Booking entity = bookingRepository.findByBookingNumber(response.bookingNumber())
                             .orElseThrow(() -> new IllegalStateException("Booking " + response.bookingNumber() + " not found after creation"));
                     entity.setBatchNumber(batchNumber);
+                    if (entity.getStatus() == BookingStatus.PENDING_APPROVAL && !StringUtils.hasText(entity.getBillableNumber())) {
+                        // Soumise a approbation : elle entre quand meme dans la facture commune. Un
+                        // refus l'en retirera ; l'approbation reprendra cet element sans en creer un autre.
+                        entity.setBillableNumber(billableBridge.ensureBillableItem(entity));
+                    }
                     created.add(bookingRepository.save(entity));
                 } catch (BaseException ex) {
                     errors.add(booking.label() + " : " + ex.getMessage());

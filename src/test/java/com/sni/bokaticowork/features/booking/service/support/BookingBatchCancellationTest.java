@@ -132,4 +132,32 @@ class BookingBatchCancellationTest {
         assertThat(credit.getValue().amount()).isEqualByComparingTo("10000");
         verify(billingDocumentService, never()).cancelAndArchive(anyString(), anyString());
     }
+
+    @Test
+    @DisplayName("Refus a l'approbation, facture deja payee : la part sort de la facture et est rendue en entier")
+    void rejectionRefundsTheWholeShare() {
+        invoice.setTotalAmount(new BigDecimal("40000"));
+        invoice.setPaidAmount(new BigDecimal("40000"));
+        when(paymentAllocationRepository.findAllByBillingDocumentNumberFetchTransaction("INV-LOT")).thenReturn(List.of());
+
+        support.processRejection(booking("BKG-1", "BI-1", BookingStatus.REJECTED));
+
+        ArgumentCaptor<CreateCreditNoteRequest> credit = ArgumentCaptor.forClass(CreateCreditNoteRequest.class);
+        verify(billingDocumentService).createCreditNote(eq("INV-LOT"), credit.capture());
+        assertThat(credit.getValue().amount()).isEqualByComparingTo("20000");
+        verify(paymentAllocationRepository).findAllByBillingDocumentNumberFetchTransaction("INV-LOT");
+        verify(cancellationPolicyRepository, never()).findAllByActiveTrueOrderByRuleOrderAsc();
+    }
+
+    @Test
+    @DisplayName("Refus a l'approbation, reglement partiel qui couvre les autres : avoir, mais rien a rendre")
+    void rejectionWithPartialPaymentRefundsNothing() {
+        invoice.setTotalAmount(new BigDecimal("40000"));
+        invoice.setPaidAmount(new BigDecimal("15000"));
+
+        support.processRejection(booking("BKG-1", "BI-1", BookingStatus.REJECTED));
+
+        verify(billingDocumentService).createCreditNote(eq("INV-LOT"), any());
+        verify(paymentAllocationRepository, never()).findAllByBillingDocumentNumberFetchTransaction(anyString());
+    }
 }

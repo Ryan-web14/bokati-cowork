@@ -35,9 +35,9 @@ Back-office seulement : pas de route portail. Droits : `BOOKING:CREATE` pour cr�
 - `memberIds` du lot : les membres de **toutes** les lignes. Une ligne qui a ses propres `memberIds` les utilise **à la place** (la ligne parking ci-dessus ne concerne qu'un membre).
 - Chaque couple ligne et membre devient une réservation : l'exemple en crée 2 + 2 + 1 = 5.
 - Champs d'une ligne : `resourceCode`, `startedAt`, `endedAt` (obligatoires), `quantity` (défaut 1), `bookingUnit`, `memberIds`, `notes` (sinon celles du lot), `participants` (même forme que la réservation seule).
-- Champs du lot : `paymentMode` obligatoire (`DIRECT`, `SUBSCRIPTION` ou `PASS`), puis `billingCompanyCode`, `confirmImmediately`, `sendEmail`, `notes` et `idempotencyKey` (même sens que pour une réservation seule, voir le [README](README.md#créer-une-réservation-back-office)).
+- Champs du lot : `paymentMode` obligatoire (`DIRECT`, `WALLET`, `SUBSCRIPTION` ou `PASS`), puis `billingCompanyCode`, `confirmImmediately`, `sendEmail`, `notes` et `idempotencyKey` (même sens que pour une réservation seule, voir le [README](README.md#créer-une-réservation-back-office)).
 - Au plus 50 lignes et 200 réservations par lot.
-- `paymentMode: "WALLET"` est **refusé** (`400`) : le portefeuille règle chaque réservation au moment du blocage des fonds, ce qui ne marche pas avec une facture commune. Réserver une par une dans ce cas.
+- `paymentMode: "WALLET"` : chaque réservation bloque son montant sur le portefeuille du membre (ou de son organisation) et passe `CONFIRMED` tout de suite, comme une réservation seule. Le débit qui suit ne règle que la part de chaque réservation sur la facture commune. Solde insuffisant pour une des réservations : le lot entier est refusé, l'erreur la nomme.
 - Dates sans fuseau, comme pour une réservation seule.
 
 ## Tout ou rien
@@ -82,7 +82,8 @@ Le contrôle de capacité tient compte des réservations précédentes du même 
 ```
 
 - `invoices` : une facture par membre (plus exactement, par titulaire, organisation payeuse et devise). Elle liste une ligne par réservation et part par courriel au membre comme une facture de réservation seule.
-- `uninvoicedBookingNumbers` : réservations sans facture pour l'instant. C'est le cas d'une ressource **soumise à approbation** : sa réservation reste `PENDING_APPROVAL` et reçoit sa propre facture à l'approbation, hors de la facture commune.
+- `uninvoicedBookingNumbers` : réservations sans facture. Normalement vide ; une liste non vide signale une anomalie à remonter.
+- Ressource **soumise à approbation** : sa réservation reste `PENDING_APPROVAL` mais figure **déjà** dans la facture commune. Approuvée : elle suit le cours normal, et passe directement `CONFIRMED` si la facture a été réglée entre-temps. Refusée : sa part sort de la facture (avoir), et ce qui a été payé pour elle est rendu en entier, sans politique d'annulation. Un paiement de la facture ne confirme jamais une réservation encore en attente d'approbation.
 - Une réservation en `SUBSCRIPTION` ou `PASS` figure dans la facture commune pour un montant nul, comme aujourd'hui pour une réservation seule.
 - Chaque réservation porte désormais `batchNumber` (aussi dans `GET /bookings/{bookingNumber}`) : `null` pour une réservation seule. S'en servir sur la fiche pour renvoyer vers le lot.
 

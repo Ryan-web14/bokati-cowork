@@ -168,9 +168,19 @@ class BookingBatchServiceImplTest {
     }
 
     @Test
-    @DisplayName("Le portefeuille est refuse pour un lot")
-    void walletIsRefused() {
-        assertThatThrownBy(() -> service.create(request(List.of("MBR-1"), BookingPaymentMode.WALLET, line("SALLE-A", null))))
+    @DisplayName("Le portefeuille est accepte : chaque reservation bloque sa part, une facture pour le membre")
+    void walletIsAccepted() {
+        service.create(request(List.of("MBR-1"), BookingPaymentMode.WALLET, line("SALLE-A", null), line("BUREAU-B", null)));
+
+        verify(bookingService, times(2)).create(org.mockito.ArgumentMatchers.argThat(r -> r != null && r.paymentMode() == BookingPaymentMode.WALLET));
+        verify(billableBridge).invoiceGroup(any(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("Un lot trop grand est refuse avant toute creation")
+    void tooLargeIsRefused() {
+        List<String> members = java.util.stream.IntStream.rangeClosed(1, 101).mapToObj(i -> "MBR-" + i).toList();
+        assertThatThrownBy(() -> service.create(request(members, BookingPaymentMode.DIRECT, line("SALLE-A", null), line("BUREAU-B", null))))
                 .isInstanceOf(BadRequestException.class);
         verify(bookingService, never()).create(any());
     }
@@ -187,5 +197,26 @@ class BookingBatchServiceImplTest {
 
         assertThat(response.batchNumber()).isEqualTo("BKL-OLD");
         verify(bookingService, never()).create(any());
+    }
+
+    @Test
+    @DisplayName("Une reservation soumise a approbation entre quand meme dans la facture commune")
+    void pendingApprovalBookingIsInvoicedWithTheBatch() {
+        when(billableBridge.ensureBillableItem(any(Booking.class))).thenReturn("BI-APPROVAL");
+        when(bookingService.create(org.mockito.ArgumentMatchers.argThat(r -> r != null && "SALLE-VIP".equals(r.resourceCode()))))
+                .thenAnswer(call -> {
+                    Booking booking = Booking.builder().bookingNumber("BKG-VIP").ownerType(SubscriberType.MEMBER).ownerCode("MBR-1")
+                            .status(com.sni.bokaticowork.features.booking.enums.BookingStatus.PENDING_APPROVAL)
+                            .resource(new Resource()).build();
+                    bookings.put("BKG-VIP", booking);
+                    BookingResponse response = mock(BookingResponse.class);
+                    when(response.bookingNumber()).thenReturn("BKG-VIP");
+                    return response;
+                });
+
+        service.create(request(List.of("MBR-1"), BookingPaymentMode.DIRECT, line("SALLE-VIP", null), line("BUREAU-B", null)));
+
+        verify(billableBridge).ensureBillableItem(bookings.get("BKG-VIP"));
+        assertThat(bookings.get("BKG-VIP").getBillableNumber()).isEqualTo("BI-APPROVAL");
     }
 }
