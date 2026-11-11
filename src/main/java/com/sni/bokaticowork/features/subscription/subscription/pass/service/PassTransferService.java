@@ -96,14 +96,15 @@ public class PassTransferService {
 
         // Le destinataire est resolu des la demande, pas a l'acceptation : proposer un pass a
         // quelqu'un qui n'existe pas doit echouer tout de suite, pas apres une notification.
-        ownerResolver.resolve(toOwnerType, requireText(toOwnerCode, "Destinataire requis"));
+        SubscriberType resolvedToType = ownerResolver.resolve(toOwnerType, requireText(toOwnerCode, "Destinataire requis"))
+                .typeOr(toOwnerType);
 
         PassTransfer transfer = transferRepository.save(PassTransfer.builder()
                 .transferNumber(sequenceGenerator.next("pass_transfer"))
                 .pass(pass)
                 .fromOwnerType(pass.getOwnerType().name())
                 .fromOwnerCode(pass.getOwnerCode())
-                .toOwnerType(toOwnerType.name())
+                .toOwnerType(resolvedToType.name())
                 .toOwnerCode(toOwnerCode.trim())
                 .status(PassTransferStatus.PENDING_ACCEPTANCE)
                 .reason(reason)
