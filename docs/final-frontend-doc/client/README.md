@@ -74,7 +74,7 @@ L'accès au portail (`/sni/api/v1/client/**`) exige trois choses (`src/main/java
 
 ### Créer un client sans membre
 
-1. `POST /sni/api/v1/customers` ([détail](routes/CustomerController.md#r-post-sni-api-v1-customers)) avec `type`, `email`, `phone`, et selon le type `firstname` + `lastname` (`PERSON`) ou `companyName` (`COMPANY`). Facultatifs : `billingEmail`, `whatsappPhone`, `phoneCountry`, `address`. En-tête `Idempotency-Key` conseillé.
+1. `POST /sni/api/v1/customers` ([détail](routes/CustomerController.md#r-post-sni-api-v1-customers)) avec `type`, `email`, `phone`, et selon le type `firstname` + `lastname` (`PERSON`) ou `companyName` (`COMPANY`). Facultatifs : `billingEmail` (une ou plusieurs adresses séparées par des virgules, 500 caractères au plus ; utile pour une entreprise), `whatsappPhone`, `phoneCountry`, `address`. En-tête `Idempotency-Key` conseillé.
 2. Réponse `201` avec le `CustomerResponse`. Le statut est `ACTIVE`, ou déjà `PENDING` si des pièces KYC sont configurées pour ce type de client (le statut renvoyé est relu après l'initialisation KYC).
 3. Un courriel « Bienvenue chez Bokati » part vers `email` après validation.
 4. Pour une organisation, la suite (profil légal, facturation, blocage, membres rattachés) se fait dans le module `company`.

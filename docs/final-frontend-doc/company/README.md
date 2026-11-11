@@ -104,7 +104,7 @@ Ces transitions (sauf l'expiration) se font depuis le portail ([portal](../porta
 ### 2. Créer une organisation
 
 1. Charger les listes : types d'organisation (table ci-dessus), formes juridiques pour une société (`SARL`, `SARLU`, `SA`, `SAU`, `SAS`, `SASU`, `SNC`, `SCS`, `SP`, `SCOOP`, `SCI`, `ETABLISSEMENT`), types d'identifiant, devises (module `socle`), pays pour l'adresse.
-2. `POST /sni/api/v1/companies` ([détail](routes/CompanyAccountController.md#r-post-sni-api-v1-companies)) avec au minimum `organizationType`, `name`, `phone`. Facultatifs utiles : `legalForm`, `identifiers: [{type, value, label?}]`, `vatRegime` (`SUBJECT` par défaut ; `EXEMPT` exige `vatExemptionNote`), `email`, `billingEmail`, `address`, `billingAddress`, `paymentTermsDays`, `creditLimit`, `currencyCode` (`XAF` par défaut).
+2. `POST /sni/api/v1/companies` ([détail](routes/CompanyAccountController.md#r-post-sni-api-v1-companies)) avec au minimum `organizationType`, `name`, `phone`. Facultatifs utiles : `legalForm`, `identifiers: [{type, value, label?}]`, `vatRegime` (`SUBJECT` par défaut ; `EXEMPT` exige `vatExemptionNote`), `email`, `billingEmail`, `address`, `billingAddress`, `paymentTermsDays`, `creditLimit`, `currencyCode` (`XAF` par défaut). `billingEmail` accepte **une ou plusieurs adresses séparées par des virgules** (`"compta@acme.cg, dg@acme.cg"`, 500 caractères au plus) : les factures, relances et relevés partent à toutes ; le serveur renvoie la liste en minuscules, séparée par `, `.
 3. Réponse `201` : la fiche complète (`CompanyResponse`), avec `customerId` et `businessCode`. Le serveur crée le client, initialise son dossier KYC et envoie un courriel de bienvenue au client (module `client`).
 4. Ensuite : ouvrir la fiche, proposer de rattacher des membres.
 
@@ -115,7 +115,7 @@ Sans `legalForm`, la forme enregistrée est le nom du type (`ASSOCIATION`…). P
 1. `GET /sni/api/v1/companies/{customerId}` ([détail](routes/CompanyAccountController.md#r-get-sni-api-v1-companies-customerid)) : tout en un appel, dont `identifiers` (chacun avec `format = STANDARD` ou `LEGACY`, ce dernier pour un RCCM à l'ancienne forme, à signaler), `suggestedIdentifiers`, `outstanding`, `membersCount` (rattachements actifs), `activeSubscriptions`.
 2. Chaque bloc a sa route ; un champ absent ou `null` reste inchangé. Toutes renvoient la fiche à jour.
    - Légal : `PATCH .../legal` (type, nom, forme, activité, représentant, TVA, identifiants). **`identifiers` remplace la liste entière** quand il est fourni : renvoyer tous les identifiants à garder. Changer le nom change aussi le nom du client.
-   - Facturation : `PATCH .../billing` (`billingEmail`, `billingAddress`, `paymentTermsDays`, `creditLimit`). Pour retirer le plafond : `removeCreditLimit: true` (un `creditLimit` absent ne retire rien).
+   - Facturation : `PATCH .../billing` (`billingEmail`, une ou plusieurs adresses séparées par des virgules ; `billingAddress`, `paymentTermsDays`, `creditLimit`). Pour retirer le plafond : `removeCreditLimit: true` (un `creditLimit` absent ne retire rien).
    - Contact : `PATCH .../contact` (`email`, `phone`, `website`, `address`). Le courriel doit être libre chez les autres clients.
 3. Une fiche créée avant le centre de gestion n'a pas de profil légal (`businessCode = null`) : le premier `PATCH .../legal` en crée un (type `SOCIETE` par défaut). On peut aussi relier un profil existant : `POST .../legal-profile` avec `{ "businessCode": "..." }` ([détail](routes/CompanyAccountController.md#r-post-sni-api-v1-companies-customerid-legal-profile)).
 
@@ -218,7 +218,7 @@ Sauf mention, les refus sont des `400` (`BAD_REQUEST`) dont `message` est en fra
 Fiche d'organisation :
 - `name` et `phone` obligatoires à la création ; courriels au format courriel.
 - Identifiants : tous les refus sont réunis dans un seul `message`. Un même type saisi deux fois (sauf `AUTRE`) est refusé ; `AUTRE` exige `label`.
-  - NIU : une lettre (P ou E) suivie de 15 chiffres ; espaces retirés, mis en majuscules.
+  - NIU : une lettre (P, E ou M) suivie de 15 chiffres ; espaces retirés, mis en majuscules.
   - RCCM : forme OHADA `CG-BZV-01-2024-B12-00001`, ou ancienne forme `CG/BZV/16 B 6261` (acceptée, renvoyée en `format: LEGACY`).
   - Autres : lettres, chiffres et ponctuation simple, 150 caractères au plus.
   - Un NIU ou un RCCM déjà porté par un autre profil est refusé (« Le NIU ... est déjà celui de ... »).

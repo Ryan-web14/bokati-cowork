@@ -87,7 +87,7 @@ public class CompanyAccountService {
                 .type(CustomerType.COMPANY.name())
                 .companyName(request.name().trim())
                 .email(trimToNull(request.email()))
-                .billingEmail(trimToNull(request.billingEmail()))
+                .billingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(request.billingEmail()))
                 .phone(request.phone())
                 .address(request.address())
                 .build());
@@ -181,7 +181,7 @@ public class CompanyAccountService {
 
     public CompanyDtos.CompanyResponse updateBilling(String customerId, CompanyDtos.UpdateBillingRequest request) {
         Customer customer = company(customerId);
-        if (request.billingEmail() != null) customer.setBillingEmail(trimToNull(request.billingEmail()));
+        if (request.billingEmail() != null) customer.setBillingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(request.billingEmail()));
         if (request.paymentTermsDays() != null) customer.setPaymentTermsDays(request.paymentTermsDays());
         if (Boolean.TRUE.equals(request.removeCreditLimit())) {
             customer.setCreditLimit(null);

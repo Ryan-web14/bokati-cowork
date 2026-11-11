@@ -399,7 +399,10 @@ public class DefaultEmailSender {
         body.setContent(content);
         message.setBody(body);
 
-        message.setToRecipients(List.of(recipient(to)));
+        // Un champ peut porter plusieurs adresses separees par des virgules (courriel de facturation
+        // d'une entreprise) · une adresse par destinataire, sinon Graph refuse l'envoi.
+        List<String> addresses = com.sni.bokaticowork.core.utils.validation.EmailAddresses.split(to);
+        message.setToRecipients((addresses.isEmpty() ? List.of(to) : addresses).stream().map(this::recipient).toList());
         return message;
     }
 

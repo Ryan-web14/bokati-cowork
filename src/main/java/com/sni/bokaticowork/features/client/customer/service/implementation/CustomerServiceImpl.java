@@ -308,8 +308,10 @@ public class CustomerServiceImpl implements CustomerService {
             errors.add("Invalid customer request, the email is not valid");
         }
 
-        if (StringUtils.hasText(request.getBillingEmail()) && !ValidationUtils.validateEmail(request.getBillingEmail())) {
-            errors.add("Invalid customer request, the billing email is not valid");
+        // Une ou plusieurs adresses, separees par des virgules (entreprises : comptabilite, direction...).
+        if (StringUtils.hasText(request.getBillingEmail())
+                && !com.sni.bokaticowork.core.utils.validation.EmailAddresses.isValidList(request.getBillingEmail())) {
+            errors.add("Invalid customer request, the billing email is not valid (one or more addresses separated by commas)");
         }
 
         if (!StringUtils.hasText(request.getPhone()) || !ValidationUtils.validatePhoneNumber(request.getPhone())) {
