@@ -16,6 +16,7 @@ Fichiers du dossier :
 | [caisses-et-sessions.md](caisses-et-sessions.md) | Le système de caisse complet : défauts de l'existant, référentiel des caisses, cycle de vie des sessions, titulaire et remplaçants, congés et absences des caissiers, transfert de responsabilité, comptages et billetage, catalogue des opérations, transferts à deux temps, corrections, plafonds et contrôles, états, données, routes, droits, saisie minimale (champs déduits, générés, listes), lots C0 à C6. |
 | [rapprochement-et-comptes-tiers.md](rapprochement-et-comptes-tiers.md) | Rapprochement bancaire complet (relevés, modèles d'import, pointage, règles d'affectation, suspens, état de rapprochement validé) ; compte de chaque tiers, état de compte imprimable, justificatif de solde, dossier de justification de clôture, confirmations de solde. |
 | [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md) | Immobilisations et amortissements : catégories et comptes, fiche du bien pré-remplie, composants, en cours, mise en service, plans linéaire, dégressif et par unités d'œuvre, dotations mensuelles automatiques, dérogatoire, dépréciations, transferts et affectations, sorties et cessions, étiquettes QR et inventaire physique, notes 3A à 3E, contrôles fichier et comptabilité, lot F18. |
+| [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md) | Provisions et créances douteuses : cycle d'une créance, classement en douteux ou litigieux depuis la balance âgée et les relances, dépréciation sur base HT nette des garanties, ajustement, passage en perte et récupération, effets sur l'accès des clients, registre des risques, provisions pour risques et charges, indemnités de fin de carrière, autres dépréciations, lot F19. |
 | [pieces-comptables.md](pieces-comptables.md) | Les pièces émises (bon d'entrée, bon de sortie, bon de décaissement, état de besoin, fiche de justification, procès-verbaux...) : champs, champs automatiques, signatures, numérotation. |
 | [demandes-et-justification.md](demandes-et-justification.md) | Le nouveau circuit des demandes de fonds (état de besoin, demande, validation, décaissement) et la justification des dépenses une par une. |
 
@@ -217,6 +218,8 @@ Comptes de départ proposés pour un espace de coworking (valeurs par défaut re
 | Transports et déplacements | `61` Transports (`614` Transports du personnel, `618` Autres frais de transport) |
 | Services extérieurs | `62`, `63` (`631` Frais bancaires, dont commissions PawaPay) |
 | Pertes sur créances | `651` Pertes sur créances clients |
+| Clients litigieux et douteux, dépréciations | `4161`, `4162` (auxiliaires par client) ; `4911`, `4912` ; dotation `6594`, reprise `7594` ; voir [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#2-comptes) |
+| Provisions pour risques et charges | `19x` (plus d'un an), `499` (moins d'un an) ; dotation `6911` ou `6591`, reprise `7911` ou `7591` |
 | Manquants et excédents de caisse | `658` Charges diverses / `758` Produits divers, en passant par `471` tant que l'écart est en revue |
 | Stocks (déjà utilisé par l'inventaire) | `31`, `603` Variation des stocks |
 
@@ -409,6 +412,7 @@ Propriété du compte (section 4.1), valeurs initiales :
 | `411` clients (par auxiliaire) | Facture, avoir, paiement, remboursement, escompte, perte | Numéro de facture porté par l'imputation du paiement (`payment_allocation`), numéro d'avoir |
 | `4191` avances clients | Acompte reçu sans facture, puis son imputation sur la facture | Numéro de transaction de l'acompte |
 | `401` fournisseurs | Facture fournisseur, paiement, avoir fournisseur | Numéro de facture fournisseur |
+| `4161`, `4162` clients litigieux et douteux | Reclassement depuis `411`, encaissement, imputation d'une garantie, passage en perte | Numéro de facture |
 | `481` fournisseurs d'investissements | Facture d'immobilisation, acompte imputé, paiement | Numéro de facture fournisseur |
 | `485` créances sur cessions d'immobilisations | Facture de cession, encaissement | Numéro de facture de cession |
 | `275` dépôts et cautionnements versés | Caution versée, restitution, retenue | Numéro du contrat de bail |
@@ -749,7 +753,7 @@ Résumé ci-dessous ; le détail de chaque état (colonnes, règles de calcul, c
 3. **Immobilisations** : mobilier, informatique, aménagements de l'espace ; fiche, amortissement linéaire ou dégressif, écritures de dotation, sortie d'actif ; détail dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md).
 4. **Dépôts de garantie** : caution à la signature d'un contrat de bureau, restitution ou retenue à la sortie (lien avec le module `contract`).
 5. **Produits constatés d'avance** pour les abonnements, pass et domiciliations facturés d'avance.
-6. **Créances douteuses** : passage en douteux depuis la relance (module `dunning`), provision, perte définitive (`WRITTEN_OFF` existe déjà côté facture).
+6. **Créances douteuses et provisions** : passage en douteux depuis la relance (module `dunning`), provision, perte définitive (`WRITTEN_OFF` existe déjà côté facture), provisions pour risques et charges ; détail dans [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md).
 7. **Cycle des chèques** (reçu, remis, encaissé, rejeté) et bordereaux de remise.
 8. **Comptes bancaires et mobile money** comme comptes de trésorerie, relevés, rapprochement.
 9. **Notes de frais** des employés.
@@ -832,6 +836,7 @@ Tables nouvelles (préfixe `acc_` pour la comptabilité, `cash_` pour la trésor
 | `bank_statement`, `bank_statement_line` | relevés importés et pointage |
 | `supplier`, `supplier_invoice` | lot achats |
 | `fa_category`, `fixed_asset`, `fixed_asset_value_line`, `depreciation_plan`, `depreciation_schedule`, `fixed_asset_event`, `fixed_asset_disposal`, `fixed_asset_impairment`, `fixed_asset_inventory_campaign`, `fixed_asset_inventory_scan`, `fixed_asset_maintenance` | lot F18, détail dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#14-données) |
+| `acc_receivable_status`, `acc_receivable_proposal`, `acc_receivable_impairment`, `acc_receivable_writeoff`, `acc_risk`, `acc_risk_valuation`, `acc_risk_provision_move`, `acc_provision_review`, `acc_retirement_obligation` | lot F19, détail dans [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#14-données) |
 
 Colonnes ajoutées à `cash_movement` : voir 7.1. À `payment_transaction` : `accounting_status`, `accounting_entry_number`. À `billing_document` : idem.
 
@@ -859,6 +864,7 @@ Colonnes ajoutées à `cash_movement` : voir 7.1. À `payment_transaction` : `ac
 | `ACCOUNTING_ACCOUNT:CREATE` | Comptable, administrateur finance : créer un compte divisionnaire ; caissière principale : seulement un divisionnaire de trésorerie en créant un journal |
 | `ACCOUNTING_ACCOUNT:MANAGE` | Administrateur finance : nouveau compte principal, validation des comptes créés, désactivation, fusion |
 | `FIXED_ASSET:READ`, `:MANAGE`, `:REVISE`, `:IMPAIR`, `:DISPOSE`, `:DEPRECIATION_RUN`, `:INVENTORY` | Moyens généraux et comptable ; sortie validée par une seconde personne ; détail dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#16-droits) |
+| `RECEIVABLE_RISK:*`, `RISK_PROVISION:*`, `CUSTOMER_CREDIT:OVERRIDE` | Comptable, responsable financier, direction ; la perte est préparée et validée par deux personnes ; détail dans [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#16-droits) |
 | `ACCOUNTING_REPORT:READ` | Direction, comptable, expert-comptable (lecture seule) |
 | `BANK_RECONCILIATION:MANAGE` | Comptable |
 
@@ -896,15 +902,16 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 | **F9. Analytique** | Axes, sections, ventilation, clés, répartition secondaire, règles automatiques, obligation par compte, reclassements, **postes de dépense** et analyse par poste, tableau de bord des dépenses, états analytiques, tenue en classe 9 en partie double (journal `CAG`, comptes réfléchis, centres, coûts, résultats analytiques), balance analytique | F3, F4 | Avec l'analytique activée, une dépense de classe 6 sans section ne se valide pas ; le résultat par site se calcule ; chaque dépense a un poste |
 | **F10. Banque, chèques, mobile money** | Comptes bancaires, cycle des chèques, bordereaux de remise, import de relevés, rapprochement, frais PawaPay, lettrage des `585`, `513`, `5851` et du compte PawaPay | F3, F4 | Un relevé importé se pointe automatiquement à plus de 80 % sur un mois réel |
 | **F11. Fiscalité** | Comptes de taxe, exigibilité, déclaration de TVA, liquidation | F4 | L'état de TVA d'un mois égale la somme des TVA des factures scellées du mois |
-| **F12. Abonnements et clôture** | Produits constatés d'avance, créances douteuses, contrôles de clôture, à-nouveaux, états financiers SYSCOHADA | F4, F11 | La clôture d'un exercice de test produit bilan, compte de résultat et à-nouveaux équilibrés |
+| **F12. Abonnements et clôture** | Produits constatés d'avance, contrôles de clôture (les créances douteuses et provisions passent au lot F19), à-nouveaux, états financiers SYSCOHADA | F4, F11 | La clôture d'un exercice de test produit bilan, compte de résultat et à-nouveaux équilibrés |
 | **F13. Achats** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, lettrage des `401` (les immobilisations passent au lot F18) | F5, F9 | Une commande validée engage le budget ; une immobilisation génère son plan d'amortissement |
 | **F16. Budget** | Budgets et versions, mensualisation, élaboration et validation, révisions, virements de crédits, engagements, contrôle budgétaire dans les états de besoin, demandes, décaissements, justifications, dépenses directes, écritures ; dérogations ; suivi, projections, alertes | F5, F6, F9 | Une demande sur une ligne bloquante sans disponible est refusée ou part en validation budgétaire ; un engagement de 100 000 réalisé pour 85 000 libère 15 000 |
 | **F17. Financement, hors bilan, paie** | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre hors bilan et sa tenue en classe 90 (journal `HB`), import du journal de paie | F1, F2, F10 | Une échéance d'emprunt s'écrit seule ; un journal de paie importé s'équilibre et solde les avances retenues |
 | **F18. Immobilisations et amortissements** | Voir [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#18-lots-et-critères-dacceptation) : fiches pré-remplies, composants, mise en service, plans et dotations mensuelles, dérogatoire, dépréciations, sorties, étiquettes et inventaire physique, notes 3A à 3E | F1, F2, F9, F13 ; F5, F6, F17 | Une facture d'ordinateur crée sa fiche ; la dotation mensuelle va sur la section de la ressource ; le fichier égale les comptes `2x` et `28x`, sinon la clôture est refusée |
+| **F19. Provisions et créances douteuses** | Voir [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#18-lots-et-critères-dacceptation) : classement en douteux et litigieux, dépréciation et ajustement, passage en perte lié à `WRITTEN_OFF`, récupération, politique d'accès des clients, registre des risques, provisions pour risques et charges, indemnités de fin de carrière, autres dépréciations | F1, F2, F4 ; F10 | Un paiement sur une facture douteuse crédite `4162` et réduit la dépréciation ; une facture `WRITTEN_OFF` est soldée en comptabilité ; la clôture est refusée sans revue des provisions validée |
 | **F15. Liasse et états de gestion** | DSF pré-remplie, passage au résultat fiscal, soldes de gestion mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, confirmation de solde | F12 | La DSF d'un exercice de test se remplit sans saisie hors notes rédactionnelles et tableau fiscal |
 | **F14. Exports et bascule** | Exports pour l'expert-comptable, archive annuelle, outils de reprise et d'à-nouveaux | F1 à F4 | La balance exportée se réimporte sans écart dans Sage 100, Sage X3 et Odoo |
 
-Le lot C0 (correctifs de caisse) part tout de suite, indépendamment du reste. Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F16 (analytique puis budget, qui s'appuie sur les demandes), F10, F11, F17, F13, F18, F12, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
+Le lot C0 (correctifs de caisse) part tout de suite, indépendamment du reste. Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F16 (analytique puis budget, qui s'appuie sur les demandes), F10, F11, F17, F13, F18, F19, F12, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
 
 ---
 
@@ -951,6 +958,7 @@ Règle de conception de tous les lots : **aucune valeur métier n'est codée en 
 | Numérotation | Format des numéros par journal, longueur, remise à zéro par exercice ou par période, ordre chronologique (`STRICT` ou `PERIOD`), heure du contrôle de continuité ; **ne sont pas paramétrables** : la continuité sans trou, l'attribution à la validation, l'interdiction de modifier ou de réutiliser un numéro |
 | Lettrage | Comptes lettrables et clé de rapprochement par compte, lettrage automatique à la comptabilisation (oui/non par compte), rapprochement nocturne (fenêtre de dates, nombre maximal de lignes combinées, lettrage automatique des correspondances uniques), seuil et comptes d'écart de règlement, motifs de délettrage, délai d'alerte des lignes non lettrées par compte |
 | Immobilisations | Catégories (comptes, durée, mode, coefficient), seuil d'immobilisation, suivi hors comptabilité des petits biens, rythme et heure des dotations, journal, base du prorata, amortissement fiscal, seuils de validation, délais d'alerte, inventaire physique exigé ; liste dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#17-paramétrage) |
+| Provisions et créances douteuses | Déclencheurs de classement, classement automatique, contagion, seuil de la méthode individuelle, grille par ancienneté, base et garanties, rythme de l'ajustement, déductibilité fiscale, grille de validation des pertes, politique d'accès des clients, natures de risques, indemnités de fin de carrière ; liste dans [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#17-paramétrage) |
 | Exercices et périodes | Début et durée d'exercice, découpage, verrouillage automatique après N jours, synchronisation avec la clôture de facturation |
 | Journaux | Code, type, compte de trésorerie, numérotation, validation automatique ou brouillard, caisses autorisées, comptes autorisés, qui peut créer (et mode immédiat ou après validation) |
 | Schémas d'écriture | Pour chaque événement : conditions, journal, lignes, comptes, analytique ; versionnés avec date d'effet ; activation par famille d'événements |

@@ -30,6 +30,7 @@ Conventions :
 12. [Ce qui ne produit pas d'écriture](#12-ce-qui-ne-produit-pas-décriture)
 13. [Classe 9 : analytique et hors bilan](#13-classe-9--analytique-et-hors-bilan)
 14. [Immobilisations et amortissements](#14-immobilisations-et-amortissements)
+15. [Provisions et créances douteuses](#15-provisions-et-créances-douteuses)
 
 ---
 
@@ -43,7 +44,7 @@ Conventions :
 | `INVOICE_CANCELLED` | Facture annulée avant tout paiement | `VT` | Contre-passation de la pièce `INVOICE_ISSUED` | Héritée |
 | `EARLY_PAYMENT_DISCOUNT` | Escompte de règlement appliqué au paiement | `VT` | D `673` ; D `4431` (TVA sur l'escompte, selon le régime) ; C `{CLIENT}` | Héritée |
 | `RECOVERABLE_BILLED` | Débours refacturés au client | `VT` | D `{CLIENT}` ; C compte de débours (sans TVA si débours au sens fiscal) | Héritée |
-| `INVOICE_WRITTEN_OFF` | Facture passée en perte (`WRITTEN_OFF`) | `OD` | D `651` HT ; D `4431` (si récupération de TVA admise) ; C `{CLIENT}` ; reprise de provision s'il y en a une | Héritée |
+| `INVOICE_WRITTEN_OFF` | Facture passée en perte (`WRITTEN_OFF`) | `OD` | D `651` HT ; D `4431` (si récupération de TVA admise) ; C `{CLIENT}` (ou `4162`, `4161` si la facture était classée) ; reprise de la dépréciation D `491x` ; C `7594` (section 15) | Héritée |
 
 ## 2. Caisse
 
@@ -194,8 +195,8 @@ Analytique : site, activité et ressource de la réservation.
 
 | Événement | Écriture |
 | --- | --- |
-| Provision pour créance douteuse | D `6594` ; C `491` |
-| Reprise de provision | D `491` ; C `7594` |
+| Provision pour créance douteuse | D `6594` ; C `4912` (ou `4911`), après reclassement en `4162` ; voir section 15 |
+| Reprise de provision | D `4912` ; C `7594` |
 | Produits constatés d'avance | voir section 6 |
 | Charges constatées d'avance (abonnement logiciel payé d'avance) | D `476` ; C `{NATURE}`, extourne à l'ouverture |
 | Dotation aux amortissements | D `6812` ou `6813` ; C `28x`, mensuelle par défaut, voir section 14 |
@@ -256,3 +257,22 @@ Toutes les écritures sur les comptes `2x`, `28x` et `29x` partent d'une fiche d
 | Sortie de l'actif | `OD` | D `28x` ; D `29x` ; D `811` ou `812` ; C compte du bien |
 | Cession | `VT` | D `485` ; C `821` ou `822` ; C `4431` si TVA |
 | Encaissement du prix de cession | trésorerie | D `521x` ou `571x` ; C `485` (lettré) |
+
+## 15. Provisions et créances douteuses
+
+Classement, dépréciation, perte et provisions pour risques se suivent facture par facture et risque par risque ; détail, exemple chiffré et règles dans [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#10-écritures). Les comptes `4161` et `4162` sont lettrés par numéro de facture.
+
+| Événement | Journal | Écriture |
+| --- | --- | --- |
+| `RECEIVABLE_DISPUTED` : créance contestée | `OD` | D `4161` ; C `411` reste dû TTC (lettré) |
+| `RECEIVABLE_DOUBTFUL` : classement en douteux | `OD` | D `4162` ; C `411` reste dû TTC (lettré) |
+| `RECEIVABLE_BACK_TO_NORMAL` : retour en normal | `OD` | D `411` ; C `4161` ou `4162` ; reprise de la dépréciation |
+| `RECEIVABLE_IMPAIRMENT_ADJUSTED` : dotation ou reprise d'ajustement | `OD` | D `6594` ; C `4911` ou `4912`, ou l'inverse vers `7594`, détail par facture |
+| Encaissement d'une facture douteuse | trésorerie | D trésorerie ; C `4162` ou `4161` (lettré) ; reprise au prorata D `491x` ; C `7594` |
+| `INVOICE_WRITTEN_OFF` : passage en perte | `OD` | D `6511` HT ; D `4431` si récupération admise ; C `4162`, `4161` ou `411` ; reprise D `491x` ; C `7594` |
+| Récupération après perte | trésorerie | D trésorerie ; C `75x` (et TVA reversée si elle avait été récupérée) |
+| Imputation d'une garantie (caution, portefeuille) sur une créance douteuse | `OD` | D `165` ou `4191` ; C `4162` (lettré) |
+| `RISK_PROVISION_POSTED` : constitution ou complément | `OD` | D `6911`, `6591`, `697` ou `85x` ; C `19x` ou `499` |
+| `RISK_PROVISION_RELEASED` : reprise utilisée ou non | `OD` | D `19x` ou `499` ; C `7911`, `7591`, `797` ou `86x` |
+| Reclassement long terme vers court terme | `OD` | D `19x` ; C `499` |
+| Dépréciation des stocks | `OD` ou `ST` | D `6593` ; C `39x` ; reprise D `39x` ; C `7593` |
