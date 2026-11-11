@@ -6,7 +6,8 @@ import java.math.BigDecimal;
 
 public record OpenCashSessionRequest(
         @NotBlank String registerCode,
-        @NotBlank String openedBy,
+        /** Ignore en contexte authentifie : l'auteur est l'utilisateur connecte. */
+        String openedBy,
         BigDecimal openingAmount
 ) {
 }

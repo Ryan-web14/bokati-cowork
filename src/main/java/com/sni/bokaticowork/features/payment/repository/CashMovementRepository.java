@@ -25,9 +25,10 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
                 COALESCE(SUM(CASE WHEN cm.movement_type = 'REFUND' THEN cm.amount ELSE 0 END), 0) AS total_refunds,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_IN', 'TRANSFER_IN') THEN cm.amount ELSE 0 END), 0) AS total_cash_in,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_OUT', 'SAFE_DEPOSIT', 'TRANSFER_OUT') THEN cm.amount ELSE 0 END), 0) AS total_cash_out,
-                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN cm.amount ELSE 0 END), 0) AS total_adjustments
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN (CASE WHEN cm.direction = 'OUT' THEN -cm.amount ELSE cm.amount END) ELSE 0 END), 0) AS total_adjustments
             FROM cash_movement cm
             WHERE cm.cash_session_id = :sessionId
+              AND cm.status IN ('CONFIRMED', 'REVERSED')
             """)
     Object[] sessionTotals(@Param("sessionId") Long sessionId);
 
@@ -121,11 +122,12 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
                 COALESCE(SUM(CASE WHEN cm.movement_type = 'REFUND' THEN cm.amount ELSE 0 END), 0) AS total_refunds,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_IN', 'TRANSFER_IN') THEN cm.amount ELSE 0 END), 0) AS total_cash_in,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_OUT', 'SAFE_DEPOSIT', 'TRANSFER_OUT') THEN cm.amount ELSE 0 END), 0) AS total_cash_out,
-                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN cm.amount ELSE 0 END), 0) AS total_adjustments
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN (CASE WHEN cm.direction = 'OUT' THEN -cm.amount ELSE cm.amount END) ELSE 0 END), 0) AS total_adjustments
             FROM cash_movement cm
             JOIN cash_session cs ON cs.id = cm.cash_session_id
             JOIN cash_register cr ON cr.id = cs.cash_register_id
-            WHERE (CAST(:registerCode AS VARCHAR) IS NULL OR cr.register_code = CAST(:registerCode AS VARCHAR))
+            WHERE cm.status IN ('CONFIRMED', 'REVERSED')
+              AND (CAST(:registerCode AS VARCHAR) IS NULL OR cr.register_code = CAST(:registerCode AS VARCHAR))
               AND (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))
               AND (CAST(:fromDate AS TIMESTAMPTZ) IS NULL OR cm.created_at >= CAST(:fromDate AS TIMESTAMPTZ))
               AND (CAST(:toDate AS TIMESTAMPTZ) IS NULL OR cm.created_at <= CAST(:toDate AS TIMESTAMPTZ))
@@ -148,10 +150,11 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
                 COALESCE(SUM(CASE WHEN cm.movement_type = 'REFUND' THEN cm.amount ELSE 0 END), 0) AS total_refunds,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_IN', 'TRANSFER_IN') THEN cm.amount ELSE 0 END), 0) AS total_cash_in,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_OUT', 'SAFE_DEPOSIT', 'TRANSFER_OUT') THEN cm.amount ELSE 0 END), 0) AS total_cash_out,
-                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN cm.amount ELSE 0 END), 0) AS total_adjustments
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN (CASE WHEN cm.direction = 'OUT' THEN -cm.amount ELSE cm.amount END) ELSE 0 END), 0) AS total_adjustments
             FROM cash_register cr
             LEFT JOIN cash_session cs ON cs.cash_register_id = cr.id
             LEFT JOIN cash_movement cm ON cm.cash_session_id = cs.id
+                AND cm.status IN ('CONFIRMED', 'REVERSED')
                 AND (CAST(:fromDate AS TIMESTAMPTZ) IS NULL OR cm.created_at >= CAST(:fromDate AS TIMESTAMPTZ))
                 AND (CAST(:toDate AS TIMESTAMPTZ) IS NULL OR cm.created_at <= CAST(:toDate AS TIMESTAMPTZ))
             WHERE (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))

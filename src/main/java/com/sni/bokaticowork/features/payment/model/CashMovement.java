@@ -80,6 +80,14 @@ public class CashMovement {
     @Column(name = "status", nullable = false, length = 40)
     private CashMovementStatus status = CashMovementStatus.CONFIRMED;
 
+    /**
+     * Sens d'un ajustement ({@code IN} ou {@code OUT}) · vide pour les autres types, dont le sens
+     * se deduit du type (voir {@code CashFlowRules}).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "direction", length = 10)
+    private com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction;
+
     @Column(name = "related_movement_id")
     private Long relatedMovementId;
 

@@ -175,6 +175,38 @@ class AdminApiAuthorizationManagerTest {
     }
 
     /** Renvoie la permission exigee en refusant l'appel avec un compte sans aucune permission. */
+    @Test
+    void shouldGiveEachCashActionItsOwnPermission() {
+        // Lot C0 : tout tombait sur CASH:ADJUST, que chaque caissier avait, y compris la
+        // validation d'un ecart et la creation d'une caisse.
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/sessions")).isEqualTo("CASH:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/statistics/overview")).isEqualTo("CASH:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1/deactivate")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions")).isEqualTo("CASH_SESSION:OPEN");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/close")).isEqualTo("CASH_SESSION:CLOSE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/closing-request")).isEqualTo("CASH_SESSION:CLOSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/approve-variance")).isEqualTo("CASH_VARIANCE:DECIDE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/anomalies/CAF-1/review")).isEqualTo("CASH_VARIANCE:DECIDE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/movements")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/exit-vouchers")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/requests")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/requests/CRQ-1/approve")).isEqualTo("CASH_MOVEMENT:APPROVE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/requests/CRQ-1/reject")).isEqualTo("CASH_MOVEMENT:APPROVE");
+    }
+
+    @Test
+    void shouldNotLetACashierWithOnlyTheOldAdjustRightValidateAVariance() {
+        List<String> cashier = List.of("ROLE_ADMIN", "CASH_READ", "CASH:READ", "CASH_ADJUST", "CASH:ADJUST",
+                "CASH_SESSION_OPEN", "CASH_SESSION:OPEN", "CASH_SESSION_CLOSE", "CASH_SESSION:CLOSE",
+                "CASH_MOVEMENT_CREATE", "CASH_MOVEMENT:CREATE");
+
+        assertThat(granted(cashier, "PATCH", BASE + "/cash-registers/sessions/CSS-1/approve-variance")).isFalse();
+        assertThat(granted(cashier, "POST", BASE + "/cash-registers")).isFalse();
+        assertThat(granted(cashier, "POST", BASE + "/cash-registers/sessions")).isTrue();
+        assertThat(granted(cashier, "POST", BASE + "/cash-registers/sessions/CSS-1/movements")).isTrue();
+    }
+
     private String requiredPermissionFor(String method, String uri) {
         MockHttpServletRequest request = new MockHttpServletRequest(method, uri);
         manager.authorize(() -> authentication(List.of("ROLE_ADMIN")), new RequestAuthorizationContext(request));

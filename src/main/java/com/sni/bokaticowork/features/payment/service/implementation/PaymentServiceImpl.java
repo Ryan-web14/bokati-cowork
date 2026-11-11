@@ -290,18 +290,23 @@ public class PaymentServiceImpl implements PaymentService {
         // Le client peut tendre plus que le du · on encaisse le du et on rend la difference.
         CashChange cash = CashChange.compute(intentBalance(intent).payable(), request.amount(), request.tenderedAmount());
         BigDecimal paymentAmount = requestedIntentAmount(cash.appliedAmount(), intent);
-        PaymentTransaction transaction = saveSucceededTransaction(intent, PaymentMethod.CASH, "CASH", request.providerReference(), request.receivedBy(), request.metadataJson(), paymentAmount,
+        // L'encaisseur vient du jeton ; la valeur envoyee ne sert qu'hors contexte authentifie.
+        String cashier = StringUtils.hasText(paymentOrigin.currentActor()) ? paymentOrigin.currentActor() : request.receivedBy();
+        if (!StringUtils.hasText(cashier)) {
+            throw new BadRequestException("Impossible d'identifier l'encaisseur du paiement en especes");
+        }
+        PaymentTransaction transaction = saveSucceededTransaction(intent, PaymentMethod.CASH, "CASH", request.providerReference(), cashier, request.metadataJson(), paymentAmount,
                 builder -> builder.tenderedAmount(cash.tenderedAmount())
                         .changeAmount(cash.changeAmount())
                         .cashSessionNumber(trim(request.cashSessionNumber())));
         if (StringUtils.hasText(request.cashSessionNumber())) {
-            cashRegisterService.recordPayment(request.cashSessionNumber(), transaction.getAmount(), transaction.getTransactionNumber(), request.receivedBy());
+            cashRegisterService.recordPayment(request.cashSessionNumber(), transaction.getAmount(), transaction.getTransactionNumber(), cashier);
         }
         else{
             throw new BadRequestException("Cash session number is required for cash payments");
         }
         reconcileIntent(intent);
-        creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), request.receivedBy());
+        creditOverpayment(intent, allocationService.allocateIfBillingDocument(transaction), cashier);
         publishTransactionWorkflow(transaction.getTransactionNumber(), PaymentTransactionStatus.SUCCEEDED);
         return mapper.toTransactionResponse(transaction);
     }
@@ -317,7 +322,7 @@ public class PaymentServiceImpl implements PaymentService {
             cashRegisterService.assertCounterSessionOpen(sessionNumber);
         }
         BigDecimal paymentAmount = requestedIntentAmount(request.amount(), intent);
-        String receivedBy = StringUtils.hasText(request.receivedBy()) ? request.receivedBy() : paymentOrigin.currentActor();
+        String receivedBy = StringUtils.hasText(paymentOrigin.currentActor()) ? paymentOrigin.currentActor() : request.receivedBy();
         PaymentTransaction transaction = saveSucceededTransaction(intent, details.method(), details.provider(),
                 details.reference(), receivedBy, request.metadataJson(), paymentAmount,
                 builder -> applyManualDetails(builder, details).cashSessionNumber(sessionNumber));

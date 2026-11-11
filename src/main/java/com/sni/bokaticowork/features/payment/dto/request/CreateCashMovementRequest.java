@@ -19,6 +19,7 @@ public record CreateCashMovementRequest(
         String counterpartyCode,
         String counterpartyName,
         String reason,
+        /** Ignore en contexte authentifie : l'auteur est l'utilisateur connecte. */
         String createdBy,
         String metadataJson,
         String relatedMovementNumber,
@@ -28,6 +29,8 @@ public record CreateCashMovementRequest(
         String deviceCode,
         String deviceIp,
         String subCategory,
-        String tags
+        String tags,
+        /** Sens d'un ajustement : obligatoire pour {@code ADJUSTMENT}, ignore pour les autres types. */
+        com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction
 ) {
 }

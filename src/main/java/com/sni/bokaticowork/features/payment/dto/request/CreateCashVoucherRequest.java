@@ -16,7 +16,8 @@ public record CreateCashVoucherRequest(
         String counterpartyCode,
         String counterpartyName,
         String reason,
-        @NotBlank String createdBy,
+        /** Ignore en contexte authentifie : l'auteur est l'utilisateur connecte. */
+        String createdBy,
         CashDocumentType documentType,
         String metadataJson
 ) {

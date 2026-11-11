@@ -71,6 +71,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final CashEmailNotifier emailNotifier;
     private final com.sni.bokaticowork.features.payment.repository.CashMovementAttachmentRepository attachmentRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
 
     private static final String CASH_SESSIONS_PATH = "/payments/cash-registers/sessions/";
 
@@ -135,11 +136,12 @@ public class CashRegisterServiceImpl implements CashRegisterService {
             throw new BadRequestException("Cash register is inactive");
         }
         assertManualEntryAllowed(register);
+        String openedBy = actors.resolve(request.openedBy());
         sessionRepository.findBlockingSessionByCashRegisterId(register.getId())
                 .ifPresent(session -> {
                     throw new BadRequestException("Cash register already has an active session");
                 });
-        sessionRepository.findBlockingSessionByOpenedBy(request.openedBy().trim())
+        sessionRepository.findBlockingSessionByOpenedBy(openedBy)
                 .ifPresent(session -> {
                     throw new BadRequestException("Cashier already has an active cash session");
                 });
@@ -147,7 +149,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .sessionNumber(sequenceGenerator.next("cash_session"))
                 .cashRegister(register)
                 .status(CashSessionStatus.OPEN)
-                .openedBy(request.openedBy().trim())
+                .openedBy(openedBy)
                 .openingAmount(money(request.openingAmount() == null ? BigDecimal.ZERO : request.openingAmount()))
                 .build());
         if (session.getOpeningAmount().signum() > 0) {
@@ -189,7 +191,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
             throw new BadRequestException("Variance reason is required when counted amount differs from expected amount");
         }
         Instant now = Instant.now();
-        session.setClosedBy(request.closedBy().trim());
+        session.setClosedBy(actors.resolve(request.closedBy()));
         session.setClosingAmount(counted);
         session.setExpectedClosingAmount(expected);
         session.setCountedClosingAmount(counted);
@@ -226,7 +228,15 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (session.getStatus() != CashSessionStatus.CLOSING_REVIEW) {
             throw new BadRequestException("Cash session is not waiting for variance review");
         }
-        session.setReviewedBy(request.reviewedBy().trim());
+        String reviewer = actors.resolve(request.reviewedBy());
+        // Le caissier ne valide jamais son propre ecart : ni celui qui a tenu la session, ni celui
+        // qui l'a close. Sans cette regle, le controle de l'ecart n'etait qu'une formalite.
+        if (com.sni.bokaticowork.features.payment.service.support.CashActorResolver.samePerson(reviewer, session.getOpenedBy())
+                || com.sni.bokaticowork.features.payment.service.support.CashActorResolver.samePerson(reviewer, session.getClosedBy())) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException(
+                    "Un caissier ne peut pas valider l'ecart de sa propre session : la validation revient a une autre personne");
+        }
+        session.setReviewedBy(reviewer);
         session.setReviewedAt(Instant.now());
         if (StringUtils.hasText(request.note())) {
             String currentReason = trim(session.getVarianceReason());
@@ -266,7 +276,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         .contentType(trim(request.contentType()))
                         .storagePath(request.storagePath().trim())
                         .label(trim(request.label()))
-                        .uploadedBy(trim(request.uploadedBy()))
+                        .uploadedBy(actors.resolve(request.uploadedBy()))
                         .build();
         attachmentRepository.save(attachment);
         return mapper.toCashMovementResponse(movement);
@@ -274,11 +284,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Override
     public CashMovementResponse signMovement(String movementNumber, String signedBy) {
-        if (!StringUtils.hasText(signedBy)) {
-            throw new BadRequestException("Signer identifier is required");
-        }
+        String signer = actors.resolve(signedBy);
         CashMovement movement = movementByNumber(movementNumber);
-        movement.setSignedBy(signedBy.trim());
+        movement.setSignedBy(signer);
         movement.setSignedAt(Instant.now());
         return mapper.toCashMovementResponse(movementRepository.save(movement));
     }
@@ -311,9 +319,15 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (type == CashMovementType.PAYMENT || type == CashMovementType.OPENING_FLOAT || type == CashMovementType.CLOSING_COUNT) {
             throw new BadRequestException("Movement type is system managed");
         }
+        if (type == CashMovementType.ADJUSTMENT
+                && request.direction() != com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN
+                && request.direction() != com.sni.bokaticowork.features.payment.enums.CashFlowDirection.OUT) {
+            throw new BadRequestException("Un ajustement de caisse doit preciser son sens : IN (entree) ou OUT (sortie)");
+        }
         CashMovement movement = saveManualMovement(session, type, request.amount(), request.documentType(), request.documentNumber(),
                 request.flowCategory(), request.referenceType(), request.referenceCode(), request.counterpartyType(),
-                request.counterpartyCode(), request.counterpartyName(), request.reason(), request.createdBy(), request.metadataJson());
+                request.counterpartyCode(), request.counterpartyName(), request.reason(), request.createdBy(), request.metadataJson(),
+                type == CashMovementType.ADJUSTMENT ? request.direction() : null);
         movement = applyEnrichments(movement, request);
         return mapper.toCashMovementResponse(movement);
     }
@@ -359,31 +373,26 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         return changed || runningBalance != null ? movementRepository.save(movement) : movement;
     }
 
+    /**
+     * Solde de la session juste apres ce mouvement.
+     *
+     * <p>Il part de zero : le fonds d'ouverture est deja un mouvement {@code OPENING_FLOAT}. Partir
+     * du fonds d'ouverture, comme avant, le comptait deux fois. Le sens vient de la regle unique
+     * ({@link com.sni.bokaticowork.features.payment.service.support.CashFlowRules}).</p>
+     */
     private BigDecimal computeRunningBalance(CashMovement movement) {
         CashSession session = movement.getCashSession();
-        if (session == null) {
+        if (session == null || session.getId() == null) {
             return null;
         }
-        BigDecimal balance = safeAmount(session.getOpeningAmount());
+        BigDecimal balance = BigDecimal.ZERO;
         for (CashMovement entry : movementRepository.findByCashSession_IdOrderByCreatedAtAsc(session.getId())) {
-            balance = applyDirection(balance, entry);
-            if (entry.getId().equals(movement.getId())) {
-                return balance.setScale(4, RoundingMode.HALF_UP);
+            if (entry.getId() != null && entry.getId().equals(movement.getId())) {
+                break;
             }
+            balance = balance.add(com.sni.bokaticowork.features.payment.service.support.CashFlowRules.signedAmount(entry));
         }
-        return balance.setScale(4, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal applyDirection(BigDecimal balance, CashMovement entry) {
-        return switch (entry.getMovementType()) {
-            case PAYMENT, CASH_IN, TRANSFER_IN, OPENING_FLOAT -> balance.add(entry.getAmount());
-            case REFUND, CASH_OUT, SAFE_DEPOSIT, TRANSFER_OUT -> balance.subtract(entry.getAmount());
-            case ADJUSTMENT, CLOSING_COUNT -> balance;
-        };
-    }
-
-    private BigDecimal safeAmount(BigDecimal amount) {
-        return amount == null ? BigDecimal.ZERO : amount;
+        return balance.add(com.sni.bokaticowork.features.payment.service.support.CashFlowRules.signedAmount(movement)).setScale(4, RoundingMode.HALF_UP);
     }
 
     @Override
@@ -479,7 +488,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         assertManualEntryAllowed(session.getCashRegister());
         validatePositive(amount);
         saveMovement(session, CashMovementType.PAYMENT, amount, CashDocumentType.RECEIPT, trim(referenceCode), "PAYMENT",
-                "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, trim(createdBy), null);
+                "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, actors.resolve(createdBy), null);
     }
 
     /**
@@ -812,13 +821,30 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                                             String reason,
                                             String createdBy,
                                             String metadataJson) {
+        return saveManualMovement(session, movementType, amount, documentType, documentNumber, flowCategory, referenceType,
+                referenceCode, counterpartyType, counterpartyCode, counterpartyName, reason, createdBy, metadataJson, null);
+    }
+
+    private CashMovement saveManualMovement(CashSession session,
+                                            CashMovementType movementType,
+                                            BigDecimal amount,
+                                            CashDocumentType documentType,
+                                            String documentNumber,
+                                            String flowCategory,
+                                            String referenceType,
+                                            String referenceCode,
+                                            String counterpartyType,
+                                            String counterpartyCode,
+                                            String counterpartyName,
+                                            String reason,
+                                            String createdBy,
+                                            String metadataJson,
+                                            com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction) {
         validatePositive(amount);
         // Toute saisie humaine passe ici · le controle y tient donc en un seul point, plutot que
         // repete a chaque point d'entree ou l'un d'eux finirait par l'oublier.
         assertManualEntryAllowed(session.getCashRegister());
-        if (!StringUtils.hasText(createdBy)) {
-            throw new BadRequestException("Created by is required for manual cash movement");
-        }
+        String author = actors.resolve(createdBy);
         if (requiresReason(movementType) && !StringUtils.hasText(reason)) {
             throw new BadRequestException("Reason is required for this cash movement type");
         }
@@ -828,8 +854,8 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (requiresDocumentNumber(documentType) && !StringUtils.hasText(documentNumber)) {
             throw new BadRequestException("Document number is required for this cash document type");
         }
-        return saveMovement(session, movementType, amount, documentType, documentNumber, flowCategory, referenceType, referenceCode,
-                counterpartyType, counterpartyCode, counterpartyName, reason, createdBy, metadataJson);
+        return saveMovement(session, movementType, amount, CASH_CURRENCY, documentType, documentNumber, flowCategory,
+                referenceType, referenceCode, counterpartyType, counterpartyCode, counterpartyName, reason, author, metadataJson, direction);
     }
 
     private CashMovement saveMovement(CashSession session, CashMovementType movementType, BigDecimal amount,
@@ -844,7 +870,22 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                                       CashDocumentType documentType, String documentNumber, String flowCategory,
                                       String referenceType, String referenceCode, String counterpartyType, String counterpartyCode,
                                       String counterpartyName, String reason, String createdBy, String metadataJson) {
-        return movementRepository.save(CashMovement.builder()
+        return saveMovement(session, movementType, amount, currency, documentType, documentNumber, flowCategory,
+                referenceType, referenceCode, counterpartyType, counterpartyCode, counterpartyName, reason, createdBy, metadataJson, null);
+    }
+
+    /**
+     * Enregistre un mouvement et son solde courant.
+     *
+     * <p>Le solde courant n'etait pose que sur les mouvements libres ; les bons, les paiements et le
+     * fonds d'ouverture n'en avaient pas. Il est desormais calcule pour tous.</p>
+     */
+    private CashMovement saveMovement(CashSession session, CashMovementType movementType, BigDecimal amount, String currency,
+                                      CashDocumentType documentType, String documentNumber, String flowCategory,
+                                      String referenceType, String referenceCode, String counterpartyType, String counterpartyCode,
+                                      String counterpartyName, String reason, String createdBy, String metadataJson,
+                                      com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction) {
+        CashMovement movement = CashMovement.builder()
                 .movementNumber(sequenceGenerator.next("cash_movement"))
                 .cashSession(session)
                 .movementType(movementType)
@@ -861,7 +902,12 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .reason(trim(reason))
                 .createdBy(trim(createdBy))
                 .metadataJson(trim(metadataJson))
-                .build());
+                .direction(direction)
+                .build();
+        // Calcule avant l'enregistrement : le mouvement n'est pas encore en base, il s'ajoute au
+        // solde des mouvements deja enregistres de la session. Un seul enregistrement.
+        movement.setRunningBalance(computeRunningBalance(movement));
+        return movementRepository.save(movement);
     }
 
     private boolean requiresDocumentNumber(CashDocumentType documentType) {

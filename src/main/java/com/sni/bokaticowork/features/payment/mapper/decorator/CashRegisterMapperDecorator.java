@@ -120,7 +120,7 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 session == null ? null : session.getOpenedBy(),
                 session == null ? null : session.getOpenedAt(),
                 cashMovement.getMovementType(),
-                flowDirection(cashMovement.getMovementType()),
+                flowDirection(cashMovement),
                 cashMovement.getAmount(),
                 cashMovement.getCurrency(),
                 cashMovement.getDocumentType(),
@@ -195,15 +195,14 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
         return paymentTransactionRepository.findByTransactionNumber(cashMovement.getReferenceCode().trim()).orElse(null);
     }
 
-    private CashFlowDirection flowDirection(CashMovementType movementType) {
-        if (movementType == null) {
-            return CashFlowDirection.ADJUSTMENT;
-        }
-        return switch (movementType) {
-            case PAYMENT, CASH_IN, TRANSFER_IN, OPENING_FLOAT -> CashFlowDirection.IN;
-            case REFUND, CASH_OUT, SAFE_DEPOSIT, TRANSFER_OUT -> CashFlowDirection.OUT;
-            case ADJUSTMENT, CLOSING_COUNT -> CashFlowDirection.ADJUSTMENT;
-        };
+    /**
+     * Sens affiche : celui de la regle unique ; un ajustement montre desormais s'il entre ou sort,
+     * seul un mouvement neutre (comptage) reste marque {@code ADJUSTMENT}.
+     */
+    private CashFlowDirection flowDirection(CashMovement movement) {
+        CashFlowDirection direction = com.sni.bokaticowork.features.payment.service.support.CashFlowRules
+                .direction(movement.getMovementType(), movement.getDirection());
+        return direction == null ? CashFlowDirection.ADJUSTMENT : direction;
     }
 
     @SafeVarargs

@@ -96,6 +96,35 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
                 auth.getName(), auth.getAuthorities());
     }
 
+    /**
+     * Droits fins des caisses (plan finance, lot C0).
+     *
+     * <p>Avant, tout ce qui n'etait ni une lecture ni un chemin contenant {@code /open} ou
+     * {@code /close} tombait sur {@code CASH:ADJUST} : l'ouverture de session ({@code POST /sessions},
+     * sans {@code /open}), la creation de caisse, les mouvements et la validation d'un ecart
+     * exigeaient le meme droit, que tout caissier avait. Chaque action a desormais le sien.</p>
+     */
+    private String cashPermission(String path, String method) {
+        if (HttpMethod.GET.matches(method)) return permission("CASH", "READ");
+        if (path.equals("/cash-registers")
+                || path.endsWith("/activate") || path.endsWith("/deactivate")) {
+            return permission("CASH_REGISTER", "MANAGE");
+        }
+        if (path.equals("/cash-registers/sessions")) return permission("CASH_SESSION", "OPEN");
+        if (path.contains("/sessions/") && (path.endsWith("/close") || path.endsWith("/closing-request"))) {
+            return permission("CASH_SESSION", "CLOSE");
+        }
+        if (path.endsWith("/approve-variance") || path.startsWith("/cash-registers/anomalies")) {
+            return permission("CASH_VARIANCE", "DECIDE");
+        }
+        if (path.startsWith("/cash-registers/requests/")
+                && (path.endsWith("/approve") || path.endsWith("/reject"))) {
+            return permission("CASH_MOVEMENT", "APPROVE");
+        }
+        if (path.endsWith("/reverse")) return permission("CASH_MOVEMENT", "REVERSE");
+        return permission("CASH_MOVEMENT", "CREATE");
+    }
+
     private String resolvePermission(HttpServletRequest request) {
         String path = normalizePath(request.getRequestURI());
         String method = request.getMethod();
@@ -145,10 +174,7 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("PAYMENT", HttpMethod.GET.matches(method) ? "READ" : "PROCESS");
         }
         if (path.startsWith("/cash-registers")) {
-            if (path.contains("/open")) return permission("CASH", "OPEN_SESSION");
-            if (path.contains("/close")) return permission("CASH", "CLOSE_SESSION");
-            if (HttpMethod.GET.matches(method)) return permission("CASH", "READ");
-            return permission("CASH", "ADJUST");
+            return cashPermission(path, method);
         }
         if (path.startsWith("/bookings")) {
             if (path.contains("/check-in") || path.contains("/check-out")) return permission("BOOKING", "CHECKIN");

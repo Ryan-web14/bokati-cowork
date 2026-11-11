@@ -49,6 +49,11 @@ class CashMonthEndTest {
     @Mock private CashSessionSummarySupport summarySupport;
     @Mock private CashRegisterMapper mapper;
     @Mock private ApplicationEventPublisher eventPublisher;
+    /** Hors contexte authentifie, l'acteur est la valeur fournie : les tests gardent leurs acteurs. */
+    @org.mockito.Spy
+    private com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors =
+            new com.sni.bokaticowork.features.payment.service.support.CashActorResolver();
+
     @InjectMocks private CashRegisterServiceImpl service;
 
     private CashSession open(CashRegister register) {

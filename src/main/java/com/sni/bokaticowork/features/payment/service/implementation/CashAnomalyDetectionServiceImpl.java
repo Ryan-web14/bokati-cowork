@@ -63,6 +63,7 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
     private final CashRegisterRepository cashRegisterRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final CashEmailNotifier emailNotifier;
+    private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
     @Lazy private final SupportTicketService supportTicketService;
 
     @Value("${bokati.payment.cash-register.alert-cooldown-hours:6}")
@@ -110,7 +111,7 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
             throw new BadRequestException("Anomaly flag " + flagNumber + " has already been resolved");
         }
         flag.setStatus(request.status());
-        flag.setReviewedBy(request.reviewedBy().trim());
+        flag.setReviewedBy(actors.resolve(request.reviewedBy()));
         flag.setReviewedAt(Instant.now());
         flag.setReviewNote(StringUtils.hasText(request.note()) ? request.note().trim() : null);
         flag = anomalyFlagRepository.save(flag);
