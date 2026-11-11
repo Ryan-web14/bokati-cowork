@@ -71,6 +71,8 @@ Tout ce que le module comptable doit produire : livres, balances, relevés de co
 
 ### 3.2 Cible
 
+Détail du contenu imprimé, des modèles, du justificatif de solde et du dossier de justification de clôture dans [rapprochement-et-comptes-tiers.md](rapprochement-et-comptes-tiers.md#3-état-de-compte-dun-tiers).
+
 Une fois la comptabilité activée, le relevé de compte est **tiré du compte auxiliaire du tiers** (grand livre). Ce n'est plus une reconstitution des factures. Il devient donc identique à ce que voit le comptable.
 
 - Pendant la bascule, les deux coexistent et un contrôle compare leurs soldes.

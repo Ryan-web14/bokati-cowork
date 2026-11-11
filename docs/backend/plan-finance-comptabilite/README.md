@@ -14,6 +14,7 @@ Fichiers du dossier :
 | [analytique-et-budget.md](analytique-et-budget.md) | Comptabilité analytique, analyse par poste de dépense, gestion budgétaire complète et contrôle budgétaire dans les sorties de fonds et les autres opérations. |
 | [financement-engagements-paie.md](financement-engagements-paie.md) | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre des engagements hors bilan, import du journal de paie. |
 | [caisses-et-sessions.md](caisses-et-sessions.md) | Le système de caisse complet : défauts de l'existant, référentiel des caisses, cycle de vie des sessions, titulaire et remplaçants, congés et absences des caissiers, transfert de responsabilité, comptages et billetage, catalogue des opérations, transferts à deux temps, corrections, plafonds et contrôles, états, données, routes, droits, saisie minimale (champs déduits, générés, listes), lots C0 à C6. |
+| [rapprochement-et-comptes-tiers.md](rapprochement-et-comptes-tiers.md) | Rapprochement bancaire complet (relevés, modèles d'import, pointage, règles d'affectation, suspens, état de rapprochement validé) ; compte de chaque tiers, état de compte imprimable, justificatif de solde, dossier de justification de clôture, confirmations de solde. |
 | [pieces-comptables.md](pieces-comptables.md) | Les pièces émises (bon d'entrée, bon de sortie, bon de décaissement, état de besoin, fiche de justification, procès-verbaux...) : champs, champs automatiques, signatures, numérotation. |
 | [demandes-et-justification.md](demandes-et-justification.md) | Le nouveau circuit des demandes de fonds (état de besoin, demande, validation, décaissement) et la justification des dépenses une par une. |
 
@@ -154,7 +155,7 @@ Paramètres `accounting.enabled`, `accounting.analytic.enabled`, `accounting.sta
 
 - Chargé à l'installation avec le plan SYSCOHADA révisé : classes 1 à 9, comptes principaux et divisionnaires utiles à l'activité. L'administrateur finance l'étend, mais ne supprime pas un compte mouvementé : il le désactive.
 - Champs : numéro, intitulé, classe, nature (bilan / gestion / hors activités ordinaires / analytique), sens normal, **lettrable** oui/non, **compte de tiers** (collectif client, fournisseur, personnel), **compte de trésorerie** (caisse, banque, mobile money), **analytique obligatoire** oui/non (par défaut oui pour les classes 6 et 7), taxe associée, actif oui/non.
-- **Comptes auxiliaires de tiers** : un compte client par membre, client ou organisation (`411` + code), créé à la première écriture ; un compte fournisseur par fournisseur (`401` + code) ; un compte personnel par employé pour les avances (`421` + code).
+- **Comptes auxiliaires de tiers** (détail, état de compte imprimable et justificatif de solde dans [rapprochement-et-comptes-tiers.md](rapprochement-et-comptes-tiers.md#2-comptes-de-tiers)) : un compte client par membre, client ou organisation (`411` + code), créé à la première écriture ; un compte fournisseur par fournisseur (`401` + code) ; un compte personnel par employé pour les avances (`421` + code).
 
 #### Créer un compte comptable
 
@@ -574,7 +575,7 @@ Nouvelle notion qui englobe : caisses (existantes), comptes bancaires, comptes m
 - **Chèques** : nouveau cycle `REÇU` (compte `513`), `REMIS` (bordereau), `ENCAISSÉ` (relevé), `REJETÉ` (contre-passation, la facture redevient due, le client est notifié, des frais de rejet sont facturables).
 - **Virements reçus** : saisie au guichet (existant), puis pointage sur le relevé.
 - **Relevés** : import CSV ou OFX par banque, import du relevé PawaPay (dépôts, remboursements, frais), saisie du relevé des numéros marchands.
-- **Rapprochement** : pointage automatique (montant, date à plus ou moins N jours, référence), pointage manuel, écritures de régularisation proposées (frais bancaires, agios, commissions opérateur), état de rapprochement imprimable.
+- **Rapprochement** : pointage automatique (montant, date à plus ou moins N jours, référence), pointage manuel, écritures de régularisation proposées (frais bancaires, agios, commissions opérateur), état de rapprochement imprimable. Détail complet dans [rapprochement-et-comptes-tiers.md](rapprochement-et-comptes-tiers.md#1-rapprochement-bancaire).
 - **Frais PawaPay** : constatés au relevé ou calculés au taux contractuel à chaque dépôt (`631` contre le compte mobile money).
 
 ---
