@@ -8,7 +8,7 @@ Les pièces sont produites en PDF (Thymeleaf vers OpenHtmlToPDF, comme la factur
 | --- | --- |
 | En-tête | Logo, raison sociale et identifiants de l'exploitant (RCCM, NIU, adresse), organisation (`business_entity`) si plusieurs |
 | Titre | Nom de la pièce en grand (« BON DE SORTIE DE CAISSE ») |
-| Numéro | Séquence continue par type, organisation et exercice (`core/generator`), jamais réutilisée ; préfixes proposés ci-dessous |
+| Numéro | Séquence continue **sans trou** par type, organisation et exercice, attribuée à l'émission dans la même transaction, jamais modifiée ni réutilisée ; une pièce abandonnée reste dans la séquence avec le statut ANNULÉ (voir [README, section 4.8](README.md#48-numérotation-des-pièces--continuité-et-protection)) ; préfixes proposés ci-dessous |
 | Dates | Date de la pièce, date et heure d'émission, date comptable si différente |
 | Caisse et session | Code et nom de la caisse, numéro de session, caissière |
 | Montant | En chiffres et **en lettres** (formateur existant `inWords` du reçu), devise |
@@ -199,4 +199,6 @@ Existe (`payment/receipt.html`). Ajouter le numéro de pièce comptable de l'enc
 
 Les PV de remise de caisse, de clôture d'office, de mise sous scellés, de comptage inopiné et de revue d'écart suivent le modèle du PV de passation (section 8) : caisse, date, comptage par coupure, attendu, écart, motif choisi dans une liste, signatures des deux parties (ou du superviseur et du témoin) ; voir [caisses-et-sessions.md](caisses-et-sessions.md) sections 4.5, 5.6 et 6.1.
 
-Format : `{PREFIX}-{AAAA}{MM}-{SEQ}`, séquence mensuelle sur 6 chiffres, comme les autres numéros du logiciel.
+Format : `{PREFIX}-{AAAA}{MM}-{SEQ}`, séquence sur 6 chiffres. La continuité est contrôlée chaque nuit et figure dans l'état de continuité des numéros.
+
+Le moteur `core/generator` attribue ses numéros dans une transaction séparée (`REQUIRES_NEW`) : une émission annulée y laisse un trou. Pour ces pièces, la numérotation passe donc par un compteur transactionnel, comme les pièces comptables.

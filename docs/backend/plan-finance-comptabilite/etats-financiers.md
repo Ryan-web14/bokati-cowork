@@ -54,6 +54,8 @@ Tout ce que le module comptable doit produire : livres, balances, relevés de co
 | **Livre de caisse** | Par caisse et par jour : solde d'ouverture, entrées, sorties, solde de clôture, rapproché du billetage | Lien vers les pièces de caisse |
 | **État du lettrage** | Par compte lettrable et par tiers : lignes non lettrées, lettrages partiels et leur reste, ancienneté | Par compte, par tiers, par ancienneté |
 | **Propositions de lettrage** | Rapprochements proposés par le traitement de nuit, avec indice de confiance | À valider ou rejeter |
+| **État de continuité des numéros** | Par journal et par type de pièce émise : premier et dernier numéro, nombre, trous, doublons, pièces annulées, état de la chaîne d'empreintes | Par exercice ; imprimable pour l'audit |
+| **Pièces acceptées déséquilibrées et compte d'attente d'équilibrage** | Selon la politique choisie : pièces acceptées non régularisées, solde et lignes non lettrées du compte d'attente d'équilibrage | Ancienneté |
 | **Journal des lettrages et délettrages** | Qui, quand, lignes, type, écart de règlement généré, motif de délettrage | Piste d'audit |
 | **État des comptes d'attente** | Soldes des `471` et `585` avec ancienneté | Alerte au-delà du délai paramétré |
 
@@ -143,7 +145,8 @@ Les notes sans objet sont marquées « Néant » comme le prévoit la liasse.
 ### 4.5 Contrôles de cohérence avant édition définitive
 
 - Balance équilibrée (débit = crédit, à-nouveaux, mouvements, soldes) ; balances analytique et hors bilan de la classe 9 équilibrées.
-- Aucune pièce en attente d'équilibrage datée dans l'exercice.
+- Aucune pièce en attente d'équilibrage datée dans l'exercice ; compte d'attente d'équilibrage soldé ; aucune pièce acceptée déséquilibrée non régularisée.
+- Numérotation continue dans chaque journal (aucun trou, aucun doublon, chaîne d'empreintes intacte).
 - Total actif = total passif.
 - Résultat du bilan = résultat net du compte de résultat.
 - Trésorerie du tableau des flux = trésorerie du bilan.
