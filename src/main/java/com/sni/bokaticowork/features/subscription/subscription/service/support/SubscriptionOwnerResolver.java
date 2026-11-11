@@ -35,6 +35,14 @@ public class SubscriptionOwnerResolver {
             case BUSINESS_ENTITY -> {
                 BusinessEntity business = businessRepository.findByCode(code).orElse(null);
                 if (business != null) {
+                    // Profil legal d'une entreprise cliente (cree par /companies avec le client COMPANY) :
+                    // l'abonnement va au client CUS-COM, pour figurer dans son portefeuille et son releve.
+                    Customer holder = business.getId() == null ? null : customerRepository
+                            .findFirstByBusinessEntity_IdAndTypeAndDeletedFalse(business.getId(), CustomerType.COMPANY)
+                            .orElse(null);
+                    if (holder != null) {
+                        yield new Owner(holder.getCustomerId(), null, holder, null, SubscriberType.CUSTOMER);
+                    }
                     yield new Owner(business.getCode(), null, null, business, SubscriberType.BUSINESS_ENTITY);
                 }
                 // BUSINESS_ENTITY designe une fiche /businesses (table business_entity, codes BIZ-...).
@@ -51,8 +59,9 @@ public class SubscriptionOwnerResolver {
     }
 
     /**
-     * @param type le type reellement trouve · peut differer du type demande (entreprise cliente
-     *             envoyee en BUSINESS_ENTITY, reconnue comme CUSTOMER)
+     * @param type le type reellement trouve · peut differer du type demande (entreprise cliente,
+     *             par son code CUS-COM ou par le code de son profil legal, envoyee en BUSINESS_ENTITY :
+     *             reconnue comme CUSTOMER)
      */
     public record Owner(String code, Member member, Customer customer, BusinessEntity businessEntity, SubscriberType type) {
 

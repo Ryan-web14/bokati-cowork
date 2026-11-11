@@ -160,4 +160,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
 
     /** Un autre client deja relie a ce profil legal · une fiche legale ne sert qu'un compte. */
     Optional<Customer> findFirstByBusinessEntity_IdAndIdNot(Long businessEntityId, Long id);
+
+    /** Le client qui porte ce profil legal (entreprise cliente creee par /companies). */
+    Optional<Customer> findFirstByBusinessEntity_IdAndTypeAndDeletedFalse(Long businessEntityId,
+            com.sni.bokaticowork.features.client.customer.enums.CustomerType type);
 }
