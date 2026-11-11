@@ -191,5 +191,12 @@ Existe (`payment/receipt.html`). Ajouter le numéro de pièce comptable de l'enc
 | PV de passation | `PVP` |
 | Ordre de transfert interne | `OTI` |
 | Bordereau de remise en banque | `BRB` |
+| PV de remise de caisse (changement de titulaire) | `PRC` |
+| PV de clôture d'office | `PCO` |
+| PV de mise sous scellés et d'ouverture du scellé | `PVS` |
+| PV de comptage inopiné | `PCI` |
+| PV de revue d'écart | `PRE` |
+
+Les PV de remise de caisse, de clôture d'office, de mise sous scellés, de comptage inopiné et de revue d'écart suivent le modèle du PV de passation (section 8) : caisse, date, comptage par coupure, attendu, écart, motif choisi dans une liste, signatures des deux parties (ou du superviseur et du témoin) ; voir [caisses-et-sessions.md](caisses-et-sessions.md) sections 4.5, 5.6 et 6.1.
 
 Format : `{PREFIX}-{AAAA}{MM}-{SEQ}`, séquence mensuelle sur 6 chiffres, comme les autres numéros du logiciel.

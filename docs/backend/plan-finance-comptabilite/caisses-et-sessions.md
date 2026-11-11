@@ -30,6 +30,9 @@ Liens : écritures produites par chaque opération dans [catalogue-ecritures.md]
 18. [Paramétrage](#18-paramétrage)
 19. [Reprise de l'existant](#19-reprise-de-lexistant)
 20. [Découpage en lots et critères d'acceptation](#20-découpage-en-lots-et-critères-dacceptation)
+21. [Saisie minimale : champs déduits, générés et listes](#21-saisie-minimale--champs-déduits-générés-et-listes)
+
+Points clés ajoutés : titulaire et remplaçants d'une caisse ([4.5](#45-titulaire-remplaçants-et-transfert-de-responsabilité)) ; caissier en congé, absent ou parti ([5.6](#56-caissier-absent--congé-absence-imprévue-départ)).
 
 ---
 
@@ -115,6 +118,8 @@ Routes : création, liste, activation, désactivation. **Aucune modification** d
 6. **Un seul calcul de solde.** L'attendu, le solde courant, le rapport et les statistiques utilisent la même règle de sens (section 7.5).
 7. **Séparation des tâches** imposée par le serveur : le caissier ne valide ni son écart, ni son ajustement, ni la réception de son propre transfert.
 8. **Tout est paramétrable** (section 18), avec des valeurs initiales sûres.
+9. **Le moins de saisie possible.** Le caissier saisit ce que seul lui connaît : les quantités comptées, le montant d'une dépense, une pièce externe. Tout le reste est **déduit** (du contexte, de la nature, de la facture, de la demande), **généré** (numéros, dates, libellés, montant en lettres) ou **choisi dans une liste préenregistrée** (natures, motifs, tiers, banques, porteurs). Détail champ par champ en [section 21](#21-saisie-minimale--champs-déduits-générés-et-listes).
+10. **La caisse ne dépend pas d'une personne.** Une caisse a un titulaire et des remplaçants. Elle se passe à quelqu'un d'autre, temporairement (congé, absence) ou définitivement (changement de titulaire, départ), toujours par un comptage contradictoire et un procès-verbal (sections 4.5 et 5.6).
 
 ---
 
@@ -169,7 +174,7 @@ Routes : création, liste, activation, désactivation. **Aucune modification** d
 
 ### 4.3 Habilitation des caissiers
 
-Une table d'affectation dit qui peut ouvrir une session sur quelle caisse, avec un rôle et une période.
+Une table d'affectation dit qui peut ouvrir une session sur quelle caisse, avec un rôle, une **qualité** (titulaire, remplaçant, intérimaire, voir 4.5) et une période.
 
 | Rôle | Peut |
 | --- | --- |
@@ -189,6 +194,30 @@ L'ouverture d'une session par une personne non affectée est refusée. Une affec
 - Une caisse fermée reste consultable. Son code ne se réutilise pas.
 
 Toute modification de la fiche est historisée : qui, quand, ancienne et nouvelle valeur. Un changement de plafond prend effet immédiatement, un changement de compte comptable à la date d'effet indiquée.
+
+### 4.5 Titulaire, remplaçants et transfert de responsabilité
+
+| Qualité | Sens |
+| --- | --- |
+| `HOLDER` (titulaire) | Responsable du fonds de la caisse ; un seul titulaire à la fois par caisse de guichet, de petite caisse et de caisse principale. Le coffre a deux titulaires (double clé) |
+| `BACKUP` (remplaçant) | Habilité en permanence à tenir la caisse en l'absence du titulaire ; un ou plusieurs, classés par ordre de préférence. Le premier est proposé d'office |
+| `INTERIM` (intérimaire) | Habilité pour une période fixe (congé du titulaire, renfort) ; l'affectation s'active et s'éteint seule aux dates prévues |
+
+**Transfert de responsabilité** (la caisse change de titulaire, temporairement ou définitivement) :
+
+1. Le responsable choisit le nouveau titulaire dans la liste des personnes habilitées ou habilitables, et la date d'effet. Le motif vient d'une liste : congé, mutation, départ, réorganisation, autre.
+2. Comptage contradictoire par l'ancien et le nouveau titulaire (billetage, chèques, instruments), comme une passation (5.4). En l'absence de l'ancien titulaire, le comptage se fait par un superviseur et un témoin.
+3. Le système liste ce que l'ancien titulaire laisse en cours, et chaque élément est soldé ou transféré explicitement :
+   - session ouverte ;
+   - transferts en transit, à envoyer ou à recevoir ;
+   - mouvements en attente de visa ;
+   - écarts en revue ;
+   - annonces de paiement en espèces rattachées ;
+   - chèques non remis ;
+   - avances qu'il a décaissées et qui restent à justifier.
+4. Un procès-verbal de remise de caisse (`PRC-`) est produit, signé par les deux (ou par le superviseur et le témoin). Les affectations sont mises à jour à la date d'effet, et l'historique de la caisse garde la succession des titulaires.
+
+Un écart constaté à la remise est imputé à la période de l'ancien titulaire, et suit la revue d'écart (5.2).
 
 ---
 
@@ -251,6 +280,39 @@ Un caissier en remplace un autre sans fermer la caisse :
   - **`CARRY_OVER`** : comportement actuel, gardé en option ; chaque report est signalé, et le compteur « jours sans comptage » de la caisse continue de courir.
 - Les caisses automatiques gardent la clôture et la réouverture automatiques.
 
+### 5.6 Caissier absent : congé, absence imprévue, départ
+
+Une caisse n'attend jamais le retour d'une personne, et aucune session ne reste ouverte au nom d'un absent.
+
+**Absence planifiée** (congé, mission, formation) :
+
+1. L'absence est déclarée à l'avance, par le caissier ou son responsable : dates et motif choisis dans une liste. Le **remplaçant est proposé d'office** : premier remplaçant (`BACKUP`) disponible sur la période, sinon un caissier affecté à une autre caisse du site. Le responsable valide.
+2. L'affectation `INTERIM` du remplaçant est créée automatiquement pour la période. Elle s'active au premier jour et s'éteint au retour.
+3. **Avant le départ**, le système relance le caissier (J-2 par défaut). Il faut clore sa session par une passation au remplaçant (5.4), ou par une clôture avec remise du fonds à la caisse mère. Au premier jour de l'absence, une session encore ouverte est suspendue et signalée au superviseur.
+4. Pendant l'absence, le caissier absent ne peut ouvrir aucune session. Ce qui lui était adressé est redirigé vers le remplaçant : transferts à réceptionner, visas, annonces de paiement en espèces, notifications de caisse.
+5. **Au retour**, le titulaire reprend la caisse par une passation avec l'intérimaire ; l'écart éventuel est imputé à la période de l'intérimaire.
+6. **Sans remplaçant**, le comportement est paramétré :
+   - **remise à la caisse mère** (défaut) : le fonds est transféré à la caisse mère par un transfert à deux temps, la caisse est suspendue et rouvre au retour avec un nouveau fonds ;
+   - **mise sous scellés** : le fonds est compté par deux personnes, mis sous enveloppe scellée numérotée et déposé au coffre, avec un PV de mise sous scellés ; au retour, l'ouverture du scellé est un comptage contradictoire ;
+   - **suspension simple** : pour une absence très courte, le fonds reste dans la caisse fermée à clé ; ce n'est permis que sous un montant plafond.
+
+**Absence imprévue** (maladie, urgence) :
+
+1. Le responsable enregistre l'absence, avec une date de fin éventuellement inconnue.
+2. Si une session est ouverte, un superviseur fait une **clôture d'office** : comptage par le superviseur et un témoin (deux personnes différentes, pas le caissier), puis PV de clôture d'office (`PCO-`).
+3. Le caissier est informé. Il peut **contester** le comptage dans un délai donné (3 jours par défaut) ; d'ici là, l'écart reste en revue et n'est pas imputé.
+4. Le remplaçant ouvre ensuite sa propre session avec le montant compté.
+
+**Départ définitif** (fin de contrat, mutation, démission) :
+
+1. Transfert de responsabilité (4.5) à la date de départ.
+2. Toutes les affectations de la personne prennent fin à cette date ; ses droits de caisse sont retirés.
+3. Le départ est bloqué tant que restent en cours une avance non justifiée, un écart non décidé ou une session non close. Le responsable peut le forcer, en indiquant la suite donnée (imputation, retenue sur le solde de tout compte via l'import de paie) ; c'est tracé.
+
+**Réviseurs et superviseurs absents** : ils déclarent un **délégué** pour la période (liste des personnes ayant le même droit). Les revues d'écart et les visas de leurs caisses vont au délégué, pour qu'aucune clôture ne reste bloquée par une absence.
+
+Le calendrier des absences de caisse est visible sur le tableau de bord (13.1) : qui est absent, qui remplace, quelles caisses sont suspendues ou sous scellés.
+
 ---
 
 ## 6. Comptages et billetage
@@ -266,6 +328,9 @@ Un caissier en remplace un autre sans fermer la caisse :
 | `SPOT_CHECK` (comptage inopiné) | Superviseur, sans prévenir | PV de comptage inopiné ; session non interrompue, écart constaté et revu |
 | `TRANSFER_RECEIPT` | Destinataire d'un transfert | Accusé de réception de l'ordre de transfert (`OTI-`) |
 | `PERIODIC` (coffre) | Deux personnes | PV de comptage du coffre |
+| `RESPONSIBILITY_TRANSFER` | Ancien et nouveau titulaire, ou superviseur et témoin | PV de remise de caisse (`PRC-`) |
+| `FORCED_CLOSE` | Superviseur et témoin | PV de clôture d'office (`PCO-`) |
+| `SEAL`, `UNSEAL` | Deux personnes | PV de mise sous scellés et d'ouverture du scellé |
 
 ### 6.2 Billetage
 
@@ -517,6 +582,11 @@ Billetage, passation, comptage inopiné, recomptage, revue d'écart, réception 
 | Session trop longue, session ouverte à la fin du mois | Caissier, responsable |
 | Caisse non comptée depuis N jours | Superviseur |
 | Session suspendue ou reprise | Caissier |
+| Absence déclarée, remplaçant désigné | Responsable (validation), remplaçant |
+| Absence qui commence avec une session encore ouverte (J-2 puis J) | Caissier, responsable |
+| Clôture d'office faite, délai de contestation | Caissier absent |
+| Retour d'absence : reprise de caisse à faire | Titulaire, intérimaire |
+| Transfert de responsabilité : éléments en cours à solder | Ancien et nouveau titulaire, responsable |
 
 Canaux et destinataires paramétrés (section 20 du plan).
 
@@ -540,7 +610,11 @@ Migrations dev et prod à chaque lot. Les tables existantes sont enrichies, rien
 
 | Table | Champs principaux |
 | --- | --- |
-| `cash_register_assignment` | register_code, user_code, role, valid_from, valid_to, emergency, granted_by |
+| `cash_register_assignment` | register_code, user_code, role, quality (`HOLDER`, `BACKUP`, `INTERIM`), backup_rank, valid_from, valid_to, emergency, absence_number, granted_by |
+| `cash_staff_absence` | number, user_code, kind (liste paramétrable : congé, maladie, mission, formation, départ), starts_on, ends_on (facultatif), replacement_user, register_codes, no_replacement_policy, status (`PLANNED`, `APPROVED`, `ACTIVE`, `ENDED`, `CANCELLED`), declared_by, approved_by |
+| `cash_responsibility_transfer` | number (`PRC-`), register_code, from_user, to_user, reason, effective_at, count_id, pending_items (jsonb : éléments en cours et leur sort), signatures, permanent |
+| `cash_seal` | number, register_code, count_id, envelope_number, sealed_by, witness, deposited_in (coffre), unsealed_at, unseal_count_id |
+| `cash_delegation` | delegator, delegate, permissions, starts_on, ends_on |
 | `cash_register_schedule` | register_code, day_of_week, opens_at, closes_at |
 | `cash_register_history` | register_code, field, old_value, new_value, changed_by, changed_at, effective_at |
 | `cash_denomination` | currency, value, kind (BILL, COIN), active_from, active_to, label |
@@ -580,6 +654,14 @@ Les routes existantes restent (`/cash-registers/...`) ; elles ignorent les acteu
 | `GET /cash-registers/position` | Position de trésorerie en temps réel |
 | `GET /cash-registers/reports/{kind}` | États de la section 13.2 |
 | `GET`, `PUT /cash-registers/denominations`, `/exchange-rates` | Référentiels |
+| `POST`, `GET /cash-registers/absences`, `PATCH .../{n}/approve`, `/cancel`, `/end` | Absences de caisse ; la réponse de création contient le remplaçant proposé |
+| `GET /cash-registers/absences/replacement-suggestions?registerCode=&from=&to=` | Remplaçants disponibles, dans l'ordre de préférence |
+| `POST /cash-registers/{code}/responsibility-transfers`, `GET .../pending-items` | Transfert de responsabilité et liste des éléments en cours |
+| `PATCH /cash-registers/sessions/{n}/force-close` | Clôture d'office avec témoin |
+| `PATCH /cash-registers/sessions/{n}/contest` | Contestation d'une clôture d'office par le caissier |
+| `POST /cash-registers/{code}/seal`, `/unseal` | Mise sous scellés et ouverture |
+| `POST`, `GET /cash-registers/delegations` | Délégations des réviseurs et superviseurs |
+| `GET /cash-registers/form-defaults?context=` | Valeurs proposées pour un formulaire (section 21) |
 
 Les routes de clôture et de comptage ne renvoient jamais l'attendu tant que le comptage n'est pas validé, si la clôture à l'aveugle est active.
 
@@ -601,6 +683,8 @@ Remplace le découpage actuel (`CASH:READ`, `OPEN_SESSION`, `CLOSE_SESSION`, `AD
 | `CASH_MOVEMENT:REVERSE` | Contre-passation au-delà du seuil caissier |
 | `CASH_TRANSFER:SEND`, `:RECEIVE` | Caissier principal, caissier affecté à la destination |
 | `CASH_REPORT:READ` | États |
+| `CASH_STAFF:DECLARE_ABSENCE` | Le caissier pour lui-même, son responsable |
+| `CASH_STAFF:MANAGE` | Valider les absences, désigner les remplaçants, transférer la responsabilité d'une caisse, forcer un départ |
 
 Les anciennes permissions sont reprises par correspondance à la migration :
 
@@ -638,6 +722,14 @@ Les anciennes permissions sont reprises par correspondance à la migration :
 | Dérogation à la séparation des tâches | Désactivée |
 | Rendu de monnaie en devise | Non |
 | Monnaie rendue au portefeuille | Proposée |
+| Rappel avant une absence | 2 jours |
+| Sans remplaçant | Remise à la caisse mère (sinon : mise sous scellés, suspension simple sous un plafond) |
+| Plafond de la suspension simple | 100 000 XAF |
+| Délai de contestation d'une clôture d'office | 3 jours |
+| Choix du remplaçant | Premier remplaçant disponible, sinon caissier du site le moins chargé |
+| Départ avec éléments en cours | Bloqué, forçable par `CASH_STAFF:MANAGE` |
+| Motifs (absence, écart, ajustement, contre-passation, suspension, annulation, transfert de responsabilité) | Listes initiales de la section 21.3 ; option « Autre, préciser » activable par liste |
+| Champs déduits modifiables par le caissier | Montant d'une sortie liée, libellé ; non modifiables : compte, journal, analytique (modifiables par le caissier principal) |
 
 Tous ces paramètres se règlent par caisse quand ils ont un sens par caisse ; la valeur générale sert par défaut.
 
@@ -667,13 +759,95 @@ Ces lots détaillent le lot **F8** du plan. C0 n'a aucune dépendance et peut pa
 | Lot | Contenu | Dépend de | Critère d'acceptation |
 | --- | --- | --- | --- |
 | **C0. Corrections** | D1 (acteurs tirés du jeton), D2 (droits fins sur les routes existantes), D3 (pas d'auto-validation d'un écart), D4 (solde courant), D5 (sens de l'ajustement), D6 (filtre de statut), règle unique de sens, recalcul des soldes | | Un caissier ne peut ni ouvrir au nom d'un autre ni valider son propre écart ; le solde courant d'une session ouverte avec 10 000 de fonds et un encaissement de 5 000 vaut 15 000 |
-| **C1. Référentiel des caisses** | Types, fiche complète, modification historisée, cycle de vie, caisse mère, affectations, horaires, postes autorisés | C0 | Une personne non affectée ne peut pas ouvrir de session ; chaque modification de caisse apparaît dans l'historique |
-| **C2. Sessions et comptages** | États complets, continuité du fonds, écart d'ouverture, pause, suspension, billetage, clôture à l'aveugle, tolérance, double comptage, recomptage, décision d'écart, passation, politique de fin de mois, durée maximale | C1 | L'attendu n'est visible qu'après le comptage ; une session ouverte avec un fonds différent du dernier comptage crée un écart d'ouverture ; une passation produit son PV signé par les deux |
+| **C1. Référentiel des caisses** | Types, fiche complète avec valeurs déduites du type et du site, modification historisée, cycle de vie, caisse mère, affectations, titulaire et remplaçants, transfert de responsabilité, horaires, postes autorisés, listes préenregistrées | C0 | Une personne non affectée ne peut pas ouvrir de session ; chaque modification de caisse apparaît dans l'historique |
+| **C2. Sessions et comptages** | États complets, continuité du fonds, écart d'ouverture, pause, suspension, billetage, clôture à l'aveugle, tolérance, double comptage, recomptage, décision d'écart, passation, politique de fin de mois, durée maximale ; absences (congé, imprévue, départ), remplaçant proposé, clôture d'office avec témoin et contestation, mise sous scellés, délégation des réviseurs | C1 | L'attendu n'est visible qu'après le comptage ; une session ouverte avec un fonds différent du dernier comptage crée un écart d'ouverture ; une passation produit son PV signé par les deux ; un congé déclaré avec remplaçant crée l'intérim aux bonnes dates et bloque l'ouverture par l'absent |
 | **C3. Opérations et transferts** | Natures d'opération en caisse, transferts à deux temps, remise de fin de journée, échange de monnaie, petite caisse à fonds fixe, contre-passation, ajustement visé, mouvements en attente et double visa | C2 | Un transfert de 200 000 envoyé et reçu pour 195 000 passe en contestation et en revue ; une contre-passation remet le solde à sa valeur d'avant |
 | **C4. Contrôles** | Plafonds appliqués, comptages inopinés, nouvelles anomalies, réimpressions tracées, audit | C2, C3 | En mode blocage, un encaissement en espèces au-delà du plafond est refusé jusqu'à la remise |
 | **C5. Instruments et devises** | Chèques en caisse (avec le lot F10), devises, taux, billetage par devise, monnaie au portefeuille | C2 | Une caisse acceptant l'euro tient un solde et un billetage en EUR et en XAF |
 | **C6. Pilotage** | Position de trésorerie en temps réel, états, PV manquants, notifications | C2, C3 | La position montre, pour chaque caisse, le dernier comptage, son ancienneté et l'argent en transit |
 
+La **saisie minimale** (section 21) n'est pas un lot à part : chaque lot livre ses formulaires avec leurs champs déduits, générés et listés, et un formulaire qui demande à la main une valeur que le système connaît est un défaut à corriger.
+
 Ordre conseillé : C0 (correctifs, livrable en quelques jours, à faire même si le reste attend), C1, C2, C3, puis C4 et C6, et C5 avec le lot banque F10.
 
 Chaque lot a son dossier de doc backend et sa doc frontend dans `docs/final-frontend-doc/`, conformément aux règles du dépôt.
+
+---
+
+## 21. Saisie minimale : champs déduits, générés et listes
+
+### 21.1 Règles
+
+1. **Quatre origines possibles pour un champ**, dans cet ordre de préférence :
+   - **déduit** : du contexte (utilisateur, poste, caisse, session), d'un objet lié (facture, demande, avance, transfert) ou d'un paramétrage (nature, caisse) ;
+   - **généré** : numéros, dates, libellés, montant en lettres, totaux ;
+   - **liste** : référentiel préenregistré, avec recherche, plus utilisés d'abord, favoris par caissier ;
+   - **saisi** : uniquement ce que personne d'autre ne sait (quantités comptées, montant d'une dépense libre, numéro d'une pièce externe).
+2. **Un champ déduit s'affiche**, il ne se cache pas : le caissier voit ce qui sera enregistré. Il ne le modifie que si le paramétrage le permet, et la modification est tracée (valeur proposée, valeur retenue).
+3. **Les listes sont administrables** (ajout, désactivation, ordre). L'option « Autre, préciser », qui ouvre un texte libre, est activable liste par liste. Les « Autre » fréquents sont signalés à l'administrateur pour enrichir la liste.
+4. **Pré-remplissage par scan** : le QR ou le code-barres d'une facture, d'une demande de fonds, d'un ordre de transfert ou d'un reçu remplit le formulaire correspondant.
+5. **Mémoire** : le dernier choix du caissier pour un même contexte est proposé (par exemple, la dernière banque de remise).
+6. Le serveur expose les valeurs proposées (`GET /cash-registers/form-defaults?context=`) pour que le frontend n'ait aucune règle à recoder.
+
+### 21.2 Champ par champ
+
+| Objet | Champ | Origine |
+| --- | --- | --- |
+| Caisse | Code | Généré (existant) |
+| Caisse | Organisation, caisse mère | Déduites du site |
+| Caisse | Compte de trésorerie | Généré : prochain sous-compte `571x` libre ; journal `CA-<code>` généré |
+| Caisse | Plafonds, tolérance, horaires, clôture à l'aveugle | Hérités des valeurs par défaut du type de caisse |
+| Caisse | Site, responsables, titulaire, remplaçants | Listes (sites, utilisateurs habilités) |
+| Caisse | Poste autorisé | Proposé à la première connexion depuis ce poste |
+| Session | Caisse | Déduite : la caisse dont l'utilisateur est titulaire ou intérimaire sur ce poste ; liste s'il en a plusieurs |
+| Session | Caissier, date et heure, poste, IP | Déduits (jeton, serveur) |
+| Session | Fonds d'ouverture attendu | Déduit du dernier comptage |
+| Comptage | Quantités par coupure | **Saisies** ; total, écart et montant en lettres calculés |
+| Clôture | Fonds conservé | Proposé : fonds standard de la caisse |
+| Clôture | Montant à remettre, destination | Calculé (compté moins fonds conservé) ; destination déduite (caisse mère) |
+| Clôture | Chèques et instruments à pointer | Liste des instruments de la session, tous cochés |
+| Écart | Montant | Calculé |
+| Écart | Motif | Liste (21.3) |
+| Écart | Décision d'imputation | Proposée (paramètre) |
+| Mouvement | Numéro, date, session, caissier, poste | Générés ou déduits |
+| Mouvement | Nature | Liste par famille, recherche par mots, plus utilisées d'abord |
+| Mouvement | Type technique, sens, compte, journal, TVA, section analytique, poste budgétaire, justificatif exigé | Déduits de la nature (et de la caisse pour le journal) |
+| Mouvement | Montant | Déduit de l'objet lié (facture, demande approuvée, reliquat d'avance, remboursement) ; saisi pour une dépense libre |
+| Mouvement | HT et TVA | Calculés à partir du TTC saisi et du taux de la nature |
+| Mouvement | Contrepartie | Liste (clients, membres, entreprises, fournisseurs, employés) avec recherche par nom, téléphone, code ; ou déduite de l'objet lié ; fiche fournisseur en création rapide (nom, téléphone, NIU facultatif) |
+| Mouvement | Bénéficiaire, pièce d'identité | Déduits de la demande ou de la fiche employé |
+| Mouvement | Libellé | Généré : nature + contrepartie + référence ; modifiable |
+| Mouvement | Numéro de pièce interne (`BEC-`, `BSC-`, `BDF-`) | Généré |
+| Mouvement | Numéro de pièce externe (facture fournisseur, ticket) | Saisi, ou lu sur la photo jointe |
+| Mouvement | Montant en lettres | Généré |
+| Mouvement | Signature | Capturée sur la tablette ou le pavé de signature |
+| Paiement en espèces | Montant dû | Déduit de la facture (scan) ; seul le montant remis est saisi, la monnaie se calcule (existant) |
+| Chèque | Tireur, montant | Déduits du client et du paiement ; banque : liste des banques ; numéro saisi |
+| Transfert | Destination | Déduite (caisse mère, ou caisse fille unique) ; liste sinon |
+| Transfert | Montant | Proposé : excédent au-dessus du fonds standard (remise), ou montant de réalimentation (petite caisse) |
+| Transfert | Porteur | Liste des employés |
+| Remise en banque | Compte bancaire | Compte par défaut de la caisse ; liste sinon |
+| Remise en banque | Lignes du bordereau | Chèques non remis et espèces à remettre, déduits |
+| Devise | Taux | Taux du jour, déduit |
+| Contre-passation | Montant, sens, session | Déduits du mouvement d'origine ; motif dans une liste |
+| Passation | Entrant | Liste des caissiers affectés et présents ; remplaçant proposé d'office |
+| Absence | Remplaçant | Proposé d'office (5.6) ; motif et période : liste et calendrier |
+| Absence | Caisses concernées | Déduites des affectations de la personne |
+| Transfert de responsabilité | Éléments en cours | Listés par le système |
+
+### 21.3 Listes préenregistrées initiales
+
+| Liste | Valeurs initiales |
+| --- | --- |
+| Natures d'opération | Celles de la section 7.2 du plan, par famille |
+| Motifs d'écart | Erreur de rendu de monnaie, billet non compté, encaissement non saisi, sortie non saisie, billet faux ou abîmé, erreur de saisie de montant, inexpliqué |
+| Motifs d'ajustement | Erreur de montant sur un bon, doublon, mouvement oublié, régularisation demandée par la comptabilité |
+| Motifs de contre-passation | Erreur de saisie, mauvaise nature, mauvaise caisse, opération non réalisée, doublon |
+| Motifs de suspension | Contrôle, incident, enquête, absence imprévue, panne |
+| Motifs d'annulation de session | Ouverte par erreur, mauvaise caisse |
+| Motifs d'absence | Congé annuel, maladie, mission, formation, congé exceptionnel, départ |
+| Motifs de transfert de responsabilité | Congé, mutation, départ, réorganisation |
+| Motifs de session hors horaires | Événement, inventaire, rattrapage |
+| Banques | Banques du pays (à compléter par l'administrateur) |
+| Coupures, devises | Section 6.2 |
+| Types de pièce externe | Facture, ticket de caisse, reçu, quittance, note de frais |

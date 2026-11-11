@@ -13,7 +13,7 @@ Fichiers du dossier :
 | [etats-financiers.md](etats-financiers.md) | Livres, balances, relevés de compte des tiers, bilan, compte de résultat, tableau des flux, notes annexes, liasse DSF, états d'inventaire, fiscaux, de trésorerie et de gestion ; correspondance comptes vers postes. |
 | [analytique-et-budget.md](analytique-et-budget.md) | Comptabilité analytique, analyse par poste de dépense, gestion budgétaire complète et contrôle budgétaire dans les sorties de fonds et les autres opérations. |
 | [financement-engagements-paie.md](financement-engagements-paie.md) | Emprunts et tableaux d'amortissement, comptes courants d'associés, registre des engagements hors bilan, import du journal de paie. |
-| [caisses-et-sessions.md](caisses-et-sessions.md) | Le système de caisse complet : défauts de l'existant, référentiel des caisses, cycle de vie des sessions, comptages et billetage, catalogue des opérations, transferts à deux temps, corrections, plafonds et contrôles, états, données, routes, droits, lots C0 à C6. |
+| [caisses-et-sessions.md](caisses-et-sessions.md) | Le système de caisse complet : défauts de l'existant, référentiel des caisses, cycle de vie des sessions, titulaire et remplaçants, congés et absences des caissiers, transfert de responsabilité, comptages et billetage, catalogue des opérations, transferts à deux temps, corrections, plafonds et contrôles, états, données, routes, droits, saisie minimale (champs déduits, générés, listes), lots C0 à C6. |
 | [pieces-comptables.md](pieces-comptables.md) | Les pièces émises (bon d'entrée, bon de sortie, bon de décaissement, état de besoin, fiche de justification, procès-verbaux...) : champs, champs automatiques, signatures, numérotation. |
 | [demandes-et-justification.md](demandes-et-justification.md) | Le nouveau circuit des demandes de fonds (état de besoin, demande, validation, décaissement) et la justification des dépenses une par une. |
 
@@ -54,7 +54,8 @@ Fichiers du dossier :
 6. **La caisse reste simple pour la caissière.** Elle choisit une nature d'opération en langage courant (« achat de fournitures », « avance pour déplacement »). Le logiciel en déduit le compte, le journal par défaut et l'analytique. Elle peut changer le journal, ou en créer un si elle en a le droit.
 7. **Séparation des tâches.** Celui qui demande n'approuve pas, celui qui approuve ne décaisse pas, celui qui décaisse ne valide pas l'écriture. Le logiciel l'impose et l'administrateur peut l'assouplir, avec trace.
 8. **Tout est paramétrable.** Comptes, journaux, schémas, natures, seuils, délais, formulaires, pièces, exports : rien n'est codé en dur (voir [section 20](#20-tout-est-paramétrable)).
-9. **Conformité.** SYSCOHADA révisé (Acte uniforme OHADA relatif au droit comptable, 2017) : plan de comptes, système normal ou système minimal de trésorerie, états financiers annuels. Conservation des pièces et écritures 10 ans.
+9. **Le moins de saisie possible.** Tout champ que le système peut connaître est déduit (contexte, objet lié, paramétrage), généré (numéros, dates, libellés, totaux, montant en lettres) ou choisi dans une liste préenregistrée ; on ne saisit que ce que personne d'autre ne sait. Règles et inventaire champ par champ pour la caisse dans [caisses-et-sessions.md](caisses-et-sessions.md#21-saisie-minimale--champs-déduits-générés-et-listes) ; la même règle vaut pour les demandes, les justifications et les écritures.
+10. **Conformité.** SYSCOHADA révisé (Acte uniforme OHADA relatif au droit comptable, 2017) : plan de comptes, système normal ou système minimal de trésorerie, états financiers annuels. Conservation des pièces et écritures 10 ans.
 
 ---
 
