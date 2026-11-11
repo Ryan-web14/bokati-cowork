@@ -25,7 +25,8 @@ public class CustomerRequest {
 
     @Email
     private String email;
-    @Email
+    /** Une ou plusieurs adresses separees par des virgules. */
+    @com.sni.bokaticowork.core.utils.validation.EmailList
     private String billingEmail;
 
 
