@@ -113,7 +113,15 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
         if (billing != null) {
             updateField("billingEntityType", settings.getEntityType(), billing.billingEntityType(), actorId, reason, settings::setEntityType);
             updateField("billingCompanyName", settings.getBillingCompanyName(), billing.billingCompanyName(), actorId, reason, settings::setBillingCompanyName);
-            updateField("billingEmail", settings.getBillingEmail(), billing.billingEmail(), actorId, reason, settings::setBillingEmail);
+            // Une ou plusieurs adresses separees par des virgules.
+            if (org.springframework.util.StringUtils.hasText(billing.billingEmail())
+                    && !com.sni.bokaticowork.core.utils.validation.EmailAddresses.isValidList(billing.billingEmail())) {
+                throw new com.sni.bokaticowork.core.exception.customs.BadRequestException(
+                        "Le courriel de facturation n'est pas valide : une ou plusieurs adresses séparées par des virgules");
+            }
+            updateField("billingEmail", settings.getBillingEmail(),
+                    com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(billing.billingEmail()),
+                    actorId, reason, settings::setBillingEmail);
             updateField("billingAddress", settings.getBillingAddress(), billing.billlingAddress(), actorId, reason, settings::setBillingAddress);
         }
 

@@ -541,7 +541,7 @@ public class MemberServiceImpl  implements MemberService {
         request.setLastname(normalizeWhitespace(Normalization.normalizeLastname(request.getLastname())));
         request.setCompanyName(normalizeWhitespace(request.getCompanyName()));
         request.setEmail(normalizeEmail(request.getEmail()));
-        request.setBillingEmail(normalizeOptionalEmail(request.getBillingEmail()));
+        request.setBillingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(request.getBillingEmail()));
         request.setPhone(normalizePhone(request.getPhone(), request.getPhoneCountry()));
 
         if (StringUtils.hasText(request.getWhatsappPhone())) {
@@ -742,8 +742,9 @@ public class MemberServiceImpl  implements MemberService {
             errors.add("Company name is required when customer type is COMPANY");
         }
 
-        if (StringUtils.hasText(request.getBillingEmail()) && !ValidationUtils.validateEmail(request.getBillingEmail())) {
-            errors.add("Billing email is invalid");
+        if (StringUtils.hasText(request.getBillingEmail())
+                && !com.sni.bokaticowork.core.utils.validation.EmailAddresses.isValidList(request.getBillingEmail())) {
+            errors.add("Billing email is invalid (one or more addresses separated by commas)");
         }
 
         if (!Boolean.TRUE.equals(createByadmin) && !StringUtils.hasText(request.getPassword())) {

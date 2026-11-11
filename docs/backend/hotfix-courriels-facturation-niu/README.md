@@ -33,9 +33,9 @@ Prod `V279_1__courriels_facturation_multiples.sql`, dev `V283_1` sur `new-main` 
 
 Le numéro décimal `279_1` (version 279.1) s'intercale entre la dernière migration de prod (`V279`) et celles de la branche de fonctionnalité en cours (`V280` et suivantes), qui restent dans l'ordre à leur déploiement.
 
-## Hors champ
+## Membres
 
-Le courriel de facturation d'un membre (fiche membre, réglages) reste à adresse unique.
+Étendu aux membres : `CreateMemberRequest.billingEmail` (`@EmailList`, 500), validation et normalisation dans `MemberServiceImpl` ; réglages du membre (`BillingPreferences.billingEmail`, création et mise à jour dans `MemberSettingsMapper` et `MemberSettingsServiceImpl`). Le courriel de facturation d'un membre est porté par sa fiche client (`customer.billing_email`, déjà élargie) et par ses réglages (`user_settings.billing_email`, élargie par `V279_2` en prod, `V283_2` en dev sur `new-main`).
 
 ## Tests
 
