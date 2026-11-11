@@ -10,6 +10,7 @@ Fichiers du dossier :
 | --- | --- |
 | [README.md](README.md) | Ce plan : existant, cible, modules, données, droits, découpage en lots, décisions prises, paramétrage. |
 | [catalogue-ecritures.md](catalogue-ecritures.md) | Pour chaque événement de la plateforme, l'écriture produite (journal, comptes au débit et au crédit, analytique). |
+| [etats-financiers.md](etats-financiers.md) | Livres, balances, relevés de compte des tiers, bilan, compte de résultat, tableau des flux, notes annexes, liasse DSF, états d'inventaire, fiscaux, de trésorerie et de gestion ; correspondance comptes vers postes. |
 | [pieces-comptables.md](pieces-comptables.md) | Les pièces émises (bon d'entrée, bon de sortie, bon de décaissement, état de besoin, fiche de justification, procès-verbaux...) : champs, champs automatiques, signatures, numérotation. |
 | [demandes-et-justification.md](demandes-et-justification.md) | Le nouveau circuit des demandes de fonds (état de besoin, demande, validation, décaissement) et la justification des dépenses une par une. |
 
@@ -420,6 +421,8 @@ Toute transaction de la plateforme produit une écriture. Le catalogue complet e
 
 ## 13. États, contrôles et exports
 
+Résumé ci-dessous ; le détail de chaque état (colonnes, règles de calcul, contrôles de cohérence, correspondance des comptes vers les postes, liasse DSF, relevés de compte des tiers) est dans [etats-financiers.md](etats-financiers.md).
+
 | État | Contenu |
 | --- | --- |
 | Brouillard | Écritures non validées, par journal |
@@ -427,7 +430,10 @@ Toute transaction de la plateforme produit une écriture. Le catalogue complet e
 | Journal centralisateur | Totaux par journal et par mois |
 | Grand livre | Par compte, avec soldes progressifs ; grand livre auxiliaire clients, fournisseurs, personnel |
 | Balance générale | 6 colonnes (à-nouveaux, mouvements, soldes) ; balance auxiliaire ; balance âgée clients |
-| États financiers SYSCOHADA | Bilan, compte de résultat, tableau des flux de trésorerie, notes annexes ; ou état du système minimal de trésorerie selon le régime |
+| États de compte des tiers | Relevé client, fournisseur, personnel tiré du grand livre auxiliaire ; envoi par courriel ; confirmation de solde |
+| États financiers SYSCOHADA | Bilan, compte de résultat avec soldes de gestion, tableau des flux de trésorerie, notes annexes, comparatif N-1, éditions définitives figées ; ou système minimal de trésorerie selon le régime |
+| Liasse fiscale | DSF pré-remplie, passage au résultat fiscal |
+| Inventaire | Immobilisations et amortissements, provisions, créances douteuses, produits constatés d'avance, rapprochements, liste de clôture |
 | Analytique | Résultat par section, par site, par activité ; budget comparé au réalisé |
 | Trésorerie | Position par compte, prévisionnel (échéances clients et fournisseurs, abonnements à venir), rapprochements |
 | Caisse | Brouillard de caisse journalier, état des avances non justifiées, état des écarts |
@@ -576,9 +582,10 @@ Chaque lot est livrable seul, avec migrations dev et prod, tests, doc backend et
 | **F11. Fiscalité** | Comptes de taxe, exigibilité, déclaration de TVA, liquidation | F4 | L'état de TVA d'un mois égale la somme des TVA des factures scellées du mois |
 | **F12. Abonnements et clôture** | Produits constatés d'avance, créances douteuses, contrôles de clôture, à-nouveaux, états financiers SYSCOHADA | F4, F11 | La clôture d'un exercice de test produit bilan, compte de résultat et à-nouveaux équilibrés |
 | **F13. Achats, budget, immobilisations** | Fournisseurs, factures fournisseurs, commandes depuis l'état de besoin, budget et engagements, immobilisations et amortissements | F5, F9 | Une demande au-delà du budget restant est signalée ; une immobilisation génère son plan d'amortissement |
+| **F15. Liasse et états de gestion** | DSF pré-remplie, passage au résultat fiscal, soldes de gestion mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, confirmation de solde | F12 | La DSF d'un exercice de test se remplit sans saisie hors notes rédactionnelles et tableau fiscal |
 | **F14. Exports et bascule** | Exports pour l'expert-comptable, archive annuelle, outils de reprise et d'à-nouveaux | F1 à F4 | La balance exportée se réimporte sans écart dans Sage 100, Sage X3 et Odoo |
 
-Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F10, F11, F12, F13, F14.
+Ordre conseillé : F1, F2, F3, F4 (le cœur : chaque transaction écrit), puis F5, F6, F7 (demandes et pièces, très visibles pour les équipes), puis F8, F9, F10, F11, F12, F13, F14, F15. Les états de chaque lot sont listés dans [etats-financiers.md](etats-financiers.md#12-place-dans-les-lots).
 
 ---
 
@@ -601,7 +608,7 @@ Réponses de la direction (11/11/2026). **Chaque décision est une valeur par d�
 | 9 | Exports | **Sage 100, Sage X3, Odoo et CSV** | Format d'export choisi à l'export ; correspondance des comptes et journaux par format |
 | 10 | Création de journal | **Caissières principales**, journal **utilisable aussitôt** ; l'administrateur finance est prévenu et peut le désactiver | Droit `ACCOUNTING_JOURNAL:CREATE`, mode `IMMEDIATE` ou `AFTER_APPROVAL` |
 
-Reste à confirmer avec l'expert-comptable : régime d'exigibilité et taux de TVA (4), ajustements du plan de comptes (2), balance d'ouverture au 1er janvier 2026 (6).
+Reste à confirmer avec l'expert-comptable : régime d'exigibilité et taux de TVA (4), ajustements du plan de comptes (2), balance d'ouverture au 1er janvier 2026 (6), et les points des états financiers ([etats-financiers.md, section 13](etats-financiers.md#13-points-à-confirmer)) : modèle et dépôt de la DSF, balance 2025 et immobilisations existantes, commissaire aux comptes, notes rédactionnelles.
 
 ## 20. Tout est paramétrable
 
