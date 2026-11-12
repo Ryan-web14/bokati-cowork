@@ -103,6 +103,13 @@ public class GlobalExceptionHandler {
                 "Invalid credentials provided.", request, ex, null));
     }
 
+    @ExceptionHandler(com.sni.bokaticowork.core.exception.customs.BackOfficeAccessDeniedException.class)
+    public ResponseEntity<Object> handleBackOfficeAccessDenied(com.sni.bokaticowork.core.exception.customs.BackOfficeAccessDeniedException ex,
+                                                               HttpServletRequest request) {
+        return respond(errorResponse.build(ErrorCode.BACK_OFFICE_ACCESS_DENIED, HttpStatus.FORBIDDEN,
+                "Ce compte n'a pas accès à l'espace d'administration.", request, ex, null));
+    }
+
     @ExceptionHandler(AccountLockedException.class)
     public ResponseEntity<Object> handleAccountLocked(AccountLockedException ex, HttpServletRequest request) {
         return respond(errorResponse.build(ErrorCode.ACCOUNT_LOCKED, HttpStatus.UNAUTHORIZED,

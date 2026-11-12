@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.billing.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -128,6 +130,19 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     /** Devise retenue quand la simulation n'en precise aucune · celle du catalogue. */
     @org.springframework.beans.factory.annotation.Value("${bokati.billing.default-currency:XAF}")
     private String defaultCurrency;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String DEFAULT_CURRENCY_KEY = "bokati.billing.default-currency";
+
+    private String defaultCurrency() {
+        return platformSettings == null ? defaultCurrency : platformSettings.text(DEFAULT_CURRENCY_KEY, defaultCurrency);
+    }
     private final BillingCustomerSnapshotResolver customerSnapshotResolver;
     private final com.sni.bokaticowork.features.company.membership.service.MemberBillingCompanyResolver billingCompanyResolver;
     private final com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile organizationProfile;
@@ -175,7 +190,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
         return new SimulateBillingDocumentResponse(
                 request.resolvedDocumentType(),
-                request.resolvedCurrency(defaultCurrency),
+                request.resolvedCurrency(defaultCurrency()),
                 request.title(),
                 lines,
                 calculation.subtotalAmount(),

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.core.exception;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +17,21 @@ import java.util.UUID;
 public class ErrorResponse {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorResponse.class);
+    private static final String DEV_MODE_KEY = "app.dev-mode";
 
     @Value("${app.dev-mode:false}")
     private boolean devMode;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private boolean devMode() {
+        return platformSettings == null ? devMode : platformSettings.bool(DEV_MODE_KEY, devMode);
+    }
 
     public ApiError build(String errorCode, HttpStatus status, String message,
                           HttpServletRequest request, Throwable ex, List<String> errors) {
@@ -39,7 +53,7 @@ public class ErrorResponse {
                 .traceId(traceId)
                 .errors(errors);
 
-        if (devMode) {
+        if (devMode()) {
             builder.path(path)
                     .debugMessage(ex != null ? buildDebugMessage(ex) : null)
                     .exceptionName(ex != null ? ex.getClass().getName() : null);

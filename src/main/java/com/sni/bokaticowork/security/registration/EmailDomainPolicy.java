@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.registration;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,20 +50,47 @@ public class EmailDomainPolicy {
             ".example", ".test", ".invalid", ".localhost", ".local");
 
     private final MailDomainResolver resolver;
-    private final Set<String> blockedDomains;
+    private final Set<String> disposableDomains;
+    private final String extraBlockedDomains;
     private final boolean mxCheckEnabled;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String BLOCKED_DOMAINS_KEY = "app.security.registration.blocked-domains";
+    private static final String MX_CHECK_KEY = "app.security.registration.mx-check-enabled";
+
+    private String extraBlockedDomains() {
+        return platformSettings == null ? extraBlockedDomains
+                : platformSettings.text(BLOCKED_DOMAINS_KEY, extraBlockedDomains);
+    }
+
+    private boolean mxCheckEnabled() {
+        return platformSettings == null ? mxCheckEnabled : platformSettings.bool(MX_CHECK_KEY, mxCheckEnabled);
+    }
+
+    /** Domaines ajoutes par la configuration, relus a chaque verification. */
+    private static Set<String> parseDomains(String value) {
+        if (!StringUtils.hasText(value)) {
+            return Set.of();
+        }
+        return Arrays.stream(value.split(","))
+                .map(EmailDomainPolicy::normalize)
+                .filter(StringUtils::hasText)
+                .collect(Collectors.toUnmodifiableSet());
+    }
 
     public EmailDomainPolicy(MailDomainResolver resolver,
                              @Value("${app.security.registration.blocked-domains:}") String extraBlockedDomains,
                              @Value("${app.security.registration.mx-check-enabled:true}") boolean mxCheckEnabled) {
         this.resolver = resolver;
         this.mxCheckEnabled = mxCheckEnabled;
-        Set<String> domains = new HashSet<>(loadDisposableDomains());
-        Arrays.stream(extraBlockedDomains.split(","))
-                .map(EmailDomainPolicy::normalize)
-                .filter(StringUtils::hasText)
-                .forEach(domains::add);
-        this.blockedDomains = Set.copyOf(domains);
+        this.extraBlockedDomains = extraBlockedDomains == null ? "" : extraBlockedDomains;
+        this.disposableDomains = Set.copyOf(new HashSet<>(loadDisposableDomains()));
     }
 
     /** Refuse l'adresse si elle ne peut pas servir · le message ne dit pas laquelle des regles a joue. */
@@ -85,7 +114,7 @@ public class EmailDomainPolicy {
         if (isBlocked(domain)) {
             return "boite jetable";
         }
-        if (mxCheckEnabled && resolver.resolve(domain) == MailDomainResolver.Verdict.NO_MAIL) {
+        if (mxCheckEnabled() && resolver.resolve(domain) == MailDomainResolver.Verdict.NO_MAIL) {
             return "aucun serveur de courrier";
         }
         return null;
@@ -99,9 +128,10 @@ public class EmailDomainPolicy {
 
     /** Le domaine ou l'un de ses parents est-il bloque · {@code x.mailinator.com} l'est. */
     private boolean isBlocked(String domain) {
+        Set<String> extraDomains = parseDomains(extraBlockedDomains());
         String candidate = domain;
         while (candidate.contains(".")) {
-            if (blockedDomains.contains(candidate)) {
+            if (disposableDomains.contains(candidate) || extraDomains.contains(candidate)) {
                 return true;
             }
             candidate = candidate.substring(candidate.indexOf('.') + 1);

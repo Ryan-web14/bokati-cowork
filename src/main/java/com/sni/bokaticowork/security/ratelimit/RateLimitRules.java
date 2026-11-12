@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.ratelimit;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -92,6 +94,27 @@ public class RateLimitRules {
     @Value("${app.security.rate-limit.default.window-seconds:60}")
     private long defaultWindow;
 
+    private static final String KEY_PREFIX = "app.security.rate-limit.";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Plafond du seau, relu a chaque requete · la valeur du champ sert de repli. */
+    private int max(String bucket, int fallback) {
+        return platformSettings == null ? fallback
+                : platformSettings.integer(KEY_PREFIX + bucket + ".max-requests", fallback);
+    }
+
+    /** Fenetre du seau en secondes, relue a chaque requete. */
+    private long window(String bucket, long fallback) {
+        return platformSettings == null ? fallback
+                : platformSettings.number(KEY_PREFIX + bucket + ".window-seconds", fallback);
+    }
+
     /**
      * Le plafond applicable · jamais {@code null}.
      *
@@ -104,12 +127,12 @@ public class RateLimitRules {
         String verb = method == null ? "GET" : method.toUpperCase(Locale.ROOT);
 
         if (path.equals(ApiPath.V1 + "/auth/login")) {
-            return new Rule("login:" + clientIp, loginMax, loginWindow);
+            return new Rule("login:" + clientIp, max("login", loginMax), window("login", loginWindow));
         }
         // Chaque inscription cree un utilisateur, un membre et un client · elle tombait dans le
         // seau admin, a six cents par minute, et un robot pouvait remplir la base.
         if (path.equals(ApiPath.V1 + "/auth/register")) {
-            return new Rule("register:" + clientIp, registerMax, registerWindow);
+            return new Rule("register:" + clientIp, max("register", registerMax), window("register", registerWindow));
         }
         if (path.startsWith(ApiPath.V1 + "/auth/ott/")
                 || path.startsWith(ApiPath.V1 + "/auth/password-reset/")
@@ -118,33 +141,33 @@ public class RateLimitRules {
                 // et le renvoi servait a inonder la boite d'un tiers.
                 || path.startsWith(ApiPath.V1 + "/auth/unlock-account")
                 || path.equals(ApiPath.V1 + "/auth/email/verify/resend")) {
-            return new Rule("otp:" + clientIp + ":" + path, otpMax, otpWindow);
+            return new Rule("otp:" + clientIp + ":" + path, max("otp", otpMax), window("otp", otpWindow));
         }
         if (path.startsWith(ApiPath.V1 + "/payments/mobile-money/")
                 && (path.contains("callback") || path.endsWith("/return"))) {
-            return new Rule("callback:" + clientIp + ":" + path, callbackMax, callbackWindow);
+            return new Rule("callback:" + clientIp + ":" + path, max("callback", callbackMax), window("callback", callbackWindow));
         }
         // Un depot de fichier non authentifie · le plus couteux de toutes les routes publiques.
         if (path.startsWith("/verify/") && path.endsWith("/compare")) {
-            return new Rule("upload:" + clientIp, uploadMax, uploadWindow);
+            return new Rule("upload:" + clientIp, max("upload", uploadMax), window("upload", uploadWindow));
         }
         if (path.startsWith("/verify/")) {
-            return new Rule("verify:" + clientIp, verifyMax, verifyWindow);
+            return new Rule("verify:" + clientIp, max("verify", verifyMax), window("verify", verifyWindow));
         }
         // La cle d'un poste de pointage est un secret partage · on la traite comme un code.
         if (path.startsWith(CHECKIN_PREFIX + "/scanner")) {
-            return new Rule("otp:" + clientIp + ":" + path, otpMax, otpWindow);
+            return new Rule("otp:" + clientIp + ":" + path, max("otp", otpMax), window("otp", otpWindow));
         }
         if (path.startsWith(CHECKIN_PREFIX)) {
-            return new Rule("checkin:" + clientIp, checkinMax, checkinWindow);
+            return new Rule("checkin:" + clientIp, max("checkin", checkinMax), window("checkin", checkinWindow));
         }
         if (isPublicWrite(verb, path)) {
-            return new Rule("public-write:" + clientIp + ":" + path, publicWriteMax, publicWriteWindow);
+            return new Rule("public-write:" + clientIp + ":" + path, max("public-write", publicWriteMax), window("public-write", publicWriteWindow));
         }
         if (path.startsWith(ApiPath.V1)) {
-            return new Rule("admin:" + clientIp, adminMax, adminWindow);
+            return new Rule("admin:" + clientIp, max("admin", adminMax), window("admin", adminWindow));
         }
-        return new Rule("default:" + clientIp, defaultMax, defaultWindow);
+        return new Rule("default:" + clientIp, max("default", defaultMax), window("default", defaultWindow));
     }
 
     /** Une ecriture qu'un inconnu peut declencher · prospect, inscription, enquete. */

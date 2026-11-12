@@ -3,8 +3,12 @@ package com.sni.bokaticowork.features.subscription.subscription.pass.worker;
 import com.sni.bokaticowork.features.subscription.subscription.pass.service.PassAlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 /**
  * Detecte les pass a signaler, une fois par jour.
@@ -19,11 +23,31 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PassAlertWorker {
+public class PassAlertWorker implements SchedulingConfigurer {
+
+    private static final String CRON_KEY = "bokati.pass.alert.cron";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<PassAlertWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<PassAlertWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().announcePassAlerts(), triggers.cron(CRON_KEY, "0 0 8 * * *"));
+    }
 
     private final PassAlertService alertService;
 
-    @Scheduled(cron = "${bokati.pass.alert.cron:0 0 8 * * *}")
     public void announcePassAlerts() {
         int expiring = run("expiration", alertService::announceExpiring);
         int lowBalance = run("solde bas", alertService::announceLowBalance);

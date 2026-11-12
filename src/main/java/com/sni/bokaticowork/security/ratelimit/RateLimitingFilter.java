@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.ratelimit;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,12 +36,25 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Value("${app.security.rate-limit.enabled:true}")
     private boolean enabled;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String ENABLED_KEY = "app.security.rate-limit.enabled";
+
+    private boolean enabled() {
+        return platformSettings == null ? enabled : platformSettings.bool(ENABLED_KEY, enabled);
+    }
+
     @Override
     protected void doFilterInternal(
             @NotNull HttpServletRequest request,
             @NotNull HttpServletResponse response,
             @NotNull FilterChain filterChain) throws ServletException, IOException {
-        if (!enabled) {
+        if (!enabled()) {
             filterChain.doFilter(request, response);
             return;
         }

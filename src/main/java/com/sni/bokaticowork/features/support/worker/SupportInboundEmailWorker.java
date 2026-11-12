@@ -18,7 +18,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -27,11 +26,46 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SupportInboundEmailWorker {
+public class SupportInboundEmailWorker implements SchedulingConfigurer {
+
+    private static final String INBOUND_POLL_DELAY_MS_KEY = "bokati.support.inbound-poll-delay-ms";
+    private static final String SENDER_EMAIL_KEY = "bokati.support.sender-email";
+    private static final String MANAGER_EMAIL_KEY = "bokati.support.manager-email";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<SupportInboundEmailWorker> self;
+    private PlatformSettings platformSettings;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<SupportInboundEmailWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().pollInbox(), triggers.fixedDelay(INBOUND_POLL_DELAY_MS_KEY, 60000L));
+    }
 
     private static final Pattern TICKET_NUMBER = Pattern.compile("(TCK-\\d+)");
     private static final int MAX_MESSAGES_PER_RUN = 25;
@@ -56,11 +90,19 @@ public class SupportInboundEmailWorker {
     @Value("${bokati.support.manager-email:}")
     private String managerEmail;
 
-    @Scheduled(fixedDelayString = "${bokati.support.inbound-poll-delay-ms:60000}")
+    /** Boite du support relevee, relue a chaque usage. */
+    private String supportInbox() {
+        return platformSettings == null ? supportInbox : platformSettings.text(SENDER_EMAIL_KEY, supportInbox);
+    }
+
+    private String managerEmail() {
+        return platformSettings == null ? managerEmail : platformSettings.text(MANAGER_EMAIL_KEY, managerEmail);
+    }
+
     public void pollInbox() {
         try {
             var response = emailSender.graphClient()
-                    .users().byUserId(supportInbox)
+                    .users().byUserId(supportInbox())
                     .messages()
                     .get(config -> {
                         config.queryParameters.filter = "isRead eq false";
@@ -71,11 +113,11 @@ public class SupportInboundEmailWorker {
             if (response == null || response.getValue() == null || response.getValue().isEmpty()) return;
 
             List<Message> messages = response.getValue();
-            log.info("Support inbound: {} unread message(s) in {}", messages.size(), supportInbox);
+            log.info("Support inbound: {} unread message(s) in {}", messages.size(), supportInbox());
             for (Message msg : messages) processMessage(msg);
 
         } catch (Exception ex) {
-            log.error("Support inbound poll failed for {}", supportInbox, ex);
+            log.error("Support inbound poll failed for {}", supportInbox(), ex);
         }
     }
 
@@ -156,7 +198,8 @@ public class SupportInboundEmailWorker {
             return false;
         }
         String sender = senderEmail.trim();
-        return sender.equalsIgnoreCase(supportInbox) || (StringUtils.hasText(managerEmail) && sender.equalsIgnoreCase(managerEmail.trim()));
+        String manager = managerEmail();
+        return sender.equalsIgnoreCase(supportInbox()) || (StringUtils.hasText(manager) && sender.equalsIgnoreCase(manager.trim()));
     }
 
     // ── Attachments (#5) ─────────────────────────────────────────────
@@ -164,7 +207,7 @@ public class SupportInboundEmailWorker {
     private void processAttachments(String messageId, SupportTicket ticket, TicketMessage ticketMessage) {
         try {
             var attResponse = emailSender.graphClient()
-                    .users().byUserId(supportInbox)
+                    .users().byUserId(supportInbox())
                     .messages().byMessageId(messageId)
                     .attachments()
                     .get();
@@ -217,7 +260,7 @@ public class SupportInboundEmailWorker {
             Message update = new Message();
             update.setIsRead(true);
             emailSender.graphClient()
-                    .users().byUserId(supportInbox)
+                    .users().byUserId(supportInbox())
                     .messages().byMessageId(messageId)
                     .patch(update);
         } catch (Exception ex) {

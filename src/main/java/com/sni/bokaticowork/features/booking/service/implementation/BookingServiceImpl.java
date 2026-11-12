@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.booking.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
@@ -109,6 +111,31 @@ public class BookingServiceImpl implements BookingService {
 
     @Value("${bokati.task.booking-cleanup-default-assignee:}")
     private String bookingCleanupDefaultAssignee;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String PREP_HOURS_KEY = "bokati.task.booking-prep-hours";
+    private static final String DEFAULT_ASSIGNEE_KEY = "bokati.task.booking-default-assignee";
+    private static final String CLEANUP_ASSIGNEE_KEY = "bokati.task.booking-cleanup-default-assignee";
+
+    private int bookingPrepHours() {
+        return platformSettings == null ? bookingPrepHours : platformSettings.integer(PREP_HOURS_KEY, bookingPrepHours);
+    }
+
+    private String bookingDefaultAssignee() {
+        return platformSettings == null ? bookingDefaultAssignee
+                : platformSettings.text(DEFAULT_ASSIGNEE_KEY, bookingDefaultAssignee);
+    }
+
+    private String bookingCleanupDefaultAssignee() {
+        return platformSettings == null ? bookingCleanupDefaultAssignee
+                : platformSettings.text(CLEANUP_ASSIGNEE_KEY, bookingCleanupDefaultAssignee);
+    }
 
     /**
      * Un rejeu ne rend la reservation qu'a celui qui l'a faite.
@@ -832,9 +859,9 @@ public class BookingServiceImpl implements BookingService {
                             + ". Ressource: " + booking.getResource().getName()
                             + ". Debut: " + booking.getStartedAt()
                             + ". Contact: " + nullSafe(booking.getContactName()),
-                    configuredAssignee(bookingDefaultAssignee),
+                    configuredAssignee(bookingDefaultAssignee()),
                     TaskPriority.HIGH,
-                    booking.getStartedAt().minusHours(Math.max(0, bookingPrepHours)).atZone(ZoneId.systemDefault()).toInstant(),
+                    booking.getStartedAt().minusHours(Math.max(0, bookingPrepHours())).atZone(ZoneId.systemDefault()).toInstant(),
                     "BOOKING",
                     booking.getBookingNumber(),
                     TaskRecurrence.NONE,
@@ -855,7 +882,7 @@ public class BookingServiceImpl implements BookingService {
                     "Tache generee apres la reservation " + booking.getBookingNumber()
                             + ". Ressource: " + booking.getResource().getName()
                             + ". Fin: " + booking.getEndedAt(),
-                    configuredAssignee(bookingCleanupDefaultAssignee),
+                    configuredAssignee(bookingCleanupDefaultAssignee()),
                     TaskPriority.MEDIUM,
                     booking.getEndedAt().atZone(ZoneId.systemDefault()).toInstant(),
                     "BOOKING",

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.billing.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -45,6 +47,19 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
 
     @Value("${app.api-base-url:http://localhost:8080}")
     private String baseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
+
+    private String baseUrl() {
+        return platformSettings == null ? baseUrl : platformSettings.text(API_BASE_URL_KEY, baseUrl);
+    }
 
     @Override
     public BillingDocumentSignatureResponse requestSignature(String quoteNumber, RequestSignatureRequest request) {
@@ -123,7 +138,7 @@ public class QuoteSignatureServiceImpl implements QuoteSignatureService {
     }
 
     private void sendSignatureEmail(String to, String signerName, String quoteNumber, String token, String customMessage) {
-        String signatureUrl = baseUrl + "/public/quotes/sign/" + token;
+        String signatureUrl = baseUrl() + "/public/quotes/sign/" + token;
         String body = buildSignatureEmailHtml(signerName, quoteNumber, signatureUrl, customMessage);
         try {
             emailSender.sendHtmlEmail(to, "Signature électronique · Devis " + quoteNumber, body);

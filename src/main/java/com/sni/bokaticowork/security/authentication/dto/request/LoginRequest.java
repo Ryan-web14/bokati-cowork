@@ -19,4 +19,14 @@ public class LoginRequest {
     @NotBlank
     private String password;
 
+    /**
+     * Espace demande (facultatif) : {@code BACK_OFFICE} refuse un compte sans role d'equipe, avant
+     * l'ouverture de la session. Sans valeur (portail client), rien ne change.
+     */
+    private String space;
+
+    public LoginRequest(String email, String password) {
+        this(email, password, null);
+    }
+
 }

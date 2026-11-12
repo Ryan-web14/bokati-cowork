@@ -12,7 +12,6 @@ import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +19,12 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 
 /**
  * Ce que la conformite fait sans qu'on la lance.
@@ -32,7 +37,41 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ComplianceWorker {
+public class ComplianceWorker implements SchedulingConfigurer {
+
+    private static final String SCREENING_CRON_KEY = "bokati.compliance.screening.cron";
+    private static final String IDENTITY_CRON_KEY = "bokati.compliance.identity.cron";
+    private static final String OVERDUE_CRON_KEY = "bokati.compliance.overdue.cron";
+    private static final String RECHECK_DAYS_KEY = "bokati.compliance.screening.recheck-days";
+    private static final String REVIEW_DAYS_KEY = "bokati.compliance.identity.review-days";
+    private static final String EXPOSURE_THRESHOLD_KEY = "bokati.compliance.identity.exposure-threshold";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<ComplianceWorker> self;
+    private PlatformSettings platformSettings;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<ComplianceWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().periodicScreening(), triggers.cron(SCREENING_CRON_KEY, "0 40 3 * * *"));
+        registrar.addTriggerTask(() -> self.getObject().identityReview(), triggers.cron(IDENTITY_CRON_KEY, "0 50 3 * * *"));
+        registrar.addTriggerTask(() -> self.getObject().overdueCases(), triggers.cron(OVERDUE_CRON_KEY, "0 0 8 * * *"));
+    }
 
     private final WalletAccountRepository walletRepository;
     private final MemberRepository memberRepository;
@@ -51,11 +90,22 @@ public class ComplianceWorker {
     @Value("${bokati.compliance.identity.exposure-threshold:1000000}")
     private BigDecimal exposureThreshold;
 
+    private long screeningRecheckDays() {
+        return platformSettings == null ? screeningRecheckDays : platformSettings.number(RECHECK_DAYS_KEY, screeningRecheckDays);
+    }
+
+    private long identityReviewDays() {
+        return platformSettings == null ? identityReviewDays : platformSettings.number(REVIEW_DAYS_KEY, identityReviewDays);
+    }
+
+    private BigDecimal exposureThreshold() {
+        return platformSettings == null ? exposureThreshold : platformSettings.decimal(EXPOSURE_THRESHOLD_KEY, exposureThreshold);
+    }
+
     /** Recontrole des listes · les titulaires de portefeuille dont le dernier controle est ancien. */
-    @Scheduled(cron = "${bokati.compliance.screening.cron:0 40 3 * * *}")
     @Transactional(readOnly = true)
     public void periodicScreening() {
-        Instant threshold = Instant.now().minus(Duration.ofDays(Math.max(1, screeningRecheckDays)));
+        Instant threshold = Instant.now().minus(Duration.ofDays(Math.max(1, screeningRecheckDays())));
         int rechecked = 0;
         for (Long walletId : walletRepository.findAllOpenIds()) {
             WalletAccount wallet = walletRepository.findById(walletId).orElse(null);
@@ -89,10 +139,11 @@ public class ComplianceWorker {
      * depassee leve un signalement et ouvre un dossier de priorite basse. La revue conclura par
      * une decision motivee, et l'echeance repartira pour un tour.</p>
      */
-    @Scheduled(cron = "${bokati.compliance.identity.cron:0 50 3 * * *}")
     @Transactional
     public void identityReview() {
         Instant now = Instant.now();
+        long reviewDays = identityReviewDays();
+        BigDecimal exposureThreshold = exposureThreshold();
         int scheduled = 0;
         int due = 0;
         for (Long walletId : walletRepository.findAllOpenIds()) {
@@ -102,7 +153,7 @@ public class ComplianceWorker {
             }
             if (wallet.getIdentityReviewDueAt() == null) {
                 Instant from = wallet.getIdentityReviewedAt() == null ? now : wallet.getIdentityReviewedAt();
-                wallet.setIdentityReviewDueAt(from.plus(Duration.ofDays(Math.max(30, identityReviewDays))));
+                wallet.setIdentityReviewDueAt(from.plus(Duration.ofDays(Math.max(30, reviewDays))));
                 walletRepository.save(wallet);
                 scheduled++;
                 continue;
@@ -114,7 +165,7 @@ public class ComplianceWorker {
                         .ifPresent(flag -> caseService.openOrAttach(wallet, flag, ComplianceCase.Priority.LOW,
                                 "Reverification periodique d'identite", "SYSTEM"));
                 // L'echeance repart · on ne redemande pas chaque nuit ce qu'on a deja demande.
-                wallet.setIdentityReviewDueAt(now.plus(Duration.ofDays(Math.max(30, identityReviewDays))));
+                wallet.setIdentityReviewDueAt(now.plus(Duration.ofDays(Math.max(30, reviewDays))));
                 walletRepository.save(wallet);
                 due++;
             }
@@ -125,7 +176,6 @@ public class ComplianceWorker {
     }
 
     /** Les dossiers hors delai remontent · dans le journal ici, au tableau de bord toujours. */
-    @Scheduled(cron = "${bokati.compliance.overdue.cron:0 0 8 * * *}")
     public void overdueCases() {
         List<ComplianceCase> overdue = caseService.overdue();
         if (overdue.isEmpty()) {

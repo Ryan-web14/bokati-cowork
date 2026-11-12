@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.transfer.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -43,6 +45,19 @@ public class WalletPaymentRequestService {
     @Value("${bokati.wallet.payment-request.validity-days:7}")
     private int validityDays;
 
+    private static final String PAYMENT_REQUEST_VALIDITY_DAYS_KEY = "bokati.wallet.payment-request.validity-days";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int validityDays() {
+        return platformSettings == null ? validityDays : platformSettings.integer(PAYMENT_REQUEST_VALIDITY_DAYS_KEY, validityDays);
+    }
+
     @Transactional
     public WalletPaymentRequest create(WalletAccount requester, String payerReference, BigDecimal amount, String reason) {
         if (amount == null || amount.signum() <= 0) {
@@ -65,7 +80,7 @@ public class WalletPaymentRequestService {
                 .currency(requester.getCurrency())
                 .reason(StringUtils.hasText(reason) ? reason.trim() : null)
                 .status(WalletPaymentRequestStatus.PENDING)
-                .expiresAt(Instant.now().plus(Duration.ofDays(validityDays)))
+                .expiresAt(Instant.now().plus(Duration.ofDays(validityDays())))
                 .build());
         notifier.paymentRequestReceived(payer, requester, request.getAmount(), request.getRequestNumber(), request.getReason());
         return request;

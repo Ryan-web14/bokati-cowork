@@ -3,9 +3,15 @@ package com.sni.bokaticowork.features.booking.worker;
 import com.sni.bokaticowork.features.booking.service.interfaces.BookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import org.springframework.scheduling.Trigger;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -26,13 +32,21 @@ import java.util.function.Supplier;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class BookingNoShowWorker {
+public class BookingNoShowWorker implements SchedulingConfigurer {
+
+    private static final String DELAY_KEY = "bokati.booking.lifecycle.worker-delay-ms";
+    private static final String LEGACY_DELAY_KEY = "bokati.booking.no-show.worker-delay-ms";
+    private static final long DEFAULT_DELAY_MS = 60_000L;
+    /** Meme plancher que SettingTriggers : une valeur aberrante ne sature pas le planificateur. */
+    private static final long MIN_DELAY_MS = 1_000L;
+
+    private ObjectProvider<BookingNoShowWorker> self;
+    private PlatformSettings platformSettings;
 
     static final int BATCH = 200;
 
     private final BookingService bookingService;
 
-    @Scheduled(fixedDelayString = "${bokati.booking.lifecycle.worker-delay-ms:${bokati.booking.no-show.worker-delay-ms:60000}}")
     public void processOverdueBookings() {
         try {
             int started = bookingService.startCheckedInBookings(BATCH);
@@ -73,5 +87,37 @@ public class BookingNoShowWorker {
             }
         }
         return done;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<BookingNoShowWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement de parametre vaut au passage suivant. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().processOverdueBookings(), delayTrigger());
+    }
+
+    /** Delai fixe relu a chaque passage : la cle lifecycle, sinon l'ancienne cle no-show, sinon 60 s. */
+    private Trigger delayTrigger() {
+        return context -> {
+            long delay = Math.max(MIN_DELAY_MS, delayMs());
+            Instant last = context.lastCompletion();
+            return last == null ? context.getClock().instant() : last.plusMillis(delay);
+        };
+    }
+
+    private long delayMs() {
+        if (platformSettings == null) {
+            return DEFAULT_DELAY_MS;
+        }
+        return platformSettings.number(DELAY_KEY, platformSettings.number(LEGACY_DELAY_KEY, DEFAULT_DELAY_MS));
     }
 }

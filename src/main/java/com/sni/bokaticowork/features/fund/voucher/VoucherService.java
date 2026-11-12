@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.fund.voucher;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer;
@@ -43,6 +45,29 @@ public class VoucherService {
     private String issuerDetails;
     @Value("${app.verify-base-url:https://api.elleaose.com}")
     private String verifyBaseUrl;
+
+    private static final String VOUCHER_ISSUER_NAME_KEY = "fund.voucher.issuer-name";
+    private static final String VOUCHER_ISSUER_DETAILS_KEY = "fund.voucher.issuer-details";
+    private static final String APP_VERIFY_BASE_URL_KEY = "app.verify-base-url";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String issuerName() {
+        return platformSettings == null ? issuerName : platformSettings.text(VOUCHER_ISSUER_NAME_KEY, issuerName);
+    }
+
+    private String issuerDetails() {
+        return platformSettings == null ? issuerDetails : platformSettings.text(VOUCHER_ISSUER_DETAILS_KEY, issuerDetails);
+    }
+
+    private String verifyBaseUrl() {
+        return platformSettings == null ? verifyBaseUrl : platformSettings.text(APP_VERIFY_BASE_URL_KEY, verifyBaseUrl);
+    }
 
     /** Piece enregistree. */
     public record Issued(String number, String type, String sourceCode, BigDecimal amount, String label, String issuedBy, Instant issuedAt,
@@ -181,8 +206,8 @@ public class VoucherService {
     }
 
     public byte[] render(String title, Issued issued, List<Section> sections, BigDecimal amount, String commitment, List<Signature> signatures) {
-        String verifyUrl = verifyBaseUrl.replaceAll("/+$", "") + "/verify/voucher/" + issued.number();
-        View view = new View(title, issued.number(), issuerName, issuerDetails, issued.printCount() > 0,
+        String verifyUrl = verifyBaseUrl().replaceAll("/+$", "") + "/verify/voucher/" + issued.number();
+        View view = new View(title, issued.number(), issuerName(), issuerDetails(), issued.printCount() > 0,
                 STAMP.format(Instant.now()), issued.cancelledBy(), sections,
                 amount == null ? null : money(amount) + " XAF",
                 amount == null ? null : FrenchAmountWords.withCurrency(amount, "XAF"), commitment, signatures,

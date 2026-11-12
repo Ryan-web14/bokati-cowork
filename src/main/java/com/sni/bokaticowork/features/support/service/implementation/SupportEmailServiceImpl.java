@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.support.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.richtext.RichTextSupport;
 import com.sni.bokaticowork.features.support.model.SupportTicket;
@@ -47,6 +49,34 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
     @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
 
+    private static final String SUPPORT_SENDER_EMAIL_KEY = "bokati.support.sender-email";
+    private static final String SUPPORT_MANAGER_EMAIL_KEY = "bokati.support.manager-email";
+    private static final String SUPPORT_ADMIN_EMAIL_KEY = "bokati.support.admin-email";
+    private static final String APP_API_BASE_URL_KEY = "app.api-base-url";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String supportEmail() {
+        return platformSettings == null ? supportEmail : platformSettings.text(SUPPORT_SENDER_EMAIL_KEY, supportEmail);
+    }
+
+    private String managerEmail() {
+        return platformSettings == null ? managerEmail : platformSettings.text(SUPPORT_MANAGER_EMAIL_KEY, managerEmail);
+    }
+
+    private String adminEmail() {
+        return platformSettings == null ? adminEmail : platformSettings.text(SUPPORT_ADMIN_EMAIL_KEY, adminEmail);
+    }
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(APP_API_BASE_URL_KEY, apiBaseUrl);
+    }
+
     @Override
     @Async
     public void sendTicketCreated(SupportTicket ticket) {
@@ -77,7 +107,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
     @Async
     public void sendClientMessage(SupportTicket ticket, TicketMessage message) {
         String agentEmail = resolveAgentEmail(ticket.getAssignedTo());
-        if (!StringUtils.hasText(agentEmail)) agentEmail = managerEmail;
+        if (!StringUtils.hasText(agentEmail)) agentEmail = managerEmail();
         String clientName = message != null && StringUtils.hasText(message.getSenderName())
                 ? message.getSenderName()
                 : ticket.getContactName();
@@ -113,7 +143,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
     @Async
     public void sendTicketReopenedToAgent(SupportTicket ticket, TicketMessage message) {
         String agentEmail = resolveAgentEmail(ticket.getAssignedTo());
-        if (!StringUtils.hasText(agentEmail)) agentEmail = managerEmail;
+        if (!StringUtils.hasText(agentEmail)) agentEmail = managerEmail();
         String clientName = message != null && StringUtils.hasText(message.getSenderName())
                 ? message.getSenderName()
                 : ticket.getContactName();
@@ -130,7 +160,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
     public void sendSlaBreachAlert(SupportTicket ticket, String breachType) {
         Context ctx = base(ticket, "SLA_BREACH");
         ctx.setVariable("breachType", breachType);
-        send(managerEmail,
+        send(managerEmail(),
                 "[ALERTE SLA] " + breachType + " - " + ticket.getTicketNumber(),
                 render(ctx), ticket.getTicketNumber());
     }
@@ -141,10 +171,10 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
         String recipient = switch (level) {
             case 1 -> {
                 String agentEmail = resolveAgentEmail(ticket.getAssignedTo());
-                yield StringUtils.hasText(agentEmail) ? agentEmail : managerEmail;
+                yield StringUtils.hasText(agentEmail) ? agentEmail : managerEmail();
             }
-            case 2 -> managerEmail;
-            default -> adminEmail;
+            case 2 -> managerEmail();
+            default -> adminEmail();
         };
         Context ctx = base(ticket, "SLA_ESCALATION");
         ctx.setVariable("escalationLevel", level);
@@ -183,7 +213,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
 
     private Map<Integer, String> buildCsatLinks(String ticketNumber) {
         Map<Integer, String> links = new LinkedHashMap<>();
-        String base = apiBaseUrl + "/sni/api/v1/public/support/csat?ticket=" + ticketNumber;
+        String base = apiBaseUrl() + "/sni/api/v1/public/support/csat?ticket=" + ticketNumber;
         for (int score = 1; score <= 5; score++) {
             links.put(score, base + "&score=" + score + "&token=" + csatTokenService.generate(ticketNumber, score));
         }
@@ -196,7 +226,7 @@ public class  SupportEmailServiceImpl implements SupportEmailService {
 
     private void send(String to, String subject, String html, String ticketNumber) {
         try {
-            emailSender.queueEmail(supportEmail, to, subject, html, true, "SUPPORT_TICKET", ticketNumber);
+            emailSender.queueEmail(supportEmail(), to, subject, html, true, "SUPPORT_TICKET", ticketNumber);
         } catch (Exception ex) {
             log.warn("Failed to queue support email to {}: {}", to, ex.getMessage());
         }

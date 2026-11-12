@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.inventory.intelligence.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.features.inventory.intelligence.enums.InventoryAlertStatus;
@@ -48,6 +50,24 @@ public class InventoryAutomationServiceImpl implements InventoryAutomationServic
 
     @Value("${bokati.task.inventory-default-assignee:}")
     private String inventoryDefaultAssignee;
+
+    private static final String TASK_INVENTORY_REORDER_DUE_HOURS_KEY = "bokati.task.inventory-reorder-due-hours";
+    private static final String TASK_INVENTORY_DEFAULT_ASSIGNEE_KEY = "bokati.task.inventory-default-assignee";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private long inventoryReorderDueHours() {
+        return platformSettings == null ? inventoryReorderDueHours : platformSettings.number(TASK_INVENTORY_REORDER_DUE_HOURS_KEY, inventoryReorderDueHours);
+    }
+
+    private String inventoryDefaultAssignee() {
+        return platformSettings == null ? inventoryDefaultAssignee : platformSettings.text(TASK_INVENTORY_DEFAULT_ASSIGNEE_KEY, inventoryDefaultAssignee);
+    }
 
     @Override
     public void afterStockMovement(StockMovement movement, StockLevel... impactedLevels) {
@@ -179,7 +199,7 @@ public class InventoryAutomationServiceImpl implements InventoryAutomationServic
                             + ". Seuil: " + alert.getThresholdQuantity(),
                     configuredAssignee(),
                     alert.getAlertType() == InventoryAlertType.RECURRING_LOW_STOCK ? TaskPriority.URGENT : TaskPriority.HIGH,
-                    Instant.now().plusSeconds(Math.max(1, inventoryReorderDueHours) * 3600),
+                    Instant.now().plusSeconds(Math.max(1, inventoryReorderDueHours()) * 3600),
                     "INVENTORY",
                     alert.getAlertCode(),
                     TaskRecurrence.NONE,
@@ -194,13 +214,13 @@ public class InventoryAutomationServiceImpl implements InventoryAutomationServic
     }
 
     private Long configuredAssignee() {
-        if (!StringUtils.hasText(inventoryDefaultAssignee)) {
+        if (!StringUtils.hasText(inventoryDefaultAssignee())) {
             return null;
         }
         try {
-            return Long.parseLong(inventoryDefaultAssignee.trim());
+            return Long.parseLong(inventoryDefaultAssignee().trim());
         } catch (NumberFormatException ex) {
-            log.warn("Ignoring invalid inventory task assignee configuration value '{}'", inventoryDefaultAssignee);
+            log.warn("Ignoring invalid inventory task assignee configuration value '{}'", inventoryDefaultAssignee());
             return null;
         }
     }

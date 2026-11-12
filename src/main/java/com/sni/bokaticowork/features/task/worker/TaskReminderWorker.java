@@ -7,18 +7,51 @@ import com.sni.bokaticowork.features.task.service.interfaces.TaskEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TaskReminderWorker {
+public class TaskReminderWorker implements SchedulingConfigurer {
+
+    private static final String REMINDER_CRON_KEY = "bokati.task.reminder-cron";
+    private static final String DUE_SOON_HOURS_KEY = "bokati.task.due-soon-hours";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<TaskReminderWorker> self;
+    private PlatformSettings platformSettings;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<TaskReminderWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().sendTaskReminders(), triggers.cron(REMINDER_CRON_KEY, "0 0 * * * *"));
+    }
 
     private static final List<TaskStatus> EXCLUDED_STATUSES =
             List.of(TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.ARCHIVED);
@@ -29,7 +62,6 @@ public class TaskReminderWorker {
     @Value("${bokati.task.due-soon-hours:24}")
     private long dueSoonHours;
 
-    @Scheduled(cron = "${bokati.task.reminder-cron:0 0 * * * *}")
     @Transactional
     public void sendTaskReminders() {
         Instant now = Instant.now();
@@ -41,6 +73,7 @@ public class TaskReminderWorker {
     }
 
     private int processDueSoon(Instant now) {
+        long dueSoonHours = platformSettings == null ? this.dueSoonHours : platformSettings.number(DUE_SOON_HOURS_KEY, this.dueSoonHours);
         Instant dueSoonUntil = now.plus(dueSoonHours, ChronoUnit.HOURS);
         List<TaskItem> tasks = taskRepository.findDueSoonReminderCandidates(now, dueSoonUntil, EXCLUDED_STATUSES);
         for (TaskItem task : tasks) {

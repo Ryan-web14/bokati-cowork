@@ -5,20 +5,45 @@ import com.sni.bokaticowork.features.accounting.service.support.AccountingNotifi
 import com.sni.bokaticowork.features.accounting.service.support.AccountingSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import java.time.ZoneId;
 
 /** Recuperation quotidienne des taux de change sur internet (gestion multidevise). */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ExchangeRateWorker {
+public class ExchangeRateWorker implements SchedulingConfigurer {
+
+    private static final String FETCH_CRON_KEY = "accounting.exchange.fetch-cron";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<ExchangeRateWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<ExchangeRateWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().fetch(), triggers.cron(FETCH_CRON_KEY, "0 15 7 * * *", ZoneId.of("Africa/Brazzaville")));
+    }
 
     private final ExchangeRateService rates;
     private final AccountingSettings settings;
     private final AccountingNotifier notifier;
 
-    @Scheduled(cron = "${accounting.exchange.fetch-cron:0 15 7 * * *}", zone = "Africa/Brazzaville")
     public void fetch() {
         if ("false".equalsIgnoreCase(settings.text("accounting.exchange.auto-fetch", "true"))) {
             return;

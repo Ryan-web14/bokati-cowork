@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.event.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.idempotency.aop.Idempotent;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.event.dto.EventRegistrationDtos.EventRegistrationResponse;
@@ -33,15 +35,28 @@ public class PublicOpeningController {
     @Value("${app.event.opening-code:OUVERTURE}")
     private String openingEventCode;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String OPENING_CODE_KEY = "app.event.opening-code";
+
+    private String openingEventCode() {
+        return platformSettings == null ? openingEventCode : platformSettings.text(OPENING_CODE_KEY, openingEventCode);
+    }
+
     @GetMapping
     public ResponseEntity<EventSummaryResponse> getOpeningEvent() {
-        return ResponseEntity.ok(service.getEvent(openingEventCode));
+        return ResponseEntity.ok(service.getEvent(openingEventCode()));
     }
 
     @PostMapping("/registrations")
     @Idempotent(operation = "OPENING_REGISTRATION_CREATE", required = false)
     public ResponseEntity<EventRegistrationResponse> register(
             @Valid @RequestBody PublicEventRegistrationRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.register(openingEventCode, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.register(openingEventCode(), request));
     }
 }

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.zxing.BarcodeFormat;
@@ -78,6 +80,19 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
 
     @Value("${app.verify-base-url:http://localhost:8080}")
     private String verifyBaseUrl;
+
+    private static final String APP_VERIFY_BASE_URL_KEY = "app.verify-base-url";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String verifyBaseUrl() {
+        return platformSettings == null ? verifyBaseUrl : platformSettings.text(APP_VERIFY_BASE_URL_KEY, verifyBaseUrl);
+    }
 
     @Override
     public PaymentReceiptResponse getByTransactionNumber(String transactionNumber) {
@@ -332,7 +347,7 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
     }
 
     private String buildQrContent(PaymentReceiptResponse receipt) {
-        return verifyBaseUrl.stripTrailing() + "/verify/receipt/" + receipt.receiptNumber();
+        return verifyBaseUrl().stripTrailing() + "/verify/receipt/" + receipt.receiptNumber();
     }
 
     private org.jsoup.nodes.Document toXhtmlDocument(String html) {

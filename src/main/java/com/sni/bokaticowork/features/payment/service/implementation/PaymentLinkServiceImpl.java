@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -45,6 +47,19 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     @org.springframework.beans.factory.annotation.Value("${app.api-base-url:}")
     private String publicBaseUrl;
 
+    private static final String APP_API_BASE_URL_KEY = "app.api-base-url";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String publicBaseUrl() {
+        return platformSettings == null ? publicBaseUrl : platformSettings.text(APP_API_BASE_URL_KEY, publicBaseUrl);
+    }
+
     @Override
     public PaymentLinkResponse createLink(String intentNumber, CreatePaymentLinkRequest request) {
         PaymentIntent intent = findIntent(intentNumber);
@@ -88,7 +103,7 @@ public class PaymentLinkServiceImpl implements PaymentLinkService {
     }
 
     private String checkoutUrl(String token) {
-        String base = publicBaseUrl == null ? "" : publicBaseUrl.trim();
+        String base = publicBaseUrl() == null ? "" : publicBaseUrl().trim();
         if (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
         }

@@ -87,6 +87,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `updatedBy` | texte |  |  |
 | `updatedAt` | date-heure ISO 8601 UTC |  |  |
 | `options` | texte[] |  |  |
+| `sensitive` | booléen |  | un changement prend effet aussitôt et alerte les super-administrateurs |
+| `risk` | texte |  | ce que risque un changement, à montrer avant d'enregistrer ; `null` si non sensible |
 
 <a id="m-SettingDomain"></a>
 #### SettingDomain

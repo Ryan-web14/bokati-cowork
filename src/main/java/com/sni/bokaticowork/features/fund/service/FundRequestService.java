@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.fund.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.accounting.AccountingEventPublisher;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
@@ -104,6 +106,64 @@ public class FundRequestService {
     private boolean unplannedApproval;
     @Value("${fund.budget.require-forecast-choice:true}")
     private boolean requireForecastChoice;
+
+    private static final String APPROVAL_LEVEL1_MAX_KEY = "fund.approval.level1-max";
+    private static final String APPROVAL_LEVEL2_MAX_KEY = "fund.approval.level2-max";
+    private static final String REQUEST_EXPIRY_DAYS_KEY = "fund.request.expiry-days";
+    private static final String JUSTIFICATION_DAYS_KEY = "fund.justification.days";
+    private static final String ADVANCE_OVERDUE_POLICY_KEY = "fund.advance.overdue-policy";
+    private static final String JUSTIFICATION_RECEIPT_EXEMPT_MAX_KEY = "fund.justification.receipt-exempt-max";
+    private static final String VAT_RECOVERABLE_ACCOUNT_KEY = "fund.vat-recoverable-account";
+    private static final String BUDGET_BLOCKING_MODE_KEY = "fund.budget.blocking-mode";
+    private static final String BUDGET_UNPLANNED_APPROVAL_KEY = "fund.budget.unplanned-approval";
+    private static final String BUDGET_REQUIRE_FORECAST_CHOICE_KEY = "fund.budget.require-forecast-choice";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private long level1Max() {
+        return platformSettings == null ? level1Max : platformSettings.number(APPROVAL_LEVEL1_MAX_KEY, level1Max);
+    }
+
+    private long level2Max() {
+        return platformSettings == null ? level2Max : platformSettings.number(APPROVAL_LEVEL2_MAX_KEY, level2Max);
+    }
+
+    private int expiryDays() {
+        return platformSettings == null ? expiryDays : platformSettings.integer(REQUEST_EXPIRY_DAYS_KEY, expiryDays);
+    }
+
+    private int justificationDays() {
+        return platformSettings == null ? justificationDays : platformSettings.integer(JUSTIFICATION_DAYS_KEY, justificationDays);
+    }
+
+    private String overduePolicy() {
+        return platformSettings == null ? overduePolicy : platformSettings.text(ADVANCE_OVERDUE_POLICY_KEY, overduePolicy);
+    }
+
+    private long receiptExemptMax() {
+        return platformSettings == null ? receiptExemptMax : platformSettings.number(JUSTIFICATION_RECEIPT_EXEMPT_MAX_KEY, receiptExemptMax);
+    }
+
+    private String vatAccount() {
+        return platformSettings == null ? vatAccount : platformSettings.text(VAT_RECOVERABLE_ACCOUNT_KEY, vatAccount);
+    }
+
+    private String budgetBlockingMode() {
+        return platformSettings == null ? budgetBlockingMode : platformSettings.text(BUDGET_BLOCKING_MODE_KEY, budgetBlockingMode);
+    }
+
+    private boolean unplannedApproval() {
+        return platformSettings == null ? unplannedApproval : platformSettings.bool(BUDGET_UNPLANNED_APPROVAL_KEY, unplannedApproval);
+    }
+
+    private boolean requireForecastChoice() {
+        return platformSettings == null ? requireForecastChoice : platformSettings.bool(BUDGET_REQUIRE_FORECAST_CHOICE_KEY, requireForecastChoice);
+    }
 
     // ------------------------------------------------------------------ saisie
 
@@ -235,17 +295,17 @@ public class FundRequestService {
         com.sni.bokaticowork.core.accounting.BudgetControl.Impact budget = insight.budget();
         int levels = insight.requiredLevels();
         if (budget != null && budget.budgetActive()) {
-            if (requireForecastChoice && request.getForecastNumber() == null && !request.getUnplanned()) {
+            if (requireForecastChoice() && request.getForecastNumber() == null && !request.getUnplanned()) {
                 throw new BadRequestException("Choisissez la prevision couverte par cette depense, ou declarez-la non prevue avec son motif");
             }
             if (budget.blocked()) {
-                if ("REFUSE".equalsIgnoreCase(budgetBlockingMode)) {
+                if ("REFUSE".equalsIgnoreCase(budgetBlockingMode())) {
                     throw new BadRequestException("Budget insuffisant : " + String.join(" ; ", budget.messages())
                             + ". Demandez un virement de credits ou une revision.");
                 }
                 request.setBudgetApproval("OVERRIDE");
                 levels++;
-            } else if (request.getUnplanned() && unplannedApproval) {
+            } else if (request.getUnplanned() && unplannedApproval()) {
                 request.setBudgetApproval("UNPLANNED");
                 levels++;
             }
@@ -266,10 +326,10 @@ public class FundRequestService {
 
     /** Niveau requis par le montant (grille parametrable : 50 000, puis 500 000 XAF). */
     int levelsFor(BigDecimal amount) {
-        if (amount.compareTo(BigDecimal.valueOf(level1Max)) <= 0) {
+        if (amount.compareTo(BigDecimal.valueOf(level1Max())) <= 0) {
             return 1;
         }
-        return amount.compareTo(BigDecimal.valueOf(level2Max)) <= 0 ? 2 : 3;
+        return amount.compareTo(BigDecimal.valueOf(level2Max())) <= 0 ? 2 : 3;
     }
 
     public FundDtos.Request approve(String number, FundDtos.Decision decision) {
@@ -298,7 +358,7 @@ public class FundRequestService {
             if (request.getApprovedAmount() == null) {
                 request.setApprovedAmount(request.getTotalAmount());
             }
-            request.setExpiresAt(now.plus(Duration.ofDays(expiryDays)));
+            request.setExpiresAt(now.plus(Duration.ofDays(expiryDays())));
             requestRepository.save(request);
             commitBudget(request);
             notifier.approved(request);
@@ -479,7 +539,7 @@ public class FundRequestService {
         } else if (advance && request.getRequestType() == FundRequestType.ADVANCE) {
             request.setStatus(FundRequestStatus.TO_JUSTIFY);
             LocalDate base = request.getMissionEnd() != null ? request.getMissionEnd() : LocalDate.now(ZONE);
-            request.setJustificationDueDate(base.plusDays(justificationDays));
+            request.setJustificationDueDate(base.plusDays(justificationDays()));
         } else {
             request.setStatus(FundRequestStatus.SETTLED);
             request.setSettledAt(now);
@@ -547,10 +607,10 @@ public class FundRequestService {
             throw new BadRequestException("Montant positif ; TVA positive et inferieure au montant");
         }
         if (!StringUtils.hasText(input.documentReference())) {
-            boolean exempt = Boolean.TRUE.equals(input.honourStatement()) && amount.compareTo(BigDecimal.valueOf(receiptExemptMax)) <= 0;
+            boolean exempt = Boolean.TRUE.equals(input.honourStatement()) && amount.compareTo(BigDecimal.valueOf(receiptExemptMax())) <= 0;
             if (!exempt) {
                 throw new BadRequestException("Joignez la piece (ticket, facture) ; sans piece, une attestation sur l'honneur couvre au plus "
-                        + receiptExemptMax + " XAF par ligne");
+                        + receiptExemptMax() + " XAF par ligne");
             }
         }
         LocalDate earliest = request.getMissionStart() != null ? request.getMissionStart()
@@ -598,7 +658,7 @@ public class FundRequestService {
         data.put("requestNumber", request.getNumber());
         data.put("journalCode", "AV");
         data.put("natureAccount", nature == null || !StringUtils.hasText(nature.getAccountNumber()) ? "471" : nature.getAccountNumber());
-        data.put("vatAccount", vatAccount);
+        data.put("vatAccount", vatAccount());
         data.put("amount", line.getAmount());
         data.put("netAmount", line.getAmount().subtract(line.getVatAmount()));
         data.put("vatAmount", line.getVatAmount());
@@ -873,7 +933,7 @@ public class FundRequestService {
                 .filter(other -> !other.getId().equals(request.getId()) && other.getRequestType() == FundRequestType.ADVANCE).toList()
                 : List.of();
         boolean overdue = open.stream().anyMatch(other -> other.getJustificationDueDate() != null && today.isAfter(other.getJustificationDueDate()));
-        boolean blocked = overdue && "BLOCK".equalsIgnoreCase(overduePolicy) && request.getRequestType() == FundRequestType.ADVANCE;
+        boolean blocked = overdue && "BLOCK".equalsIgnoreCase(overduePolicy()) && request.getRequestType() == FundRequestType.ADVANCE;
         String warning = overdue ? "Le beneficiaire a une avance en retard de justification" + (blocked ? " : aucune nouvelle avance avant sa justification" : "")
                 : balance != null && balance.compareTo(amount) < 0 ? "La caisse ne peut pas couvrir ce montant aujourd'hui" : null;
         com.sni.bokaticowork.core.accounting.BudgetControl control = budgetControl.getIfAvailable();
@@ -881,9 +941,9 @@ public class FundRequestService {
                 : control.check(spends(request), LocalDate.now(ZONE));
         List<String> allLabels = new ArrayList<>(labels);
         String budgetApproval = null;
-        if (budget != null && budget.blocked() && !"REFUSE".equalsIgnoreCase(budgetBlockingMode)) {
+        if (budget != null && budget.blocked() && !"REFUSE".equalsIgnoreCase(budgetBlockingMode())) {
             budgetApproval = "OVERRIDE";
-        } else if (budget != null && budget.budgetActive() && Boolean.TRUE.equals(request.getUnplanned()) && unplannedApproval) {
+        } else if (budget != null && budget.budgetActive() && Boolean.TRUE.equals(request.getUnplanned()) && unplannedApproval()) {
             budgetApproval = "UNPLANNED";
         }
         if (budgetApproval != null) {

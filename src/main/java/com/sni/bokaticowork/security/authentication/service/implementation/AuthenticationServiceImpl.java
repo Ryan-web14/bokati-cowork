@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.security.authentication.service.implementation;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.audit.dto.response.UserSessionToken;
 import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
 import com.sni.bokaticowork.core.exception.customs.AccountLockedException;
@@ -74,13 +76,28 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
     @Value("${app.security.jwt.refresh-reuse-grace-seconds:30}")
     private long refreshReuseGraceSeconds;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String REFRESH_REUSE_GRACE_KEY = "app.security.jwt.refresh-reuse-grace-seconds";
+
+    private long refreshReuseGraceSeconds() {
+        return platformSettings == null ? refreshReuseGraceSeconds
+                : platformSettings.number(REFRESH_REUSE_GRACE_KEY, refreshReuseGraceSeconds);
+    }
+
     @Transactional
     public LoginResponse login(LoginRequest request, HttpServletRequest httpReq) throws AuthenticationException{
 
         log.debug("Authenticating user {}", request.getEmail());
             UsernamePasswordAuthenticationToken token = UsernamePasswordAuthenticationToken.unauthenticated(
                     request.getEmail(),request.getPassword());
-            return authenticationAndCreateSesison(token, httpReq);
+            return authenticationAndCreateSesison(token, httpReq, "BACK_OFFICE".equalsIgnoreCase(
+                    request.getSpace() == null ? null : request.getSpace().trim()));
     }
 
     /**
@@ -164,7 +181,7 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
             return;
         }
         Users user = stored.getUser();
-        if (revokedAt.isAfter(Instant.now().minusSeconds(refreshReuseGraceSeconds))) {
+        if (revokedAt.isAfter(Instant.now().minusSeconds(refreshReuseGraceSeconds()))) {
             log.info("Jeton de rafraichissement presente apres sa rotation pour {} · rafraichissement concurrent, refuse",
                     user.getUserId());
             return;
@@ -369,10 +386,25 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
      * @throws BadCredentialException if the authentication process fails due to invalid credentials
      */
     private LoginResponse authenticationAndCreateSesison(UsernamePasswordAuthenticationToken token, HttpServletRequest request){
+        return authenticationAndCreateSesison(token, request, false);
+    }
+
+    /**
+     * {@code backOffice} : l'espace d'administration est demande. Un compte sans role d'equipe
+     * (membre, client) est refuse apres la verification du mot de passe et avant toute ecriture :
+     * ni session ouverte, ni ancienne session fermee, ni echec de connexion compte.
+     */
+    private LoginResponse authenticationAndCreateSesison(UsernamePasswordAuthenticationToken token, HttpServletRequest request, boolean backOffice){
         try{
             Authentication authentication = authenticationManager.authenticate(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
             UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+            if (backOffice && !com.sni.bokaticowork.security.authorization.SecurityRoles.hasAdminRealmRole(principal.getAuthorities())) {
+                log.warn("Back-office login refused for an account without staff role: {}", principal.getUsername());
+                SecurityContextHolder.clearContext();
+                throw new com.sni.bokaticowork.core.exception.customs.BackOfficeAccessDeniedException(
+                        "Ce compte n'a pas accès à l'espace d'administration");
+            }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             sessionService.invalidateOldestSessionByUser(principal.getUser());
             return createSessionAndResponse(request, principal);
         } catch (LockedException e) {

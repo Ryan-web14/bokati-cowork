@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.subscription.promotion.pricing.referral.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -69,6 +71,26 @@ public class ReferralProgramService {
      */
     @Value("${app.referral.share-url-template:${app.frontend-url:http://localhost:3000}/inscription?parrain={code}}")
     private String shareUrlTemplate;
+
+    private static final String REFERRAL_SHARE_URL_TEMPLATE_KEY = "app.referral.share-url-template";
+    private static final String FRONTEND_URL_KEY = "app.frontend-url";
+    private static final String DEFAULT_FRONTEND_URL = "http://localhost:3000";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String shareUrlTemplate() {
+        return platformSettings == null ? shareUrlTemplate : platformSettings.text(REFERRAL_SHARE_URL_TEMPLATE_KEY, frontendShareUrlTemplate());
+    }
+
+    /** Repli imbrique du fichier de configuration : la page d'inscription du portail, a son adresse du moment. */
+    private String frontendShareUrlTemplate() {
+        return platformSettings.text(FRONTEND_URL_KEY, DEFAULT_FRONTEND_URL) + "/inscription?parrain={code}";
+    }
 
     // Programmes ---------------------------------------------------------------------------------
 
@@ -376,7 +398,7 @@ public class ReferralProgramService {
     }
 
     String url(String code) {
-        return shareUrlTemplate.replace("{code}", code);
+        return shareUrlTemplate().replace("{code}", code);
     }
 
     /** « Awa N. » : assez pour que le parrain reconnaisse son ami, pas plus. */

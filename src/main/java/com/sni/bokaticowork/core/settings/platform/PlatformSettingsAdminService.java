@@ -44,6 +44,7 @@ public class PlatformSettingsAdminService {
     private final PlatformSettings settings;
     private final ConfigurableEnvironment environment;
     private final List<PlatformSettingProvider> providers;
+    private final SensitiveSettingAlerter sensitiveAlerter;
     private final Clock clock = Clock.systemUTC();
 
     /**
@@ -53,11 +54,13 @@ public class PlatformSettingsAdminService {
      * @param configured     un secret est renseigne sur le serveur · jamais sa valeur
      * @param restartPending enregistree, elle attend le prochain redemarrage
      * @param options        les valeurs permises d'une liste de choix
+     * @param sensitive      un changement prend effet aussitot mais alerte les super-administrateurs
+     * @param risk           ce qu'un changement risque, pour l'avertissement avant enregistrement
      */
     public record SettingView(String key, String label, SettingDomain domain, PlatformSettingCatalog.Type type,
                               PlatformSettingCatalog.Effect effect, String value, String defaultValue, boolean modified,
                               boolean editable, Boolean configured, boolean restartPending, String updatedBy, Instant updatedAt,
-                              List<String> options) {
+                              List<String> options, boolean sensitive, String risk) {
     }
 
     public record DomainView(SettingDomain domain, String label, boolean adminEditable, int settings) {
@@ -111,6 +114,7 @@ public class PlatformSettingsAdminService {
         stored.setUpdatedAt(clock.instant());
         repository.save(stored);
         audit(key, previous, value, reason, authentication);
+        sensitiveAlerter.changed(key, definition.label(), previous, value, authentication.getName());
         refreshAfterCommit();
         return view(definition, stored);
     }
@@ -125,6 +129,7 @@ public class PlatformSettingsAdminService {
         }
         repository.findById(key).ifPresent(stored -> {
             audit(key, stored.getValue(), defaultValue(definition), reason, authentication);
+            sensitiveAlerter.changed(key, definition.label(), stored.getValue(), defaultValue(definition), authentication.getName());
             repository.delete(stored);
         });
         refreshAfterCommit();
@@ -149,6 +154,7 @@ public class PlatformSettingsAdminService {
         provider.update(definition.key(), value);
         PlatformSettingProvider.ProvidedSetting updated = provided(provider, definition.key());
         audit(definition.key(), previous, updated.value(), reason, authentication);
+        sensitiveAlerter.changed(definition.key(), definition.label(), previous, updated.value(), authentication.getName());
         return view(updated);
     }
 
@@ -170,7 +176,8 @@ public class PlatformSettingsAdminService {
         PlatformSettingCatalog.Definition definition = setting.definition();
         return new SettingView(definition.key(), definition.label(), definition.domain(), definition.type(), definition.effect(),
                 setting.value(), definition.defaultValue(), !Objects.equals(setting.value(), definition.defaultValue()), true,
-                null, false, null, null, setting.options());
+                null, false, null, null, setting.options(),
+                SensitiveSettings.isSensitive(definition.key()), SensitiveSettings.risk(definition.key()));
     }
 
     private PlatformSettingCatalog.Definition editable(String key, Authentication authentication) {
@@ -221,13 +228,15 @@ public class PlatformSettingsAdminService {
         boolean secret = definition.type() == PlatformSettingCatalog.Type.SECRET;
         if (secret) {
             return new SettingView(definition.key(), definition.label(), definition.domain(), definition.type(), definition.effect(),
-                    null, null, false, false, StringUtils.hasText(fileValue(definition.key())), false, null, null, List.of());
+                    null, null, false, false, StringUtils.hasText(fileValue(definition.key())), false, null, null, List.of(),
+                    SensitiveSettings.isSensitive(definition.key()), SensitiveSettings.risk(definition.key()));
         }
         String fallback = defaultValue(definition);
         String value = stored != null ? stored.getValue() : fallback;
         return new SettingView(definition.key(), definition.label(), definition.domain(), definition.type(), definition.effect(),
                 value, fallback, stored != null, true, null, restartPending(definition, value),
-                stored == null ? null : stored.getUpdatedBy(), stored == null ? null : stored.getUpdatedAt(), List.of());
+                stored == null ? null : stored.getUpdatedBy(), stored == null ? null : stored.getUpdatedAt(), List.of(),
+                SensitiveSettings.isSensitive(definition.key()), SensitiveSettings.risk(definition.key()));
     }
 
     /** La valeur voulue n'est pas celle que l'application a lue en demarrant. */
