@@ -59,6 +59,8 @@ public class PaymentTransactionWorkflowProcessor {
     private final com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionGraceService graceService;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService marketplaceOrderService;
+    private final com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository allocationRepository;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService billingLinkService;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -78,6 +80,7 @@ public class PaymentTransactionWorkflowProcessor {
             walletTopUpService.settle(transaction);
             recordAutomaticCashSession(transaction);
             validatePaidBillingDocuments(transaction);
+            activateSubscriptionsOnLinkedInvoices(transaction);
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
             if (StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
                 handleSucceededTransaction(transaction, source);
@@ -100,6 +103,18 @@ public class PaymentTransactionWorkflowProcessor {
                 log.warn("Failed to send refund email for transaction {} · refund workflow already completed",
                         transaction.getTransactionNumber(), ex);
             }
+        }
+    }
+
+    /** Un abonnement rattache a une facture existante est valide quand ce paiement la solde. */
+    private void activateSubscriptionsOnLinkedInvoices(PaymentTransaction transaction) {
+        try {
+            allocationRepository.findAllByPaymentTransactionId(transaction.getId()).stream()
+                    .map(com.sni.bokaticowork.features.payment.model.PaymentAllocation::getBillingDocumentNumber)
+                    .filter(StringUtils::hasText).distinct()
+                    .forEach(number -> billingLinkService.activateIfLinkedInvoicePaid(number, SYSTEM_ACTOR));
+        } catch (Exception ex) {
+            log.warn("Validation des abonnements rattaches apres le paiement {} en echec", transaction.getTransactionNumber(), ex);
         }
     }
 

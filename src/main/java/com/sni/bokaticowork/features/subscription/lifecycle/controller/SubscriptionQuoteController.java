@@ -45,26 +45,34 @@ public class SubscriptionQuoteController {
     public record ReasonRequest(String reason) {
     }
 
+    /** Facture ou paiement deja faits pour l'abonnement (facultatif). */
+    public record AcceptRequest(String existingInvoiceNumber, String existingPaymentNumber) {
+    }
+
     public record QuoteView(String quoteNumber, SubscriptionQuote.Status status, SubscriberType subscriberType, String subscriberCode,
                             String subscriberName, String subscriberEmail, String planCode, String planName, Integer planVersionNumber,
                             BillingCycle billingCycle, String currency, BigDecimal cataloguePrice, BigDecimal quotedPrice, boolean negotiated,
                             BigDecimal setupFee, Integer commitmentMonths, Integer trialDays, LocalDate startDate, LocalDate validUntil,
                             String notes, String preparedBy, Instant sentAt, Instant acceptedAt, String acceptedBy, Instant rejectedAt,
                             String rejectionReason, String convertedSubscriptionNumber, String derivationCode, String proposalNumber,
-                            Instant createdAt) {
+                            Instant createdAt, List<String> warnings) {
         static QuoteView of(SubscriptionQuote q) {
+            return of(q, List.of());
+        }
+
+        static QuoteView of(SubscriptionQuote q, List<String> warnings) {
             return new QuoteView(q.getQuoteNumber(), q.getStatus(), q.getSubscriberType(), q.getSubscriberCode(), q.getSubscriberName(),
                     q.getSubscriberEmail(), q.getPlanVersion().getPlan().getCode(), q.getPlanVersion().getName(), q.getPlanVersion().getVersionNumber(),
                     q.getBillingCycle(), q.getCurrency(), q.getCataloguePrice(), q.getQuotedPrice(), q.negotiated(), q.getSetupFee(),
                     q.getCommitmentMonths(), q.getTrialDays(), q.getStartDate(), q.getValidUntil(), q.getNotes(), q.getPreparedBy(),
                     q.getSentAt(), q.getAcceptedAt(), q.getAcceptedBy(), q.getRejectedAt(), q.getRejectionReason(),
-                    q.getConvertedSubscriptionNumber(), q.getDerivationCode(), q.getProposalNumber(), q.getCreatedAt());
+                    q.getConvertedSubscriptionNumber(), q.getDerivationCode(), q.getProposalNumber(), q.getCreatedAt(), warnings);
         }
     }
 
     @PostMapping
     public ResponseEntity<QuoteView> create(@Valid @RequestBody QuoteRequest request, Authentication authentication) {
-        return ResponseEntity.ok(QuoteView.of(quoteService.create(request.toRequest(), actor(authentication))));
+        return ResponseEntity.ok(view(quoteService.create(request.toRequest(), actor(authentication), admin(authentication))));
     }
 
     @GetMapping
@@ -81,7 +89,7 @@ public class SubscriptionQuoteController {
 
     @GetMapping("/{quoteNumber}")
     public ResponseEntity<QuoteView> get(@PathVariable String quoteNumber) {
-        return ResponseEntity.ok(QuoteView.of(quoteService.get(quoteNumber)));
+        return ResponseEntity.ok(view(quoteService.get(quoteNumber)));
     }
 
     /** Ce que la conversion donnera · ecart au catalogue, visa a prevoir. */
@@ -96,13 +104,25 @@ public class SubscriptionQuoteController {
     }
 
     @PostMapping("/{quoteNumber}/accept")
-    public ResponseEntity<QuoteView> accept(@PathVariable String quoteNumber, Authentication authentication) {
-        return ResponseEntity.ok(QuoteView.of(quoteService.accept(quoteNumber, actor(authentication))));
+    public ResponseEntity<QuoteView> accept(@PathVariable String quoteNumber, @RequestBody(required = false) AcceptRequest request,
+                                            Authentication authentication) {
+        return ResponseEntity.ok(view(quoteService.accept(quoteNumber, actor(authentication), admin(authentication),
+                request == null ? null : request.existingInvoiceNumber(), request == null ? null : request.existingPaymentNumber())));
     }
 
     @PostMapping("/{quoteNumber}/reject")
     public ResponseEntity<QuoteView> reject(@PathVariable String quoteNumber, @RequestBody(required = false) ReasonRequest request) {
         return ResponseEntity.ok(QuoteView.of(quoteService.reject(quoteNumber, request == null ? null : request.reason())));
+    }
+
+    private QuoteView view(SubscriptionQuote quote) {
+        return QuoteView.of(quote, quoteService.warnings(quote));
+    }
+
+    /** Administrateur : peut lever le plancher et le rabais maximum d'un devis. */
+    static boolean admin(Authentication authentication) {
+        return authentication != null && authentication.getAuthorities().stream().map(a -> a.getAuthority())
+                .anyMatch(a -> a.equals("ROLE_ADMIN") || a.equals("ROLE_SUPER_ADMIN") || a.equals("ADMIN") || a.equals("SUPER_ADMIN"));
     }
 
     private static String actor(Authentication authentication) {

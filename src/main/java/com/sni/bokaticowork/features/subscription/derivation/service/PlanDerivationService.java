@@ -227,6 +227,20 @@ public class PlanDerivationService {
 
     @Transactional
     public PlanDerivation create(Subscription subscription, Spec spec, String requestedBy, String batchCode) {
+        return create(subscription, spec, requestedBy, batchCode, false);
+    }
+
+    /**
+     * Un blocage de prix (plancher, rabais au-dela du maximum admis) peut etre leve par un
+     * administrateur : cas d'une facturation deja faite hors de l'abonnement, jusqu'a un prix nul.
+     * Les autres blocages restent.
+     */
+    public static boolean overridable(String blockingReason) {
+        return blockingReason != null && (blockingReason.startsWith("Prix plancher") || blockingReason.startsWith("Rabais de"));
+    }
+
+    @Transactional
+    public PlanDerivation create(Subscription subscription, Spec spec, String requestedBy, String batchCode, boolean adminOverride) {
         if (spec.reason() == null) {
             throw new BadRequestException("Une dérivation a un motif · négociation, geste commercial, partenariat, pilote, protection, fidélité ou correction");
         }
@@ -236,8 +250,17 @@ public class PlanDerivationService {
         }
         PlanVersion source = catalogueSourceOf(subscription);
         Preview preview = preview(subscription, source, spec);
-        if (!preview.allowed()) {
+        boolean overridden = !preview.allowed() && adminOverride && overridable(preview.blockingReason());
+        if (!preview.allowed() && !overridden) {
             throw new ConflictException("derivation", preview.blockingReason());
+        }
+        if (overridden) {
+            log.warn("Derivation de {} : derogation administrateur ({}) par {}", subscription.getSubscriptionNumber(), preview.blockingReason(), requestedBy);
+            String note = "Dérogation administrateur : " + preview.blockingReason();
+            spec = new Spec(spec.price(), spec.setupFee(), spec.trialDays(), spec.commitmentMonths(), spec.entitlementQuantities(),
+                    spec.unlimitedEntitlements(), spec.includedBenefits(), spec.reason(),
+                    spec.reasonDetails() == null ? note : spec.reasonDetails() + " · " + note, spec.effectiveFrom(), spec.effectiveTo(),
+                    spec.renewalBehaviour(), spec.revertAfterPeriods(), spec.promotionsAllowed());
         }
 
         PlanVersion derived = cloneAsPrivate(subscription, source, spec);
