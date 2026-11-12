@@ -125,3 +125,14 @@ Rôles : `STAFF` crée ; `CASHIER` crée et décaisse ; `MANAGER` crée, lit, ni
 - état de besoin validé puis transformé en demande.
 
 `AdminApiAuthorizationManagerTest` couvre les routes.
+
+## Évolutions apportées par les lots suivants
+
+- **Lot F7** : pièces PDF de l'état de besoin, de la demande, du bon de décaissement et de la fiche de justification ([finance-f7-pieces-comptables](../finance-f7-pieces-comptables/README.md)).
+- **Lot F9** : la ligne de justification validée porte le poste de dépense de sa nature (axe `POSTE`).
+- **Lot F16** (contrôle budgétaire, [finance-f16-budget](../finance-f16-budget/README.md)) :
+  - la saisie accepte `forecastNumber` (prévision couverte) et `unplannedCode` (motif de la liste des dépenses non prévues) ;
+  - `insight` porte `budget` (impact par ligne de budget) et `budgetApproval` ;
+  - à la soumission, avec un budget actif, une demande cite sa prévision ou se déclare non prévue ; un dépassement de ligne bloquante ajoute un niveau de validation budgétaire (`BUDGET:OVERRIDE`) ou refuse la demande selon `fund.budget.blocking-mode` ;
+  - l'approbation finale engage le budget ; le décaissement d'une dépense directe le solde ; l'avance soldée le solde pour le justifié ; rejet, annulation et expiration le libèrent ;
+  - la file `/fund-requests/to-approve` montre le niveau budgétaire aux détenteurs du droit budgétaire concerné.

@@ -310,6 +310,9 @@ fund.approval.escalation-days	PAYMENT	INTEGER	RESTART	3	Jours d'attente d'une va
 fund.approval.level1-max	PAYMENT	INTEGER	RESTART	50000	Montant maximal valide par le seul chef de service (XAF)
 fund.approval.level2-max	PAYMENT	INTEGER	RESTART	500000	Montant maximal valide sans la direction (XAF)
 fund.approval.reminder-hours	PAYMENT	INTEGER	RESTART	24	Heures avant rappel au valideur
+fund.budget.blocking-mode	PAYMENT	ENUM	RESTART	EXTRA_APPROVAL	Depassement d'une ligne bloquante : REFUSE (demande refusee) ou EXTRA_APPROVAL (validation budgetaire en plus)
+fund.budget.require-forecast-choice	PAYMENT	BOOLEAN	RESTART	true	Avec un budget actif, chaque demande cite sa prevision ou se declare non prevue
+fund.budget.unplanned-approval	PAYMENT	BOOLEAN	RESTART	false	Une depense non prevue demande une validation budgetaire en plus
 fund.justification.days	PAYMENT	INTEGER	RESTART	7	Delai de justification d'une avance apres la mission ou le decaissement (jours)
 fund.justification.receipt-exempt-max	PAYMENT	INTEGER	RESTART	5000	Montant d'une ligne de justification admis sans piece, sur attestation (XAF)
 fund.request.expiry-days	PAYMENT	INTEGER	RESTART	15	Jours apres lesquels une demande approuvee non decaissee expire

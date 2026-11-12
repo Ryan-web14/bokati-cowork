@@ -265,6 +265,10 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("PATCH", BASE + "/fund-requests/DDF-1/expenses/JUS-1/validate")).isEqualTo("FUND_JUSTIFICATION:VALIDATE");
         assertThat(requiredPermissionFor("GET", BASE + "/fund-requests")).isEqualTo("FUND_REQUEST:READ");
         assertThat(requiredPermissionFor("PATCH", BASE + "/fund-needs/EDB-1/validate")).isEqualTo("FUND_REQUEST:APPROVE_L1");
+        // Lot F16.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/budget/reports/follow-up")).isEqualTo("BUDGET_REPORT:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/budget/forecasts")).isEqualTo("BUDGET_FORECAST:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/budget/5/approve")).isEqualTo("BUDGET:PREPARE");
         // Lot F9.
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/analytic/reports/dashboard")).isEqualTo("ANALYTIC_REPORT:READ");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/analytic/axes/POSTE/sections")).isEqualTo("ANALYTIC_ITEM:CREATE");

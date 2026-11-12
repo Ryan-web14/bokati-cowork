@@ -67,8 +67,19 @@ public final class FundDtos {
             @NotEmpty @Valid List<RequestLine> lines,
             String attachments,
             /** Vrai : la demande est soumise aussitot. */
-            Boolean submit
+            Boolean submit,
+            /** Prevision budgetaire couverte (lot F16) ; sinon depense non prevue avec motif. */
+            String forecastNumber,
+            String unplannedCode
     ) {
+        public RequestInput(FundRequestType type, String subject, String requesterDepartment, String requesterPhone, FundBeneficiaryType beneficiaryType,
+                            String beneficiaryCode, String beneficiaryName, String beneficiaryIdNumber, String beneficiaryPhone, String registerCode,
+                            FundDeliveryMode deliveryMode, LocalDate wantedDate, String missionDestination, LocalDate missionStart, LocalDate missionEnd,
+                            Boolean unplanned, String unplannedReason, List<RequestLine> lines, String attachments, Boolean submit) {
+            this(type, subject, requesterDepartment, requesterPhone, beneficiaryType, beneficiaryCode, beneficiaryName, beneficiaryIdNumber,
+                    beneficiaryPhone, registerCode, deliveryMode, wantedDate, missionDestination, missionStart, missionEnd, unplanned, unplannedReason,
+                    lines, attachments, submit, null, null);
+        }
     }
 
     public record Decision(String comment, BigDecimal reducedAmount) {
@@ -99,7 +110,9 @@ public final class FundDtos {
 
     /** Ce que la demande devient, affiche avant l'envoi et au fil de l'eau. */
     public record Insight(Integer requiredLevels, List<String> levelLabels, BigDecimal registerBalance, Boolean registerCanCover,
-                          List<String> openAdvances, Boolean blockedByOverdueAdvance, String warning) {
+                          List<String> openAdvances, Boolean blockedByOverdueAdvance, String warning,
+                          /** Impact budgetaire (lot F16) : lignes touchees, disponible avant et apres, previsions ouvertes. */
+                          com.sni.bokaticowork.core.accounting.BudgetControl.Impact budget, String budgetApproval) {
     }
 
     public record Request(

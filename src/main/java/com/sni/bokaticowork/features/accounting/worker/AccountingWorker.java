@@ -31,6 +31,7 @@ public class AccountingWorker {
     private final AccPendingEntryLogRepository pendingRepository;
     private final AccEntryRepository entryRepository;
     private final AccountingNotifier notifier;
+    private final com.sni.bokaticowork.features.accounting.service.implementation.BudgetReportService budgetReports;
 
     @Scheduled(cron = "${accounting.night-worker-cron:0 30 2 * * *}", zone = "Africa/Brazzaville")
     public void nightly() {
@@ -43,6 +44,11 @@ public class AccountingWorker {
             remindPending();
         } catch (RuntimeException exception) {
             log.error("Comptabilite · relances des pieces en attente en echec : {}", exception.getMessage(), exception);
+        }
+        try {
+            budgetReports.alerts(String.valueOf(java.time.LocalDate.now(java.time.ZoneId.of("Africa/Brazzaville")).getYear()));
+        } catch (RuntimeException exception) {
+            log.error("Comptabilite · alertes budgetaires en echec : {}", exception.getMessage(), exception);
         }
     }
 

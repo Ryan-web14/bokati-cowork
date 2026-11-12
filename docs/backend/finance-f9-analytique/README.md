@@ -84,3 +84,7 @@ Rôles : `ADMIN` et `SUPER_ADMIN` tout ; `FINANCE` proposer, reclasser, lire ; `
 ## Tests
 
 `AnalyticF9IT` (schéma de production) : dépense sans section refusée, ventilation sur activité et poste (par le compte), reflet en classe 9 au journal `CAG` ; résultat par section (produits, charges, marge), clé de répartition 60/40, reclassement, analyse d'un poste, tableau de bord ; poste proposé en attente puis validé, libellé en double refusé, fusion.
+
+## Évolutions apportées par les lots suivants
+
+- **Lot F16** : les postes de dépense sont reliés aux postes budgétaires (`acc_budget_item_mapping`, type `EXPENSE_ITEM`) ; le réalisé budgétaire d'une ligne avec section filtre les lignes d'écriture par leur ventilation analytique. La comparaison au budget se lit dans le suivi budgétaire ([finance-f16-budget](../finance-f16-budget/README.md)).

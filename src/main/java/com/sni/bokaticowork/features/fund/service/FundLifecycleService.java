@@ -78,6 +78,7 @@ public class FundLifecycleService {
                 requestRepository.save(request);
                 requests.record(request, request.getCurrentLevel(), FundApprovalDecision.EXPIRED, requests.amount(request), null,
                         "Approuvee sans decaissement dans le delai", null);
+                requests.releaseBudget(request, true);
                 notifier.toRequester(request, "Votre demande " + request.getNumber() + " a expire faute de decaissement.");
                 expired++;
             }

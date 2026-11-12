@@ -82,6 +82,7 @@ public class FundRequestService {
     private final CashActorResolver actors;
     private final AccountingEventPublisher accountingEvents;
     private final FundNotifier notifier;
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.BudgetControl> budgetControl;
 
     @Value("${fund.approval.level1-max:50000}")
     private long level1Max;
@@ -97,6 +98,12 @@ public class FundRequestService {
     private long receiptExemptMax;
     @Value("${fund.vat-recoverable-account:4452}")
     private String vatAccount;
+    @Value("${fund.budget.blocking-mode:EXTRA_APPROVAL}")
+    private String budgetBlockingMode;
+    @Value("${fund.budget.unplanned-approval:false}")
+    private boolean unplannedApproval;
+    @Value("${fund.budget.require-forecast-choice:true}")
+    private boolean requireForecastChoice;
 
     // ------------------------------------------------------------------ saisie
 
@@ -187,6 +194,11 @@ public class FundRequestService {
         request.setMissionEnd(input.missionEnd());
         request.setUnplanned(Boolean.TRUE.equals(input.unplanned()));
         request.setUnplannedReason(trim(input.unplannedReason()));
+        request.setForecastNumber(trim(input.forecastNumber()));
+        request.setUnplannedCode(trim(input.unplannedCode()));
+        if (request.getForecastNumber() != null && request.getUnplanned()) {
+            throw new BadRequestException("Une depense est liee a une prevision ou declaree non prevue, pas les deux");
+        }
         request.setAttachments(input.attachments());
         lineRepository.deleteByRequestId(request.getId());
         lineRepository.flush();
@@ -218,8 +230,28 @@ public class FundRequestService {
         if (Boolean.TRUE.equals(insight.blockedByOverdueAdvance())) {
             throw new BadRequestException(insight.warning());
         }
+        // Lot F16 : controle budgetaire a la soumission.
+        request.setBudgetApproval(null);
+        com.sni.bokaticowork.core.accounting.BudgetControl.Impact budget = insight.budget();
+        int levels = insight.requiredLevels();
+        if (budget != null && budget.budgetActive()) {
+            if (requireForecastChoice && request.getForecastNumber() == null && !request.getUnplanned()) {
+                throw new BadRequestException("Choisissez la prevision couverte par cette depense, ou declarez-la non prevue avec son motif");
+            }
+            if (budget.blocked()) {
+                if ("REFUSE".equalsIgnoreCase(budgetBlockingMode)) {
+                    throw new BadRequestException("Budget insuffisant : " + String.join(" ; ", budget.messages())
+                            + ". Demandez un virement de credits ou une revision.");
+                }
+                request.setBudgetApproval("OVERRIDE");
+                levels++;
+            } else if (request.getUnplanned() && unplannedApproval) {
+                request.setBudgetApproval("UNPLANNED");
+                levels++;
+            }
+        }
         Instant now = Instant.now();
-        request.setRequiredLevels(insight.requiredLevels());
+        request.setRequiredLevels(levels);
         request.setCurrentLevel(1);
         request.setStatus(FundRequestStatus.IN_APPROVAL);
         request.setSubmittedAt(now);
@@ -268,6 +300,7 @@ public class FundRequestService {
             }
             request.setExpiresAt(now.plus(Duration.ofDays(expiryDays)));
             requestRepository.save(request);
+            commitBudget(request);
             notifier.approved(request);
         } else {
             request.setCurrentLevel(request.getCurrentLevel() + 1);
@@ -278,6 +311,55 @@ public class FundRequestService {
             notifier.toRequester(request, "Votre demande " + request.getNumber() + " a franchi le niveau " + (request.getCurrentLevel() - 1));
         }
         return view(request);
+    }
+
+    /** Lot F16 : engagement des montants approuves sur les lignes de budget. */
+    private void commitBudget(FundRequest request) {
+        com.sni.bokaticowork.core.accounting.BudgetControl control = budgetControl.getIfAvailable();
+        if (control == null) {
+            return;
+        }
+        List<com.sni.bokaticowork.core.accounting.BudgetControl.Spend> spends = spends(request);
+        LocalDate today = LocalDate.now(ZONE);
+        if ("OVERRIDE".equals(request.getBudgetApproval())) {
+            control.recordOverride(request.getNumber(), control.check(spends, today),
+                    request.getLastComment() == null ? "Derogation accordee a la validation budgetaire" : request.getLastComment(), actor());
+        }
+        control.commit("FUND_REQUEST", request.getNumber(), spends, today, request.getForecastNumber(), Boolean.TRUE.equals(request.getUnplanned()),
+                request.getUnplannedCode(), request.getUnplannedReason(), actor());
+    }
+
+    /** Lignes de la demande, au prorata du montant approuve. */
+    List<com.sni.bokaticowork.core.accounting.BudgetControl.Spend> spends(FundRequest request) {
+        BigDecimal total = request.getTotalAmount();
+        BigDecimal approved = amount(request);
+        List<com.sni.bokaticowork.core.accounting.BudgetControl.Spend> spends = new ArrayList<>();
+        for (FundRequestLine line : lineRepository.findByRequestIdOrderByLineNoAsc(request.getId())) {
+            BigDecimal value = total.signum() == 0 || approved.compareTo(total) == 0 ? line.getAmount()
+                    : line.getAmount().multiply(approved).divide(total, 4, RoundingMode.HALF_UP);
+            String nature = line.getNatureCode();
+            if (FundRequestService.ADVANCE_NATURE.equals(nature) && lineRepository.findByRequestIdOrderByLineNoAsc(request.getId()).size() == 1) {
+                // Une avance porte son objet sur la nature de la mission : le compte d'avance n'est pas une charge.
+                nature = null;
+            }
+            spends.add(new com.sni.bokaticowork.core.accounting.BudgetControl.Spend(nature, null, line.getSection(), value));
+        }
+        return spends;
+    }
+
+    /** Lot F16 : solde (realise) ou liberation de l'engagement. */
+    void settleBudget(FundRequest request, BigDecimal realized) {
+        com.sni.bokaticowork.core.accounting.BudgetControl control = budgetControl.getIfAvailable();
+        if (control != null) {
+            control.settle("FUND_REQUEST", request.getNumber(), realized);
+        }
+    }
+
+    void releaseBudget(FundRequest request, boolean expired) {
+        com.sni.bokaticowork.core.accounting.BudgetControl control = budgetControl.getIfAvailable();
+        if (control != null) {
+            control.release("FUND_REQUEST", request.getNumber(), expired);
+        }
     }
 
     public FundDtos.Request reject(String number, FundDtos.Decision decision) {
@@ -291,6 +373,7 @@ public class FundRequestService {
         request.setStatus(FundRequestStatus.REJECTED);
         request.setLastComment(comment);
         requestRepository.save(request);
+        releaseBudget(request, false);
         notifier.toRequester(request, "Votre demande " + request.getNumber() + " est rejetee : " + comment);
         return view(request);
     }
@@ -325,6 +408,7 @@ public class FundRequestService {
         request.setStatus(FundRequestStatus.CANCELLED);
         request.setCancelledAt(Instant.now());
         requestRepository.save(request);
+        releaseBudget(request, false);
         return view(request);
     }
 
@@ -399,6 +483,7 @@ public class FundRequestService {
         } else {
             request.setStatus(FundRequestStatus.SETTLED);
             request.setSettledAt(now);
+            settleBudget(request, request.getDisbursedAmount());
         }
         requestRepository.save(request);
         notifier.disbursed(request, value);
@@ -606,6 +691,7 @@ public class FundRequestService {
         if (covered.compareTo(given) == 0 && given.signum() > 0) {
             request.setStatus(FundRequestStatus.SETTLED);
             request.setSettledAt(Instant.now());
+            settleBudget(request, justified);
             notifier.toBeneficiary(request, "Votre avance " + request.getNumber() + " est soldee");
         } else if (justified.compareTo(given) >= 0) {
             request.setStatus(FundRequestStatus.JUSTIFIED);
@@ -660,6 +746,13 @@ public class FundRequestService {
             throw new ForbiddenException("On ne valide jamais sa propre demande, meme avec le niveau requis");
         }
         int level = request.getCurrentLevel();
+        if (request.getBudgetApproval() != null && level == request.getRequiredLevels()) {
+            String permission = "OVERRIDE".equals(request.getBudgetApproval()) ? "BUDGET:OVERRIDE" : "BUDGET:APPROVE_UNPLANNED";
+            if (!actors.hasAuthority(permission)) {
+                throw new ForbiddenException("La validation budgetaire demande le droit " + permission);
+            }
+            return null;
+        }
         if (actors.hasAuthority(levelPermission(level))) {
             return null;
         }
@@ -713,7 +806,9 @@ public class FundRequestService {
                 .filter(delegation -> !delegation.getStartsOn().isAfter(today) && !delegation.getEndsOn().isBefore(today))
                 .forEach(delegation -> levels.add(delegation.getLevel()));
         return requestRepository.findByStatusInOrderByCreatedAtAsc(EnumSet.of(FundRequestStatus.IN_APPROVAL)).stream()
-                .filter(request -> levels.contains(request.getCurrentLevel()))
+                .filter(request -> request.getBudgetApproval() != null && request.getCurrentLevel().equals(request.getRequiredLevels())
+                        ? actors.hasAuthority("OVERRIDE".equals(request.getBudgetApproval()) ? "BUDGET:OVERRIDE" : "BUDGET:APPROVE_UNPLANNED")
+                        : levels.contains(request.getCurrentLevel()))
                 .filter(request -> !CashActorResolver.samePerson(actor, request.getRequester()))
                 .map(this::summary).toList();
     }
@@ -781,8 +876,22 @@ public class FundRequestService {
         boolean blocked = overdue && "BLOCK".equalsIgnoreCase(overduePolicy) && request.getRequestType() == FundRequestType.ADVANCE;
         String warning = overdue ? "Le beneficiaire a une avance en retard de justification" + (blocked ? " : aucune nouvelle avance avant sa justification" : "")
                 : balance != null && balance.compareTo(amount) < 0 ? "La caisse ne peut pas couvrir ce montant aujourd'hui" : null;
-        return new FundDtos.Insight(levels, labels, balance, balance == null ? null : balance.compareTo(amount) >= 0,
-                open.stream().map(other -> other.getNumber() + " : reste " + plain(remainingToJustify(other)) + " XAF").toList(), blocked, warning);
+        com.sni.bokaticowork.core.accounting.BudgetControl control = budgetControl.getIfAvailable();
+        com.sni.bokaticowork.core.accounting.BudgetControl.Impact budget = control == null || request.getId() == null ? null
+                : control.check(spends(request), LocalDate.now(ZONE));
+        List<String> allLabels = new ArrayList<>(labels);
+        String budgetApproval = null;
+        if (budget != null && budget.blocked() && !"REFUSE".equalsIgnoreCase(budgetBlockingMode)) {
+            budgetApproval = "OVERRIDE";
+        } else if (budget != null && budget.budgetActive() && Boolean.TRUE.equals(request.getUnplanned()) && unplannedApproval) {
+            budgetApproval = "UNPLANNED";
+        }
+        if (budgetApproval != null) {
+            allLabels.add("Validation budgetaire");
+        }
+        return new FundDtos.Insight(levels, allLabels, balance, balance == null ? null : balance.compareTo(amount) >= 0,
+                open.stream().map(other -> other.getNumber() + " : reste " + plain(remainingToJustify(other)) + " XAF").toList(), blocked, warning,
+                budget, budgetApproval);
     }
 
     @Transactional(readOnly = true)

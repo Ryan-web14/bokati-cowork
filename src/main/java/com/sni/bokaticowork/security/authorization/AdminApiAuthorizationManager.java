@@ -124,6 +124,14 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
 
     /** Droits de la comptabilite (plan finance, section 16). */
     private String accountingPermission(String path, String method) {
+        if (path.startsWith("/accounting/budget")) {
+            // Lot F16 : les droits fins (preparer, consolider, approuver, virer, deroger) sont dans le service.
+            if (HttpMethod.GET.matches(method) || path.equals("/accounting/budget/check")) return permission("BUDGET_REPORT", "READ");
+            if (path.startsWith("/accounting/budget/items")) return permission("BUDGET", "PREPARE");
+            if (path.startsWith("/accounting/budget/forecasts")) return permission("BUDGET_FORECAST", "MANAGE");
+            if (path.startsWith("/accounting/budget/transfers")) return permission("BUDGET", "TRANSFER_REQUEST");
+            return permission("BUDGET", "PREPARE");
+        }
         if (path.startsWith("/accounting/analytic")) {
             // Lot F9 : les controles fins (branche du responsable, reclassement) sont dans le service.
             if (HttpMethod.GET.matches(method)) return permission("ANALYTIC_REPORT", "READ");

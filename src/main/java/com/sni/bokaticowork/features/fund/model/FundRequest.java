@@ -162,6 +162,16 @@ public class FundRequest {
     @Column(name = "cancelled_at")
     private java.time.Instant cancelledAt;
 
+    /** Validation budgetaire supplementaire (lot F16) : OVERRIDE (depassement bloquant) ou UNPLANNED. */
+    @Column(name = "budget_approval")
+    private String budgetApproval;
+
+    @Column(name = "forecast_number")
+    private String forecastNumber;
+
+    @Column(name = "unplanned_code")
+    private String unplannedCode;
+
     @Column(name = "legacy_request_number")
     private String legacyRequestNumber;
 
