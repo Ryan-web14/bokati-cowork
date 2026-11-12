@@ -2886,6 +2886,9 @@
     },
     "earlyPaymentDiscount": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.features.billing.dto.request.CreateEarlyPaymentDiscountRequest"
+    },
+    "companyCustomerCode": {
+     "type": "string"
     }
    }
   },
