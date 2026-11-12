@@ -99,6 +99,16 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
         return renderPdf(toResponse(serviceTransactionByReceipt(receiptNumber)));
     }
 
+    @Override
+    public byte[] generateAdminPdfByTransactionNumber(String transactionNumber) {
+        return com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(generatePdfByTransactionNumber(transactionNumber));
+    }
+
+    @Override
+    public byte[] generateAdminPdfByReceiptNumber(String receiptNumber) {
+        return com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(generatePdfByReceiptNumber(receiptNumber));
+    }
+
     private PaymentTransaction serviceTransactionByNumber(String transactionNumber) {
         if (!StringUtils.hasText(transactionNumber)) {
             throw new BadRequestException("Payment transaction number is required");
