@@ -93,7 +93,7 @@ Spécification : `docs/backend/plan-finance-comptabilite/provisions-et-creances-
 - indemnités de fin de carrière recalculées ;
 - contrôles des créances sans écart bloquant.
 
-Le lot F12 (clôture) appellera cette liste avec celle des immobilisations.
+**Réglé** : la liste de clôture du lot F12 appelle ce contrôle (étape `PROVISIONS`).
 
 ## Contrôles quotidiens
 

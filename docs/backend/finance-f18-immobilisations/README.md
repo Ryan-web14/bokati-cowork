@@ -105,7 +105,7 @@ La liste de clôture (`closing-check`) exige :
 - une campagne d'inventaire close avec son PV dans l'exercice (paramètre `accounting.fixed-asset.inventory-required`) ;
 - des en-cours justifiés.
 
-La clôture d'exercice (lot F12) appellera cette liste et refusera tant qu'elle n'est pas vide.
+**Réglé** : la liste de clôture du lot F12 appelle ce contrôle (étape `FIXED_ASSETS`) et refuse la clôture tant qu'il reste un constat bloquant.
 
 ## Paramètres (`ACCOUNTING`, tous lus à chaud)
 

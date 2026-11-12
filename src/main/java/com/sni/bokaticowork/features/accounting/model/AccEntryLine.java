@@ -79,4 +79,8 @@ public class AccEntryLine {
     /** Code de pointage bancaire (lot F10), distinct du lettrage. */
     @Column(name = "matching_code", length = 20)
     private String matchingCode;
+
+    /** Ligne d'a-nouveau : ligne de l'exercice clos dont elle reprend le reste non lettre (lot F12). */
+    @Column(name = "carried_from_line_id")
+    private Long carriedFromLineId;
 }

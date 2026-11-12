@@ -22,12 +22,20 @@ accounting.cash.exchange-loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes
 accounting.cash.treasury-parent-account	ACCOUNTING	TEXT	LIVE	571	Compte parent sous lequel chaque caisse recoit son compte
 accounting.cash.vat-collected-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA collectee sur une entree de caisse
 accounting.cash.vat-recoverable-account	ACCOUNTING	TEXT	LIVE	4452	Compte de TVA recuperable sur une sortie de caisse
+accounting.closing.collective-accounts	ACCOUNTING	TEXT	LIVE	411,401,421,4191,422,462,165	Comptes collectifs a justifier par leurs tiers avant la cloture
+accounting.closing.loss-account	ACCOUNTING	TEXT	LIVE	139	Compte du resultat en perte repris en a-nouveau
+accounting.closing.off-balance-journal	ACCOUNTING	TEXT	LIVE	HB	Journal de reprise des engagements hors bilan a la cloture
+accounting.closing.opening-journal	ACCOUNTING	TEXT	LIVE	AN	Journal des a-nouveaux de l'exercice suivant
+accounting.closing.profit-account	ACCOUNTING	TEXT	LIVE	131	Compte du resultat en benefice repris en a-nouveau
+accounting.closing.suspense-accounts	ACCOUNTING	TEXT	LIVE	471,585	Comptes d'attente a solder avant la cloture (prefixes separes par des virgules)
 accounting.commitment.alert-days	ACCOUNTING	INTEGER	LIVE	30	Hors bilan : alerte avant echeance, preavis et renouvellement (jours ; aussi a 7 et 1 jour)
 accounting.commitment.given-account	ACCOUNTING	TEXT	LIVE	901	Compte des engagements donnes
 accounting.commitment.given-counter-account	ACCOUNTING	TEXT	LIVE	902	Compte de contrepartie des engagements donnes
 accounting.commitment.journal	ACCOUNTING	TEXT	LIVE	HB	Journal des engagements hors bilan
 accounting.commitment.received-account	ACCOUNTING	TEXT	LIVE	905	Compte des engagements recus
 accounting.commitment.received-counter-account	ACCOUNTING	TEXT	LIVE	906	Compte de contrepartie des engagements recus
+accounting.confirmation.threshold	ACCOUNTING	DECIMAL	LIVE	1000000	Confirmations de solde : tout solde au-dela de ce montant est circularise
+accounting.confirmation.top-count	ACCOUNTING	INTEGER	LIVE	20	Confirmations de solde : nombre des plus gros soldes circularises
 accounting.currencies	ACCOUNTING	TEXT	LIVE	EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR	Devises suivies (taux recuperes et proposes), separees par des virgules
 accounting.deferral.analytic-axis	ACCOUNTING	TEXT	LIVE		Constatations d'avance : axe analytique des sections reprises sur les ecritures (vide : celui des achats)
 accounting.deferral.cron	ACCOUNTING	CRON	LIVE	0 0 4 * * *	Constatations d'avance : planification (echeanciers chaque nuit, fin de periode le 1er du mois)

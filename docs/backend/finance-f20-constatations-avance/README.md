@@ -76,7 +76,7 @@ La liste de clôture (`closing-check`) exige :
 - le traitement de chaque mois de l'exercice où un échéancier existait, décembre compris ;
 - un écart nul.
 
-Le lot F12 l'appellera avec celles des immobilisations et des provisions.
+**Réglé** : la liste de clôture du lot F12 appelle ce contrôle (étape `DEFERRALS`).
 
 ## Routes (`/sni/api/v1`)
 

@@ -316,6 +316,9 @@ public class AccountingLetteringService {
         if (lettering.getStatus() == LetteringStatus.UNLETTERED) {
             throw new BadRequestException("Ce lettrage est deja defait");
         }
+        if (lettering.getKind() == LetteringKind.CARRY_FORWARD) {
+            throw new BadRequestException("Un lettrage de reprise en a-nouveau solde un exercice clos : il ne se defait pas. Delettrez la ligne d'a-nouveau.");
+        }
         if (!StringUtils.hasText(reason)) {
             throw new BadRequestException("Indiquez le motif du delettrage");
         }
