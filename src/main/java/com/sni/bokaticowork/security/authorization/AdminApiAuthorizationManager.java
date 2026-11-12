@@ -105,6 +105,10 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
      * exigeaient le meme droit, que tout caissier avait. Chaque action a desormais le sien.</p>
      */
     private String cashPermission(String path, String method) {
+        // Position et etats (lot C6) : lecture reservee a l'encadrement.
+        if (path.equals("/cash-registers/position") || path.startsWith("/cash-registers/reports/")) {
+            return permission("CASH_REPORT", "READ");
+        }
         if (HttpMethod.GET.matches(method)) return permission("CASH", "READ");
         if (path.equals("/cash-registers") || path.startsWith("/cash-registers/reference-lists")) {
             return permission("CASH_REGISTER", "MANAGE");

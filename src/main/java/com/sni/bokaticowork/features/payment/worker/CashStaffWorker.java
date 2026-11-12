@@ -18,6 +18,7 @@ public class CashStaffWorker {
 
     private final CashStaffService staffService;
     private final com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService operations;
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashDashboardService dashboard;
 
     @Scheduled(cron = "${bokati.cash.staff-worker-cron:0 10 * * * *}", zone = "Africa/Brazzaville")
     public void run() {
@@ -31,6 +32,12 @@ public class CashStaffWorker {
             operations.runPeriodicChecks();
         } catch (RuntimeException exception) {
             log.error("Caisse · traitement periodique des operations en echec : {}", exception.getMessage(), exception);
+        }
+        try {
+            // Caisses non comptees depuis trop longtemps (lot C6).
+            dashboard.runPeriodicChecks();
+        } catch (RuntimeException exception) {
+            log.error("Caisse · alertes de comptage en echec : {}", exception.getMessage(), exception);
         }
     }
 }

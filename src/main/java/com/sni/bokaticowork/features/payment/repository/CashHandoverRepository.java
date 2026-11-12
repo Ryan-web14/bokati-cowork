@@ -12,4 +12,6 @@ public interface CashHandoverRepository extends JpaRepository<com.sni.bokaticowo
     Optional<com.sni.bokaticowork.features.payment.model.CashHandover> findByHandoverNumber(String handoverNumber);
 
     List<com.sni.bokaticowork.features.payment.model.CashHandover> findByFromSessionAndStatus(String fromSession, com.sni.bokaticowork.features.payment.enums.CashHandoverStatus status);
+
+    List<com.sni.bokaticowork.features.payment.model.CashHandover> findByStatusOrderByCreatedAtAsc(com.sni.bokaticowork.features.payment.enums.CashHandoverStatus status);
 }

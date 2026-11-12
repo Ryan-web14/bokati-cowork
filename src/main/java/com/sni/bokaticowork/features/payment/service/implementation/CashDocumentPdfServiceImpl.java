@@ -60,6 +60,11 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         context.setVariable("docTypeLabel", documentTypeLabel(response.documentType(), response.movementType()));
         context.setVariable("generatedAt", Instant.now());
         context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
+        // Lot C4 : une piece deja imprimee ressort en DUPLICATA ; une piece contre-passee porte la
+        // mention ANNULE PAR et le numero du mouvement inverse.
+        context.setVariable("duplicate", movement.getPrintCount() != null && movement.getPrintCount() > 0);
+        context.setVariable("reversedBy", movement.getStatus() == com.sni.bokaticowork.features.payment.enums.CashMovementStatus.REVERSED
+                ? response.relatedMovementNumber() : null);
         return renderToPdf(templateEngine.process("cash/movement-document", context));
     }
 

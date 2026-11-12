@@ -84,6 +84,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Value("${bokati.cash.visa.expiry-hours:24}")
     private int visaExpiryHours = 24;
 
+    /** Remboursement en especes au-dela duquel le virement ou le mobile money est impose ; 0 : sans limite. */
+    @Value("${bokati.cash.refund.max-cash-amount:0}")
+    private BigDecimal refundCashMax = BigDecimal.ZERO;
+
     @Value("${bokati.payment.cash-session.auto-limit:10000000}")
     private BigDecimal autoSessionLimit;
 
@@ -137,6 +141,61 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .build());
         registerAdmin.initializeRegister(register, request.schedules(), request.holderEmail(), request.backupEmails());
         return mapper.toCashRegisterResponse(register);
+    }
+
+    /** Sorties confirmees du jour par le meme caissier sur la caisse (hors ce mouvement). */
+    private BigDecimal dailyOutflow(CashRegister register, CashMovement movement) {
+        Instant startOfDay = java.time.LocalDate.now(com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.ZONE)
+                .atStartOfDay(com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.ZONE).toInstant();
+        BigDecimal total = BigDecimal.ZERO;
+        for (CashMovement other : movementRepository.findByCreatedByOrderByCreatedAtDesc(movement.getCreatedBy())) {
+            if (other.getCreatedAt() == null || other.getCreatedAt().isBefore(startOfDay)) {
+                break;
+            }
+            if (other.getId() != null && other.getId().equals(movement.getId())) {
+                continue;
+            }
+            if (other.getCashSession() != null && register.getRegisterCode().equals(other.getCashSession().getCashRegister().getRegisterCode())) {
+                BigDecimal signed = com.sni.bokaticowork.features.payment.service.support.CashFlowRules.signedAmount(other);
+                if (signed.signum() < 0) {
+                    total = total.add(signed.negate());
+                }
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Plafond de detention (lot C4), enfin applique : en mode blocage, un encaissement en especes
+     * qui le depasserait est refuse jusqu'a une remise ; en mode alerte, il passe et le responsable
+     * est prevenu.
+     */
+    private void enforceDetentionCap(CashSession session, BigDecimal amount) {
+        CashRegister register = session.getCashRegister();
+        if (amount == null || register == null || Boolean.TRUE.equals(register.getSystemManaged())
+                || Boolean.FALSE.equals(register.getCashControlEnabled())
+                || register.getMaxCashAmount() == null || register.getMaxCashAmount().signum() <= 0) {
+            return;
+        }
+        BigDecimal after = money(summarySupport.expectedClosingAmount(session)).add(amount);
+        if (after.compareTo(register.getMaxCashAmount()) <= 0) {
+            return;
+        }
+        if (register.getCapBehavior() == com.sni.bokaticowork.features.payment.enums.CashCapBehavior.BLOCK) {
+            throw new BadRequestException("Plafond de detention de la caisse " + register.getRegisterCode() + " atteint ("
+                    + register.getMaxCashAmount().stripTrailingZeros().toPlainString()
+                    + " XAF) : faites une remise a la caisse mere avant d'encaisser en especes");
+        }
+        Instant lastSent = register.getLastAnomalyAlertSentAt();
+        if (lastSent == null || lastSent.isBefore(Instant.now().minus(java.time.Duration.ofHours(6)))) {
+            emailNotifier.notifyRegisterManager(register, "Plafond de detention depasse · " + register.getRegisterCode(),
+                    "La caisse " + register.getName() + " detiendra " + after.stripTrailingZeros().toPlainString()
+                            + " XAF, au-dela de son plafond de " + register.getMaxCashAmount().stripTrailingZeros().toPlainString()
+                            + " XAF. Faites une remise a la caisse mere.",
+                    session.getSessionNumber(), CASH_SESSIONS_PATH + session.getSessionNumber());
+            register.setLastAnomalyAlertSentAt(Instant.now());
+            registerRepository.save(register);
+        }
     }
 
     private BigDecimal positiveOrNull(BigDecimal amount) {
@@ -349,7 +408,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Override
     public CashMovementResponse markMovementPrinted(String movementNumber) {
         CashMovement movement = movementByNumber(movementNumber);
-        movement.setPrintedAt(Instant.now());
+        // Reimpression tracee (lot C4) : la date de premiere impression reste, le compteur et le
+        // dernier auteur avancent ; au-dela de la premiere, la piece sort en DUPLICATA.
+        if (movement.getPrintedAt() == null) {
+            movement.setPrintedAt(Instant.now());
+        }
+        movement.setPrintCount((movement.getPrintCount() == null ? 0 : movement.getPrintCount()) + 1);
+        movement.setLastPrintedBy(actors.current());
         return mapper.toCashMovementResponse(movementRepository.save(movement));
     }
 
@@ -378,6 +443,14 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 && request.direction() != com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN
                 && request.direction() != com.sni.bokaticowork.features.payment.enums.CashFlowDirection.OUT) {
             throw new BadRequestException("Un ajustement de caisse doit preciser son sens : IN (entree) ou OUT (sortie)");
+        }
+        if (type == CashMovementType.CASH_IN) {
+            enforceDetentionCap(session, request.amount());
+        }
+        if (type == CashMovementType.REFUND && refundCashMax != null && refundCashMax.signum() > 0
+                && request.amount() != null && request.amount().compareTo(refundCashMax) > 0) {
+            throw new BadRequestException("Au-dela de " + refundCashMax.stripTrailingZeros().toPlainString()
+                    + " XAF, un remboursement se fait par virement ou mobile money, pas en especes");
         }
         com.sni.bokaticowork.features.payment.model.CashOperationNature nature = nature(request.natureCode(), type, request.amount(), request.referenceType());
         CashMovement movement = saveManualMovement(session, type, request.amount(), request.documentType(), request.documentNumber(),
@@ -466,6 +539,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private CashMovementResponse voucher(String sessionNumber, CashMovementType type, CashDocumentType defaultDocument,
                                          CreateCashVoucherRequest request) {
         CashSession session = requireOpenSession(sessionNumber);
+        if (type == CashMovementType.CASH_IN) {
+            enforceDetentionCap(session, request.amount());
+        }
         com.sni.bokaticowork.features.payment.model.CashOperationNature nature = nature(request.natureCode(), type, request.amount(), request.referenceType());
         CashMovement movement = saveManualMovement(session, type, request.amount(),
                 request.documentType() == null ? defaultDocument : request.documentType(),
@@ -523,7 +599,15 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 : movement.getCashSession().getCashRegister().getDoubleVisaThreshold();
         boolean outflow = com.sni.bokaticowork.features.payment.service.support.CashFlowRules
                 .direction(movement.getMovementType(), movement.getDirection()) == com.sni.bokaticowork.features.payment.enums.CashFlowDirection.OUT;
+        CashRegister register = movement.getCashSession().getCashRegister();
+        // Plafonds de sortie du caissier (lot C4) : au-dela, le visa d'un caissier principal ou
+        // d'un superviseur est exige.
+        boolean overOperationCap = outflow && register.getMaxOutPerOperation() != null && register.getMaxOutPerOperation().signum() > 0
+                && movement.getAmount().compareTo(register.getMaxOutPerOperation()) > 0;
+        boolean overDailyCap = outflow && register.getMaxOutPerDay() != null && register.getMaxOutPerDay().signum() > 0
+                && dailyOutflow(register, movement).add(movement.getAmount()).compareTo(register.getMaxOutPerDay()) > 0;
         boolean needsVisa = movement.getMovementType() == CashMovementType.ADJUSTMENT
+                || overOperationCap || overDailyCap
                 || (threshold != null && movement.getAmount().compareTo(threshold) > 0 && (outflow || threshold.signum() == 0));
         if (needsVisa) {
             movement.setStatus(com.sni.bokaticowork.features.payment.enums.CashMovementStatus.PENDING);
@@ -609,6 +693,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashSession session = requireOpenSession(sessionNumber);
         assertManualEntryAllowed(session.getCashRegister());
         validatePositive(amount);
+        enforceDetentionCap(session, amount);
         saveMovement(session, CashMovementType.PAYMENT, amount, CashDocumentType.RECEIPT, trim(referenceCode), "PAYMENT",
                 "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, actors.resolve(createdBy), null);
     }

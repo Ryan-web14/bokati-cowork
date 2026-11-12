@@ -32,6 +32,7 @@ public class CashAnomalyFlagController {
 
     private final CashAnomalyDetectionService anomalyDetectionService;
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_ANALYZE_SESSION", ressource = "cash_register")
     @PostMapping("/sessions/{sessionNumber}/analyze")
     public ResponseEntity<List<CashAnomalyFlagResponse>> analyzeSession(@PathVariable String sessionNumber) {
         return ResponseEntity.ok(anomalyDetectionService.analyzeSession(sessionNumber));
@@ -48,6 +49,7 @@ public class CashAnomalyFlagController {
         return ResponseEntity.ok(anomalyDetectionService.list(registerCode, sessionNumber, severity, status, anomalyType, pageable));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_REVIEW", ressource = "cash_register")
     @PatchMapping("/{flagNumber}/review")
     public ResponseEntity<CashAnomalyFlagResponse> review(@PathVariable String flagNumber,
                                                            @Valid @RequestBody ReviewCashAnomalyRequest request) {

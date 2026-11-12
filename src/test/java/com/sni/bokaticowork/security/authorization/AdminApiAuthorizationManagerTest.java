@@ -213,6 +213,24 @@ class AdminApiAuthorizationManagerTest {
     }
 
     @Test
+    void shouldGuardTheCashOperationsAndDashboard() {
+        // Lots C2, C3 et C6.
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/suspend")).isEqualTo("CASH_SESSION:SUSPEND");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/force-close")).isEqualTo("CASH_SESSION:FORCE_CLOSE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/counts")).isEqualTo("CASH_SESSION:CLOSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/pause")).isEqualTo("CASH_SESSION:PAUSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/handovers/PVP-1/accept")).isEqualTo("CASH_SESSION:OPEN");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/movements/CSM-1/approve")).isEqualTo("CASH_MOVEMENT:APPROVE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/movements/CSM-1/reverse")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/transfers")).isEqualTo("CASH_TRANSFER:SEND");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/transfers/OTI-1/receive")).isEqualTo("CASH_TRANSFER:RECEIVE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/absences")).isEqualTo("CASH_STAFF:DECLARE_ABSENCE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/absences/ABS-1/approve")).isEqualTo("CASH_STAFF:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/position")).isEqualTo("CASH_REPORT:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/reports/daily-blotter")).isEqualTo("CASH_REPORT:READ");
+    }
+
+    @Test
     void shouldNotLetACashierWithOnlyTheOldAdjustRightValidateAVariance() {
         List<String> cashier = List.of("ROLE_ADMIN", "CASH_READ", "CASH:READ", "CASH_ADJUST", "CASH:ADJUST",
                 "CASH_SESSION_OPEN", "CASH_SESSION:OPEN", "CASH_SESSION_CLOSE", "CASH_SESSION:CLOSE",

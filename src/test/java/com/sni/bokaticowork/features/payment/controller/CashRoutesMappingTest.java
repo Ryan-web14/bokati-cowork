@@ -31,6 +31,9 @@ class CashRoutesMappingTest {
     private final com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService operations =
             mock(com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService.class);
 
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashDashboardService dashboard =
+            mock(com.sni.bokaticowork.features.payment.service.interfaces.CashDashboardService.class);
+
     private MockMvc mvc() {
         return MockMvcBuilders.standaloneSetup(
                 new CashRegisterController(registers),
@@ -41,7 +44,8 @@ class CashRoutesMappingTest {
                 new CashDocumentController(mock(CashDocumentPdfService.class)),
                 new CashAnomalyFlagController(mock(CashAnomalyDetectionService.class)),
                 new CashStatisticsController(mock(CashStatisticsService.class)),
-                new CashOperationsController(operations)
+                new CashOperationsController(operations),
+                new CashDashboardController(dashboard)
         ).build();
     }
 
@@ -74,6 +78,8 @@ class CashRoutesMappingTest {
 
         mvc.perform(get("/sni/api/v1/cash-registers/CSR-1/petty-cash/refill"));
         org.mockito.Mockito.verify(operations).pettyRefillProposal("CSR-1");
+        mvc.perform(get("/sni/api/v1/cash-registers/position"));
+        org.mockito.Mockito.verify(dashboard).position(null);
         assertThat(mvc).isNotNull();
     }
 }

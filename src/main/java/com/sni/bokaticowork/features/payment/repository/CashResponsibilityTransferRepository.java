@@ -12,4 +12,6 @@ public interface CashResponsibilityTransferRepository extends JpaRepository<com.
     List<com.sni.bokaticowork.features.payment.model.CashResponsibilityTransfer> findByRegisterCodeOrderByEffectiveAtDesc(String registerCode);
 
     Optional<com.sni.bokaticowork.features.payment.model.CashResponsibilityTransfer> findByTransferNumber(String transferNumber);
+
+    List<com.sni.bokaticowork.features.payment.model.CashResponsibilityTransfer> findByStatusOrderByCreatedAtAsc(com.sni.bokaticowork.features.payment.enums.CashResponsibilityTransferStatus status);
 }

@@ -48,6 +48,8 @@
     </style>
 </head>
 <body>
+<div th:if="${duplicate}" style="text-align:center;font-weight:bold;font-size:18px;color:#b00020;border:2px solid #b00020;padding:4px;margin-bottom:8px;">DUPLICATA</div>
+<div th:if="${reversedBy != null}" style="text-align:center;font-weight:bold;font-size:14px;color:#b00020;margin-bottom:8px;" th:text="${'ANNULÉ PAR ' + reversedBy}">ANNULÉ PAR</div>
 <div class="header">
     <table class="header-table">
         <tr>

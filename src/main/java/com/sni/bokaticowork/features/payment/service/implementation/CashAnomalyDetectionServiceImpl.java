@@ -65,6 +65,9 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
     private final CashEmailNotifier emailNotifier;
     private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
     @Lazy private final SupportTicketService supportTicketService;
+    private final com.sni.bokaticowork.features.payment.repository.CashCountRepository countRepository;
+    private final com.sni.bokaticowork.features.payment.repository.CashRegisterDeviceRepository deviceRepository;
+    private final com.sni.bokaticowork.features.payment.repository.CashTransferOrderRepository transferRepository;
 
     @Value("${bokati.payment.cash-register.alert-cooldown-hours:6}")
     private int alertCooldownHours;
@@ -84,6 +87,7 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
         detectThresholdStructuring(session, movements, newFlags);
         detectNearMaxCashRecurrence(session, movements, newFlags);
         detectMaxCashOverflow(session, movements);
+        detectControlAnomalies(session, movements, newFlags);
 
         return newFlags.stream().map(this::toResponse).toList();
     }
@@ -290,6 +294,68 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
         );
         register.setLastAnomalyAlertSentAt(Instant.now());
         cashRegisterRepository.save(register);
+    }
+
+    /** Anomalies ajoutees par le lot C4 du plan des caisses (section 11.4). */
+    private void detectControlAnomalies(CashSession session, List<CashMovement> movements, List<CashAnomalyFlag> newFlags) {
+        CashRegister register = session.getCashRegister();
+        if (register == null || Boolean.TRUE.equals(register.getSystemManaged())) {
+            return;
+        }
+        if (session.getOpeningVariance() != null && session.getOpeningVariance().signum() != 0) {
+            flag(session, null, CashAnomalyType.OPENING_VARIANCE, CashAnomalySeverity.MEDIUM, session.getOpeningVariance().abs(),
+                    "Fonds compte a l'ouverture different du dernier comptage de la caisse : ecart de "
+                            + session.getOpeningVariance().stripTrailingZeros().toPlainString() + " XAF.", newFlags);
+        }
+        int maxHours = register.getMaxSessionHours() == null ? 24 : register.getMaxSessionHours();
+        Instant end = session.getClosedAt() != null ? session.getClosedAt() : Instant.now();
+        if (session.getOpenedAt() != null && session.getOpenedAt().plus(maxHours, ChronoUnit.HOURS).isBefore(end)) {
+            long hours = ChronoUnit.HOURS.between(session.getOpenedAt(), end);
+            flag(session, null, CashAnomalyType.LONG_SESSION, hours > 2L * maxHours ? CashAnomalySeverity.MEDIUM : CashAnomalySeverity.LOW,
+                    BigDecimal.valueOf(hours), "Session ouverte pendant " + hours + " heures, au-dela des " + maxHours + " heures prevues.", newFlags);
+        }
+        if (session.getPauseSeconds() != null && session.getPauseSeconds() > 3600) {
+            long minutes = session.getPauseSeconds() / 60;
+            flag(session, null, CashAnomalyType.LONG_PAUSES, CashAnomalySeverity.LOW, BigDecimal.valueOf(minutes),
+                    "Pauses cumulees de " + minutes + " minutes sur la session.", newFlags);
+        }
+        long reversals = movements.stream()
+                .filter(m -> m.getStatus() == com.sni.bokaticowork.features.payment.enums.CashMovementStatus.REVERSED)
+                .filter(m -> session.getOpenedBy() != null && session.getOpenedBy().equalsIgnoreCase(m.getCreatedBy()))
+                .count();
+        if (reversals >= 3) {
+            flag(session, null, CashAnomalyType.REPEATED_REVERSALS, reversals >= 6 ? CashAnomalySeverity.HIGH : CashAnomalySeverity.MEDIUM,
+                    BigDecimal.valueOf(reversals), reversals + " mouvements du caissier contre-passes sur la session.", newFlags);
+        }
+        BigDecimal cap = register.getMaxCashAmount();
+        if (cap != null && cap.signum() > 0) {
+            movements.stream()
+                    .filter(m -> m.getRunningBalance() != null && m.getRunningBalance().compareTo(cap) > 0)
+                    .reduce((first, second) -> second)
+                    .ifPresent(m -> flag(session, m, CashAnomalyType.DETENTION_CAP_EXCEEDED, CashAnomalySeverity.MEDIUM,
+                            m.getRunningBalance(), "Solde de " + m.getRunningBalance().stripTrailingZeros().toPlainString()
+                                    + " XAF au-dela du plafond de detention de " + cap.stripTrailingZeros().toPlainString() + " XAF.", newFlags));
+        }
+        if (session.getOpenedFromDevice() != null) {
+            deviceRepository.findByRegisterCodeAndDeviceCode(register.getRegisterCode(), session.getOpenedFromDevice())
+                    .filter(device -> device.getStatus() != com.sni.bokaticowork.features.payment.enums.CashDeviceStatus.ALLOWED)
+                    .ifPresent(device -> flag(session, null, CashAnomalyType.UNKNOWN_DEVICE, CashAnomalySeverity.LOW, BigDecimal.ONE,
+                            "Session ouverte depuis le poste " + device.getDeviceCode() + ", non autorise sur la caisse.", newFlags));
+        }
+        BigDecimal damaged = countRepository.findBySessionNumberOrderByCreatedAtAsc(session.getSessionNumber()).stream()
+                .map(count -> count.getDamagedTotal() == null ? BigDecimal.ZERO : count.getDamagedTotal())
+                .reduce(BigDecimal.ZERO, BigDecimal::max);
+        if (damaged.signum() > 0) {
+            flag(session, null, CashAnomalyType.DAMAGED_NOTES, CashAnomalySeverity.MEDIUM, damaged,
+                    "Billets abimes ou suspects comptes pour " + damaged.stripTrailingZeros().toPlainString() + " XAF : a echanger en banque.", newFlags);
+        }
+        transferRepository.findByRegister(register.getRegisterCode()).stream()
+                .filter(order -> session.getSessionNumber().equals(order.getToSession())
+                        && order.getStatus() == com.sni.bokaticowork.features.payment.enums.CashTransferStatus.DISPUTED)
+                .findFirst()
+                .ifPresent(order -> flag(session, null, CashAnomalyType.TRANSFER_VARIANCE, CashAnomalySeverity.MEDIUM,
+                        order.getReceivedAmount() == null ? BigDecimal.ZERO : order.getReceivedAmount().subtract(order.getSentAmount()).abs(),
+                        "Transfert " + order.getTransferNumber() + " recu pour un autre montant que l'envoi.", newFlags));
     }
 
     // ---- Persistence helpers ----

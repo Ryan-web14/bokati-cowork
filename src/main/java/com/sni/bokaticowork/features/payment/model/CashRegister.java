@@ -160,6 +160,17 @@ public class CashRegister {
     @Column(name = "double_visa_threshold", precision = 19, scale = 4)
     private java.math.BigDecimal doubleVisaThreshold;
 
+    /** Calendrier minimal des comptages inopines (jours) ; vide : pas de calendrier. */
+    @Column(name = "spot_check_every_days")
+    private Integer spotCheckEveryDays;
+
+    /** Alerte quand la caisse n'a pas ete comptee depuis ce nombre de jours. */
+    @Column(name = "not_counted_alert_days")
+    private Integer notCountedAlertDays;
+
+    @Column(name = "not_counted_alerted_at")
+    private Instant notCountedAlertedAt;
+
     @Column(name = "max_session_hours")
     private Integer maxSessionHours;
 
@@ -213,6 +224,12 @@ public class CashRegister {
         }
         if (maxSessionHours == null) {
             maxSessionHours = 24;
+        }
+        if (spotCheckEveryDays == null && !Boolean.TRUE.equals(systemManaged)) {
+            spotCheckEveryDays = 30;
+        }
+        if (notCountedAlertDays == null && !Boolean.TRUE.equals(systemManaged)) {
+            notCountedAlertDays = 7;
         }
         if (monthEndPolicy == null) {
             monthEndPolicy = com.sni.bokaticowork.features.payment.enums.CashMonthEndPolicy.REQUIRE_COUNT;

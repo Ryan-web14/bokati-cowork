@@ -165,4 +165,8 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
     /** Sessions dans ces statuts, toutes caisses confondues (alerte de duree maximale). */
     @Query("SELECT s FROM CashSession s WHERE s.status IN :statuses ORDER BY s.openedAt ASC")
     java.util.List<CashSession> findByStatuses(@Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashSessionStatus> statuses);
+
+    @Query("SELECT s FROM CashSession s WHERE (:registerCode IS NULL OR s.cashRegister.registerCode = :registerCode) AND s.openedAt >= :from AND s.openedAt < :to ORDER BY s.openedAt ASC")
+    java.util.List<CashSession> findOpenedBetween(@Param("registerCode") String registerCode, @Param("from") java.time.Instant from,
+                                                  @Param("to") java.time.Instant to);
 }

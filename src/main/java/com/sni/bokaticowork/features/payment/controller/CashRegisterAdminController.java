@@ -63,12 +63,14 @@ public class CashRegisterAdminController {
         return ResponseEntity.ok(service.referenceList(listCode, includeInactive));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_REPLACE_REFERENCE_LIST", ressource = "cash_register")
     @PutMapping("/reference-lists/{listCode}")
     public ResponseEntity<List<CashReferenceValueResponse>> replaceReferenceList(@PathVariable String listCode,
                                                                                  @Valid @RequestBody List<CashReferenceValueRequest> values) {
         return ResponseEntity.ok(service.replaceReferenceList(listCode, values));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_SIGN_TRANSFER", ressource = "cash_register")
     @PatchMapping("/responsibility-transfers/{transferNumber}/sign")
     public ResponseEntity<CashResponsibilityTransferResponse> signTransfer(@PathVariable String transferNumber) {
         return ResponseEntity.ok(service.signResponsibilityTransfer(transferNumber));
@@ -79,23 +81,27 @@ public class CashRegisterAdminController {
         return ResponseEntity.ok(service.get(registerCode));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_UPDATE", ressource = "cash_register")
     @PatchMapping("/{registerCode}")
     public ResponseEntity<CashRegisterDetailResponse> update(@PathVariable String registerCode,
                                                              @Valid @RequestBody UpdateCashRegisterRequest request) {
         return ResponseEntity.ok(service.update(registerCode, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_SUSPEND", ressource = "cash_register")
     @PatchMapping("/{registerCode}/suspend")
     public ResponseEntity<CashRegisterDetailResponse> suspend(@PathVariable String registerCode,
                                                               @RequestBody(required = false) CashRegisterStatusRequest request) {
         return ResponseEntity.ok(service.suspend(registerCode, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_REACTIVATE", ressource = "cash_register")
     @PatchMapping("/{registerCode}/reactivate")
     public ResponseEntity<CashRegisterDetailResponse> reactivate(@PathVariable String registerCode) {
         return ResponseEntity.ok(service.reactivate(registerCode));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_CLOSE", ressource = "cash_register")
     @PatchMapping("/{registerCode}/close")
     public ResponseEntity<CashRegisterDetailResponse> close(@PathVariable String registerCode,
                                                             @RequestBody(required = false) CashRegisterStatusRequest request) {
@@ -113,18 +119,21 @@ public class CashRegisterAdminController {
         return ResponseEntity.ok(service.assignments(registerCode, includeEnded));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_REPLACE_ASSIGNMENTS", ressource = "cash_register")
     @PutMapping("/{registerCode}/assignments")
     public ResponseEntity<List<CashRegisterAssignmentResponse>> replaceAssignments(@PathVariable String registerCode,
                                                                                    @Valid @RequestBody List<CashRegisterAssignmentRequest> assignments) {
         return ResponseEntity.ok(service.replaceAssignments(registerCode, assignments));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_EMERGENCY_ASSIGNMENT", ressource = "cash_register")
     @PostMapping("/{registerCode}/emergency-assignments")
     public ResponseEntity<CashRegisterAssignmentResponse> emergencyAssignment(@PathVariable String registerCode,
                                                                               @Valid @RequestBody EmergencyAssignmentRequest request) {
         return ResponseEntity.ok(service.emergencyAssignment(registerCode, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_DECIDE_DEVICE", ressource = "cash_register")
     @PatchMapping("/{registerCode}/devices/{deviceCode}")
     public ResponseEntity<CashRegisterDetailResponse> decideDevice(@PathVariable String registerCode,
                                                                    @PathVariable String deviceCode,
@@ -142,6 +151,7 @@ public class CashRegisterAdminController {
         return ResponseEntity.ok(service.responsibilityTransfers(registerCode));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_CREATE_TRANSFER", ressource = "cash_register")
     @PostMapping("/{registerCode}/responsibility-transfers")
     public ResponseEntity<CashResponsibilityTransferResponse> createTransfer(@PathVariable String registerCode,
                                                                              @Valid @RequestBody CreateResponsibilityTransferRequest request) {

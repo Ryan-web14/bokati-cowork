@@ -182,4 +182,8 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
                                                          @Param("type") com.sni.bokaticowork.features.payment.enums.CashMovementType type,
                                                          @Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashMovementStatus> statuses,
                                                          @Param("since") java.time.Instant since);
+
+    @Query("SELECT m FROM CashMovement m WHERE (:registerCode IS NULL OR m.cashSession.cashRegister.registerCode = :registerCode) AND m.createdAt >= :from AND m.createdAt < :to ORDER BY m.createdAt ASC, m.id ASC")
+    java.util.List<CashMovement> findByRegisterBetween(@Param("registerCode") String registerCode, @Param("from") java.time.Instant from,
+                                                       @Param("to") java.time.Instant to);
 }

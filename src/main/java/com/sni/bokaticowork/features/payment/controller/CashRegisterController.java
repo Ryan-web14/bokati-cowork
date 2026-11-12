@@ -43,6 +43,7 @@ public class CashRegisterController {
 
     private final CashRegisterService cashRegisterService;
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_CREATE_REGISTER", ressource = "cash_register")
     @PostMapping
     public ResponseEntity<CashRegisterResponse> createRegister(@Valid @RequestBody CreateCashRegisterRequest request) {
         return ResponseEntity.ok(cashRegisterService.createRegister(request));
@@ -58,16 +59,19 @@ public class CashRegisterController {
         return ResponseEntity.ok(cashRegisterService.listRegisters(active, locationCode, businessEntityCode, searchText, pageable));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_ACTIVATE_REGISTER", ressource = "cash_register")
     @PatchMapping("/{registerCode}/activate")
     public ResponseEntity<CashRegisterResponse> activateRegister(@PathVariable String registerCode) {
         return ResponseEntity.ok(cashRegisterService.activateRegister(registerCode));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_DEACTIVATE_REGISTER", ressource = "cash_register")
     @PatchMapping("/{registerCode}/deactivate")
     public ResponseEntity<CashRegisterResponse> deactivateRegister(@PathVariable String registerCode) {
         return ResponseEntity.ok(cashRegisterService.deactivateRegister(registerCode));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_OPEN_SESSION", ressource = "cash_register")
     @PostMapping("/sessions")
     public ResponseEntity<CashSessionResponse> openSession(@Valid @RequestBody OpenCashSessionRequest request) {
         return ResponseEntity.ok(cashRegisterService.openSession(request));
@@ -84,18 +88,21 @@ public class CashRegisterController {
         return ResponseEntity.ok(cashRegisterService.listSessions(registerCode, status, openedBy, closedBy, searchText, pageable));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_REQUEST_CLOSING", ressource = "cash_register")
     @PostMapping("/sessions/{sessionNumber}/closing-request")
     public ResponseEntity<CashSessionResponse> requestClosing(@PathVariable String sessionNumber,
                                                               @Valid @RequestBody CloseCashSessionRequest request) {
         return ResponseEntity.ok(cashRegisterService.closeSession(sessionNumber, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_CLOSE_SESSION", ressource = "cash_register")
     @PatchMapping("/sessions/{sessionNumber}/close")
     public ResponseEntity<CashSessionResponse> closeSession(@PathVariable String sessionNumber,
                                                             @Valid @RequestBody CloseCashSessionRequest request) {
         return ResponseEntity.ok(cashRegisterService.closeSession(sessionNumber, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_APPROVE_VARIANCE", ressource = "cash_register")
     @PatchMapping("/sessions/{sessionNumber}/approve-variance")
     public ResponseEntity<CashSessionResponse> approveVariance(@PathVariable String sessionNumber,
                                                                @Valid @RequestBody ApproveCashVarianceRequest request) {
@@ -107,18 +114,21 @@ public class CashRegisterController {
         return ResponseEntity.ok(cashRegisterService.sessionSummary(sessionNumber));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_CREATE_MOVEMENT", ressource = "cash_register")
     @PostMapping("/sessions/{sessionNumber}/movements")
     public ResponseEntity<CashMovementResponse> createMovement(@PathVariable String sessionNumber,
                                                                @Valid @RequestBody CreateCashMovementRequest request) {
         return ResponseEntity.ok(cashRegisterService.createMovement(sessionNumber, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_CREATE_ENTRY_VOUCHER", ressource = "cash_register")
     @PostMapping("/sessions/{sessionNumber}/entry-vouchers")
     public ResponseEntity<CashMovementResponse> createEntryVoucher(@PathVariable String sessionNumber,
                                                                    @Valid @RequestBody CreateCashVoucherRequest request) {
         return ResponseEntity.ok(cashRegisterService.createEntryVoucher(sessionNumber, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_CREATE_EXIT_VOUCHER", ressource = "cash_register")
     @PostMapping("/sessions/{sessionNumber}/exit-vouchers")
     public ResponseEntity<CashMovementResponse> createExitVoucher(@PathVariable String sessionNumber,
                                                                   @Valid @RequestBody CreateCashVoucherRequest request) {
@@ -163,18 +173,21 @@ public class CashRegisterController {
                 createdBy, fromDate, toDate, searchText, pageable));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_ADD_ATTACHMENT", ressource = "cash_register")
     @PostMapping("/movements/{movementNumber}/attachments")
     public ResponseEntity<CashMovementResponse> addAttachment(@PathVariable String movementNumber,
                                                               @Valid @RequestBody AddCashMovementAttachmentRequest request) {
         return ResponseEntity.ok(cashRegisterService.addAttachment(movementNumber, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_SIGN_MOVEMENT", ressource = "cash_register")
     @PatchMapping("/movements/{movementNumber}/sign")
     public ResponseEntity<CashMovementResponse> signMovement(@PathVariable String movementNumber,
                                                               @RequestParam String signedBy) {
         return ResponseEntity.ok(cashRegisterService.signMovement(movementNumber, signedBy));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_MARK_PRINTED", ressource = "cash_register")
     @PatchMapping("/movements/{movementNumber}/print")
     public ResponseEntity<CashMovementResponse> markPrinted(@PathVariable String movementNumber) {
         return ResponseEntity.ok(cashRegisterService.markMovementPrinted(movementNumber));

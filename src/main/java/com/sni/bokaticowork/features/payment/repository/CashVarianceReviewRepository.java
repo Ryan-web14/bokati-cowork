@@ -16,4 +16,8 @@ public interface CashVarianceReviewRepository extends JpaRepository<com.sni.boka
     List<com.sni.bokaticowork.features.payment.model.CashVarianceReview> findByStatusOrderByCreatedAtAsc(com.sni.bokaticowork.features.payment.enums.CashVarianceStatus status);
 
     List<com.sni.bokaticowork.features.payment.model.CashVarianceReview> findByRegisterCodeOrderByCreatedAtDesc(String registerCode);
+
+    @Query("SELECT r FROM CashVarianceReview r WHERE (:registerCode IS NULL OR r.registerCode = :registerCode) AND r.createdAt >= :from AND r.createdAt < :to ORDER BY r.createdAt ASC")
+    List<com.sni.bokaticowork.features.payment.model.CashVarianceReview> findBetween(@Param("registerCode") String registerCode, @Param("from") java.time.Instant from,
+                                                               @Param("to") java.time.Instant to);
 }

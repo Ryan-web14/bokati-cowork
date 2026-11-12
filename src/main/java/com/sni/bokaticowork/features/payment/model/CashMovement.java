@@ -162,6 +162,14 @@ public class CashMovement {
     @Column(name = "printed_at")
     private Instant printedAt;
 
+    /** Nombre d'impressions : au-dela de la premiere, la piece sort en DUPLICATA (lot C4). */
+    @Builder.Default
+    @Column(name = "print_count", nullable = false)
+    private Integer printCount = 0;
+
+    @Column(name = "last_printed_by", length = 180)
+    private String lastPrintedBy;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
