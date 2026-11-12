@@ -96,4 +96,8 @@ public class AccDeferralSchedule {
     @Builder.Default
     @Column(name = "updated_at")
     private Instant updatedAt = Instant.now();
+
+    /** Reference de la source : numero de pass pour la reconnaissance a l'usage. */
+    @Column(name = "source_ref")
+    private String sourceRef;
 }

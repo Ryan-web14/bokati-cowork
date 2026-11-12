@@ -115,13 +115,17 @@ Le lot F12 l'appellera avec celles des immobilisations et des provisions.
 
 ## Non fait dans ce lot
 
-- **Gel automatique** : le gel d'abonnement n'appelle pas encore `freezeDocuments`. L'événement se passe par la route. Le branchement sur le module abonnements est à faire.
-- **Consommations de pass** : elles ne sont pas encore lues dans les pointages d'entrée. Elles se saisissent par la route `usage`.
-- **Estimations automatiques** : les factures à établir et non parvenues sont saisies. Les propositions automatiques (dépassements non facturés, réservations rendues facturées à terme échu, commandes réceptionnées, contrats récurrents) sont à ajouter.
-- **Analytique** : la section analytique n'est pas encore portée sur les écritures de fin de période. Elle est gardée sur l'échéancier des charges.
+- **Réglé** : gel automatique. Le gel d'un abonnement (`SubscriptionFreezeService`) recule les échéanciers des factures de ses éléments facturables, par l'interface `core/accounting/DeferralEvents`. Une reprise anticipée ramène la fin à la durée réellement gelée.
+- **Réglé** : consommations de pass. Un pass à crédits (droits non illimités) est reconnu à l'usage. Les crédits achetés viennent de ses droits, les consommations du journal des droits (`entitlement_ledger`, mouvements `CONSUME`). La route `usage` reste disponible pour une saisie complémentaire.
+- **Réglé en partie** : estimations automatiques. Le 1er du mois, `proposeAccruals` propose deux types d'estimation, une seule fois par référence et par période :
+  - les dépassements d'abonnement non facturés, en factures à établir ;
+  - les commandes fournisseurs validées, attendues dans la période et pas entièrement facturées, en factures non parvenues (par ligne).
+
+  Le comptable les comptabilise. Les réservations facturées à terme échu et les contrats récurrents restent à saisir.
+- **Réglé** : analytique. La section de la ligne d'origine est portée sur la ligne de produit ou de charge de l'écriture de fin de période, sur l'axe `accounting.deferral.analytic-axis` (à défaut, celui des achats).
 - **Lignes de justification d'avance** : elles ont leurs colonnes de période, mais pas encore d'échéancier.
 - **Remises** : une remise de document est étalée avec la ligne au prorata de son brut.
-- **Facture PDF** : la période n'y est pas encore affichée. Ce sera fait avec le lot D5 des modèles de documents.
+- **Réglé** : facture PDF. Chaque ligne à période affiche « Période : du 15/10/2026 au 14/10/2027 » (ou « le 10/01/2027 »). La réponse de la facture porte `serviceStart`, `serviceEnd` et `servicePeriod` sur chaque ligne.
 
 ## Tests
 

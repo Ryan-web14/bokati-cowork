@@ -192,7 +192,10 @@ public abstract class BillingDocumentMapperDecorator implements BillingDocumentM
                 line.getSourceCode(),
                 line.getExternalReference(),
                 line.getNotes(),
-                line.getOptional()
+                line.getOptional(),
+                line.getServiceStart(),
+                line.getServiceEnd(),
+                BillingDocumentLineResponse.period(line.getServiceStart(), line.getServiceEnd())
         );
     }
 

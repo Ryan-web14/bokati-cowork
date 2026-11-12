@@ -337,6 +337,7 @@
                         <span th:if="${line.optional()}" class="line-sub" style="margin-left:4px;">(option)</span>
                     </div>
                     <div class="line-sub" th:if="${line.detailedDescription()}" th:text="${line.detailedDescription()}"></div>
+                    <div class="line-sub" th:if="${line.servicePeriod()}" th:text="'Période : ' + ${line.servicePeriod()}">Période : du 15/10/2026 au 14/10/2027</div>
                     <div class="line-sub" th:if="${line.itemCode()}" th:text="|Art. : ${line.itemCode()}|"></div>
                     <div class="line-sub" th:if="${line.notes()}" th:text="${line.notes()}"></div>
                 </td>

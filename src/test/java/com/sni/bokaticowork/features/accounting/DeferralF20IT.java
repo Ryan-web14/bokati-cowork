@@ -97,6 +97,9 @@ class DeferralF20IT extends PostgresIntegrationTestBase {
     @Autowired private AccDeferralScheduleRepository schedules;
     @Autowired private BillingDocumentRepository documents;
     @Autowired private BillingDocumentLineRepository documentLines;
+    @Autowired private com.sni.bokaticowork.features.subscription.repository.BillableItemRepository billables;
+    @Autowired private com.sni.bokaticowork.features.accounting.repository.AccPurchaseOrderRepository orders;
+    @Autowired private com.sni.bokaticowork.features.accounting.repository.AccPurchaseOrderLineRepository orderLines;
     @MockitoBean private AccountingSettings settings;
     @MockitoBean private AccountingNotifier notifier;
     @MockitoBean private SequenceGeneratorFacade sequences;
@@ -177,13 +180,68 @@ class DeferralF20IT extends PostgresIntegrationTestBase {
         assertThat(matched.getGap()).isEqualByComparingTo("12000");
     }
 
+    @Test
+    @DisplayName("Gel d'abonnement automatique : la periode vient de l'element facturable, le gel recule la fin, la reprise anticipee la ramene")
+    void subscriptionFreezeHook() {
+        String subscription = "SUB-F20-" + code;
+        String billable = "BIL-F20-" + code;
+        billables.save(com.sni.bokaticowork.features.subscription.subscription.model.BillableItem.builder().billableNumber(billable)
+                .sourceType("SUBSCRIPTION").sourceId(subscription)
+                .subscriberType(com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.MEMBER).subscriberCode("MBR-F20-" + code)
+                .description("Abonnement mensuel").amount(new BigDecimal("300000")).currency("XAF")
+                .billingPeriodStart(LocalDate.of(2026, 11, 1)).billingPeriodEnd(LocalDate.of(2026, 11, 30))
+                .status(com.sni.bokaticowork.features.subscription.subscription.enums.BillableItemStatus.INVOICED)
+                .createdAt(java.time.Instant.now()).updatedAt(java.time.Instant.now()).build());
+        BillingDocument invoice = document("FAC-F20S-" + code, BillingDocumentType.INVOICE, null);
+        BillingDocumentLine line = line(invoice, billable, "300000", null, null);
+
+        deferrals.sync();
+        AccDeferralSchedule schedule = schedules.findByKindAndSourceTypeAndSourceLineId(DeferralService.REVENUE, DeferralService.BILLING_LINE, line.getId())
+                .orElseThrow();
+        assertThat(schedule.getStartDate()).isEqualTo(LocalDate.of(2026, 11, 1));
+        assertThat(schedule.getEndDate()).isEqualTo(LocalDate.of(2026, 11, 30));
+        assertThat(documentLines.findById(line.getId()).orElseThrow().getServiceStart()).isEqualTo(LocalDate.of(2026, 11, 1));
+
+        deferrals.subscriptionFrozen(subscription, LocalDate.of(2026, 11, 10), 10);
+        assertThat(schedules.findById(schedule.getId()).orElseThrow().getEndDate()).isEqualTo(LocalDate.of(2026, 12, 10));
+        deferrals.subscriptionResumed(subscription, LocalDate.of(2026, 11, 10), 4);
+        assertThat(schedules.findById(schedule.getId()).orElseThrow().getEndDate()).isEqualTo(LocalDate.of(2026, 12, 4));
+    }
+
+    @Test
+    @DisplayName("Commande validee non facturee : proposee en facture non parvenue, une seule fois")
+    void purchaseOrderAccrualIsProposed() {
+        var order = orders.save(com.sni.bokaticowork.features.accounting.model.AccPurchaseOrder.builder().number("BC-F20-" + code).supplierCode("FRN-F20")
+                .subject("Nettoyage").orderDate(LocalDate.of(2026, 10, 1)).expectedDate(LocalDate.of(2026, 10, 20)).totalHt(new BigDecimal("80000"))
+                .totalVat(BigDecimal.ZERO).totalTtc(new BigDecimal("80000")).status("VALIDATED").createdBy("acheteur@elleaose.com").build());
+        orderLines.save(com.sni.bokaticowork.features.accounting.model.AccPurchaseOrderLine.builder().orderId(order.getId()).lineNo(1)
+                .designation("Menage d'octobre").unitPrice(new BigDecimal("80000")).accountNumber("605").amountHt(new BigDecimal("80000")).build());
+
+        assertThat(deferrals.proposeAccruals(java.time.YearMonth.of(2026, 10))).isGreaterThanOrEqualTo(1);
+        assertThat(deferrals.accruals("2026-10")).anyMatch(item -> ("BC-F20-" + code + "-1").equals(item.getReference())
+                && item.getEstimatedAmount().compareTo(new BigDecimal("80000")) == 0 && "ACCRUED_EXPENSE".equals(item.getKind()));
+        int before = deferrals.accruals("2026-10").size();
+        deferrals.proposeAccruals(java.time.YearMonth.of(2026, 10));
+        assertThat(deferrals.accruals("2026-10")).hasSize(before);
+    }
+
+    @Test
+    @DisplayName("La periode de service s'imprime sur la ligne de facture")
+    void invoicePeriodText() {
+        assertThat(com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse.period(LocalDate.of(2026, 10, 15),
+                LocalDate.of(2027, 10, 14))).isEqualTo("du 15/10/2026 au 14/10/2027");
+        assertThat(com.sni.bokaticowork.features.billing.dto.response.BillingDocumentLineResponse.period(LocalDate.of(2027, 1, 10),
+                LocalDate.of(2027, 1, 10))).isEqualTo("le 10/01/2027");
+    }
+
     private static BigDecimal need(DeferralService.RunResult result, AccDeferralSchedule schedule) {
         return result.lines().stream().filter(item -> item.scheduleId().equals(schedule.getId())).findFirst().orElseThrow().need();
     }
 
     private BillingDocument document(String number, BillingDocumentType type, String original) {
         BigDecimal net = new BigDecimal("1200000");
-        BigDecimal tax = new BigDecimal("216000");
+        // Sans TVA : l'etalement ne porte que sur le HT, et une TVA d'octobre fausserait la declaration du test F11 sur la meme base.
+        BigDecimal tax = BigDecimal.ZERO;
         return documents.save(BillingDocument.builder().documentNumber(number).documentType(type).status(BillingDocumentStatus.ISSUED)
                 .customerType("CUSTOMER").customerCode("CUS-F20-" + code).customerName("Client " + code).currency("XAF").subtotalAmount(net)
                 .discountAmount(BigDecimal.ZERO).taxableAmount(net).vatAmount(tax).additionalCentAmount(BigDecimal.ZERO).taxAmount(tax)
@@ -193,7 +251,7 @@ class DeferralF20IT extends PostgresIntegrationTestBase {
 
     private BillingDocumentLine line(BillingDocument document, String itemCode, String ht, LocalDate start, LocalDate end) {
         BigDecimal net = new BigDecimal(ht);
-        BigDecimal tax = net.multiply(new BigDecimal("0.18"));
+        BigDecimal tax = BigDecimal.ZERO;
         BillingDocumentLine line = BillingDocumentLine.builder().document(document).lineOrder(1).lineType(BillingLineType.SUBSCRIPTION)
                 .itemCode(itemCode).description("Abonnement annuel").quantity(BigDecimal.ONE).unitPrice(net).discountAmount(BigDecimal.ZERO).taxable(true)
                 .subtotalAmount(net).taxableAmount(net).vatAmount(tax).additionalCentAmount(BigDecimal.ZERO).taxAmount(tax).totalAmount(net.add(tax)).build();

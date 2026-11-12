@@ -165,7 +165,7 @@ public class ReceivableRiskService implements ReceivableRiskQuery {
                 continue;
             }
             long days = ChronoUnit.DAYS.between(document.getDueDate(), today);
-            String trigger = days > triggerDays ? "OVER_" + triggerDays + "_DAYS" : handover(document) ? "HANDOVER" : null;
+            String trigger = days > triggerDays ? "OVER_" + triggerDays + "_DAYS" : handover(document) ? "HANDOVER" : extraTrigger(document, today);
             if (trigger == null) {
                 continue;
             }
@@ -765,6 +765,20 @@ public class ReceivableRiskService implements ReceivableRiskQuery {
         };
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void guardCreditSale(String customerType, String customerCode, String what) {
+        if (policyFor(customerType, customerCode) != Policy.PREPAY) {
+            return;
+        }
+        if (actors.hasAuthority(OVERRIDE)) {
+            log.warn("Creances : derogation a la politique PREPAY du client {} par {} ({})", customerCode, actor(), what);
+            return;
+        }
+        throw new ForbiddenException("Client a creance douteuse : " + what + " doit etre payee d'avance (vente a credit refusee sans derogation, droit "
+                + OVERRIDE + ").");
+    }
+
     // ================================================================== controles
 
     public record Finding(String severity, String subject, String message) {
@@ -919,16 +933,53 @@ public class ReceivableRiskService implements ReceivableRiskQuery {
         return BigDecimal.ZERO;
     }
 
-    /** Garanties detenues : solde crediteur du portefeuille du client (4191). */
+    /**
+     * Garanties detenues : soldes crediteurs du portefeuille (4191) et de la caution (165) du client,
+     * plus ses avoirs emis et non encore imputes.
+     */
     private BigDecimal guarantee(String customerCode) {
         if (!StringUtils.hasText(customerCode)) {
             return BigDecimal.ZERO;
         }
         entityManager.flush();
-        BigDecimal value = new JdbcTemplate(dataSource).queryForObject("SELECT COALESCE(SUM(l.credit - l.debit), 0) FROM acc_entry_line l "
-                + "JOIN acc_entry e ON e.id = l.entry_id WHERE l.account_number = ? AND l.third_party_code = ? AND e.status IN ('VALIDATED', 'REVERSED')",
-                BigDecimal.class, settings.text("accounting.receivable.guarantee-account", "4191"), customerCode);
-        return value == null ? BigDecimal.ZERO : value.max(BigDecimal.ZERO);
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        BigDecimal total = BigDecimal.ZERO;
+        for (String account : List.of(settings.text("accounting.receivable.guarantee-account", "4191"),
+                settings.text("accounting.receivable.deposit-account", "165"))) {
+            BigDecimal value = jdbc.queryForObject("SELECT COALESCE(SUM(l.credit - l.debit), 0) FROM acc_entry_line l "
+                    + "JOIN acc_entry e ON e.id = l.entry_id WHERE l.account_number = ? AND l.third_party_code = ? AND e.status IN ('VALIDATED', 'REVERSED')",
+                    BigDecimal.class, account, customerCode);
+            total = total.add(value == null ? BigDecimal.ZERO : value.max(BigDecimal.ZERO));
+        }
+        BigDecimal credits = jdbc.queryForObject("SELECT COALESCE(SUM(balance_due), 0) FROM billing_document WHERE document_type = 'CREDIT_NOTE' "
+                + "AND deleted_at IS NULL AND status NOT IN ('DRAFT', 'CANCELLED', 'VOIDED') AND balance_due > 0 "
+                + "AND COALESCE(customer_code, company_customer_code) = ?", BigDecimal.class, customerCode);
+        return total.add(credits == null ? BigDecimal.ZERO : credits);
+    }
+
+    /**
+     * Autres declencheurs : cheque rejete non regularise apres le delai ; abonnement suspendu pour
+     * impaye depuis plus du delai (factures de ses elements facturables).
+     */
+    private String extraTrigger(BillingDocument document, LocalDate today) {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        long chequeDays = number("accounting.receivable.cheque-rejected-days", 15);
+        Integer cheques = jdbc.queryForObject("SELECT COUNT(*) FROM bank_cheque c JOIN payment_transaction t ON t.transaction_number = c.transaction_number "
+                + "JOIN payment_allocation a ON a.payment_transaction_id = t.id WHERE c.status = 'REJECTED' AND a.billing_document_number = ? "
+                + "AND c.rejected_at < ?", Integer.class, document.getDocumentNumber(),
+                java.sql.Timestamp.from(today.minusDays(chequeDays).atStartOfDay(ZONE).toInstant()));
+        if (cheques != null && cheques > 0) {
+            return "CHEQUE_REJECTED";
+        }
+        long suspendedDays = number("accounting.receivable.suspended-days", 30);
+        Integer suspended = jdbc.queryForObject("SELECT COUNT(*) FROM billing_document_line l JOIN billing_document d ON d.id = l.document_id "
+                + "JOIN billable_item b ON b.billable_number = l.item_code JOIN subscription s ON s.subscription_number = b.source_id "
+                + "WHERE d.document_number = ? AND s.status = 'SUSPENDED' AND s.suspended_at < ?", Integer.class, document.getDocumentNumber(),
+                java.sql.Timestamp.from(today.minusDays(suspendedDays).atStartOfDay(ZONE).toInstant()));
+        if (suspended != null && suspended > 0) {
+            return "SUBSCRIPTION_SUSPENDED";
+        }
+        return null;
     }
 
     private boolean handover(BillingDocument document) {

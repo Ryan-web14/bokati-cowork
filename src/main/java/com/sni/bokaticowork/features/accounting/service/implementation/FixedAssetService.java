@@ -442,6 +442,33 @@ public class FixedAssetService implements FixedAssetIntake {
         return view(parent, List.of());
     }
 
+    /**
+     * Bien en location-acquisition : rattache l'emprunt (lot F17) qui porte la dette ; il figure
+     * alors a la note 3B. Une chaine vide detache le bien.
+     */
+    public AssetView linkLease(String code, String loanCode) {
+        require(MANAGE);
+        FixedAsset asset = live(code);
+        String loan = blankToNull(loanCode);
+        if (loan != null) {
+            Integer found = new org.springframework.jdbc.core.JdbcTemplate(dataSource)
+                    .queryForObject("SELECT COUNT(*) FROM acc_loan WHERE code = ?", Integer.class, loan.trim().toUpperCase(Locale.ROOT));
+            if (found == null || found == 0) {
+                throw new BadRequestException("Emprunt introuvable : " + loan);
+            }
+            loan = loan.trim().toUpperCase(Locale.ROOT);
+        }
+        String before = asset.getLoanCode();
+        asset.setLoanCode(loan);
+        if (loan != null && "PURCHASE".equals(asset.getEntryMode())) {
+            asset.setEntryMode("LEASE");
+        }
+        assets.save(asset);
+        event(asset, "LEASE_LINK", LocalDate.now(), before, loan, loan == null ? "Emprunt detache" : "Location-acquisition, emprunt " + loan,
+                null, null, null);
+        return view(asset, List.of());
+    }
+
     // ================================================================== mise en service
 
     public record CommissionRequest(LocalDate date, String site, String resourceCode, String locationLabel, String holder, String organisation,

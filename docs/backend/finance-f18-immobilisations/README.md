@@ -120,7 +120,7 @@ La clôture d'exercice (lot F12) appellera cette liste et refusera tant qu'elle 
 
 ## Non fait dans ce lot
 
-- Biens en location-acquisition (note 3B) : ils relèvent du lot F17. La table des emprunts ne porte pas encore de lien vers une fiche ; l'état sera ajouté quand ce lien existera.
+- **Réglé** : biens en location-acquisition (note 3B). `POST /{code}/lease` rattache un bien à son emprunt du lot F17 (`fixed_asset.loan_code`, migrations dev `V317`, prod `V311`). Le bien passe en entrée `LEASE`, et l'état `note-3b` donne sa valeur brute, ses amortissements, sa valeur nette et la dette restante de l'emprunt.
 - Coût par espace : seules les dotations sont comptées pour l'instant. L'entretien et l'assurance par ressource sont à ajouter.
 - Page mobile de scan : le frontend la construit sur `POST /inventories/{code}/scans`. La photo est une référence de la GED (`photoRef`).
 - Export Excel : les états sortent en CSV (ouvrable dans Excel) et en PDF.

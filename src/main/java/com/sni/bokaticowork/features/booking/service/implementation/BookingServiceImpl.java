@@ -207,6 +207,10 @@ public class BookingServiceImpl implements BookingService {
         if (risk != null) {
             // Lot F19 : un client bloque pour creance douteuse ne reserve pas sans derogation.
             String warning = risk.guardNewSale(String.valueOf(identity.ownerType()), identity.ownerCode(), "la reservation");
+            // Politique PREPAY : une reservation facturee sur compte (organisation payeuse) est une vente a credit.
+            if (StringUtils.hasText(request.billingCompanyCode())) {
+                risk.guardCreditSale(String.valueOf(identity.ownerType()), identity.ownerCode(), "la reservation facturee sur compte");
+            }
             if (warning != null) {
                 log.warn("Reservation de {} : {}", identity.ownerCode(), warning);
             }

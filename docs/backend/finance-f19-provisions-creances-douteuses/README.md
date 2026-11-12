@@ -143,9 +143,9 @@ Les écarts bloquants sont signalés aux comptables.
 
 ## Non fait dans ce lot
 
-- **Déclencheurs** : les chèques rejetés (lot F10), les abonnements suspendus et les procédures collectives ne déclenchent pas encore de proposition. Seuls le retard et l'étape `HANDOVER` le font. Les autres cas se classent à la main.
-- **Garanties** : seul le portefeuille est déduit de la base. La caution (`165`) et les avoirs non imputés ne le sont pas encore.
-- **Politique `PREPAY`** : elle avertit mais n'impose pas encore le paiement d'avance dans le parcours de réservation.
+- **Réglé** : déclencheurs supplémentaires. Un chèque rejeté non régularisé après 15 jours (`CHEQUE_REJECTED`) et un abonnement suspendu pour impayé depuis plus de 30 jours (`SUBSCRIPTION_SUSPENDED`) proposent maintenant le classement des factures concernées. Les délais sont réglables : `accounting.receivable.cheque-rejected-days` et `suspended-days`. La procédure collective reste un classement à la main, avec pièce.
+- **Réglé** : garanties. La base déduit le portefeuille (`4191`), la caution reçue (`165`, paramètre `accounting.receivable.deposit-account`) et les avoirs émis non encore imputés.
+- **Réglé** : politique `PREPAY`. Une réservation facturée sur compte (organisation payeuse) est une vente à crédit : elle est refusée (`403`) sauf avec le droit `CUSTOMER_CREDIT:OVERRIDE`. Une réservation payée d'avance (paiement direct attendu, portefeuille, droit d'abonnement ou de pass) passe, avec l'avertissement.
 - **TVA à la récupération après perte** : elle n'est pas reversée automatiquement.
 - **Portail** : la mention « en cours d'examen » sur les factures contestées est à afficher par le frontend, à partir de l'état `DISPUTED`.
 

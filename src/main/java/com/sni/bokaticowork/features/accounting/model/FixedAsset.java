@@ -241,4 +241,8 @@ public class FixedAsset {
     @Builder.Default
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
+
+    /** Bien en location-acquisition : emprunt (lot F17) qui porte la dette (note 3B). */
+    @Column(name = "loan_code")
+    private String loanCode;
 }

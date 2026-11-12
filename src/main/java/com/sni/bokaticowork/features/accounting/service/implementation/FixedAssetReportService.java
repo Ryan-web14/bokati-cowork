@@ -54,6 +54,7 @@ public class FixedAssetReportService {
     private static final BigDecimal TOLERANCE = new BigDecimal("0.5");
 
     private final FixedAssetService fixedAssets;
+    private final org.springframework.beans.factory.ObjectProvider<LoanService> loans;
     private final FixedAssetRepository assets;
     private final FaCategoryRepository categories;
     private final FixedAssetScheduleRepository schedules;
@@ -74,7 +75,7 @@ public class FixedAssetReportService {
     public record Finding(String severity, String subject, String message) {
     }
 
-    public static final List<String> REPORTS = List.of("registry", "note-3a", "note-3c", "note-3d", "impairments", "forecast",
+    public static final List<String> REPORTS = List.of("registry", "note-3a", "note-3b", "note-3c", "note-3d", "impairments", "forecast",
             "fully-depreciated", "pending", "warranties", "holders", "reconciliation", "cost-by-resource");
 
     // ================================================================== fichier
@@ -99,6 +100,7 @@ public class FixedAssetReportService {
         return switch (report == null ? "" : report.trim().toLowerCase(Locale.ROOT)) {
             case "registry" -> registry(at, category, site, resource, holder);
             case "note-3a" -> note3a(fiscalYear);
+            case "note-3b" -> note3b(at);
             case "note-3c" -> note3c(fiscalYear);
             case "note-3d" -> note3d(fiscalYear);
             case "impairments" -> impairmentTable();
@@ -172,6 +174,41 @@ public class FixedAssetReportService {
         }
         return byCategoryTable("note-3a", "Tableau des immobilisations " + year + " (note 3A)",
                 List.of("Valeur brute debut", "Acquisitions", "Sorties", "Valeur brute fin"), byCategory);
+    }
+
+    /** Note 3B : biens en location-acquisition, valeurs et dette restante de l'emprunt associe. */
+    Table note3b(LocalDate at) {
+        Map<String, BigDecimal> debts = new java.util.HashMap<>();
+        try {
+            for (LoanService.NoteLine line : loans.getObject().note(at)) {
+                debts.put(line.code(), line.outstanding());
+            }
+        } catch (RuntimeException ex) {
+            // Sans droit sur les emprunts, la dette n'est pas affichee.
+        }
+        List<List<Object>> rows = new ArrayList<>();
+        BigDecimal gross = BigDecimal.ZERO;
+        BigDecimal net = BigDecimal.ZERO;
+        BigDecimal debt = BigDecimal.ZERO;
+        for (FixedAsset asset : assets.findAllByOrderByCodeAsc()) {
+            if (!StringUtils.hasText(asset.getLoanCode()) && !"LEASE".equals(asset.getEntryMode())) {
+                continue;
+            }
+            if (!inFile(asset, at)) {
+                continue;
+            }
+            BigDecimal value = value(asset.getEntryValue());
+            BigDecimal netValue = value.subtract(value(asset.getAccumulatedDepreciation())).subtract(value(asset.getAccumulatedImpairment()));
+            BigDecimal remaining = asset.getLoanCode() == null ? BigDecimal.ZERO : debts.getOrDefault(asset.getLoanCode(), BigDecimal.ZERO);
+            rows.add(List.of(asset.getCode(), nz(asset.getDesignation()), nz(asset.getLoanCode()), value, value(asset.getAccumulatedDepreciation()),
+                    netValue, remaining));
+            gross = gross.add(value);
+            net = net.add(netValue);
+            debt = debt.add(remaining);
+        }
+        return new Table("note-3b", "Biens en location-acquisition au " + dateText(at) + " (note 3B)",
+                List.of("Code", "Designation", "Emprunt", "Valeur brute", "Amortissements", "Valeur nette", "Dette restante"),
+                List.of(false, false, false, true, true, true, true), rows, totals("Valeur brute", gross, "Valeur nette", net, "Dette restante", debt));
     }
 
     /** Note 3C : amortissements par categorie, cumul debut, dotations, sorties, cumul fin. */

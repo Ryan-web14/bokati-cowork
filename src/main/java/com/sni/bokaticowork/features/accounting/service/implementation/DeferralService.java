@@ -64,7 +64,7 @@ import java.util.TreeMap;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DeferralService {
+public class DeferralService implements com.sni.bokaticowork.core.accounting.DeferralEvents {
 
     public static final String READ = "ACCOUNTING_DEFERRAL:READ";
     public static final String RUN = "ACCOUNTING_DEFERRAL:RUN";
@@ -158,7 +158,8 @@ public class DeferralService {
                 .startDate(corrected != null ? corrected.getStartDate() : period.start())
                 .endDate(corrected != null ? corrected.getEndDate() : period.end())
                 .method(corrected != null ? corrected.getMethod() : period.method())
-                .totalUnits(corrected != null ? corrected.getTotalUnits() : period.units()).recognitionSource(period.source()).build());
+                .totalUnits(corrected != null ? corrected.getTotalUnits() : period.units()).recognitionSource(period.source())
+                .sourceRef(corrected != null ? corrected.getSourceRef() : period.ref()).build());
         if (corrected != null) {
             for (AccDeferralScheduleEvent event : events.findAllByScheduleIdOrderByCreatedAtAsc(corrected.getId())) {
                 if ("FREEZE".equals(event.getType())) {
@@ -171,7 +172,11 @@ public class DeferralService {
         return schedule;
     }
 
-    private record Period(LocalDate start, LocalDate end, String method, String source, BigDecimal units) {
+    private record Period(LocalDate start, LocalDate end, String method, String source, BigDecimal units, String ref) {
+
+        Period(LocalDate start, LocalDate end, String method, String source, BigDecimal units) {
+            this(start, end, method, source, units, null);
+        }
     }
 
     /** Periode d'une ligne : saisie, element facturable, reservation, ou ligne corrigee d'un avoir. */
@@ -186,7 +191,14 @@ public class DeferralService {
             if (billable != null && billable.getBillingPeriodStart() != null && billable.getBillingPeriodEnd() != null
                     && billable.getBillingPeriodEnd().isAfter(billable.getBillingPeriodStart())) {
                 String source = billable.getSourceType() == null ? "SUBSCRIPTION" : billable.getSourceType().toUpperCase(Locale.ROOT);
-                return new Period(billable.getBillingPeriodStart(), billable.getBillingPeriodEnd(), "DAILY", source, null);
+                if (source.contains("PASS")) {
+                    // Pass a credits : reconnaissance a l'usage, credits lus dans le journal des droits.
+                    BigDecimal units = passUnits(billable.getSourceId());
+                    if (units.signum() > 0) {
+                        return new Period(billable.getBillingPeriodStart(), billable.getBillingPeriodEnd(), "USAGE", "PASS", units, billable.getSourceId());
+                    }
+                }
+                return new Period(billable.getBillingPeriodStart(), billable.getBillingPeriodEnd(), "DAILY", source, null, billable.getSourceId());
             }
         }
         String sourceType = line.getSourceType() == null ? "" : line.getSourceType().toUpperCase(Locale.ROOT);
@@ -294,7 +306,7 @@ public class DeferralService {
                 }
                 BigDecimal used = consumptions.findAllByScheduleIdOrderByUsageDateAsc(schedule.getId()).stream()
                         .filter(item -> !item.getUsageDate().isAfter(date)).map(AccUsageConsumption::getUnits).reduce(BigDecimal.ZERO, BigDecimal::add)
-                        .min(total);
+                        .add(passConsumed(schedule, date)).min(total);
                 return amount.subtract(amount.multiply(used).divide(total, 0, RoundingMode.HALF_UP));
             }
             case "MONTHLY" -> {
@@ -317,6 +329,28 @@ public class DeferralService {
                 return amount.subtract(amount.multiply(BigDecimal.valueOf(elapsed)).divide(BigDecimal.valueOf(total), 0, RoundingMode.HALF_UP));
             }
         }
+    }
+
+    /** Credits achetes d'un pass : somme des droits non illimites qu'il porte. */
+    private BigDecimal passUnits(String passNumber) {
+        if (!StringUtils.hasText(passNumber)) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal units = new JdbcTemplate(dataSource).queryForObject("SELECT COALESCE(SUM(g.quantity_granted), 0) FROM entitlement_grant g "
+                + "JOIN subscription_pass p ON p.id = g.pass_id WHERE p.pass_number = ? AND COALESCE(g.unlimited, FALSE) = FALSE", BigDecimal.class, passNumber);
+        return units == null ? BigDecimal.ZERO : units;
+    }
+
+    /** Credits consommes d'un pass jusqu'a une date incluse, lus dans le journal des droits. */
+    private BigDecimal passConsumed(AccDeferralSchedule schedule, LocalDate date) {
+        if (!"PASS".equals(schedule.getRecognitionSource()) || !StringUtils.hasText(schedule.getSourceRef())) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal used = new JdbcTemplate(dataSource).queryForObject("SELECT COALESCE(SUM(l.quantity), 0) FROM entitlement_ledger l "
+                + "JOIN entitlement_grant g ON g.id = l.grant_id JOIN subscription_pass p ON p.id = g.pass_id WHERE p.pass_number = ? AND l.transaction_type = 'CONSUME' "
+                + "AND l.created_at < ?", BigDecimal.class, schedule.getSourceRef(),
+                java.sql.Timestamp.from(date.plusDays(1).atStartOfDay(ZONE).toInstant()));
+        return used == null ? BigDecimal.ZERO : used.abs();
     }
 
     /** Jours de gel ecoules jusqu'a une date incluse. */
@@ -349,7 +383,10 @@ public class DeferralService {
     @Transactional
     public AccDeferralSchedule event(Long scheduleId, EventRequest request) {
         require(EDIT_PERIOD, RUN);
-        AccDeferralSchedule schedule = schedule(scheduleId);
+        return applyEvent(schedule(scheduleId), request, actor());
+    }
+
+    private AccDeferralSchedule applyEvent(AccDeferralSchedule schedule, EventRequest request, String actor) {
         if (request == null || !StringUtils.hasText(request.type())) {
             throw new BadRequestException("Type d'evenement attendu : FREEZE, TERMINATION, CANCELLATION, RESCHEDULE ou EXPIRY");
         }
@@ -385,7 +422,7 @@ public class DeferralService {
         schedule.setUpdatedAt(Instant.now());
         schedules.save(schedule);
         events.save(AccDeferralScheduleEvent.builder().scheduleId(schedule.getId()).type(type).eventDate(date).beforeValue(cut(before, 200))
-                .afterValue(after).reason(cut(request.reason(), 500)).createdBy(actor()).build());
+                .afterValue(after).reason(cut(request.reason(), 500)).createdBy(actor).build());
         return schedule;
     }
 
@@ -395,13 +432,53 @@ public class DeferralService {
         int touched = 0;
         for (String number : documentNumbers) {
             for (AccDeferralSchedule schedule : schedules.findAllByDocumentNumber(number)) {
-                if ("ACTIVE".equals(schedule.getStatus()) && schedule.getEndDate().isAfter(from)) {
-                    event(schedule.getId(), new EventRequest("FREEZE", from, days, null, reason));
+                if ("ACTIVE".equals(schedule.getStatus()) && schedule.getEndDate().isAfter(from) && "DAILY".equals(schedule.getMethod())) {
+                    applyEvent(schedule, new EventRequest("FREEZE", from, days, null, reason), "SYSTEM");
                     touched++;
                 }
             }
         }
         return touched;
+    }
+
+    @Override
+    @Transactional
+    public void subscriptionFrozen(String subscriptionNumber, LocalDate from, int plannedDays) {
+        sync();
+        int touched = freezeDocuments(subscriptionDocuments(subscriptionNumber), from, plannedDays, "Gel de l'abonnement " + subscriptionNumber);
+        log.info("Constatations d'avance : gel de {} jours de {}, {} echeancier(s) decale(s)", plannedDays, subscriptionNumber, touched);
+    }
+
+    /** A la reprise anticipee, la duree reellement gelee remplace la duree prevue. */
+    @Override
+    @Transactional
+    public void subscriptionResumed(String subscriptionNumber, LocalDate from, int effectiveDays) {
+        for (String number : subscriptionDocuments(subscriptionNumber)) {
+            for (AccDeferralSchedule schedule : schedules.findAllByDocumentNumber(number)) {
+                for (AccDeferralScheduleEvent event : events.findAllByScheduleIdOrderByCreatedAtAsc(schedule.getId())) {
+                    if (!"FREEZE".equals(event.getType()) || !event.getEventDate().equals(from)) {
+                        continue;
+                    }
+                    int planned = Integer.parseInt(event.getAfterValue());
+                    if (effectiveDays >= planned) {
+                        continue;
+                    }
+                    schedule.setEndDate(schedule.getEndDate().minusDays(planned - effectiveDays));
+                    schedule.setUpdatedAt(Instant.now());
+                    schedules.save(schedule);
+                    event.setAfterValue(String.valueOf(effectiveDays));
+                    event.setReason(cut(nz(event.getReason(), "") + " (reprise apres " + effectiveDays + " jours)", 500));
+                    events.save(event);
+                }
+            }
+        }
+    }
+
+    /** Factures des elements facturables d'un abonnement. */
+    private List<String> subscriptionDocuments(String subscriptionNumber) {
+        return new JdbcTemplate(dataSource).queryForList("SELECT DISTINCT d.document_number FROM billing_document_line l "
+                + "JOIN billing_document d ON d.id = l.document_id JOIN billable_item b ON b.billable_number = l.item_code WHERE b.source_id = ?",
+                String.class, subscriptionNumber);
     }
 
     public record PeriodRequest(LocalDate serviceStart, LocalDate serviceEnd, String method, String reason) {
@@ -544,12 +621,18 @@ public class DeferralService {
                 return;
             }
             String account = key.substring(0, key.indexOf('|'));
+            String section = key.substring(key.indexOf('|') + 1);
             boolean up = value.signum() > 0;
             BigDecimal amount = value.abs();
+            // La section de la ligne d'origine suit la charge ou le produit reconnu, mois par mois.
+            String axis = settings.text("accounting.deferral.analytic-axis", settings.text("accounting.purchase.analytic-axis", ""));
+            Map<String, String> analytic = StringUtils.hasText(section) && StringUtils.hasText(axis) ? Map.of(axis, section) : null;
             // Produits : besoin en hausse, D produit C 477. Charges : besoin en hausse, D 476 C charge.
             boolean debitPnl = REVENUE.equals(kind) == up;
-            entryLines.add(ReceivableRiskService.line(debitPnl ? account : deferredAccount, null, label, amount, null, month.toString()));
-            entryLines.add(ReceivableRiskService.line(debitPnl ? deferredAccount : account, null, label, null, amount, month.toString()));
+            entryLines.add(new AccountingRequests.EntryLine(debitPnl ? account : deferredAccount, null, label, amount, null, null, null, null, null,
+                    null, null, month.toString(), debitPnl ? analytic : null));
+            entryLines.add(new AccountingRequests.EntryLine(debitPnl ? deferredAccount : account, null, label, null, amount, null, null, null, null,
+                    null, null, month.toString(), debitPnl ? null : analytic));
         });
         AccEntry entry = entryLines.isEmpty() ? null : poster.book(settings.text("accounting.deferral.journal", "OD"), end, label,
                 REVENUE.equals(kind) ? "REVENUE_DEFERRAL_ADJUSTED" : "EXPENSE_DEFERRAL_ADJUSTED", kind + "-" + month, entryLines, actor);
@@ -634,6 +717,52 @@ public class DeferralService {
                 .thirdParty(request.thirdParty()).label(cut(request.label(), 300)).accountNumber(account).sectionCode(request.sectionCode())
                 .periodCode(month(request.period()).toString()).estimatedAmount(money(request.amount()))
                 .vatAmount(request.vatAmount() == null ? BigDecimal.ZERO : money(request.vatAmount())).createdBy(actor()).build());
+    }
+
+    /**
+     * Propositions automatiques de fin de periode : depassements d'abonnement consommes non factures
+     * (factures a etablir) ; commandes fournisseurs validees, attendues dans la periode et non
+     * entierement facturees (factures non parvenues). Une proposition par reference, jamais deux.
+     */
+    @Transactional
+    public int proposeAccruals(YearMonth month) {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        LocalDate end = month.atEndOfMonth();
+        int created = 0;
+        for (Map<String, Object> row : jdbc.queryForList("SELECT c.charge_number, c.owner_code, c.amount FROM subscription_overage_charge c "
+                + "LEFT JOIN billable_item b ON b.id = c.billable_item_id WHERE c.created_at < ? AND (b.id IS NULL OR b.invoice_id IS NULL)",
+                java.sql.Timestamp.from(end.plusDays(1).atStartOfDay(ZONE).toInstant()))) {
+            String reference = String.valueOf(row.get("charge_number"));
+            if (accruals.findAllByPeriodCode(month.toString()).stream().anyMatch(item -> reference.equals(item.getReference()))) {
+                continue;
+            }
+            BigDecimal amount = money((BigDecimal) row.get("amount"));
+            if (amount.signum() <= 0) {
+                continue;
+            }
+            accruals.save(AccAccrual.builder().kind("ACCRUED_REVENUE").sourceType("OVERAGE").reference(reference).thirdParty((String) row.get("owner_code"))
+                    .label("Depassement non facture " + reference).accountNumber(settings.text("accounting.sales.account.SUBSCRIPTION", "7062"))
+                    .periodCode(month.toString()).estimatedAmount(amount).createdBy("SYSTEM").build());
+            created++;
+        }
+        for (Map<String, Object> row : jdbc.queryForList("SELECT o.number, o.supplier_code, l.line_no, l.account_number, l.section_code, l.designation, "
+                + "l.amount_ht - COALESCE(l.invoiced_ht, 0) AS remaining FROM acc_purchase_order o JOIN acc_purchase_order_line l ON l.order_id = o.id "
+                + "WHERE o.status = 'VALIDATED' AND COALESCE(o.expected_date, o.order_date) <= ? AND l.amount_ht > COALESCE(l.invoiced_ht, 0)", end)) {
+            String reference = row.get("number") + "-" + row.get("line_no");
+            if (accruals.findAllByPeriodCode(month.toString()).stream().anyMatch(item -> reference.equals(item.getReference()))) {
+                continue;
+            }
+            String account = (String) row.get("account_number");
+            if (!StringUtils.hasText(account) || !account.startsWith("6")) {
+                continue;
+            }
+            accruals.save(AccAccrual.builder().kind("ACCRUED_EXPENSE").sourceType("PURCHASE_ORDER").reference(reference)
+                    .thirdParty((String) row.get("supplier_code")).label(cut("Commande non facturee : " + row.get("designation"), 300)).accountNumber(account)
+                    .sectionCode((String) row.get("section_code")).periodCode(month.toString()).estimatedAmount(money((BigDecimal) row.get("remaining")))
+                    .createdBy("SYSTEM").build());
+            created++;
+        }
+        return created;
     }
 
     /** Comptabilise l'estimation en fin de periode et son extourne au premier jour de la periode suivante. */

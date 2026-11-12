@@ -63,6 +63,11 @@ public class DeferralWorker implements SchedulingConfigurer {
             log.warn("Constatations d'avance : creation des echeanciers en echec : {}", exception.getMessage());
         }
         if (today.getDayOfMonth() == 1) {
+            try {
+                log.info("Constatations d'avance : {} estimation(s) proposee(s)", deferrals.proposeAccruals(YearMonth.from(today).minusMonths(1)));
+            } catch (RuntimeException exception) {
+                log.warn("Constatations d'avance : propositions d'estimations en echec : {}", exception.getMessage());
+            }
             for (String kind : List.of(DeferralService.REVENUE, DeferralService.EXPENSE)) {
                 try {
                     DeferralService.RunResult result = deferrals.runAutomatically(YearMonth.from(today).minusMonths(1), kind);

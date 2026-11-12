@@ -201,6 +201,15 @@ public class FixedAssetController {
         return ResponseEntity.ok(assets.meterReading(code, request.period(), request.units()));
     }
 
+    public record LeaseRequest(String loanCode) {
+    }
+
+    @Audited(module = "ACCOUNTING", action = "FIXED_ASSET_LEASE_LINK", ressource = "fixed_asset")
+    @PostMapping("/{code}/lease")
+    public ResponseEntity<FixedAssetService.AssetView> lease(@PathVariable String code, @RequestBody LeaseRequest request) {
+        return ResponseEntity.ok(assets.linkLease(code, request.loanCode()));
+    }
+
     @Audited(module = "ACCOUNTING", action = "FIXED_ASSET_INVENTORY_LINK", ressource = "fixed_asset")
     @PostMapping("/{code}/inventory-links")
     public ResponseEntity<FixedAssetService.AssetView> linkInventory(@PathVariable String code, @RequestBody InventoryLinkRequest request) {

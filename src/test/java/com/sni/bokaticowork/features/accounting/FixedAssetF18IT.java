@@ -138,6 +138,8 @@ class FixedAssetF18IT extends PostgresIntegrationTestBase {
         FixedAssetReportService.Table note = reports.report("note-3d", 2026, null, null, null, null, null);
         assertThat(note.rows()).anyMatch(row -> code.equals(row.get(0)) && new BigDecimal("-25000").compareTo((BigDecimal) row.get(9)) == 0);
         assertThat(reports.csv(note)).isNotEmpty();
+        assertThatThrownBy(() -> assets.linkLease(code, "EMP-INCONNU")).isInstanceOf(BadRequestException.class);
+        assertThat(reports.report("note-3b", null, LocalDate.of(2026, 4, 30), null, null, null, null).code()).isEqualTo("note-3b");
         assertThat(reports.pdf(note)).isNotEmpty();
     }
 

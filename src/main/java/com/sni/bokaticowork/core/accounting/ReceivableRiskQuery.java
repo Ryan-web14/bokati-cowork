@@ -22,4 +22,10 @@ public interface ReceivableRiskQuery {
      * {@code CUSTOMER_CREDIT:OVERRIDE} ; renvoie un avertissement a afficher (ou null).
      */
     String guardNewSale(String customerType, String customerCode, String what);
+
+    /**
+     * Politique {@code PREPAY} : une vente a credit (facturee sur compte, payable plus tard) est
+     * refusee sauf derogation ; une vente payee d'avance passe.
+     */
+    void guardCreditSale(String customerType, String customerCode, String what);
 }

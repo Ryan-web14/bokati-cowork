@@ -248,6 +248,15 @@ class ProvisionF19IT extends PostgresIntegrationTestBase {
         as("manager@elleaose.com", "CUSTOMER_CREDIT_OVERRIDE");
         assertThat(receivables.guardNewSale("CUSTOMER", customer, "la reservation")).contains("Derogation");
         assertThat(receivables.policyFor("CUSTOMER", "CUS-SANS-RISQUE-" + code)).isEqualTo(ReceivableRiskQuery.Policy.NONE);
+
+        // PREPAY : une vente payee d'avance passe, une vente a credit est refusee sans derogation.
+        when(settings.text(eq("accounting.doubtful.customer-policy"), anyString())).thenReturn("PREPAY");
+        as("accueil@elleaose.com", "BOOKING_CREATE");
+        assertThat(receivables.guardNewSale("CUSTOMER", customer, "la reservation")).contains("payable d'avance");
+        assertThatThrownBy(() -> receivables.guardCreditSale("CUSTOMER", customer, "la reservation facturee sur compte"))
+                .isInstanceOf(ForbiddenException.class);
+        as("manager@elleaose.com", "CUSTOMER_CREDIT_OVERRIDE");
+        receivables.guardCreditSale("CUSTOMER", customer, "la reservation facturee sur compte");
     }
 
     @Test
