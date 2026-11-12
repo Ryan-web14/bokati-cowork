@@ -62,6 +62,8 @@ public class PaymentTransactionWorkflowProcessor {
     private final com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository allocationRepository;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService billingLinkService;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository allocationRepository;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService billingLinkService;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {

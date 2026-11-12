@@ -52,6 +52,11 @@ Tout ce que le module comptable doit produire : livres, balances, relevés de co
 | **Balance âgée** | Créances clients (ou dettes fournisseurs) non lettrées par ancienneté : non échu, 0 à 30, 31 à 60, 61 à 90, plus de 90 jours | Tranches paramétrables ; par client, par organisation |
 | **Balance analytique** | Par section et par compte | Par axe |
 | **Livre de caisse** | Par caisse et par jour : solde d'ouverture, entrées, sorties, solde de clôture, rapproché du billetage | Lien vers les pièces de caisse |
+| **État du lettrage** | Par compte lettrable et par tiers : lignes non lettrées, lettrages partiels et leur reste, ancienneté | Par compte, par tiers, par ancienneté |
+| **Propositions de lettrage** | Rapprochements proposés par le traitement de nuit, avec indice de confiance | À valider ou rejeter |
+| **État de continuité des numéros** | Par journal et par type de pièce émise : premier et dernier numéro, nombre, trous, doublons, pièces annulées, état de la chaîne d'empreintes | Par exercice ; imprimable pour l'audit |
+| **Pièces acceptées déséquilibrées et compte d'attente d'équilibrage** | Selon la politique choisie : pièces acceptées non régularisées, solde et lignes non lettrées du compte d'attente d'équilibrage | Ancienneté |
+| **Journal des lettrages et délettrages** | Qui, quand, lignes, type, écart de règlement généré, motif de délettrage | Piste d'audit |
 | **État des comptes d'attente** | Soldes des `471` et `585` avec ancienneté | Alerte au-delà du délai paramétré |
 
 ---
@@ -65,6 +70,8 @@ Tout ce que le module comptable doit produire : livres, balances, relevés de co
 - Relevé de portefeuille (`WalletStatementService`).
 
 ### 3.2 Cible
+
+Détail du contenu imprimé, des modèles, du justificatif de solde et du dossier de justification de clôture dans [rapprochement-et-comptes-tiers.md](rapprochement-et-comptes-tiers.md#3-état-de-compte-dun-tiers).
 
 Une fois la comptabilité activée, le relevé de compte est **tiré du compte auxiliaire du tiers** (grand livre). Ce n'est plus une reconstitution des factures. Il devient donc identique à ce que voit le comptable.
 
@@ -139,7 +146,9 @@ Les notes sans objet sont marquées « Néant » comme le prévoit la liasse.
 
 ### 4.5 Contrôles de cohérence avant édition définitive
 
-- Balance équilibrée (débit = crédit, à-nouveaux, mouvements, soldes).
+- Balance équilibrée (débit = crédit, à-nouveaux, mouvements, soldes) ; balances analytique et hors bilan de la classe 9 équilibrées.
+- Aucune pièce en attente d'équilibrage datée dans l'exercice ; compte d'attente d'équilibrage soldé ; aucune pièce acceptée déséquilibrée non régularisée.
+- Numérotation continue dans chaque journal (aucun trou, aucun doublon, chaîne d'empreintes intacte).
 - Total actif = total passif.
 - Résultat du bilan = résultat net du compte de résultat.
 - Trésorerie du tableau des flux = trésorerie du bilan.
@@ -169,11 +178,11 @@ Non retenu (décision 1) mais disponible par paramètre : bilan et compte de ré
 
 | État | Contenu |
 | --- | --- |
-| Tableau des immobilisations | Valeur d'origine, acquisitions, cessions, valeur de fin ; par catégorie |
+| Tableau des immobilisations | Valeur d'origine, acquisitions, cessions, valeur de fin ; par catégorie ; tous les états des immobilisations dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#11-états) |
 | Tableau des amortissements | Cumul début, dotation, reprises, cumul fin, valeur nette ; plan d'amortissement par bien |
 | État des provisions et dépréciations | Créances douteuses par client, risques ; dotations et reprises |
-| État des créances douteuses | Factures concernées, ancienneté, provision, perte |
-| Produits constatés d'avance | Par facture d'abonnement ou de pass : montant, part reportée, période |
+| État des créances douteuses | Factures concernées, ancienneté, provision, perte ; tous les états des créances douteuses et des provisions dans [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#11-états) |
+| Produits constatés d'avance | Par facture d'abonnement ou de pass : montant, part reportée, période ; tous les états dans [produits-et-charges-constates-d-avance.md](produits-et-charges-constates-d-avance.md#10-états) |
 | Charges constatées d'avance, charges à payer, produits à recevoir | Par pièce |
 | Rapprochements bancaires | Par compte : solde banque, solde comptable, suspens des deux côtés |
 | Inventaire de caisse | PV de billetage au 31 décembre par caisse, comparé au solde comptable |
@@ -264,6 +273,9 @@ Les correspondances sont livrées pour le SYSCOHADA révisé et restent **modifi
 | F9 Analytique | Grand livre et balance analytiques, résultat analytique, rentabilités |
 | F10 Banque | Rapprochements, inventaire des chèques |
 | F11 Fiscalité | Déclaration et rapprochement de TVA, CA déclaré |
+| F18 Immobilisations | Fichier des immobilisations, fiche et plan par bien, notes 3A à 3E, dotations prévisionnelles, coût par espace, inventaire physique, rapprochement fichier et comptabilité |
+| F19 Provisions et créances douteuses | Balance âgée avec risque, état des créances douteuses et litigieuses, variation des dépréciations et des provisions, registre des risques, passifs éventuels, pertes sur créances, réintégrations fiscales |
+| F20 Constatations d'avance | Détail du `477` et du `476`, échéancier du chiffre d'affaires à reconnaître, chiffre d'affaires facturé et reconnu, factures à établir et non parvenues, crédits de pass non consommés |
 | F12 Clôture | Table de correspondance, **bilan, compte de résultat, tableau des flux, notes chiffrées et rédactionnelles**, contrôles de cohérence, états d'inventaire, liste de clôture, éditions définitives |
 | **F15 Liasse et gestion** (nouveau) | DSF pré-remplie, passage au résultat fiscal, SIG mensuels, tableau de bord financier, ratios, budget et réalisé, prévisionnel de trésorerie, circularisation |
 

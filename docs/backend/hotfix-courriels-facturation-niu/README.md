@@ -23,7 +23,7 @@ Correctif de production, branche `hotfix/emails-facturation-niu` partie de `new-
 
 ## Migration
 
-Prod `V279_1__courriels_facturation_multiples.sql`, dev `V283_1` (contenu identique) :
+Prod `V279_1__courriels_facturation_multiples.sql`, dev `V283_1` sur `new-main` et `V289` sur `feature/reservation-places` (contenu identique, idempotent) :
 
 - `customer.billing_email` passe à `VARCHAR(500)` ;
 - `billing_document.customer_email` passe à `VARCHAR(500)` ;
