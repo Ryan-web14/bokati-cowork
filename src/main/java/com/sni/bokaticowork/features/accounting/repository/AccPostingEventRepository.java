@@ -31,4 +31,6 @@ public interface AccPostingEventRepository extends JpaRepository<AccPostingEvent
     List<Object[]> countByStatus();
 
     long countByStatusIn(Collection<PostingEventStatus> statuses);
+
+    List<AccPostingEvent> findByReferenceOrderByIdAsc(String reference);
 }

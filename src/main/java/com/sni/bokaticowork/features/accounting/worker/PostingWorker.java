@@ -15,6 +15,7 @@ public class PostingWorker {
 
     private final PostingEngine engine;
     private final com.sni.bokaticowork.features.accounting.service.implementation.CashAccountingService cash;
+    private final com.sni.bokaticowork.features.accounting.service.implementation.SalesAccountingService sales;
 
     @Scheduled(fixedDelayString = "${accounting.posting.worker-delay-ms:30000}", initialDelayString = "${accounting.posting.worker-delay-ms:30000}")
     public void run() {
@@ -27,12 +28,33 @@ public class PostingWorker {
             log.error("Comptabilite · alimentation de la caisse en echec : {}", exception.getMessage(), exception);
         }
         try {
+            PostingDtos.BatchResult fed = sales.feed();
+            if (fed.failed() > 0) {
+                log.warn("Comptabilite · {} fait(s) de vente ou d'encaissement non transmis : {}", fed.failed(), fed.errors());
+            }
+        } catch (RuntimeException exception) {
+            log.error("Comptabilite · alimentation des ventes en echec : {}", exception.getMessage(), exception);
+        }
+        try {
             PostingDtos.BatchResult result = engine.processPending();
             if (result.failed() > 0) {
                 log.warn("Comptabilite · {} evenement(s) en echec sur {} : {}", result.failed(), result.processed(), result.errors());
             }
         } catch (RuntimeException exception) {
             log.error("Comptabilite · moteur d'imputation en echec : {}", exception.getMessage(), exception);
+        }
+    }
+
+    /** Lettrage automatique des comptes clients et des avances, par reference (lot F4). */
+    @Scheduled(fixedDelayString = "${accounting.lettering.auto-delay-ms:600000}", initialDelayString = "${accounting.lettering.auto-delay-ms:600000}")
+    public void letter() {
+        try {
+            PostingDtos.BatchResult result = sales.autoLetter();
+            if (result.failed() > 0) {
+                log.warn("Comptabilite · lettrage automatique : {} groupe(s) en echec : {}", result.failed(), result.errors());
+            }
+        } catch (RuntimeException exception) {
+            log.error("Comptabilite · lettrage automatique en echec : {}", exception.getMessage(), exception);
         }
     }
 }

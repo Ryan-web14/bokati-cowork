@@ -208,6 +208,68 @@ public class AccountingLetteringService {
         return entry;
     }
 
+    /**
+     * Lettrage automatique par reference (lot F4) : les lignes ouvertes d'un compte et d'un tiers
+     * qui portent la meme reference (numero de facture) se lettrent ; complet si elles se soldent,
+     * partiel sinon. Rien si un seul cote est present.
+     */
+    public java.util.Optional<AccountingResponses.Lettering> autoLetterByReference(String accountNumber, String thirdPartyCode, String reference) {
+        if (!StringUtils.hasText(reference)) {
+            return java.util.Optional.empty();
+        }
+        List<AccountingResponses.OpenLine> open = openLines(accountNumber, thirdPartyCode).stream()
+                .filter(line -> reference.equals(line.reference()) && java.util.Objects.equals(thirdPartyCode, line.thirdPartyCode()))
+                .toList();
+        boolean hasDebit = open.stream().anyMatch(line -> line.side() == AccountSide.DEBIT);
+        boolean hasCredit = open.stream().anyMatch(line -> line.side() == AccountSide.CREDIT);
+        if (!hasDebit || !hasCredit) {
+            return java.util.Optional.empty();
+        }
+        BigDecimal debit = open.stream().filter(line -> line.side() == AccountSide.DEBIT).map(AccountingResponses.OpenLine::remaining)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal credit = open.stream().filter(line -> line.side() == AccountSide.CREDIT).map(AccountingResponses.OpenLine::remaining)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        AccountingResponses.Lettering result = letter(new AccountingRequests.Letter(accountNumber, thirdPartyCode,
+                open.stream().map(line -> new AccountingRequests.LetterLine(line.lineId(), null)).toList(),
+                debit.compareTo(credit) != 0, false));
+        letteringRepository.findById(result.id()).ifPresent(lettering -> {
+            lettering.setKind(LetteringKind.AUTO_REFERENCE);
+            letteringRepository.save(lettering);
+        });
+        return java.util.Optional.of(result);
+    }
+
+    /** Proposition de lettrage : deux lignes du meme tiers, de sens oppose, au meme reste, sans reference commune. */
+    public record Proposal(String accountNumber, String thirdPartyCode, AccountingResponses.OpenLine debit, AccountingResponses.OpenLine credit) {
+    }
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<Proposal> proposals(String accountNumber, int limit) {
+        List<AccountingResponses.OpenLine> open = openLines(accountNumber, null);
+        Map<String, List<AccountingResponses.OpenLine>> byParty = open.stream().filter(line -> line.thirdPartyCode() != null)
+                .collect(Collectors.groupingBy(AccountingResponses.OpenLine::thirdPartyCode, LinkedHashMap::new, Collectors.toList()));
+        List<Proposal> proposals = new ArrayList<>();
+        for (Map.Entry<String, List<AccountingResponses.OpenLine>> party : byParty.entrySet()) {
+            List<AccountingResponses.OpenLine> credits = new ArrayList<>(party.getValue().stream().filter(line -> line.side() == AccountSide.CREDIT).toList());
+            for (AccountingResponses.OpenLine debit : party.getValue()) {
+                if (debit.side() != AccountSide.DEBIT) {
+                    continue;
+                }
+                for (AccountingResponses.OpenLine credit : credits) {
+                    if (credit.remaining().compareTo(debit.remaining()) == 0 && !java.util.Objects.equals(credit.reference(), debit.reference())) {
+                        proposals.add(new Proposal(accountNumber, party.getKey(), debit, credit));
+                        credits.remove(credit);
+                        break;
+                    }
+                }
+                if (proposals.size() >= limit) {
+                    return proposals;
+                }
+            }
+        }
+        return proposals;
+    }
+
     public AccountingResponses.Lettering unletter(Long letteringId, String reason) {
         AccLettering lettering = letteringRepository.findById(letteringId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lettrage introuvable : " + letteringId));

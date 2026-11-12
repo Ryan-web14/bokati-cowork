@@ -135,6 +135,11 @@ public class AccountingSettings {
         }
     }
 
+    /** Delai laisse a l'imputation d'un paiement sur ses factures avant sa comptabilisation (minutes). */
+    public long paymentDelayMinutes() {
+        return Math.max(0, settings.number("accounting.sales.payment-delay-minutes", 5));
+    }
+
     public String disabledFamilies() {
         return settings.text("accounting.posting.disabled-families", "");
     }

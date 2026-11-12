@@ -258,6 +258,10 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("PUT", BASE + "/accounting/cash/registers/CSR-1/journals/OD")).isEqualTo("ACCOUNTING_JOURNAL:MANAGE");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/reconciliation")).isEqualTo("ACCOUNTING_REPORT:READ");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/cash/feed")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
+        // Lot F4.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/sales/checks")).isEqualTo("ACCOUNTING_REPORT:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/sales/auto-letter")).isEqualTo("ACCOUNTING_LETTERING:MANUAL");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/sales/feed")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
     }
 
     @Test
