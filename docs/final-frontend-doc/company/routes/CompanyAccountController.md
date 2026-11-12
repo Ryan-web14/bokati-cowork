@@ -168,6 +168,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `blockedBy` | texte |  |  |
 | `blockedAt` | date-heure ISO 8601 UTC |  |  |
 | `businessCode` | texte |  |  |
+| `currencyCode` | texte |  | devise de facturation de l'organisation (code ISO à 3 lettres) |
 | `membersCount` | entier int64 ⚠ |  |  |
 | `activeSubscriptions` | entier |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
@@ -206,6 +207,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `paymentTermsDays` | entier |  |  |
 | `creditLimit` | nombre décimal |  |  |
 | `removeCreditLimit` | booléen |  |  |
+| `currencyCode` | texte |  | longueur `3` ; code ISO d'une devise connue (`XAF`, `EUR`, `USD`...) ; absent : devise inchangée ; inconnue : `400` « Devise inconnue » |
 
 <a id="m-CompanyDtos-BlockRequest"></a>
 #### CompanyDtos.BlockRequest
