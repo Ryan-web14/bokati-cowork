@@ -23,10 +23,16 @@ public class BillingCustomerSnapshotResolver {
     private final BusinessRepository businessRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final com.sni.bokaticowork.features.company.service.support.OrganizationBillingProfile organizationProfile;
+    private final MemberBillingContact memberContact;
 
     public CustomerSnapshot resolve(CreateBillingDocumentRequest request) {
         validateCustomerReference(request.customerType(), request.customerCode());
         CustomerSnapshot resolved = resolveKnownCustomer(request.customerType(), request.customerCode());
+        // Un membre (ou le client personne d'un membre) peut avoir choisi une adresse de facturation :
+        // elle remplace l'adresse du compte transmise par l'appelant, pas une adresse saisie a part.
+        String email = memberContact.memberOf(resolved.customerType(), resolved.customerCode())
+                .map(member -> memberContact.recipient(member, firstText(request.customerEmail(), resolved.customerEmail())))
+                .orElseGet(() -> firstText(request.customerEmail(), resolved.customerEmail()));
         String name = firstText(request.customerName(), resolved.customerName());
         if (!StringUtils.hasText(name)) {
             throw new BadRequestException("Customer name is required when customer cannot be resolved");
@@ -41,7 +47,7 @@ public class BillingCustomerSnapshotResolver {
                 customerType,
                 customerCode,
                 name,
-                firstText(request.customerEmail(), resolved.customerEmail()),
+                email,
                 firstText(request.customerPhone(), resolved.customerPhone()),
                 // L'adresse de la demande d'abord ; a defaut, celle de la fiche de l'organisation.
                 firstText(request.billingAddressJson(), resolved.billingAddressJson()),

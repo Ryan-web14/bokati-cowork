@@ -100,16 +100,16 @@ Droits : nouvelle permission `SYSTEM:DOCUMENT_TEMPLATES` (lecture, modification,
 
 ## Lots
 
-| Lot | Contenu |
-| --- | --- |
-| D1, socle | Composant unique de rendu PDF (remplace les 14 copies), générateur de QR unique, fragments communs d'en-tête et de pied lus depuis la fiche exploitant. Écriture des `seller_*` à l'émission. Corrections : rapport de clôture, QR d'emprunt, marque « Bokati Cowork » / « Elle A Osé », titres accentués, logo du reçu, mention « scellé » du reçu |
-| D2, modèles | Tables, routes d'administration, moteur de blocs, aperçu, publication et versions. Modèles de départ des quatre pièces maquettées (bon de sortie et bon d'entrée en deux exemplaires A5, demande de fonds, état de besoin) |
-| D3, champs ajoutés | Champs `PRINTED_BLANK` et `CAPTURED`, saisie sur les pièces, contrôle des champs obligatoires, valeurs imprimées |
-| D4, autres pièces de fonds et d'achats | Bon de décaissement, fiche de justification, bon de commande, demande de caisse, rapport de clôture, déclaration de TVA, état de rapprochement, tableau d'emprunt ; bordereau de remise en banque (nouveau PDF) ; relevés fournisseur et partenaire imprimables |
-| D5, pièces clients | Reçu de paiement, reçu de portefeuille, relevé de portefeuille, avoir, confirmation de réservation ; facture en dernier, avec la version figée par pièce. Contrats : ils gardent `contract_template`, mais reçoivent l'en-tête commun |
-| E1, courriels : socle | Blocs de courriel, catalogue de jetons, aperçu HTML et envoi de test, repli sur le gabarit Thymeleaf ; rapprochement avec `notification_template` |
-| E2, courriels : reprise | Tous les courriels de l'inventaire, famille par famille (facturation, paiement, réservation, abonnements, portefeuille, domiciliation, sécurité...) ; gabarits de repli pour les courriels écrits en Java |
-| D6, nettoyage | Suppression des gabarits morts seulement (les gabarits utilisés restent comme repli), doc frontend finale |
+| Lot | Contenu | État |
+| --- | --- | --- |
+| D1, socle | Composant unique de rendu PDF (remplace les 14 copies), générateur de QR unique, fragments communs d'en-tête et de pied lus depuis la fiche exploitant. Écriture des `seller_*` à l'émission. Corrections : rapport de clôture, QR d'emprunt, marque « Bokati Cowork » / « Elle A Osé », titres accentués, logo du reçu, mention « scellé » du reçu | Fait, voir [lot-d1-socle.md](lot-d1-socle.md) |
+| D2, modèles | Tables, routes d'administration, moteur de blocs, aperçu, publication et versions. Modèles de départ des quatre pièces maquettées (bon de sortie et bon d'entrée en deux exemplaires A5, demande de fonds, état de besoin) | À faire |
+| D3, champs ajoutés | Champs `PRINTED_BLANK` et `CAPTURED`, saisie sur les pièces, contrôle des champs obligatoires, valeurs imprimées | À faire |
+| D4, autres pièces de fonds et d'achats | Bon de décaissement, fiche de justification, bon de commande, demande de caisse, rapport de clôture, déclaration de TVA, état de rapprochement, tableau d'emprunt ; bordereau de remise en banque (nouveau PDF) ; relevés fournisseur et partenaire imprimables | À faire |
+| D5, pièces clients | Reçu de paiement, reçu de portefeuille, relevé de portefeuille, avoir, confirmation de réservation ; facture en dernier, avec la version figée par pièce. Contrats : ils gardent `contract_template`, mais reçoivent l'en-tête commun | À faire |
+| E1, courriels : socle | Blocs de courriel, catalogue de jetons, aperçu HTML et envoi de test, repli sur le gabarit Thymeleaf ; rapprochement avec `notification_template` | À faire |
+| E2, courriels : reprise | Tous les courriels de l'inventaire, famille par famille (facturation, paiement, réservation, abonnements, portefeuille, domiciliation, sécurité...) ; gabarits de repli pour les courriels écrits en Java | À faire |
+| D6, nettoyage | Suppression des gabarits morts seulement (les gabarits utilisés restent comme repli), doc frontend finale | À faire |
 
 Les migrations vont dans `db/migration` et `db/migration-prod`, à la suite du chantier finance.
 

@@ -122,6 +122,7 @@ class VatF11IT extends PostgresIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
+        com.sni.bokaticowork.core.settings.platform.PlatformSettingsStubs.fallbacks(platformSettings);
         as("preparateur@elleaose.com", RIGHTS);
         when(sequences.next(anyString())).thenAnswer(invocation -> "BR-F11-" + SEQ.getAndIncrement() + "-" + UUID.randomUUID().toString().substring(0, 6));
         when(settings.enabled()).thenReturn(true);

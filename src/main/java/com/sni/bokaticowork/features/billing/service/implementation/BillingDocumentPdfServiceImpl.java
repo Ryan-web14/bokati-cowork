@@ -2,11 +2,7 @@ package com.sni.bokaticowork.features.billing.service.implementation;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
@@ -45,8 +41,6 @@ import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -56,7 +50,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -79,6 +72,8 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
     private final PdfSignatureService pdfSignatureService;
     private final Locale appLocale;
     private final BrandLogo brandLogo;
+    private final com.sni.bokaticowork.core.identity.OperatorIdentityService operatorIdentityService;
+    private final com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer qrCodeRenderer;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
     private String verifyBaseUrl;
@@ -206,21 +201,11 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
 
     private byte[] render(BillingDocumentResponse document) {
         String html = renderHtml(document);
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document jsoupDoc = org.jsoup.Jsoup.parse(html);
-            jsoupDoc.outputSettings()
-                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
-                    .charset(java.nio.charset.StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoupDoc), null);
-            builder.toStream(out);
-            builder.run();
+        try {
+            byte[] pdf = PdfRenderer.render(html);
             // Le filigrane n'est plus appose ici · il depend du statut courant, qui evolue,
             // alors que ces octets-ci sont la version canonique et doivent rester stables.
-            return out.toByteArray();
+            return pdf;
         } catch (Exception ex) {
             throw new BadRequestException("Unable to generate billing document PDF", ex);
         }
@@ -320,9 +305,11 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         context.setVariable("qrCode", generateQrCode(document));
         context.setVariable("payments", fetchPaymentInfos(document.documentNumber()));
         context.setVariable("logo", brandLogo.base64());
+        context.setVariable("operator", currentOperator());
         // Les identifiants saisis sur la fiche de l'organisation et sa mention d'exoneration,
         // figes a l'emission · seuls ceux-la s'impriment.
         documentRepository.findByDocumentNumber(document.documentNumber()).ifPresent(entity -> {
+            putFrozenOperator(context, entity);
             context.setVariable("customerIdentifiers", identifierLines(entity.getCustomerIdentifiersJson(), entity.getCustomerNiu()));
             context.setVariable("customerVatExemptionNote", entity.getCustomerVatExemptionNote());
             context.setVariable("usageAnnex", usageAnnex(entity.getUsageAnnexJson(), document.documentNumber()));
@@ -334,6 +321,26 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
             }
         });
         return templateEngine.process("billing/document", context);
+    }
+
+    /** Identite courante de l'exploitant · celle par defaut si le service manque (tests). */
+    private com.sni.bokaticowork.core.identity.OperatorIdentity currentOperator() {
+        return operatorIdentityService != null ? operatorIdentityService.current()
+                : com.sni.bokaticowork.core.identity.OperatorIdentity.defaults();
+    }
+
+    /**
+     * Identite figee a l'emission (colonnes seller_*) · une facture reimprimee garde le vendeur
+     * de son emission. Sans instantane (pieces anterieures), l'identite courante reste.
+     */
+    private void putFrozenOperator(Context context, com.sni.bokaticowork.features.billing.model.BillingDocument entity) {
+        com.sni.bokaticowork.core.identity.OperatorIdentity frozen =
+                com.sni.bokaticowork.features.billing.service.support.BillingSellerSnapshot.frozen(
+                        entity.getSellerName(), entity.getSellerNiu(), entity.getSellerAddressJson(),
+                        entity.getSellerPhone(), entity.getSellerEmail(), currentOperator(), objectMapper);
+        if (frozen != null) {
+            context.setVariable("operator", frozen);
+        }
     }
 
     /** L'annexe figee a la creation · une annexe illisible ne fait pas echouer le PDF, il sort sans. */
@@ -361,6 +368,9 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
         context.setVariable("fmt", fmt);
         context.setVariable("generatedAt", LocalDate.now());
         context.setVariable("logo", brandLogo.base64());
+        context.setVariable("operator", currentOperator());
+        documentRepository.findByDocumentNumber(document.documentNumber())
+                .ifPresent(entity -> putFrozenOperator(context, entity));
         // Effet chiffre de l'avoir · sans ce report, le client refait la soustraction pour
         // savoir ce qu'il doit encore sur la facture corrigee.
         context.setVariable("origin", loadOrigin(document.originalDocumentNumber()));
@@ -464,13 +474,7 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
 
     private String generateQrCode(BillingDocumentResponse document) {
         try {
-            String content = buildQrContent(document);
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix matrix = writer.encode(content, BarcodeFormat.QR_CODE, 350, 350);
-            BufferedImage image = MatrixToImageWriter.toBufferedImage(matrix);
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            ImageIO.write(image, "PNG", stream);
-            return Base64.getEncoder().encodeToString(stream.toByteArray());
+            return (qrCodeRenderer != null ? qrCodeRenderer : new com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer()).toBase64(buildQrContent(document), 350);
         } catch (Exception ex) {
             return null;
         }

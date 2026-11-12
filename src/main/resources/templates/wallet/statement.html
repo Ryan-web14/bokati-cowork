@@ -33,22 +33,11 @@
         .footer { margin-top: 20px; font-size: 7.6px; color: #9b8caa; text-align: center; }
         .seal { margin-top: 10px; font-size: 7.6px; color: #6f6478; font-family: "Courier New", monospace; word-break: break-all; }
     </style>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
 </head>
 <body>
-<div class="header">
-    <table class="header-table">
-        <tr>
-            <td>
-                <div class="brand">Bokati Cowork</div>
-                <div class="brand-sub">Portefeuille client</div>
-            </td>
-            <td>
-                <div class="doc-type">Relevé de compte</div>
-                <div class="doc-number" th:text="${walletNumber}">WAL-000001</div>
-            </td>
-        </tr>
-    </table>
-</div>
+<div th:replace="~{fragments/document-brand :: titled('Relevé de compte', ${walletNumber})}"></div>
+<div style="height:12px"></div>
 
 <div class="section-title">Titulaire et période</div>
 <table class="info">
@@ -100,9 +89,6 @@
     Empreinte de la dernière écriture · <span th:text="${lastHash}">hash</span>
 </div>
 
-<div class="footer">
-    Ce relevé reproduit le journal du portefeuille tel qu'il est tenu par l'établissement.
-    Chaque écriture y est chaînée à la précédente · toute modification ultérieure serait détectable.
-</div>
+<div th:replace="~{fragments/document-brand :: footer('Ce relevé reproduit le journal du portefeuille tel qu’il est tenu par l’établissement. Chaque écriture y est chaînée à la précédente : toute modification ultérieure serait détectable.')}"></div>
 </body>
 </html>

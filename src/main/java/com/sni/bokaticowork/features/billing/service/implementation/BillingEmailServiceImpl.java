@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.billing.service.implementation;
 
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.core.enums.EventType;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
@@ -8,6 +9,7 @@ import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentPdfService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingEmailService;
+import com.sni.bokaticowork.features.billing.service.support.MemberBillingContact;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentTransactionResponse;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -37,18 +39,43 @@ public class BillingEmailServiceImpl implements BillingEmailService {
     private final DefaultEmailSender emailSender;
     private final SpringTemplateEngine templateEngine;
     private final Locale appLocale;
+    private final MemberBillingContact memberContact;
 
+    /**
+     * Envoi demande explicitement (bouton « renvoyer ») ou relance d'impaye · part toujours, quelles
+     * que soient les preferences du membre. Seule l'adresse suit sa preference de facturation.
+     */
     @Override
     @Transactional(readOnly = true)
     public boolean sendDocument(String documentNumber) {
+        return send(billingDocumentService.get(documentNumber));
+    }
+
+    /**
+     * Envoi automatique · ne part pas si le membre destinataire a coupe cet evenement par courriel.
+     * Le document reste consultable dans le portail ; un envoi coupe n'est pas un echec.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public boolean sendDocumentIfAllowed(String documentNumber, EventType event) {
         BillingDocumentResponse document = billingDocumentService.get(documentNumber);
-        if (!StringUtils.hasText(document.customerEmail())) {
+        if (!memberContact.allowsEmail(document.customerType(), document.customerCode(), event)) {
+            log.info("Envoi de {} non fait ({}) : preference du membre {}", documentNumber, event, document.customerCode());
+            return false;
+        }
+        return send(document);
+    }
+
+    private boolean send(BillingDocumentResponse document) {
+        String documentNumber = document.documentNumber();
+        String to = recipient(document);
+        if (!StringUtils.hasText(to)) {
             throw new BadRequestException("Billing document customer has no email");
         }
         byte[] pdf = billingDocumentPdfService.generatePdf(documentNumber);
         try {
             return emailSender.sendHtmlEmailWithPdfAttachment(
-                    document.customerEmail(),
+                    to,
                     billingSubject(document),
                     renderBillingDocument(document),
                     document.documentNumber() + ".pdf",
@@ -141,11 +168,17 @@ public class BillingEmailServiceImpl implements BillingEmailService {
         return templateEngine.process("billing-document", context);
     }
 
+    /** L'adresse du document, ou l'adresse de facturation choisie par le membre destinataire. */
+    private String recipient(BillingDocumentResponse document) {
+        return memberContact.recipient(document.customerType(), document.customerCode(), document.customerEmail());
+    }
+
+    /** Envoi automatique d'une facture a son emission · se coupe par INVOICE_ISSUED. */
     @Async
     @Override
     public void sendDocumentAsync(String documentNumber) {
         try {
-            sendDocument(documentNumber);
+            sendDocumentIfAllowed(documentNumber, EventType.INVOICE_ISSUED);
         } catch (Exception e) {
             log.warn("Envoi async facture {} échoué : {}", documentNumber, e.getMessage());
         }
@@ -154,8 +187,14 @@ public class BillingEmailServiceImpl implements BillingEmailService {
     @Async
     @Override
     public void sendPaymentConfirmation(BillingDocumentResponse document, PaymentTransactionResponse transaction) {
-        if (!StringUtils.hasText(document.customerEmail())) {
+        String to = recipient(document);
+        if (!StringUtils.hasText(to)) {
             log.debug("No email for customer {}, skipping payment confirmation", document.customerCode());
+            return;
+        }
+        if (!memberContact.allowsEmail(document.customerType(), document.customerCode(), EventType.PAYMENT_RECEIVED)) {
+            log.info("Confirmation de reglement de {} non envoyee : preference du membre {}",
+                    document.documentNumber(), document.customerCode());
             return;
         }
         try {
@@ -164,7 +203,7 @@ public class BillingEmailServiceImpl implements BillingEmailService {
             String amount = transaction != null && transaction.amount() != null
                     ? money(transaction.amount(), document.currency()) : "";
             String body = renderPaymentConfirmation(document, method, amount);
-            emailSender.sendHtmlEmail(document.customerEmail(),
+            emailSender.sendHtmlEmail(to,
                     "Confirmation de reglement - " + document.documentNumber(), body);
         } catch (MessagingException ex) {
             log.warn("Unable to send payment confirmation email for {}: {}", document.documentNumber(), ex.getMessage());

@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.features.domiciliation.service;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.identity.OperatorIdentityService;
+import com.sni.bokaticowork.core.utils.BrandLogo;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.baseClasses.model.Address;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.document.documentMaster.dto.request.DocumentUploadMetadataRequest;
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -34,12 +35,14 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class DomiciliationDocuments {
 
-    private static final ZoneId APP_ZONE = ZoneId.of("Africa/Lagos");
+    static final ZoneId APP_ZONE = ZoneId.of("Africa/Brazzaville");
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final DocumentService documentService;
     private final SpringTemplateEngine templateEngine;
     private final Locale appLocale;
+    private final OperatorIdentityService operatorIdentity;
+    private final BrandLogo brandLogo;
 
     public DocumentResponse contract(DomiciliationContract contract) {
         Context context = base(contract);
@@ -85,6 +88,9 @@ public class DomiciliationDocuments {
         context.setVariable("startDate", contract.getStartDate() == null ? "" : DATE.format(contract.getStartDate()));
         context.setVariable("endDate", contract.getEndDate() == null ? "" : DATE.format(contract.getEndDate()));
         context.setVariable("issuedAt", DATE.format(LocalDate.now(APP_ZONE)));
+        // Le domiciliataire est l'exploitant · nomme avec son RCCM et son siege dans le corps.
+        context.setVariable("operator", operatorIdentity.current());
+        context.setVariable("logo", brandLogo.base64());
         return context;
     }
 
@@ -131,19 +137,8 @@ public class DomiciliationDocuments {
     }
 
     private byte[] render(String html) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document document = org.jsoup.Jsoup.parse(html);
-            document.outputSettings()
-                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
-                    .charset(java.nio.charset.StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(document), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception ex) {
             throw new BadRequestException("Impossible de générer la pièce de domiciliation", ex);
         }

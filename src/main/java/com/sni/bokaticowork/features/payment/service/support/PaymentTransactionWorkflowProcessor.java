@@ -151,7 +151,9 @@ public class PaymentTransactionWorkflowProcessor {
         }
         splitCodes(intent.getSourceCode()).forEach(documentNumber -> {
             try {
-                if (billingEmailService.sendDocument(documentNumber)) {
+                // Envoi automatique apres paiement · se coupe si le membre a refuse la confirmation de paiement
+                if (billingEmailService.sendDocumentIfAllowed(documentNumber,
+                        com.sni.bokaticowork.core.enums.EventType.PAYMENT_RECEIVED)) {
                     log.info("Sent billing document {} after payment {}", documentNumber, transaction.getTransactionNumber());
                 }
             } catch (Exception ex) {

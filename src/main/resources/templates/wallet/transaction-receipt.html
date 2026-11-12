@@ -24,22 +24,16 @@
         .mono { font-family: "Courier New", monospace; font-size: 8.5px; word-break: break-all; }
         .footer { margin-top: 18px; font-size: 7.6px; color: #9b8caa; text-align: center; }
     </style>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
+    <style>
+        /* Format A5 · en-tete resserre */
+        .dbr-logo { height: 30px; }
+        .dbr-title { font-size: 16px; }
+    </style>
 </head>
 <body>
-<div class="header">
-    <table class="header-table">
-        <tr>
-            <td>
-                <div class="brand">Bokati Cowork</div>
-                <div class="brand-sub">Portefeuille client</div>
-            </td>
-            <td>
-                <div class="doc-type">Reçu</div>
-                <div class="doc-number" th:text="${entry.transactionNumber}">WTX</div>
-            </td>
-        </tr>
-    </table>
-</div>
+<div th:replace="~{fragments/document-brand :: titled('Reçu', ${entry.transactionNumber})}"></div>
+<div style="height:10px"></div>
 
 <div class="amount-box">
     <div class="label" th:text="${directionLabel}">Montant</div>
@@ -57,8 +51,6 @@
     <tr><td class="label">Identifiant</td><td class="value mono" th:text="${entry.transactionUuid}">uuid</td></tr>
 </table>
 
-<div class="footer">
-    Ce reçu est extrait du journal chaîné du portefeuille. Sa référence suffit à retrouver l'écriture.
-</div>
+<div th:replace="~{fragments/document-brand :: footer('Ce reçu est extrait du journal chaîné du portefeuille. Sa référence suffit à retrouver l’écriture.')}"></div>
 </body>
 </html>

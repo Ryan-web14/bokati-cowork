@@ -350,8 +350,8 @@ public class PurchaseService {
         sections.add(new VoucherService.Section("Fournisseur").pair("Fournisseur", supplier == null ? order.getSupplierCode() : supplier.getName())
                 .pair("NIU", supplier == null ? null : supplier.getNiu()).pair("Adresse", supplier == null ? null : supplier.getAddress())
                 .pair("Commande", order.getNumber()).pair("Objet", order.getSubject()).pair("Date", order.getOrderDate())
-                .pair("Livraison souhaitee", order.getExpectedDate()).pair("Etat de besoin", order.getNeedStatementNumber()));
-        VoucherService.Section lines = new VoucherService.Section("Lignes").columns(List.of("N", "Designation", "Qte", "PU HT", "HT", "TVA %", "TVA"),
+                .pair("Livraison souhaitée", order.getExpectedDate()).pair("État de besoin", order.getNeedStatementNumber()));
+        VoucherService.Section lines = new VoucherService.Section("Lignes").columns(List.of("N°", "Désignation", "Qté", "PU HT", "HT", "TVA %", "TVA"),
                 List.of(true, false, true, true, true, true, true));
         view.lines().forEach(line -> lines.row(line.getLineNo(), line.getDesignation(), line.getQuantity().stripTrailingZeros().toPlainString(),
                 VoucherService.money(line.getUnitPrice()), VoucherService.money(line.getAmountHt()), line.getVatRate().stripTrailingZeros().toPlainString(),
@@ -359,8 +359,8 @@ public class PurchaseService {
         lines.row("", "Total", "", "", VoucherService.money(order.getTotalHt()), "", VoucherService.money(order.getTotalVat()));
         sections.add(lines);
         return vouchers.render("Bon de commande", issued, sections, order.getTotalTtc(), null, List.of(
-                new VoucherService.Signature("Prepare par", order.getCreatedBy(), VoucherService.date(order.getCreatedAt())),
-                new VoucherService.Signature("Valide par", order.getValidatedBy(), order.getValidatedAt() == null ? null : VoucherService.date(order.getValidatedAt()))));
+                new VoucherService.Signature("Préparé par", order.getCreatedBy(), VoucherService.date(order.getCreatedAt())),
+                new VoucherService.Signature("Validé par", order.getValidatedBy(), order.getValidatedAt() == null ? null : VoucherService.date(order.getValidatedAt()))));
     }
 
     // ------------------------------------------------------------------ factures

@@ -127,6 +127,28 @@ public class GlobalExceptionHandler {
                 "Invalid request parameters.", request, ex, errors));
     }
 
+    /**
+     * Une contrainte d'entite violee a l'enregistrement remonte enveloppee dans une exception de
+     * transaction : c'est une donnee refusee (400), pas une panne du serveur (500).
+     */
+    @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
+    public ResponseEntity<Object> handleTransactionSystem(org.springframework.transaction.TransactionSystemException ex,
+                                                          HttpServletRequest request) {
+        Throwable cause = ex;
+        while (cause != null && !(cause instanceof jakarta.validation.ConstraintViolationException)) {
+            cause = cause.getCause();
+        }
+        if (cause instanceof jakarta.validation.ConstraintViolationException violations) {
+            List<String> errors = violations.getConstraintViolations().stream()
+                    .map(violation -> violation.getPropertyPath() + " : " + violation.getMessage())
+                    .sorted()
+                    .toList();
+            return respond(errorResponse.build(ErrorCode.VALIDATION_FAILED, HttpStatus.BAD_REQUEST,
+                    "Valeur refusée à l'enregistrement.", request, ex, errors));
+        }
+        return handleGeneric(ex, request);
+    }
+
     @ExceptionHandler(BindException.class)
     public ResponseEntity<Object> handleBind(BindException ex, HttpServletRequest request) {
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()

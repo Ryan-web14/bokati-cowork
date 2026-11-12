@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.features.payment.limit.service;
 
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
+import com.sni.bokaticowork.features.billing.service.support.MemberBillingContact;
 import com.sni.bokaticowork.features.payment.enums.WalletEntryType;
 import com.sni.bokaticowork.features.payment.limit.model.WalletLimitPolicy;
 import com.sni.bokaticowork.features.payment.limit.repository.WalletLimitPolicyRepository;
@@ -10,6 +12,7 @@ import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.repository.WalletLedgerEntryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -18,6 +21,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -41,6 +46,18 @@ public class WalletLimitService {
     private final WalletLimitPolicyRepository policyRepository;
     private final WalletLedgerEntryRepository ledgerRepository;
     private final WalletRiskFlagService flagService;
+
+    /** Ce qui compte comme une depense du titulaire pour ses plafonds personnels. */
+    private static final List<WalletEntryType> PERSONAL_SPENDING =
+            List.of(WalletEntryType.PAYMENT, WalletEntryType.TRANSFER_OUT, WalletEntryType.TRANSFER_FEE);
+
+    private MemberBillingContact memberContact;
+
+    /** Absent : aucun plafond personnel, seules les limites du palier s'appliquent. */
+    @Autowired(required = false)
+    void setMemberContact(MemberBillingContact memberContact) {
+        this.memberContact = memberContact;
+    }
 
     /**
      * Verdict d'un controle de plafond.
@@ -76,6 +93,54 @@ public class WalletLimitService {
     }
 
     // -----------------------------------------------------------------------------------------
+
+    /**
+     * Les plafonds personnels que le membre s'est fixes, par jour et sur sept jours glissants.
+     *
+     * <p>Ils s'ajoutent aux limites du palier, ils ne les remplacent pas. Seules les depenses du
+     * titulaire comptent (paiement, transfert sortant et ses frais) : un credit n'est pas concerne,
+     * et une correction de solde par un administrateur ne passe pas par ici. Le jour se compte dans
+     * le fuseau du membre.</p>
+     *
+     * @param amount ce que l'operation va retirer du portefeuille, frais compris
+     */
+    @Transactional(readOnly = true)
+    public void assertWithinPersonalCaps(WalletAccount wallet, BigDecimal amount) {
+        if (memberContact == null || wallet == null || amount == null || amount.signum() <= 0) {
+            return;
+        }
+        MemberBillingContact.SpendingCaps caps = memberContact.spendingCaps(wallet.getOwnerType(), wallet.getOwnerCode());
+        if (caps.isEmpty()) {
+            return;
+        }
+        if (caps.daily() != null) {
+            ZoneId zone = caps.zone() == null ? APP_ZONE : caps.zone();
+            BigDecimal spent = spentSince(wallet, LocalDate.now(zone).atStartOfDay(zone).toInstant());
+            BigDecimal cap = BigDecimal.valueOf(caps.daily());
+            if (spent.add(amount).compareTo(cap) > 0) {
+                throw new BadRequestException("Plafond personnel journalier atteint : " + format(cap) + " "
+                        + wallet.getCurrency() + " par jour, " + format(spent) + " " + wallet.getCurrency()
+                        + " déjà dépensés aujourd'hui. Vous pouvez modifier ce plafond dans vos préférences.");
+            }
+        }
+        if (caps.weekly() != null) {
+            BigDecimal spent = spentSince(wallet, Instant.now().minus(7, ChronoUnit.DAYS));
+            BigDecimal cap = BigDecimal.valueOf(caps.weekly());
+            if (spent.add(amount).compareTo(cap) > 0) {
+                throw new BadRequestException("Plafond personnel hebdomadaire atteint : " + format(cap) + " "
+                        + wallet.getCurrency() + " sur 7 jours, " + format(spent) + " " + wallet.getCurrency()
+                        + " déjà dépensés. Vous pouvez modifier ce plafond dans vos préférences.");
+            }
+        }
+    }
+
+    private BigDecimal spentSince(WalletAccount wallet, Instant from) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (WalletEntryType type : PERSONAL_SPENDING) {
+            total = total.add(consumed(wallet, type, from));
+        }
+        return total;
+    }
 
     /** Le portefeuille peut-il recevoir ce montant. */
     @Transactional(readOnly = true)

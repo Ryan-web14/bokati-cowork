@@ -203,6 +203,8 @@ public class WalletTransferService {
         try {
             assertTransferable(source, target, amount);
             limit = limitService.checkTransfer(source, kycLevelResolver.levelOf(source), amount);
+            // Plafonds personnels du membre · le refus s'affiche comme blocage de la simulation.
+            limitService.assertWithinPersonalCaps(source, total);
             if (!limit.allowed()) {
                 blocking = limit.reason();
                 // Le chemin de sortie nomme les pieces qui manquent · sans rien envoyer, on simule.
@@ -258,6 +260,7 @@ public class WalletTransferService {
         limitService.assertAllowed(source, identityUpgrade.enrich(source,
                 limitService.checkTransfer(source, kycLevelResolver.levelOf(source), amount)));
         BigDecimal fee = fee(amount);
+        limitService.assertWithinPersonalCaps(source, amount.add(fee));
         if (source.getAvailableBalance().compareTo(amount.add(fee)) < 0) {
             throw new ConflictException("wallet", "solde disponible insuffisant");
         }
@@ -383,6 +386,9 @@ public class WalletTransferService {
         // une tentative au-dela du plafond s'il y en avait une.
         limitService.assertAllowed(limitService.checkTransfer(source,
                 kycLevelResolver.levelOf(source), transfer.getAmount()));
+        // Les plafonds personnels se reverifient sous verrou, comme ceux du palier.
+        limitService.assertWithinPersonalCaps(source, transfer.getFeeAmount() == null
+                ? transfer.getAmount() : transfer.getAmount().add(transfer.getFeeAmount()));
 
         String number = transfer.getTransferNumber();
         String reference = "Transfert " + number

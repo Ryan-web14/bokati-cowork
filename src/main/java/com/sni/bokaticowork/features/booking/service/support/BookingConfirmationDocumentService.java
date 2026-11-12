@@ -2,11 +2,10 @@ package com.sni.bokaticowork.features.booking.service.support;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer;
+import com.sni.bokaticowork.core.identity.OperatorIdentityService;
+import com.sni.bokaticowork.core.utils.BrandLogo;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
@@ -21,8 +20,6 @@ import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import javax.imageio.ImageIO;
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLEncoder;
@@ -46,6 +43,9 @@ public class BookingConfirmationDocumentService {
     private final SpringTemplateEngine templateEngine;
     private final Locale appLocale;
     private final BillingTaxRuleResolver taxRuleResolver;
+    private final QrCodeRenderer qrCodeRenderer;
+    private final OperatorIdentityService operatorIdentity;
+    private final BrandLogo brandLogo;
 
     @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
@@ -107,7 +107,9 @@ public class BookingConfirmationDocumentService {
     public byte[] confirmationPdf(String bookingNumber, String token) {
         Booking booking = publicBooking(bookingNumber, token);
         Context ctx = new Context(appLocale);
-        ctx.setVariable("generatedAt", LocalDate.now());
+        ctx.setVariable("generatedAt", DateTimeFormatter.ofPattern("dd/MM/yyyy").format(LocalDate.now()));
+        ctx.setVariable("operator", operatorIdentity.current());
+        ctx.setVariable("logo", brandLogo.base64());
         ctx.setVariable("bookingNumber", booking.getBookingNumber());
         ctx.setVariable("recipientName", valueOrDefault(booking.getContactName(), "client"));
         ctx.setVariable("resourceName", resourceName(booking));
@@ -135,34 +137,19 @@ public class BookingConfirmationDocumentService {
     }
 
     private byte[] renderPdf(String html) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document doc = org.jsoup.Jsoup.parse(html);
-            doc.outputSettings()
-                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
-                    .charset(java.nio.charset.StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(doc), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception e) {
             throw new BadRequestException("Unable to generate booking confirmation PDF", e);
         }
     }
 
     private byte[] qrBytes(Booking booking) {
-        try {
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix matrix = writer.encode(scanUrl(booking), BarcodeFormat.QR_CODE, 260, 260);
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            ImageIO.write(MatrixToImageWriter.toBufferedImage(matrix), "png", output);
-            return output.toByteArray();
-        } catch (Exception e) {
-            throw new BadRequestException("Unable to generate booking QR code", e);
+        byte[] png = qrCodeRenderer.toPng(scanUrl(booking), 260);
+        if (png == null) {
+            throw new BadRequestException("Unable to generate booking QR code");
         }
+        return png;
     }
 
     private String scanUrl(Booking booking) {

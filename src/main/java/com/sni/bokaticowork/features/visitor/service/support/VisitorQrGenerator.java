@@ -1,37 +1,30 @@
 package com.sni.bokaticowork.features.visitor.service.support;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
+import com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.util.Base64;
-
+/**
+ * QR des laissez-passer visiteurs.
+ *
+ * <p>Delegue au generateur commun {@link QrCodeRenderer} · meme contenu, meme taille (280 px),
+ * meme format PNG qu'avant. L'API est gardee pour le badge et le courriel d'invitation.</p>
+ */
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class VisitorQrGenerator {
 
+    static final int SIZE = 280;
+
+    private final QrCodeRenderer qrCodeRenderer;
+
     public String generateBase64(String content) {
-        byte[] bytes = generateBytes(content);
-        return bytes != null ? Base64.getEncoder().encodeToString(bytes) : null;
+        return qrCodeRenderer.toBase64(content, SIZE);
     }
 
     public byte[] generateBytes(String content) {
-        try {
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix matrix = writer.encode(content, BarcodeFormat.QR_CODE, 280, 280);
-            BufferedImage image = MatrixToImageWriter.toBufferedImage(matrix);
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ImageIO.write(image, "PNG", out);
-            return out.toByteArray();
-        } catch (Exception e) {
-            log.warn("QR code generation failed for content: {}", content, e);
-            return null;
-        }
+        return qrCodeRenderer.toPng(content, SIZE);
     }
 }

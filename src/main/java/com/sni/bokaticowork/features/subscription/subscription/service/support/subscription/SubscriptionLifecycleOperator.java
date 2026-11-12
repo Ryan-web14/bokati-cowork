@@ -85,6 +85,14 @@ public class SubscriptionLifecycleOperator {
     /** Soi-meme, pour que chaque abonnement d'un balayage obtienne sa propre transaction. */
     private final @Lazy SubscriptionLifecycleOperator self;
 
+    private com.sni.bokaticowork.features.billing.service.support.MemberBillingContact memberContact;
+
+    /** Absent : les rappels de paiement partent a l'adresse du compte. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    void setMemberContact(com.sni.bokaticowork.features.billing.service.support.MemberBillingContact memberContact) {
+        this.memberContact = memberContact;
+    }
+
 
     public void activate(Subscription subscription, String reason, String actor) {
         if (subscription.getStatus() == SubscriptionStatus.ACTIVE) {
@@ -658,7 +666,9 @@ public class SubscriptionLifecycleOperator {
             return;
         }
         Map<String, Object> payload = new HashMap<>(details);
-        payload.put("recipientEmail", email);
+        // Rappel de paiement · ne se coupe jamais, mais part a l'adresse de facturation du membre.
+        // La notification dans l'application garde l'adresse du compte, qui identifie le membre.
+        payload.put("recipientEmail", billingRecipient(subscription, email));
         payload.put("subject", subject);
         payload.put("templateCode", PAYMENT_DUE_EVENT.toLowerCase(java.util.Locale.ROOT));
         outboxService.publish(PAYMENT_DUE_EVENT, "SUBSCRIPTION", subscription.getSubscriptionNumber(), payload);
@@ -826,6 +836,21 @@ public class SubscriptionLifecycleOperator {
         }
         if (subscription.getBusinessEntity() != null) return subscription.getBusinessEntity().getEmail();
         return null;
+    }
+
+    private String billingRecipient(Subscription subscription, String email) {
+        if (memberContact == null) {
+            return email;
+        }
+        if (subscription.getMember() != null) {
+            return memberContact.recipient(subscription.getMember(), email);
+        }
+        if (subscription.getCustomer() != null) {
+            return memberContact.memberOf(subscription.getCustomer())
+                    .map(member -> memberContact.recipient(member, email))
+                    .orElse(email);
+        }
+        return email;
     }
 
     private String resolveRecipientName(Subscription subscription) {

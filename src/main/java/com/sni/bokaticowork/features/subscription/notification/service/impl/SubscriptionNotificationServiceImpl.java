@@ -163,7 +163,20 @@ public class SubscriptionNotificationServiceImpl implements SubscriptionNotifica
         }
         DocumentOwnerType ownerType = ownerTypeOf(notification.getOwnerType());
         String ownerCode = StringUtils.hasText(notification.getOwnerCode()) ? notification.getOwnerCode() : recipient;
-        return ownerType == null ? null : recipientResolver.resolveByOwnerCode(ownerType, ownerCode);
+        if (ownerType == null) {
+            return null;
+        }
+        // Un message de facturation part a l'adresse de facturation du membre ; le reste a celle du compte.
+        return isBilling(notification.getNotificationType())
+                ? recipientResolver.resolveBillingByOwnerCode(ownerType, ownerCode)
+                : recipientResolver.resolveByOwnerCode(ownerType, ownerCode);
+    }
+
+    /** Facture, reglement du, credit du portefeuille · les messages qui parlent d'argent du. */
+    private boolean isBilling(SubscriptionNotificationType type) {
+        return type == SubscriptionNotificationType.OVERAGE_BILLED
+                || type == SubscriptionNotificationType.PAYMENT_DUE
+                || type == SubscriptionNotificationType.WALLET_CREDIT_APPLIED;
     }
 
     private DocumentOwnerType ownerTypeOf(SubscriberType type) {

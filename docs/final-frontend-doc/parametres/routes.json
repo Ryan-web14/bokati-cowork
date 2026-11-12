@@ -316,7 +316,7 @@
     "notificationPref": {
      "type": "array",
      "items": {
-      "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.model.NotificationPreferences"
+      "$ref": "#/components/schemas/com.sni.bokaticowork.core.settings.userSettings.dto.request.UpdateNotificationPreferenceRequest"
      }
     }
    }
@@ -595,6 +595,9 @@
     "spendingWeeklyLimit": {
      "type": "integer",
      "format": "int32"
+    },
+    "receiptPreference": {
+     "type": "string"
     }
    }
   },
@@ -650,6 +653,10 @@
      "minimum": 0,
      "type": "integer",
      "format": "int32"
+    },
+    "receiptPreference": {
+     "type": "string",
+     "enum": ["EVERY_TRANSACTION", "INVOICE_ONLY"]
     }
    }
   },

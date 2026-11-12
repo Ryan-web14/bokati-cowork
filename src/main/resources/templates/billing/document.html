@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${document.documentNumber()}">Facture</title>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
     <style>
         @page {
             size: A4;
@@ -25,18 +26,12 @@
             background: #ffffff;
         }
 
-        .header { background: #ffffff; padding: 0; }
-        .header-inner { padding: 18px 16px 10px; }
-        .header-table { width: 100%; border-collapse: collapse; }
-        .header-table td { border: none; padding: 0; vertical-align: middle; }
-        .brand-logo { height: 38px; width: auto; display: block; }
-        .brand-text { font-size: 19px; font-weight: 700; color: #1f1430; letter-spacing: 3px; text-transform: uppercase; line-height: 1; white-space: nowrap; }
-        .brand-sub { font-size: 7.6px; color: #1f1430; letter-spacing: 1.6px; text-transform: uppercase; margin-top: 4px; }
-        .brand-contact { font-size: 7.4px; color: #1f1430; margin-top: 5px; letter-spacing: 0.2px; }
+        /* En-tete commun (fragments/document-brand) · la facture garde ses marges propres,
+           la page n'ayant pas de marge. */
+        .dbr-header-inner { padding: 18px 16px 10px; }
         .doc-type-block { text-align: right; }
         .doc-type { font-size: 25px; font-weight: 700; color: #1f1430; letter-spacing: 2.6px; text-transform: uppercase; line-height: 1; }
         .doc-number { font-size: 9.6px; color: #1f1430; margin-top: 4px; letter-spacing: 1.35px; font-weight: 700; font-family: "Courier New", monospace; }
-        .header-rule { height: 2px; background: #c9a84c; }
 
         /* Ribbon · statut en texte coloré, sans pilule */
         .ribbon { background: #ffffff; border-bottom: 1px solid #e6ddea; padding: 5px 16px; font-size: 8px; color: #1f1430; }
@@ -182,31 +177,15 @@
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-    <div class="header-inner">
-        <table class="header-table">
-            <tr>
-                <td>
-                    <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="brand-logo" alt="Logo"/>
-                    <div class="brand-text" th:if="${logo == null}"
-                         th:text="${document.sellerName() != null ? document.sellerName() : 'ELLE A OSE'}">ELLE A OSE</div>
-                    <div class="brand-sub">Espace de coworking</div>
-                    <div class="brand-contact">
-                        84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire<br>
-                        RCCM CG-PNR-01-2017-A11-00472<br>
-                        <span th:text="${document.sellerEmail() != null ? document.sellerEmail() : 'coworkspace@elleaose.com'}">courriel</span>
-                        ·
-                        <span th:text="${document.sellerPhone() != null ? document.sellerPhone() : '05 204 2552'}">téléphone</span>
-                    </div>
-                </td>
-                <td>
-                    <div class="doc-type-block">
+<!-- EN-TETE · commun aux pieces (fragments/document-brand) ; bloc droit propre a la facture. -->
+<div th:replace="~{fragments/document-brand :: letterhead(~{::#doc-aside})}">
+    <div class="doc-type-block" id="doc-aside">
                         <div class="doc-type" th:switch="${document.documentType().name()}">
                             <span th:case="'QUOTE'">DEVIS</span>
                             <span th:case="'PROFORMA_INVOICE'">PROFORMA</span>
                             <span th:case="'CREDIT_NOTE'">AVOIR</span>
                             <span th:case="'DEBIT_NOTE'">NOTE DE DÉBIT</span>
+                            <span th:case="'CORRECTIVE_INVOICE'" style="font-size:18px;">FACTURE RECTIFICATIVE</span>
                             <span th:case="*">FACTURE</span>
                         </div>
                         <div class="doc-number"
@@ -217,12 +196,7 @@
                         <div th:if="${document.documentType().name() == 'QUOTE'}"
                              style="font-size:7px; margin-top:3px; text-transform:uppercase; letter-spacing:0.9px;">Sans valeur fiscale</div>
                     </div>
-                </td>
-            </tr>
-        </table>
-    </div>
 </div>
-<div class="header-rule"></div>
 
 <!-- STATUT -->
 <div class="ribbon">
@@ -324,16 +298,6 @@
                 </div>
             </td>
         </tr>
-        <tr th:if="${document.sellerName() != null}">
-            <td colspan="2" style="padding-top:12px; border-top:1px solid #e6ddea;">
-                <div class="info-block-title">Émetteur (Vendeur)</div>
-                <div class="info-primary" th:text="${document.sellerName()}">Vendeur</div>
-                <div class="info-detail">
-                    <span th:if="${document.sellerEmail() != null}"><strong>Email :</strong> <span th:text="${document.sellerEmail()}"></span><br></span>
-                    <span th:if="${document.sellerPhone() != null}"><strong>Tél. :</strong> <span th:text="${document.sellerPhone()}"></span><br></span>
-                </div>
-            </td>
-        </tr>
     </table>
 
     <!-- ORIGINE · un avoir qui ne nomme pas la facture qu'il annule est orphelin au journal. -->
@@ -428,9 +392,9 @@
                     </div>
                 </div>
                 <div class="contact-info">
-                    <div class="contact-info-title">Contact Elle A Osé</div>
-                    <div>coworkspace@elleaose.com</div>
-                    <div>05 204 2552</div>
+                    <div class="contact-info-title" th:text="${'Contact ' + (operator != null ? operator.name() : 'ELLE A OSE')}">Contact ELLE A OSE</div>
+                    <div th:text="${operator != null ? operator.email() : 'coworkspace@elleaose.com'}">coworkspace@elleaose.com</div>
+                    <div th:text="${operator != null ? operator.phone() : '05 204 2552'}">05 204 2552</div>
                 </div>
             </td>
             <td style="width:58%;">
@@ -593,7 +557,7 @@
             </td>
             <td class="holder">
                 <table class="visa-box">
-                    <tr><th>Visa ELLE A OSE</th></tr>
+                    <tr><th th:text="|Visa ${operator != null ? operator.name() : 'ELLE A OSE'}|">Visa ELLE A OSE</th></tr>
                     <tr><td class="stamp"></td></tr>
                     <tr><td class="legend">Cachet et signature</td></tr>
                 </table>
