@@ -230,6 +230,41 @@ class VatF11IT extends PostgresIntegrationTestBase {
         assertThat(vat.prepare("2026-08").getCollected()).isEqualByComparingTo("1800");
     }
 
+    @Test
+    @DisplayName("Prorata de deduction : seule la part deductible diminue la TVA due, le reste passe en charge a la liquidation")
+    void deductionProrata() {
+        when(settings.text(eq("accounting.vat.deduction-prorata"), anyString())).thenReturn("80");
+        LocalDate day = LocalDate.of(2026, 10, 8);
+        invoice("FAC-P1-" + code, BillingDocumentType.INVOICE, "10000", "1800", "0", null, day);
+        run();
+        entryService.create(new AccountingRequests.Entry("OD", day.plusDays(1), null, "Achat prorata " + code, null, null, List.of(
+                new AccountingRequests.EntryLine("6055", null, "Fournitures", new BigDecimal("5000"), null, null, null, null, null, null, null, null),
+                new AccountingRequests.EntryLine("4452", null, "TVA", new BigDecimal("900"), null, null, null, null, "TVA18", new BigDecimal("5000"), null, null),
+                new AccountingRequests.EntryLine("571", null, "Caisse", null, new BigDecimal("5900"), null, null, null, null, null, null, null)), true));
+
+        AccVatReturn draft = vat.prepare("2026-10");
+        assertThat(draft.getDeductibleGross()).isEqualByComparingTo("900");
+        assertThat(draft.getDeductionProrata()).isEqualByComparingTo("80");
+        assertThat(draft.getDeductible()).isEqualByComparingTo("720");
+        assertThat(draft.getNonDeductible()).isEqualByComparingTo("180");
+        assertThat(draft.getDueAmount()).isEqualByComparingTo("1080");
+        as("controleur@elleaose.com", RIGHTS);
+        vat.validate(draft.getId());
+        AccVatReturn liquidated = vat.liquidate(draft.getId());
+        List<AccEntryLine> liquidation = lines.findByEntryIdInOrderByEntryIdAscLineNoAsc(
+                List.of(entries.findByEntryNumber(liquidated.getLiquidationEntryNumber()).orElseThrow().getId()));
+        assertThat(liquidation).anySatisfy(line -> {
+            assertThat(line.getAccountNumber()).isEqualTo("658");
+            assertThat(line.getDebit()).isEqualByComparingTo("180");
+        }).anySatisfy(line -> {
+            assertThat(line.getAccountNumber()).isEqualTo("4452");
+            assertThat(line.getCredit()).isEqualByComparingTo("900");
+        }).anySatisfy(line -> {
+            assertThat(line.getAccountNumber()).isEqualTo("4441");
+            assertThat(line.getCredit()).isEqualByComparingTo("1080");
+        });
+    }
+
     // ------------------------------------------------------------------ outils
 
     private void run() {

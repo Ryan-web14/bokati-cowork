@@ -87,6 +87,16 @@ public class VatService {
         return settings.text("accounting.vat.credit-account", "4449");
     }
 
+    /** Prorata de deduction en pourcentage, borne entre 0 et 100. */
+    BigDecimal prorata() {
+        try {
+            BigDecimal value = new BigDecimal(settings.text("accounting.vat.deduction-prorata", "100").replace(',', '.').trim());
+            return value.max(BigDecimal.ZERO).min(new BigDecimal("100"));
+        } catch (RuntimeException exception) {
+            return new BigDecimal("100");
+        }
+    }
+
     String pendingAccount() {
         return settings.text("accounting.vat.pending-account", "4438");
     }
@@ -191,6 +201,9 @@ public class VatService {
         for (AccountAmount line : detail.deductible()) {
             add(lines, line.account(), label, line.amount(), false);
         }
+        // Part non deductible (prorata) : en charge.
+        add(lines, settings.text("accounting.vat.non-deductible-account", "658"), "TVA non deductible (prorata " + record.getDeductionProrata()
+                .stripTrailingZeros().toPlainString() + " %)", record.getNonDeductible(), true);
         add(lines, creditAccount(), "Credit de TVA impute", record.getCreditBroughtForward(), false);
         add(lines, dueAccount(), "TVA due " + record.getPeriodCode(), record.getDueAmount(), false);
         add(lines, creditAccount(), "Credit de TVA a reporter", record.getCreditCarriedForward(), true);
@@ -237,7 +250,10 @@ public class VatService {
         List<AccountAmount> collected = movements(collectedAccounts(), from, to, true);
         List<AccountAmount> deductible = movements(deductibleAccounts(), from, to, false);
         BigDecimal collectedTotal = sum(collected);
-        BigDecimal deductibleTotal = sum(deductible);
+        BigDecimal deductibleGross = sum(deductible);
+        BigDecimal prorata = prorata();
+        // Prorata de deduction : seule la part deductible vient en diminution de la TVA collectee.
+        BigDecimal deductibleTotal = deductibleGross.multiply(prorata).divide(new BigDecimal("100"), 0, RoundingMode.HALF_UP).setScale(4, RoundingMode.HALF_UP);
         BigDecimal creditIn = balanceBefore(creditAccount(), from).max(BigDecimal.ZERO);
         BigDecimal net = collectedTotal.subtract(deductibleTotal).subtract(creditIn);
         List<DocumentTax> documents = documents(from, to);
@@ -246,6 +262,9 @@ public class VatService {
         record.setRegime(regime);
         record.setCollected(collectedTotal);
         record.setDeductible(deductibleTotal);
+        record.setDeductionProrata(prorata);
+        record.setDeductibleGross(deductibleGross);
+        record.setNonDeductible(deductibleGross.subtract(deductibleTotal));
         record.setCreditBroughtForward(creditIn);
         record.setDueAmount(net.max(BigDecimal.ZERO));
         record.setCreditCarriedForward(net.negate().max(BigDecimal.ZERO));
@@ -410,7 +429,10 @@ public class VatService {
                 .pair("Chiffre d'affaires HT", VoucherService.money(record.getRevenue())));
         sections.add(new VoucherService.Section("Calcul").columns(List.of("Rubrique", "Montant"), List.of(false, true))
                 .row("TVA collectee", VoucherService.money(record.getCollected()))
+                .row("TVA recuperable du mois", VoucherService.money(record.getDeductibleGross()))
+                .row("Prorata de deduction (%)", record.getDeductionProrata().stripTrailingZeros().toPlainString())
                 .row("- TVA deductible", VoucherService.money(record.getDeductible()))
+                .row("TVA non deductible (en charge)", VoucherService.money(record.getNonDeductible()))
                 .row("- Credit de TVA reporte du mois precedent", VoucherService.money(record.getCreditBroughtForward()))
                 .row("= TVA due", VoucherService.money(record.getDueAmount()))
                 .row("Credit de TVA a reporter", VoucherService.money(record.getCreditCarriedForward()))
@@ -445,8 +467,9 @@ public class VatService {
         AccVatReturn record = get(id);
         Detail detail = read(record.getDetailJson());
         StringBuilder out = new StringBuilder("﻿");
-        out.append("Periode;Regime;TVA collectee;TVA deductible;Credit reporte;TVA due;Credit a reporter;Chiffre d'affaires HT;Etat\n");
-        out.append(String.join(";", record.getPeriodCode(), record.getRegime(), plain(record.getCollected()), plain(record.getDeductible()),
+        out.append("Periode;Regime;TVA collectee;TVA recuperable;Prorata;TVA deductible;TVA non deductible;Credit reporte;TVA due;Credit a reporter;Chiffre d'affaires HT;Etat\n");
+        out.append(String.join(";", record.getPeriodCode(), record.getRegime(), plain(record.getCollected()), plain(record.getDeductibleGross()),
+                record.getDeductionProrata().stripTrailingZeros().toPlainString(), plain(record.getDeductible()), plain(record.getNonDeductible()),
                 plain(record.getCreditBroughtForward()), plain(record.getDueAmount()), plain(record.getCreditCarriedForward()), plain(record.getRevenue()),
                 record.getStatus())).append("\n\n");
         out.append("Date;Document;Numero fiscal;Scelle;Type;Fait;Client;Devise;Base HT;TVA;Centime additionnel;Taxe XAF;Comptabilise;Ecart\n");

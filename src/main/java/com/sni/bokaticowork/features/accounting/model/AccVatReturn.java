@@ -46,6 +46,21 @@ public class AccVatReturn {
     @Column(name = "deductible", nullable = false)
     private BigDecimal deductible = BigDecimal.ZERO;
 
+    /** Prorata de deduction applique (en %, 100 : tout est deductible). */
+    @Builder.Default
+    @Column(name = "deduction_prorata", nullable = false)
+    private BigDecimal deductionProrata = new BigDecimal("100");
+
+    /** TVA recuperable du mois avant prorata. */
+    @Builder.Default
+    @Column(name = "deductible_gross", nullable = false)
+    private BigDecimal deductibleGross = BigDecimal.ZERO;
+
+    /** Part non deductible (avant prorata moins deductible), passee en charge a la liquidation. */
+    @Builder.Default
+    @Column(name = "non_deductible", nullable = false)
+    private BigDecimal nonDeductible = BigDecimal.ZERO;
+
     @Builder.Default
     @Column(name = "credit_brought_forward", nullable = false)
     private BigDecimal creditBroughtForward = BigDecimal.ZERO;

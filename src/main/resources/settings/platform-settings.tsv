@@ -55,9 +55,11 @@ accounting.vat.chargeability	ACCOUNTING	ENUM	LIVE	INVOICE	Exigibilite de la TVA 
 accounting.vat.collected-accounts	ACCOUNTING	TEXT	LIVE	4431,4432	Comptes de TVA facturee repris dans la declaration
 accounting.vat.credit-account	ACCOUNTING	TEXT	LIVE	4449	Compte du credit de TVA a reporter
 accounting.vat.deductible-accounts	ACCOUNTING	TEXT	LIVE	4451,4452,4454	Comptes de TVA recuperable repris dans la declaration
+accounting.vat.deduction-prorata	ACCOUNTING	DECIMAL	LIVE	100	Prorata de deduction de la TVA recuperable, en pourcentage (100 : tout est deductible)
 accounting.vat.due-account	ACCOUNTING	TEXT	LIVE	4441	Compte de la TVA due a l'Etat
 accounting.vat.extra-tax-code	ACCOUNTING	TEXT	LIVE	CA	Code de taxe du centime additionnel sur les ecritures
 accounting.vat.journal	ACCOUNTING	TEXT	LIVE	OD	Journal de la piece de liquidation de la TVA
+accounting.vat.non-deductible-account	ACCOUNTING	TEXT	LIVE	658	Compte de charge de la TVA non deductible (prorata) a la liquidation
 accounting.vat.pending-account	ACCOUNTING	TEXT	LIVE	4438	Compte d'attente de la TVA facturee non encore exigible (regime des encaissements)
 accounting.wallet.admin-account	ACCOUNTING	TEXT	LIVE	471	Contrepartie des ajustements administratifs de portefeuille
 accounting.wallet.fee-account	ACCOUNTING	TEXT	LIVE	706	Compte des frais de transfert entre portefeuilles
