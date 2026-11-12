@@ -168,14 +168,14 @@
         .legal-head { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #1f1430; margin-bottom: 4px; }
         .legal-compact { font-size: 7px; color: #1f1430; line-height: 1.28; }
 
-        .visa-wrap { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; }
-        .visa-wrap td.spacer { border: none; }
-        .visa-wrap td.holder { width: 260px; border: none; padding: 0; vertical-align: top; }
-        .visa-box { width: 260px; border-collapse: collapse; border: 1.2px solid #1f1430; }
-        .visa-box th { background: #f3eef6; color: #1f1430; font-size: 8.4px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
-                       text-align: center; padding: 5px 6px; border: 1.2px solid #1f1430; }
-        .visa-box td.stamp { height: 92px; border: 1.2px solid #1f1430; padding: 0; }
-        .visa-box td.legend { font-size: 7.4px; color: #6f6478; text-align: center; padding: 3px 6px; border: 1.2px solid #1f1430; }
+        .visa-wrap { width: 100%; border-collapse: collapse; margin-top: 8px; page-break-inside: avoid; }
+        .visa-wrap td.texts { border: none; padding: 0 12px 0 0; vertical-align: top; }
+        .visa-wrap td.holder { width: 200px; border: none; padding: 11px 0 0; vertical-align: top; }
+        .visa-box { width: 200px; border-collapse: collapse; border: 1.2px solid #1f1430; }
+        .visa-box th { background: #f3eef6; color: #1f1430; font-size: 8px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+                       text-align: center; padding: 4px 6px; border: 1.2px solid #1f1430; }
+        .visa-box td.stamp { height: 82px; border: 1.2px solid #1f1430; padding: 0; }
+        .visa-box td.legend { font-size: 7.2px; color: #6f6478; text-align: center; padding: 2px 6px; border: 1.2px solid #1f1430; }
         .doc-footer { margin-top: 8px; padding: 8px 0 9px; border-top: 1px solid #e6ddea; font-size: 7.8px; color: #1f1430; text-align: center; }
         .doc-footer .made-by { font-size: 7.4px; color: #1f1430; font-weight: 700; letter-spacing: 0.5px; margin-top: 3px; text-transform: uppercase; }
     </style>
@@ -554,17 +554,6 @@
         </table>
     </div>
 
-    <!-- CONDITIONS ET INSTRUCTIONS DE REGLEMENT -->
-    <div th:if="${document.terms() != null or document.paymentInstructions() != null or document.bankDetailsJson() != null}" style="margin-top:8px;">
-        <div class="section-label">Conditions et modalités de règlement</div>
-        <div class="detail-block" th:if="${document.terms()}" th:text="${document.terms()}">Paiement à réception</div>
-        <!-- Ou payer · sans cette mention, le client telephone pour demander le numero. -->
-        <div class="detail-block" th:if="${document.paymentInstructions()}" th:text="${document.paymentInstructions()}"></div>
-        <div class="detail-block" th:if="${document.bankDetailsJson()}">
-            <span th:each="detailLine : ${fmt.addressLines(document.bankDetailsJson())}"><span th:text="${detailLine}"></span><br></span>
-        </div>
-    </div>
-
     <!-- CLAUSES -->
     <div th:if="${!#lists.isEmpty(document.clauses())}">
         <div class="section-label">Conditions et clauses</div>
@@ -574,23 +563,34 @@
         </div>
     </div>
 
-    <!-- MENTIONS LÉGALES -->
-    <div class="legal-section">
-        <div class="legal-head">Mentions légales</div>
-        <div class="legal-compact" th:if="${document.documentType().name() == 'QUOTE'}">
-            Ce document est une proposition commerciale. Il ne constitue pas une facture et n'ouvre
-            aucun droit à déduction de TVA. Les prix sont fermes jusqu'à la date de validité indiquée.
-            Document soumis au droit congolais, juridiction compétente de Pointe-Noire.
-        </div>
-        <div class="legal-compact" th:unless="${document.documentType().name() == 'QUOTE'}">
-            Règlement exigible à réception. Retard : pénalités 1,5&nbsp;%/mois et indemnité forfaitaire de recouvrement 40&nbsp;000 XAF. Contestation sous 15 jours. Document soumis au droit congolais, juridiction compétente de Pointe-Noire.
-        </div>
-    </div>
-
-    <!-- VISA DE L'EXPLOITANT · case fermee, laissee libre pour le cachet et la signature. -->
+    <!-- REGLEMENT, MENTIONS LEGALES ET VISA · le visa se place a cote des textes pour que le bas de
+         page tienne sur la meme page que la facture. -->
     <table class="visa-wrap">
         <tr>
-            <td class="spacer"></td>
+            <td class="texts">
+                <!-- CONDITIONS ET INSTRUCTIONS DE REGLEMENT -->
+                <div th:if="${document.terms() != null or document.paymentInstructions() != null or document.bankDetailsJson() != null}" style="margin-top:8px;">
+                    <div class="section-label">Conditions et modalités de règlement</div>
+                    <div class="detail-block" th:if="${document.terms()}" th:text="${document.terms()}">Paiement à réception</div>
+                    <!-- Ou payer · sans cette mention, le client telephone pour demander le numero. -->
+                    <div class="detail-block" th:if="${document.paymentInstructions()}" th:text="${document.paymentInstructions()}"></div>
+                    <div class="detail-block" th:if="${document.bankDetailsJson()}">
+                        <span th:each="detailLine : ${fmt.addressLines(document.bankDetailsJson())}"><span th:text="${detailLine}"></span><br></span>
+                    </div>
+                </div>
+                <!-- MENTIONS LÉGALES -->
+                <div class="legal-section">
+                    <div class="legal-head">Mentions légales</div>
+                    <div class="legal-compact" th:if="${document.documentType().name() == 'QUOTE'}">
+                        Ce document est une proposition commerciale. Il ne constitue pas une facture et n'ouvre
+                        aucun droit à déduction de TVA. Les prix sont fermes jusqu'à la date de validité indiquée.
+                        Document soumis au droit congolais, juridiction compétente de Pointe-Noire.
+                    </div>
+                    <div class="legal-compact" th:unless="${document.documentType().name() == 'QUOTE'}">
+                        Règlement exigible à réception. Retard : pénalités 1,5&nbsp;%/mois et indemnité forfaitaire de recouvrement 40&nbsp;000 XAF. Contestation sous 15 jours. Document soumis au droit congolais, juridiction compétente de Pointe-Noire.
+                    </div>
+                </div>
+            </td>
             <td class="holder">
                 <table class="visa-box">
                     <tr><th>Visa ELLE A OSE</th></tr>

@@ -4,14 +4,18 @@ Demande : ajouter en bas des factures une case où l'exploitant signe et appose 
 
 ## Changement
 
-- Modèle `src/main/resources/templates/billing/document.html` (factures, devis, pro forma, factures rectificatives) : après les mentions légales et avant le pied de page, une case fermée à droite (cadre complet) : en-tête « Visa ELLE A OSE », grande case vide d'environ 2,5 cm pour le cachet et la signature, légende « Cachet et signature ».
-- La case ne se coupe jamais entre deux pages (`page-break-inside: avoid`) : si elle ne tient pas en bas de la dernière page, elle passe entière à la page suivante.
+- Modèle `src/main/resources/templates/billing/document.html` (factures, devis, pro forma, factures rectificatives) : le bas de document est un tableau à deux colonnes.
+  - **À gauche** : les « Conditions et modalités de règlement » et les « Mentions légales ».
+  - **À droite** : une case fermée (cadre complet) d'environ 5,3 cm de large, avec l'en-tête « Visa ELLE A OSE », une grande case vide d'environ 2,2 cm de haut pour le cachet et la signature, et la légende « Cachet et signature ».
+- Placée à côté des textes et non en dessous, la case n'ajoute presque pas de hauteur : une facture d'une ligne tient sur une seule page, bas de page compris (la première version, posée sous les mentions, faisait passer la facture sur deux pages).
+- Le bloc ne se coupe jamais entre deux pages (`page-break-inside: avoid`).
 - L'avoir (`avoir-note-credit.html`) n'est pas modifié.
 - Aucune migration, aucun réglage.
 
 ## Tests
 
-`BillingDocumentPdfLinesRenderTest.theInvoiceCarriesTheOperatorVisaBox` : la case est présente, avant le pied de page.
+- `BillingDocumentPdfLinesRenderTest.theInvoiceCarriesTheOperatorVisaBox` : la case est présente, avant le pied de page.
+- `BillingDocumentOnePageTest` : le vrai PDF d'une facture d'une ligne, avec logo, QR, conditions, instructions de règlement et coordonnées bancaires, fait une seule page.
 
 ## Pour le frontend
 
