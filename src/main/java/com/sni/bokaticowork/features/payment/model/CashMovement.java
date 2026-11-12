@@ -88,6 +88,35 @@ public class CashMovement {
     @Column(name = "direction", length = 10)
     private com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction;
 
+    // ---- Operations (lot C3) ----
+
+    /** Nature d'operation choisie par le caissier. */
+    @Column(name = "nature_code", length = 60)
+    private String natureCode;
+
+    @Column(name = "transfer_order_number", length = 100)
+    private String transferOrderNumber;
+
+    /** Second visa d'un mouvement en attente. */
+    @Column(name = "approved_by", length = 180)
+    private String approvedBy;
+
+    @Column(name = "approved_at")
+    private Instant approvedAt;
+
+    /** Echeance du visa : sans visa, le mouvement en attente expire (annule). */
+    @Column(name = "expires_at")
+    private Instant expiresAt;
+
+    @Column(name = "reversal_reason", length = 500)
+    private String reversalReason;
+
+    @Column(name = "cancelled_by", length = 180)
+    private String cancelledBy;
+
+    @Column(name = "cancel_reason", length = 500)
+    private String cancelReason;
+
     @Column(name = "related_movement_id")
     private Long relatedMovementId;
 

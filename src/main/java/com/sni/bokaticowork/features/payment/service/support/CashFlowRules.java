@@ -49,8 +49,8 @@ public final class CashFlowRules {
         return switch (type) {
             case OPENING_FLOAT, PAYMENT, CASH_IN, TRANSFER_IN -> CashFlowDirection.IN;
             case REFUND, CASH_OUT, SAFE_DEPOSIT, TRANSFER_OUT -> CashFlowDirection.OUT;
-            case ADJUSTMENT -> storedDirection == CashFlowDirection.OUT ? CashFlowDirection.OUT : CashFlowDirection.IN;
-            case CLOSING_COUNT -> null;
+            case ADJUSTMENT, VARIANCE -> storedDirection == CashFlowDirection.OUT ? CashFlowDirection.OUT : CashFlowDirection.IN;
+            case CLOSING_COUNT, EXCHANGE -> null;
         };
     }
 

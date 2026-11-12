@@ -31,6 +31,8 @@ public record CreateCashMovementRequest(
         String subCategory,
         String tags,
         /** Sens d'un ajustement : obligatoire pour {@code ADJUSTMENT}, ignore pour les autres types. */
-        com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction
+        com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction,
+        /** Nature d'operation (liste {@code GET /cash-registers/natures}) ; remplace {@code flowCategory}. */
+        String natureCode
 ) {
 }

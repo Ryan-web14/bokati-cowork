@@ -74,10 +74,15 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
     private final com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard accessGuard;
     private final CashRegisterAdminServiceImpl registerAdmin;
+    private final com.sni.bokaticowork.features.payment.repository.CashOperationNatureRepository natureRepository;
     @org.springframework.context.annotation.Lazy
     private final com.sni.bokaticowork.features.payment.service.interfaces.CashSessionLifecycleService lifecycle;
 
     private static final String CASH_SESSIONS_PATH = "/payments/cash-registers/sessions/";
+
+    /** Delai du second visa d'une operation en attente ; au-dela, elle expire (lot C3). */
+    @Value("${bokati.cash.visa.expiry-hours:24}")
+    private int visaExpiryHours = 24;
 
     @Value("${bokati.payment.cash-session.auto-limit:10000000}")
     private BigDecimal autoSessionLimit;
@@ -374,10 +379,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 && request.direction() != com.sni.bokaticowork.features.payment.enums.CashFlowDirection.OUT) {
             throw new BadRequestException("Un ajustement de caisse doit preciser son sens : IN (entree) ou OUT (sortie)");
         }
+        com.sni.bokaticowork.features.payment.model.CashOperationNature nature = nature(request.natureCode(), type, request.amount(), request.referenceType());
         CashMovement movement = saveManualMovement(session, type, request.amount(), request.documentType(), request.documentNumber(),
-                request.flowCategory(), request.referenceType(), request.referenceCode(), request.counterpartyType(),
-                request.counterpartyCode(), request.counterpartyName(), request.reason(), request.createdBy(), request.metadataJson(),
+                nature == null ? request.flowCategory() : nature.getCode(), request.referenceType(), request.referenceCode(), request.counterpartyType(),
+                request.counterpartyCode(), request.counterpartyName(),
+                nature != null && !StringUtils.hasText(request.reason()) ? nature.getLabel() : request.reason(), request.createdBy(), request.metadataJson(),
                 type == CashMovementType.ADJUSTMENT ? request.direction() : null);
+        movement = applyOperationRules(movement, nature);
         movement = applyEnrichments(movement, request);
         return mapper.toCashMovementResponse(movement);
     }
@@ -447,24 +455,88 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Override
     public CashMovementResponse createEntryVoucher(String sessionNumber, CreateCashVoucherRequest request) {
-        CashSession session = requireOpenSession(sessionNumber);
-        CashMovement movement = saveManualMovement(session, CashMovementType.CASH_IN, request.amount(),
-                request.documentType() == null ? CashDocumentType.ENTRY_VOUCHER : request.documentType(),
-                request.documentNumber(), request.flowCategory(), request.referenceType(), request.referenceCode(),
-                request.counterpartyType(), request.counterpartyCode(), request.counterpartyName(), request.reason(),
-                request.createdBy(), request.metadataJson());
-        return mapper.toCashMovementResponse(movement);
+        return voucher(sessionNumber, CashMovementType.CASH_IN, CashDocumentType.ENTRY_VOUCHER, request);
     }
 
     @Override
     public CashMovementResponse createExitVoucher(String sessionNumber, CreateCashVoucherRequest request) {
+        return voucher(sessionNumber, CashMovementType.CASH_OUT, CashDocumentType.EXIT_VOUCHER, request);
+    }
+
+    private CashMovementResponse voucher(String sessionNumber, CashMovementType type, CashDocumentType defaultDocument,
+                                         CreateCashVoucherRequest request) {
         CashSession session = requireOpenSession(sessionNumber);
-        CashMovement movement = saveManualMovement(session, CashMovementType.CASH_OUT, request.amount(),
-                request.documentType() == null ? CashDocumentType.EXIT_VOUCHER : request.documentType(),
-                request.documentNumber(), request.flowCategory(), request.referenceType(), request.referenceCode(),
-                request.counterpartyType(), request.counterpartyCode(), request.counterpartyName(), request.reason(),
+        com.sni.bokaticowork.features.payment.model.CashOperationNature nature = nature(request.natureCode(), type, request.amount(), request.referenceType());
+        CashMovement movement = saveManualMovement(session, type, request.amount(),
+                request.documentType() == null ? defaultDocument : request.documentType(),
+                request.documentNumber(), nature == null ? request.flowCategory() : nature.getCode(), request.referenceType(), request.referenceCode(),
+                request.counterpartyType(), request.counterpartyCode(), request.counterpartyName(),
+                nature != null && !StringUtils.hasText(request.reason()) ? nature.getLabel() : request.reason(),
                 request.createdBy(), request.metadataJson());
+        movement = applyOperationRules(movement, nature);
         return mapper.toCashMovementResponse(movement);
+    }
+
+    /**
+     * Nature d'operation choisie (lot C3) : active, de meme sens que l'operation, dans son plafond,
+     * et passee par une demande de fonds quand la nature l'exige.
+     */
+    private com.sni.bokaticowork.features.payment.model.CashOperationNature nature(String natureCode, CashMovementType type,
+                                                                                    BigDecimal amount, String referenceType) {
+        if (!StringUtils.hasText(natureCode)) {
+            return null;
+        }
+        com.sni.bokaticowork.features.payment.model.CashOperationNature nature = natureRepository.findByCode(natureCode.trim().toUpperCase(Locale.ROOT))
+                .orElseThrow(() -> new BadRequestException("Nature d'operation inconnue : " + natureCode));
+        if (!Boolean.TRUE.equals(nature.getActive())) {
+            throw new BadRequestException("La nature « " + nature.getLabel() + " » n'est plus proposee");
+        }
+        if (type != CashMovementType.ADJUSTMENT && nature.getMovementType() != type) {
+            throw new BadRequestException("La nature « " + nature.getLabel() + " » est une "
+                    + (nature.getDirection() == com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN ? "entree" : "sortie") + " : elle ne convient pas a cette operation");
+        }
+        boolean fromRequest = "CASH_REQUEST".equalsIgnoreCase(referenceType) || "FUND_REQUEST".equalsIgnoreCase(referenceType);
+        if (Boolean.TRUE.equals(nature.getPriorRequestRequired()) && !fromRequest) {
+            throw new BadRequestException("« " + nature.getLabel() + " » passe par une demande de fonds approuvee");
+        }
+        if (nature.getMaxPerOperation() != null && amount != null && amount.compareTo(nature.getMaxPerOperation()) > 0 && !fromRequest) {
+            throw new BadRequestException("Au-dela de " + nature.getMaxPerOperation().stripTrailingZeros().toPlainString()
+                    + " XAF, « " + nature.getLabel() + " » passe par une demande de fonds");
+        }
+        nature.setUsageCount((nature.getUsageCount() == null ? 0L : nature.getUsageCount()) + 1);
+        natureRepository.save(nature);
+        return nature;
+    }
+
+    /**
+     * Mouvements en attente (lot C3) : un ajustement attend toujours le visa d'un superviseur ; une
+     * sortie au-dela du seuil de double visa (de la nature, sinon de la caisse) attend un second
+     * visa. En attente, l'operation ne touche pas au solde et expire sans visa.
+     */
+    private CashMovement applyOperationRules(CashMovement movement, com.sni.bokaticowork.features.payment.model.CashOperationNature nature) {
+        boolean changed = false;
+        if (nature != null) {
+            movement.setNatureCode(nature.getCode());
+            changed = true;
+        }
+        BigDecimal threshold = nature != null && nature.getDoubleVisaThreshold() != null ? nature.getDoubleVisaThreshold()
+                : movement.getCashSession().getCashRegister().getDoubleVisaThreshold();
+        boolean outflow = com.sni.bokaticowork.features.payment.service.support.CashFlowRules
+                .direction(movement.getMovementType(), movement.getDirection()) == com.sni.bokaticowork.features.payment.enums.CashFlowDirection.OUT;
+        boolean needsVisa = movement.getMovementType() == CashMovementType.ADJUSTMENT
+                || (threshold != null && movement.getAmount().compareTo(threshold) > 0 && (outflow || threshold.signum() == 0));
+        if (needsVisa) {
+            movement.setStatus(com.sni.bokaticowork.features.payment.enums.CashMovementStatus.PENDING);
+            movement.setExpiresAt(Instant.now().plus(java.time.Duration.ofHours(visaExpiryHours)));
+            movement.setRunningBalance(computeRunningBalance(movement));
+            changed = true;
+            emailNotifier.notifySupervisor("Operation de caisse a viser · " + movement.getMovementNumber(),
+                    movement.getCreatedBy() + " a saisi " + movement.getMovementType().name() + " de "
+                            + movement.getAmount().stripTrailingZeros().toPlainString() + " XAF sur la session "
+                            + movement.getCashSession().getSessionNumber() + " : un second visa est attendu.",
+                    movement.getMovementNumber(), CASH_SESSIONS_PATH + movement.getCashSession().getSessionNumber());
+        }
+        return changed ? movementRepository.save(movement) : movement;
     }
 
     @Override

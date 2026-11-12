@@ -181,7 +181,7 @@ class CashCorrectionsC0Test {
     }
 
     @Test
-    @DisplayName("D5 : un ajustement en sortie baisse le solde courant")
+    @DisplayName("D5 : un ajustement en sortie baisse le solde, une fois vise")
     void outgoingAdjustmentLowersTheBalance() {
         CashSession session = openSession(new BigDecimal("10000"));
         storeMovements();
@@ -193,7 +193,11 @@ class CashCorrectionsC0Test {
 
         CashMovement adjustment = stored.get(1);
         assertThat(adjustment.getDirection()).isEqualTo(CashFlowDirection.OUT);
-        assertThat(adjustment.getRunningBalance()).isEqualByComparingTo("8000");
+        // Lot C3 : un ajustement attend le visa d'un superviseur ; en attente, il ne touche pas au solde.
+        assertThat(adjustment.getStatus()).isEqualTo(CashMovementStatus.PENDING);
+        assertThat(adjustment.getRunningBalance()).isEqualByComparingTo("10000");
+        adjustment.setStatus(CashMovementStatus.CONFIRMED);
+        assertThat(CashFlowRules.signedAmount(adjustment)).as("une fois vise, il baisse le solde").isEqualByComparingTo("-2000");
     }
 
     @Test
@@ -231,7 +235,7 @@ class CashCorrectionsC0Test {
     private CreateCashMovementRequest adjustment(CashFlowDirection direction) {
         return new CreateCashMovementRequest(CashMovementType.ADJUSTMENT, new BigDecimal("2000"), null, null, null, null, null,
                 null, null, null, "Erreur de saisie sur un bon", "caissier@elleaose.com", null, null, null, null, null,
-                null, null, null, null, direction);
+                null, null, null, null, direction, null);
     }
 
     private CashRegister register() {

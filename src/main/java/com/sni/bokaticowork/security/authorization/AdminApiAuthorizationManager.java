@@ -144,7 +144,16 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
                 && (path.endsWith("/approve") || path.endsWith("/reject"))) {
             return permission("CASH_MOVEMENT", "APPROVE");
         }
-        if (path.endsWith("/reverse")) return permission("CASH_MOVEMENT", "REVERSE");
+        if (path.startsWith("/cash-registers/movements/") && path.endsWith("/approve")) return permission("CASH_MOVEMENT", "APPROVE");
+        // Le caissier contre-passe seul dans un court delai et sous un plafond ; au-dela, le service
+        // exige CASH_MOVEMENT:REVERSE. La route ne demande donc que le droit de saisir.
+        if (path.endsWith("/reverse")) return permission("CASH_MOVEMENT", "CREATE");
+        if (path.startsWith("/cash-registers/natures")) return permission("CASH_REGISTER", "MANAGE");
+        if (path.equals("/cash-registers/transfers")) return permission("CASH_TRANSFER", "SEND");
+        if (path.startsWith("/cash-registers/transfers/")) {
+            return path.endsWith("/receive") ? permission("CASH_TRANSFER", "RECEIVE") : permission("CASH_TRANSFER", "SEND");
+        }
+        if (path.contains("/petty-cash/")) return permission("CASH_TRANSFER", "SEND");
         if (path.startsWith("/cash-registers/movements/") || path.startsWith("/cash-registers/requests/")) {
             return permission("CASH_MOVEMENT", "CREATE");
         }

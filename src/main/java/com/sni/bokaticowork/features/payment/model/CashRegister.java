@@ -156,6 +156,10 @@ public class CashRegister {
     @Column(name = "double_count_threshold", precision = 19, scale = 4)
     private java.math.BigDecimal doubleCountThreshold;
 
+    /** Au-dela, une sortie attend un second visa (50 000 XAF par defaut). */
+    @Column(name = "double_visa_threshold", precision = 19, scale = 4)
+    private java.math.BigDecimal doubleVisaThreshold;
+
     @Column(name = "max_session_hours")
     private Integer maxSessionHours;
 

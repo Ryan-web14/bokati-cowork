@@ -231,6 +231,8 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
                 case TRANSFER_OUT -> "Transfert sortant";
                 case ADJUSTMENT -> "Ajustement";
                 case CLOSING_COUNT -> "Comptage de clôture";
+                case EXCHANGE -> "Échange de monnaie";
+                case VARIANCE -> "Écart de caisse";
             };
         }
     }

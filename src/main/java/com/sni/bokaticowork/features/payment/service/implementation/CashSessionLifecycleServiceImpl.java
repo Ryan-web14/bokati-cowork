@@ -123,6 +123,8 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
     private final PasswordEncoder passwordEncoder;
     @Lazy
     private final CashRegisterService cashRegisterService;
+    @Lazy
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService operations;
 
     @Value("${bokati.cash.forced-close.contest-days:3}")
     private int contestDays = 3;
@@ -278,6 +280,7 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
         CashSession session = session(sessionNumber);
         requireStatus(session, CashSessionStatus.OPEN);
         requireCashier(session, actors.resolve(null), "demander la cloture");
+        assertNoPendingMovement(session);
         session.setStatus(CashSessionStatus.COUNTING);
         session.setClosingRequestedAt(Instant.now());
         sessionRepository.save(session);
@@ -294,6 +297,7 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
         if (status == CashSessionStatus.OPEN) {
             // Forme historique : le comptage arrive sans demande de cloture prealable.
             requireCashier(session, actor, "clore la session");
+            assertNoPendingMovement(session);
             session.setStatus(CashSessionStatus.COUNTING);
             session.setClosingRequestedAt(Instant.now());
             status = CashSessionStatus.COUNTING;
@@ -403,6 +407,18 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
                             + actor + " : attendu " + plain(expected) + " XAF, compte " + plain(counted) + " XAF, ecart "
                             + plain(variance) + " XAF. Motif : " + reason + ".", session.getSessionNumber());
             messages.add("Ecart de " + plain(variance) + " XAF hors tolerance : session en revue");
+        }
+        // Remise de fin de session (lot C3) : ce qui depasse le fonds garde part a la caisse mere,
+        // en transit jusqu'a sa reception comptee.
+        if (session.getStatus() != CashSessionStatus.RECOUNT && session.getAmountToRemit() != null
+                && session.getAmountToRemit().signum() > 0 && register.getParentRegisterCode() != null && operations != null) {
+            var remittance = operations.remitAtClosing(session, session.getAmountToRemit(), actor);
+            if (remittance != null) {
+                register.setLastCountAmount(session.getKeptFloat());
+                registerRepository.save(register);
+                messages.add("Remise de " + plain(session.getAmountToRemit()) + " XAF a la caisse mere : transfert "
+                        + remittance.transferNumber() + " en transit");
+            }
         }
         sessionRepository.save(session);
         eventPublisher.publishEvent(new CashSessionClosedEvent(session.getSessionNumber()));
@@ -680,6 +696,7 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
         requireStatus(session, CashSessionStatus.OPEN);
         String actor = actors.resolve(null);
         requireCashier(session, actor, "passer la caisse");
+        assertNoPendingMovement(session);
         String incoming = request.incomingEmail().trim().toLowerCase(Locale.ROOT);
         if (CashActorResolver.samePerson(incoming, actor)) {
             throw new BadRequestException("L'entrant doit etre une autre personne");
@@ -902,6 +919,13 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
         }
         return sessionRepository.findBySessionNumber(sessionNumber.trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Session de caisse introuvable : " + sessionNumber));
+    }
+
+    private void assertNoPendingMovement(CashSession session) {
+        if (session.getId() != null && !movementRepository.findByCashSession_IdAndStatus(session.getId(), CashMovementStatus.PENDING).isEmpty()) {
+            throw new BadRequestException("Des operations attendent un visa sur la session " + session.getSessionNumber()
+                    + " : faites-les viser ou annulez-les avant de clore");
+        }
     }
 
     private static void requireStatus(CashSession session, CashSessionStatus status) {

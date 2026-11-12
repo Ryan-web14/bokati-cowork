@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class CashStaffWorker {
 
     private final CashStaffService staffService;
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService operations;
 
     @Scheduled(cron = "${bokati.cash.staff-worker-cron:0 10 * * * *}", zone = "Africa/Brazzaville")
     public void run() {
@@ -24,6 +25,12 @@ public class CashStaffWorker {
             staffService.runPeriodicChecks();
         } catch (RuntimeException exception) {
             log.error("Caisse · traitement periodique du personnel en echec : {}", exception.getMessage(), exception);
+        }
+        try {
+            // Visas expires, transferts trop longtemps en transit (lot C3).
+            operations.runPeriodicChecks();
+        } catch (RuntimeException exception) {
+            log.error("Caisse · traitement periodique des operations en echec : {}", exception.getMessage(), exception);
         }
     }
 }

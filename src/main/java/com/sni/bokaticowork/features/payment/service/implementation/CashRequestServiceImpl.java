@@ -49,6 +49,8 @@ public class CashRequestServiceImpl implements CashRequestService {
     private final com.sni.bokaticowork.features.payment.repository.CashMovementRepository movementRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final CashRegisterService cashRegisterService;
+    @org.springframework.context.annotation.Lazy
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService operations;
     private final CashEmailNotifier emailNotifier;
     private final ObjectMapper objectMapper;
     private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
@@ -204,9 +206,12 @@ public class CashRequestServiceImpl implements CashRequestService {
                 // Un justificatif approuve etait ajoute a l'attendu : on garde ce sens, desormais explicite.
                 movementType == CashMovementType.ADJUSTMENT
                         ? com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN
-                        : null
+                        : null,
+                null
         );
         var movementResponse = cashRegisterService.createMovement(cashRequest.getCashSession().getSessionNumber(), movementRequest);
+        // La demande approuvee par un autre que le demandeur vaut second visa.
+        operations.approveInternally(movementResponse.movementNumber(), cashRequest.getReviewedBy());
         CashMovement persisted = movementRepository.findByMovementNumber(movementResponse.movementNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Cash movement not found: " + movementResponse.movementNumber()));
         cashRequest.setExecutedMovement(persisted);

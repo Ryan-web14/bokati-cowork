@@ -169,4 +169,17 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
     @Query("SELECT m FROM CashMovement m WHERE m.cashSession.cashRegister.registerCode = :registerCode AND m.status = :status ORDER BY m.createdAt ASC")
     java.util.List<CashMovement> findByRegisterCodeAndStatus(@Param("registerCode") String registerCode,
                                                              @Param("status") com.sni.bokaticowork.features.payment.enums.CashMovementStatus status);
+
+    java.util.List<CashMovement> findByCashSession_IdAndStatus(Long sessionId, com.sni.bokaticowork.features.payment.enums.CashMovementStatus status);
+
+    @Query("SELECT m FROM CashMovement m WHERE m.status = :status AND m.expiresAt IS NOT NULL AND m.expiresAt < :now")
+    java.util.List<CashMovement> findExpired(@Param("status") com.sni.bokaticowork.features.payment.enums.CashMovementStatus status,
+                                             @Param("now") java.time.Instant now);
+
+    /** Sorties confirmees d'une caisse depuis un instant (realimentation de la petite caisse). */
+    @Query("SELECT m FROM CashMovement m WHERE m.cashSession.cashRegister.registerCode = :registerCode AND m.movementType = :type AND m.status IN :statuses AND m.createdAt > :since ORDER BY m.createdAt ASC")
+    java.util.List<CashMovement> findByRegisterTypeSince(@Param("registerCode") String registerCode,
+                                                         @Param("type") com.sni.bokaticowork.features.payment.enums.CashMovementType type,
+                                                         @Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashMovementStatus> statuses,
+                                                         @Param("since") java.time.Instant since);
 }

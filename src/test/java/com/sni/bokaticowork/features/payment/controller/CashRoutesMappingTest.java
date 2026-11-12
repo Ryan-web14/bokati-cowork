@@ -28,6 +28,8 @@ class CashRoutesMappingTest {
     private final CashRegisterAdminService admin = mock(CashRegisterAdminService.class);
     private final CashSessionLifecycleService lifecycle = mock(CashSessionLifecycleService.class);
     private final CashStaffService staff = mock(CashStaffService.class);
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService operations =
+            mock(com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService.class);
 
     private MockMvc mvc() {
         return MockMvcBuilders.standaloneSetup(
@@ -38,7 +40,8 @@ class CashRoutesMappingTest {
                 new CashRequestController(mock(CashRequestService.class)),
                 new CashDocumentController(mock(CashDocumentPdfService.class)),
                 new CashAnomalyFlagController(mock(CashAnomalyDetectionService.class)),
-                new CashStatisticsController(mock(CashStatisticsService.class))
+                new CashStatisticsController(mock(CashStatisticsService.class)),
+                new CashOperationsController(operations)
         ).build();
     }
 
@@ -63,6 +66,14 @@ class CashRoutesMappingTest {
 
         mvc.perform(get("/sni/api/v1/cash-registers/absences"));
         org.mockito.Mockito.verify(staff).absences(null, null);
+        mvc.perform(get("/sni/api/v1/cash-registers/natures"));
+        org.mockito.Mockito.verify(operations).natures(null, null, null, false);
+
+        mvc.perform(patch("/sni/api/v1/cash-registers/movements/CSM-1/approve"));
+        org.mockito.Mockito.verify(operations).approveMovement("CSM-1");
+
+        mvc.perform(get("/sni/api/v1/cash-registers/CSR-1/petty-cash/refill"));
+        org.mockito.Mockito.verify(operations).pettyRefillProposal("CSR-1");
         assertThat(mvc).isNotNull();
     }
 }
