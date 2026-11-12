@@ -90,6 +90,10 @@ public class AccSupplierInvoice {
     @Column(name = "entry_number")
     private String entryNumber;
 
+    /** Compte du fournisseur credite (481 pour une facture d'immobilisation, lot F18) ; vide : celui du fournisseur. */
+    @Column(name = "payable_account")
+    private String payableAccount;
+
     @Column(name = "posted_by")
     private String postedBy;
 

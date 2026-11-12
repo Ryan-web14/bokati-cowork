@@ -63,15 +63,26 @@ public class AccountingEntryService {
     private final AccountingLetteringService lettering;
     @Lazy
     private final AnalyticAllocator analyticAllocator;
+    /** Garde des comptes tenus par le fichier des immobilisations (lot F18), absente d'un contexte reduit. */
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.accounting.service.support.FixedAssetIntake> fixedAssets;
 
     /** Probleme qui empeche la validation directe ; il suit la politique des pieces desequilibrees. */
     record Issue(PendingReason reason, String detail) {
+    }
+
+    /** Lot F18 : une saisie manuelle sur un compte suivi par les fiches d'immobilisation exige le droit special et un motif. */
+    private void guardFixedAssets(AccountingRequests.Entry request) {
+        com.sni.bokaticowork.features.accounting.service.support.FixedAssetIntake guard = fixedAssets == null ? null : fixedAssets.getIfAvailable();
+        if (guard != null && request.lines() != null) {
+            guard.checkManualEntry(request.lines(), request.label());
+        }
     }
 
     // ------------------------------------------------------------- saisie
 
     public AccountingResponses.Entry create(AccountingRequests.Entry request) {
         String actor = actors.resolve("SYSTEM");
+        guardFixedAssets(request);
         AccJournal journal = periods.journal(request.journalCode());
         if (!Boolean.TRUE.equals(journal.getActive())) {
             throw new BadRequestException("Le journal " + journal.getCode() + " est desactive");
@@ -189,6 +200,9 @@ public class AccountingEntryService {
         }
         if (entry.getStatus() == EntryStatus.PENDING_BALANCE && !actors.hasAuthority(BALANCE)) {
             throw new ForbiddenException("Completer une piece en attente d'equilibrage demande le droit ACCOUNTING_ENTRY:BALANCE");
+        }
+        if (entry.getOrigin() == EntryOrigin.MANUAL) {
+            guardFixedAssets(request);
         }
         AccJournal journal = periods.journal(request.journalCode());
         AccPeriod period = periods.periodFor(request.entryDate(), true);
