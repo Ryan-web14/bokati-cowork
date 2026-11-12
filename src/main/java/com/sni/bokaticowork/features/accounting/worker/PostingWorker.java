@@ -14,9 +14,18 @@ import org.springframework.stereotype.Component;
 public class PostingWorker {
 
     private final PostingEngine engine;
+    private final com.sni.bokaticowork.features.accounting.service.implementation.CashAccountingService cash;
 
     @Scheduled(fixedDelayString = "${accounting.posting.worker-delay-ms:30000}", initialDelayString = "${accounting.posting.worker-delay-ms:30000}")
     public void run() {
+        try {
+            PostingDtos.BatchResult fed = cash.feed();
+            if (fed.failed() > 0) {
+                log.warn("Comptabilite · {} fait(s) de caisse non transmis : {}", fed.failed(), fed.errors());
+            }
+        } catch (RuntimeException exception) {
+            log.error("Comptabilite · alimentation de la caisse en echec : {}", exception.getMessage(), exception);
+        }
         try {
             PostingDtos.BatchResult result = engine.processPending();
             if (result.failed() > 0) {

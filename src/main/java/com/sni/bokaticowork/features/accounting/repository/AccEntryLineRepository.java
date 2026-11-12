@@ -36,4 +36,10 @@ public interface AccEntryLineRepository extends JpaRepository<com.sni.bokaticowo
 
     @Query("SELECT COUNT(l) FROM AccEntryLine l, AccEntry e WHERE l.entryId = e.id AND e.status IN :statuses AND l.accountNumber = :account")
     long countPostedOnAccount(@Param("account") String account, @Param("statuses") Collection<com.sni.bokaticowork.features.accounting.enums.EntryStatus> statuses);
+
+    /** Solde (debit moins credit) d'un compte sur les pieces comptabilisees. */
+    @Query("SELECT COALESCE(SUM(l.debit), 0) - COALESCE(SUM(l.credit), 0) FROM AccEntryLine l, AccEntry e WHERE l.entryId = e.id "
+            + "AND e.status IN :statuses AND l.accountNumber = :account")
+    java.math.BigDecimal balanceOf(@Param("account") String account,
+                                   @Param("statuses") Collection<com.sni.bokaticowork.features.accounting.enums.EntryStatus> statuses);
 }

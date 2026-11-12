@@ -81,6 +81,18 @@ public class CashVarianceReview {
     @Column(name = "entry_number", length = 100)
     private String entryNumber;
 
+    /** Etat comptable du constat de l'ecart (lot F3). */
+    @Builder.Default
+    @Column(name = "accounting_status", nullable = false, length = 20)
+    private String accountingStatus = "PENDING";
+
+    /** Etat comptable de l'imputation decidee (lot F3). */
+    @Column(name = "decision_accounting_status", length = 20)
+    private String decisionAccountingStatus;
+
+    @Column(name = "decision_entry_number", length = 40)
+    private String decisionEntryNumber;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

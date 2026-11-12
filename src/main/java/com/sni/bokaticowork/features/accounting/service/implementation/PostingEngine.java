@@ -73,11 +73,14 @@ public class PostingEngine {
     private final PostingTemplate template;
     private final CashActorResolver actors;
     private final TransactionTemplate newTransaction;
+    private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.accounting.service.support.PostingOutcomeListener> listeners;
 
     public PostingEngine(AccPostingEventRepository eventRepository, AccPostingRuleRepository ruleRepository,
                          AccEntryRepository entryRepository, AccJournalRepository journalRepository, AccountingEntryService entries,
                          AccountingPeriodService periods, AccountingChartService chart, AccountingSettings settings,
-                         PostingTemplate template, CashActorResolver actors, PlatformTransactionManager transactionManager) {
+                         PostingTemplate template, CashActorResolver actors, PlatformTransactionManager transactionManager,
+                         org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.accounting.service.support.PostingOutcomeListener> listeners) {
+        this.listeners = listeners;
         this.eventRepository = eventRepository;
         this.ruleRepository = ruleRepository;
         this.entryRepository = entryRepository;
@@ -204,7 +207,7 @@ public class PostingEngine {
     private AccPostingEvent run(Long eventId, boolean regenerate) {
         String actor = actors.resolve(SYSTEM_ACTOR);
         try {
-            return newTransaction.execute(status -> post(event(eventId), regenerate, actor));
+            return newTransaction.execute(status -> notifyListeners(post(event(eventId), regenerate, actor)));
         } catch (RuntimeException exception) {
             String reason = readable(exception);
             log.warn("Comptabilite · evenement {} en echec : {}", eventId, reason);
@@ -214,9 +217,18 @@ public class PostingEngine {
                 event.setFailureReason(reason);
                 event.setAttempts(event.getAttempts() + 1);
                 event.setLastAttemptAt(Instant.now());
-                return eventRepository.save(event);
+                return notifyListeners(eventRepository.save(event));
             });
         }
+    }
+
+    private AccPostingEvent notifyListeners(AccPostingEvent event) {
+        for (var listener : listeners.orderedStream().toList()) {
+            if (listener.supports(event.getEventType())) {
+                listener.onOutcome(event);
+            }
+        }
+        return event;
     }
 
     private AccPostingEvent post(AccPostingEvent event, boolean regenerate, String actor) {
@@ -235,6 +247,10 @@ public class PostingEngine {
             return eventRepository.save(event);
         }
         JsonNode payload = template.read(event.getPayload());
+        JsonNode reverse = payload.path("_reverse");
+        if (reverse.isObject()) {
+            return reverse(event, reverse, regenerate, actor);
+        }
         AccPostingRule rule = ruleFor(event.getEventType(), event.getEventDate(), payload)
                 .orElseThrow(() -> new PostingTemplate.PostingException("Aucun schema actif pour " + event.getEventType()
                         + " au " + event.getEventDate() + " dont les conditions sont remplies"));
@@ -287,6 +303,71 @@ public class PostingEngine {
             event.setFailureReason(null);
             event.setPostedAt(Instant.now());
         }
+        return eventRepository.save(event);
+    }
+
+    /**
+     * Evenement d'annulation ({@code "_reverse": {"eventType": .., "reference": ..}}) : contre-passation
+     * de la piece de l'evenement d'origine. Tant que l'origine n'est pas comptabilisee, l'evenement
+     * reste en file. Origine en brouillard (reprise) : brouillard inverse.
+     */
+    private AccPostingEvent reverse(AccPostingEvent event, JsonNode target, boolean regenerate, String actor) {
+        String type = target.path("eventType").asText("");
+        String reference = target.path("reference").asText("");
+        AccPostingEvent original = eventRepository.findByEventTypeAndReference(type.toUpperCase(Locale.ROOT), reference).orElse(null);
+        String reason = target.path("reason").asText("Annulation " + event.getReference());
+        if (original == null || original.getStatus() == PostingEventStatus.PENDING || original.getStatus() == PostingEventStatus.FAILED
+                || original.getStatus() == PostingEventStatus.UNBALANCED) {
+            event.setStatus(PostingEventStatus.PENDING);
+            event.setFailureReason("En attente de la comptabilisation de " + type + " " + reference);
+            return eventRepository.save(event);
+        }
+        event.setRuleCode("_REVERSE");
+        event.setRuleVersion(null);
+        if (original.getStatus() == PostingEventStatus.IGNORED) {
+            event.setStatus(PostingEventStatus.IGNORED);
+            event.setIgnoredBy(SYSTEM_ACTOR);
+            event.setIgnoredReason("Le fait annule n'avait pas d'ecriture");
+            event.setFailureReason(null);
+            return eventRepository.save(event);
+        }
+        AccEntry source = entryRepository.findByProvisionalNumber(original.getProvisionalNumber())
+                .orElseThrow(() -> new PostingTemplate.PostingException("Piece d'origine introuvable : " + original.getProvisionalNumber()));
+        if (source.getStatus() == EntryStatus.REVERSED) {
+            event.setStatus(PostingEventStatus.POSTED);
+            event.setEntryNumber(source.getReversedByEntry());
+            event.setFailureReason(null);
+            event.setPostedAt(Instant.now());
+            return eventRepository.save(event);
+        }
+        LocalDate date = event.getEventDate();
+        AccPeriod period = periods.firstOpenOnOrAfter(date);
+        if (period.getStartDate().isAfter(date)) {
+            event.setShiftedNote("Periode du " + date + " fermee : piece passee au " + period.getStartDate());
+            date = period.getStartDate();
+        }
+        if (source.getStatus() == EntryStatus.VALIDATED) {
+            if (date.isBefore(source.getEntryDate())) {
+                date = source.getEntryDate();
+            }
+            var response = entries.reverse(source.getEntryNumber(),
+                    new com.sni.bokaticowork.features.accounting.dto.AccountingRequests.Reverse(reason, date));
+            AccEntry reversal = entryRepository.findByEntryNumber(response.entryNumber()).orElseThrow();
+            reversal.setPostingEventId(event.getId());
+            entryRepository.save(reversal);
+            event.setEntryNumber(reversal.getEntryNumber());
+            event.setProvisionalNumber(reversal.getProvisionalNumber());
+        } else {
+            // Origine en brouillard (reprise) : brouillard inverse dans le meme journal.
+            var lines = entries.swappedLines(source);
+            AccEntry draft = entries.post(new AccountingEntryService.AutoPost(source.getJournalCode(), date, null,
+                    "Contre-passation de " + source.getProvisionalNumber() + " : " + reason, origin(event), event.getEventType(),
+                    event.getReference(), lines, SYSTEM_ACTOR, false, event.getId()));
+            event.setProvisionalNumber(draft.getProvisionalNumber());
+        }
+        event.setStatus(PostingEventStatus.POSTED);
+        event.setFailureReason(null);
+        event.setPostedAt(Instant.now());
         return eventRepository.save(event);
     }
 

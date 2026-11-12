@@ -1,6 +1,11 @@
 # cle	domaine	type	effet	defaut	libelle
 accounting.account.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation de compte : IMMEDIATE ou AFTER_APPROVAL
 accounting.analytic.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite analytique active (ventilation obligatoire sur les comptes concernes)
+accounting.cash.default-in-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une entree de caisse sans nature d'operation
+accounting.cash.default-out-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une sortie de caisse sans nature d'operation
+accounting.cash.treasury-parent-account	ACCOUNTING	TEXT	LIVE	571	Compte parent sous lequel chaque caisse recoit son compte
+accounting.cash.vat-collected-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA collectee sur une entree de caisse
+accounting.cash.vat-recoverable-account	ACCOUNTING	TEXT	LIVE	4452	Compte de TVA recuperable sur une sortie de caisse
 accounting.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite active (ecritures automatiques de la plateforme)
 accounting.lettering.difference-threshold	ACCOUNTING	INTEGER	LIVE	500	Ecart de reglement maximal au lettrage (XAF)
 accounting.lettering.gain-account	ACCOUNTING	TEXT	LIVE	758	Compte des ecarts de reglement favorables
@@ -13,6 +18,7 @@ accounting.numbering.width	ACCOUNTING	INTEGER	LIVE	6	Longueur de la sequence des
 accounting.posting.batch-size	ACCOUNTING	INTEGER	LIVE	50	Nombre d'evenements comptables traites par passage du moteur d'imputation
 accounting.posting.disabled-families	ACCOUNTING	TEXT	LIVE		Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules
 accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	RESTART	30000	Intervalle du moteur d'imputation (millisecondes)
+accounting.replay-until	ACCOUNTING	TEXT	LIVE		Reprise : les faits dates avant ce jour produisent des brouillards a valider en bloc (vide : pas de reprise)
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
 accounting.start-date	ACCOUNTING	TEXT	LIVE	2026-01-01	Date de bascule : les faits anterieurs ne sont comptabilises que par la reprise
 accounting.unbalanced-entry.blocks-period-close	ACCOUNTING	BOOLEAN	LIVE	true	Un ecart non regularise bloque le verrouillage de la periode

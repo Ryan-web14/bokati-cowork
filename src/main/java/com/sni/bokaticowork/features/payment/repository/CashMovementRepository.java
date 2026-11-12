@@ -186,4 +186,12 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
     @Query("SELECT m FROM CashMovement m WHERE (:registerCode IS NULL OR m.cashSession.cashRegister.registerCode = :registerCode) AND m.createdAt >= :from AND m.createdAt < :to ORDER BY m.createdAt ASC, m.id ASC")
     java.util.List<CashMovement> findByRegisterBetween(@Param("registerCode") String registerCode, @Param("from") java.time.Instant from,
                                                        @Param("to") java.time.Instant to);
+
+    /** Lot F3 : mouvements a transmettre a la comptabilite. */
+    java.util.List<CashMovement> findByAccountingStatusAndStatusNotOrderByCreatedAtAscIdAsc(String accountingStatus,
+            com.sni.bokaticowork.features.payment.enums.CashMovementStatus excluded,
+                                                                              org.springframework.data.domain.Pageable pageable);
+
+    /** Lot F3 : mouvements d'une caisse pas encore comptabilises. */
+    long countByCashSession_CashRegister_IdAndAccountingStatusIn(Long registerId, java.util.Collection<String> statuses);
 }

@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 @Component
 public class PostingTemplate {
 
-    private static final Pattern VARIABLE = Pattern.compile("\\{([A-Za-z_][A-Za-z0-9_.\\[\\]]*)(?::([A-Za-z0-9_.\\[\\]]+))?}");
+    private static final Pattern VARIABLE = Pattern.compile("\\{(\\?)?([A-Za-z_][A-Za-z0-9_.\\[\\]]*)(?::([A-Za-z0-9_.\\[\\]]+))?}");
     private static final Pattern INDEXED = Pattern.compile("(.*)\\[(\\d+)]");
     private static final TypeReference<List<LineSpec>> LINES = new TypeReference<>() {
     };
@@ -221,9 +221,14 @@ public class PostingTemplate {
         Matcher matcher = VARIABLE.matcher(template);
         StringBuilder out = new StringBuilder();
         while (matcher.find()) {
-            String name = matcher.group(1);
-            String argument = matcher.group(2);
+            boolean optional = matcher.group(1) != null;
+            String name = matcher.group(2);
+            String argument = matcher.group(3);
             String value = variable(name, argument, event, item);
+            if (value == null && optional) {
+                // {?chemin} : variable facultative, vide si absente.
+                value = "";
+            }
             if (value == null) {
                 String readable = argument == null ? name : name + ":" + argument;
                 if (!lenient) {

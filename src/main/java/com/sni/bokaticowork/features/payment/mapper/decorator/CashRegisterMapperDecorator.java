@@ -206,7 +206,11 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 cashMovement.getApprovedAt(),
                 cashMovement.getExpiresAt(),
                 cashMovement.getReversalReason(),
-                cashMovement.getCancelReason()
+                cashMovement.getCancelReason(),
+                new CashMovementResponse.Accounting(cashMovement.getJournalCode(), cashMovement.getAccountingStatus(),
+                        cashMovement.getAccountingEntryNumber(), cashMovement.getAccountingNote(), cashMovement.getVatAmount(),
+                        cashMovement.getVatCode(), cashMovement.getSupplierCode(), cashMovement.getBeneficiaryName(),
+                        cashMovement.getBeneficiaryIdNumber(), cashMovement.getBeneficiaryPhone(), cashMovement.getRequestNumber())
         );
     }
 

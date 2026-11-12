@@ -169,4 +169,7 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
     @Query("SELECT s FROM CashSession s WHERE (:registerCode IS NULL OR s.cashRegister.registerCode = :registerCode) AND s.openedAt >= :from AND s.openedAt < :to ORDER BY s.openedAt ASC")
     java.util.List<CashSession> findOpenedBetween(@Param("registerCode") String registerCode, @Param("from") java.time.Instant from,
                                                   @Param("to") java.time.Instant to);
+
+    /** Lot F3 : la caisse a-t-elle une session ouverte avant celle-ci ? */
+    boolean existsByCashRegister_IdAndOpenedAtBefore(Long registerId, java.time.Instant openedAt);
 }

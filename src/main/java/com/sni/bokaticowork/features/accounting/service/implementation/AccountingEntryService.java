@@ -69,7 +69,7 @@ public class AccountingEntryService {
     // ------------------------------------------------------------- saisie
 
     public AccountingResponses.Entry create(AccountingRequests.Entry request) {
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         AccJournal journal = periods.journal(request.journalCode());
         if (!Boolean.TRUE.equals(journal.getActive())) {
             throw new BadRequestException("Le journal " + journal.getCode() + " est desactive");
@@ -143,6 +143,16 @@ public class AccountingEntryService {
             runValidation(entry, journal, request.actor(), false);
         }
         return entry;
+    }
+
+    /** Lignes inversees d'une piece (brouillard de contre-passation d'une piece de reprise). */
+    public List<AccountingRequests.EntryLine> swappedLines(AccEntry entry) {
+        return lineRepository.findByEntryIdOrderByLineNoAsc(entry.getId()).stream()
+                .map(line -> new AccountingRequests.EntryLine(line.getAccountNumber(), line.getThirdPartyCode(), line.getLabel(),
+                        line.getCredit().signum() > 0 ? line.getCredit() : null, line.getDebit().signum() > 0 ? line.getDebit() : null,
+                        line.getCurrency(), line.getForeignAmount(), line.getRate(), line.getTaxCode(), line.getTaxBase(), line.getDueDate(),
+                        line.getReference()))
+                .toList();
     }
 
     /** Derniere date validee d'un journal sur un exercice (ordre chronologique strict). */
@@ -252,7 +262,7 @@ public class AccountingEntryService {
         if (entry.getStatus() != EntryStatus.DRAFT && entry.getStatus() != EntryStatus.PENDING_BALANCE) {
             throw new BadRequestException("La piece " + reference + " n'est ni un brouillard ni une piece en attente");
         }
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         AccJournal journal = periods.journal(entry.getJournalCode());
         if (entry.getOrigin() == EntryOrigin.MANUAL) {
             BigDecimal threshold = settings.secondValidationThreshold();
@@ -450,7 +460,7 @@ public class AccountingEntryService {
         if (!StringUtils.hasText(reason)) {
             throw new BadRequestException("Indiquez le motif du rejet");
         }
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         entry.setStatus(EntryStatus.REJECTED);
         entry.setRejectedBy(actor);
         entry.setRejectedAt(Instant.now());
@@ -474,7 +484,7 @@ public class AccountingEntryService {
                     ? "La piece " + original.getEntryNumber() + " est deja contre-passee par " + original.getReversedByEntry()
                     : "Seule une piece validee se contre-passe");
         }
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         LocalDate date = request.date() == null ? LocalDate.now() : request.date();
         AccJournal journal = periods.journal(original.getJournalCode());
         AccPeriod period = periods.periodFor(date, true);
@@ -538,7 +548,7 @@ public class AccountingEntryService {
         if (!Boolean.TRUE.equals(original.getAcceptedUnbalanced()) || original.getStatus() == EntryStatus.DRAFT) {
             throw new BadRequestException("La piece " + reference + " n'est pas une piece acceptee desequilibree");
         }
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         AccJournal journal = periods.journal(original.getJournalCode());
         AccPeriod period = periods.periodFor(LocalDate.now(), true);
         AccEntry complement = entryRepository.save(AccEntry.builder()

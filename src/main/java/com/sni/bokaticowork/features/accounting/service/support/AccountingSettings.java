@@ -113,6 +113,28 @@ public class AccountingSettings {
         return Arrays.stream(disabled.split(",")).map(String::trim).noneMatch(value -> value.equalsIgnoreCase(family.trim()));
     }
 
+    /** Reglage texte de la comptabilite (comptes parametres). */
+    public String text(String key, String fallback) {
+        String value = settings.text(key, fallback);
+        return StringUtils.hasText(value) ? value.trim() : fallback;
+    }
+
+    /**
+     * Reprise de l'historique : les faits dates avant ce jour produisent des brouillards, valides
+     * en bloc apres controle. Vide : pas de reprise.
+     */
+    public java.time.LocalDate replayUntil() {
+        String value = settings.text("accounting.replay-until", "");
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return java.time.LocalDate.parse(value.trim());
+        } catch (RuntimeException exception) {
+            return null;
+        }
+    }
+
     public String disabledFamilies() {
         return settings.text("accounting.posting.disabled-families", "");
     }

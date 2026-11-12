@@ -88,7 +88,7 @@ public class AccountingChartService {
     }
 
     public AccountingResponses.Account create(AccountingRequests.CreateAccount request) {
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         AccAccount parent = StringUtils.hasText(request.parentNumber()) ? account(request.parentNumber()) : null;
         String number = StringUtils.hasText(request.number()) ? request.number().trim() : parent == null ? null : nextFreeNumber(parent);
         if (number == null) {
@@ -175,7 +175,7 @@ public class AccountingChartService {
 
     public AccountingResponses.Account update(String number, AccountingRequests.UpdateAccount request) {
         AccAccount account = account(number);
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         boolean posted = hasPostings(account.getNumber());
         List<Runnable> structural = new ArrayList<>();
         if (StringUtils.hasText(request.label()) && !request.label().trim().equals(account.getLabel())) {
@@ -215,7 +215,7 @@ public class AccountingChartService {
                 .anyMatch(child -> child.getStatus() == AccountStatus.ACTIVE)) {
             throw new BadRequestException("Desactivez d'abord les comptes divisionnaires actifs de " + number);
         }
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         history(number, "status", account.getStatus().name(), AccountStatus.INACTIVE.name(), reason, actor);
         account.setStatus(AccountStatus.INACTIVE);
         account.setUpdatedBy(actor);
@@ -228,7 +228,7 @@ public class AccountingChartService {
         if (account.getStatus() == AccountStatus.MERGED) {
             throw new BadRequestException("Un compte fusionne ne se reactive pas");
         }
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         history(number, "status", account.getStatus().name(), AccountStatus.ACTIVE.name(), null, actor);
         account.setStatus(AccountStatus.ACTIVE);
         if (account.getApprovedBy() == null) {

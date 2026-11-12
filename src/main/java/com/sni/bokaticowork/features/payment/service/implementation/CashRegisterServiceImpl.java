@@ -499,6 +499,34 @@ public class CashRegisterServiceImpl implements CashRegisterService {
             movement.setTags(request.tags().trim());
             changed = true;
         }
+        // Lot F3 : journal choisi et donnees comptables de la piece.
+        if (StringUtils.hasText(request.journalCode())) {
+            movement.setJournalCode(request.journalCode().trim().toUpperCase(java.util.Locale.ROOT));
+            changed = true;
+        }
+        if (request.vatAmount() != null) {
+            if (request.vatAmount().signum() < 0 || request.vatAmount().compareTo(movement.getAmount()) >= 0) {
+                throw new BadRequestException("La TVA doit etre positive et inferieure au montant du mouvement");
+            }
+            movement.setVatAmount(money(request.vatAmount()));
+            movement.setVatCode(trim(request.vatCode()));
+            changed = true;
+        }
+        if (StringUtils.hasText(request.supplierCode())) {
+            movement.setSupplierCode(request.supplierCode().trim());
+            changed = true;
+        }
+        if (StringUtils.hasText(request.beneficiaryName()) || StringUtils.hasText(request.beneficiaryIdNumber())
+                || StringUtils.hasText(request.beneficiaryPhone())) {
+            movement.setBeneficiaryName(trim(request.beneficiaryName()));
+            movement.setBeneficiaryIdNumber(trim(request.beneficiaryIdNumber()));
+            movement.setBeneficiaryPhone(trim(request.beneficiaryPhone()));
+            changed = true;
+        }
+        if (StringUtils.hasText(request.requestNumber())) {
+            movement.setRequestNumber(request.requestNumber().trim());
+            changed = true;
+        }
         BigDecimal runningBalance = computeRunningBalance(movement);
         movement.setRunningBalance(runningBalance);
         return changed || runningBalance != null ? movementRepository.save(movement) : movement;

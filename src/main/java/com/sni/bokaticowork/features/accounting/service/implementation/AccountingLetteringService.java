@@ -83,7 +83,7 @@ public class AccountingLetteringService {
             throw new BadRequestException("Le compte " + account.getNumber() + " n'est pas lettrable");
         }
         String thirdParty = StringUtils.hasText(request.thirdPartyCode()) ? request.thirdPartyCode().trim() : null;
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         List<Long> ids = request.lines().stream().map(AccountingRequests.LetterLine::lineId).distinct().toList();
         if (ids.size() < 2) {
             throw new BadRequestException("Un lettrage rapproche au moins deux lignes");
@@ -217,7 +217,7 @@ public class AccountingLetteringService {
         if (!StringUtils.hasText(reason)) {
             throw new BadRequestException("Indiquez le motif du delettrage");
         }
-        String actor = actors.resolve(null);
+        String actor = actors.resolve("SYSTEM");
         lettering.setStatus(LetteringStatus.UNLETTERED);
         lettering.setUnletteredAt(Instant.now());
         lettering.setUnletteredBy(actor);

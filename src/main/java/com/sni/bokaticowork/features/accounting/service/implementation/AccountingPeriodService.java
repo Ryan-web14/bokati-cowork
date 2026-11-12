@@ -100,7 +100,7 @@ public class AccountingPeriodService {
         assertNoPendingIn(period, "verrouiller");
         period.setStatus(PeriodStatus.LOCKED);
         period.setLockedAt(Instant.now());
-        period.setLockedBy(actors.resolve(null));
+        period.setLockedBy(actors.resolve("SYSTEM"));
         return toResponse(periodRepository.save(period));
     }
 
@@ -134,7 +134,7 @@ public class AccountingPeriodService {
         }
         period.setStatus(PeriodStatus.CLOSED);
         period.setClosedAt(Instant.now());
-        period.setClosedBy(actors.resolve(null));
+        period.setClosedBy(actors.resolve("SYSTEM"));
         return toResponse(periodRepository.save(period));
     }
 
@@ -236,7 +236,7 @@ public class AccountingPeriodService {
                 .numberingReset(request.numberingReset() == null ? NumberingReset.YEAR : request.numberingReset())
                 .autoValidate(request.autoValidate() == null || request.autoValidate())
                 .allowedAccounts(join(request.allowedAccounts())).cashRegisterCode(request.cashRegisterCode())
-                .createdBy(actors.resolve(null)).build());
+                .createdBy(actors.resolve("SYSTEM")).build());
         return toResponse(journal);
     }
 
@@ -282,7 +282,7 @@ public class AccountingPeriodService {
                 journal.getActive());
     }
 
-    static List<String> split(String csv) {
+    public static List<String> split(String csv) {
         if (!StringUtils.hasText(csv)) {
             return List.of();
         }

@@ -170,6 +170,42 @@ public class CashMovement {
     @Column(name = "last_printed_by", length = 180)
     private String lastPrintedBy;
 
+    /** Journal comptable choisi a la saisie (lot F3) ; a defaut, celui de la caisse. */
+    @Column(name = "journal_code", length = 30)
+    private String journalCode;
+
+    /** Etat comptable (lot F3) : NOT_APPLICABLE, PENDING, QUEUED, POSTED, UNBALANCED, FAILED, IGNORED. */
+    @Builder.Default
+    @Column(name = "accounting_status", nullable = false, length = 20)
+    private String accountingStatus = "PENDING";
+
+    @Column(name = "accounting_entry_number", length = 40)
+    private String accountingEntryNumber;
+
+    @Column(name = "accounting_note", length = 1000)
+    private String accountingNote;
+
+    @Column(name = "vat_amount", precision = 19, scale = 4)
+    private BigDecimal vatAmount;
+
+    @Column(name = "vat_code", length = 20)
+    private String vatCode;
+
+    @Column(name = "supplier_code", length = 80)
+    private String supplierCode;
+
+    @Column(name = "beneficiary_name", length = 255)
+    private String beneficiaryName;
+
+    @Column(name = "beneficiary_id_number", length = 80)
+    private String beneficiaryIdNumber;
+
+    @Column(name = "beneficiary_phone", length = 40)
+    private String beneficiaryPhone;
+
+    @Column(name = "request_number", length = 60)
+    private String requestNumber;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
