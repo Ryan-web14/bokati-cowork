@@ -175,7 +175,7 @@ Pour `early-termination-fixed-fee`, une valeur vide signifie « pas de montant f
 Préférences d'un membre :
 
 - Membre inconnu ou supprimé : `404`, message `Member not found` (en anglais).
-- `billingCompanyName`, `billlingAddress` : 255 caractères au plus ; `billingEmail` : une ou plusieurs adresses séparées par des virgules, 500 caractères au plus, chaque adresse vérifiée (`400` sinon) et la liste enregistrée en minuscules ; montants de `walletPref` entiers `>= 0` ; plafond journalier au plus égal au plafond hebdomadaire (`400` sinon) ; `timeZone` doit être un fuseau connu (`Africa/Brazzaville`, `Africa/Kinshasa`…, `400` sinon) ; `langage` non vide, 50 caractères au plus.
+- `billingCompanyName` : 150 caractères au plus, `billlingAddress` : 255 caractères au plus ; `billingEmail` : une ou plusieurs adresses séparées par des virgules, 500 caractères au plus, chaque adresse vérifiée (`400` sinon) et la liste enregistrée en minuscules ; montants de `walletPref` entiers `>= 0` ; plafond journalier au plus égal au plafond hebdomadaire (`400` sinon) ; `timeZone` doit être un fuseau connu (`Africa/Brazzaville`, `Africa/Kinshasa`…, `400` sinon) ; `langage` non vide, 50 caractères au plus.
 - `PATCH /settings` : un champ absent ou `null` garde sa valeur ; une chaîne vide retire un texte facultatif ; `0` retire un plafond.
 - `PATCH /settings/notifications` : `eventType`, `channel` et `enabled` sont exigés (`400` sinon).
 
