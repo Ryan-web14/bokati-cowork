@@ -50,6 +50,10 @@ public class Booking {
     @Column(name = "recurrence_group_number", length = 80)
     private String recurrenceGroupNumber;
 
+    /** Le lot multi-ressources dont la reservation fait partie · vide pour une reservation seule. */
+    @Column(name = "batch_number", length = 80)
+    private String batchNumber;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resource_id", nullable = false, foreignKey = @ForeignKey(name = "fk_booking_resource"))
     private Resource resource;

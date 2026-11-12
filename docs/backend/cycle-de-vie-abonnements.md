@@ -23,8 +23,9 @@ dispense de frais sont réservées aux ADMIN). Package `features/subscription/li
 - **`PENDING_DOCUMENTS`** · l'activation constate que le niveau KYC du plan n'est pas atteint. Avant,
   l'abonnement était activé avec un avertissement ; désormais il attend. Le worker horaire retente
   l'activation · si les pièces sont arrivées, il s'active seul.
-- **`GRACE_PERIOD`** · une échéance de renouvellement impayée depuis `gracePeriodDays`. Les droits
-  restent ouverts, l'abonné est prévenu (`SUBSCRIPTION_GRACE_PERIOD`). Un paiement le rend `ACTIVE`
+- **`GRACE_PERIOD`** · la période est finie et la facture de renouvellement n'est pas soldée
+  (voir `abonnements-echeances-et-expiration.md`), ou une échéance d'avant cette règle reste impayée
+  depuis `gracePeriodDays`. Les droits de la période écoulée ne sont pas prolongés, l'abonné est prévenu (`SUBSCRIPTION_GRACE_PERIOD`). Un paiement le rend `ACTIVE`
   sans intervention (`PaymentTransactionWorkflowProcessor`, prélèvement réussi) ; au bout de
   `suspensionAfterGraceDays`, suspension. `POST /lifecycle/{n}/grace/exit` pour une régularisation
   constatée hors système.

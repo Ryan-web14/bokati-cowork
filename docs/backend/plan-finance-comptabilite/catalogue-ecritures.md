@@ -1,0 +1,292 @@
+# Catalogue des écritures automatiques
+
+Pour chaque fait de la plateforme : l'événement comptable publié, le journal, les lignes produites et l'analytique. Les comptes sont ceux proposés au [README, section 4.1](README.md#41-plan-de-comptes), à valider avec l'expert-comptable. Ce sont les **valeurs initiales** des schémas d'imputation (`acc_posting_rule`), modifiables sans code.
+
+Conventions :
+
+- `D` débit, `C` crédit.
+- `{TRESO}` est le compte de trésorerie du moyen. Caisse de la session : `571x`. Caisse automatique du portefeuille : sans objet, voir la section 4. Mobile money plateforme : compte PawaPay. Mobile money marchand : compte du numéro. Chèque : `513`. Virement : compte bancaire désigné.
+- `{CLIENT}` : compte auxiliaire `411` du client de la facture (membre, client ou organisation payeuse).
+- `{NATURE}` : compte de la nature d'opération choisie.
+- `{PRODUIT}` : compte de produit de la ligne de facture (par type de ligne ou de service du catalogue).
+- Clé d'idempotence : `eventType` + référence. Un même événement ne produit qu'une pièce.
+- **Lettrage** : chaque ligne sur un compte lettrable porte sa clé de rapprochement (numéro de facture, de demande, d'ordre de transfert, de chèque...) et se lettre automatiquement à la comptabilisation ([README, section 4.7](README.md#47-lettrage)). La mention « lettré » dans les tableaux le rappelle.
+- **Partie double** : chaque pièce de ce catalogue est équilibrée (total des débits = total des crédits, en XAF). Quand une ligne du tableau ne montre qu'un côté, c'est qu'elle complète une pièce dont les autres lignes sont écrites ailleurs dans la même ligne ou dans l'événement indiqué ; la pièce entière reste équilibrée. Une pièce déséquilibrée, ou dont la contrepartie n'est pas conforme, suit la politique paramétrée : par défaut mise en attente d'équilibrage et notifiée ; sinon équilibrée sur le compte d'attente dédié, ou acceptée déséquilibrée puis régularisée ([README, section 4.6](README.md#46-partie-double--règles-et-garanties)). Numéros de pièces continus et protégés ([section 4.8](README.md#48-numérotation-des-pièces--continuité-et-protection)).
+- Analytique : « héritée » signifie copiée des lignes de la facture concernée.
+
+## Sommaire
+
+1. [Ventes](#1-ventes)
+2. [Caisse](#2-caisse)
+3. [Encaissements](#3-encaissements)
+4. [Portefeuille électronique](#4-portefeuille-électronique)
+5. [Remboursements](#5-remboursements)
+6. [Abonnements, pass, domiciliation](#6-abonnements-pass-domiciliation)
+7. [Réservations](#7-réservations)
+8. [Marketplace et stock](#8-marketplace-et-stock)
+9. [Demandes de fonds et avances](#9-demandes-de-fonds-et-avances)
+10. [Banque, chèques, mobile money](#10-banque-chèques-mobile-money)
+11. [Clôture et inventaire](#11-clôture-et-inventaire)
+12. [Ce qui ne produit pas d'écriture](#12-ce-qui-ne-produit-pas-décriture)
+13. [Classe 9 : analytique et hors bilan](#13-classe-9--analytique-et-hors-bilan)
+14. [Immobilisations et amortissements](#14-immobilisations-et-amortissements)
+15. [Provisions et créances douteuses](#15-provisions-et-créances-douteuses)
+16. [Produits et charges constatés d'avance, rattachement](#16-produits-et-charges-constatés-davance-rattachement)
+
+---
+
+## 1. Ventes
+
+| Événement | Fait déclencheur | Journal | Écriture | Analytique |
+| --- | --- | --- | --- | --- |
+| `INVOICE_ISSUED` | Facture émise ou scellée (numéro définitif) | `VT` | D `{CLIENT}` TTC ; C `{PRODUIT}` HT par ligne ; C `4431` TVA par taux | Par ligne : site et activité de la ressource ou du service |
+| `INVOICE_DISCOUNT` | Remise de document, coupon, réduction de parrainage portés sur la facture | `VT` (même pièce) | Dans la pièce de la facture : D compte de réductions sur ventes HT ; le `{PRODUIT}` reste crédité au brut HT, le `{CLIENT}` débité au net TTC, la TVA calculée sur le net. Équilibre : net TTC + réduction = brut HT + TVA | Héritée |
+| `CREDIT_NOTE_ISSUED` | Avoir (annulation partielle d'une réservation de lot, geste commercial, correction) | `VT` | Inverse de la facture au prorata : D `{PRODUIT}`, D `4431` ; C `{CLIENT}` | Héritée de la facture d'origine |
+| `INVOICE_CANCELLED` | Facture annulée avant tout paiement | `VT` | Contre-passation de la pièce `INVOICE_ISSUED` | Héritée |
+| `EARLY_PAYMENT_DISCOUNT` | Escompte de règlement appliqué au paiement | `VT` | D `673` ; D `4431` (TVA sur l'escompte, selon le régime) ; C `{CLIENT}` | Héritée |
+| `RECOVERABLE_BILLED` | Débours refacturés au client | `VT` | D `{CLIENT}` ; C compte de débours (sans TVA si débours au sens fiscal) | Héritée |
+| `INVOICE_WRITTEN_OFF` | Facture passée en perte (`WRITTEN_OFF`) | `OD` | D `651` HT ; D `4431` (si récupération de TVA admise) ; C `{CLIENT}` (ou `4162`, `4161` si la facture était classée) ; reprise de la dépréciation D `491x` ; C `7594` (section 15) | Héritée |
+
+## 2. Caisse
+
+Tous dans le journal choisi par la caissière (par défaut `CA-<caisse>`).
+
+| Type de mouvement | Cas | Écriture |
+| --- | --- | --- |
+| `OPENING_FLOAT` | Fonds de caisse de la première session | D `571x` ; C `585` (venant de la caisse principale ou de la banque) |
+| `OPENING_FLOAT` | Report de fin de mois (clôture automatique) | **Aucune** écriture : l'argent ne bouge pas |
+| `PAYMENT` | Encaissement client | **Aucune** écriture du mouvement : c'est `PAYMENT_RECEIVED` qui écrit (section 3), pour ne pas doubler |
+| `REFUND` | Remboursement client en espèces | **Aucune** écriture du mouvement : c'est `PAYMENT_REFUNDED` qui écrit (section 5) |
+| `CASH_OUT` / bon de sortie | Dépense directe sur pièce | D `{NATURE}` HT ; D `4452`/`4454` TVA récupérable ; C `571x` |
+| `CASH_OUT` | Paiement d'une facture fournisseur | D `401` fournisseur (lettré) ; C `571x` |
+| `CASH_OUT` | Décaissement d'une avance à justifier | D `421` bénéficiaire ; C `571x` |
+| `CASH_OUT` | Restitution d'un dépôt de garantie | D `165` ; C `571x` |
+| `CASH_IN` / bon d'entrée | Retour de reliquat d'avance | D `571x` ; C `421` bénéficiaire |
+| `CASH_IN` | Dépôt de garantie reçu | D `571x` ; C `165` |
+| `CASH_IN` | Produit divers (remboursement d'assurance, cession) | D `571x` ; C `{NATURE}` |
+| `SAFE_DEPOSIT` | Remise en banque ou au coffre | D `585` ; C `571x` ; la banque solde le `585` au relevé |
+| `TRANSFER_OUT` / `TRANSFER_IN` | Transfert entre caisses | Émettrice : D `585` ; C `571x`. Réceptrice : D `571y` ; C `585`. Le `585` se solde quand les deux côtés sont passés |
+| `ADJUSTMENT` | Correction manuelle approuvée | Selon la nature choisie, sinon D/C `571x` contre `471` |
+| Écart de clôture (session en `CLOSING_REVIEW`) | Manquant | D `471` ; C `571x` |
+| Écart de clôture | Excédent | D `571x` ; C `471` |
+| Approbation de l'écart | Manquant passé en charge | D `658` ; C `471` (ou D `421` du caissier si imputé) |
+| Approbation de l'écart | Excédent passé en produit | D `471` ; C `758` |
+| Contre-mouvement (`relatedMovementId`) | Annulation d'un mouvement | Contre-passation de la pièce du mouvement d'origine |
+
+Analytique des sorties : section de la nature, sinon site de la caisse ; modifiable à la saisie.
+
+## 3. Encaissements
+
+Événement `PAYMENT_RECEIVED` : transaction `SUCCEEDED`, publié en même temps que le `PAYMENT_TRANSACTION_WORKFLOW` existant.
+
+| Moyen | Journal | Écriture |
+| --- | --- | --- |
+| `CASH` | `CA-<caisse de la session>` | D `571x` ; C `{CLIENT}` lettré avec la ou les factures imputées |
+| `MOBILE_MONEY` (PawaPay) | `MM-PAWAPAY` | D compte PawaPay ; C `{CLIENT}` |
+| `MOBILE_MONEY_OFFLINE` | `MM-<opérateur>` | D compte du numéro marchand ; C `{CLIENT}` |
+| `CHEQUE` | `BQ-CHQ` ou journal de la caisse | D `513` ; C `{CLIENT}` |
+| `BANK_TRANSFER` | `BQ-<banque>` | D `521x` ; C `{CLIENT}` (à pointer sur le relevé) |
+| `CARD` | `BQ-<acquéreur>` | D compte d'attente carte `5851` ou `521x` ; C `{CLIENT}` |
+| `WALLET` | `PF` | D `4191` (sous-compte du client) ; C `{CLIENT}` |
+| `CREDIT_NOTE` | `OD` | Imputation d'un avoir sur une facture : D `{CLIENT}` (avoir) ; C `{CLIENT}` (facture), lettrage |
+
+Cas particuliers :
+
+| Cas | Écriture |
+| --- | --- |
+| Paiement sans facture (acompte, intention sur une source non facturée) | D `{TRESO}` ; C `4191` ; puis à l'émission de la facture, D `4191` ; C `{CLIENT}` |
+| Trop-perçu crédité au portefeuille (`creditOverpayment`) | Une seule pièce : D `{TRESO}` montant reçu ; C `{CLIENT}` montant de la facture ; C `4191` excédent |
+| Facture commune d'un lot multi-ressources | Une seule écriture par paiement ; le lettrage porte la facture commune |
+| Monnaie rendue | Rien de plus : seul le montant encaissé est écrit |
+| Frais opérateur PawaPay | D `631` ; C compte PawaPay (au taux contractuel, ou au relevé) |
+
+## 4. Portefeuille électronique
+
+Le portefeuille est une dette envers le client : son solde total doit égaler le solde de `4191` (contrôle quotidien, et extension de `WalletTreasuryReconciliation`).
+
+| Événement | Écriture |
+| --- | --- |
+| Rechargement en espèces | D `571x` ; C `4191` client |
+| Rechargement par mobile money | D compte PawaPay ; C `4191` client |
+| Paiement par portefeuille | voir section 3 (`WALLET`) |
+| Retenue posée (`WalletHold`) | Aucune : l'argent reste au client |
+| Retenue capturée | Écriture du paiement qu'elle règle |
+| Transfert entre portefeuilles | D `4191` émetteur ; C `4191` bénéficiaire |
+| Expiration ou péremption d'un solde (si les conditions le prévoient) | D `4191` ; C `758` (à valider juridiquement) |
+| Ajustement administratif à double visa | D/C `4191` contre `471` puis compte décidé (geste commercial `6xx`, correction) |
+| Remboursement du solde au client | D `4191` ; C `{TRESO}` |
+
+## 5. Remboursements
+
+Événement `PAYMENT_REFUNDED` (et `PAYMENT_REVERSED`) : transaction de remboursement `SUCCEEDED`.
+
+| Cas | Écriture |
+| --- | --- |
+| Remboursement en espèces | D `{CLIENT}` ; C `571x` |
+| Remboursement mobile money PawaPay | D `{CLIENT}` ; C compte PawaPay |
+| Remboursement d'un moyen hors plateforme (chèque, virement, MoMo marchand) | D `{CLIENT}` ; C `{TRESO}` du moyen de restitution |
+| Remboursement vers le portefeuille | D `{CLIENT}` ; C `4191` |
+| Remboursement mobile money refusé par l'opérateur | Aucune écriture (la transaction est `FAILED`) |
+| Contre-passation (chèque rejeté, erreur de saisie) | Contre-passation de l'écriture d'encaissement ; la facture redevient due |
+
+L'avoir qui accompagne le remboursement (annulation de réservation) est écrit par `CREDIT_NOTE_ISSUED`. Le remboursement solde le crédit du client.
+
+## 6. Abonnements, pass, domiciliation
+
+Chiffre d'affaires étalé, mode retenu par défaut ([décision 5](README.md#19-décisions-prises), paramétrable) :
+
+| Événement | Écriture |
+| --- | --- |
+| Facture d'abonnement ou de pass couvrant une période future | Écriture de vente normale |
+| Fin de mois (worker comptable) | Ajustement du solde : besoin de `477` recalculé ligne par ligne d'après la période de service ; D `{PRODUIT}` ; C `477` pour la hausse, D `477` ; C `{PRODUIT}` pour la baisse (section 16) |
+| Résiliation avec avoir | Avoir sur la part non rendue, reprise du `477` correspondant |
+
+Sans étalement, seule l'écriture de vente s'applique. Les crédits d'heures ou de réservations consommés ne produisent pas d'écriture.
+
+## 7. Réservations
+
+| Événement | Écriture |
+| --- | --- |
+| Réservation confirmée | Aucune : l'écriture est celle de sa facture (ou de sa ligne dans la facture commune du lot) |
+| Annulation avant paiement | `CREDIT_NOTE_ISSUED` (part de la réservation) ou `INVOICE_CANCELLED` |
+| Annulation après paiement avec pénalité | Avoir de la part remboursée ; la pénalité reste en produit ; `PAYMENT_REFUNDED` pour le versement |
+| Réservation en `WALLET` | Paiement `WALLET` (section 3) à la capture de la retenue |
+| Réservation en `SUBSCRIPTION` ou `PASS` | Ligne à montant nul : aucune écriture |
+
+Analytique : site, activité et ressource de la réservation.
+
+## 8. Marketplace et stock
+
+| Événement | Écriture |
+| --- | --- |
+| Commande facturée | `INVOICE_ISSUED` avec ventes de marchandises `701` |
+| Sortie de stock à la livraison | Reprise de `stock_journal_entry` dans le journal `ST` : D `603` ; C `31` (comptes déjà portés par l'inventaire) |
+| Entrée en stock, ajustement d'inventaire | Reprise de `stock_journal_entry` (compte de contrepartie du motif) |
+| Vente pour compte d'un vendeur tiers (si la marketplace en a) | D `{CLIENT}` TTC ; C compte du vendeur `401`/`467` pour sa part ; C `706` pour la commission HT ; C `4431` TVA sur la commission |
+
+## 9. Demandes de fonds et avances
+
+| Événement | Écriture |
+| --- | --- |
+| Demande approuvée | Aucune écriture générale ; **engagement budgétaire** si le budget est activé |
+| Décaissement d'une dépense directe | voir section 2 (`CASH_OUT`, dépense directe) |
+| Décaissement d'une avance | D `421` bénéficiaire ; C `571x` |
+| Ligne de justification validée | D `{NATURE}` HT ; D `4452`/`4454` TVA ; C `421` bénéficiaire |
+| Reliquat rendu | D `571x` ; C `421` |
+| Complément versé (dépenses supérieures à l'avance) | D `421` ; C `571x`, puis la ligne justifiée solde le `421` |
+| Avance non justifiée au-delà du délai, retenue sur salaire décidée | Aucune écriture à la décision : le `421` reste ouvert. À l'import de paie (`PA`) : D `422` rémunérations dues ; C `421` bénéficiaire |
+| Note de frais remboursée | D `{NATURE}` ; D TVA ; C `571x` (ou `421` puis caisse) |
+| Réalimentation de petite caisse | D petite caisse `571z` ; C caisse principale `571x` ou banque |
+
+## 10. Banque, chèques, mobile money
+
+| Événement | Écriture |
+| --- | --- |
+| Bordereau de remise d'espèces | D `585` ; C `571x` (déjà via `SAFE_DEPOSIT`) |
+| Crédit en banque de la remise (relevé) | D `521x` ; C `585` |
+| Remise de chèques | Pas d'écriture au bordereau : le chèque reste au `513` jusqu'au relevé ; il passe `DEPOSITED` |
+| Chèque encaissé (relevé) | D `521x` ; C `513` |
+| Chèque rejeté | Contre-passation : D `{CLIENT}` ; C `513` ; frais de rejet D `631` ; C `521x` ; refacturation éventuelle |
+| Reversement PawaPay vers la banque | D `521x` ; C compte PawaPay |
+| Frais bancaires, agios (relevé) | D `631` ; C `521x` |
+| Retrait pour alimenter une caisse | D `585` ; C `521x`, puis caisse D `571x` ; C `585` |
+
+## 11. Clôture et inventaire
+
+| Événement | Écriture |
+| --- | --- |
+| Provision pour créance douteuse | D `6594` ; C `4912` (ou `4911`), après reclassement en `4162` ; voir section 15 |
+| Reprise de provision | D `4912` ; C `7594` |
+| Produits constatés d'avance | voir section 6 |
+| Charges constatées d'avance (loyer, assurance, licence payés d'avance) | Ajustement du solde du `476` chaque mois (section 16) ; en mode `YEAR_END`, D `476` ; C `{NATURE}` puis extourne à l'ouverture |
+| Dotation aux amortissements | D `6812` ou `6813` ; C `28x`, mensuelle par défaut, voir section 14 |
+| Liquidation de TVA | D `4431` ; C `4452`/`4454` ; solde vers `4441` (dette) ou `4449` (crédit) |
+| Solde des comptes d'attente | `471` vers comptes définitifs, à la main |
+| Résultat et à-nouveaux | Écritures de clôture et journal `AN` |
+
+## 12. Ce qui ne produit pas d'écriture
+
+- Création, modification, expiration ou annulation d'une **intention de paiement** (pas de mouvement d'argent).
+- Dépôt mobile money **en cours** (`PROCESSING`) ou en échec.
+- Retenue de portefeuille posée ou libérée.
+- Réservation confirmée, annulée sans facture, réservation à montant nul.
+- Consommation d'heures, de crédits ou de pass.
+- Devis, bon de commande, état de besoin, demande approuvée (hors engagement budgétaire).
+- Report de fonds de caisse en fin de mois.
+- Mouvements `PAYMENT` et `REFUND` de caisse (écrits par l'événement de paiement).
+
+## 13. Classe 9 : analytique et hors bilan
+
+Numéros de comptes proposés, à valider avec l'expert-comptable (décision 20 du plan). Chaque écriture est équilibrée en classe 9 et ne touche pas aux classes 1 à 8.
+
+| Événement | Journal | Écriture |
+| --- | --- | --- |
+| Ligne de charge (classe 6) validée et ventilée | `CAG` | D `93x` centre d'analyse, une ligne par section selon la ventilation ; C `91x` charges réfléchies |
+| Ligne de produit (classe 7) validée et ventilée | `CAG` | D `91x` produits réfléchis ; C `93x` ou `95x` selon l'activité |
+| Répartition secondaire (clé de répartition) | `CAG` | D `93x` sections réceptrices ; C `93x` section répartie |
+| Calcul des coûts | `CAG` | D `95x` coût ; C `93x` centres |
+| Charges non incorporables, charges supplétives | `CAG` | D ou C `97x` ; contrepartie `93x` ou `95x` |
+| Résultat analytique de la période | `CAG` | Solde des `95x` et des produits vers `98x` |
+| Contre-passation d'une pièce générale | `CAG` | Contre-passation de son reflet analytique |
+| Reclassement analytique (changement de section) | `CAG` | D `93x` nouvelle section ; C `93x` ancienne section |
+| Engagement donné inscrit au registre | `HB` | D `90x` engagement donné ; C `90x` contrepartie des engagements donnés |
+| Engagement reçu inscrit au registre | `HB` | D `90x` contrepartie des engagements reçus ; C `90x` engagement reçu |
+| Variation mensuelle d'un engagement de bail | `HB` | Écriture de la variation, dans le sens de l'engagement |
+| Levée ou expiration d'un engagement | `HB` | Contre-passation du solde de l'engagement |
+
+## 14. Immobilisations et amortissements
+
+Toutes les écritures sur les comptes `2x`, `28x` et `29x` partent d'une fiche d'immobilisation ; détail, exemples chiffrés et cycle de vie dans [immobilisations-et-amortissements.md](immobilisations-et-amortissements.md#10-écritures). Les comptes `481`, `485` et `275` sont lettrés.
+
+| Événement | Journal | Écriture |
+| --- | --- | --- |
+| Facture fournisseur d'immobilisation | `AC` | D compte du bien (ou `239` en cours) HT ; D `4451` TVA récupérable ; C `481` fournisseur d'investissement (lettrable) |
+| Acompte versé sur immobilisation | trésorerie | D `252` (ou `251`) ; C `521x` ou `571x` |
+| Imputation de l'acompte à la facture | `OD` | D `481` ; C `252` |
+| Paiement du fournisseur d'investissement | trésorerie | D `481` (lettré) ; C `521x` ou `571x` |
+| Immobilisation acquise par une avance justifiée | `OD` | D compte du bien ; D `4451` ; C `421` employé (lettré) |
+| Mise en service d'une immobilisation en cours | `OD` | D comptes définitifs par composant ; C `239` |
+| Production immobilisée | `OD` | D compte du bien ; C `721` ou `722` |
+| Dépôt de garantie versé (caution des locaux) | trésorerie | D `275` ; C `521x` ; restitution : écriture inverse, retenue : D `6x` ; C `275` |
+| Location-acquisition | `OD` | D compte du bien ; C `17x` |
+| Subvention d'équipement reçue | trésorerie | D `521x` ; C `14x` ; reprise annuelle D `14x` ; C `799` |
+| Dotation aux amortissements (mensuelle) | `OD` | D `6812` ou `6813` ; C `28x`, ventilée par section |
+| Amortissement dérogatoire | `OD` | D `851` ; C `151` ; reprise D `151` ; C `861` |
+| Dépréciation et reprise | `OD` | D `691x` ; C `29x` ; reprise D `29x` ; C `791x` |
+| Reclassement de compte | `OD` | D nouveau compte ; C ancien, valeur brute et cumul |
+| Sortie de l'actif | `OD` | D `28x` ; D `29x` ; D `811` ou `812` ; C compte du bien |
+| Cession | `VT` | D `485` ; C `821` ou `822` ; C `4431` si TVA |
+| Encaissement du prix de cession | trésorerie | D `521x` ou `571x` ; C `485` (lettré) |
+
+## 15. Provisions et créances douteuses
+
+Classement, dépréciation, perte et provisions pour risques se suivent facture par facture et risque par risque ; détail, exemple chiffré et règles dans [provisions-et-creances-douteuses.md](provisions-et-creances-douteuses.md#10-écritures). Les comptes `4161` et `4162` sont lettrés par numéro de facture.
+
+| Événement | Journal | Écriture |
+| --- | --- | --- |
+| `RECEIVABLE_DISPUTED` : créance contestée | `OD` | D `4161` ; C `411` reste dû TTC (lettré) |
+| `RECEIVABLE_DOUBTFUL` : classement en douteux | `OD` | D `4162` ; C `411` reste dû TTC (lettré) |
+| `RECEIVABLE_BACK_TO_NORMAL` : retour en normal | `OD` | D `411` ; C `4161` ou `4162` ; reprise de la dépréciation |
+| `RECEIVABLE_IMPAIRMENT_ADJUSTED` : dotation ou reprise d'ajustement | `OD` | D `6594` ; C `4911` ou `4912`, ou l'inverse vers `7594`, détail par facture |
+| Encaissement d'une facture douteuse | trésorerie | D trésorerie ; C `4162` ou `4161` (lettré) ; reprise au prorata D `491x` ; C `7594` |
+| `INVOICE_WRITTEN_OFF` : passage en perte | `OD` | D `6511` HT ; D `4431` si récupération admise ; C `4162`, `4161` ou `411` ; reprise D `491x` ; C `7594` |
+| Récupération après perte | trésorerie | D trésorerie ; C `75x` (et TVA reversée si elle avait été récupérée) |
+| Imputation d'une garantie (caution, portefeuille) sur une créance douteuse | `OD` | D `165` ou `4191` ; C `4162` (lettré) |
+| `RISK_PROVISION_POSTED` : constitution ou complément | `OD` | D `6911`, `6591`, `697` ou `85x` ; C `19x` ou `499` |
+| `RISK_PROVISION_RELEASED` : reprise utilisée ou non | `OD` | D `19x` ou `499` ; C `7911`, `7591`, `797` ou `86x` |
+| Reclassement long terme vers court terme | `OD` | D `19x` ; C `499` |
+| Dépréciation des stocks | `OD` ou `ST` | D `6593` ; C `39x` ; reprise D `39x` ; C `7593` |
+
+## 16. Produits et charges constatés d'avance, rattachement
+
+Le produit suit la période de service et la charge la période consommée ; chaque ligne a son échéancier, et le `477` comme le `476` égalent à tout moment la somme des restants. Détail, exemples et règles dans [produits-et-charges-constates-d-avance.md](produits-et-charges-constates-d-avance.md#9-écritures). Les comptes `4181` et `408` sont lettrés avec la facture réelle.
+
+| Événement | Journal | Écriture |
+| --- | --- | --- |
+| `REVENUE_DEFERRAL_ADJUSTED` : fin de période, produits | `OD` | Besoin en hausse : D `{PRODUIT}` ; C `477`. En baisse : D `477` ; C `{PRODUIT}`. Détail par ligne, ventilé par compte de produit et section |
+| `EXPENSE_DEFERRAL_ADJUSTED` : fin de période, charges | `OD` | Besoin en hausse : D `476` ; C `{CHARGE}`. En baisse : D `{CHARGE}` ; C `476` |
+| `ACCRUED_REVENUE_POSTED` : factures à établir | `OD` | D `4181` ; C `{PRODUIT}` HT |
+| `ACCRUED_EXPENSE_POSTED` : factures non parvenues | `OD` | D `{CHARGE}` ; D `4452` ou `4454` (si TVA connue) ; C `408` |
+| Extourne des produits à recevoir et des charges à payer | `EXT` ou `OD` | Contre-passation au premier jour de la période suivante |
+| Résiliation sans remboursement | `OD` | La part non rendue sort du `477` vers le compte de produit de résiliation (paramétrable) au calcul suivant |
+| Pass expiré non consommé | `OD` | La part non consommée sort du `477` vers le compte de produit du pass au calcul suivant |

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 public record BillingPreferences(
         BillingEntityType billingEntityType,
         @Size(max = 255) String billingCompanyName,
-        @Size(max = 255) String billingEmail,
+        /** Une ou plusieurs adresses separees par des virgules. */
+        @Size(max = 500) @com.sni.bokaticowork.core.utils.validation.EmailList String billingEmail,
         @Size(max = 255)String billlingAddress) {
 }

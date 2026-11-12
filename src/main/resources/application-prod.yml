@@ -244,6 +244,15 @@ app:
       language: ${KYC_OCR_LANGUAGE:fra+eng}
       data-path: ${KYC_OCR_DATA_PATH:storage/tessdata}
 
+  # GED : lecture du texte des fichiers pour la recherche (lot 3). L'OCR des scans reprend
+  # Tesseract et les langues du KYC ; sans lui, seuls les PDF numeriques et les fichiers
+  # bureautiques sont lus.
+  ged:
+    text:
+      ocr-enabled: ${GED_OCR_ENABLED:false}
+      ocr-language: ${GED_OCR_LANGUAGE:fra+eng}
+      ocr-data-path: ${GED_OCR_DATA_PATH:${KYC_OCR_DATA_PATH:storage/tessdata}}
+
   security:
 
     bootstrap:

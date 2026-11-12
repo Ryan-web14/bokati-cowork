@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.subscription.lifecycle.repository;
 
 import com.sni.bokaticowork.features.subscription.lifecycle.model.SubscriptionDebitMandate;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,8 @@ import java.util.Optional;
 @Repository
 public interface SubscriptionDebitMandateRepository extends JpaRepository<SubscriptionDebitMandate, Long> {
 
+    /** L'abonnement est lu avec le mandat : la vue du mandat le lit hors transaction. */
+    @EntityGraph(attributePaths = "subscription")
     Optional<SubscriptionDebitMandate> findByMandateCode(String mandateCode);
 
     @Query(nativeQuery = true, value = "SELECT * FROM subscription_debit_mandate WHERE subscription_id = :subscriptionId AND status IN ('ACTIVE', 'SUSPENDED') LIMIT 1")

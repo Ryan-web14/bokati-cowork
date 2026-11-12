@@ -126,7 +126,7 @@ class SubscriptionDirectDebitServiceTest {
     @Test
     void successfulDebitClosesTheGracePeriod() {
         when(gateway.pay(eq("INV-1"), eq("WAL-1"), eq(new BigDecimal("30000")), anyString()))
-                .thenReturn(new PayInvoiceResponse(null, new PaymentTransactionResponse("TXN-1", null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                .thenReturn(new PayInvoiceResponse(null, new PaymentTransactionResponse("TXN-1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
 
         SubscriptionDebitAttempt attempt = service.collect(1L, "INV-1").orElseThrow();
 
@@ -136,6 +136,17 @@ class SubscriptionDirectDebitServiceTest {
         assertNotNull(mandate.getLastDebitAt());
         verify(graceService).exit(eq(subscription), anyString());
         verify(graceService, never()).enter(any(), anyString());
+    }
+
+    @Test
+    void aPendingRenewalDecidesItsOwnStatus() {
+        subscription.setPendingRenewalInvoice("INV-1");
+        wallet.setAvailableBalance(new BigDecimal("1000"));
+
+        service.collect(1L, "INV-1").orElseThrow();
+
+        verify(graceService, never()).enter(any(), anyString());
+        verify(graceService, never()).exit(any(), anyString());
     }
 
     @Test

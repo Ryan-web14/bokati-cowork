@@ -148,6 +148,7 @@ public class PassPlanServiceImpl implements PassPlanService {
         PassPlanVersion version = PassPlanVersion.builder()
                 .plan(plan)
                 .versionNumber(nextVersion)
+                .versionCode(plan.getCode() + "-V" + nextVersion)
                 .name(request.name())
                 .description(request.description())
                 .duration(request.duration())
@@ -165,8 +166,8 @@ public class PassPlanServiceImpl implements PassPlanService {
 
     @Override
     @Transactional(readOnly = true)
-    public PassPlanDtos.PassPlanVersionResponse getVersion(Long versionId) {
-        return toVersionResponse(findVersionById(versionId));
+    public PassPlanDtos.PassPlanVersionResponse getVersion(String versionCode) {
+        return toVersionResponse(findVersion(versionCode));
     }
 
     @Override
@@ -179,8 +180,8 @@ public class PassPlanServiceImpl implements PassPlanService {
     }
 
     @Override
-    public PassPlanDtos.PassPlanVersionResponse publishVersion(Long versionId) {
-        PassPlanVersion version = findVersionById(versionId);
+    public PassPlanDtos.PassPlanVersionResponse publishVersion(String versionCode) {
+        PassPlanVersion version = findVersion(versionCode);
         if (version.getStatus() != PlanStatus.DRAFT) {
             throw new BadRequestException("Only DRAFT versions can be published. Current status: " + version.getStatus());
         }
@@ -191,8 +192,8 @@ public class PassPlanServiceImpl implements PassPlanService {
     // ── Price operations ──
 
     @Override
-    public PassPlanDtos.PassPlanPriceResponse setPrice(Long versionId, PassPlanDtos.SetPassPlanPriceRequest request) {
-        PassPlanVersion version = findVersionById(versionId);
+    public PassPlanDtos.PassPlanPriceResponse setPrice(String versionCode, PassPlanDtos.SetPassPlanPriceRequest request) {
+        PassPlanVersion version = findVersion(versionCode);
 
         PassPlanPrice price = passPlanPriceRepository
                 .findByPassVersionAndCurrency(version, request.currency())
@@ -212,8 +213,8 @@ public class PassPlanServiceImpl implements PassPlanService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PassPlanDtos.PassPlanPriceResponse> listPrices(Long versionId) {
-        PassPlanVersion version = findVersionById(versionId);
+    public List<PassPlanDtos.PassPlanPriceResponse> listPrices(String versionCode) {
+        PassPlanVersion version = findVersion(versionCode);
         return passPlanPriceRepository.findAllByPassVersion(version).stream()
                 .map(this::toPriceResponse)
                 .toList();
@@ -222,9 +223,9 @@ public class PassPlanServiceImpl implements PassPlanService {
     // ── Entitlement operations ──
 
     @Override
-    public PassPlanDtos.PassPlanEntitlementResponse addEntitlement(Long versionId,
+    public PassPlanDtos.PassPlanEntitlementResponse addEntitlement(String versionCode,
                                                                     PassPlanDtos.AddPassPlanEntitlementRequest request) {
-        PassPlanVersion version = findVersionById(versionId);
+        PassPlanVersion version = findVersion(versionCode);
 
         EntitlementDefinition definition = entitlementDefinitionRepository
                 .findByCodeIgnoreCase(request.entitlementCode())
@@ -246,17 +247,20 @@ public class PassPlanServiceImpl implements PassPlanService {
     }
 
     @Override
-    public void removeEntitlement(Long entitlementId) {
-        if (!passPlanEntitlementRepository.existsById(entitlementId)) {
-            throw new ResourceNotFoundException("PassPlanEntitlement", "id", entitlementId);
+    public void removeEntitlement(String versionCode, String entitlementCode) {
+        List<PassPlanEntitlement> entitlements = passPlanEntitlementRepository.findAllByPassVersion(findVersion(versionCode)).stream()
+                .filter(entitlement -> entitlement.getEntitlementDefinition().getCode().equalsIgnoreCase(entitlementCode))
+                .toList();
+        if (entitlements.isEmpty()) {
+            throw new ResourceNotFoundException("PassPlanEntitlement", "code", entitlementCode);
         }
-        passPlanEntitlementRepository.deleteById(entitlementId);
+        passPlanEntitlementRepository.deleteAll(entitlements);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<PassPlanDtos.PassPlanEntitlementResponse> listEntitlements(Long versionId) {
-        PassPlanVersion version = findVersionById(versionId);
+    public List<PassPlanDtos.PassPlanEntitlementResponse> listEntitlements(String versionCode) {
+        PassPlanVersion version = findVersion(versionCode);
         return passPlanEntitlementRepository.findAllByPassVersion(version).stream()
                 .map(this::toEntitlementResponse)
                 .toList();
@@ -269,14 +273,15 @@ public class PassPlanServiceImpl implements PassPlanService {
                 .orElseThrow(() -> new ResourceNotFoundException("PassPlan", "code", planCode));
     }
 
-    private PassPlanVersion findVersionById(Long versionId) {
-        return passPlanVersionRepository.findById(versionId)
-                .orElseThrow(() -> new ResourceNotFoundException("PassPlanVersion", "id", versionId));
+    private PassPlanVersion findVersion(String versionCode) {
+        String code = versionCode == null ? "" : versionCode.trim().toUpperCase(java.util.Locale.ROOT);
+        return passPlanVersionRepository.findByVersionCode(code)
+                .orElseThrow(() -> new ResourceNotFoundException("Version de plan introuvable : " + versionCode));
     }
 
     private PassPlanDtos.PassPlanResponse toResponse(PassPlan plan) {
         return new PassPlanDtos.PassPlanResponse(
-                plan.getId(),
+                plan.getCode(),
                 plan.getCode(),
                 plan.getName(),
                 plan.getDescription(),
@@ -293,7 +298,8 @@ public class PassPlanServiceImpl implements PassPlanService {
 
     private PassPlanDtos.PassPlanVersionResponse toVersionResponse(PassPlanVersion version) {
         return new PassPlanDtos.PassPlanVersionResponse(
-                version.getId(),
+                version.getVersionCode(),
+                version.getVersionCode(),
                 version.getPlan().getCode(),
                 version.getVersionNumber(),
                 version.getName(),
@@ -313,8 +319,8 @@ public class PassPlanServiceImpl implements PassPlanService {
 
     private PassPlanDtos.PassPlanPriceResponse toPriceResponse(PassPlanPrice price) {
         return new PassPlanDtos.PassPlanPriceResponse(
-                price.getId(),
-                price.getPassVersion().getId(),
+                price.getPassVersion().getVersionCode() + "-" + price.getCurrency(),
+                price.getPassVersion().getVersionCode(),
                 price.getCurrency(),
                 price.getAmount(),
                 price.getSetupFee(),
@@ -327,8 +333,8 @@ public class PassPlanServiceImpl implements PassPlanService {
 
     private PassPlanDtos.PassPlanEntitlementResponse toEntitlementResponse(PassPlanEntitlement entitlement) {
         return new PassPlanDtos.PassPlanEntitlementResponse(
-                entitlement.getId(),
-                entitlement.getPassVersion().getId(),
+                entitlement.getEntitlementDefinition().getCode(),
+                entitlement.getPassVersion().getVersionCode(),
                 entitlement.getEntitlementDefinition().getCode(),
                 entitlement.getEntitlementDefinition().getName(),
                 entitlement.getQuantity(),

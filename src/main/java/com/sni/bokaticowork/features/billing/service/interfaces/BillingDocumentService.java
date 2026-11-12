@@ -82,6 +82,13 @@ public interface BillingDocumentService {
      * lorsqu'il n'y a plus rien à imputer, la créance devant rester acquise au client.
      */
     BillingDocumentResponse refundCreditNoteToWallet(String creditNoteNumber, String reason);
+
+    /**
+     * Reverse l'avoir au portefeuille d'un autre titulaire que le client de l'avoir · une facture de
+     * membre reglee pour le compte de son organisation rembourse l'organisation, pas le membre.
+     */
+    BillingDocumentResponse refundCreditNoteToWallet(String creditNoteNumber, String reason,
+                                                     String walletOwnerType, String walletOwnerCode);
     BillingDocumentResponse send(String documentNumber);
     BillingDocumentResponse selectQuoteOptions(String quoteNumber, SelectQuoteOptionsRequest request);
     BillingDocumentResponse markViewed(String quoteNumber);

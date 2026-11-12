@@ -53,7 +53,8 @@ class MonthlyAvailabilityGeneratorTest {
     @BeforeEach
     void setUp() {
         generator = new MonthlyAvailabilityGenerator(resourceRepository, availabilityRepository,
-                availabilityService, new ResourceSlotPolicy(), "08:00-18:00", "18:00-22:00", "08:00-12:00", "");
+                availabilityService, new ResourceSlotPolicy(),
+                new OpeningHoursResolver(null, null, "08:00-18:00", "18:00-22:00", "08:00-12:00", ""));
     }
 
     private static Resource resource(String code) {
@@ -175,8 +176,7 @@ class MonthlyAvailabilityGeneratorTest {
     @Test
     @DisplayName("Une plage horaire mal ecrite arrete le demarrage plutot que d'ouvrir n'importe quoi")
     void rejectsMalformedHours() {
-        assertThatThrownBy(() -> new MonthlyAvailabilityGenerator(resourceRepository, availabilityRepository,
-                availabilityService, new ResourceSlotPolicy(), "18:00-08:00", "18:00-22:00", "08:00-12:00", ""))
+        assertThatThrownBy(() -> new OpeningHoursResolver(null, null, "18:00-08:00", "18:00-22:00", "08:00-12:00", ""))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }

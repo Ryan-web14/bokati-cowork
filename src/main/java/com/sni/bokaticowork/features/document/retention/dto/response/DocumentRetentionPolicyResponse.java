@@ -17,6 +17,8 @@ public class DocumentRetentionPolicyResponse {
     private String name;
     private DocumentSpace space;
     private String documentTypeCode;
+    private String folderCode;
+    private String folderName;
     private Integer retentionDays;
     private DocumentRetentionReference retentionReference;
     private DocumentRetentionAction action;

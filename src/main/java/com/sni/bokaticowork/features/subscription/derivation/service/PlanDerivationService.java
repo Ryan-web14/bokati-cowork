@@ -227,6 +227,20 @@ public class PlanDerivationService {
 
     @Transactional
     public PlanDerivation create(Subscription subscription, Spec spec, String requestedBy, String batchCode) {
+        return create(subscription, spec, requestedBy, batchCode, false);
+    }
+
+    /**
+     * Un blocage de prix (plancher, rabais au-dela du maximum admis) peut etre leve par un
+     * administrateur : cas d'une facturation deja faite hors de l'abonnement, jusqu'a un prix nul.
+     * Les autres blocages restent.
+     */
+    public static boolean overridable(String blockingReason) {
+        return blockingReason != null && (blockingReason.startsWith("Prix plancher") || blockingReason.startsWith("Rabais de"));
+    }
+
+    @Transactional
+    public PlanDerivation create(Subscription subscription, Spec spec, String requestedBy, String batchCode, boolean adminOverride) {
         if (spec.reason() == null) {
             throw new BadRequestException("Une dérivation a un motif · négociation, geste commercial, partenariat, pilote, protection, fidélité ou correction");
         }
@@ -236,8 +250,17 @@ public class PlanDerivationService {
         }
         PlanVersion source = catalogueSourceOf(subscription);
         Preview preview = preview(subscription, source, spec);
-        if (!preview.allowed()) {
+        boolean overridden = !preview.allowed() && adminOverride && overridable(preview.blockingReason());
+        if (!preview.allowed() && !overridden) {
             throw new ConflictException("derivation", preview.blockingReason());
+        }
+        if (overridden) {
+            log.warn("Derivation de {} : derogation administrateur ({}) par {}", subscription.getSubscriptionNumber(), preview.blockingReason(), requestedBy);
+            String note = "Dérogation administrateur : " + preview.blockingReason();
+            spec = new Spec(spec.price(), spec.setupFee(), spec.trialDays(), spec.commitmentMonths(), spec.entitlementQuantities(),
+                    spec.unlimitedEntitlements(), spec.includedBenefits(), spec.reason(),
+                    spec.reasonDetails() == null ? note : spec.reasonDetails() + " · " + note, spec.effectiveFrom(), spec.effectiveTo(),
+                    spec.renewalBehaviour(), spec.revertAfterPeriods(), spec.promotionsAllowed());
         }
 
         PlanVersion derived = cloneAsPrivate(subscription, source, spec);
@@ -271,7 +294,7 @@ public class PlanDerivationService {
         if (!preview.requiresApproval()) {
             apply(derivation);
         }
-        return derivation;
+        return loaded(derivation);
     }
 
     /** Approuve · par un autre que le demandeur · et applique. */
@@ -287,7 +310,26 @@ public class PlanDerivationService {
         derivation.setApprovedBy(approvedBy.trim());
         derivation.setApprovedAt(Instant.now());
         apply(derivation);
-        return derivationRepository.save(derivation);
+        return loaded(derivationRepository.save(derivation));
+    }
+
+    /**
+     * Le visa d'un devis accepte : l'admin qui accepte un prix negocie le vise, meme s'il a
+     * prepare le devis (choix du 2026-11-08). La regle des quatre yeux reste entiere pour les
+     * derivations posees directement sur un abonnement.
+     */
+    @Transactional
+    public PlanDerivation approveFromQuote(String derivationCode, String acceptedBy) {
+        PlanDerivation derivation = get(derivationCode);
+        if (derivation.getStatus() != PlanDerivation.Status.PENDING_APPROVAL) {
+            return loaded(derivation);
+        }
+        derivation.setApprovedBy(StringUtils.hasText(acceptedBy) ? acceptedBy.trim() : "STAFF");
+        derivation.setApprovedAt(Instant.now());
+        // La base n'admet un visa par le demandeur lui-meme que pour cette source
+        derivation.setApprovalSource("QUOTE");
+        apply(derivation);
+        return loaded(derivationRepository.save(derivation));
     }
 
     @Transactional
@@ -305,7 +347,7 @@ public class PlanDerivationService {
         PlanVersion derived = derivation.getDerivedPlanVersion();
         derived.setStatus(PlanStatus.ARCHIVED);
         planVersionRepository.save(derived);
-        return derivationRepository.save(derivation);
+        return loaded(derivationRepository.save(derivation));
     }
 
     /**
@@ -373,7 +415,7 @@ public class PlanDerivationService {
         active.setEndedAt(Instant.now());
         active.setReasonDetails(join(active.getReasonDetails(), "Fin · " + because));
         log.info("Abonnement {} · retour au catalogue ({})", subscription.getSubscriptionNumber(), because);
-        return derivationRepository.save(active);
+        return loaded(derivationRepository.save(active));
     }
 
     /**
@@ -443,6 +485,20 @@ public class PlanDerivationService {
         return statuses == null || statuses.isEmpty()
                 ? derivationRepository.findAllByOrderByCreatedAtDesc(pageable)
                 : derivationRepository.findByStatusInOrderByCreatedAtDesc(statuses, pageable);
+    }
+
+    /**
+     * Charge ce que la vue d'une derivation lit (abonnement, versions, plan) : le controleur la
+     * construit apres la transaction, sans open-in-view.
+     */
+    private static PlanDerivation loaded(PlanDerivation derivation) {
+        org.hibernate.Hibernate.initialize(derivation.getSubscription());
+        org.hibernate.Hibernate.initialize(derivation.getSourcePlanVersion());
+        if (derivation.getSourcePlanVersion() != null) {
+            org.hibernate.Hibernate.initialize(derivation.getSourcePlanVersion().getPlan());
+        }
+        org.hibernate.Hibernate.initialize(derivation.getDerivedPlanVersion());
+        return derivation;
     }
 
     public record ConcessionLine(String requestedBy, PlanDerivation.Reason reason, long count, BigDecimal totalImpact) {
@@ -607,7 +663,10 @@ public class PlanDerivationService {
             throw new BadRequestException("Le plancher ne peut pas être négatif");
         }
         version.setFloorPrice(floorPrice);
-        return planVersionRepository.save(version);
+        PlanVersion saved = planVersionRepository.save(version);
+        // Le controleur lit le code du plan hors transaction
+        org.hibernate.Hibernate.initialize(saved.getPlan());
+        return saved;
     }
 
     private PlanPrice priceFor(PlanVersion version, BillingCycle cycle) {

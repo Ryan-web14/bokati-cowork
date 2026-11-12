@@ -69,8 +69,9 @@ public final class PassPlanDtos {
 
     // ── Responses ──
 
+    /** @param id le code du plan · jamais son identifiant technique */
     public record PassPlanResponse(
-            Long id,
+            String id,
             String code,
             String name,
             String description,
@@ -84,8 +85,10 @@ public final class PassPlanDtos {
             Instant updatedAt
     ) {}
 
+    /** @param id le code de la version, a reprendre dans les routes */
     public record PassPlanVersionResponse(
-            Long id,
+            String id,
+            String versionCode,
             String planCode,
             Integer versionNumber,
             String name,
@@ -102,9 +105,10 @@ public final class PassPlanDtos {
             Instant updatedAt
     ) {}
 
+    /** @param id le code de la version suivi de la devise */
     public record PassPlanPriceResponse(
-            Long id,
-            Long versionId,
+            String id,
+            String versionCode,
             String currency,
             BigDecimal amount,
             BigDecimal setupFee,
@@ -114,9 +118,10 @@ public final class PassPlanDtos {
             Instant createdAt
     ) {}
 
+    /** @param id le code du droit, unique dans une version */
     public record PassPlanEntitlementResponse(
-            Long id,
-            Long versionId,
+            String id,
+            String versionCode,
             String entitlementCode,
             String entitlementName,
             BigDecimal quantity,

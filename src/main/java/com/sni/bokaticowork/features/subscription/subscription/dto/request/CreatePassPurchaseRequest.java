@@ -7,7 +7,8 @@ import jakarta.validation.constraints.NotNull;
 public record CreatePassPurchaseRequest(
         @NotNull SubscriberType ownerType,
         @NotBlank String ownerCode,
-        Long planVersionId,
+        /** Le code de la version · vide, la version active du plan. */
+        String planVersionId,
         String currency,
         String validFrom,
         Boolean autoRenew,

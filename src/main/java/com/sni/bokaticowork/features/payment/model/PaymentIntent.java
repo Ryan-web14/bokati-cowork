@@ -84,6 +84,26 @@ public class PaymentIntent {
     @Column(name = "payment_link_expires_at")
     private Instant paymentLinkExpiresAt;
 
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
+
+    @Column(name = "cancelled_by", length = 180)
+    private String cancelledBy;
+
+    @Column(name = "cancellation_reason", length = 500)
+    private String cancellationReason;
+
+    /** Nombre de fois ou l'intention a ete relancee apres expiration, annulation ou echec. */
+    @Column(name = "relaunch_count", nullable = false)
+    @Builder.Default
+    private Integer relaunchCount = 0;
+
+    @Column(name = "last_relaunched_at")
+    private Instant lastRelaunchedAt;
+
+    @Column(name = "last_relaunched_by", length = 180)
+    private String lastRelaunchedBy;
+
     @org.hibernate.annotations.ColumnTransformer(write = "?::jsonb")
     @Column(name = "metadata_json", columnDefinition = "jsonb")
     private String metadataJson;
@@ -98,6 +118,9 @@ public class PaymentIntent {
     public void prePersist() {
         createdAt = Instant.now();
         updatedAt = Instant.now();
+        if (relaunchCount == null) {
+            relaunchCount = 0;
+        }
     }
 
     @PreUpdate

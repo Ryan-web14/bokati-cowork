@@ -34,6 +34,19 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     @Query(nativeQuery = true, value = "SELECT * FROM booking WHERE billable_number = :billableNumber AND deleted = false")
     Optional<Booking> findByBillableNumber(@Param("billableNumber") String billableNumber);
 
+    /** Les reservations d'un lot multi-ressources, ressource chargee pour la reponse. */
+    @Query("""
+            SELECT b
+            FROM Booking b
+            JOIN FETCH b.resource r
+            LEFT JOIN FETCH r.resourceType
+            LEFT JOIN FETCH r.resourceGroup
+            WHERE b.batchNumber = :batchNumber
+              AND b.deleted = false
+            ORDER BY b.ownerCode, b.startedAt, b.id
+            """)
+    List<Booking> findAllByBatchNumber(@Param("batchNumber") String batchNumber);
+
     @Query(nativeQuery = true, value = "SELECT * FROM booking WHERE idempotency_key = :idempotencyKey AND deleted = false")
     Optional<Booking> findByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
 

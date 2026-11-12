@@ -134,4 +134,32 @@ class MobileMoneyRefundSupervisionTest {
         verify(allocationService).reverseAllocations(original, new BigDecimal("10"));
         assertThat(refund.getStatus()).isEqualTo(PaymentTransactionStatus.REFUNDED);
     }
+
+    /** Une confirmation de remboursement partiel ne doit pas declencher les annulations du remboursement total. */
+    @Test
+    @DisplayName("La confirmation d'un remboursement partiel publie un evenement marque partiel")
+    void partialConfirmationIsFlaggedPartial() {
+        OutboxService outboxService = org.mockito.Mockito.mock(OutboxService.class);
+        PaymentIntentRepository intentRepository = org.mockito.Mockito.mock(PaymentIntentRepository.class);
+        PawapayRefundCallbackProcessor processor = new PawapayRefundCallbackProcessor(transactionRepository,
+                intentRepository, outboxService, org.mockito.Mockito.mock(PaymentAllocationService.class), new ObjectMapper());
+        PaymentIntent intent = new PaymentIntent();
+        intent.setId(1L);
+        refund.setPaymentIntent(intent);
+        refund.setAmount(new BigDecimal("4"));
+        refund.setMetadataJson("{\"originalTransactionNumber\":\"TXN-1\"}");
+        PaymentTransaction original = new PaymentTransaction();
+        original.setTransactionNumber("TXN-1");
+        original.setAmount(new BigDecimal("10"));
+        original.setStatus(PaymentTransactionStatus.SUCCEEDED);
+        when(transactionRepository.findByProviderReference("ref-1")).thenReturn(Optional.of(refund));
+        when(transactionRepository.findByTransactionNumber("TXN-1")).thenReturn(Optional.of(original));
+        when(transactionRepository.findAllByOriginalTransactionNumber("TXN-1")).thenReturn(List.of());
+
+        processor.process(new PawapayRefundCallbackPayload("ref-1", null, "COMPLETED", null, null, null, null, null));
+
+        verify(outboxService).publish(org.mockito.ArgumentMatchers.eq("PAYMENT_TRANSACTION_WORKFLOW"), any(), any(),
+                org.mockito.ArgumentMatchers.argThat(payload -> Boolean.FALSE.equals(((java.util.Map<?, ?>) payload).get("fullRefund"))));
+        assertThat(original.getStatus()).isEqualTo(PaymentTransactionStatus.SUCCEEDED);
+    }
 }

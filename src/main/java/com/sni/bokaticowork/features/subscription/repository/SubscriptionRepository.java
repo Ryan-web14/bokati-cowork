@@ -18,6 +18,11 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscription_number = :subscriptionNumber")
     Optional<Subscription> findBySubscriptionNumber(@Param("subscriptionNumber") String subscriptionNumber);
 
+    /** Abonnements auxquels une facture existante est rattachee (metadonnee linkedInvoiceNumber). */
+    @org.springframework.data.jpa.repository.Query(value = "SELECT subscription_number FROM subscription WHERE metadata_json ->> 'linkedInvoiceNumber' = :invoiceNumber",
+            nativeQuery = true)
+    java.util.List<String> findNumbersLinkedToInvoice(@Param("invoiceNumber") String invoiceNumber);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM subscription
@@ -144,7 +149,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM subscription
-            WHERE status IN ('ACTIVE', 'TRIALING', 'GRACE_PERIOD', 'PAST_DUE')
+            WHERE (status IN ('ACTIVE', 'TRIALING', 'GRACE_PERIOD', 'PAST_DUE')
+                   OR (status = 'SUSPENDED' AND pending_renewal_invoice IS NOT NULL))
               AND current_period_end IS NOT NULL
               AND current_period_end < :today
               AND auto_renew = true
@@ -166,8 +172,55 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
               AND bd.balance_due > 0
               AND bd.status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE')
               AND bi.created_at < :unpaidSince
+              AND (s.pending_renewal_invoice IS NULL OR s.current_period_end < CURRENT_DATE)
             """)
     List<Subscription> findActiveWithRenewalUnpaidSince(@Param("unpaidSince") Instant unpaidSince);
+
+    /**
+     * Les abonnements paies dont le contrat s'arrete avant la periode en cours · renouveles avant que
+     * le contrat ne suive. Une echeance impayee les ecarte : le contrat ne se prolonge que sur du paye.
+     */
+    @Query(nativeQuery = true, value = """
+            SELECT s.id
+            FROM subscription s
+            JOIN contract_record c ON c.contract_code = s.contract_code
+            WHERE s.status IN ('ACTIVE', 'GRACE_PERIOD', 'PAST_DUE', 'PAUSED', 'PENDING_TERMINATION')
+              AND s.pending_renewal_invoice IS NULL
+              AND s.current_period_end > c.end_date
+              AND c.deleted = false
+              AND c.status NOT IN ('TERMINATED', 'CANCELLED')
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM billable_item bi
+                  JOIN billing_document bd ON bd.id = bi.invoice_id
+                  WHERE bi.source_id = s.subscription_number
+                    AND bi.source_type = 'SUBSCRIPTION_RENEWAL'
+                    AND bd.balance_due > 0
+                    AND bd.status IN ('ISSUED', 'VALIDATED', 'SENT', 'VIEWED', 'PARTIALLY_PAID', 'OVERDUE'))
+            """)
+    List<Long> findIdsWithContractBehindPeriod();
+
+    /** Les contrats portes par un abonnement qui n'a pas pris fin · ils n'expirent pas d'eux-memes. */
+    @Query(nativeQuery = true, value = """
+            SELECT DISTINCT contract_code FROM subscription
+            WHERE contract_code IS NOT NULL AND status NOT IN ('CANCELLED', 'EXPIRED')
+            """)
+    List<String> findContractCodesOfOpenSubscriptions();
+
+    /** Les contrats marques echus alors que leur abonnement court encore. */
+    @Query(nativeQuery = true, value = """
+            SELECT DISTINCT c.contract_code
+            FROM subscription s
+            JOIN contract_record c ON c.contract_code = s.contract_code
+            WHERE s.status NOT IN ('CANCELLED', 'EXPIRED')
+              AND c.status = 'EXPIRED'
+              AND c.deleted = false
+            """)
+    List<String> findExpiredContractCodesOfOpenSubscriptions();
+
+    /** Les abonnements dont un renouvellement attend son reglement. */
+    @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE pending_renewal_invoice IS NOT NULL")
+    List<Subscription> findWithPendingRenewal();
 
     @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE status = :status ORDER BY updated_at ASC")
     List<Subscription> findAllByStatus(@Param("status") String status);

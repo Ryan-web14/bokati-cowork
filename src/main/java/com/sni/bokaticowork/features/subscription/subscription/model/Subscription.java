@@ -113,6 +113,16 @@ public class Subscription {
     @Column(name = "end_notice_stage")
     private Integer endNoticeStage;
 
+    /** La facture de renouvellement en attente de reglement · la periode n'avance qu'une fois payee. */
+    @Column(name = "pending_renewal_invoice", length = 120)
+    private String pendingRenewalInvoice;
+
+    @Column(name = "pending_renewal_start")
+    private LocalDate pendingRenewalStart;
+
+    @Column(name = "pending_renewal_end")
+    private LocalDate pendingRenewalEnd;
+
     @Column(name = "trial_start")
     private LocalDate trialStart;
 

@@ -11,7 +11,6 @@ import com.sni.bokaticowork.features.subscription.subscription.enums.Subscriptio
 import com.sni.bokaticowork.features.subscription.subscription.mapper.interfaces.SubscriptionBillingMapper;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
 import com.sni.bokaticowork.features.subscription.subscription.model.BillingSchedule;
-import com.sni.bokaticowork.features.subscription.subscription.model.PlanPrice;
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
 import com.sni.bokaticowork.features.subscription.repository.BillableItemRepository;
 import com.sni.bokaticowork.features.subscription.repository.BillingScheduleRepository;
@@ -34,11 +33,6 @@ public class SubscriptionBillingSupport {
     private final SubscriptionEventWriter eventWriter;
     private final BillableItemInvoiceSupport billableItemInvoiceSupport;
 
-    public void createSubscriptionSetupItems(Subscription subscription, PlanPrice price) {
-        createSubscriptionSetupItems(subscription, safe(price.getAmount()),
-                safe(price.getSetupFee()), safe(price.getDepositAmount()));
-    }
-
     /**
      * Ventile en montants effectifs plutot qu'en tarif catalogue.
      *
@@ -46,13 +40,17 @@ public class SubscriptionBillingSupport {
      * Une remise generale se reporte donc d'elle-meme sur les deux lignes. Une dispense de frais
      * d'entree, elle, ne doit toucher que la seconde · d'ou le besoin de recevoir les montants deja
      * reduits, et non le tarif du catalogue.</p>
+     *
+     * @param firstInvoiceTotal total de la premiere facture, taxes, frais d'entree et caution compris ·
+     *                          l'abonnement, lui, ne garde que le prix de la periode
      */
     public void createSubscriptionSetupItems(Subscription subscription,
                                              BigDecimal recurringRaw,
                                              BigDecimal setupFeeRaw,
-                                             BigDecimal depositRaw) {
+                                             BigDecimal depositRaw,
+                                             BigDecimal firstInvoiceTotal) {
         BigDecimal taxableBase   = recurringRaw.add(setupFeeRaw);
-        BigDecimal totalAmount   = safe(subscription.getTotalAmount());
+        BigDecimal totalAmount   = safe(firstInvoiceTotal);
         BigDecimal chargeableTotal = totalAmount.subtract(depositRaw);
 
         BigDecimal setupFeeGross;

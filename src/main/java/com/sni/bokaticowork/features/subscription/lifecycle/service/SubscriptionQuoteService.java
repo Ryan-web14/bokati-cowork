@@ -67,8 +67,21 @@ public class SubscriptionQuoteService {
                           boolean negotiated, boolean requiresApproval, String blockingReason, Integer commitmentMonths, LocalDate validUntil) {
     }
 
+    /** Trace d'une derogation administrateur, gardee dans les notes du devis. */
+    public static final String OVERRIDE_MARK = "[Dérogation administrateur";
+
     @Transactional
     public SubscriptionQuote create(Request request, String preparedBy) {
+        return create(request, preparedBy, false);
+    }
+
+    /**
+     * {@code adminOverride} : un administrateur peut descendre sous le plancher ou au-dela du rabais
+     * maximum, jusqu'a un prix nul (facturation deja faite hors de l'abonnement). Le devis est cree
+     * avec un avertissement, non bloquant, garde dans ses notes.
+     */
+    @Transactional
+    public SubscriptionQuote create(Request request, String preparedBy, boolean adminOverride) {
         if (request.subscriberType() == null || !StringUtils.hasText(request.subscriberCode())) {
             throw new BadRequestException("Le souscripteur est requis");
         }
@@ -89,7 +102,7 @@ public class SubscriptionQuoteService {
         }
         SubscriptionQuote quote = SubscriptionQuote.builder()
                 .quoteNumber(sequenceGenerator.next("subscription_quote"))
-                .subscriberType(request.subscriberType())
+                .subscriberType(owner.typeOr(request.subscriberType()))
                 .subscriberCode(owner.code())
                 .subscriberName(ownerName(owner))
                 .subscriberEmail(ownerEmail(owner))
@@ -111,8 +124,16 @@ public class SubscriptionQuoteService {
         SubscriptionQuote saved = quoteRepository.save(quote);
         Outlook outlook = outlook(saved);
         if (outlook.blockingReason() != null) {
-            throw new ConflictException("quote", outlook.blockingReason());
+            if (!adminOverride || !PlanDerivationService.overridable(outlook.blockingReason())) {
+                throw new ConflictException("quote", outlook.blockingReason());
+            }
+            String mark = OVERRIDE_MARK + " par " + preparedBy + "] " + outlook.blockingReason();
+            saved.setNotes(saved.getNotes() == null ? mark : saved.getNotes() + "\n" + mark);
+            saved = quoteRepository.save(saved);
+            log.warn("Devis {} : {}", saved.getQuoteNumber(), mark);
         }
+        // Version lue par son id : son plan reste un proxy, que la vue du devis lit hors transaction
+        org.hibernate.Hibernate.initialize(saved.getPlanVersion().getPlan());
         return saved;
     }
 
@@ -161,9 +182,24 @@ public class SubscriptionQuoteService {
     /**
      * Accepte et convertit · l'abonnement est cree, la derivation posee si le prix est negocie,
      * l'engagement pose si le devis en porte un.
+     *
+     * <p>Un prix negocie vaut des la creation : premiere facture, montants de l'abonnement et
+     * notifications portent le prix du devis, pas celui du catalogue. L'acceptation vaut visa :
+     * la derivation est appliquee aussitot, meme quand sa remise demande un visa.</p>
      */
     @Transactional
     public SubscriptionQuote accept(String quoteNumber, String acceptedBy) {
+        return accept(quoteNumber, acceptedBy, false, null, null);
+    }
+
+    /**
+     * Acceptation, avec en option la facture ou le paiement deja faits pour cet abonnement : la
+     * premiere periode n'est pas refacturee, l'abonnement est valide quand la facture est soldee.
+     * La derogation d'un devis cree par un administrateur suit le devis ; un administrateur qui
+     * accepte peut aussi l'accorder.
+     */
+    @Transactional
+    public SubscriptionQuote accept(String quoteNumber, String acceptedBy, boolean admin, String existingInvoiceNumber, String existingPaymentNumber) {
         SubscriptionQuote quote = get(quoteNumber);
         if (!quote.getStatus().open()) {
             throw new BadRequestException("Ce devis ne peut plus être accepté · il est " + quote.getStatus());
@@ -177,14 +213,23 @@ public class SubscriptionQuoteService {
         Subscription subscription = creationOperator.create(new CreateSubscriptionRequest(
                 quote.getPlanVersion().getPlan().getCode(), String.valueOf(quote.getPlanVersion().getId()), quote.getBillingCycle(),
                 quote.getSubscriberType(), quote.getSubscriberCode(), start, true,
-                com.sni.bokaticowork.core.utils.json.JsonPayload.of("quoteNumber", quote.getQuoteNumber()), false));
+                com.sni.bokaticowork.core.utils.json.JsonPayload.of("quoteNumber", quote.getQuoteNumber()), false, null,
+                existingInvoiceNumber, existingPaymentNumber),
+                // Le devis fixe le prix et les frais d'entree, negocies ou non : le client paie ce qu'il a lu
+                new SubscriptionCreationOperator.NegotiatedPrice(quote.getQuotedPrice(), quote.getSetupFee()));
         quote.setStatus(SubscriptionQuote.Status.CONVERTED);
         quote.setAcceptedAt(Instant.now());
         quote.setAcceptedBy(acceptedBy);
         quote.setConvertedSubscriptionNumber(subscription.getSubscriptionNumber());
 
         if (quote.negotiated()) {
-            PlanDerivation derivation = derivationService.create(subscription, derivationSpec(quote), quote.getPreparedBy(), null);
+            boolean override = admin || (quote.getNotes() != null && quote.getNotes().contains(OVERRIDE_MARK));
+            PlanDerivation derivation = override
+                    ? derivationService.create(subscription, derivationSpec(quote), quote.getPreparedBy(), null, true)
+                    : derivationService.create(subscription, derivationSpec(quote), quote.getPreparedBy(), null);
+            if (derivation.getStatus() == PlanDerivation.Status.PENDING_APPROVAL) {
+                derivation = derivationService.approveFromQuote(derivation.getDerivationCode(), acceptedBy);
+            }
             quote.setDerivationCode(derivation.getDerivationCode());
         }
         if (quote.getCommitmentMonths() != null && quote.getCommitmentMonths() > 0) {
@@ -194,6 +239,20 @@ public class SubscriptionQuoteService {
         log.info("Devis {} accepte par {} · abonnement {}{}", quoteNumber, acceptedBy, subscription.getSubscriptionNumber(),
                 quote.getDerivationCode() == null ? "" : " · derivation " + quote.getDerivationCode());
         return quoteRepository.save(quote);
+    }
+
+    /** Avertissements non bloquants du devis : derogation accordee, prix nul reconduit aux renouvellements. */
+    @Transactional(readOnly = true)
+    public List<String> warnings(SubscriptionQuote quote) {
+        List<String> warnings = new java.util.ArrayList<>();
+        if (quote.getNotes() != null && quote.getNotes().contains(OVERRIDE_MARK)) {
+            quote.getNotes().lines().filter(line -> line.startsWith(OVERRIDE_MARK)).forEach(warnings::add);
+        }
+        if (quote.getQuotedPrice() != null && quote.getQuotedPrice().signum() == 0) {
+            warnings.add("Prix nul : aucune période ne sera facturée, renouvellements compris, tant que la dérivation reste active ; "
+                    + "si la facturation a été faite à part, rattachez plutôt la facture existante à l'acceptation");
+        }
+        return warnings;
     }
 
     @Transactional

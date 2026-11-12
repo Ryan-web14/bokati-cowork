@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.billing.service.implementation;
 
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
@@ -372,9 +373,17 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             if (!remainingLines.isEmpty()) {
                 List<CreateBillingDocumentLineRequest> lineRequests = remainingLines.stream()
                         .map(this::toCreateLineRequest).toList();
+                // Sans remises dans la demande, celles en base restent · le recalcul les compte,
+                // sinon le total ignorait des remises toujours affichees sur le document.
+                List<CreateBillingDocumentDiscountRequest> effectiveDiscounts = request.discounts() != null
+                        ? request.discounts()
+                        : discountRepository.findAllByDocumentOrderByIdAsc(document).stream()
+                                .map(d -> new CreateBillingDocumentDiscountRequest(d.getDiscountCode(), d.getDescription(),
+                                        d.getDiscountType(), d.getValue(), d.getSourceType(), d.getSourceCode()))
+                                .toList();
                 BillingCalculationService.CalculatedDocument recalc = calculationService.calculate(
                         lineRequests,
-                        request.discounts() != null ? request.discounts() : List.of()
+                        effectiveDiscounts
                 );
                 document.setSubtotalAmount(recalc.subtotalAmount());
                 document.setDiscountAmount(recalc.discountAmount());
@@ -385,14 +394,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 document.setTotalAmount(recalc.totalAmount());
                 document.setBalanceDue(recalc.totalAmount().subtract(document.getPaidAmount()));
 
-                // Rebuild discounts, clauses and taxes
-                if (request.discounts() != null) {
-                    documentWriter.save(document, recalc, request.discounts(), List.of(), null);
-                }
-                if (request.clauses() != null) {
-                    taxRepository.deleteAllByDocument(document);
-                    documentWriter.save(document, recalc, List.of(), request.clauses(), null);
-                }
+                // Remises, taxes et clauses reecrites sans toucher aux lignes, deja en base
+                documentWriter.rewriteDetails(document, recalc, request.discounts(), request.clauses());
             }
         }
 
@@ -1374,7 +1377,7 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
             validate(creditDoc.getDocumentNumber());
         }
         if (Boolean.TRUE.equals(request.applyImmediately())) {
-            applyCreditNote(creditDoc.getDocumentNumber());
+            applyCreditNote(creditDoc.getDocumentNumber(), false);
         }
         return get(creditDoc.getDocumentNumber());
     }
@@ -1391,6 +1394,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
      */
     @Override
     public BillingDocumentResponse refundCreditNoteToWallet(String creditNoteNumber, String reason) {
+        return refundCreditNoteToWallet(creditNoteNumber, reason, null, null);
+    }
+
+    @Override
+    public BillingDocumentResponse refundCreditNoteToWallet(String creditNoteNumber, String reason,
+                                                            String walletOwnerType, String walletOwnerCode) {
         BillingDocument creditNote = serviceByNumber(creditNoteNumber);
 
         if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE) {
@@ -1412,7 +1421,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
         // Les portefeuilles sont uniques par proprietaire et devise depuis V206 · demander celui
         // de la devise de l'avoir donne donc le bon compte, sans conversion implicite.
         var wallet = walletService.serviceWallet(
-                walletService.getOrCreate(creditNote.getCustomerType(), creditNote.getCustomerCode(),
+                walletService.getOrCreate(
+                        StringUtils.hasText(walletOwnerType) ? walletOwnerType : creditNote.getCustomerType(),
+                        StringUtils.hasText(walletOwnerCode) ? walletOwnerCode : creditNote.getCustomerCode(),
                         creditNote.getCurrency()).walletNumber());
 
         String motive = StringUtils.hasText(reason)
@@ -1437,9 +1448,29 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     @Override
     public BillingDocumentResponse applyCreditNote(String creditNoteNumber) {
-        BillingDocument creditNote = serviceByNumber(creditNoteNumber);
+        return applyCreditNote(creditNoteNumber, true);
+    }
+
+    /**
+     * @param requireSealed vrai pour l'imputation demandee par l'API · meme regle que l'imputation
+     *                      sur une autre facture et le reversement au portefeuille, un avoir non
+     *                      scelle n'a pas de valeur. L'imputation immediate a la creation
+     *                      (applyImmediately) garde son comportement d'origine.
+     */
+    private BillingDocumentResponse applyCreditNote(String creditNoteNumber, boolean requireSealed) {
+        // Sous verrou · deux imputations simultanees lisaient toutes deux l'avoir non consomme
+        // et reglaient deux fois la facture.
+        BillingDocument creditNote = lockedByNumber(creditNoteNumber);
         if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE || !"INVOICE".equalsIgnoreCase(creditNote.getSourceType())) {
             throw new BadRequestException("Credit note is not linked to an invoice");
+        }
+        if (requireSealed && !Boolean.TRUE.equals(creditNote.getLocked())) {
+            throw new ConflictException("credit_note",
+                    "l'avoir " + creditNoteNumber + " doit etre valide (SEFC) avant d'etre impute");
+        }
+        // Un avoir consomme (ISSUED) ne s'impute plus
+        if (creditNote.getStatus() == BillingDocumentStatus.ISSUED) {
+            throw new ConflictException("credit_note", "l'avoir " + creditNoteNumber + " a deja ete consomme");
         }
         BillingDocument invoice = applyPayment(creditNote.getSourceCode(), creditNote.getTotalAmount());
         creditNote.setStatus(BillingDocumentStatus.ISSUED);
@@ -1795,7 +1826,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
     @Override
     public BillingDocumentResponse applyCreditNoteToInvoice(String creditNoteNumber, String targetInvoiceNumber) {
-        BillingDocument creditNote = serviceByNumber(creditNoteNumber);
+        // Sous verrou, comme applyCreditNote · sinon deux imputations concurrentes passent le controle de statut.
+        BillingDocument creditNote = lockedByNumber(creditNoteNumber);
         BillingDocument targetInvoice = serviceByNumber(targetInvoiceNumber);
 
         if (creditNote.getDocumentType() != BillingDocumentType.CREDIT_NOTE) {

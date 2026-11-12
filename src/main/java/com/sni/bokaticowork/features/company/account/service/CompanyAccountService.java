@@ -75,6 +75,7 @@ public class CompanyAccountService {
     private final BillingDocumentRepository documentRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final com.sni.bokaticowork.features.company.membership.repository.CustomerMemberLinkRepository linkRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     // ── Creation ─────────────────────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ public class CompanyAccountService {
                 .type(CustomerType.COMPANY.name())
                 .companyName(request.name().trim())
                 .email(trimToNull(request.email()))
-                .billingEmail(trimToNull(request.billingEmail()))
+                .billingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(request.billingEmail()))
                 .phone(request.phone())
                 .address(request.address())
                 .build());
@@ -172,12 +173,15 @@ public class CompanyAccountService {
         legal.setUpdated_by(actor);
         businessRepository.save(legal);
         customerRepository.save(customer);
+        // Les domiciliations en cours relisent la fiche · le contrat et l'attestation suivante l'impriment.
+        eventPublisher.publishEvent(new com.sni.bokaticowork.features.company.service.support.CompanyLegalCardChangedEvent(
+                customer.getCustomerId()));
         return toResponse(customer);
     }
 
     public CompanyDtos.CompanyResponse updateBilling(String customerId, CompanyDtos.UpdateBillingRequest request) {
         Customer customer = company(customerId);
-        if (request.billingEmail() != null) customer.setBillingEmail(trimToNull(request.billingEmail()));
+        if (request.billingEmail() != null) customer.setBillingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(request.billingEmail()));
         if (request.paymentTermsDays() != null) customer.setPaymentTermsDays(request.paymentTermsDays());
         if (Boolean.TRUE.equals(request.removeCreditLimit())) {
             customer.setCreditLimit(null);

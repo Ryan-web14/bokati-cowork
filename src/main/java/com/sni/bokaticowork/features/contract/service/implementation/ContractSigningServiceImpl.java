@@ -35,6 +35,8 @@ public class ContractSigningServiceImpl implements ContractSigningService {
     private final ContractService contractService;
     private final OutboxService outboxService;
     private final MemberInAppNotifier memberInAppNotifier;
+    private final com.sni.bokaticowork.features.client.customer.repository.CustomerRepository customerRepository;
+    private final com.sni.bokaticowork.features.company.service.support.CompanyLegalCard companyLegalCard;
 
     @Value("${app.contract.signing-token-hours:72}")
     private int signingTokenHours;
@@ -42,12 +44,53 @@ public class ContractSigningServiceImpl implements ContractSigningService {
     @Value("${app.api-base-url:}")
     private String apiBaseUrl;
 
+    private record Signer(String name, String email) {
+    }
+
+    /**
+     * Qui signe · pour une organisation, une personne designee : son representant legal, ou un
+     * membre dont le lien porte le drapeau {@code can_sign}. Sans signataire dans la demande, le
+     * premier designe ayant une adresse est retenu. Pour un particulier, la demande dit qui signe.
+     */
+    private Signer signer(Contract contract, RequestContractSigningRequest request) {
+        String email = request.getSignerEmail() == null ? null : request.getSignerEmail().trim();
+        String name = request.getSignerName() == null ? null : request.getSignerName().trim();
+        var company = contract.getOwnerType() == com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType.CUSTOMER
+                && companyLegalCard != null && customerRepository != null
+                ? customerRepository.findByCustomerId(contract.getOwnerCode())
+                        .filter(c -> c.getType() == com.sni.bokaticowork.features.client.customer.enums.CustomerType.COMPANY)
+                : java.util.Optional.<com.sni.bokaticowork.features.client.customer.model.Customer>empty();
+        if (company.isEmpty()) {
+            if (!org.springframework.util.StringUtils.hasText(email) || !org.springframework.util.StringUtils.hasText(name)) {
+                throw new BadRequestException("Le nom et l'adresse du signataire sont requis");
+            }
+            return new Signer(name, email);
+        }
+        var signatories = companyLegalCard.signatories(company.get());
+        if (!org.springframework.util.StringUtils.hasText(email) && !org.springframework.util.StringUtils.hasText(name)) {
+            var first = signatories.stream().filter(s -> org.springframework.util.StringUtils.hasText(s.email())).findFirst()
+                    .orElseThrow(() -> new BadRequestException("Aucun signataire désigné avec une adresse pour "
+                            + company.get().getCompanyName() + " : renseignez le représentant légal ou autorisez un membre à signer."));
+            return new Signer(first.name(), first.email());
+        }
+        var designated = companyLegalCard.designated(company.get(), email, name)
+                .orElseThrow(() -> new BadRequestException((name != null ? name : email) + " n'est pas désigné pour signer au nom de "
+                        + company.get().getCompanyName() + " : seul le représentant légal ou un membre autorisé à signer le peut."));
+        String signerEmail = org.springframework.util.StringUtils.hasText(designated.email()) ? designated.email() : email;
+        if (!org.springframework.util.StringUtils.hasText(signerEmail)) {
+            throw new BadRequestException("L'adresse du signataire est requise");
+        }
+        return new Signer(designated.name(), signerEmail);
+    }
+
     @Override
     public ContractSigningResponse requestSigning(String contractCode, RequestContractSigningRequest request) {
         Contract contract = contractService.serviceByCode(contractCode);
         if (contract.getStatus() != ContractStatus.AWAITING_SIGNATURE) {
             throw new BadRequestException("Le contrat doit être en attente de signature");
         }
+
+        Signer signer = signer(contract, request);
 
         tokenRepository.findByContractCodeAndRevokedFalseAndSignedAtIsNull(contractCode)
                 .ifPresent(existing -> {
@@ -58,8 +101,8 @@ public class ContractSigningServiceImpl implements ContractSigningService {
         ContractSigningToken token = ContractSigningToken.builder()
                 .contract(contract)
                 .contractCode(contract.getContractCode())
-                .signerEmail(request.getSignerEmail().trim())
-                .signerName(request.getSignerName().trim())
+                .signerEmail(signer.email())
+                .signerName(signer.name())
                 .expiresAt(Instant.now().plus(Duration.ofHours(signingTokenHours)))
                 .build();
         tokenRepository.save(token);

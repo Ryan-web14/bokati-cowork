@@ -14,6 +14,13 @@ public interface CashRegisterRepository extends JpaRepository<CashRegister, Long
     @Query(nativeQuery = true, value = "SELECT * FROM cash_register WHERE register_code = :registerCode")
     Optional<CashRegister> findByRegisterCode(@Param("registerCode") String registerCode);
 
+    /**
+     * Verrouille la caisse le temps d'une transaction · deux confirmations simultanees ne doivent pas
+     * ouvrir chacune leur session sur une caisse automatique.
+     */
+    @Query(nativeQuery = true, value = "SELECT * FROM cash_register WHERE id = :id FOR UPDATE")
+    Optional<CashRegister> lockById(@Param("id") Long id);
+
     @Query(nativeQuery = true,
             value = """
                     SELECT cr.*
@@ -51,4 +58,12 @@ public interface CashRegisterRepository extends JpaRepository<CashRegister, Long
                               @Param("businessEntityCode") String businessEntityCode,
                               @Param("searchText") String searchText,
                               Pageable pageable);
+
+    // ---- Referentiel (lot C1) ----
+
+    java.util.List<CashRegister> findByLocationCodeOrderByNameAsc(String locationCode);
+
+    java.util.List<CashRegister> findByRegisterCodeIn(java.util.Collection<String> registerCodes);
+
+    java.util.List<CashRegister> findByParentRegisterCode(String parentRegisterCode);
 }

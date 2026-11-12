@@ -1,0 +1,2083 @@
+{
+ "module": "securite",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/users",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "list",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "email",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "enabled",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "locked",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "deleted",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/users",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "create",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ADMIN_USER_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.user.dto.request.AdminCreateUserRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/users/by-email",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "getByEmail",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "email",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/users/search/by-name",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "searchByName",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "archive",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "getByCode",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "update",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ADMIN_USER_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.user.dto.request.AdminUpdateUserRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/activate",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "activate",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ADMIN_USER_ACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/deactivate",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "deactivate",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ADMIN_USER_DEACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/disable",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "deactivate",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ADMIN_USER_DEACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/enable",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "activate",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ADMIN_USER_ACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/password/reset",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "resetPassword",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ADMIN_USER_RESET_PASSWORD",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.user.dto.request.AdminResetUserPasswordRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/reset-password",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "initiatePasswordReset",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/users/{userCode}/unlock",
+   "package": "security.admin.user.controller",
+   "controller": "AdminUserController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/user/controller/AdminUserController.java",
+   "handler": "unlock",
+   "declaredIn": "AdminUserController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:USERS')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ADMIN_USER_UNLOCK",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/email/verify/resend",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "resendEmailVerification",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.EmailRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.authentication.dto.response.OttResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/login",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "login",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.LoginRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.authentication.dto.response.LoginResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/logout",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "logout",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "authenticated"
+   },
+   "params": [
+    {
+     "in": "header",
+     "name": "Authorization",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/auth/me",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "me",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "authenticated"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.authentication.dto.response.CurrentUserResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/ott/request",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "requestOtt",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.EmailRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.authentication.dto.response.OttResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/ott/validate",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "validateOtt",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.ValidateOttRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.authentication.dto.response.LoginResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/password-reset/confirm",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "confirmPasswordReset",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.PasswordResetConfirmationRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/password-reset/request",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "requestPasswordReset",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.EmailRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/refresh",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "refresh",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.RefreshTokenRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.authentication.dto.response.LoginResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/register",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "register",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.RegisterMemberRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.authentication.dto.response.OttResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/unlock-account",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "requestUnlockAccount",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.EmailRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.authentication.dto.response.OttResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/unlock-account/confirm",
+   "package": "security.authentication.controller",
+   "controller": "AuthenticationController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/AuthenticationController.java",
+   "handler": "confirmUnlockAccount",
+   "declaredIn": "AuthenticationController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.authentication.dto.request.ValidateOttRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/one-time-tokens",
+   "package": "security.authentication.controller",
+   "controller": "OneTimeTokenAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/OneTimeTokenAdminController.java",
+   "handler": "list",
+   "declaredIn": "OneTimeTokenAdminController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "email",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "used",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.security.authentication.controller.OneTimeTokenAdminController.OneTimeTokenView>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/auth/password-reset/form",
+   "package": "security.authentication.controller",
+   "controller": "PasswordResetFormController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/PasswordResetFormController.java",
+   "handler": "showForm",
+   "declaredIn": "PasswordResetFormController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "token",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/auth/password-reset/form",
+   "package": "security.authentication.controller",
+   "controller": "PasswordResetFormController",
+   "source": "src/main/java/com/sni/bokaticowork/security/authentication/controller/PasswordResetFormController.java",
+   "handler": "processForm",
+   "declaredIn": "PasswordResetFormController",
+   "access": {
+    "kind": "public"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "newPassword",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "password",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "confirmPassword",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "_csrf",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "page HTML (vue serveur)"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/permissions",
+   "package": "security.admin.role.controller",
+   "controller": "PermissionAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/PermissionAdminController.java",
+   "handler": "list",
+   "declaredIn": "PermissionAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:PERMISSIONS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "activeOnly",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "query",
+     "name": "systemOnly",
+     "required": false,
+     "default": "false",
+     "type": "boolean"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=name,ASC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/permissions",
+   "package": "security.admin.role.controller",
+   "controller": "PermissionAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/PermissionAdminController.java",
+   "handler": "create",
+   "declaredIn": "PermissionAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:PERMISSIONS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PERMISSION_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.role.dto.request.PermissionRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/permissions/search/by-name",
+   "package": "security.admin.role.controller",
+   "controller": "PermissionAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/PermissionAdminController.java",
+   "handler": "searchByName",
+   "declaredIn": "PermissionAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:PERMISSIONS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/permissions/{name}",
+   "package": "security.admin.role.controller",
+   "controller": "PermissionAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/PermissionAdminController.java",
+   "handler": "delete",
+   "declaredIn": "PermissionAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:PERMISSIONS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/permissions/{name}",
+   "package": "security.admin.role.controller",
+   "controller": "PermissionAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/PermissionAdminController.java",
+   "handler": "get",
+   "declaredIn": "PermissionAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:PERMISSIONS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/admin/permissions/{name}",
+   "package": "security.admin.role.controller",
+   "controller": "PermissionAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/PermissionAdminController.java",
+   "handler": "update",
+   "declaredIn": "PermissionAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:PERMISSIONS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PERMISSION_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.role.dto.request.PermissionRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/permissions/{name}/activate",
+   "package": "security.admin.role.controller",
+   "controller": "PermissionAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/PermissionAdminController.java",
+   "handler": "activate",
+   "declaredIn": "PermissionAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:PERMISSIONS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PERMISSION_ACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/permissions/{name}/deactivate",
+   "package": "security.admin.role.controller",
+   "controller": "PermissionAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/PermissionAdminController.java",
+   "handler": "deactivate",
+   "declaredIn": "PermissionAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:PERMISSIONS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "PERMISSION_DEACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/roles",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAdminController.java",
+   "handler": "list",
+   "declaredIn": "RoleAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/roles",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAdminController.java",
+   "handler": "create",
+   "declaredIn": "RoleAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ROLE_CREATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.role.dto.request.RoleRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/roles/search/by-name",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAdminController.java",
+   "handler": "searchByName",
+   "declaredIn": "RoleAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "query",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/roles/{name}",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAdminController.java",
+   "handler": "delete",
+   "declaredIn": "RoleAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/roles/{name}",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAdminController.java",
+   "handler": "get",
+   "declaredIn": "RoleAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/admin/roles/{name}",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAdminController.java",
+   "handler": "update",
+   "declaredIn": "RoleAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ROLE_UPDATE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.role.dto.request.RoleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/roles/{name}/activate",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAdminController.java",
+   "handler": "activate",
+   "declaredIn": "RoleAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ROLE_ACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/roles/{name}/deactivate",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAdminController.java",
+   "handler": "deactivate",
+   "declaredIn": "RoleAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ROLE_DEACTIVATE",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "name",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/roles/{roleId}/permission-names",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAssignmentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAssignmentAdminController.java",
+   "handler": "replaceRolePermissionNames",
+   "declaredIn": "RoleAssignmentAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ROLE_PERMISSION_REPLACE_BY_NAME",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionNamesRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "roleId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/roles/{roleId}/permissions",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAssignmentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAssignmentAdminController.java",
+   "handler": "clearRolePermissions",
+   "declaredIn": "RoleAssignmentAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "roleId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/roles/{roleId}/permissions",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAssignmentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAssignmentAdminController.java",
+   "handler": "getRolePermissions",
+   "declaredIn": "RoleAssignmentAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "roleId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse>>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/admin/roles/{roleId}/permissions",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAssignmentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAssignmentAdminController.java",
+   "handler": "replaceRolePermissions",
+   "declaredIn": "RoleAssignmentAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:PERMISSIONS')",
+    "kind": "admin",
+    "permission": "SYSTEM:ROLES"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ROLE_PERMISSION_REPLACE",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionsRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "roleId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/admin/users/{userId}/roles",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAssignmentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAssignmentAdminController.java",
+   "handler": "getUserRoles",
+   "declaredIn": "RoleAssignmentAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/users/{userId}/roles",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAssignmentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAssignmentAdminController.java",
+   "handler": "assignRole",
+   "declaredIn": "RoleAssignmentAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "idempotency": {
+    "header": "Idempotency-Key",
+    "operation": "ROLE_USER_ASSIGN",
+    "required": false
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.role.dto.request.AssignRoleToUserRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userId",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/admin/users/{userId}/roles/{roleId}",
+   "package": "security.admin.role.controller",
+   "controller": "RoleAssignmentAdminController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/role/controller/RoleAssignmentAdminController.java",
+   "handler": "removeRole",
+   "declaredIn": "RoleAssignmentAdminController",
+   "access": {
+    "preAuthorize": "hasAuthority('SYSTEM:ROLES')",
+    "kind": "admin",
+    "permission": "SYSTEM:USERS"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "userId",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "roleId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/provisioning/bootstrap-admin",
+   "package": "security.admin.provisioning.controller",
+   "controller": "UserProvisioningController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/provisioning/controller/UserProvisioningController.java",
+   "handler": "bootstrapAdmin",
+   "declaredIn": "UserProvisioningController",
+   "access": {
+    "kind": "public"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.user.dto.request.UserRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.UserResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/admin/provisioning/staff",
+   "package": "security.admin.provisioning.controller",
+   "controller": "UserProvisioningController",
+   "source": "src/main/java/com/sni/bokaticowork/security/admin/provisioning/controller/UserProvisioningController.java",
+   "handler": "createStaff",
+   "declaredIn": "UserProvisioningController",
+   "access": {
+    "kind": "admin",
+    "permission": "SYSTEM:SETTINGS"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.security.admin.user.dto.request.UserRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.security.admin.user.dto.response.UserResponse>"
+  }
+ ],
+ "schemas": {
+  "AdminUserResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "userId": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "accountEnabled": {
+     "type": "boolean"
+    },
+    "accountLocked": {
+     "type": "boolean"
+    },
+    "accountExpired": {
+     "type": "boolean"
+    },
+    "deleted": {
+     "type": "boolean"
+    },
+    "failedLoginAttempts": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "lastLogin": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "local-date-time"
+    },
+    "roleNames": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "generatedPassword": {
+     "type": "string"
+    }
+   }
+  },
+  "AdminCreateUserRequest": {
+   "required": [
+    "email"
+   ],
+   "type": "object",
+   "properties": {
+    "email": {
+     "minLength": 1,
+     "type": "string",
+     "format": "email"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "password": {
+     "type": "string"
+    },
+    "generatePassword": {
+     "type": "boolean"
+    },
+    "roleNames": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "AdminUpdateUserRequest": {
+   "type": "object",
+   "properties": {
+    "email": {
+     "type": "string",
+     "format": "email"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "isAccountEnabled": {
+     "type": "boolean"
+    },
+    "isAccountLocked": {
+     "type": "boolean"
+    },
+    "roleNames": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "AdminResetUserPasswordRequest": {
+   "type": "object",
+   "properties": {
+    "newPassword": {
+     "type": "string"
+    },
+    "generatePassword": {
+     "type": "boolean"
+    }
+   }
+  },
+  "OttResponse": {
+   "type": "object",
+   "properties": {
+    "verificationToken": {
+     "type": "string"
+    },
+    "message": {
+     "type": "string"
+    }
+   }
+  },
+  "EmailRequest": {
+   "required": [
+    "email"
+   ],
+   "type": "object",
+   "properties": {
+    "email": {
+     "minLength": 1,
+     "type": "string",
+     "format": "email"
+    }
+   }
+  },
+  "LoginResponse": {
+   "type": "object",
+   "properties": {
+    "accessToken": {
+     "type": "string"
+    },
+    "refreshToken": {
+     "type": "string"
+    },
+    "emailVerified": {
+     "type": "boolean"
+    },
+    "roles": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "LoginRequest": {
+   "required": [
+    "email",
+    "password"
+   ],
+   "type": "object",
+   "properties": {
+    "email": {
+     "minLength": 1,
+     "type": "string",
+     "format": "email"
+    },
+    "password": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "CurrentUserResponse": {
+   "type": "object",
+   "properties": {
+    "userId": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "accountEnabled": {
+     "type": "boolean"
+    },
+    "authorities": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "ValidateOttRequest": {
+   "required": [
+    "ottToken",
+    "verificationToken"
+   ],
+   "type": "object",
+   "properties": {
+    "ottToken": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "verificationToken": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "PasswordResetConfirmationRequest": {
+   "required": [
+    "newPassword",
+    "token"
+   ],
+   "type": "object",
+   "properties": {
+    "token": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "newPassword": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "RefreshTokenRequest": {
+   "required": [
+    "refreshToken"
+   ],
+   "type": "object",
+   "properties": {
+    "refreshToken": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "RegisterMemberRequest": {
+   "required": [
+    "email",
+    "firstname",
+    "lastname",
+    "password",
+    "phone"
+   ],
+   "type": "object",
+   "properties": {
+    "firstname": {
+     "maxLength": 350,
+     "minLength": 0,
+     "type": "string"
+    },
+    "lastname": {
+     "maxLength": 350,
+     "minLength": 0,
+     "type": "string"
+    },
+    "email": {
+     "maxLength": 250,
+     "minLength": 0,
+     "type": "string",
+     "format": "email"
+    },
+    "password": {
+     "maxLength": 45,
+     "minLength": 8,
+     "type": "string"
+    },
+    "phone": {
+     "maxLength": 30,
+     "minLength": 0,
+     "pattern": "^[+0-9()\\s.\\-]{6,30}$",
+     "type": "string"
+    },
+    "phoneCountry": {
+     "maxLength": 10,
+     "minLength": 0,
+     "type": "string"
+    },
+    "whatsappPhone": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "address": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+    },
+    "birthDate": {
+     "type": "string",
+     "format": "date"
+    },
+    "gender": {
+     "maxLength": 20,
+     "minLength": 0,
+     "type": "string"
+    },
+    "preferredCommunicationChannel": {
+     "maxLength": 30,
+     "minLength": 0,
+     "type": "string"
+    },
+    "referralCode": {
+     "maxLength": 40,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "OneTimeTokenAdminController.OneTimeTokenView": {
+   "type": "object",
+   "properties": {
+    "token": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "userId": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiredAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "used": {
+     "type": "boolean"
+    },
+    "expired": {
+     "type": "boolean"
+    },
+    "status": {
+     "type": "string"
+    }
+   }
+  },
+  "PermissionResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "type": "string"
+    },
+    "displayName": {
+     "type": "string"
+    },
+    "module": {
+     "type": "string"
+    },
+    "action": {
+     "type": "string"
+    },
+    "fullPermissionName": {
+     "type": "string"
+    },
+    "isActive": {
+     "type": "boolean"
+    }
+   }
+  },
+  "PermissionRequest": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "displayName": {
+     "type": "string"
+    },
+    "module": {
+     "type": "string"
+    },
+    "action": {
+     "type": "string"
+    },
+    "isActive": {
+     "type": "boolean"
+    }
+   }
+  },
+  "RoleResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "type": "string"
+    },
+    "displayName": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "isActive": {
+     "type": "boolean"
+    },
+    "permissions": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "RoleRequest": {
+   "required": [
+    "displayName",
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "maxLength": 250,
+     "minLength": 0,
+     "pattern": "^[A-Z_]+$",
+     "type": "string"
+    },
+    "displayName": {
+     "maxLength": 150,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "isActive": {
+     "type": "boolean"
+    }
+   }
+  },
+  "UpdateRolePermissionNamesRequest": {
+   "required": [
+    "permissionNames"
+   ],
+   "type": "object",
+   "properties": {
+    "permissionNames": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "UpdateRolePermissionsRequest": {
+   "required": [
+    "permissionIds"
+   ],
+   "type": "object",
+   "properties": {
+    "permissionIds": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "integer",
+      "format": "int64"
+     }
+    }
+   }
+  },
+  "AssignRoleToUserRequest": {
+   "required": [
+    "roleName"
+   ],
+   "type": "object",
+   "properties": {
+    "roleName": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "UserResponse": {
+   "type": "object",
+   "properties": {
+    "userId": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "businessEntityCode": {
+     "type": "string"
+    },
+    "businessEntityName": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string"
+    },
+    "generatedPassword": {
+     "type": "string"
+    }
+   }
+  },
+  "UserRequest": {
+   "required": [
+    "email",
+    "password"
+   ],
+   "type": "object",
+   "properties": {
+    "email": {
+     "minLength": 1,
+     "type": "string",
+     "format": "email"
+    },
+    "firstname": {
+     "type": "string"
+    },
+    "lastname": {
+     "type": "string"
+    },
+    "password": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "generatePassword": {
+     "type": "boolean"
+    },
+    "bootstrapSecret": {
+     "type": "string"
+    }
+   }
+  },
+  "AddressRequest": {
+   "type": "object",
+   "properties": {
+    "streetNumber": {
+     "type": "string"
+    },
+    "streetName": {
+     "type": "string"
+    },
+    "district": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "countryCode": {
+     "maxLength": 3,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  }
+ },
+ "enums": {},
+ "names": {
+  "AdminUserResponse": "com.sni.bokaticowork.security.admin.user.dto.response.AdminUserResponse",
+  "AdminCreateUserRequest": "com.sni.bokaticowork.security.admin.user.dto.request.AdminCreateUserRequest",
+  "AdminUpdateUserRequest": "com.sni.bokaticowork.security.admin.user.dto.request.AdminUpdateUserRequest",
+  "AdminResetUserPasswordRequest": "com.sni.bokaticowork.security.admin.user.dto.request.AdminResetUserPasswordRequest",
+  "OttResponse": "com.sni.bokaticowork.security.authentication.dto.response.OttResponse",
+  "EmailRequest": "com.sni.bokaticowork.security.authentication.dto.request.EmailRequest",
+  "LoginResponse": "com.sni.bokaticowork.security.authentication.dto.response.LoginResponse",
+  "LoginRequest": "com.sni.bokaticowork.security.authentication.dto.request.LoginRequest",
+  "CurrentUserResponse": "com.sni.bokaticowork.security.authentication.dto.response.CurrentUserResponse",
+  "ValidateOttRequest": "com.sni.bokaticowork.security.authentication.dto.request.ValidateOttRequest",
+  "PasswordResetConfirmationRequest": "com.sni.bokaticowork.security.authentication.dto.request.PasswordResetConfirmationRequest",
+  "RefreshTokenRequest": "com.sni.bokaticowork.security.authentication.dto.request.RefreshTokenRequest",
+  "RegisterMemberRequest": "com.sni.bokaticowork.security.authentication.dto.request.RegisterMemberRequest",
+  "OneTimeTokenAdminController.OneTimeTokenView": "com.sni.bokaticowork.security.authentication.controller.OneTimeTokenAdminController.OneTimeTokenView",
+  "PermissionResponse": "com.sni.bokaticowork.security.admin.role.dto.response.PermissionResponse",
+  "PermissionRequest": "com.sni.bokaticowork.security.admin.role.dto.request.PermissionRequest",
+  "RoleResponse": "com.sni.bokaticowork.security.admin.role.dto.response.RoleResponse",
+  "RoleRequest": "com.sni.bokaticowork.security.admin.role.dto.request.RoleRequest",
+  "UpdateRolePermissionNamesRequest": "com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionNamesRequest",
+  "UpdateRolePermissionsRequest": "com.sni.bokaticowork.security.admin.role.dto.request.UpdateRolePermissionsRequest",
+  "AssignRoleToUserRequest": "com.sni.bokaticowork.security.admin.role.dto.request.AssignRoleToUserRequest",
+  "UserResponse": "com.sni.bokaticowork.security.admin.user.dto.response.UserResponse",
+  "UserRequest": "com.sni.bokaticowork.security.admin.user.dto.request.UserRequest",
+  "AddressRequest": "com.sni.bokaticowork.core.baseClasses.dto.request.AddressRequest"
+ }
+}

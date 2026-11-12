@@ -58,6 +58,12 @@ public class PaymentTransactionWorkflowProcessor {
     private final com.sni.bokaticowork.features.subscription.subscription.service.support.pass.PassRenewalOperator passRenewalOperator;
     private final com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionGraceService graceService;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService marketplaceOrderService;
+    private final com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository allocationRepository;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService billingLinkService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository allocationRepository;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService billingLinkService;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -77,18 +83,23 @@ public class PaymentTransactionWorkflowProcessor {
             walletTopUpService.settle(transaction);
             recordAutomaticCashSession(transaction);
             validatePaidBillingDocuments(transaction);
+            activateSubscriptionsOnLinkedInvoices(transaction);
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
             if (StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
                 handleSucceededTransaction(transaction, source);
             }
             // Notifications only after all business logic is complete
             sendPaidBillingDocumentEmails(transaction);
+            // Parrainage : traite apres la validation du paiement, jamais dans sa transaction
+            eventPublisher.publishEvent(new com.sni.bokaticowork.features.subscription.promotion.pricing.referral.event.RefereePaidEvent(
+                    intent.getCustomerType(), intent.getCustomerCode(), transaction.getTransactionNumber()));
             return;
         }
         if (event.status() == PaymentTransactionStatus.REFUNDED || event.status() == PaymentTransactionStatus.REVERSED) {
-            // Business logic first
+            // Business logic first · seul un remboursement total annule les factures et ce
+            // qu'elles reglaient. Un remboursement partiel ne fait que prevenir le client.
             TransactionContextResolver.SourceView source = contextResolver.resolveSource(intent.getSourceType(), intent.getSourceCode());
-            if (StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
+            if (event.fullRefund() && StringUtils.hasText(source.type()) && StringUtils.hasText(source.code())) {
                 handleRefundedTransaction(transaction, source);
             }
             // Notification after business logic
@@ -98,6 +109,18 @@ public class PaymentTransactionWorkflowProcessor {
                 log.warn("Failed to send refund email for transaction {} · refund workflow already completed",
                         transaction.getTransactionNumber(), ex);
             }
+        }
+    }
+
+    /** Un abonnement rattache a une facture existante est valide quand ce paiement la solde. */
+    private void activateSubscriptionsOnLinkedInvoices(PaymentTransaction transaction) {
+        try {
+            allocationRepository.findAllByPaymentTransactionId(transaction.getId()).stream()
+                    .map(com.sni.bokaticowork.features.payment.model.PaymentAllocation::getBillingDocumentNumber)
+                    .filter(StringUtils::hasText).distinct()
+                    .forEach(number -> billingLinkService.activateIfLinkedInvoicePaid(number, SYSTEM_ACTOR));
+        } catch (Exception ex) {
+            log.warn("Validation des abonnements rattaches apres le paiement {} en echec", transaction.getTransactionNumber(), ex);
         }
     }
 
@@ -151,6 +174,10 @@ public class PaymentTransactionWorkflowProcessor {
     private void handleSucceededTransaction(PaymentTransaction transaction, TransactionContextResolver.SourceView source) {
         if ("SUBSCRIPTION".equalsIgnoreCase(source.type())) {
             Subscription subscription = subscriptionService.getForService(source.code());
+            // La facture de renouvellement est soldee · la periode payee commence ici.
+            if (subscriptionService.applyPaidRenewal(source.code(), "Paiement " + transaction.getTransactionNumber())) {
+                return;
+            }
             if (subscription.getStatus() == SubscriptionStatus.GRACE_PERIOD) {
                 // Un paiement pendant la tolerance rend les droits sans intervention
                 graceService.exit(subscription, "Paiement " + transaction.getTransactionNumber());
@@ -194,7 +221,55 @@ public class PaymentTransactionWorkflowProcessor {
 
         if ("BOOKING".equalsIgnoreCase(source.type())) {
             confirmBookingIfFullyPaid(transaction, source.code());
+            return;
         }
+
+        // Facture d'un lot multi-ressources : chacune des reservations qu'elle regle est confirmee.
+        if (TransactionContextResolver.BOOKINGS_SOURCE.equalsIgnoreCase(source.type())) {
+            bookingNumbers(source.code()).forEach(number -> confirmBookingIfFullyPaid(transaction, number));
+            return;
+        }
+
+        if (com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService.SOURCE_TYPE.equalsIgnoreCase(source.type())) {
+            syncMarketplaceOrderAfterCommit(source.code());
+        }
+    }
+
+    /**
+     * La commande lit le solde de sa facture · elle le fait une fois ce reglement valide, dans sa
+     * propre transaction, pour qu'un incident sur la commande ne defasse pas le paiement. Le passage
+     * periodique rattrape ce qui manquerait ici.
+     */
+    private void syncMarketplaceOrderAfterCommit(String orderNumber) {
+        if (marketplaceOrderService == null) {
+            return;
+        }
+        Runnable sync = () -> {
+            try {
+                marketplaceOrderService.sync(orderNumber);
+            } catch (Exception ex) {
+                log.warn("Marketplace order {} not synced after payment · retried by the worker: {}", orderNumber, ex.getMessage());
+            }
+        };
+        if (!org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            sync.run();
+            return;
+        }
+        org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        sync.run();
+                    }
+                });
+    }
+
+    private static java.util.List<String> bookingNumbers(String codes) {
+        return java.util.Arrays.stream(codes.split(","))
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
     }
 
     private void confirmBookingIfFullyPaid(PaymentTransaction transaction, String bookingNumber) {
@@ -245,6 +320,8 @@ public class PaymentTransactionWorkflowProcessor {
                 closeContractIfPresent(pass.getContractCode(), reason);
             }
             case "BOOKING" -> bookingService.systemCancel(source.code(), reason);
+            case TransactionContextResolver.BOOKINGS_SOURCE ->
+                    bookingNumbers(source.code()).forEach(number -> bookingService.systemCancel(number, reason));
             default -> log.debug("No asynchronous refund workflow configured for source {} {}", source.type(), source.code());
         }
     }

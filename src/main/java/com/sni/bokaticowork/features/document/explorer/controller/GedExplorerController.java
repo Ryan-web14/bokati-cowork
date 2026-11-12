@@ -1,0 +1,337 @@
+package com.sni.bokaticowork.features.document.explorer.controller;
+
+import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderTreeNode;
+import com.sni.bokaticowork.features.document.documentMaster.enums.DocumentOwnerType;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCopyRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCreateFolderRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFilingResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedListing;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedMoveRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRenameRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSelectionRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashBatch;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTrashResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDestructionCandidate;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDocumentsDecision;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFileText;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHold;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHoldRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPurgeResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedQuotaRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedReasonRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUsage;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrantRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRestrictRequest;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSearchResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTextRunResult;
+import com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTextStatus;
+import com.sni.bokaticowork.features.document.explorer.service.GedExplorerService;
+import com.sni.bokaticowork.features.document.explorer.service.GedTextService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+/**
+ * L'explorateur de fichiers de la GED, pour le back-office.
+ *
+ * <p>Droits : lecture {@code DOCUMENT:READ}, depot {@code DOCUMENT:UPLOAD}, tout le reste
+ * {@code DOCUMENT:WRITE} (voir {@code AdminApiAuthorizationManager}). La numerisation est un
+ * depot : {@code DOCUMENT:UPLOAD}.</p>
+ */
+@RestController
+@RequestMapping(ApiPath.V1 + "/ged")
+@RequiredArgsConstructor
+public class GedExplorerController {
+
+    private final GedExplorerService service;
+    private final GedTextService textService;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedHoldService holdService;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedPurgeService purgeService;
+    private final com.sni.bokaticowork.features.document.retention.service.interfaces.DocumentRetentionService retentionService;
+
+    /** Le contenu d'un dossier (ou de la racine sans {@code folderCode}) : dossiers puis fichiers. */
+    @GetMapping("/items")
+    public ResponseEntity<GedListing> items(
+            @RequestParam(required = false) String folderCode,
+            @RequestParam(required = false) String search,
+            @RequestParam(defaultValue = "name") String sort,
+            @RequestParam(defaultValue = "asc") String direction,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        return ResponseEntity.ok(service.list(folderCode, search, sort, direction, page, size));
+    }
+
+    @GetMapping("/tree")
+    public ResponseEntity<List<DocumentFolderTreeNode>> tree() {
+        return ResponseEntity.ok(service.tree());
+    }
+
+    @PostMapping("/folders")
+    public ResponseEntity<GedItem> createFolder(@Valid @RequestBody GedCreateFolderRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createFolder(request));
+    }
+
+    @PatchMapping("/folders/{code}")
+    public ResponseEntity<GedItem> renameFolder(@PathVariable String code, @Valid @RequestBody GedRenameRequest request) {
+        return ResponseEntity.ok(service.renameFolder(code, request.name()));
+    }
+
+    /**
+     * Depose un ou plusieurs fichiers. {@code relativePaths} (un par fichier, dans le meme ordre)
+     * recree l'arborescence d'un dossier depose. La taille totale d'une requete est limitee
+     * (10 Mo) : pour beaucoup de fichiers, envoyer une requete par fichier.
+     */
+    @PostMapping(value = "/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<GedUploadResult> upload(
+            @RequestPart("files") List<MultipartFile> files,
+            @RequestParam(required = false) String folderCode,
+            @RequestParam(required = false) List<String> relativePaths,
+            @RequestParam(required = false) String documentTypeCode,
+            @RequestParam(required = false) DocumentOwnerType ownerType,
+            @RequestParam(required = false) String ownerCode) {
+        GedUploadResult result = service.upload(files, folderCode, relativePaths, documentTypeCode, ownerType, ownerCode);
+        HttpStatus status = result.uploaded().isEmpty() ? HttpStatus.BAD_REQUEST : HttpStatus.CREATED;
+        return ResponseEntity.status(status).body(result);
+    }
+
+    @PatchMapping("/files/{code}")
+    public ResponseEntity<GedItem> renameFile(@PathVariable String code, @Valid @RequestBody GedRenameRequest request) {
+        return ResponseEntity.ok(service.renameFile(code, request.name()));
+    }
+
+    @PostMapping("/move")
+    public ResponseEntity<Void> move(@RequestBody GedMoveRequest request) {
+        service.move(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/copy")
+    public ResponseEntity<GedUploadResult> copy(@RequestBody GedCopyRequest request) {
+        GedUploadResult result = service.copy(request);
+        HttpStatus status = result.uploaded().isEmpty() ? HttpStatus.BAD_REQUEST : HttpStatus.CREATED;
+        return ResponseEntity.status(status).body(result);
+    }
+
+    @PostMapping("/trash")
+    public ResponseEntity<GedTrashResult> trash(@RequestBody GedSelectionRequest request) {
+        return ResponseEntity.ok(service.trash(request));
+    }
+
+    @GetMapping("/trash")
+    public ResponseEntity<List<GedTrashBatch>> trashContent() {
+        return ResponseEntity.ok(service.trashContent());
+    }
+
+    /** Range dans le plan de classement les documents encore sans dossier (la reprise tourne aussi seule, chaque heure). */
+    @PostMapping("/filing/run")
+    public ResponseEntity<GedFilingResult> runFiling(@RequestParam(defaultValue = "1000") int limit) {
+        return ResponseEntity.ok(service.fileUnfiled(limit));
+    }
+
+    @PostMapping("/trash/{batch}/restore")
+    public ResponseEntity<GedTrashResult> restore(@PathVariable String batch) {
+        return ResponseEntity.ok(service.restore(batch));
+    }
+
+    // Numerisation, texte et recherche (lot 3) ---------------------------------------------------
+
+    /**
+     * Numerise un document papier : les pages (photos ou images de scanner, dans l'ordre d'envoi)
+     * deviennent un seul PDF dans le dossier. Le PDF est ensuite lu par OCR pour la recherche.
+     * Taille totale limitee a 10 Mo par requete : photos en JPEG.
+     */
+    @PostMapping(value = "/scans", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<GedItem> scan(
+            @RequestPart("pages") List<MultipartFile> pages,
+            @RequestParam(required = false) String folderCode,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String documentTypeCode,
+            @RequestParam(required = false) DocumentOwnerType ownerType,
+            @RequestParam(required = false) String ownerCode) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.scan(pages, folderCode, title, documentTypeCode, ownerType, ownerCode));
+    }
+
+    /**
+     * Cherche dans le contenu et le nom des fichiers ; sous un dossier et ses sous-dossiers avec
+     * {@code folderCode}. Syntaxe : mots, {@code "expression exacte"}, {@code -exclu}, {@code or}.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<GedSearchResult> search(
+            @RequestParam String q,
+            @RequestParam(required = false) String folderCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(textService.search(q, folderCode, page, size));
+    }
+
+    /** Le texte lu dans un fichier (couche texte, OCR ou bureautique) et l'etat de sa lecture. */
+    @GetMapping("/files/{code}/text")
+    public ResponseEntity<GedFileText> fileText(@PathVariable String code) {
+        return ResponseEntity.ok(textService.fileText(code));
+    }
+
+    /** Relit un fichier tout de suite ; l'OCR d'un long scan peut prendre une minute. */
+    @PostMapping("/files/{code}/text/refresh")
+    public ResponseEntity<GedFileText> refreshText(@PathVariable String code) {
+        return ResponseEntity.ok(textService.refresh(code));
+    }
+
+    /** Fichiers en attente de lecture, et nombre de fichiers par etat de lecture. */
+    @GetMapping("/text/status")
+    public ResponseEntity<GedTextStatus> textStatus() {
+        return ResponseEntity.ok(textService.status());
+    }
+
+    /** Lit tout de suite un lot de fichiers en attente (la lecture tourne aussi seule, chaque minute). */
+    @PostMapping("/text/run")
+    public ResponseEntity<GedTextRunResult> runText(@RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(textService.runPending(limit));
+    }
+
+    // Acces restreint et verrou (lot 4) -------------------------------------------------------------
+
+    /**
+     * L'acces d'un dossier : restreint ou non, droits, dossiers restreints au-dessus, et le niveau
+     * de la personne connectee.
+     */
+    @GetMapping("/folders/{code}/access")
+    public ResponseEntity<GedFolderAccess> folderAccess(@PathVariable String code) {
+        return ResponseEntity.ok(service.folderAccess(code));
+    }
+
+    /**
+     * Restreint un dossier et tout son contenu aux personnes et roles designes. Celui qui le fait
+     * recoit le droit de gerer l'acces. Interdit sur un dossier du plan de classement.
+     */
+    @PostMapping("/folders/{code}/restrict")
+    public ResponseEntity<GedFolderAccess> restrict(@PathVariable String code, @Valid @RequestBody(required = false) GedRestrictRequest request) {
+        return ResponseEntity.ok(service.restrict(code, request == null ? null : request.grants()));
+    }
+
+    /** Rouvre le dossier a tous ceux qui ont les droits generaux ; ses droits sont retires. */
+    @PostMapping("/folders/{code}/unrestrict")
+    public ResponseEntity<GedFolderAccess> unrestrict(@PathVariable String code) {
+        return ResponseEntity.ok(service.unrestrict(code));
+    }
+
+    /** Donne ou change le droit d'un utilisateur (par son e-mail) ou d'un role (par son nom). */
+    @PutMapping("/folders/{code}/grants")
+    public ResponseEntity<GedFolderAccess> grant(@PathVariable String code, @Valid @RequestBody GedGrantRequest request) {
+        return ResponseEntity.ok(service.grant(code, request));
+    }
+
+    @DeleteMapping("/folders/{code}/grants")
+    public ResponseEntity<GedFolderAccess> revoke(@PathVariable String code, @RequestParam String granteeType,
+                                                  @RequestParam String grantee) {
+        return ResponseEntity.ok(service.revoke(code, granteeType, grantee));
+    }
+
+    /** Verrouille un fichier pour le modifier ({@code hours} : 1 par defaut, 24 au plus) ; le reposer le prolonge. */
+    @PostMapping("/files/{code}/lock")
+    public ResponseEntity<GedItem> lock(@PathVariable String code, @RequestParam(required = false) Integer hours) {
+        return ResponseEntity.ok(service.lock(code, hours));
+    }
+
+    @PostMapping("/files/{code}/unlock")
+    public ResponseEntity<GedItem> unlock(@PathVariable String code) {
+        return ResponseEntity.ok(service.unlock(code));
+    }
+
+    // Conservation, gel juridique, destruction, quotas (lot 5) ---------------------------------------
+    // Ce qui detruit ou fige des documents est reserve aux administrateurs.
+
+    /** Les gels juridiques ; {@code active=false} : aussi ceux qui sont leves. */
+    @GetMapping("/holds")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<List<GedHold>> holds(@RequestParam(defaultValue = "true") boolean active) {
+        return ResponseEntity.ok(holdService.list(active));
+    }
+
+    /** Gele un dossier (et tout son contenu, present et a venir) ou un fichier. */
+    @PostMapping("/holds")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedHold> placeHold(@Valid @RequestBody GedHoldRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(holdService.place(request));
+    }
+
+    @PostMapping("/holds/{code}/release")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedHold> releaseHold(@PathVariable String code, @Valid @RequestBody GedReasonRequest request) {
+        return ResponseEntity.ok(holdService.release(code, request.reason()));
+    }
+
+    /** Detruit definitivement un lot de la corbeille ; ce qui est gele est epargne. */
+    @PostMapping("/trash/{batch}/purge")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedPurgeResult> purgeBatch(@PathVariable String batch, @Valid @RequestBody GedReasonRequest request) {
+        return ResponseEntity.ok(service.purgeBatch(batch, request.reason()));
+    }
+
+    /** Vide la corbeille des lots supprimes depuis plus de {@code olderThanDays} jours (0 : tout). */
+    @PostMapping("/trash/empty")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedPurgeResult> emptyTrash(@RequestParam(defaultValue = "0") int olderThanDays,
+                                                     @Valid @RequestBody GedReasonRequest request) {
+        return ResponseEntity.ok(purgeService.emptyTrash(olderThanDays, request.reason()));
+    }
+
+    /** Les fichiers marques « a detruire » par une regle de conservation. */
+    @GetMapping("/retention/due")
+    public ResponseEntity<List<GedDestructionCandidate>> destructionDue(@RequestParam(defaultValue = "200") int limit) {
+        return ResponseEntity.ok(service.destructionDue(limit));
+    }
+
+    @PostMapping("/retention/destroy")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedPurgeResult> destroy(@Valid @RequestBody GedDocumentsDecision request) {
+        return ResponseEntity.ok(service.destroy(request.documentCodes(), request.reason()));
+    }
+
+    /** Garde des fichiers marques « a detruire » : ils sortent des regles de conservation. */
+    @PostMapping("/retention/keep")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<java.util.Map<String, Integer>> keep(@Valid @RequestBody GedDocumentsDecision request) {
+        return ResponseEntity.ok(java.util.Map.of("kept", service.keep(request.documentCodes(), request.reason())));
+    }
+
+    /** Applique tout de suite les regles de conservation (elles tournent aussi chaque nuit). */
+    @PostMapping("/retention/run")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<java.util.Map<String, Integer>> runRetention() {
+        return ResponseEntity.ok(java.util.Map.of("applied", retentionService.applyPolicies()));
+    }
+
+    /** L'espace occupe par un dossier (ou toute la GED) et ses quotas. */
+    @GetMapping("/usage")
+    public ResponseEntity<GedUsage> usage(@RequestParam(required = false) String folderCode) {
+        return ResponseEntity.ok(service.usage(folderCode));
+    }
+
+    @PutMapping("/folders/{code}/quota")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<GedUsage> setQuota(@PathVariable String code, @RequestBody GedQuotaRequest request) {
+        return ResponseEntity.ok(service.setQuota(code, request.quotaBytes()));
+    }
+}

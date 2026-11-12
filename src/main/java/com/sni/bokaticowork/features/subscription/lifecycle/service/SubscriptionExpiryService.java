@@ -56,6 +56,7 @@ public class SubscriptionExpiryService {
     private final SubscriptionEventWriter eventWriter;
     private final @Lazy SubscriptionGraceService graceService;
     private final @Lazy SubscriptionExpiryService self;
+    private final @Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionLifecycleOperator lifecycleOperator;
 
     /** Ce qu'une passe a donne · prevenus, puis fermes. */
     public record Sweep(int warned, int expired) {
@@ -112,6 +113,9 @@ public class SubscriptionExpiryService {
             String reason = "Période échue le " + periodEnd + " · aucun règlement ni renouvellement depuis "
                     + days + " jours";
             statusManager.changeStatus(subscription, SubscriptionStatus.EXPIRED, reason, "SYSTEM");
+            if (lifecycleOperator != null) {
+                lifecycleOperator.dropPendingRenewal(subscription, reason);
+            }
             subscriptionRepository.save(subscription);
             eventWriter.writeEvent(subscription, SubscriptionEventType.SUBSCRIPTION_EXPIRED,
                     com.sni.bokaticowork.core.utils.json.JsonPayload.of("periodEnd", periodEnd, "daysOverdue", days));

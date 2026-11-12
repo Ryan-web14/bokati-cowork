@@ -229,17 +229,51 @@ public class MemberController {
      * appelle pour retirer un membre ordinaire, et une suppression definitive declenchee par ce
      * bouton detruirait la facturation d'un client reel. Previsualiser d'abord avec
      * {@code GET /admin/maintenance/members/{code}/purge-preview}.
+     *
+     * <p>La purge porte les memes garde-fous que la route dediee
+     * {@code DELETE /admin/maintenance/members/{code}} : role administrateur, droit
+     * {@code SYSTEM:SETTINGS} et {@code confirm=true}. Sans eux, le seul {@code CLIENT:DELETE}
+     * suffisait a detruire un membre et sa facturation.
      */
     @DeleteMapping("/{id}")
     @Audited(module = "MEMBER", action = "ARCHIVE", ressource = "member")
     public ResponseEntity<?> archive(@PathVariable String id,
                                      @RequestParam(defaultValue = "false") boolean purge,
-                                     @RequestParam(required = false) String reason) {
+                                     @RequestParam(defaultValue = "false") boolean confirm,
+                                     @RequestParam(required = false) String reason,
+                                     Authentication authentication) {
         if (purge) {
+            requirePurgeRights(authentication);
+            if (!confirm) {
+                return ResponseEntity.badRequest().body(java.util.Map.of(
+                        "message", "Suppression definitive du membre " + id
+                                + " et de toutes ses donnees. Ajouter ?confirm=true pour proceder.",
+                        "preview", "GET " + ApiPath.V1 + "/admin/maintenance/members/" + id + "/purge-preview"
+                ));
+            }
             return ResponseEntity.ok(memberPurgeService.purge(id, reason));
         }
         memberService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Les droits de la route dediee · son {@code @PreAuthorize} (ROLE_ADMIN ou ADMIN) et le
+     * SYSTEM:SETTINGS que {@code AdminApiAuthorizationManager} exige sur /admin/maintenance.
+     */
+    private void requirePurgeRights(Authentication authentication) {
+        java.util.Set<String> authorities = authentication == null
+                ? java.util.Set.of()
+                : authentication.getAuthorities().stream()
+                        .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                        .collect(java.util.stream.Collectors.toSet());
+        boolean admin = authorities.contains("ROLE_ADMIN") || authorities.contains("ADMIN");
+        boolean settings = authorities.contains("ROLE_SUPER_ADMIN")
+                || authorities.contains("SYSTEM:SETTINGS") || authorities.contains("SYSTEM_SETTINGS");
+        if (!admin || !settings) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "La purge definitive d'un membre exige le role administrateur et SYSTEM:SETTINGS");
+        }
     }
 
     }

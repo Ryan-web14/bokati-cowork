@@ -32,10 +32,18 @@ public class StaffBookingOverride {
     /** Les roles qui peuvent reserver hors preavis. */
     public static final Set<String> ROLES = Set.of("ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ROLE_MANAGER", "ROLE_OPERATIONS_AGENT");
 
-    private final int maxBackdateDays;
+    private static final String MAX_BACKDATE_KEY = "bokati.booking.staff.max-backdate-days";
 
-    public StaffBookingOverride(@Value("${bokati.booking.staff.max-backdate-days:31}") int maxBackdateDays) {
+    private final int maxBackdateDays;
+    private com.sni.bokaticowork.core.settings.platform.PlatformSettings settings;
+
+    public StaffBookingOverride(@Value("${" + MAX_BACKDATE_KEY + ":31}") int maxBackdateDays) {
         this.maxBackdateDays = maxBackdateDays;
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    void setSettings(com.sni.bokaticowork.core.settings.platform.PlatformSettings settings) {
+        this.settings = settings;
     }
 
     /** Le membre de l'equipe qui reserve, s'il peut deroger · vide sinon (client, portail, systeme). */
@@ -60,11 +68,12 @@ public class StaffBookingOverride {
 
     /** Une reservation saisie apres coup ne remonte pas au-dela de ce nombre de jours. */
     public LocalDateTime earliestStart(LocalDateTime now) {
-        return now.toLocalDate().minusDays(maxBackdateDays).atStartOfDay();
+        return now.toLocalDate().minusDays(maxBackdateDays()).atStartOfDay();
     }
 
+    /** La limite en vigueur · un changement dans les parametres vaut aussitot. */
     public int maxBackdateDays() {
-        return maxBackdateDays;
+        return settings == null ? maxBackdateDays : (int) settings.number(MAX_BACKDATE_KEY, maxBackdateDays);
     }
 
     private static boolean fromPortal() {

@@ -431,9 +431,14 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
                             depositId = deposit.getDepositId();
                             payerPhone = com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(deposit.getPhoneNumber());
                         }
+                    } else if (tx.getPaymentMethod() == PaymentMethod.MOBILE_MONEY_OFFLINE) {
+                        payerPhone = com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(tx.getPayerPhone());
                     }
                     return new PaymentInfo(
-                            tx.getPaymentMethod() != null ? tx.getPaymentMethod().name() : null,
+                            // Le moyen s'imprime en francais, operateur compris pour un mobile money hors plateforme.
+                            tx.getPaymentMethod() != null
+                                    ? com.sni.bokaticowork.features.payment.service.support.PaymentMethodLabels.label(tx.getPaymentMethod(), tx.getProvider())
+                                    : null,
                             tx.getProvider(),
                             tx.getProviderReference(),
                             depositId,
@@ -519,6 +524,11 @@ public class BillingDocumentPdfServiceImpl implements BillingDocumentPdfService 
          * <p>En divisant le brut HT par la quantite, la colonne est HT par construction et reste
          * coherente avec celle d'a cote, quel que soit le mode de saisie.</p>
          */
+        /** Le montant facture de la ligne, taxes comprises · sans TVA, il egale le net HT. */
+        public java.math.BigDecimal totalTtc(BillingDocumentLineResponse line) {
+            return line == null || line.totalAmount() == null ? netHt(line) : line.totalAmount();
+        }
+
         public java.math.BigDecimal unitPriceHt(BillingDocumentLineResponse line) {
             if (line == null) {
                 return java.math.BigDecimal.ZERO;

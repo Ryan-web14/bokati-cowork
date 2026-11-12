@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{email/fragments/notice-layout :: head('Renouvellement à régler')}"></head>
+<body>
+<div style="display:none; font-size:1px; color:#ffffff; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;"
+     th:text="${preheader != null ? preheader : 'Votre abonnement sera renouvelé dès réception du paiement.'}">Votre abonnement sera renouvelé dès réception du paiement.</div>
+<div class="wrap">
+  <div class="sheet">
+    <div th:replace="~{email/fragments/notice-layout :: header('warn')}"></div>
+
+    <div class="em-body">
+      <div class="em-title">Renouvellement à régler</div>
+      <div class="em-intro">
+        Bonjour <strong th:text="${recipientName ?: 'client'}">client</strong>, votre abonnement arrive à échéance. Il sera renouvelé dès réception du paiement de sa facture.
+      </div>
+      <div class="section-lbl">Détail</div>
+      <table role="presentation" class="rows">
+        <tr>
+          <td class="r-key">Abonnement</td>
+          <td class="r-val mono" th:text="${subscriptionNumber}">Abonnement</td>
+        </tr>
+        <tr>
+          <td class="r-key">Facture</td>
+          <td class="r-val mono" th:text="${invoiceNumber}">Facture</td>
+        </tr>
+        <tr>
+          <td class="r-key">Montant à régler</td>
+          <td class="r-val" th:text="${amount + ' ' + currency}">Montant</td>
+        </tr>
+        <tr>
+          <td class="r-key">Prochaine période</td>
+          <td class="r-val" th:text="${periodStart + ' au ' + periodEnd}">Période</td>
+        </tr>
+      </table>
+      <div class="em-note warn">Sans paiement, votre abonnement n'est pas renouvelé : il passe en tolérance à la fin de la période en cours, puis il est suspendu. Réglez la facture depuis votre espace client (portefeuille ou mobile money).</div>
+      <a class="cta" th:href="${actionUrl ?: 'https://espace.elleaose.com'}" href="https://espace.elleaose.com">Régler ma facture</a>
+      <div th:replace="~{email/fragments/notice-layout :: legal}"></div>
+    </div>
+
+    <div th:replace="~{email/fragments/notice-layout :: footer}"></div>
+  </div>
+</div>
+</body>
+</html>

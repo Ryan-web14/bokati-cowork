@@ -61,7 +61,7 @@ class SubscriptionExpiryServiceTest {
         // Le service s'appelle lui-meme pour donner sa transaction a chaque abonnement · en test
         // on lui passe l'instance reelle, le comportement observe reste le sien.
         service = new SubscriptionExpiryService(subscriptionRepository, policyService, statusManager,
-                eventWriter, graceService, null);
+                eventWriter, graceService, null, null);
         org.springframework.test.util.ReflectionTestUtils.setField(service, "self", service);
     }
 

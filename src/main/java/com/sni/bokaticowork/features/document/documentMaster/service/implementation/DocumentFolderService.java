@@ -103,6 +103,9 @@ public class DocumentFolderService {
 
     public FolderDetailResponse update(String code, UpdateFolderRequest request) {
         DocumentFolder folder = findByCode(code);
+        if (StringUtils.hasText(request.getName()) && !request.getName().trim().equals(folder.getName())) {
+            requireUserFolder(folder);
+        }
 
         if (StringUtils.hasText(request.getName())) {
             String newName = request.getName().trim();
@@ -123,6 +126,7 @@ public class DocumentFolderService {
 
     public void delete(String code) {
         DocumentFolder folder = findByCode(code);
+        requireUserFolder(folder);
         long children = folderRepository.countByParentAndDeletedFalse(folder);
         if (children > 0) {
             throw new BadRequestException("Cannot delete a folder that contains sub-folders. Move or delete them first.");
@@ -136,6 +140,7 @@ public class DocumentFolderService {
 
     public FolderDetailResponse move(String code, MoveFolderRequest request) {
         DocumentFolder folder = findByCode(code);
+        requireUserFolder(folder);
         String oldPath = folder.getPath();
         int oldDepth = folder.getDepth();
 
@@ -230,6 +235,14 @@ public class DocumentFolderService {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
+    /** Un dossier du plan de classement est tenu par le serveur, pas a la main. */
+    public static void requireUserFolder(DocumentFolder folder) {
+        if (folder.getSystemKey() != null) {
+            throw new BadRequestException("« " + folder.getName() + " » est un dossier du plan de classement : "
+                    + "il ne se renomme, ne se déplace ni ne se supprime.");
+        }
+    }
 
     private DocumentFolder findByCode(String code) {
         return folderRepository.findByCode(code)

@@ -8,12 +8,13 @@ public interface PaymentReceiptService {
     byte[] generatePdfByTransactionNumber(String transactionNumber);
     byte[] generatePdfByReceiptNumber(String receiptNumber);
 
-    /** La version d'impression de l'administration · l'original puis son duplicata, dans un meme PDF. */
-    default byte[] generateAdminPdfByTransactionNumber(String transactionNumber) {
-        return com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(generatePdfByTransactionNumber(transactionNumber));
-    }
+    /**
+     * La version d'impression de l'administration : l'original puis son duplicata, dans un meme PDF.
+     * Declaree ici sans corps : l'implementation la porte, sous sa transaction (une methode par
+     * defaut de l'interface s'executait hors transaction, et le recu lisait l'intention de paiement
+     * apres la fermeture de la session).
+     */
+    byte[] generateAdminPdfByTransactionNumber(String transactionNumber);
 
-    default byte[] generateAdminPdfByReceiptNumber(String receiptNumber) {
-        return com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(generatePdfByReceiptNumber(receiptNumber));
-    }
+    byte[] generateAdminPdfByReceiptNumber(String receiptNumber);
 }

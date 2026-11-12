@@ -259,8 +259,9 @@ public class SubscriptionContractSupport {
         request.setEffectiveDate(effectiveDate);
         request.setStartDate(startDate);
         request.setEndDate(endDate);
-        request.setSignatoryName(owner.displayName());
-        request.setSignatoryRole("SIGNATORY");
+        // Pour une organisation, la personne qui signe en son nom · son representant legal.
+        request.setSignatoryName(owner.signatoryName() != null ? owner.signatoryName() : owner.displayName());
+        request.setSignatoryRole(owner.signatoryRole() != null ? owner.signatoryRole() : "SIGNATORY");
         request.setVariables(variables);
         request.setClauses(clauses == null ? List.of() : clauses);
         return request;
@@ -342,10 +343,18 @@ public class SubscriptionContractSupport {
             return fallbackOwner(ownerCode);
         }
         String individualName = (nullSafe(customer.getFirstname()) + " " + nullSafe(customer.getLastname())).trim();
+        var legal = customer.getBusinessEntity();
+        String representative = legal == null || legal.getLegalRepresentativeName() == null || legal.getLegalRepresentativeName().isBlank()
+                ? null : legal.getLegalRepresentativeName().trim();
+        String representativeTitle = representative == null ? null
+                : legal.getLegalRepresentativeTitle() == null || legal.getLegalRepresentativeTitle().isBlank()
+                ? "Représentant légal" : legal.getLegalRepresentativeTitle().trim();
         return new OwnerContractView(
                 fallback(customer.getCompanyName(), fallback(individualName, customer.getCustomerId())),
                 fallback(customer.getBillingEmail(), customer.getEmail()),
-                customer.getPhone()
+                customer.getPhone(),
+                representative,
+                representativeTitle
         );
     }
 
@@ -471,6 +480,10 @@ public class SubscriptionContractSupport {
         });
     }
 
-    private record OwnerContractView(String displayName, String email, String phone) {
+    /** @param signatoryName la personne qui signe pour une organisation · vide pour un particulier */
+    private record OwnerContractView(String displayName, String email, String phone, String signatoryName, String signatoryRole) {
+        private OwnerContractView(String displayName, String email, String phone) {
+            this(displayName, email, phone, null, null);
+        }
     }
 }

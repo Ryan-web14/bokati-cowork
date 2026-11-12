@@ -183,8 +183,16 @@
                      de rapprochement bancaire, celle qu'on vient chercher sur un recu. -->
                 <div class="pblock">
                     <div class="plabel">Moyen de règlement</div>
-                    <div class="pname" th:text="${receipt.paymentMethod()}">Moyen</div>
+                    <div class="pname" th:text="${receipt.paymentMethodLabel() != null ? receipt.paymentMethodLabel() : receipt.paymentMethod()}">Moyen</div>
                     <div class="pline">
+                        <span th:if="${receipt.paymentMethod()?.name() == 'CHEQUE' and receipt.providerReference() != null}">
+                            Chèque n° <b th:text="${receipt.providerReference()}">N°</b><br></span>
+                        <span th:if="${receipt.paymentMethod()?.name() == 'BANK_TRANSFER' and receipt.providerReference() != null}">
+                            Réf. virement <b th:text="${receipt.providerReference()}">Réf.</b><br></span>
+                        <span th:if="${receipt.bankName() != null}">Banque <b th:text="${receipt.bankName()}">Banque</b><br></span>
+                        <span th:if="${receipt.payerName() != null}">
+                            <span th:text="${receipt.paymentMethod()?.name() == 'CHEQUE' ? 'Tireur' : (receipt.paymentMethod()?.name() == 'BANK_TRANSFER' ? 'Donneur d''ordre' : 'Titulaire')}">Payeur</span>
+                            <b th:text="${receipt.payerName()}">Nom</b><br></span>
                         <span th:if="${receipt.paymentMethod()?.name() == 'MOBILE_MONEY' and receipt.depositId() != null}">
                             Dépôt <b th:text="${receipt.depositId()}">ID</b><br></span>
                         <span th:if="${receipt.payerPhone() != null}">Payeur <b th:text="${receipt.payerPhone()}">Tél.</b><br></span>
@@ -268,6 +276,10 @@
                     <tr th:if="${receipt.advanceAmount() != null and receipt.advanceAmount().signum() > 0}">
                         <td>Dont acompte</td><td th:text="${fmt.money(receipt.advanceAmount())}">0</td></tr>
                     <tr class="grand"><td>Montant reçu</td><td th:text="${fmt.money(receipt.paidAmount())}">0</td></tr>
+                    <tr th:if="${receipt.tenderedAmount() != null}">
+                        <td>Montant remis</td><td th:text="${fmt.money(receipt.tenderedAmount())}">0</td></tr>
+                    <tr th:if="${receipt.changeAmount() != null and receipt.changeAmount().signum() > 0}">
+                        <td>Monnaie rendue</td><td th:text="${fmt.money(receipt.changeAmount())}">0</td></tr>
                 </table>
             </td>
         </tr>

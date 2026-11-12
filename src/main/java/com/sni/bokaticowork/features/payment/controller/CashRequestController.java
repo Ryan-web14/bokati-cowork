@@ -30,6 +30,7 @@ public class CashRequestController {
 
     private final CashRequestService cashRequestService;
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_SUBMIT", ressource = "cash_register")
     @PostMapping("/sessions/{sessionNumber}/requests")
     public ResponseEntity<CashRequestResponse> submit(@PathVariable String sessionNumber,
                                                        @Valid @RequestBody CreateCashRequestRequest request) {
@@ -53,12 +54,14 @@ public class CashRequestController {
         return ResponseEntity.ok(cashRequestService.get(requestNumber));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_APPROVE", ressource = "cash_register")
     @PatchMapping("/requests/{requestNumber}/approve")
     public ResponseEntity<CashRequestResponse> approve(@PathVariable String requestNumber,
                                                         @Valid @RequestBody ReviewCashRequestRequest request) {
         return ResponseEntity.ok(cashRequestService.approve(requestNumber, request));
     }
 
+    @com.sni.bokaticowork.core.audit.aop.Audited(module = "CASH", action = "CASH_REJECT", ressource = "cash_register")
     @PatchMapping("/requests/{requestNumber}/reject")
     public ResponseEntity<CashRequestResponse> reject(@PathVariable String requestNumber,
                                                        @Valid @RequestBody ReviewCashRequestRequest request) {

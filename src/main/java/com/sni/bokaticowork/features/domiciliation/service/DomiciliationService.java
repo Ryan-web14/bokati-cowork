@@ -66,6 +66,10 @@ public class DomiciliationService {
     private final TransactionContextResolver contextResolver;
     private final OutboxService outboxService;
     private final SequenceGeneratorFacade sequenceGenerator;
+    /** Absents dans les tests qui ne les fournissent pas · la demande fait alors foi, comme avant. */
+    private final DomiciliationCompanyAccess companyAccess;
+    private final com.sni.bokaticowork.features.company.service.support.CompanyLegalCard companyLegalCard;
+    private final com.sni.bokaticowork.features.company.repository.BusinessRepository businessRepository;
 
     @Value("${bokati.domiciliation.certificate-validity-days:365}")
     private int certificateValidityDays;
@@ -107,9 +111,6 @@ public class DomiciliationService {
      */
     @Transactional
     public DomiciliationContract open(OpenOrder order, String actor) {
-        if (!StringUtils.hasText(order.legalName())) {
-            throw new BadRequestException("La dénomination du domicilié est requise");
-        }
         BillingCycle cycle = order.billingCycle();
         if (cycle != BillingCycle.MONTHLY && cycle != BillingCycle.QUARTERLY && cycle != BillingCycle.YEARLY) {
             throw new BadRequestException("La domiciliation se facture au mois, au trimestre ou à l'année");
@@ -140,12 +141,21 @@ public class DomiciliationService {
                     throw new ConflictException("domiciliation", "un contrat est déjà en cours sur cet abonnement · " + existing.getContractNumber());
                 });
 
+        // Une organisation domiciliee : sa fiche fait foi. La demande ne sert qu'a completer une
+        // fiche vide · elle y est reportee, pour ne plus avoir a la ressaisir.
+        var company = companyAccess == null ? java.util.Optional.<com.sni.bokaticowork.features.client.customer.model.Customer>empty()
+                : companyAccess.companyOf(subscription);
+        company.ifPresent(customer -> completeCard(customer, order, actor));
+        if (company.isEmpty() && !StringUtils.hasText(order.legalName())) {
+            throw new BadRequestException("La dénomination du domicilié est requise");
+        }
+
         DomiciliationContract contract = DomiciliationContract.builder()
                 .contractNumber(sequenceGenerator.next("domiciliation_contract"))
                 .subscription(subscription)
                 .subscriptionService(service)
                 .businessEntity(subscription.getBusinessEntity())
-                .legalName(order.legalName().trim())
+                .legalName(StringUtils.hasText(order.legalName()) ? order.legalName().trim() : null)
                 .legalForm(trim(order.legalForm()))
                 .registrationNumber(trim(order.registrationNumber()))
                 .taxNumber(trim(order.taxNumber()))
@@ -163,8 +173,83 @@ public class DomiciliationService {
                 .status(DomiciliationContract.Status.DRAFT)
                 .createdBy(actor)
                 .build();
+        company.ifPresent(customer -> applyCard(contract, customer));
         applyFiscalRule(contract, "ouverture");
         return contractRepository.save(contract);
+    }
+
+    /**
+     * Reporte la fiche de l'organisation sur le contrat · denomination, forme, RCCM, NIU et
+     * representant. Ce qui manque a la fiche garde la valeur du contrat.
+     */
+    void applyCard(DomiciliationContract contract, com.sni.bokaticowork.features.client.customer.model.Customer customer) {
+        if (companyLegalCard == null) {
+            return;
+        }
+        companyLegalCard.of(customer).ifPresent(card -> {
+            if (StringUtils.hasText(card.name())) contract.setLegalName(card.name());
+            if (StringUtils.hasText(card.legalForm())) contract.setLegalForm(card.legalForm());
+            if (StringUtils.hasText(card.rccm())) contract.setRegistrationNumber(card.rccm());
+            if (StringUtils.hasText(card.niu())) contract.setTaxNumber(card.niu());
+            if (StringUtils.hasText(card.representativeName())) contract.setLegalRepresentativeName(card.representativeName());
+        });
+    }
+
+    /** La fiche est relue avant chaque document · une modification se reporte sur le contrat en cours et l'attestation suivante. */
+    @Transactional
+    public void refreshFromCard(DomiciliationContract contract) {
+        if (companyAccess == null) {
+            return;
+        }
+        companyAccess.companyOf(contract.getSubscription()).ifPresent(customer -> {
+            applyCard(contract, customer);
+            contractRepository.save(contract);
+        });
+    }
+
+    /** Toutes les domiciliations en cours d'une organisation, apres une modification de sa fiche. */
+    @Transactional
+    public int refreshCompany(String customerId) {
+        int refreshed = 0;
+        for (DomiciliationContract contract : contractRepository
+                .findBySubscription_SubscriberTypeAndSubscription_SubscriberCodeOrderByCreatedAtDesc(
+                        com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType.CUSTOMER, customerId)) {
+            if (ENDED.contains(contract.getStatus())) {
+                continue;
+            }
+            refreshFromCard(contract);
+            refreshed++;
+        }
+        return refreshed;
+    }
+
+    /** Complete une fiche vide avec ce que la demande fournit · jamais n'ecrase une valeur saisie. */
+    private void completeCard(com.sni.bokaticowork.features.client.customer.model.Customer customer, OpenOrder order, String actor) {
+        var legal = customer.getBusinessEntity();
+        if (legal == null || businessRepository == null) {
+            return;
+        }
+        boolean changed = false;
+        if (!StringUtils.hasText(legal.getLegalForm()) && StringUtils.hasText(order.legalForm())) {
+            legal.setLegalForm(order.legalForm().trim());
+            changed = true;
+        }
+        if (!StringUtils.hasText(legal.getRccmNumber()) && StringUtils.hasText(order.registrationNumber())) {
+            legal.setRccmNumber(order.registrationNumber().trim());
+            changed = true;
+        }
+        if (!StringUtils.hasText(legal.getNiuNumber()) && StringUtils.hasText(order.taxNumber())) {
+            legal.setNiuNumber(order.taxNumber().trim());
+            changed = true;
+        }
+        if (!StringUtils.hasText(legal.getLegalRepresentativeName()) && StringUtils.hasText(order.legalRepresentativeName())) {
+            legal.setLegalRepresentativeName(order.legalRepresentativeName().trim());
+            changed = true;
+        }
+        if (changed) {
+            legal.setUpdated_by(actor);
+            businessRepository.save(legal);
+        }
     }
 
     // -----------------------------------------------------------------------------------------
@@ -195,6 +280,7 @@ public class DomiciliationService {
                             + ") avant de générer le contrat · le dossier est en attente de pièces");
         }
 
+        refreshFromCard(contract);
         DocumentResponse generated = documents.contract(contract);
         contract.setContractDocumentCode(generated.getCode());
         contract.setStatus(DomiciliationContract.Status.PENDING_SIGNATURE);
@@ -325,6 +411,7 @@ public class DomiciliationService {
     @Transactional
     public DomiciliationContract issueCertificate(String contractNumber, DomiciliationContract.CertificateScope scope, String actor) {
         DomiciliationContract contract = get(contractNumber);
+        refreshFromCard(contract);
         if (contract.getStatus() != DomiciliationContract.Status.ACTIVE) {
             throw new ConflictException("domiciliation", "aucune attestation avant l'enregistrement du contrat · le contrat est "
                     + contract.getStatus());

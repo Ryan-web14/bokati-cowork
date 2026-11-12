@@ -10,5 +10,9 @@ public enum CashMovementType {
     TRANSFER_IN,
     TRANSFER_OUT,
     ADJUSTMENT,
-    CLOSING_COUNT
+    CLOSING_COUNT,
+    /** Echange de monnaie (gros billets contre petites coupures) : montant net nul, neutre. */
+    EXCHANGE,
+    /** Ecart constate (ouverture, cloture, comptage) produit par le systeme ; porte un sens. */
+    VARIANCE
 }

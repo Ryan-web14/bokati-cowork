@@ -54,8 +54,9 @@ public class CreateMemberRequest {
 
     private String companyName;
 
-    @Email
-    @Size(max = 250)
+    /** Une ou plusieurs adresses separees par des virgules. */
+    @com.sni.bokaticowork.core.utils.validation.EmailList
+    @Size(max = 500)
     private String billingEmail;
 
     @Valid

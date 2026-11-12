@@ -47,6 +47,9 @@ public interface SubscriptionService {
 
     int renewDueSubscriptions();
 
+    /** Applique le renouvellement en attente si sa facture est soldee · rend s'il a pris effet. */
+    boolean applyPaidRenewal(String subscriptionNumber, String reason);
+
     /**
      * Recale la periode sur le jour du reglement quand l'echeance a ete payee en retard.
      *
@@ -57,4 +60,7 @@ public interface SubscriptionService {
     int cancelEndedSubscriptions();
 
     int repairActiveSubscriptionsWithoutGrants();
+
+    /** Prolonge par avenant les contrats restes derriere leur abonnement · rend combien. */
+    int catchUpContractTerms();
 }

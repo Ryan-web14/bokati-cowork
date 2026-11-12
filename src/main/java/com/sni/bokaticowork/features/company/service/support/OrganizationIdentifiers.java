@@ -67,7 +67,7 @@ public final class OrganizationIdentifiers {
     /** Le message d'un refus · dit le format attendu plutot que « invalide ». */
     public static String expected(IdentifierType type) {
         return switch (type) {
-            case NIU -> "le NIU attendu est une lettre (P ou E) suivie de 15 chiffres";
+            case NIU -> "le NIU attendu est une lettre (P, E ou M) suivie de 15 chiffres";
             case RCCM -> "le RCCM attendu suit la forme OHADA CG-BZV-01-2024-B12-00001, ou l'ancienne forme CG/BZV/16 B 6261";
             default -> "lettres, chiffres et ponctuation simple, 150 caractères au plus";
         };

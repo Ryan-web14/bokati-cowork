@@ -345,7 +345,13 @@ public class SubscriptionTerminationService {
     /** Les sorties bloquees · date d'effet passee, liste encore ouverte. */
     @Transactional(readOnly = true)
     public List<SubscriptionTermination> blocked() {
-        return terminationRepository.findDue(LocalDate.now());
+        List<SubscriptionTermination> due = terminationRepository.findDue(LocalDate.now());
+        // Requete native, sans graphe : abonnement et liste de sortie charges ici, la vue les lit hors transaction
+        due.forEach(termination -> {
+            org.hibernate.Hibernate.initialize(termination.getSubscription());
+            org.hibernate.Hibernate.initialize(termination.getExitItems());
+        });
+        return due;
     }
 
     // ---- Interne --------------------------------------------------------------------------------

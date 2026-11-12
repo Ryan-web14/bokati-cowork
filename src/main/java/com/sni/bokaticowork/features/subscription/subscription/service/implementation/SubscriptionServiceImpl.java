@@ -167,6 +167,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
+    public boolean applyPaidRenewal(String subscriptionNumber, String reason) {
+        return lifecycleOperator.applyPaidRenewal(getForService(subscriptionNumber), reason);
+    }
+
+    @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public int cancelEndedSubscriptions() {
         return lifecycleOperator.cancelEndedSubscriptions();
@@ -175,5 +180,11 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     public int repairActiveSubscriptionsWithoutGrants() {
         return lifecycleOperator.repairActiveSubscriptionsWithoutGrants();
+    }
+
+    @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
+    public int catchUpContractTerms() {
+        return lifecycleOperator.catchUpContractTerms();
     }
 }

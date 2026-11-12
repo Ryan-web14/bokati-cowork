@@ -224,7 +224,8 @@ public class CashPaymentDeclarationService {
                     + balance.toPlainString() + " " + document.currency() + ").");
         }
 
-        String receivedBy = StringUtils.hasText(request.receivedBy()) ? request.receivedBy() : actor;
+        // L'encaisseur est l'utilisateur connecte ; la valeur envoyee ne sert qu'hors contexte authentifie.
+        String receivedBy = StringUtils.hasText(actor) ? actor : request.receivedBy();
         PaymentIntentResponse intent = paymentService.createIntentFromBillingDocument(
                 new CreatePaymentIntentFromBillingDocumentRequest(
                         declaration.getDocumentNumber(), received,

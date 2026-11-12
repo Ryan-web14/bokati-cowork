@@ -25,6 +25,23 @@ class GlobalExceptionHandlerRenderTest {
         String missing() {
             throw new ResourceNotFoundException("Booking not found");
         }
+
+        @GetMapping("/denied")
+        String denied() {
+            throw new org.springframework.security.authorization.AuthorizationDeniedException("Access Denied");
+        }
+    }
+
+    @Test
+    @DisplayName("Refus d'une methode protegee : 403, pas 500")
+    void methodDenialIsForbidden() throws Exception {
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(new Failing())
+                .setControllerAdvice(new GlobalExceptionHandler(new ErrorResponse()))
+                .build();
+
+        mvc.perform(get("/denied").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
     }
 
     @Test

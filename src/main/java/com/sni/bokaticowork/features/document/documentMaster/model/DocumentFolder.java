@@ -84,6 +84,41 @@ public class DocumentFolder {
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
 
+    /** Mis a la corbeille de la GED : restaurable avec les autres elements du meme lot. */
+    @Column(name = "trashed_at")
+    private Instant trashedAt;
+
+    @Column(name = "trashed_by")
+    private Long trashedBy;
+
+    @Column(name = "trash_batch", length = 40)
+    private String trashBatch;
+
+    /**
+     * Cle d'un dossier du plan de classement automatique ({@code owner:MEMBER:12:KYC}). Un dossier
+     * systeme ne se renomme, ne se deplace ni ne se supprime : le classement le retrouve par elle.
+     */
+    @Column(name = "system_key", length = 120)
+    private String systemKey;
+
+    /**
+     * Acces restreint : le dossier et son contenu ne sont visibles que des personnes et roles qui y
+     * ont un droit. Voir {@code GedAccessService}.
+     */
+    @Column(name = "restricted", nullable = false)
+    @Builder.Default
+    private Boolean restricted = Boolean.FALSE;
+
+    @Column(name = "restricted_at")
+    private java.time.Instant restrictedAt;
+
+    @Column(name = "restricted_by")
+    private Long restrictedBy;
+
+    /** Quota d'espace du dossier, sous-dossiers compris, en octets ; vide : pas de limite. */
+    @Column(name = "quota_bytes")
+    private Long quotaBytes;
+
     @PrePersist
     public void prePersist() {
         Instant now = Instant.now();

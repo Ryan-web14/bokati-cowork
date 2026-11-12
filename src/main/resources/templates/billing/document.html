@@ -130,13 +130,6 @@
         /* L'unite se lit avec la quantite, pas comme une annotation · meme corps, teinte plus
            douce, et une vraie espace pour que "2 h" ne se lise pas "2h". */
         .line-unit { color: #1f1430; font-weight: 400; }
-        /* Meme forme que la categorie · une mention qui qualifie la prestation, pas une valeur. */
-        .line-exempt {
-            display: inline-block; white-space: nowrap;
-            font-size: 7.2px; font-weight: 700; letter-spacing: .4px;
-            text-transform: uppercase; color: #1f1430; background: #f4efe2;
-            border: 0.5px solid #c9a84c; border-radius: 2px; padding: 1px 4px; margin-right: 4px;
-        }
         .line-discount { color: #1f1430; font-weight: 700; }
         /* Mention secondaire d'une remise : le montant accorde en TTC, sous le libelle. */
         .disc-note { font-size: 7.6px; color: #6B6478; font-weight: 400; margin-top: 1px; }
@@ -175,6 +168,14 @@
         .legal-head { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #1f1430; margin-bottom: 4px; }
         .legal-compact { font-size: 7px; color: #1f1430; line-height: 1.28; }
 
+        .visa-wrap { width: 100%; border-collapse: collapse; margin-top: 8px; page-break-inside: avoid; }
+        .visa-wrap td.texts { border: none; padding: 0 12px 0 0; vertical-align: top; }
+        .visa-wrap td.holder { width: 5cm; border: none; padding: 11px 0 0; vertical-align: top; }
+        .visa-box { width: 5cm; border-collapse: collapse; border: 1.2px solid #1f1430; }
+        .visa-box th { background: #f3eef6; color: #1f1430; font-size: 8px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+                       text-align: center; padding: 4px 6px; border: 1.2px solid #1f1430; }
+        .visa-box td.stamp { height: 4.5cm; border: 1.2px solid #1f1430; padding: 0; }
+        .visa-box td.legend { font-size: 7.2px; color: #6f6478; text-align: center; padding: 2px 6px; border: 1.2px solid #1f1430; }
         .doc-footer { margin-top: 8px; padding: 8px 0 9px; border-top: 1px solid #e6ddea; font-size: 7.8px; color: #1f1430; text-align: center; }
         .doc-footer .made-by { font-size: 7.4px; color: #1f1430; font-weight: 700; letter-spacing: 0.5px; margin-top: 3px; text-transform: uppercase; }
     </style>
@@ -350,12 +351,13 @@
         <thead>
             <tr>
                 <th style="width:4%; text-align:center;">#</th>
-                <th style="width:37%;">Désignation</th>
-                <th class="r" style="width:10%;">Qté</th>
+                <th style="width:30%;">Désignation</th>
+                <th class="r" style="width:8%;">Qté</th>
                 <th class="r" style="width:12%;">P.U. HT</th>
                 <th class="r" style="width:12%;">Brut HT</th>
-                <th class="r" style="width:11%;">Remise</th>
-                <th class="r" style="width:14%;">Net HT</th>
+                <th class="r" style="width:10%;">Remise</th>
+                <th class="r" style="width:12%;">Net HT</th>
+                <th class="r" style="width:12%;">Total TTC</th>
             </tr>
         </thead>
         <tbody>
@@ -367,11 +369,6 @@
                          chaque poste. -->
                     <div class="line-name">
                         <span class="line-category" th:if="${line.category()}" th:text="${line.category()}">Catégorie</span>
-                        <!-- La colonne « TVA » repetait le meme taux sur chaque ligne alors que le
-                             recapitulatif le porte deja. Seule l'exoneration apprend quelque chose,
-                             et elle se dit ici : sans cela, une prestation exoneree ne se verrait
-                             plus du tout. -->
-                        <span class="line-exempt" th:if="${line.taxable() != null and !line.taxable()}">Exonéré</span>
                         <span th:text="${line.description()}">Service</span>
                         <span th:if="${line.optional()}" class="line-sub" style="margin-left:4px;">(option)</span>
                     </div>
@@ -405,9 +402,9 @@
                     <span class="muted"
                           th:unless="${line.discountAmount() != null and line.discountAmount().signum() > 0}"> · </span>
                 </td>
-                <!-- Brut barre au-dessus du net des qu'une remise s'applique · la deduction se
-                     lit sans calcul, et le montant facture reste celui mis en avant. -->
-                <td class="r num col-amt" th:text="${fmt.amount(fmt.netHt(line))}">0</td>
+                <td class="r num" th:text="${fmt.amount(fmt.netHt(line))}">0</td>
+                <!-- Le montant facture de la ligne · sans TVA, il egale le net HT. -->
+                <td class="r num col-amt" th:text="${fmt.amount(fmt.totalTtc(line))}">0</td>
             </tr>
         </tbody>
     </table>
@@ -557,17 +554,6 @@
         </table>
     </div>
 
-    <!-- CONDITIONS ET INSTRUCTIONS DE REGLEMENT -->
-    <div th:if="${document.terms() != null or document.paymentInstructions() != null or document.bankDetailsJson() != null}" style="margin-top:8px;">
-        <div class="section-label">Conditions et modalités de règlement</div>
-        <div class="detail-block" th:if="${document.terms()}" th:text="${document.terms()}">Paiement à réception</div>
-        <!-- Ou payer · sans cette mention, le client telephone pour demander le numero. -->
-        <div class="detail-block" th:if="${document.paymentInstructions()}" th:text="${document.paymentInstructions()}"></div>
-        <div class="detail-block" th:if="${document.bankDetailsJson()}">
-            <span th:each="detailLine : ${fmt.addressLines(document.bankDetailsJson())}"><span th:text="${detailLine}"></span><br></span>
-        </div>
-    </div>
-
     <!-- CLAUSES -->
     <div th:if="${!#lists.isEmpty(document.clauses())}">
         <div class="section-label">Conditions et clauses</div>
@@ -577,18 +563,43 @@
         </div>
     </div>
 
-    <!-- MENTIONS LÉGALES -->
-    <div class="legal-section">
-        <div class="legal-head">Mentions légales</div>
-        <div class="legal-compact" th:if="${document.documentType().name() == 'QUOTE'}">
-            Ce document est une proposition commerciale. Il ne constitue pas une facture et n'ouvre
-            aucun droit à déduction de TVA. Les prix sont fermes jusqu'à la date de validité indiquée.
-            Document soumis au droit congolais, juridiction compétente de Pointe-Noire.
-        </div>
-        <div class="legal-compact" th:unless="${document.documentType().name() == 'QUOTE'}">
-            Règlement exigible à réception. Retard : pénalités 1,5&nbsp;%/mois et indemnité forfaitaire de recouvrement 40&nbsp;000 XAF. Contestation sous 15 jours. Document soumis au droit congolais, juridiction compétente de Pointe-Noire.
-        </div>
-    </div>
+    <!-- REGLEMENT, MENTIONS LEGALES ET VISA · le visa se place a cote des textes pour que le bas de
+         page tienne sur la meme page que la facture. -->
+    <table class="visa-wrap">
+        <tr>
+            <td class="texts">
+                <!-- CONDITIONS ET INSTRUCTIONS DE REGLEMENT -->
+                <div th:if="${document.terms() != null or document.paymentInstructions() != null or document.bankDetailsJson() != null}" style="margin-top:8px;">
+                    <div class="section-label">Conditions et modalités de règlement</div>
+                    <div class="detail-block" th:if="${document.terms()}" th:text="${document.terms()}">Paiement à réception</div>
+                    <!-- Ou payer · sans cette mention, le client telephone pour demander le numero. -->
+                    <div class="detail-block" th:if="${document.paymentInstructions()}" th:text="${document.paymentInstructions()}"></div>
+                    <div class="detail-block" th:if="${document.bankDetailsJson()}">
+                        <span th:each="detailLine : ${fmt.addressLines(document.bankDetailsJson())}"><span th:text="${detailLine}"></span><br></span>
+                    </div>
+                </div>
+                <!-- MENTIONS LÉGALES -->
+                <div class="legal-section">
+                    <div class="legal-head">Mentions légales</div>
+                    <div class="legal-compact" th:if="${document.documentType().name() == 'QUOTE'}">
+                        Ce document est une proposition commerciale. Il ne constitue pas une facture et n'ouvre
+                        aucun droit à déduction de TVA. Les prix sont fermes jusqu'à la date de validité indiquée.
+                        Document soumis au droit congolais, juridiction compétente de Pointe-Noire.
+                    </div>
+                    <div class="legal-compact" th:unless="${document.documentType().name() == 'QUOTE'}">
+                        Règlement exigible à réception. Retard : pénalités 1,5&nbsp;%/mois et indemnité forfaitaire de recouvrement 40&nbsp;000 XAF. Contestation sous 15 jours. Document soumis au droit congolais, juridiction compétente de Pointe-Noire.
+                    </div>
+                </div>
+            </td>
+            <td class="holder">
+                <table class="visa-box">
+                    <tr><th>Visa ELLE A OSE</th></tr>
+                    <tr><td class="stamp"></td></tr>
+                    <tr><td class="legend">Cachet et signature</td></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 
     <!-- PIED DE PAGE -->
     <div class="doc-footer">

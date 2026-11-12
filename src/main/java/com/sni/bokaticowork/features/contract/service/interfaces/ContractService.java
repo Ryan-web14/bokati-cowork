@@ -24,6 +24,15 @@ public interface ContractService {
     ContractResponse suspend(String contractCode, String reason);
     ContractResponse terminate(String contractCode, String reason);
     ContractResponse cancel(String contractCode, String reason);
+
+    /**
+     * Repousse la fin d'un contrat en cours · la duree s'etend sans que ses termes changent, il n'y a
+     * donc pas d'avenant. Rend si la date a bouge : un contrat clos ou deja plus long reste tel quel.
+     */
+    boolean extendEndDate(String contractCode, java.time.LocalDate newEndDate, String reason);
+
+    /** Remet en vigueur un contrat marque echu a tort · rend s'il l'etait. */
+    boolean reopenExpired(String contractCode, String reason);
     void delete(String contractCode);
     Contract serviceByCode(String contractCode);
 }

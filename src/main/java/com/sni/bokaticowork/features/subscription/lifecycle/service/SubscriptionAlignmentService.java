@@ -43,6 +43,7 @@ public class SubscriptionAlignmentService {
     private final ProrationCalculator proration;
     private final SubscriptionBillingSupport billingSupport;
     private final SubscriptionEventWriter eventWriter;
+    private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.contract.service.interfaces.ContractService contractService;
 
     public record Line(String subscriptionNumber, LocalDate currentPeriodEnd, LocalDate newPeriodEnd, int bridgingDays,
                        BigDecimal bridgingAmount, boolean aligned, String message) {
@@ -93,6 +94,10 @@ public class SubscriptionAlignmentService {
             if (!simulateOnly) {
                 subscription.setCurrentPeriodEnd(target);
                 subscription.setNextBillingDate(target.plusDays(1));
+                if (org.springframework.util.StringUtils.hasText(subscription.getContractCode())) {
+                    contractService.extendEndDate(subscription.getContractCode(), target,
+                            "Alignement des échéances de l'abonnement " + subscription.getSubscriptionNumber());
+                }
                 subscriptionRepository.save(subscription);
                 billingSupport.upsertBillingSchedule(subscription, BillingScheduleStatus.ACTIVE);
                 if (bridging.signum() > 0) {

@@ -68,7 +68,7 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
             SELECT *
             FROM cash_session
             WHERE cash_register_id = :cashRegisterId
-              AND status IN ('OPEN', 'CLOSING_REVIEW')
+              AND status NOT IN ('CLOSED', 'CANCELLED')
             ORDER BY opened_at DESC
             LIMIT 1
             """)
@@ -87,8 +87,8 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM cash_session
-            WHERE opened_by = CAST(:openedBy AS VARCHAR)
-              AND status IN ('OPEN', 'CLOSING_REVIEW')
+            WHERE lower(opened_by) = lower(CAST(:openedBy AS VARCHAR))
+              AND status NOT IN ('CLOSED', 'CANCELLED')
             ORDER BY opened_at DESC
             LIMIT 1
             """)
@@ -156,4 +156,20 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
                             @Param("businessEntityCode") String businessEntityCode,
                             @Param("fromDate") java.time.Instant fromDate,
                             @Param("toDate") java.time.Instant toDate);
+
+    /** Sessions d'une caisse dans ces statuts (elements en cours d'un titulaire). */
+    @Query("SELECT s FROM CashSession s WHERE s.cashRegister.registerCode = :registerCode AND s.status IN :statuses ORDER BY s.openedAt ASC")
+    java.util.List<CashSession> findByRegisterCodeAndStatuses(@Param("registerCode") String registerCode,
+                                                              @Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashSessionStatus> statuses);
+
+    /** Sessions dans ces statuts, toutes caisses confondues (alerte de duree maximale). */
+    @Query("SELECT s FROM CashSession s WHERE s.status IN :statuses ORDER BY s.openedAt ASC")
+    java.util.List<CashSession> findByStatuses(@Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashSessionStatus> statuses);
+
+    @Query("SELECT s FROM CashSession s WHERE (:registerCode IS NULL OR s.cashRegister.registerCode = :registerCode) AND s.openedAt >= :from AND s.openedAt < :to ORDER BY s.openedAt ASC")
+    java.util.List<CashSession> findOpenedBetween(@Param("registerCode") String registerCode, @Param("from") java.time.Instant from,
+                                                  @Param("to") java.time.Instant to);
+
+    /** Lot F3 : la caisse a-t-elle une session ouverte avant celle-ci ? */
+    boolean existsByCashRegister_IdAndOpenedAtBefore(Long registerId, java.time.Instant openedAt);
 }

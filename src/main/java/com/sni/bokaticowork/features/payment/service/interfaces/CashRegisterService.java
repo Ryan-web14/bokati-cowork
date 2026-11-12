@@ -41,6 +41,13 @@ public interface CashRegisterService {
      * @return la session ouverte a sa suite
      */
     CashSessionResponse closeForMonthEnd(String sessionNumber);
+
+    /**
+     * Ouvre la session de l'entrant d'une passation, avec le montant retenu comme fonds (lot C2).
+     * Appele par le cycle de vie des sessions, jamais directement par une route.
+     */
+    CashSessionResponse openSessionFromHandover(String registerCode, String incoming, BigDecimal amount,
+                                                String handoverNumber, String deviceCode);
     CashSessionSummaryResponse sessionSummary(String sessionNumber);
     CashMovementResponse createMovement(String sessionNumber, CreateCashMovementRequest request);
     CashMovementResponse createEntryVoucher(String sessionNumber, CreateCashVoucherRequest request);
@@ -54,6 +61,9 @@ public interface CashRegisterService {
     java.util.List<CashRegisterMetricsResponse> registerMetrics(String businessEntityCode, Instant fromDate, Instant toDate);
     void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
     void recordAutomaticPayment(PaymentTransaction transaction);
+
+    /** Refuse une session close ou tenue par le systeme · pour rattacher un paiement saisi au guichet. */
+    void assertCounterSessionOpen(String sessionNumber);
     CashMovementResponse addAttachment(String movementNumber, AddCashMovementAttachmentRequest request);
     CashMovementResponse signMovement(String movementNumber, String signedBy);
     CashMovementResponse markMovementPrinted(String movementNumber);

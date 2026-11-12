@@ -17,6 +17,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TicketAssignedToJsonTest {
 
     private static SupportDtos.SupportTicketResponse ticket(Long assignedTo) {
+ *
+ * <p>Les reponses HTTP passent par Jackson 3 : c'est lui qu'il faut interroger. Une annotation de
+ * Jackson 2 passait ce test avec un {@code ObjectMapper} de Jackson 2, et restait sans effet sur
+ * l'API.</p>
+ */
+class TicketAssignedToJsonTest {
+
+    private static final JsonMapper JSON = JsonMapper.builder().build();
+
+    private static SupportDtos.SupportTicketResponse ticket(String assignedTo) {
         return new SupportDtos.SupportTicketResponse("TCK-1", "Wifi", null, null, null, null, null, null, null, null, null,
                 assignedTo, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 List.of(), List.of(), List.of(), 0, 0, 0, 0);

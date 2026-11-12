@@ -124,7 +124,7 @@ public class PassCreationOperator {
                 .passNumber(sequenceGenerator.next("pass"))
                 .idempotencyKey(trim(request.idempotencyKey()))
                 .passType(request.passType())
-                .ownerType(request.ownerType())
+                .ownerType(owner.typeOr(request.ownerType()))
                 .ownerCode(owner.code())
                 .subscription(subscription)
                 .planVersion(planVersion)
@@ -171,10 +171,10 @@ public class PassCreationOperator {
         Instant validUntil = periodCalculator.periodEnd(validFrom, version.getDuration(), version.getDurationUnit());
 
         Pass pass = passRepository.save(Pass.builder()
-                .passNumber(codeFactory.nextPassNumber(request.ownerType(), version))
+                .passNumber(codeFactory.nextPassNumber(owner.typeOr(request.ownerType()), version))
                 .idempotencyKey(trim(request.idempotencyKey()))
                 .passType(version.getPlan().getPassType())
-                .ownerType(request.ownerType())
+                .ownerType(owner.typeOr(request.ownerType()))
                 .ownerCode(owner.code())
                 .passVersion(version)
                 .status(PassStatus.PENDING_ACTIVATION)

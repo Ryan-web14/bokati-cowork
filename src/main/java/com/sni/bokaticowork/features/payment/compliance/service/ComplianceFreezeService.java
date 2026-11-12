@@ -12,6 +12,7 @@ import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
 import com.sni.bokaticowork.features.payment.transfer.service.WalletNotifier;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -125,6 +126,8 @@ public class ComplianceFreezeService {
                 saved.getFreezeNumber() + " · " + liftReference.trim() + " · " + liftRationale.trim());
         notifier.securityEvent(locked, "WALLET_UNSUSPENDED", "Votre portefeuille est de nouveau actif",
                 Map.of("freezeNumber", saved.getFreezeNumber()));
+        // La vue du gel lit le portefeuille apres la transaction · charge ici, apres le verrou.
+        Hibernate.initialize(saved.getWallet());
         return saved;
     }
 

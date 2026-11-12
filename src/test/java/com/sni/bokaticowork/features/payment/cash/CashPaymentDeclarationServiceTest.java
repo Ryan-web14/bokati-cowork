@@ -284,7 +284,8 @@ class CashPaymentDeclarationServiceTest {
         ArgumentCaptor<RegisterCashPaymentRequest> captor = ArgumentCaptor.forClass(RegisterCashPaymentRequest.class);
         verify(paymentService).registerCashPayment(any(), captor.capture());
         assertThat(captor.getValue().cashSessionNumber()).isEqualTo("CSH-1");
-        assertThat(captor.getValue().receivedBy()).isEqualTo("caissier");
+        // L encaisseur est l utilisateur connecte, pas la valeur envoyee dans la requete (lot C0).
+        assertThat(captor.getValue().receivedBy()).isEqualTo("caisse@elleaose.com");
         verify(notifier).confirmed(any());
     }
 

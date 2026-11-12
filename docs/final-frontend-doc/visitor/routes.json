@@ -1,0 +1,324 @@
+{
+ "module": "visitor",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/visitors/log",
+   "package": "features.visitor.controller",
+   "controller": "VisitorManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/visitor/controller/VisitorManagementController.java",
+   "handler": "log",
+   "declaredIn": "VisitorManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('VISITOR:READ','VISITOR_READ')",
+    "kind": "admin",
+    "permission": "VISITOR:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.visitor.dto.VisitorDtos.VisitorLogResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/visitors/passes",
+   "package": "features.visitor.controller",
+   "controller": "VisitorManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/visitor/controller/VisitorManagementController.java",
+   "handler": "list",
+   "declaredIn": "VisitorManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('VISITOR:READ','VISITOR_READ')",
+    "kind": "admin",
+    "permission": "VISITOR:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.visitor.enums.VisitorPassStatus"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.visitor.dto.VisitorDtos.VisitorPassResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/visitors/passes",
+   "package": "features.visitor.controller",
+   "controller": "VisitorManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/visitor/controller/VisitorManagementController.java",
+   "handler": "create",
+   "declaredIn": "VisitorManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('VISITOR:WRITE','VISITOR_WRITE')",
+    "kind": "admin",
+    "permission": "VISITOR:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.visitor.dto.VisitorDtos.CreateVisitorPassRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.visitor.dto.VisitorDtos.VisitorPassResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/visitors/passes/today",
+   "package": "features.visitor.controller",
+   "controller": "VisitorManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/visitor/controller/VisitorManagementController.java",
+   "handler": "today",
+   "declaredIn": "VisitorManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('VISITOR:READ','VISITOR_READ')",
+    "kind": "admin",
+    "permission": "VISITOR:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.visitor.dto.VisitorDtos.VisitorPassResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/visitors/passes/{passNumber}/badge",
+   "package": "features.visitor.controller",
+   "controller": "VisitorManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/visitor/controller/VisitorManagementController.java",
+   "handler": "badge",
+   "declaredIn": "VisitorManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('VISITOR:READ','VISITOR_READ')",
+    "kind": "admin",
+    "permission": "VISITOR:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "passNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/visitors/{passNumber}/check-in",
+   "package": "features.visitor.controller",
+   "controller": "VisitorManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/visitor/controller/VisitorManagementController.java",
+   "handler": "checkIn",
+   "declaredIn": "VisitorManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('VISITOR:CHECKIN','VISITOR_CHECKIN')",
+    "kind": "admin",
+    "permission": "VISITOR:CHECKIN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.visitor.dto.VisitorDtos.CheckInRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "passNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.visitor.dto.VisitorDtos.VisitorPassResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/visitors/{passNumber}/check-out",
+   "package": "features.visitor.controller",
+   "controller": "VisitorManagementController",
+   "source": "src/main/java/com/sni/bokaticowork/features/visitor/controller/VisitorManagementController.java",
+   "handler": "checkOut",
+   "declaredIn": "VisitorManagementController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('VISITOR:CHECKIN','VISITOR_CHECKIN')",
+    "kind": "admin",
+    "permission": "VISITOR:CHECKIN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.visitor.dto.VisitorDtos.CheckInRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "passNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.visitor.dto.VisitorDtos.VisitorPassResponse>"
+  }
+ ],
+ "schemas": {
+  "VisitorDtos.VisitorLogResponse": {
+   "type": "object",
+   "properties": {
+    "passNumber": {
+     "type": "string"
+    },
+    "visitorName": {
+     "type": "string"
+    },
+    "hostName": {
+     "type": "string"
+    },
+    "checkedInAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checkedOutAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checkInAgent": {
+     "type": "string"
+    },
+    "checkOutAgent": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    }
+   }
+  },
+  "VisitorDtos.VisitorPassResponse": {
+   "type": "object",
+   "properties": {
+    "passNumber": {
+     "type": "string"
+    },
+    "fullName": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "company": {
+     "type": "string"
+    },
+    "hostMemberCode": {
+     "type": "string"
+    },
+    "hostName": {
+     "type": "string"
+    },
+    "validFrom": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "validUntil": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "purpose": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "SCHEDULED",
+      "CHECKED_IN",
+      "CHECKED_OUT",
+      "CANCELLED",
+      "EXPIRED"
+     ]
+    },
+    "qrValue": {
+     "type": "string"
+    }
+   }
+  },
+  "VisitorDtos.CreateVisitorPassRequest": {
+   "required": [
+    "fullName",
+    "validFrom",
+    "validUntil"
+   ],
+   "type": "object",
+   "properties": {
+    "fullName": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "company": {
+     "type": "string"
+    },
+    "hostMemberCode": {
+     "type": "string"
+    },
+    "hostName": {
+     "type": "string"
+    },
+    "validFrom": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "validUntil": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "purpose": {
+     "type": "string"
+    },
+    "createdBy": {
+     "type": "string"
+    }
+   }
+  },
+  "VisitorDtos.CheckInRequest": {
+   "type": "object",
+   "properties": {
+    "agent": {
+     "type": "string"
+    },
+    "notes": {
+     "type": "string"
+    }
+   }
+  }
+ },
+ "enums": {
+  "VisitorPassStatus": [
+   "SCHEDULED",
+   "CHECKED_IN",
+   "CHECKED_OUT",
+   "CANCELLED",
+   "EXPIRED"
+  ]
+ },
+ "names": {
+  "VisitorDtos.VisitorLogResponse": "com.sni.bokaticowork.features.visitor.dto.VisitorDtos.VisitorLogResponse",
+  "VisitorDtos.VisitorPassResponse": "com.sni.bokaticowork.features.visitor.dto.VisitorDtos.VisitorPassResponse",
+  "VisitorPassStatus": "com.sni.bokaticowork.features.visitor.enums.VisitorPassStatus",
+  "VisitorDtos.CreateVisitorPassRequest": "com.sni.bokaticowork.features.visitor.dto.VisitorDtos.CreateVisitorPassRequest",
+  "VisitorDtos.CheckInRequest": "com.sni.bokaticowork.features.visitor.dto.VisitorDtos.CheckInRequest"
+ }
+}

@@ -23,4 +23,6 @@ public interface ReferralProgramRepository extends JpaRepository<ReferralProgram
             ORDER BY id
             """)
     List<ReferralProgram> findOpen(@Param("now") Instant now);
+
+    List<ReferralProgram> findAllByOrderByCreatedAtDesc();
 }

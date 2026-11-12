@@ -173,6 +173,8 @@ DRAFT ──> PENDING_ACTIVATION ──────────────> ACT
 
 ## 3. Catalogue de plans — `/pass-plans`
 
+Les plans et leurs versions se désignent par leur code. `id` porte ce code dans les réponses : celui d'un plan, `{code du plan}-V{numéro}` pour une version, `{code de version}-{devise}` pour un prix, le code du droit pour un droit. L'achat accepte `planVersionId` avec le code de version ; vide, la version active du plan.
+
 ### 3.1 Référence des endpoints
 
 | Méthode | Chemin | Autorité | Description |
@@ -243,7 +245,7 @@ Tous les champs sont optionnels — seuls les champs fournis sont mis à jour.
 |---------|--------|----------|-------------|
 | POST | `/pass-plans/{planCode}/versions` | `PASS_PLAN:WRITE` | Créer une version |
 | GET | `/pass-plans/{planCode}/versions` | `PASS_PLAN:READ` | Lister les versions |
-| PATCH | `/pass-plans/{planCode}/versions/{id}/publish` | `PASS_PLAN:WRITE` | Publier la version |
+| PATCH | `/pass-plans/{planCode}/versions/{versionCode}/publish` | `PASS_PLAN:WRITE` | Publier la version |
 
 ### 4.1 Création d'une version
 
@@ -285,12 +287,12 @@ Tous les champs sont optionnels — seuls les champs fournis sont mis à jour.
 
 | Méthode | Chemin | Autorité | Description |
 |---------|--------|----------|-------------|
-| POST | `/pass-plans/versions/{versionId}/prices` | `PASS_PLAN:WRITE` | Définir/mettre à jour un prix |
-| GET | `/pass-plans/versions/{versionId}/prices` | `PASS_PLAN:READ` | Lister les prix |
+| POST | `/pass-plans/versions/{versionCode}/prices` | `PASS_PLAN:WRITE` | Définir/mettre à jour un prix |
+| GET | `/pass-plans/versions/{versionCode}/prices` | `PASS_PLAN:READ` | Lister les prix |
 
 ### 5.1 Définir un prix
 
-**`POST /pass-plans/versions/{versionId}/prices`**
+**`POST /pass-plans/versions/{versionCode}/prices`**
 
 ```json
 {
@@ -320,13 +322,13 @@ Tous les champs sont optionnels — seuls les champs fournis sont mis à jour.
 
 | Méthode | Chemin | Autorité | Description |
 |---------|--------|----------|-------------|
-| POST | `/pass-plans/versions/{versionId}/entitlements` | `PASS_PLAN:WRITE` | Ajouter un entitlement |
-| GET | `/pass-plans/versions/{versionId}/entitlements` | `PASS_PLAN:READ` | Lister les entitlements |
-| DELETE | `/pass-plans/versions/{versionId}/entitlements/{id}` | `PASS_PLAN:WRITE` | Supprimer |
+| POST | `/pass-plans/versions/{versionCode}/entitlements` | `PASS_PLAN:WRITE` | Ajouter un entitlement |
+| GET | `/pass-plans/versions/{versionCode}/entitlements` | `PASS_PLAN:READ` | Lister les entitlements |
+| DELETE | `/pass-plans/versions/{versionCode}/entitlements/{entitlementCode}` | `PASS_PLAN:WRITE` | Supprimer |
 
 ### 6.1 Ajouter un entitlement
 
-**`POST /pass-plans/versions/{versionId}/entitlements`**
+**`POST /pass-plans/versions/{versionCode}/entitlements`**
 
 ```json
 {

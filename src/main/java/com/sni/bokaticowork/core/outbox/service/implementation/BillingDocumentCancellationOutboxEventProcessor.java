@@ -15,6 +15,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -75,19 +77,20 @@ public class BillingDocumentCancellationOutboxEventProcessor implements OutboxEv
                     event.getEventType() + " payload missing documentNumber: " + event.getPayload());
         }
 
-        Booking booking = linkedBooking(documentNumber);
-        if (booking == null) {
+        List<Booking> bookings = linkedBookings(documentNumber);
+        if (bookings.isEmpty()) {
             log.debug("Cancelled document {} facturait autre chose qu'une reservation · rien a propager", documentNumber);
             return;
         }
-        if (booking.getStatus() == BookingStatus.CANCELLED) {
-            return;
+        for (Booking booking : bookings) {
+            if (booking.getStatus() == BookingStatus.CANCELLED) {
+                continue;
+            }
+            bookingService.systemCancel(booking.getBookingNumber(),
+                    "Annulation de la facture " + documentNumber);
+            log.info("Booking {} annulee a la suite de l'annulation de sa facture {}",
+                    booking.getBookingNumber(), documentNumber);
         }
-
-        bookingService.systemCancel(booking.getBookingNumber(),
-                "Annulation de la facture " + documentNumber);
-        log.info("Booking {} annulee a la suite de l'annulation de sa facture {}",
-                booking.getBookingNumber(), documentNumber);
     }
 
     /**
@@ -95,13 +98,20 @@ public class BillingDocumentCancellationOutboxEventProcessor implements OutboxEv
      * issue d'autre chose, un abonnement ou une vente au comptoir, ne donne rien et n'est pas une
      * anomalie.
      */
-    private Booking linkedBooking(String documentNumber) {
+    private List<Booking> linkedBookings(String documentNumber) {
         BillingDocument document = billingDocumentRepository.findByDocumentNumber(documentNumber).orElse(null);
         if (document == null || !BILLABLE_SOURCE_TYPE.equalsIgnoreCase(document.getSourceType())
                 || !StringUtils.hasText(document.getSourceCode())) {
-            return null;
+            return List.of();
         }
-        return bookingRepository.findByBillableNumber(document.getSourceCode()).orElse(null);
+        // Une facture de lot multi-ressources regle plusieurs elements, separes par des virgules.
+        return Arrays.stream(document.getSourceCode().split(","))
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .map(bookingRepository::findByBillableNumber)
+                .flatMap(java.util.Optional::stream)
+                .toList();
     }
 
     private String documentNumber(OutboxEvent event) {

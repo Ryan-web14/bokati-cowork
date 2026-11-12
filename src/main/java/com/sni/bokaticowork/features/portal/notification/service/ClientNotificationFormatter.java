@@ -70,6 +70,9 @@ public class ClientNotificationFormatter {
             case "SUBSCRIPTION_RENEWED" -> subscriptionMessage(
                     "Votre abonnement %s au plan %s a ete renouvele.",
                     payload);
+            case "SUBSCRIPTION_RENEWAL_PAYMENT_DUE" -> subscriptionMessage(
+                    "Reglez la facture de votre abonnement %s au plan %s pour le renouveler.",
+                    payload);
             case "SUBSCRIPTION_EXPIRED" -> subscriptionMessage(
                     "Votre abonnement %s au plan %s a expire.",
                     payload);

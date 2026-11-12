@@ -57,6 +57,9 @@ public class MailItemService {
     private final TransactionContextResolver contextResolver;
     private final OutboxService outboxService;
     private final SequenceGeneratorFacade sequenceGenerator;
+    /** Pour le retrait par un membre d'une organisation domiciliee · absents dans certains tests. */
+    private final DomiciliationCompanyAccess companyAccess;
+    private final com.sni.bokaticowork.features.client.member.repository.repo.MemberRepository memberRepository;
 
     @Value("${bokati.domiciliation.mail.storage-days:30}")
     private int storageDays;
@@ -65,7 +68,11 @@ public class MailItemService {
                           Integer weightGrams, String dimensions, String notes) {
     }
 
-    public record Collection(String collectedBy, String collectorIdDocument, String collectorSignatureUrl) {
+    /** @param collectorMemberId le membre qui retire · doit etre autorise a retirer le courrier du domicilie */
+    public record Collection(String collectedBy, String collectorIdDocument, String collectorSignatureUrl, String collectorMemberId) {
+        public Collection(String collectedBy, String collectorIdDocument, String collectorSignatureUrl) {
+            this(collectedBy, collectorIdDocument, collectorSignatureUrl, null);
+        }
     }
 
     public record Forwarding(String trackingNumber, BigDecimal transportCost) {
@@ -132,9 +139,24 @@ public class MailItemService {
     @Transactional
     public MailItem collect(String itemNumber, Collection collection, String handedOverBy) {
         MailItem item = open(itemNumber);
-        if (!StringUtils.hasText(collection.collectedBy())) {
+        String collectedBy = collection.collectedBy();
+        if (StringUtils.hasText(collection.collectorMemberId())) {
+            var member = memberRepository == null ? null
+                    : memberRepository.findByMemberIdAndDeletedFalse(collection.collectorMemberId().trim()).orElse(null);
+            if (member == null || companyAccess == null || !companyAccess.mayAccess(member, item.getContract())) {
+                throw new BadRequestException("Ce membre n'est pas autorisé à retirer le courrier de "
+                        + item.getContract().getLegalName() + " : seul le gérant ou un membre autorisé le peut.");
+            }
+            item.setCollectedByMember(member.getMemberId());
+            if (!StringUtils.hasText(collectedBy)) {
+                collectedBy = member.getDisplayName();
+            }
+        }
+        if (!StringUtils.hasText(collectedBy)) {
             throw new BadRequestException("Le nom de la personne qui retire le pli est requis");
         }
+        collection = new Collection(collectedBy, collection.collectorIdDocument(), collection.collectorSignatureUrl(),
+                collection.collectorMemberId());
         if (item.getMailType().requiresIdentityOnCollection() && !StringUtils.hasText(collection.collectorIdDocument())) {
             throw new BadRequestException("Un " + label(item.getMailType()).toLowerCase()
                     + " se remet contre pièce d'identité · indiquez sa référence");

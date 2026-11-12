@@ -33,6 +33,7 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.S
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPlanResolver;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionCodeFactory;
 import com.sni.bokaticowork.features.portal.notification.service.MemberInAppNotifier;
+import com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -69,11 +70,25 @@ public class SubscriptionCreationOperator {
     private final SubscriberKycLevelGuard kycGuard;
     private final SubscriptionPricingBridge pricingBridge;
     private final com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionCommitmentService commitmentService;
+    private final SubscriptionBillingLinkService billingLinkService;
+
+    /**
+     * Un prix negocie (devis accepte) : il remplace le tarif du catalogue des la creation, pour la
+     * premiere facture, les montants de l'abonnement et ses notifications. Ni promotion ni code de
+     * reduction ne s'y ajoutent : le prix negocie est deja la concession.
+     */
+    public record NegotiatedPrice(BigDecimal amount, BigDecimal setupFee) {
+    }
 
     public Subscription create(CreateSubscriptionRequest request) {
+        return create(request, null);
+    }
+
+    public Subscription create(CreateSubscriptionRequest request, NegotiatedPrice negotiated) {
         PlanVersion planVersion = planResolver.resolvePlanVersion(request.planCode(), request.planVersionId());
         PlanPrice price = planResolver.resolvePrice(planVersion, request.billingCycle());
         SubscriptionOwnerResolver.Owner owner = ownerResolver.resolve(request.subscriberType(), request.subscriberCode());
+        SubscriberType subscriberType = owner.typeOr(request.subscriberType());
         kycGuard.require(planVersion.getPlan() == null ? null : planVersion.getPlan().getRequiredKycLevel(),
                 owner, "plan");
 
@@ -84,23 +99,39 @@ public class SubscriptionCreationOperator {
         }
 
         LocalDate startDate = request.startDate();
-        String subscriptionNumber = codeFactory.nextSubscriptionNumber(request.subscriberType(), planVersion, price.getBillingCycle(), startDate);
+        String subscriptionNumber = codeFactory.nextSubscriptionNumber(subscriberType, planVersion, price.getBillingCycle(), startDate);
 
         // La remise s'applique avant la taxe : celle-ci porte sur ce que le client paie reellement,
         // pas sur un tarif catalogue qu'il ne paie jamais.
-        SubscriptionPricingBridge.PricedSubscription priced = pricingBridge.price(
-                request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
+        SubscriptionPricingBridge.PricedSubscription priced = negotiated != null ? null : pricingBridge.price(
+                subscriberType.name(), owner.code(), null, TargetScope.PLAN,
                 planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
                 price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
                 price.getCurrency(), price.getAmount(), price.getSetupFee(),
                 request.couponCodesOrEmpty(), true);
+        BigDecimal recurringAmount = negotiated != null ? negotiated.amount() : priced.recurringAmount();
+        BigDecimal setupFee = negotiated != null
+                ? (negotiated.setupFee() == null ? BigDecimal.ZERO : negotiated.setupFee())
+                : priced.setupFee();
 
+        // Premiere facture : periode, frais d'entree et caution
         PlanPriceAmountCalculator.Amounts priceAmounts = priceCalculator.compute(
-                priced.recurringAmount(), priced.setupFee(), price.getDepositAmount(), price.getTaxIncluded());
+                recurringAmount, setupFee, price.getDepositAmount(), price.getTaxIncluded());
+        // L'abonnement garde le prix de la periode seul, comme apres un changement de plan ou une
+        // derivation · le renouvellement, la proration, le gel et la resiliation le lisent comme
+        // tel. Y laisser frais d'entree et caution les refacturait a chaque renouvellement.
+        PlanPriceAmountCalculator.Amounts periodAmounts = priceCalculator.compute(
+                recurringAmount, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, price.getTaxIncluded());
+
+        // Facture ou paiement deja faits hors de l'abonnement : verifies avant toute ecriture.
+        SubscriptionBillingLinkService.Link link = StringUtils.hasText(request.existingInvoiceNumber()) || StringUtils.hasText(request.existingPaymentNumber())
+                ? billingLinkService.resolve(java.util.List.of(owner.code(), request.subscriberCode()), request.existingInvoiceNumber(),
+                request.existingPaymentNumber(), null, priceAmounts.total())
+                : null;
 
         Subscription subscription = Subscription.builder()
                 .subscriptionNumber(subscriptionNumber)
-                .subscriberType(request.subscriberType())
+                .subscriberType(subscriberType)
                 .subscriberCode(owner.code())
                 .member(owner.member())
                 .customer(owner.customer())
@@ -114,9 +145,9 @@ public class SubscriptionCreationOperator {
                 .autoRenew(request.autoRenew() == null || request.autoRenew())
                 .billingCycle(price.getBillingCycle())
                 .currency(price.getCurrency())
-                .subtotalAmount(priceAmounts.subtotal())
-                .taxAmount(priceAmounts.tax())
-                .totalAmount(priceAmounts.total())
+                .subtotalAmount(periodAmounts.subtotal())
+                .taxAmount(periodAmounts.tax())
+                .totalAmount(periodAmounts.total())
                 .metadataJson(trim(request.metadataJson()))
                 .build();
 
@@ -126,7 +157,7 @@ public class SubscriptionCreationOperator {
                 .subscription(saved)
                 .planVersion(planVersion)
                 .quantity(1)
-                .unitPrice(price.getAmount())
+                .unitPrice(negotiated != null ? negotiated.amount() : price.getAmount())
                 .currency(price.getCurrency())
                 .startDate(startDate)
                 .status(saved.getStatus())
@@ -138,15 +169,23 @@ public class SubscriptionCreationOperator {
         commitmentService.setFromPlan(saved, price.getCommitmentMonths());
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
-        billingSupport.createSubscriptionSetupItems(saved, priced.recurringAmount(), priced.setupFee(),
-                price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount());
-        pricingBridge.confirm(priced, request.subscriberType().name(), owner.code(), null, TargetScope.PLAN,
+        if (link == null) {
+            billingSupport.createSubscriptionSetupItems(saved, recurringAmount, setupFee,
+                    price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount(),
+                    priceAmounts.total());
+        } else {
+            // La premiere periode est deja facturee : pas de seconde facture.
+            billingLinkService.attach(saved, link, "SYSTEM");
+        }
+        if (priced != null) pricingBridge.confirm(priced, subscriberType.name(), owner.code(), null, TargetScope.PLAN,
                 planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
                 price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
                 price.getCurrency(), request.couponCodesOrEmpty(),
                 DiscountDocumentType.SUBSCRIPTION, saved.getSubscriptionNumber(), "SYSTEM");
 
-        if (saved.getTotalAmount().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
+        if (link != null && link.paid()) {
+            lifecycleOperator.activate(saved, "Validation sur la facture existante " + link.invoiceNumber() + " soldée", "SYSTEM");
+        } else if (priceAmounts.total().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
             lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");
         } else {
             // Pas d'auto-activation · envoyer l'email de création en attente de paiement

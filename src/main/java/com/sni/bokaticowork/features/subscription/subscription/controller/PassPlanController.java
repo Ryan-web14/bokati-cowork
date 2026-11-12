@@ -85,48 +85,48 @@ public class PassPlanController {
         return ResponseEntity.ok(passPlanService.listVersions(planCode));
     }
 
-    @PatchMapping("/{planCode}/versions/{id}/publish")
+    @PatchMapping("/{planCode}/versions/{versionCode}/publish")
     @PreAuthorize("hasAnyAuthority('PASS_PLAN:WRITE','PASS_PLAN_WRITE')")
     public ResponseEntity<PassPlanVersionResponse> publishVersion(@PathVariable String planCode,
-                                                                    @PathVariable Long id) {
-        return ResponseEntity.ok(passPlanService.publishVersion(id));
+                                                                    @PathVariable String versionCode) {
+        return ResponseEntity.ok(passPlanService.publishVersion(versionCode));
     }
 
     // ── Prices ───────────────────────────────────────────────────
 
-    @PostMapping("/versions/{versionId}/prices")
+    @PostMapping("/versions/{versionCode}/prices")
     @PreAuthorize("hasAnyAuthority('PASS_PLAN:WRITE','PASS_PLAN_WRITE')")
-    public ResponseEntity<PassPlanPriceResponse> setPrice(@PathVariable Long versionId,
+    public ResponseEntity<PassPlanPriceResponse> setPrice(@PathVariable String versionCode,
                                                            @Valid @RequestBody SetPassPlanPriceRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(passPlanService.setPrice(versionId, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(passPlanService.setPrice(versionCode, request));
     }
 
-    @GetMapping("/versions/{versionId}/prices")
+    @GetMapping("/versions/{versionCode}/prices")
     @PreAuthorize("hasAnyAuthority('PASS_PLAN:READ','PASS_PLAN_READ')")
-    public ResponseEntity<List<PassPlanPriceResponse>> listPrices(@PathVariable Long versionId) {
-        return ResponseEntity.ok(passPlanService.listPrices(versionId));
+    public ResponseEntity<List<PassPlanPriceResponse>> listPrices(@PathVariable String versionCode) {
+        return ResponseEntity.ok(passPlanService.listPrices(versionCode));
     }
 
     // ── Entitlements ─────────────────────────────────────────────
 
-    @PostMapping("/versions/{versionId}/entitlements")
+    @PostMapping("/versions/{versionCode}/entitlements")
     @PreAuthorize("hasAnyAuthority('PASS_PLAN:WRITE','PASS_PLAN_WRITE')")
-    public ResponseEntity<PassPlanEntitlementResponse> addEntitlement(@PathVariable Long versionId,
+    public ResponseEntity<PassPlanEntitlementResponse> addEntitlement(@PathVariable String versionCode,
                                                                        @Valid @RequestBody AddPassPlanEntitlementRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(passPlanService.addEntitlement(versionId, request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(passPlanService.addEntitlement(versionCode, request));
     }
 
-    @DeleteMapping("/versions/{versionId}/entitlements/{id}")
+    @DeleteMapping("/versions/{versionCode}/entitlements/{entitlementCode}")
     @PreAuthorize("hasAnyAuthority('PASS_PLAN:WRITE','PASS_PLAN_WRITE')")
-    public ResponseEntity<Void> removeEntitlement(@PathVariable Long versionId, @PathVariable Long id) {
-        passPlanService.removeEntitlement(id);
+    public ResponseEntity<Void> removeEntitlement(@PathVariable String versionCode, @PathVariable String entitlementCode) {
+        passPlanService.removeEntitlement(versionCode, entitlementCode);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/versions/{versionId}/entitlements")
+    @GetMapping("/versions/{versionCode}/entitlements")
     @PreAuthorize("hasAnyAuthority('PASS_PLAN:READ','PASS_PLAN_READ')")
-    public ResponseEntity<List<PassPlanEntitlementResponse>> listEntitlements(@PathVariable Long versionId) {
-        return ResponseEntity.ok(passPlanService.listEntitlements(versionId));
+    public ResponseEntity<List<PassPlanEntitlementResponse>> listEntitlements(@PathVariable String versionCode) {
+        return ResponseEntity.ok(passPlanService.listEntitlements(versionCode));
     }
 
     // ── Purchase ─────────────────────────────────────────────────

@@ -139,10 +139,8 @@ public class FinancialReportRepository {
                     cr.name                                                              AS register_name,
                     count(DISTINCT cs.id)                                               AS sessions_count,
                     coalesce(sum(cs.opening_amount), 0)                                 AS total_opening,
-                    coalesce(sum(cm.amount) FILTER (WHERE cm.movement_type IN (
-                        'PAYMENT','CASH_IN','TRANSFER_IN','OPENING_FLOAT')), 0)         AS cash_in,
-                    coalesce(sum(cm.amount) FILTER (WHERE cm.movement_type IN (
-                        'REFUND','CASH_OUT','TRANSFER_OUT','SAFE_DEPOSIT')), 0)         AS cash_out,
+                    coalesce(sum(cm.amount) FILTER (WHERE (cm.movement_type IN ('PAYMENT','CASH_IN','TRANSFER_IN') OR (cm.movement_type = 'ADJUSTMENT' AND COALESCE(cm.direction, 'IN') = 'IN'))), 0) AS cash_in,
+                    coalesce(sum(cm.amount) FILTER (WHERE (cm.movement_type IN ('REFUND','CASH_OUT','TRANSFER_OUT','SAFE_DEPOSIT') OR (cm.movement_type = 'ADJUSTMENT' AND cm.direction = 'OUT'))), 0) AS cash_out,
                     coalesce(sum(cs.variance_amount), 0)                                AS total_variance,
                     count(cm.id)                                                        AS movements_count
                 FROM cash_register cr
@@ -151,6 +149,7 @@ public class FinancialReportRepository {
                     AND (CAST(:to   AS timestamptz) IS NULL OR cs.opened_at <= CAST(:to   AS timestamptz))
                 LEFT JOIN cash_movement cm ON cm.cash_session_id = cs.id
                     AND cm.movement_type NOT IN ('OPENING_FLOAT','CLOSING_COUNT')
+                    AND cm.status IN ('CONFIRMED','REVERSED')
                 WHERE cr.active = true
                 GROUP BY cr.id, cr.register_code, cr.name
                 ORDER BY cash_in DESC
@@ -162,16 +161,17 @@ public class FinancialReportRepository {
         return list("""
                 SELECT
                     cm.movement_type,
-                    CASE WHEN cm.movement_type IN ('PAYMENT','CASH_IN','TRANSFER_IN','OPENING_FLOAT')
+                    CASE WHEN (cm.movement_type IN ('PAYMENT','CASH_IN','TRANSFER_IN') OR (cm.movement_type = 'ADJUSTMENT' AND COALESCE(cm.direction, 'IN') = 'IN'))
                          THEN 'IN' ELSE 'OUT' END AS direction,
                     count(*) AS mv_count,
                     coalesce(sum(cm.amount), 0) AS total_amount
                 FROM cash_movement cm
                 JOIN cash_session cs ON cs.id = cm.cash_session_id
                 WHERE cm.movement_type NOT IN ('OPENING_FLOAT','CLOSING_COUNT')
+                  AND cm.status IN ('CONFIRMED','REVERSED')
                   AND (CAST(:from AS timestamptz) IS NULL OR cm.created_at >= CAST(:from AS timestamptz))
                   AND (CAST(:to   AS timestamptz) IS NULL OR cm.created_at <= CAST(:to   AS timestamptz))
-                GROUP BY cm.movement_type
+                GROUP BY cm.movement_type, 2
                 ORDER BY total_amount DESC
                 """, from, to);
     }
@@ -181,13 +181,12 @@ public class FinancialReportRepository {
         return list("""
                 SELECT
                     DATE(cm.created_at AT TIME ZONE 'UTC') AS day,
-                    coalesce(sum(cm.amount) FILTER (WHERE cm.movement_type IN (
-                        'PAYMENT','CASH_IN','TRANSFER_IN')), 0) AS inflows,
-                    coalesce(sum(cm.amount) FILTER (WHERE cm.movement_type IN (
-                        'REFUND','CASH_OUT','TRANSFER_OUT','SAFE_DEPOSIT')), 0) AS outflows
+                    coalesce(sum(cm.amount) FILTER (WHERE (cm.movement_type IN ('PAYMENT','CASH_IN','TRANSFER_IN') OR (cm.movement_type = 'ADJUSTMENT' AND COALESCE(cm.direction, 'IN') = 'IN'))), 0) AS inflows,
+                    coalesce(sum(cm.amount) FILTER (WHERE (cm.movement_type IN ('REFUND','CASH_OUT','TRANSFER_OUT','SAFE_DEPOSIT') OR (cm.movement_type = 'ADJUSTMENT' AND cm.direction = 'OUT'))), 0) AS outflows
                 FROM cash_movement cm
                 JOIN cash_session cs ON cs.id = cm.cash_session_id
-                WHERE cm.movement_type NOT IN ('OPENING_FLOAT','CLOSING_COUNT','ADJUSTMENT')
+                WHERE cm.movement_type NOT IN ('OPENING_FLOAT','CLOSING_COUNT')
+                  AND cm.status IN ('CONFIRMED','REVERSED')
                   AND (CAST(:from AS timestamptz) IS NULL OR cm.created_at >= CAST(:from AS timestamptz))
                   AND (CAST(:to   AS timestamptz) IS NULL OR cm.created_at <= CAST(:to   AS timestamptz))
                 GROUP BY DATE(cm.created_at AT TIME ZONE 'UTC')

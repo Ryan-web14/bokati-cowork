@@ -20,7 +20,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -34,6 +36,59 @@ public class BookingBillableBridge {
     private final BillableItemInvoiceSupport billableItemInvoiceSupport;
     private final BillingEmailService billingEmailService;
     private final ObjectMapper objectMapper;
+    private final com.sni.bokaticowork.features.billing.repository.BillingDocumentRepository billingDocumentRepository;
+
+    /**
+     * Pendant la creation d'un lot multi-ressources, les elements facturables sont mis de cote au
+     * lieu d'etre factures un par un · le lot les facture ensuite par membre ({@link #invoiceGroup}).
+     */
+    private static final ThreadLocal<List<BillableItem>> DEFERRED = new ThreadLocal<>();
+
+    /** Met la facturation en attente pour le fil courant · a refermer par {@link #endDeferredInvoicing()}. */
+    public void beginDeferredInvoicing() {
+        DEFERRED.set(new ArrayList<>());
+    }
+
+    /** Rend les elements mis de cote depuis {@link #beginDeferredInvoicing()} et retablit la facturation immediate. */
+    public List<BillableItem> endDeferredInvoicing() {
+        List<BillableItem> items = DEFERRED.get();
+        DEFERRED.remove();
+        return items == null ? List.of() : items;
+    }
+
+    /**
+     * Une seule facture pour plusieurs elements d'un meme titulaire, envoyee au titulaire apres le
+     * commit comme la facture d'une reservation seule.
+     */
+    public BillingDocumentResponse invoiceGroup(List<BillableItem> items, String title, String description) {
+        BillingDocumentResponse issued = billableItemInvoiceSupport.ensureInvoicedGroup(items, title, description);
+        String email = items.isEmpty() ? null : items.get(0).getSubscriberEmail();
+        if (issued != null && StringUtils.hasText(email)) {
+            try {
+                dispatchInvoiceEmail(issued.documentNumber());
+            } catch (Exception ex) {
+                log.warn("Failed to send grouped booking invoice {} · billing already completed", issued.documentNumber(), ex);
+            }
+        }
+        return issued;
+    }
+
+    /**
+     * La facture de la reservation est-elle deja soldee · le cas d'une reservation de lot approuvee
+     * apres que le membre a regle la facture commune.
+     */
+    public boolean invoiceSettled(Booking booking) {
+        if (!StringUtils.hasText(booking.getBillableNumber())) {
+            return false;
+        }
+        return billableItemRepository.findByBillableNumber(booking.getBillableNumber())
+                .map(BillableItem::getInvoiceId)
+                .flatMap(billingDocumentRepository::findById)
+                .map(invoice -> invoice.getStatus() == com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus.PAID
+                        || (invoice.getBalanceDue() != null && invoice.getBalanceDue().signum() <= 0
+                        && invoice.getPaidAmount() != null && invoice.getPaidAmount().signum() > 0))
+                .orElse(false);
+    }
 
     public String ensureBillableItem(Booking booking) {
         if (StringUtils.hasText(booking.getBillableNumber())) {
@@ -65,6 +120,18 @@ public class BookingBillableBridge {
                 .billingPeriodEnd(booking.getEndedAt().toLocalDate())
                 .status(BillableItemStatus.PENDING)
                 .build());
+
+        List<BillableItem> deferred = DEFERRED.get();
+        if (deferred != null) {
+            deferred.add(item);
+            lineRepository.findByBookingId(booking.getId()).forEach(line -> {
+                if (line.getBillableNumber() == null) {
+                    line.setBillableNumber(item.getBillableNumber());
+                    lineRepository.save(line);
+                }
+            });
+            return item.getBillableNumber();
+        }
 
         BillingDocumentResponse issued = billableItemInvoiceSupport.ensureInvoiced(item, buildInvoiceTitle(booking), description);
 

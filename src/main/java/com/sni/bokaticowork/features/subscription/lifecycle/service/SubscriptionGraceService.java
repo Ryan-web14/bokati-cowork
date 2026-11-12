@@ -49,6 +49,16 @@ public class SubscriptionGraceService {
 
     @Transactional
     public boolean enter(Subscription subscription, String reason) {
+        return enter(subscription, reason, true);
+    }
+
+    /** Le renouvellement en attente a deja son propre message · la tolerance n'en ajoute pas un second. */
+    @Transactional
+    public boolean enterQuietly(Subscription subscription, String reason) {
+        return enter(subscription, reason, false);
+    }
+
+    private boolean enter(Subscription subscription, String reason, boolean notifySubscriber) {
         if (subscription.getStatus() != SubscriptionStatus.ACTIVE && subscription.getStatus() != SubscriptionStatus.TRIALING
                 && subscription.getStatus() != SubscriptionStatus.PAST_DUE) {
             return false;
@@ -58,8 +68,10 @@ public class SubscriptionGraceService {
         subscriptionRepository.save(subscription);
         eventWriter.writeEvent(subscription, SubscriptionEventType.GRACE_PERIOD_ENTERED,
                 com.sni.bokaticowork.core.utils.json.JsonPayload.of("reason", reason, "suspensionInDays", policy.getSuspensionAfterGraceDays()));
-        notify(subscription, "SUBSCRIPTION_GRACE_PERIOD", "Échéance impayée · votre abonnement " + subscription.getSubscriptionNumber(),
-                Map.of("daysBeforeSuspension", String.valueOf(policy.getSuspensionAfterGraceDays())));
+        if (notifySubscriber) {
+            notify(subscription, "SUBSCRIPTION_GRACE_PERIOD", "Échéance impayée · votre abonnement " + subscription.getSubscriptionNumber(),
+                    Map.of("daysBeforeSuspension", String.valueOf(policy.getSuspensionAfterGraceDays())));
+        }
         log.info("Abonnement {} · tolerance ({}), suspension dans {} jours", subscription.getSubscriptionNumber(), reason,
                 policy.getSuspensionAfterGraceDays());
         return true;

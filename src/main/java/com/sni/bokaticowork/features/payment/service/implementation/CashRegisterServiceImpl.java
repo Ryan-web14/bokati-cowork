@@ -71,36 +71,141 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final CashEmailNotifier emailNotifier;
     private final com.sni.bokaticowork.features.payment.repository.CashMovementAttachmentRepository attachmentRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
+    private final com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard accessGuard;
+    private final CashRegisterAdminServiceImpl registerAdmin;
+    private final com.sni.bokaticowork.features.payment.repository.CashOperationNatureRepository natureRepository;
+    @org.springframework.context.annotation.Lazy
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashSessionLifecycleService lifecycle;
 
     private static final String CASH_SESSIONS_PATH = "/payments/cash-registers/sessions/";
+
+    /** Delai du second visa d'une operation en attente ; au-dela, elle expire (lot C3). */
+    @Value("${bokati.cash.visa.expiry-hours:24}")
+    private int visaExpiryHours = 24;
+
+    /** Remboursement en especes au-dela duquel le virement ou le mobile money est impose ; 0 : sans limite. */
+    @Value("${bokati.cash.refund.max-cash-amount:0}")
+    private BigDecimal refundCashMax = BigDecimal.ZERO;
 
     @Value("${bokati.payment.cash-session.auto-limit:10000000}")
     private BigDecimal autoSessionLimit;
 
     @Override
     public CashRegisterResponse createRegister(CreateCashRegisterRequest request) {
+        com.sni.bokaticowork.features.payment.enums.CashRegisterType type = request.registerType() == null
+                ? com.sni.bokaticowork.features.payment.enums.CashRegisterType.COUNTER : request.registerType();
+        if (type == com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC) {
+            throw new BadRequestException("Une caisse automatique est creee par le systeme, pas a la main");
+        }
+        // Seuls le libelle et le type se choisissent : le reste est herite du type de caisse ou
+        // deduit du site, et reste modifiable ensuite sur la fiche (lot C1).
+        com.sni.bokaticowork.features.payment.service.support.CashRegisterTypeDefaults.Defaults defaults =
+                com.sni.bokaticowork.features.payment.service.support.CashRegisterTypeDefaults.of(type);
         String businessEntityCode = generateBusinessCode(request.businessEntityCode(), request.name());
         String deviceCode = generateDeviceCode(request.deviceCode(), request.name(), businessEntityCode);
         String registerCode = generateRegisterCode(request.name(), businessEntityCode, deviceCode);
+        String parent = trim(request.parentRegisterCode()) != null ? trim(request.parentRegisterCode())
+                : registerAdmin.defaultParent(type, request.locationCode());
+        CashRegister draft = CashRegister.builder().registerCode(registerCode).build();
+        registerAdmin.validateParent(draft, parent);
+        String acceptedMethods = CashRegisterAdminServiceImpl.joinMethods(request.acceptedMethods() != null
+                ? request.acceptedMethods() : defaults.acceptedMethods());
+        String acceptedCurrencies = CashRegisterAdminServiceImpl.joinCurrencies(request.acceptedCurrencies() != null
+                ? request.acceptedCurrencies() : defaults.acceptedCurrencies());
+        String recipients = CashRegisterAdminServiceImpl.joinEmails(request.alertRecipients());
+        if (recipients == null && StringUtils.hasText(request.managerEmail())) {
+            recipients = request.managerEmail().trim().toLowerCase(Locale.ROOT);
+        }
         CashRegister register = registerRepository.save(CashRegister.builder()
                 .registerCode(registerCode)
                 .name(request.name().trim())
+                .registerType(type)
+                .status(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE)
                 .locationCode(trim(request.locationCode()))
                 .businessEntityCode(businessEntityCode)
                 .deviceCode(deviceCode)
+                .parentRegisterCode(parent)
                 .active(true)
                 .cashControlEnabled(request.cashControlEnabled() == null || request.cashControlEnabled())
                 .maxCashAmount(request.maxCashAmount() == null ? null : money(request.maxCashAmount()))
                 .managerEmail(trim(request.managerEmail()))
+                .acceptedMethods(acceptedMethods)
+                .acceptedCurrencies(acceptedCurrencies == null ? CASH_CURRENCY : acceptedCurrencies)
+                .capBehavior(request.capBehavior() != null ? request.capBehavior() : defaults.capBehavior())
+                .maxOutPerOperation(positiveOrNull(request.maxOutPerOperation() != null ? request.maxOutPerOperation() : defaults.maxOutPerOperation()))
+                .maxOutPerDay(positiveOrNull(request.maxOutPerDay() != null ? request.maxOutPerDay() : defaults.maxOutPerDay()))
+                .standardFloat(positiveOrNull(request.standardFloat()))
+                .alertRecipients(recipients)
+                .updatedBy(actors.current())
                 .build());
+        registerAdmin.initializeRegister(register, request.schedules(), request.holderEmail(), request.backupEmails());
         return mapper.toCashRegisterResponse(register);
+    }
+
+    /** Sorties confirmees du jour par le meme caissier sur la caisse (hors ce mouvement). */
+    private BigDecimal dailyOutflow(CashRegister register, CashMovement movement) {
+        Instant startOfDay = java.time.LocalDate.now(com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.ZONE)
+                .atStartOfDay(com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.ZONE).toInstant();
+        BigDecimal total = BigDecimal.ZERO;
+        for (CashMovement other : movementRepository.findByCreatedByOrderByCreatedAtDesc(movement.getCreatedBy())) {
+            if (other.getCreatedAt() == null || other.getCreatedAt().isBefore(startOfDay)) {
+                break;
+            }
+            if (other.getId() != null && other.getId().equals(movement.getId())) {
+                continue;
+            }
+            if (other.getCashSession() != null && register.getRegisterCode().equals(other.getCashSession().getCashRegister().getRegisterCode())) {
+                BigDecimal signed = com.sni.bokaticowork.features.payment.service.support.CashFlowRules.signedAmount(other);
+                if (signed.signum() < 0) {
+                    total = total.add(signed.negate());
+                }
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Plafond de detention (lot C4), enfin applique : en mode blocage, un encaissement en especes
+     * qui le depasserait est refuse jusqu'a une remise ; en mode alerte, il passe et le responsable
+     * est prevenu.
+     */
+    private void enforceDetentionCap(CashSession session, BigDecimal amount) {
+        CashRegister register = session.getCashRegister();
+        if (amount == null || register == null || Boolean.TRUE.equals(register.getSystemManaged())
+                || Boolean.FALSE.equals(register.getCashControlEnabled())
+                || register.getMaxCashAmount() == null || register.getMaxCashAmount().signum() <= 0) {
+            return;
+        }
+        BigDecimal after = money(summarySupport.expectedClosingAmount(session)).add(amount);
+        if (after.compareTo(register.getMaxCashAmount()) <= 0) {
+            return;
+        }
+        if (register.getCapBehavior() == com.sni.bokaticowork.features.payment.enums.CashCapBehavior.BLOCK) {
+            throw new BadRequestException("Plafond de detention de la caisse " + register.getRegisterCode() + " atteint ("
+                    + register.getMaxCashAmount().stripTrailingZeros().toPlainString()
+                    + " XAF) : faites une remise a la caisse mere avant d'encaisser en especes");
+        }
+        Instant lastSent = register.getLastAnomalyAlertSentAt();
+        if (lastSent == null || lastSent.isBefore(Instant.now().minus(java.time.Duration.ofHours(6)))) {
+            emailNotifier.notifyRegisterManager(register, "Plafond de detention depasse · " + register.getRegisterCode(),
+                    "La caisse " + register.getName() + " detiendra " + after.stripTrailingZeros().toPlainString()
+                            + " XAF, au-dela de son plafond de " + register.getMaxCashAmount().stripTrailingZeros().toPlainString()
+                            + " XAF. Faites une remise a la caisse mere.",
+                    session.getSessionNumber(), CASH_SESSIONS_PATH + session.getSessionNumber());
+            register.setLastAnomalyAlertSentAt(Instant.now());
+            registerRepository.save(register);
+        }
+    }
+
+    private BigDecimal positiveOrNull(BigDecimal amount) {
+        return amount == null || amount.signum() <= 0 ? null : money(amount);
     }
 
     @Override
     public CashRegisterResponse activateRegister(String registerCode) {
-        CashRegister register = register(registerCode);
-        register.setActive(true);
-        return mapper.toCashRegisterResponse(registerRepository.save(register));
+        registerAdmin.reactivate(registerCode);
+        return mapper.toCashRegisterResponse(register(registerCode));
     }
 
     @Override
@@ -112,7 +217,14 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         throw new BadRequestException("Cash register has an active session");
                     });
         }
+        // Forme historique de la suspension : sans motif de la liste, la desactivation est tracee comme telle.
+        if (register.getStatus() == com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.CLOSED) {
+            throw new BadRequestException("La caisse " + register.getRegisterCode() + " est fermee");
+        }
+        register.setStatus(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.SUSPENDED);
         register.setActive(false);
+        register.setStatusReason("Desactivation");
+        register.setUpdatedBy(actors.current());
         return mapper.toCashRegisterResponse(registerRepository.save(register));
     }
 
@@ -131,29 +243,94 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Override
     public CashSessionResponse openSession(OpenCashSessionRequest request) {
         CashRegister register = register(request.registerCode());
-        if (!Boolean.TRUE.equals(register.getActive())) {
-            throw new BadRequestException("Cash register is inactive");
-        }
         assertManualEntryAllowed(register);
+        String openedBy = actors.resolve(request.openedBy());
+        // Caisse active, personne affectee, poste autorise, horaires (lot C1).
+        com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.OpeningClearance clearance =
+                accessGuard.assertCanOpen(register, openedBy, request.deviceCode(),
+                        request.outOfHoursReasonCode(), request.outOfHoursReasonText());
         sessionRepository.findBlockingSessionByCashRegisterId(register.getId())
                 .ifPresent(session -> {
                     throw new BadRequestException("Cash register already has an active session");
                 });
-        sessionRepository.findBlockingSessionByOpenedBy(request.openedBy().trim())
+        sessionRepository.findBlockingSessionByOpenedBy(openedBy)
                 .ifPresent(session -> {
                     throw new BadRequestException("Cashier already has an active cash session");
                 });
+        // Continuite du fonds (lot C2) : le fonds attendu est le dernier comptage de la caisse ; un
+        // fonds compte different est un ecart d'ouverture, a motiver avant toute operation.
+        BigDecimal counted = request.openingCount() != null
+                ? openingCountTotal(register, request.openingCount())
+                : money(request.openingAmount() == null ? BigDecimal.ZERO : request.openingAmount());
+        BigDecimal expectedOpening = register.getLastCountAt() == null ? null
+                : money(register.getLastCountAmount() == null ? BigDecimal.ZERO : register.getLastCountAmount());
+        BigDecimal openingVariance = expectedOpening == null ? BigDecimal.ZERO.setScale(4) : counted.subtract(expectedOpening);
+        if (openingVariance.signum() != 0 && request.openingCount() == null
+                && Boolean.TRUE.equals(register.getCountLinesRequired())) {
+            throw new BadRequestException("Le fonds differe du dernier comptage de la caisse ("
+                    + expectedOpening.stripTrailingZeros().toPlainString() + " XAF) : saisissez le billetage d'ouverture");
+        }
         CashSession session = sessionRepository.save(CashSession.builder()
                 .sessionNumber(sequenceGenerator.next("cash_session"))
                 .cashRegister(register)
-                .status(CashSessionStatus.OPEN)
-                .openedBy(request.openedBy().trim())
-                .openingAmount(money(request.openingAmount() == null ? BigDecimal.ZERO : request.openingAmount()))
+                .status(openingVariance.signum() == 0 ? CashSessionStatus.OPEN : CashSessionStatus.OPENING)
+                .openedBy(openedBy)
+                .openingAmount(counted)
+                .expectedOpeningAmount(expectedOpening)
+                .openingVariance(openingVariance)
+                .openedFromDevice(clearance.deviceCode())
+                .outOfHoursReason(clearance.outOfHoursReason())
                 .build());
+        if (request.openingCount() != null) {
+            lifecycle.recordOpeningCount(session, request.openingCount(), expectedOpening);
+        }
         if (session.getOpeningAmount().signum() > 0) {
             saveMovement(session, CashMovementType.OPENING_FLOAT, session.getOpeningAmount(), CashDocumentType.CASH_VOUCHER,
                     session.getSessionNumber(), "OPENING_FLOAT", "CASH_SESSION", session.getSessionNumber(),
                     "INTERNAL", register.getBusinessEntityCode(), register.getName(), "Opening float", session.getOpenedBy(), null);
+        }
+        return mapper.toCashSessionResponse(session);
+    }
+
+    private BigDecimal openingCountTotal(CashRegister register, com.sni.bokaticowork.features.payment.dto.request.CashCountRequest count) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.Line line
+                : count.lines() == null ? java.util.List.<com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.Line>of() : count.lines()) {
+            if (line != null && line.value() != null && line.quantity() != null) {
+                total = total.add(line.value().multiply(BigDecimal.valueOf(line.quantity())));
+            }
+        }
+        if ((count.lines() == null || count.lines().isEmpty()) && count.totalAmount() != null) {
+            total = count.totalAmount();
+        }
+        return money(total);
+    }
+
+    @Override
+    public CashSessionResponse openSessionFromHandover(String registerCode, String incoming, BigDecimal amount,
+                                                       String handoverNumber, String deviceCode) {
+        CashRegister register = register(registerCode);
+        // L'entrant doit pouvoir tenir la caisse : meme controle qu'a une ouverture ordinaire.
+        accessGuard.assertCanOpen(register, incoming, deviceCode, "CATCH_UP", "Passation " + handoverNumber);
+        sessionRepository.findBlockingSessionByOpenedBy(incoming).ifPresent(existing -> {
+            throw new BadRequestException(incoming + " a deja une session active : " + existing.getSessionNumber());
+        });
+        BigDecimal opening = money(amount);
+        CashSession session = sessionRepository.save(CashSession.builder()
+                .sessionNumber(sequenceGenerator.next("cash_session"))
+                .cashRegister(register)
+                .status(CashSessionStatus.OPEN)
+                .openedBy(incoming)
+                .openingAmount(opening)
+                .expectedOpeningAmount(opening)
+                .openingVariance(BigDecimal.ZERO.setScale(4))
+                .handoverNumber(handoverNumber)
+                .openedFromDevice(deviceCode)
+                .build());
+        if (opening.signum() > 0) {
+            saveMovement(session, CashMovementType.OPENING_FLOAT, opening, CashDocumentType.CASH_VOUCHER,
+                    session.getSessionNumber(), "OPENING_FLOAT", "CASH_HANDOVER", handoverNumber,
+                    "INTERNAL", register.getBusinessEntityCode(), register.getName(), "Fonds recu par passation " + handoverNumber, incoming, null);
         }
         return mapper.toCashSessionResponse(session);
     }
@@ -174,7 +351,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Override
     public CashSessionResponse closeSession(String sessionNumber, CloseCashSessionRequest request) {
-        CashSession session = requireOpenSession(sessionNumber);
+        CashSession session = session(sessionNumber);
         // Une caisse automatique se clot sur son seuil, pas sur un comptage · il n'y a pas d'especes
         // a compter, et un ecart declare a la main y serait un ecart invente.
         assertManualEntryAllowed(session.getCashRegister());
@@ -182,72 +359,19 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (countedAmount == null) {
             throw new BadRequestException("Counted closing amount is required");
         }
-        BigDecimal counted = money(countedAmount);
-        BigDecimal expected = money(summarySupport.expectedClosingAmount(session));
-        BigDecimal variance = counted.subtract(expected);
-        if (variance.signum() != 0 && !StringUtils.hasText(request.varianceReason())) {
-            throw new BadRequestException("Variance reason is required when counted amount differs from expected amount");
-        }
-        Instant now = Instant.now();
-        session.setClosedBy(request.closedBy().trim());
-        session.setClosingAmount(counted);
-        session.setExpectedClosingAmount(expected);
-        session.setCountedClosingAmount(counted);
-        session.setVarianceAmount(variance);
-        session.setVarianceReason(trim(request.varianceReason()));
-        session.setClosingRequestedAt(now);
-        if (variance.signum() == 0) {
-            session.setStatus(CashSessionStatus.CLOSED);
-            session.setClosedAt(now);
-            finalized(session.getSessionNumber(), false, null, null);
-        } else {
-            session.setStatus(CashSessionStatus.CLOSING_REVIEW);
-        }
-        CashSession saved = sessionRepository.save(session);
-        if (variance.signum() != 0) {
-            emailNotifier.notifySupervisor(
-                    "Écart de caisse à valider · " + saved.getSessionNumber(),
-                    "La session " + saved.getSessionNumber() + " ouverte par " + saved.getOpenedBy()
-                            + " a été clôturée par " + saved.getClosedBy() + " avec un écart de " + variance
-                            + " " + CASH_CURRENCY + " (montant attendu : " + expected + ", montant compté : " + counted
-                            + "). Motif déclaré : " + trim(request.varianceReason())
-                            + ". Une validation par un superviseur est requise.",
-                    saved.getSessionNumber(),
-                    CASH_SESSIONS_PATH + saved.getSessionNumber()
-            );
-        }
-        eventPublisher.publishEvent(new com.sni.bokaticowork.features.payment.service.support.CashSessionClosedEvent(saved.getSessionNumber()));
-        return mapper.toCashSessionResponse(saved);
+        // Forme historique de la cloture : un total compte et un motif libre. Le cycle de vie
+        // (lot C2) applique tolerance, double comptage, revue et dernier comptage.
+        return lifecycle.submitClosingCount(sessionNumber,
+                com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.ofTotal(money(countedAmount), request.varianceReason()))
+                .session();
     }
 
     @Override
     public CashSessionResponse approveVariance(String sessionNumber, ApproveCashVarianceRequest request) {
-        CashSession session = session(sessionNumber);
-        if (session.getStatus() != CashSessionStatus.CLOSING_REVIEW) {
-            throw new BadRequestException("Cash session is not waiting for variance review");
-        }
-        session.setReviewedBy(request.reviewedBy().trim());
-        session.setReviewedAt(Instant.now());
-        if (StringUtils.hasText(request.note())) {
-            String currentReason = trim(session.getVarianceReason());
-            session.setVarianceReason((currentReason == null ? "" : currentReason + " | ") + "Review: " + request.note().trim());
-        }
-        session.setStatus(CashSessionStatus.CLOSED);
-        session.setClosedAt(Instant.now());
-        CashSession saved = sessionRepository.save(session);
-        finalized(saved.getSessionNumber(), false, "Écart validé par " + saved.getReviewedBy(), null);
-        emailNotifier.notifyUser(
-                saved.getOpenedBy(),
-                "Écart de caisse validé · " + saved.getSessionNumber(),
-                "L'écart de " + trim(saved.getVarianceAmount() == null ? null : saved.getVarianceAmount().toPlainString())
-                        + " " + CASH_CURRENCY + " constaté sur votre session " + saved.getSessionNumber()
-                        + " a été validé par " + saved.getReviewedBy()
-                        + (StringUtils.hasText(request.note()) ? (" · Note : " + request.note().trim()) : "")
-                        + ". La session est désormais clôturée.",
-                saved.getSessionNumber(),
-                CASH_SESSIONS_PATH + saved.getSessionNumber()
-        );
-        return mapper.toCashSessionResponse(saved);
+        // Forme historique : la decision par defaut (charge pour un manquant, produit pour un excedent).
+        return lifecycle.decideSessionVariance(sessionNumber,
+                new com.sni.bokaticowork.features.payment.dto.request.CashVarianceDecisionRequest(null, request.note(), null))
+                .session();
     }
 
     @Override
@@ -266,7 +390,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         .contentType(trim(request.contentType()))
                         .storagePath(request.storagePath().trim())
                         .label(trim(request.label()))
-                        .uploadedBy(trim(request.uploadedBy()))
+                        .uploadedBy(actors.resolve(request.uploadedBy()))
                         .build();
         attachmentRepository.save(attachment);
         return mapper.toCashMovementResponse(movement);
@@ -274,11 +398,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Override
     public CashMovementResponse signMovement(String movementNumber, String signedBy) {
-        if (!StringUtils.hasText(signedBy)) {
-            throw new BadRequestException("Signer identifier is required");
-        }
+        String signer = actors.resolve(signedBy);
         CashMovement movement = movementByNumber(movementNumber);
-        movement.setSignedBy(signedBy.trim());
+        movement.setSignedBy(signer);
         movement.setSignedAt(Instant.now());
         return mapper.toCashMovementResponse(movementRepository.save(movement));
     }
@@ -286,7 +408,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     @Override
     public CashMovementResponse markMovementPrinted(String movementNumber) {
         CashMovement movement = movementByNumber(movementNumber);
-        movement.setPrintedAt(Instant.now());
+        // Reimpression tracee (lot C4) : la date de premiere impression reste, le compteur et le
+        // dernier auteur avancent ; au-dela de la premiere, la piece sort en DUPLICATA.
+        if (movement.getPrintedAt() == null) {
+            movement.setPrintedAt(Instant.now());
+        }
+        movement.setPrintCount((movement.getPrintCount() == null ? 0 : movement.getPrintCount()) + 1);
+        movement.setLastPrintedBy(actors.current());
         return mapper.toCashMovementResponse(movementRepository.save(movement));
     }
 
@@ -311,9 +439,26 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (type == CashMovementType.PAYMENT || type == CashMovementType.OPENING_FLOAT || type == CashMovementType.CLOSING_COUNT) {
             throw new BadRequestException("Movement type is system managed");
         }
+        if (type == CashMovementType.ADJUSTMENT
+                && request.direction() != com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN
+                && request.direction() != com.sni.bokaticowork.features.payment.enums.CashFlowDirection.OUT) {
+            throw new BadRequestException("Un ajustement de caisse doit preciser son sens : IN (entree) ou OUT (sortie)");
+        }
+        if (type == CashMovementType.CASH_IN) {
+            enforceDetentionCap(session, request.amount());
+        }
+        if (type == CashMovementType.REFUND && refundCashMax != null && refundCashMax.signum() > 0
+                && request.amount() != null && request.amount().compareTo(refundCashMax) > 0) {
+            throw new BadRequestException("Au-dela de " + refundCashMax.stripTrailingZeros().toPlainString()
+                    + " XAF, un remboursement se fait par virement ou mobile money, pas en especes");
+        }
+        com.sni.bokaticowork.features.payment.model.CashOperationNature nature = nature(request.natureCode(), type, request.amount(), request.referenceType());
         CashMovement movement = saveManualMovement(session, type, request.amount(), request.documentType(), request.documentNumber(),
-                request.flowCategory(), request.referenceType(), request.referenceCode(), request.counterpartyType(),
-                request.counterpartyCode(), request.counterpartyName(), request.reason(), request.createdBy(), request.metadataJson());
+                nature == null ? request.flowCategory() : nature.getCode(), request.referenceType(), request.referenceCode(), request.counterpartyType(),
+                request.counterpartyCode(), request.counterpartyName(),
+                nature != null && !StringUtils.hasText(request.reason()) ? nature.getLabel() : request.reason(), request.createdBy(), request.metadataJson(),
+                type == CashMovementType.ADJUSTMENT ? request.direction() : null);
+        movement = applyOperationRules(movement, nature);
         movement = applyEnrichments(movement, request);
         return mapper.toCashMovementResponse(movement);
     }
@@ -354,58 +499,156 @@ public class CashRegisterServiceImpl implements CashRegisterService {
             movement.setTags(request.tags().trim());
             changed = true;
         }
+        // Lot F3 : journal choisi et donnees comptables de la piece.
+        if (StringUtils.hasText(request.journalCode())) {
+            movement.setJournalCode(request.journalCode().trim().toUpperCase(java.util.Locale.ROOT));
+            changed = true;
+        }
+        if (request.vatAmount() != null) {
+            if (request.vatAmount().signum() < 0 || request.vatAmount().compareTo(movement.getAmount()) >= 0) {
+                throw new BadRequestException("La TVA doit etre positive et inferieure au montant du mouvement");
+            }
+            movement.setVatAmount(money(request.vatAmount()));
+            movement.setVatCode(trim(request.vatCode()));
+            changed = true;
+        }
+        if (StringUtils.hasText(request.supplierCode())) {
+            movement.setSupplierCode(request.supplierCode().trim());
+            changed = true;
+        }
+        if (StringUtils.hasText(request.beneficiaryName()) || StringUtils.hasText(request.beneficiaryIdNumber())
+                || StringUtils.hasText(request.beneficiaryPhone())) {
+            movement.setBeneficiaryName(trim(request.beneficiaryName()));
+            movement.setBeneficiaryIdNumber(trim(request.beneficiaryIdNumber()));
+            movement.setBeneficiaryPhone(trim(request.beneficiaryPhone()));
+            changed = true;
+        }
+        if (StringUtils.hasText(request.requestNumber())) {
+            movement.setRequestNumber(request.requestNumber().trim());
+            changed = true;
+        }
         BigDecimal runningBalance = computeRunningBalance(movement);
         movement.setRunningBalance(runningBalance);
         return changed || runningBalance != null ? movementRepository.save(movement) : movement;
     }
 
+    /**
+     * Solde de la session juste apres ce mouvement.
+     *
+     * <p>Il part de zero : le fonds d'ouverture est deja un mouvement {@code OPENING_FLOAT}. Partir
+     * du fonds d'ouverture, comme avant, le comptait deux fois. Le sens vient de la regle unique
+     * ({@link com.sni.bokaticowork.features.payment.service.support.CashFlowRules}).</p>
+     */
     private BigDecimal computeRunningBalance(CashMovement movement) {
         CashSession session = movement.getCashSession();
-        if (session == null) {
+        if (session == null || session.getId() == null) {
             return null;
         }
-        BigDecimal balance = safeAmount(session.getOpeningAmount());
+        BigDecimal balance = BigDecimal.ZERO;
         for (CashMovement entry : movementRepository.findByCashSession_IdOrderByCreatedAtAsc(session.getId())) {
-            balance = applyDirection(balance, entry);
-            if (entry.getId().equals(movement.getId())) {
-                return balance.setScale(4, RoundingMode.HALF_UP);
+            if (entry.getId() != null && entry.getId().equals(movement.getId())) {
+                break;
             }
+            balance = balance.add(com.sni.bokaticowork.features.payment.service.support.CashFlowRules.signedAmount(entry));
         }
-        return balance.setScale(4, RoundingMode.HALF_UP);
-    }
-
-    private BigDecimal applyDirection(BigDecimal balance, CashMovement entry) {
-        return switch (entry.getMovementType()) {
-            case PAYMENT, CASH_IN, TRANSFER_IN, OPENING_FLOAT -> balance.add(entry.getAmount());
-            case REFUND, CASH_OUT, SAFE_DEPOSIT, TRANSFER_OUT -> balance.subtract(entry.getAmount());
-            case ADJUSTMENT, CLOSING_COUNT -> balance;
-        };
-    }
-
-    private BigDecimal safeAmount(BigDecimal amount) {
-        return amount == null ? BigDecimal.ZERO : amount;
+        return balance.add(com.sni.bokaticowork.features.payment.service.support.CashFlowRules.signedAmount(movement)).setScale(4, RoundingMode.HALF_UP);
     }
 
     @Override
     public CashMovementResponse createEntryVoucher(String sessionNumber, CreateCashVoucherRequest request) {
-        CashSession session = requireOpenSession(sessionNumber);
-        CashMovement movement = saveManualMovement(session, CashMovementType.CASH_IN, request.amount(),
-                request.documentType() == null ? CashDocumentType.ENTRY_VOUCHER : request.documentType(),
-                request.documentNumber(), request.flowCategory(), request.referenceType(), request.referenceCode(),
-                request.counterpartyType(), request.counterpartyCode(), request.counterpartyName(), request.reason(),
-                request.createdBy(), request.metadataJson());
-        return mapper.toCashMovementResponse(movement);
+        return voucher(sessionNumber, CashMovementType.CASH_IN, CashDocumentType.ENTRY_VOUCHER, request);
     }
 
     @Override
     public CashMovementResponse createExitVoucher(String sessionNumber, CreateCashVoucherRequest request) {
+        return voucher(sessionNumber, CashMovementType.CASH_OUT, CashDocumentType.EXIT_VOUCHER, request);
+    }
+
+    private CashMovementResponse voucher(String sessionNumber, CashMovementType type, CashDocumentType defaultDocument,
+                                         CreateCashVoucherRequest request) {
         CashSession session = requireOpenSession(sessionNumber);
-        CashMovement movement = saveManualMovement(session, CashMovementType.CASH_OUT, request.amount(),
-                request.documentType() == null ? CashDocumentType.EXIT_VOUCHER : request.documentType(),
-                request.documentNumber(), request.flowCategory(), request.referenceType(), request.referenceCode(),
-                request.counterpartyType(), request.counterpartyCode(), request.counterpartyName(), request.reason(),
+        if (type == CashMovementType.CASH_IN) {
+            enforceDetentionCap(session, request.amount());
+        }
+        com.sni.bokaticowork.features.payment.model.CashOperationNature nature = nature(request.natureCode(), type, request.amount(), request.referenceType());
+        CashMovement movement = saveManualMovement(session, type, request.amount(),
+                request.documentType() == null ? defaultDocument : request.documentType(),
+                request.documentNumber(), nature == null ? request.flowCategory() : nature.getCode(), request.referenceType(), request.referenceCode(),
+                request.counterpartyType(), request.counterpartyCode(), request.counterpartyName(),
+                nature != null && !StringUtils.hasText(request.reason()) ? nature.getLabel() : request.reason(),
                 request.createdBy(), request.metadataJson());
+        movement = applyOperationRules(movement, nature);
         return mapper.toCashMovementResponse(movement);
+    }
+
+    /**
+     * Nature d'operation choisie (lot C3) : active, de meme sens que l'operation, dans son plafond,
+     * et passee par une demande de fonds quand la nature l'exige.
+     */
+    private com.sni.bokaticowork.features.payment.model.CashOperationNature nature(String natureCode, CashMovementType type,
+                                                                                    BigDecimal amount, String referenceType) {
+        if (!StringUtils.hasText(natureCode)) {
+            return null;
+        }
+        com.sni.bokaticowork.features.payment.model.CashOperationNature nature = natureRepository.findByCode(natureCode.trim().toUpperCase(Locale.ROOT))
+                .orElseThrow(() -> new BadRequestException("Nature d'operation inconnue : " + natureCode));
+        if (!Boolean.TRUE.equals(nature.getActive())) {
+            throw new BadRequestException("La nature « " + nature.getLabel() + " » n'est plus proposee");
+        }
+        if (type != CashMovementType.ADJUSTMENT && nature.getMovementType() != type) {
+            throw new BadRequestException("La nature « " + nature.getLabel() + " » est une "
+                    + (nature.getDirection() == com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN ? "entree" : "sortie") + " : elle ne convient pas a cette operation");
+        }
+        boolean fromRequest = "CASH_REQUEST".equalsIgnoreCase(referenceType) || "FUND_REQUEST".equalsIgnoreCase(referenceType);
+        if (Boolean.TRUE.equals(nature.getPriorRequestRequired()) && !fromRequest) {
+            throw new BadRequestException("« " + nature.getLabel() + " » passe par une demande de fonds approuvee");
+        }
+        if (nature.getMaxPerOperation() != null && amount != null && amount.compareTo(nature.getMaxPerOperation()) > 0 && !fromRequest) {
+            throw new BadRequestException("Au-dela de " + nature.getMaxPerOperation().stripTrailingZeros().toPlainString()
+                    + " XAF, « " + nature.getLabel() + " » passe par une demande de fonds");
+        }
+        nature.setUsageCount((nature.getUsageCount() == null ? 0L : nature.getUsageCount()) + 1);
+        natureRepository.save(nature);
+        return nature;
+    }
+
+    /**
+     * Mouvements en attente (lot C3) : un ajustement attend toujours le visa d'un superviseur ; une
+     * sortie au-dela du seuil de double visa (de la nature, sinon de la caisse) attend un second
+     * visa. En attente, l'operation ne touche pas au solde et expire sans visa.
+     */
+    private CashMovement applyOperationRules(CashMovement movement, com.sni.bokaticowork.features.payment.model.CashOperationNature nature) {
+        boolean changed = false;
+        if (nature != null) {
+            movement.setNatureCode(nature.getCode());
+            changed = true;
+        }
+        BigDecimal threshold = nature != null && nature.getDoubleVisaThreshold() != null ? nature.getDoubleVisaThreshold()
+                : movement.getCashSession().getCashRegister().getDoubleVisaThreshold();
+        boolean outflow = com.sni.bokaticowork.features.payment.service.support.CashFlowRules
+                .direction(movement.getMovementType(), movement.getDirection()) == com.sni.bokaticowork.features.payment.enums.CashFlowDirection.OUT;
+        CashRegister register = movement.getCashSession().getCashRegister();
+        // Plafonds de sortie du caissier (lot C4) : au-dela, le visa d'un caissier principal ou
+        // d'un superviseur est exige.
+        boolean overOperationCap = outflow && register.getMaxOutPerOperation() != null && register.getMaxOutPerOperation().signum() > 0
+                && movement.getAmount().compareTo(register.getMaxOutPerOperation()) > 0;
+        boolean overDailyCap = outflow && register.getMaxOutPerDay() != null && register.getMaxOutPerDay().signum() > 0
+                && dailyOutflow(register, movement).add(movement.getAmount()).compareTo(register.getMaxOutPerDay()) > 0;
+        boolean needsVisa = movement.getMovementType() == CashMovementType.ADJUSTMENT
+                || overOperationCap || overDailyCap
+                || (threshold != null && movement.getAmount().compareTo(threshold) > 0 && (outflow || threshold.signum() == 0));
+        if (needsVisa) {
+            movement.setStatus(com.sni.bokaticowork.features.payment.enums.CashMovementStatus.PENDING);
+            movement.setExpiresAt(Instant.now().plus(java.time.Duration.ofHours(visaExpiryHours)));
+            movement.setRunningBalance(computeRunningBalance(movement));
+            changed = true;
+            emailNotifier.notifySupervisor("Operation de caisse a viser · " + movement.getMovementNumber(),
+                    movement.getCreatedBy() + " a saisi " + movement.getMovementType().name() + " de "
+                            + movement.getAmount().stripTrailingZeros().toPlainString() + " XAF sur la session "
+                            + movement.getCashSession().getSessionNumber() + " : un second visa est attendu.",
+                    movement.getMovementNumber(), CASH_SESSIONS_PATH + movement.getCashSession().getSessionNumber());
+        }
+        return changed ? movementRepository.save(movement) : movement;
     }
 
     @Override
@@ -478,11 +721,21 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashSession session = requireOpenSession(sessionNumber);
         assertManualEntryAllowed(session.getCashRegister());
         validatePositive(amount);
+        enforceDetentionCap(session, amount);
         saveMovement(session, CashMovementType.PAYMENT, amount, CashDocumentType.RECEIPT, trim(referenceCode), "PAYMENT",
-                "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, trim(createdBy), null);
+                "PAYMENT_TRANSACTION", trim(referenceCode), "CUSTOMER", null, null, null, actors.resolve(createdBy), null);
     }
 
+    /**
+     * Range un paiement de la plateforme (mobile money, portefeuille) dans sa caisse automatique, en
+     * ouvrant une session s'il n'y en a pas.
+     *
+     * <p>Dans sa propre transaction : l'appelant (le traitement d'un paiement confirme) attrape les
+     * erreurs d'ici pour ne pas bloquer la confirmation. Dans la meme transaction, une erreur l'aurait
+     * marquee pour annulation et toute la confirmation (facture, reservation) aurait ete perdue.</p>
+     */
     @Override
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void recordAutomaticPayment(PaymentTransaction transaction) {
         if (transaction == null || transaction.getStatus() != PaymentTransactionStatus.SUCCEEDED) {
             return;
@@ -535,6 +788,14 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         register.setSystemManaged(true);
                         changed = true;
                     }
+                    if (register.getRegisterType() != com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC) {
+                        register.setRegisterType(com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC);
+                        changed = true;
+                    }
+                    if (register.getStatus() != com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE) {
+                        register.setStatus(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE);
+                        changed = true;
+                    }
                     // La restriction n'est posee que si elle manque. La recrire quand elle differe
                     // effacerait le garde au moment meme ou il aurait quelque chose a dire : une
                     // caisse restreinte au portefeuille que l'on retrouve sous le code du mobile
@@ -544,7 +805,10 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         register.setRestrictedToMethod(exclusiveMethod(method));
                         changed = true;
                     }
-                    return changed ? registerRepository.save(register) : register;
+                    if (changed) {
+                        registerRepository.save(register);
+                    }
+                    return register;
                 })
                 .orElseGet(() -> registerRepository.save(CashRegister.builder()
                         .registerCode(registerCode)
@@ -555,12 +819,15 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                         .active(true)
                         .cashControlEnabled(true)
                         .systemManaged(true)
+                        .registerType(com.sni.bokaticowork.features.payment.enums.CashRegisterType.AUTOMATIC)
+                        .status(com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE)
                         .restrictedToMethod(exclusiveMethod(method))
                         .maxCashAmount(autoLimit())
                         .build()));
     }
 
     private CashSession automaticSession(CashRegister register, PaymentMethod method, BigDecimal nextAmount) {
+        registerRepository.lockById(register.getId());
         CashSession session = sessionRepository.findFirstByCashRegisterIdAndStatusForUpdate(register.getId(), CashSessionStatus.OPEN.name())
                 .orElseGet(() -> openAutomaticSession(register, method));
         BigDecimal currentTotal = money(summarySupport.expectedClosingAmount(session));
@@ -613,6 +880,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashRegister register = session.getCashRegister();
         BigDecimal expected = money(summarySupport.expectedClosingAmount(session));
         String cause = "fin de mois, session laissée ouverte";
+        if (!Boolean.TRUE.equals(register.getSystemManaged())
+                && register.getMonthEndPolicy() == com.sni.bokaticowork.features.payment.enums.CashMonthEndPolicy.REQUIRE_COUNT) {
+            // Plus de report silencieux sans comptage (lot C2) : la session est suspendue et un
+            // superviseur la compte et la clot d'office.
+            lifecycle.suspendBySystem(session.getSessionNumber(), "Fin de mois : la caisse doit etre comptee et close");
+            return mapper.toCashSessionResponse(session);
+        }
         if (Boolean.TRUE.equals(register.getSystemManaged())) {
             closeAutomaticSession(session, expected, "Cloture automatique: fin de mois");
             CashSession next = openAutomaticSession(register, register.getRestrictedToMethod());
@@ -754,6 +1028,16 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         return com.sni.bokaticowork.core.utils.json.JsonPayload.of(metadata);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public void assertCounterSessionOpen(String sessionNumber) {
+        CashSession session = session(sessionNumber);
+        if (session.getStatus() != CashSessionStatus.OPEN) {
+            throw new BadRequestException("La session de caisse " + session.getSessionNumber() + " n'est pas ouverte");
+        }
+        assertManualEntryAllowed(session.getCashRegister());
+    }
+
     private CashSession requireOpenSession(String sessionNumber) {
         CashSession session = session(sessionNumber);
         if (session.getStatus() != CashSessionStatus.OPEN) {
@@ -792,13 +1076,30 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                                             String reason,
                                             String createdBy,
                                             String metadataJson) {
+        return saveManualMovement(session, movementType, amount, documentType, documentNumber, flowCategory, referenceType,
+                referenceCode, counterpartyType, counterpartyCode, counterpartyName, reason, createdBy, metadataJson, null);
+    }
+
+    private CashMovement saveManualMovement(CashSession session,
+                                            CashMovementType movementType,
+                                            BigDecimal amount,
+                                            CashDocumentType documentType,
+                                            String documentNumber,
+                                            String flowCategory,
+                                            String referenceType,
+                                            String referenceCode,
+                                            String counterpartyType,
+                                            String counterpartyCode,
+                                            String counterpartyName,
+                                            String reason,
+                                            String createdBy,
+                                            String metadataJson,
+                                            com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction) {
         validatePositive(amount);
         // Toute saisie humaine passe ici · le controle y tient donc en un seul point, plutot que
         // repete a chaque point d'entree ou l'un d'eux finirait par l'oublier.
         assertManualEntryAllowed(session.getCashRegister());
-        if (!StringUtils.hasText(createdBy)) {
-            throw new BadRequestException("Created by is required for manual cash movement");
-        }
+        String author = actors.resolve(createdBy);
         if (requiresReason(movementType) && !StringUtils.hasText(reason)) {
             throw new BadRequestException("Reason is required for this cash movement type");
         }
@@ -808,8 +1109,8 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (requiresDocumentNumber(documentType) && !StringUtils.hasText(documentNumber)) {
             throw new BadRequestException("Document number is required for this cash document type");
         }
-        return saveMovement(session, movementType, amount, documentType, documentNumber, flowCategory, referenceType, referenceCode,
-                counterpartyType, counterpartyCode, counterpartyName, reason, createdBy, metadataJson);
+        return saveMovement(session, movementType, amount, CASH_CURRENCY, documentType, documentNumber, flowCategory,
+                referenceType, referenceCode, counterpartyType, counterpartyCode, counterpartyName, reason, author, metadataJson, direction);
     }
 
     private CashMovement saveMovement(CashSession session, CashMovementType movementType, BigDecimal amount,
@@ -824,7 +1125,22 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                                       CashDocumentType documentType, String documentNumber, String flowCategory,
                                       String referenceType, String referenceCode, String counterpartyType, String counterpartyCode,
                                       String counterpartyName, String reason, String createdBy, String metadataJson) {
-        return movementRepository.save(CashMovement.builder()
+        return saveMovement(session, movementType, amount, currency, documentType, documentNumber, flowCategory,
+                referenceType, referenceCode, counterpartyType, counterpartyCode, counterpartyName, reason, createdBy, metadataJson, null);
+    }
+
+    /**
+     * Enregistre un mouvement et son solde courant.
+     *
+     * <p>Le solde courant n'etait pose que sur les mouvements libres ; les bons, les paiements et le
+     * fonds d'ouverture n'en avaient pas. Il est desormais calcule pour tous.</p>
+     */
+    private CashMovement saveMovement(CashSession session, CashMovementType movementType, BigDecimal amount, String currency,
+                                      CashDocumentType documentType, String documentNumber, String flowCategory,
+                                      String referenceType, String referenceCode, String counterpartyType, String counterpartyCode,
+                                      String counterpartyName, String reason, String createdBy, String metadataJson,
+                                      com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction) {
+        CashMovement movement = CashMovement.builder()
                 .movementNumber(sequenceGenerator.next("cash_movement"))
                 .cashSession(session)
                 .movementType(movementType)
@@ -841,7 +1157,12 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .reason(trim(reason))
                 .createdBy(trim(createdBy))
                 .metadataJson(trim(metadataJson))
-                .build());
+                .direction(direction)
+                .build();
+        // Calcule avant l'enregistrement : le mouvement n'est pas encore en base, il s'ajoute au
+        // solde des mouvements deja enregistres de la session. Un seul enregistrement.
+        movement.setRunningBalance(computeRunningBalance(movement));
+        return movementRepository.save(movement);
     }
 
     private boolean requiresDocumentNumber(CashDocumentType documentType) {

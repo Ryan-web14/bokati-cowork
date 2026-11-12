@@ -41,7 +41,7 @@ public final class CompanyDtos {
             VatRegime vatRegime,
             @Size(max = 500) String vatExemptionNote,
             @Email String email,
-            @Email String billingEmail,
+            @com.sni.bokaticowork.core.utils.validation.EmailList String billingEmail,
             @NotBlank String phone,
             String website,
             @Valid AddressRequest address,
@@ -65,7 +65,7 @@ public final class CompanyDtos {
     }
 
     /** {@code removeCreditLimit} retire le plafond · un plafond absent laisse l'actuel. */
-    public record UpdateBillingRequest(@Email String billingEmail,
+    public record UpdateBillingRequest(@com.sni.bokaticowork.core.utils.validation.EmailList String billingEmail,
                                        @Valid AddressRequest billingAddress,
                                        @PositiveOrZero Integer paymentTermsDays,
                                        @PositiveOrZero BigDecimal creditLimit,

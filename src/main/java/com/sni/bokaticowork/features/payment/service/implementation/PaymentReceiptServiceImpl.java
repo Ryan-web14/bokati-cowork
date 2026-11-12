@@ -99,6 +99,16 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
         return renderPdf(toResponse(serviceTransactionByReceipt(receiptNumber)));
     }
 
+    @Override
+    public byte[] generateAdminPdfByTransactionNumber(String transactionNumber) {
+        return com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(generatePdfByTransactionNumber(transactionNumber));
+    }
+
+    @Override
+    public byte[] generateAdminPdfByReceiptNumber(String receiptNumber) {
+        return com.sni.bokaticowork.core.utils.pdf.PdfCopies.originalAndDuplicate(generatePdfByReceiptNumber(receiptNumber));
+    }
+
     private PaymentTransaction serviceTransactionByNumber(String transactionNumber) {
         if (!StringUtils.hasText(transactionNumber)) {
             throw new BadRequestException("Payment transaction number is required");
@@ -177,6 +187,10 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
                 // La reference de l'operateur est ce que le client cite a MTN ou Airtel en cas de litige.
                 operatorReference = deposit.getProviderTransactionId();
             }
+        } else if (transaction.getPaymentMethod() == PaymentMethod.MOBILE_MONEY_OFFLINE) {
+            // Recu sur le numero marchand, hors plateforme · la reference saisie est celle de l'operateur.
+            payerPhone = com.sni.bokaticowork.core.utils.phone.PhoneNumbers.mask(transaction.getPayerPhone());
+            operatorReference = transaction.getProviderReference();
         }
 
         PartySnapshot party = partySnapshot(transaction, allocationDocuments);
@@ -207,7 +221,12 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
                 transaction.getCurrency(),
                 transaction.getPaidAt(),
                 transaction.getReceivedBy(),
-                allocationResponses
+                allocationResponses,
+                com.sni.bokaticowork.features.payment.service.support.PaymentMethodLabels.label(transaction.getPaymentMethod(), transaction.getProvider()),
+                transaction.getTenderedAmount(),
+                transaction.getChangeAmount(),
+                transaction.getBankName(),
+                transaction.getPayerName()
         );
     }
 

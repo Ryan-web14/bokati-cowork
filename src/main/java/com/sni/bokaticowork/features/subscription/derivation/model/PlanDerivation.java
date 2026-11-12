@@ -127,6 +127,10 @@ public class PlanDerivation {
     @Column(name = "approved_at")
     private Instant approvedAt;
 
+    /** {@code QUOTE} : visee par l'acceptation d'un devis, qui peut venir de son auteur ; vide : visa ordinaire, par un autre que le demandeur. */
+    @Column(name = "approval_source", length = 20)
+    private String approvalSource;
+
     @Column(name = "rejection_reason", length = 500)
     private String rejectionReason;
 

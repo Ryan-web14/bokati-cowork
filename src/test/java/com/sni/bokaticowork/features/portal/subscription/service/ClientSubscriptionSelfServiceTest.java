@@ -24,6 +24,7 @@ import com.sni.bokaticowork.features.subscription.subscription.model.Subscriptio
 import com.sni.bokaticowork.features.subscription.subscription.model.SubscriptionPlan;
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.SubscriptionService;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPlanResolver;
+import org.hibernate.collection.spi.PersistentBag;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -181,5 +182,33 @@ class ClientSubscriptionSelfServiceTest {
         assertSame(mine, service.acceptQuote(member, "QTE-1"));
         assertThrows(ResourceNotFoundException.class, () -> service.acceptQuote(member, "QTE-2"));
         verify(quoteService, never()).accept(eq("QTE-2"), anyString());
+    }
+
+    /**
+     * La vue du preavis lit ses pieces de sortie apres la transaction (open-in-view coupe) · elles
+     * sont chargees avant de rendre, sinon la liste, la demande et le retrait tombaient en 500.
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    void terminationsAreReturnedWithTheirExitItemsLoaded() {
+        PersistentBag<com.sni.bokaticowork.features.subscription.lifecycle.model.SubscriptionExitItem> listed = mock(PersistentBag.class);
+        PersistentBag<com.sni.bokaticowork.features.subscription.lifecycle.model.SubscriptionExitItem> requested = mock(PersistentBag.class);
+        PersistentBag<com.sni.bokaticowork.features.subscription.lifecycle.model.SubscriptionExitItem> retracted = mock(PersistentBag.class);
+        SubscriptionTermination retractable = SubscriptionTermination.builder().terminationCode("TRM-3").subscription(subscription)
+                .exitItems(retracted).build();
+        when(terminationService.ofSubscription("SUB-1")).thenReturn(List.of(
+                SubscriptionTermination.builder().terminationCode("TRM-1").exitItems(listed).build()));
+        when(terminationService.request(eq("SUB-1"), any(), eq("MBR-1"))).thenReturn(
+                SubscriptionTermination.builder().terminationCode("TRM-2").exitItems(requested).build());
+        when(terminationService.get("TRM-3")).thenReturn(retractable);
+        when(terminationService.retract("TRM-3", null, "MBR-1")).thenReturn(retractable);
+
+        service.terminations(member, "SUB-1");
+        service.requestTermination(member, "SUB-1", null, null, null);
+        service.retractTermination(member, "TRM-3", null);
+
+        verify(listed).forceInitialization();
+        verify(requested).forceInitialization();
+        verify(retracted).forceInitialization();
     }
 }

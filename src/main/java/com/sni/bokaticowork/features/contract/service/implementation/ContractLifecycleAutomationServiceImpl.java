@@ -17,7 +17,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -30,10 +32,16 @@ public class ContractLifecycleAutomationServiceImpl implements ContractLifecycle
     private final ContractRepository contractRepository;
     private final OutboxService outboxService;
     private final SequenceGeneratorFacade sequenceGenerator;
+    private final com.sni.bokaticowork.features.subscription.repository.SubscriptionRepository subscriptionRepository;
 
     @Override
     public int processScheduledTransitions() {
-        return autoActivateContracts() + autoExpireContracts() + autoRenewContracts() + alertExpiringContracts();
+        // La reconduction passe avant l'expiration : elle cherche les contrats ACTIVE echus,
+        // que l'expiration ferait passer en EXPIRED. L'ancien contrat expire ensuite dans le meme passage.
+        int activated = autoActivateContracts();
+        int renewed = autoRenewContracts();
+        int expired = autoExpireContracts();
+        return activated + renewed + expired + alertExpiringContracts();
     }
 
     private int autoActivateContracts() {
@@ -53,15 +61,26 @@ public class ContractLifecycleAutomationServiceImpl implements ContractLifecycle
         return processed;
     }
 
+    /**
+     * Le contrat d'un abonnement vit aussi longtemps que lui · sa date de fin suit les periodes
+     * payees, par avenant. Il n'expire pas pendant qu'un renouvellement attend son reglement, et
+     * ne se reconduit jamais par un second contrat. Il suit l'abonnement quand celui-ci prend fin.
+     */
+    private Set<String> contractsOfOpenSubscriptions() {
+        return new HashSet<>(subscriptionRepository.findContractCodesOfOpenSubscriptions());
+    }
+
     private int autoExpireContracts() {
         int processed = 0;
         LocalDate today = LocalDate.now();
+        Set<String> carried = contractsOfOpenSubscriptions();
         List<Contract> contracts = contractRepository.findAllByStatusInAndEndDateBeforeAndDeletedFalse(
-                List.of(ContractStatus.ACTIVE, ContractStatus.SUSPENDED),
+                List.of(ContractStatus.ACTIVE, ContractStatus.SUSPENDED, ContractStatus.AMENDED),
                 today
         );
         for (Contract contract : contracts) {
-            if (contract.getEndDate() == null || !contract.getEndDate().isBefore(today)) {
+            if (contract.getEndDate() == null || !contract.getEndDate().isBefore(today)
+                    || carried.contains(contract.getContractCode())) {
                 continue;
             }
             contract.setStatus(ContractStatus.EXPIRED);
@@ -77,8 +96,10 @@ public class ContractLifecycleAutomationServiceImpl implements ContractLifecycle
         LocalDate today = LocalDate.now();
         List<Contract> expiring = contractRepository.findAllByStatusInAndEndDateBeforeAndDeletedFalse(
                 List.of(ContractStatus.ACTIVE), today);
+        Set<String> carried = contractsOfOpenSubscriptions();
         for (Contract contract : expiring) {
-            if (contract.getRenewalType() != ContractRenewalType.AUTO_RENEW) {
+            if (contract.getRenewalType() != ContractRenewalType.AUTO_RENEW
+                    || carried.contains(contract.getContractCode())) {
                 continue;
             }
             if (contract.getEndDate() == null || !contract.getEndDate().isBefore(today)) {

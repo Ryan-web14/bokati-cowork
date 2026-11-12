@@ -96,6 +96,213 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
                 auth.getName(), auth.getAuthorities());
     }
 
+    /**
+     * Droits fins des caisses (plan finance, lot C0).
+     *
+     * <p>Avant, tout ce qui n'etait ni une lecture ni un chemin contenant {@code /open} ou
+     * {@code /close} tombait sur {@code CASH:ADJUST} : l'ouverture de session ({@code POST /sessions},
+     * sans {@code /open}), la creation de caisse, les mouvements et la validation d'un ecart
+     * exigeaient le meme droit, que tout caissier avait. Chaque action a desormais le sien.</p>
+     */
+    /**
+     * Demandes de fonds (lots F5 et F6). Les controles fins (niveau de validation, demandeur,
+     * beneficiaire) sont faits par le service ; ici, le droit d'entree.
+     */
+    private String fundPermission(String path, String method) {
+        if (path.equals("/fund-requests") && HttpMethod.GET.matches(method)) return permission("FUND_REQUEST", "READ");
+        if (path.equals("/fund-requests/advances")) return permission("FUND_REQUEST", "READ");
+        if (path.equals("/fund-requests/justifications-to-validate")) return permission("FUND_JUSTIFICATION", "VALIDATE");
+        if (path.equals("/fund-requests/to-disburse")) return permission("FUND_REQUEST", "DISBURSE");
+        if (path.equals("/fund-requests/import-legacy")) return permission("FUND_REQUEST", "READ");
+        if (path.endsWith("/disburse") || path.endsWith("/return") || path.endsWith("/complement") || path.endsWith("/transfer")) {
+            return permission("FUND_REQUEST", "DISBURSE");
+        }
+        if (path.matches("/fund-requests/[^/]+/expenses/[^/]+/(validate|reject)")) return permission("FUND_JUSTIFICATION", "VALIDATE");
+        if (path.matches("/fund-needs/[^/]+/(validate|reject)")) return permission("FUND_REQUEST", "APPROVE_L1");
+        return permission("FUND_REQUEST", "CREATE");
+    }
+
+    /** Droits de la comptabilite (plan finance, section 16). */
+    private String accountingPermission(String path, String method) {
+        if (path.startsWith("/accounting/bank") || path.startsWith("/accounting/reconciliations") || path.startsWith("/accounting/cheques")
+                || path.startsWith("/accounting/deposit-slips") || path.startsWith("/accounting/exchange-rates")
+                || path.matches("/accounting/cash/registers/[^/]+/balances")) {
+            // Lots F10 et C5.
+            if (path.matches("/accounting/cash/registers/[^/]+/balances")) return permission("CASH", "READ");
+            if (path.startsWith("/accounting/exchange-rates")) {
+                return HttpMethod.GET.matches(method) ? permission("CASH", "READ") : permission("CASH_EXCHANGE_RATE", "MANAGE");
+            }
+            if (HttpMethod.GET.matches(method)) return permission("ACCOUNTING_REPORT", "READ");
+            if (path.startsWith("/accounting/bank-accounts") && path.endsWith("/statements")) return permission("BANK_STATEMENT", "IMPORT");
+            if (path.endsWith("/statements/manual")) return permission("BANK_STATEMENT", "IMPORT");
+            if (path.startsWith("/accounting/reconciliations") && path.endsWith("/validate")) return permission("BANK_RECONCILIATION", "VALIDATE");
+            if (path.equals("/accounting/bank-accounts") || path.startsWith("/accounting/bank-import-templates") || path.startsWith("/accounting/bank-assignment-rules")) {
+                return permission("BANK_ACCOUNT", "MANAGE");
+            }
+            return permission("BANK_RECONCILIATION", "MANAGE");
+        }
+        if (path.startsWith("/accounting/loans") || path.startsWith("/accounting/partners") || path.startsWith("/accounting/commitments")
+                || path.startsWith("/accounting/commitment-types")) {
+            // Lot F17 : emprunts, comptes courants d'associes, hors bilan.
+            return HttpMethod.GET.matches(method) ? permission("FINANCING", "READ") : permission("FINANCING", "MANAGE");
+        }
+        if (path.startsWith("/accounting/payroll")) {
+            // Lot F17 : import du journal de paie.
+            if (path.endsWith("/post") || path.endsWith("/pay")) return permission("PAYROLL", "POST");
+            if (!HttpMethod.GET.matches(method) && (path.startsWith("/accounting/payroll/templates") || path.startsWith("/accounting/payroll/rubrics")
+                    || path.startsWith("/accounting/payroll/employees"))) {
+                return permission("PAYROLL_SETTINGS", "MANAGE");
+            }
+            return permission("PAYROLL", "IMPORT");
+        }
+        if (path.startsWith("/accounting/vat-returns")) {
+            // Lot F11 : preparer, valider et liquider sont controles finement dans le service.
+            if (HttpMethod.GET.matches(method)) return permission("VAT_RETURN", "READ");
+            if (path.endsWith("/validate") || path.endsWith("/liquidate")) return permission("VAT_RETURN", "VALIDATE");
+            return permission("VAT_RETURN", "PREPARE");
+        }
+        if (path.startsWith("/accounting/budget")) {
+            // Lot F16 : les droits fins (preparer, consolider, approuver, virer, deroger) sont dans le service.
+            if (HttpMethod.GET.matches(method) || path.equals("/accounting/budget/check")) return permission("BUDGET_REPORT", "READ");
+            if (path.startsWith("/accounting/budget/items")) return permission("BUDGET", "PREPARE");
+            if (path.startsWith("/accounting/budget/forecasts")) return permission("BUDGET_FORECAST", "MANAGE");
+            if (path.startsWith("/accounting/budget/transfers")) return permission("BUDGET", "TRANSFER_REQUEST");
+            return permission("BUDGET", "PREPARE");
+        }
+        if (path.startsWith("/accounting/analytic")) {
+            // Lot F9 : les controles fins (branche du responsable, reclassement) sont dans le service.
+            if (HttpMethod.GET.matches(method)) return permission("ANALYTIC_REPORT", "READ");
+            if (path.equals("/accounting/analytic/reclass")) return permission("ANALYTIC", "RECLASS");
+            if (path.matches("/accounting/analytic/axes/[^/]+/sections") && HttpMethod.POST.matches(method)) {
+                return permission("ANALYTIC_ITEM", "CREATE");
+            }
+            return permission("ANALYTIC_SETTINGS", "MANAGE");
+        }
+        if (path.startsWith("/accounting/sales")) {
+            // Lot F4 : ventes et encaissements.
+            if (HttpMethod.GET.matches(method)) return permission("ACCOUNTING_REPORT", "READ");
+            if (path.equals("/accounting/sales/auto-letter")) return permission("ACCOUNTING_LETTERING", "MANUAL");
+            return permission("ACCOUNTING_POSTING", "REPLAY");
+        }
+        if (path.startsWith("/accounting/cash")) {
+            // Lot F3 : caisse comptable.
+            if (path.matches("/accounting/cash/registers/[^/]+/journals") && HttpMethod.GET.matches(method)) {
+                return permission("CASH_MOVEMENT", "CREATE");
+            }
+            if (path.matches("/accounting/cash/registers/[^/]+/journals") && HttpMethod.POST.matches(method)) {
+                return permission("ACCOUNTING_JOURNAL", "CREATE");
+            }
+            if (path.contains("/journals/")) return permission("ACCOUNTING_JOURNAL", "MANAGE");
+            if (path.equals("/accounting/cash/feed")) return permission("ACCOUNTING_POSTING", "REPLAY");
+            return permission("ACCOUNTING_REPORT", "READ");
+        }
+        if (path.startsWith("/accounting/posting")) {
+            // Lot F2 : moteur d'imputation.
+            if (HttpMethod.GET.matches(method) || path.equals("/accounting/posting/preview")) {
+                return permission("ACCOUNTING_POSTING", "READ");
+            }
+            if (path.startsWith("/accounting/posting/rules")) return permission("ACCOUNTING_POSTING", "MANAGE");
+            return permission("ACCOUNTING_POSTING", "REPLAY");
+        }
+        if (HttpMethod.GET.matches(method)) return permission("ACCOUNTING_REPORT", "READ");
+        if (path.equals("/accounting/numbering-checks")) return permission("ACCOUNTING_REPORT", "READ");
+        if (path.startsWith("/accounting/accounts")) {
+            if (path.endsWith("/deactivate") || path.endsWith("/activate") || path.endsWith("/merge")) {
+                return permission("ACCOUNTING_ACCOUNT", "MANAGE");
+            }
+            return permission("ACCOUNTING_ACCOUNT", "CREATE");
+        }
+        if (path.startsWith("/accounting/fiscal-years")) return permission("ACCOUNTING_PERIOD", "CLOSE");
+        if (path.startsWith("/accounting/periods")) {
+            return path.endsWith("/close") ? permission("ACCOUNTING_PERIOD", "CLOSE") : permission("ACCOUNTING_PERIOD", "LOCK");
+        }
+        if (path.startsWith("/accounting/journals")) {
+            return HttpMethod.POST.matches(method) ? permission("ACCOUNTING_JOURNAL", "CREATE") : permission("ACCOUNTING_JOURNAL", "MANAGE");
+        }
+        if (path.startsWith("/accounting/entries")) {
+            if (path.endsWith("/validate")) return permission("ACCOUNTING_ENTRY", "VALIDATE");
+            if (path.endsWith("/reverse")) return permission("ACCOUNTING_ENTRY", "REVERSE");
+            if (path.endsWith("/reject") || path.endsWith("/regularize")) return permission("ACCOUNTING_ENTRY", "BALANCE");
+            return permission("ACCOUNTING_ENTRY", "CREATE");
+        }
+        if (path.startsWith("/accounting/lettering")) {
+            return path.endsWith("/unletter") ? permission("ACCOUNTING_LETTERING", "UNLETTER") : permission("ACCOUNTING_LETTERING", "MANUAL");
+        }
+        return permission("ACCOUNTING_SETTINGS", "MANAGE");
+    }
+
+    private String cashPermission(String path, String method) {
+        // Position et etats (lot C6) : lecture reservee a l'encadrement.
+        if (path.equals("/cash-registers/position") || path.startsWith("/cash-registers/reports/")) {
+            return permission("CASH_REPORT", "READ");
+        }
+        if (HttpMethod.GET.matches(method)) return permission("CASH", "READ");
+        if (path.equals("/cash-registers") || path.startsWith("/cash-registers/reference-lists")) {
+            return permission("CASH_REGISTER", "MANAGE");
+        }
+        // Le titulaire sortant et l'entrant signent eux-memes le PV de remise : un droit de caissier suffit.
+        if (path.startsWith("/cash-registers/responsibility-transfers/") && path.endsWith("/sign")) {
+            return permission("CASH_SESSION", "OPEN");
+        }
+        if (path.equals("/cash-registers/sessions")) return permission("CASH_SESSION", "OPEN");
+        if (path.startsWith("/cash-registers/sessions/")) {
+            if (path.endsWith("/close") || path.endsWith("/closing-request") || path.endsWith("/start-closing")
+                    || path.endsWith("/counts") || path.endsWith("/handover") || path.endsWith("/confirm-opening")
+                    || path.endsWith("/cancel") || path.endsWith("/contest")) {
+                return permission("CASH_SESSION", "CLOSE");
+            }
+            if (path.endsWith("/pause") || path.endsWith("/resume")) return permission("CASH_SESSION", "PAUSE");
+            if (path.endsWith("/suspend") || path.endsWith("/unsuspend")) return permission("CASH_SESSION", "SUSPEND");
+            if (path.endsWith("/force-close")) return permission("CASH_SESSION", "FORCE_CLOSE");
+            if (path.endsWith("/spot-checks")) return permission("CASH_SESSION", "SPOT_CHECK");
+            if (path.endsWith("/approve-variance") || path.endsWith("/variance-decision") || path.endsWith("/recount")) {
+                return permission("CASH_VARIANCE", "DECIDE");
+            }
+            return permission("CASH_MOVEMENT", "CREATE");
+        }
+        // L'entrant accepte ou conteste la passation, le sortant l'annule : un droit de caissier suffit.
+        if (path.startsWith("/cash-registers/handovers/")) return permission("CASH_SESSION", "OPEN");
+        if (path.startsWith("/cash-registers/variance-reviews")) return permission("CASH_VARIANCE", "DECIDE");
+        if (path.startsWith("/cash-registers/denominations")) return permission("CASH_REGISTER", "MANAGE");
+        if (path.startsWith("/cash-registers/absences")) {
+            if (path.endsWith("/approve") || path.endsWith("/end")) return permission("CASH_STAFF", "MANAGE");
+            return permission("CASH_STAFF", "DECLARE_ABSENCE");
+        }
+        // Un reviseur delegue ses propres revues : le droit de decider suffit.
+        if (path.startsWith("/cash-registers/delegations")) return permission("CASH_VARIANCE", "DECIDE");
+        if (path.startsWith("/cash-registers/anomalies")) return permission("CASH_VARIANCE", "DECIDE");
+        if (path.startsWith("/cash-registers/requests/")
+                && (path.endsWith("/approve") || path.endsWith("/reject"))) {
+            return permission("CASH_MOVEMENT", "APPROVE");
+        }
+        if (path.startsWith("/cash-registers/movements/") && path.endsWith("/approve")) return permission("CASH_MOVEMENT", "APPROVE");
+        // Le caissier contre-passe seul dans un court delai et sous un plafond ; au-dela, le service
+        // exige CASH_MOVEMENT:REVERSE. La route ne demande donc que le droit de saisir.
+        if (path.endsWith("/reverse")) return permission("CASH_MOVEMENT", "CREATE");
+        if (path.startsWith("/cash-registers/natures")) return permission("CASH_REGISTER", "MANAGE");
+        if (path.equals("/cash-registers/transfers")) return permission("CASH_TRANSFER", "SEND");
+        if (path.startsWith("/cash-registers/transfers/")) {
+            return path.endsWith("/receive") ? permission("CASH_TRANSFER", "RECEIVE") : permission("CASH_TRANSFER", "SEND");
+        }
+        if (path.contains("/petty-cash/")) return permission("CASH_TRANSFER", "SEND");
+        if (path.startsWith("/cash-registers/movements/") || path.startsWith("/cash-registers/requests/")) {
+            return permission("CASH_MOVEMENT", "CREATE");
+        }
+        // Fiche d'une caisse : /cash-registers/{code} et ses actions de cycle de vie et de personnel.
+        String[] segments = path.substring("/cash-registers/".length()).split("/");
+        if (segments.length == 2 && (segments[1].equals("assignments") || segments[1].equals("emergency-assignments")
+                || segments[1].equals("responsibility-transfers") || segments[1].equals("seal") || segments[1].equals("unseal"))) {
+            return permission("CASH_STAFF", "MANAGE");
+        }
+        if ((segments.length == 1 && HttpMethod.PATCH.matches(method))
+                || (segments.length == 2 && (segments[1].equals("activate") || segments[1].equals("deactivate")
+                || segments[1].equals("suspend") || segments[1].equals("reactivate") || segments[1].equals("close")))
+                || (segments.length == 3 && segments[1].equals("devices"))) {
+            return permission("CASH_REGISTER", "MANAGE");
+        }
+        return permission("CASH_MOVEMENT", "CREATE");
+    }
+
     private String resolvePermission(HttpServletRequest request) {
         String path = normalizePath(request.getRequestURI());
         String method = request.getMethod();
@@ -144,11 +351,14 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("refund")) return permission("PAYMENT", "REFUND");
             return permission("PAYMENT", HttpMethod.GET.matches(method) ? "READ" : "PROCESS");
         }
+        if (path.startsWith("/accounting")) {
+            return accountingPermission(path, method);
+        }
+        if (path.startsWith("/fund-needs") || path.startsWith("/fund-requests")) {
+            return fundPermission(path, method);
+        }
         if (path.startsWith("/cash-registers")) {
-            if (path.contains("/open")) return permission("CASH", "OPEN_SESSION");
-            if (path.contains("/close")) return permission("CASH", "CLOSE_SESSION");
-            if (HttpMethod.GET.matches(method)) return permission("CASH", "READ");
-            return permission("CASH", "ADJUST");
+            return cashPermission(path, method);
         }
         if (path.startsWith("/bookings")) {
             if (path.contains("/check-in") || path.contains("/check-out")) return permission("BOOKING", "CHECKIN");
@@ -159,8 +369,13 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("CLIENT", actionFor("CLIENT", method));
         }
         if (path.startsWith("/kyc")) {
-            if (path.contains("/approve")) return permission("KYC", "APPROVE");
-            if (path.contains("/reject")) return permission("KYC", "REJECT");
+            // Les decisions en masse (bulk-approve, bulk-reject et ses alias) ne contiennent ni
+            // /approve ni /reject : elles tombaient sur KYC:READ, une lecture suffisait a valider.
+            if (path.contains("/approve") || path.contains("/bulk-approve")) return permission("KYC", "APPROVE");
+            if (path.contains("/reject") || path.contains("/bulk-reject")
+                    || path.contains("/bulk-disapprove") || path.contains("/bulk-desapprove")) {
+                return permission("KYC", "REJECT");
+            }
             return permission("KYC", "READ");
         }
         if (path.startsWith("/documents")) {
@@ -189,7 +404,11 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             return permission("RESOURCE", actionFor("RESOURCE", method));
         }
         if (path.startsWith("/analytics") || path.startsWith("/reports") || path.startsWith("/reporting")) {
-            return path.endsWith(".csv") || path.contains("/export")
+            // Les rapports se telechargent par un suffixe /csv ou /pdf : la regle n'attendait que
+            // .csv et /export, REPORT:VIEW suffisait donc a exporter.
+            return path.endsWith(".csv") || path.endsWith("/csv")
+                    || path.endsWith(".pdf") || path.endsWith("/pdf")
+                    || path.contains("/export")
                     ? permission("REPORT", "EXPORT")
                     : permission("REPORT", "VIEW");
         }
@@ -224,7 +443,8 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             if (path.contains("refund")) return permission("PAYMENT", "REFUND");
             return permission("PAYMENT", HttpMethod.GET.matches(method) ? "READ" : "PROCESS");
         }
-        if (path.startsWith("/promotions")) {
+        // Coupons et parrainages sont des promotions : memes droits
+        if (path.startsWith("/promotions") || path.startsWith("/coupons") || path.startsWith("/referrals")) {
             return permission("BILLING", actionFor("BILLING", method));
         }
         if (path.startsWith("/contracts")) {
@@ -236,6 +456,12 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/businesses") || path.startsWith("/document-types")
                 || path.startsWith("/document-requirements") || path.startsWith("/document-retention-policies")) {
             return permission("SYSTEM", "SETTINGS");
+        }
+        // Explorateur de la GED : lire, deposer, puis tout le reste (ranger, renommer, corbeille).
+        if (path.startsWith("/ged/") || path.equals("/ged")) {
+            if (HttpMethod.GET.matches(method)) return permission("DOCUMENT", "READ");
+            if ((path.equals("/ged/files") || path.equals("/ged/scans")) && HttpMethod.POST.matches(method)) return permission("DOCUMENT", "UPLOAD");
+            return permission("DOCUMENT", "WRITE");
         }
         if (path.startsWith("/review")) {
             return permission("DOCUMENT", "REVIEW");

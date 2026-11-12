@@ -80,6 +80,43 @@ public class CashMovement {
     @Column(name = "status", nullable = false, length = 40)
     private CashMovementStatus status = CashMovementStatus.CONFIRMED;
 
+    /**
+     * Sens d'un ajustement ({@code IN} ou {@code OUT}) · vide pour les autres types, dont le sens
+     * se deduit du type (voir {@code CashFlowRules}).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "direction", length = 10)
+    private com.sni.bokaticowork.features.payment.enums.CashFlowDirection direction;
+
+    // ---- Operations (lot C3) ----
+
+    /** Nature d'operation choisie par le caissier. */
+    @Column(name = "nature_code", length = 60)
+    private String natureCode;
+
+    @Column(name = "transfer_order_number", length = 100)
+    private String transferOrderNumber;
+
+    /** Second visa d'un mouvement en attente. */
+    @Column(name = "approved_by", length = 180)
+    private String approvedBy;
+
+    @Column(name = "approved_at")
+    private Instant approvedAt;
+
+    /** Echeance du visa : sans visa, le mouvement en attente expire (annule). */
+    @Column(name = "expires_at")
+    private Instant expiresAt;
+
+    @Column(name = "reversal_reason", length = 500)
+    private String reversalReason;
+
+    @Column(name = "cancelled_by", length = 180)
+    private String cancelledBy;
+
+    @Column(name = "cancel_reason", length = 500)
+    private String cancelReason;
+
     @Column(name = "related_movement_id")
     private Long relatedMovementId;
 
@@ -124,6 +161,54 @@ public class CashMovement {
 
     @Column(name = "printed_at")
     private Instant printedAt;
+
+    /** Nombre d'impressions : au-dela de la premiere, la piece sort en DUPLICATA (lot C4). */
+    @Builder.Default
+    @Column(name = "print_count", nullable = false)
+    private Integer printCount = 0;
+
+    @Column(name = "last_printed_by", length = 180)
+    private String lastPrintedBy;
+
+    /** Journal comptable choisi a la saisie (lot F3) ; a defaut, celui de la caisse. */
+    @Column(name = "journal_code", length = 30)
+    private String journalCode;
+
+    /** Etat comptable (lot F3) : NOT_APPLICABLE, PENDING, QUEUED, POSTED, UNBALANCED, FAILED, IGNORED. */
+    @Builder.Default
+    @Column(name = "accounting_status", nullable = false, length = 20)
+    private String accountingStatus = "PENDING";
+
+    @Column(name = "accounting_entry_number", length = 40)
+    private String accountingEntryNumber;
+
+    @Column(name = "accounting_note", length = 1000)
+    private String accountingNote;
+
+    @Column(name = "vat_amount", precision = 19, scale = 4)
+    private BigDecimal vatAmount;
+
+    @Column(name = "vat_code", length = 20)
+    private String vatCode;
+
+    @Column(name = "supplier_code", length = 80)
+    private String supplierCode;
+
+    @Column(name = "beneficiary_name", length = 255)
+    private String beneficiaryName;
+
+    @Column(name = "beneficiary_id_number", length = 80)
+    private String beneficiaryIdNumber;
+
+    @Column(name = "beneficiary_phone", length = 40)
+    private String beneficiaryPhone;
+
+    @Column(name = "request_number", length = 60)
+    private String requestNumber;
+
+    /** Valeur en XAF comptabilisee (lot F10) : au taux d'entree, ou a la valeur moyenne des especes en devise a la sortie. */
+    @Column(name = "accounting_base_amount", precision = 19, scale = 4)
+    private java.math.BigDecimal accountingBaseAmount;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

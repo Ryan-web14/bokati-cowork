@@ -1,0 +1,2718 @@
+{
+ "module": "support",
+ "routes": [
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/support/knowledge-base",
+   "package": "features.support.controller",
+   "controller": "ClientKnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientKnowledgeArticleController.java",
+   "handler": "search",
+   "declaredIn": "ClientKnowledgeArticleController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketCategory"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/support/knowledge-base/suggestions",
+   "package": "features.support.controller",
+   "controller": "ClientKnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientKnowledgeArticleController.java",
+   "handler": "suggestions",
+   "declaredIn": "ClientKnowledgeArticleController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketCategory"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "5",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.ArticleSuggestionResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/support/knowledge-base/{slug}",
+   "package": "features.support.controller",
+   "controller": "ClientKnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientKnowledgeArticleController.java",
+   "handler": "read",
+   "declaredIn": "ClientKnowledgeArticleController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "slug",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/support/tickets",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "list",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketStatus"
+    },
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketCategory"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20, sort=createdAt,DESC",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/support/tickets",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "create",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.portal.support.dto.request.ClientCreateTicketRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/support/tickets/summary",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "summary",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.OwnerTicketSummaryResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/support/tickets/{ticketNumber}",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "get",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/support/tickets/{ticketNumber}/attachments",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "listAttachments",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.SupportDtos.AttachmentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/support/tickets/{ticketNumber}/attachments",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "uploadAttachment",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.AttachmentResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/client/support/tickets/{ticketNumber}/attachments/{id}/download",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "downloadAttachment",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/support/tickets/{ticketNumber}/close",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "close",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/support/tickets/{ticketNumber}/csat",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "csat",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.SubmitCsatRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/client/support/tickets/{ticketNumber}/messages",
+   "package": "features.support.controller",
+   "controller": "ClientSupportController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/ClientSupportController.java",
+   "handler": "addMessage",
+   "declaredIn": "ClientSupportController",
+   "access": {
+    "kind": "member-portal"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.portal.support.dto.request.ClientAddMessageRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/knowledge-base",
+   "package": "features.support.controller",
+   "controller": "KnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/KnowledgeArticleController.java",
+   "handler": "search",
+   "declaredIn": "KnowledgeArticleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketCategory"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/knowledge-base",
+   "package": "features.support.controller",
+   "controller": "KnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/KnowledgeArticleController.java",
+   "handler": "create",
+   "declaredIn": "KnowledgeArticleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/knowledge-base/analytics",
+   "package": "features.support.controller",
+   "controller": "KnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/KnowledgeArticleController.java",
+   "handler": "analytics",
+   "declaredIn": "KnowledgeArticleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:METRICS','SUPPORT_METRICS')",
+    "kind": "admin",
+    "permission": "SUPPORT:METRICS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeAnalyticsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/knowledge-base/suggestions",
+   "package": "features.support.controller",
+   "controller": "KnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/KnowledgeArticleController.java",
+   "handler": "suggestions",
+   "declaredIn": "KnowledgeArticleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketCategory"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "5",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.ArticleSuggestionResponse>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/support/knowledge-base/{articleCode}",
+   "package": "features.support.controller",
+   "controller": "KnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/KnowledgeArticleController.java",
+   "handler": "delete",
+   "declaredIn": "KnowledgeArticleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "articleCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/knowledge-base/{articleCode}",
+   "package": "features.support.controller",
+   "controller": "KnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/KnowledgeArticleController.java",
+   "handler": "get",
+   "declaredIn": "KnowledgeArticleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "articleCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleResponse>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/support/knowledge-base/{articleCode}",
+   "package": "features.support.controller",
+   "controller": "KnowledgeArticleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/KnowledgeArticleController.java",
+   "handler": "update",
+   "declaredIn": "KnowledgeArticleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "articleCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/public/support/csat",
+   "package": "features.support.controller",
+   "controller": "SupportCsatPublicController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportCsatPublicController.java",
+   "handler": "submit",
+   "declaredIn": "SupportCsatPublicController",
+   "access": {
+    "kind": "public"
+   },
+   "produces": [
+    "text/html"
+   ],
+   "params": [
+    {
+     "in": "query",
+     "name": "ticket",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "score",
+     "required": true,
+     "type": "Integer"
+    },
+    {
+     "in": "query",
+     "name": "token",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<String>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/quick-replies",
+   "package": "features.support.controller",
+   "controller": "SupportQuickReplyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportQuickReplyController.java",
+   "handler": "list",
+   "declaredIn": "SupportQuickReplyController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketCategory"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.SupportDtos.QuickReplyResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/quick-replies",
+   "package": "features.support.controller",
+   "controller": "SupportQuickReplyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportQuickReplyController.java",
+   "handler": "create",
+   "declaredIn": "SupportQuickReplyController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.QuickReplyRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.QuickReplyResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/support/quick-replies/{id}",
+   "package": "features.support.controller",
+   "controller": "SupportQuickReplyController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportQuickReplyController.java",
+   "handler": "delete",
+   "declaredIn": "SupportQuickReplyController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/routing-rules",
+   "package": "features.support.controller",
+   "controller": "SupportRoutingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportRoutingRuleController.java",
+   "handler": "list",
+   "declaredIn": "SupportRoutingRuleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.SupportDtos.RoutingRuleResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/routing-rules",
+   "package": "features.support.controller",
+   "controller": "SupportRoutingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportRoutingRuleController.java",
+   "handler": "create",
+   "declaredIn": "SupportRoutingRuleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.RoutingRuleRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.RoutingRuleResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/support/routing-rules/{id}",
+   "package": "features.support.controller",
+   "controller": "SupportRoutingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportRoutingRuleController.java",
+   "handler": "delete",
+   "declaredIn": "SupportRoutingRuleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/support/routing-rules/{id}",
+   "package": "features.support.controller",
+   "controller": "SupportRoutingRuleController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportRoutingRuleController.java",
+   "handler": "update",
+   "declaredIn": "SupportRoutingRuleController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.RoutingRuleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.RoutingRuleResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tags",
+   "package": "features.support.controller",
+   "controller": "SupportTagController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTagController.java",
+   "handler": "list",
+   "declaredIn": "SupportTagController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.SupportDtos.TagResponse>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "search",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "status",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketStatus"
+    },
+    {
+     "in": "query",
+     "name": "assignedTo",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "category",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketCategory"
+    },
+    {
+     "in": "query",
+     "name": "priority",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.support.enums.TicketPriority"
+    },
+    {
+     "in": "query",
+     "name": "relatedType",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "relatedCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "overdueOnly",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "searchText",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "pageable",
+     "name": "page, size, sort",
+     "default": "size=20",
+     "type": "Pageable"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/tickets",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "create",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.CreateTicketRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/agents/performance",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "agentPerformance",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:METRICS','SUPPORT_METRICS')",
+    "kind": "admin",
+    "permission": "SUPPORT:METRICS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.SupportDtos.AgentPerformanceEntry>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/analytics",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "analytics",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:METRICS','SUPPORT_METRICS')",
+    "kind": "admin",
+    "permission": "SUPPORT:METRICS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportAnalyticsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/analytics.csv",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "analyticsCsv",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:METRICS','SUPPORT_METRICS')",
+    "kind": "admin",
+    "permission": "SUPPORT:METRICS"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "from",
+     "required": false,
+     "type": "Instant"
+    },
+    {
+     "in": "query",
+     "name": "to",
+     "required": false,
+     "type": "Instant"
+    }
+   ],
+   "response": "ResponseEntity<String>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/by-owner",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "byOwner",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "ownerType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "ownerCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.OwnerTicketSummaryResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/metrics",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "metrics",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:METRICS','SUPPORT_METRICS')",
+    "kind": "admin",
+    "permission": "SUPPORT:METRICS"
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportMetricsResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "get",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/assign",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "assign",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:ASSIGN','SUPPORT_ASSIGN')",
+    "kind": "admin",
+    "permission": "SUPPORT:ASSIGN"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.AssignTicketRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/attachments",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "listAttachments",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.SupportDtos.AttachmentResponse>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/attachments",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "uploadAttachment",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "consumes": [
+    "multipart/form-data"
+   ],
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "multipart",
+     "name": "file",
+     "required": true,
+     "type": "MultipartFile"
+    },
+    {
+     "in": "query",
+     "name": "internal",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "messageId",
+     "required": false,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.AttachmentResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/attachments/{id}",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "deleteAttachment",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/attachments/{id}/download",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "downloadAttachment",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "id",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<binary>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/messages",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "message",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.AddTicketMessageRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/messages/{messageId}/convert-to-article",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "convertMessageToArticle",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.ConvertMessageToArticleRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "messageId",
+     "required": true,
+     "type": "Long"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleResponse>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/status",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "status",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.UpdateTicketStatusRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/tags",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "addTag",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.AddTagRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/tags/{tag}",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "removeTag",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "tag",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/task",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "createTask",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:WRITE','SUPPORT_WRITE') and hasAnyAuthority('TASK:WRITE','TASK_WRITE')",
+    "kind": "admin",
+    "permission": "SUPPORT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.support.dto.SupportDtos.CreateTicketTaskRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/support/tickets/{ticketNumber}/timeline",
+   "package": "features.support.controller",
+   "controller": "SupportTicketController",
+   "source": "src/main/java/com/sni/bokaticowork/features/support/controller/SupportTicketController.java",
+   "handler": "timeline",
+   "declaredIn": "SupportTicketController",
+   "access": {
+    "preAuthorize": "hasAnyAuthority('SUPPORT:READ','SUPPORT_READ')",
+    "kind": "admin",
+    "permission": "SUPPORT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "ticketNumber",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.support.dto.SupportDtos.TicketEventResponse>>"
+  }
+ ],
+ "schemas": {
+  "KnowledgeDtos.KnowledgeArticleResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "articleCode": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "slug": {
+     "type": "string"
+    },
+    "body": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "tags": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "publicVisible": {
+     "type": "boolean"
+    },
+    "internalOnly": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "viewCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "updatedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "KnowledgeDtos.ArticleSuggestionResponse": {
+   "type": "object",
+   "properties": {
+    "articleCode": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "slug": {
+     "type": "string"
+    },
+    "excerpt": {
+     "type": "string"
+    }
+   }
+  },
+  "SupportDtos.SupportTicketResponse": {
+   "type": "object",
+   "properties": {
+    "ticketNumber": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "IN_PROGRESS",
+      "WAITING_CLIENT",
+      "RESOLVED",
+      "CLOSED"
+     ]
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string"
+    },
+    "contactPhone": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "string"
+    },
+    "relatedType": {
+     "type": "string"
+    },
+    "relatedCode": {
+     "type": "string"
+    },
+    "firstResponseDueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "resolutionDueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "firstRespondedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "resolvedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "closedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "csatScore": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "csatComment": {
+     "type": "string"
+    },
+    "csatSubmittedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "escalationLevel": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "escalatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "escalationReason": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "messages": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.support.dto.SupportDtos.TicketMessageResponse"
+     }
+    },
+    "attachments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.support.dto.SupportDtos.AttachmentResponse"
+     }
+    },
+    "tags": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "messageCount": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "attachmentCount": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "ClientCreateTicketRequest": {
+   "required": [
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "maxLength": 255,
+     "minLength": 0,
+     "type": "string"
+    },
+    "description": {
+     "maxLength": 5000,
+     "minLength": 0,
+     "type": "string"
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "relatedType": {
+     "type": "string"
+    },
+    "relatedCode": {
+     "type": "string"
+    }
+   }
+  },
+  "SupportDtos.OwnerTicketSummaryResponse": {
+   "type": "object",
+   "properties": {
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "openTickets": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "slaBreaches": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "avgCsatScore": {
+     "type": "number",
+     "format": "double"
+    },
+    "atRisk": {
+     "type": "boolean"
+    },
+    "recentTickets": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse"
+     }
+    }
+   }
+  },
+  "SupportDtos.AttachmentResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "fileName": {
+     "type": "string"
+    },
+    "contentType": {
+     "type": "string"
+    },
+    "fileSize": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "internal": {
+     "type": "boolean"
+    },
+    "uploadedBy": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "SupportDtos.SubmitCsatRequest": {
+   "required": [
+    "score"
+   ],
+   "type": "object",
+   "properties": {
+    "score": {
+     "maximum": 5,
+     "minimum": 1,
+     "type": "integer",
+     "format": "int32"
+    },
+    "comment": {
+     "type": "string"
+    }
+   }
+  },
+  "ClientAddMessageRequest": {
+   "required": [
+    "content"
+   ],
+   "type": "object",
+   "properties": {
+    "content": {
+     "maxLength": 10000,
+     "minLength": 0,
+     "type": "string"
+    }
+   }
+  },
+  "KnowledgeDtos.KnowledgeArticleRequest": {
+   "required": [
+    "body",
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "slug": {
+     "type": "string"
+    },
+    "body": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "tags": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "publicVisible": {
+     "type": "boolean"
+    },
+    "internalOnly": {
+     "type": "boolean"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "KnowledgeDtos.KnowledgeAnalyticsResponse": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "to": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "totalArticles": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "activeArticles": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalViews": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "ticketsCreatedInPeriod": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "topArticles": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.support.dto.KnowledgeDtos.ArticleViewEntry"
+     }
+    }
+   }
+  },
+  "SupportDtos.QuickReplyResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "title": {
+     "type": "string"
+    },
+    "body": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "SupportDtos.QuickReplyRequest": {
+   "required": [
+    "body",
+    "category",
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "body": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "SupportDtos.RoutingRuleResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "relatedType": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "teamCode": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "SupportDtos.RoutingRuleRequest": {
+   "required": [
+    "name"
+   ],
+   "type": "object",
+   "properties": {
+    "name": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "relatedType": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "teamCode": {
+     "type": "string"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "SupportDtos.TagResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "name": {
+     "type": "string"
+    }
+   }
+  },
+  "SupportDtos.CreateTicketRequest": {
+   "required": [
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "ownerType": {
+     "type": "string"
+    },
+    "ownerCode": {
+     "type": "string"
+    },
+    "contactName": {
+     "type": "string"
+    },
+    "contactEmail": {
+     "type": "string"
+    },
+    "contactPhone": {
+     "type": "string"
+    },
+    "relatedType": {
+     "type": "string"
+    },
+    "relatedCode": {
+     "type": "string"
+    }
+   }
+  },
+  "SupportDtos.AgentPerformanceEntry": {
+   "type": "object",
+   "properties": {
+    "agentId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "assignedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resolvedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "avgFirstResponseHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "avgResolutionHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "avgCsatScore": {
+     "type": "number",
+     "format": "double"
+    }
+   }
+  },
+  "SupportDtos.SupportAnalyticsResponse": {
+   "type": "object",
+   "properties": {
+    "from": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "to": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "totalCreated": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalResolved": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "openAtEndOfPeriod": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "slaBreachCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "slaBreachRate": {
+     "type": "number",
+     "format": "double"
+    },
+    "avgFirstResponseHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "avgResolutionHours": {
+     "type": "number",
+     "format": "double"
+    },
+    "reopenedCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "waitingClientCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "byCategory": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "byPriority": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "topTags": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "volumeByRelatedType": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "backlogByAgent": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "avgCsatScore": {
+     "type": "number",
+     "format": "double"
+    },
+    "csatResponseCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "csatByCategory": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "number",
+      "format": "double"
+     }
+    },
+    "csatByAgent": {
+     "type": "object",
+     "additionalProperties": {
+      "type": "number",
+      "format": "double"
+     }
+    },
+    "agentWorkload": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.support.dto.SupportDtos.AgentWorkloadEntry"
+     }
+    }
+   }
+  },
+  "SupportDtos.SupportMetricsResponse": {
+   "type": "object",
+   "properties": {
+    "openTickets": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "overdueFirstResponse": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "overdueResolution": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resolvedTickets": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "SupportDtos.AssignTicketRequest": {
+   "type": "object",
+   "properties": {
+    "assignedTo": {
+     "type": "string"
+    }
+   }
+  },
+  "SupportDtos.AddTicketMessageRequest": {
+   "required": [
+    "content"
+   ],
+   "type": "object",
+   "properties": {
+    "senderType": {
+     "type": "string",
+     "enum": [
+      "CLIENT",
+      "AGENT",
+      "SYSTEM"
+     ]
+    },
+    "senderId": {
+     "type": "string"
+    },
+    "senderName": {
+     "type": "string"
+    },
+    "content": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "internal": {
+     "type": "boolean"
+    },
+    "authorId": {
+     "type": "string"
+    },
+    "authorName": {
+     "type": "string"
+    }
+   }
+  },
+  "KnowledgeDtos.ConvertMessageToArticleRequest": {
+   "required": [
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "slug": {
+     "type": "string"
+    },
+    "category": {
+     "type": "string",
+     "enum": [
+      "BILLING",
+      "BOOKING",
+      "ACCESS",
+      "TECHNICAL",
+      "OTHER"
+     ]
+    },
+    "tags": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "publicVisible": {
+     "type": "boolean"
+    }
+   }
+  },
+  "SupportDtos.UpdateTicketStatusRequest": {
+   "type": "object",
+   "properties": {
+    "status": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "IN_PROGRESS",
+      "WAITING_CLIENT",
+      "RESOLVED",
+      "CLOSED"
+     ]
+    }
+   }
+  },
+  "SupportDtos.AddTagRequest": {
+   "required": [
+    "tag"
+   ],
+   "type": "object",
+   "properties": {
+    "tag": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "TaskDtos.TaskResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "title": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "status": {
+     "type": "string",
+     "enum": [
+      "OPEN",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+      "ARCHIVED"
+     ]
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "dueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "sourceType": {
+     "type": "string"
+    },
+    "sourceCode": {
+     "type": "string"
+    },
+    "recurrence": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "DAILY",
+      "WEEKLY",
+      "MONTHLY",
+      "AFTER_BOOKING"
+     ]
+    },
+    "parentTaskId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "completedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checklist": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistResponse"
+     }
+    },
+    "comments": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.task.dto.TaskDtos.TaskCommentResponse"
+     }
+    }
+   }
+  },
+  "SupportDtos.CreateTicketTaskRequest": {
+   "required": [
+    "title"
+   ],
+   "type": "object",
+   "properties": {
+    "title": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "assignedTo": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "priority": {
+     "type": "string",
+     "enum": [
+      "LOW",
+      "MEDIUM",
+      "HIGH",
+      "URGENT"
+     ]
+    },
+    "dueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "checklist": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistRequest"
+     }
+    }
+   }
+  },
+  "SupportDtos.TicketEventResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "eventType": {
+     "type": "string",
+     "enum": [
+      "TICKET_CREATED",
+      "ASSIGNED",
+      "STATUS_CHANGED",
+      "PRIORITY_CHANGED",
+      "CATEGORY_CHANGED",
+      "MESSAGE_ADDED",
+      "SLA_ESCALATED",
+      "CSAT_SUBMITTED",
+      "REOPENED",
+      "MERGED",
+      "AUTO_CLOSED",
+      "TASK_CREATED"
+     ]
+    },
+    "actorType": {
+     "type": "string"
+    },
+    "actorId": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "SupportDtos.TicketMessageResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "senderType": {
+     "type": "string",
+     "enum": [
+      "CLIENT",
+      "AGENT",
+      "SYSTEM"
+     ]
+    },
+    "senderId": {
+     "type": "string"
+    },
+    "senderName": {
+     "type": "string"
+    },
+    "content": {
+     "type": "string"
+    },
+    "internal": {
+     "type": "boolean"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "KnowledgeDtos.ArticleViewEntry": {
+   "type": "object",
+   "properties": {
+    "articleCode": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "viewCount": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "SupportDtos.AgentWorkloadEntry": {
+   "type": "object",
+   "properties": {
+    "agentId": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "assigned": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "resolved": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "TaskDtos.ChecklistResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "label": {
+     "type": "string"
+    },
+    "completed": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "TaskDtos.TaskCommentResponse": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "authorId": {
+     "type": "string"
+    },
+    "authorName": {
+     "type": "string"
+    },
+    "comment": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "TaskDtos.ChecklistRequest": {
+   "type": "object",
+   "properties": {
+    "label": {
+     "type": "string"
+    },
+    "completed": {
+     "type": "boolean"
+    },
+    "displayOrder": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  }
+ },
+ "enums": {
+  "TicketCategory": [
+   "BILLING",
+   "BOOKING",
+   "ACCESS",
+   "TECHNICAL",
+   "OTHER"
+  ],
+  "TicketStatus": [
+   "OPEN",
+   "IN_PROGRESS",
+   "WAITING_CLIENT",
+   "RESOLVED",
+   "CLOSED"
+  ],
+  "TicketPriority": [
+   "LOW",
+   "MEDIUM",
+   "HIGH",
+   "URGENT"
+  ]
+ },
+ "names": {
+  "KnowledgeDtos.KnowledgeArticleResponse": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleResponse",
+  "TicketCategory": "com.sni.bokaticowork.features.support.enums.TicketCategory",
+  "KnowledgeDtos.ArticleSuggestionResponse": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.ArticleSuggestionResponse",
+  "SupportDtos.SupportTicketResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.SupportTicketResponse",
+  "TicketStatus": "com.sni.bokaticowork.features.support.enums.TicketStatus",
+  "ClientCreateTicketRequest": "com.sni.bokaticowork.features.portal.support.dto.request.ClientCreateTicketRequest",
+  "SupportDtos.OwnerTicketSummaryResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.OwnerTicketSummaryResponse",
+  "SupportDtos.AttachmentResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.AttachmentResponse",
+  "SupportDtos.SubmitCsatRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.SubmitCsatRequest",
+  "ClientAddMessageRequest": "com.sni.bokaticowork.features.portal.support.dto.request.ClientAddMessageRequest",
+  "KnowledgeDtos.KnowledgeArticleRequest": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeArticleRequest",
+  "KnowledgeDtos.KnowledgeAnalyticsResponse": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.KnowledgeAnalyticsResponse",
+  "SupportDtos.QuickReplyResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.QuickReplyResponse",
+  "SupportDtos.QuickReplyRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.QuickReplyRequest",
+  "SupportDtos.RoutingRuleResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.RoutingRuleResponse",
+  "SupportDtos.RoutingRuleRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.RoutingRuleRequest",
+  "SupportDtos.TagResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.TagResponse",
+  "TicketPriority": "com.sni.bokaticowork.features.support.enums.TicketPriority",
+  "SupportDtos.CreateTicketRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.CreateTicketRequest",
+  "SupportDtos.AgentPerformanceEntry": "com.sni.bokaticowork.features.support.dto.SupportDtos.AgentPerformanceEntry",
+  "SupportDtos.SupportAnalyticsResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.SupportAnalyticsResponse",
+  "SupportDtos.SupportMetricsResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.SupportMetricsResponse",
+  "SupportDtos.AssignTicketRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.AssignTicketRequest",
+  "SupportDtos.AddTicketMessageRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.AddTicketMessageRequest",
+  "KnowledgeDtos.ConvertMessageToArticleRequest": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.ConvertMessageToArticleRequest",
+  "SupportDtos.UpdateTicketStatusRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.UpdateTicketStatusRequest",
+  "SupportDtos.AddTagRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.AddTagRequest",
+  "TaskDtos.TaskResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.TaskResponse",
+  "SupportDtos.CreateTicketTaskRequest": "com.sni.bokaticowork.features.support.dto.SupportDtos.CreateTicketTaskRequest",
+  "SupportDtos.TicketEventResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.TicketEventResponse",
+  "SupportDtos.TicketMessageResponse": "com.sni.bokaticowork.features.support.dto.SupportDtos.TicketMessageResponse",
+  "KnowledgeDtos.ArticleViewEntry": "com.sni.bokaticowork.features.support.dto.KnowledgeDtos.ArticleViewEntry",
+  "SupportDtos.AgentWorkloadEntry": "com.sni.bokaticowork.features.support.dto.SupportDtos.AgentWorkloadEntry",
+  "TaskDtos.ChecklistResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistResponse",
+  "TaskDtos.TaskCommentResponse": "com.sni.bokaticowork.features.task.dto.TaskDtos.TaskCommentResponse",
+  "TaskDtos.ChecklistRequest": "com.sni.bokaticowork.features.task.dto.TaskDtos.ChecklistRequest"
+ }
+}

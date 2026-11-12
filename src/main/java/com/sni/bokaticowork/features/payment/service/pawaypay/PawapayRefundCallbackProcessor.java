@@ -65,7 +65,8 @@ public class PawapayRefundCallbackProcessor {
             transaction.setPaidAt(Instant.now());
             transactionRepository.save(transaction);
 
-            if (original != null && projectedRefundedTotal.compareTo(original.getAmount()) >= 0) {
+            boolean fullyRefunded = original != null && projectedRefundedTotal.compareTo(original.getAmount()) >= 0;
+            if (fullyRefunded) {
                 original.setStatus(PaymentTransactionStatus.REFUNDED);
                 transactionRepository.save(original);
                 intent.setStatus(PaymentIntentStatus.REFUNDED);
@@ -76,7 +77,8 @@ public class PawapayRefundCallbackProcessor {
                     "PAYMENT_TRANSACTION_WORKFLOW",
                     "PAYMENT",
                     transaction.getTransactionNumber(),
-                    java.util.Map.of("transactionNumber", transaction.getTransactionNumber(), "status", PaymentTransactionStatus.REFUNDED.name())
+                    java.util.Map.of("transactionNumber", transaction.getTransactionNumber(), "status", PaymentTransactionStatus.REFUNDED.name(),
+                            "fullRefund", fullyRefunded)
             );
             log.info("PawaPay refund completed · transaction={}, refundId={}",
                     transaction.getTransactionNumber(), payload.refundId());

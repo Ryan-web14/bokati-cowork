@@ -34,7 +34,8 @@ public class Document {
     @Column(name = "code", nullable = false, unique = true, length = 100)
     private String code;
 
-    @Column(name = "owner_id", nullable = false)
+    /** Vide pour un document {@code INTERNAL}, qui n'appartient a personne. */
+    @Column(name = "owner_id")
     private Long ownerId;
 
     @Column(name = "owner_type", nullable = false, length = 50)
@@ -136,6 +137,28 @@ public class Document {
     @Builder.Default
     @Column(name = "deleted", nullable = false)
     private Boolean deleted = false;
+
+    /** Mis a la corbeille de la GED : restaurable avec les autres elements du meme lot. */
+    @Column(name = "trashed_at")
+    private Instant trashedAt;
+
+    @Column(name = "trashed_by")
+    private Long trashedBy;
+
+    @Column(name = "trash_batch", length = 40)
+    private String trashBatch;
+
+    /** Marque par une regle de conservation « a detruire » : en attente de la confirmation d'un administrateur. */
+    @Column(name = "destruction_due_at")
+    private Instant destructionDueAt;
+
+    @Column(name = "destruction_policy_code", length = 100)
+    private String destructionPolicyCode;
+
+    /** Garde par decision d'un administrateur : les regles de conservation ne le touchent plus. */
+    @Column(name = "retention_exempt", nullable = false)
+    @Builder.Default
+    private Boolean retentionExempt = Boolean.FALSE;
 
     @PrePersist
     public void prePersist() {

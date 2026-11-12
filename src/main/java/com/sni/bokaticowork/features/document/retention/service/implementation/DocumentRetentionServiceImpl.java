@@ -39,10 +39,14 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
 
     private static final List<DocumentStatus> RETAINABLE_STATUSES = List.of(
             DocumentStatus.APPROVED, DocumentStatus.SIGNED, DocumentStatus.EXPIRED);
+    private static final List<DocumentStatus> DESTROYABLE_STATUSES = List.of(
+            DocumentStatus.APPROVED, DocumentStatus.SIGNED, DocumentStatus.EXPIRED, DocumentStatus.ARCHIVED);
 
     private final DocumentRetentionPolicyRepository policyRepository;
     private final DocumentRepository documentRepository;
     private final DocumentService documentService;
+    private final com.sni.bokaticowork.features.document.documentMaster.repository.DocumentFolderRepository folderRepository;
+    private final com.sni.bokaticowork.features.document.explorer.lifecycle.GedHoldService holdService;
 
     @Override
     public DocumentRetentionPolicyResponse create(DocumentRetentionPolicyRequest request) {
@@ -54,6 +58,7 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
                 .name(request.getName().trim())
                 .space(request.getSpace())
                 .documentTypeCode(trimToNull(request.getDocumentTypeCode()))
+                .folderId(folderId(request.getFolderCode()))
                 .retentionDays(request.getRetentionDays())
                 .retentionReference(request.getRetentionReference() != null ? request.getRetentionReference() : DocumentRetentionReference.UPLOAD_DATE)
                 .action(request.getAction() != null ? request.getAction() : DocumentRetentionAction.ARCHIVE)
@@ -69,6 +74,7 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
         policy.setName(request.getName().trim());
         policy.setSpace(request.getSpace());
         policy.setDocumentTypeCode(trimToNull(request.getDocumentTypeCode()));
+        policy.setFolderId(folderId(request.getFolderCode()));
         policy.setRetentionDays(request.getRetentionDays());
         policy.setRetentionReference(request.getRetentionReference() != null ? request.getRetentionReference() : DocumentRetentionReference.UPLOAD_DATE);
         policy.setAction(request.getAction() != null ? request.getAction() : DocumentRetentionAction.ARCHIVE);
@@ -109,13 +115,21 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
     }
 
     private int applyPolicy(DocumentRetentionPolicy policy) {
-        List<Document> candidates = documentRepository.findAll(buildSpec(policy));
+        List<Document> candidates = documentRepository.findAll(buildSpec(policy)).stream()
+                .filter(doc -> hasReachedRetentionCutoff(doc, policy)).toList();
+        // Un document sous gel juridique echappe a toute regle de conservation
+        java.util.Set<Long> held = holdService.heldDocumentIds(candidates.stream().map(Document::getId).toList());
         int count = 0;
         for (Document doc : candidates) {
-            if (!hasReachedRetentionCutoff(doc, policy)) continue;
+            if (held.contains(doc.getId())) continue;
             try {
                 if (policy.getAction() == DocumentRetentionAction.ARCHIVE) {
                     documentService.archive(doc.getCode(), "Archived by retention policy: " + policy.getCode());
+                } else if (policy.getAction() == DocumentRetentionAction.PURGE_FLAG) {
+                    // Marque seulement : la destruction attend la confirmation d'un administrateur
+                    doc.setDestructionDueAt(Instant.now());
+                    doc.setDestructionPolicyCode(policy.getCode());
+                    documentRepository.save(doc);
                 }
                 count++;
             } catch (Exception ex) {
@@ -136,9 +150,23 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
     }
 
     private Specification<Document> buildSpec(DocumentRetentionPolicy policy) {
+        String folderPath = policy.getFolderId() == null ? null
+                : folderRepository.findById(policy.getFolderId()).map(f -> f.getPath()).orElse(null);
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(root.get("status").in(RETAINABLE_STATUSES));
+            boolean destruction = policy.getAction() == DocumentRetentionAction.PURGE_FLAG;
+            // Un document archive peut encore etre detruit ; il ne s'archive pas deux fois
+            predicates.add(root.get("status").in(destruction ? DESTROYABLE_STATUSES : RETAINABLE_STATUSES));
+            // Garde par un administrateur : hors des regles
+            predicates.add(cb.isFalse(root.get("retentionExempt")));
+            if (destruction) {
+                predicates.add(cb.isNull(root.get("destructionDueAt")));
+            }
+            if (policy.getFolderId() != null) {
+                // Un dossier introuvable (supprime) : la regle ne vise plus rien
+                predicates.add(folderPath == null ? cb.disjunction()
+                        : cb.like(root.join("folder").get("path"), folderPath + "%"));
+            }
             if (policy.getSpace() != null) {
                 predicates.add(cb.equal(root.get("space"), policy.getSpace()));
             }
@@ -161,6 +189,8 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
                 .name(p.getName())
                 .space(p.getSpace())
                 .documentTypeCode(p.getDocumentTypeCode())
+                .folderCode(p.getFolderId() == null ? null : folderRepository.findById(p.getFolderId()).map(f -> f.getCode()).orElse(null))
+                .folderName(p.getFolderId() == null ? null : folderRepository.findById(p.getFolderId()).map(f -> f.getName()).orElse(null))
                 .retentionDays(p.getRetentionDays())
                 .retentionReference(p.getRetentionReference())
                 .action(p.getAction())
@@ -168,6 +198,14 @@ public class DocumentRetentionServiceImpl implements DocumentRetentionService {
                 .createdAt(p.getCreatedAt())
                 .createdBy(p.getCreatedBy())
                 .build();
+    }
+
+    private Long folderId(String folderCode) {
+        if (!StringUtils.hasText(folderCode)) {
+            return null;
+        }
+        return folderRepository.findByCode(folderCode.trim())
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier introuvable : " + folderCode)).getId();
     }
 
     private String trimToNull(String value) {
