@@ -1,6 +1,10 @@
 # cle	domaine	type	effet	defaut	libelle
 accounting.account.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation de compte : IMMEDIATE ou AFTER_APPROVAL
+accounting.analytic.centre-account	ACCOUNTING	TEXT	LIVE	93	Compte de classe 9 des centres d'analyse (reflet analytique)
+accounting.analytic.class9-axis	ACCOUNTING	TEXT	LIVE	ACTIVITE	Axe reflechi en classe 9 dans le journal CAG (vide : pas de reflet)
+accounting.analytic.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation d'une section par un administrateur : IMMEDIATE ou AFTER_APPROVAL
 accounting.analytic.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite analytique active (ventilation obligatoire sur les comptes concernes)
+accounting.analytic.reflected-account	ACCOUNTING	TEXT	LIVE	91	Compte des charges et produits reflechis
 accounting.cash.default-in-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une entree de caisse sans nature d'operation
 accounting.cash.default-out-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une sortie de caisse sans nature d'operation
 accounting.cash.treasury-parent-account	ACCOUNTING	TEXT	LIVE	571	Compte parent sous lequel chaque caisse recoit son compte
@@ -56,24 +60,6 @@ app.document.storage.provider	DOCUMENTS	TEXT	RESTART	filesystem	Fournisseur de s
 app.document.storage.root-path	DOCUMENTS	TEXT	RESTART	storage/documents	Dossier racine du stockage
 app.document.worker.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Traitement des documents actif
 app.document.worker.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du traitement des documents (ms)
-app.ged.filing.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Classement automatique de la GED actif
-app.ged.filing.batch-size	DOCUMENTS	INTEGER	RESTART	1000	Documents rangés par passage du classement GED
-app.ged.filing.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	120000	Délai avant le premier classement GED (ms)
-app.ged.filing.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du classement GED (ms)
-app.ged.text.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Lecture du texte des fichiers GED (recherche) active
-app.ged.text.batch-size	DOCUMENTS	INTEGER	RESTART	20	Fichiers GED lus par passage
-app.ged.text.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	180000	Délai avant la première lecture des fichiers GED (ms)
-app.ged.text.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	60000	Cadence de lecture des fichiers GED (ms)
-app.ged.text.ocr-enabled	DOCUMENTS	BOOLEAN	RESTART	true	OCR des scans et images de la GED
-app.ged.text.max-ocr-pages	DOCUMENTS	INTEGER	RESTART	30	Pages lues par OCR au plus, par fichier GED
-app.ged.text.max-chars	DOCUMENTS	INTEGER	RESTART	300000	Caractères gardés au plus, par fichier GED
-app.ged.text.ocr-language	DOCUMENTS	TEXT	RESTART	fra+eng	Langues de l'OCR de la GED (Tesseract)
-app.ged.text.ocr-data-path	DOCUMENTS	TEXT	RESTART		Dossier des langues Tesseract (tessdata) pour la GED
-app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	RESTART	true	Vidage automatique de la corbeille GED
-app.ged.trash.retention-days	DOCUMENTS	INTEGER	RESTART	30	Jours en corbeille GED avant destruction
-app.ged.trash.purge-cron	DOCUMENTS	CRON	RESTART	0 15 3 * * *	Heure du vidage de la corbeille GED
-app.ged.quota.total-bytes	DOCUMENTS	INTEGER	RESTART	0	Quota d'espace de toute la GED en octets (0 : aucun)
-app.referral.share-url-template	ENVIRONMENT	TEXT	RESTART	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
 app.documents.preview-token.secret	DOCUMENTS	SECRET	RESTART		Secret des liens d'aperçu
 app.documents.preview-token.ttl-seconds	DOCUMENTS	INTEGER	RESTART	300	Validité d'un lien d'aperçu (secondes)
 app.documents.public-preview-enabled	DOCUMENTS	BOOLEAN	RESTART	false	Aperçu public des documents
@@ -81,6 +67,23 @@ app.error.verbose	ENVIRONMENT	BOOLEAN	RESTART	false	Erreurs détaillées
 app.event.notification-email	EVENTS	EMAIL	RESTART	coworkspace@elleaose.com	Adresse de notification des événements
 app.event.opening-code	EVENTS	TEXT	RESTART	OUVERTURE	Code de l'événement d'ouverture
 app.frontend-url	ENVIRONMENT	TEXT	RESTART	https://elleaose.com	Adresse du portail
+app.ged.filing.batch-size	DOCUMENTS	INTEGER	RESTART	1000	Documents rangés par passage du classement GED
+app.ged.filing.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Classement automatique de la GED actif
+app.ged.filing.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du classement GED (ms)
+app.ged.filing.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	120000	Délai avant le premier classement GED (ms)
+app.ged.quota.total-bytes	DOCUMENTS	INTEGER	RESTART	0	Quota d'espace de toute la GED en octets (0 : aucun)
+app.ged.text.batch-size	DOCUMENTS	INTEGER	RESTART	20	Fichiers GED lus par passage
+app.ged.text.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Lecture du texte des fichiers GED (recherche) active
+app.ged.text.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	60000	Cadence de lecture des fichiers GED (ms)
+app.ged.text.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	180000	Délai avant la première lecture des fichiers GED (ms)
+app.ged.text.max-chars	DOCUMENTS	INTEGER	RESTART	300000	Caractères gardés au plus, par fichier GED
+app.ged.text.max-ocr-pages	DOCUMENTS	INTEGER	RESTART	30	Pages lues par OCR au plus, par fichier GED
+app.ged.text.ocr-data-path	DOCUMENTS	TEXT	RESTART		Dossier des langues Tesseract (tessdata) pour la GED
+app.ged.text.ocr-enabled	DOCUMENTS	BOOLEAN	RESTART	true	OCR des scans et images de la GED
+app.ged.text.ocr-language	DOCUMENTS	TEXT	RESTART	fra+eng	Langues de l'OCR de la GED (Tesseract)
+app.ged.trash.purge-cron	DOCUMENTS	CRON	RESTART	0 15 3 * * *	Heure du vidage de la corbeille GED
+app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	RESTART	true	Vidage automatique de la corbeille GED
+app.ged.trash.retention-days	DOCUMENTS	INTEGER	RESTART	30	Jours en corbeille GED avant destruction
 app.locale	LOCALE	TEXT	RESTART	fr_FR	Langue de la plateforme
 app.outbox.worker.batch-size	OUTBOX	INTEGER	RESTART	25	Taille de lot de la boîte d'envoi
 app.outbox.worker.enabled	OUTBOX	BOOLEAN	RESTART	true	Boîte d'envoi active
@@ -89,6 +92,7 @@ app.phone.default-country	LOCALE	TEXT	RESTART	CG	Pays par défaut des téléphon
 app.phone.default-dial-code	LOCALE	TEXT	RESTART	+242	Indicatif par défaut
 app.phone.keep-trunk-zero	LOCALE	TEXT	RESTART	CG,GA,CI,IT	Pays qui gardent le zéro initial
 app.portal.kyc-grace-period-days	PORTAL	INTEGER	RESTART	7	Grâce KYC du portail (jours)
+app.referral.share-url-template	ENVIRONMENT	TEXT	RESTART	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
 app.security.bootstrap.secret	SECURITY	SECRET	RESTART		Secret d'initialisation
 app.security.cors.allowed-origins	SECURITY	TEXT	RESTART	*	Origines autorisées
 app.security.failed-login.max-attempts	SECURITY	INTEGER	RESTART	5	Essais de connexion avant blocage
@@ -301,7 +305,6 @@ bokati.websocket.stomp.system-passcode	WEBSOCKET	SECRET	RESTART		Mot de passe sy
 bokati.websocket.stomp.use-tls	WEBSOCKET	BOOLEAN	RESTART	false	Relais chiffré
 bokati.websocket.stomp.virtual-host	WEBSOCKET	TEXT	RESTART	/	Hôte virtuel du relais
 bokati.websocket.use-stomp-relay	WEBSOCKET	BOOLEAN	RESTART	false	Relais de messages actif
-
 fund.advance.overdue-policy	PAYMENT	ENUM	RESTART	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
 fund.approval.escalation-days	PAYMENT	INTEGER	RESTART	3	Jours d'attente d'une validation avant escalade au responsable
 fund.approval.level1-max	PAYMENT	INTEGER	RESTART	50000	Montant maximal valide par le seul chef de service (XAF)
@@ -311,6 +314,6 @@ fund.justification.days	PAYMENT	INTEGER	RESTART	7	Delai de justification d'une a
 fund.justification.receipt-exempt-max	PAYMENT	INTEGER	RESTART	5000	Montant d'une ligne de justification admis sans piece, sur attestation (XAF)
 fund.request.expiry-days	PAYMENT	INTEGER	RESTART	15	Jours apres lesquels une demande approuvee non decaissee expire
 fund.vat-recoverable-account	PAYMENT	TEXT	RESTART	4452	Compte de TVA recuperable des justifications d'avance
-fund.worker-cron	PAYMENT	CRON	RESTART	0 0 8-18 * * *	Planification des rappels et relances des demandes de fonds
 fund.voucher.issuer-details	PAYMENT	TEXT	RESTART		Mentions de l'exploitant en tete des pieces (RCCM, NIU, adresse)
 fund.voucher.issuer-name	PAYMENT	TEXT	RESTART	ELLE A OSE	Raison sociale en tete des pieces comptables
+fund.worker-cron	PAYMENT	CRON	RESTART	0 0 8-18 * * *	Planification des rappels et relances des demandes de fonds

@@ -71,4 +71,8 @@ public class AccEntryLine {
 
     @Column(name = "reference", length = 120)
     private String reference;
+
+    /** Ventilation demandee (lot F9) : {"AXE": "SECTION" ou "KEY:CLE"}. */
+    @Column(name = "analytic_json", columnDefinition = "TEXT")
+    private String analyticJson;
 }

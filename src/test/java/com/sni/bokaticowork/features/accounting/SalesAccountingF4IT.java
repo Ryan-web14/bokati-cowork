@@ -75,7 +75,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /** Lot F4 sur le schema de production : facture, encaissement, lettrage, portefeuille, annulation. */
-@Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, AccountingLetteringService.class,
+@Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, com.sni.bokaticowork.features.accounting.service.implementation.AnalyticAllocator.class, AccountingLetteringService.class,
         EntryNumbering.class, CashActorResolver.class, PostingEngine.class, PostingTemplate.class, BasicPostingResolvers.class,
         CashAccountingService.class, SalesAccountingService.class, SalesAccountingF4IT.Json.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")

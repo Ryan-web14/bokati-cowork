@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
  * Lot F1 sur le schema de production : plan initial, numerotation definitive sans trou, politiques
  * des pieces desequilibrees, contre-passation, lettrage, balance, et declencheurs d'immuabilite.
  */
-@Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class,
+@Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, com.sni.bokaticowork.features.accounting.service.implementation.AnalyticAllocator.class,
         AccountingLetteringService.class, AccountingReportService.class, EntryNumbering.class, CashActorResolver.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 class AccountingFoundationF1IT extends PostgresIntegrationTestBase {

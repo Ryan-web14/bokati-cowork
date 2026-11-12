@@ -60,7 +60,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /** Lot F3 sur le schema de production : chaque fait de caisse produit sa piece, le solde comptable suit la caisse. */
-@Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, AccountingLetteringService.class,
+@Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, com.sni.bokaticowork.features.accounting.service.implementation.AnalyticAllocator.class, AccountingLetteringService.class,
         EntryNumbering.class, CashActorResolver.class, PostingEngine.class, PostingTemplate.class, BasicPostingResolvers.class,
         CashAccountingService.class, CashAccountingF3IT.Json.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")

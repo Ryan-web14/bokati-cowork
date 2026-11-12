@@ -520,6 +520,7 @@ public class FundRequestService {
         data.put("designation", line.getDesignation());
         data.put("supplier", line.getSupplier());
         data.put("section", line.getSection());
+        data.put("natureSection", nature == null ? null : nature.getDefaultSection());
         data.put("beneficiaryCode", request.getBeneficiaryCode());
         accountingEvents.publish("EXPENSE_JUSTIFIED", "FUNDING", line.getNumber(), line.getExpenseDate(), data);
         recompute(request);

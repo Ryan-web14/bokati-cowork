@@ -75,7 +75,9 @@ public class PostingTemplate {
             String taxCode,
             String taxBase,
             String currency,
-            String foreignAmount
+            String foreignAmount,
+            /** Ventilation analytique (lot F9) : axe vers section (variables admises, vide ignore). */
+            Map<String, String> analytic
     ) {
     }
 
@@ -198,7 +200,7 @@ public class PostingTemplate {
                         debitSide ? amount : null, debitSide ? null : amount,
                         blankToNull(substitute(spec.currency(), event, item, true, new ArrayList<>())), foreign, null,
                         blankToNull(substitute(spec.taxCode(), event, item, true, new ArrayList<>())), taxBase,
-                        date(dueText), reference));
+                        date(dueText), reference, analytic(spec.analytic(), event, item)));
                 if (debitSide) {
                     debit = debit.add(amount);
                 } else {
@@ -211,6 +213,20 @@ public class PostingTemplate {
                     + " ligne(s) pour cet evenement : une piece a au moins un debit et un credit");
         }
         return new Plan(journal.trim().toUpperCase(Locale.ROOT), label, result, debit, credit, warnings);
+    }
+
+    private Map<String, String> analytic(Map<String, String> spec, JsonNode event, JsonNode item) {
+        if (spec == null || spec.isEmpty()) {
+            return null;
+        }
+        Map<String, String> result = new LinkedHashMap<>();
+        spec.forEach((axis, template) -> {
+            String value = blankToNull(substitute(template, event, item, true, new ArrayList<>()));
+            if (value != null && !value.startsWith("?")) {
+                result.put(axis.trim().toUpperCase(Locale.ROOT), value);
+            }
+        });
+        return result.isEmpty() ? null : result;
     }
 
     /** Remplace les variables d'un gabarit. */

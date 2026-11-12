@@ -123,3 +123,12 @@ Rôles : `SUPER_ADMIN` et `ADMIN` ont les trois droits ; `FINANCE` lit, régén�
 - `PostingEngineF2IT` (schéma de production, hors transaction de test) : idempotence, variable non résolue en `FAILED` sans exception, absence de schéma puis remise en file à l'activation, schéma déséquilibré refusé, compte absent mis en attente puis régénéré après création du compte (`REGENERATED`), nouvelle version qui remplace l'ancienne, schéma sans écriture, reprise en brouillard puis validation en bloc, aperçu d'un schéma non enregistré.
 - `PostingTemplateTest` : facture avec lignes répétées, réduction et TVA ; montants signés et soustraction ; refus d'un négatif non signé ; conditions ; variable introuvable.
 - `AdminApiAuthorizationManagerTest.shouldGuardTheAccountingRoutes`.
+
+## Évolutions apportées par les lots suivants
+
+- **Lot F3** :
+  - variable facultative `{?chemin}` : vide si absente, sans mettre l'événement en échec ;
+  - événement d'annulation générique : des données contenant `"_reverse": {"eventType": .., "reference": .., "reason": ..}` contre-passent la pièce de l'événement d'origine (brouillard inverse si l'origine est un brouillard de reprise) ; tant que l'origine n'est pas comptabilisée, l'événement reste en file ;
+  - `PostingOutcomeListener` : les modules sources (caisse, ventes) sont prévenus du résultat dans la transaction du moteur et reportent l'état comptable sur le fait d'origine.
+- **Lot F4** : registre interrogé par référence (`GET /accounting/sales/status/{référence}`) ; les faits de vente, d'encaissement et de portefeuille sont transmis par anti-jointure sur ce registre.
+- **Lot F9** : une ligne de schéma accepte `"analytic": {"AXE": "{variable}"}` ; une valeur vide est ignorée.

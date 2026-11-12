@@ -214,6 +214,7 @@ public class CashAccountingService implements PostingOutcomeListener {
                 .orElse(settings.text(direction == CashFlowDirection.OUT ? "accounting.cash.default-out-account" : "accounting.cash.default-in-account", "471"));
         data.put("natureAccount", natureAccount);
         data.put("counterAccount", natureAccount);
+        data.put("natureSection", nature.map(CashOperationNature::getDefaultSection).orElse(null));
         boolean thirdPartyAccount = chart.find(natureAccount).map(account -> account.getThirdPartyType() != null).orElse(false);
         String party = StringUtils.hasText(movement.getSupplierCode()) ? movement.getSupplierCode()
                 : StringUtils.hasText(movement.getCounterpartyCode()) ? movement.getCounterpartyCode() : movement.getBeneficiaryName();

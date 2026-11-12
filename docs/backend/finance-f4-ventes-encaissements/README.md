@@ -84,3 +84,8 @@ Toutes les 10 minutes (`accounting.lettering.auto-delay-ms`) et sur demande (`PO
 ## Tests
 
 `SalesAccountingF4IT` (schéma de production) : facture payée en espèces, compte client soldé et lettré, caisse débitée, contrôle d'écart facture ; rechargement mobile money crédité au `4191` du client ; facture annulée contre-passée ; avoir lettré avec sa facture.
+
+## Évolutions apportées par les lots suivants
+
+- **Lots F5 et F6** : le lettrage automatique par référence couvre aussi le `421` (avances du personnel, lettrées par numéro de demande de fonds).
+- **Lot F9** : les produits (classe 7) sont ventilés sur l'axe `ACTIVITE` (obligatoire, section par défaut `STRUCTURE`) quand l'analytique est active.

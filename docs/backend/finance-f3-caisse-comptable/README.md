@@ -100,3 +100,8 @@ Tant que le lot F4 n'est pas actif, les encaissements clients en espèces ne son
 
 - `CashAccountingF3IT` (schéma de production) : création du compte et du journal de la caisse, fonds initial, sortie avec TVA (ventilation `6055` / `4452` / caisse), entrée, ajustement, paiement client non écrit, solde comptable égal au solde opérationnel, contre-passation, écart constaté en `471` puis imputé en charge, fonds de la session suivante sans écriture.
 - `AdminApiAuthorizationManagerTest.shouldGuardTheAccountingRoutes`.
+
+## Évolutions apportées par les lots suivants
+
+- **Lots F5 et F6** : les décaissements de demandes de fonds, compléments et retours de reliquat sont des mouvements de caisse ordinaires (référence `FUND_REQUEST`, nature `AVANCE_A_JUSTIFIER` ou `RETOUR_AVANCE`) : ils sont comptabilisés par ce lot.
+- **Lot F9** : les schémas `CASH_OUT` et `CASH_IN` passent en version 2 : la ligne de nature porte le poste de dépense de la nature (`natureSection`, axe `POSTE`).

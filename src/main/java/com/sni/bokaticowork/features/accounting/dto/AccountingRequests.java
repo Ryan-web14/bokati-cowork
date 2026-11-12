@@ -89,8 +89,14 @@ public final class AccountingRequests {
             String taxCode,
             BigDecimal taxBase,
             LocalDate dueDate,
-            String reference
+            String reference,
+            /** Ventilation analytique (lot F9) : axe vers section, ou vers "KEY:code" d'une cle de repartition. */
+            java.util.Map<String, String> analytic
     ) {
+        public EntryLine(String accountNumber, String thirdPartyCode, String label, BigDecimal debit, BigDecimal credit, String currency,
+                         BigDecimal foreignAmount, BigDecimal rate, String taxCode, BigDecimal taxBase, LocalDate dueDate, String reference) {
+            this(accountNumber, thirdPartyCode, label, debit, credit, currency, foreignAmount, rate, taxCode, taxBase, dueDate, reference, null);
+        }
     }
 
     /**

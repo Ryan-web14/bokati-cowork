@@ -62,7 +62,7 @@ import static org.mockito.Mockito.when;
  * evenement dans sa propre transaction. Un journal propre au test evite de toucher a la
  * numerotation des autres tests.
  */
-@Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, AccountingLetteringService.class,
+@Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, com.sni.bokaticowork.features.accounting.service.implementation.AnalyticAllocator.class, AccountingLetteringService.class,
         EntryNumbering.class, CashActorResolver.class, PostingEngine.class, PostingRuleService.class, PostingTemplate.class,
         BasicPostingResolvers.class, PostingEngineF2IT.Json.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")

@@ -124,3 +124,9 @@ Rôles : `SUPER_ADMIN` et `ADMIN` ont tout. `FINANCE` a tout sauf `ACCOUNTING_AC
 
 - `AccountingFoundationF1IT` (schéma de production) : plan chargé, numéros consécutifs et continuité, modes `HOLD` et compte d'attente, contre-passation lettrée, lettrage client, balance équilibrée, refus par la base de modifier, supprimer, valider déséquilibré, sauter un numéro.
 - `AdminApiAuthorizationManagerTest.shouldGuardTheAccountingRoutes`.
+
+## Évolutions apportées par les lots suivants
+
+- **Lot F2** : `AccountingEntryService.post(AutoPost)` pour les pièces automatiques (brouillard possible, date d'origine conservée quand la pièce est reportée dans une période ouverte suivante, lien `postingEventId` vers l'événement) ; `discardForRegeneration` (suivi `REGENERATED`).
+- **Lot F3** : les traitements internes (moteur, traitements planifiés) s'exécutent sans utilisateur connecté : l'auteur enregistré est alors `SYSTEM`.
+- **Lot F9** : avec l'analytique active, une pièce dont une ligne de classe 6 ou 7 n'a pas sa section sur un axe obligatoire est refusée en saisie manuelle et mise en attente (`ANALYTIC_INCOMPLETE`) si elle est automatique ; à la validation, la ventilation est enregistrée et réfléchie en classe 9 (journal `CAG`). Une ligne de pièce accepte `analytic` (axe vers section).

@@ -61,6 +61,8 @@ public class AccountingEntryService {
     private final CashActorResolver actors;
     @Lazy
     private final AccountingLetteringService lettering;
+    @Lazy
+    private final AnalyticAllocator analyticAllocator;
 
     /** Probleme qui empeche la validation directe ; il suit la politique des pieces desequilibrees. */
     record Issue(PendingReason reason, String detail) {
@@ -247,6 +249,7 @@ public class AccountingEntryService {
                     .taxBase(request.taxBase())
                     .dueDate(request.dueDate())
                     .reference(trim(request.reference()))
+                    .analyticJson(AnalyticAllocator.write(request.analytic()))
                     .build());
         }
         lineRepository.saveAll(lines);
@@ -294,6 +297,15 @@ public class AccountingEntryService {
                     });
         }
         List<Issue> issues = checks(entry, journal, lines, manual);
+        // Lot F9 : ventilation analytique obligatoire (analytique active).
+        List<String> analytic = analyticAllocator.problems(entry, lines);
+        if (!analytic.isEmpty()) {
+            String detail = String.join(" ; ", analytic);
+            if (manual) {
+                throw new BadRequestException("Ventilation analytique incomplete : " + detail);
+            }
+            issues.add(new Issue(PendingReason.ANALYTIC_INCOMPLETE, detail));
+        }
         BigDecimal difference = entry.getTotalDebit().subtract(entry.getTotalCredit());
         if (difference.signum() != 0) {
             issues.add(new Issue(PendingReason.UNBALANCED, "Debit " + plain(entry.getTotalDebit()) + ", credit "
@@ -365,6 +377,7 @@ public class AccountingEntryService {
         entry.setValidatedBy(actor);
         entry.setValidatedAt(Instant.now());
         entryRepository.save(entry);
+        analyticAllocator.persist(entry, lines);
         Map<String, AccAccount> accounts = accounts(lines);
         lines.stream().filter(line -> StringUtils.hasText(line.getThirdPartyCode()))
                 .forEach(line -> chart.registerThirdParty(line.getAccountNumber(),
