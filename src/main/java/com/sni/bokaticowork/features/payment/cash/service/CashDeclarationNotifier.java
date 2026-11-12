@@ -60,6 +60,13 @@ public class CashDeclarationNotifier {
         this.platformSettings = platformSettings;
     }
 
+    private com.sni.bokaticowork.features.billing.service.support.MemberBillingContact memberContact;
+
+    @Autowired(required = false)
+    void setMemberContact(com.sni.bokaticowork.features.billing.service.support.MemberBillingContact memberContact) {
+        this.memberContact = memberContact;
+    }
+
     private String deskEmail() {
         return platformSettings == null ? deskEmail : platformSettings.text(CASH_DECLARATION_DESK_EMAIL_KEY, deskEmail);
     }
@@ -97,14 +104,15 @@ public class CashDeclarationNotifier {
 
     /** L argent a ete compte · le client en garde une trace ecrite. */
     public void confirmed(CashPaymentDeclaration declaration) {
-        publishToCustomer(declaration, "CASH_PAYMENT_CONFIRMED",
+        publishToCustomer(declaration, "CASH_PAYMENT_CONFIRMED", com.sni.bokaticowork.core.enums.EventType.PAYMENT_RECEIVED,
                 "Votre paiement en espèces a bien été reçu",
                 payload -> payload.put("confirmedAmount", plain(declaration.getConfirmedAmount())));
     }
 
     /** L annonce tombe · le client doit savoir que sa facture est de nouveau a regler. */
     public void expired(CashPaymentDeclaration declaration) {
-        publishToCustomer(declaration, "CASH_PAYMENT_DECLARATION_EXPIRED",
+        // Le reglement reste du · un rappel de paiement ne se coupe pas.
+        publishToCustomer(declaration, "CASH_PAYMENT_DECLARATION_EXPIRED", null,
                 "Votre paiement en espèces n'a pas été reçu",
                 payload -> payload.put("bookingReleased", StringUtils.hasText(declaration.getBookingNumber())));
     }
@@ -116,10 +124,18 @@ public class CashDeclarationNotifier {
 
     // -----------------------------------------------------------------------------------------
 
-    private void publishToCustomer(CashPaymentDeclaration declaration, String eventType, String subject,
+    /** @param preference l'evenement que le membre peut couper, nul quand le message part toujours */
+    private void publishToCustomer(CashPaymentDeclaration declaration, String eventType,
+                                   com.sni.bokaticowork.core.enums.EventType preference, String subject,
                                    java.util.function.Consumer<Map<String, Object>> extra) {
         try {
-            TransactionContextResolver.PartyView party = contextResolver.resolveParty(
+            if (preference != null && memberContact != null
+                    && !memberContact.allowsEmail(declaration.getCustomerType(), declaration.getCustomerCode(), preference)) {
+                log.info("Annonce {} · {} non envoye : preference du membre {}",
+                        declaration.getDeclarationNumber(), eventType, declaration.getCustomerCode());
+                return;
+            }
+            TransactionContextResolver.PartyView party = contextResolver.resolveBillingParty(
                     declaration.getCustomerType(), declaration.getCustomerCode());
             if (!StringUtils.hasText(party.email())) {
                 log.info("Annonce {} · aucun destinataire joignable pour {} {}",

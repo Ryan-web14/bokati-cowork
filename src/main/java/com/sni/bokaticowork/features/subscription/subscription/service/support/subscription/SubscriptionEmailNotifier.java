@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.subscription.subscription.service.support.subscription;
 
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.features.billing.service.support.MemberBillingContact;
 import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.member.model.Member;
@@ -9,6 +10,7 @@ import com.sni.bokaticowork.features.subscription.subscription.enums.Subscriptio
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -26,6 +28,14 @@ public class SubscriptionEmailNotifier {
 
     private final DefaultEmailSender emailSender;
     private final TemplateEngine templateEngine;
+
+    private MemberBillingContact memberContact;
+
+    /** Absent : adresse du compte, comme avant les preferences. */
+    @Autowired(required = false)
+    void setMemberContact(MemberBillingContact memberContact) {
+        this.memberContact = memberContact;
+    }
 
     public void notify(Subscription subscription, SubscriptionEventType eventType) {
         Recipient recipient = resolveRecipient(subscription);
@@ -86,7 +96,9 @@ public class SubscriptionEmailNotifier {
     private Recipient resolveRecipient(Subscription subscription) {
         Member member = subscription.getMember();
         if (member != null) {
-            return new Recipient(valueOrDefault(member.getDisplayName(), member.getMemberId()), member.getEmail());
+            // Message de facturation · l'adresse de facturation du membre passe avant celle du compte.
+            String email = memberContact == null ? member.getEmail() : memberContact.recipient(member, member.getEmail());
+            return new Recipient(valueOrDefault(member.getDisplayName(), member.getMemberId()), email);
         }
         Customer customer = subscription.getCustomer();
         if (customer != null) {
@@ -94,6 +106,11 @@ public class SubscriptionEmailNotifier {
                     ? customer.getCompanyName()
                     : ((customer.getFirstname() == null ? "" : customer.getFirstname()) + " " + (customer.getLastname() == null ? "" : customer.getLastname())).trim();
             String email = StringUtils.hasText(customer.getBillingEmail()) ? customer.getBillingEmail() : customer.getEmail();
+            if (memberContact != null) {
+                // Client personne d'un membre · sa preference passe avant ; une entreprise garde son adresse.
+                String current = email;
+                email = memberContact.memberOf(customer).map(m -> memberContact.recipient(m, current)).orElse(current);
+            }
             return new Recipient(valueOrDefault(name, customer.getCustomerId()), email);
         }
         BusinessEntity business = subscription.getBusinessEntity();

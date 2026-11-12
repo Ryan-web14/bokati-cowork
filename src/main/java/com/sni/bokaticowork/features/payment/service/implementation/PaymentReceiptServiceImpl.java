@@ -14,6 +14,7 @@ import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
+import com.sni.bokaticowork.features.billing.service.support.MemberBillingContact;
 import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
@@ -88,6 +89,14 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
     @Autowired(required = false)
     void setPlatformSettings(PlatformSettings platformSettings) {
         this.platformSettings = platformSettings;
+    }
+
+    private MemberBillingContact memberContact;
+
+    /** Absent (tests, contexte reduit) : adresse du compte et fuseau de l'exploitant. */
+    @Autowired(required = false)
+    void setMemberContact(MemberBillingContact memberContact) {
+        this.memberContact = memberContact;
     }
 
     private String verifyBaseUrl() {
@@ -250,7 +259,7 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
             BillingDocumentResponse document = allocationDocuments.get(0);
             return new PartySnapshot(
                     document.customerName(),
-                    document.customerEmail(),
+                    billingRecipient(document.customerType(), document.customerCode(), document.customerEmail()),
                     document.customerPhone(),
                     document.billingAddressJson()
             );
@@ -282,14 +291,26 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
     }
 
     private PartySnapshot memberSnapshot(Member member) {
-        return new PartySnapshot(clean(member.getDisplayName()), clean(member.getEmail()), clean(member.getPhone()), null);
+        // Un recu adresse a un membre suit son adresse de facturation, a defaut celle du compte.
+        String email = memberContact == null ? clean(member.getEmail()) : clean(memberContact.recipient(member, member.getEmail()));
+        return new PartySnapshot(clean(member.getDisplayName()), email, clean(member.getPhone()), null);
+    }
+
+    private String billingRecipient(String customerType, String customerCode, String email) {
+        return memberContact == null ? email : memberContact.recipient(customerType, customerCode, email);
     }
 
     private PartySnapshot customerSnapshot(Customer customer) {
         String name = customer.getType() == CustomerType.COMPANY
                 ? clean(customer.getCompanyName())
                 : clean(((customer.getFirstname() == null ? "" : customer.getFirstname()) + " " + (customer.getLastname() == null ? "" : customer.getLastname())).trim());
-        return new PartySnapshot(name, clean(customer.getBillingEmail() != null ? customer.getBillingEmail() : customer.getEmail()), clean(customer.getPhone()), null);
+        String email = clean(customer.getBillingEmail() != null ? customer.getBillingEmail() : customer.getEmail());
+        if (memberContact != null) {
+            // Le client personne d'un membre · l'adresse de facturation du membre passe avant.
+            String current = email;
+            email = clean(memberContact.memberOf(customer).map(member -> memberContact.recipient(member, current)).orElse(current));
+        }
+        return new PartySnapshot(name, email, clean(customer.getPhone()), null);
     }
 
     private PartySnapshot businessSnapshot(BusinessEntity business) {
@@ -312,10 +333,13 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
     }
 
     private String renderHtml(PaymentReceiptResponse receipt) {
+        // Les heures du recu se lisent dans le fuseau du membre, a defaut celui de l'exploitant.
+        ZoneId zone = memberContact == null ? MemberBillingContact.defaultZone()
+                : memberContact.zone(receipt.customerType(), receipt.customerCode());
         Context context = new Context(appLocale);
         context.setVariable("receipt", receipt);
-        context.setVariable("generatedAt", LocalDate.now());
-        context.setVariable("fmt", new PaymentReceiptTemplateFormatter(receipt.currency(), objectMapper, appLocale));
+        context.setVariable("generatedAt", LocalDate.now(zone));
+        context.setVariable("fmt", new PaymentReceiptTemplateFormatter(receipt.currency(), objectMapper, appLocale, zone));
         context.setVariable("qrCode", generateQrCode(receipt));
         context.setVariable("logo", loadLogoBase64());
         return templateEngine.process("payment/receipt", context);
@@ -384,11 +408,17 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
         private final String currency;
         private final ObjectMapper objectMapper;
         private final Locale locale;
+        private final ZoneId zone;
 
         public PaymentReceiptTemplateFormatter(String currency, ObjectMapper objectMapper, Locale locale) {
+            this(currency, objectMapper, locale, ZoneId.systemDefault());
+        }
+
+        public PaymentReceiptTemplateFormatter(String currency, ObjectMapper objectMapper, Locale locale, ZoneId zone) {
             this.currency = currency;
             this.objectMapper = objectMapper;
             this.locale = locale;
+            this.zone = zone == null ? ZoneId.systemDefault() : zone;
         }
 
         public String money(BigDecimal amount) {
@@ -417,7 +447,7 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
         }
 
         public String timestamp(Instant value) {
-            return value == null ? EMPTY_VALUE : DATE_TIME_FORMATTER.format(value.atZone(ZoneId.systemDefault()));
+            return value == null ? EMPTY_VALUE : DATE_TIME_FORMATTER.format(value.atZone(zone));
         }
 
         public String partyLabel(String customerType) {

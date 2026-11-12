@@ -1,10 +1,12 @@
 package com.sni.bokaticowork.features.payment.transfer.service;
 
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
+import com.sni.bokaticowork.features.billing.service.support.MemberBillingContact;
 import com.sni.bokaticowork.features.payment.model.WalletAccount;
 import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -33,31 +35,39 @@ public class WalletNotifier {
     private final OutboxService outboxService;
     private final TransactionContextResolver contextResolver;
 
+    private MemberBillingContact memberContact;
+
+    /** Absent : un recu a chaque operation, a l'adresse du compte, comme avant les preferences. */
+    @Autowired(required = false)
+    void setMemberContact(MemberBillingContact memberContact) {
+        this.memberContact = memberContact;
+    }
+
     public void transferSent(WalletAccount source, WalletAccount target, BigDecimal amount, String transferNumber) {
-        if (!Boolean.TRUE.equals(source.getNotifyOnDebit())) {
+        if (!Boolean.TRUE.equals(source.getNotifyOnDebit()) || !wantsReceipt(source, "WALLET_TRANSFER_SENT")) {
             return;
         }
-        publish("WALLET_TRANSFER_SENT", source, transferNumber, payload(source, amount)
+        publishReceipt("WALLET_TRANSFER_SENT", source, transferNumber, payload(source, amount)
                 .with("counterpartyWallet", target.getWalletNumber())
                 .with("counterpartyName", partyName(target))
                 .with("subject", "Transfert envoyé · " + plain(amount) + " " + source.getCurrency()));
     }
 
     public void transferReceived(WalletAccount target, WalletAccount source, BigDecimal amount, String transferNumber) {
-        if (!Boolean.TRUE.equals(target.getNotifyOnCredit())) {
+        if (!Boolean.TRUE.equals(target.getNotifyOnCredit()) || !wantsReceipt(target, "WALLET_TRANSFER_RECEIVED")) {
             return;
         }
-        publish("WALLET_TRANSFER_RECEIVED", target, transferNumber, payload(target, amount)
+        publishReceipt("WALLET_TRANSFER_RECEIVED", target, transferNumber, payload(target, amount)
                 .with("counterpartyWallet", source.getWalletNumber())
                 .with("counterpartyName", partyName(source))
                 .with("subject", "Transfert reçu · " + plain(amount) + " " + target.getCurrency()));
     }
 
     public void topUpCompleted(WalletAccount wallet, BigDecimal amount, String transactionNumber) {
-        if (!Boolean.TRUE.equals(wallet.getNotifyOnCredit())) {
+        if (!Boolean.TRUE.equals(wallet.getNotifyOnCredit()) || !wantsReceipt(wallet, "WALLET_TOPUP_COMPLETED")) {
             return;
         }
-        publish("WALLET_TOPUP_COMPLETED", wallet, transactionNumber, payload(wallet, amount)
+        publishReceipt("WALLET_TOPUP_COMPLETED", wallet, transactionNumber, payload(wallet, amount)
                 .with("subject", "Rechargement effectué · " + plain(amount) + " " + wallet.getCurrency()));
     }
 
@@ -86,8 +96,32 @@ public class WalletNotifier {
 
     // -----------------------------------------------------------------------------------------
 
+    /**
+     * Le titulaire membre qui a choisi « factures seulement » ne recoit pas de recu par courriel a
+     * chaque operation. Les alertes de solde et de securite ne passent pas par ici.
+     */
+    private boolean wantsReceipt(WalletAccount wallet, String eventType) {
+        if (memberContact == null || memberContact.wantsEveryWalletReceipt(wallet.getOwnerType(), wallet.getOwnerCode())) {
+            return true;
+        }
+        log.debug("Portefeuille {} · {} non envoye : preference du membre (factures seulement)",
+                wallet.getWalletNumber(), eventType);
+        return false;
+    }
+
+    /** Un recu d'operation · part a l'adresse de facturation du membre, a defaut a celle du compte. */
+    private void publishReceipt(String eventType, WalletAccount wallet, String aggregateId, Payload payload) {
+        publish(eventType, wallet, aggregateId, payload,
+                contextResolver.resolveBillingParty(wallet.getOwnerType(), wallet.getOwnerCode()));
+    }
+
     private void publish(String eventType, WalletAccount wallet, String aggregateId, Payload payload) {
-        TransactionContextResolver.PartyView party = contextResolver.resolveParty(wallet.getOwnerType(), wallet.getOwnerCode());
+        publish(eventType, wallet, aggregateId, payload,
+                contextResolver.resolveParty(wallet.getOwnerType(), wallet.getOwnerCode()));
+    }
+
+    private void publish(String eventType, WalletAccount wallet, String aggregateId, Payload payload,
+                         TransactionContextResolver.PartyView party) {
         if (!StringUtils.hasText(party.email())) {
             // Sans adresse, la notification ne peut pas partir · on le note, on ne bloque rien.
             log.info("Portefeuille {} · {} sans destinataire joignable", wallet.getWalletNumber(), eventType);

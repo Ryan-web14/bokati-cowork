@@ -78,7 +78,8 @@ public interface MemberSettingsMapper {
                 obj.getWalletAutoTopupThreshold(),
                 obj.getWalletAutoTopupAmount(),
                 obj.getWalletSpendingDailyLimit(),
-                obj.getWalletSpendingWeeklyLimit()
+                obj.getWalletSpendingWeeklyLimit(),
+                obj.getWalletReceiptPreference() == null ? null : obj.getWalletReceiptPreference().name()
         );
     }
 }
