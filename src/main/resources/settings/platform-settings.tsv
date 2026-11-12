@@ -33,6 +33,31 @@ accounting.exchange.loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes de c
 accounting.exchange.provider-url	ACCOUNTING	TEXT	LIVE	https://api.frankfurter.dev/v1/latest?from=EUR	Adresse du fournisseur de taux (reponse JSON en base EUR)
 accounting.financing.analytic-axis	ACCOUNTING	TEXT	LIVE		Axe analytique des sections portees par les emprunts et la paie (vide : pas de ventilation)
 accounting.financing.cron	ACCOUNTING	CRON	LIVE	0 45 6 * * *	Tenue quotidienne : echeances d'emprunt, alertes, hors bilan
+accounting.fixed-asset.commission-alert-days	ACCOUNTING	INTEGER	LIVE	30	Immobilisations : jours avant alerte d'un bien recu non mis en service
+accounting.fixed-asset.controls-cron	ACCOUNTING	CRON	LIVE	0 30 6 * * *	Immobilisations : planification des controles quotidiens du fichier
+accounting.fixed-asset.day-basis	ACCOUNTING	TEXT	LIVE	360	Immobilisations : base du prorata temporis (360 ou 365 jours)
+accounting.fixed-asset.declining-coefficients	ACCOUNTING	TEXT	LIVE	3-4:1.5,5-6:2,7+:2.5	Immobilisations : coefficients du degressif par duree en annees
+accounting.fixed-asset.depreciation-cron	ACCOUNTING	CRON	LIVE	0 0 3 1 * *	Immobilisations : planification des dotations automatiques
+accounting.fixed-asset.derogatory-account	ACCOUNTING	TEXT	LIVE	151	Immobilisations : compte des amortissements derogatoires
+accounting.fixed-asset.derogatory-expense-account	ACCOUNTING	TEXT	LIVE	851	Immobilisations : compte de dotation aux amortissements derogatoires
+accounting.fixed-asset.derogatory-reversal-account	ACCOUNTING	TEXT	LIVE	861	Immobilisations : compte de reprise des amortissements derogatoires
+accounting.fixed-asset.disposal-receivable-account	ACCOUNTING	TEXT	LIVE	485	Immobilisations : compte de creance sur cession
+accounting.fixed-asset.draft-alert-days	ACCOUNTING	INTEGER	LIVE	15	Immobilisations : jours avant alerte d'une fiche a completer
+accounting.fixed-asset.impairment-second-validation	ACCOUNTING	INTEGER	LIVE	1000000	Immobilisations : montant de depreciation au-dela duquel une seconde validation est exigee (XAF)
+accounting.fixed-asset.in-progress-account	ACCOUNTING	TEXT	LIVE	239	Immobilisations : compte des immobilisations en cours
+accounting.fixed-asset.insurance-claim-account	ACCOUNTING	TEXT	LIVE	471	Immobilisations : compte de l'indemnite d'assurance a recevoir
+accounting.fixed-asset.insurance-income-account	ACCOUNTING	TEXT	LIVE	841	Immobilisations : compte de produit des indemnites d'assurance
+accounting.fixed-asset.inventory-required	ACCOUNTING	BOOLEAN	LIVE	true	Immobilisations : une campagne d'inventaire physique close est exigee avant la cloture
+accounting.fixed-asset.journal	ACCOUNTING	TEXT	LIVE	OD	Immobilisations : journal des dotations et operations
+accounting.fixed-asset.manual-entry-guard	ACCOUNTING	BOOLEAN	LIVE	true	Immobilisations : interdire la saisie directe sur les comptes 2, 28 et 29 sans motif ni droit
+accounting.fixed-asset.resource-axis	ACCOUNTING	TEXT	LIVE	RESSOURCE	Immobilisations : axe analytique des ressources
+accounting.fixed-asset.rhythm	ACCOUNTING	ENUM	LIVE	MONTHLY	Immobilisations : rythme des dotations (MONTHLY, QUARTERLY, YEARLY)
+accounting.fixed-asset.sale-journal	ACCOUNTING	TEXT	LIVE	VT	Immobilisations : journal des cessions
+accounting.fixed-asset.subsidy-income-account	ACCOUNTING	TEXT	LIVE	799	Immobilisations : compte de reprise des subventions d'equipement
+accounting.fixed-asset.supplier-account	ACCOUNTING	TEXT	LIVE	481	Immobilisations : compte des fournisseurs d'investissement
+accounting.fixed-asset.vat-regularization-account	ACCOUNTING	TEXT	LIVE	658	Immobilisations : compte de charge des regularisations de TVA
+accounting.fixed-asset.vat-regularization-years	ACCOUNTING	INTEGER	LIVE	5	Immobilisations : periode de regularisation de la TVA deduite (annees)
+accounting.fixed-asset.warranty-alert-days	ACCOUNTING	INTEGER	LIVE	30	Immobilisations : jours d'alerte avant la fin d'une garantie ou d'un contrat
 accounting.lettering.auto-delay-ms	ACCOUNTING	INTEGER	LIVE	600000	Intervalle du lettrage automatique des comptes clients (millisecondes)
 accounting.lettering.difference-threshold	ACCOUNTING	INTEGER	LIVE	500	Ecart de reglement maximal au lettrage (XAF)
 accounting.lettering.gain-account	ACCOUNTING	TEXT	LIVE	758	Compte des ecarts de reglement favorables
@@ -53,6 +78,7 @@ accounting.payroll.section-required	ACCOUNTING	BOOLEAN	LIVE	false	Paie : refuser
 accounting.posting.batch-size	ACCOUNTING	INTEGER	LIVE	50	Nombre d'evenements comptables traites par passage du moteur d'imputation
 accounting.posting.disabled-families	ACCOUNTING	TEXT	LIVE		Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules
 accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	RESTART	30000	Intervalle du moteur d'imputation (millisecondes)
+accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	LIVE	30000	Intervalle du moteur d'imputation (millisecondes)
 accounting.purchase.analytic-axis	ACCOUNTING	TEXT	LIVE		Axe analytique des sections portees par les lignes d'achat (vide : ventilation par defaut des comptes)
 accounting.purchase.default-vat-rate	ACCOUNTING	DECIMAL	LIVE	18	Taux de TVA propose sur une ligne d'achat sans taux (en %)
 accounting.purchase.journal	ACCOUNTING	TEXT	LIVE	AC	Journal des achats (factures et avoirs fournisseurs)
@@ -61,7 +87,6 @@ accounting.purchase.vat-account	ACCOUNTING	TEXT	LIVE	4452	TVA recuperable sur ac
 accounting.purchase.vat-account-fixed-assets	ACCOUNTING	TEXT	LIVE	4451	TVA recuperable sur immobilisations (comptes de classe 2)
 accounting.purchase.vat-account-services	ACCOUNTING	TEXT	LIVE	4454	TVA recuperable sur services exterieurs (comptes 62 et 63)
 accounting.purchase.withholding-account	ACCOUNTING	TEXT	LIVE	447	Compte des retenues a la source operees sur les fournisseurs
-accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	LIVE	30000	Intervalle du moteur d'imputation (millisecondes)
 accounting.replay-until	ACCOUNTING	TEXT	LIVE		Reprise : les faits dates avant ce jour produisent des brouillards a valider en bloc (vide : pas de reprise)
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
 accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients

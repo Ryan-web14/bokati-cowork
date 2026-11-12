@@ -245,7 +245,8 @@ public class FixedAssetService implements FixedAssetIntake {
             String label = "Entree immobilisation " + asset.getCode() + " " + asset.getDesignation();
             AccEntry entry = book(journal(), acquisition, label, "FIXED_ASSET_ENTRY", asset.getCode(), List.of(
                     line(category.getAssetAccount(), null, label, value, null, asset.getCode(), null),
-                    line(counter, null, label, null, value, asset.getCode(), counter.startsWith("6") || counter.startsWith("7") ? analytic(asset) : null)));
+                    line(counter, thirdPartyFor(counter, request.supplierCode()), label, null, value, asset.getCode(),
+                            counter.startsWith("6") || counter.startsWith("7") ? analytic(asset) : null)));
             asset.setEntryNumber(entry.getEntryNumber());
             asset.setBooked(true);
             if (counter.startsWith("14")) {
@@ -1694,6 +1695,18 @@ public class FixedAssetService implements FixedAssetIntake {
                                       Map<String, String> analytic) {
         return new AccountingRequests.EntryLine(account, thirdParty, cut(label, 250), debit, credit, null, null, null, null, null, null, reference,
                 analytic == null || analytic.isEmpty() ? null : analytic);
+    }
+
+    /** Tiers d'une contrepartie : un compte de tiers (40, 41, 42, 46, 47, 48) porte le fournisseur de la fiche. */
+    private String thirdPartyFor(String counter, String supplierCode) {
+        boolean thirdPartyAccount = accounts.findByNumber(counter).map(account -> account.getThirdPartyType() != null).orElse(false);
+        if (!thirdPartyAccount) {
+            return null;
+        }
+        if (!StringUtils.hasText(supplierCode)) {
+            throw new BadRequestException("Le compte " + counter + " est un compte de tiers : indiquez le fournisseur (supplierCode)");
+        }
+        return supplierCode.trim().toUpperCase(Locale.ROOT);
     }
 
     /** Sections analytiques d'un bien : celles de la fiche, sinon la section de sa ressource sur l'axe des ressources. */
