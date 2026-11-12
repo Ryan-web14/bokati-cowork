@@ -1,17 +1,17 @@
 package com.sni.bokaticowork.features.reporting.service.implementation;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.reporting.dto.response.*;
 import com.sni.bokaticowork.features.reporting.service.interfaces.*;
 import com.sni.bokaticowork.core.utils.BrandLogo;
+import com.sni.bokaticowork.core.identity.OperatorIdentityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
@@ -35,6 +35,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
     private final SubscriptionReportService subscriptionReportService;
     private final Locale appLocale;
     private final BrandLogo brandLogo;
+    private final OperatorIdentityService operatorIdentityService;
 
     @Override
     public byte[] financialDashboardPdf(LocalDate from, LocalDate to) {
@@ -43,6 +44,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         ctx.setVariable("report",      data);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("logo",        brandLogo.base64());
+        ctx.setVariable("operator",    operatorIdentityService.current());
         ctx.setVariable("fmt",         new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/financial-report", ctx));
     }
@@ -54,6 +56,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         ctx.setVariable("report",      data);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("logo",        brandLogo.base64());
+        ctx.setVariable("operator",    operatorIdentityService.current());
         ctx.setVariable("fmt",         new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/occupancy-report", ctx));
     }
@@ -65,6 +68,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("logo",        brandLogo.base64());
+        ctx.setVariable("operator",    operatorIdentityService.current());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/activity-report", ctx));
     }
@@ -76,6 +80,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("logo",        brandLogo.base64());
+        ctx.setVariable("operator",    operatorIdentityService.current());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/member-profile-report", ctx));
     }
@@ -87,6 +92,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("logo",        brandLogo.base64());
+        ctx.setVariable("operator",    operatorIdentityService.current());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/debt-recovery-report", ctx));
     }
@@ -98,6 +104,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("logo",        brandLogo.base64());
+        ctx.setVariable("operator",    operatorIdentityService.current());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/resource-utilization-report", ctx));
     }
@@ -109,6 +116,7 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("logo",        brandLogo.base64());
+        ctx.setVariable("operator",    operatorIdentityService.current());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/stock-valuation-report", ctx));
     }
@@ -120,24 +128,14 @@ public class ReportPdfServiceImpl implements ReportPdfService {
         ctx.setVariable("report", data);
         ctx.setVariable("generatedAt", LocalDate.now());
         ctx.setVariable("logo",        brandLogo.base64());
+        ctx.setVariable("operator",    operatorIdentityService.current());
         ctx.setVariable("fmt", new ReportFormatter(appLocale));
         return renderPdf(templateEngine.process("reporting/subscription-report", ctx));
     }
 
     private byte[] renderPdf(String html) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document doc = org.jsoup.Jsoup.parse(html);
-            doc.outputSettings()
-                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
-                    .charset(java.nio.charset.StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(doc), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception e) {
             throw new BadRequestException("Unable to generate report PDF", e);
         }

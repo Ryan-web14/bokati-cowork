@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<!--
+  En-tete et pied communs des pieces PDF, au style de la facture (billing/document.html) :
+  logo encre (BrandLogo), identite de l'exploitant, filet dore.
+
+  Variables lues dans le contexte du gabarit appelant :
+    - logo     : logo encre en base64 (BrandLogo.base64()), ou null · le nom s'imprime alors en
+                 toutes lettres ;
+    - operator : OperatorIdentity (OperatorIdentityService.current()), ou null · les valeurs
+                 historiques s'impriment alors, comme avant la fiche exploitant.
+
+  Les classes sont prefixees dbr- pour ne pas heurter celles des gabarits. Tout est en tableaux :
+  OpenHtmlToPDF 1.0.10 ne connait ni flexbox, ni grid, ni les variables CSS.
+
+  Emploi :
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>   (dans <head>)
+    <div th:replace="~{fragments/document-brand :: titled('Bon de caisse', ${numero})}"></div>
+    <div th:replace="~{fragments/document-brand :: letterhead(~{::#mon-bloc-droit})}">
+        <div id="mon-bloc-droit">...</div>
+    </div>
+    <div th:replace="~{fragments/document-brand :: footer(${'Réf. ' + numero})}"></div>
+-->
+<head>
+<th:block th:fragment="styles">
+<style>
+  .dbr-header { background: #ffffff; padding: 0; }
+  .dbr-header-inner { padding: 0 0 10px; }
+  .dbr-header-table { width: 100%; border-collapse: collapse; }
+  .dbr-header-table td { border: none; padding: 0; vertical-align: middle; }
+  .dbr-logo { height: 38px; width: auto; display: block; }
+  .dbr-name { font-family: Helvetica, Arial, sans-serif; font-size: 19px; font-weight: 700; color: #1f1430; letter-spacing: 3px; text-transform: uppercase; line-height: 1; white-space: nowrap; }
+  .dbr-sub { font-family: Helvetica, Arial, sans-serif; font-size: 7.6px; color: #1f1430; letter-spacing: 1.6px; text-transform: uppercase; margin-top: 4px; }
+  .dbr-contact { font-family: Helvetica, Arial, sans-serif; font-size: 7.4px; color: #1f1430; margin-top: 5px; letter-spacing: 0.2px; line-height: 1.34; }
+  .dbr-aside { text-align: right; }
+  .dbr-title { font-family: Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 700; color: #1f1430; letter-spacing: 2.2px; text-transform: uppercase; line-height: 1.1; }
+  .dbr-number { font-size: 9.6px; color: #1f1430; margin-top: 4px; letter-spacing: 1.35px; font-weight: 700; font-family: "Courier New", monospace; }
+  .dbr-rule { height: 2px; background: #c9a84c; font-size: 0; line-height: 0; }
+  .dbr-footer { margin-top: 10px; padding: 6px 0 4px; border-top: 1px solid #e6ddea; font-family: Helvetica, Arial, sans-serif; font-size: 7.4px; color: #1f1430; text-align: center; line-height: 1.5; }
+  .dbr-footer-identity { font-size: 7px; color: #6f6478; }
+</style>
+</th:block>
+</head>
+<body>
+
+<!-- Identite de l'exploitant · colonne gauche des en-tetes. -->
+<th:block th:fragment="identity">
+            <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="dbr-logo" alt="Logo"/>
+            <div class="dbr-name" th:if="${logo == null}"
+                 th:text="${operator != null ? operator.name() : 'ELLE A OSE'}">ELLE A OSE</div>
+            <div class="dbr-sub">Espace de coworking</div>
+            <div class="dbr-contact" th:if="${operator != null}">
+              <th:block th:if="${operator.address() != null}"><span th:text="${operator.address()}">Adresse</span><br/></th:block>
+              <th:block th:if="${operator.registrationLine() != null}"><span th:text="${operator.registrationLine()}">RCCM</span><br/></th:block>
+              <span th:if="${operator.contactLine() != null}" th:text="${operator.contactLine()}">courriel · téléphone</span>
+            </div>
+            <div class="dbr-contact" th:if="${operator == null}">
+              84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire<br/>
+              RCCM CG-PNR-01-2017-A11-00472<br/>
+              coworkspace@elleaose.com · 05 204 2552
+            </div>
+</th:block>
+
+<!-- En-tete · identite a gauche, bloc libre a droite, filet dore dessous. -->
+<div th:fragment="letterhead(aside)" class="dbr-letterhead">
+  <div class="dbr-header">
+    <div class="dbr-header-inner">
+      <table class="dbr-header-table">
+        <tr>
+          <td>
+            <th:block th:replace="~{fragments/document-brand :: identity}"></th:block>
+          </td>
+          <td class="dbr-aside">
+            <th:block th:replace="${aside}"></th:block>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="dbr-rule"></div>
+</div>
+
+<!-- En-tete avec un titre et un numero a droite · le cas le plus courant. -->
+<div th:fragment="titled(title, number)" class="dbr-letterhead">
+  <div class="dbr-header">
+    <div class="dbr-header-inner">
+      <table class="dbr-header-table">
+        <tr>
+          <td>
+            <th:block th:replace="~{fragments/document-brand :: identity}"></th:block>
+          </td>
+          <td class="dbr-aside">
+            <div class="dbr-title" th:text="${title}">Titre</div>
+            <div class="dbr-number" th:if="${number != null}" th:text="${number}">N°</div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="dbr-rule"></div>
+</div>
+
+<!-- Pied · texte propre a la piece, puis l'identite de l'exploitant. -->
+<div th:fragment="footer(text)" class="dbr-footer">
+  <div th:if="${text != null}" th:text="${text}">Référence</div>
+  <div class="dbr-footer-identity"
+       th:text="${operator != null ? operator.footerLine() : 'ELLE A OSE · 84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire · RCCM CG-PNR-01-2017-A11-00472'}">ELLE A OSE</div>
+</div>
+
+</body>
+</html>

@@ -46,13 +46,17 @@
         .engineered { float: right; color: #b8adbf; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; }
         .clearfix::after { content: ""; display: block; clear: both; }
     </style>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
+    <style>
+        /* L'en-tete commun dans le cadre arrondi · meme retrait que le reste de la page. */
+        .dbr-header-inner { padding: 16px 22px 10px; }
+        .tag { float: none; display: inline-block; color: #1d7a46; background: #e9f7ef; border: 1px solid #b7e2c8; }
+    </style>
 </head>
 <body>
 <div class="page">
-    <div class="header clearfix">
-        <div class="tag">Confirmée</div>
-        <div class="brand">Elle A Osé</div>
-        <div class="brand-sub">Espaces de travail</div>
+    <div th:replace="~{fragments/document-brand :: letterhead(~{::#booking-tag})}">
+        <div id="booking-tag" class="tag">Confirmée</div>
     </div>
     <div class="hero">
         <div class="hero-label">Résumé de confirmation</div>
@@ -86,8 +90,8 @@
                         <div class="row clearfix"><span class="key">Lieu</span><span class="val"><span th:text="${address}">84 Boulevard du Général de Gaulle</span><br /><span th:text="${city}">Espace de coworking</span></span></div>
                     </div>
                     <div class="contact">
-                        <div class="contact-title">Contact Elle A Osé</div>
-                        coworkspace@elleaose.com<br />05 204 2552
+                        <div class="contact-title" th:text="${'Contact ' + (operator != null ? operator.name() : 'ELLE A OSE')}">Contact ELLE A OSE</div>
+                        <span th:text="${operator != null ? operator.email() : 'coworkspace@elleaose.com'}">coworkspace@elleaose.com</span><br /><span th:text="${operator != null ? operator.phone() : '05 204 2552'}">05 204 2552</span>
                     </div>
                 </td>
                 <td class="right">
@@ -110,7 +114,8 @@
         </table>
     </div>
     <div class="footer clearfix">
-        Généré le <span th:text="${generatedAt}">2026-06-05</span>
+        Généré le <span th:text="${generatedAt}">05/06/2026</span>
+        · <span th:text="${operator != null ? operator.footerLine() : 'ELLE A OSE'}">ELLE A OSE</span>
         <span class="engineered">Engineered by SNI</span>
     </div>
 </div>

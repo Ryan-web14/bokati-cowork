@@ -4,11 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -32,24 +28,16 @@ import com.sni.bokaticowork.features.payment.repository.PawapayDepositRepository
 import com.sni.bokaticowork.features.payment.repository.PaymentTransactionRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentReceiptService;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Value;
-import org.jsoup.helper.W3CDom;
-import org.jsoup.nodes.Entities;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
-import java.util.Base64;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -77,6 +65,9 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
     private final SpringTemplateEngine templateEngine;
     private final ObjectMapper objectMapper;
     private final Locale appLocale;
+    private final com.sni.bokaticowork.core.utils.BrandLogo brandLogo;
+    private final com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer qrCodeRenderer;
+    private final com.sni.bokaticowork.core.identity.OperatorIdentityService operatorIdentityService;
 
     @Value("${app.verify-base-url:http://localhost:8080}")
     private String verifyBaseUrl;
@@ -298,14 +289,8 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
 
     private byte[] renderPdf(PaymentReceiptResponse receipt) {
         String html = renderHtml(receipt);
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document xhtml = toXhtmlDocument(html);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new W3CDom().fromJsoup(xhtml), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception ex) {
             throw new BadRequestException("Unable to generate payment receipt PDF", ex);
         }
@@ -317,30 +302,17 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
         context.setVariable("generatedAt", LocalDate.now());
         context.setVariable("fmt", new PaymentReceiptTemplateFormatter(receipt.currency(), objectMapper, appLocale));
         context.setVariable("qrCode", generateQrCode(receipt));
-        context.setVariable("logo", loadLogoBase64());
+        // Logo encre · logo.png est blanc sur transparent, donc invisible sur le fond blanc du recu.
+        context.setVariable("logo", brandLogo.base64());
+        context.setVariable("operator", operatorIdentityService.current());
         return templateEngine.process("payment/receipt", context);
-    }
-
-    private String loadLogoBase64() {
-        try (java.io.InputStream is = getClass().getResourceAsStream("/static/images/logo.png")) {
-            if (is == null) return null;
-            return Base64.getEncoder().encodeToString(is.readAllBytes());
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     private static final DateTimeFormatter QR_DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private String generateQrCode(PaymentReceiptResponse receipt) {
         try {
-            String content = buildQrContent(receipt);
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix matrix = writer.encode(content, BarcodeFormat.QR_CODE, 350, 350);
-            BufferedImage image = MatrixToImageWriter.toBufferedImage(matrix);
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            ImageIO.write(image, "PNG", stream);
-            return Base64.getEncoder().encodeToString(stream.toByteArray());
+            return qrCodeRenderer.toBase64(buildQrContent(receipt), 350);
         } catch (Exception ex) {
             return null;
         }
@@ -348,16 +320,6 @@ public class PaymentReceiptServiceImpl implements PaymentReceiptService {
 
     private String buildQrContent(PaymentReceiptResponse receipt) {
         return verifyBaseUrl().stripTrailing() + "/verify/receipt/" + receipt.receiptNumber();
-    }
-
-    private org.jsoup.nodes.Document toXhtmlDocument(String html) {
-        org.jsoup.nodes.Document document = Jsoup.parse(html);
-        document.outputSettings()
-                .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                .escapeMode(Entities.EscapeMode.xhtml)
-                .charset(StandardCharsets.UTF_8)
-                .prettyPrint(false);
-        return document;
     }
 
     private String clean(String value) {

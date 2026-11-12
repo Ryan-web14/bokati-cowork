@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title th:text="${'État de compte ' + statement.code()}">État de compte</title>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
     <style>
         @page {
             size: A4;
@@ -16,13 +17,9 @@
         }
         * { box-sizing: border-box; }
         body { font-family: Helvetica, Arial, sans-serif; color: #1f1430; font-size: 9px; line-height: 1.35; margin: 0; }
-        .header-table { width: 100%; border-collapse: collapse; }
-        .header-table td { border: none; padding: 0; vertical-align: middle; }
-        .brand-logo { height: 34px; width: auto; display: block; }
-        .brand-text { font-size: 18px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
         .doc-type { font-size: 20px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-align: right; }
         .doc-sub { font-size: 8.6px; text-align: right; margin-top: 3px; }
-        .rule { height: 2px; background: #c9a84c; margin: 8px 0 10px; }
+        .dbr-letterhead { margin-bottom: 10px; }
         .label { font-size: 7.4px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;
                  border-bottom: 1px solid #e6ddea; padding-bottom: 3px; margin: 12px 0 6px; }
         .who { font-size: 11px; font-weight: 700; }
@@ -43,23 +40,17 @@
     </style>
 </head>
 <body>
-<table class="header-table">
-    <tr>
-        <td>
-            <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="brand-logo" alt="Logo"/>
-            <div class="brand-text" th:if="${logo == null}">ELLE A OSE</div>
-        </td>
-        <td>
-            <div class="doc-type">État de compte</div>
-            <div class="doc-sub">
-                Du <span th:text="${fmt.date(statement.from())}"></span>
-                au <span th:text="${fmt.date(statement.to())}"></span>
-                · arrêté au <span th:text="${fmt.date(statement.asOf())}"></span>
-            </div>
-        </td>
-    </tr>
-</table>
-<div class="rule"></div>
+<!-- En-tete commun · identite de l'exploitant a gauche, nature et periode a droite. -->
+<div th:replace="~{fragments/document-brand :: letterhead(~{::#statement-aside})}">
+    <div id="statement-aside">
+        <div class="doc-type">État de compte</div>
+        <div class="doc-sub">
+            Du <span th:text="${fmt.date(statement.from())}"></span>
+            au <span th:text="${fmt.date(statement.to())}"></span>
+            · arrêté au <span th:text="${fmt.date(statement.asOf())}"></span>
+        </div>
+    </div>
+</div>
 
 <div class="label" th:text="${statement.subject().name() == 'COMPANY' ? 'Organisation' : 'Membre'}">Titulaire</div>
 <div class="who" th:text="${statement.name()}">Nom</div>
@@ -139,5 +130,6 @@
     Les factures de membres reliées après coup gardent leur document d'origine, au nom du membre.
     État produit le <span th:text="${fmt.date(generatedAt)}"></span>.
 </div>
+<div th:replace="~{fragments/document-brand :: footer(${null})}"></div>
 </body>
 </html>

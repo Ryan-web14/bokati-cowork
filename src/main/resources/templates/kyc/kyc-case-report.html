@@ -2,87 +2,93 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
+    <title th:text="${'Rapport KYC ' + case.code}">Rapport KYC</title>
     <style>
-        body { font-family: Arial, sans-serif; color: #1f2933; font-size: 12px; }
-        h1 { font-size: 22px; margin-bottom: 4px; }
-        h2 { font-size: 15px; margin-top: 22px; border-bottom: 1px solid #d7dde4; padding-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        th, td { border: 1px solid #d7dde4; padding: 6px; text-align: left; vertical-align: top; }
-        th { background: #f3f6f8; }
-        .muted { color: #627083; }
-        .badge { display: inline-block; padding: 3px 6px; border: 1px solid #9aa8b5; border-radius: 3px; }
+        @page { size: A4; margin: 16mm 14mm; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #1f1430; font-size: 10px; line-height: 1.4; }
+        h2 { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin: 16px 0 6px; border-bottom: 1px solid #e6ddea; padding-bottom: 4px; }
+        table.grid { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        table.grid th, table.grid td { border: 1px solid #e6ddea; padding: 5px 6px; text-align: left; vertical-align: top; }
+        table.grid th { background: #f4f1f7; font-size: 8px; text-transform: uppercase; letter-spacing: 0.6px; }
+        .muted { color: #6f6478; margin-top: 8px; }
+        .badge { font-weight: 700; }
+        .empty { color: #6f6478; text-align: center; }
     </style>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
 </head>
 <body>
-<h1>Rapport KYC</h1>
-<div class="muted">Genere le <span th:text="${generatedAt}"></span></div>
+<div th:replace="~{fragments/document-brand :: titled('Rapport KYC', ${case.code})}"></div>
+<div class="muted">Généré le <span th:text="${generatedAt}"></span></div>
 
 <h2>Dossier</h2>
-<table>
-    <tr><th>Code</th><td th:text="${case.code}"></td><th>Statut</th><td><span class="badge" th:text="${case.status}"></span></td></tr>
-    <tr><th>Proprietaire</th><td th:text="${case.ownerName}"></td><th>Type</th><td th:text="${case.ownerType}"></td></tr>
-    <tr><th>Risque</th><td th:text="${case.riskLevel}"></td><th>Niveau KYC</th><td th:text="${case.kycLevel}"></td></tr>
-    <tr><th>Soumis le</th><td th:text="${case.submittedAt}"></td><th>Revise le</th><td th:text="${case.reviewedAt}"></td></tr>
+<table class="grid">
+    <tr><th>Code</th><td th:text="${case.code}"></td><th>Statut</th><td><span class="badge" th:text="${fmt.label(case.status)}"></span></td></tr>
+    <tr><th>Titulaire</th><td th:text="${case.ownerName}"></td><th>Type</th><td th:text="${fmt.label(case.ownerType)}"></td></tr>
+    <tr><th>Risque</th><td th:text="${fmt.label(case.riskLevel)}"></td><th>Niveau KYC</th><td th:text="${case.kycLevel}"></td></tr>
+    <tr><th>Soumis le</th><td th:text="${fmt.dateTime(case.submittedAt)}"></td><th>Examiné le</th><td th:text="${fmt.dateTime(case.reviewedAt)}"></td></tr>
 </table>
 
 <h2>Documents</h2>
-<table>
+<table class="grid">
     <thead>
-    <tr><th>Code</th><th>Type</th><th>Numero</th><th>Expiration</th><th>Statut</th></tr>
+    <tr><th>Code</th><th>Type</th><th>Numéro</th><th>Expiration</th><th>Statut</th></tr>
     </thead>
     <tbody>
     <tr th:each="document : ${case.documents}">
         <td th:text="${document.documentCode}"></td>
         <td th:text="${document.documentType}"></td>
         <td th:text="${document.documentNumber}"></td>
-        <td th:text="${document.expiryDate}"></td>
-        <td th:text="${document.status}"></td>
+        <td th:text="${fmt.date(document.expiryDate)}"></td>
+        <td th:text="${fmt.label(document.status)}"></td>
     </tr>
+    <tr th:if="${case.documents == null or case.documents.isEmpty()}"><td colspan="5" class="empty">Aucun document.</td></tr>
     </tbody>
 </table>
 
-<h2>Expiration</h2>
-<table>
+<h2>Échéances</h2>
+<table class="grid">
     <thead>
     <tr><th>Document</th><th>Date</th><th>Jours restants</th><th>Statut</th></tr>
     </thead>
     <tbody>
     <tr th:each="item : ${expiry}">
         <td th:text="${item.documentType}"></td>
-        <td th:text="${item.expiryDate}"></td>
+        <td th:text="${fmt.date(item.expiryDate)}"></td>
         <td th:text="${item.daysUntilExpiry}"></td>
-        <td th:text="${item.status}"></td>
+        <td th:text="${fmt.label(item.status)}"></td>
     </tr>
     </tbody>
 </table>
 
-<h2>Timeline</h2>
-<table>
+<h2>Historique</h2>
+<table class="grid">
     <thead>
     <tr><th>Date</th><th>Action</th><th>Acteur</th><th>Description</th></tr>
     </thead>
     <tbody>
     <tr th:each="entry : ${timeline}">
-        <td th:text="${entry.timestamp}"></td>
-        <td th:text="${entry.action}"></td>
-        <td th:text="${entry.actor}"></td>
-        <td th:text="${entry.description}"></td>
+        <td th:text="${fmt.dateTime(entry.timestamp)}"></td>
+        <td th:text="${fmt.label(entry.action)}"></td>
+        <td th:text="${fmt.label(entry.actor)}"></td>
+        <td th:text="${fmt.description(entry.description)}"></td>
     </tr>
     </tbody>
 </table>
 
 <h2 th:if="${!notes.isEmpty()}">Notes internes</h2>
-<table th:if="${!notes.isEmpty()}">
+<table class="grid" th:if="${!notes.isEmpty()}">
     <thead>
     <tr><th>Date</th><th>Auteur</th><th>Note</th></tr>
     </thead>
     <tbody>
     <tr th:each="note : ${notes}">
-        <td th:text="${note.createdAt}"></td>
-        <td th:text="${note.authorId}"></td>
+        <td th:text="${fmt.dateTime(note.createdAt)}"></td>
+        <td th:text="${note.authorEmail != null ? note.authorEmail : note.authorId}"></td>
         <td th:text="${note.content}"></td>
     </tr>
     </tbody>
 </table>
+
+<div th:replace="~{fragments/document-brand :: footer(${'Dossier ' + case.code + ' · document confidentiel, à usage interne'})}"></div>
 </body>
 </html>

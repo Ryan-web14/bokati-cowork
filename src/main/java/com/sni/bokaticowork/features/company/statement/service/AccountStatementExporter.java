@@ -1,22 +1,16 @@
 package com.sni.bokaticowork.features.company.statement.service;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.utils.BrandLogo;
 import com.sni.bokaticowork.features.company.statement.dto.StatementDtos;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
-import org.jsoup.helper.W3CDom;
-import org.jsoup.nodes.Document.OutputSettings;
-import org.jsoup.nodes.Entities;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -34,27 +28,19 @@ public class AccountStatementExporter {
     private final SpringTemplateEngine templateEngine;
     private final Locale appLocale;
     private final BrandLogo brandLogo;
+    private final com.sni.bokaticowork.core.identity.OperatorIdentityService operatorIdentityService;
 
     public byte[] pdf(StatementDtos.Statement statement) {
         Context context = new Context(appLocale);
         context.setVariable("statement", statement);
         context.setVariable("fmt", new Formatter(appLocale));
         context.setVariable("logo", brandLogo.base64());
+        context.setVariable("operator", operatorIdentityService != null ? operatorIdentityService.current()
+                : com.sni.bokaticowork.core.identity.OperatorIdentity.defaults());
         context.setVariable("generatedAt", LocalDate.now());
         String html = templateEngine.process("billing/account-statement", context);
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document jsoupDoc = Jsoup.parse(html);
-            jsoupDoc.outputSettings()
-                    .syntax(OutputSettings.Syntax.xml)
-                    .escapeMode(Entities.EscapeMode.xhtml)
-                    .charset(StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new W3CDom().fromJsoup(jsoupDoc), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception ex) {
             throw new BadRequestException("Impossible de produire l'état de compte en PDF", ex);
         }

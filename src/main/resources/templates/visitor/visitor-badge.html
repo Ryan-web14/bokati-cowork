@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Badge visiteur</title>
     <style>
-        @page { size: A6 landscape; margin: 0; }
+        @page { size: 148mm 105mm; margin: 0; }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -134,7 +134,7 @@
                 </td>
             </tr>
         </table>
-        <div class="brand-footer">Elle A Osé · Bokati Cowork</div>
+        <div class="brand-footer" th:text="${(operator != null ? operator.name() : 'ELLE A OSE') + ' · Espace de coworking'}">ELLE A OSE · Espace de coworking</div>
     </div>
 </div>
 </body>

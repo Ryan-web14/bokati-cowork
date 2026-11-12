@@ -19,13 +19,21 @@
         .signatures td { width: 50%; padding-top: 40px; border-top: 1px solid #2b2030; font-size: 9px; color: #6f6478; text-align: center; }
         .footer { margin-top: 20px; font-size: 7.6px; color: #9b8caa; text-align: center; }
     </style>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
 </head>
 <body>
-<div class="header">
-    <div class="brand">Bokati Cowork</div>
-    <div class="doc-type">Contrat de domiciliation</div>
-    <div class="doc-number" th:text="${contractNumber}">DOM-2026-00001</div>
-</div>
+<div th:replace="~{fragments/document-brand :: titled('Contrat de domiciliation', ${contractNumber})}"></div>
+<div style="height:10px"></div>
+
+<h2>Le domiciliataire</h2>
+<table class="info">
+    <tr><td class="label">Dénomination</td><td th:text="${operator != null ? operator.fullName() : 'ELLE A OSE'}">ELLE A OSE</td></tr>
+    <tr><td class="label">RCCM</td><td th:text="${operator != null and operator.rccm() != null ? operator.rccm() : 'CG-PNR-01-2017-A11-00472'}">…</td></tr>
+    <tr th:if="${operator != null and operator.niu() != null}"><td class="label">NIU</td><td th:text="${operator.niu()}">…</td></tr>
+    <tr><td class="label">Siège</td><td th:text="${operator != null and operator.address() != null ? operator.address() : '84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire'}">…</td></tr>
+    <tr th:if="${operator != null and operator.representativeName() != null}"><td class="label">Représentant légal</td>
+        <td th:text="${operator.representativeName() + (operator.representativeTitle() != null ? ', ' + operator.representativeTitle() : '')}">…</td></tr>
+</table>
 
 <h2>Le domicilié</h2>
 <table class="info">
@@ -64,11 +72,11 @@
 
 <table class="signatures">
     <tr>
-        <td>Le domiciliataire</td>
+        <td>Le domiciliataire<br/><span th:text="${operator != null ? operator.name() : 'ELLE A OSE'}">ELLE A OSE</span></td>
         <td>Le domicilié</td>
     </tr>
 </table>
 
-<div class="footer" th:text="'Établi le ' + ${issuedAt} + ' · ' + ${contractNumber}">…</div>
+<div th:replace="~{fragments/document-brand :: footer(${'Établi le ' + issuedAt + ' · ' + contractNumber})}"></div>
 </body>
 </html>

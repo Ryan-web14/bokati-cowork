@@ -2,17 +2,14 @@
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${v.number}">Piece</title>
+    <title th:text="${v.number}">Pièce</title>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
     <style>
         @page { size: A4; margin: 26px 28px 40px 28px;
             @bottom-center { content: "Page " counter(page) " / " counter(pages); font-size: 7.5px; color: #9b8caa; } }
         * { box-sizing: border-box; }
         body { font-family: Helvetica, Arial, sans-serif; color: #2b2030; font-size: 9.5px; line-height: 1.4; }
-        .header { border-bottom: 2px solid #d9a21b; padding-bottom: 8px; margin-bottom: 12px; }
-        .header-table { width: 100%; border-collapse: collapse; }
-        .header-table td { border: none; padding: 0; vertical-align: top; }
-        .brand { font-size: 15px; font-weight: 700; color: #281332; letter-spacing: 1.5px; text-transform: uppercase; }
-        .brand-sub { font-size: 7.5px; color: #6f6478; margin-top: 2px; }
+        .after-letterhead { height: 12px; }
         .doc-type { font-size: 16px; font-weight: 700; color: #281332; text-align: right; text-transform: uppercase; letter-spacing: 1px; }
         .doc-number { font-size: 10px; color: #d9a21b; text-align: right; font-weight: 700; font-family: "Courier New", monospace; margin-top: 3px; }
         .stamp { border: 2px solid #b3261e; color: #b3261e; font-weight: 700; text-align: center; padding: 4px; margin-bottom: 10px; letter-spacing: 2px; }
@@ -40,22 +37,15 @@
     </style>
 </head>
 <body>
-<div class="header">
-    <table class="header-table">
-        <tr>
-            <td>
-                <div class="brand" th:text="${v.issuerName}">Exploitant</div>
-                <div class="brand-sub" th:text="${v.issuerDetails}">RCCM, NIU, adresse</div>
-            </td>
-            <td>
-                <div class="doc-type" th:text="${v.title}">Piece</div>
-                <div class="doc-number" th:text="${v.number}">BDF-202611-000001</div>
-            </td>
-        </tr>
-    </table>
+<div th:replace="~{fragments/document-brand :: letterhead(~{::#voucher-aside})}">
+    <div id="voucher-aside">
+        <div class="doc-type" th:text="${v.title}">Pièce</div>
+        <div class="doc-number" th:text="${v.number}">BDF-202611-000001</div>
+    </div>
 </div>
+<div class="after-letterhead"></div>
 
-<div class="stamp" th:if="${v.cancelledBy != null}" th:text="'ANNULÉE PAR ' + ${v.cancelledBy}">ANNULEE</div>
+<div class="stamp" th:if="${v.cancelledBy != null}" th:text="'ANNULÉE PAR ' + ${v.cancelledBy}">ANNULÉE</div>
 <div class="stamp dup" th:if="${v.duplicate}" th:text="'DUPLICATA, réimpression du ' + ${v.printedAtLabel}">DUPLICATA</div>
 
 <th:block th:each="section : ${v.sections}">
@@ -63,7 +53,7 @@
     <table class="info" th:if="${section.pairs != null and !section.pairs.isEmpty()}">
         <tr th:each="row : ${section.pairRows}">
             <th:block th:each="pair : ${row}">
-                <td class="label" th:text="${pair[0]}">Libelle</td>
+                <td class="label" th:text="${pair[0]}">Libellé</td>
                 <td class="value" th:text="${pair[1]}">Valeur</td>
             </th:block>
         </tr>
@@ -90,7 +80,7 @@
         <th:block th:each="signature, iter : ${v.signatures}">
             <td class="gap" th:if="${iter.index > 0}"></td>
             <td>
-                <div th:text="${signature.role}">Role</div>
+                <div th:text="${signature.role}">Rôle</div>
                 <div class="signed" th:if="${signature.signedBy != null}" th:text="'Signé électroniquement par ' + ${signature.signedBy} + ' le ' + ${signature.signedAt}"></div>
             </td>
         </th:block>
@@ -101,10 +91,10 @@
     <table class="footer-table">
         <tr>
             <td>
-                <div th:text="'Émise le ' + ${v.issuedAtLabel} + ' par ' + ${v.issuedBy}">Emise le</div>
-                <div th:text="'Généré le ' + ${v.generatedAtLabel} + ' · identifiant ' + ${v.generationId}">Genere le</div>
+                <div th:text="'Émise le ' + ${v.issuedAtLabel} + ' par ' + ${v.issuedBy}">Émise le</div>
+                <div th:text="'Généré le ' + ${v.generatedAtLabel} + ' · identifiant ' + ${v.generationId}">Généré le</div>
                 <div>Pièce comptable à conserver dix ans (Acte uniforme OHADA relatif au droit comptable). Toute rature la rend nulle.</div>
-                <div th:text="'Vérifier : ' + ${v.verifyUrl}">Verifier</div>
+                <div th:if="${v.verifyUrl != null}" th:text="'Vérifier : ' + ${v.verifyUrl}">Vérifier</div>
             </td>
             <td style="text-align: right; width: 90px;">
                 <img th:if="${v.qrDataUri != null}" th:src="${v.qrDataUri}" style="width: 80px; height: 80px;" alt="QR"/>
@@ -112,5 +102,6 @@
         </tr>
     </table>
 </div>
+<div th:replace="~{fragments/document-brand :: footer(null)}"></div>
 </body>
 </html>

@@ -1,22 +1,20 @@
 package com.sni.bokaticowork.features.inventory.admin.service.support;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.identity.OperatorIdentityService;
+import com.sni.bokaticowork.core.utils.BrandLogo;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
-import org.jsoup.helper.W3CDom;
-import org.jsoup.nodes.Document.OutputSettings;
-import org.jsoup.nodes.Entities;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 @Component
@@ -25,24 +23,18 @@ public class InventoryMovementReportPdfRenderer {
 
     private static final String TEMPLATE_NAME = "inventory/movement-report";
 
+    static final ZoneId APP_ZONE = ZoneId.of("Africa/Brazzaville");
+    private static final DateTimeFormatter GENERATED_AT = DateTimeFormatter.ofPattern("dd/MM/yyyy 'à' HH:mm");
+
     private final Locale appLocale;
+    private final OperatorIdentityService operatorIdentity;
+    private final BrandLogo brandLogo;
     private final SpringTemplateEngine templateEngine = buildTemplateEngine();
 
     public byte[] render(InventoryMovementReportResponse report) {
         String html = renderHtml(report);
-        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document jsoupDoc = Jsoup.parse(html);
-            jsoupDoc.outputSettings()
-                    .syntax(OutputSettings.Syntax.xml)
-                    .escapeMode(Entities.EscapeMode.xhtml)
-                    .charset(StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new W3CDom().fromJsoup(jsoupDoc), null);
-            builder.toStream(output);
-            builder.run();
-            return output.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception ex) {
             throw new BadRequestException("Unable to generate inventory movement PDF report", ex);
         }
@@ -51,7 +43,9 @@ public class InventoryMovementReportPdfRenderer {
     private String renderHtml(InventoryMovementReportResponse report) {
         Context context = new Context(appLocale);
         context.setVariable("report", report);
-        context.setVariable("generatedAt", Instant.now().toString());
+        context.setVariable("generatedAt", GENERATED_AT.format(Instant.now().atZone(APP_ZONE)));
+        context.setVariable("operator", operatorIdentity.current());
+        context.setVariable("logo", brandLogo.base64());
         return templateEngine.process(TEMPLATE_NAME, context);
     }
 

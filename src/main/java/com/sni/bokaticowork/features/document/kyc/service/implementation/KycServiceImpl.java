@@ -66,11 +66,8 @@ import com.sni.bokaticowork.features.document.kyc.repository.KycVerificationRepo
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycAutomationService;
 import com.sni.bokaticowork.features.document.kyc.service.interfaces.KycService;
 import com.sni.bokaticowork.features.payment.service.interfaces.WalletService;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
-import org.jsoup.helper.W3CDom;
-import org.jsoup.nodes.Entities;
 import com.sni.bokaticowork.core.templateResponse.PaginatedResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -87,10 +84,8 @@ import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.admin.user.repository.UserRepository;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -133,6 +128,8 @@ public class KycServiceImpl implements KycService {
     private final KycMapper mapper;
     private final WalletService walletService;
     private final Locale appLocale;
+    private final com.sni.bokaticowork.core.identity.OperatorIdentityService operatorIdentityService;
+    private final com.sni.bokaticowork.core.utils.BrandLogo brandLogo;
 
     @Override
     public KycCaseResponse createCase(CreateKycCaseRequest request) {
@@ -655,21 +652,15 @@ public class KycServiceImpl implements KycService {
         context.setVariable("timeline", timeline(code));
         context.setVariable("expiry", expiryStatus(code));
         context.setVariable("notes", includeInternalNotes ? listNotes(code) : List.of());
-        context.setVariable("generatedAt", Instant.now());
+        com.sni.bokaticowork.features.document.kyc.service.support.KycReportFormatter fmt =
+                new com.sni.bokaticowork.features.document.kyc.service.support.KycReportFormatter();
+        context.setVariable("fmt", fmt);
+        context.setVariable("generatedAt", fmt.dateTime(Instant.now()));
+        context.setVariable("operator", operatorIdentityService.current());
+        context.setVariable("logo", brandLogo.base64());
         String html = templateEngine.process("kyc/kyc-case-report", context);
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document xhtml = Jsoup.parse(html);
-            xhtml.outputSettings()
-                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(Entities.EscapeMode.xhtml)
-                    .charset(StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new W3CDom().fromJsoup(xhtml), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception ex) {
             throw new BadRequestException("Unable to export KYC case PDF", ex);
         }

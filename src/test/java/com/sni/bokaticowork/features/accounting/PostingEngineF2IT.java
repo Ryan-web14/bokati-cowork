@@ -96,6 +96,7 @@ class PostingEngineF2IT extends PostgresIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
+        com.sni.bokaticowork.core.settings.platform.PlatformSettingsStubs.fallbacks(platformSettings);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("compta@elleaose.com", null,
                 List.of(new SimpleGrantedAuthority("ACCOUNTING_ENTRY_BALANCE"))));
         when(sequences.next(anyString())).thenAnswer(invocation -> "BR-F2-" + PROVISIONAL.getAndIncrement() + "-" + UUID.randomUUID().toString().substring(0, 6));

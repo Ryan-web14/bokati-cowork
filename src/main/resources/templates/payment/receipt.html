@@ -16,6 +16,7 @@
 <head>
 <meta charset="UTF-8">
 <title th:text="|Reçu ${receipt.receiptNumber()}|">Reçu</title>
+<th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
 <style>
     @page {
         size: A4;
@@ -39,14 +40,6 @@
     }
     .content { padding: 18px 16px 0; }
 
-    .lh { width: 100%; border-collapse: collapse; }
-    .lh td { vertical-align: top; padding: 0; border: none; }
-    .lh-logo { height: 34px; width: auto; display: block; margin-bottom: 4px; }
-    .lh-name { font-size: 19px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; line-height: 1.1; }
-    .lh-tag { font-size: 7.4px; letter-spacing: 1.6px; text-transform: uppercase; margin-top: 4px; opacity: .68; }
-    .lh-id { font-size: 7.6px; line-height: 1.7; margin-top: 7px; opacity: .8; }
-    .lh-id b { font-weight: 700; }
-    .lh-right { text-align: right; }
     .doc-kind {
         display: inline-block; border: 1.2px solid #1f1430;
         font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
@@ -55,7 +48,8 @@
     .doc-no { font-size: 13.5px; font-weight: 700; font-family: "Courier New", monospace; margin-top: 7px; letter-spacing: 1px; }
     .doc-cert { font-size: 7.4px; font-family: "Courier New", monospace; margin-top: 3px; opacity: .74; }
     .mark { display: inline-block; font-size: 7.4px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; margin-top: 6px; opacity: .74; }
-    .rule-gold { height: 2px; background: #c9a84c; margin: 11px 0 15px; }
+    /* En-tete commun (fragments/document-brand) · l'ecart sous le filet dore reste celui d'avant. */
+    .dbr-letterhead { margin-bottom: 15px; }
 
     /* Le chiffre que le porteur du recu vient verifier · seul encadre de la piece. */
     .hero { border: 1.2px solid #1f1430; padding: 10px 13px; margin-bottom: 15px; }
@@ -129,28 +123,16 @@
 <body>
 <div class="content">
 
-    <table class="lh">
-        <tr>
-            <td>
-                <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="lh-logo" alt="ELLE A OSE"/>
-                <div class="lh-name" th:if="${logo == null}">ELLE A OSE</div>
-                <div class="lh-tag">Espace de coworking</div>
-                <div class="lh-id">
-                    84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire<br>
-                    RCCM <b>CG-PNR-01-2017-A11-00472</b><br>
-                    coworkspace@elleaose.com · 05 204 2552
-                </div>
-            </td>
-            <td class="lh-right">
+    <!-- En-tete commun · identite de l'exploitant a gauche, nature et numero du recu a droite. -->
+    <div th:replace="~{fragments/document-brand :: letterhead(~{::#receipt-aside})}">
+        <div id="receipt-aside">
                 <span class="doc-kind">Reçu</span>
                 <div class="doc-no" th:text="${receipt.receiptNumber()}">REC-000001</div>
                 <div class="doc-cert" th:if="${receipt.transactionNumber() != null}"
                      th:text="|Transaction ${receipt.transactionNumber()}|">Transaction</div>
                 <div><span class="mark" th:text="${receipt.transactionStatus()}">Encaissé</span></div>
-            </td>
-        </tr>
-    </table>
-    <div class="rule-gold"></div>
+        </div>
+    </div>
 
     <!-- MONTANT REÇU · l'information que le porteur du recu vient verifier. -->
     <div class="hero">
@@ -286,9 +268,10 @@
     </table>
 
     <div class="legalstrip">
-        <b>ELLE A OSE</b> · 84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire · RCCM CG-PNR-01-2017-A11-00472<br>
+        <span th:text="${operator != null ? operator.footerLine() : 'ELLE A OSE · 84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire · RCCM CG-PNR-01-2017-A11-00472'}">ELLE A OSE</span><br>
         <span th:text="|Reçu n° ${receipt.receiptNumber()} émis le ${fmt.timestamp(receipt.receiptIssuedAt())}|">Référence</span>.
-        Document scellé électroniquement · toute altération invalide la signature.
+        <!-- Un recu n'est ni signe ni scelle · seule la verification en ligne par le QR est vraie. -->
+        <span th:if="${qrCode != null}">Document vérifiable en ligne au moyen du code QR.</span>
     </div>
 </div>
 </body>
