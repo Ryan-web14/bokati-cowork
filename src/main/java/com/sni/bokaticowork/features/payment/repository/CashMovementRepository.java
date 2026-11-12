@@ -194,4 +194,7 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
 
     /** Lot F3 : mouvements d'une caisse pas encore comptabilises. */
     long countByCashSession_CashRegister_IdAndAccountingStatusIn(Long registerId, java.util.Collection<String> statuses);
+
+    /** Lot F10 : mouvements comptabilises d'une caisse dans une devise (valeur des especes en devise). */
+    java.util.List<CashMovement> findByCashSession_CashRegister_IdAndCurrencyIgnoreCaseAndAccountingBaseAmountIsNotNull(Long registerId, String currency);
 }

@@ -90,13 +90,15 @@ public class SalesAccountingService {
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbc;
     private final TransactionTemplate newTransaction;
+    private final ExchangeRateService rates;
 
     public SalesAccountingService(BillingDocumentRepository documentRepository, BillingDocumentLineRepository documentLineRepository,
                                   PaymentTransactionRepository transactionRepository, PaymentAllocationRepository allocationRepository,
                                   WalletLedgerEntryRepository ledgerRepository, CashSessionRepository sessionRepository,
                                   AccEntryLineRepository lineRepository, CashAccountingService cash, AccountingLetteringService lettering,
                                   AccountingChartService chart, AccountingSettings settings, @Lazy PostingEngine engine, ObjectMapper objectMapper,
-                                  DataSource dataSource, PlatformTransactionManager transactionManager) {
+                                  DataSource dataSource, PlatformTransactionManager transactionManager, ExchangeRateService rates) {
+        this.rates = rates;
         this.documentRepository = documentRepository;
         this.documentLineRepository = documentLineRepository;
         this.transactionRepository = transactionRepository;
@@ -175,6 +177,9 @@ public class SalesAccountingService {
     void feedDocument(String number) {
         BillingDocument document = documentRepository.findByDocumentNumber(number).orElseThrow();
         boolean creditNote = document.getDocumentType() == BillingDocumentType.CREDIT_NOTE;
+        LocalDate date = document.getIssueDate() != null ? document.getIssueDate() : date(document.getIssuedAt());
+        // Document en devise : converti en XAF au taux du document, sinon au taux du jour d'emission.
+        Conversion fx = conversion(document.getCurrency(), document.getExchangeRate(), date);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("documentNumber", document.getDocumentNumber());
         data.put("documentType", document.getDocumentType().name());
@@ -185,13 +190,13 @@ public class SalesAccountingService {
         data.put("discountAccount", settings.text("accounting.sales.discount-account", "709"));
         data.put("vatAccount", settings.text("accounting.sales.vat-account", "4431"));
         data.put("extraTaxAccount", settings.text("accounting.sales.extra-tax-account", "4431"));
-        BigDecimal taxable = money(document.getTaxableAmount());
-        BigDecimal vat = money(document.getVatAmount());
-        BigDecimal extra = money(document.getTaxAmount()).subtract(vat).max(BigDecimal.ZERO);
+        BigDecimal taxable = fx.apply(money(document.getTaxableAmount()));
+        BigDecimal vat = fx.apply(money(document.getVatAmount()));
+        BigDecimal extra = fx.apply(money(document.getTaxAmount()).subtract(money(document.getVatAmount())).max(BigDecimal.ZERO));
         List<Map<String, Object>> lines = new ArrayList<>();
         BigDecimal gross = BigDecimal.ZERO;
         for (BillingDocumentLine line : documentLineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document)) {
-            BigDecimal amount = money(line.getSubtotalAmount() != null ? line.getSubtotalAmount() : line.getTaxableAmount());
+            BigDecimal amount = fx.apply(money(line.getSubtotalAmount() != null ? line.getSubtotalAmount() : line.getTaxableAmount()));
             if (amount.signum() == 0 || Boolean.TRUE.equals(line.getOptional())) {
                 continue;
             }
@@ -207,12 +212,17 @@ public class SalesAccountingService {
         data.put("reduction", gross.subtract(taxable));
         data.put("vatAmount", vat);
         data.put("extraTaxAmount", extra);
-        data.put("totalAmount", money(document.getTotalAmount()));
+        // En devise, le total est la somme des parties converties : la piece reste equilibree.
+        data.put("totalAmount", fx.foreign() ? taxable.add(vat).add(extra) : money(document.getTotalAmount()));
+        if (fx.foreign()) {
+            data.put("currency", fx.currency());
+            data.put("exchangeRate", fx.rate());
+            data.put("foreignTotal", money(document.getTotalAmount()));
+        }
         data.put("dueDate", document.getDueDate() == null ? null : document.getDueDate().toString());
         data.put("letteringReference", creditNote && StringUtils.hasText(document.getOriginalDocumentNumber())
                 ? document.getOriginalDocumentNumber() : document.getDocumentNumber());
         data.put("originalDocumentNumber", document.getOriginalDocumentNumber());
-        LocalDate date = document.getIssueDate() != null ? document.getIssueDate() : date(document.getIssuedAt());
         engine.receive(creditNote ? CREDIT_NOTE_ISSUED : INVOICE_ISSUED, number, "SALES", date, json(data), replay(date));
     }
 
@@ -232,10 +242,13 @@ public class SalesAccountingService {
         boolean refund = originalNumber != null;
         PaymentTransaction source = refund ? transactionRepository.findByTransactionNumber(originalNumber).orElse(transaction) : transaction;
         Map<String, Object> data = new LinkedHashMap<>();
-        BigDecimal amount = money(transaction.getAmount());
+        LocalDate date = date(transaction.getPaidAt() != null ? transaction.getPaidAt() : transaction.getCreatedAt());
+        // Paiement en devise : converti au taux du jour du paiement ; l'ecart avec le taux de la
+        // facture est solde au lettrage (perte ou gain de change).
+        Conversion fx = conversion(transaction.getCurrency(), null, date);
+        BigDecimal foreignAmount = money(transaction.getAmount());
         data.put("transactionNumber", number);
         data.put("method", transaction.getPaymentMethod().name());
-        data.put("amount", amount);
         data.put("clientAccount", settings.text("accounting.sales.client-account", "411"));
         data.put("unallocatedAccount", settings.text("accounting.sales.unallocated-account", "4719"));
         Treasury treasury = treasury(transaction, source);
@@ -244,7 +257,8 @@ public class SalesAccountingService {
         data.put("treasuryThirdParty", treasury.thirdParty());
         String customer = transaction.getPaymentIntent() == null ? null : transaction.getPaymentIntent().getCustomerCode();
         List<Map<String, Object>> allocations = new ArrayList<>();
-        BigDecimal left = amount;
+        BigDecimal left = foreignAmount;
+        BigDecimal amount = BigDecimal.ZERO;
         for (PaymentAllocation allocation : allocationRepository.findAllByPaymentTransactionId(source.getId())) {
             if (left.signum() <= 0) {
                 break;
@@ -256,21 +270,35 @@ public class SalesAccountingService {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("documentNumber", allocation.getBillingDocumentNumber());
             item.put("customerCode", documentRepository.findByDocumentNumber(allocation.getBillingDocumentNumber()).map(this::customerCode).orElse(customer));
-            item.put("amount", value);
+            BigDecimal converted = fx.apply(value);
+            item.put("amount", converted);
+            if (fx.foreign()) {
+                item.put("foreignAmount", value);
+            }
             allocations.add(item);
+            amount = amount.add(converted);
             left = left.subtract(value);
         }
+        BigDecimal unallocated = fx.apply(left);
+        amount = amount.add(unallocated);
+        data.put("amount", amount);
         data.put("allocations", allocations);
-        data.put("unallocated", left);
+        data.put("unallocated", unallocated);
         data.put("customerCode", customer);
-        LocalDate date = date(transaction.getPaidAt() != null ? transaction.getPaidAt() : transaction.getCreatedAt());
+        if (fx.foreign()) {
+            data.put("currency", fx.currency());
+            data.put("exchangeRate", fx.rate());
+            data.put("foreignAmount", foreignAmount);
+        }
         engine.receive(refund ? PAYMENT_REFUNDED : PAYMENT_RECEIVED, number, "PAYMENT", date, json(data), replay(date));
     }
 
     void feedWalletEntry(String number) {
         WalletLedgerEntry entry = ledgerRepository.findByEntryNumber(number).orElseThrow();
         boolean credit = entry.getDirection() == WalletEntryDirection.CREDIT;
-        BigDecimal amount = money(entry.getAmount());
+        LocalDate date = date(entry.getCreatedAt());
+        Conversion fx = conversion(entry.getWallet().getCurrency(), null, date);
+        BigDecimal amount = fx.apply(money(entry.getAmount()));
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("entryNumber", number);
         data.put("entryType", entry.getEntryType().name());
@@ -303,7 +331,11 @@ public class SalesAccountingService {
         data.put("counterAccount", counter);
         data.put("counterThirdParty", counterThirdParty);
         data.put("counterReference", counterReference);
-        LocalDate date = date(entry.getCreatedAt());
+        if (fx.foreign()) {
+            data.put("currency", fx.currency());
+            data.put("exchangeRate", fx.rate());
+            data.put("foreignAmount", money(entry.getAmount()));
+        }
         engine.receive(WALLET_ENTRY, number, "WALLET", date, json(data), replay(date));
     }
 
@@ -470,6 +502,30 @@ public class SalesAccountingService {
     }
 
     // ------------------------------------------------------------------ outils
+
+    /** Conversion d'une devise en XAF ; neutre pour le XAF. */
+    record Conversion(String currency, BigDecimal rate) {
+        boolean foreign() {
+            return rate != null;
+        }
+
+        BigDecimal apply(BigDecimal value) {
+            return rate == null ? value : value.multiply(rate).setScale(0, RoundingMode.HALF_UP).setScale(4, RoundingMode.HALF_UP);
+        }
+    }
+
+    private Conversion conversion(String currency, BigDecimal documentRate, LocalDate date) {
+        String code = StringUtils.hasText(currency) ? currency.trim().toUpperCase(java.util.Locale.ROOT) : ExchangeRateService.BASE;
+        if (ExchangeRateService.BASE.equals(code)) {
+            return new Conversion(code, null);
+        }
+        if (documentRate != null && documentRate.signum() > 0) {
+            return new Conversion(code, documentRate);
+        }
+        BigDecimal rate = rates.rate(code, date).orElseThrow(() -> new com.sni.bokaticowork.core.exception.customs.BadRequestException(
+                "Aucun taux " + code + " au " + date + " : saisissez-le ou recuperez les taux du jour"));
+        return new Conversion(code, rate);
+    }
 
     private boolean replay(LocalDate date) {
         LocalDate until = settings.replayUntil();

@@ -190,6 +190,14 @@ public class CashAccountingService implements PostingOutcomeListener {
         boolean foreign = !ExchangeRateService.BASE.equals(ExchangeRateService.normalize(movement.getCurrency()));
         // Lot C5 : un mouvement en devise est comptabilise en XAF, au taux du mouvement ou du jour.
         BigDecimal amount = money(foreign ? exchangeRates.toBase(movement, date(at0)) : movement.getAmount());
+        // Lot F10 : une sortie d'especes en devise credite la caisse a leur valeur comptable (taux moyen
+        // d'entree) ; la contrepartie est au taux du jour ; l'ecart va en perte ou en gain de change.
+        BigDecimal treasuryAmount = amount;
+        if (foreign && CashFlowRules.direction(movement.getMovementType(), movement.getDirection()) == CashFlowDirection.OUT) {
+            treasuryAmount = money(bookValue(register, movement));
+        }
+        BigDecimal exchange = treasuryAmount.subtract(amount);
+        movement.setAccountingBaseAmount(treasuryAmount);
         BigDecimal vat = movement.getVatAmount() == null ? BigDecimal.ZERO : money(movement.getVatAmount());
         data.put("movementNumber", movement.getMovementNumber());
         data.put("type", movement.getMovementType().name());
@@ -197,6 +205,11 @@ public class CashAccountingService implements PostingOutcomeListener {
         data.put("amount", amount);
         data.put("signedAmount", direction == CashFlowDirection.OUT ? amount.negate() : amount);
         data.put("netAmount", amount.subtract(vat));
+        data.put("treasuryAmount", treasuryAmount);
+        data.put("exchangeLoss", exchange.signum() > 0 ? exchange : BigDecimal.ZERO);
+        data.put("exchangeGain", exchange.signum() < 0 ? exchange.negate() : BigDecimal.ZERO);
+        data.put("exchangeLossAccount", settings.text("accounting.cash.exchange-loss-account", "676"));
+        data.put("exchangeGainAccount", settings.text("accounting.cash.exchange-gain-account", "776"));
         data.put("vatAmount", vat);
         data.put("vatCode", movement.getVatCode());
         data.put("vatAccount", direction == CashFlowDirection.OUT ? settings.text("accounting.cash.vat-recoverable-account", "4452")
@@ -543,6 +556,30 @@ public class CashAccountingService implements PostingOutcomeListener {
 
     private static LocalDate date(Instant at) {
         return (at == null ? Instant.now() : at).atZone(PostingEngine.AccountingClock.ZONE).toLocalDate();
+    }
+
+    /**
+     * Valeur comptable en XAF d'une sortie en devise : montant multiplie par le taux moyen des especes
+     * de cette devise encore en caisse (entrees moins sorties deja comptabilisees). Sans stock connu,
+     * le taux du jour.
+     */
+    BigDecimal bookValue(CashRegister register, CashMovement movement) {
+        BigDecimal foreignHeld = BigDecimal.ZERO;
+        BigDecimal baseHeld = BigDecimal.ZERO;
+        for (CashMovement earlier : movementRepository.findByCashSession_CashRegister_IdAndCurrencyIgnoreCaseAndAccountingBaseAmountIsNotNull(
+                register.getId(), movement.getCurrency())) {
+            if (earlier.getId().equals(movement.getId())) {
+                continue;
+            }
+            boolean in = CashFlowRules.direction(earlier.getMovementType(), earlier.getDirection()) == CashFlowDirection.IN;
+            foreignHeld = foreignHeld.add(in ? earlier.getAmount() : earlier.getAmount().negate());
+            baseHeld = baseHeld.add(in ? earlier.getAccountingBaseAmount() : earlier.getAccountingBaseAmount().negate());
+        }
+        if (foreignHeld.signum() <= 0 || baseHeld.signum() <= 0) {
+            Instant at = movement.getApprovedAt() != null ? movement.getApprovedAt() : movement.getCreatedAt();
+            return exchangeRates.toBase(movement, date(at));
+        }
+        return movement.getAmount().multiply(baseHeld).divide(foreignHeld, 0, RoundingMode.HALF_UP);
     }
 
     private String label(CashMovement movement) {

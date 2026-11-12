@@ -78,6 +78,14 @@ public class AccountingLetteringService {
     }
 
     public AccountingResponses.Lettering letter(AccountingRequests.Letter request) {
+        return letter(request, false);
+    }
+
+    /**
+     * {@code exchange} : l'ecart vient du change (les montants en devise se soldent) ; il est passe
+     * en perte ou gain de change (676 / 776), sans seuil.
+     */
+    private AccountingResponses.Lettering letter(AccountingRequests.Letter request, boolean exchange) {
         AccAccount account = chart.account(request.accountNumber());
         if (!Boolean.TRUE.equals(account.getReconcilable())) {
             throw new BadRequestException("Le compte " + account.getNumber() + " n'est pas lettrable");
@@ -124,11 +132,11 @@ public class AccountingLetteringService {
         String differenceEntry = null;
         if (difference.signum() != 0) {
             if (Boolean.TRUE.equals(request.withDifference())) {
-                if (difference.abs().compareTo(settings.letteringDifferenceThreshold()) > 0) {
+                if (!exchange && difference.abs().compareTo(settings.letteringDifferenceThreshold()) > 0) {
                     throw new BadRequestException("L'ecart de " + plain(difference.abs()) + " XAF depasse le seuil d'ecart de reglement ("
                             + plain(settings.letteringDifferenceThreshold()) + " XAF)");
                 }
-                AccEntry gap = differenceEntry(account, thirdParty, difference, actor);
+                AccEntry gap = differenceEntry(account, thirdParty, difference, actor, exchange);
                 differenceEntry = gap.getEntryNumber();
                 AccEntryLine gapLine = lineRepository.findByEntryIdOrderByLineNoAsc(gap.getId()).stream()
                         .filter(line -> line.getAccountNumber().equals(account.getNumber())).findFirst().orElseThrow();
@@ -192,15 +200,18 @@ public class AccountingLetteringService {
      * Ecriture d'ecart de reglement en partie double : perte D 658 / C compte du tiers, gain
      * D compte du tiers / C 758.
      */
-    private AccEntry differenceEntry(AccAccount account, String thirdParty, BigDecimal difference, String actor) {
+    private AccEntry differenceEntry(AccAccount account, String thirdParty, BigDecimal difference, String actor, boolean exchange) {
         BigDecimal value = difference.abs();
         boolean debitHeavy = difference.signum() > 0;
+        String label = exchange ? "Ecart de change" : "Ecart de reglement";
+        String loss = exchange ? settings.text("accounting.exchange.loss-account", "676") : settings.letteringLossAccount();
+        String gain = exchange ? settings.text("accounting.exchange.gain-account", "776") : settings.letteringGainAccount();
         List<AccountingRequests.EntryLine> lines = debitHeavy
-                ? List.of(new AccountingRequests.EntryLine(settings.letteringLossAccount(), null, "Ecart de reglement", value, null, null, null, null, null, null, null, null),
-                new AccountingRequests.EntryLine(account.getNumber(), thirdParty, "Ecart de reglement", null, value, null, null, null, null, null, null, null))
-                : List.of(new AccountingRequests.EntryLine(account.getNumber(), thirdParty, "Ecart de reglement", value, null, null, null, null, null, null, null, null),
-                new AccountingRequests.EntryLine(settings.letteringGainAccount(), null, "Ecart de reglement", null, value, null, null, null, null, null, null, null));
-        AccEntry entry = entries.post("OD", LocalDate.now(), "Ecart de reglement au lettrage", EntryOrigin.MANUAL, "LETTERING",
+                ? List.of(new AccountingRequests.EntryLine(loss, null, label, value, null, null, null, null, null, null, null, null),
+                new AccountingRequests.EntryLine(account.getNumber(), thirdParty, label, null, value, null, null, null, null, null, null, null))
+                : List.of(new AccountingRequests.EntryLine(account.getNumber(), thirdParty, label, value, null, null, null, null, null, null, null, null),
+                new AccountingRequests.EntryLine(gain, null, label, null, value, null, null, null, null, null, null, null));
+        AccEntry entry = entries.post("OD", LocalDate.now(), label + " au lettrage", EntryOrigin.MANUAL, "LETTERING",
                 account.getNumber() + (thirdParty == null ? "" : "/" + thirdParty), lines, actor);
         if (entry.getStatus() != EntryStatus.VALIDATED) {
             throw new BadRequestException("L'ecriture d'ecart de reglement n'a pas pu etre validee : " + entry.getPendingDetail());
@@ -229,14 +240,43 @@ public class AccountingLetteringService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal credit = open.stream().filter(line -> line.side() == AccountSide.CREDIT).map(AccountingResponses.OpenLine::remaining)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        // Ecart en XAF : partiel, sauf si les montants en devise se soldent (ecart de change, solde en 676 / 776).
+        boolean exchange = debit.compareTo(credit) != 0 && foreignBalanced(open);
         AccountingResponses.Lettering result = letter(new AccountingRequests.Letter(accountNumber, thirdPartyCode,
                 open.stream().map(line -> new AccountingRequests.LetterLine(line.lineId(), null)).toList(),
-                debit.compareTo(credit) != 0, false));
+                debit.compareTo(credit) != 0 && !exchange, exchange), exchange);
         letteringRepository.findById(result.id()).ifPresent(lettering -> {
             lettering.setKind(LetteringKind.AUTO_REFERENCE);
             letteringRepository.save(lettering);
         });
         return java.util.Optional.of(result);
+    }
+
+    /**
+     * Vrai quand toutes les lignes sont dans la meme devise etrangere et que leurs restes en devise
+     * (au prorata du reste en XAF) se soldent : l'ecart en XAF est alors un ecart de change.
+     */
+    private boolean foreignBalanced(List<AccountingResponses.OpenLine> open) {
+        Map<Long, AccEntryLine> lines = lineRepository.findAllById(open.stream().map(AccountingResponses.OpenLine::lineId).toList()).stream()
+                .collect(Collectors.toMap(AccEntryLine::getId, line -> line));
+        String currency = null;
+        BigDecimal balance = BigDecimal.ZERO;
+        for (AccountingResponses.OpenLine item : open) {
+            AccEntryLine line = lines.get(item.lineId());
+            if (line == null || !StringUtils.hasText(line.getCurrency()) || line.getForeignAmount() == null || line.getForeignAmount().signum() == 0
+                    || "XAF".equalsIgnoreCase(line.getCurrency())) {
+                return false;
+            }
+            if (currency != null && !currency.equalsIgnoreCase(line.getCurrency())) {
+                return false;
+            }
+            currency = line.getCurrency();
+            BigDecimal full = amount(line);
+            BigDecimal foreign = full.signum() == 0 ? BigDecimal.ZERO
+                    : line.getForeignAmount().abs().multiply(item.remaining()).divide(full, 4, RoundingMode.HALF_UP);
+            balance = item.side() == AccountSide.DEBIT ? balance.add(foreign) : balance.subtract(foreign);
+        }
+        return balance.abs().compareTo(new BigDecimal("0.01")) <= 0;
     }
 
     /** Proposition de lettrage : deux lignes du meme tiers, de sens oppose, au meme reste, sans reference commune. */

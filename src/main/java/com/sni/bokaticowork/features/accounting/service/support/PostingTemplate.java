@@ -196,6 +196,9 @@ public class PostingTemplate {
                 String dueText = blankToNull(substitute(spec.dueDate(), event, item, true, new ArrayList<>()));
                 BigDecimal taxBase = StringUtils.hasText(spec.taxBase()) ? amount(spec.taxBase(), event, item, index) : null;
                 BigDecimal foreign = StringUtils.hasText(spec.foreignAmount()) ? amount(spec.foreignAmount(), event, item, index).abs() : null;
+                if (foreign != null && foreign.signum() == 0) {
+                    foreign = null;
+                }
                 result.add(new AccountingRequests.EntryLine(account.trim(), thirdParty, lineLabel,
                         debitSide ? amount : null, debitSide ? null : amount,
                         blankToNull(substitute(spec.currency(), event, item, true, new ArrayList<>())), foreign, null,

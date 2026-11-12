@@ -16,6 +16,7 @@ import com.sni.bokaticowork.features.accounting.service.implementation.Accountin
 import com.sni.bokaticowork.features.accounting.service.implementation.CashAccountingService;
 import com.sni.bokaticowork.features.accounting.service.implementation.PostingEngine;
 import com.sni.bokaticowork.features.accounting.service.implementation.SalesAccountingService;
+import com.sni.bokaticowork.features.accounting.service.implementation.ExchangeRateService;
 import com.sni.bokaticowork.features.accounting.service.support.AccountingNotifier;
 import com.sni.bokaticowork.features.accounting.service.support.AccountingSettings;
 import com.sni.bokaticowork.features.accounting.service.support.BasicPostingResolvers;
@@ -77,7 +78,7 @@ import static org.mockito.Mockito.when;
 /** Lot F4 sur le schema de production : facture, encaissement, lettrage, portefeuille, annulation. */
 @Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, com.sni.bokaticowork.features.accounting.service.implementation.AnalyticAllocator.class, AccountingLetteringService.class,
         EntryNumbering.class, CashActorResolver.class, PostingEngine.class, PostingTemplate.class, BasicPostingResolvers.class,
-        CashAccountingService.class, SalesAccountingService.class, SalesAccountingF4IT.Json.class})
+        CashAccountingService.class, SalesAccountingService.class, ExchangeRateService.class, SalesAccountingF4IT.Json.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class SalesAccountingF4IT extends PostgresIntegrationTestBase {
@@ -107,6 +108,8 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
     @Autowired private AccPostingEventRepository events;
     @Autowired private AccEntryRepository entries;
     @Autowired private AccEntryLineRepository lines;
+    @Autowired private ExchangeRateService rates;
+    @Autowired private com.sni.bokaticowork.features.accounting.repository.CashExchangeRateRepository rateRepository;
     @MockitoBean private AccountingSettings settings;
     @MockitoBean private AccountingNotifier notifier;
     @MockitoBean private SequenceGeneratorFacade sequences;
@@ -210,6 +213,92 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
         assertThat(lettering.openLines("411", customer)).isEmpty();
     }
 
+    @Test
+    @DisplayName("Multidevise : facture en USD au taux du document, paiement au taux du jour, ecart de change au lettrage (776)")
+    void foreignInvoicePaidAtAnotherRate() {
+        LocalDate today = LocalDate.now(PostingEngine.AccountingClock.ZONE);
+        upsertRate("USD", "610", today);
+        BillingDocument invoice = invoice("FAC-USD-" + code, BillingDocumentType.INVOICE, "100", "18", null);
+        invoice.setCurrency("USD");
+        invoice.setExchangeRate(new BigDecimal("600"));
+        documents.save(invoice);
+        PaymentTransaction payment = payment("TXN-USD-" + code, PaymentMethod.MOBILE_MONEY, "118", null, "USD");
+        allocations.save(PaymentAllocation.builder().paymentTransaction(payment).billingDocumentNumber(invoice.getDocumentNumber())
+                .allocatedAmount(new BigDecimal("118")).allocatedAt(Instant.now()).build());
+
+        run();
+
+        assertThat(posted("INVOICE_ISSUED", invoice.getDocumentNumber())).isTrue();
+        assertThat(posted("PAYMENT_RECEIVED", payment.getTransactionNumber())).isTrue();
+        List<com.sni.bokaticowork.features.accounting.model.AccEntryLine> sale = lines.findByEntryIdInOrderByEntryIdAscLineNoAsc(
+                entriesOf("INVOICE_ISSUED", invoice.getDocumentNumber()));
+        com.sni.bokaticowork.features.accounting.model.AccEntryLine client = sale.stream().filter(line -> line.getAccountNumber().equals("411")).findFirst().orElseThrow();
+        assertThat(client.getDebit()).isEqualByComparingTo("70800");
+        assertThat(client.getCurrency()).isEqualTo("USD");
+        assertThat(client.getForeignAmount()).isEqualByComparingTo("118");
+        List<com.sni.bokaticowork.features.accounting.model.AccEntryLine> cash = lines.findByEntryIdInOrderByEntryIdAscLineNoAsc(
+                entriesOf("PAYMENT_RECEIVED", payment.getTransactionNumber()));
+        assertThat(cash.stream().filter(line -> line.getAccountNumber().equals("411")).map(line -> line.getCredit()).reduce(BigDecimal.ZERO, BigDecimal::add))
+                .isEqualByComparingTo("71980");
+        // 118 USD factures a 600 et encaisses a 610 : gain de change de 1 180 XAF, compte client solde.
+        assertThat(lettering.openLines("411", customer)).as("lettrages : " + lettering.letterings("411", customer) + " ; lignes : " + sale + cash).isEmpty();
+        assertThat(lettering.letterings("411", customer)).singleElement().satisfies(letter -> {
+            assertThat(letter.difference()).isEqualByComparingTo("-1180");
+            assertThat(letter.differenceEntryNumber()).isNotNull();
+            List<com.sni.bokaticowork.features.accounting.model.AccEntryLine> gap = lines.findByEntryIdInOrderByEntryIdAscLineNoAsc(
+                    List.of(entries.findByEntryNumber(letter.differenceEntryNumber()).orElseThrow().getId()));
+            assertThat(gap).anySatisfy(line -> {
+                assertThat(line.getAccountNumber()).isEqualTo("776");
+                assertThat(line.getCredit()).isEqualByComparingTo("1180");
+            });
+        });
+    }
+
+    @Test
+    @DisplayName("Multidevise : sans taux du jour, le paiement en devise attend (erreur lisible) puis passe une fois le taux saisi")
+    void foreignPaymentWaitsForARate() {
+        LocalDate today = LocalDate.now(PostingEngine.AccountingClock.ZONE);
+        String currency = "Q" + code.replaceAll("[^A-Z]", "X").substring(0, 2);
+        PaymentTransaction payment = payment("TXN-Q-" + code, PaymentMethod.MOBILE_MONEY, "10", null, currency);
+        var first = sales.feed();
+        assertThat(first.errors()).anyMatch(error -> error.contains(payment.getTransactionNumber()) && error.contains("Aucun taux " + currency));
+        upsertRate(currency, "1000", today);
+        run();
+        assertThat(posted("PAYMENT_RECEIVED", payment.getTransactionNumber())).isTrue();
+        assertThat(lines.findByEntryIdInOrderByEntryIdAscLineNoAsc(entriesOf("PAYMENT_RECEIVED", payment.getTransactionNumber())).stream()
+                .map(line -> line.getDebit()).reduce(BigDecimal.ZERO, BigDecimal::add)).isEqualByComparingTo("10000");
+    }
+
+    @Test
+    @DisplayName("Taux recuperes : conversion par la parite de l'euro ; un taux saisi a la main n'est jamais remplace")
+    void fetchedRatesKeepManualOnes() {
+        LocalDate day = LocalDate.of(2031, 1, 1).plusDays(SEQ.getAndIncrement() * 7L + (code.hashCode() & 0xff));
+        upsertRate("GBP", "800", day);
+        ExchangeRateService.ProviderRates provider = ExchangeRateService.parseEuroRates(
+                "{\"amount\":1.0,\"base\":\"EUR\",\"date\":\"" + day + "\",\"rates\":{\"USD\":1.1,\"GBP\":0.85}}");
+        rates.store(provider, "api.frankfurter.app");
+        assertThat(rateRepository.findByCurrencyAndValidOn("USD", day).orElseThrow()).satisfies(rate -> {
+            assertThat(rate.getRate()).isEqualByComparingTo("596.324545");
+            assertThat(rate.getSource()).isEqualTo("AUTO");
+        });
+        assertThat(rateRepository.findByCurrencyAndValidOn("GBP", day).orElseThrow()).satisfies(rate -> {
+            assertThat(rate.getRate()).isEqualByComparingTo("800");
+            assertThat(rate.getSource()).isEqualTo("MANUAL");
+        });
+        assertThat(rateRepository.findByCurrencyAndValidOn("EUR", day).orElseThrow().getRate()).isEqualByComparingTo("655.957");
+        assertThat(rates.convert(new BigDecimal("10"), "USD", "XAF", day)).isEqualByComparingTo("5963.2455");
+        assertThat(rates.convert(new BigDecimal("1"), "EUR", "USD", day)).isEqualByComparingTo("1.1000");
+    }
+
+    private void upsertRate(String currency, String value, LocalDate day) {
+        var rate = rateRepository.findByCurrencyAndValidOn(currency, day)
+                .orElseGet(() -> com.sni.bokaticowork.features.accounting.model.CashExchangeRate.builder().currency(currency).validOn(day).build());
+        rate.setRate(new BigDecimal(value));
+        rate.setSetBy("TEST");
+        rate.setSource("MANUAL");
+        rateRepository.save(rate);
+    }
+
     private void run() {
         sales.feed();
         engine.processPending();
@@ -252,10 +341,14 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
     }
 
     private PaymentTransaction payment(String number, PaymentMethod method, String amount, String session) {
+        return payment(number, method, amount, session, "XAF");
+    }
+
+    private PaymentTransaction payment(String number, PaymentMethod method, String amount, String session, String currency) {
         PaymentIntent intent = intents.save(PaymentIntent.builder().intentNumber("INT-" + number).customerType("CUSTOMER").customerCode(customer)
-                .amount(new BigDecimal(amount)).currency("XAF").status(PaymentIntentStatus.SUCCEEDED).build());
+                .amount(new BigDecimal(amount)).currency(currency).status(PaymentIntentStatus.SUCCEEDED).build());
         return transactions.save(PaymentTransaction.builder().transactionNumber(number).paymentIntent(intent).paymentMethod(method)
-                .amount(new BigDecimal(amount)).currency("XAF").status(PaymentTransactionStatus.SUCCEEDED)
+                .amount(new BigDecimal(amount)).currency(currency).status(PaymentTransactionStatus.SUCCEEDED)
                 .paidAt(Instant.now().minusSeconds(600)).cashSessionNumber(session).build());
     }
 }

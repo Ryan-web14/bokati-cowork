@@ -14,6 +14,7 @@ import com.sni.bokaticowork.features.accounting.service.implementation.Accountin
 import com.sni.bokaticowork.features.accounting.service.implementation.AccountingLetteringService;
 import com.sni.bokaticowork.features.accounting.service.implementation.AccountingPeriodService;
 import com.sni.bokaticowork.features.accounting.service.implementation.CashAccountingService;
+import com.sni.bokaticowork.features.accounting.service.implementation.ExchangeRateService;
 import com.sni.bokaticowork.features.accounting.service.implementation.PostingEngine;
 import com.sni.bokaticowork.features.accounting.service.support.AccountingNotifier;
 import com.sni.bokaticowork.features.accounting.service.support.AccountingSettings;
@@ -62,7 +63,7 @@ import static org.mockito.Mockito.when;
 /** Lot F3 sur le schema de production : chaque fait de caisse produit sa piece, le solde comptable suit la caisse. */
 @Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, com.sni.bokaticowork.features.accounting.service.implementation.AnalyticAllocator.class, AccountingLetteringService.class,
         EntryNumbering.class, CashActorResolver.class, PostingEngine.class, PostingTemplate.class, BasicPostingResolvers.class,
-        CashAccountingService.class, CashAccountingF3IT.Json.class})
+        CashAccountingService.class, ExchangeRateService.class, CashAccountingF3IT.Json.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class CashAccountingF3IT extends PostgresIntegrationTestBase {
@@ -210,6 +211,33 @@ class CashAccountingF3IT extends PostgresIntegrationTestBase {
 
     private String cashier() {
         return "caissier-" + code.toLowerCase() + "@elleaose.com";
+    }
+
+    @Test
+    @DisplayName("Lot F10 : especes en devise entrees a 650, remises a 660 : la caisse sort a 65 000, la remise vaut 66 000, gain de change 1 000")
+    void foreignCashExchangeGain() {
+        CashSession session = session(code);
+        CashMovement in = movements.save(CashMovement.builder().movementNumber("MVT-" + code + "-EUR1").cashSession(session)
+                .movementType(CashMovementType.CASH_IN).amount(new BigDecimal("100")).currency("EUR").exchangeRate(new BigDecimal("650"))
+                .reason("Achat de devises").status(CashMovementStatus.CONFIRMED).createdBy("caissier@elleaose.com").build());
+        CashMovement deposit = movements.save(CashMovement.builder().movementNumber("MVT-" + code + "-EUR2").cashSession(session)
+                .movementType(CashMovementType.SAFE_DEPOSIT).amount(new BigDecimal("100")).currency("EUR").exchangeRate(new BigDecimal("660"))
+                .reason("Remise EUR").status(CashMovementStatus.CONFIRMED).createdBy("caissier@elleaose.com").build());
+        run();
+        assertThat(movements.findById(in.getId()).orElseThrow().getAccountingStatus()).isEqualTo("POSTED");
+        List<AccEntryLine> remise = lines(deposit);
+        assertThat(remise).anySatisfy(line -> {
+            assertThat(line.getAccountNumber()).isEqualTo("585");
+            assertThat(line.getDebit()).isEqualByComparingTo("66000");
+        });
+        assertThat(remise).anySatisfy(line -> {
+            assertThat(line.getAccountNumber()).startsWith("571");
+            assertThat(line.getCredit()).isEqualByComparingTo("65000");
+        });
+        assertThat(remise).anySatisfy(line -> {
+            assertThat(line.getAccountNumber()).isEqualTo("776");
+            assertThat(line.getCredit()).isEqualByComparingTo("1000");
+        });
     }
 
     private void run() {

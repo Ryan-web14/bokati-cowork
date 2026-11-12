@@ -248,8 +248,19 @@ public class BankService {
     public ImportResult importFile(String accountCode, byte[] content, String fileName, BigDecimal openingBalance, BigDecimal closingBalance,
                                    String replaceNumber) {
         BankAccount account = account(accountCode);
+        // OFX et MT940 portent eux-memes dates, montants, references et soldes : pas de modele.
+        String format = com.sni.bokaticowork.features.accounting.service.support.BankFileParsers.detect(content);
+        if (format != null) {
+            var parsed = com.sni.bokaticowork.features.accounting.service.support.BankFileParsers.parse(content);
+            List<ManualLine> read = parsed.lines().stream()
+                    .map(line -> new ManualLine(line.date(), line.valueDate(), line.label(), line.reference(), line.amount())).toList();
+            LocalDate first = parsed.from() != null ? parsed.from() : read.stream().map(ManualLine::date).min(LocalDate::compareTo).orElseThrow();
+            LocalDate last = parsed.to() != null ? parsed.to() : read.stream().map(ManualLine::date).max(LocalDate::compareTo).orElseThrow();
+            return store(account, new ManualStatement(first, last, openingBalance != null ? openingBalance : parsed.openingBalance(),
+                    closingBalance != null ? closingBalance : parsed.closingBalance(), read), fileName, format, replaceNumber);
+        }
         if (account.getImportTemplateCode() == null) {
-            throw new BadRequestException("Le compte " + account.getCode() + " n'a pas de modele d'import");
+            throw new BadRequestException("Le compte " + account.getCode() + " n'a pas de modele d'import (CSV), et le fichier n'est ni OFX ni MT940");
         }
         List<ManualLine> lines = parse(templateRepository.findByCode(account.getImportTemplateCode()).orElseThrow(), content);
         LocalDate from = lines.stream().map(ManualLine::date).min(LocalDate::compareTo).orElseThrow();
@@ -728,12 +739,82 @@ public class BankService {
         record.setStatementBalance(computed.statementBalance());
         record.setBookBalance(computed.bookBalance());
         record.setDifference(BigDecimal.ZERO);
+        try {
+            // Le detail est fige : la reimpression montre l'etat tel qu'il a ete valide.
+            record.setDetailJson(JSON.writeValueAsString(withRecord(computed, record)));
+        } catch (Exception exception) {
+            throw new IllegalStateException("Detail du rapprochement illisible : " + exception.getMessage(), exception);
+        }
         reconciliationRepository.save(record);
         matchingRepository.findByBankAccountCodeAndUnmatchedAtIsNull(account.getCode()).forEach(matching -> {
             matching.setLocked(true);
             matchingRepository.save(matching);
         });
         return withRecord(computed, record);
+    }
+
+    private static final com.fasterxml.jackson.databind.ObjectMapper JSON = new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules()
+            .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+    /**
+     * PDF de l'etat de rapprochement : un etat valide est reimprime tel qu'il a ete fige, sous son
+     * numero RAP et avec la mention DUPLICATA ; un brouillon s'imprime recalcule, marque BROUILLON.
+     */
+    public byte[] pdf(Long id) {
+        BankReconciliation record = reconciliationRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Rapprochement introuvable"));
+        BankAccount account = account(record.getBankAccountCode());
+        Reconciliation state;
+        VoucherService.Issued issued;
+        String actor = actors.resolve("SYSTEM");
+        if ("VALIDATED".equals(record.getStatus()) && record.getDetailJson() != null) {
+            try {
+                state = JSON.readValue(record.getDetailJson(), Reconciliation.class);
+            } catch (Exception exception) {
+                throw new IllegalStateException("Detail du rapprochement illisible : " + exception.getMessage(), exception);
+            }
+            issued = vouchers.issueAndPrint("RAP", "BANK_RECONCILIATION", String.valueOf(record.getId()), state.statementBalance(),
+                    account.getCode() + " au " + record.getReconciliationDate(), actor);
+        } else {
+            state = withRecord(compute(account, record.getReconciliationDate()), record);
+            issued = new VoucherService.Issued("BROUILLON-" + record.getId(), "RAP", String.valueOf(record.getId()), state.statementBalance(), null,
+                    record.getPreparedBy(), record.getPreparedAt(), 0, null, null);
+        }
+        List<VoucherService.Section> sections = new ArrayList<>();
+        sections.add(new VoucherService.Section("Compte").pair("Compte", account.getCode() + " : " + account.getLabel())
+                .pair("Banque", account.getBankName()).pair("RIB", account.getRib()).pair("Compte comptable", account.getAccountNumber())
+                .pair("Journal", account.getJournalCode()).pair("Date du rapprochement", record.getReconciliationDate())
+                .pair("Etat", "VALIDATED".equals(record.getStatus()) ? "Valide" : "Brouillon, non valide"));
+        BigDecimal bookPlus = state.bookOutstanding().stream().map(BookLine::amount).filter(a -> a.signum() > 0).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal bookMinus = state.bookOutstanding().stream().map(BookLine::amount).filter(a -> a.signum() < 0).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal statementNet = state.statementOutstanding().stream().map(Line::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        sections.add(new VoucherService.Section("Rapprochement").columns(List.of("Libelle", "Montant"), List.of(false, true))
+                .row("Solde du releve au " + record.getReconciliationDate(), VoucherService.money(state.statementBalance()))
+                .row("+ Encaissements comptabilises, non encore au releve", VoucherService.money(bookPlus))
+                .row("- Decaissements comptabilises, non encore au releve", VoucherService.money(bookMinus.negate()))
+                .row("+ / - Lignes du releve non encore comptabilisees (en sens inverse)", VoucherService.money(statementNet.negate()))
+                .row("= Solde rapproche", VoucherService.money(state.reconciledBalance()))
+                .row("Solde comptable du compte " + account.getAccountNumber(), VoucherService.money(state.bookBalance()))
+                .row("Ecart", VoucherService.money(state.difference())));
+        LocalDate date = record.getReconciliationDate();
+        VoucherService.Section book = new VoucherService.Section("Ecritures en suspens (comptabilisees, absentes du releve)")
+                .columns(List.of("Date", "Piece", "Libelle", "Reference", "Montant", "Anciennete (j)"), List.of(false, false, false, false, true, true));
+        state.bookOutstanding().forEach(line -> book.row(line.date(), line.entryNumber(), line.label(), line.reference(),
+                VoucherService.money(line.amount()), ChronoUnit.DAYS.between(line.date(), date)));
+        if (state.bookOutstanding().isEmpty()) {
+            book.row("", "", "Aucune", "", "", "");
+        }
+        sections.add(book);
+        VoucherService.Section statement = new VoucherService.Section("Lignes du releve non comptabilisees")
+                .columns(List.of("Date", "Releve", "Libelle", "Reference", "Montant", "Anciennete (j)"), List.of(false, false, false, false, true, true));
+        state.statementOutstanding().forEach(line -> statement.row(line.date(), line.statementNumber(), line.label(), line.reference(),
+                VoucherService.money(line.amount()), ChronoUnit.DAYS.between(line.date(), date)));
+        if (state.statementOutstanding().isEmpty()) {
+            statement.row("", "", "Aucune", "", "", "");
+        }
+        sections.add(statement);
+        return vouchers.render("Etat de rapprochement bancaire", issued, sections, null, null, List.of(
+                new VoucherService.Signature("Prepare par", record.getPreparedBy(), VoucherService.date(record.getPreparedAt())),
+                new VoucherService.Signature("Valide par", record.getValidatedBy(), record.getValidatedAt() == null ? null : VoucherService.date(record.getValidatedAt()))));
     }
 
     @Transactional(readOnly = true)

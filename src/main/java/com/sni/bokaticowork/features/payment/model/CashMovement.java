@@ -206,6 +206,10 @@ public class CashMovement {
     @Column(name = "request_number", length = 60)
     private String requestNumber;
 
+    /** Valeur en XAF comptabilisee (lot F10) : au taux d'entree, ou a la valeur moyenne des especes en devise a la sortie. */
+    @Column(name = "accounting_base_amount", precision = 19, scale = 4)
+    private java.math.BigDecimal accountingBaseAmount;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

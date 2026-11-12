@@ -55,7 +55,7 @@ import static org.mockito.Mockito.when;
  */
 @Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, AnalyticAllocator.class,
         AccountingLetteringService.class, EntryNumbering.class, CashActorResolver.class, BankService.class, ExchangeRateService.class,
-        VoucherService.class})
+        VoucherService.class, QrCodeRenderer.class, BankF10IT.Templates.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 class BankF10IT extends PostgresIntegrationTestBase {
 
@@ -72,8 +72,21 @@ class BankF10IT extends PostgresIntegrationTestBase {
     @MockitoBean private AccountingNotifier notifier;
     @MockitoBean private SequenceGeneratorFacade sequences;
     @MockitoBean private PaymentService paymentService;
-    @MockitoBean private SpringTemplateEngine templateEngine;
-    @MockitoBean private QrCodeRenderer qrCodeRenderer;
+    @Autowired private VoucherService vouchers;
+
+    @org.springframework.boot.test.context.TestConfiguration
+    static class Templates {
+        @org.springframework.context.annotation.Bean
+        SpringTemplateEngine templateEngine() {
+            org.thymeleaf.templateresolver.ClassLoaderTemplateResolver resolver = new org.thymeleaf.templateresolver.ClassLoaderTemplateResolver();
+            resolver.setPrefix("templates/");
+            resolver.setSuffix(".html");
+            resolver.setCharacterEncoding("UTF-8");
+            SpringTemplateEngine engine = new SpringTemplateEngine();
+            engine.setTemplateResolver(resolver);
+            return engine;
+        }
+    }
 
     @BeforeEach
     void setUp() {
@@ -137,6 +150,27 @@ class BankF10IT extends PostgresIntegrationTestBase {
         assertThatThrownBy(() -> banks.unmatch(bank.getCode(), fees.matchingCode(), "Erreur")).isInstanceOf(ForbiddenException.class);
         assertThat(banks.missingReconciliations(LocalDate.of(2026, 4, 30))).doesNotContain(bank.getCode());
         assertThat(banks.missingReconciliations(LocalDate.of(2026, 5, 31))).contains(bank.getCode());
+
+        // PDF fige, numero RAP, reimpression comptee (DUPLICATA).
+        byte[] pdf = banks.pdf(draft.id());
+        assertThat(new String(pdf, 0, 5, StandardCharsets.ISO_8859_1)).isEqualTo("%PDF-");
+        banks.pdf(draft.id());
+        assertThat(vouchers.find(validated.number())).hasValueSatisfying(voucher -> assertThat(voucher.printCount()).isEqualTo(3));
+    }
+
+    @Test
+    @DisplayName("Un releve OFX s'importe sans modele, avec ses soldes, et se pointe par reference")
+    void ofxImport() {
+        BankAccount bank = account();
+        book("Remise BRB-202604-000001", "BRB-202604-000001", "250000", null, "585", DAY);
+        entityManager.flush();
+        BankService.ImportResult result = banks.importFile(bank.getCode(), BankFileParsersTest.OFX_SGML.getBytes(StandardCharsets.ISO_8859_1),
+                "avril.ofx", null, null, null);
+        assertThat(result.statement().getSource()).isEqualTo("OFX");
+        assertThat(result.statement().getOpeningBalance()).isEqualByComparingTo("1000000");
+        assertThat(result.statement().getClosingBalance()).isEqualByComparingTo("1245000");
+        assertThat(result.lines()).isEqualTo(2);
+        assertThat(result.autoMatched()).isEqualTo(1);
     }
 
     @Test

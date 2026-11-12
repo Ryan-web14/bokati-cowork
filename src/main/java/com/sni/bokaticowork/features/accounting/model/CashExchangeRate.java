@@ -32,6 +32,14 @@ public class CashExchangeRate {
     @Column(name = "set_by", nullable = false)
     private String setBy;
 
+    /** MANUAL (saisi), AUTO (recupere sur internet), PARITY (parite fixe EUR). */
+    @Builder.Default
+    @Column(name = "source", nullable = false)
+    private String source = "MANUAL";
+
+    @Column(name = "provider")
+    private String provider;
+
     @Column(name = "created_at", nullable = false)
     private java.time.Instant createdAt;
 

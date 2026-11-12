@@ -271,6 +271,10 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/reconciliations/3/validate")).isEqualTo("BANK_RECONCILIATION:VALIDATE");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/bank-accounts")).isEqualTo("BANK_ACCOUNT:MANAGE");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/exchange-rates")).isEqualTo("CASH_EXCHANGE_RATE:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/exchange-rates/fetch")).isEqualTo("CASH_EXCHANGE_RATE:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/exchange-rates/board")).isEqualTo("CASH:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/exchange-rates/convert")).isEqualTo("CASH:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/reconciliations/3/pdf")).isEqualTo("ACCOUNTING_REPORT:READ");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/registers/CSR-1/balances")).isEqualTo("CASH:READ");
         // Lot F16.
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/budget/reports/follow-up")).isEqualTo("BUDGET_REPORT:READ");

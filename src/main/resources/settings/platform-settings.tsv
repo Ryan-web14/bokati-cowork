@@ -12,10 +12,19 @@ accounting.bank.missing-statement	ACCOUNTING	ENUM	LIVE	ALERT	Releve manquant a l
 accounting.bank.reconciliation-before-lock	ACCOUNTING	BOOLEAN	LIVE	true	Rapprochement bancaire valide exige avant de verrouiller une periode
 accounting.cash.default-in-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une entree de caisse sans nature d'operation
 accounting.cash.default-out-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une sortie de caisse sans nature d'operation
+accounting.cash.exchange-gain-account	ACCOUNTING	TEXT	LIVE	776	Compte des gains de change sur especes en devise
+accounting.cash.exchange-loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes de change sur especes en devise
 accounting.cash.treasury-parent-account	ACCOUNTING	TEXT	LIVE	571	Compte parent sous lequel chaque caisse recoit son compte
 accounting.cash.vat-collected-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA collectee sur une entree de caisse
 accounting.cash.vat-recoverable-account	ACCOUNTING	TEXT	LIVE	4452	Compte de TVA recuperable sur une sortie de caisse
+accounting.currencies	ACCOUNTING	TEXT	LIVE	EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR	Devises suivies (taux recuperes et proposes), separees par des virgules
 accounting.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite active (ecritures automatiques de la plateforme)
+accounting.exchange.auto-fetch	ACCOUNTING	BOOLEAN	LIVE	true	Recuperation automatique des taux du jour sur internet
+accounting.exchange.eur-parity	ACCOUNTING	DECIMAL	LIVE	655.957	Parite fixe de l'euro en francs CFA
+accounting.exchange.fetch-cron	ACCOUNTING	CRON	RESTART	0 15 7 * * *	Planification de la recuperation des taux de change
+accounting.exchange.gain-account	ACCOUNTING	TEXT	LIVE	776	Compte des gains de change au reglement d'une facture en devise
+accounting.exchange.loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes de change au reglement d'une facture en devise
+accounting.exchange.provider-url	ACCOUNTING	TEXT	LIVE	https://api.frankfurter.dev/v1/latest?from=EUR	Adresse du fournisseur de taux (reponse JSON en base EUR)
 accounting.lettering.auto-delay-ms	ACCOUNTING	INTEGER	RESTART	600000	Intervalle du lettrage automatique des comptes clients (millisecondes)
 accounting.lettering.difference-threshold	ACCOUNTING	INTEGER	LIVE	500	Ecart de reglement maximal au lettrage (XAF)
 accounting.lettering.gain-account	ACCOUNTING	TEXT	LIVE	758	Compte des ecarts de reglement favorables

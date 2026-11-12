@@ -145,6 +145,12 @@ public class BankController {
         return ResponseEntity.ok(banks.validate(id));
     }
 
+    @GetMapping("/reconciliations/{id}/pdf")
+    public ResponseEntity<byte[]> reconciliationPdf(@PathVariable Long id) {
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"rapprochement-" + id + ".pdf\"").body(banks.pdf(id));
+    }
+
     @GetMapping("/bank-dashboard")
     public ResponseEntity<List<BankService.Dashboard>> dashboard() {
         return ResponseEntity.ok(banks.dashboard());
@@ -201,6 +207,24 @@ public class BankController {
     public ResponseEntity<CashExchangeRate> setRate(@RequestParam String currency, @RequestParam BigDecimal rate,
                                                     @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate validOn) {
         return ResponseEntity.ok(rates.setRate(currency, rate, validOn));
+    }
+
+    /** Taux du jour de chaque devise suivie, avec sa source (saisie, internet, parite). */
+    @GetMapping("/exchange-rates/board")
+    public ResponseEntity<List<ExchangeRateService.CurrencyRate>> board(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(rates.board(date));
+    }
+
+    @Audited(module = "ACCOUNTING", action = "EXCHANGE_RATE_FETCH", ressource = "cash_exchange_rate")
+    @PostMapping("/exchange-rates/fetch")
+    public ResponseEntity<List<CashExchangeRate>> fetch() {
+        return ResponseEntity.ok(rates.fetch());
+    }
+
+    @GetMapping("/exchange-rates/convert")
+    public ResponseEntity<BigDecimal> convert(@RequestParam BigDecimal amount, @RequestParam String from, @RequestParam(defaultValue = "XAF") String to,
+                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(rates.convert(amount, from, to, date));
     }
 
     @GetMapping("/cash/registers/{registerCode}/balances")

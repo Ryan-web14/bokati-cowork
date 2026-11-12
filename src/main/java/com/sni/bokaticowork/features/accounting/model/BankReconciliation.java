@@ -38,6 +38,10 @@ public class BankReconciliation {
     @Column(name = "outstanding", nullable = false, columnDefinition = "TEXT")
     private String outstanding;
 
+    /** Detail fige a la validation (suspens des deux cotes), en JSON. */
+    @Column(name = "detail_json", columnDefinition = "TEXT")
+    private String detailJson;
+
     @Column(name = "difference", nullable = false)
     private java.math.BigDecimal difference;
 
