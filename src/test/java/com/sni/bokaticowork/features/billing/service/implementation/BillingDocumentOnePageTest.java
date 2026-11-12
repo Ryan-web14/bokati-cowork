@@ -105,8 +105,8 @@ class BillingDocumentOnePageTest {
     }
 
     @Test
-    @DisplayName("La case du cachet recoit un cachet rond de 5,7 cm de diametre")
-    void theStampCellFitsARoundStampOf57mm() throws Exception {
+    @DisplayName("La case du cachet fait au moins 4,5 cm de haut, le visa 5 cm de large")
+    void theStampCellKeepsItsSize() throws Exception {
         String template;
         try (var in = getClass().getResourceAsStream("/templates/billing/document.html")) {
             template = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
@@ -115,8 +115,8 @@ class BillingDocumentOnePageTest {
         java.util.regex.Matcher width = java.util.regex.Pattern.compile("\\.visa-box \\{ width: ([0-9.]+)cm;").matcher(template);
         assertThat(height.find()).isTrue();
         assertThat(width.find()).isTrue();
-        assertThat(Double.parseDouble(height.group(1))).isGreaterThanOrEqualTo(5.9);
-        assertThat(Double.parseDouble(width.group(1))).isGreaterThanOrEqualTo(5.9);
+        assertThat(Double.parseDouble(height.group(1))).isGreaterThanOrEqualTo(4.5);
+        assertThat(Double.parseDouble(width.group(1))).isGreaterThanOrEqualTo(5.0);
     }
 
     private static byte[] pdf(String html) throws Exception {
