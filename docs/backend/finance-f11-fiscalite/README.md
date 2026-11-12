@@ -94,3 +94,7 @@ Rôles : `SUPER_ADMIN`, `ADMIN` et `FINANCE` tout ; `MANAGER` la lecture.
 - régime des encaissements, août 2026 : la TVA d'une facture attend en `4438`, la moitié devient exigible avec un premier règlement de moitié, le reste avec le second ; la déclaration suit (900 puis 1 800).
 
 `AdminApiAuthorizationManagerTest` couvre les routes.
+
+## Évolutions apportées par les lots suivants
+
+- **Lot F13** : les retenues à la source sur prestataires sont faites (taux, base et compte `447` sur la fiche fournisseur, ligne `RAS` sur la facture, état mensuel des retenues) ; la TVA des factures fournisseurs porte son code et sa base et entre dans la déclaration ([finance-f13-achats](../finance-f13-achats/README.md)).

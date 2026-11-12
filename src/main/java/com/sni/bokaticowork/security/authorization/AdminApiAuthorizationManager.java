@@ -141,6 +141,15 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             }
             return permission("BANK_RECONCILIATION", "MANAGE");
         }
+        if (path.startsWith("/accounting/purchases")) {
+            // Lot F13 : achats.
+            if (HttpMethod.GET.matches(method)) return permission("PURCHASE", "READ");
+            if (path.startsWith("/accounting/purchases/suppliers")) return permission("SUPPLIER", "MANAGE");
+            if (path.endsWith("/validate") || path.endsWith("/cancel")) return permission("PURCHASE_ORDER", "VALIDATE");
+            if (path.startsWith("/accounting/purchases/orders")) return permission("PURCHASE_ORDER", "MANAGE");
+            if (path.endsWith("/pay")) return permission("SUPPLIER_PAYMENT", "MANAGE");
+            return permission("SUPPLIER_INVOICE", "MANAGE");
+        }
         if (path.startsWith("/accounting/loans") || path.startsWith("/accounting/partners") || path.startsWith("/accounting/commitments")
                 || path.startsWith("/accounting/commitment-types")) {
             // Lot F17 : emprunts, comptes courants d'associes, hors bilan.

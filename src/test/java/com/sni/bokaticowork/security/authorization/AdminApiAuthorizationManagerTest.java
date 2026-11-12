@@ -276,6 +276,13 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/exchange-rates/convert")).isEqualTo("CASH:READ");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/reconciliations/3/pdf")).isEqualTo("ACCOUNTING_REPORT:READ");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/registers/CSR-1/balances")).isEqualTo("CASH:READ");
+        // Lot F13.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/purchases/payables")).isEqualTo("PURCHASE:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/purchases/suppliers")).isEqualTo("SUPPLIER:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/purchases/orders/from-need")).isEqualTo("PURCHASE_ORDER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/purchases/orders/BC-1/validate")).isEqualTo("PURCHASE_ORDER:VALIDATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/purchases/invoices/FF-1/post")).isEqualTo("SUPPLIER_INVOICE:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/purchases/invoices/FF-1/pay")).isEqualTo("SUPPLIER_PAYMENT:MANAGE");
         // Lot F17.
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/loans/note")).isEqualTo("FINANCING:READ");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/loans/EMP-1/prepay")).isEqualTo("FINANCING:MANAGE");
