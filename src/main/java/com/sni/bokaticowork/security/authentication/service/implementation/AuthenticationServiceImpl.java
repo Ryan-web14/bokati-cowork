@@ -96,7 +96,8 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
         log.debug("Authenticating user {}", request.getEmail());
             UsernamePasswordAuthenticationToken token = UsernamePasswordAuthenticationToken.unauthenticated(
                     request.getEmail(),request.getPassword());
-            return authenticationAndCreateSesison(token, httpReq);
+            return authenticationAndCreateSesison(token, httpReq, "BACK_OFFICE".equalsIgnoreCase(
+                    request.getSpace() == null ? null : request.getSpace().trim()));
     }
 
     /**
@@ -385,10 +386,25 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
      * @throws BadCredentialException if the authentication process fails due to invalid credentials
      */
     private LoginResponse authenticationAndCreateSesison(UsernamePasswordAuthenticationToken token, HttpServletRequest request){
+        return authenticationAndCreateSesison(token, request, false);
+    }
+
+    /**
+     * {@code backOffice} : l'espace d'administration est demande. Un compte sans role d'equipe
+     * (membre, client) est refuse apres la verification du mot de passe et avant toute ecriture :
+     * ni session ouverte, ni ancienne session fermee, ni echec de connexion compte.
+     */
+    private LoginResponse authenticationAndCreateSesison(UsernamePasswordAuthenticationToken token, HttpServletRequest request, boolean backOffice){
         try{
             Authentication authentication = authenticationManager.authenticate(token);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
             UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+            if (backOffice && !com.sni.bokaticowork.security.authorization.SecurityRoles.hasAdminRealmRole(principal.getAuthorities())) {
+                log.warn("Back-office login refused for an account without staff role: {}", principal.getUsername());
+                SecurityContextHolder.clearContext();
+                throw new com.sni.bokaticowork.core.exception.customs.BackOfficeAccessDeniedException(
+                        "Ce compte n'a pas accès à l'espace d'administration");
+            }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             sessionService.invalidateOldestSessionByUser(principal.getUser());
             return createSessionAndResponse(request, principal);
         } catch (LockedException e) {

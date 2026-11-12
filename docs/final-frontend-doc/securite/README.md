@@ -72,6 +72,7 @@ Le compte n'a pas de champ de statut. Son état se lit dans cinq champs de `Admi
 ### Se connecter par mot de passe
 
 1. `POST /sni/api/v1/auth/login` avec `{ "email", "password" }` ([route](routes/AuthenticationController.md#r-post-sni-api-v1-auth-login)). La comparaison de l'adresse ignore la casse.
+   - **Écran de connexion du back-office** : envoyer aussi `"space": "BACK_OFFICE"`. Un compte sans rôle d'équipe (membre, client) est alors refusé par le serveur avec `403 BACK_OFFICE_ACCESS_DENIED`, message « Ce compte n'a pas accès à l'espace d'administration. », après la vérification du mot de passe et sans ouvrir de session. Afficher ce message, pas « mot de passe incorrect ». Le portail client n'envoie pas `space` : rien ne change pour lui.
 2. La réponse `200` contient `{ accessToken, refreshToken, emailVerified, roles }`. Stocker les deux jetons et `roles`.
 3. Choisir l'espace :
    - si `roles` contient un rôle du back-office (voir [Notions](#qui-entre-dans-le-back-office)), ouvrir le back-office ;
@@ -310,6 +311,7 @@ Toutes ces routes exigent `SYSTEM:PERMISSIONS`. L'écriture exige en plus d'êtr
 - **Erreurs fréquentes** :
   - `401 INVALID_CREDENTIALS` sur `/auth/login`, `/auth/refresh` et `/auth/unlock-account/confirm` ;
   - `401 ACCOUNT_LOCKED` sur `/auth/login` ;
+  - `403 BACK_OFFICE_ACCESS_DENIED` sur `/auth/login` avec `space: BACK_OFFICE`, pour un compte sans rôle d'équipe ;
   - `403 FORBIDDEN` sur une règle de `PrivilegeGuard` ;
   - `404 RESOURCE_NOT_FOUND` pour un compte (`"Utilisateur introuvable : USR-..."`) ou un rôle introuvable ;
   - `400 BAD_REQUEST` pour les doublons et les règles métier.
