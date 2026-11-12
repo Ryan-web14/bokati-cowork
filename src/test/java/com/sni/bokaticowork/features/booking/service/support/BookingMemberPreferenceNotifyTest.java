@@ -44,7 +44,8 @@ class BookingMemberPreferenceNotifyTest {
     private final MemberRepository memberRepository = mock(MemberRepository.class);
     private final BookingMemberPreferences bookingPreferences = new BookingMemberPreferences(preferences, memberRepository);
     private final BookingEmailNotifier notifier = new BookingEmailNotifier(
-            emailSender, eventWriter, mock(TemplateEngine.class), mock(BillingTaxRuleResolver.class));
+            emailSender, eventWriter, mock(TemplateEngine.class), mock(BillingTaxRuleResolver.class),
+            new com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer());
     private final Member member = Member.builder().id(7L).memberId("MBR-7").email("awa@example.com").build();
 
     private Booking booking() {
