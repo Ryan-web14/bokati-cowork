@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.subscription.subscription.service.support;
 
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import com.sni.bokaticowork.features.client.customer.enums.CustomerType;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
 import com.sni.bokaticowork.features.client.member.model.Member;
@@ -24,21 +25,57 @@ public class SubscriptionOwnerResolver {
             case MEMBER -> {
                 Member member = memberRepository.findByMemberIdAndDeletedFalse(code)
                         .orElseThrow(() -> new ResourceNotFoundException("Member " + code + " not found"));
-                yield new Owner(member.getMemberId(), member, null, null);
+                yield new Owner(member.getMemberId(), member, null, null, SubscriberType.MEMBER);
             }
             case CUSTOMER -> {
                 Customer customer = customerRepository.findByCustomerId(code)
                         .orElseThrow(() -> new ResourceNotFoundException("Customer " + code + " not found"));
-                yield new Owner(customer.getCustomerId(), null, customer, null);
+                yield new Owner(customer.getCustomerId(), null, customer, null, SubscriberType.CUSTOMER);
             }
             case BUSINESS_ENTITY -> {
-                BusinessEntity business = businessRepository.findByCode(code)
-                        .orElseThrow(() -> new ResourceNotFoundException("Business entity " + code + " not found"));
-                yield new Owner(business.getCode(), null, null, business);
+                BusinessEntity business = businessRepository.findByCode(code).orElse(null);
+                if (business != null) {
+                    // Profil legal d'une entreprise cliente (cree par /companies avec le client COMPANY) :
+                    // l'abonnement va au client CUS-COM, pour figurer dans son portefeuille et son releve.
+                    Customer holder = business.getId() == null ? null : customerRepository
+                            .findFirstByBusinessEntity_IdAndTypeAndDeletedFalse(business.getId(), CustomerType.COMPANY)
+                            .orElse(null);
+                    if (holder != null) {
+                        yield new Owner(holder.getCustomerId(), null, holder, null, SubscriberType.CUSTOMER);
+                    }
+                    yield new Owner(business.getCode(), null, null, business, SubscriberType.BUSINESS_ENTITY);
+                }
+                // BUSINESS_ENTITY designe une fiche /businesses (table business_entity, codes BIZ-...).
+                // Une entreprise cliente creee par /companies (code CUS-COM-...) est un client de type
+                // COMPANY : envoyee en BUSINESS_ENTITY, elle est reconnue et traitee comme CUSTOMER,
+                // c'est le type enregistre ensuite.
+                Customer company = customerRepository.findByCustomerId(code)
+                        .filter(customer -> customer.getType() == CustomerType.COMPANY)
+                        .orElseThrow(() -> new ResourceNotFoundException("Business entity " + code + " not found"
+                                + " (pour une entreprise cliente, subscriberType CUSTOMER et son code CUS-COM-...)"));
+                yield new Owner(company.getCustomerId(), null, company, null, SubscriberType.CUSTOMER);
             }
         };
     }
 
-    public record Owner(String code, Member member, Customer customer, BusinessEntity businessEntity) {
+    /**
+     * @param type le type reellement trouve · peut differer du type demande (entreprise cliente,
+     *             par son code CUS-COM ou par le code de son profil legal, envoyee en BUSINESS_ENTITY :
+     *             reconnue comme CUSTOMER)
+     */
+    public record Owner(String code, Member member, Customer customer, BusinessEntity businessEntity, SubscriberType type) {
+
+        public Owner(String code, Member member, Customer customer, BusinessEntity businessEntity) {
+            this(code, member, customer, businessEntity,
+                    member != null ? SubscriberType.MEMBER
+                            : customer != null ? SubscriberType.CUSTOMER
+                            : businessEntity != null ? SubscriberType.BUSINESS_ENTITY
+                            : null);
+        }
+
+        /** Le type a enregistrer : celui trouve, sinon celui demande. */
+        public SubscriberType typeOr(SubscriberType requested) {
+            return type != null ? type : requested;
+        }
     }
 }

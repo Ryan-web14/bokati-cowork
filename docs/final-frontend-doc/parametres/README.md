@@ -152,7 +152,7 @@ Pour `early-termination-fixed-fee`, une valeur vide signifie « pas de montant f
 Préférences d'un membre :
 
 - Membre inconnu ou supprimé : `404`, message `Member not found` (en anglais).
-- `billingCompanyName`, `billingEmail`, `billlingAddress` : 255 caractères au plus ; montants de `walletPref` entiers `>= 0`. Aucune autre validation (pas de contrôle de format de courriel, de langue ni de fuseau).
+- `billingCompanyName`, `billlingAddress` : 255 caractères au plus ; `billingEmail` : une ou plusieurs adresses séparées par des virgules, 500 caractères au plus, chaque adresse vérifiée (`400` sinon) et la liste enregistrée en minuscules ; montants de `walletPref` entiers `>= 0`. Aucune autre validation (pas de contrôle de format de courriel, de langue ni de fuseau).
 - `PATCH /settings` : un booléen omis ou `null` est enregistré à `false` ; un texte ou un entier omis est enregistré à `null` (`MemberSettingsServiceImpl.java:175`). Omettre `langage`, `timeZone` ou `billingPref.billingEntityType` alors que ces colonnes sont `NOT NULL` fait échouer l'enregistrement (erreur base, statut non vérifié, probablement `500`). Toujours partir de la réponse du `GET` et renvoyer l'objet complet.
 - `PATCH /settings/notifications` : envoyer `eventType` et `channel` (une valeur `null` fait échouer l'enregistrement) ; `enabled` omis vaut `false`.
 

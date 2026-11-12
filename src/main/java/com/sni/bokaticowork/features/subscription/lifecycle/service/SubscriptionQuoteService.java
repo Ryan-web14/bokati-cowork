@@ -89,7 +89,7 @@ public class SubscriptionQuoteService {
         }
         SubscriptionQuote quote = SubscriptionQuote.builder()
                 .quoteNumber(sequenceGenerator.next("subscription_quote"))
-                .subscriberType(request.subscriberType())
+                .subscriberType(owner.typeOr(request.subscriberType()))
                 .subscriberCode(owner.code())
                 .subscriberName(ownerName(owner))
                 .subscriberEmail(ownerEmail(owner))
