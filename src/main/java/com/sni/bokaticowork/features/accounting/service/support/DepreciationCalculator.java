@@ -119,6 +119,14 @@ public final class DepreciationCalculator {
         return result;
     }
 
+    /** Duree en mois d'un taux lineaire annuel en pourcentage : 15 % donne 80 mois, 20 % donne 60 mois. */
+    public static int monthsForRate(BigDecimal annualRate) {
+        if (annualRate == null || annualRate.signum() <= 0) {
+            throw new IllegalArgumentException("Taux annuel positif attendu");
+        }
+        return BigDecimal.valueOf(1200).divide(annualRate, 0, RoundingMode.HALF_UP).intValueExact();
+    }
+
     /** Taux degressif annuel : coefficient divise par la duree en annees. */
     public static BigDecimal decliningRate(int durationMonths, BigDecimal coefficient) {
         return coefficient.multiply(TWELVE).divide(BigDecimal.valueOf(durationMonths), MathContext.DECIMAL64);
@@ -139,12 +147,14 @@ public final class DepreciationCalculator {
                 String range = pair[0].trim();
                 BigDecimal value = new BigDecimal(pair[1].trim());
                 if (range.endsWith("+")) {
-                    if (years >= Double.parseDouble(range.substring(0, range.length() - 1))) {
+                    // « 7+ » couvre plus de 6 ans : une duree de 6 ans et 8 mois prend ce coefficient.
+                    if (years > Double.parseDouble(range.substring(0, range.length() - 1)) - 1) {
                         return value;
                     }
                 } else if (range.contains("-")) {
+                    // « 5-6 » couvre plus de 4 ans et jusqu'a 6 ans inclus : les tranches se suivent sans trou.
                     String[] bounds = range.split("-");
-                    if (years >= Double.parseDouble(bounds[0]) && years < Double.parseDouble(bounds[1]) + 1) {
+                    if (years > Double.parseDouble(bounds[0]) - 1 && years <= Double.parseDouble(bounds[1])) {
                         return value;
                     }
                 } else if (years == Double.parseDouble(range)) {

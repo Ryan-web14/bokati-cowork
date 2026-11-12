@@ -56,6 +56,27 @@ class DepreciationCalculatorTest {
         assertThat(DepreciationCalculator.coefficient(36, table)).isEqualByComparingTo("1.5");
         assertThat(DepreciationCalculator.coefficient(60, table)).isEqualByComparingTo("2");
         assertThat(DepreciationCalculator.coefficient(120, table)).isEqualByComparingTo("2.5");
+        assertThat(DepreciationCalculator.coefficient(48, table)).isEqualByComparingTo("1.5");
+        assertThat(DepreciationCalculator.coefficient(54, table)).isEqualByComparingTo("2");
+        assertThat(DepreciationCalculator.coefficient(72, table)).isEqualByComparingTo("2");
+        // 15 % : 6 ans et 8 mois, au-dela de 6 ans, donc 2,5.
+        assertThat(DepreciationCalculator.coefficient(80, table)).isEqualByComparingTo("2.5");
+    }
+
+    @Test
+    @DisplayName("Taux lineaire 15 % : 80 mois ; degressif SYSCOHADA a 37,5 %, 337 500 la premiere annee sur 900 000")
+    void fifteenPercentDeclining() {
+        assertThat(DepreciationCalculator.monthsForRate(new BigDecimal("15"))).isEqualTo(80);
+        assertThat(DepreciationCalculator.monthsForRate(new BigDecimal("20"))).isEqualTo(60);
+        BigDecimal rate = DepreciationCalculator.decliningRate(80, DepreciationCalculator.coefficient(80, "3-4:1.5,5-6:2,7+:2.5"));
+        assertThat(rate).isEqualByComparingTo("0.375");
+        List<DepreciationCalculator.Line> lines = DepreciationCalculator.declining(new BigDecimal("900000"), YearMonth.of(2026, 1), 80, rate);
+        BigDecimal firstYear = lines.subList(0, 12).stream().map(DepreciationCalculator.Line::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal secondYear = lines.subList(12, 24).stream().map(DepreciationCalculator.Line::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(firstYear).isEqualByComparingTo("337500");
+        assertThat(secondYear).isEqualByComparingTo("210938");
+        BigDecimal total = lines.stream().map(DepreciationCalculator.Line::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(total).isEqualByComparingTo("900000");
     }
 
     @Test

@@ -51,7 +51,7 @@ import static org.mockito.Mockito.when;
  */
 @Import({AccountingChartService.class, AccountingPeriodService.class, AccountingEntryService.class, AnalyticAllocator.class,
         AccountingLetteringService.class, EntryNumbering.class, CashActorResolver.class, FixedAssetService.class, DepreciationRunService.class,
-        FixedAssetReportService.class, FixedAssetInventoryService.class, VoucherService.class, QrCodeRenderer.class, FixedAssetF18IT.Templates.class})
+        FixedAssetReportService.class, FixedAssetInventoryService.class, DepreciationProfileService.class, VoucherService.class, QrCodeRenderer.class, FixedAssetF18IT.Templates.class})
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class FixedAssetF18IT extends PostgresIntegrationTestBase {
@@ -78,6 +78,7 @@ class FixedAssetF18IT extends PostgresIntegrationTestBase {
     @Autowired private DepreciationRunService runs;
     @Autowired private FixedAssetReportService reports;
     @Autowired private FixedAssetInventoryService inventories;
+    @Autowired private DepreciationProfileService profiles;
     @MockitoBean private AccountingSettings settings;
     @MockitoBean private AccountingNotifier accountingNotifier;
     @MockitoBean private SequenceGeneratorFacade sequences;
@@ -103,7 +104,7 @@ class FixedAssetF18IT extends PostgresIntegrationTestBase {
     @Test
     @DisplayName("Acquisition, mise en service au 1er avril, dotations de 25 000 sans doublon, cession avec moins-value de 25 000")
     void acceptance() {
-        FixedAssetService.AssetView created = assets.create(request("Ordinateur portable F18", new BigDecimal("900000"), LocalDate.of(2026, 3, 20)));
+        FixedAssetService.AssetView created = assets.create(request("Ordinateur portable F18", "Marque", new BigDecimal("900000"), LocalDate.of(2026, 3, 20), "LINEAR", 36));
         String code = created.asset().getCode();
         assertThat(created.asset().getAccountingStatus()).isEqualTo("DRAFT");
         assertThat(created.asset().getBooked()).isTrue();
@@ -143,7 +144,7 @@ class FixedAssetF18IT extends PostgresIntegrationTestBase {
     @Test
     @DisplayName("Le fichier egale les comptes 2x et 28x ; une campagne signale le bien non vu et produit son PV")
     void reconciliationAndInventory() {
-        FixedAssetService.AssetView created = assets.create(request("Ecran de salle F18", new BigDecimal("600000"), LocalDate.of(2026, 2, 10)));
+        FixedAssetService.AssetView created = assets.create(request("Ecran de salle F18", "Marque", new BigDecimal("600000"), LocalDate.of(2026, 2, 10), "LINEAR", 36));
         String code = created.asset().getCode();
         assets.commission(code, new FixedAssetService.CommissionRequest(LocalDate.of(2026, 3, 1), "F18SITE", null, "Salle", null, null,
                 null, null, null));
@@ -168,11 +169,41 @@ class FixedAssetF18IT extends PostgresIntegrationTestBase {
         assertThat(inventories.labels(List.of(code))).isNotEmpty();
     }
 
-    private static FixedAssetService.AssetRequest request(String designation, BigDecimal value, LocalDate acquisition) {
-        return new FixedAssetService.AssetRequest("MATERIEL_INFORMATIQUE", designation, "Marque", "Modele", null, 1, "PURCHASE", "FRN-F18",
+    @Test
+    @DisplayName("Materiel informatique par defaut : degressif a 15 %, 337 500 la premiere annee ; un profil Apple change la duree et la valeur residuelle")
+    void categoryRateAndBrandProfile() {
+        as("daf@elleaose.com", RIGHTS[0], "FIXED_ASSET_SETTINGS_MANAGE");
+        profiles.create(new DepreciationProfileService.ProfileRequest("Mac (test F18)", "MATERIEL_INFORMATIQUE", "AppleF18", "MacBook", "LINEAR",
+                new BigDecimal("20"), null, null, new BigDecimal("20"), 10, true, "Le Mac garde de la valeur"));
+        as("comptable@elleaose.com", RIGHTS);
+
+        String pc = assets.create(request("PC portable F18", "Marque", new BigDecimal("900000"), LocalDate.of(2026, 1, 2), null, null)).asset().getCode();
+        assets.commission(pc, new FixedAssetService.CommissionRequest(LocalDate.of(2026, 1, 1).plusDays(1), null, null, null, null, null, null, null, null));
+        FixedAssetService.AssetView pcView = assets.view(pc);
+        assertThat(assets.method(pcView.asset())).isEqualTo("DECLINING");
+        assertThat(assets.duration(pcView.asset())).isEqualTo(80);
+        BigDecimal pcFirstYear = pcView.schedule().stream().filter(row -> FixedAssetService.ACCOUNTING.equals(row.getKind())
+                && row.getPeriodCode().startsWith("2026")).map(row -> row.getPlanned()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(pcFirstYear).isEqualByComparingTo("337500");
+
+        String mac = assets.create(request("MacBook Pro F18", "AppleF18", new BigDecimal("900000"), LocalDate.of(2026, 1, 2), null, null)).asset().getCode();
+        assertThat(profiles.resolve(mac).profile()).isNotNull();
+        assets.commission(mac, new FixedAssetService.CommissionRequest(LocalDate.of(2026, 1, 2), null, null, null, null, null, null, null, null));
+        FixedAssetService.AssetView macView = assets.view(mac);
+        assertThat(assets.method(macView.asset())).isEqualTo("LINEAR");
+        assertThat(assets.duration(macView.asset())).isEqualTo(60);
+        assertThat(macView.asset().getResidualValue()).isEqualByComparingTo("180000");
+        BigDecimal macTotal = macView.schedule().stream().filter(row -> FixedAssetService.ACCOUNTING.equals(row.getKind()))
+                .map(row -> row.getPlanned()).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertThat(macTotal).isEqualByComparingTo("720000");
+    }
+
+    private static FixedAssetService.AssetRequest request(String designation, String brand, BigDecimal value, LocalDate acquisition,
+                                                          String method, Integer durationMonths) {
+        return new FixedAssetService.AssetRequest("MATERIEL_INFORMATIQUE", designation, brand, designation, null, 1, "PURCHASE", "FRN-F18",
                 "Fournisseur F18", null, null, null, null, acquisition, acquisition, value, BigDecimal.ZERO, BigDecimal.ZERO, false, "481", null,
-                null, null, null, null, null, Map.of(), null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, List.of());
+                null, null, null, null, null, Map.of(), null, null, null, null, null, null, null, null, null, method, durationMonths, null,
+                null, null, null, null, List.of());
     }
 
     private static void as(String user, String... rights) {

@@ -67,6 +67,7 @@ public class FixedAssetService implements FixedAssetIntake {
             "COMPONENT_REPLACED", "SUPPLIER_RETURN");
 
     private final FaCategoryRepository categories;
+    private final com.sni.bokaticowork.features.accounting.repository.FaDepreciationProfileRepository profiles;
     private final FixedAssetRepository assets;
     private final FixedAssetValueLineRepository valueLines;
     private final FixedAssetInventoryLinkRepository links;
@@ -100,7 +101,8 @@ public class FixedAssetService implements FixedAssetIntake {
                                   String impairmentAccount, String impairmentExpenseAccount, String impairmentReversalAccount,
                                   String disposalValueAccount, String disposalIncomeAccount, String method, Integer durationMonths,
                                   BigDecimal coefficient, BigDecimal threshold, String tracking, Boolean trackOffBooks, String taxMethod,
-                                  Integer taxDurationMonths, String componentTypes, Boolean vatRecoverable, Boolean inProgress, Boolean active) {
+                                  Integer taxDurationMonths, String componentTypes, Boolean vatRecoverable, Boolean inProgress, Boolean active,
+                                  BigDecimal annualRate) {
     }
 
     @Transactional(readOnly = true)
@@ -131,7 +133,12 @@ public class FixedAssetService implements FixedAssetIntake {
                 || !Objects.equals(category.getImpairmentAccount(), blankToNull(request.impairmentAccount())))) {
             throw new BadRequestException("La categorie " + code + " a des fiches au fichier : ses comptes ne changent plus ; reclassez les fiches vers une autre categorie");
         }
-        Integer duration = request.durationMonths();
+        BigDecimal annualRate = request.annualRate();
+        if (annualRate != null && (annualRate.signum() <= 0 || annualRate.compareTo(BigDecimal.valueOf(100)) > 0)) {
+            throw new BadRequestException("Le taux annuel est un pourcentage entre 0 et 100");
+        }
+        Integer duration = request.durationMonths() != null ? request.durationMonths()
+                : annualRate == null ? null : DepreciationCalculator.monthsForRate(annualRate);
         if (!"NONE".equals(method) && (duration == null || duration <= 0)) {
             throw new BadRequestException("Duree d'amortissement obligatoire (en mois)");
         }
@@ -152,6 +159,7 @@ public class FixedAssetService implements FixedAssetIntake {
         category.setMethod(method);
         category.setDurationMonths("NONE".equals(method) ? null : duration);
         category.setCoefficient(request.coefficient());
+        category.setAnnualRate("NONE".equals(method) ? null : annualRate);
         category.setThreshold(request.threshold() == null ? new BigDecimal("100000") : request.threshold());
         category.setTracking("LOT".equalsIgnoreCase(request.tracking()) ? "LOT" : "UNIT");
         category.setTrackOffBooks(Boolean.TRUE.equals(request.trackOffBooks()));
@@ -458,6 +466,11 @@ public class FixedAssetService implements FixedAssetIntake {
             throw new BadRequestException("La fiche " + code + " n'est pas encore en comptabilite : rattachez sa facture ou sa piece d'entree");
         }
         LocalDate date = input.date() != null ? input.date() : asset.getReceivedDate() != null ? asset.getReceivedDate() : LocalDate.now();
+        // Valeur de revente propre a la marque (profil) quand la fiche n'en porte pas.
+        if (asset.getResidualValue().signum() == 0) {
+            profile(asset).map(FaDepreciationProfile::getResidualRate).filter(rate -> rate.signum() > 0)
+                    .ifPresent(rate -> asset.setResidualValue(asset.getEntryValue().multiply(rate).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP)));
+        }
         if (asset.getAcquisitionDate() != null && date.isBefore(asset.getAcquisitionDate())) {
             throw new BadRequestException("La mise en service suit l'acquisition (" + asset.getAcquisitionDate() + ")");
         }
@@ -1609,15 +1622,50 @@ public class FixedAssetService implements FixedAssetIntake {
         if (asset.getMethod() != null) {
             return asset.getMethod();
         }
+        Optional<FaDepreciationProfile> profile = profile(asset);
+        if (profile.isPresent() && profile.get().getMethod() != null) {
+            return profile.get().getMethod();
+        }
         return categories.findById(asset.getCategoryCode()).map(FaCategory::getMethod).orElse("NONE");
+    }
+
+    /**
+     * Profil de marque applicable a un bien : meme marque, categorie et modele compatibles ; le plus
+     * precis gagne (categorie et modele renseignes), puis la priorite la plus haute.
+     */
+    public Optional<FaDepreciationProfile> profile(FixedAsset asset) {
+        if (asset == null || !StringUtils.hasText(asset.getBrand())) {
+            return Optional.empty();
+        }
+        String model = asset.getModel() == null ? "" : asset.getModel().toUpperCase(Locale.ROOT);
+        return profiles.findAllByActiveTrueAndBrandIgnoreCase(asset.getBrand().trim()).stream()
+                .filter(profile -> profile.getCategoryCode() == null || profile.getCategoryCode().equalsIgnoreCase(asset.getCategoryCode()))
+                .filter(profile -> !StringUtils.hasText(profile.getModelPattern()) || model.contains(profile.getModelPattern().trim().toUpperCase(Locale.ROOT)))
+                .max(Comparator.<FaDepreciationProfile>comparingInt(profile -> (profile.getCategoryCode() != null ? 2 : 0)
+                                + (StringUtils.hasText(profile.getModelPattern()) ? 1 : 0))
+                        .thenComparing(profile -> profile.getPriority() == null ? 0 : profile.getPriority())
+                        .thenComparing(FaDepreciationProfile::getId, Comparator.reverseOrder()));
     }
 
     public int duration(FixedAsset asset) {
         if (asset.getDurationMonths() != null) {
             return asset.getDurationMonths();
         }
-        Integer duration = categories.findById(asset.getCategoryCode()).map(FaCategory::getDurationMonths).orElse(null);
-        return duration == null ? 12 : duration;
+        Optional<FaDepreciationProfile> profile = profile(asset);
+        if (profile.isPresent() && profile.get().getDurationMonths() != null) {
+            return profile.get().getDurationMonths();
+        }
+        if (profile.isPresent() && profile.get().getAnnualRate() != null) {
+            return DepreciationCalculator.monthsForRate(profile.get().getAnnualRate());
+        }
+        FaCategory category = categories.findById(asset.getCategoryCode()).orElse(null);
+        if (category != null && category.getDurationMonths() != null) {
+            return category.getDurationMonths();
+        }
+        if (category != null && category.getAnnualRate() != null) {
+            return DepreciationCalculator.monthsForRate(category.getAnnualRate());
+        }
+        return 12;
     }
 
     private String taxMethod(FixedAsset asset, FaCategory category) {
@@ -1631,7 +1679,13 @@ public class FixedAssetService implements FixedAssetIntake {
     }
 
     private BigDecimal coefficient(FixedAsset asset, FaCategory category, int duration) {
-        BigDecimal value = asset.getCoefficient() != null ? asset.getCoefficient() : category.getCoefficient();
+        BigDecimal value = asset.getCoefficient();
+        if (value == null) {
+            value = profile(asset).map(FaDepreciationProfile::getCoefficient).orElse(null);
+        }
+        if (value == null) {
+            value = category.getCoefficient();
+        }
         if (value == null) {
             value = DepreciationCalculator.coefficient(duration, settings.text("accounting.fixed-asset.declining-coefficients", "3-4:1.5,5-6:2,7+:2.5"));
         }

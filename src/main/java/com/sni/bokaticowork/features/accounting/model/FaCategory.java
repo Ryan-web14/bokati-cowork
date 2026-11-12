@@ -62,6 +62,10 @@ public class FaCategory {
     @Column(name = "coefficient")
     private BigDecimal coefficient;
 
+    /** Taux lineaire annuel en pourcentage : quand il est renseigne, la duree en decoule (15 % : 80 mois). */
+    @Column(name = "annual_rate")
+    private BigDecimal annualRate;
+
     @Builder.Default
     @Column(name = "threshold", nullable = false)
     private BigDecimal threshold = new BigDecimal("100000");

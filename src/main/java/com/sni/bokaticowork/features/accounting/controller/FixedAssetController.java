@@ -39,6 +39,7 @@ public class FixedAssetController {
     private final DepreciationRunService runs;
     private final FixedAssetReportService reports;
     private final FixedAssetInventoryService inventories;
+    private final com.sni.bokaticowork.features.accounting.service.implementation.DepreciationProfileService depreciationProfiles;
 
     public record CodesRequest(List<String> codes) {
     }
@@ -63,6 +64,39 @@ public class FixedAssetController {
     @PostMapping("/categories")
     public ResponseEntity<FaCategory> saveCategory(@RequestBody FixedAssetService.CategoryRequest request) {
         return ResponseEntity.ok(assets.saveCategory(request));
+    }
+
+    // ------------------------------------------------------------------ profils par marque
+
+    @GetMapping("/depreciation-profiles")
+    public ResponseEntity<List<com.sni.bokaticowork.features.accounting.model.FaDepreciationProfile>> profiles() {
+        return ResponseEntity.ok(depreciationProfiles.list());
+    }
+
+    @Audited(module = "ACCOUNTING", action = "FIXED_ASSET_PROFILE_CREATE", ressource = "fa_depreciation_profile")
+    @PostMapping("/depreciation-profiles")
+    public ResponseEntity<com.sni.bokaticowork.features.accounting.model.FaDepreciationProfile> createProfile(
+            @RequestBody com.sni.bokaticowork.features.accounting.service.implementation.DepreciationProfileService.ProfileRequest request) {
+        return ResponseEntity.ok(depreciationProfiles.create(request));
+    }
+
+    @Audited(module = "ACCOUNTING", action = "FIXED_ASSET_PROFILE_UPDATE", ressource = "fa_depreciation_profile")
+    @PatchMapping("/depreciation-profiles/{id}")
+    public ResponseEntity<com.sni.bokaticowork.features.accounting.model.FaDepreciationProfile> updateProfile(@PathVariable Long id,
+            @RequestBody com.sni.bokaticowork.features.accounting.service.implementation.DepreciationProfileService.ProfileRequest request) {
+        return ResponseEntity.ok(depreciationProfiles.update(id, request));
+    }
+
+    @Audited(module = "ACCOUNTING", action = "FIXED_ASSET_PROFILE_DEACTIVATE", ressource = "fa_depreciation_profile")
+    @PostMapping("/depreciation-profiles/{id}/deactivate")
+    public ResponseEntity<com.sni.bokaticowork.features.accounting.model.FaDepreciationProfile> deactivateProfile(@PathVariable Long id) {
+        return ResponseEntity.ok(depreciationProfiles.deactivate(id));
+    }
+
+    @GetMapping("/{code}/depreciation-profile")
+    public ResponseEntity<com.sni.bokaticowork.features.accounting.service.implementation.DepreciationProfileService.Resolution> resolvedProfile(
+            @PathVariable String code) {
+        return ResponseEntity.ok(depreciationProfiles.resolve(code));
     }
 
     // ------------------------------------------------------------------ fichier et fiches
