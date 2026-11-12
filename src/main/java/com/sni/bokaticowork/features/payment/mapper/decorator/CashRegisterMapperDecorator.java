@@ -42,6 +42,9 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
     private CashSessionSummarySupport summarySupport;
 
     @Autowired
+    private com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
+
+    @Autowired
     private CashMovementAttachmentRepository attachmentRepository;
 
     @Autowired
@@ -78,6 +81,7 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
         BigDecimal countedClosingAmount = firstNonNull(cashSession.getCountedClosingAmount(), cashSession.getClosingAmount(), expectedClosingAmount);
         BigDecimal closingAmount = firstNonNull(cashSession.getClosingAmount(), countedClosingAmount, expectedClosingAmount);
         BigDecimal varianceAmount = firstNonNull(cashSession.getVarianceAmount(), countedClosingAmount.subtract(expectedClosingAmount));
+        boolean hidden = expectedHidden(cashSession);
         return new CashSessionResponse(
                 cashSession.getSessionNumber(),
                 cashSession.getCashRegister().getRegisterCode(),
@@ -86,15 +90,46 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 textOrEmpty(cashSession.getClosedBy()),
                 textOrEmpty(cashSession.getReviewedBy()),
                 firstNonNull(cashSession.getOpeningAmount(), BigDecimal.ZERO),
-                closingAmount,
-                expectedClosingAmount,
-                countedClosingAmount,
-                varianceAmount,
+                hidden ? null : closingAmount,
+                hidden ? null : expectedClosingAmount,
+                hidden ? null : countedClosingAmount,
+                hidden ? null : varianceAmount,
                 textOrEmpty(cashSession.getVarianceReason()),
                 cashSession.getOpenedAt(),
                 cashSession.getClosingRequestedAt(),
-                cashSession.getClosedAt()
+                cashSession.getClosedAt(),
+                cashSession.getExpectedOpeningAmount(),
+                cashSession.getOpeningVariance(),
+                cashSession.getOpeningVarianceReason(),
+                cashSession.getPausedAt(),
+                cashSession.getPauseSeconds(),
+                cashSession.getSuspendedBy(),
+                cashSession.getSuspensionReason(),
+                cashSession.getKeptFloat(),
+                cashSession.getAmountToRemit(),
+                cashSession.getClosingCountNumber(),
+                cashSession.getVarianceDecision(),
+                cashSession.getVarianceDecidedBy(),
+                cashSession.getForcedClose(),
+                cashSession.getHandoverNumber(),
+                cashSession.getOutOfHoursReason(),
+                hidden
         );
+    }
+
+    /**
+     * Cloture a l'aveugle (lot C2) : tant que la session n'est pas comptee, l'attendu, l'ecart et le
+     * solde courant ne sont pas montres a qui n'a pas le droit de decider d'un ecart.
+     */
+    private boolean expectedHidden(CashSession session) {
+        if (session == null || session.getCashRegister() == null || !Boolean.TRUE.equals(session.getCashRegister().getBlindClose())) {
+            return false;
+        }
+        var status = session.getStatus();
+        boolean uncounted = status == com.sni.bokaticowork.features.payment.enums.CashSessionStatus.OPEN || status == com.sni.bokaticowork.features.payment.enums.CashSessionStatus.PAUSED
+                || status == com.sni.bokaticowork.features.payment.enums.CashSessionStatus.SUSPENDED || status == com.sni.bokaticowork.features.payment.enums.CashSessionStatus.COUNTING
+                || status == com.sni.bokaticowork.features.payment.enums.CashSessionStatus.RECOUNT || status == com.sni.bokaticowork.features.payment.enums.CashSessionStatus.OPENING;
+        return uncounted && (actors == null || !actors.hasAuthority("CASH_VARIANCE:DECIDE"));
     }
 
     @Override
@@ -151,7 +186,7 @@ public abstract class CashRegisterMapperDecorator implements CashRegisterMapper 
                 cashMovement.getStatus(),
                 relatedMovementNumber,
                 cashMovement.getBatchId(),
-                cashMovement.getRunningBalance(),
+                expectedHidden(session) ? null : cashMovement.getRunningBalance(),
                 cashMovement.getExchangeRate(),
                 cashMovement.getChannel(),
                 cashMovement.getDeviceCode(),

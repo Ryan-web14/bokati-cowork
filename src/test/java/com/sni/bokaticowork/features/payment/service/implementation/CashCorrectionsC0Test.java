@@ -73,6 +73,9 @@ class CashCorrectionsC0Test {
     @org.mockito.Mock
     private CashRegisterAdminServiceImpl registerAdmin;
 
+    @org.mockito.Mock
+    private com.sni.bokaticowork.features.payment.service.interfaces.CashSessionLifecycleService lifecycle;
+
     @InjectMocks private CashRegisterServiceImpl service;
 
     /** Mouvements enregistres pendant le test, dans l'ordre, avec un identifiant pose a l'enregistrement. */
@@ -113,30 +116,42 @@ class CashCorrectionsC0Test {
     }
 
     @Test
-    @DisplayName("D3 : le caissier ne valide pas l'ecart de sa propre session")
-    void cashierCannotApproveOwnVariance() {
-        loggedInAs("caissier@elleaose.com");
+    @DisplayName("D3 : la validation d'ecart historique passe par le cycle de vie, qui refuse le caissier (voir CashSessionLifecycleServiceImplTest)")
+    void legacyApprovalDelegatesToTheLifecycle() {
         CashSession session = reviewSession();
-        when(sessionRepository.findBySessionNumber("CSS-1")).thenReturn(Optional.of(session));
+        when(lifecycle.decideSessionVariance(org.mockito.ArgumentMatchers.eq("CSS-1"), any()))
+                .thenReturn(new com.sni.bokaticowork.features.payment.dto.response.CashSessionStepResponse(null, null, null, List.of()));
 
-        assertThatThrownBy(() -> service.approveVariance("CSS-1", new ApproveCashVarianceRequest("superviseur@elleaose.com", null)))
-                .isInstanceOf(ForbiddenException.class);
+        service.approveVariance("CSS-1", new ApproveCashVarianceRequest("superviseur@elleaose.com", "ok"));
+
+        verify(lifecycle).decideSessionVariance(org.mockito.ArgumentMatchers.eq("CSS-1"), any());
         assertThat(session.getStatus()).isEqualTo(CashSessionStatus.CLOSING_REVIEW);
-        verify(sessionRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("D3 : une autre personne valide l'ecart, et c'est elle qui est inscrite")
-    void anotherPersonApprovesTheVariance() {
-        loggedInAs("superviseur@elleaose.com");
-        CashSession session = reviewSession();
-        when(sessionRepository.findBySessionNumber("CSS-1")).thenReturn(Optional.of(session));
+    @DisplayName("C2 : un fonds compte different du dernier comptage ouvre la session en OPENING avec son ecart")
+    void openingVarianceStartsInOpening() {
+        loggedInAs("caissier@elleaose.com");
+        CashRegister register = register();
+        register.setLastCountAt(java.time.Instant.parse("2026-11-10T18:00:00Z"));
+        register.setLastCountAmount(new BigDecimal("10000"));
+        register.setCountLinesRequired(false);
+        when(registerRepository.findByRegisterCode("CSR-1")).thenReturn(Optional.of(register));
+        when(sessionRepository.findBlockingSessionByCashRegisterId(any())).thenReturn(Optional.empty());
+        when(sessionRepository.findBlockingSessionByOpenedBy(anyString())).thenReturn(Optional.empty());
+        when(sequenceGenerator.next(anyString())).thenReturn("CSS-2");
         when(sessionRepository.save(any(CashSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(accessGuard.assertCanOpen(any(), anyString(), any(), any(), any()))
+                .thenReturn(new com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard.OpeningClearance(null, null, null));
+        storeMovements();
 
-        service.approveVariance("CSS-1", new ApproveCashVarianceRequest("caissier@elleaose.com", "ok"));
+        service.openSession(new OpenCashSessionRequest("CSR-1", null, new BigDecimal("9000")));
 
-        assertThat(session.getStatus()).isEqualTo(CashSessionStatus.CLOSED);
-        assertThat(session.getReviewedBy()).isEqualTo("superviseur@elleaose.com");
+        ArgumentCaptor<CashSession> saved = ArgumentCaptor.forClass(CashSession.class);
+        verify(sessionRepository).save(saved.capture());
+        assertThat(saved.getValue().getStatus()).isEqualTo(CashSessionStatus.OPENING);
+        assertThat(saved.getValue().getExpectedOpeningAmount()).isEqualByComparingTo("10000");
+        assertThat(saved.getValue().getOpeningVariance()).isEqualByComparingTo("-1000");
     }
 
     @Test

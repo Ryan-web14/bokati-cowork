@@ -39,6 +39,69 @@ public class CashSession {
     @Column(name = "out_of_hours_reason", length = 500)
     private String outOfHoursReason;
 
+    // ---- Cycle de vie complet (lot C2) ----
+
+    /** Fonds attendu a l'ouverture : le dernier comptage de la caisse. */
+    @Column(name = "expected_opening_amount", precision = 19, scale = 4)
+    private BigDecimal expectedOpeningAmount;
+
+    /** Compte a l'ouverture moins attendu. */
+    @Column(name = "opening_variance", precision = 19, scale = 4)
+    private BigDecimal openingVariance;
+
+    @Column(name = "opening_variance_reason", length = 500)
+    private String openingVarianceReason;
+
+    @Column(name = "paused_at")
+    private Instant pausedAt;
+
+    @Builder.Default
+    @Column(name = "pause_seconds", nullable = false)
+    private Long pauseSeconds = 0L;
+
+    @Column(name = "suspended_at")
+    private Instant suspendedAt;
+
+    @Column(name = "suspended_by", length = 180)
+    private String suspendedBy;
+
+    @Column(name = "suspension_reason", length = 500)
+    private String suspensionReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status_before_suspension", length = 30)
+    private com.sni.bokaticowork.features.payment.enums.CashSessionStatus statusBeforeSuspension;
+
+    /** Fonds garde pour la session suivante ; le reste est a remettre a la caisse mere. */
+    @Column(name = "kept_float", precision = 19, scale = 4)
+    private BigDecimal keptFloat;
+
+    @Column(name = "amount_to_remit", precision = 19, scale = 4)
+    private BigDecimal amountToRemit;
+
+    @Column(name = "closing_count_number", length = 100)
+    private String closingCountNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "variance_decision", length = 30)
+    private com.sni.bokaticowork.features.payment.enums.CashVarianceDecision varianceDecision;
+
+    @Column(name = "variance_decided_by", length = 180)
+    private String varianceDecidedBy;
+
+    @Builder.Default
+    @Column(name = "forced_close", nullable = false)
+    private Boolean forcedClose = Boolean.FALSE;
+
+    @Column(name = "handover_number", length = 100)
+    private String handoverNumber;
+
+    @Column(name = "cancel_reason", length = 500)
+    private String cancelReason;
+
+    @Column(name = "max_duration_alerted_at")
+    private Instant maxDurationAlertedAt;
+
     @Column(name = "opened_by", nullable = false, length = 120)
     private String openedBy;
 

@@ -112,6 +112,9 @@ bokati.booking.wallet.hold-grace-minutes	BOOKING	INTEGER	RESTART	60	Grâce de re
 bokati.booking.wallet.settlement-delay-minutes	BOOKING	INTEGER	RESTART	1	Délai de règlement sur portefeuille (minutes)
 bokati.booking.wallet.worker-delay-ms	BOOKING	INTEGER	RESTART	15000	Cadence des retenues de réservation (ms)
 bokati.cash.assignment.enforced	PAYMENT	BOOLEAN	RESTART	true	Ouverture de session reservee aux personnes affectees a la caisse
+bokati.cash.forced-close.contest-days	PAYMENT	INTEGER	RESTART	3	Delai de contestation d'une cloture d'office (jours)
+bokati.cash.staff-worker-cron	PAYMENT	CRON	RESTART	0 10 * * * *	Planification du suivi des absences et des sessions trop longues
+bokati.cash.variance.investigation-days	PAYMENT	INTEGER	RESTART	30	Echeance de revue d'un ecart mis en recherche (jours)
 bokati.company.wallet.approval-expiry-delay-ms	COMPANIES	INTEGER	RESTART	600000	Cadence d'expiration des validations (ms)
 bokati.company.wallet.approval-hours	COMPANIES	INTEGER	LIVE	48	Délai de validation d'une dépense (heures)
 bokati.company.wallet.currency	COMPANIES	TEXT	RESTART	XAF	Devise du portefeuille d'organisation

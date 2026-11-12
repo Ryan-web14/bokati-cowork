@@ -74,6 +74,8 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
     private final com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard accessGuard;
     private final CashRegisterAdminServiceImpl registerAdmin;
+    @org.springframework.context.annotation.Lazy
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashSessionLifecycleService lifecycle;
 
     private static final String CASH_SESSIONS_PATH = "/payments/cash-registers/sessions/";
 
@@ -191,19 +193,80 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 .ifPresent(session -> {
                     throw new BadRequestException("Cashier already has an active cash session");
                 });
+        // Continuite du fonds (lot C2) : le fonds attendu est le dernier comptage de la caisse ; un
+        // fonds compte different est un ecart d'ouverture, a motiver avant toute operation.
+        BigDecimal counted = request.openingCount() != null
+                ? openingCountTotal(register, request.openingCount())
+                : money(request.openingAmount() == null ? BigDecimal.ZERO : request.openingAmount());
+        BigDecimal expectedOpening = register.getLastCountAt() == null ? null
+                : money(register.getLastCountAmount() == null ? BigDecimal.ZERO : register.getLastCountAmount());
+        BigDecimal openingVariance = expectedOpening == null ? BigDecimal.ZERO.setScale(4) : counted.subtract(expectedOpening);
+        if (openingVariance.signum() != 0 && request.openingCount() == null
+                && Boolean.TRUE.equals(register.getCountLinesRequired())) {
+            throw new BadRequestException("Le fonds differe du dernier comptage de la caisse ("
+                    + expectedOpening.stripTrailingZeros().toPlainString() + " XAF) : saisissez le billetage d'ouverture");
+        }
         CashSession session = sessionRepository.save(CashSession.builder()
                 .sessionNumber(sequenceGenerator.next("cash_session"))
                 .cashRegister(register)
-                .status(CashSessionStatus.OPEN)
+                .status(openingVariance.signum() == 0 ? CashSessionStatus.OPEN : CashSessionStatus.OPENING)
                 .openedBy(openedBy)
-                .openingAmount(money(request.openingAmount() == null ? BigDecimal.ZERO : request.openingAmount()))
+                .openingAmount(counted)
+                .expectedOpeningAmount(expectedOpening)
+                .openingVariance(openingVariance)
                 .openedFromDevice(clearance.deviceCode())
                 .outOfHoursReason(clearance.outOfHoursReason())
                 .build());
+        if (request.openingCount() != null) {
+            lifecycle.recordOpeningCount(session, request.openingCount(), expectedOpening);
+        }
         if (session.getOpeningAmount().signum() > 0) {
             saveMovement(session, CashMovementType.OPENING_FLOAT, session.getOpeningAmount(), CashDocumentType.CASH_VOUCHER,
                     session.getSessionNumber(), "OPENING_FLOAT", "CASH_SESSION", session.getSessionNumber(),
                     "INTERNAL", register.getBusinessEntityCode(), register.getName(), "Opening float", session.getOpenedBy(), null);
+        }
+        return mapper.toCashSessionResponse(session);
+    }
+
+    private BigDecimal openingCountTotal(CashRegister register, com.sni.bokaticowork.features.payment.dto.request.CashCountRequest count) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.Line line
+                : count.lines() == null ? java.util.List.<com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.Line>of() : count.lines()) {
+            if (line != null && line.value() != null && line.quantity() != null) {
+                total = total.add(line.value().multiply(BigDecimal.valueOf(line.quantity())));
+            }
+        }
+        if ((count.lines() == null || count.lines().isEmpty()) && count.totalAmount() != null) {
+            total = count.totalAmount();
+        }
+        return money(total);
+    }
+
+    @Override
+    public CashSessionResponse openSessionFromHandover(String registerCode, String incoming, BigDecimal amount,
+                                                       String handoverNumber, String deviceCode) {
+        CashRegister register = register(registerCode);
+        // L'entrant doit pouvoir tenir la caisse : meme controle qu'a une ouverture ordinaire.
+        accessGuard.assertCanOpen(register, incoming, deviceCode, "CATCH_UP", "Passation " + handoverNumber);
+        sessionRepository.findBlockingSessionByOpenedBy(incoming).ifPresent(existing -> {
+            throw new BadRequestException(incoming + " a deja une session active : " + existing.getSessionNumber());
+        });
+        BigDecimal opening = money(amount);
+        CashSession session = sessionRepository.save(CashSession.builder()
+                .sessionNumber(sequenceGenerator.next("cash_session"))
+                .cashRegister(register)
+                .status(CashSessionStatus.OPEN)
+                .openedBy(incoming)
+                .openingAmount(opening)
+                .expectedOpeningAmount(opening)
+                .openingVariance(BigDecimal.ZERO.setScale(4))
+                .handoverNumber(handoverNumber)
+                .openedFromDevice(deviceCode)
+                .build());
+        if (opening.signum() > 0) {
+            saveMovement(session, CashMovementType.OPENING_FLOAT, opening, CashDocumentType.CASH_VOUCHER,
+                    session.getSessionNumber(), "OPENING_FLOAT", "CASH_HANDOVER", handoverNumber,
+                    "INTERNAL", register.getBusinessEntityCode(), register.getName(), "Fonds recu par passation " + handoverNumber, incoming, null);
         }
         return mapper.toCashSessionResponse(session);
     }
@@ -224,7 +287,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Override
     public CashSessionResponse closeSession(String sessionNumber, CloseCashSessionRequest request) {
-        CashSession session = requireOpenSession(sessionNumber);
+        CashSession session = session(sessionNumber);
         // Une caisse automatique se clot sur son seuil, pas sur un comptage · il n'y a pas d'especes
         // a compter, et un ecart declare a la main y serait un ecart invente.
         assertManualEntryAllowed(session.getCashRegister());
@@ -232,85 +295,19 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (countedAmount == null) {
             throw new BadRequestException("Counted closing amount is required");
         }
-        BigDecimal counted = money(countedAmount);
-        BigDecimal expected = money(summarySupport.expectedClosingAmount(session));
-        BigDecimal variance = counted.subtract(expected);
-        if (variance.signum() != 0 && !StringUtils.hasText(request.varianceReason())) {
-            throw new BadRequestException("Variance reason is required when counted amount differs from expected amount");
-        }
-        Instant now = Instant.now();
-        session.setClosedBy(actors.resolve(request.closedBy()));
-        session.setClosingAmount(counted);
-        session.setExpectedClosingAmount(expected);
-        session.setCountedClosingAmount(counted);
-        session.setVarianceAmount(variance);
-        session.setVarianceReason(trim(request.varianceReason()));
-        session.setClosingRequestedAt(now);
-        // Dernier comptage de la caisse : il fait foi pour la session suivante et pour sa fermeture (lot C1).
-        CashRegister countedRegister = session.getCashRegister();
-        countedRegister.setLastCountAt(now);
-        countedRegister.setLastCountAmount(counted);
-        registerRepository.save(countedRegister);
-        if (variance.signum() == 0) {
-            session.setStatus(CashSessionStatus.CLOSED);
-            session.setClosedAt(now);
-            finalized(session.getSessionNumber(), false, null, null);
-        } else {
-            session.setStatus(CashSessionStatus.CLOSING_REVIEW);
-        }
-        CashSession saved = sessionRepository.save(session);
-        if (variance.signum() != 0) {
-            emailNotifier.notifySupervisor(
-                    "Écart de caisse à valider · " + saved.getSessionNumber(),
-                    "La session " + saved.getSessionNumber() + " ouverte par " + saved.getOpenedBy()
-                            + " a été clôturée par " + saved.getClosedBy() + " avec un écart de " + variance
-                            + " " + CASH_CURRENCY + " (montant attendu : " + expected + ", montant compté : " + counted
-                            + "). Motif déclaré : " + trim(request.varianceReason())
-                            + ". Une validation par un superviseur est requise.",
-                    saved.getSessionNumber(),
-                    CASH_SESSIONS_PATH + saved.getSessionNumber()
-            );
-        }
-        eventPublisher.publishEvent(new com.sni.bokaticowork.features.payment.service.support.CashSessionClosedEvent(saved.getSessionNumber()));
-        return mapper.toCashSessionResponse(saved);
+        // Forme historique de la cloture : un total compte et un motif libre. Le cycle de vie
+        // (lot C2) applique tolerance, double comptage, revue et dernier comptage.
+        return lifecycle.submitClosingCount(sessionNumber,
+                com.sni.bokaticowork.features.payment.dto.request.CashCountRequest.ofTotal(money(countedAmount), request.varianceReason()))
+                .session();
     }
 
     @Override
     public CashSessionResponse approveVariance(String sessionNumber, ApproveCashVarianceRequest request) {
-        CashSession session = session(sessionNumber);
-        if (session.getStatus() != CashSessionStatus.CLOSING_REVIEW) {
-            throw new BadRequestException("Cash session is not waiting for variance review");
-        }
-        String reviewer = actors.resolve(request.reviewedBy());
-        // Le caissier ne valide jamais son propre ecart : ni celui qui a tenu la session, ni celui
-        // qui l'a close. Sans cette regle, le controle de l'ecart n'etait qu'une formalite.
-        if (com.sni.bokaticowork.features.payment.service.support.CashActorResolver.samePerson(reviewer, session.getOpenedBy())
-                || com.sni.bokaticowork.features.payment.service.support.CashActorResolver.samePerson(reviewer, session.getClosedBy())) {
-            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException(
-                    "Un caissier ne peut pas valider l'ecart de sa propre session : la validation revient a une autre personne");
-        }
-        session.setReviewedBy(reviewer);
-        session.setReviewedAt(Instant.now());
-        if (StringUtils.hasText(request.note())) {
-            String currentReason = trim(session.getVarianceReason());
-            session.setVarianceReason((currentReason == null ? "" : currentReason + " | ") + "Review: " + request.note().trim());
-        }
-        session.setStatus(CashSessionStatus.CLOSED);
-        session.setClosedAt(Instant.now());
-        CashSession saved = sessionRepository.save(session);
-        finalized(saved.getSessionNumber(), false, "Écart validé par " + saved.getReviewedBy(), null);
-        emailNotifier.notifyUser(
-                saved.getOpenedBy(),
-                "Écart de caisse validé · " + saved.getSessionNumber(),
-                "L'écart de " + trim(saved.getVarianceAmount() == null ? null : saved.getVarianceAmount().toPlainString())
-                        + " " + CASH_CURRENCY + " constaté sur votre session " + saved.getSessionNumber()
-                        + " a été validé par " + saved.getReviewedBy()
-                        + (StringUtils.hasText(request.note()) ? (" · Note : " + request.note().trim()) : "")
-                        + ". La session est désormais clôturée.",
-                saved.getSessionNumber(),
-                CASH_SESSIONS_PATH + saved.getSessionNumber()
-        );
-        return mapper.toCashSessionResponse(saved);
+        // Forme historique : la decision par defaut (charge pour un manquant, produit pour un excedent).
+        return lifecycle.decideSessionVariance(sessionNumber,
+                new com.sni.bokaticowork.features.payment.dto.request.CashVarianceDecisionRequest(null, request.note(), null))
+                .session();
     }
 
     @Override
@@ -698,6 +695,13 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         CashRegister register = session.getCashRegister();
         BigDecimal expected = money(summarySupport.expectedClosingAmount(session));
         String cause = "fin de mois, session laissée ouverte";
+        if (!Boolean.TRUE.equals(register.getSystemManaged())
+                && register.getMonthEndPolicy() == com.sni.bokaticowork.features.payment.enums.CashMonthEndPolicy.REQUIRE_COUNT) {
+            // Plus de report silencieux sans comptage (lot C2) : la session est suspendue et un
+            // superviseur la compte et la clot d'office.
+            lifecycle.suspendBySystem(session.getSessionNumber(), "Fin de mois : la caisse doit etre comptee et close");
+            return mapper.toCashSessionResponse(session);
+        }
         if (Boolean.TRUE.equals(register.getSystemManaged())) {
             closeAutomaticSession(session, expected, "Cloture automatique: fin de mois");
             CashSession next = openAutomaticSession(register, register.getRestrictedToMethod());

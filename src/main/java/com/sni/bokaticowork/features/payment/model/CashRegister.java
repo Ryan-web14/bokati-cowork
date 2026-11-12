@@ -134,6 +134,35 @@ public class CashRegister {
     @Column(name = "updated_by", length = 180)
     private String updatedBy;
 
+    // ---- Fonctionnement des sessions (lot C2) ----
+
+    /** Cloture a l'aveugle : l'attendu n'est montre qu'apres le comptage. */
+    @Column(name = "blind_close")
+    private Boolean blindClose;
+
+    /** Billetage par coupure obligatoire aux comptages (sinon un total suffit). */
+    @Column(name = "count_lines_required")
+    private Boolean countLinesRequired;
+
+    /** Tolerance d'ecart en montant : en dessous, l'ecart est comptabilise sans revue. */
+    @Column(name = "count_tolerance", precision = 19, scale = 4)
+    private java.math.BigDecimal countTolerance;
+
+    /** Tolerance d'ecart en pourcentage de l'attendu (facultative). */
+    @Column(name = "count_tolerance_percent", precision = 7, scale = 4)
+    private java.math.BigDecimal countTolerancePercent;
+
+    /** Au-dela de cet ecart, un second compteur different du premier est obligatoire. */
+    @Column(name = "double_count_threshold", precision = 19, scale = 4)
+    private java.math.BigDecimal doubleCountThreshold;
+
+    @Column(name = "max_session_hours")
+    private Integer maxSessionHours;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "month_end_policy", length = 20)
+    private com.sni.bokaticowork.features.payment.enums.CashMonthEndPolicy monthEndPolicy;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -164,6 +193,25 @@ public class CashRegister {
         active = status == com.sni.bokaticowork.features.payment.enums.CashRegisterStatus.ACTIVE;
         if (acceptedCurrencies == null) {
             acceptedCurrencies = "XAF";
+        }
+        // Une caisse creee maintenant suit le plan des caisses (lot C2).
+        if (blindClose == null) {
+            blindClose = !Boolean.TRUE.equals(systemManaged);
+        }
+        if (countLinesRequired == null) {
+            countLinesRequired = !Boolean.TRUE.equals(systemManaged);
+        }
+        if (countTolerance == null) {
+            countTolerance = java.math.BigDecimal.ZERO;
+        }
+        if (doubleCountThreshold == null) {
+            doubleCountThreshold = new java.math.BigDecimal("10000");
+        }
+        if (maxSessionHours == null) {
+            maxSessionHours = 24;
+        }
+        if (monthEndPolicy == null) {
+            monthEndPolicy = com.sni.bokaticowork.features.payment.enums.CashMonthEndPolicy.REQUIRE_COUNT;
         }
     }
 

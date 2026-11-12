@@ -68,7 +68,7 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
             SELECT *
             FROM cash_session
             WHERE cash_register_id = :cashRegisterId
-              AND status IN ('OPEN', 'CLOSING_REVIEW')
+              AND status NOT IN ('CLOSED', 'CANCELLED')
             ORDER BY opened_at DESC
             LIMIT 1
             """)
@@ -87,8 +87,8 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM cash_session
-            WHERE opened_by = CAST(:openedBy AS VARCHAR)
-              AND status IN ('OPEN', 'CLOSING_REVIEW')
+            WHERE lower(opened_by) = lower(CAST(:openedBy AS VARCHAR))
+              AND status NOT IN ('CLOSED', 'CANCELLED')
             ORDER BY opened_at DESC
             LIMIT 1
             """)
@@ -161,4 +161,8 @@ public interface CashSessionRepository extends JpaRepository<CashSession, Long> 
     @Query("SELECT s FROM CashSession s WHERE s.cashRegister.registerCode = :registerCode AND s.status IN :statuses ORDER BY s.openedAt ASC")
     java.util.List<CashSession> findByRegisterCodeAndStatuses(@Param("registerCode") String registerCode,
                                                               @Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashSessionStatus> statuses);
+
+    /** Sessions dans ces statuts, toutes caisses confondues (alerte de duree maximale). */
+    @Query("SELECT s FROM CashSession s WHERE s.status IN :statuses ORDER BY s.openedAt ASC")
+    java.util.List<CashSession> findByStatuses(@Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashSessionStatus> statuses);
 }

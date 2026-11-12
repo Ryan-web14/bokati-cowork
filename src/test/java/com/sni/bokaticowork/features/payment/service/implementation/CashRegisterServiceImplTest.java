@@ -70,6 +70,9 @@ class CashRegisterServiceImplTest {
     @org.mockito.Mock
     private CashRegisterAdminServiceImpl registerAdmin;
 
+    @org.mockito.Mock
+    private com.sni.bokaticowork.features.payment.service.interfaces.CashSessionLifecycleService lifecycle;
+
     @InjectMocks
     private CashRegisterServiceImpl service;
 

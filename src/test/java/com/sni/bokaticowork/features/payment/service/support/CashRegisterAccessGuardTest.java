@@ -48,6 +48,7 @@ class CashRegisterAccessGuardTest {
     @Mock private CashRegisterDeviceRepository deviceRepository;
     @Mock private CashRegisterScheduleRepository scheduleRepository;
     @Mock private CashReferenceLists referenceLists;
+    @Mock private com.sni.bokaticowork.features.payment.repository.CashStaffAbsenceRepository absenceRepository;
 
     @InjectMocks private CashRegisterAccessGuard guard;
 
@@ -161,6 +162,18 @@ class CashRegisterAccessGuardTest {
 
         assertThat(guard.withinSchedule("CSR-1", WEDNESDAY_10H)).isTrue();
         assertThat(guard.withinSchedule("CSR-1", Instant.parse("2026-11-12T09:00:00Z"))).as("jeudi").isFalse();
+    }
+
+    @Test
+    @DisplayName("Une personne absente ne peut pas ouvrir de session, meme affectee")
+    void absentPersonIsRefused() {
+        when(absenceRepository.findByUser(CASHIER)).thenReturn(List.of(
+                com.sni.bokaticowork.features.payment.model.CashStaffAbsence.builder().absenceNumber("ABS-1").userEmail(CASHIER)
+                        .kindCode("ANNUAL_LEAVE").status(com.sni.bokaticowork.features.payment.enums.CashAbsenceStatus.ACTIVE)
+                        .startsOn(java.time.LocalDate.of(2026, 11, 9)).endsOn(java.time.LocalDate.of(2026, 11, 20)).build()));
+
+        assertThatThrownBy(() -> guard.assertCanOpen(register(), CASHIER, null, null, null))
+                .isInstanceOf(ForbiddenException.class).hasMessageContaining("absent");
     }
 
     private CashRegister register() {

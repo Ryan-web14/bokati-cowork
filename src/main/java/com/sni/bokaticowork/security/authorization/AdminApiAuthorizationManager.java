@@ -115,10 +115,30 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         }
         if (path.equals("/cash-registers/sessions")) return permission("CASH_SESSION", "OPEN");
         if (path.startsWith("/cash-registers/sessions/")) {
-            if (path.endsWith("/close") || path.endsWith("/closing-request")) return permission("CASH_SESSION", "CLOSE");
-            if (path.endsWith("/approve-variance")) return permission("CASH_VARIANCE", "DECIDE");
+            if (path.endsWith("/close") || path.endsWith("/closing-request") || path.endsWith("/start-closing")
+                    || path.endsWith("/counts") || path.endsWith("/handover") || path.endsWith("/confirm-opening")
+                    || path.endsWith("/cancel") || path.endsWith("/contest")) {
+                return permission("CASH_SESSION", "CLOSE");
+            }
+            if (path.endsWith("/pause") || path.endsWith("/resume")) return permission("CASH_SESSION", "PAUSE");
+            if (path.endsWith("/suspend") || path.endsWith("/unsuspend")) return permission("CASH_SESSION", "SUSPEND");
+            if (path.endsWith("/force-close")) return permission("CASH_SESSION", "FORCE_CLOSE");
+            if (path.endsWith("/spot-checks")) return permission("CASH_SESSION", "SPOT_CHECK");
+            if (path.endsWith("/approve-variance") || path.endsWith("/variance-decision") || path.endsWith("/recount")) {
+                return permission("CASH_VARIANCE", "DECIDE");
+            }
             return permission("CASH_MOVEMENT", "CREATE");
         }
+        // L'entrant accepte ou conteste la passation, le sortant l'annule : un droit de caissier suffit.
+        if (path.startsWith("/cash-registers/handovers/")) return permission("CASH_SESSION", "OPEN");
+        if (path.startsWith("/cash-registers/variance-reviews")) return permission("CASH_VARIANCE", "DECIDE");
+        if (path.startsWith("/cash-registers/denominations")) return permission("CASH_REGISTER", "MANAGE");
+        if (path.startsWith("/cash-registers/absences")) {
+            if (path.endsWith("/approve") || path.endsWith("/end")) return permission("CASH_STAFF", "MANAGE");
+            return permission("CASH_STAFF", "DECLARE_ABSENCE");
+        }
+        // Un reviseur delegue ses propres revues : le droit de decider suffit.
+        if (path.startsWith("/cash-registers/delegations")) return permission("CASH_VARIANCE", "DECIDE");
         if (path.startsWith("/cash-registers/anomalies")) return permission("CASH_VARIANCE", "DECIDE");
         if (path.startsWith("/cash-registers/requests/")
                 && (path.endsWith("/approve") || path.endsWith("/reject"))) {
@@ -131,7 +151,7 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         // Fiche d'une caisse : /cash-registers/{code} et ses actions de cycle de vie et de personnel.
         String[] segments = path.substring("/cash-registers/".length()).split("/");
         if (segments.length == 2 && (segments[1].equals("assignments") || segments[1].equals("emergency-assignments")
-                || segments[1].equals("responsibility-transfers"))) {
+                || segments[1].equals("responsibility-transfers") || segments[1].equals("seal") || segments[1].equals("unseal"))) {
             return permission("CASH_STAFF", "MANAGE");
         }
         if ((segments.length == 1 && HttpMethod.PATCH.matches(method))

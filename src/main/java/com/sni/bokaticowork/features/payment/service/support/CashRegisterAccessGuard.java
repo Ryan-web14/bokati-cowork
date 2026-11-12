@@ -49,6 +49,7 @@ public class CashRegisterAccessGuard {
     private final CashRegisterDeviceRepository deviceRepository;
     private final CashRegisterScheduleRepository scheduleRepository;
     private final CashReferenceLists referenceLists;
+    private final com.sni.bokaticowork.features.payment.repository.CashStaffAbsenceRepository absenceRepository;
 
     /** Desactivable le temps de completer les affectations reprises ; actif par defaut. */
     @Value("${bokati.cash.assignment.enforced:true}")
@@ -82,6 +83,10 @@ public class CashRegisterAccessGuard {
             throw new BadRequestException("Un coffre n'a pas de session : ses mouvements sont des transferts internes");
         }
         Instant now = clock.instant();
+        currentAbsence(actor, now).ifPresent(absence -> {
+            throw new ForbiddenException("Vous etes declare absent (" + absence.getAbsenceNumber()
+                    + ") : vous ne pouvez pas ouvrir de session pendant votre absence");
+        });
         CashRegisterAssignment assignment = effectiveAssignment(register.getRegisterCode(), actor, now).orElse(null);
         if (assignmentEnforced && (assignment == null || assignment.getRole() == CashAssignmentRole.VIEWER)) {
             throw new ForbiddenException("Vous n'etes pas affecte a la caisse " + register.getRegisterCode()
@@ -104,6 +109,20 @@ public class CashRegisterAccessGuard {
                 .filter(assignment -> registerCode.equals(assignment.getRegisterCode()))
                 .filter(assignment -> assignment.isEffectiveAt(at))
                 .min(Comparator.comparingInt(CashRegisterAccessGuard::strength));
+    }
+
+    /** Absence validee ou en cours de la personne a cet instant. */
+    public Optional<com.sni.bokaticowork.features.payment.model.CashStaffAbsence> currentAbsence(String actor, Instant at) {
+        if (!StringUtils.hasText(actor)) {
+            return Optional.empty();
+        }
+        java.time.LocalDate today = at.atZone(ZONE).toLocalDate();
+        return absenceRepository.findByUser(actor).stream()
+                .filter(absence -> absence.getStatus() == com.sni.bokaticowork.features.payment.enums.CashAbsenceStatus.APPROVED
+                        || absence.getStatus() == com.sni.bokaticowork.features.payment.enums.CashAbsenceStatus.ACTIVE)
+                .filter(absence -> !absence.getStartsOn().isAfter(today)
+                        && (absence.getEndsOn() == null || !absence.getEndsOn().isBefore(today)))
+                .findFirst();
     }
 
     /** Les affectations en vigueur de la personne, toutes caisses confondues. */
