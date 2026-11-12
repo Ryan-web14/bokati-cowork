@@ -1,3 +1,9 @@
+server:
+  # Le jeton d'acces porte les roles et permissions de l'utilisateur : celui d'un administrateur
+  # depasse les 8 Ko d'en-tete acceptes par defaut, et Tomcat renvoyait un 400 sur chaque appel
+  # authentifie (connexion reussie, puis /auth/me refuse).
+  max-http-request-header-size: ${SERVER_MAX_HTTP_REQUEST_HEADER_SIZE:64KB}
+
 
 spring:
   # Les secrets viennent de l environnement, sans valeur de repli dans le depot. En local
