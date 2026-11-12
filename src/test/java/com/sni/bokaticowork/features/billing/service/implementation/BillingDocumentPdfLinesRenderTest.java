@@ -104,7 +104,7 @@ class BillingDocumentPdfLinesRenderTest {
     @org.junit.jupiter.api.DisplayName("Le bas de page porte la case de visa ELLE A OSE, pour la signature et le cachet")
     void theInvoiceCarriesTheOperatorVisaBox() {
         String html = render(List.of(line(1, "Salle de réunion", "1", "25000", "21186.44", true)));
-        assertThat(html).contains("Visa ELLE A OSE").contains("Signature et cachet");
+        assertThat(html).contains("Visa ELLE A OSE").contains("Cachet et signature").contains("visa-box");
         assertThat(html.indexOf("Visa ELLE A OSE")).isLessThan(html.indexOf("Engineered by SNI"));
     }
 

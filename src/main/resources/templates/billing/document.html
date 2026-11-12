@@ -168,12 +168,14 @@
         .legal-head { font-size: 6.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #1f1430; margin-bottom: 4px; }
         .legal-compact { font-size: 7px; color: #1f1430; line-height: 1.28; }
 
-        .visa-table { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; }
-        .visa-table td { border: none; padding: 0; vertical-align: top; }
-        .visa-box { width: 250px; border: 1px solid #1f1430; padding: 6px 8px 0; }
-        .visa-title { font-size: 8.4px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: #1f1430; }
-        .visa-space { height: 78px; }
-        .visa-hint { font-size: 7.4px; color: #6f6478; border-top: 1px dashed #c9bfd1; padding: 3px 0 4px; text-align: center; }
+        .visa-wrap { width: 100%; border-collapse: collapse; margin-top: 10px; page-break-inside: avoid; }
+        .visa-wrap td.spacer { border: none; }
+        .visa-wrap td.holder { width: 260px; border: none; padding: 0; vertical-align: top; }
+        .visa-box { width: 260px; border-collapse: collapse; border: 1.2px solid #1f1430; }
+        .visa-box th { background: #f3eef6; color: #1f1430; font-size: 8.4px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+                       text-align: center; padding: 5px 6px; border: 1.2px solid #1f1430; }
+        .visa-box td.stamp { height: 92px; border: 1.2px solid #1f1430; padding: 0; }
+        .visa-box td.legend { font-size: 7.4px; color: #6f6478; text-align: center; padding: 3px 6px; border: 1.2px solid #1f1430; }
         .doc-footer { margin-top: 8px; padding: 8px 0 9px; border-top: 1px solid #e6ddea; font-size: 7.8px; color: #1f1430; text-align: center; }
         .doc-footer .made-by { font-size: 7.4px; color: #1f1430; font-weight: 700; letter-spacing: 0.5px; margin-top: 3px; text-transform: uppercase; }
     </style>
@@ -585,14 +587,16 @@
         </div>
     </div>
 
-    <!-- VISA DE L'EXPLOITANT · case laissee libre pour la signature et le cachet. -->
-    <table class="visa-table">
+    <!-- VISA DE L'EXPLOITANT · case fermee, laissee libre pour le cachet et la signature. -->
+    <table class="visa-wrap">
         <tr>
-            <td></td>
-            <td class="visa-box">
-                <div class="visa-title">Visa ELLE A OSE</div>
-                <div class="visa-space"></div>
-                <div class="visa-hint">Signature et cachet</div>
+            <td class="spacer"></td>
+            <td class="holder">
+                <table class="visa-box">
+                    <tr><th>Visa ELLE A OSE</th></tr>
+                    <tr><td class="stamp"></td></tr>
+                    <tr><td class="legend">Cachet et signature</td></tr>
+                </table>
             </td>
         </tr>
     </table>

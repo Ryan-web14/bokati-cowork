@@ -4,7 +4,7 @@ Demande : ajouter en bas des factures une case où l'exploitant signe et appose 
 
 ## Changement
 
-- Modèle `src/main/resources/templates/billing/document.html` (factures, devis, pro forma, factures rectificatives) : après les mentions légales et avant le pied de page, une case encadrée à droite, titrée « Visa ELLE A OSE », avec un espace libre d'environ 2 cm pour la signature et le cachet, et la légende « Signature et cachet ».
+- Modèle `src/main/resources/templates/billing/document.html` (factures, devis, pro forma, factures rectificatives) : après les mentions légales et avant le pied de page, une case fermée à droite (cadre complet) : en-tête « Visa ELLE A OSE », grande case vide d'environ 2,5 cm pour le cachet et la signature, légende « Cachet et signature ».
 - La case ne se coupe jamais entre deux pages (`page-break-inside: avoid`) : si elle ne tient pas en bas de la dernière page, elle passe entière à la page suivante.
 - L'avoir (`avoir-note-credit.html`) n'est pas modifié.
 - Aucune migration, aucun réglage.
