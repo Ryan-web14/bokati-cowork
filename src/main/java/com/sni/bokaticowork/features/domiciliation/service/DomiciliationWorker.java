@@ -8,7 +8,12 @@ import com.sni.bokaticowork.features.subscription.subscription.model.Subscriptio
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -28,7 +33,19 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DomiciliationWorker {
+public class DomiciliationWorker implements SchedulingConfigurer {
+
+    private static final String REMINDER_CRON_KEY = "bokati.domiciliation.reminder-cron";
+    private static final String DEFAULT_REMINDER_CRON = "0 20 7 * * *";
+    private static final String MAIL_CRON_KEY = "bokati.domiciliation.mail-cron";
+    private static final String DEFAULT_MAIL_CRON = "0 30 7 * * *";
+    private static final String EXPIRY_CRON_KEY = "bokati.domiciliation.expiry-cron";
+    private static final String DEFAULT_EXPIRY_CRON = "0 40 7 * * *";
+    private static final String REMINDER_DAYS_KEY = "bokati.domiciliation.renewal-reminder-days";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<DomiciliationWorker> self;
+    private PlatformSettings platformSettings;
 
     private final DomiciliationContractRepository contractRepository;
     private final MailItemService mailItemService;
@@ -39,11 +56,10 @@ public class DomiciliationWorker {
     private int reminderDays;
 
     /** Attestations qui expirent dans la fenetre · une relance, avec la date. */
-    @Scheduled(cron = "${bokati.domiciliation.reminder-cron:0 20 7 * * *}")
     @Transactional(readOnly = true)
     public void remindCertificateRenewals() {
         LocalDate today = LocalDate.now();
-        List<DomiciliationContract> expiring = contractRepository.findCertificatesExpiringBetween(today, today.plusDays(Math.max(1, reminderDays)));
+        List<DomiciliationContract> expiring = contractRepository.findCertificatesExpiringBetween(today, today.plusDays(Math.max(1, reminderDays())));
         int sent = 0;
         for (DomiciliationContract contract : expiring) {
             Subscription subscription = contract.getSubscription();
@@ -72,7 +88,6 @@ public class DomiciliationWorker {
     }
 
     /** Courrier au-dela du delai de garde · relance et garde prolongee facturee. */
-    @Scheduled(cron = "${bokati.domiciliation.mail-cron:0 30 7 * * *}")
     public void chaseMail() {
         int chased = mailItemService.chaseOverdue();
         if (chased > 0) {
@@ -81,7 +96,6 @@ public class DomiciliationWorker {
     }
 
     /** Contrats a terme echu sans renouvellement · ils expirent, ils ne restent pas actifs par oubli. */
-    @Scheduled(cron = "${bokati.domiciliation.expiry-cron:0 40 7 * * *}")
     @Transactional
     public void expireEndedContracts() {
         LocalDate today = LocalDate.now();
@@ -102,5 +116,32 @@ public class DomiciliationWorker {
         if (expired > 0) {
             log.info("Domiciliation · {} contrat(s) arrive(s) a terme", expired);
         }
+    }
+
+    @Autowired
+    void setSettingTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<DomiciliationWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement de parametre vaut au passage suivant. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().remindCertificateRenewals(), triggers.cron(REMINDER_CRON_KEY, DEFAULT_REMINDER_CRON));
+        registrar.addTriggerTask(() -> self.getObject().chaseMail(), triggers.cron(MAIL_CRON_KEY, DEFAULT_MAIL_CRON));
+        registrar.addTriggerTask(() -> self.getObject().expireEndedContracts(), triggers.cron(EXPIRY_CRON_KEY, DEFAULT_EXPIRY_CRON));
+    }
+
+    private int reminderDays() {
+        return platformSettings == null ? reminderDays : platformSettings.integer(REMINDER_DAYS_KEY, reminderDays);
     }
 }

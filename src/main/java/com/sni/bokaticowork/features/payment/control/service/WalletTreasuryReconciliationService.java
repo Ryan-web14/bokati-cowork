@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.control.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -51,6 +53,29 @@ public class WalletTreasuryReconciliationService {
     /** Tolerance sous laquelle un ecart entre encours et compte d'avances est un arrondi, pas une anomalie. */
     @Value("${bokati.wallet.treasury.variance-tolerance:1}")
     private BigDecimal varianceTolerance;
+
+    private static final String TREASURY_COVERAGE_ALERT_RATIO_KEY = "bokati.wallet.treasury.coverage-alert-ratio";
+    private static final String TREASURY_ALERT_EMAIL_KEY = "bokati.wallet.treasury.alert-email";
+    private static final String TREASURY_VARIANCE_TOLERANCE_KEY = "bokati.wallet.treasury.variance-tolerance";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private BigDecimal coverageAlertRatio() {
+        return platformSettings == null ? coverageAlertRatio : platformSettings.decimal(TREASURY_COVERAGE_ALERT_RATIO_KEY, coverageAlertRatio);
+    }
+
+    private String alertEmail() {
+        return platformSettings == null ? alertEmail : platformSettings.text(TREASURY_ALERT_EMAIL_KEY, alertEmail);
+    }
+
+    private BigDecimal varianceTolerance() {
+        return platformSettings == null ? varianceTolerance : platformSettings.decimal(TREASURY_VARIANCE_TOLERANCE_KEY, varianceTolerance);
+    }
 
     public record Inputs(LocalDate date, String currency, BigDecimal ledgerAccountBalance,
                          BigDecimal availableCash, String explanation) {
@@ -116,7 +141,7 @@ public class WalletTreasuryReconciliationService {
         reconciliation.setPreparedBy(preparedBy);
         WalletTreasuryReconciliation saved = reconciliationRepository.save(reconciliation);
 
-        if (ratio.compareTo(coverageAlertRatio) < 0) {
+        if (ratio.compareTo(coverageAlertRatio()) < 0) {
             alertDirection(saved);
         }
         return saved;
@@ -148,10 +173,10 @@ public class WalletTreasuryReconciliationService {
      * {@code VARIANCE} · visible, mais pas alarmant.</p>
      */
     private WalletTreasuryReconciliation.Status status(BigDecimal variance, BigDecimal ratio, boolean explained) {
-        if (ratio.compareTo(coverageAlertRatio) < 0) {
+        if (ratio.compareTo(coverageAlertRatio()) < 0) {
             return WalletTreasuryReconciliation.Status.UNDER_REVIEW;
         }
-        if (variance != null && variance.abs().compareTo(varianceTolerance) > 0) {
+        if (variance != null && variance.abs().compareTo(varianceTolerance()) > 0) {
             return explained ? WalletTreasuryReconciliation.Status.VARIANCE : WalletTreasuryReconciliation.Status.UNDER_REVIEW;
         }
         return WalletTreasuryReconciliation.Status.BALANCED;
@@ -163,7 +188,7 @@ public class WalletTreasuryReconciliationService {
                 reconciliation.getReconciliationDate(), reconciliation.getTotalWalletBalance(), reconciliation.getCurrency(),
                 reconciliation.getAvailableCash(), reconciliation.getCurrency());
         // Une adresse ou plusieurs · un courriel par destinataire, la boite de sortie n'en fusionne pas
-        for (String recipient : com.sni.bokaticowork.core.utils.mail.Recipients.split(alertEmail)) {
+        for (String recipient : com.sni.bokaticowork.core.utils.mail.Recipients.split(alertEmail())) {
             outboxService.publish("WALLET_TREASURY_COVERAGE_ALERT", "WALLET", reconciliation.getReconciliationNumber() + ":" + recipient, Map.of(
                     "adminEmail", recipient,
                     "subject", "Couverture des portefeuilles insuffisante · " + reconciliation.getReconciliationDate(),

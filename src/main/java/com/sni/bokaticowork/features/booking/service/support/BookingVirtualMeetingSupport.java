@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.booking.service.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.features.ressource.model.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -10,6 +12,19 @@ public class BookingVirtualMeetingSupport {
 
     private final String baseUrl;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String BASE_URL_KEY = "bokati.booking.virtual-room.base-url";
+
+    private String baseUrl() {
+        return platformSettings == null ? baseUrl : platformSettings.text(BASE_URL_KEY, baseUrl);
+    }
+
     public BookingVirtualMeetingSupport(@Value("${bokati.booking.virtual-room.base-url:https://meet.jit.si}") String baseUrl) {
         this.baseUrl = baseUrl;
     }
@@ -18,6 +33,7 @@ public class BookingVirtualMeetingSupport {
         if (!isVirtual(resource)) {
             return null;
         }
+        String baseUrl = baseUrl();
         String base = StringUtils.hasText(baseUrl) ? baseUrl.replaceAll("/+$", "") : "https://meet.jit.si";
         return base + "/bokati-" + bookingNumber.toLowerCase();
     }

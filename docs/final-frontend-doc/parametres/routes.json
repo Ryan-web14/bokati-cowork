@@ -464,6 +464,12 @@
      "items": {
       "type": "string"
      }
+    },
+    "sensitive": {
+     "type": "boolean"
+    },
+    "risk": {
+     "type": "string"
     }
    }
   },

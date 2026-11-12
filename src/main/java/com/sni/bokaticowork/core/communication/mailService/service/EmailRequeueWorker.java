@@ -7,7 +7,12 @@ import com.sni.bokaticowork.core.communication.mailService.repository.EmailDeliv
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -28,7 +33,15 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EmailRequeueWorker {
+public class EmailRequeueWorker implements SchedulingConfigurer {
+
+    private static final String DELAY_KEY = "bokati.mail.requeue.delay-ms";
+    private static final long DEFAULT_DELAY_MS = 60_000L;
+    private static final String AFTER_KEY = "bokati.mail.requeue.after-seconds";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<EmailRequeueWorker> self;
+    private PlatformSettings platformSettings;
 
     private final EmailDeliveryLogRepository deliveryLogRepository;
     private final DefaultEmailSender emailSender;
@@ -36,9 +49,8 @@ public class EmailRequeueWorker {
     @Value("${bokati.mail.requeue.after-seconds:120}")
     private long requeueAfterSeconds;
 
-    @Scheduled(fixedDelayString = "${bokati.mail.requeue.delay-ms:60000}")
     public void requeueStranded() {
-        Instant before = Instant.now().minus(Duration.ofSeconds(Math.max(30, requeueAfterSeconds)));
+        Instant before = Instant.now().minus(Duration.ofSeconds(Math.max(30, requeueAfterSeconds())));
         List<EmailDeliveryLog> stranded = deliveryLogRepository
                 .findTop50ByStatusAndCreatedAtBeforeOrderByCreatedAtAsc(EmailDeliveryStatus.QUEUED, before);
         if (stranded.isEmpty()) {
@@ -54,5 +66,30 @@ public class EmailRequeueWorker {
             }
         }
         log.info("Courriels · {} sur {} redepose(s) dans la file", republished, stranded.size());
+    }
+
+    @Autowired
+    void setSettingTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<EmailRequeueWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement de parametre vaut au passage suivant. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().requeueStranded(), triggers.fixedDelay(DELAY_KEY, DEFAULT_DELAY_MS));
+    }
+
+    private long requeueAfterSeconds() {
+        return platformSettings == null ? requeueAfterSeconds : platformSettings.number(AFTER_KEY, requeueAfterSeconds);
     }
 }

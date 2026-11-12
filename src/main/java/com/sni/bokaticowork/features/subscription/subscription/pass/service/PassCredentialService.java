@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.subscription.subscription.pass.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer;
@@ -56,6 +58,19 @@ public class PassCredentialService {
     @Value("${bokati.pass.credential.rotation-minutes:15}")
     private int rotationMinutes;
 
+    private static final String CREDENTIAL_ROTATION_MINUTES_KEY = "bokati.pass.credential.rotation-minutes";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int rotationMinutes() {
+        return platformSettings == null ? rotationMinutes : platformSettings.integer(CREDENTIAL_ROTATION_MINUTES_KEY, rotationMinutes);
+    }
+
     /**
      * @param imageDataUri image QR encodee en base64, nulle pour un support qui ne s'affiche pas
      */
@@ -85,7 +100,7 @@ public class PassCredentialService {
 
         revokeActive(pass, type, "Remplacé par un nouveau support");
 
-        Instant validUntil = rotating ? Instant.now().plus(Duration.ofMinutes(rotationMinutes)) : pass.getValidUntil();
+        Instant validUntil = rotating ? Instant.now().plus(Duration.ofMinutes(rotationMinutes())) : pass.getValidUntil();
         PassCredential credential = credentialRepository.save(PassCredential.builder()
                 .pass(pass)
                 .credentialType(type == null ? PassCredentialType.QR_CODE : type)

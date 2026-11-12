@@ -8,13 +8,18 @@ import com.sni.bokaticowork.features.accounting.service.implementation.Accountin
 import com.sni.bokaticowork.features.accounting.service.support.AccountingNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import java.time.ZoneId;
 
 /**
  * Traitements de nuit de la comptabilite (lot F1) : controle de continuite des numeros et
@@ -23,7 +28,28 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AccountingWorker {
+public class AccountingWorker implements SchedulingConfigurer {
+
+    private static final String NIGHT_WORKER_CRON_KEY = "accounting.night-worker-cron";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<AccountingWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<AccountingWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().nightly(), triggers.cron(NIGHT_WORKER_CRON_KEY, "0 30 2 * * *", ZoneId.of("Africa/Brazzaville")));
+    }
 
     static final List<Integer> REMINDER_DAYS = List.of(1, 3, 7);
 
@@ -33,7 +59,6 @@ public class AccountingWorker {
     private final AccountingNotifier notifier;
     private final com.sni.bokaticowork.features.accounting.service.implementation.BudgetReportService budgetReports;
 
-    @Scheduled(cron = "${accounting.night-worker-cron:0 30 2 * * *}", zone = "Africa/Brazzaville")
     public void nightly() {
         try {
             reports.checkAll();

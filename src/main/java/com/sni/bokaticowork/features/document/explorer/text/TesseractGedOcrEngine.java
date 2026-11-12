@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.document.explorer.text;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,8 +27,20 @@ public class TesseractGedOcrEngine implements GedOcrEngine {
     @Value("${app.ged.text.ocr-data-path:}")
     private String dataPath;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String LANGUAGE_KEY = "app.ged.text.ocr-language";
+    private static final String DATA_PATH_KEY = "app.ged.text.ocr-data-path";
+
     @Override
     public String read(BufferedImage page) {
+        String dataPath = platformSettings == null ? this.dataPath : platformSettings.text(DATA_PATH_KEY, this.dataPath);
+        String language = platformSettings == null ? this.language : platformSettings.text(LANGUAGE_KEY, this.language);
         Tesseract tesseract = new Tesseract();
         if (StringUtils.hasText(dataPath)) {
             tesseract.setDatapath(dataPath);

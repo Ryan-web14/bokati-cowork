@@ -6,11 +6,15 @@ import com.sni.bokaticowork.features.accounting.service.support.AccountingNotifi
 import com.sni.bokaticowork.features.accounting.service.support.AccountingSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 /**
  * Tenue quotidienne du financement (lot F17) : echeances d'emprunt ecrites seules a leur date,
@@ -20,14 +24,34 @@ import java.time.ZoneId;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FinancingWorker {
+public class FinancingWorker implements SchedulingConfigurer {
+
+    private static final String CRON_KEY = "accounting.financing.cron";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<FinancingWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<FinancingWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().run(), triggers.cron(CRON_KEY, "0 45 6 * * *", ZoneId.of("Africa/Brazzaville")));
+    }
 
     private final LoanService loans;
     private final CommitmentService commitments;
     private final AccountingSettings settings;
     private final AccountingNotifier notifier;
 
-    @Scheduled(cron = "${accounting.financing.cron:0 45 6 * * *}", zone = "Africa/Brazzaville")
     public void run() {
         if (!settings.enabled()) {
             return;

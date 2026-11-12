@@ -51,15 +51,18 @@ Répartition actuelle du catalogue : 132 `INTEGER`, 30 `TEXT`, 23 `CRON`, 20 `BO
 
 ### Effet d'un changement
 
-`effect` vaut `LIVE` (pris en compte sans redémarrage) ou `RESTART` (au prochain démarrage de l'application). Dans le catalogue, 8 clés sont `LIVE`, les 229 autres `RESTART`. Les 13 clés `subscription.policy.*` sont toutes `LIVE`.
+`effect` vaut `LIVE` (pris en compte sans redémarrage) ou `RESTART` (au prochain démarrage de l'application). Dans le catalogue, 327 clés sont `LIVE` et 34 `RESTART`. Les 13 clés `subscription.policy.*` sont toutes `LIVE`.
 
-| Clé `LIVE` | Lue par |
-| --- | --- |
-| `bokati.booking.staff.max-backdate-days` | `features/ressource/service/support/StaffBookingOverride.java:76` |
-| `bokati.company.wallet.approval-hours` | `features/company/wallet/service/CompanyWalletService.java:436` |
-| `bokati.marketplace.payment-window-minutes` | `features/marketplace/service/MarketplaceOrderService.java:169` |
-| `bokati.resource.availability.generation.weekday-hours`, `...weekday-subscriber-hours`, `...saturday-hours`, `...sunday-hours` | `features/ressource/service/support/OpeningHoursResolver.java:87` |
-| `bokati.support.auto-close-delay-days` | `features/support/worker/SupportAutoCloseWorker.java:36`, au prochain passage du worker (toutes les heures par défaut, `bokati.support.auto-close-check-delay-ms`) |
+- Une clé `LIVE` est relue au moment où elle sert : une valeur métier (délai, seuil, adresse, URL) au prochain usage, une planification (`cron`, délai entre deux passages) au prochain passage du traitement.
+- Les 34 clés `RESTART` : le stockage des documents, les secrets, CORS, le relais websocket, la langue, le fuseau horaire, l'aperçu public des documents, le plafond de requêtes Graph et les 7 délais initiaux (`*-initial-delay-ms`), qui ne servent qu'au démarrage.
+- Une valeur estampillée à la création (date d'expiration d'un jeton, d'une offre, d'une attestation) ne change que pour les nouvelles créations.
+
+### Paramètres sensibles
+
+31 clés `LIVE` sont marquées sensibles (`sensitive = true`) : devise, code machine fiscal, numéros de téléphone, mode dev, sécurité des connexions et des jetons, frais et plafonds du portefeuille, plafond de caisse, niveau de conformité de la domiciliation. `risk` dit en une phrase ce qu'un changement risque.
+
+- Avant d'enregistrer une clé sensible, afficher `risk` dans une confirmation.
+- Chaque changement ou remise à zéro d'une clé sensible envoie, après enregistrement, un courriel à chaque super-administrateur actif et une alerte dans l'application (`SENSITIVE_SETTING_CHANGED`, module `SETTINGS`, sévérité `WARNING`) avec l'ancienne valeur, la nouvelle, l'auteur et le risque.
 
 (Chemins relatifs à `src/main/java/com/sni/bokaticowork/`.)
 
@@ -73,7 +76,7 @@ Un réglage de plateforme n'a pas de champ statut, mais son état se lit dans `m
 | --- | --- | --- | --- |
 | Valeur du fichier (`modified = false`) | aucune ligne en base, `value = defaultValue` | état initial ; `DELETE /sni/api/v1/admin/settings/{key}` | Modifié, par `PUT` |
 | Modifié (`modified = true`) | une ligne existe dans `platform_setting` ; `updatedBy` et `updatedAt` renseignés | `PUT /sni/api/v1/admin/settings/{key}` | Valeur du fichier, par `DELETE` ; nouvelle valeur, par `PUT` |
-| En attente de redémarrage (`restartPending = true`) | réglage `RESTART` dont la valeur voulue diffère de celle lue au démarrage | `PUT` ou `DELETE` sur une clé `RESTART` | disparaît au redémarrage de l'application |
+| En attente de redémarrage (`restartPending = true`) | réglage `RESTART` dont la valeur voulue diffère de celle lue au démarrage | `PUT` ou `DELETE` sur une clé `RESTART` | disparaît au redémarrage de l'application ; ne concerne plus que les 34 clés `RESTART` |
 
 Pour les réglages `subscription.policy.*` : `modified` signifie « différent de la valeur par défaut de la politique » (pas « enregistré depuis l'écran »), `restartPending` vaut toujours `false`, `updatedBy` et `updatedAt` sont toujours `null` (`PlatformSettingsAdminService.java:234`).
 
@@ -173,11 +176,11 @@ Préférences d'un membre :
 - `PlatformSettings.refresh` (`src/main/java/com/sni/bokaticowork/core/settings/platform/PlatformSettings.java:606`) relit la table `platform_setting` toutes les 60 secondes et après chaque `PUT` / `DELETE` validé : c'est ce qui rend les clés `LIVE` immédiates, y compris sur plusieurs instances (délai d'une minute au plus sur les autres instances).
 - Au démarrage, `PlatformSettingsEnvironmentPostProcessor` charge les valeurs enregistrées (hors secrets et hors clés inconnues du catalogue) devant `application.yml` : c'est ce qui applique les clés `RESTART`. Si la base est injoignable, l'application démarre avec le fichier seul.
 - Chaque changement écrit une ligne dans `setting_audit_logs`. Les deux `PATCH` des préférences membre passent aussi par l'audit général (`@Audited`, module `SETTINGS`).
-- Aucun courriel, aucune notification, aucun événement.
+- Changement d'une clé sensible : courriel aux super-administrateurs et alerte `SENSITIVE_SETTING_CHANGED` dans l'application, après validation de la transaction. Aucun autre courriel ni événement.
 
 ## Écarts relevés
 
-- **Remise à zéro d'une clé `LIVE` sans effet avant redémarrage** : les consommateurs lisent `settings.number(key, fallback)` où `fallback` est la valeur injectée par `@Value` au démarrage, qui contient déjà la valeur enregistrée en base (`PlatformSettingsEnvironmentPostProcessor.java:52`). Après un `DELETE`, la clé disparaît de la mémoire et le service retombe sur cette ancienne valeur, pas sur celle du fichier, jusqu'au prochain redémarrage (`src/main/java/com/sni/bokaticowork/features/support/worker/SupportAutoCloseWorker.java:30` et `:36`, `features/marketplace/service/MarketplaceOrderService.java:169`). L'écran affiche pourtant `modified = false` et `restartPending = false`.
+- **Réglé** : remise à zéro d'une clé `LIVE` sans effet avant redémarrage. Sans valeur en base, `PlatformSettings` rend désormais la valeur du fichier de configuration, sans la valeur de base lue au démarrage.
 - **Motif trop long refusé par la base** : `UpdateRequest.reason` accepte 500 caractères (`PlatformSettingsController.java:32`), mais l'audit enregistre `<auteur> · <motif>` dans `setting_audit_logs.reason VARCHAR(255)` (`src/main/resources/db/migration/V32__create_and_align_member_settings_module.sql:91`). Au-delà d'environ 200 caractères de motif, l'enregistrement échoue (erreur base, aucun gestionnaire `DataIntegrityViolationException` trouvé dans `GlobalExceptionHandler`, statut non vérifié). Le `DELETE` n'a aucune limite de longueur.
 - **`PATCH` des préférences membre destructif** : les champs omis sont remis à `false` ou `null` (`src/main/java/com/sni/bokaticowork/core/settings/userSettings/service/implementation/MemberSettingsServiceImpl.java:175` à `:196`), ce qui contredit la sémantique d'un `PATCH` et fait échouer l'enregistrement sur les colonnes `NOT NULL`.
 - **Préférences membre jamais lues** : `user_settings` et `notification_preferences` ne sont lues par aucun autre code que ce module (recherche sur `MemberSettingRepository`, `NotificationPreferenceRepository`, noms de tables). Les préférences de notification n'empêchent ni n'activent aucun envoi, et `walletPref` ne pilote aucun rechargement automatique ni plafond.

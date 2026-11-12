@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.fund.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
 import com.sni.bokaticowork.features.fund.enums.*;
 import com.sni.bokaticowork.features.fund.model.FundRequest;
@@ -46,6 +48,24 @@ public class FundLifecycleService {
     @Value("${fund.approval.escalation-days:3}")
     private long escalationDays;
 
+    private static final String APPROVAL_REMINDER_HOURS_KEY = "fund.approval.reminder-hours";
+    private static final String APPROVAL_ESCALATION_DAYS_KEY = "fund.approval.escalation-days";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private long reminderHours() {
+        return platformSettings == null ? reminderHours : platformSettings.number(APPROVAL_REMINDER_HOURS_KEY, reminderHours);
+    }
+
+    private long escalationDays() {
+        return platformSettings == null ? escalationDays : platformSettings.number(APPROVAL_ESCALATION_DAYS_KEY, escalationDays);
+    }
+
     public Map<String, Integer> runPeriodic() {
         Instant now = Instant.now();
         LocalDate today = LocalDate.now(FundRequestService.ZONE);
@@ -58,11 +78,11 @@ public class FundLifecycleService {
             if (since == null) {
                 continue;
             }
-            boolean due = Duration.between(since, now).toHours() >= reminderHours
-                    && (request.getApproverRemindedAt() == null || Duration.between(request.getApproverRemindedAt(), now).toHours() >= reminderHours);
+            boolean due = Duration.between(since, now).toHours() >= reminderHours()
+                    && (request.getApproverRemindedAt() == null || Duration.between(request.getApproverRemindedAt(), now).toHours() >= reminderHours());
             if (due) {
                 notifier.toApprovers(request, request.getCurrentLevel());
-                if (Duration.between(since, now).toDays() >= escalationDays) {
+                if (Duration.between(since, now).toDays() >= escalationDays()) {
                     notifier.toSupervisor(request, "La demande " + request.getNumber() + " attend sa validation de niveau " + request.getCurrentLevel()
                             + " depuis " + Duration.between(since, now).toDays() + " jours.");
                     escalated++;

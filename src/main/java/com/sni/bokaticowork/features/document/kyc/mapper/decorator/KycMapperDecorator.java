@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.document.kyc.mapper.decorator;
 
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.repository.CustomerRepository;
@@ -48,6 +49,19 @@ public abstract class KycMapperDecorator implements KycMapper {
 
     @Value("${app.api-base-url:}")
     private String apiBaseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(API_BASE_URL_KEY, apiBaseUrl);
+    }
 
     @Override
     public KycCaseResponse toResponse(KycCase kycCase) {
@@ -187,6 +201,7 @@ public abstract class KycMapperDecorator implements KycMapper {
     }
 
     private String apiUrl(String path) {
+        String apiBaseUrl = apiBaseUrl();
         if (!StringUtils.hasText(apiBaseUrl)) {
             return path;
         }

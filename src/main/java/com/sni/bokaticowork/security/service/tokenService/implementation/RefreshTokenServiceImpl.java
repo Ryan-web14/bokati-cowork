@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.service.tokenService.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import com.sni.bokaticowork.security.model.RefreshToken;
@@ -23,6 +25,20 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Value("${app.security.jwt.refresh-token-expiration-ms:604800000}")
     private long refreshTokenExpiration;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String REFRESH_EXPIRATION_KEY = "app.security.jwt.refresh-token-expiration-ms";
+
+    private long refreshTokenExpiration() {
+        return platformSettings == null ? refreshTokenExpiration
+                : platformSettings.number(REFRESH_EXPIRATION_KEY, refreshTokenExpiration);
+    }
+
     private final RefreshTokenRepository refreshTokenRepo;
     private final TokenHashService tokenHashService;
 
@@ -33,7 +49,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken rt = RefreshToken.builder()
                 .user(user)
                 .token(tokenHash)
-                .expiration(Instant.now().plusMillis(refreshTokenExpiration))
+                .expiration(Instant.now().plusMillis(refreshTokenExpiration()))
                 .revoked(false)
                 .build();
 
@@ -69,7 +85,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken rt = RefreshToken.builder()
                 .user(oldRt.getUser())
                 .token(newTokenHash)
-                .expiration(Instant.now().plusMillis(refreshTokenExpiration))
+                .expiration(Instant.now().plusMillis(refreshTokenExpiration()))
                 .revoked(false)
                 .build();
 

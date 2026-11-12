@@ -12,9 +12,14 @@ import com.sni.bokaticowork.features.subscription.subscription.model.Subscriptio
 import com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionLifecycleOperator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 
 /**
  * Ce que le cycle de vie fait tout seul, chaque heure.
@@ -28,7 +33,35 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SubscriptionLifecycleWorker {
+public class SubscriptionLifecycleWorker implements SchedulingConfigurer {
+
+    private static final String LIFECYCLE_DELAY_MS_KEY = "bokati.subscription.workers.lifecycle-delay-ms";
+    private static final String LIFECYCLE_INITIAL_DELAY_MS_KEY = "bokati.subscription.workers.lifecycle-initial-delay-ms";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<SubscriptionLifecycleWorker> self;
+    private PlatformSettings platformSettings;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<SubscriptionLifecycleWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().run(), triggers.fixedDelay(LIFECYCLE_DELAY_MS_KEY, 3600000L, platformSettings == null ? 120000L : platformSettings.number(LIFECYCLE_INITIAL_DELAY_MS_KEY, 120000L)));
+    }
 
     private final SubscriptionTerminationService terminationService;
     private final SubscriptionQuoteService quoteService;
@@ -39,7 +72,6 @@ public class SubscriptionLifecycleWorker {
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionLifecycleOperator lifecycleOperator;
 
-    @Scheduled(fixedDelayString = "${bokati.subscription.workers.lifecycle-delay-ms:3600000}", initialDelayString = "${bokati.subscription.workers.lifecycle-initial-delay-ms:120000}")
     public void run() {
         step("preavis acheves", terminationService::completeDue);
         step("devis expires", quoteService::expireOpen);

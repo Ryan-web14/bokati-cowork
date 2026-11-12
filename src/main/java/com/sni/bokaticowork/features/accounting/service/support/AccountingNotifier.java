@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.accounting.service.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,19 @@ public class AccountingNotifier {
     @Value("${app.admin-access-url:https://admin.elleaose.com}")
     private String adminAccessUrl;
 
+    private static final String APP_ADMIN_ACCESS_URL_KEY = "app.admin-access-url";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String adminAccessUrl() {
+        return platformSettings == null ? adminAccessUrl : platformSettings.text(APP_ADMIN_ACCESS_URL_KEY, adminAccessUrl);
+    }
+
     public void notifyAccountants(String subject, String message, String reference, String actionPath, String alsoTo) {
         Set<String> recipients = new LinkedHashSet<>(settings.notifyEmails());
         if (StringUtils.hasText(alsoTo) && alsoTo.contains("@")) {
@@ -45,7 +60,7 @@ public class AccountingNotifier {
             ctx.setVariable("recipientName", "comptabilite");
             ctx.setVariable("message", message);
             ctx.setVariable("reference", reference);
-            ctx.setVariable("actionUrl", StringUtils.hasText(actionPath) ? adminAccessUrl.stripTrailing() + actionPath : adminAccessUrl);
+            ctx.setVariable("actionUrl", StringUtils.hasText(actionPath) ? adminAccessUrl().stripTrailing() + actionPath : adminAccessUrl());
             emailSender.sendHtmlEmail(to, subject, templateEngine.process("email/generic-notification", ctx));
         } catch (MessagingException | RuntimeException exception) {
             log.warn("Notification comptable '{}' non envoyee a {}", subject, to, exception);

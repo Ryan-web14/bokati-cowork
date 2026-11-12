@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.booking.service.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
@@ -54,6 +56,25 @@ public class BookingEmailNotifier {
 
     @Value("${app.frontend-url:https://elleaose.com}")
     private String frontendUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(API_BASE_URL_KEY, apiBaseUrl);
+    }
+
+    private static final String FRONTEND_URL_KEY = "app.frontend-url";
+
+    private String frontendUrl() {
+        return platformSettings == null ? frontendUrl : platformSettings.text(FRONTEND_URL_KEY, frontendUrl);
+    }
 
     public void notify(Booking booking, BookingEventType eventType) {
         if (!StringUtils.hasText(booking.getContactEmail())) {
@@ -165,11 +186,11 @@ public class BookingEmailNotifier {
         ctx.setVariable("qrCodeUrl",      showQr ? "cid:" + QR_CONTENT_ID : null);
         ctx.setVariable("bookingUrl",     publicBookingViewUrl(booking));
         ctx.setVariable("invoiceUrl",     publicBookingPdfUrl(booking));
-        ctx.setVariable("accountUrl",     frontendUrl);
+        ctx.setVariable("accountUrl",     frontendUrl());
 
         // ── CSAT pour booking-completed ─────────────────────────────
         if (eventType == BookingEventType.BOOKING_COMPLETED) {
-            ctx.setVariable("csatUrl", apiBaseUrl.stripTrailing()
+            ctx.setVariable("csatUrl", apiBaseUrl().stripTrailing()
                     + ApiPath.V1 + "/public/bookings/csat/" + booking.getBookingNumber() + "?score=");
         }
 
@@ -364,7 +385,7 @@ public class BookingEmailNotifier {
 
     private byte[] generateQrBytes(Booking booking) {
         if (!StringUtils.hasText(booking.getCheckInToken())) return null;
-        String scanUrl = apiBaseUrl.stripTrailing()
+        String scanUrl = apiBaseUrl().stripTrailing()
                 + ApiPath.V1 + "/public/bookings/check-in/scan/"
                 + booking.getCheckInToken();
         try {
@@ -384,7 +405,7 @@ public class BookingEmailNotifier {
     }
 
     private String publicBookingPdfUrl(Booking booking) {
-        return apiBaseUrl.stripTrailing()
+        return apiBaseUrl().stripTrailing()
                 + ApiPath.V1
                 + "/public/bookings/"
                 + encode(booking.getBookingNumber())
@@ -393,7 +414,7 @@ public class BookingEmailNotifier {
     }
 
     private String publicBookingBaseUrl(Booking booking) {
-        return apiBaseUrl.stripTrailing()
+        return apiBaseUrl().stripTrailing()
                 + ApiPath.V1
                 + "/public/bookings/"
                 + encode(booking.getBookingNumber())

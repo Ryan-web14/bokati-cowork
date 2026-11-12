@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.domiciliation.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -64,6 +66,19 @@ public class MailItemService {
     @Value("${bokati.domiciliation.mail.storage-days:30}")
     private int storageDays;
 
+    private static final String MAIL_STORAGE_DAYS_KEY = "bokati.domiciliation.mail.storage-days";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int storageDays() {
+        return platformSettings == null ? storageDays : platformSettings.integer(MAIL_STORAGE_DAYS_KEY, storageDays);
+    }
+
     public record Receipt(MailItem.Type mailType, String senderName, String senderReference,
                           Integer weightGrams, String dimensions, String notes) {
     }
@@ -102,7 +117,7 @@ public class MailItemService {
                 .dimensions(trim(receipt.dimensions()))
                 .notes(trim(receipt.notes()))
                 .status(MailItem.Status.RECEIVED)
-                .storageDeadline(LocalDate.now().plusDays(Math.max(1, storageDays)))
+                .storageDeadline(LocalDate.now().plusDays(Math.max(1, storageDays())))
                 .build());
         event(item, "RECEIVED", receivedBy, receipt.mailType() + (receipt.senderName() == null ? "" : " de " + receipt.senderName()));
         notifyHolder(item, "MAIL_RECEIVED", receipt.mailType().requiresIdentityOnCollection()

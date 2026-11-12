@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.domiciliation.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -86,6 +88,39 @@ public class DomiciliationService {
 
     @Value("${bokati.domiciliation.administration-email:}")
     private String administrationEmail;
+
+    private static final String DOMICILIATION_CERTIFICATE_VALIDITY_DAYS_KEY = "bokati.domiciliation.certificate-validity-days";
+    private static final String DOMICILIATION_KYC_LEVEL_REQUIRED_KEY = "bokati.domiciliation.kyc-level-required";
+    private static final String DOMICILIATION_RETENTION_YEARS_KEY = "bokati.domiciliation.retention-years";
+    private static final String DOMICILIATION_NOTIFY_ADMINISTRATION_ON_TERMINATION_KEY = "bokati.domiciliation.notify-administration-on-termination";
+    private static final String DOMICILIATION_ADMINISTRATION_EMAIL_KEY = "bokati.domiciliation.administration-email";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int certificateValidityDays() {
+        return platformSettings == null ? certificateValidityDays : platformSettings.integer(DOMICILIATION_CERTIFICATE_VALIDITY_DAYS_KEY, certificateValidityDays);
+    }
+
+    private int kycLevelRequired() {
+        return platformSettings == null ? kycLevelRequired : platformSettings.integer(DOMICILIATION_KYC_LEVEL_REQUIRED_KEY, kycLevelRequired);
+    }
+
+    private int retentionYears() {
+        return platformSettings == null ? retentionYears : platformSettings.integer(DOMICILIATION_RETENTION_YEARS_KEY, retentionYears);
+    }
+
+    private boolean notifyAdministrationOnTermination() {
+        return platformSettings == null ? notifyAdministrationOnTermination : platformSettings.bool(DOMICILIATION_NOTIFY_ADMINISTRATION_ON_TERMINATION_KEY, notifyAdministrationOnTermination);
+    }
+
+    private String administrationEmail() {
+        return platformSettings == null ? administrationEmail : platformSettings.text(DOMICILIATION_ADMINISTRATION_EMAIL_KEY, administrationEmail);
+    }
 
     // -----------------------------------------------------------------------------------------
     // Ouvrir
@@ -271,12 +306,12 @@ public class DomiciliationService {
         SubscriptionOwnerResolver.Owner owner = ownerResolver.resolve(
                 contract.getSubscription().getSubscriberType(), contract.getSubscription().getSubscriberCode());
         try {
-            kycGuard.require(kycLevelRequired, owner, "domiciliation");
+            kycGuard.require(kycLevelRequired(), owner, "domiciliation");
         } catch (BadRequestException ex) {
             contract.setStatus(DomiciliationContract.Status.PENDING_DOCUMENTS);
             contractRepository.save(contract);
             throw new ConflictException("domiciliation",
-                    "les pièces d'identité du représentant légal doivent être vérifiées (niveau " + kycLevelRequired
+                    "les pièces d'identité du représentant légal doivent être vérifiées (niveau " + kycLevelRequired()
                             + ") avant de générer le contrat · le dossier est en attente de pièces");
         }
 
@@ -424,7 +459,7 @@ public class DomiciliationService {
         DomiciliationRegistration registration = registrationRepository
                 .findFirstByContract_IdAndStatusInOrderByCreatedAtDesc(contract.getId(), List.of(DomiciliationRegistration.Status.REGISTERED))
                 .orElse(null);
-        LocalDate validUntil = LocalDate.now().plusDays(Math.max(30, certificateValidityDays));
+        LocalDate validUntil = LocalDate.now().plusDays(Math.max(30, certificateValidityDays()));
         if (contract.getEndDate() != null && contract.getEndDate().isBefore(validUntil)) {
             // Une attestation ne survit pas au contrat qu'elle atteste.
             validUntil = contract.getEndDate();
@@ -529,7 +564,7 @@ public class DomiciliationService {
             contract.setCertificateRevocationReason("Fin du contrat · " + reason.trim());
         }
         // Conservation des pieces · posee a la fin, jamais raccourcie.
-        contract.setRetainDocumentsUntil(effective.plusYears(Math.max(1, retentionYears)));
+        contract.setRetainDocumentsUntil(effective.plusYears(Math.max(1, retentionYears())));
         DomiciliationContract saved = contractRepository.save(contract);
         subscribedServiceService.terminate(saved.getSubscriptionService());
 
@@ -643,13 +678,13 @@ public class DomiciliationService {
     }
 
     private boolean notifyAdministration(DomiciliationContract contract, String eventType, String subject) {
-        if (!notifyAdministrationOnTermination || !StringUtils.hasText(administrationEmail)) {
+        if (!notifyAdministrationOnTermination() || !StringUtils.hasText(administrationEmail())) {
             return false;
         }
         Optional<DomiciliationRegistration> registration = registrationRepository
                 .findFirstByContract_IdAndStatusInOrderByCreatedAtDesc(contract.getId(), List.of(DomiciliationRegistration.Status.REGISTERED));
         Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("adminEmail", administrationEmail);
+        payload.put("adminEmail", administrationEmail());
         payload.put("subject", subject);
         payload.put("templateCode", eventType);
         payload.put("contractNumber", contract.getContractNumber());

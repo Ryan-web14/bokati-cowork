@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.core.communication.mailService.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -37,6 +39,9 @@ public class EmailDedupKeyFactory {
 
     private static final String BUSINESS_PREFIX = "B";
     private static final String GENERIC_PREFIX = "G";
+    private static final String ENABLED_KEY = "bokati.email.dedup.enabled";
+    private static final String BUSINESS_WINDOW_KEY = "bokati.email.dedup.business-window-seconds";
+    private static final String GENERIC_WINDOW_KEY = "bokati.email.dedup.generic-window-seconds";
 
     @Value("${bokati.email.dedup.enabled:true}")
     private boolean enabled;
@@ -47,13 +52,34 @@ public class EmailDedupKeyFactory {
     @Value("${bokati.email.dedup.generic-window-seconds:3600}")
     private long genericWindowSeconds;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private boolean enabled() {
+        return platformSettings == null ? enabled : platformSettings.bool(ENABLED_KEY, enabled);
+    }
+
+    private long businessWindowSeconds() {
+        return platformSettings == null ? businessWindowSeconds
+                : platformSettings.number(BUSINESS_WINDOW_KEY, businessWindowSeconds);
+    }
+
+    private long genericWindowSeconds() {
+        return platformSettings == null ? genericWindowSeconds
+                : platformSettings.number(GENERIC_WINDOW_KEY, genericWindowSeconds);
+    }
+
     public Keys build(String recipient, String subject, String relatedType, String relatedCode) {
-        if (!enabled || !StringUtils.hasText(recipient)) {
+        if (!enabled() || !StringUtils.hasText(recipient)) {
             return Keys.disabled();
         }
 
         boolean business = StringUtils.hasText(relatedType) && StringUtils.hasText(relatedCode);
-        long window = business ? businessWindowSeconds : genericWindowSeconds;
+        long window = business ? businessWindowSeconds() : genericWindowSeconds();
         if (window <= 0) {
             return Keys.disabled();
         }

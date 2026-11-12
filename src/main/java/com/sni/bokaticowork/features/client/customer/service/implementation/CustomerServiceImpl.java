@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.client.customer.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.features.client.customer.dto.request.CustomerRequest;
 import com.sni.bokaticowork.features.client.customer.dto.request.ChangeCustomerStatusRequest;
@@ -61,6 +63,19 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Value("${app.verify-base-url:}")
     private String publicBaseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String VERIFY_BASE_URL_KEY = "app.verify-base-url";
+
+    private String publicBaseUrl() {
+        return platformSettings == null ? publicBaseUrl : platformSettings.text(VERIFY_BASE_URL_KEY, publicBaseUrl);
+    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -356,6 +371,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private String logoUrl() {
+        String publicBaseUrl = publicBaseUrl();
         if (!StringUtils.hasText(publicBaseUrl)) {
             return "/images/logo.png";
         }

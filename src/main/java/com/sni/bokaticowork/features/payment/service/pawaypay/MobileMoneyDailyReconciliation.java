@@ -7,7 +7,6 @@ import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResp
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -20,6 +19,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 /**
  * Chaque matin, nos paiements mobile money des deux derniers jours relus chez PawaPay.
@@ -41,7 +45,28 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "bokati.payment.pawaypay.enabled", havingValue = "true")
-public class MobileMoneyDailyReconciliation {
+public class MobileMoneyDailyReconciliation implements SchedulingConfigurer {
+
+    private static final String RECONCILIATION_CRON_KEY = "bokati.payment.pawaypay.reconciliation-cron";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<MobileMoneyDailyReconciliation> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<MobileMoneyDailyReconciliation> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().runDaily(), triggers.cron(RECONCILIATION_CRON_KEY, "0 0 6 * * *", ZoneId.of("Africa/Brazzaville")));
+    }
 
     static final String JOB = "MOBILE_MONEY_DAILY_RECONCILIATION";
     static final Duration WINDOW = Duration.ofHours(48);
@@ -61,7 +86,6 @@ public class MobileMoneyDailyReconciliation {
                          List<MobileMoneyOperationsService.ReconciliationLine> remaining) {
     }
 
-    @Scheduled(cron = "${bokati.payment.pawaypay.reconciliation-cron:0 0 6 * * *}", zone = "Africa/Brazzaville")
     public void runDaily() {
         String runKey = LocalDate.now(ZONE).toString();
         if (!jobRuns.claim(JOB, runKey)) {

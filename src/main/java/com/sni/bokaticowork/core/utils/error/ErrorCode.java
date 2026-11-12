@@ -26,6 +26,8 @@ public final class ErrorCode {
     public static final String TOKEN_EXPIRED = "TOKEN_EXPIRED";
     public static final String BAD_CREDENTIALS = "BAD_CREDENTIALS";
     public static final String ACCOUNT_LOCKED = "ACCOUNT_LOCKED";
+    /** Connexion a l'espace d'administration refusee : le compte n'a aucun role d'equipe. */
+    public static final String BACK_OFFICE_ACCESS_DENIED = "BACK_OFFICE_ACCESS_DENIED";
 
     // Server errors
     public static final String INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR";

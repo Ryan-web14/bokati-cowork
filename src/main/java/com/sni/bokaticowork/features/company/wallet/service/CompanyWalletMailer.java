@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.company.wallet.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.communication.mailService.enums.EmailPriority;
 import com.sni.bokaticowork.features.client.member.model.Member;
@@ -28,6 +30,19 @@ public class CompanyWalletMailer {
     private final DefaultEmailSender emailSender;
     private final SpringTemplateEngine templateEngine;
     private final String portalUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String FRONTEND_URL_KEY = "app.frontend-url";
+
+    private String portalUrl() {
+        return platformSettings == null ? portalUrl : platformSettings.text(FRONTEND_URL_KEY, portalUrl);
+    }
 
     public CompanyWalletMailer(DefaultEmailSender emailSender, SpringTemplateEngine templateEngine,
                                @Value("${app.frontend-url:https://elleaose.com}") String portalUrl) {
@@ -75,6 +90,7 @@ public class CompanyWalletMailer {
                 ctx.setVariable("recipientName", name);
                 ctx.setVariable("message", message);
                 ctx.setVariable("reference", reference);
+                String portalUrl = portalUrl();
                 ctx.setVariable("actionUrl", StringUtils.hasText(portalPath) ? portalUrl.stripTrailing() + portalPath : portalUrl);
                 emailSender.sendHtmlEmail(to, subject, templateEngine.process("email/generic-notification", ctx), priority);
             } catch (Exception ex) {

@@ -3,8 +3,12 @@ package com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.work
 import com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.service.CouponService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 /**
  * Rend les codes retenus par des paniers abandonnes.
@@ -15,11 +19,31 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CouponReservationExpiryWorker {
+public class CouponReservationExpiryWorker implements SchedulingConfigurer {
+
+    private static final String EXPIRY_WORKER_DELAY_MS_KEY = "bokati.promotion.coupon.expiry-worker-delay-ms";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<CouponReservationExpiryWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<CouponReservationExpiryWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().releaseExpiredReservations(), triggers.fixedDelay(EXPIRY_WORKER_DELAY_MS_KEY, 120000L));
+    }
 
     private final CouponService couponService;
 
-    @Scheduled(fixedDelayString = "${bokati.promotion.coupon.expiry-worker-delay-ms:120000}")
     public void releaseExpiredReservations() {
         try {
             int released = couponService.releaseExpired();

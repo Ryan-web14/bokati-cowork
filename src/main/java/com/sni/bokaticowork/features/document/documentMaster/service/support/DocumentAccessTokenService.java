@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.document.documentMaster.service.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -36,8 +38,21 @@ public class DocumentAccessTokenService {
     @Value("${app.documents.preview-token.ttl-seconds:300}")
     private long ttlSeconds;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String TTL_KEY = "app.documents.preview-token.ttl-seconds";
+
+    private long ttlSeconds() {
+        return platformSettings == null ? ttlSeconds : platformSettings.number(TTL_KEY, ttlSeconds);
+    }
+
     public IssuedToken issue(String documentCode) {
-        long exp = Instant.now().getEpochSecond() + ttlSeconds;
+        long exp = Instant.now().getEpochSecond() + ttlSeconds();
         String encodedPayload = B64.encodeToString((documentCode + ":" + exp).getBytes(StandardCharsets.UTF_8));
         String token = encodedPayload + "." + B64.encodeToString(hmac(encodedPayload));
         return new IssuedToken(token, Instant.ofEpochSecond(exp));

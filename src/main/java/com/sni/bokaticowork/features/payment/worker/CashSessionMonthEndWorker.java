@@ -5,13 +5,17 @@ import com.sni.bokaticowork.features.payment.repository.CashSessionRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 /**
  * Fin de mois des caisses · une session restee ouverte d'un mois sur l'autre est close par le
@@ -25,7 +29,28 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CashSessionMonthEndWorker {
+public class CashSessionMonthEndWorker implements SchedulingConfigurer {
+
+    private static final String MONTH_END_CRON_KEY = "bokati.payment.cash-session.month-end-cron";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<CashSessionMonthEndWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<CashSessionMonthEndWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().closeLeftOpenSessions(), triggers.cron(MONTH_END_CRON_KEY, "0 5 0 * * *", ZoneId.of("Africa/Brazzaville")));
+    }
 
     static final String JOB = "CASH_SESSION_MONTH_END";
     static final ZoneId ZONE = ZoneId.of("Africa/Brazzaville");
@@ -34,7 +59,6 @@ public class CashSessionMonthEndWorker {
     private final CashRegisterService cashRegisterService;
     private final ScheduledJobRuns jobRuns;
 
-    @Scheduled(cron = "${bokati.payment.cash-session.month-end-cron:0 5 0 * * *}", zone = "Africa/Brazzaville")
     public void closeLeftOpenSessions() {
         String runKey = LocalDate.now(ZONE).toString();
         if (!jobRuns.claim(JOB, runKey)) {

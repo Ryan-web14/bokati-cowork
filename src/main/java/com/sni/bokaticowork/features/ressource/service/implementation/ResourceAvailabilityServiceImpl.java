@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.ressource.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ValidationException;
@@ -73,6 +75,24 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
     @org.springframework.beans.factory.annotation.Value("${bokati.resource.availability.subscriber-hours-from:18:00}")
     private String subscriberHoursFrom = "18:00";
 
+    private static final String RESOURCE_BULK_MAX_RESOURCES_KEY = "bokati.resource.bulk-max-resources";
+    private static final String AVAILABILITY_SUBSCRIBER_HOURS_FROM_KEY = "bokati.resource.availability.subscriber-hours-from";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int maxBulkResources() {
+        return platformSettings == null ? maxBulkResources : platformSettings.integer(RESOURCE_BULK_MAX_RESOURCES_KEY, maxBulkResources);
+    }
+
+    private String subscriberHoursFrom() {
+        return platformSettings == null ? subscriberHoursFrom : platformSettings.text(AVAILABILITY_SUBSCRIBER_HOURS_FROM_KEY, subscriberHoursFrom);
+    }
+
     /**
      * Ouvre la meme plage sur plusieurs ressources.
      *
@@ -88,7 +108,7 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
         // que rien de ce qui est demande ne peut aboutir. Refus net, avant toute ecriture.
         slotPolicy.assertAcceptable(request.getSlotDurationMinutes());
 
-        return bulkExecutor.run(request.getResourceCodes(), maxBulkResources, code -> {
+        return bulkExecutor.run(request.getResourceCodes(), maxBulkResources(), code -> {
             createAvailability(request.forResource(code));
             return countCreated(code, request);
         });
@@ -454,10 +474,10 @@ public class ResourceAvailabilityServiceImpl implements ResourceAvailabilityServ
 
     /** Lue telle quelle et parsee ici · la conversion automatique d'une heure depend de la locale. */
     private boolean isSubscriberHour(LocalTime slotStart) {
-        if (subscriberHoursFrom == null || subscriberHoursFrom.isBlank()) {
+        if (subscriberHoursFrom() == null || subscriberHoursFrom().isBlank()) {
             return false;
         }
-        return !slotStart.isBefore(LocalTime.parse(subscriberHoursFrom.trim()));
+        return !slotStart.isBefore(LocalTime.parse(subscriberHoursFrom().trim()));
     }
 
     @Override

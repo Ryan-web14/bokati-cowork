@@ -3,8 +3,12 @@ package com.sni.bokaticowork.features.payment.worker;
 import com.sni.bokaticowork.features.payment.security.service.WalletConfirmationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 /**
  * Ferme les demandes de confirmation echues.
@@ -18,11 +22,31 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class WalletConfirmationExpiryWorker {
+public class WalletConfirmationExpiryWorker implements SchedulingConfigurer {
+
+    private static final String EXPIRY_DELAY_MS_KEY = "bokati.wallet.confirmation.expiry-delay-ms";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<WalletConfirmationExpiryWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<WalletConfirmationExpiryWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().expire(), triggers.fixedDelay(EXPIRY_DELAY_MS_KEY, 300000L));
+    }
 
     private final WalletConfirmationService confirmationService;
 
-    @Scheduled(fixedDelayString = "${bokati.wallet.confirmation.expiry-delay-ms:300000}")
     public void expire() {
         int closed = confirmationService.expireStale();
         if (closed > 0) {

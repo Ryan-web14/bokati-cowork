@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
 import com.sni.bokaticowork.features.payment.enums.CashAssignmentQuality;
@@ -55,6 +57,19 @@ public class CashRegisterAccessGuard {
     @Value("${bokati.cash.assignment.enforced:true}")
     private boolean assignmentEnforced = true;
 
+    private static final String ASSIGNMENT_ENFORCED_KEY = "bokati.cash.assignment.enforced";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private boolean assignmentEnforced() {
+        return platformSettings == null ? assignmentEnforced : platformSettings.bool(ASSIGNMENT_ENFORCED_KEY, assignmentEnforced);
+    }
+
     private Clock clock = Clock.systemUTC();
 
     void useClock(Clock clock) {
@@ -88,7 +103,7 @@ public class CashRegisterAccessGuard {
                     + ") : vous ne pouvez pas ouvrir de session pendant votre absence");
         });
         CashRegisterAssignment assignment = effectiveAssignment(register.getRegisterCode(), actor, now).orElse(null);
-        if (assignmentEnforced && (assignment == null || assignment.getRole() == CashAssignmentRole.VIEWER)) {
+        if (assignmentEnforced() && (assignment == null || assignment.getRole() == CashAssignmentRole.VIEWER)) {
             throw new ForbiddenException("Vous n'etes pas affecte a la caisse " + register.getRegisterCode()
                     + " : demandez une affectation a son responsable, ou une affectation d'urgence a un superviseur");
         }

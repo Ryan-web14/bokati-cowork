@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.core.communication.mailService.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.communication.mailService.enums.EmailPriority;
 import com.sni.bokaticowork.core.communication.mailService.interfaces.PasswordResetMailService;
@@ -20,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class PasswordResetMailServiceImpl implements PasswordResetMailService {
 
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
     private static final String FORM_PATH = "/sni/api/v1/auth/password-reset/form?token=";
 
     private final DefaultEmailSender emailSender;
@@ -28,11 +31,22 @@ public class PasswordResetMailServiceImpl implements PasswordResetMailService {
     @Value("${app.api-base-url:}")
     private String apiBaseUrl;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(API_BASE_URL_KEY, apiBaseUrl);
+    }
+
     @Async
     @Override
     public CompletableFuture<Boolean> sendPasswordResetMail(Users user, String rawToken, long expirationMs) {
         String firstname = user.getEmail();
-        String link = apiBaseUrl + FORM_PATH + rawToken;
+        String link = apiBaseUrl() + FORM_PATH + rawToken;
 
         long totalMinutes = expirationMs / (1000 * 60);
         String expiryLabel = totalMinutes >= 60

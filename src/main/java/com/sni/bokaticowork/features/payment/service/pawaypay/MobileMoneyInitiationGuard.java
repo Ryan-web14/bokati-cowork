@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.pawaypay;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.utils.phone.PhoneNumbers;
 import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
@@ -39,15 +41,33 @@ public class MobileMoneyInitiationGuard {
     @Value("${bokati.payment.pawaypay.enabled-providers:}")
     private String enabledProviders;
 
+    private static final String PAWAYPAY_OPERATOR_PREFIXES_KEY = "bokati.payment.pawaypay.operator-prefixes";
+    private static final String PAWAYPAY_ENABLED_PROVIDERS_KEY = "bokati.payment.pawaypay.enabled-providers";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String operatorPrefixes() {
+        return platformSettings == null ? operatorPrefixes : platformSettings.text(PAWAYPAY_OPERATOR_PREFIXES_KEY, operatorPrefixes);
+    }
+
+    private String enabledProviders() {
+        return platformSettings == null ? enabledProviders : platformSettings.text(PAWAYPAY_ENABLED_PROVIDERS_KEY, enabledProviders);
+    }
+
     /** L'operateur est-il active sur le compte · la page de paiement ne propose que ceux-la. */
     public boolean isEnabled(CongoCorrespondent operator) {
         if (operator == null) {
             return false;
         }
-        if (!StringUtils.hasText(enabledProviders)) {
+        if (!StringUtils.hasText(enabledProviders())) {
             return true;
         }
-        return java.util.Arrays.stream(enabledProviders.split(","))
+        return java.util.Arrays.stream(enabledProviders().split(","))
                 .map(String::trim)
                 .anyMatch(code -> code.equalsIgnoreCase(operator.name()) || code.equalsIgnoreCase(operator.providerCode()));
     }
@@ -111,10 +131,10 @@ public class MobileMoneyInitiationGuard {
     }
 
     private Map<String, List<String>> prefixes() {
-        if (!StringUtils.hasText(operatorPrefixes)) {
+        if (!StringUtils.hasText(operatorPrefixes())) {
             return Map.of();
         }
-        return Arrays.stream(operatorPrefixes.split(";"))
+        return Arrays.stream(operatorPrefixes().split(";"))
                 .map(String::trim)
                 .filter(entry -> entry.contains("="))
                 .collect(Collectors.toMap(

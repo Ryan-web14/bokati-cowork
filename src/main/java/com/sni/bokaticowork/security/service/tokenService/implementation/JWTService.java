@@ -1,12 +1,13 @@
 package com.sni.bokaticowork.security.service.tokenService.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.security.admin.user.model.UserPrincipal;
 import com.sni.bokaticowork.security.admin.user.model.Users;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -52,11 +53,37 @@ public class JWTService {
     private long accessTokenExpiration;
 
     @Value("${app.security.jwt.refresh-token-expiration-ms:604800000}")
-    @Getter
     private long refreshTokenExpiration;
 
     @Value("${app.security.jwt.verification-token-expiration-ms:900000}")
     private long verificationTokenExpiration;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String ACCESS_EXPIRATION_KEY = "app.security.jwt.access-token-expiration-ms";
+    private static final String REFRESH_EXPIRATION_KEY = "app.security.jwt.refresh-token-expiration-ms";
+    private static final String VERIFICATION_EXPIRATION_KEY = "app.security.jwt.verification-token-expiration-ms";
+
+    private long accessTokenExpiration() {
+        return platformSettings == null ? accessTokenExpiration
+                : platformSettings.number(ACCESS_EXPIRATION_KEY, accessTokenExpiration);
+    }
+
+    /** Duree de vie du jeton de rafraichissement, relue a chaque appel. */
+    public long getRefreshTokenExpiration() {
+        return platformSettings == null ? refreshTokenExpiration
+                : platformSettings.number(REFRESH_EXPIRATION_KEY, refreshTokenExpiration);
+    }
+
+    private long verificationTokenExpiration() {
+        return platformSettings == null ? verificationTokenExpiration
+                : platformSettings.number(VERIFICATION_EXPIRATION_KEY, verificationTokenExpiration);
+    }
 
     public String generateAccesToken(Users user, String sessionId) {
         return generateAccessToken(user, sessionId);
@@ -67,11 +94,11 @@ public class JWTService {
     }
 
     public String generateRefreshToken(Users user, String sessionId) {
-        return buildSimpleToken(user, sessionId, refreshTokenExpiration, TOKEN_TYPE_REFRESH);
+        return buildSimpleToken(user, sessionId, getRefreshTokenExpiration(), TOKEN_TYPE_REFRESH);
     }
 
     public String generateVerificationToken(Users user, String sessionId) {
-        return buildSimpleToken(user, sessionId, verificationTokenExpiration, TOKEN_TYPE_VERIFICATION);
+        return buildSimpleToken(user, sessionId, verificationTokenExpiration(), TOKEN_TYPE_VERIFICATION);
     }
 
     public boolean isTokenExpired(String token) {
@@ -163,7 +190,7 @@ public class JWTService {
 
     private String buildAccessToken(Users user, String sessionId) {
         Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + accessTokenExpiration);
+        Date expirationDate = new Date(now.getTime() + accessTokenExpiration());
 
         UserPrincipal principal = new UserPrincipal(user);
 

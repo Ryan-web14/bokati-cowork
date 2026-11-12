@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.event.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException;
@@ -52,6 +54,20 @@ public class EventRegistrationServiceImpl implements EventRegistrationService {
 
     @Value("${app.event.notification-email:coworkspace@elleaose.com}")
     private String notificationEmail;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String NOTIFICATION_EMAIL_KEY = "app.event.notification-email";
+
+    private String notificationEmail() {
+        return platformSettings == null ? notificationEmail
+                : platformSettings.text(NOTIFICATION_EMAIL_KEY, notificationEmail);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -221,6 +237,7 @@ public class EventRegistrationServiceImpl implements EventRegistrationService {
                 log.warn("Unable to queue thank-you email to {}", registration.getEmail(), ex);
             }
 
+            String notificationEmail = notificationEmail();
             if (!StringUtils.hasText(notificationEmail)) {
                 return;
             }

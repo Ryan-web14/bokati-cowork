@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.ressource.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.exception.customs.ValidationException;
@@ -45,6 +47,19 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
     @org.springframework.beans.factory.annotation.Value("${bokati.resource.bulk-max-resources:20}")
     private int maxBulkResources;
 
+    private static final String RESOURCE_BULK_MAX_RESOURCES_KEY = "bokati.resource.bulk-max-resources";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int maxBulkResources() {
+        return platformSettings == null ? maxBulkResources : platformSettings.integer(RESOURCE_BULK_MAX_RESOURCES_KEY, maxBulkResources);
+    }
+
     /**
      * Delegue a {@link #createPricingRule} ressource par ressource · la validation existante
      * s'applique donc a l'identique. Volontairement non transactionnelle : c'est l'executeur qui
@@ -52,7 +67,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
      */
     @Override
     public BulkResourceOperationResponse createPricingRuleBulk(BulkCreateResourcePricingRuleRequest request) {
-        return bulkExecutor.run(request.getResourceCodes(), maxBulkResources, code -> {
+        return bulkExecutor.run(request.getResourceCodes(), maxBulkResources(), code -> {
             createPricingRule(request.forResource(code));
             return null;
         });
@@ -66,7 +81,7 @@ public class ResourcePricingRuleServiceImpl implements ResourcePricingRuleServic
         List<PricingRuleConflictPreviewResponse.ResourcePreview> previews = new ArrayList<>();
 
         // Meme normalisation que la creation · un lot accepte ici doit l'etre a la creation.
-        List<String> codes = bulkExecutor.normalizeCodes(request.getResourceCodes(), maxBulkResources);
+        List<String> codes = bulkExecutor.normalizeCodes(request.getResourceCodes(), maxBulkResources());
 
         for (String code : codes) {
             Resource resource = resourceService.getResourceForService(code);

@@ -9,12 +9,16 @@ import com.sni.bokaticowork.features.payment.cash.service.CashPaymentDeclaration
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 /**
  * Une annonce que personne n honore finit par tomber · et rend ce qu elle tenait.
@@ -30,7 +34,28 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CashDeclarationExpiryWorker {
+public class CashDeclarationExpiryWorker implements SchedulingConfigurer {
+
+    private static final String EXPIRY_DELAY_MS_KEY = "bokati.payment.cash-declaration.expiry-delay-ms";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<CashDeclarationExpiryWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<CashDeclarationExpiryWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().expireStaleDeclarations(), triggers.fixedDelay(EXPIRY_DELAY_MS_KEY, 900000L));
+    }
 
     private static final int BATCH = 100;
 
@@ -43,7 +68,6 @@ public class CashDeclarationExpiryWorker {
     public record Sweep(int expired, int bookingsReleased) {
     }
 
-    @Scheduled(fixedDelayString = "${bokati.payment.cash-declaration.expiry-delay-ms:900000}")
     public void expireStaleDeclarations() {
         try {
             Sweep sweep = run();

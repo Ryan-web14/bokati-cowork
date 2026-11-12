@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.core.utils.mail.Recipients;
 import com.sni.bokaticowork.features.payment.enums.PaymentChannel;
@@ -48,6 +50,25 @@ public class SelfServicePaymentNotifier {
     @Value("${bokati.payment.self-service.confirmation-email:${bokati.support.manager-email:}}")
     private String confirmationEmail;
 
+    private static final String SELF_SERVICE_CONFIRMATION_EMAIL_KEY = "bokati.payment.self-service.confirmation-email";
+    private static final String MANAGER_EMAIL_KEY = "bokati.support.manager-email";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String confirmationEmail() {
+        if (platformSettings == null) {
+            return confirmationEmail;
+        }
+        // repli imbrique : adresse du responsable du support, comme dans le fichier de configuration
+        return platformSettings.text(SELF_SERVICE_CONFIRMATION_EMAIL_KEY,
+                platformSettings.text(MANAGER_EMAIL_KEY, confirmationEmail));
+    }
+
     /**
      * Un reglement vient d'aboutir · on ne parle que de ceux que personne n'a vus passer.
      *
@@ -72,7 +93,7 @@ public class SelfServicePaymentNotifier {
         String subject = "Paiement client · " + facts.get("amount") + " " + facts.get("currency")
                 + " par " + facts.get("customerName");
 
-        List<String> recipients = Recipients.split(confirmationEmail);
+        List<String> recipients = Recipients.split(confirmationEmail());
         if (recipients.isEmpty()) {
             log.info("Paiement libre-service {} · aucune adresse de confirmation configuree",
                     transaction.getTransactionNumber());

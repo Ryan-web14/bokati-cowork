@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.compliance.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -73,6 +75,34 @@ public class ComplianceCaseService {
 
     @Value("${bokati.compliance.case.due-hours.low:336}")
     private int dueHoursLow;
+
+    private static final String DUE_HOURS_CRITICAL_KEY = "bokati.compliance.case.due-hours.critical";
+    private static final String DUE_HOURS_HIGH_KEY = "bokati.compliance.case.due-hours.high";
+    private static final String DUE_HOURS_MEDIUM_KEY = "bokati.compliance.case.due-hours.medium";
+    private static final String DUE_HOURS_LOW_KEY = "bokati.compliance.case.due-hours.low";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int dueHoursCritical() {
+        return platformSettings == null ? dueHoursCritical : platformSettings.integer(DUE_HOURS_CRITICAL_KEY, dueHoursCritical);
+    }
+
+    private int dueHoursHigh() {
+        return platformSettings == null ? dueHoursHigh : platformSettings.integer(DUE_HOURS_HIGH_KEY, dueHoursHigh);
+    }
+
+    private int dueHoursMedium() {
+        return platformSettings == null ? dueHoursMedium : platformSettings.integer(DUE_HOURS_MEDIUM_KEY, dueHoursMedium);
+    }
+
+    private int dueHoursLow() {
+        return platformSettings == null ? dueHoursLow : platformSettings.integer(DUE_HOURS_LOW_KEY, dueHoursLow);
+    }
 
     // -----------------------------------------------------------------------------------------
     // Ouvrir
@@ -362,10 +392,10 @@ public class ComplianceCaseService {
 
     private Instant dueFor(ComplianceCase.Priority priority, Instant from) {
         int hours = switch (priority) {
-            case CRITICAL -> dueHoursCritical;
-            case HIGH -> dueHoursHigh;
-            case MEDIUM -> dueHoursMedium;
-            case LOW -> dueHoursLow;
+            case CRITICAL -> dueHoursCritical();
+            case HIGH -> dueHoursHigh();
+            case MEDIUM -> dueHoursMedium();
+            case LOW -> dueHoursLow();
         };
         return from.plus(Duration.ofHours(Math.max(1, hours)));
     }

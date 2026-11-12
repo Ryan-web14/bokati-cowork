@@ -27,20 +27,20 @@ accounting.currencies	ACCOUNTING	TEXT	LIVE	EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR	Devis
 accounting.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite active (ecritures automatiques de la plateforme)
 accounting.exchange.auto-fetch	ACCOUNTING	BOOLEAN	LIVE	true	Recuperation automatique des taux du jour sur internet
 accounting.exchange.eur-parity	ACCOUNTING	DECIMAL	LIVE	655.957	Parite fixe de l'euro en francs CFA
-accounting.exchange.fetch-cron	ACCOUNTING	CRON	RESTART	0 15 7 * * *	Planification de la recuperation des taux de change
+accounting.exchange.fetch-cron	ACCOUNTING	CRON	LIVE	0 15 7 * * *	Planification de la recuperation des taux de change
 accounting.exchange.gain-account	ACCOUNTING	TEXT	LIVE	776	Compte des gains de change au reglement d'une facture en devise
 accounting.exchange.loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes de change au reglement d'une facture en devise
 accounting.exchange.provider-url	ACCOUNTING	TEXT	LIVE	https://api.frankfurter.dev/v1/latest?from=EUR	Adresse du fournisseur de taux (reponse JSON en base EUR)
 accounting.financing.analytic-axis	ACCOUNTING	TEXT	LIVE		Axe analytique des sections portees par les emprunts et la paie (vide : pas de ventilation)
-accounting.financing.cron	ACCOUNTING	CRON	RESTART	0 45 6 * * *	Tenue quotidienne : echeances d'emprunt, alertes, hors bilan
-accounting.lettering.auto-delay-ms	ACCOUNTING	INTEGER	RESTART	600000	Intervalle du lettrage automatique des comptes clients (millisecondes)
+accounting.financing.cron	ACCOUNTING	CRON	LIVE	0 45 6 * * *	Tenue quotidienne : echeances d'emprunt, alertes, hors bilan
+accounting.lettering.auto-delay-ms	ACCOUNTING	INTEGER	LIVE	600000	Intervalle du lettrage automatique des comptes clients (millisecondes)
 accounting.lettering.difference-threshold	ACCOUNTING	INTEGER	LIVE	500	Ecart de reglement maximal au lettrage (XAF)
 accounting.lettering.gain-account	ACCOUNTING	TEXT	LIVE	758	Compte des ecarts de reglement favorables
 accounting.lettering.loss-account	ACCOUNTING	TEXT	LIVE	658	Compte des ecarts de reglement defavorables
 accounting.loan.accrual-journal	ACCOUNTING	TEXT	LIVE	OD	Journal des interets courus des emprunts
 accounting.loan.alert-days	ACCOUNTING	INTEGER	LIVE	7	Alerte des comptables avant une echeance d'emprunt (jours)
 accounting.manual-entry.second-validation-threshold	ACCOUNTING	INTEGER	LIVE	0	Montant au-dela duquel une piece manuelle est validee par un autre comptable (0 : jamais)
-accounting.night-worker-cron	ACCOUNTING	CRON	RESTART	0 30 2 * * *	Planification du controle de continuite et des relances comptables
+accounting.night-worker-cron	ACCOUNTING	CRON	LIVE	0 30 2 * * *	Planification du controle de continuite et des relances comptables
 accounting.notify-emails	ACCOUNTING	TEXT	LIVE		Destinataires des alertes comptables (comptables, administrateur finance), separes par des virgules
 accounting.numbering.chronology	ACCOUNTING	ENUM	LIVE	STRICT	Ordre des pieces : STRICT (dates croissantes) ou PERIOD
 accounting.numbering.width	ACCOUNTING	INTEGER	LIVE	6	Longueur de la sequence des numeros de piece
@@ -61,6 +61,7 @@ accounting.purchase.vat-account	ACCOUNTING	TEXT	LIVE	4452	TVA recuperable sur ac
 accounting.purchase.vat-account-fixed-assets	ACCOUNTING	TEXT	LIVE	4451	TVA recuperable sur immobilisations (comptes de classe 2)
 accounting.purchase.vat-account-services	ACCOUNTING	TEXT	LIVE	4454	TVA recuperable sur services exterieurs (comptes 62 et 63)
 accounting.purchase.withholding-account	ACCOUNTING	TEXT	LIVE	447	Compte des retenues a la source operees sur les fournisseurs
+accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	LIVE	30000	Intervalle du moteur d'imputation (millisecondes)
 accounting.replay-until	ACCOUNTING	TEXT	LIVE		Reprise : les faits dates avant ce jour produisent des brouillards a valider en bloc (vide : pas de reprise)
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
 accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients
@@ -89,16 +90,16 @@ accounting.wallet.admin-account	ACCOUNTING	TEXT	LIVE	471	Contrepartie des ajuste
 accounting.wallet.fee-account	ACCOUNTING	TEXT	LIVE	706	Compte des frais de transfert entre portefeuilles
 accounting.wallet.journal	ACCOUNTING	TEXT	LIVE	PF	Journal du portefeuille electronique
 accounting.wallet.promotion-account	ACCOUNTING	TEXT	LIVE	658	Compte des credits promotionnels et remises en argent
-app.admin-access-url	ENVIRONMENT	TEXT	RESTART	https://admin.elleaose.com	Adresse de l'administration
-app.api-base-url	ENVIRONMENT	TEXT	RESTART	http://localhost:8080	Adresse de l'API
-app.company.machine-code	ENVIRONMENT	TEXT	RESTART	00000	Code machine de l'exploitant
-app.contract.signing-token-hours	CONTRACTS	INTEGER	RESTART	72	Validité du lien de signature (heures)
-app.contract.worker.enabled	CONTRACTS	BOOLEAN	RESTART	true	Traitement des contrats actif
-app.contract.worker.fixed-delay-ms	CONTRACTS	INTEGER	RESTART	3600000	Cadence du traitement des contrats (ms)
-app.dev-mode	ENVIRONMENT	BOOLEAN	RESTART	false	Mode développement
-app.document.default-expiry-years	DOCUMENTS	INTEGER	RESTART	5	Expiration par défaut d'un document (années)
-app.document.retention.cron	DOCUMENTS	CRON	RESTART	0 30 2 * * *	Planification de la rétention des documents
-app.document.retention.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Rétention des documents active
+app.admin-access-url	ENVIRONMENT	TEXT	LIVE	https://admin.elleaose.com	Adresse de l'administration
+app.api-base-url	ENVIRONMENT	TEXT	LIVE	http://localhost:8080	Adresse de l'API
+app.company.machine-code	ENVIRONMENT	TEXT	LIVE	00000	Code machine de l'exploitant
+app.contract.signing-token-hours	CONTRACTS	INTEGER	LIVE	72	Validité du lien de signature (heures)
+app.contract.worker.enabled	CONTRACTS	BOOLEAN	LIVE	true	Traitement des contrats actif
+app.contract.worker.fixed-delay-ms	CONTRACTS	INTEGER	LIVE	3600000	Cadence du traitement des contrats (ms)
+app.dev-mode	ENVIRONMENT	BOOLEAN	LIVE	false	Mode développement
+app.document.default-expiry-years	DOCUMENTS	INTEGER	LIVE	5	Expiration par défaut d'un document (années)
+app.document.retention.cron	DOCUMENTS	CRON	LIVE	0 30 2 * * *	Planification de la rétention des documents
+app.document.retention.enabled	DOCUMENTS	BOOLEAN	LIVE	true	Rétention des documents active
 app.document.storage.minio.access-key	DOCUMENTS	SECRET	RESTART		Clé d'accès du stockage
 app.document.storage.minio.bucket	DOCUMENTS	TEXT	RESTART	bokati-documents	Compartiment de stockage
 app.document.storage.minio.endpoint	DOCUMENTS	TEXT	RESTART	http://localhost:9000	Adresse du stockage
@@ -106,243 +107,243 @@ app.document.storage.minio.region	DOCUMENTS	TEXT	RESTART		Région du stockage
 app.document.storage.minio.secret-key	DOCUMENTS	SECRET	RESTART		Clé secrète du stockage
 app.document.storage.provider	DOCUMENTS	TEXT	RESTART	filesystem	Fournisseur de stockage
 app.document.storage.root-path	DOCUMENTS	TEXT	RESTART	storage/documents	Dossier racine du stockage
-app.document.worker.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Traitement des documents actif
-app.document.worker.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du traitement des documents (ms)
+app.document.worker.enabled	DOCUMENTS	BOOLEAN	LIVE	true	Traitement des documents actif
+app.document.worker.fixed-delay-ms	DOCUMENTS	INTEGER	LIVE	3600000	Cadence du traitement des documents (ms)
 app.documents.preview-token.secret	DOCUMENTS	SECRET	RESTART		Secret des liens d'aperçu
-app.documents.preview-token.ttl-seconds	DOCUMENTS	INTEGER	RESTART	300	Validité d'un lien d'aperçu (secondes)
-app.documents.public-preview-enabled	DOCUMENTS	BOOLEAN	RESTART	false	Aperçu public des documents
+app.documents.preview-token.ttl-seconds	DOCUMENTS	INTEGER	LIVE	300	Validité d'un lien d'aperçu (secondes)
+app.documents.public-preview-enabled	DOCUMENTS	BOOLEAN	RESTART	true	Aperçu public des documents
 app.error.verbose	ENVIRONMENT	BOOLEAN	RESTART	false	Erreurs détaillées
-app.event.notification-email	EVENTS	EMAIL	RESTART	coworkspace@elleaose.com	Adresse de notification des événements
-app.event.opening-code	EVENTS	TEXT	RESTART	OUVERTURE	Code de l'événement d'ouverture
-app.frontend-url	ENVIRONMENT	TEXT	RESTART	https://elleaose.com	Adresse du portail
-app.ged.filing.batch-size	DOCUMENTS	INTEGER	RESTART	1000	Documents rangés par passage du classement GED
-app.ged.filing.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Classement automatique de la GED actif
-app.ged.filing.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du classement GED (ms)
+app.event.notification-email	EVENTS	EMAIL	LIVE	coworkspace@elleaose.com	Adresse de notification des événements
+app.event.opening-code	EVENTS	TEXT	LIVE	OUVERTURE	Code de l'événement d'ouverture
+app.frontend-url	ENVIRONMENT	TEXT	LIVE	https://elleaose.com	Adresse du portail
+app.ged.filing.batch-size	DOCUMENTS	INTEGER	LIVE	1000	Documents rangés par passage du classement GED
+app.ged.filing.enabled	DOCUMENTS	BOOLEAN	LIVE	true	Classement automatique de la GED actif
+app.ged.filing.fixed-delay-ms	DOCUMENTS	INTEGER	LIVE	3600000	Cadence du classement GED (ms)
 app.ged.filing.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	120000	Délai avant le premier classement GED (ms)
-app.ged.quota.total-bytes	DOCUMENTS	INTEGER	RESTART	0	Quota d'espace de toute la GED en octets (0 : aucun)
-app.ged.text.batch-size	DOCUMENTS	INTEGER	RESTART	20	Fichiers GED lus par passage
-app.ged.text.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Lecture du texte des fichiers GED (recherche) active
-app.ged.text.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	60000	Cadence de lecture des fichiers GED (ms)
+app.ged.quota.total-bytes	DOCUMENTS	INTEGER	LIVE	0	Quota d'espace de toute la GED en octets (0 : aucun)
+app.ged.text.batch-size	DOCUMENTS	INTEGER	LIVE	20	Fichiers GED lus par passage
+app.ged.text.enabled	DOCUMENTS	BOOLEAN	LIVE	true	Lecture du texte des fichiers GED (recherche) active
+app.ged.text.fixed-delay-ms	DOCUMENTS	INTEGER	LIVE	60000	Cadence de lecture des fichiers GED (ms)
 app.ged.text.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	180000	Délai avant la première lecture des fichiers GED (ms)
-app.ged.text.max-chars	DOCUMENTS	INTEGER	RESTART	300000	Caractères gardés au plus, par fichier GED
-app.ged.text.max-ocr-pages	DOCUMENTS	INTEGER	RESTART	30	Pages lues par OCR au plus, par fichier GED
-app.ged.text.ocr-data-path	DOCUMENTS	TEXT	RESTART		Dossier des langues Tesseract (tessdata) pour la GED
-app.ged.text.ocr-enabled	DOCUMENTS	BOOLEAN	RESTART	true	OCR des scans et images de la GED
-app.ged.text.ocr-language	DOCUMENTS	TEXT	RESTART	fra+eng	Langues de l'OCR de la GED (Tesseract)
-app.ged.trash.purge-cron	DOCUMENTS	CRON	RESTART	0 15 3 * * *	Heure du vidage de la corbeille GED
-app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	RESTART	true	Vidage automatique de la corbeille GED
-app.ged.trash.retention-days	DOCUMENTS	INTEGER	RESTART	30	Jours en corbeille GED avant destruction
+app.ged.text.max-chars	DOCUMENTS	INTEGER	LIVE	300000	Caractères gardés au plus, par fichier GED
+app.ged.text.max-ocr-pages	DOCUMENTS	INTEGER	LIVE	30	Pages lues par OCR au plus, par fichier GED
+app.ged.text.ocr-data-path	DOCUMENTS	TEXT	LIVE		Dossier des langues Tesseract (tessdata) pour la GED
+app.ged.text.ocr-enabled	DOCUMENTS	BOOLEAN	LIVE	true	OCR des scans et images de la GED
+app.ged.text.ocr-language	DOCUMENTS	TEXT	LIVE	fra+eng	Langues de l'OCR de la GED (Tesseract)
+app.ged.trash.purge-cron	DOCUMENTS	CRON	LIVE	0 15 3 * * *	Heure du vidage de la corbeille GED
+app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	LIVE	true	Vidage automatique de la corbeille GED
+app.ged.trash.retention-days	DOCUMENTS	INTEGER	LIVE	30	Jours en corbeille GED avant destruction
 app.locale	LOCALE	TEXT	RESTART	fr_FR	Langue de la plateforme
-app.outbox.worker.batch-size	OUTBOX	INTEGER	RESTART	25	Taille de lot de la boîte d'envoi
-app.outbox.worker.enabled	OUTBOX	BOOLEAN	RESTART	true	Boîte d'envoi active
-app.outbox.worker.fixed-delay-ms	OUTBOX	INTEGER	RESTART	2000	Cadence de la boîte d'envoi (ms)
-app.phone.default-country	LOCALE	TEXT	RESTART	CG	Pays par défaut des téléphones
-app.phone.default-dial-code	LOCALE	TEXT	RESTART	+242	Indicatif par défaut
-app.phone.keep-trunk-zero	LOCALE	TEXT	RESTART	CG,GA,CI,IT	Pays qui gardent le zéro initial
-app.portal.kyc-grace-period-days	PORTAL	INTEGER	RESTART	7	Grâce KYC du portail (jours)
-app.referral.share-url-template	ENVIRONMENT	TEXT	RESTART	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
+app.outbox.worker.batch-size	OUTBOX	INTEGER	LIVE	25	Taille de lot de la boîte d'envoi
+app.outbox.worker.enabled	OUTBOX	BOOLEAN	LIVE	true	Boîte d'envoi active
+app.outbox.worker.fixed-delay-ms	OUTBOX	INTEGER	LIVE	2000	Cadence de la boîte d'envoi (ms)
+app.phone.default-country	LOCALE	TEXT	LIVE	CG	Pays par défaut des téléphones
+app.phone.default-dial-code	LOCALE	TEXT	LIVE	+242	Indicatif par défaut
+app.phone.keep-trunk-zero	LOCALE	TEXT	LIVE	CG,GA,CI,IT	Pays qui gardent le zéro initial
+app.portal.kyc-grace-period-days	PORTAL	INTEGER	LIVE	7	Grâce KYC du portail (jours)
+app.referral.share-url-template	ENVIRONMENT	TEXT	LIVE	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
 app.security.bootstrap.secret	SECURITY	SECRET	RESTART		Secret d'initialisation
 app.security.cors.allowed-origins	SECURITY	TEXT	RESTART	*	Origines autorisées
-app.security.failed-login.max-attempts	SECURITY	INTEGER	RESTART	5	Essais de connexion avant blocage
-app.security.jwt.access-token-expiration-ms	SECURITY	INTEGER	RESTART	900000	Durée d'un jeton d'accès (ms)
-app.security.jwt.refresh-reuse-grace-seconds	SECURITY	INTEGER	RESTART	30	Grâce de réutilisation du jeton de rafraîchissement (secondes)
-app.security.jwt.refresh-token-expiration-ms	SECURITY	INTEGER	RESTART	604800000	Durée d'un jeton de rafraîchissement (ms)
+app.security.failed-login.max-attempts	SECURITY	INTEGER	LIVE	5	Essais de connexion avant blocage
+app.security.jwt.access-token-expiration-ms	SECURITY	INTEGER	LIVE	900000	Durée d'un jeton d'accès (ms)
+app.security.jwt.refresh-reuse-grace-seconds	SECURITY	INTEGER	LIVE	30	Grâce de réutilisation du jeton de rafraîchissement (secondes)
+app.security.jwt.refresh-token-expiration-ms	SECURITY	INTEGER	LIVE	604800000	Durée d'un jeton de rafraîchissement (ms)
 app.security.jwt.secret	SECURITY	SECRET	RESTART		Secret des jetons
-app.security.jwt.verification-token-expiration-ms	SECURITY	INTEGER	RESTART	900000	Durée d'un jeton de vérification (ms)
-app.security.one-time-token.expiration-ms	SECURITY	INTEGER	RESTART	900000	Durée d'un jeton à usage unique (ms)
-app.security.password-reset.expiration-ms	SECURITY	INTEGER	RESTART	900000	Durée d'un lien de mot de passe oublié (ms)
-app.security.rate-limit.admin.max-requests	SECURITY	INTEGER	RESTART	600	Plafond de requêtes · administration
-app.security.rate-limit.admin.window-seconds	SECURITY	INTEGER	RESTART	60	Fenêtre · administration (secondes)
-app.security.rate-limit.callback.max-requests	SECURITY	INTEGER	RESTART	120	Plafond de requêtes · rappels des opérateurs
-app.security.rate-limit.callback.window-seconds	SECURITY	INTEGER	RESTART	60	Fenêtre · rappels des opérateurs (secondes)
-app.security.rate-limit.checkin.max-requests	SECURITY	INTEGER	RESTART	120	Plafond de requêtes · check-in
-app.security.rate-limit.checkin.window-seconds	SECURITY	INTEGER	RESTART	60	Fenêtre · check-in (secondes)
-app.security.rate-limit.default.max-requests	SECURITY	INTEGER	RESTART	300	Plafond de requêtes · par défaut
-app.security.rate-limit.default.window-seconds	SECURITY	INTEGER	RESTART	60	Fenêtre · par défaut (secondes)
-app.security.rate-limit.enabled	SECURITY	BOOLEAN	RESTART	true	Plafonds de requêtes actifs
-app.security.rate-limit.login.max-requests	SECURITY	INTEGER	RESTART	5	Plafond de requêtes · connexion
-app.security.rate-limit.login.window-seconds	SECURITY	INTEGER	RESTART	60	Fenêtre · connexion (secondes)
-app.security.rate-limit.otp.max-requests	SECURITY	INTEGER	RESTART	3	Plafond de requêtes · codes à usage unique
-app.security.rate-limit.otp.window-seconds	SECURITY	INTEGER	RESTART	600	Fenêtre · codes à usage unique (secondes)
-app.security.rate-limit.public-write.max-requests	SECURITY	INTEGER	RESTART	10	Plafond de requêtes · formulaires publics
-app.security.rate-limit.public-write.window-seconds	SECURITY	INTEGER	RESTART	600	Fenêtre · formulaires publics (secondes)
-app.security.rate-limit.register.max-requests	SECURITY	INTEGER	RESTART	5	Plafond de requêtes · inscription
-app.security.rate-limit.register.window-seconds	SECURITY	INTEGER	RESTART	3600	Fenêtre · inscription (secondes)
-app.security.rate-limit.trusted-proxy-count	SECURITY	INTEGER	RESTART	1	Nombre de relais de confiance
-app.security.rate-limit.upload.max-requests	SECURITY	INTEGER	RESTART	5	Plafond de requêtes · envois de fichiers
-app.security.rate-limit.upload.window-seconds	SECURITY	INTEGER	RESTART	600	Fenêtre · envois de fichiers (secondes)
-app.security.rate-limit.verify.max-requests	SECURITY	INTEGER	RESTART	60	Plafond de requêtes · vérification
-app.security.rate-limit.verify.window-seconds	SECURITY	INTEGER	RESTART	600	Fenêtre · vérification (secondes)
-app.security.registration.blocked-domains	SECURITY	TEXT	RESTART		Domaines d'e-mail bloqués à l'inscription
-app.security.registration.dns-timeout-ms	SECURITY	INTEGER	RESTART	3000	Délai de vérification DNS (ms)
-app.security.registration.mx-check-enabled	SECURITY	BOOLEAN	RESTART	true	Vérification du domaine d'e-mail
+app.security.jwt.verification-token-expiration-ms	SECURITY	INTEGER	LIVE	900000	Durée d'un jeton de vérification (ms)
+app.security.one-time-token.expiration-ms	SECURITY	INTEGER	LIVE	900000	Durée d'un jeton à usage unique (ms)
+app.security.password-reset.expiration-ms	SECURITY	INTEGER	LIVE	900000	Durée d'un lien de mot de passe oublié (ms)
+app.security.rate-limit.admin.max-requests	SECURITY	INTEGER	LIVE	600	Plafond de requêtes · administration
+app.security.rate-limit.admin.window-seconds	SECURITY	INTEGER	LIVE	60	Fenêtre · administration (secondes)
+app.security.rate-limit.callback.max-requests	SECURITY	INTEGER	LIVE	120	Plafond de requêtes · rappels des opérateurs
+app.security.rate-limit.callback.window-seconds	SECURITY	INTEGER	LIVE	60	Fenêtre · rappels des opérateurs (secondes)
+app.security.rate-limit.checkin.max-requests	SECURITY	INTEGER	LIVE	120	Plafond de requêtes · check-in
+app.security.rate-limit.checkin.window-seconds	SECURITY	INTEGER	LIVE	60	Fenêtre · check-in (secondes)
+app.security.rate-limit.default.max-requests	SECURITY	INTEGER	LIVE	300	Plafond de requêtes · par défaut
+app.security.rate-limit.default.window-seconds	SECURITY	INTEGER	LIVE	60	Fenêtre · par défaut (secondes)
+app.security.rate-limit.enabled	SECURITY	BOOLEAN	LIVE	true	Plafonds de requêtes actifs
+app.security.rate-limit.login.max-requests	SECURITY	INTEGER	LIVE	5	Plafond de requêtes · connexion
+app.security.rate-limit.login.window-seconds	SECURITY	INTEGER	LIVE	60	Fenêtre · connexion (secondes)
+app.security.rate-limit.otp.max-requests	SECURITY	INTEGER	LIVE	3	Plafond de requêtes · codes à usage unique
+app.security.rate-limit.otp.window-seconds	SECURITY	INTEGER	LIVE	600	Fenêtre · codes à usage unique (secondes)
+app.security.rate-limit.public-write.max-requests	SECURITY	INTEGER	LIVE	10	Plafond de requêtes · formulaires publics
+app.security.rate-limit.public-write.window-seconds	SECURITY	INTEGER	LIVE	600	Fenêtre · formulaires publics (secondes)
+app.security.rate-limit.register.max-requests	SECURITY	INTEGER	LIVE	5	Plafond de requêtes · inscription
+app.security.rate-limit.register.window-seconds	SECURITY	INTEGER	LIVE	3600	Fenêtre · inscription (secondes)
+app.security.rate-limit.trusted-proxy-count	SECURITY	INTEGER	LIVE	1	Nombre de relais de confiance
+app.security.rate-limit.upload.max-requests	SECURITY	INTEGER	LIVE	5	Plafond de requêtes · envois de fichiers
+app.security.rate-limit.upload.window-seconds	SECURITY	INTEGER	LIVE	600	Fenêtre · envois de fichiers (secondes)
+app.security.rate-limit.verify.max-requests	SECURITY	INTEGER	LIVE	60	Plafond de requêtes · vérification
+app.security.rate-limit.verify.window-seconds	SECURITY	INTEGER	LIVE	600	Fenêtre · vérification (secondes)
+app.security.registration.blocked-domains	SECURITY	TEXT	LIVE		Domaines d'e-mail bloqués à l'inscription
+app.security.registration.dns-timeout-ms	SECURITY	INTEGER	LIVE	3000	Délai de vérification DNS (ms)
+app.security.registration.mx-check-enabled	SECURITY	BOOLEAN	LIVE	true	Vérification du domaine d'e-mail
 app.security.token-hash.secret	SECURITY	SECRET	RESTART		Secret d'empreinte des jetons
 app.time-zone	LOCALE	TEXT	RESTART	Africa/Lagos	Fuseau horaire
-app.verify-base-url	ENVIRONMENT	TEXT	RESTART	https://api.elleaose.com	Adresse de vérification
-bokati.billing.default-currency	BILLING	TEXT	RESTART	XAF	Devise par défaut
-bokati.billing.dunning.batch-size	BILLING	INTEGER	RESTART	200	Taille de lot des relances
-bokati.billing.dunning.cron	BILLING	CRON	RESTART	0 30 8 * * *	Planification des relances
-bokati.billing.dunning.handover-email	BILLING	EMAIL	RESTART		Adresse de reprise des impayés
-bokati.billing.workers.annual-closure-cron	BILLING	CRON	RESTART	0 0 1 1 1 *	Planification de la clôture annuelle
-bokati.billing.workers.daily-closure-cron	BILLING	CRON	RESTART	0 30 23 * * *	Planification de la clôture journalière
-bokati.billing.workers.fiscal-integrity-cron	BILLING	CRON	RESTART	0 0 2 * * *	Planification du contrôle d'intégrité fiscale
-bokati.billing.workers.monthly-closure-cron	BILLING	CRON	RESTART	0 15 0 1 * *	Planification de la clôture mensuelle
-bokati.billing.workers.overdue-delay-ms	BILLING	INTEGER	RESTART	3600000	Cadence du suivi des factures échues (ms)
-bokati.billing.workers.payment-reminder-cooldown-days	BILLING	INTEGER	RESTART	7	Intervalle entre deux rappels (jours)
-bokati.billing.workers.payment-reminder-cron	BILLING	CRON	RESTART	0 0 8 * * *	Planification des rappels de paiement
-bokati.billing.workers.payment-reminder-max	BILLING	INTEGER	RESTART	3	Nombre maximum de rappels
-bokati.billing.workers.schedule-overdue-delay-ms	BILLING	INTEGER	RESTART	3600000	Cadence du suivi des échéanciers (ms)
-bokati.booking.lifecycle.worker-delay-ms	BOOKING	INTEGER	RESTART	60000	Cadence du suivi des réservations (ms)
-bokati.booking.no-show.worker-delay-ms	BOOKING	INTEGER	RESTART	60000	Cadence du suivi des absences (ms)
+app.verify-base-url	ENVIRONMENT	TEXT	LIVE	https://api.elleaose.com	Adresse de vérification
+bokati.billing.default-currency	BILLING	TEXT	LIVE	XAF	Devise par défaut
+bokati.billing.dunning.batch-size	BILLING	INTEGER	LIVE	200	Taille de lot des relances
+bokati.billing.dunning.cron	BILLING	CRON	LIVE	0 30 8 * * *	Planification des relances
+bokati.billing.dunning.handover-email	BILLING	EMAIL	LIVE		Adresse de reprise des impayés
+bokati.billing.workers.annual-closure-cron	BILLING	CRON	LIVE	0 0 1 1 1 *	Planification de la clôture annuelle
+bokati.billing.workers.daily-closure-cron	BILLING	CRON	LIVE	0 30 23 * * *	Planification de la clôture journalière
+bokati.billing.workers.fiscal-integrity-cron	BILLING	CRON	LIVE	0 0 2 * * *	Planification du contrôle d'intégrité fiscale
+bokati.billing.workers.monthly-closure-cron	BILLING	CRON	LIVE	0 15 0 1 * *	Planification de la clôture mensuelle
+bokati.billing.workers.overdue-delay-ms	BILLING	INTEGER	LIVE	3600000	Cadence du suivi des factures échues (ms)
+bokati.billing.workers.payment-reminder-cooldown-days	BILLING	INTEGER	LIVE	7	Intervalle entre deux rappels (jours)
+bokati.billing.workers.payment-reminder-cron	BILLING	CRON	LIVE	0 0 8 * * *	Planification des rappels de paiement
+bokati.billing.workers.payment-reminder-max	BILLING	INTEGER	LIVE	3	Nombre maximum de rappels
+bokati.billing.workers.schedule-overdue-delay-ms	BILLING	INTEGER	LIVE	3600000	Cadence du suivi des échéanciers (ms)
+bokati.booking.lifecycle.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Cadence du suivi des réservations (ms)
+bokati.booking.no-show.worker-delay-ms	BOOKING	INTEGER	LIVE	60000	Cadence du suivi des absences (ms)
 bokati.booking.staff.max-backdate-days	BOOKING	INTEGER	LIVE	31	Rétroaction d'une réservation de l'équipe (jours)
-bokati.booking.virtual-room.base-url	BOOKING	TEXT	RESTART	https://meet.jit.si	Adresse des salles virtuelles
-bokati.booking.waitlist.offer-ttl-minutes	BOOKING	INTEGER	RESTART	30	Durée d'une offre de liste d'attente (minutes)
-bokati.booking.waitlist.worker-delay-ms	BOOKING	INTEGER	RESTART	300000	Cadence de la liste d'attente (ms)
-bokati.booking.wallet.hold-grace-minutes	BOOKING	INTEGER	RESTART	60	Grâce de retenue sur portefeuille (minutes)
-bokati.booking.wallet.settlement-delay-minutes	BOOKING	INTEGER	RESTART	1	Délai de règlement sur portefeuille (minutes)
-bokati.booking.wallet.worker-delay-ms	BOOKING	INTEGER	RESTART	15000	Cadence des retenues de réservation (ms)
-bokati.cash.assignment.enforced	PAYMENT	BOOLEAN	RESTART	true	Ouverture de session reservee aux personnes affectees a la caisse
-bokati.cash.forced-close.contest-days	PAYMENT	INTEGER	RESTART	3	Delai de contestation d'une cloture d'office (jours)
-bokati.cash.refund.max-cash-amount	PAYMENT	INTEGER	RESTART	0	Remboursement en especes au-dela duquel le virement est impose (0 : sans limite)
-bokati.cash.reversal.cashier-max-amount	PAYMENT	INTEGER	RESTART	50000	Plafond d'une contre-passation par le caissier seul
-bokati.cash.reversal.cashier-minutes	PAYMENT	INTEGER	RESTART	15	Delai pendant lequel le caissier contre-passe seul (minutes)
-bokati.cash.staff-worker-cron	PAYMENT	CRON	RESTART	0 10 * * * *	Planification du suivi des absences et des sessions trop longues
-bokati.cash.transfer.max-transit-hours	PAYMENT	INTEGER	RESTART	2	Transit maximal d'un transfert de caisse avant alerte (heures)
-bokati.cash.variance.investigation-days	PAYMENT	INTEGER	RESTART	30	Echeance de revue d'un ecart mis en recherche (jours)
-bokati.cash.visa.expiry-hours	PAYMENT	INTEGER	RESTART	24	Delai du second visa d'une operation de caisse (heures)
-bokati.company.wallet.approval-expiry-delay-ms	COMPANIES	INTEGER	RESTART	600000	Cadence d'expiration des validations (ms)
+bokati.booking.virtual-room.base-url	BOOKING	TEXT	LIVE	https://meet.jit.si	Adresse des salles virtuelles
+bokati.booking.waitlist.offer-ttl-minutes	BOOKING	INTEGER	LIVE	30	Durée d'une offre de liste d'attente (minutes)
+bokati.booking.waitlist.worker-delay-ms	BOOKING	INTEGER	LIVE	300000	Cadence de la liste d'attente (ms)
+bokati.booking.wallet.hold-grace-minutes	BOOKING	INTEGER	LIVE	60	Grâce de retenue sur portefeuille (minutes)
+bokati.booking.wallet.settlement-delay-minutes	BOOKING	INTEGER	LIVE	1	Délai de règlement sur portefeuille (minutes)
+bokati.booking.wallet.worker-delay-ms	BOOKING	INTEGER	LIVE	15000	Cadence des retenues de réservation (ms)
+bokati.cash.assignment.enforced	PAYMENT	BOOLEAN	LIVE	true	Ouverture de session reservee aux personnes affectees a la caisse
+bokati.cash.forced-close.contest-days	PAYMENT	INTEGER	LIVE	3	Delai de contestation d'une cloture d'office (jours)
+bokati.cash.refund.max-cash-amount	PAYMENT	INTEGER	LIVE	0	Remboursement en especes au-dela duquel le virement est impose (0 : sans limite)
+bokati.cash.reversal.cashier-max-amount	PAYMENT	INTEGER	LIVE	50000	Plafond d'une contre-passation par le caissier seul
+bokati.cash.reversal.cashier-minutes	PAYMENT	INTEGER	LIVE	15	Delai pendant lequel le caissier contre-passe seul (minutes)
+bokati.cash.staff-worker-cron	PAYMENT	CRON	LIVE	0 10 * * * *	Planification du suivi des absences et des sessions trop longues
+bokati.cash.transfer.max-transit-hours	PAYMENT	INTEGER	LIVE	2	Transit maximal d'un transfert de caisse avant alerte (heures)
+bokati.cash.variance.investigation-days	PAYMENT	INTEGER	LIVE	30	Echeance de revue d'un ecart mis en recherche (jours)
+bokati.cash.visa.expiry-hours	PAYMENT	INTEGER	LIVE	24	Delai du second visa d'une operation de caisse (heures)
+bokati.company.wallet.approval-expiry-delay-ms	COMPANIES	INTEGER	LIVE	600000	Cadence d'expiration des validations (ms)
 bokati.company.wallet.approval-hours	COMPANIES	INTEGER	LIVE	48	Délai de validation d'une dépense (heures)
-bokati.company.wallet.currency	COMPANIES	TEXT	RESTART	XAF	Devise du portefeuille d'organisation
-bokati.compliance.case.due-hours.critical	COMPLIANCE	INTEGER	RESTART	24	Délai d'un dossier critique (heures)
-bokati.compliance.case.due-hours.high	COMPLIANCE	INTEGER	RESTART	72	Délai d'un dossier élevé (heures)
-bokati.compliance.case.due-hours.low	COMPLIANCE	INTEGER	RESTART	336	Délai d'un dossier faible (heures)
-bokati.compliance.case.due-hours.medium	COMPLIANCE	INTEGER	RESTART	168	Délai d'un dossier moyen (heures)
-bokati.compliance.identity.cron	COMPLIANCE	CRON	RESTART	0 50 3 * * *	Planification du contrôle d'identité
-bokati.compliance.identity.exposure-threshold	COMPLIANCE	INTEGER	RESTART	1000000	Seuil d'exposition
-bokati.compliance.identity.review-days	COMPLIANCE	INTEGER	RESTART	365	Revue d'identité (jours)
-bokati.compliance.overdue.cron	COMPLIANCE	CRON	RESTART	0 0 8 * * *	Planification du suivi des dossiers en retard
-bokati.compliance.screening.cron	COMPLIANCE	CRON	RESTART	0 40 3 * * *	Planification du filtrage
-bokati.compliance.screening.recheck-days	COMPLIANCE	INTEGER	RESTART	180	Nouveau filtrage (jours)
-bokati.crm.dormant-cron	CRM	CRON	RESTART	0 0 8 * * MON-FRI	Planification du suivi des clients dormants
-bokati.crm.dormant-threshold-days	CRM	INTEGER	RESTART	7	Client dormant après (jours)
-bokati.domiciliation.administration-email	DOMICILIATION	EMAIL	RESTART		Adresse de l'administration à notifier
-bokati.domiciliation.certificate-validity-days	DOMICILIATION	INTEGER	RESTART	365	Validité de l'attestation (jours)
-bokati.domiciliation.expiry-cron	DOMICILIATION	CRON	RESTART	0 40 7 * * *	Planification des expirations
-bokati.domiciliation.kyc-level-required	DOMICILIATION	INTEGER	RESTART	2	Niveau KYC exigé
-bokati.domiciliation.mail-cron	DOMICILIATION	CRON	RESTART	0 30 7 * * *	Planification du suivi du courrier
-bokati.domiciliation.mail.storage-days	DOMICILIATION	INTEGER	RESTART	30	Garde du courrier (jours)
-bokati.domiciliation.notify-administration-on-termination	DOMICILIATION	BOOLEAN	RESTART	false	Notifier l'administration à la résiliation
-bokati.domiciliation.reminder-cron	DOMICILIATION	CRON	RESTART	0 20 7 * * *	Planification des rappels
-bokati.domiciliation.renewal-reminder-days	DOMICILIATION	INTEGER	RESTART	30	Rappel avant renouvellement (jours)
-bokati.domiciliation.retention-years	DOMICILIATION	INTEGER	RESTART	10	Conservation (années)
-bokati.email.dedup.business-window-seconds	NOTIFICATIONS	INTEGER	RESTART	86400	Anti-doublon métier (secondes)
-bokati.email.dedup.enabled	NOTIFICATIONS	BOOLEAN	RESTART	true	Anti-doublon d'e-mails actif
-bokati.email.dedup.generic-window-seconds	NOTIFICATIONS	INTEGER	RESTART	3600	Anti-doublon générique (secondes)
-bokati.graph-api.rate-limit.limit-for-period	GRAPH_API	INTEGER	RESTART	800	Requêtes par période
-bokati.graph-api.rate-limit.limit-refresh-period-ms	GRAPH_API	INTEGER	RESTART	60000	Durée d'une période (ms)
-bokati.graph-api.rate-limit.timeout-ms	GRAPH_API	INTEGER	RESTART	30000	Délai d'attente (ms)
-bokati.mail.requeue.after-seconds	NOTIFICATIONS	INTEGER	RESTART	120	Renvoi d'un e-mail bloqué après (secondes)
-bokati.mail.requeue.delay-ms	NOTIFICATIONS	INTEGER	RESTART	60000	Cadence des renvois d'e-mails (ms)
+bokati.company.wallet.currency	COMPANIES	TEXT	LIVE	XAF	Devise du portefeuille d'organisation
+bokati.compliance.case.due-hours.critical	COMPLIANCE	INTEGER	LIVE	24	Délai d'un dossier critique (heures)
+bokati.compliance.case.due-hours.high	COMPLIANCE	INTEGER	LIVE	72	Délai d'un dossier élevé (heures)
+bokati.compliance.case.due-hours.low	COMPLIANCE	INTEGER	LIVE	336	Délai d'un dossier faible (heures)
+bokati.compliance.case.due-hours.medium	COMPLIANCE	INTEGER	LIVE	168	Délai d'un dossier moyen (heures)
+bokati.compliance.identity.cron	COMPLIANCE	CRON	LIVE	0 50 3 * * *	Planification du contrôle d'identité
+bokati.compliance.identity.exposure-threshold	COMPLIANCE	INTEGER	LIVE	1000000	Seuil d'exposition
+bokati.compliance.identity.review-days	COMPLIANCE	INTEGER	LIVE	365	Revue d'identité (jours)
+bokati.compliance.overdue.cron	COMPLIANCE	CRON	LIVE	0 0 8 * * *	Planification du suivi des dossiers en retard
+bokati.compliance.screening.cron	COMPLIANCE	CRON	LIVE	0 40 3 * * *	Planification du filtrage
+bokati.compliance.screening.recheck-days	COMPLIANCE	INTEGER	LIVE	180	Nouveau filtrage (jours)
+bokati.crm.dormant-cron	CRM	CRON	LIVE	0 0 8 * * MON-FRI	Planification du suivi des clients dormants
+bokati.crm.dormant-threshold-days	CRM	INTEGER	LIVE	7	Client dormant après (jours)
+bokati.domiciliation.administration-email	DOMICILIATION	EMAIL	LIVE		Adresse de l'administration à notifier
+bokati.domiciliation.certificate-validity-days	DOMICILIATION	INTEGER	LIVE	365	Validité de l'attestation (jours)
+bokati.domiciliation.expiry-cron	DOMICILIATION	CRON	LIVE	0 40 7 * * *	Planification des expirations
+bokati.domiciliation.kyc-level-required	DOMICILIATION	INTEGER	LIVE	2	Niveau KYC exigé
+bokati.domiciliation.mail-cron	DOMICILIATION	CRON	LIVE	0 30 7 * * *	Planification du suivi du courrier
+bokati.domiciliation.mail.storage-days	DOMICILIATION	INTEGER	LIVE	30	Garde du courrier (jours)
+bokati.domiciliation.notify-administration-on-termination	DOMICILIATION	BOOLEAN	LIVE	false	Notifier l'administration à la résiliation
+bokati.domiciliation.reminder-cron	DOMICILIATION	CRON	LIVE	0 20 7 * * *	Planification des rappels
+bokati.domiciliation.renewal-reminder-days	DOMICILIATION	INTEGER	LIVE	30	Rappel avant renouvellement (jours)
+bokati.domiciliation.retention-years	DOMICILIATION	INTEGER	LIVE	10	Conservation (années)
+bokati.email.dedup.business-window-seconds	NOTIFICATIONS	INTEGER	LIVE	86400	Anti-doublon métier (secondes)
+bokati.email.dedup.enabled	NOTIFICATIONS	BOOLEAN	LIVE	true	Anti-doublon d'e-mails actif
+bokati.email.dedup.generic-window-seconds	NOTIFICATIONS	INTEGER	LIVE	3600	Anti-doublon générique (secondes)
+bokati.graph-api.rate-limit.limit-for-period	GRAPH_API	INTEGER	RESTART	25	Requêtes par période
+bokati.graph-api.rate-limit.limit-refresh-period-ms	GRAPH_API	INTEGER	LIVE	60000	Durée d'une période (ms)
+bokati.graph-api.rate-limit.timeout-ms	GRAPH_API	INTEGER	LIVE	30000	Délai d'attente (ms)
+bokati.mail.requeue.after-seconds	NOTIFICATIONS	INTEGER	LIVE	120	Renvoi d'un e-mail bloqué après (secondes)
+bokati.mail.requeue.delay-ms	NOTIFICATIONS	INTEGER	LIVE	60000	Cadence des renvois d'e-mails (ms)
 bokati.marketplace.payment-window-minutes	MARKETPLACE	INTEGER	LIVE	30	Délai de paiement d'une commande (minutes)
-bokati.marketplace.sync-delay-ms	MARKETPLACE	INTEGER	RESTART	60000	Cadence de suivi des commandes (ms)
+bokati.marketplace.sync-delay-ms	MARKETPLACE	INTEGER	LIVE	60000	Cadence de suivi des commandes (ms)
 bokati.marketplace.sync-initial-delay-ms	MARKETPLACE	INTEGER	RESTART	60000	Attente avant le premier suivi (ms)
-bokati.notification.worker.batch-size	NOTIFICATIONS	INTEGER	RESTART	25	Taille de lot des notifications
-bokati.notification.worker.delay-ms	NOTIFICATIONS	INTEGER	RESTART	30000	Cadence des notifications (ms)
-bokati.notification.worker.enabled	NOTIFICATIONS	BOOLEAN	RESTART	true	Envoi des notifications actif
-bokati.pass.alert.cron	PASSES	CRON	RESTART	0 0 8 * * *	Planification des alertes de pass
-bokati.pass.alert.expiring-days	PASSES	INTEGER	RESTART	7	Alerte avant expiration (jours)
-bokati.pass.alert.low-balance-ratio	PASSES	DECIMAL	RESTART	0.2	Alerte de solde bas (part restante)
-bokati.pass.alert.unused-days	PASSES	INTEGER	RESTART	14	Alerte de non-usage (jours)
-bokati.pass.credential.rotation-minutes	PASSES	INTEGER	RESTART	15	Rotation du code d'accès (minutes)
-bokati.pass.workers.renewal-delay-ms	PASSES	INTEGER	RESTART	900000	Cadence des renouvellements de pass (ms)
-bokati.payment.cash-declaration.desk-email	PAYMENT	EMAIL	RESTART		Adresse de l'accueil pour les espèces
-bokati.payment.cash-declaration.expiry-delay-ms	PAYMENT	INTEGER	RESTART	900000	Cadence d'expiration des déclarations (ms)
-bokati.payment.cash-declaration.validity-hours	PAYMENT	INTEGER	RESTART	4	Validité d'une déclaration d'espèces (heures)
-bokati.payment.cash-register.alert-cooldown-hours	PAYMENT	INTEGER	RESTART	6	Intervalle entre deux alertes de caisse (heures)
-bokati.payment.cash-session.auto-limit	PAYMENT	INTEGER	RESTART	10000000	Plafond d'une session automatique
-bokati.payment.cash-session.closing-report.enabled	PAYMENT	BOOLEAN	RESTART	true	Rapport de clôture de caisse actif
-bokati.payment.cash-session.month-end-cron	PAYMENT	CRON	RESTART	0 5 0 * * *	Planification de la clôture de fin de mois
-bokati.payment.cash-session.supervisor-email	PAYMENT	EMAIL	RESTART	supportela@elleaose.com	Adresse du superviseur de caisse
-bokati.payment.pawaypay.enabled-providers	PAYMENT	TEXT	RESTART		Opérateurs mobile money actifs
-bokati.payment.pawaypay.operator-prefixes	PAYMENT	TEXT	RESTART		Préfixes des opérateurs
-bokati.payment.pawaypay.polling-delay-ms	PAYMENT	INTEGER	RESTART	60000	Cadence de lecture de l'opérateur (ms)
-bokati.payment.pawaypay.reconciliation-cron	PAYMENT	CRON	RESTART	0 0 6 * * *	Planification du rapprochement mobile money
-bokati.payment.self-service.confirmation-email	PAYMENT	EMAIL	RESTART		Adresse de confirmation du libre-service
-bokati.payment.workers.dunning-delay-ms	PAYMENT	INTEGER	RESTART	60000	Cadence des relances de paiement (ms)
-bokati.payment.workers.expiry-alert-delay-ms	PAYMENT	INTEGER	RESTART	1800000	Cadence des alertes d'expiration (ms)
-bokati.payment.workers.intent-expiry-delay-ms	PAYMENT	INTEGER	RESTART	300000	Cadence d'expiration des intentions de paiement (ms)
-bokati.payment.workers.reconciliation-cron	PAYMENT	CRON	RESTART	0 30 2 * * *	Planification du rapprochement des paiements
-bokati.payment.workers.wallet-hold-expiry-delay-ms	PAYMENT	INTEGER	RESTART	300000	Cadence d'expiration des retenues (ms)
-bokati.payment.workers.wallet-reconciliation-cron	PAYMENT	CRON	RESTART	0 15 3 * * *	Planification du rapprochement des portefeuilles
-bokati.payment.workers.wallet-reconciliation-enabled	PAYMENT	BOOLEAN	RESTART	true	Rapprochement des portefeuilles actif
-bokati.promotion.coupon.expiry-worker-delay-ms	PROMOTIONS	INTEGER	RESTART	120000	Cadence d'expiration des coupons (ms)
-bokati.promotion.coupon.reservation-minutes	PROMOTIONS	INTEGER	RESTART	30	Réservation d'un coupon (minutes)
-bokati.promotion.referral.tenure-cron	PROMOTIONS	CRON	RESTART	0 30 2 * * *	Planification du suivi du parrainage
+bokati.notification.worker.batch-size	NOTIFICATIONS	INTEGER	LIVE	25	Taille de lot des notifications
+bokati.notification.worker.delay-ms	NOTIFICATIONS	INTEGER	LIVE	30000	Cadence des notifications (ms)
+bokati.notification.worker.enabled	NOTIFICATIONS	BOOLEAN	LIVE	true	Envoi des notifications actif
+bokati.pass.alert.cron	PASSES	CRON	LIVE	0 0 8 * * *	Planification des alertes de pass
+bokati.pass.alert.expiring-days	PASSES	INTEGER	LIVE	7	Alerte avant expiration (jours)
+bokati.pass.alert.low-balance-ratio	PASSES	DECIMAL	LIVE	0.2	Alerte de solde bas (part restante)
+bokati.pass.alert.unused-days	PASSES	INTEGER	LIVE	14	Alerte de non-usage (jours)
+bokati.pass.credential.rotation-minutes	PASSES	INTEGER	LIVE	15	Rotation du code d'accès (minutes)
+bokati.pass.workers.renewal-delay-ms	PASSES	INTEGER	LIVE	900000	Cadence des renouvellements de pass (ms)
+bokati.payment.cash-declaration.desk-email	PAYMENT	EMAIL	LIVE		Adresse de l'accueil pour les espèces
+bokati.payment.cash-declaration.expiry-delay-ms	PAYMENT	INTEGER	LIVE	900000	Cadence d'expiration des déclarations (ms)
+bokati.payment.cash-declaration.validity-hours	PAYMENT	INTEGER	LIVE	4	Validité d'une déclaration d'espèces (heures)
+bokati.payment.cash-register.alert-cooldown-hours	PAYMENT	INTEGER	LIVE	6	Intervalle entre deux alertes de caisse (heures)
+bokati.payment.cash-session.auto-limit	PAYMENT	INTEGER	LIVE	10000000	Plafond d'une session automatique
+bokati.payment.cash-session.closing-report.enabled	PAYMENT	BOOLEAN	LIVE	true	Rapport de clôture de caisse actif
+bokati.payment.cash-session.month-end-cron	PAYMENT	CRON	LIVE	0 5 0 * * *	Planification de la clôture de fin de mois
+bokati.payment.cash-session.supervisor-email	PAYMENT	EMAIL	LIVE	supportela@elleaose.com	Adresse du superviseur de caisse
+bokati.payment.pawaypay.enabled-providers	PAYMENT	TEXT	LIVE		Opérateurs mobile money actifs
+bokati.payment.pawaypay.operator-prefixes	PAYMENT	TEXT	LIVE		Préfixes des opérateurs
+bokati.payment.pawaypay.polling-delay-ms	PAYMENT	INTEGER	LIVE	60000	Cadence de lecture de l'opérateur (ms)
+bokati.payment.pawaypay.reconciliation-cron	PAYMENT	CRON	LIVE	0 0 6 * * *	Planification du rapprochement mobile money
+bokati.payment.self-service.confirmation-email	PAYMENT	EMAIL	LIVE		Adresse de confirmation du libre-service
+bokati.payment.workers.dunning-delay-ms	PAYMENT	INTEGER	LIVE	60000	Cadence des relances de paiement (ms)
+bokati.payment.workers.expiry-alert-delay-ms	PAYMENT	INTEGER	LIVE	1800000	Cadence des alertes d'expiration (ms)
+bokati.payment.workers.intent-expiry-delay-ms	PAYMENT	INTEGER	LIVE	300000	Cadence d'expiration des intentions de paiement (ms)
+bokati.payment.workers.reconciliation-cron	PAYMENT	CRON	LIVE	0 30 2 * * *	Planification du rapprochement des paiements
+bokati.payment.workers.wallet-hold-expiry-delay-ms	PAYMENT	INTEGER	LIVE	300000	Cadence d'expiration des retenues (ms)
+bokati.payment.workers.wallet-reconciliation-cron	PAYMENT	CRON	LIVE	0 15 3 * * *	Planification du rapprochement des portefeuilles
+bokati.payment.workers.wallet-reconciliation-enabled	PAYMENT	BOOLEAN	LIVE	true	Rapprochement des portefeuilles actif
+bokati.promotion.coupon.expiry-worker-delay-ms	PROMOTIONS	INTEGER	LIVE	120000	Cadence d'expiration des coupons (ms)
+bokati.promotion.coupon.reservation-minutes	PROMOTIONS	INTEGER	LIVE	30	Réservation d'un coupon (minutes)
+bokati.promotion.referral.tenure-cron	PROMOTIONS	CRON	LIVE	0 30 2 * * *	Planification du suivi du parrainage
 bokati.resource.availability.generation.saturday-hours	RESOURCES	TIME_RANGE	LIVE	08:00-12:00	Horaires du samedi
 bokati.resource.availability.generation.sunday-hours	RESOURCES	TIME_RANGE	LIVE		Horaires du dimanche
 bokati.resource.availability.generation.weekday-hours	RESOURCES	TIME_RANGE	LIVE	08:00-18:00	Horaires de semaine
 bokati.resource.availability.generation.weekday-subscriber-hours	RESOURCES	TIME_RANGE	LIVE	18:00-22:00	Horaires de semaine réservés aux abonnés
-bokati.resource.availability.subscriber-hours-from	RESOURCES	TIME	RESTART	18:00	Début de la plage réservée aux abonnés
-bokati.resource.bulk-max-resources	RESOURCES	INTEGER	RESTART	20	Ressources par action groupée
-bokati.resource.workers.monthly-availability-cron	RESOURCES	CRON	RESTART	0 0 3 1 * *	Planification de l'ouverture du mois
-bokati.resource.workers.monthly-availability-enabled	RESOURCES	BOOLEAN	RESTART	true	Ouverture automatique du mois active
+bokati.resource.availability.subscriber-hours-from	RESOURCES	TIME	LIVE	18:00	Début de la plage réservée aux abonnés
+bokati.resource.bulk-max-resources	RESOURCES	INTEGER	LIVE	20	Ressources par action groupée
+bokati.resource.workers.monthly-availability-cron	RESOURCES	CRON	LIVE	0 0 3 1 * *	Planification de l'ouverture du mois
+bokati.resource.workers.monthly-availability-enabled	RESOURCES	BOOLEAN	LIVE	true	Ouverture automatique du mois active
 bokati.resource.workers.monthly-availability-initial-delay-ms	RESOURCES	INTEGER	RESTART	120000	Attente avant l'ouverture du mois (ms)
-bokati.resource.workers.slot-capacity-delay-ms	RESOURCES	INTEGER	RESTART	3600000	Cadence de recalcul des capacités (ms)
-bokati.resource.workers.slot-capacity-enabled	RESOURCES	BOOLEAN	RESTART	true	Recalcul des capacités actif
+bokati.resource.workers.slot-capacity-delay-ms	RESOURCES	INTEGER	LIVE	3600000	Cadence de recalcul des capacités (ms)
+bokati.resource.workers.slot-capacity-enabled	RESOURCES	BOOLEAN	LIVE	true	Recalcul des capacités actif
 bokati.resource.workers.slot-capacity-initial-delay-ms	RESOURCES	INTEGER	RESTART	60000	Attente avant le recalcul des capacités (ms)
-bokati.subscription.kpi.workspace-type-codes	SUBSCRIPTIONS	TEXT	RESTART		Types d'espace des indicateurs
-bokati.subscription.workers.addon-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	900000	Cadence d'expiration des options (ms)
-bokati.subscription.workers.cancellation-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	900000	Cadence des clôtures (ms)
-bokati.subscription.workers.change-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	900000	Cadence des changements planifiés (ms)
+bokati.subscription.kpi.workspace-type-codes	SUBSCRIPTIONS	TEXT	LIVE		Types d'espace des indicateurs
+bokati.subscription.workers.addon-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	900000	Cadence d'expiration des options (ms)
+bokati.subscription.workers.cancellation-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	900000	Cadence des clôtures (ms)
+bokati.subscription.workers.change-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	900000	Cadence des changements planifiés (ms)
 bokati.subscription.workers.contract-catch-up-initial-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	120000	Attente avant le rattrapage des contrats (ms)
-bokati.subscription.workers.contract-repair-batch-size	SUBSCRIPTIONS	INTEGER	RESTART	20	Taille de lot de la réparation des contrats
-bokati.subscription.workers.contract-repair-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	60000	Cadence de la réparation des contrats (ms)
-bokati.subscription.workers.contract-repair-enabled	SUBSCRIPTIONS	BOOLEAN	RESTART	true	Réparation des contrats active
-bokati.subscription.workers.contract-repair-min-age-seconds	SUBSCRIPTIONS	INTEGER	RESTART	300	Ancienneté minimale avant réparation (secondes)
-bokati.subscription.workers.entitlement-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	600000	Cadence d'expiration des droits (ms)
-bokati.subscription.workers.integrity-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	1800000	Cadence du contrôle d'intégrité (ms)
-bokati.subscription.workers.lifecycle-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	3600000	Cadence du cycle de vie (ms)
+bokati.subscription.workers.contract-repair-batch-size	SUBSCRIPTIONS	INTEGER	LIVE	20	Taille de lot de la réparation des contrats
+bokati.subscription.workers.contract-repair-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	60000	Cadence de la réparation des contrats (ms)
+bokati.subscription.workers.contract-repair-enabled	SUBSCRIPTIONS	BOOLEAN	LIVE	true	Réparation des contrats active
+bokati.subscription.workers.contract-repair-min-age-seconds	SUBSCRIPTIONS	INTEGER	LIVE	300	Ancienneté minimale avant réparation (secondes)
+bokati.subscription.workers.entitlement-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	600000	Cadence d'expiration des droits (ms)
+bokati.subscription.workers.integrity-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	1800000	Cadence du contrôle d'intégrité (ms)
+bokati.subscription.workers.lifecycle-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	3600000	Cadence du cycle de vie (ms)
 bokati.subscription.workers.lifecycle-initial-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	120000	Attente avant le cycle de vie (ms)
-bokati.subscription.workers.notification-dispatch-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	60000	Cadence des avis d'abonnement (ms)
-bokati.subscription.workers.pass-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	600000	Cadence d'expiration des pass (ms)
-bokati.subscription.workers.promotion-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	900000	Cadence d'expiration des promotions (ms)
-bokati.subscription.workers.renewal-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	900000	Cadence des renouvellements (ms)
-bokati.subscription.workers.reservation-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	300000	Cadence d'expiration des retenues de droits (ms)
-bokati.subscription.workers.rollover-delay-ms	SUBSCRIPTIONS	INTEGER	RESTART	900000	Cadence des reports de droits (ms)
-bokati.support.admin-email	SUPPORT	EMAIL	RESTART	supportela@elleaose.com	Adresse de l'administration
-bokati.support.auto-close-check-delay-ms	SUPPORT	INTEGER	RESTART	3600000	Cadence de fermeture automatique (ms)
+bokati.subscription.workers.notification-dispatch-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	60000	Cadence des avis d'abonnement (ms)
+bokati.subscription.workers.pass-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	600000	Cadence d'expiration des pass (ms)
+bokati.subscription.workers.promotion-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	900000	Cadence d'expiration des promotions (ms)
+bokati.subscription.workers.renewal-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	900000	Cadence des renouvellements (ms)
+bokati.subscription.workers.reservation-expiry-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	300000	Cadence d'expiration des retenues de droits (ms)
+bokati.subscription.workers.rollover-delay-ms	SUBSCRIPTIONS	INTEGER	LIVE	900000	Cadence des reports de droits (ms)
+bokati.support.admin-email	SUPPORT	EMAIL	LIVE	supportela@elleaose.com	Adresse de l'administration
+bokati.support.auto-close-check-delay-ms	SUPPORT	INTEGER	LIVE	3600000	Cadence de fermeture automatique (ms)
 bokati.support.auto-close-delay-days	SUPPORT	INTEGER	LIVE	5	Fermeture automatique après (jours)
-bokati.support.csat-check-delay-ms	SUPPORT	INTEGER	RESTART	3600000	Cadence des enquêtes de satisfaction (ms)
-bokati.support.inbound-poll-delay-ms	SUPPORT	INTEGER	RESTART	60000	Cadence de lecture de la boîte support (ms)
-bokati.support.manager-email	SUPPORT	EMAIL	RESTART	supportela@elleaose.com	Adresse du responsable
-bokati.support.sender-email	SUPPORT	EMAIL	RESTART	supportela@elleaose.com	Adresse d'envoi
-bokati.support.sla-check-delay-ms	SUPPORT	INTEGER	RESTART	3600000	Cadence du contrôle des délais (ms)
-bokati.task.booking-cleanup-default-assignee	TASKS	TEXT	RESTART		Assigné par défaut · remise en état
-bokati.task.booking-default-assignee	TASKS	TEXT	RESTART		Assigné par défaut · préparation
-bokati.task.booking-prep-hours	TASKS	INTEGER	RESTART	2	Préparation d'une réservation (heures)
-bokati.task.due-soon-hours	TASKS	INTEGER	RESTART	24	Échéance proche (heures)
-bokati.task.inventory-default-assignee	TASKS	TEXT	RESTART		Assigné par défaut · stock
-bokati.task.inventory-reorder-due-hours	TASKS	INTEGER	RESTART	24	Délai de réapprovisionnement (heures)
-bokati.task.reminder-cron	TASKS	CRON	RESTART	0 0 * * * *	Planification des rappels de tâches
-bokati.wallet.admin.four-eyes-threshold	WALLET	INTEGER	RESTART	100000	Seuil de double validation
-bokati.wallet.confirmation.expiry-delay-ms	WALLET	INTEGER	RESTART	300000	Cadence d'expiration des confirmations (ms)
-bokati.wallet.confirmation.validity-minutes	WALLET	INTEGER	RESTART	5	Validité d'une confirmation (minutes)
-bokati.wallet.dormancy.after-days	WALLET	INTEGER	RESTART	180	Dormance après (jours)
-bokati.wallet.dormancy.cron	WALLET	CRON	RESTART	0 15 3 * * *	Planification de la dormance
-bokati.wallet.payment-request.validity-days	WALLET	INTEGER	RESTART	7	Validité d'une demande de paiement (jours)
-bokati.wallet.risk.large-transfer-amount	WALLET	INTEGER	RESTART	100000	Montant d'un gros transfert
-bokati.wallet.transfer.confirmation-validity-minutes	WALLET	INTEGER	RESTART	5	Validité de la confirmation d'un transfert (minutes)
-bokati.wallet.transfer.fee-max	WALLET	DECIMAL	RESTART	0	Frais de transfert maximum
-bokati.wallet.transfer.fee-min	WALLET	DECIMAL	RESTART	0	Frais de transfert minimum
-bokati.wallet.transfer.fee-rate	WALLET	DECIMAL	RESTART	0	Taux des frais de transfert
-bokati.wallet.transfer.fee-wallet-number	WALLET	TEXT	RESTART		Portefeuille des frais
-bokati.wallet.treasury.alert-email	WALLET	EMAIL	RESTART		Adresse des alertes de trésorerie
-bokati.wallet.treasury.coverage-alert-ratio	WALLET	DECIMAL	RESTART	1.0	Seuil d'alerte de couverture
-bokati.wallet.treasury.variance-tolerance	WALLET	DECIMAL	RESTART	1	Tolérance d'écart de trésorerie
-bokati.wallet.usage.expiry-delay-ms	WALLET	INTEGER	RESTART	600000	Cadence d'expiration des usages (ms)
-bokati.webhook.worker.batch-size	WEBHOOKS	INTEGER	RESTART	25	Taille de lot des webhooks
-bokati.webhook.worker.delay-ms	WEBHOOKS	INTEGER	RESTART	60000	Cadence des webhooks (ms)
-bokati.webhook.worker.enabled	WEBHOOKS	BOOLEAN	RESTART	true	Envoi des webhooks actif
+bokati.support.csat-check-delay-ms	SUPPORT	INTEGER	LIVE	3600000	Cadence des enquêtes de satisfaction (ms)
+bokati.support.inbound-poll-delay-ms	SUPPORT	INTEGER	LIVE	60000	Cadence de lecture de la boîte support (ms)
+bokati.support.manager-email	SUPPORT	EMAIL	LIVE	supportela@elleaose.com	Adresse du responsable
+bokati.support.sender-email	SUPPORT	EMAIL	LIVE	supportela@elleaose.com	Adresse d'envoi
+bokati.support.sla-check-delay-ms	SUPPORT	INTEGER	LIVE	3600000	Cadence du contrôle des délais (ms)
+bokati.task.booking-cleanup-default-assignee	TASKS	TEXT	LIVE		Assigné par défaut · remise en état
+bokati.task.booking-default-assignee	TASKS	TEXT	LIVE		Assigné par défaut · préparation
+bokati.task.booking-prep-hours	TASKS	INTEGER	LIVE	2	Préparation d'une réservation (heures)
+bokati.task.due-soon-hours	TASKS	INTEGER	LIVE	24	Échéance proche (heures)
+bokati.task.inventory-default-assignee	TASKS	TEXT	LIVE		Assigné par défaut · stock
+bokati.task.inventory-reorder-due-hours	TASKS	INTEGER	LIVE	24	Délai de réapprovisionnement (heures)
+bokati.task.reminder-cron	TASKS	CRON	LIVE	0 0 * * * *	Planification des rappels de tâches
+bokati.wallet.admin.four-eyes-threshold	WALLET	INTEGER	LIVE	100000	Seuil de double validation
+bokati.wallet.confirmation.expiry-delay-ms	WALLET	INTEGER	LIVE	300000	Cadence d'expiration des confirmations (ms)
+bokati.wallet.confirmation.validity-minutes	WALLET	INTEGER	LIVE	5	Validité d'une confirmation (minutes)
+bokati.wallet.dormancy.after-days	WALLET	INTEGER	LIVE	180	Dormance après (jours)
+bokati.wallet.dormancy.cron	WALLET	CRON	LIVE	0 15 3 * * *	Planification de la dormance
+bokati.wallet.payment-request.validity-days	WALLET	INTEGER	LIVE	7	Validité d'une demande de paiement (jours)
+bokati.wallet.risk.large-transfer-amount	WALLET	INTEGER	LIVE	100000	Montant d'un gros transfert
+bokati.wallet.transfer.confirmation-validity-minutes	WALLET	INTEGER	LIVE	5	Validité de la confirmation d'un transfert (minutes)
+bokati.wallet.transfer.fee-max	WALLET	DECIMAL	LIVE	0	Frais de transfert maximum
+bokati.wallet.transfer.fee-min	WALLET	DECIMAL	LIVE	0	Frais de transfert minimum
+bokati.wallet.transfer.fee-rate	WALLET	DECIMAL	LIVE	0	Taux des frais de transfert
+bokati.wallet.transfer.fee-wallet-number	WALLET	TEXT	LIVE		Portefeuille des frais
+bokati.wallet.treasury.alert-email	WALLET	EMAIL	LIVE		Adresse des alertes de trésorerie
+bokati.wallet.treasury.coverage-alert-ratio	WALLET	DECIMAL	LIVE	1.0	Seuil d'alerte de couverture
+bokati.wallet.treasury.variance-tolerance	WALLET	DECIMAL	LIVE	1	Tolérance d'écart de trésorerie
+bokati.wallet.usage.expiry-delay-ms	WALLET	INTEGER	LIVE	600000	Cadence d'expiration des usages (ms)
+bokati.webhook.worker.batch-size	WEBHOOKS	INTEGER	LIVE	25	Taille de lot des webhooks
+bokati.webhook.worker.delay-ms	WEBHOOKS	INTEGER	LIVE	60000	Cadence des webhooks (ms)
+bokati.webhook.worker.enabled	WEBHOOKS	BOOLEAN	LIVE	true	Envoi des webhooks actif
 bokati.websocket.stomp.broker-url	WEBSOCKET	SECRET	RESTART		Adresse du relais de messages
 bokati.websocket.stomp.client-login	WEBSOCKET	SECRET	RESTART		Identifiant client du relais
 bokati.websocket.stomp.client-passcode	WEBSOCKET	SECRET	RESTART		Mot de passe client du relais
@@ -353,19 +354,19 @@ bokati.websocket.stomp.system-passcode	WEBSOCKET	SECRET	RESTART		Mot de passe sy
 bokati.websocket.stomp.use-tls	WEBSOCKET	BOOLEAN	RESTART	false	Relais chiffré
 bokati.websocket.stomp.virtual-host	WEBSOCKET	TEXT	RESTART	/	Hôte virtuel du relais
 bokati.websocket.use-stomp-relay	WEBSOCKET	BOOLEAN	RESTART	false	Relais de messages actif
-fund.advance.overdue-policy	PAYMENT	ENUM	RESTART	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
-fund.approval.escalation-days	PAYMENT	INTEGER	RESTART	3	Jours d'attente d'une validation avant escalade au responsable
-fund.approval.level1-max	PAYMENT	INTEGER	RESTART	50000	Montant maximal valide par le seul chef de service (XAF)
-fund.approval.level2-max	PAYMENT	INTEGER	RESTART	500000	Montant maximal valide sans la direction (XAF)
-fund.approval.reminder-hours	PAYMENT	INTEGER	RESTART	24	Heures avant rappel au valideur
-fund.budget.blocking-mode	PAYMENT	ENUM	RESTART	EXTRA_APPROVAL	Depassement d'une ligne bloquante : REFUSE (demande refusee) ou EXTRA_APPROVAL (validation budgetaire en plus)
-fund.budget.require-forecast-choice	PAYMENT	BOOLEAN	RESTART	true	Avec un budget actif, chaque demande cite sa prevision ou se declare non prevue
-fund.budget.unplanned-approval	PAYMENT	BOOLEAN	RESTART	false	Une depense non prevue demande une validation budgetaire en plus
-fund.justification.days	PAYMENT	INTEGER	RESTART	7	Delai de justification d'une avance apres la mission ou le decaissement (jours)
-fund.justification.receipt-exempt-max	PAYMENT	INTEGER	RESTART	5000	Montant d'une ligne de justification admis sans piece, sur attestation (XAF)
-fund.request.expiry-days	PAYMENT	INTEGER	RESTART	15	Jours apres lesquels une demande approuvee non decaissee expire
-fund.vat-recoverable-account	PAYMENT	TEXT	RESTART	4452	Compte de TVA recuperable des justifications d'avance
-fund.voucher.issuer-details	PAYMENT	TEXT	RESTART		Mentions de l'exploitant en tete des pieces (RCCM, NIU, adresse)
-fund.voucher.issuer-name	PAYMENT	TEXT	RESTART	ELLE A OSE	Raison sociale en tete des pieces comptables
-fund.worker-cron	PAYMENT	CRON	RESTART	0 0 8-18 * * *	Planification des rappels et relances des demandes de fonds
+fund.advance.overdue-policy	PAYMENT	ENUM	LIVE	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
+fund.approval.escalation-days	PAYMENT	INTEGER	LIVE	3	Jours d'attente d'une validation avant escalade au responsable
+fund.approval.level1-max	PAYMENT	INTEGER	LIVE	50000	Montant maximal valide par le seul chef de service (XAF)
+fund.approval.level2-max	PAYMENT	INTEGER	LIVE	500000	Montant maximal valide sans la direction (XAF)
+fund.approval.reminder-hours	PAYMENT	INTEGER	LIVE	24	Heures avant rappel au valideur
+fund.budget.blocking-mode	PAYMENT	ENUM	LIVE	EXTRA_APPROVAL	Depassement d'une ligne bloquante : REFUSE (demande refusee) ou EXTRA_APPROVAL (validation budgetaire en plus)
+fund.budget.require-forecast-choice	PAYMENT	BOOLEAN	LIVE	true	Avec un budget actif, chaque demande cite sa prevision ou se declare non prevue
+fund.budget.unplanned-approval	PAYMENT	BOOLEAN	LIVE	false	Une depense non prevue demande une validation budgetaire en plus
+fund.justification.days	PAYMENT	INTEGER	LIVE	7	Delai de justification d'une avance apres la mission ou le decaissement (jours)
+fund.justification.receipt-exempt-max	PAYMENT	INTEGER	LIVE	5000	Montant d'une ligne de justification admis sans piece, sur attestation (XAF)
+fund.request.expiry-days	PAYMENT	INTEGER	LIVE	15	Jours apres lesquels une demande approuvee non decaissee expire
+fund.vat-recoverable-account	PAYMENT	TEXT	LIVE	4452	Compte de TVA recuperable des justifications d'avance
+fund.voucher.issuer-details	PAYMENT	TEXT	LIVE		Mentions de l'exploitant en tete des pieces (RCCM, NIU, adresse)
+fund.voucher.issuer-name	PAYMENT	TEXT	LIVE	ELLE A OSE	Raison sociale en tete des pieces comptables
+fund.worker-cron	PAYMENT	CRON	LIVE	0 0 8-18 * * *	Planification des rappels et relances des demandes de fonds
 inventory.supplier-suggestion.limit	ACCOUNTING	INTEGER	LIVE	5	Nombre de fournisseurs proposes par la suggestion de fournisseurs (au plus 50)

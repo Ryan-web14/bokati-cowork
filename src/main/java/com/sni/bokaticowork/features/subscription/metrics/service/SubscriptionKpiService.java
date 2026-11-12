@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.subscription.metrics.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionCommitmentService;
 import com.sni.bokaticowork.features.subscription.subscription.enums.BillingCycle;
@@ -40,6 +42,19 @@ public class SubscriptionKpiService {
     /** Codes des types de ressource qui comptent comme postes · vide pour toutes les ressources actives. */
     @Value("${bokati.subscription.kpi.workspace-type-codes:}")
     private String workspaceTypeCodes;
+
+    private static final String KPI_WORKSPACE_TYPE_CODES_KEY = "bokati.subscription.kpi.workspace-type-codes";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String workspaceTypeCodes() {
+        return platformSettings == null ? workspaceTypeCodes : platformSettings.text(KPI_WORKSPACE_TYPE_CODES_KEY, workspaceTypeCodes);
+    }
 
     public record Kpis(LocalDate from, LocalDate to,
                        long activeSubscriptions, BigDecimal mrr, BigDecimal arr, Map<String, BigDecimal> mrrByCycle,
@@ -108,7 +123,7 @@ public class SubscriptionKpiService {
     }
 
     private long workspaceCapacity() {
-        List<String> codes = Arrays.stream(workspaceTypeCodes.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
+        List<String> codes = Arrays.stream(workspaceTypeCodes().split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
         if (codes.isEmpty()) {
             return count("SELECT coalesce(sum(capacity), 0) FROM resource WHERE active = true", Map.of());
         }

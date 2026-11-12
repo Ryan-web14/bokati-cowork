@@ -110,6 +110,7 @@ public class CompanyWalletService {
     private final MemberInAppNotifier inAppNotifier;
     private final com.sni.bokaticowork.features.payment.security.service.WalletSecurityService securityService;
     private static final String APPROVAL_HOURS_KEY = "bokati.company.wallet.approval-hours";
+    private static final String CURRENCY_KEY = "bokati.company.wallet.currency";
 
     private final CompanySpendCodeGuard codeGuard;
     private final CompanyWalletMailer mailer;
@@ -434,6 +435,11 @@ public class CompanyWalletService {
     private Duration approvalWindow() {
         return settings == null ? approvalWindow
                 : Duration.ofHours(settings.number(APPROVAL_HOURS_KEY, approvalWindow.toHours()));
+    }
+
+    /** La devise des nouveaux portefeuilles · relue a chaque creation. */
+    private String defaultCurrency() {
+        return settings == null ? defaultCurrency : settings.text(CURRENCY_KEY, defaultCurrency);
     }
 
     /** Le collaborateur saisit le code a usage unique recu par e-mail. */
@@ -974,7 +980,7 @@ public class CompanyWalletService {
     }
 
     private String currency(String requested) {
-        return StringUtils.hasText(requested) ? requested.trim().toUpperCase(Locale.ROOT) : defaultCurrency;
+        return StringUtils.hasText(requested) ? requested.trim().toUpperCase(Locale.ROOT) : defaultCurrency();
     }
 
     private void notifyOwners(Customer company, CompanyWalletSpend spend, Member spender) {

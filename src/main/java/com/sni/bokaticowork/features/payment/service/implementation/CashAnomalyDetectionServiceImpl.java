@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -71,6 +73,19 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
 
     @Value("${bokati.payment.cash-register.alert-cooldown-hours:6}")
     private int alertCooldownHours;
+
+    private static final String CASH_REGISTER_ALERT_COOLDOWN_HOURS_KEY = "bokati.payment.cash-register.alert-cooldown-hours";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int alertCooldownHours() {
+        return platformSettings == null ? alertCooldownHours : platformSettings.integer(CASH_REGISTER_ALERT_COOLDOWN_HOURS_KEY, alertCooldownHours);
+    }
 
     @Override
     @Transactional
@@ -279,7 +294,7 @@ public class CashAnomalyDetectionServiceImpl implements CashAnomalyDetectionServ
             return;
         }
         Instant lastSent = register.getLastAnomalyAlertSentAt();
-        if (lastSent != null && Instant.now().isBefore(lastSent.plus(alertCooldownHours, ChronoUnit.HOURS))) {
+        if (lastSent != null && Instant.now().isBefore(lastSent.plus(alertCooldownHours(), ChronoUnit.HOURS))) {
             return;
         }
         String description = "Le solde de la caisse " + register.getName() + " a dépassé le plafond autorisé ("

@@ -4,10 +4,15 @@ import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 
 /**
  * Rapprochement quotidien des portefeuilles.
@@ -23,7 +28,35 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class WalletReconciliationWorker {
+public class WalletReconciliationWorker implements SchedulingConfigurer {
+
+    private static final String WALLET_RECONCILIATION_CRON_KEY = "bokati.payment.workers.wallet-reconciliation-cron";
+    private static final String ENABLED_KEY = "bokati.payment.workers.wallet-reconciliation-enabled";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<WalletReconciliationWorker> self;
+    private PlatformSettings platformSettings;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<WalletReconciliationWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().reconcile(), triggers.cron(WALLET_RECONCILIATION_CRON_KEY, "0 15 3 * * *"));
+    }
 
     private final WalletAccountRepository walletRepository;
     private final WalletReconciliationChecker checker;
@@ -31,9 +64,8 @@ public class WalletReconciliationWorker {
     @Value("${bokati.payment.workers.wallet-reconciliation-enabled:true}")
     private boolean enabled;
 
-    @Scheduled(cron = "${bokati.payment.workers.wallet-reconciliation-cron:0 15 3 * * *}")
     public void reconcile() {
-        if (!enabled) {
+        if (!(platformSettings == null ? enabled : platformSettings.bool(ENABLED_KEY, enabled))) {
             return;
         }
         List<Long> walletIds = walletRepository.findAllOpenIds();
