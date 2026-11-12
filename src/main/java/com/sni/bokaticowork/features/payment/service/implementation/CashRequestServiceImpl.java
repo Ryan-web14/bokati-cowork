@@ -49,8 +49,11 @@ public class CashRequestServiceImpl implements CashRequestService {
     private final com.sni.bokaticowork.features.payment.repository.CashMovementRepository movementRepository;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final CashRegisterService cashRegisterService;
+    @org.springframework.context.annotation.Lazy
+    private final com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService operations;
     private final CashEmailNotifier emailNotifier;
     private final ObjectMapper objectMapper;
+    private final com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors;
 
     @Override
     @Transactional
@@ -62,7 +65,8 @@ public class CashRequestServiceImpl implements CashRequestService {
         if (!StringUtils.hasText(request.reason())) {
             throw new BadRequestException("Cash request reason is required");
         }
-        String requestedBy = StringUtils.hasText(request.requestedBy()) ? request.requestedBy().trim() : session.getOpenedBy();
+        String requestedBy = actors.current() != null ? actors.current()
+                : (StringUtils.hasText(request.requestedBy()) ? request.requestedBy().trim() : session.getOpenedBy());
 
         CashRequest cashRequest = CashRequest.builder()
                 .requestNumber(sequenceGenerator.next("cash_request"))
@@ -93,8 +97,9 @@ public class CashRequestServiceImpl implements CashRequestService {
     @Transactional
     public CashRequestResponse approve(String requestNumber, ReviewCashRequestRequest request) {
         CashRequest cashRequest = requireStatus(requestNumber, CashRequestStatus.PENDING);
+        String reviewer = reviewer(cashRequest, request);
         cashRequest.setStatus(CashRequestStatus.APPROVED);
-        cashRequest.setReviewedBy(request.reviewedBy().trim());
+        cashRequest.setReviewedBy(reviewer);
         cashRequest.setReviewedAt(Instant.now());
         cashRequest.setReviewNote(StringUtils.hasText(request.note()) ? request.note().trim() : null);
         cashRequest = requestRepository.save(cashRequest);
@@ -119,8 +124,9 @@ public class CashRequestServiceImpl implements CashRequestService {
     @Transactional
     public CashRequestResponse reject(String requestNumber, ReviewCashRequestRequest request) {
         CashRequest cashRequest = requireStatus(requestNumber, CashRequestStatus.PENDING);
+        String reviewer = reviewer(cashRequest, request);
         cashRequest.setStatus(CashRequestStatus.REJECTED);
-        cashRequest.setReviewedBy(request.reviewedBy().trim());
+        cashRequest.setReviewedBy(reviewer);
         cashRequest.setReviewedAt(Instant.now());
         cashRequest.setReviewNote(StringUtils.hasText(request.note()) ? request.note().trim() : null);
         cashRequest = requestRepository.save(cashRequest);
@@ -160,6 +166,18 @@ public class CashRequestServiceImpl implements CashRequestService {
         ).map(this::toResponse));
     }
 
+    /**
+     * Celui qui decide de la demande : l'utilisateur connecte, jamais le demandeur lui-meme.
+     */
+    private String reviewer(CashRequest cashRequest, ReviewCashRequestRequest request) {
+        String reviewer = actors.resolve(request.reviewedBy());
+        if (com.sni.bokaticowork.features.payment.service.support.CashActorResolver.samePerson(reviewer, cashRequest.getRequestedBy())) {
+            throw new com.sni.bokaticowork.core.exception.customs.ForbiddenException(
+                    "Le demandeur ne peut pas decider de sa propre demande de caisse");
+        }
+        return reviewer;
+    }
+
     private void executeApprovedRequest(CashRequest cashRequest) {
         CashMovementType movementType = movementTypeFor(cashRequest.getRequestType());
         CashDocumentType documentType = documentTypeFor(cashRequest.getRequestType());
@@ -184,9 +202,16 @@ public class CashRequestServiceImpl implements CashRequestService {
                 null,
                 null,
                 cashRequest.getRequestType().name(),
-                "cash-request"
+                "cash-request",
+                // Un justificatif approuve etait ajoute a l'attendu : on garde ce sens, desormais explicite.
+                movementType == CashMovementType.ADJUSTMENT
+                        ? com.sni.bokaticowork.features.payment.enums.CashFlowDirection.IN
+                        : null,
+                null
         );
         var movementResponse = cashRegisterService.createMovement(cashRequest.getCashSession().getSessionNumber(), movementRequest);
+        // La demande approuvee par un autre que le demandeur vaut second visa.
+        operations.approveInternally(movementResponse.movementNumber(), cashRequest.getReviewedBy());
         CashMovement persisted = movementRepository.findByMovementNumber(movementResponse.movementNumber())
                 .orElseThrow(() -> new ResourceNotFoundException("Cash movement not found: " + movementResponse.movementNumber()));
         cashRequest.setExecutedMovement(persisted);

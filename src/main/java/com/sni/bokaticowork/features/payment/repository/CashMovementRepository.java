@@ -25,9 +25,10 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
                 COALESCE(SUM(CASE WHEN cm.movement_type = 'REFUND' THEN cm.amount ELSE 0 END), 0) AS total_refunds,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_IN', 'TRANSFER_IN') THEN cm.amount ELSE 0 END), 0) AS total_cash_in,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_OUT', 'SAFE_DEPOSIT', 'TRANSFER_OUT') THEN cm.amount ELSE 0 END), 0) AS total_cash_out,
-                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN cm.amount ELSE 0 END), 0) AS total_adjustments
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN (CASE WHEN cm.direction = 'OUT' THEN -cm.amount ELSE cm.amount END) ELSE 0 END), 0) AS total_adjustments
             FROM cash_movement cm
             WHERE cm.cash_session_id = :sessionId
+              AND cm.status IN ('CONFIRMED', 'REVERSED')
             """)
     Object[] sessionTotals(@Param("sessionId") Long sessionId);
 
@@ -121,11 +122,12 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
                 COALESCE(SUM(CASE WHEN cm.movement_type = 'REFUND' THEN cm.amount ELSE 0 END), 0) AS total_refunds,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_IN', 'TRANSFER_IN') THEN cm.amount ELSE 0 END), 0) AS total_cash_in,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_OUT', 'SAFE_DEPOSIT', 'TRANSFER_OUT') THEN cm.amount ELSE 0 END), 0) AS total_cash_out,
-                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN cm.amount ELSE 0 END), 0) AS total_adjustments
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN (CASE WHEN cm.direction = 'OUT' THEN -cm.amount ELSE cm.amount END) ELSE 0 END), 0) AS total_adjustments
             FROM cash_movement cm
             JOIN cash_session cs ON cs.id = cm.cash_session_id
             JOIN cash_register cr ON cr.id = cs.cash_register_id
-            WHERE (CAST(:registerCode AS VARCHAR) IS NULL OR cr.register_code = CAST(:registerCode AS VARCHAR))
+            WHERE cm.status IN ('CONFIRMED', 'REVERSED')
+              AND (CAST(:registerCode AS VARCHAR) IS NULL OR cr.register_code = CAST(:registerCode AS VARCHAR))
               AND (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))
               AND (CAST(:fromDate AS TIMESTAMPTZ) IS NULL OR cm.created_at >= CAST(:fromDate AS TIMESTAMPTZ))
               AND (CAST(:toDate AS TIMESTAMPTZ) IS NULL OR cm.created_at <= CAST(:toDate AS TIMESTAMPTZ))
@@ -148,10 +150,11 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
                 COALESCE(SUM(CASE WHEN cm.movement_type = 'REFUND' THEN cm.amount ELSE 0 END), 0) AS total_refunds,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_IN', 'TRANSFER_IN') THEN cm.amount ELSE 0 END), 0) AS total_cash_in,
                 COALESCE(SUM(CASE WHEN cm.movement_type IN ('CASH_OUT', 'SAFE_DEPOSIT', 'TRANSFER_OUT') THEN cm.amount ELSE 0 END), 0) AS total_cash_out,
-                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN cm.amount ELSE 0 END), 0) AS total_adjustments
+                COALESCE(SUM(CASE WHEN cm.movement_type = 'ADJUSTMENT' THEN (CASE WHEN cm.direction = 'OUT' THEN -cm.amount ELSE cm.amount END) ELSE 0 END), 0) AS total_adjustments
             FROM cash_register cr
             LEFT JOIN cash_session cs ON cs.cash_register_id = cr.id
             LEFT JOIN cash_movement cm ON cm.cash_session_id = cs.id
+                AND cm.status IN ('CONFIRMED', 'REVERSED')
                 AND (CAST(:fromDate AS TIMESTAMPTZ) IS NULL OR cm.created_at >= CAST(:fromDate AS TIMESTAMPTZ))
                 AND (CAST(:toDate AS TIMESTAMPTZ) IS NULL OR cm.created_at <= CAST(:toDate AS TIMESTAMPTZ))
             WHERE (CAST(:businessEntityCode AS VARCHAR) IS NULL OR cr.business_entity_code ILIKE CONCAT('%', CAST(:businessEntityCode AS VARCHAR), '%'))
@@ -161,4 +164,37 @@ public interface CashMovementRepository extends JpaRepository<CashMovement, Long
     java.util.List<Object[]> registerMetrics(@Param("businessEntityCode") String businessEntityCode,
                                              @Param("fromDate") java.time.Instant fromDate,
                                              @Param("toDate") java.time.Instant toDate);
+
+    /** Mouvements d'une caisse dans ce statut (mouvements en attente de visa d'un titulaire). */
+    @Query("SELECT m FROM CashMovement m WHERE m.cashSession.cashRegister.registerCode = :registerCode AND m.status = :status ORDER BY m.createdAt ASC")
+    java.util.List<CashMovement> findByRegisterCodeAndStatus(@Param("registerCode") String registerCode,
+                                                             @Param("status") com.sni.bokaticowork.features.payment.enums.CashMovementStatus status);
+
+    java.util.List<CashMovement> findByCashSession_IdAndStatus(Long sessionId, com.sni.bokaticowork.features.payment.enums.CashMovementStatus status);
+
+    @Query("SELECT m FROM CashMovement m WHERE m.status = :status AND m.expiresAt IS NOT NULL AND m.expiresAt < :now")
+    java.util.List<CashMovement> findExpired(@Param("status") com.sni.bokaticowork.features.payment.enums.CashMovementStatus status,
+                                             @Param("now") java.time.Instant now);
+
+    /** Sorties confirmees d'une caisse depuis un instant (realimentation de la petite caisse). */
+    @Query("SELECT m FROM CashMovement m WHERE m.cashSession.cashRegister.registerCode = :registerCode AND m.movementType = :type AND m.status IN :statuses AND m.createdAt > :since ORDER BY m.createdAt ASC")
+    java.util.List<CashMovement> findByRegisterTypeSince(@Param("registerCode") String registerCode,
+                                                         @Param("type") com.sni.bokaticowork.features.payment.enums.CashMovementType type,
+                                                         @Param("statuses") java.util.Collection<com.sni.bokaticowork.features.payment.enums.CashMovementStatus> statuses,
+                                                         @Param("since") java.time.Instant since);
+
+    @Query("SELECT m FROM CashMovement m WHERE (:registerCode IS NULL OR m.cashSession.cashRegister.registerCode = :registerCode) AND m.createdAt >= :from AND m.createdAt < :to ORDER BY m.createdAt ASC, m.id ASC")
+    java.util.List<CashMovement> findByRegisterBetween(@Param("registerCode") String registerCode, @Param("from") java.time.Instant from,
+                                                       @Param("to") java.time.Instant to);
+
+    /** Lot F3 : mouvements a transmettre a la comptabilite. */
+    java.util.List<CashMovement> findByAccountingStatusAndStatusNotOrderByCreatedAtAscIdAsc(String accountingStatus,
+            com.sni.bokaticowork.features.payment.enums.CashMovementStatus excluded,
+                                                                              org.springframework.data.domain.Pageable pageable);
+
+    /** Lot F3 : mouvements d'une caisse pas encore comptabilises. */
+    long countByCashSession_CashRegister_IdAndAccountingStatusIn(Long registerId, java.util.Collection<String> statuses);
+
+    /** Lot F10 : mouvements comptabilises d'une caisse dans une devise (valeur des especes en devise). */
+    java.util.List<CashMovement> findByCashSession_CashRegister_IdAndCurrencyIgnoreCaseAndAccountingBaseAmountIsNotNull(Long registerId, String currency);
 }

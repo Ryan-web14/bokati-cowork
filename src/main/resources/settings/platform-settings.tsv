@@ -1,4 +1,86 @@
 # cle	domaine	type	effet	defaut	libelle
+accounting.account.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation de compte : IMMEDIATE ou AFTER_APPROVAL
+accounting.analytic.centre-account	ACCOUNTING	TEXT	LIVE	93	Compte de classe 9 des centres d'analyse (reflet analytique)
+accounting.analytic.class9-axis	ACCOUNTING	TEXT	LIVE	ACTIVITE	Axe reflechi en classe 9 dans le journal CAG (vide : pas de reflet)
+accounting.analytic.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation d'une section par un administrateur : IMMEDIATE ou AFTER_APPROVAL
+accounting.analytic.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite analytique active (ventilation obligatoire sur les comptes concernes)
+accounting.analytic.reflected-account	ACCOUNTING	TEXT	LIVE	91	Compte des charges et produits reflechis
+accounting.bank.auto-match	ACCOUNTING	BOOLEAN	LIVE	true	Pointage d'office des correspondances sures
+accounting.bank.date-window-days	ACCOUNTING	INTEGER	LIVE	5	Fenetre de dates du pointage automatique (jours)
+accounting.bank.max-combined-lines	ACCOUNTING	INTEGER	LIVE	10	Nombre maximal d'ecritures combinees pour une ligne de releve
+accounting.bank.missing-statement	ACCOUNTING	ENUM	LIVE	ALERT	Releve manquant a l'import : ALERT ou REFUSE
+accounting.bank.reconciliation-before-lock	ACCOUNTING	BOOLEAN	LIVE	true	Rapprochement bancaire valide exige avant de verrouiller une periode
+accounting.cash.default-in-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une entree de caisse sans nature d'operation
+accounting.cash.default-out-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une sortie de caisse sans nature d'operation
+accounting.cash.exchange-gain-account	ACCOUNTING	TEXT	LIVE	776	Compte des gains de change sur especes en devise
+accounting.cash.exchange-loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes de change sur especes en devise
+accounting.cash.treasury-parent-account	ACCOUNTING	TEXT	LIVE	571	Compte parent sous lequel chaque caisse recoit son compte
+accounting.cash.vat-collected-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA collectee sur une entree de caisse
+accounting.cash.vat-recoverable-account	ACCOUNTING	TEXT	LIVE	4452	Compte de TVA recuperable sur une sortie de caisse
+accounting.commitment.alert-days	ACCOUNTING	INTEGER	LIVE	30	Hors bilan : alerte avant echeance, preavis et renouvellement (jours ; aussi a 7 et 1 jour)
+accounting.commitment.given-account	ACCOUNTING	TEXT	LIVE	901	Compte des engagements donnes
+accounting.commitment.given-counter-account	ACCOUNTING	TEXT	LIVE	902	Compte de contrepartie des engagements donnes
+accounting.commitment.journal	ACCOUNTING	TEXT	LIVE	HB	Journal des engagements hors bilan
+accounting.commitment.received-account	ACCOUNTING	TEXT	LIVE	905	Compte des engagements recus
+accounting.commitment.received-counter-account	ACCOUNTING	TEXT	LIVE	906	Compte de contrepartie des engagements recus
+accounting.currencies	ACCOUNTING	TEXT	LIVE	EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR	Devises suivies (taux recuperes et proposes), separees par des virgules
+accounting.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite active (ecritures automatiques de la plateforme)
+accounting.exchange.auto-fetch	ACCOUNTING	BOOLEAN	LIVE	true	Recuperation automatique des taux du jour sur internet
+accounting.exchange.eur-parity	ACCOUNTING	DECIMAL	LIVE	655.957	Parite fixe de l'euro en francs CFA
+accounting.exchange.fetch-cron	ACCOUNTING	CRON	RESTART	0 15 7 * * *	Planification de la recuperation des taux de change
+accounting.exchange.gain-account	ACCOUNTING	TEXT	LIVE	776	Compte des gains de change au reglement d'une facture en devise
+accounting.exchange.loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes de change au reglement d'une facture en devise
+accounting.exchange.provider-url	ACCOUNTING	TEXT	LIVE	https://api.frankfurter.dev/v1/latest?from=EUR	Adresse du fournisseur de taux (reponse JSON en base EUR)
+accounting.financing.analytic-axis	ACCOUNTING	TEXT	LIVE		Axe analytique des sections portees par les emprunts et la paie (vide : pas de ventilation)
+accounting.financing.cron	ACCOUNTING	CRON	RESTART	0 45 6 * * *	Tenue quotidienne : echeances d'emprunt, alertes, hors bilan
+accounting.lettering.auto-delay-ms	ACCOUNTING	INTEGER	RESTART	600000	Intervalle du lettrage automatique des comptes clients (millisecondes)
+accounting.lettering.difference-threshold	ACCOUNTING	INTEGER	LIVE	500	Ecart de reglement maximal au lettrage (XAF)
+accounting.lettering.gain-account	ACCOUNTING	TEXT	LIVE	758	Compte des ecarts de reglement favorables
+accounting.lettering.loss-account	ACCOUNTING	TEXT	LIVE	658	Compte des ecarts de reglement defavorables
+accounting.loan.accrual-journal	ACCOUNTING	TEXT	LIVE	OD	Journal des interets courus des emprunts
+accounting.loan.alert-days	ACCOUNTING	INTEGER	LIVE	7	Alerte des comptables avant une echeance d'emprunt (jours)
+accounting.manual-entry.second-validation-threshold	ACCOUNTING	INTEGER	LIVE	0	Montant au-dela duquel une piece manuelle est validee par un autre comptable (0 : jamais)
+accounting.night-worker-cron	ACCOUNTING	CRON	RESTART	0 30 2 * * *	Planification du controle de continuite et des relances comptables
+accounting.notify-emails	ACCOUNTING	TEXT	LIVE		Destinataires des alertes comptables (comptables, administrateur finance), separes par des virgules
+accounting.numbering.chronology	ACCOUNTING	ENUM	LIVE	STRICT	Ordre des pieces : STRICT (dates croissantes) ou PERIOD
+accounting.numbering.width	ACCOUNTING	INTEGER	LIVE	6	Longueur de la sequence des numeros de piece
+accounting.partner.account	ACCOUNTING	TEXT	LIVE	462	Compte des comptes courants d'associes (462, ou divisionnaire de 16 si bloques)
+accounting.partner.dividend-account	ACCOUNTING	TEXT	LIVE	465	Compte des dividendes a payer affectes en compte courant
+accounting.partner.interest-account	ACCOUNTING	TEXT	LIVE	671	Compte de charge des interets des comptes courants
+accounting.partner.journal	ACCOUNTING	TEXT	LIVE	OD	Journal des interets et mouvements sans tresorerie des comptes courants
+accounting.payroll.journal	ACCOUNTING	TEXT	LIVE	PA	Journal de paie
+accounting.payroll.section-required	ACCOUNTING	BOOLEAN	LIVE	false	Paie : refuser un salarie sans section analytique
+accounting.posting.batch-size	ACCOUNTING	INTEGER	LIVE	50	Nombre d'evenements comptables traites par passage du moteur d'imputation
+accounting.posting.disabled-families	ACCOUNTING	TEXT	LIVE		Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules
+accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	RESTART	30000	Intervalle du moteur d'imputation (millisecondes)
+accounting.replay-until	ACCOUNTING	TEXT	LIVE		Reprise : les faits dates avant ce jour produisent des brouillards a valider en bloc (vide : pas de reprise)
+accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
+accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients
+accounting.sales.discount-account	ACCOUNTING	TEXT	LIVE	709	Compte des remises accordees sur facture
+accounting.sales.extra-tax-account	ACCOUNTING	TEXT	LIVE	4431	Compte du centime additionnel facture
+accounting.sales.journal	ACCOUNTING	TEXT	LIVE	VT	Journal des factures et avoirs
+accounting.sales.payment-delay-minutes	ACCOUNTING	INTEGER	LIVE	5	Delai avant comptabilisation d'un paiement, le temps de son imputation sur les factures (minutes)
+accounting.sales.unallocated-account	ACCOUNTING	TEXT	LIVE	4719	Compte de liaison des encaissements non imputes et du portefeuille
+accounting.sales.vat-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA facturee
+accounting.start-date	ACCOUNTING	TEXT	LIVE	2026-01-01	Date de bascule : les faits anterieurs ne sont comptabilises que par la reprise
+accounting.unbalanced-entry.blocks-period-close	ACCOUNTING	BOOLEAN	LIVE	true	Un ecart non regularise bloque le verrouillage de la periode
+accounting.unbalanced-entry.policy	ACCOUNTING	ENUM	LIVE	HOLD	Piece desequilibree : HOLD (attente), SUSPENSE_ACCOUNT (compte d'attente) ou ACCEPT
+accounting.unbalanced-entry.suspense-account	ACCOUNTING	TEXT	LIVE	4718	Compte d'attente d'equilibrage
+accounting.unbalanced-entry.suspense-max-difference	ACCOUNTING	INTEGER	LIVE	0	Difference maximale passee en compte d'attente (0 : sans limite)
+accounting.vat.chargeability	ACCOUNTING	ENUM	LIVE	INVOICE	Exigibilite de la TVA facturee : INVOICE (a la facture, regime des debits) ou PAYMENT (a l'encaissement)
+accounting.vat.collected-accounts	ACCOUNTING	TEXT	LIVE	4431,4432	Comptes de TVA facturee repris dans la declaration
+accounting.vat.credit-account	ACCOUNTING	TEXT	LIVE	4449	Compte du credit de TVA a reporter
+accounting.vat.deductible-accounts	ACCOUNTING	TEXT	LIVE	4451,4452,4454	Comptes de TVA recuperable repris dans la declaration
+accounting.vat.deduction-prorata	ACCOUNTING	DECIMAL	LIVE	100	Prorata de deduction de la TVA recuperable, en pourcentage (100 : tout est deductible)
+accounting.vat.due-account	ACCOUNTING	TEXT	LIVE	4441	Compte de la TVA due a l'Etat
+accounting.vat.extra-tax-code	ACCOUNTING	TEXT	LIVE	CA	Code de taxe du centime additionnel sur les ecritures
+accounting.vat.journal	ACCOUNTING	TEXT	LIVE	OD	Journal de la piece de liquidation de la TVA
+accounting.vat.non-deductible-account	ACCOUNTING	TEXT	LIVE	658	Compte de charge de la TVA non deductible (prorata) a la liquidation
+accounting.vat.pending-account	ACCOUNTING	TEXT	LIVE	4438	Compte d'attente de la TVA facturee non encore exigible (regime des encaissements)
+accounting.wallet.admin-account	ACCOUNTING	TEXT	LIVE	471	Contrepartie des ajustements administratifs de portefeuille
+accounting.wallet.fee-account	ACCOUNTING	TEXT	LIVE	706	Compte des frais de transfert entre portefeuilles
+accounting.wallet.journal	ACCOUNTING	TEXT	LIVE	PF	Journal du portefeuille electronique
+accounting.wallet.promotion-account	ACCOUNTING	TEXT	LIVE	658	Compte des credits promotionnels et remises en argent
 app.admin-access-url	ENVIRONMENT	TEXT	RESTART	https://admin.elleaose.com	Adresse de l'administration
 app.api-base-url	ENVIRONMENT	TEXT	RESTART	http://localhost:8080	Adresse de l'API
 app.company.machine-code	ENVIRONMENT	TEXT	RESTART	00000	Code machine de l'exploitant
@@ -18,24 +100,6 @@ app.document.storage.provider	DOCUMENTS	TEXT	RESTART	filesystem	Fournisseur de s
 app.document.storage.root-path	DOCUMENTS	TEXT	RESTART	storage/documents	Dossier racine du stockage
 app.document.worker.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Traitement des documents actif
 app.document.worker.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du traitement des documents (ms)
-app.ged.filing.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Classement automatique de la GED actif
-app.ged.filing.batch-size	DOCUMENTS	INTEGER	RESTART	1000	Documents rangés par passage du classement GED
-app.ged.filing.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	120000	Délai avant le premier classement GED (ms)
-app.ged.filing.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du classement GED (ms)
-app.ged.text.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Lecture du texte des fichiers GED (recherche) active
-app.ged.text.batch-size	DOCUMENTS	INTEGER	RESTART	20	Fichiers GED lus par passage
-app.ged.text.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	180000	Délai avant la première lecture des fichiers GED (ms)
-app.ged.text.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	60000	Cadence de lecture des fichiers GED (ms)
-app.ged.text.ocr-enabled	DOCUMENTS	BOOLEAN	RESTART	true	OCR des scans et images de la GED
-app.ged.text.max-ocr-pages	DOCUMENTS	INTEGER	RESTART	30	Pages lues par OCR au plus, par fichier GED
-app.ged.text.max-chars	DOCUMENTS	INTEGER	RESTART	300000	Caractères gardés au plus, par fichier GED
-app.ged.text.ocr-language	DOCUMENTS	TEXT	RESTART	fra+eng	Langues de l'OCR de la GED (Tesseract)
-app.ged.text.ocr-data-path	DOCUMENTS	TEXT	RESTART		Dossier des langues Tesseract (tessdata) pour la GED
-app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	RESTART	true	Vidage automatique de la corbeille GED
-app.ged.trash.retention-days	DOCUMENTS	INTEGER	RESTART	30	Jours en corbeille GED avant destruction
-app.ged.trash.purge-cron	DOCUMENTS	CRON	RESTART	0 15 3 * * *	Heure du vidage de la corbeille GED
-app.ged.quota.total-bytes	DOCUMENTS	INTEGER	RESTART	0	Quota d'espace de toute la GED en octets (0 : aucun)
-app.referral.share-url-template	ENVIRONMENT	TEXT	RESTART	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
 app.documents.preview-token.secret	DOCUMENTS	SECRET	RESTART		Secret des liens d'aperçu
 app.documents.preview-token.ttl-seconds	DOCUMENTS	INTEGER	RESTART	300	Validité d'un lien d'aperçu (secondes)
 app.documents.public-preview-enabled	DOCUMENTS	BOOLEAN	RESTART	false	Aperçu public des documents
@@ -43,6 +107,23 @@ app.error.verbose	ENVIRONMENT	BOOLEAN	RESTART	false	Erreurs détaillées
 app.event.notification-email	EVENTS	EMAIL	RESTART	coworkspace@elleaose.com	Adresse de notification des événements
 app.event.opening-code	EVENTS	TEXT	RESTART	OUVERTURE	Code de l'événement d'ouverture
 app.frontend-url	ENVIRONMENT	TEXT	RESTART	https://elleaose.com	Adresse du portail
+app.ged.filing.batch-size	DOCUMENTS	INTEGER	RESTART	1000	Documents rangés par passage du classement GED
+app.ged.filing.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Classement automatique de la GED actif
+app.ged.filing.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	3600000	Cadence du classement GED (ms)
+app.ged.filing.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	120000	Délai avant le premier classement GED (ms)
+app.ged.quota.total-bytes	DOCUMENTS	INTEGER	RESTART	0	Quota d'espace de toute la GED en octets (0 : aucun)
+app.ged.text.batch-size	DOCUMENTS	INTEGER	RESTART	20	Fichiers GED lus par passage
+app.ged.text.enabled	DOCUMENTS	BOOLEAN	RESTART	true	Lecture du texte des fichiers GED (recherche) active
+app.ged.text.fixed-delay-ms	DOCUMENTS	INTEGER	RESTART	60000	Cadence de lecture des fichiers GED (ms)
+app.ged.text.initial-delay-ms	DOCUMENTS	INTEGER	RESTART	180000	Délai avant la première lecture des fichiers GED (ms)
+app.ged.text.max-chars	DOCUMENTS	INTEGER	RESTART	300000	Caractères gardés au plus, par fichier GED
+app.ged.text.max-ocr-pages	DOCUMENTS	INTEGER	RESTART	30	Pages lues par OCR au plus, par fichier GED
+app.ged.text.ocr-data-path	DOCUMENTS	TEXT	RESTART		Dossier des langues Tesseract (tessdata) pour la GED
+app.ged.text.ocr-enabled	DOCUMENTS	BOOLEAN	RESTART	true	OCR des scans et images de la GED
+app.ged.text.ocr-language	DOCUMENTS	TEXT	RESTART	fra+eng	Langues de l'OCR de la GED (Tesseract)
+app.ged.trash.purge-cron	DOCUMENTS	CRON	RESTART	0 15 3 * * *	Heure du vidage de la corbeille GED
+app.ged.trash.purge-enabled	DOCUMENTS	BOOLEAN	RESTART	true	Vidage automatique de la corbeille GED
+app.ged.trash.retention-days	DOCUMENTS	INTEGER	RESTART	30	Jours en corbeille GED avant destruction
 app.locale	LOCALE	TEXT	RESTART	fr_FR	Langue de la plateforme
 app.outbox.worker.batch-size	OUTBOX	INTEGER	RESTART	25	Taille de lot de la boîte d'envoi
 app.outbox.worker.enabled	OUTBOX	BOOLEAN	RESTART	true	Boîte d'envoi active
@@ -51,6 +132,7 @@ app.phone.default-country	LOCALE	TEXT	RESTART	CG	Pays par défaut des téléphon
 app.phone.default-dial-code	LOCALE	TEXT	RESTART	+242	Indicatif par défaut
 app.phone.keep-trunk-zero	LOCALE	TEXT	RESTART	CG,GA,CI,IT	Pays qui gardent le zéro initial
 app.portal.kyc-grace-period-days	PORTAL	INTEGER	RESTART	7	Grâce KYC du portail (jours)
+app.referral.share-url-template	ENVIRONMENT	TEXT	RESTART	https://elleaose.com/inscription?parrain={code}	Adresse d'un lien de parrainage ({code} remplacé par le code)
 app.security.bootstrap.secret	SECURITY	SECRET	RESTART		Secret d'initialisation
 app.security.cors.allowed-origins	SECURITY	TEXT	RESTART	*	Origines autorisées
 app.security.failed-login.max-attempts	SECURITY	INTEGER	RESTART	5	Essais de connexion avant blocage
@@ -111,6 +193,15 @@ bokati.booking.waitlist.worker-delay-ms	BOOKING	INTEGER	RESTART	300000	Cadence d
 bokati.booking.wallet.hold-grace-minutes	BOOKING	INTEGER	RESTART	60	Grâce de retenue sur portefeuille (minutes)
 bokati.booking.wallet.settlement-delay-minutes	BOOKING	INTEGER	RESTART	1	Délai de règlement sur portefeuille (minutes)
 bokati.booking.wallet.worker-delay-ms	BOOKING	INTEGER	RESTART	15000	Cadence des retenues de réservation (ms)
+bokati.cash.assignment.enforced	PAYMENT	BOOLEAN	RESTART	true	Ouverture de session reservee aux personnes affectees a la caisse
+bokati.cash.forced-close.contest-days	PAYMENT	INTEGER	RESTART	3	Delai de contestation d'une cloture d'office (jours)
+bokati.cash.refund.max-cash-amount	PAYMENT	INTEGER	RESTART	0	Remboursement en especes au-dela duquel le virement est impose (0 : sans limite)
+bokati.cash.reversal.cashier-max-amount	PAYMENT	INTEGER	RESTART	50000	Plafond d'une contre-passation par le caissier seul
+bokati.cash.reversal.cashier-minutes	PAYMENT	INTEGER	RESTART	15	Delai pendant lequel le caissier contre-passe seul (minutes)
+bokati.cash.staff-worker-cron	PAYMENT	CRON	RESTART	0 10 * * * *	Planification du suivi des absences et des sessions trop longues
+bokati.cash.transfer.max-transit-hours	PAYMENT	INTEGER	RESTART	2	Transit maximal d'un transfert de caisse avant alerte (heures)
+bokati.cash.variance.investigation-days	PAYMENT	INTEGER	RESTART	30	Echeance de revue d'un ecart mis en recherche (jours)
+bokati.cash.visa.expiry-hours	PAYMENT	INTEGER	RESTART	24	Delai du second visa d'une operation de caisse (heures)
 bokati.company.wallet.approval-expiry-delay-ms	COMPANIES	INTEGER	RESTART	600000	Cadence d'expiration des validations (ms)
 bokati.company.wallet.approval-hours	COMPANIES	INTEGER	LIVE	48	Délai de validation d'une dépense (heures)
 bokati.company.wallet.currency	COMPANIES	TEXT	RESTART	XAF	Devise du portefeuille d'organisation
@@ -254,3 +345,18 @@ bokati.websocket.stomp.system-passcode	WEBSOCKET	SECRET	RESTART		Mot de passe sy
 bokati.websocket.stomp.use-tls	WEBSOCKET	BOOLEAN	RESTART	false	Relais chiffré
 bokati.websocket.stomp.virtual-host	WEBSOCKET	TEXT	RESTART	/	Hôte virtuel du relais
 bokati.websocket.use-stomp-relay	WEBSOCKET	BOOLEAN	RESTART	false	Relais de messages actif
+fund.advance.overdue-policy	PAYMENT	ENUM	RESTART	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
+fund.approval.escalation-days	PAYMENT	INTEGER	RESTART	3	Jours d'attente d'une validation avant escalade au responsable
+fund.approval.level1-max	PAYMENT	INTEGER	RESTART	50000	Montant maximal valide par le seul chef de service (XAF)
+fund.approval.level2-max	PAYMENT	INTEGER	RESTART	500000	Montant maximal valide sans la direction (XAF)
+fund.approval.reminder-hours	PAYMENT	INTEGER	RESTART	24	Heures avant rappel au valideur
+fund.budget.blocking-mode	PAYMENT	ENUM	RESTART	EXTRA_APPROVAL	Depassement d'une ligne bloquante : REFUSE (demande refusee) ou EXTRA_APPROVAL (validation budgetaire en plus)
+fund.budget.require-forecast-choice	PAYMENT	BOOLEAN	RESTART	true	Avec un budget actif, chaque demande cite sa prevision ou se declare non prevue
+fund.budget.unplanned-approval	PAYMENT	BOOLEAN	RESTART	false	Une depense non prevue demande une validation budgetaire en plus
+fund.justification.days	PAYMENT	INTEGER	RESTART	7	Delai de justification d'une avance apres la mission ou le decaissement (jours)
+fund.justification.receipt-exempt-max	PAYMENT	INTEGER	RESTART	5000	Montant d'une ligne de justification admis sans piece, sur attestation (XAF)
+fund.request.expiry-days	PAYMENT	INTEGER	RESTART	15	Jours apres lesquels une demande approuvee non decaissee expire
+fund.vat-recoverable-account	PAYMENT	TEXT	RESTART	4452	Compte de TVA recuperable des justifications d'avance
+fund.voucher.issuer-details	PAYMENT	TEXT	RESTART		Mentions de l'exploitant en tete des pieces (RCCM, NIU, adresse)
+fund.voucher.issuer-name	PAYMENT	TEXT	RESTART	ELLE A OSE	Raison sociale en tete des pieces comptables
+fund.worker-cron	PAYMENT	CRON	RESTART	0 0 8-18 * * *	Planification des rappels et relances des demandes de fonds

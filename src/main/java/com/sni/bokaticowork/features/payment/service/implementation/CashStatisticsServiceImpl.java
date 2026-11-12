@@ -61,10 +61,13 @@ public class CashStatisticsServiceImpl implements CashStatisticsService {
         for (CashMovement movement : movements) {
             BigDecimal amount = safeAmount(movement.getAmount());
             amountSum = amountSum.add(amount);
-            switch (movement.getMovementType()) {
-                case PAYMENT, CASH_IN, TRANSFER_IN, OPENING_FLOAT -> totalInflow = totalInflow.add(amount);
-                case REFUND, CASH_OUT, SAFE_DEPOSIT, TRANSFER_OUT -> totalOutflow = totalOutflow.add(amount);
-                case ADJUSTMENT, CLOSING_COUNT -> { }
+            // Regle unique de sens (lot C0) : un ajustement compte selon son sens, un comptage ou un
+            // echange est neutre, un mouvement en attente ou annule ne compte pas.
+            BigDecimal signed = com.sni.bokaticowork.features.payment.service.support.CashFlowRules.signedAmount(movement);
+            if (signed.signum() > 0) {
+                totalInflow = totalInflow.add(signed);
+            } else if (signed.signum() < 0) {
+                totalOutflow = totalOutflow.add(signed.negate());
             }
         }
         BigDecimal inOutRatio = totalOutflow.signum() > 0

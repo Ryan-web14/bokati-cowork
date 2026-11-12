@@ -57,6 +57,20 @@ class CounterAndAutomaticRegisterTest {
     @Mock private com.sni.bokaticowork.features.payment.repository.CashMovementAttachmentRepository attachmentRepository;
     @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
+    /** Hors contexte authentifie, l'acteur est la valeur fournie : les tests gardent leurs acteurs. */
+    @org.mockito.Spy
+    private com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors =
+            new com.sni.bokaticowork.features.payment.service.support.CashActorResolver();
+
+    @org.mockito.Mock
+    private com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard accessGuard;
+
+    @org.mockito.Mock
+    private CashRegisterAdminServiceImpl registerAdmin;
+
+    @org.mockito.Mock
+    private com.sni.bokaticowork.features.payment.service.interfaces.CashSessionLifecycleService lifecycle;
+
     @InjectMocks private CashRegisterServiceImpl service;
 
     private CashRegister mobileMoneyRegister;

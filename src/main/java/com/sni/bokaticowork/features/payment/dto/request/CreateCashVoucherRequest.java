@@ -16,8 +16,19 @@ public record CreateCashVoucherRequest(
         String counterpartyCode,
         String counterpartyName,
         String reason,
-        @NotBlank String createdBy,
+        /** Ignore en contexte authentifie : l'auteur est l'utilisateur connecte. */
+        String createdBy,
         CashDocumentType documentType,
-        String metadataJson
+        String metadataJson,
+        /** Nature d'operation (liste {@code GET /cash-registers/natures}) ; remplace {@code flowCategory}. */
+        String natureCode
 ) {
+    /** Forme historique, sans nature. */
+    public CreateCashVoucherRequest(java.math.BigDecimal amount, String documentNumber, String flowCategory, String referenceType,
+                                    String referenceCode, String counterpartyType, String counterpartyCode, String counterpartyName,
+                                    String reason, String createdBy, com.sni.bokaticowork.features.payment.enums.CashDocumentType documentType,
+                                    String metadataJson) {
+        this(amount, documentNumber, flowCategory, referenceType, referenceCode, counterpartyType, counterpartyCode, counterpartyName,
+                reason, createdBy, documentType, metadataJson, null);
+    }
 }

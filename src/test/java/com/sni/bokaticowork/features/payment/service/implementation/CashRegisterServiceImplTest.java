@@ -59,6 +59,20 @@ class CashRegisterServiceImplTest {
     @Mock
     private CashRegisterMapper mapper;
 
+    /** Hors contexte authentifie, l'acteur est la valeur fournie : les tests gardent leurs acteurs. */
+    @org.mockito.Spy
+    private com.sni.bokaticowork.features.payment.service.support.CashActorResolver actors =
+            new com.sni.bokaticowork.features.payment.service.support.CashActorResolver();
+
+    @org.mockito.Mock
+    private com.sni.bokaticowork.features.payment.service.support.CashRegisterAccessGuard accessGuard;
+
+    @org.mockito.Mock
+    private CashRegisterAdminServiceImpl registerAdmin;
+
+    @org.mockito.Mock
+    private com.sni.bokaticowork.features.payment.service.interfaces.CashSessionLifecycleService lifecycle;
+
     @InjectMocks
     private CashRegisterServiceImpl service;
 

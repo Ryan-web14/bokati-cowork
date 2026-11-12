@@ -21,6 +21,7 @@ public enum SettingDomain {
     COMPANIES("Entreprises", false),
     WALLET("Portefeuille", false),
     PAYMENT("Paiement et caisses", false),
+    ACCOUNTING("Comptabilité", false),
     BILLING("Facturation", false),
     COMPLIANCE("Conformité", false),
     DOCUMENTS("Documents", false),

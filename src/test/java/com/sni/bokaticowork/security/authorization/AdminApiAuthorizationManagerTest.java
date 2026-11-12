@@ -175,6 +175,151 @@ class AdminApiAuthorizationManagerTest {
     }
 
     /** Renvoie la permission exigee en refusant l'appel avec un compte sans aucune permission. */
+    @Test
+    void shouldGiveEachCashActionItsOwnPermission() {
+        // Lot C0 : tout tombait sur CASH:ADJUST, que chaque caissier avait, y compris la
+        // validation d'un ecart et la creation d'une caisse.
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/sessions")).isEqualTo("CASH:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/statistics/overview")).isEqualTo("CASH:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1/deactivate")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions")).isEqualTo("CASH_SESSION:OPEN");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/close")).isEqualTo("CASH_SESSION:CLOSE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/closing-request")).isEqualTo("CASH_SESSION:CLOSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/approve-variance")).isEqualTo("CASH_VARIANCE:DECIDE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/anomalies/CAF-1/review")).isEqualTo("CASH_VARIANCE:DECIDE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/movements")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/exit-vouchers")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/requests")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/requests/CRQ-1/approve")).isEqualTo("CASH_MOVEMENT:APPROVE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/requests/CRQ-1/reject")).isEqualTo("CASH_MOVEMENT:APPROVE");
+    }
+
+    @Test
+    void shouldProtectTheCashRegisterReferential() {
+        // Lot C1 : la fiche et le cycle de vie relevent de la gestion des caisses, le personnel
+        // (affectations, remises) de la gestion des caissiers.
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1/suspend")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1/close")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/CSR-1/devices/POS-7")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PUT", BASE + "/cash-registers/reference-lists/VARIANCE_REASON")).isEqualTo("CASH_REGISTER:MANAGE");
+        assertThat(requiredPermissionFor("PUT", BASE + "/cash-registers/CSR-1/assignments")).isEqualTo("CASH_STAFF:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/CSR-1/emergency-assignments")).isEqualTo("CASH_STAFF:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/CSR-1/responsibility-transfers")).isEqualTo("CASH_STAFF:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/responsibility-transfers/PRC-1/sign")).isEqualTo("CASH_SESSION:OPEN");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/movements/CSM-1/sign")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/CSR-1/history")).isEqualTo("CASH:READ");
+    }
+
+    @Test
+    void shouldGuardTheCashOperationsAndDashboard() {
+        // Lots C2, C3 et C6.
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/suspend")).isEqualTo("CASH_SESSION:SUSPEND");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/force-close")).isEqualTo("CASH_SESSION:FORCE_CLOSE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/sessions/CSS-1/counts")).isEqualTo("CASH_SESSION:CLOSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/sessions/CSS-1/pause")).isEqualTo("CASH_SESSION:PAUSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/handovers/PVP-1/accept")).isEqualTo("CASH_SESSION:OPEN");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/movements/CSM-1/approve")).isEqualTo("CASH_MOVEMENT:APPROVE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/movements/CSM-1/reverse")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/transfers")).isEqualTo("CASH_TRANSFER:SEND");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/transfers/OTI-1/receive")).isEqualTo("CASH_TRANSFER:RECEIVE");
+        assertThat(requiredPermissionFor("POST", BASE + "/cash-registers/absences")).isEqualTo("CASH_STAFF:DECLARE_ABSENCE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/cash-registers/absences/ABS-1/approve")).isEqualTo("CASH_STAFF:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/position")).isEqualTo("CASH_REPORT:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/cash-registers/reports/daily-blotter")).isEqualTo("CASH_REPORT:READ");
+    }
+
+    @Test
+    void shouldGuardTheAccountingRoutes() {
+        // Lot F1.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/reports/trial-balance")).isEqualTo("ACCOUNTING_REPORT:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/accounts")).isEqualTo("ACCOUNTING_ACCOUNT:CREATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/accounts/6055/deactivate")).isEqualTo("ACCOUNTING_ACCOUNT:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/entries")).isEqualTo("ACCOUNTING_ENTRY:CREATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/entries/BR-1/validate")).isEqualTo("ACCOUNTING_ENTRY:VALIDATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/entries/OD-2026-000001/reverse")).isEqualTo("ACCOUNTING_ENTRY:REVERSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/entries/BR-1/reject")).isEqualTo("ACCOUNTING_ENTRY:BALANCE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/periods/2026-01/lock")).isEqualTo("ACCOUNTING_PERIOD:LOCK");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/periods/2026-01/close")).isEqualTo("ACCOUNTING_PERIOD:CLOSE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/journals")).isEqualTo("ACCOUNTING_JOURNAL:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/lettering")).isEqualTo("ACCOUNTING_LETTERING:MANUAL");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/lettering/5/unletter")).isEqualTo("ACCOUNTING_LETTERING:UNLETTER");
+        // Lot F2.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/posting/events")).isEqualTo("ACCOUNTING_POSTING:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/posting/preview")).isEqualTo("ACCOUNTING_POSTING:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/posting/rules")).isEqualTo("ACCOUNTING_POSTING:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/posting/rules/4/activate")).isEqualTo("ACCOUNTING_POSTING:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/posting/events/4/regenerate")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/posting/drafts/validate")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
+        // Lot F3.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/registers/CSR-1/journals")).isEqualTo("CASH_MOVEMENT:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/cash/registers/CSR-1/journals")).isEqualTo("ACCOUNTING_JOURNAL:CREATE");
+        assertThat(requiredPermissionFor("PUT", BASE + "/accounting/cash/registers/CSR-1/journals/OD")).isEqualTo("ACCOUNTING_JOURNAL:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/reconciliation")).isEqualTo("ACCOUNTING_REPORT:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/cash/feed")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
+        // Lots F5 et F6.
+        assertThat(requiredPermissionFor("POST", BASE + "/fund-requests")).isEqualTo("FUND_REQUEST:CREATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/fund-requests/DDF-1/approve")).isEqualTo("FUND_REQUEST:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/fund-requests/DDF-1/disburse")).isEqualTo("FUND_REQUEST:DISBURSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/fund-requests/DDF-1/expenses/JUS-1/validate")).isEqualTo("FUND_JUSTIFICATION:VALIDATE");
+        assertThat(requiredPermissionFor("GET", BASE + "/fund-requests")).isEqualTo("FUND_REQUEST:READ");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/fund-needs/EDB-1/validate")).isEqualTo("FUND_REQUEST:APPROVE_L1");
+        // Lots F10 et C5.
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/bank-accounts/BQ/statements")).isEqualTo("BANK_STATEMENT:IMPORT");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/bank-accounts/BQ/matching")).isEqualTo("BANK_RECONCILIATION:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/reconciliations/3/validate")).isEqualTo("BANK_RECONCILIATION:VALIDATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/bank-accounts")).isEqualTo("BANK_ACCOUNT:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/exchange-rates")).isEqualTo("CASH_EXCHANGE_RATE:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/exchange-rates/fetch")).isEqualTo("CASH_EXCHANGE_RATE:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/exchange-rates/board")).isEqualTo("CASH:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/exchange-rates/convert")).isEqualTo("CASH:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/reconciliations/3/pdf")).isEqualTo("ACCOUNTING_REPORT:READ");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/registers/CSR-1/balances")).isEqualTo("CASH:READ");
+        // Lot F17.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/loans/note")).isEqualTo("FINANCING:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/loans/EMP-1/prepay")).isEqualTo("FINANCING:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/partners/CCA-1/movements")).isEqualTo("FINANCING:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/commitments")).isEqualTo("FINANCING:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/commitments/reconciliation")).isEqualTo("FINANCING:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/payroll/imports")).isEqualTo("PAYROLL:IMPORT");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/payroll/imports/5/post")).isEqualTo("PAYROLL:POST");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/payroll/imports/5/pay")).isEqualTo("PAYROLL:POST");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/payroll/rubrics")).isEqualTo("PAYROLL_SETTINGS:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/payroll/rubrics")).isEqualTo("PAYROLL:IMPORT");
+        // Lot F11.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/vat-returns/4/pdf")).isEqualTo("VAT_RETURN:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/vat-returns")).isEqualTo("VAT_RETURN:PREPARE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/vat-returns/4/validate")).isEqualTo("VAT_RETURN:VALIDATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/vat-returns/4/liquidate")).isEqualTo("VAT_RETURN:VALIDATE");
+        assertThat(requiredPermissionFor("DELETE", BASE + "/accounting/vat-returns/4")).isEqualTo("VAT_RETURN:PREPARE");
+        // Lot F16.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/budget/reports/follow-up")).isEqualTo("BUDGET_REPORT:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/budget/forecasts")).isEqualTo("BUDGET_FORECAST:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/budget/5/approve")).isEqualTo("BUDGET:PREPARE");
+        // Lot F9.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/analytic/reports/dashboard")).isEqualTo("ANALYTIC_REPORT:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/analytic/axes/POSTE/sections")).isEqualTo("ANALYTIC_ITEM:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/analytic/reclass")).isEqualTo("ANALYTIC:RECLASS");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/analytic/rules")).isEqualTo("ANALYTIC_SETTINGS:MANAGE");
+        // Lot F4.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/sales/checks")).isEqualTo("ACCOUNTING_REPORT:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/sales/auto-letter")).isEqualTo("ACCOUNTING_LETTERING:MANUAL");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/sales/feed")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
+    }
+
+    @Test
+    void shouldNotLetACashierWithOnlyTheOldAdjustRightValidateAVariance() {
+        List<String> cashier = List.of("ROLE_ADMIN", "CASH_READ", "CASH:READ", "CASH_ADJUST", "CASH:ADJUST",
+                "CASH_SESSION_OPEN", "CASH_SESSION:OPEN", "CASH_SESSION_CLOSE", "CASH_SESSION:CLOSE",
+                "CASH_MOVEMENT_CREATE", "CASH_MOVEMENT:CREATE");
+
+        assertThat(granted(cashier, "PATCH", BASE + "/cash-registers/sessions/CSS-1/approve-variance")).isFalse();
+        assertThat(granted(cashier, "POST", BASE + "/cash-registers")).isFalse();
+        assertThat(granted(cashier, "POST", BASE + "/cash-registers/sessions")).isTrue();
+        assertThat(granted(cashier, "POST", BASE + "/cash-registers/sessions/CSS-1/movements")).isTrue();
+    }
+
     private String requiredPermissionFor(String method, String uri) {
         MockHttpServletRequest request = new MockHttpServletRequest(method, uri);
         manager.authorize(() -> authentication(List.of("ROLE_ADMIN")), new RequestAuthorizationContext(request));
