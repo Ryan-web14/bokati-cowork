@@ -49,13 +49,19 @@ Préfixe `/api/v1/accounting/purchases`. Écritures auditées.
 | Route | Droit |
 | --- | --- |
 | Toutes les lectures (`GET`) | `PURCHASE:READ` |
-| `POST /suppliers` | `SUPPLIER:MANAGE` |
+| `POST /suppliers`, `POST /suppliers/from-inventory/{code}` | `SUPPLIER:MANAGE` |
 | `POST /orders`, `/orders/from-need` | `PURCHASE_ORDER:MANAGE` |
 | `PATCH /orders/{n}/validate`, `/orders/{n}/cancel` | `PURCHASE_ORDER:VALIDATE` |
 | `POST /invoices`, `/invoices/{n}/post`, `DELETE /invoices/{n}` | `SUPPLIER_INVOICE:MANAGE` |
 | `POST /invoices/{n}/pay` | `SUPPLIER_PAYMENT:MANAGE` |
 
 Rôles : `SUPER_ADMIN`, `ADMIN` et `FINANCE` tout ; `MANAGER` la lecture, la préparation et la validation des commandes.
+
+## Suggestion de fournisseurs (complément)
+
+Voir [finance-suggestion-fournisseurs](../finance-suggestion-fournisseurs/README.md). La fiche fournisseur de référence est celle de l'inventaire ; `acc_supplier` gagne `inventory_supplier_id` (facultatif, unique) :
+- `POST /suppliers` accepte `inventorySupplierId` ; `POST /suppliers/from-inventory/{code}` retrouve ou crée le fournisseur comptable d'une fiche d'inventaire (nom, NIU, adresse, téléphone, courriel copiés ; `401` et `447` par défaut) ;
+- `POST /orders/from-need` : `supplierCode` devient facultatif ; absent, la fiche fournisseur portée par les lignes retenues (toutes la même) donne le fournisseur de la commande ; un code de fiche d'inventaire est aussi accepté.
 
 ## Paramètres (domaine Comptabilité)
 
@@ -79,6 +85,7 @@ Rôles : `SUPER_ADMIN`, `ADMIN` et `FINANCE` tout ; `MANAGER` la lecture, la pr�
 `PurchaseF13IT` (schéma de production) :
 - commande depuis un état de besoin (20 ramettes à 5 000) : compte `6055` de la nature, TVA 18 000, état de besoin transformé ; validation refusée au préparateur, faite par une autre personne ; **le budget est engagé de 100 000** ;
 - facture sur commande avec retenue de 5 % : TTC 118 000, retenue 5 000, net 113 000 ; doublon refusé ; écriture `6055` 100 000, `4452` 18 000 (`TVA18`), `401` 113 000 au nom du fournisseur, `447` 5 000 ; commande `INVOICED`, engagement réalisé ; échéancier et état des retenues ; règlement : facture `PAID`, `401` lettré, relevé soldé ; bon de commande en PDF ;
-- avoir de 2 000 HT sur une facture de 10 000 HT : reste à payer 9 440, facture partiellement réglée.
+- avoir de 2 000 HT sur une facture de 10 000 HT : reste à payer 9 440, facture partiellement réglée ;
+- commande depuis un état de besoin dont la ligne porte une fiche fournisseur, sans fournisseur indiqué : fournisseur comptable créé depuis la fiche, puis retrouvé.
 
 `AdminApiAuthorizationManagerTest` couvre les routes.

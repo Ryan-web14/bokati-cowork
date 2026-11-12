@@ -78,6 +78,10 @@ public class AccSupplier {
     @Column(name = "withholding_label")
     private String withholdingLabel;
 
+    /** Fiche fournisseur d'inventaire reliee (facultatif, au plus un fournisseur comptable par fiche). */
+    @Column(name = "inventory_supplier_id")
+    private Long inventorySupplierId;
+
     @Builder.Default
     @Column(name = "status", nullable = false)
     private String status = "ACTIVE";

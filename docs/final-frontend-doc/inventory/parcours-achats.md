@@ -13,6 +13,15 @@ Circuit complet : règle de réapprovisionnement, suggestion, demande d'achat, a
 
 Le statut du fournisseur n'est pas contrôlé à la commande : filtrer soi-même les fournisseurs `ACTIVE` (la liste `GET /sni/api/v1/inventory/reference/data` ne contient que ceux-là).
 
+## Catégories de fournisseurs et suggestion
+
+Détail des règles : [docs/backend/finance-suggestion-fournisseurs](../../backend/finance-suggestion-fournisseurs/README.md). Routes : [SupplierSuggestionController](routes/SupplierSuggestionController.md).
+
+1. Référentiel des catégories de fournisseurs (écran de paramétrage) : `GET .../supplier-categories?q=&active=&parentCode=`, création `POST .../supplier-categories` (`label` obligatoire ; `code` facultatif, déduit du libellé ; `parentCode` pour une sous-catégorie ; `natureCodes` et `inventoryCategoryCodes` : natures d'opération et catégories de stock reliées), modification `PUT .../supplier-categories/{code}`, `PATCH .../{code}/deactivate` et `/activate`, suppression `DELETE .../{code}` (`409` si la catégorie classe un fournisseur ou a des sous-catégories : proposer de la désactiver). Onze catégories de départ, reliées aux natures d'achat existantes.
+2. Catégories d'un fournisseur : la fiche (`SupplierResponse`) porte `categories` (`kind`, `code`, `label`, `active`) ; `kind` vaut `NATURE`, `INVENTORY_CATEGORY` ou `SUPPLIER_CATEGORY`. Elles se saisissent avec la fiche (`categories` dans `POST` / `PUT .../suppliers`, absent : inchangées) ou à part : `GET`, `PUT` (remplacement), `POST` (ajout) `.../suppliers/{supplierCode}/categories`, `DELETE .../suppliers/{supplierCode}/categories/{kind}/{code}`.
+3. Liste filtrée : `GET .../suppliers?categoryCode=` (catégorie fournisseur, sous-catégories comprises) ou `?categoryKind=NATURE&categoryCode=`.
+4. Suggestion : `GET .../supplier-suggestions?natureCode=&inventoryCategoryCode=&supplierCategoryCode=&designation=&itemCode=&amount=&limit=` : fournisseurs actifs classés, chacun avec `score`, `reasons` (phrases à afficher telles quelles), `declared`, `historyCount`, `contractUnitPrice`, `leadTimeDays`, `categories`. Sans nature, elle est devinée depuis `designation` (`natureGuessed`). Pour une ligne de besoin, proposer la première suggestion et laisser choisir dans la liste ; le choix s'enregistre dans `supplierCode` de la ligne.
+
 ## Règles de réapprovisionnement
 
 1. Liste : `GET /sni/api/v1/inventory/reorder-rules` (non paginée).

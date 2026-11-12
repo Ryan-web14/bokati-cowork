@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-176 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+188 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -182,3 +182,15 @@
 | PATCH | `/sni/api/v1/inventory/stock/transfers/{transferCode}/cancel` | INVENTORY:UPDATE | [StockTransferWorkflowController](routes/StockTransferWorkflowController.md#r-patch-sni-api-v1-inventory-stock-transfers-transfercode-cancel) |
 | PATCH | `/sni/api/v1/inventory/stock/transfers/{transferCode}/receive` | INVENTORY:UPDATE | [StockTransferWorkflowController](routes/StockTransferWorkflowController.md#r-patch-sni-api-v1-inventory-stock-transfers-transfercode-receive) |
 | PATCH | `/sni/api/v1/inventory/stock/transfers/{transferCode}/ship` | INVENTORY:UPDATE | [StockTransferWorkflowController](routes/StockTransferWorkflowController.md#r-patch-sni-api-v1-inventory-stock-transfers-transfercode-ship) |
+| GET | `/sni/api/v1/inventory/procurement/supplier-categories` | INVENTORY:READ | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-get-sni-api-v1-inventory-procurement-supplier-categories) |
+| POST | `/sni/api/v1/inventory/procurement/supplier-categories` | INVENTORY:CREATE | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-post-sni-api-v1-inventory-procurement-supplier-categories) |
+| DELETE | `/sni/api/v1/inventory/procurement/supplier-categories/{code}` | INVENTORY:DELETE | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-delete-sni-api-v1-inventory-procurement-supplier-categories-code) |
+| GET | `/sni/api/v1/inventory/procurement/supplier-categories/{code}` | INVENTORY:READ | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-get-sni-api-v1-inventory-procurement-supplier-categories-code) |
+| PUT | `/sni/api/v1/inventory/procurement/supplier-categories/{code}` | INVENTORY:UPDATE | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-put-sni-api-v1-inventory-procurement-supplier-categories-code) |
+| PATCH | `/sni/api/v1/inventory/procurement/supplier-categories/{code}/activate` | INVENTORY:UPDATE | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-patch-sni-api-v1-inventory-procurement-supplier-categories-code-activate) |
+| PATCH | `/sni/api/v1/inventory/procurement/supplier-categories/{code}/deactivate` | INVENTORY:UPDATE | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-patch-sni-api-v1-inventory-procurement-supplier-categories-code-deactivate) |
+| GET | `/sni/api/v1/inventory/procurement/supplier-suggestions` | INVENTORY:READ | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-get-sni-api-v1-inventory-procurement-supplier-suggestions) |
+| GET | `/sni/api/v1/inventory/procurement/suppliers/{supplierCode}/categories` | INVENTORY:READ | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-get-sni-api-v1-inventory-procurement-suppliers-suppliercode-categories) |
+| POST | `/sni/api/v1/inventory/procurement/suppliers/{supplierCode}/categories` | INVENTORY:CREATE | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-post-sni-api-v1-inventory-procurement-suppliers-suppliercode-categories) |
+| PUT | `/sni/api/v1/inventory/procurement/suppliers/{supplierCode}/categories` | INVENTORY:UPDATE | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-put-sni-api-v1-inventory-procurement-suppliers-suppliercode-categories) |
+| DELETE | `/sni/api/v1/inventory/procurement/suppliers/{supplierCode}/categories/{kind}/{code}` | INVENTORY:DELETE | [SupplierSuggestionController](routes/SupplierSuggestionController.md#r-delete-sni-api-v1-inventory-procurement-suppliers-suppliercode-categories-kind-code) |

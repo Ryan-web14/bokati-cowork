@@ -12,6 +12,8 @@ import com.sni.bokaticowork.features.fund.model.FundNeedLine;
 import com.sni.bokaticowork.features.fund.model.FundNeedStatement;
 import com.sni.bokaticowork.features.fund.repository.FundNeedLineRepository;
 import com.sni.bokaticowork.features.fund.repository.FundNeedStatementRepository;
+import com.sni.bokaticowork.features.inventory.procurement.repository.SupplierRepository;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.service.LinkedSupplier;
 import com.sni.bokaticowork.features.payment.model.CashOperationNature;
 import com.sni.bokaticowork.features.payment.repository.CashOperationNatureRepository;
 import com.sni.bokaticowork.features.payment.service.support.CashActorResolver;
@@ -39,6 +41,7 @@ public class FundNeedService {
     private final FundRequestService requests;
     private final SequenceGeneratorFacade sequences;
     private final CashActorResolver actors;
+    private final SupplierRepository supplierRepository;
 
     public FundDtos.Need create(FundDtos.NeedRequest input) {
         FundNeedStatement statement = statementRepository.save(FundNeedStatement.builder().number(sequences.next("fund_need_statement"))
@@ -77,9 +80,10 @@ public class FundNeedService {
             }
             BigDecimal amount = FundRequestService.money(quantity.multiply(price));
             String nature = StringUtils.hasText(line.natureCode()) ? line.natureCode().trim().toUpperCase(Locale.ROOT) : suggestNature(line.designation());
+            LinkedSupplier.Resolved supplier = LinkedSupplier.resolve(supplierRepository, line.supplierCode(), line.supplier(), no);
             lineRepository.save(FundNeedLine.builder().statementId(statement.getId()).lineNo(no++).designation(line.designation().trim())
                     .quantity(quantity).unit(FundRequestService.trim(line.unit())).unitPrice(FundRequestService.money(price)).totalAmount(amount)
-                    .natureCode(nature).supplier(FundRequestService.trim(line.supplier())).build());
+                    .natureCode(nature).supplier(supplier.name()).supplierCode(supplier.code()).build());
             total = total.add(amount);
         }
         statement.setTotalAmount(total);
@@ -91,8 +95,16 @@ public class FundNeedService {
         if (!StringUtils.hasText(designation)) {
             return null;
         }
+        return guessNature(natureRepository.findAll(), designation);
+    }
+
+    /** Nature active dont un mot-cle figure dans la designation ; la plus utilisee l'emporte. */
+    public static String guessNature(Collection<CashOperationNature> natures, String designation) {
+        if (!StringUtils.hasText(designation)) {
+            return null;
+        }
         String text = designation.toLowerCase(Locale.ROOT);
-        return natureRepository.findAll().stream()
+        return natures.stream()
                 .filter(nature -> Boolean.TRUE.equals(nature.getActive()) && StringUtils.hasText(nature.getKeywords()))
                 .filter(nature -> Arrays.stream(nature.getKeywords().toLowerCase(Locale.ROOT).split("[,; ]+"))
                         .anyMatch(word -> word.length() > 2 && text.contains(word)))
@@ -148,7 +160,7 @@ public class FundNeedService {
         FundDtos.Request request = requests.create(new FundDtos.RequestInput(input.type(), statement.getSubject(), statement.getDepartment(), null,
                 null, null, null, null, null, input.registerCode(), null, statement.getWantedDate(), null, null, null, false, null,
                 lines.stream().map(line -> new FundDtos.RequestLine(line.getNatureCode(), line.getDesignation(), line.getTotalAmount(),
-                        line.getSupplier(), statement.getCostCenter())).toList(), statement.getAttachments(), false));
+                        line.getSupplier(), statement.getCostCenter(), line.getSupplierCode())).toList(), statement.getAttachments(), false));
         requests.request(request.number()).setNeedStatementNumber(statement.getNumber());
         lines.forEach(line -> {
             line.setTransformedRequestNumber(request.number());
@@ -179,7 +191,7 @@ public class FundNeedService {
     private FundDtos.Need view(FundNeedStatement statement) {
         List<FundDtos.NeedLine> lines = lineRepository.findByStatementIdOrderByLineNoAsc(statement.getId()).stream()
                 .map(line -> new FundDtos.NeedLine(line.getLineNo(), line.getDesignation(), line.getQuantity(), line.getUnit(), line.getUnitPrice(),
-                        line.getTotalAmount(), line.getNatureCode(), line.getSupplier(), line.getTransformedRequestNumber())).toList();
+                        line.getTotalAmount(), line.getNatureCode(), line.getSupplier(), line.getTransformedRequestNumber(), line.getSupplierCode())).toList();
         return new FundDtos.Need(statement.getNumber(), statement.getRequester(), statement.getDepartment(), statement.getLocationCode(),
                 statement.getCostCenter(), statement.getSubject(), statement.getUrgency(), statement.getWantedDate(), statement.getStatus(),
                 statement.getTotalAmount(), FrenchAmountWords.withCurrency(statement.getTotalAmount(), "XAF"), statement.getSubmittedAt(),

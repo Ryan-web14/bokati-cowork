@@ -10,6 +10,7 @@ import com.sni.bokaticowork.features.fund.dto.FundDtos;
 import com.sni.bokaticowork.features.fund.enums.*;
 import com.sni.bokaticowork.features.fund.model.*;
 import com.sni.bokaticowork.features.fund.repository.*;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.service.LinkedSupplier;
 import com.sni.bokaticowork.features.payment.dto.request.CreateCashMovementRequest;
 import com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse;
 import com.sni.bokaticowork.features.payment.enums.CashDocumentType;
@@ -83,6 +84,8 @@ public class FundRequestService {
     private final AccountingEventPublisher accountingEvents;
     private final FundNotifier notifier;
     private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.BudgetControl> budgetControl;
+    /** Fiches fournisseurs d'inventaire, pour relier une ligne a son fournisseur. */
+    private final com.sni.bokaticowork.features.inventory.procurement.repository.SupplierRepository supplierRepository;
 
     @Value("${fund.approval.level1-max:50000}")
     private long level1Max;
@@ -147,7 +150,7 @@ public class FundRequestService {
                 source.getBeneficiaryIdNumber(), source.getBeneficiaryPhone(), source.getRegisterCode(), source.getDeliveryMode(), null,
                 source.getMissionDestination(), null, null, source.getUnplanned(), source.getUnplannedReason(),
                 lines.stream().map(line -> new FundDtos.RequestLine(line.getNatureCode(), line.getDesignation(), line.getAmount(), line.getSupplier(),
-                        line.getSection())).toList(), null, false);
+                        line.getSection(), line.getSupplierCode())).toList(), null, false);
         return create(input);
     }
 
@@ -206,9 +209,11 @@ public class FundRequestService {
         BigDecimal total = BigDecimal.ZERO;
         for (FundDtos.RequestLine line : input.lines()) {
             BigDecimal amount = money(line.amount());
+            LinkedSupplier.Resolved supplier = LinkedSupplier.resolve(supplierRepository, line.supplierCode(), line.supplier(), no);
             lineRepository.save(FundRequestLine.builder().requestId(request.getId()).lineNo(no++)
                     .natureCode(StringUtils.hasText(line.natureCode()) ? line.natureCode().trim().toUpperCase(Locale.ROOT) : null)
-                    .designation(line.designation().trim()).amount(amount).supplier(trim(line.supplier())).section(trim(line.section())).build());
+                    .designation(line.designation().trim()).amount(amount).supplier(supplier.name()).supplierCode(supplier.code())
+                    .section(trim(line.section())).build());
             total = total.add(amount);
         }
         request.setTotalAmount(total);
@@ -559,8 +564,10 @@ public class FundRequestService {
             throw new BadRequestException("La depense est datee avant l'avance ou la mission");
         }
         List<ExpenseJustificationLine> existing = expenseRepository.findByRequestIdOrderByLineNoAsc(request.getId());
+        LinkedSupplier.Resolved supplier = LinkedSupplier.resolve(supplierRepository, input.supplierCode(), input.supplier(), existing.size() + 1);
         expenseRepository.save(ExpenseJustificationLine.builder().number(sequences.next("expense_justification")).requestId(request.getId())
-                .lineNo(existing.size() + 1).expenseDate(input.expenseDate()).natureCode(nature.getCode()).supplier(trim(input.supplier()))
+                .lineNo(existing.size() + 1).expenseDate(input.expenseDate()).natureCode(nature.getCode()).supplier(supplier.name())
+                .supplierCode(supplier.code())
                 .designation(input.designation().trim()).amount(amount).vatAmount(vat).section(trim(input.section()))
                 .documentReference(trim(input.documentReference())).honourStatement(Boolean.TRUE.equals(input.honourStatement()))
                 .requestLineNo(input.requestLineNo()).status(ExpenseLineStatus.PENDING).enteredBy(actor).build());
@@ -909,7 +916,8 @@ public class FundRequestService {
 
     private FundDtos.Request build(FundRequest request, boolean full) {
         List<FundDtos.RequestLine> lines = lineRepository.findByRequestIdOrderByLineNoAsc(request.getId()).stream()
-                .map(line -> new FundDtos.RequestLine(line.getNatureCode(), line.getDesignation(), line.getAmount(), line.getSupplier(), line.getSection()))
+                .map(line -> new FundDtos.RequestLine(line.getNatureCode(), line.getDesignation(), line.getAmount(), line.getSupplier(), line.getSection(),
+                        line.getSupplierCode()))
                 .toList();
         List<FundDtos.Approval> timeline = full ? approvalRepository.findByRequestIdOrderByDecidedAtAscIdAsc(request.getId()).stream()
                 .map(approval -> new FundDtos.Approval(approval.getLevel(), approval.getApprover(), approval.getDecision(), approval.getAmountBefore(),
@@ -921,7 +929,7 @@ public class FundRequestService {
                 .map(line -> new FundDtos.ExpenseLine(line.getNumber(), line.getLineNo(), line.getExpenseDate(), line.getNatureCode(), line.getSupplier(),
                         line.getDesignation(), line.getAmount(), line.getVatAmount(), line.getSection(), line.getDocumentReference(),
                         line.getHonourStatement(), line.getRequestLineNo(), line.getStatus(), line.getRejectReason(), line.getEnteredBy(),
-                        line.getValidatedBy(), line.getValidatedAt())).toList() : List.of();
+                        line.getValidatedBy(), line.getValidatedAt(), line.getSupplierCode())).toList() : List.of();
         BigDecimal approved = amount(request);
         return new FundDtos.Request(request.getNumber(), request.getRequestType(), request.getStatus(), request.getRequester(),
                 request.getRequesterDepartment(), request.getRequesterPhone(), request.getBeneficiaryType(), request.getBeneficiaryCode(),

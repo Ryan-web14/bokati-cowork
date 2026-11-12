@@ -43,6 +43,13 @@ public class PurchaseController {
         return ResponseEntity.ok(purchases.saveSupplier(supplier));
     }
 
+    /** Fournisseur comptable d'une fiche fournisseur d'inventaire : retrouve, ou cree depuis la fiche. */
+    @Audited(module = "ACCOUNTING", action = "SUPPLIER_FROM_INVENTORY", ressource = "acc_supplier")
+    @PostMapping("/suppliers/from-inventory/{inventoryCode}")
+    public ResponseEntity<AccSupplier> supplierFromInventory(@PathVariable String inventoryCode) {
+        return ResponseEntity.ok(purchases.supplierFromInventory(inventoryCode));
+    }
+
     @GetMapping("/suppliers/{code}/statement")
     public ResponseEntity<PurchaseService.Statement> statement(@PathVariable String code,
                                                                @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,

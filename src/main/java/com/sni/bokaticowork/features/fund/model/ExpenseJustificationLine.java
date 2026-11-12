@@ -38,6 +38,10 @@ public class ExpenseJustificationLine {
     @Column(name = "supplier")
     private String supplier;
 
+    /** Fiche fournisseur d'inventaire (facultatif) ; supplier reprend alors son nom. */
+    @Column(name = "supplier_code")
+    private String supplierCode;
+
     @Column(name = "designation", nullable = false)
     private String designation;
 

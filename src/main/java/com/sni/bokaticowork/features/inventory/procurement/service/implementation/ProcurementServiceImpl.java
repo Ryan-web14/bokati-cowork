@@ -14,6 +14,9 @@ import com.sni.bokaticowork.features.inventory.procurement.mapper.ProcurementMap
 import com.sni.bokaticowork.features.inventory.procurement.model.*;
 import com.sni.bokaticowork.features.inventory.procurement.repository.*;
 import com.sni.bokaticowork.features.inventory.procurement.service.interfaces.ProcurementService;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.model.SupplierCategoryKind;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.service.SupplierCategoryService;
 import com.sni.bokaticowork.features.inventory.stock.dto.request.StockInRequest;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockReferenceType;
 import com.sni.bokaticowork.features.inventory.stock.model.InventoryLocation;
@@ -34,6 +37,8 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.Objects;
 
 @Service
@@ -54,6 +59,7 @@ public class ProcurementServiceImpl implements ProcurementService {
     private final SequenceGeneratorFacade sequenceGenerator;
     private final OutboxService outboxService;
     private final ProcurementMapper mapper;
+    private final SupplierCategoryService supplierCategories;
 
     @Override
     public SupplierResponse createSupplier(SupplierRequest request) {
@@ -64,8 +70,11 @@ public class ProcurementServiceImpl implements ProcurementService {
         }
         applySupplier(supplier, request);
         Supplier saved = supplierRepository.save(supplier);
+        if (request.getCategories() != null) {
+            supplierCategories.replaceFor(saved, request.getCategories());
+        }
         publish("inventory.supplier.created", "INVENTORY_SUPPLIER", saved.getSupplierCode(), saved.getSupplierCode());
-        return mapper.toSupplierResponse(saved);
+        return withCategories(mapper.toSupplierResponse(saved), saved);
     }
 
     @Override
@@ -73,17 +82,46 @@ public class ProcurementServiceImpl implements ProcurementService {
         Supplier supplier = findSupplier(supplierCode);
         applySupplier(supplier, request);
         Supplier saved = supplierRepository.save(supplier);
+        if (request.getCategories() != null) {
+            supplierCategories.replaceFor(saved, request.getCategories());
+        }
         publish("inventory.supplier.updated", "INVENTORY_SUPPLIER", saved.getSupplierCode(), saved.getSupplierCode());
-        return mapper.toSupplierResponse(saved);
+        return withCategories(mapper.toSupplierResponse(saved), saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<SupplierResponse> suppliers(String query, Pageable pageable) {
-        Page<Supplier> suppliers = StringUtils.hasText(query)
-                ? supplierRepository.search(query.trim().toUpperCase(Locale.ROOT), unsortedPage(pageable))
-                : supplierRepository.findAll(pageable);
-        return suppliers.map(mapper::toSupplierResponse);
+        return suppliers(query, null, null, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<SupplierResponse> suppliers(String query, SupplierCategoryKind categoryKind, String categoryCode, Pageable pageable) {
+        Page<Supplier> suppliers;
+        if (StringUtils.hasText(categoryCode)) {
+            // Sans sorte precisee, le filtre porte sur le referentiel des categories fournisseurs.
+            Set<Long> ids = supplierCategories.supplierIdsIn(categoryKind == null ? SupplierCategoryKind.SUPPLIER_CATEGORY : categoryKind,
+                    categoryCode);
+            suppliers = ids.isEmpty()
+                    ? Page.empty(pageable)
+                    : supplierRepository.searchIn(StringUtils.hasText(query) ? query.trim().toUpperCase(Locale.ROOT) : null, ids, unsortedPage(pageable));
+        } else {
+            suppliers = StringUtils.hasText(query)
+                    ? supplierRepository.search(query.trim().toUpperCase(Locale.ROOT), unsortedPage(pageable))
+                    : supplierRepository.findAll(pageable);
+        }
+        Map<Long, List<SupplierCategoryView>> categories = supplierCategories.viewsBySupplier(suppliers.getContent().stream().map(Supplier::getId).toList());
+        return suppliers.map(supplier -> {
+            SupplierResponse response = mapper.toSupplierResponse(supplier);
+            response.setCategories(categories.getOrDefault(supplier.getId(), List.of()));
+            return response;
+        });
+    }
+
+    private SupplierResponse withCategories(SupplierResponse response, Supplier supplier) {
+        response.setCategories(supplierCategories.viewsBySupplier(List.of(supplier.getId())).getOrDefault(supplier.getId(), List.of()));
+        return response;
     }
 
     @Override

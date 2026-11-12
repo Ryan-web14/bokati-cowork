@@ -197,12 +197,14 @@ Module [inventory](../README.md) · 19 route(s).
 
 - Accès : back-office : rôle d'administration et droit `INVENTORY:READ`
 - Réponse : `Page<ProcurementDtos.SupplierResponse>`
-- Modèles : [ProcurementDtos.SupplierResponse](#m-ProcurementDtos-SupplierResponse)
+- Modèles : [ProcurementDtos.SupplierResponse](#m-ProcurementDtos-SupplierResponse), [SupplierCategoryKind](#m-SupplierCategoryKind)
 - Code : `src/main/java/com/sni/bokaticowork/features/inventory/procurement/controller/ProcurementController.java`, méthode `suppliers`
 
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `q` | requête | `String` |  |  |
+| `categoryKind` | requête | `SupplierCategoryKind` |  |  |
+| `categoryCode` | requête | `String` |  |  |
 | `page, size, sort` | requête (pagination) | `Pageable` |  | size=20, sort=name,ASC |
 
 <a id="r-post-sni-api-v1-inventory-procurement-suppliers"></a>
@@ -381,6 +383,12 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `taxId` | texte |  |  |
 | `address` | texte |  |  |
 | `status` | enum : `ACTIVE`, `INACTIVE`, `BLOCKED` |  |  |
+| `categories` | [SupplierSuggestionDtos.SupplierCategoryView](#m-SupplierSuggestionDtos-SupplierCategoryView)[] |  |  |
+
+<a id="m-SupplierCategoryKind"></a>
+#### SupplierCategoryKind
+
+Énumération : `NATURE`, `INVENTORY_CATEGORY`, `SUPPLIER_CATEGORY`
 
 <a id="m-ProcurementDtos-SupplierRequest"></a>
 #### ProcurementDtos.SupplierRequest
@@ -394,6 +402,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `taxId` | texte |  |  |
 | `address` | texte |  |  |
 | `status` | enum : `ACTIVE`, `INACTIVE`, `BLOCKED` |  |  |
+| `categories` | [SupplierSuggestionDtos.CategoryRef](#m-SupplierSuggestionDtos-CategoryRef)[] |  |  |
 
 <a id="m-ProcurementDtos-SupplierPerformanceResponse"></a>
 #### ProcurementDtos.SupplierPerformanceResponse
@@ -462,3 +471,21 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `itemCode` | texte | oui | longueur min `1` |
 | `quantity` | nombre décimal | oui |  |
 | `unitCost` | entier int64 ⚠ |  |  |
+
+<a id="m-SupplierSuggestionDtos-SupplierCategoryView"></a>
+#### SupplierSuggestionDtos.SupplierCategoryView
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `kind` | enum : `NATURE`, `INVENTORY_CATEGORY`, `SUPPLIER_CATEGORY` |  |  |
+| `code` | texte |  |  |
+| `label` | texte |  |  |
+| `active` | booléen |  |  |
+
+<a id="m-SupplierSuggestionDtos-CategoryRef"></a>
+#### SupplierSuggestionDtos.CategoryRef
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `kind` | enum : `NATURE`, `INVENTORY_CATEGORY`, `SUPPLIER_CATEGORY` | oui |  |
+| `code` | texte | oui | longueur min `1` |

@@ -368,3 +368,4 @@ fund.vat-recoverable-account	PAYMENT	TEXT	RESTART	4452	Compte de TVA recuperable
 fund.voucher.issuer-details	PAYMENT	TEXT	RESTART		Mentions de l'exploitant en tete des pieces (RCCM, NIU, adresse)
 fund.voucher.issuer-name	PAYMENT	TEXT	RESTART	ELLE A OSE	Raison sociale en tete des pieces comptables
 fund.worker-cron	PAYMENT	CRON	RESTART	0 0 8-18 * * *	Planification des rappels et relances des demandes de fonds
+inventory.supplier-suggestion.limit	ACCOUNTING	INTEGER	LIVE	5	Nombre de fournisseurs proposes par la suggestion de fournisseurs (au plus 50)

@@ -4137,6 +4137,18 @@
      "type": "String"
     },
     {
+     "in": "query",
+     "name": "categoryKind",
+     "required": false,
+     "type": "com.sni.bokaticowork.features.inventory.procurement.suggestion.model.SupplierCategoryKind"
+    },
+    {
+     "in": "query",
+     "name": "categoryCode",
+     "required": false,
+     "type": "String"
+    },
+    {
      "in": "pageable",
      "name": "page, size, sort",
      "default": "size=20, sort=name,ASC",
@@ -5254,6 +5266,363 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.inventory.stock.dto.response.StockTransferWorkflowResponse>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/supplier-categories",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "categories",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "q",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "type": "Boolean"
+    },
+    {
+     "in": "query",
+     "name": "parentCode",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/supplier-categories",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "createCategory",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryView>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/supplier-categories/{code}",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "deleteCategory",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/supplier-categories/{code}",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "category",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryView>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/supplier-categories/{code}",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "updateCategory",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/supplier-categories/{code}/activate",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "activateCategory",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryView>"
+  },
+  {
+   "methods": [
+    "PATCH"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/supplier-categories/{code}/deactivate",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "deactivateCategory",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:UPDATE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryView>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/supplier-suggestions",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "suggest",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "natureCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "inventoryCategoryCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "supplierCategoryCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "designation",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "itemCode",
+     "required": false,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "amount",
+     "required": false,
+     "type": "BigDecimal"
+    },
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SuggestionResult>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/suppliers/{supplierCode}/categories",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "supplierCategories",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "supplierCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/suppliers/{supplierCode}/categories",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "addSupplierCategory",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:CREATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.CategoryRef",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "supplierCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView>>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/suppliers/{supplierCode}/categories",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "replaceSupplierCategories",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:UPDATE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoriesRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "supplierCode",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView>>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/inventory/procurement/suppliers/{supplierCode}/categories/{kind}/{code}",
+   "package": "features.inventory.procurement.suggestion.controller",
+   "controller": "SupplierSuggestionController",
+   "source": "src/main/java/com/sni/bokaticowork/features/inventory/procurement/suggestion/controller/SupplierSuggestionController.java",
+   "handler": "removeSupplierCategory",
+   "declaredIn": "SupplierSuggestionController",
+   "access": {
+    "kind": "admin",
+    "permission": "INVENTORY:DELETE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "supplierCode",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "path",
+     "name": "kind",
+     "required": true,
+     "type": "com.sni.bokaticowork.features.inventory.procurement.suggestion.model.SupplierCategoryKind"
+    },
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView>>"
   }
  ],
  "schemas": {
@@ -8524,6 +8893,12 @@
       "INACTIVE",
       "BLOCKED"
      ]
+    },
+    "categories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView"
+     }
     }
    }
   },
@@ -8559,6 +8934,12 @@
       "INACTIVE",
       "BLOCKED"
      ]
+    },
+    "categories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.CategoryRef"
+     }
     }
    }
   },
@@ -9569,6 +9950,200 @@
     }
    }
   },
+  "SupplierSuggestionDtos.RefCategoryView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "parentCode": {
+     "type": "string"
+    },
+    "parentLabel": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "natures": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.TargetView"
+     }
+    },
+    "inventoryCategories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.TargetView"
+     }
+    },
+    "supplierCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "childCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "createdBy": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "updatedBy": {
+     "type": "string"
+    },
+    "updatedAt": {
+     "type": "string",
+     "format": "date-time"
+    }
+   }
+  },
+  "SupplierSuggestionDtos.RefCategoryRequest": {
+   "required": [
+    "label"
+   ],
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "description": {
+     "type": "string"
+    },
+    "parentCode": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    },
+    "sortOrder": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "natureCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "inventoryCategoryCodes": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "SupplierSuggestionDtos.SuggestionResult": {
+   "type": "object",
+   "properties": {
+    "natureCode": {
+     "type": "string"
+    },
+    "natureLabel": {
+     "type": "string"
+    },
+    "natureGuessed": {
+     "type": "boolean"
+    },
+    "inventoryCategoryCode": {
+     "type": "string"
+    },
+    "supplierCategoryCode": {
+     "type": "string"
+    },
+    "itemCode": {
+     "type": "string"
+    },
+    "amount": {
+     "type": "number"
+    },
+    "limit": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "suggestions": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.Suggestion"
+     }
+    }
+   }
+  },
+  "SupplierSuggestionDtos.SupplierCategoryView": {
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "NATURE",
+      "INVENTORY_CATEGORY",
+      "SUPPLIER_CATEGORY"
+     ]
+    },
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "SupplierSuggestionDtos.CategoryRef": {
+   "required": [
+    "code",
+    "kind"
+   ],
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "enum": [
+      "NATURE",
+      "INVENTORY_CATEGORY",
+      "SUPPLIER_CATEGORY"
+     ]
+    },
+    "code": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "SupplierSuggestionDtos.SupplierCategoriesRequest": {
+   "required": [
+    "categories"
+   ],
+   "type": "object",
+   "properties": {
+    "categories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.CategoryRef"
+     }
+    }
+   }
+  },
   "InventoryLabelBatchRequest.Item": {
    "type": "object",
    "properties": {
@@ -10425,6 +11000,69 @@
     }
    }
   },
+  "SupplierSuggestionDtos.TargetView": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "label": {
+     "type": "string"
+    }
+   }
+  },
+  "SupplierSuggestionDtos.Suggestion": {
+   "type": "object",
+   "properties": {
+    "rank": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "supplierCode": {
+     "type": "string"
+    },
+    "supplierName": {
+     "type": "string"
+    },
+    "phone": {
+     "type": "string"
+    },
+    "email": {
+     "type": "string"
+    },
+    "score": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "reasons": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "declared": {
+     "type": "boolean"
+    },
+    "historyCount": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "contractUnitPrice": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "leadTimeDays": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "categories": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView"
+     }
+    }
+   }
+  },
   "InventoryItemTemplateResponse.Value": {
    "type": "object",
    "properties": {
@@ -10537,6 +11175,11 @@
    "REJECTED",
    "CONVERTED",
    "CANCELLED"
+  ],
+  "SupplierCategoryKind": [
+   "NATURE",
+   "INVENTORY_CATEGORY",
+   "SUPPLIER_CATEGORY"
   ],
   "StockMovementType": [
    "IN",
@@ -10667,6 +11310,7 @@
   "PurchaseRequestStatus": "com.sni.bokaticowork.features.inventory.procurement.enums.PurchaseRequestStatus",
   "ProcurementDtos.PurchaseRequestCreateRequest": "com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.PurchaseRequestCreateRequest",
   "ProcurementDtos.SupplierResponse": "com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.SupplierResponse",
+  "SupplierCategoryKind": "com.sni.bokaticowork.features.inventory.procurement.suggestion.model.SupplierCategoryKind",
   "ProcurementDtos.SupplierRequest": "com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.SupplierRequest",
   "ProcurementDtos.SupplierPerformanceResponse": "com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.SupplierPerformanceResponse",
   "StockMovementResponse": "com.sni.bokaticowork.features.inventory.stock.dto.response.StockMovementResponse",
@@ -10694,6 +11338,12 @@
   "StockTransferWorkflowResponse": "com.sni.bokaticowork.features.inventory.stock.dto.response.StockTransferWorkflowResponse",
   "StockTransferWorkflowStatus": "com.sni.bokaticowork.features.inventory.stock.enums.StockTransferWorkflowStatus",
   "StockTransferWorkflowRequest": "com.sni.bokaticowork.features.inventory.stock.dto.request.StockTransferWorkflowRequest",
+  "SupplierSuggestionDtos.RefCategoryView": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryView",
+  "SupplierSuggestionDtos.RefCategoryRequest": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.RefCategoryRequest",
+  "SupplierSuggestionDtos.SuggestionResult": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SuggestionResult",
+  "SupplierSuggestionDtos.SupplierCategoryView": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoryView",
+  "SupplierSuggestionDtos.CategoryRef": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.CategoryRef",
+  "SupplierSuggestionDtos.SupplierCategoriesRequest": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.SupplierCategoriesRequest",
   "InventoryLabelBatchRequest.Item": "com.sni.bokaticowork.features.inventory.admin.dto.InventoryLabelBatchRequest.Item",
   "StockReconciliationLineResponse": "com.sni.bokaticowork.features.inventory.stock.dto.response.StockReconciliationLineResponse",
   "InventoryMovementReportResponse.Summary": "com.sni.bokaticowork.features.inventory.admin.dto.InventoryMovementReportResponse.Summary",
@@ -10723,6 +11373,8 @@
   "LotTraceabilityResponse.UpstreamEvent": "com.sni.bokaticowork.features.inventory.stock.dto.response.LotTraceabilityResponse.UpstreamEvent",
   "LotTraceabilityResponse.DownstreamEvent": "com.sni.bokaticowork.features.inventory.stock.dto.response.LotTraceabilityResponse.DownstreamEvent",
   "LotTraceabilityResponse.GenealogyLink": "com.sni.bokaticowork.features.inventory.stock.dto.response.LotTraceabilityResponse.GenealogyLink",
+  "SupplierSuggestionDtos.TargetView": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.TargetView",
+  "SupplierSuggestionDtos.Suggestion": "com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos.Suggestion",
   "InventoryItemTemplateResponse.Value": "com.sni.bokaticowork.features.inventory.catalog.dto.response.InventoryItemTemplateResponse.Value",
   "InventoryItemTemplateRequest.Value": "com.sni.bokaticowork.features.inventory.catalog.dto.request.InventoryItemTemplateRequest.Value"
  }

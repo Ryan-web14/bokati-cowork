@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.fund.controller;
 
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.service.SupplierSuggestionService;
 import com.sni.bokaticowork.core.audit.aop.Audited;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.fund.dto.FundDtos;
@@ -24,6 +26,7 @@ public class FundController {
     private final FundNeedService needs;
     private final FundRequestService requests;
     private final FundLifecycleService lifecycle;
+    private final SupplierSuggestionService supplierSuggestions;
 
     // ------------------------------------------------------------------ etats de besoin
 
@@ -40,6 +43,30 @@ public class FundController {
     @GetMapping("/fund-needs/{number}")
     public ResponseEntity<FundDtos.Need> need(@PathVariable String number) {
         return ResponseEntity.ok(needs.get(number));
+    }
+
+    /** Fournisseurs suggeres pour chaque ligne de l'etat de besoin, selon sa nature. */
+    @GetMapping("/fund-needs/{number}/supplier-suggestions")
+    public ResponseEntity<List<SupplierSuggestionDtos.LineSuggestion>> needSupplierSuggestions(@PathVariable String number,
+                                                                                               @RequestParam(required = false) Integer limit) {
+        FundDtos.Need need = needs.get(number);
+        return ResponseEntity.ok(supplierSuggestions.forLines(need.lines().stream()
+                .map(line -> new SupplierSuggestionDtos.LineInput(line.lineNo(), line.designation(), line.natureCode(), line.totalAmount(),
+                        line.supplierCode(), line.supplier())).toList(), limit));
+    }
+
+    /** Fournisseurs suggeres pour chaque ligne de la demande de fonds, selon sa nature. */
+    @GetMapping("/fund-requests/{number}/supplier-suggestions")
+    public ResponseEntity<List<SupplierSuggestionDtos.LineSuggestion>> requestSupplierSuggestions(@PathVariable String number,
+                                                                                                  @RequestParam(required = false) Integer limit) {
+        List<FundDtos.RequestLine> lines = requests.get(number).lines();
+        List<SupplierSuggestionDtos.LineInput> inputs = new java.util.ArrayList<>();
+        for (int index = 0; index < lines.size(); index++) {
+            FundDtos.RequestLine line = lines.get(index);
+            inputs.add(new SupplierSuggestionDtos.LineInput(index + 1, line.designation(), line.natureCode(), line.amount(), line.supplierCode(),
+                    line.supplier()));
+        }
+        return ResponseEntity.ok(supplierSuggestions.forLines(inputs, limit));
     }
 
     @Audited(module = "FUND", action = "NEED_CREATE", ressource = "fund_need_statement")

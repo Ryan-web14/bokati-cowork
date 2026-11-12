@@ -1,6 +1,7 @@
 package com.sni.bokaticowork.features.inventory.procurement.dto;
 
 import com.sni.bokaticowork.features.inventory.procurement.enums.*;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.dto.SupplierSuggestionDtos;
 import com.sni.bokaticowork.features.inventory.stock.enums.StockOwnershipType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -29,6 +30,9 @@ public final class ProcurementDtos {
         private String taxId;
         private String address;
         private SupplierStatus status;
+        /** Facultatif : categories du fournisseur ; absent (null), elles restent inchangees. */
+        @Valid
+        private List<SupplierSuggestionDtos.CategoryRef> categories;
     }
 
     @Data
@@ -125,6 +129,8 @@ public final class ProcurementDtos {
         private String taxId;
         private String address;
         private SupplierStatus status;
+        /** Categories du fournisseur (nature, categorie de stock, categorie fournisseur), avec libelle. */
+        private List<SupplierSuggestionDtos.SupplierCategoryView> categories;
     }
 
     @Data

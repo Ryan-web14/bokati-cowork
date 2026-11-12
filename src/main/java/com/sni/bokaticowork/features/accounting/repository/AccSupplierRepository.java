@@ -8,4 +8,8 @@ public interface AccSupplierRepository extends JpaRepository<AccSupplier, Long> 
     java.util.Optional<AccSupplier> findByCode(String code);
 
     java.util.List<AccSupplier> findAllByOrderByNameAsc();
+
+    java.util.Optional<AccSupplier> findByInventorySupplierId(Long inventorySupplierId);
+
+    boolean existsByCode(String code);
 }

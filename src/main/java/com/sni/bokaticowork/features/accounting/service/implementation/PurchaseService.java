@@ -17,6 +17,10 @@ import com.sni.bokaticowork.features.fund.model.FundNeedStatement;
 import com.sni.bokaticowork.features.fund.repository.FundNeedLineRepository;
 import com.sni.bokaticowork.features.fund.repository.FundNeedStatementRepository;
 import com.sni.bokaticowork.features.fund.voucher.VoucherService;
+import com.sni.bokaticowork.features.inventory.procurement.enums.SupplierStatus;
+import com.sni.bokaticowork.features.inventory.procurement.model.Supplier;
+import com.sni.bokaticowork.features.inventory.procurement.repository.SupplierRepository;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.service.LinkedSupplier;
 import com.sni.bokaticowork.features.payment.repository.CashOperationNatureRepository;
 import com.sni.bokaticowork.features.payment.service.support.CashActorResolver;
 import jakarta.persistence.EntityManager;
@@ -69,6 +73,8 @@ public class PurchaseService {
     private final ObjectProvider<BudgetControl> budgetControl;
     private final DataSource dataSource;
     private final EntityManager entityManager;
+    /** Fiches fournisseurs d'inventaire (reference des fournisseurs, suggestion). */
+    private final SupplierRepository inventorySuppliers;
 
     // ------------------------------------------------------------------ fournisseurs
 
@@ -106,7 +112,63 @@ public class PurchaseService {
         supplier.setWithholdingBase("TTC".equalsIgnoreCase(request.getWithholdingBase()) ? "TTC" : "HT");
         supplier.setWithholdingLabel(request.getWithholdingLabel());
         supplier.setStatus("INACTIVE".equalsIgnoreCase(request.getStatus()) ? "INACTIVE" : "ACTIVE");
+        if (request.getInventorySupplierId() != null && !request.getInventorySupplierId().equals(supplier.getInventorySupplierId())) {
+            Supplier inventory = inventorySuppliers.findById(request.getInventorySupplierId())
+                    .orElseThrow(() -> new BadRequestException("Fiche fournisseur d'inventaire inconnue : " + request.getInventorySupplierId()));
+            suppliers.findByInventorySupplierId(inventory.getId()).filter(other -> !other.getCode().equals(supplier.getCode())).ifPresent(other -> {
+                throw new ConflictException("La fiche " + inventory.getSupplierCode() + " est deja reliee au fournisseur comptable " + other.getCode());
+            });
+            supplier.setInventorySupplierId(inventory.getId());
+        }
         return suppliers.save(supplier);
+    }
+
+    /**
+     * Fournisseur comptable d'une fiche fournisseur d'inventaire : celui qui lui est relie, sinon
+     * un nouveau, cree depuis la fiche (nom, NIU, adresse, telephone, courriel ; compte 401 et
+     * retenue a la source par defaut).
+     */
+    public AccSupplier supplierFromInventory(String inventoryCode) {
+        require("SUPPLIER:MANAGE");
+        return linkedSupplier(inventorySupplier(inventoryCode));
+    }
+
+    private Supplier inventorySupplier(String inventoryCode) {
+        Supplier inventory = LinkedSupplier.find(inventorySuppliers, inventoryCode)
+                .orElseThrow(() -> new BadRequestException("Fournisseur d'inventaire inconnu : " + inventoryCode));
+        if (inventory.getStatus() != SupplierStatus.ACTIVE) {
+            throw new BadRequestException("Le fournisseur " + inventory.getName() + " n'est pas actif");
+        }
+        return inventory;
+    }
+
+    private AccSupplier linkedSupplier(Supplier inventory) {
+        Optional<AccSupplier> linked = suppliers.findByInventorySupplierId(inventory.getId());
+        if (linked.isPresent()) {
+            return linked.get();
+        }
+        String code = inventory.getSupplierCode().trim().toUpperCase(Locale.ROOT);
+        if (code.length() > 40 || suppliers.existsByCode(code)) {
+            long next = suppliers.count() + 1;
+            code = "FRN-" + next;
+            while (suppliers.existsByCode(code)) {
+                next++;
+                code = "FRN-" + next;
+            }
+        }
+        return suppliers.save(AccSupplier.builder().code(code).name(cut(inventory.getName(), 200)).niu(cut(inventory.getTaxId(), 60))
+                .address(cut(inventory.getAddress(), 500)).phone(cut(inventory.getPhone(), 40)).email(cut(inventory.getEmail(), 180))
+                .accountNumber(settings.text("accounting.purchase.supplier-account", "401"))
+                .withholdingAccount(settings.text("accounting.purchase.withholding-account", "447"))
+                .inventorySupplierId(inventory.getId()).createdBy(actors.resolve("SYSTEM")).build());
+    }
+
+    private static String cut(String value, int max) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        String text = value.trim();
+        return text.length() > max ? text.substring(0, max) : text;
     }
 
     // ------------------------------------------------------------------ commandes
@@ -157,13 +219,13 @@ public class PurchaseService {
         if (need.getStatus() != FundNeedStatus.VALIDATED && need.getStatus() != FundNeedStatus.PARTIALLY_TRANSFORMED) {
             throw new BadRequestException("Seul un etat de besoin valide se transforme en commande");
         }
-        AccSupplier supplier = activeSupplier(supplierCode);
         List<FundNeedLine> lines = needLines.findByStatementIdOrderByLineNoAsc(need.getId()).stream()
                 .filter(line -> line.getTransformedRequestNumber() == null && line.getTotalAmount() != null && line.getTotalAmount().signum() > 0)
                 .filter(line -> lineNos == null || lineNos.isEmpty() || lineNos.contains(line.getLineNo())).toList();
         if (lines.isEmpty()) {
             throw new BadRequestException("Aucune ligne chiffree restant a transformer");
         }
+        AccSupplier supplier = needSupplier(supplierCode, lines);
         AccPurchaseOrder order = orders.save(AccPurchaseOrder.builder().number(nextNumber("BC", LocalDate.now(), true)).supplierCode(supplier.getCode())
                 .needStatementNumber(need.getNumber()).subject(need.getSubject()).orderDate(LocalDate.now()).expectedDate(need.getWantedDate())
                 .sectionCode(need.getCostCenter()).createdBy(actors.resolve("SYSTEM")).build());
@@ -717,6 +779,30 @@ public class PurchaseService {
         String base = prefix + "-" + date.format(MONTH) + "-";
         long count = order ? orders.countByNumberStartingWith(base) : invoices.countByNumberStartingWith(base);
         return base + String.format("%04d", count + 1);
+    }
+
+    /**
+     * Fournisseur d'une commande issue d'un etat de besoin : celui indique (code comptable, ou code
+     * d'une fiche d'inventaire), sinon la fiche d'inventaire portee par les lignes retenues.
+     */
+    private AccSupplier needSupplier(String supplierCode, List<FundNeedLine> lines) {
+        if (StringUtils.hasText(supplierCode)) {
+            if (suppliers.findByCode(supplierCode.trim().toUpperCase(Locale.ROOT)).isEmpty()
+                    && LinkedSupplier.find(inventorySuppliers, supplierCode).isPresent()) {
+                return activeSupplier(linkedSupplier(inventorySupplier(supplierCode)).getCode());
+            }
+            return activeSupplier(supplierCode);
+        }
+        Set<String> codes = lines.stream().map(FundNeedLine::getSupplierCode).filter(StringUtils::hasText)
+                .collect(java.util.stream.Collectors.toCollection(TreeSet::new));
+        if (codes.isEmpty()) {
+            throw new BadRequestException("Indiquez le fournisseur : aucune ligne retenue n'est reliee a une fiche fournisseur");
+        }
+        if (codes.size() > 1 || lines.stream().anyMatch(line -> !StringUtils.hasText(line.getSupplierCode()))) {
+            throw new BadRequestException("Les lignes retenues ne portent pas toutes le meme fournisseur (" + String.join(", ", codes)
+                    + ") : indiquez le fournisseur ou choisissez les lignes");
+        }
+        return activeSupplier(linkedSupplier(inventorySupplier(codes.iterator().next())).getCode());
     }
 
     private AccSupplier activeSupplier(String code) {

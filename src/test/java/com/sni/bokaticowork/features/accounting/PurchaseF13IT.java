@@ -25,6 +25,9 @@ import com.sni.bokaticowork.features.fund.repository.FundNeedStatementRepository
 import com.sni.bokaticowork.features.fund.service.FundNotifier;
 import com.sni.bokaticowork.features.fund.service.FundRequestService;
 import com.sni.bokaticowork.features.fund.voucher.VoucherService;
+import com.sni.bokaticowork.features.inventory.procurement.enums.SupplierStatus;
+import com.sni.bokaticowork.features.inventory.procurement.model.Supplier;
+import com.sni.bokaticowork.features.inventory.procurement.repository.SupplierRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashRegisterService;
 import com.sni.bokaticowork.features.payment.service.support.CashActorResolver;
 import com.sni.bokaticowork.support.PostgresIntegrationTestBase;
@@ -95,6 +98,7 @@ class PurchaseF13IT extends PostgresIntegrationTestBase {
     @Autowired private AccountingLetteringService lettering;
     @Autowired private AccEntryRepository entries;
     @Autowired private AccEntryLineRepository lines;
+    @Autowired private SupplierRepository inventorySuppliers;
     @MockitoBean private AccountingSettings settings;
     @MockitoBean private AccountingNotifier accountingNotifier;
     @MockitoBean private SequenceGeneratorFacade sequences;
@@ -218,6 +222,28 @@ class PurchaseF13IT extends PostgresIntegrationTestBase {
             assertThat(p.remaining()).isEqualByComparingTo("9440");
         });
         assertThat(purchases.invoice(invoice.invoice().getNumber()).invoice().getStatus()).isEqualTo("PARTIALLY_PAID");
+    }
+
+    @Test
+    @DisplayName("Commande issue d'un etat de besoin dont la ligne porte une fiche fournisseur : le fournisseur comptable est cree depuis la fiche et reutilise")
+    void orderFromNeedTakesInventorySupplier() {
+        as("acheteur@elleaose.com", PURCHASER);
+        Supplier inventory = inventorySuppliers.saveAndFlush(Supplier.builder().supplierCode("SUP-" + code).name("Papeterie liee " + code)
+                .taxId("M1" + code).phone("060000000").email("papeterie@exemple.cg").status(SupplierStatus.ACTIVE).build());
+        FundNeedStatement need = needs.save(FundNeedStatement.builder().number("EDB-L-" + code).requester("agent@elleaose.com").subject("Fournitures")
+                .status(FundNeedStatus.VALIDATED).totalAmount(new BigDecimal("50000")).build());
+        needLines.save(FundNeedLine.builder().statementId(need.getId()).lineNo(1).designation("Ramettes de papier").quantity(new BigDecimal("10"))
+                .unitPrice(new BigDecimal("5000")).totalAmount(new BigDecimal("50000")).natureCode("ACHAT_FOURNITURES_BUREAU")
+                .supplierCode(inventory.getSupplierCode()).supplier(inventory.getName()).build());
+
+        PurchaseService.OrderView order = purchases.orderFromNeed(need.getNumber(), null, null);
+
+        assertThat(order.supplier().getInventorySupplierId()).isEqualTo(inventory.getId());
+        assertThat(order.supplier().getName()).isEqualTo(inventory.getName());
+        assertThat(order.supplier().getNiu()).isEqualTo("M1" + code);
+        assertThat(order.supplier().getAccountNumber()).isEqualTo("401");
+        assertThat(order.order().getSupplierCode()).isEqualTo(order.supplier().getCode());
+        assertThat(purchases.supplierFromInventory(inventory.getSupplierCode()).getCode()).isEqualTo(order.supplier().getCode());
     }
 
     private AccBudgetLine line(String item) {

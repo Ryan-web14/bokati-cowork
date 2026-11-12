@@ -19,8 +19,12 @@ public final class FundDtos {
 
     // ------------------------------------------------------------------ etat de besoin
 
+    /** {@code supplierCode} (facultatif) : fiche fournisseur d'inventaire active ; son nom remplit {@code supplier}. */
     public record NeedLineRequest(@NotBlank String designation, BigDecimal quantity, String unit, BigDecimal unitPrice,
-                                  String natureCode, String supplier) {
+                                  String natureCode, String supplier, String supplierCode) {
+        public NeedLineRequest(String designation, BigDecimal quantity, String unit, BigDecimal unitPrice, String natureCode, String supplier) {
+            this(designation, quantity, unit, unitPrice, natureCode, supplier, null);
+        }
     }
 
     public record NeedRequest(@NotBlank String subject, String department, String locationCode, String costCenter, FundUrgency urgency,
@@ -28,7 +32,11 @@ public final class FundDtos {
     }
 
     public record NeedLine(Integer lineNo, String designation, BigDecimal quantity, String unit, BigDecimal unitPrice, BigDecimal totalAmount,
-                           String natureCode, String supplier, String transformedRequestNumber) {
+                           String natureCode, String supplier, String transformedRequestNumber, String supplierCode) {
+        public NeedLine(Integer lineNo, String designation, BigDecimal quantity, String unit, BigDecimal unitPrice, BigDecimal totalAmount,
+                        String natureCode, String supplier, String transformedRequestNumber) {
+            this(lineNo, designation, quantity, unit, unitPrice, totalAmount, natureCode, supplier, transformedRequestNumber, null);
+        }
     }
 
     public record Need(String number, String requester, String department, String locationCode, String costCenter, String subject,
@@ -43,7 +51,12 @@ public final class FundDtos {
 
     // ------------------------------------------------------------------ demande de fonds
 
-    public record RequestLine(String natureCode, @NotBlank String designation, @NotNull BigDecimal amount, String supplier, String section) {
+    /** {@code supplierCode} (facultatif) : fiche fournisseur d'inventaire active ; son nom remplit {@code supplier}. */
+    public record RequestLine(String natureCode, @NotBlank String designation, @NotNull BigDecimal amount, String supplier, String section,
+                              String supplierCode) {
+        public RequestLine(String natureCode, String designation, BigDecimal amount, String supplier, String section) {
+            this(natureCode, designation, amount, supplier, section, null);
+        }
     }
 
     public record RequestInput(
@@ -105,7 +118,14 @@ public final class FundDtos {
     public record ExpenseLine(String number, Integer lineNo, LocalDate expenseDate, String natureCode, String supplier, String designation,
                               BigDecimal amount, BigDecimal vatAmount, String section, String documentReference, Boolean honourStatement,
                               Integer requestLineNo, ExpenseLineStatus status, String rejectReason, String enteredBy, String validatedBy,
-                              Instant validatedAt) {
+                              Instant validatedAt, String supplierCode) {
+        public ExpenseLine(String number, Integer lineNo, LocalDate expenseDate, String natureCode, String supplier, String designation,
+                           BigDecimal amount, BigDecimal vatAmount, String section, String documentReference, Boolean honourStatement,
+                           Integer requestLineNo, ExpenseLineStatus status, String rejectReason, String enteredBy, String validatedBy,
+                           Instant validatedAt) {
+            this(number, lineNo, expenseDate, natureCode, supplier, designation, amount, vatAmount, section, documentReference, honourStatement,
+                    requestLineNo, status, rejectReason, enteredBy, validatedBy, validatedAt, null);
+        }
     }
 
     /** Ce que la demande devient, affiche avant l'envoi et au fil de l'eau. */
@@ -132,7 +152,11 @@ public final class FundDtos {
 
     public record ExpenseInput(@NotNull LocalDate expenseDate, @NotBlank String natureCode, String supplier, @NotBlank String designation,
                                @NotNull BigDecimal amount, BigDecimal vatAmount, String section, String documentReference, Boolean honourStatement,
-                               Integer requestLineNo) {
+                               Integer requestLineNo, String supplierCode) {
+        public ExpenseInput(LocalDate expenseDate, String natureCode, String supplier, String designation, BigDecimal amount, BigDecimal vatAmount,
+                            String section, String documentReference, Boolean honourStatement, Integer requestLineNo) {
+            this(expenseDate, natureCode, supplier, designation, amount, vatAmount, section, documentReference, honourStatement, requestLineNo, null);
+        }
     }
 
     public record Reject(@NotBlank String reason) {
