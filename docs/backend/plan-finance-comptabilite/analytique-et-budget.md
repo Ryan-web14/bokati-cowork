@@ -69,6 +69,8 @@ Un **axe** est une façon de découper l'activité ; une **section** est une cas
 
 Tous les états se filtrent par axe, section (avec ou sans sous-sections) et période, et se comparent au budget de la même section.
 
+**Tenue en classe 9, en partie double** (décision 20 du plan) : chaque ventilation produit une écriture équilibrée en classe 9 (journal `CAG`). Les charges et produits sont reflétés en `91`, les sections et postes analytiques sont des comptes `93`, les coûts des `95`, les résultats analytiques des `98`. Le grand livre et la balance analytiques ci-dessus sont ceux de la classe 9 ; la balance analytique est toujours équilibrée et se rapproche chaque jour de la comptabilité générale. Écritures dans le [catalogue](catalogue-ecritures.md#13-classe-9--analytique-et-hors-bilan), règles dans le [README, section 4.6](README.md#46-partie-double--règles-et-garanties).
+
 ### 1.4 Postes analytiques définis par l'utilisateur
 
 Les axes, sections et postes de dépense livrés ne sont qu'un point de départ. **Chaque organisation définit les siens**, sans développement :

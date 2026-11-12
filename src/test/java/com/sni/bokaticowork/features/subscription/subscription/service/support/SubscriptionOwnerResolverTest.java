@@ -51,11 +51,35 @@ class SubscriptionOwnerResolverTest {
     }
 
     @Test
+    @DisplayName("Code du profil legal d'une entreprise cliente envoye en BUSINESS_ENTITY : rattache au client CUS-COM")
+    void legalProfileCodeIsResolvedToItsCompanyCustomer() {
+        BusinessEntity legal = new BusinessEntity();
+        legal.setId(42L);
+        legal.setCode("ELL20261111482");
+        Customer company = new Customer();
+        company.setCustomerId("CUS-COM-202611-00000012");
+        company.setType(CustomerType.COMPANY);
+        when(businessRepository.findByCode("ELL20261111482")).thenReturn(Optional.of(legal));
+        when(customerRepository.findFirstByBusinessEntity_IdAndTypeAndDeletedFalse(42L, CustomerType.COMPANY))
+                .thenReturn(Optional.of(company));
+
+        var owner = resolver.resolve(SubscriberType.BUSINESS_ENTITY, "ELL20261111482");
+
+        assertThat(owner.type()).isEqualTo(SubscriberType.CUSTOMER);
+        assertThat(owner.customer()).isSameAs(company);
+        assertThat(owner.businessEntity()).isNull();
+        assertThat(owner.code()).isEqualTo("CUS-COM-202611-00000012");
+    }
+
+    @Test
     @DisplayName("Une fiche /businesses (BIZ-...) reste BUSINESS_ENTITY")
     void realBusinessEntityStaysBusinessEntity() {
         BusinessEntity business = new BusinessEntity();
+        business.setId(7L);
         business.setCode("BIZ-1");
         when(businessRepository.findByCode("BIZ-1")).thenReturn(Optional.of(business));
+        when(customerRepository.findFirstByBusinessEntity_IdAndTypeAndDeletedFalse(7L, CustomerType.COMPANY))
+                .thenReturn(Optional.empty());
 
         assertThat(resolver.resolve(SubscriberType.BUSINESS_ENTITY, "BIZ-1").type()).isEqualTo(SubscriberType.BUSINESS_ENTITY);
     }

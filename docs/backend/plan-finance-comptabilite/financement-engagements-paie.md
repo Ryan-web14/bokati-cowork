@@ -84,6 +84,7 @@ Trois manques relevés à la relecture du plan, tranchés par la direction ([dé
 - **Alertes** : échéance, date de préavis de résiliation, renouvellement à décider.
 - **Calcul automatique** des loyers restant dus pour les baux, et des engagements de crédit-bail : à moins d'un an, de un à cinq ans, au-delà.
 - **Note annexe des engagements hors bilan** remplie automatiquement à la date de clôture, donnés et reçus, par type.
+- **Tenue en classe 90, en partie double** (décision 20 du plan) : chaque inscription, variation, levée ou expiration écrit automatiquement dans le journal `HB` (engagement et sa contrepartie). Le solde des comptes `90` est rapproché chaque jour du registre. Écritures dans le [catalogue](catalogue-ecritures.md#13-classe-9--analytique-et-hors-bilan).
 - **Lien avec les cautions clients** : les dépôts de garantie reçus des membres (compte `165`) sont au bilan, pas hors bilan. Une **garantie bancaire** remise par un client à la place d'un dépôt, elle, est un engagement reçu.
 
 ## 4. Import du journal de paie
