@@ -9,13 +9,18 @@ import com.sni.bokaticowork.features.subscription.subscription.service.support.C
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 
 /**
  * Rattrape les contrats qui n'ont pas ete generes a la souscription.
@@ -38,7 +43,37 @@ import java.util.Map;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SubscriptionContractGenerationRepairWorker {
+public class SubscriptionContractGenerationRepairWorker implements SchedulingConfigurer {
+
+    private static final String CONTRACT_REPAIR_DELAY_MS_KEY = "bokati.subscription.workers.contract-repair-delay-ms";
+    private static final String ENABLED_KEY = "bokati.subscription.workers.contract-repair-enabled";
+    private static final String BATCH_SIZE_KEY = "bokati.subscription.workers.contract-repair-batch-size";
+    private static final String MIN_AGE_SECONDS_KEY = "bokati.subscription.workers.contract-repair-min-age-seconds";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<SubscriptionContractGenerationRepairWorker> self;
+    private PlatformSettings platformSettings;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<SubscriptionContractGenerationRepairWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().repairMissingContracts(), triggers.fixedDelay(CONTRACT_REPAIR_DELAY_MS_KEY, 60000L));
+    }
 
     private final SubscriptionRepository subscriptionRepository;
     private final PassRepository passRepository;
@@ -63,11 +98,12 @@ public class SubscriptionContractGenerationRepairWorker {
     @Value("${bokati.subscription.workers.contract-repair-min-age-seconds:300}")
     private long minAgeSeconds;
 
-    @Scheduled(fixedDelayString = "${bokati.subscription.workers.contract-repair-delay-ms:60000}")
     public void repairMissingContracts() {
-        if (!enabled) {
+        if (!(platformSettings == null ? enabled : platformSettings.bool(ENABLED_KEY, enabled))) {
             return;
         }
+        int batchSize = platformSettings == null ? this.batchSize : platformSettings.integer(BATCH_SIZE_KEY, this.batchSize);
+        long minAgeSeconds = platformSettings == null ? this.minAgeSeconds : platformSettings.number(MIN_AGE_SECONDS_KEY, this.minAgeSeconds);
 
         Instant createdBefore = Instant.now().minusSeconds(minAgeSeconds);
         int processed = 0;

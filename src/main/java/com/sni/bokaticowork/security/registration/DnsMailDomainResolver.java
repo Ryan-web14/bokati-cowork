@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.registration;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -38,6 +40,19 @@ public class DnsMailDomainResolver implements MailDomainResolver {
     @Value("${app.security.registration.dns-timeout-ms:3000}")
     private long timeoutMs = 3000;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String DNS_TIMEOUT_KEY = "app.security.registration.dns-timeout-ms";
+
+    private long timeoutMs() {
+        return platformSettings == null ? timeoutMs : platformSettings.number(DNS_TIMEOUT_KEY, timeoutMs);
+    }
+
     private record Cached(Verdict verdict, Instant expiresAt) {
     }
 
@@ -60,7 +75,7 @@ public class DnsMailDomainResolver implements MailDomainResolver {
     private Verdict lookup(String domain) {
         Hashtable<String, String> env = new Hashtable<>();
         env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
-        env.put("com.sun.jndi.dns.timeout.initial", String.valueOf(timeoutMs));
+        env.put("com.sun.jndi.dns.timeout.initial", String.valueOf(timeoutMs()));
         env.put("com.sun.jndi.dns.timeout.retries", "1");
         DirContext context = null;
         try {

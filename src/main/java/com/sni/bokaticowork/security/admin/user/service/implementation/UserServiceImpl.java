@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.security.admin.user.service.implementation;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceAlreadyExistException;
@@ -45,6 +47,20 @@ public class UserServiceImpl implements UserService {
 
     @Value("${app.security.failed-login.max-attempts:5}")
     private int maxFailedLoginAttempts;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String MAX_FAILED_LOGIN_KEY = "app.security.failed-login.max-attempts";
+
+    private int maxFailedLoginAttempts() {
+        return platformSettings == null ? maxFailedLoginAttempts
+                : platformSettings.integer(MAX_FAILED_LOGIN_KEY, maxFailedLoginAttempts);
+    }
 
     @Transactional
     public Users createUser(UserRequest request){
@@ -313,7 +329,7 @@ public class UserServiceImpl implements UserService {
             int failures = user.getFailedLoginAttempts() == null ? 0 : user.getFailedLoginAttempts();
             int nextFailures = failures + 1;
             user.setFailedLoginAttempts(nextFailures);
-            if (nextFailures >= maxFailedLoginAttempts) {
+            if (nextFailures >= maxFailedLoginAttempts()) {
                 user.setIsAccountLocked(true);
                 log.warn("User {} locked after {} failed login attempts", email, nextFailures);
             }

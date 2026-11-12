@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.subscription.promotion.pricing.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.dto.PricingSimulationRequest;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.engine.PriceableRef;
 import com.sni.bokaticowork.features.subscription.promotion.pricing.enums.TargetScope;
@@ -49,6 +51,19 @@ public class PricingRequestResolver {
     @Value("${bokati.billing.default-currency:XAF}")
     private String defaultCurrency;
 
+    private static final String BILLING_DEFAULT_CURRENCY_KEY = "bokati.billing.default-currency";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String defaultCurrency() {
+        return platformSettings == null ? defaultCurrency : platformSettings.text(BILLING_DEFAULT_CURRENCY_KEY, defaultCurrency);
+    }
+
     /** La demande, completee de sa devise quand elle n'en portait pas. */
     @Transactional(readOnly = true)
     public PricingSimulationRequest resolve(PricingSimulationRequest request) {
@@ -60,7 +75,7 @@ public class PricingRequestResolver {
     public PricingSimulationRequest resolveFor(PricingSimulationRequest request, String subscriberType, String subscriberCode) {
         String currency = StringUtils.hasText(request.currency())
                 ? request.currency().trim().toUpperCase()
-                : currencyOf(request).orElse(defaultCurrency);
+                : currencyOf(request).orElse(defaultCurrency());
         String type = StringUtils.hasText(subscriberType) ? subscriberType : request.subscriberType();
         String code = StringUtils.hasText(subscriberCode) ? subscriberCode : request.subscriberCode();
         return new PricingSimulationRequest(

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.subscription.subscription.pass.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.features.subscription.notification.dto.CreateSubscriptionNotificationRequest;
 import com.sni.bokaticowork.features.subscription.notification.enums.SubscriptionNotificationChannel;
 import com.sni.bokaticowork.features.subscription.notification.enums.SubscriptionNotificationType;
@@ -58,6 +60,29 @@ public class PassAlertService {
     @Value("${bokati.pass.alert.unused-days:14}")
     private int unusedDays;
 
+    private static final String ALERT_EXPIRING_DAYS_KEY = "bokati.pass.alert.expiring-days";
+    private static final String ALERT_LOW_BALANCE_RATIO_KEY = "bokati.pass.alert.low-balance-ratio";
+    private static final String ALERT_UNUSED_DAYS_KEY = "bokati.pass.alert.unused-days";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int expiringDays() {
+        return platformSettings == null ? expiringDays : platformSettings.integer(ALERT_EXPIRING_DAYS_KEY, expiringDays);
+    }
+
+    private String lowBalanceRatio() {
+        return platformSettings == null ? lowBalanceRatio : platformSettings.text(ALERT_LOW_BALANCE_RATIO_KEY, lowBalanceRatio);
+    }
+
+    private int unusedDays() {
+        return platformSettings == null ? unusedDays : platformSettings.integer(ALERT_UNUSED_DAYS_KEY, unusedDays);
+    }
+
     /**
      * Les trois detections sont exposees separement, et chacune porte sa transaction.
      *
@@ -67,7 +92,7 @@ public class PassAlertService {
     @Transactional
     public int announceExpiring() {
         Instant now = Instant.now();
-        Instant until = now.plus(Duration.ofDays(expiringDays));
+        Instant until = now.plus(Duration.ofDays(expiringDays()));
         List<Pass> passes = passRepository.findExpiringSoon(now, until, BATCH_SIZE);
         int queued = 0;
         for (Pass pass : passes) {
@@ -88,7 +113,7 @@ public class PassAlertService {
     @Transactional
     public int announceLowBalance() {
         Instant now = Instant.now();
-        BigDecimal ratio = new BigDecimal(lowBalanceRatio);
+        BigDecimal ratio = new BigDecimal(lowBalanceRatio());
         List<Pass> passes = passRepository.findLowBalance(ratio, now, BATCH_SIZE);
         int queued = 0;
         for (Pass pass : passes) {
@@ -110,7 +135,7 @@ public class PassAlertService {
     @Transactional
     public int announceUnused() {
         Instant now = Instant.now();
-        Instant since = now.minus(Duration.ofDays(unusedDays));
+        Instant since = now.minus(Duration.ofDays(unusedDays()));
         List<Pass> passes = passRepository.findUnused(since, now, BATCH_SIZE);
         int queued = 0;
         for (Pass pass : passes) {
@@ -119,7 +144,7 @@ public class PassAlertService {
             // fait pas venir, cela le fait se desabonner.
             if (announce(pass, PassAlertType.UNUSED, "once",
                     SubscriptionNotificationType.PASS_UNUSED, subject,
-                    payload(pass, "unusedSinceDays", String.valueOf(unusedDays)))) {
+                    payload(pass, "unusedSinceDays", String.valueOf(unusedDays())))) {
                 queued++;
             }
         }

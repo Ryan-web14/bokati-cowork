@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.subscription.promotion.pricing.coupon.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -50,6 +52,19 @@ public class CouponService {
 
     @Value("${bokati.promotion.coupon.reservation-minutes:30}")
     private int reservationMinutes;
+
+    private static final String COUPON_RESERVATION_MINUTES_KEY = "bokati.promotion.coupon.reservation-minutes";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int reservationMinutes() {
+        return platformSettings == null ? reservationMinutes : platformSettings.integer(COUPON_RESERVATION_MINUTES_KEY, reservationMinutes);
+    }
 
     // -----------------------------------------------------------------------------------------
     // Admission
@@ -173,7 +188,7 @@ public class CouponService {
                 throw new BadRequestException("Ce panier n'est pas le vôtre");
             }
             reservation.setDiscountAmount(discountAmount);
-            reservation.setExpiresAt(Instant.now().plus(Duration.ofMinutes(reservationMinutes)));
+            reservation.setExpiresAt(Instant.now().plus(Duration.ofMinutes(reservationMinutes())));
             return reservationRepository.save(reservation);
         }
 
@@ -194,7 +209,7 @@ public class CouponService {
                 .discountAmount(discountAmount)
                 .currency(currency)
                 .status(CouponReservationStatus.RESERVED)
-                .expiresAt(Instant.now().plus(Duration.ofMinutes(reservationMinutes)))
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(reservationMinutes())))
                 .reservedBy(reservedBy)
                 .build());
     }

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.admin.user.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.security.admin.role.model.Role;
 import com.sni.bokaticowork.security.admin.role.service.interfaces.RoleService;
@@ -60,6 +62,19 @@ public class UserAdminServiceImpl implements UserAdminService {
 
     @Value("${app.admin-access-url:https://admin.elleaose.com}")
     private String adminAccessUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String ADMIN_ACCESS_URL_KEY = "app.admin-access-url";
+
+    private String adminAccessUrl() {
+        return platformSettings == null ? adminAccessUrl : platformSettings.text(ADMIN_ACCESS_URL_KEY, adminAccessUrl);
+    }
 
     @Override
     public AdminUserResponse createUser(AdminCreateUserRequest request, String assignedBy) {
@@ -374,6 +389,7 @@ public class UserAdminServiceImpl implements UserAdminService {
         String roles = roleNames == null || roleNames.isEmpty()
                 ? "Aucun role specifique"
                 : String.join(", ", roleNames);
+        String adminAccessUrl = adminAccessUrl();
         String accessUrl = StringUtils.hasText(adminAccessUrl) ? adminAccessUrl.trim() : "https://admin.elleaose.com";
         return """
                 <!doctype html>

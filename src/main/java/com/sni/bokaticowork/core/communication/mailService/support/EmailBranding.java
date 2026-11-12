@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.core.communication.mailService.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -20,8 +22,20 @@ import org.thymeleaf.context.Context;
 public class EmailBranding {
 
     private static final String LOGO_PATH = "/images/logo.png";
+    private static final String VERIFY_BASE_URL_KEY = "app.verify-base-url";
 
     private final String publicBaseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String publicBaseUrl() {
+        return platformSettings == null ? publicBaseUrl : platformSettings.text(VERIFY_BASE_URL_KEY, publicBaseUrl);
+    }
 
     public EmailBranding(@Value("${app.verify-base-url:}") String publicBaseUrl) {
         this.publicBaseUrl = publicBaseUrl;
@@ -29,6 +43,7 @@ public class EmailBranding {
 
     /** Adresse absolue du logo · relative seulement si aucune base publique n'est configuree. */
     public String logoUrl() {
+        String publicBaseUrl = publicBaseUrl();
         if (!StringUtils.hasText(publicBaseUrl)) {
             return LOGO_PATH;
         }

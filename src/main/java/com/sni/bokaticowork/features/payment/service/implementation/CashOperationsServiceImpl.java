@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
@@ -116,6 +118,29 @@ public class CashOperationsServiceImpl implements CashOperationsService {
 
     @Value("${bokati.cash.transfer.max-transit-hours:2}")
     private int maxTransitHours = 2;
+
+    private static final String REVERSAL_CASHIER_MINUTES_KEY = "bokati.cash.reversal.cashier-minutes";
+    private static final String REVERSAL_CASHIER_MAX_AMOUNT_KEY = "bokati.cash.reversal.cashier-max-amount";
+    private static final String TRANSFER_MAX_TRANSIT_HOURS_KEY = "bokati.cash.transfer.max-transit-hours";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int cashierReversalMinutes() {
+        return platformSettings == null ? cashierReversalMinutes : platformSettings.integer(REVERSAL_CASHIER_MINUTES_KEY, cashierReversalMinutes);
+    }
+
+    private BigDecimal cashierReversalMaxAmount() {
+        return platformSettings == null ? cashierReversalMaxAmount : platformSettings.decimal(REVERSAL_CASHIER_MAX_AMOUNT_KEY, cashierReversalMaxAmount);
+    }
+
+    private int maxTransitHours() {
+        return platformSettings == null ? maxTransitHours : platformSettings.integer(TRANSFER_MAX_TRANSIT_HOURS_KEY, maxTransitHours);
+    }
 
     // ------------------------------------------------------------------ natures
 
@@ -265,10 +290,10 @@ public class CashOperationsServiceImpl implements CashOperationsService {
         String actor = actors.resolve(null);
         boolean cashierWindow = CashActorResolver.samePerson(actor, original.getCreatedBy())
                 && original.getCreatedAt() != null
-                && original.getCreatedAt().plus(Duration.ofMinutes(cashierReversalMinutes)).isAfter(Instant.now())
-                && original.getAmount().compareTo(cashierReversalMaxAmount) < 0;
+                && original.getCreatedAt().plus(Duration.ofMinutes(cashierReversalMinutes())).isAfter(Instant.now())
+                && original.getAmount().compareTo(cashierReversalMaxAmount()) < 0;
         if (!cashierWindow && !actors.hasAuthority(REVERSE)) {
-            throw new ForbiddenException("Au-dela de " + cashierReversalMinutes + " minutes ou de " + plain(cashierReversalMaxAmount)
+            throw new ForbiddenException("Au-dela de " + cashierReversalMinutes() + " minutes ou de " + plain(cashierReversalMaxAmount())
                     + " XAF, la contre-passation demande un superviseur (droit CASH_MOVEMENT:REVERSE)");
         }
         String reason = referenceLists.describe(REVERSAL_REASON, request == null ? null : request.reasonCode(),
@@ -583,10 +608,10 @@ public class CashOperationsServiceImpl implements CashOperationsService {
             }
         }
         for (CashTransferOrder order : transferRepository.findByStatusOrderBySentAtAsc(CashTransferStatus.IN_TRANSIT)) {
-            if (order.getTransitAlertedAt() == null && order.getSentAt().plus(Duration.ofHours(maxTransitHours)).isBefore(now)) {
+            if (order.getTransitAlertedAt() == null && order.getSentAt().plus(Duration.ofHours(maxTransitHours())).isBefore(now)) {
                 order.setTransitAlertedAt(now);
                 transferRepository.save(order);
-                emailNotifier.notifySupervisor("Transfert de caisse en transit depuis plus de " + maxTransitHours + " h · " + order.getTransferNumber(),
+                emailNotifier.notifySupervisor("Transfert de caisse en transit depuis plus de " + maxTransitHours() + " h · " + order.getTransferNumber(),
                         "Le transfert " + order.getTransferNumber() + " de " + plain(order.getSentAmount()) + " XAF, envoye par "
                                 + order.getSentBy() + " de " + order.getFromRegister() + " vers " + order.getToRegister()
                                 + ", n'a pas ete recu.", order.getTransferNumber(), "/payments/cash-registers/transfers");

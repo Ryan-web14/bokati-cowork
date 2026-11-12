@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.transfer.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -97,6 +99,44 @@ public class WalletTransferService {
 
     @Value("${bokati.wallet.transfer.confirmation-validity-minutes:5}")
     private int confirmationValidityMinutes;
+
+    private static final String RISK_LARGE_TRANSFER_AMOUNT_KEY = "bokati.wallet.risk.large-transfer-amount";
+    private static final String TRANSFER_FEE_RATE_KEY = "bokati.wallet.transfer.fee-rate";
+    private static final String TRANSFER_FEE_MIN_KEY = "bokati.wallet.transfer.fee-min";
+    private static final String TRANSFER_FEE_MAX_KEY = "bokati.wallet.transfer.fee-max";
+    private static final String TRANSFER_FEE_WALLET_NUMBER_KEY = "bokati.wallet.transfer.fee-wallet-number";
+    private static final String TRANSFER_CONFIRMATION_VALIDITY_MINUTES_KEY = "bokati.wallet.transfer.confirmation-validity-minutes";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private BigDecimal largeTransferAmount() {
+        return platformSettings == null ? largeTransferAmount : platformSettings.decimal(RISK_LARGE_TRANSFER_AMOUNT_KEY, largeTransferAmount);
+    }
+
+    private BigDecimal feeRate() {
+        return platformSettings == null ? feeRate : platformSettings.decimal(TRANSFER_FEE_RATE_KEY, feeRate);
+    }
+
+    private BigDecimal feeMin() {
+        return platformSettings == null ? feeMin : platformSettings.decimal(TRANSFER_FEE_MIN_KEY, feeMin);
+    }
+
+    private BigDecimal feeMax() {
+        return platformSettings == null ? feeMax : platformSettings.decimal(TRANSFER_FEE_MAX_KEY, feeMax);
+    }
+
+    private String feeWalletNumber() {
+        return platformSettings == null ? feeWalletNumber : platformSettings.text(TRANSFER_FEE_WALLET_NUMBER_KEY, feeWalletNumber);
+    }
+
+    private int confirmationValidityMinutes() {
+        return platformSettings == null ? confirmationValidityMinutes : platformSettings.integer(TRANSFER_CONFIRMATION_VALIDITY_MINUTES_KEY, confirmationValidityMinutes);
+    }
 
     // -----------------------------------------------------------------------------------------
     // Contrats
@@ -231,7 +271,7 @@ public class WalletTransferService {
         ruleEngine.assertNotBlocked(source, deviceId);
 
         WalletDeviceService.DeviceVerdict device = deviceService.touch(source, deviceId, ipAddress);
-        if (device.firstUse() && largeTransferAmount != null && amount.compareTo(largeTransferAmount) >= 0) {
+        if (device.firstUse() && largeTransferAmount() != null && amount.compareTo(largeTransferAmount()) >= 0) {
             // Le signal le plus simple et le plus fiable : un appareil jamais vu, un gros montant.
             flagService.raise(source, WalletRiskFlag.Type.NEW_DEVICE_LARGE_TRANSFER, WalletRiskFlag.Severity.HIGH,
                     plain(amount) + " " + source.getCurrency() + " vers " + target.getWalletNumber()
@@ -264,7 +304,7 @@ public class WalletTransferService {
                 .initiatedBy(initiatedBy)
                 .ipAddress(ipAddress)
                 .deviceId(trim(deviceId))
-                .expiresAt(Instant.now().plus(Duration.ofMinutes(confirmationValidityMinutes)))
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(confirmationValidityMinutes())))
                 .build());
         return new InitiatedTransfer(transfer, confirmation);
     }
@@ -507,22 +547,22 @@ public class WalletTransferService {
      * part creerait un ecart au rapprochement, et ce serait le rapprochement qui aurait raison.</p>
      */
     private BigDecimal fee(BigDecimal amount) {
-        if (feeRate == null || feeRate.signum() <= 0 || feeWallet().isEmpty()) {
+        if (feeRate() == null || feeRate().signum() <= 0 || feeWallet().isEmpty()) {
             return BigDecimal.ZERO.setScale(4, RoundingMode.HALF_UP);
         }
-        BigDecimal fee = amount.multiply(feeRate).setScale(4, RoundingMode.HALF_UP);
-        if (feeMin != null && feeMin.signum() > 0 && fee.compareTo(feeMin) < 0) {
-            fee = feeMin;
+        BigDecimal fee = amount.multiply(feeRate()).setScale(4, RoundingMode.HALF_UP);
+        if (feeMin() != null && feeMin().signum() > 0 && fee.compareTo(feeMin()) < 0) {
+            fee = feeMin();
         }
-        if (feeMax != null && feeMax.signum() > 0 && fee.compareTo(feeMax) > 0) {
-            fee = feeMax;
+        if (feeMax() != null && feeMax().signum() > 0 && fee.compareTo(feeMax()) > 0) {
+            fee = feeMax();
         }
         return fee.setScale(4, RoundingMode.HALF_UP);
     }
 
     private Optional<WalletAccount> feeWallet() {
-        return StringUtils.hasText(feeWalletNumber)
-                ? walletRepository.findByWalletNumber(feeWalletNumber.trim())
+        return StringUtils.hasText(feeWalletNumber())
+                ? walletRepository.findByWalletNumber(feeWalletNumber().trim())
                 : Optional.empty();
     }
 

@@ -6,10 +6,14 @@ import com.sni.bokaticowork.features.payment.service.pawaypay.PawapayDepositServ
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 /**
  * On relit le statut jusqu'a ce que l'operateur tranche · on ne tranche jamais a sa place.
@@ -28,7 +32,28 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(name = "bokati.payment.pawaypay.enabled", havingValue = "true")
-public class MobileMoneyStatusPollingWorker {
+public class MobileMoneyStatusPollingWorker implements SchedulingConfigurer {
+
+    private static final String POLLING_DELAY_MS_KEY = "bokati.payment.pawaypay.polling-delay-ms";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<MobileMoneyStatusPollingWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<MobileMoneyStatusPollingWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().pollProcessingTransactions(), triggers.fixedDelay(POLLING_DELAY_MS_KEY, 60000L));
+    }
 
     private static final int BATCH = 100;
 
@@ -40,7 +65,6 @@ public class MobileMoneyStatusPollingWorker {
     public record Sweep(int checked, int settled, int unresolved) {
     }
 
-    @Scheduled(fixedDelayString = "${bokati.payment.pawaypay.polling-delay-ms:60000}")
     public void pollProcessingTransactions() {
         try {
             Sweep sweep = run();

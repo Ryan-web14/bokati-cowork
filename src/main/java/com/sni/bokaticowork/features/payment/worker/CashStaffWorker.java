@@ -3,8 +3,13 @@ package com.sni.bokaticowork.features.payment.worker;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashStaffService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import java.time.ZoneId;
 
 /**
  * Traitement periodique du personnel de caisse (lot C2) : absences qui commencent (la session
@@ -14,13 +19,33 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CashStaffWorker {
+public class CashStaffWorker implements SchedulingConfigurer {
+
+    private static final String STAFF_WORKER_CRON_KEY = "bokati.cash.staff-worker-cron";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<CashStaffWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<CashStaffWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().run(), triggers.cron(STAFF_WORKER_CRON_KEY, "0 10 * * * *", ZoneId.of("Africa/Brazzaville")));
+    }
 
     private final CashStaffService staffService;
     private final com.sni.bokaticowork.features.payment.service.interfaces.CashOperationsService operations;
     private final com.sni.bokaticowork.features.payment.service.interfaces.CashDashboardService dashboard;
 
-    @Scheduled(cron = "${bokati.cash.staff-worker-cron:0 10 * * * *}", zone = "Africa/Brazzaville")
     public void run() {
         try {
             staffService.runPeriodicChecks();

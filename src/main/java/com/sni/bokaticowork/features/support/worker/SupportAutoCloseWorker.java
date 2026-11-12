@@ -8,18 +8,43 @@ import com.sni.bokaticowork.features.support.service.implementation.SupportTicke
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SupportAutoCloseWorker {
+public class SupportAutoCloseWorker implements SchedulingConfigurer {
+
+    private static final String AUTO_CLOSE_CHECK_DELAY_MS_KEY = "bokati.support.auto-close-check-delay-ms";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<SupportAutoCloseWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<SupportAutoCloseWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().closeStaleResolvedTickets(), triggers.fixedDelay(AUTO_CLOSE_CHECK_DELAY_MS_KEY, 3600000L));
+    }
 
     private final SupportTicketRepository ticketRepository;
     private static final String DELAY_KEY = "bokati.support.auto-close-delay-days";
@@ -30,7 +55,6 @@ public class SupportAutoCloseWorker {
     @Value("${" + DELAY_KEY + ":5}")
     private int autoCloseDays;
 
-    @Scheduled(fixedDelayString = "${bokati.support.auto-close-check-delay-ms:3600000}")
     @Transactional
     public void closeStaleResolvedTickets() {
         long delayDays = settings.number(DELAY_KEY, autoCloseDays);

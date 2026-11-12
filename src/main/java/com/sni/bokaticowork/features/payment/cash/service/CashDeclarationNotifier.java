@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.cash.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.core.utils.mail.Recipients;
 import com.sni.bokaticowork.features.payment.cash.model.CashPaymentDeclaration;
@@ -49,6 +51,19 @@ public class CashDeclarationNotifier {
     @Value("${bokati.payment.cash-declaration.desk-email:}")
     private String deskEmail;
 
+    private static final String CASH_DECLARATION_DESK_EMAIL_KEY = "bokati.payment.cash-declaration.desk-email";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private String deskEmail() {
+        return platformSettings == null ? deskEmail : platformSettings.text(CASH_DECLARATION_DESK_EMAIL_KEY, deskEmail);
+    }
+
     /** Un client a annonce qu il passerait payer · la caisse a quelque chose a faire. */
     public void declared(CashPaymentDeclaration declaration) {
         try {
@@ -56,7 +71,7 @@ public class CashDeclarationNotifier {
             String subject = "Espèces annoncées · " + facts.get("amount") + " " + facts.get("currency")
                     + " par " + facts.get("customerName");
 
-            for (String recipient : Recipients.split(deskEmail)) {
+            for (String recipient : Recipients.split(deskEmail())) {
                 Map<String, Object> payload = new LinkedHashMap<>(facts);
                 payload.put("adminEmail", recipient);
                 payload.put("recipientName", "l'équipe");
@@ -160,6 +175,6 @@ public class CashDeclarationNotifier {
 
     /** Utilise par les tests pour verifier le comportement sans destinataire. */
     List<String> recipients() {
-        return Recipients.split(deskEmail);
+        return Recipients.split(deskEmail());
     }
 }

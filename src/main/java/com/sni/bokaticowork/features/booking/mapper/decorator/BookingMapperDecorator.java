@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.booking.mapper.decorator;
 
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.booking.dto.request.BookingParticipantRequest;
@@ -34,6 +35,19 @@ public abstract class BookingMapperDecorator implements BookingMapper {
 
     @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(API_BASE_URL_KEY, apiBaseUrl);
+    }
 
     @Override
     public Booking toEntity(CreateBookingRequest request) {
@@ -105,7 +119,7 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 booking.getNotes(),
                 booking.getMetadataJson(),
                 booking.getCheckInToken(),
-                booking.getCheckInToken() == null ? null : generateQrCode(apiBaseUrl.stripTrailing() + ApiPath.V1 + "/public/bookings/check-in/scan/" + booking.getCheckInToken()),
+                booking.getCheckInToken() == null ? null : generateQrCode(apiBaseUrl().stripTrailing() + ApiPath.V1 + "/public/bookings/check-in/scan/" + booking.getCheckInToken()),
                 booking.getVirtualMeetingUrl(),
                 booking.getConfirmedAt(),
                 booking.getCompletedAt(),

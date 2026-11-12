@@ -8,18 +8,43 @@ import com.sni.bokaticowork.features.support.service.implementation.SupportTicke
 import com.sni.bokaticowork.features.support.service.interfaces.SupportEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SupportSlaEscalationWorker {
+public class SupportSlaEscalationWorker implements SchedulingConfigurer {
+
+    private static final String SLA_CHECK_DELAY_MS_KEY = "bokati.support.sla-check-delay-ms";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<SupportSlaEscalationWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<SupportSlaEscalationWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().checkSlaBreaches(), triggers.fixedDelay(SLA_CHECK_DELAY_MS_KEY, 3600000L));
+    }
 
     private static final int MAX_ESCALATION_LEVEL = 3;
 
@@ -27,7 +52,6 @@ public class SupportSlaEscalationWorker {
     private final SupportEmailService emailService;
     private final SupportTicketEventWriter eventWriter;
 
-    @Scheduled(fixedDelayString = "${bokati.support.sla-check-delay-ms:3600000}")
     @Transactional
     public void checkSlaBreaches() {
         Instant now = Instant.now();

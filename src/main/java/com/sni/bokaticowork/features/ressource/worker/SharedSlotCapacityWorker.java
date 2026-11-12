@@ -4,10 +4,15 @@ import com.sni.bokaticowork.features.ressource.service.support.SharedSlotCapacit
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 
 /**
  * Remet les creneaux a venir a la capacite reelle de leur ressource.
@@ -22,7 +27,36 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SharedSlotCapacityWorker {
+public class SharedSlotCapacityWorker implements SchedulingConfigurer {
+
+    private static final String SLOT_CAPACITY_DELAY_MS_KEY = "bokati.resource.workers.slot-capacity-delay-ms";
+    private static final String SLOT_CAPACITY_INITIAL_DELAY_MS_KEY = "bokati.resource.workers.slot-capacity-initial-delay-ms";
+    private static final String SLOT_CAPACITY_ENABLED_KEY = "bokati.resource.workers.slot-capacity-enabled";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<SharedSlotCapacityWorker> self;
+    private PlatformSettings platformSettings;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<SharedSlotCapacityWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().align(), triggers.fixedDelay(SLOT_CAPACITY_DELAY_MS_KEY, 3600000L, platformSettings == null ? 60000L : platformSettings.number(SLOT_CAPACITY_INITIAL_DELAY_MS_KEY, 60000L)));
+    }
 
     private final SharedSlotCapacityAligner aligner;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -30,10 +64,9 @@ public class SharedSlotCapacityWorker {
     @Value("${bokati.resource.workers.slot-capacity-enabled:true}")
     private boolean enabled;
 
-    @Scheduled(initialDelayString = "${bokati.resource.workers.slot-capacity-initial-delay-ms:60000}",
-            fixedDelayString = "${bokati.resource.workers.slot-capacity-delay-ms:3600000}")
     public void align() {
-        if (!enabled || !running.compareAndSet(false, true)) {
+        boolean active = platformSettings == null ? enabled : platformSettings.bool(SLOT_CAPACITY_ENABLED_KEY, enabled);
+        if (!active || !running.compareAndSet(false, true)) {
             return;
         }
         try {

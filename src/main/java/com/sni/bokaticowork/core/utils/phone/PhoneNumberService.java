@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.core.utils.phone;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.baseClasses.model.Country;
 import com.sni.bokaticowork.core.baseClasses.repository.CountryRepository;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
@@ -41,6 +43,30 @@ public class PhoneNumberService {
      */
     @Value("${app.phone.keep-trunk-zero:CG,GA,CI,IT}")
     private String keepTrunkZeroCountries;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String DEFAULT_COUNTRY_KEY = "app.phone.default-country";
+    private static final String DEFAULT_DIAL_CODE_KEY = "app.phone.default-dial-code";
+    private static final String KEEP_TRUNK_ZERO_KEY = "app.phone.keep-trunk-zero";
+
+    private String defaultCountry() {
+        return platformSettings == null ? defaultCountry : platformSettings.text(DEFAULT_COUNTRY_KEY, defaultCountry);
+    }
+
+    private String defaultDialCode() {
+        return platformSettings == null ? defaultDialCode : platformSettings.text(DEFAULT_DIAL_CODE_KEY, defaultDialCode);
+    }
+
+    private String keepTrunkZeroCountries() {
+        return platformSettings == null ? keepTrunkZeroCountries
+                : platformSettings.text(KEEP_TRUNK_ZERO_KEY, keepTrunkZeroCountries);
+    }
 
     /** Indicatif et regle du zero, resolus ensemble · ils vont par pays. */
     private record DialPlan(String dialCode, boolean keepTrunkZero) {
@@ -137,6 +163,8 @@ public class PhoneNumberService {
     }
 
     private DialPlan planForOrNull(String country) {
+        String defaultCountry = defaultCountry();
+        String defaultDialCode = defaultDialCode();
         String value = StringUtils.hasText(country) ? country.trim() : defaultCountry;
         if (!StringUtils.hasText(value)) {
             return new DialPlan(defaultDialCode, keepsTrunkZero(defaultCountry));
@@ -158,8 +186,8 @@ public class PhoneNumberService {
     }
 
     private String isoForDial(String dial) {
-        if (dial.equals(normalizeDial(defaultDialCode))) {
-            return defaultCountry;
+        if (dial.equals(normalizeDial(defaultDialCode()))) {
+            return defaultCountry();
         }
         return countryRepository.findCountryByPhoneCode(dial).map(Country::getCountryCode).orElse("");
     }
@@ -169,6 +197,7 @@ public class PhoneNumberService {
     }
 
     private boolean keepsTrunkZero(String iso) {
+        String keepTrunkZeroCountries = keepTrunkZeroCountries();
         if (!StringUtils.hasText(iso) || !StringUtils.hasText(keepTrunkZeroCountries)) {
             return false;
         }

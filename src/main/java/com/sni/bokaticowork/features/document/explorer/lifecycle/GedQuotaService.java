@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.document.explorer.lifecycle;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.features.document.documentMaster.model.DocumentFolder;
@@ -31,11 +33,24 @@ public class GedQuotaService {
     @Value("${app.ged.quota.total-bytes:0}")
     private long totalQuotaBytes;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String TOTAL_QUOTA_KEY = "app.ged.quota.total-bytes";
+
+    private long totalQuotaBytes() {
+        return platformSettings == null ? totalQuotaBytes : platformSettings.number(TOTAL_QUOTA_KEY, totalQuotaBytes);
+    }
+
     /** Ce qu'occupe un dossier (ou toute la GED si {@code folder} est vide), et sa limite. */
     @Transactional(readOnly = true)
     public GedUsage usage(DocumentFolder folder) {
         long globalUsed = usedBytes(null);
-        long globalQuota = Math.max(0, totalQuotaBytes);
+        long globalQuota = Math.max(0, totalQuotaBytes());
         if (folder == null) {
             return new GedUsage(null, null, globalUsed, files(null), globalQuota == 0 ? null : globalQuota,
                     globalQuota == 0 ? null : Math.max(0, globalQuota - globalUsed), null, globalUsed, globalQuota == 0 ? null : globalQuota);
@@ -69,6 +84,7 @@ public class GedQuotaService {
         if (addedBytes <= 0) {
             return;
         }
+        long totalQuotaBytes = totalQuotaBytes();
         if (totalQuotaBytes > 0) {
             long used = usedBytes(null);
             if (used + addedBytes > totalQuotaBytes) {

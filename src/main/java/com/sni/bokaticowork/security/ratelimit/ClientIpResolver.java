@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.ratelimit;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -34,10 +36,25 @@ public class ClientIpResolver {
     @Value("${app.security.rate-limit.trusted-proxy-count:1}")
     private int trustedProxyCount;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String TRUSTED_PROXY_COUNT_KEY = "app.security.rate-limit.trusted-proxy-count";
+
+    private int trustedProxyCount() {
+        return platformSettings == null ? trustedProxyCount
+                : platformSettings.integer(TRUSTED_PROXY_COUNT_KEY, trustedProxyCount);
+    }
+
     public String resolve(HttpServletRequest request) {
         if (request == null) {
             return UNKNOWN;
         }
+        int trustedProxyCount = trustedProxyCount();
         String direct = StringUtils.hasText(request.getRemoteAddr()) ? request.getRemoteAddr() : UNKNOWN;
         if (trustedProxyCount <= 0) {
             return direct;

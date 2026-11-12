@@ -37,14 +37,16 @@ class PlatformSettingsAdminServiceTest {
     private static final String FEE = "bokati.wallet.transfer.fee-rate";
     private static final String RETRY_CRON = "bokati.billing.dunning.cron";
     private static final String DELAY = "bokati.subscription.workers.renewal-delay-ms";
+    private static final String INITIAL_DELAY = "bokati.subscription.workers.lifecycle-initial-delay-ms";
     private static final String SECRET = "app.security.jwt.secret";
 
     private final PlatformSettingRepository repository = mock(PlatformSettingRepository.class);
     private final SettingsAuditLogsRepository audit = mock(SettingsAuditLogsRepository.class);
     private final PlatformSettings settings = mock(PlatformSettings.class);
     private final StandardEnvironment environment = new StandardEnvironment();
+    private final SensitiveSettingAlerter alerter = mock(SensitiveSettingAlerter.class);
     private final PlatformSettingsAdminService service =
-            new PlatformSettingsAdminService(repository, audit, settings, environment, List.of(new PolicyStub()));
+            new PlatformSettingsAdminService(repository, audit, settings, environment, List.of(new PolicyStub()), alerter);
 
     private final Authentication superAdmin = user("root@sni", "ROLE_SUPER_ADMIN");
     private final Authentication admin = user("admin@sni", "ROLE_ADMIN");
@@ -147,7 +149,8 @@ class PlatformSettingsAdminServiceTest {
     @Test
     @DisplayName("Un reglage lu au demarrage annonce qu'il attend le redemarrage · pas un reglage immediat")
     void restartIsAnnounced() {
-        assertThat(service.update(DELAY, "600000", null, superAdmin).restartPending()).isTrue();
+        assertThat(service.update(INITIAL_DELAY, "777000", null, superAdmin).restartPending()).isTrue();
+        assertThat(service.update(DELAY, "600000", null, superAdmin).restartPending()).isFalse();
         assertThat(service.update(WINDOW, "45", null, superAdmin).restartPending()).isFalse();
     }
 
@@ -199,5 +202,27 @@ class PlatformSettingsAdminServiceTest {
         assertThat(view.defaultValue()).isEqualTo("30");
         assertThat(view.modified()).isTrue();
         assertThat(view.updatedBy()).isEqualTo("admin@sni");
+    }
+
+    @Test
+    @DisplayName("Un parametre sensible se dit sensible, avec son risque, et son changement alerte")
+    void sensitiveSettingsAlert() {
+        PlatformSettingsAdminService.SettingView view = service.update(FEE, "0.02", "Promotion", superAdmin);
+
+        assertThat(view.sensitive()).isTrue();
+        assertThat(view.risk()).contains("frais");
+        verify(alerter).changed(org.mockito.ArgumentMatchers.eq(FEE), any(), any(), org.mockito.ArgumentMatchers.eq("0.02"), org.mockito.ArgumentMatchers.eq("root@sni"));
+        assertThat(service.update(WINDOW, "45", null, admin).sensitive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("La remise a zero d'un parametre sensible alerte aussi")
+    void sensitiveResetAlerts() {
+        when(repository.findById(FEE)).thenReturn(Optional.of(PlatformSetting.builder().key(FEE).value("0.05").build()));
+
+        service.reset(FEE, null, superAdmin);
+
+        verify(alerter).changed(org.mockito.ArgumentMatchers.eq(FEE), any(), org.mockito.ArgumentMatchers.eq("0.05"), any(),
+                org.mockito.ArgumentMatchers.eq("root@sni"));
     }
 }

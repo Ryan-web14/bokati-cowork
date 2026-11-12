@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.document.documentMaster.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.exception.customs.UnauthorizedException;
@@ -40,6 +42,19 @@ public class DocumentShareService {
 
     @Value("${app.api-base-url:}")
     private String apiBaseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(API_BASE_URL_KEY, apiBaseUrl);
+    }
 
     public ShareLinkResponse shareDocument(String documentCode, CreateShareLinkRequest request) {
         Document document = documentRepository.findByCode(documentCode)
@@ -124,6 +139,7 @@ public class DocumentShareService {
     }
 
     private ShareLinkResponse toResponse(DocumentShareLink link) {
+        String apiBaseUrl = apiBaseUrl();
         String baseUrl = StringUtils.hasText(apiBaseUrl) ? apiBaseUrl.replaceAll("/+$", "") : "";
         return ShareLinkResponse.builder()
                 .token(link.getToken())

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.cash.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -70,6 +72,19 @@ public class CashPaymentDeclarationService {
     @Value("${bokati.payment.cash-declaration.validity-hours:4}")
     private int validityHours;
 
+    private static final String CASH_DECLARATION_VALIDITY_HOURS_KEY = "bokati.payment.cash-declaration.validity-hours";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int validityHours() {
+        return platformSettings == null ? validityHours : platformSettings.integer(CASH_DECLARATION_VALIDITY_HOURS_KEY, validityHours);
+    }
+
     // ---------------------------------------------------------------------------------------
     // Annonce
     // ---------------------------------------------------------------------------------------
@@ -112,7 +127,7 @@ public class CashPaymentDeclarationService {
                 .note(request == null ? null : StringUtils.trimWhitespace(request.note()))
                 .declaredAt(Instant.now())
                 .declaredBy(declaredBy)
-                .expiresAt(Instant.now().plus(Duration.ofHours(Math.max(1, validityHours))))
+                .expiresAt(Instant.now().plus(Duration.ofHours(Math.max(1, validityHours()))))
                 .build());
 
         log.info("Especes annoncees · {} pour {} {} sur la facture {}{}",
