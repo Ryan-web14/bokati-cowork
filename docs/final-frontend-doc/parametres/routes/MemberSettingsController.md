@@ -90,7 +90,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `showPhone` | booléen |  |  |
 | `billingPref` | [BillingPreferences](#m-BillingPreferences) |  |  |
 | `walletPref` | [WalletPreferencesRequest](#m-WalletPreferencesRequest) |  |  |
-| `notificationPref` | [NotificationPreferences](#m-NotificationPreferences)[] |  |  |
+| `notificationPref` | [UpdateNotificationPreferenceRequest](#m-UpdateNotificationPreferenceRequest)[] |  | facultatif ; chaque entrée exige `eventType`, `channel`, `enabled` |
 
 <a id="m-NotificationPreferenceResponse"></a>
 #### NotificationPreferenceResponse
@@ -132,6 +132,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `autoTopupAmount` | entier |  |  |
 | `spendingDailyLimit` | entier |  |  |
 | `spendingWeeklyLimit` | entier |  |  |
+| `receiptPreference` | enum : `EVERY_TRANSACTION`, `INVOICE_ONLY` |  |  |
 
 <a id="m-BillingPreferences"></a>
 #### BillingPreferences
@@ -152,7 +153,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `autoTopupThreshold` | entier |  | min `0` |
 | `autoTopupAmount` | entier |  | min `0` |
 | `spendingDailyLimit` | entier |  | min `0` |
-| `spendingWeeklyLimit` | entier |  | min `0` |
+| `spendingWeeklyLimit` | entier |  | min `0` ; `0` retire le plafond |
+| `receiptPreference` | enum : `EVERY_TRANSACTION`, `INVOICE_ONLY` |  |  |
 
 <a id="m-NotificationPreferences"></a>
 #### NotificationPreferences

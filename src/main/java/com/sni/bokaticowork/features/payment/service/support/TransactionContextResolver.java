@@ -19,7 +19,9 @@ import com.sni.bokaticowork.features.subscription.repository.SubscriptionReposit
 import com.sni.bokaticowork.features.subscription.subscription.model.BillableItem;
 import com.sni.bokaticowork.features.subscription.subscription.model.Pass;
 import com.sni.bokaticowork.features.subscription.subscription.model.Subscription;
+import com.sni.bokaticowork.features.billing.service.support.MemberBillingContact;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -50,6 +52,33 @@ public class TransactionContextResolver {
     private final BookingRepository bookingRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final PassRepository passRepository;
+
+    private MemberBillingContact memberContact;
+
+    @Autowired(required = false)
+    void setMemberContact(MemberBillingContact memberContact) {
+        this.memberContact = memberContact;
+    }
+
+    /**
+     * Le meme tiers, avec l'adresse ou lui adresser une facture, un recu ou un message de paiement.
+     *
+     * <p>Pour un membre, ou le client personne d'un membre, l'adresse de facturation de ses
+     * preferences remplace celle du compte. Une organisation garde la sienne. A n'utiliser que pour
+     * la facturation : un message de securite ou de conformite part a l'adresse du compte
+     * ({@link #resolveParty}).</p>
+     */
+    public PartyView resolveBillingParty(String customerType, String customerCode) {
+        PartyView party = resolveParty(customerType, customerCode);
+        if (memberContact == null || !party.registered()) {
+            return party;
+        }
+        String email = memberContact.recipient(customerType, customerCode, party.email());
+        if (email == null ? party.email() == null : email.equals(party.email())) {
+            return party;
+        }
+        return new PartyView(party.type(), party.code(), party.name(), email, party.phone(), party.billingAddressJson(), true);
+    }
 
     public PartyView resolveParty(String customerType, String customerCode) {
         if (!StringUtils.hasText(customerType) || !StringUtils.hasText(customerCode)) {

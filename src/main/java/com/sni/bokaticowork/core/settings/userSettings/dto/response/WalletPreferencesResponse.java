@@ -7,6 +7,7 @@ public record WalletPreferencesResponse(
         Integer autoTopupThreshold,
         Integer autoTopupAmount,
         Integer spendingDailyLimit,
-        Integer spendingWeeklyLimit
+        Integer spendingWeeklyLimit,
+        String receiptPreference
 ) {
 }

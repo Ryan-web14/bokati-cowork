@@ -15,7 +15,9 @@ import com.sni.bokaticowork.features.payment.repository.WalletAccountRepository;
 import com.sni.bokaticowork.features.payment.repository.WalletLedgerEntryRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.WalletService;
 import com.sni.bokaticowork.features.payment.service.support.WalletLedgerService;
+import com.sni.bokaticowork.features.payment.limit.service.WalletLimitService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +37,14 @@ public class WalletServiceImpl implements WalletService {
     private final WalletLedgerService ledgerService;
     private final SequenceGeneratorFacade sequenceGenerator;
     private final PaymentMapper mapper;
+
+    private WalletLimitService limitService;
+
+    /** Absent : pas de controle des plafonds personnels du membre. */
+    @Autowired(required = false)
+    void setLimitService(WalletLimitService limitService) {
+        this.limitService = limitService;
+    }
 
     @Override
     public WalletResponse adminTopUp(WalletTopUpRequest request) {
@@ -98,6 +108,10 @@ public class WalletServiceImpl implements WalletService {
     public void debit(WalletAccount wallet, BigDecimal amount, WalletEntryType entryType, String sourceType,
                       String sourceCode, String reference, String createdBy, String idempotencyKey) {
         ensureUsable(wallet);
+        if (limitService != null && entryType == WalletEntryType.PAYMENT) {
+            // Un paiement depuis le portefeuille est une depense du titulaire · ses plafonds personnels s'appliquent.
+            limitService.assertWithinPersonalCaps(wallet, amount);
+        }
         ledgerService.debit(wallet, amount, entryType, sourceType, sourceCode, reference, createdBy, idempotencyKey);
     }
 

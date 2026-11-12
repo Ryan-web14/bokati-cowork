@@ -7,6 +7,7 @@ public record WalletPreferencesRequest(
            @Min(0) Integer autoTopupThreshold,
            @Min(0) Integer autoTopupAmount,
            @Min(0) Integer spendingDailyLimit,
-           @Min(0) Integer spendingWeeklyLimit) {
+           @Min(0) Integer spendingWeeklyLimit,
+           com.sni.bokaticowork.core.enums.ReceiptPreference receiptPreference) {
 
 }

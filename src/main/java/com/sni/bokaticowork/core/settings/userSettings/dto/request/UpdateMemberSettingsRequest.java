@@ -22,6 +22,7 @@ public class UpdateMemberSettingsRequest {
     private Boolean showPhone;
     private BillingPreferences billingPref;
     private WalletPreferencesRequest walletPref;
-    private List<NotificationPreferences> notificationPref;
+    /** Preferences de notification a changer en meme temps ; une entree par couple evenement et canal. */
+    private List<UpdateNotificationPreferenceRequest> notificationPref;
 
 }

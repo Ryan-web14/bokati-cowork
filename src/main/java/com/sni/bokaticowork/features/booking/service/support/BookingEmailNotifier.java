@@ -8,6 +8,10 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
+import com.sni.bokaticowork.core.enums.EventType;
+import com.sni.bokaticowork.core.enums.NotificationChannel;
+import com.sni.bokaticowork.features.client.member.model.Member;
+import com.sni.bokaticowork.features.notification.service.support.MemberNotificationEvents;
 import com.sni.bokaticowork.features.booking.enums.BookingEventType;
 import com.sni.bokaticowork.features.booking.enums.BookingPaymentStatus;
 import com.sni.bokaticowork.features.booking.enums.BookingStatus;
@@ -30,8 +34,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -59,6 +65,13 @@ public class BookingEmailNotifier {
 
     private PlatformSettings platformSettings;
 
+    private BookingMemberPreferences memberPreferences;
+
+    @Autowired(required = false)
+    void setMemberPreferences(BookingMemberPreferences memberPreferences) {
+        this.memberPreferences = memberPreferences;
+    }
+
     @Autowired(required = false)
     void setPlatformSettings(PlatformSettings platformSettings) {
         this.platformSettings = platformSettings;
@@ -80,12 +93,21 @@ public class BookingEmailNotifier {
         if (!StringUtils.hasText(booking.getContactEmail())) {
             return;
         }
+        Optional<Member> member = memberPreferences == null ? Optional.empty() : memberPreferences.member(booking);
+        EventType preference = MemberNotificationEvents.of(eventType.name()).orElse(null);
+        if (memberPreferences != null && !memberPreferences.allows(member, preference, NotificationChannel.EMAIL)) {
+            // Coupe par le membre : rien ne part, ce n'est pas un echec.
+            log.info("Courriel {} de la reservation {} non envoye : preference du membre",
+                    eventType, booking.getBookingNumber());
+            return;
+        }
+        ZoneId zone = memberPreferences == null ? null : memberPreferences.zone(member);
         String subject = subject(eventType, booking);
         boolean templated = isTemplatedEvent(eventType);
         boolean isConfirmation = eventType == BookingEventType.BOOKING_CREATED
                 || eventType == BookingEventType.BOOKING_CONFIRMED;
 
-        String body = templated ? body(eventType, booking, isConfirmation) : plainTextBody(eventType, booking);
+        String body = templated ? body(eventType, booking, isConfirmation, zone) : plainTextBody(eventType, booking, zone);
         eventWriter.write(booking, BookingEventType.EMAIL_QUEUED, "Email queued", subject, null);
         try {
             CompletableFuture<Boolean> future;
@@ -115,8 +137,11 @@ public class BookingEmailNotifier {
         }
     }
 
-    private String body(BookingEventType eventType, Booking booking, boolean includeQr) {
+    private String body(BookingEventType eventType, Booking booking, boolean includeQr, ZoneId zone) {
         Context ctx = new Context(Locale.FRENCH);
+        // Les heures dans le fuseau du membre ; sans membre, l'heure de l'espace telle quelle.
+        LocalDateTime start = BookingMemberPreferences.inZone(booking.getStartedAt(), zone);
+        LocalDateTime end = BookingMemberPreferences.inZone(booking.getEndedAt(), zone);
         String resourceName = booking.getResource() == null ? "" : booking.getResource().getName();
         String durationLabel = formatDuration(booking.getDurationMinutes());
         boolean showQr = includeQr && StringUtils.hasText(booking.getCheckInToken());
@@ -128,8 +153,8 @@ public class BookingEmailNotifier {
         ctx.setVariable("resourceName",   resourceName);
         ctx.setVariable("spaceName",      resourceName);
         ctx.setVariable("status",         booking.getStatus() == null ? "" : booking.getStatus().name());
-        ctx.setVariable("startedAt",      formatDateTime(booking.getStartedAt()));
-        ctx.setVariable("endedAt",        formatDateTime(booking.getEndedAt()));
+        ctx.setVariable("startedAt",      formatDateTime(start));
+        ctx.setVariable("endedAt",        formatDateTime(end));
         ctx.setVariable("quantity",       booking.getQuantity());
         ctx.setVariable("paymentMode",    booking.getPaymentMode() == null ? "" : booking.getPaymentMode().name());
         ctx.setVariable("checkInToken",   booking.getCheckInToken());
@@ -142,9 +167,9 @@ public class BookingEmailNotifier {
         ctx.setVariable("eventMessage",   eventMessage(eventType, booking));
 
         // ── Variables pour booking-confirmation ─────────────────────
-        ctx.setVariable("bookingDate",    formatDate(booking.getStartedAt()));
-        ctx.setVariable("startTime",      formatTime(booking.getStartedAt()));
-        ctx.setVariable("endTime",        formatTime(booking.getEndedAt()));
+        ctx.setVariable("bookingDate",    formatDate(start));
+        ctx.setVariable("startTime",      formatTime(start));
+        ctx.setVariable("endTime",        formatTime(end));
         ctx.setVariable("durationLabel",  durationLabel);
         ctx.setVariable("duration",       durationLabel);
         ctx.setVariable("resourceType",   resolveResourceType(booking));
@@ -428,7 +453,9 @@ public class BookingEmailNotifier {
 
     // ── Plain text fallback ───────────────────────────────────────────
 
-    private String plainTextBody(BookingEventType eventType, Booking booking) {
+    private String plainTextBody(BookingEventType eventType, Booking booking, ZoneId zone) {
+        LocalDateTime start = BookingMemberPreferences.inZone(booking.getStartedAt(), zone);
+        LocalDateTime end = BookingMemberPreferences.inZone(booking.getEndedAt(), zone);
         return """
                 Réservation : %s
                 Ressource   : %s
@@ -440,8 +467,8 @@ public class BookingEmailNotifier {
                 booking.getBookingNumber(),
                 booking.getResource() == null ? "" : booking.getResource().getName(),
                 booking.getStatus(),
-                formatDateTime(booking.getStartedAt()),
-                formatDateTime(booking.getEndedAt()),
+                formatDateTime(start),
+                formatDateTime(end),
                 eventType
         );
     }

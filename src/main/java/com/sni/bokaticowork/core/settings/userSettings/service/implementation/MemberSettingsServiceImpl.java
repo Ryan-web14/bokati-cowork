@@ -61,6 +61,11 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
 
         applySettingsUpdate(settings, request, actorId, reason);
         memberSettingRepository.save(settings);
+        if (request.getNotificationPref() != null) {
+            for (UpdateNotificationPreferenceRequest preference : request.getNotificationPref()) {
+                applyNotificationPreference(member, preference, actorId, reason);
+            }
+        }
         return toResponse(settings, buildPreferenceResponses(member.getId()));
     }
 
@@ -77,11 +82,20 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
                                                                              Long actorId,
                                                                              String reason) {
         Member member = memberService.getByMemberIdForService(memberId);
+        applyNotificationPreference(member, request, actorId, reason);
+        return buildPreferenceResponses(member.getId());
+    }
+
+    /** Un couple evenement et canal ; les trois champs sont exiges. */
+    private void applyNotificationPreference(Member member, UpdateNotificationPreferenceRequest request, Long actorId, String reason) {
+        if (request == null || request.eventType() == null || request.channel() == null || request.enabled() == null) {
+            throw new com.sni.bokaticowork.core.exception.customs.BadRequestException(
+                    "Une préférence de notification demande eventType, channel et enabled.");
+        }
         NotificationPreferences preference = notificationPreferenceRepository
                 .findByMember_IdAndEventTypeAndNotificationChannel(member.getId(), request.eventType(), request.channel())
                 .orElseGet(() -> createDefaultPreference(member, request.eventType(), request.channel()));
-
-        boolean newEnabled = Boolean.TRUE.equals(request.enabled());
+        boolean newEnabled = request.enabled();
         boolean previousEnabled = preference.isEnabled();
         preference.setEnabled(newEnabled);
         notificationPreferenceRepository.save(preference);
@@ -95,43 +109,90 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
                     reason
             );
         }
-
-        return buildPreferenceResponses(member.getId());
     }
 
     private void applySettingsUpdate(MemberSettings settings,
                                      UpdateMemberSettingsRequest request,
                                      Long actorId,
                                      String reason) {
-        updateField("langage", settings.getLangage(), request.getLangage(), actorId, reason, settings::setLangage);
-        updateField("timeZone", settings.getTimeZone(), request.getTimeZone(), actorId, reason, settings::setTimeZone);
-        updateField("showNameOnDisplays", settings.isShowNameOnDisplays(), Boolean.TRUE.equals(request.getShowNameOnDisplay()), actorId, reason, settings::setShowNameOnDisplays);
-        updateField("showEmail", settings.isShowEmail(), Boolean.TRUE.equals(request.getShowEmail()), actorId, reason, settings::setShowEmail);
-        updateField("showPhone", settings.isShowPhone(), Boolean.TRUE.equals(request.getShowPhone()), actorId, reason, settings::setShowPhone);
+        // PATCH : un champ absent laisse la valeur telle quelle.
+        if (request.getLangage() != null) {
+            String language = request.getLangage().trim();
+            if (language.isEmpty() || language.length() > 50) {
+                throw new com.sni.bokaticowork.core.exception.customs.BadRequestException("La langue doit être un code comme fr ou en.");
+            }
+            updateField("langage", settings.getLangage(), language, actorId, reason, settings::setLangage);
+        }
+        if (request.getTimeZone() != null) {
+            String zone = request.getTimeZone().trim();
+            try {
+                java.time.ZoneId.of(zone);
+            } catch (java.time.DateTimeException ex) {
+                throw new com.sni.bokaticowork.core.exception.customs.BadRequestException("Fuseau horaire inconnu : " + zone + ". Exemple : Africa/Brazzaville.");
+            }
+            updateField("timeZone", settings.getTimeZone(), zone, actorId, reason, settings::setTimeZone);
+        }
+        if (request.getShowNameOnDisplay() != null) {
+            updateField("showNameOnDisplays", settings.isShowNameOnDisplays(), request.getShowNameOnDisplay(), actorId, reason, settings::setShowNameOnDisplays);
+        }
+        if (request.getShowEmail() != null) {
+            updateField("showEmail", settings.isShowEmail(), request.getShowEmail(), actorId, reason, settings::setShowEmail);
+        }
+        if (request.getShowPhone() != null) {
+            updateField("showPhone", settings.isShowPhone(), request.getShowPhone(), actorId, reason, settings::setShowPhone);
+        }
 
         BillingPreferences billing = request.getBillingPref();
         if (billing != null) {
-            updateField("billingEntityType", settings.getEntityType(), billing.billingEntityType(), actorId, reason, settings::setEntityType);
-            updateField("billingCompanyName", settings.getBillingCompanyName(), billing.billingCompanyName(), actorId, reason, settings::setBillingCompanyName);
+            if (billing.billingEntityType() != null) {
+                updateField("billingEntityType", settings.getEntityType(), billing.billingEntityType(), actorId, reason, settings::setEntityType);
+            }
+            if (billing.billingCompanyName() != null) {
+                updateField("billingCompanyName", settings.getBillingCompanyName(), blankToNull(billing.billingCompanyName()), actorId, reason, settings::setBillingCompanyName);
+            }
             // Une ou plusieurs adresses separees par des virgules.
             if (org.springframework.util.StringUtils.hasText(billing.billingEmail())
                     && !com.sni.bokaticowork.core.utils.validation.EmailAddresses.isValidList(billing.billingEmail())) {
                 throw new com.sni.bokaticowork.core.exception.customs.BadRequestException(
                         "Le courriel de facturation n'est pas valide : une ou plusieurs adresses séparées par des virgules");
             }
-            updateField("billingEmail", settings.getBillingEmail(),
-                    com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(billing.billingEmail()),
-                    actorId, reason, settings::setBillingEmail);
-            updateField("billingAddress", settings.getBillingAddress(), billing.billlingAddress(), actorId, reason, settings::setBillingAddress);
+            // Une chaine vide retire l'adresse de facturation : les factures repartent a l'adresse du compte.
+            if (billing.billingEmail() != null) {
+                updateField("billingEmail", settings.getBillingEmail(),
+                        blankToNull(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(billing.billingEmail())),
+                        actorId, reason, settings::setBillingEmail);
+            }
+            if (billing.billlingAddress() != null) {
+                updateField("billingAddress", settings.getBillingAddress(), blankToNull(billing.billlingAddress()), actorId, reason, settings::setBillingAddress);
+            }
         }
 
         WalletPreferencesRequest wallet = request.getWalletPref();
         if (wallet != null) {
-            updateField("walletAutoPopUp", settings.isWalletAutoPopUp(), Boolean.TRUE.equals(wallet.autoTopupEnabled()), actorId, reason, settings::setWalletAutoPopUp);
-            updateField("walletAutoTopupThreshold", settings.getWalletAutoTopupThreshold(), wallet.autoTopupThreshold(), actorId, reason, settings::setWalletAutoTopupThreshold);
-            updateField("walletAutoTopupAmount", settings.getWalletAutoTopupAmount(), wallet.autoTopupAmount(), actorId, reason, settings::setWalletAutoTopupAmount);
-            updateField("walletSpendingDailyLimit", settings.getWalletSpendingDailyLimit(), wallet.spendingDailyLimit(), actorId, reason, settings::setWalletSpendingDailyLimit);
-            updateField("walletSpendingWeeklyLimit", settings.getWalletSpendingWeeklyLimit(), wallet.spendingWeeklyLimit(), actorId, reason, settings::setWalletSpendingWeeklyLimit);
+            if (wallet.autoTopupEnabled() != null) {
+                updateField("walletAutoPopUp", settings.isWalletAutoPopUp(), wallet.autoTopupEnabled(), actorId, reason, settings::setWalletAutoPopUp);
+            }
+            if (wallet.autoTopupThreshold() != null) {
+                updateField("walletAutoTopupThreshold", settings.getWalletAutoTopupThreshold(), zeroToNull(wallet.autoTopupThreshold()), actorId, reason, settings::setWalletAutoTopupThreshold);
+            }
+            if (wallet.autoTopupAmount() != null) {
+                updateField("walletAutoTopupAmount", settings.getWalletAutoTopupAmount(), zeroToNull(wallet.autoTopupAmount()), actorId, reason, settings::setWalletAutoTopupAmount);
+            }
+            // 0 retire le plafond personnel.
+            if (wallet.spendingDailyLimit() != null) {
+                updateField("walletSpendingDailyLimit", settings.getWalletSpendingDailyLimit(), zeroToNull(wallet.spendingDailyLimit()), actorId, reason, settings::setWalletSpendingDailyLimit);
+            }
+            if (wallet.spendingWeeklyLimit() != null) {
+                updateField("walletSpendingWeeklyLimit", settings.getWalletSpendingWeeklyLimit(), zeroToNull(wallet.spendingWeeklyLimit()), actorId, reason, settings::setWalletSpendingWeeklyLimit);
+            }
+            Integer daily = settings.getWalletSpendingDailyLimit();
+            Integer weekly = settings.getWalletSpendingWeeklyLimit();
+            if (daily != null && weekly != null && daily > weekly) {
+                throw new com.sni.bokaticowork.core.exception.customs.BadRequestException("Le plafond journalier ne peut pas dépasser le plafond hebdomadaire.");
+            }
+            if (wallet.receiptPreference() != null) {
+                updateField("walletReceiptPreference", settings.getWalletReceiptPreference(), wallet.receiptPreference(), actorId, reason, settings::setWalletReceiptPreference);
+            }
         }
     }
 
@@ -152,7 +213,7 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
                         defaultPreferenceDescription(eventType, channel),
                         eventType.name(),
                         channel.name(),
-                        match != null && match.isEnabled()
+                        match == null || match.isEnabled()
                 ));
             }
         }
@@ -167,7 +228,7 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
         preference.setMember(member);
         preference.setEventType(eventType);
         preference.setNotificationChannel(channel);
-        preference.setEnabled(false);
+        preference.setEnabled(true);
         preference.setPreferenceName(defaultPreferenceName(eventType, channel));
         preference.setPreferenceDescription(defaultPreferenceDescription(eventType, channel));
         return preference;
@@ -177,7 +238,7 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
         MemberSettings settings = new MemberSettings();
         settings.setMember(member);
         settings.setLangage("fr");
-        settings.setTimeZone("Africa/Lagos");
+        settings.setTimeZone(com.sni.bokaticowork.core.settings.userSettings.service.MemberPreferences.DEFAULT_TIME_ZONE);
         settings.setShowNameOnDisplays(false);
         settings.setShowEmail(false);
         settings.setShowPhone(false);
@@ -205,7 +266,8 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
                         settings.getWalletAutoTopupThreshold(),
                         settings.getWalletAutoTopupAmount(),
                         settings.getWalletSpendingDailyLimit(),
-                        settings.getWalletSpendingWeeklyLimit()
+                        settings.getWalletSpendingWeeklyLimit(),
+                        settings.getWalletReceiptPreference() == null ? null : settings.getWalletReceiptPreference().name()
                 ))
                 .notificationPref(notifications)
                 .build();
@@ -241,6 +303,14 @@ public class MemberSettingsServiceImpl implements MemberSettingsService {
                 .reason(reason)
                 .build();
         settingsAuditLogsRepository.save(log);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private static Integer zeroToNull(Integer value) {
+        return value == null || value == 0 ? null : value;
     }
 
     private String stringify(Object value) {

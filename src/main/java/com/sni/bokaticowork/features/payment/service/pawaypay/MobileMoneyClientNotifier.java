@@ -1,11 +1,15 @@
 package com.sni.bokaticowork.features.payment.service.pawaypay;
 
+import com.sni.bokaticowork.core.enums.EventType;
+import com.sni.bokaticowork.core.enums.NotificationChannel;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
+import com.sni.bokaticowork.core.settings.userSettings.service.MemberPreferences;
 import com.sni.bokaticowork.features.payment.model.PawapayDeposit;
 import com.sni.bokaticowork.features.payment.provider.pawaypay.CongoCorrespondent;
 import com.sni.bokaticowork.features.payment.service.support.TransactionContextResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -36,10 +40,23 @@ public class MobileMoneyClientNotifier {
     private final OutboxService outboxService;
     private final TransactionContextResolver contextResolver;
 
+    private MemberPreferences memberPreferences;
+
+    @Autowired(required = false)
+    public void setMemberPreferences(MemberPreferences memberPreferences) {
+        this.memberPreferences = memberPreferences;
+    }
+
     /** Le paiement a ete refuse par l'operateur · on dit pourquoi et si reessayer a un sens. */
     public void depositFailed(PawapayDeposit deposit) {
         Map<String, Object> payload = base(deposit);
         if (payload == null) {
+            return;
+        }
+        if (!memberAllows(deposit, (String) payload.get("recipientEmail"), EventType.PAYMENT_FAILED)) {
+            // Le membre a coupe l'avis de paiement echoue : rien ne part, ce n'est pas un echec.
+            log.info("Depot {} · avis d'echec non envoye a {} : preference du membre",
+                    deposit.getDepositId(), deposit.getCustomerCode());
             return;
         }
         payload.put("failureCode", deposit.getFailureCode());
@@ -101,6 +118,28 @@ public class MobileMoneyClientNotifier {
     private void publish(String eventType, PawapayDeposit deposit, Map<String, Object> payload) {
         payload.put("templateCode", eventType);
         outboxService.publish(eventType, AGGREGATE, deposit.getDepositId(), payload);
+    }
+
+    /**
+     * Le membre a-t-il coupe cet avis ? Une organisation le recoit toujours ; un client personne
+     * suit le membre de meme adresse. L'avis de depot en verification n'est jamais coupe : il dit
+     * de ne pas payer deux fois.
+     */
+    private boolean memberAllows(PawapayDeposit deposit, String email, EventType event) {
+        if (memberPreferences == null) {
+            return true;
+        }
+        String type = deposit.getCustomerType() == null ? "" : deposit.getCustomerType().trim().toUpperCase(Locale.ROOT);
+        try {
+            return switch (type) {
+                case "MEMBER" -> memberPreferences.allows(deposit.getCustomerCode(), event, NotificationChannel.EMAIL);
+                case "CUSTOMER" -> memberPreferences.allowsEmail(email, event);
+                default -> true;
+            };
+        } catch (RuntimeException ex) {
+            log.debug("Preference illisible pour le depot {}, avis maintenu : {}", deposit.getDepositId(), ex.getMessage());
+            return true;
+        }
     }
 
     /**

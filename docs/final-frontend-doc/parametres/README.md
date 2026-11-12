@@ -20,7 +20,7 @@ Modules liés : `subscription` (fournit la politique d'abonnement), `socle` (jou
 | Domaine (`SettingDomain`) | nom d'énumération (`BOOKING`, `SECURITY`…) | énumération `src/main/java/com/sni/bokaticowork/core/settings/platform/SettingDomain.java` | 27 domaines, chacun avec un libellé français et un indicateur `adminEditable` |
 | Changement (`ChangeView`) | aucun | `setting_audit_logs` | `oldValue`, `newValue`, `reason`, `changedAt`. Pas de champ auteur : l'auteur est en tête de `reason` (voir plus bas). |
 | Préférences d'un membre (`MemberSettingsResponse`) | `memberId` du membre (code lisible, pas l'id numérique) | `user_settings`, une ligne par membre, créée au premier `PATCH` | Sans ligne, le `GET` renvoie des valeurs par défaut sans rien enregistrer |
-| Préférence de notification (`NotificationPreferenceResponse`) | couple `eventType` + `channel` | `notification_preferences`, une ligne par couple modifié | 7 événements x 5 canaux = 35 entrées toujours renvoyées |
+| Préférence de notification (`NotificationPreferenceResponse`) | couple `eventType` + `channel` | `notification_preferences`, une ligne par couple modifié | 7 événements x 5 canaux = 35 entrées toujours renvoyées ; un couple sans ligne est activé |
 
 ### Domaines et droits
 
@@ -122,9 +122,29 @@ Les autres routes `GET` / `PUT /sni/api/v1/subscriptions/lifecycle/policy` du mo
 
 ### Préférences d'un membre (fiche membre, back-office)
 
-1. `GET /sni/api/v1/members/{memberId}/settings` ([détail](routes/MemberSettingsController.md#r-get-sni-api-v1-members-memberid-settings)), où `memberId` est le code lisible du membre. Renvoie langue (`langage`, défaut `fr`), fuseau (`timeZone`, défaut `Africa/Lagos`), `showNameOnDisplay`, `showEmail`, `showPhone` (défaut `false`), `billingPref` (défaut `billingEntityType = PERSONAL`), `walletPref`, et `notificationPref` (les 35 couples).
-2. Modifier : `PATCH /sni/api/v1/members/{memberId}/settings?reason=...` ([détail](routes/MemberSettingsController.md#r-patch-sni-api-v1-members-memberid-settings)) avec un `Idempotency-Key`. **Renvoyer tous les champs** (voir les règles : ce `PATCH` se comporte comme un remplacement). Chaque champ réellement changé produit une ligne dans `setting_audit_logs` (clé `langage`, `showEmail`, `billingEmail`, `walletAutoTopupAmount`…).
-3. Préférences de notification : `GET /sni/api/v1/members/{memberId}/settings/notifications`, puis une bascule par couple avec `PATCH /sni/api/v1/members/{memberId}/settings/notifications` et `{ "eventType": "INVOICE_ISSUED", "channel": "EMAIL", "enabled": true }` ([détail](routes/MemberSettingsController.md#r-patch-sni-api-v1-members-memberid-settings-notifications)). La réponse est la liste complète des 35 couples : la substituer à l'affichage. Présenter une grille événements x canaux.
+1. `GET /sni/api/v1/members/{memberId}/settings` ([détail](routes/MemberSettingsController.md#r-get-sni-api-v1-members-memberid-settings)), où `memberId` est le code lisible du membre. Renvoie langue (`langage`, défaut `fr`), fuseau (`timeZone`, défaut `Africa/Brazzaville`), `showNameOnDisplay`, `showEmail`, `showPhone` (défaut `false`), `billingPref` (défaut `billingEntityType = PERSONAL`), `walletPref` (dont `receiptPreference`, défaut `EVERY_TRANSACTION`), et `notificationPref` (les 35 couples, activés par défaut).
+2. Modifier : `PATCH /sni/api/v1/members/{memberId}/settings?reason=...` ([détail](routes/MemberSettingsController.md#r-patch-sni-api-v1-members-memberid-settings)) avec un `Idempotency-Key`. N'envoyer que les champs à changer : un champ absent ou `null` garde sa valeur. Une chaîne vide retire `billingEmail`, `billingCompanyName` ou `billlingAddress` ; `0` retire un plafond ou un montant de `walletPref`. `notificationPref` accepte une liste de `{ eventType, channel, enabled }` appliquée dans la même requête. Chaque champ réellement changé produit une ligne dans `setting_audit_logs` (clé `langage`, `showEmail`, `billingEmail`, `walletSpendingDailyLimit`, `notification.INVOICE_ISSUED.EMAIL`…).
+3. Préférences de notification : `GET /sni/api/v1/members/{memberId}/settings/notifications`, puis une bascule par couple avec `PATCH /sni/api/v1/members/{memberId}/settings/notifications` et `{ "eventType": "INVOICE_ISSUED", "channel": "EMAIL", "enabled": false }` ([détail](routes/MemberSettingsController.md#r-patch-sni-api-v1-members-memberid-settings-notifications)). Les trois champs sont exigés (`400` sinon). La réponse est la liste complète des 35 couples : la substituer à l'affichage. Présenter une grille événements x canaux.
+
+### Préférences d'un membre (portail, le membre lui-même)
+
+Mêmes corps et mêmes réponses que les routes du back-office, pour le membre connecté (rôle membre et accès au portail), sans `memberId` dans le chemin ni `Idempotency-Key` exigé. Le journal note « Portail membre » comme motif.
+
+| Route | Usage |
+| --- | --- |
+| `GET /sni/api/v1/client/settings` | lire ses préférences |
+| `PATCH /sni/api/v1/client/settings` | les modifier (mêmes règles de `PATCH` partiel) |
+| `GET /sni/api/v1/client/settings/notifications` | grille des notifications |
+| `PATCH /sni/api/v1/client/settings/notifications` | basculer un couple |
+
+### Effet des préférences dans les autres modules
+
+- **Notifications** : un couple coupé arrête l'envoi automatique correspondant : confirmation, annulation, rappel, échec de réservation ; envoi d'une facture ; reçu ou confirmation de paiement ; paiement échoué. Le canal `IN_APP` coupe la notification dans l'application. Ne se coupent jamais : relances d'impayés et rappels d'échéance, sécurité (codes, mots de passe, connexions), contrats, conformité. Un envoi demandé par un administrateur (« renvoyer ») part toujours. La facture et le reçu restent dans le portail.
+- **Adresse de facturation** : `billingPref.billingEmail` reçoit les factures, reçus et messages de facturation du membre, à la place du courriel du compte. Une organisation garde son propre courriel de facturation.
+- **Fuseau** : les dates et heures des courriels et reçus du membre sont données dans `timeZone`.
+- **Portefeuille** : `spendingDailyLimit` et `spendingWeeklyLimit` sont des plafonds personnels de dépense (paiements, transferts sortants, retraits), en plus des limites de la plateforme ; un dépassement répond `400` avec un message clair. `receiptPreference = INVOICE_ONLY` arrête le reçu par courriel à chaque opération du portefeuille.
+- **Langue** : sert au formatage, pas à la traduction ; les messages restent en français.
+- `autoTopupEnabled`, `autoTopupThreshold`, `autoTopupAmount` et les `show*` sont enregistrés mais ne pilotent encore rien (pas de rechargement automatique, pas d'annuaire des membres).
 
 ## Règles et erreurs à refléter dans l'écran
 
@@ -155,9 +175,9 @@ Pour `early-termination-fixed-fee`, une valeur vide signifie « pas de montant f
 Préférences d'un membre :
 
 - Membre inconnu ou supprimé : `404`, message `Member not found` (en anglais).
-- `billingCompanyName`, `billlingAddress` : 255 caractères au plus ; `billingEmail` : une ou plusieurs adresses séparées par des virgules, 500 caractères au plus, chaque adresse vérifiée (`400` sinon) et la liste enregistrée en minuscules ; montants de `walletPref` entiers `>= 0`. Aucune autre validation (pas de contrôle de format de courriel, de langue ni de fuseau).
-- `PATCH /settings` : un booléen omis ou `null` est enregistré à `false` ; un texte ou un entier omis est enregistré à `null` (`MemberSettingsServiceImpl.java:175`). Omettre `langage`, `timeZone` ou `billingPref.billingEntityType` alors que ces colonnes sont `NOT NULL` fait échouer l'enregistrement (erreur base, statut non vérifié, probablement `500`). Toujours partir de la réponse du `GET` et renvoyer l'objet complet.
-- `PATCH /settings/notifications` : envoyer `eventType` et `channel` (une valeur `null` fait échouer l'enregistrement) ; `enabled` omis vaut `false`.
+- `billingCompanyName`, `billlingAddress` : 255 caractères au plus ; `billingEmail` : une ou plusieurs adresses séparées par des virgules, 500 caractères au plus, chaque adresse vérifiée (`400` sinon) et la liste enregistrée en minuscules ; montants de `walletPref` entiers `>= 0` ; plafond journalier au plus égal au plafond hebdomadaire (`400` sinon) ; `timeZone` doit être un fuseau connu (`Africa/Brazzaville`, `Africa/Kinshasa`…, `400` sinon) ; `langage` non vide, 50 caractères au plus.
+- `PATCH /settings` : un champ absent ou `null` garde sa valeur ; une chaîne vide retire un texte facultatif ; `0` retire un plafond.
+- `PATCH /settings/notifications` : `eventType`, `channel` et `enabled` sont exigés (`400` sinon).
 
 ## À prévoir côté frontend
 
@@ -167,7 +187,8 @@ Préférences d'un membre :
 - Envoyer `value` en chaîne : `"true"`, `"30"`, `"08:00-18:00"`, `""` pour un jour fermé.
 - Proposer un champ « motif » facultatif sur la modification et la remise à zéro (500 caractères au plus pour le `PUT`, mais voir les écarts : rester sous 200).
 - Afficher clairement l'effet `RESTART` et l'état `restartPending` : sans redémarrage, rien ne change pour ces réglages. Le frontend ne peut pas déclencher de redémarrage.
-- **Fiche membre, onglet « Préférences »** : lecture avec `CLIENT:READ`, modification avec `CLIENT:UPDATE`. Envoyer `Idempotency-Key` sur les deux `PATCH`. Ne jamais envoyer `notificationPref` dans le corps du `PATCH /settings` : le champ est accepté mais ignoré, et son modèle est l'entité complète (avec `member`).
+- **Fiche membre, onglet « Préférences »** : lecture avec `CLIENT:READ`, modification avec `CLIENT:UPDATE`. Envoyer `Idempotency-Key` sur les deux `PATCH`. Envoyer seulement les champs changés.
+- **Portail, « Mes préférences »** : routes `/sni/api/v1/client/settings`, mêmes écrans sans le motif.
 - Le nom du champ d'adresse de facturation est `billlingAddress` (trois `l`), en lecture comme en écriture.
 - Aucun temps réel, aucun fichier.
 
@@ -182,12 +203,12 @@ Préférences d'un membre :
 
 - **Réglé** : remise à zéro d'une clé `LIVE` sans effet avant redémarrage. Sans valeur en base, `PlatformSettings` rend désormais la valeur du fichier de configuration, sans la valeur de base lue au démarrage.
 - **Motif trop long refusé par la base** : `UpdateRequest.reason` accepte 500 caractères (`PlatformSettingsController.java:32`), mais l'audit enregistre `<auteur> · <motif>` dans `setting_audit_logs.reason VARCHAR(255)` (`src/main/resources/db/migration/V32__create_and_align_member_settings_module.sql:91`). Au-delà d'environ 200 caractères de motif, l'enregistrement échoue (erreur base, aucun gestionnaire `DataIntegrityViolationException` trouvé dans `GlobalExceptionHandler`, statut non vérifié). Le `DELETE` n'a aucune limite de longueur.
-- **`PATCH` des préférences membre destructif** : les champs omis sont remis à `false` ou `null` (`src/main/java/com/sni/bokaticowork/core/settings/userSettings/service/implementation/MemberSettingsServiceImpl.java:175` à `:196`), ce qui contredit la sémantique d'un `PATCH` et fait échouer l'enregistrement sur les colonnes `NOT NULL`.
-- **Préférences membre jamais lues** : `user_settings` et `notification_preferences` ne sont lues par aucun autre code que ce module (recherche sur `MemberSettingRepository`, `NotificationPreferenceRepository`, noms de tables). Les préférences de notification n'empêchent ni n'activent aucun envoi, et `walletPref` ne pilote aucun rechargement automatique ni plafond.
-- **Préférences de notification désactivées par défaut** : un couple sans ligne est renvoyé `enabled = false` (`MemberSettingsServiceImpl.java:216`), ce qui afficherait toutes les notifications comme coupées alors que les envois ont lieu.
-- `UpdateMemberSettingsRequest.notificationPref` est typé avec l'entité JPA `NotificationPreferences` (`src/main/java/com/sni/bokaticowork/core/settings/userSettings/dto/request/UpdateMemberSettingsRequest.java:346`) et ignoré par le service.
+- **Réglé** : `PATCH` des préférences membre destructif. Un champ absent garde sa valeur.
+- **Réglé** : préférences membre jamais lues. Notifications, adresse de facturation, fuseau, plafonds et reçus du portefeuille sont appliqués (voir « Effet des préférences dans les autres modules »). Restent sans effet : rechargement automatique et options `show*`.
+- **Réglé** : préférences de notification désactivées par défaut. Un couple sans ligne est renvoyé activé.
+- **Réglé** : `notificationPref` était typé avec l'entité JPA et ignoré. C'est désormais une liste de `{ eventType, channel, enabled }`, appliquée.
 - Le journal des paramètres de plateforme ne renseigne pas `changed_by` (l'auteur est mis dans `reason`, `PlatformSettingsAdminService.java:268`), alors que celui des préférences membre renseigne `changed_by` et laisse `reason` au seul motif : deux formats dans la même table.
 - `ChangeView` n'expose pas l'auteur séparément ; il faut le découper dans `reason`.
 - Message `Member not found` en anglais (`src/main/java/com/sni/bokaticowork/features/client/member/service/implementation/MemberServiceImpl.java:223`).
-- Fuseau par défaut `Africa/Lagos` (`MemberSettingsServiceImpl.java:241`) plutôt qu'un fuseau du Congo ; même décalage horaire (UTC+1), mais libellé surprenant à l'affichage.
-- `walletReceiptPreference` est stocké avec une valeur par défaut mais n'est ni renvoyé ni modifiable.
+- **Réglé** : fuseau par défaut `Africa/Lagos`, remplacé par `Africa/Brazzaville` pour un membre sans préférence enregistrée.
+- **Réglé** : `walletReceiptPreference` est renvoyé et modifiable (`walletPref.receiptPreference`).
