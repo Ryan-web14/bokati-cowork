@@ -258,6 +258,13 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("PUT", BASE + "/accounting/cash/registers/CSR-1/journals/OD")).isEqualTo("ACCOUNTING_JOURNAL:MANAGE");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/reconciliation")).isEqualTo("ACCOUNTING_REPORT:READ");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/cash/feed")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
+        // Lots F5 et F6.
+        assertThat(requiredPermissionFor("POST", BASE + "/fund-requests")).isEqualTo("FUND_REQUEST:CREATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/fund-requests/DDF-1/approve")).isEqualTo("FUND_REQUEST:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/fund-requests/DDF-1/disburse")).isEqualTo("FUND_REQUEST:DISBURSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/fund-requests/DDF-1/expenses/JUS-1/validate")).isEqualTo("FUND_JUSTIFICATION:VALIDATE");
+        assertThat(requiredPermissionFor("GET", BASE + "/fund-requests")).isEqualTo("FUND_REQUEST:READ");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/fund-needs/EDB-1/validate")).isEqualTo("FUND_REQUEST:APPROVE_L1");
         // Lot F4.
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/sales/checks")).isEqualTo("ACCOUNTING_REPORT:READ");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/sales/auto-letter")).isEqualTo("ACCOUNTING_LETTERING:MANUAL");

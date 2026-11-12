@@ -380,7 +380,7 @@ public class SalesAccountingService {
         int processed = 0;
         int ok = 0;
         List<String> errors = new ArrayList<>();
-        for (String account : List.of(settings.text("accounting.sales.client-account", "411"), "4191")) {
+        for (String account : List.of(settings.text("accounting.sales.client-account", "411"), "4191", "421")) {
             if (chart.find(account).isEmpty()) {
                 continue;
             }

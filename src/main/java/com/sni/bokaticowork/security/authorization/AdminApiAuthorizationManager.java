@@ -104,6 +104,24 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
      * sans {@code /open}), la creation de caisse, les mouvements et la validation d'un ecart
      * exigeaient le meme droit, que tout caissier avait. Chaque action a desormais le sien.</p>
      */
+    /**
+     * Demandes de fonds (lots F5 et F6). Les controles fins (niveau de validation, demandeur,
+     * beneficiaire) sont faits par le service ; ici, le droit d'entree.
+     */
+    private String fundPermission(String path, String method) {
+        if (path.equals("/fund-requests") && HttpMethod.GET.matches(method)) return permission("FUND_REQUEST", "READ");
+        if (path.equals("/fund-requests/advances")) return permission("FUND_REQUEST", "READ");
+        if (path.equals("/fund-requests/justifications-to-validate")) return permission("FUND_JUSTIFICATION", "VALIDATE");
+        if (path.equals("/fund-requests/to-disburse")) return permission("FUND_REQUEST", "DISBURSE");
+        if (path.equals("/fund-requests/import-legacy")) return permission("FUND_REQUEST", "READ");
+        if (path.endsWith("/disburse") || path.endsWith("/return") || path.endsWith("/complement") || path.endsWith("/transfer")) {
+            return permission("FUND_REQUEST", "DISBURSE");
+        }
+        if (path.matches("/fund-requests/[^/]+/expenses/[^/]+/(validate|reject)")) return permission("FUND_JUSTIFICATION", "VALIDATE");
+        if (path.matches("/fund-needs/[^/]+/(validate|reject)")) return permission("FUND_REQUEST", "APPROVE_L1");
+        return permission("FUND_REQUEST", "CREATE");
+    }
+
     /** Droits de la comptabilite (plan finance, section 16). */
     private String accountingPermission(String path, String method) {
         if (path.startsWith("/accounting/sales")) {
@@ -281,6 +299,9 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         }
         if (path.startsWith("/accounting")) {
             return accountingPermission(path, method);
+        }
+        if (path.startsWith("/fund-needs") || path.startsWith("/fund-requests")) {
+            return fundPermission(path, method);
         }
         if (path.startsWith("/cash-registers")) {
             return cashPermission(path, method);

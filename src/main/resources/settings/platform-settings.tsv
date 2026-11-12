@@ -301,3 +301,16 @@ bokati.websocket.stomp.system-passcode	WEBSOCKET	SECRET	RESTART		Mot de passe sy
 bokati.websocket.stomp.use-tls	WEBSOCKET	BOOLEAN	RESTART	false	Relais chiffré
 bokati.websocket.stomp.virtual-host	WEBSOCKET	TEXT	RESTART	/	Hôte virtuel du relais
 bokati.websocket.use-stomp-relay	WEBSOCKET	BOOLEAN	RESTART	false	Relais de messages actif
+
+fund.advance.overdue-policy	PAYMENT	ENUM	RESTART	BLOCK	Avance en retard de justification : BLOCK (pas de nouvelle avance) ou ALERT
+fund.approval.escalation-days	PAYMENT	INTEGER	RESTART	3	Jours d'attente d'une validation avant escalade au responsable
+fund.approval.level1-max	PAYMENT	INTEGER	RESTART	50000	Montant maximal valide par le seul chef de service (XAF)
+fund.approval.level2-max	PAYMENT	INTEGER	RESTART	500000	Montant maximal valide sans la direction (XAF)
+fund.approval.reminder-hours	PAYMENT	INTEGER	RESTART	24	Heures avant rappel au valideur
+fund.justification.days	PAYMENT	INTEGER	RESTART	7	Delai de justification d'une avance apres la mission ou le decaissement (jours)
+fund.justification.receipt-exempt-max	PAYMENT	INTEGER	RESTART	5000	Montant d'une ligne de justification admis sans piece, sur attestation (XAF)
+fund.request.expiry-days	PAYMENT	INTEGER	RESTART	15	Jours apres lesquels une demande approuvee non decaissee expire
+fund.vat-recoverable-account	PAYMENT	TEXT	RESTART	4452	Compte de TVA recuperable des justifications d'avance
+fund.worker-cron	PAYMENT	CRON	RESTART	0 0 8-18 * * *	Planification des rappels et relances des demandes de fonds
+fund.voucher.issuer-details	PAYMENT	TEXT	RESTART		Mentions de l'exploitant en tete des pieces (RCCM, NIU, adresse)
+fund.voucher.issuer-name	PAYMENT	TEXT	RESTART	ELLE A OSE	Raison sociale en tete des pieces comptables
