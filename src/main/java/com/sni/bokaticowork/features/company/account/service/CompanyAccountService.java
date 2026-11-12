@@ -180,7 +180,18 @@ public class CompanyAccountService {
     }
 
     public CompanyDtos.CompanyResponse updateBilling(String customerId, CompanyDtos.UpdateBillingRequest request) {
+        return updateBilling(customerId, request, "system");
+    }
+
+    /** Conditions de facturation · la devise de facturation vit sur le profil legal, cree au besoin. */
+    public CompanyDtos.CompanyResponse updateBilling(String customerId, CompanyDtos.UpdateBillingRequest request, String actor) {
         Customer customer = company(customerId);
+        if (StringUtils.hasText(request.currencyCode())) {
+            BusinessEntity legal = legalProfile(customer, actor);
+            legal.setBaseCurrency(resolveCurrency(request.currencyCode()));
+            legal.setUpdated_by(actor);
+            businessRepository.save(legal);
+        }
         if (request.billingEmail() != null) customer.setBillingEmail(com.sni.bokaticowork.core.utils.validation.EmailAddresses.normalize(request.billingEmail()));
         if (request.paymentTermsDays() != null) customer.setPaymentTermsDays(request.paymentTermsDays());
         if (Boolean.TRUE.equals(request.removeCreditLimit())) {
@@ -466,6 +477,7 @@ public class CompanyAccountService {
                 customer.getBlockedBy(),
                 customer.getBlockedAt(),
                 legal == null ? null : legal.getCode(),
+                legal == null || legal.getBaseCurrency() == null ? null : legal.getBaseCurrency().getCurrencyCode(),
                 // Les membres rattaches · le payeur par defaut n'est plus le critere depuis la tranche 1.
                 linkRepository.countByCustomerAndStatus(customer, com.sni.bokaticowork.features.company.enums.MemberLinkStatus.ACTIVE),
                 subscriptionRepository.findAllCurrentActive("CUSTOMER", customer.getCustomerId(), LocalDate.now()).size(),

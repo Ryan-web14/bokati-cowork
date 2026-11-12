@@ -69,7 +69,8 @@ public final class CompanyDtos {
                                        @Valid AddressRequest billingAddress,
                                        @PositiveOrZero Integer paymentTermsDays,
                                        @PositiveOrZero BigDecimal creditLimit,
-                                       Boolean removeCreditLimit) {
+                                       Boolean removeCreditLimit,
+                                       @Size(min = 3, max = 3) String currencyCode) {
     }
 
     public record UpdateContactRequest(@Email String email,
@@ -119,6 +120,7 @@ public final class CompanyDtos {
             String blockedBy,
             Instant blockedAt,
             String businessCode,
+            String currencyCode,
             long membersCount,
             int activeSubscriptions,
             Instant createdAt) {

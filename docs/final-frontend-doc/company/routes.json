@@ -2136,6 +2136,9 @@
     "businessCode": {
      "type": "string"
     },
+    "currencyCode": {
+     "type": "string"
+    },
     "membersCount": {
      "type": "integer",
      "format": "int64"
@@ -2259,6 +2262,11 @@
     },
     "removeCreditLimit": {
      "type": "boolean"
+    },
+    "currencyCode": {
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
     }
    }
   },
