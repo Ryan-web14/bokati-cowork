@@ -43,8 +43,9 @@ class PlatformSettingsAdminServiceTest {
     private final SettingsAuditLogsRepository audit = mock(SettingsAuditLogsRepository.class);
     private final PlatformSettings settings = mock(PlatformSettings.class);
     private final StandardEnvironment environment = new StandardEnvironment();
+    private final SensitiveSettingAlerter alerter = mock(SensitiveSettingAlerter.class);
     private final PlatformSettingsAdminService service =
-            new PlatformSettingsAdminService(repository, audit, settings, environment, List.of(new PolicyStub()));
+            new PlatformSettingsAdminService(repository, audit, settings, environment, List.of(new PolicyStub()), alerter);
 
     private final Authentication superAdmin = user("root@sni", "ROLE_SUPER_ADMIN");
     private final Authentication admin = user("admin@sni", "ROLE_ADMIN");
@@ -199,5 +200,27 @@ class PlatformSettingsAdminServiceTest {
         assertThat(view.defaultValue()).isEqualTo("30");
         assertThat(view.modified()).isTrue();
         assertThat(view.updatedBy()).isEqualTo("admin@sni");
+    }
+
+    @Test
+    @DisplayName("Un parametre sensible se dit sensible, avec son risque, et son changement alerte")
+    void sensitiveSettingsAlert() {
+        PlatformSettingsAdminService.SettingView view = service.update(FEE, "0.02", "Promotion", superAdmin);
+
+        assertThat(view.sensitive()).isTrue();
+        assertThat(view.risk()).contains("frais");
+        verify(alerter).changed(org.mockito.ArgumentMatchers.eq(FEE), any(), any(), org.mockito.ArgumentMatchers.eq("0.02"), org.mockito.ArgumentMatchers.eq("root@sni"));
+        assertThat(service.update(WINDOW, "45", null, admin).sensitive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("La remise a zero d'un parametre sensible alerte aussi")
+    void sensitiveResetAlerts() {
+        when(repository.findById(FEE)).thenReturn(Optional.of(PlatformSetting.builder().key(FEE).value("0.05").build()));
+
+        service.reset(FEE, null, superAdmin);
+
+        verify(alerter).changed(org.mockito.ArgumentMatchers.eq(FEE), any(), org.mockito.ArgumentMatchers.eq("0.05"), any(),
+                org.mockito.ArgumentMatchers.eq("root@sni"));
     }
 }
