@@ -70,6 +70,7 @@ public class SubscriptionCreationOperator {
     private final SubscriberKycLevelGuard kycGuard;
     private final SubscriptionPricingBridge pricingBridge;
     private final com.sni.bokaticowork.features.subscription.lifecycle.service.SubscriptionCommitmentService commitmentService;
+    private final SubscriptionBillingLinkService billingLinkService;
 
     /**
      * Un prix negocie (devis accepte) : il remplace le tarif du catalogue des la creation, pour la
@@ -122,6 +123,12 @@ public class SubscriptionCreationOperator {
         PlanPriceAmountCalculator.Amounts periodAmounts = priceCalculator.compute(
                 recurringAmount, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO, price.getTaxIncluded());
 
+        // Facture ou paiement deja faits hors de l'abonnement : verifies avant toute ecriture.
+        SubscriptionBillingLinkService.Link link = StringUtils.hasText(request.existingInvoiceNumber()) || StringUtils.hasText(request.existingPaymentNumber())
+                ? billingLinkService.resolve(java.util.List.of(owner.code(), request.subscriberCode()), request.existingInvoiceNumber(),
+                request.existingPaymentNumber(), null, priceAmounts.total())
+                : null;
+
         Subscription subscription = Subscription.builder()
                 .subscriptionNumber(subscriptionNumber)
                 .subscriberType(subscriberType)
@@ -162,16 +169,23 @@ public class SubscriptionCreationOperator {
         commitmentService.setFromPlan(saved, price.getCommitmentMonths());
         notifyInApp(saved, SubscriptionEventType.SUBSCRIPTION_CREATED);
         billingSupport.upsertBillingSchedule(saved, BillingScheduleStatus.ACTIVE);
-        billingSupport.createSubscriptionSetupItems(saved, recurringAmount, setupFee,
-                price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount(),
-                priceAmounts.total());
+        if (link == null) {
+            billingSupport.createSubscriptionSetupItems(saved, recurringAmount, setupFee,
+                    price.getDepositAmount() == null ? java.math.BigDecimal.ZERO : price.getDepositAmount(),
+                    priceAmounts.total());
+        } else {
+            // La premiere periode est deja facturee : pas de seconde facture.
+            billingLinkService.attach(saved, link, "SYSTEM");
+        }
         if (priced != null) pricingBridge.confirm(priced, subscriberType.name(), owner.code(), null, TargetScope.PLAN,
                 planVersion.getPlan() == null ? request.planCode() : planVersion.getPlan().getCode(),
                 price.getBillingCycle() == null ? null : price.getBillingCycle().name(),
                 price.getCurrency(), request.couponCodesOrEmpty(),
                 DiscountDocumentType.SUBSCRIPTION, saved.getSubscriptionNumber(), "SYSTEM");
 
-        if (priceAmounts.total().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
+        if (link != null && link.paid()) {
+            lifecycleOperator.activate(saved, "Validation sur la facture existante " + link.invoiceNumber() + " soldée", "SYSTEM");
+        } else if (priceAmounts.total().signum() == 0 || Boolean.TRUE.equals(request.autoActivate())) {
             lifecycleOperator.activate(saved, "Auto activation", "SYSTEM");
         } else {
             // Pas d'auto-activation · envoyer l'email de création en attente de paiement

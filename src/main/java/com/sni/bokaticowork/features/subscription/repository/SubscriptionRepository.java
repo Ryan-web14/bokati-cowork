@@ -18,6 +18,11 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     @Query(nativeQuery = true, value = "SELECT * FROM subscription WHERE subscription_number = :subscriptionNumber")
     Optional<Subscription> findBySubscriptionNumber(@Param("subscriptionNumber") String subscriptionNumber);
 
+    /** Abonnements auxquels une facture existante est rattachee (metadonnee linkedInvoiceNumber). */
+    @org.springframework.data.jpa.repository.Query(value = "SELECT subscription_number FROM subscription WHERE metadata_json ->> 'linkedInvoiceNumber' = :invoiceNumber",
+            nativeQuery = true)
+    java.util.List<String> findNumbersLinkedToInvoice(@Param("invoiceNumber") String invoiceNumber);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM subscription

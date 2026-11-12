@@ -101,6 +101,14 @@ class BillingDocumentPdfLinesRenderTest {
     }
 
     @Test
+    @org.junit.jupiter.api.DisplayName("Le bas de page porte la case de visa ELLE A OSE, pour la signature et le cachet")
+    void theInvoiceCarriesTheOperatorVisaBox() {
+        String html = render(List.of(line(1, "Salle de réunion", "1", "25000", "21186.44", true)));
+        assertThat(html).contains("Visa ELLE A OSE").contains("Cachet et signature").contains("visa-box");
+        assertThat(html.indexOf("Visa ELLE A OSE")).isLessThan(html.indexOf("Engineered by SNI"));
+    }
+
+    @Test
     @DisplayName("Le prix unitaire affiché est hors taxe, pas le prix total de la prestation")
     void theUnitPriceColumnIsExcludingTax() {
         // Ligne saisie en prix TTC : 1 x 25 000 TTC, brut HT 21 186.

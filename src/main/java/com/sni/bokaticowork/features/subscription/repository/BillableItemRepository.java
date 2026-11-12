@@ -23,6 +23,8 @@ public interface BillableItemRepository extends JpaRepository<BillableItem, Long
     @Query(nativeQuery = true, value = "SELECT * FROM billable_item WHERE invoice_id = :invoiceId")
     List<BillableItem> findByInvoiceId(@Param("invoiceId") Long invoiceId);
 
+    List<BillableItem> findAllBySourceId(String sourceId);
+
     @Query(nativeQuery = true, value = """
             SELECT *
             FROM billable_item
