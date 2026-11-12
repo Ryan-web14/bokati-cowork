@@ -66,4 +66,13 @@ public class AccSupplierInvoiceLine {
     /** Fiche d'immobilisation a laquelle la ligne se rattache (frais accessoires, avoir, en cours ; lot F18). */
     @Column(name = "fixed_asset_code")
     private String fixedAssetCode;
+
+    @Column(name = "service_start")
+    private LocalDate serviceStart;
+
+    @Column(name = "service_end")
+    private LocalDate serviceEnd;
+
+    @Column(name = "recognition_method")
+    private String recognitionMethod;
 }

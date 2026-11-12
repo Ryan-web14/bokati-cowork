@@ -425,7 +425,7 @@ public class SalesAccountingService {
     }
 
     /** Compte de produit d'une ligne : reglage par type de ligne. */
-    private String productAccount(BillingDocumentLine line) {
+    public String productAccount(BillingDocumentLine line) {
         String type = line.getLineType() == null ? "SERVICE" : line.getLineType().name();
         String fallback = switch (type) {
             case "PRODUCT" -> "701";

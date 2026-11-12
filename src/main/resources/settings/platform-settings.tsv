@@ -1,5 +1,10 @@
 # cle	domaine	type	effet	defaut	libelle
 accounting.account.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation de compte : IMMEDIATE ou AFTER_APPROVAL
+accounting.accrual.alert-days	ACCOUNTING	INTEGER	LIVE	60	Jours avant alerte d'une estimation non rapprochee d'une facture reelle
+accounting.accrual.expense-account	ACCOUNTING	TEXT	LIVE	408	Compte des factures non parvenues
+accounting.accrual.expense-vat-account	ACCOUNTING	TEXT	LIVE	4454	TVA sur les factures non parvenues quand elle est connue
+accounting.accrual.revenue-account	ACCOUNTING	TEXT	LIVE	4181	Compte des factures a etablir
+accounting.accrual.reversal-journal	ACCOUNTING	TEXT	LIVE	OD	Journal des extournes des estimations
 accounting.analytic.centre-account	ACCOUNTING	TEXT	LIVE	93	Compte de classe 9 des centres d'analyse (reflet analytique)
 accounting.analytic.class9-axis	ACCOUNTING	TEXT	LIVE	ACTIVITE	Axe reflechi en classe 9 dans le journal CAG (vide : pas de reflet)
 accounting.analytic.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation d'une section par un administrateur : IMMEDIATE ou AFTER_APPROVAL
@@ -24,6 +29,8 @@ accounting.commitment.journal	ACCOUNTING	TEXT	LIVE	HB	Journal des engagements ho
 accounting.commitment.received-account	ACCOUNTING	TEXT	LIVE	905	Compte des engagements recus
 accounting.commitment.received-counter-account	ACCOUNTING	TEXT	LIVE	906	Compte de contrepartie des engagements recus
 accounting.currencies	ACCOUNTING	TEXT	LIVE	EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR	Devises suivies (taux recuperes et proposes), separees par des virgules
+accounting.deferral.cron	ACCOUNTING	CRON	LIVE	0 0 4 * * *	Constatations d'avance : planification (echeanciers chaque nuit, fin de periode le 1er du mois)
+accounting.deferral.journal	ACCOUNTING	TEXT	LIVE	OD	Constatations d'avance : journal des ajustements et des estimations
 accounting.doubtful.customer-policy	ACCOUNTING	ENUM	LIVE	ALERT	Client a creance douteuse : ALERT, PREPAY ou BLOCK (suffixe .member, .customer, .business-entity par segment)
 accounting.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite active (ecritures automatiques de la plateforme)
 accounting.exchange.auto-fetch	ACCOUNTING	BOOLEAN	LIVE	true	Recuperation automatique des taux du jour sur internet
@@ -32,6 +39,9 @@ accounting.exchange.fetch-cron	ACCOUNTING	CRON	LIVE	0 15 7 * * *	Planification d
 accounting.exchange.gain-account	ACCOUNTING	TEXT	LIVE	776	Compte des gains de change au reglement d'une facture en devise
 accounting.exchange.loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes de change au reglement d'une facture en devise
 accounting.exchange.provider-url	ACCOUNTING	TEXT	LIVE	https://api.frankfurter.dev/v1/latest?from=EUR	Adresse du fournisseur de taux (reponse JSON en base EUR)
+accounting.expense.deferral	ACCOUNTING	ENUM	LIVE	MONTHLY	Charges constatees d'avance : MONTHLY, YEAR_END ou NONE
+accounting.expense.deferral-threshold	ACCOUNTING	INTEGER	LIVE	50000	Seuil de signification des charges a etaler (XAF HT par ligne)
+accounting.expense.deferred-account	ACCOUNTING	TEXT	LIVE	476	Compte des charges constatees d'avance
 accounting.financing.analytic-axis	ACCOUNTING	TEXT	LIVE		Axe analytique des sections portees par les emprunts et la paie (vide : pas de ventilation)
 accounting.financing.cron	ACCOUNTING	CRON	LIVE	0 45 6 * * *	Tenue quotidienne : echeances d'emprunt, alertes, hors bilan
 accounting.fixed-asset.commission-alert-days	ACCOUNTING	INTEGER	LIVE	30	Immobilisations : jours avant alerte d'un bien recu non mis en service
@@ -113,6 +123,8 @@ accounting.receivable.trigger-days	ACCOUNTING	INTEGER	LIVE	90	Creances : retard 
 accounting.receivable.writeoff-direction-threshold	ACCOUNTING	INTEGER	LIVE	100000	Creances : perte TTC au-dela de laquelle la direction valide (XAF)
 accounting.receivable.writeoff-vat-recovery	ACCOUNTING	BOOLEAN	LIVE	true	Creances : recuperer la TVA collectee sur une creance passee en perte
 accounting.replay-until	ACCOUNTING	TEXT	LIVE		Reprise : les faits dates avant ce jour produisent des brouillards a valider en bloc (vide : pas de reprise)
+accounting.revenue.deferral	ACCOUNTING	ENUM	LIVE	MONTHLY	Produits constates d'avance : MONTHLY, YEAR_END ou NONE
+accounting.revenue.deferred-account	ACCOUNTING	TEXT	LIVE	477	Compte des produits constates d'avance
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
 accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients
 accounting.sales.discount-account	ACCOUNTING	TEXT	LIVE	709	Compte des remises accordees sur facture
