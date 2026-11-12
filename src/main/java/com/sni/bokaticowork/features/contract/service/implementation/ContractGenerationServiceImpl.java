@@ -1,6 +1,6 @@
 package com.sni.bokaticowork.features.contract.service.implementation;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.client.customer.model.Customer;
 import com.sni.bokaticowork.features.client.customer.service.interfaces.CustomerService;
@@ -21,7 +21,6 @@ import com.sni.bokaticowork.features.contract.repository.ContractTemplateReposit
 import com.sni.bokaticowork.features.contract.service.support.ContractEmailNotifier;
 import com.sni.bokaticowork.core.utils.BrandLogo;
 import com.sni.bokaticowork.features.company.repository.BusinessRepository;
-import com.sni.bokaticowork.features.contract.service.support.ContractPdfFonts;
 import com.sni.bokaticowork.features.contract.service.support.ContractWording;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +31,6 @@ import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
@@ -52,7 +50,6 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
 
     private final SpringTemplateEngine templateEngine;
     private final ContractWording wording;
-    private final ContractPdfFonts pdfFonts;
     private final BrandLogo brandLogo;
     private final BusinessRepository businessRepository;
     private final DocumentService documentService;
@@ -278,22 +275,8 @@ public class ContractGenerationServiceImpl implements ContractGenerationService 
     }
 
     private byte[] renderPdf(String html) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document jsoupDoc = org.jsoup.Jsoup.parse(html);
-            jsoupDoc.outputSettings()
-                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
-                    .charset(java.nio.charset.StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            // Sans cela le moteur ignore le <link> vers Google Fonts et retombe sur Times ·
-            // la mise en page obtenue n etait pas celle qui avait ete dessinee.
-            pdfFonts.register(builder);
-            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoupDoc), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception ex) {
             Throwable root = ex.getCause() != null ? ex.getCause() : ex;
             throw new BadRequestException("Unable to generate contract PDF: " + root.getMessage(), ex);

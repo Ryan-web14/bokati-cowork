@@ -49,7 +49,7 @@ class AccountStatementExporterTest {
     @Test
     @DisplayName("PDF : le modele se rend, organisation bloquee et lignes hors periode comprises")
     void rendersPdf() {
-        AccountStatementExporter exporter = new AccountStatementExporter(engine(), Locale.FRANCE, new BrandLogo());
+        AccountStatementExporter exporter = new AccountStatementExporter(engine(), Locale.FRANCE, new BrandLogo(), null);
 
         byte[] pdf = exporter.pdf(statement());
 
@@ -67,7 +67,7 @@ class AccountStatementExporterTest {
     @Test
     @DisplayName("CSV : une ligne par document, montants bruts")
     void rendersCsv() {
-        AccountStatementExporter exporter = new AccountStatementExporter(engine(), Locale.FRANCE, new BrandLogo());
+        AccountStatementExporter exporter = new AccountStatementExporter(engine(), Locale.FRANCE, new BrandLogo(), null);
 
         String csv = exporter.csv(statement());
 

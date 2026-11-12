@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.features.payment.service.implementation;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
+import com.sni.bokaticowork.core.utils.BrandLogo;
+import com.sni.bokaticowork.core.identity.OperatorIdentityService;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.payment.dto.response.CashMovementResponse;
@@ -27,7 +29,6 @@ import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
@@ -50,6 +51,8 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
     private final CashStatisticsService cashStatisticsService;
     private final SpringTemplateEngine templateEngine;
     private final Locale appLocale;
+    private final BrandLogo brandLogo;
+    private final OperatorIdentityService operatorIdentityService;
 
     @Override
     public byte[] generateMovementDocument(String movementNumber) {
@@ -60,6 +63,7 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         context.setVariable("docTypeLabel", documentTypeLabel(response.documentType(), response.movementType()));
         context.setVariable("generatedAt", Instant.now());
         context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
+        brand(context);
         // Lot C4 : une piece deja imprimee ressort en DUPLICATA ; une piece contre-passee porte la
         // mention ANNULE PAR et le numero du mouvement inverse.
         context.setVariable("duplicate", movement.getPrintCount() != null && movement.getPrintCount() > 0);
@@ -77,6 +81,7 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         context.setVariable("statusLabel", requestStatusLabel(request.status()));
         context.setVariable("generatedAt", Instant.now());
         context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
+        brand(context);
         return renderToPdf(templateEngine.process("cash/request-document", context));
     }
 
@@ -97,23 +102,19 @@ public class CashDocumentPdfServiceImpl implements CashDocumentPdfService {
         context.setVariable("reviewedBy", session.getReviewedBy());
         context.setVariable("generatedAt", Instant.now());
         context.setVariable("fmt", new CashDocumentTemplateFormatter(appLocale));
+        brand(context);
         return renderToPdf(templateEngine.process("cash/session-closing-report", context));
     }
 
+    /** En-tete commun · logo encre et identite de l'exploitant. */
+    private void brand(Context context) {
+        context.setVariable("logo", brandLogo.base64());
+        context.setVariable("operator", operatorIdentityService.current());
+    }
+
     private byte[] renderToPdf(String html) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document jsoupDoc = org.jsoup.Jsoup.parse(html);
-            jsoupDoc.outputSettings()
-                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
-                    .charset(java.nio.charset.StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(jsoupDoc), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception ex) {
             throw new BadRequestException("Unable to generate cash document PDF", ex);
         }

@@ -151,6 +151,16 @@ class ContractTemplatesRenderTest {
     }
 
     /** Le corps contractuel seul · la feuille de style porte des commentaires. */
+    @ParameterizedTest
+    @DisplayName("Le pied ne se dit plus scellé · aucun contrat n'est signé ni scellé électroniquement")
+    @ValueSource(strings = {"subscription-pass-non-refundable", "membership-agreement",
+            "business-service-agreement", "contrat-domiciliation"})
+    void theFooterNoLongerClaimsAnElectronicSeal(String gabarit) {
+        String html = render(gabarit);
+
+        assertThat(html).doesNotContainIgnoringCase("scellé").doesNotContainIgnoringCase("scelle ");
+    }
+
     private String texteDuCorps(String html) {
         String rendu = html.replace(' ', ' ').replace(' ', ' ')
                 .replace("&#160;", " ").replace("&#39;", "'").replace("&middot;", "·");

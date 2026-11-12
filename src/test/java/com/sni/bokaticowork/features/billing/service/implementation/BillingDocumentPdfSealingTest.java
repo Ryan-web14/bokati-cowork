@@ -35,7 +35,9 @@ class BillingDocumentPdfSealingTest {
             storageService,
             mock(com.sni.bokaticowork.features.billing.service.support.PdfSignatureService.class),
             java.util.Locale.FRANCE,
-            new com.sni.bokaticowork.core.utils.BrandLogo());
+            new com.sni.bokaticowork.core.utils.BrandLogo(),
+            null,
+            new com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer());
 
     @Test
     void shouldConfirmAFileThatMatchesTheSealedVersion() {

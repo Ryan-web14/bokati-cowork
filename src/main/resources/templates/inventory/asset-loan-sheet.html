@@ -148,23 +148,16 @@
             padding-top: 8px;
         }
     </style>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
+    <style>
+        /* Page sans marge haute · l'en-tete commun porte son propre retrait. */
+        .dbr-header-inner { padding: 18px 26px 10px; }
+        .dbr-number { font-family: Helvetica, Arial, sans-serif; letter-spacing: 0.5px; font-weight: 400; }
+    </style>
 </head>
 <body>
 
-<div class="doc-header">
-    <table class="header-table">
-        <tr>
-            <td>
-                <div class="brand-name">Bokati Cowork</div>
-                <div class="brand-sub">Espace de coworking</div>
-            </td>
-            <td class="doc-title-block">
-                <h1>Fiche de Prêt</h1>
-                <div class="doc-sub" th:text="'Généré le ' + ${generatedAt}"></div>
-            </td>
-        </tr>
-    </table>
-</div>
+<div th:replace="~{fragments/document-brand :: titled('Fiche de prêt', ${'Générée le ' + generatedAt})}"></div>
 
 <div class="content">
 

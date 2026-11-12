@@ -159,28 +159,20 @@
         }
         .doc-footer .made-by { font-size: 6.5px; color: #d6d0df; margin-top: 2px; letter-spacing: 0.4px; }
     </style>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
+    <style>
+        /* Page sans marge haute · l'en-tete commun porte son propre retrait. */
+        .dbr-header-inner { padding: 18px 26px 10px; }
+        .dbr-number { font-family: Helvetica, Arial, sans-serif; letter-spacing: 0.5px; font-weight: 400; }
+    </style>
 </head>
 <body>
 
-<div class="doc-header">
-    <table class="header-table">
-        <tr>
-            <td>
-                <div class="brand-name">Elle A Ose</div>
-                <div class="brand-sub">Cowork &amp; Studio</div>
-            </td>
-            <td class="doc-title-block">
-                <h1>Rapport inventaire</h1>
-                <div class="doc-gen">Genere le <span th:text="${generatedAt}">2026-05-01</span></div>
-            </td>
-        </tr>
-    </table>
-</div>
-<div class="header-stripe"></div>
+<div th:replace="~{fragments/document-brand :: titled('Rapport d’inventaire', ${'Généré le ' + generatedAt})}"></div>
 
 <div class="content">
     <div class="filters-box">
-        <div class="filters-head">Filtres appliques</div>
+        <div class="filters-head">Filtres appliqués</div>
         <table class="filters-table">
             <tr>
                 <td>
@@ -193,7 +185,7 @@
                 </td>
                 <td>
                     <div class="filter-label">Du</div>
-                    <div class="filter-value" th:text="${report.fromDate ?: 'Debut'}">Debut</div>
+                    <div class="filter-value" th:text="${report.fromDate ?: 'Debut'}">Début</div>
                 </td>
                 <td>
                     <div class="filter-label">Au</div>
@@ -211,7 +203,7 @@
                 <div class="kpi-value" th:text="${report.summary.movementCount}">0</div>
             </td>
             <td>
-                <div class="kpi-label">Entrees</div>
+                <div class="kpi-label">Entrées</div>
                 <div class="kpi-value positive" th:text="${report.summary.totalInQuantity}">0</div>
             </td>
             <td>
@@ -219,13 +211,13 @@
                 <div class="kpi-value negative" th:text="${report.summary.totalOutQuantity}">0</div>
             </td>
             <td>
-                <div class="kpi-label">Quantite nette</div>
+                <div class="kpi-label">Quantité nette</div>
                 <div class="kpi-value" th:text="${report.summary.netQuantity}">0</div>
             </td>
         </tr>
         <tr>
             <td>
-                <div class="kpi-label">Valeur entrees</div>
+                <div class="kpi-label">Valeur entrées</div>
                 <div class="kpi-value positive" th:text="${report.summary.totalInValue}">0</div>
             </td>
             <td>
@@ -243,16 +235,16 @@
         </tr>
     </table>
 
-    <div class="section-label"><span>Synthese par type de mouvement</span></div>
+    <div class="section-label"><span>Synthèse par type de mouvement</span></div>
     <table class="data-table">
         <thead>
         <tr>
             <th>Type</th>
             <th class="right">Nombre</th>
-            <th class="right">Quantite</th>
+            <th class="right">Quantité</th>
             <th class="right">Valeur</th>
-            <th class="right">Qte signee</th>
-            <th class="right col-accent">Valeur signee</th>
+            <th class="right">Qté signée</th>
+            <th class="right col-accent">Valeur signée</th>
         </tr>
         </thead>
         <tbody>
@@ -269,7 +261,7 @@
             <td class="right col-accent" th:text="${line.signedValue}">0</td>
         </tr>
         <tr th:if="${#lists.isEmpty(report.lines)}" class="empty-row">
-            <td colspan="6">Aucun mouvement sur la periode.</td>
+            <td colspan="6">Aucun mouvement sur la période.</td>
         </tr>
         </tbody>
     </table>
@@ -281,7 +273,7 @@
             <th>Code</th>
             <th>Article</th>
             <th class="right">Mouvements</th>
-            <th class="right">Entrees</th>
+            <th class="right">Entrées</th>
             <th class="right">Sorties</th>
             <th class="right">Net</th>
             <th class="right col-accent">Valeur</th>
@@ -298,7 +290,7 @@
             <td class="right col-accent" th:text="${item.totalValue}">0</td>
         </tr>
         <tr th:if="${#lists.isEmpty(report.items)}" class="empty-row">
-            <td colspan="7">Aucun article a afficher.</td>
+            <td colspan="7">Aucun article à afficher.</td>
         </tr>
         </tbody>
     </table>
@@ -310,7 +302,7 @@
             <th>Code</th>
             <th>Location</th>
             <th class="right">Mouvements</th>
-            <th class="right">Entrees</th>
+            <th class="right">Entrées</th>
             <th class="right">Sorties</th>
             <th class="right">Net</th>
             <th class="right col-accent">Valeur</th>
@@ -327,7 +319,7 @@
             <td class="right col-accent" th:text="${location.totalValue}">0</td>
         </tr>
         <tr th:if="${#lists.isEmpty(report.locations)}" class="empty-row">
-            <td colspan="7">Aucune location a afficher.</td>
+            <td colspan="7">Aucune location à afficher.</td>
         </tr>
         </tbody>
     </table>
@@ -341,9 +333,9 @@
             <th>Article</th>
             <th>De</th>
             <th>Vers</th>
-            <th class="right">Qte</th>
-            <th class="right col-accent">Cout</th>
-            <th>Reference</th>
+            <th class="right">Qté</th>
+            <th class="right col-accent">Coût</th>
+            <th>Référence</th>
             <th>Date</th>
         </tr>
         </thead>
@@ -370,15 +362,15 @@
             <td style="font-size:8.5px;" th:text="${movement.performedAt}">date</td>
         </tr>
         <tr th:if="${#lists.isEmpty(report.recentMovements)}" class="empty-row">
-            <td colspan="9">Aucun mouvement recent.</td>
+            <td colspan="9">Aucun mouvement récent.</td>
         </tr>
         </tbody>
     </table>
 
     <div class="doc-footer">
-        Elle A Ose - Rapport inventaire &nbsp;|&nbsp;
-        Genere le <span th:text="${generatedAt}">2026-05-01</span> &nbsp;|&nbsp;
-        Valeurs calculees a partir des mouvements enregistres sur la periode selectionnee.
+        <span th:text="${operator != null ? operator.name() : 'ELLE A OSE'}">ELLE A OSE</span> &nbsp;|&nbsp; Rapport d'inventaire &nbsp;|&nbsp;
+        Généré le <span th:text="${generatedAt}">01/05/2026</span> &nbsp;|&nbsp;
+        Valeurs calculées à partir des mouvements enregistrés sur la période sélectionnée.
         <div class="made-by">Made by SNI</div>
     </div>
 </div>

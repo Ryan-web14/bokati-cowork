@@ -34,6 +34,18 @@ public class QrCodeRenderer {
     }
 
     public String toDataUri(String content, int size) {
+        String base64 = toBase64(content, size);
+        return base64 == null ? null : DATA_URI_PREFIX + base64;
+    }
+
+    /** Image PNG en base64, sans prefixe {@code data:} · forme attendue par plusieurs gabarits. */
+    public String toBase64(String content, int size) {
+        byte[] png = toPng(content, size);
+        return png == null ? null : Base64.getEncoder().encodeToString(png);
+    }
+
+    /** Octets PNG du QR, ou {@code null} si le contenu est vide ou le rendu impossible. */
+    public byte[] toPng(String content, int size) {
         if (!StringUtils.hasText(content)) {
             return null;
         }
@@ -41,7 +53,7 @@ public class QrCodeRenderer {
             BitMatrix matrix = new QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, size, size);
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             MatrixToImageWriter.writeToStream(matrix, "PNG", out);
-            return DATA_URI_PREFIX + Base64.getEncoder().encodeToString(out.toByteArray());
+            return out.toByteArray();
         } catch (Exception ex) {
             log.warn("Rendu QR impossible pour un contenu de {} caracteres : {}",
                     content.length(), ex.getMessage());

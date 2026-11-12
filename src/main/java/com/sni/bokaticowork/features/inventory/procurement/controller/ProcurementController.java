@@ -6,6 +6,7 @@ import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.inventory.procurement.dto.ProcurementDtos.*;
 import com.sni.bokaticowork.features.inventory.procurement.enums.*;
 import com.sni.bokaticowork.features.inventory.procurement.service.interfaces.ProcurementService;
+import com.sni.bokaticowork.features.inventory.procurement.suggestion.model.SupplierCategoryKind;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,8 +39,10 @@ public class ProcurementController {
 
     @GetMapping("/suppliers")
     public ResponseEntity<Page<SupplierResponse>> suppliers(@RequestParam(required = false) String q,
+                                                            @RequestParam(required = false) SupplierCategoryKind categoryKind,
+                                                            @RequestParam(required = false) String categoryCode,
                                                             @PageableDefault(size = 20, sort = "name") Pageable pageable) {
-        return ResponseEntity.ok(service.suppliers(q, pageable));
+        return ResponseEntity.ok(service.suppliers(q, categoryKind, categoryCode, pageable));
     }
 
     @PostMapping("/purchase-requests")

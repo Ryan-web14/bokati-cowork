@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.features.payment.transfer.service;
 
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.identity.OperatorIdentityService;
+import com.sni.bokaticowork.core.utils.BrandLogo;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.payment.dto.response.WalletLedgerEntryResponse;
@@ -18,7 +20,6 @@ import org.springframework.util.StringUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.Instant;
@@ -49,6 +50,8 @@ public class WalletStatementService {
     private final TransactionContextResolver contextResolver;
     private final SpringTemplateEngine templateEngine;
     private final Locale appLocale;
+    private final OperatorIdentityService operatorIdentity;
+    private final BrandLogo brandLogo;
 
     public record StatementLine(String date, String reference, String nature, String label,
                                 String credit, String debit, String balance) {
@@ -105,6 +108,7 @@ public class WalletStatementService {
         context.setVariable("closingBalance", money(closing));
         context.setVariable("lines", lines);
         context.setVariable("lastHash", lastHash);
+        brand(context);
         return render(templateEngine.process("wallet/statement", context));
     }
 
@@ -135,10 +139,17 @@ public class WalletStatementService {
         context.setVariable("nature", nature(entry.getEntryType()));
         context.setVariable("directionLabel",
                 entry.getDirection() == WalletEntryDirection.CREDIT ? "Montant reçu" : "Montant débité");
+        brand(context);
         return render(templateEngine.process("wallet/transaction-receipt", context));
     }
 
     // -----------------------------------------------------------------------------------------
+
+    /** En-tete commun des pieces · identite de l'exploitant et logo encre. */
+    private void brand(Context context) {
+        context.setVariable("operator", operatorIdentity.current());
+        context.setVariable("logo", brandLogo.base64());
+    }
 
     private String nature(WalletEntryType type) {
         if (type == null) {
@@ -176,19 +187,8 @@ public class WalletStatementService {
     }
 
     private byte[] render(String html) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document document = org.jsoup.Jsoup.parse(html);
-            document.outputSettings()
-                    .syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml)
-                    .charset(java.nio.charset.StandardCharsets.UTF_8)
-                    .prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(document), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception ex) {
             throw new BadRequestException("Impossible de générer le document PDF du portefeuille", ex);
         }

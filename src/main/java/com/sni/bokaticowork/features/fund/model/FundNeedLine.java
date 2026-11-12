@@ -47,6 +47,10 @@ public class FundNeedLine {
     @Column(name = "supplier")
     private String supplier;
 
+    /** Fiche fournisseur d'inventaire (facultatif) ; supplier reprend alors son nom. */
+    @Column(name = "supplier_code")
+    private String supplierCode;
+
     @Column(name = "transformed_request_number")
     private String transformedRequestNumber;
 

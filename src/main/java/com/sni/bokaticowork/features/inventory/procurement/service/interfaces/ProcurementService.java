@@ -12,6 +12,10 @@ public interface ProcurementService {
 
     Page<SupplierResponse> suppliers(String query, Pageable pageable);
 
+    /** Liste filtree par categorie (sorte et code) ; sans code, comme {@link #suppliers(String, Pageable)}. */
+    Page<SupplierResponse> suppliers(String query, com.sni.bokaticowork.features.inventory.procurement.suggestion.model.SupplierCategoryKind categoryKind,
+                                     String categoryCode, Pageable pageable);
+
     PurchaseRequestResponse createPurchaseRequest(PurchaseRequestCreateRequest request);
 
     PurchaseRequestResponse createPurchaseRequestFromReorderSuggestions(String locationCode, String supplierCode, String requestedBy);

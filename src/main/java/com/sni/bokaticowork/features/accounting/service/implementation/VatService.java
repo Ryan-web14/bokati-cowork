@@ -415,7 +415,7 @@ public class VatService {
             issued = new VoucherService.Issued("BROUILLON-" + record.getPeriodCode(), "DTV", record.getPeriodCode(), record.getDueAmount(), null,
                     record.getPreparedBy(), record.getPreparedAt(), 0, null, null);
         } else {
-            issued = vouchers.issueAndPrint("DTV", SOURCE, record.getPeriodCode(), record.getDueAmount(), "Declaration de TVA " + record.getPeriodCode(),
+            issued = vouchers.issueAndPrint("DTV", SOURCE, record.getPeriodCode(), record.getDueAmount(), "Déclaration de TVA " + record.getPeriodCode(),
                     actors.resolve("SYSTEM"));
             if (record.getVoucherNumber() == null) {
                 record.setVoucherNumber(issued.number());
@@ -423,41 +423,41 @@ public class VatService {
             }
         }
         List<VoucherService.Section> sections = new ArrayList<>();
-        sections.add(new VoucherService.Section("Declaration").pair("Periode", record.getPeriodCode() + " (du " + record.getStartDate() + " au " + record.getEndDate() + ")")
-                .pair("Regime d'exigibilite", "PAYMENT".equals(record.getRegime()) ? "Sur les encaissements" : "Sur les debits (a la facture)")
-                .pair("Etat", label(record.getStatus())).pair("Piece de liquidation", record.getLiquidationEntryNumber())
+        sections.add(new VoucherService.Section("Déclaration").pair("Période", record.getPeriodCode() + " (du " + record.getStartDate() + " au " + record.getEndDate() + ")")
+                .pair("Régime d'exigibilité", "PAYMENT".equals(record.getRegime()) ? "Sur les encaissements" : "Sur les débits (à la facture)")
+                .pair("État", label(record.getStatus())).pair("Pièce de liquidation", record.getLiquidationEntryNumber())
                 .pair("Chiffre d'affaires HT", VoucherService.money(record.getRevenue())));
         sections.add(new VoucherService.Section("Calcul").columns(List.of("Rubrique", "Montant"), List.of(false, true))
-                .row("TVA collectee", VoucherService.money(record.getCollected()))
-                .row("TVA recuperable du mois", VoucherService.money(record.getDeductibleGross()))
+                .row("TVA collectée", VoucherService.money(record.getCollected()))
+                .row("TVA récupérable du mois", VoucherService.money(record.getDeductibleGross()))
                 .row("Prorata de deduction (%)", record.getDeductionProrata().stripTrailingZeros().toPlainString())
-                .row("- TVA deductible", VoucherService.money(record.getDeductible()))
-                .row("TVA non deductible (en charge)", VoucherService.money(record.getNonDeductible()))
-                .row("- Credit de TVA reporte du mois precedent", VoucherService.money(record.getCreditBroughtForward()))
+                .row("- TVA déductible", VoucherService.money(record.getDeductible()))
+                .row("TVA non déductible (en charge)", VoucherService.money(record.getNonDeductible()))
+                .row("- Crédit de TVA reporté du mois précédent", VoucherService.money(record.getCreditBroughtForward()))
                 .row("= TVA due", VoucherService.money(record.getDueAmount()))
-                .row("Credit de TVA a reporter", VoucherService.money(record.getCreditCarriedForward()))
-                .row("TVA encore en attente d'exigibilite", VoucherService.money(record.getPendingBalance())));
-        VoucherService.Section accounts = new VoucherService.Section("Par compte").columns(List.of("Compte", "Libelle", "Nature", "Montant"), List.of(false, false, false, true));
-        detail.collected().forEach(line -> accounts.row(line.account(), line.label(), "Collectee", VoucherService.money(line.amount())));
-        detail.deductible().forEach(line -> accounts.row(line.account(), line.label(), "Deductible", VoucherService.money(line.amount())));
+                .row("Crédit de TVA à reporter", VoucherService.money(record.getCreditCarriedForward()))
+                .row("TVA encore en attente d'exigibilité", VoucherService.money(record.getPendingBalance())));
+        VoucherService.Section accounts = new VoucherService.Section("Par compte").columns(List.of("Compte", "Libellé", "Nature", "Montant"), List.of(false, false, false, true));
+        detail.collected().forEach(line -> accounts.row(line.account(), line.label(), "Collectée", VoucherService.money(line.amount())));
+        detail.deductible().forEach(line -> accounts.row(line.account(), line.label(), "Déductible", VoucherService.money(line.amount())));
         sections.add(accounts);
-        VoucherService.Section codes = new VoucherService.Section("TVA collectee par code de taxe").columns(List.of("Code", "Base", "Taxe"), List.of(false, true, true));
+        VoucherService.Section codes = new VoucherService.Section("TVA collectée par code de taxe").columns(List.of("Code", "Base", "Taxe"), List.of(false, true, true));
         detail.byCode().forEach(line -> codes.row(line.taxCode(), VoucherService.money(line.base()), VoucherService.money(line.tax())));
         sections.add(codes);
-        VoucherService.Section documents = new VoucherService.Section("Detail par facture").columns(
-                List.of("Date", "Document", "Fait", "Client", "Devise", "Taxe (XAF)", "Comptabilise", "Ecart"), List.of(false, false, false, false, false, true, true, true));
+        VoucherService.Section documents = new VoucherService.Section("Détail par facture").columns(
+                List.of("Date", "Document", "Fait", "Client", "Devise", "Taxe (XAF)", "Comptabilisé", "Écart"), List.of(false, false, false, false, false, true, true, true));
         detail.documents().forEach(line -> documents.row(line.date(), line.documentNumber(), "ANNULATION".equals(line.event()) ? "Annulation" : type(line.documentType()),
                 line.customerName(), line.currency(), VoucherService.money(line.taxXaf()), line.accountingTax() == null ? "Non" : VoucherService.money(line.accountingTax()),
                 line.difference() == null ? "" : VoucherService.money(line.difference())));
-        documents.row("", "", "", "Dont documents scelles", "", VoucherService.money(detail.sealedTaxTotal()), "", "");
+        documents.row("", "", "", "Dont documents scellés", "", VoucherService.money(detail.sealedTaxTotal()), "", "");
         if (record.getControlDifference() != null) {
             documents.row("", "", "", "Total", "", VoucherService.money(record.getInvoiceTaxTotal()), VoucherService.money(record.getCollected()),
                     VoucherService.money(record.getControlDifference()));
         }
         sections.add(documents);
-        return vouchers.render("Declaration de TVA " + record.getPeriodCode(), issued, sections, record.getDueAmount(), null, List.of(
-                new VoucherService.Signature("Prepare par", record.getPreparedBy(), VoucherService.date(record.getPreparedAt())),
-                new VoucherService.Signature("Valide par", record.getValidatedBy(), record.getValidatedAt() == null ? null : VoucherService.date(record.getValidatedAt()))));
+        return vouchers.render("Déclaration de TVA " + record.getPeriodCode(), issued, sections, record.getDueAmount(), null, List.of(
+                new VoucherService.Signature("Préparé par", record.getPreparedBy(), VoucherService.date(record.getPreparedAt())),
+                new VoucherService.Signature("Validé par", record.getValidatedBy(), record.getValidatedAt() == null ? null : VoucherService.date(record.getValidatedAt()))));
     }
 
     /** Export CSV (separateur point-virgule, UTF-8 avec BOM) : synthese puis detail par facture. */
@@ -511,8 +511,8 @@ public class VatService {
 
     private static String label(String status) {
         return switch (status) {
-            case "VALIDATED" -> "validee";
-            case "LIQUIDATED" -> "liquidee";
+            case "VALIDATED" -> "validée";
+            case "LIQUIDATED" -> "liquidée";
             default -> "en brouillon";
         };
     }

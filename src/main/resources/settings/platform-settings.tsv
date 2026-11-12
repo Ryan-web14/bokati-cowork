@@ -369,3 +369,4 @@ fund.vat-recoverable-account	PAYMENT	TEXT	LIVE	4452	Compte de TVA recuperable de
 fund.voucher.issuer-details	PAYMENT	TEXT	LIVE		Mentions de l'exploitant en tete des pieces (RCCM, NIU, adresse)
 fund.voucher.issuer-name	PAYMENT	TEXT	LIVE	ELLE A OSE	Raison sociale en tete des pieces comptables
 fund.worker-cron	PAYMENT	CRON	LIVE	0 0 8-18 * * *	Planification des rappels et relances des demandes de fonds
+inventory.supplier-suggestion.limit	ACCOUNTING	INTEGER	LIVE	5	Nombre de fournisseurs proposes par la suggestion de fournisseurs (au plus 50)

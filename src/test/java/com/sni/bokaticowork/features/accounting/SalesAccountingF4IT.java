@@ -120,6 +120,7 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
 
     @BeforeEach
     void setUp() {
+        com.sni.bokaticowork.core.settings.platform.PlatformSettingsStubs.fallbacks(platformSettings);
         when(sequences.next(anyString())).thenAnswer(invocation -> "BR-F4-" + SEQ.getAndIncrement() + "-" + UUID.randomUUID().toString().substring(0, 6));
         when(settings.enabled()).thenReturn(true);
         when(settings.familyEnabled(anyString())).thenReturn(true);

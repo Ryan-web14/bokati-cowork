@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <title>Rapport d'occupation</title>
+<th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
 <style>
 @page {
     size: A4;
@@ -26,6 +27,8 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 .doc-title { font-size: 14px; font-weight: 700; color: #1f1430; text-align: right; text-transform: uppercase; letter-spacing: 1.5px; }
 .doc-sub { font-size: 8px; color: #c9a84c; text-align: right; margin-top: 4px; }
 .stripe { height: 2px; background: #c9a84c; }
+.dbr-header-inner { padding: 18px 24px 14px; }
+.dbr-footer { margin: 16px 24px 0; }
 
 .period-bar { background: #fdf8ed; border-bottom: 1px solid #f0dfa0; padding: 6px 24px; font-size: 8px; color: #1f1430; }
 .content { padding: 14px 24px 0; }
@@ -61,22 +64,12 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 </head>
 <body>
 
-<div class="header">
-    <table class="header-tbl"><tr>
-        <td>
-            <img th:if="${logo != null}" th:src="@{'data:image/png;base64,' + ${logo}}" class="brand-logo" alt="ELLE A OSE"/>
-            <div class="brand" th:if="${logo == null}">ELLE A OSE</div>
-            <div class="brand-sub">Espace de coworking</div>
-            <div class="brand-id">84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire<br>
-                RCCM CG-PNR-01-2017-A11-00472</div>
-        </td>
-        <td>
-            <div class="doc-title">Rapport d'occupation</div>
-            <div class="doc-sub">Généré le <span th:text="${fmt.date(generatedAt)}"></span></div>
-        </td>
-    </tr></table>
+<div th:replace="~{fragments/document-brand :: letterhead(~{::#report-aside})}">
+    <div id="report-aside">
+        <div class="doc-title">Rapport d'occupation</div>
+        <div class="doc-sub">Généré le <span th:text="${fmt.date(generatedAt)}"></span></div>
+    </div>
 </div>
-<div class="stripe"></div>
 
 <div class="period-bar">
     Période : <strong th:text="${fmt.date(report.fromDate())} + ' → ' + ${fmt.date(report.toDate())}"></strong>
@@ -172,8 +165,6 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 9
 
 </div>
 
-<div class="footer">
-    Elle A Osé · Bokati Cowork &nbsp;·&nbsp; Rapport d'occupation &nbsp;·&nbsp; Généré le <span th:text="${fmt.date(generatedAt)}"></span> &nbsp;·&nbsp; Document confidentiel
-</div>
+<div th:replace="~{fragments/document-brand :: footer(${'Rapport d’occupation · Généré le ' + fmt.date(generatedAt) + ' · Document confidentiel'})}"></div>
 </body>
 </html>

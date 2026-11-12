@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @Builder
 @Entity
 @Table(name = "address")
+@EntityListeners(com.sni.bokaticowork.core.identity.OperatorIdentityChangeListener.class)
 public class Address {
     @Id
     @IdGeneration

@@ -161,6 +161,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
     private final FiscalSignatureService fiscalSignatureService;
     private final MemberInAppNotifier memberInAppNotifier;
     private final org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.features.billing.service.support.InvoiceAnnexProvider> annexProviders;
+    /** Instantane vendeur · peut etre absent dans les tests qui construisent le service a la main. */
+    private final com.sni.bokaticowork.features.billing.service.support.BillingSellerSnapshot sellerSnapshot;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -1043,6 +1045,9 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
         document.setStatus(document.getDocumentType() == BillingDocumentType.QUOTE ? BillingDocumentStatus.SENT : BillingDocumentStatus.ISSUED);
         document.setIssuedAt(Instant.now());
+        // Identite du vendeur figee a l'emission · la reimpression reste identique meme si la
+        // fiche exploitant change ensuite.
+        freezeSeller(document);
         BillingDocument saved = documentRepository.save(document);
         eventWriter.write(saved, "BILLING_DOCUMENT_ISSUED", null);
         memberInAppNotifier.notify("BILLING_DOCUMENT_ISSUED", "BILLING_DOCUMENT", saved.getDocumentNumber(),
@@ -1052,6 +1057,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                         "documentType", saved.getDocumentType() != null ? saved.getDocumentType().name() : "",
                         "status", saved.getStatus() != null ? saved.getStatus().name() : ""));
         return mapper.toResponse(saved);
+    }
+
+    private void freezeSeller(BillingDocument document) {
+        if (sellerSnapshot != null) {
+            sellerSnapshot.applyIfMissing(document);
+        }
     }
 
     @Override
@@ -2361,6 +2372,10 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
 
         document.setFiscalDate(fiscalDate);
         document.setFiscalNumber(fiscalNumber);
+
+        // Instantane vendeur avant le hash et le verrouillage · une piece validee sans etre passee
+        // par l'emission le recoit ici, jamais apres.
+        freezeSeller(document);
 
         // 4 · hash précédent (chaînage, SELECT FOR UPDATE SKIP LOCKED)
         String previousHash = documentRepository

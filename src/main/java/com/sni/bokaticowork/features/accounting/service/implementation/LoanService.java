@@ -469,18 +469,18 @@ public class LoanService {
         VoucherService.Issued issued = new VoucherService.Issued(loan.getCode() + "-V" + loan.getScheduleVersion(), "EMP", loan.getCode(), loan.getPrincipal(),
                 null, loan.getCreatedBy(), loan.getCreatedAt(), 0, null, null);
         List<VoucherService.Section> sections = new ArrayList<>();
-        sections.add(new VoucherService.Section("Emprunt").pair("Preteur", loan.getLenderName()).pair("Objet", loan.getPurpose())
-                .pair("Montant", VoucherService.money(loan.getPrincipal())).pair("Deblocage", loan.getDisbursedOn())
+        sections.add(new VoucherService.Section("Emprunt").pair("Prêteur", loan.getLenderName()).pair("Objet", loan.getPurpose())
+                .pair("Montant", VoucherService.money(loan.getPrincipal())).pair("Déblocage", loan.getDisbursedOn())
                 .pair("Taux annuel", loan.getRate().stripTrailingZeros().toPlainString() + " % (" + loan.getRateType() + ", base " + loan.getDayCount() + ")")
-                .pair("Echeances", loan.getTermCount() + " tous les " + loan.getFrequencyMonths() + " mois, " + loan.getMethod()
-                        + ("NONE".equals(loan.getDeferralType()) ? "" : ", differe " + loan.getDeferralType() + " " + loan.getDeferralCount()))
+                .pair("Échéances", loan.getTermCount() + " tous les " + loan.getFrequencyMonths() + " mois, " + loan.getMethod()
+                        + ("NONE".equals(loan.getDeferralType()) ? "" : ", différé " + loan.getDeferralType() + " " + loan.getDeferralCount()))
                 .pair("Compte", loan.getLoanAccount()).pair("Version du tableau", loan.getScheduleVersion()));
         VoucherService.Section table = new VoucherService.Section("Tableau d'amortissement").columns(
-                List.of("N", "Echeance", "Capital du", "Interets", "Capital", "Assurance", "Total", "Reste", "Etat"),
+                List.of("N°", "Échéance", "Capital dû", "Intérêts", "Capital", "Assurance", "Total", "Reste", "État"),
                 List.of(true, false, true, true, true, true, true, true, false));
         current(loan).forEach(item -> table.row(item.getNumber(), item.getDueDate(), VoucherService.money(item.getOpeningBalance()),
                 VoucherService.money(item.getInterest()), VoucherService.money(item.getPrincipal()), VoucherService.money(item.getInsurance()),
-                VoucherService.money(item.getPayment()), VoucherService.money(item.getClosingBalance()), "POSTED".equals(item.getStatus()) ? "Ecrite" : "Prevue"));
+                VoucherService.money(item.getPayment()), VoucherService.money(item.getClosingBalance()), "POSTED".equals(item.getStatus()) ? "Écrite" : "Prévue"));
         sections.add(table);
         return vouchers.render("Tableau d'amortissement " + loan.getCode(), issued, sections, null, null, List.of());
     }

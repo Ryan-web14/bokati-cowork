@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "business_entity")
+@EntityListeners(com.sni.bokaticowork.core.identity.OperatorIdentityChangeListener.class)
 @SQLDelete(sql = "UPDATE business_entity SET deleted = true WHERE id = ?")
 @SQLRestriction("deleted = false")
 public class BusinessEntity {

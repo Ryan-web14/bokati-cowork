@@ -2,11 +2,8 @@ package com.sni.bokaticowork.features.booking.service.support;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.core.enums.EventType;
 import com.sni.bokaticowork.core.enums.NotificationChannel;
@@ -27,8 +24,6 @@ import org.springframework.util.StringUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import javax.imageio.ImageIO;
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -56,6 +51,7 @@ public class BookingEmailNotifier {
     private final BookingEventWriter eventWriter;
     private final TemplateEngine templateEngine;
     private final BillingTaxRuleResolver taxRuleResolver;
+    private final QrCodeRenderer qrCodeRenderer;
 
     @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
@@ -413,16 +409,11 @@ public class BookingEmailNotifier {
         String scanUrl = apiBaseUrl().stripTrailing()
                 + ApiPath.V1 + "/public/bookings/check-in/scan/"
                 + booking.getCheckInToken();
-        try {
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix matrix = writer.encode(scanUrl, BarcodeFormat.QR_CODE, 280, 280);
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-            ImageIO.write(MatrixToImageWriter.toBufferedImage(matrix), "png", output);
-            return output.toByteArray();
-        } catch (Exception ex) {
-            log.warn("Failed to generate booking QR code for {}", booking.getBookingNumber(), ex);
-            return null;
+        byte[] png = qrCodeRenderer.toPng(scanUrl, 280);
+        if (png == null) {
+            log.warn("Failed to generate booking QR code for {}", booking.getBookingNumber());
         }
+        return png;
     }
 
     private String publicBookingViewUrl(Booking booking) {

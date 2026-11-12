@@ -783,38 +783,38 @@ public class BankService {
         sections.add(new VoucherService.Section("Compte").pair("Compte", account.getCode() + " : " + account.getLabel())
                 .pair("Banque", account.getBankName()).pair("RIB", account.getRib()).pair("Compte comptable", account.getAccountNumber())
                 .pair("Journal", account.getJournalCode()).pair("Date du rapprochement", record.getReconciliationDate())
-                .pair("Etat", "VALIDATED".equals(record.getStatus()) ? "Valide" : "Brouillon, non valide"));
+                .pair("État", "VALIDATED".equals(record.getStatus()) ? "Validé" : "Brouillon, non validé"));
         BigDecimal bookPlus = state.bookOutstanding().stream().map(BookLine::amount).filter(a -> a.signum() > 0).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal bookMinus = state.bookOutstanding().stream().map(BookLine::amount).filter(a -> a.signum() < 0).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal statementNet = state.statementOutstanding().stream().map(Line::amount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        sections.add(new VoucherService.Section("Rapprochement").columns(List.of("Libelle", "Montant"), List.of(false, true))
-                .row("Solde du releve au " + record.getReconciliationDate(), VoucherService.money(state.statementBalance()))
-                .row("+ Encaissements comptabilises, non encore au releve", VoucherService.money(bookPlus))
-                .row("- Decaissements comptabilises, non encore au releve", VoucherService.money(bookMinus.negate()))
-                .row("+ / - Lignes du releve non encore comptabilisees (en sens inverse)", VoucherService.money(statementNet.negate()))
-                .row("= Solde rapproche", VoucherService.money(state.reconciledBalance()))
+        sections.add(new VoucherService.Section("Rapprochement").columns(List.of("Libellé", "Montant"), List.of(false, true))
+                .row("Solde du relevé au " + record.getReconciliationDate(), VoucherService.money(state.statementBalance()))
+                .row("+ Encaissements comptabilisés, non encore au relevé", VoucherService.money(bookPlus))
+                .row("- Décaissements comptabilisés, non encore au relevé", VoucherService.money(bookMinus.negate()))
+                .row("+ / - Lignes du relevé non encore comptabilisées (en sens inverse)", VoucherService.money(statementNet.negate()))
+                .row("= Solde rapproché", VoucherService.money(state.reconciledBalance()))
                 .row("Solde comptable du compte " + account.getAccountNumber(), VoucherService.money(state.bookBalance()))
-                .row("Ecart", VoucherService.money(state.difference())));
+                .row("Écart", VoucherService.money(state.difference())));
         LocalDate date = record.getReconciliationDate();
-        VoucherService.Section book = new VoucherService.Section("Ecritures en suspens (comptabilisees, absentes du releve)")
-                .columns(List.of("Date", "Piece", "Libelle", "Reference", "Montant", "Anciennete (j)"), List.of(false, false, false, false, true, true));
+        VoucherService.Section book = new VoucherService.Section("Écritures en suspens (comptabilisées, absentes du relevé)")
+                .columns(List.of("Date", "Pièce", "Libellé", "Référence", "Montant", "Ancienneté (j)"), List.of(false, false, false, false, true, true));
         state.bookOutstanding().forEach(line -> book.row(line.date(), line.entryNumber(), line.label(), line.reference(),
                 VoucherService.money(line.amount()), ChronoUnit.DAYS.between(line.date(), date)));
         if (state.bookOutstanding().isEmpty()) {
             book.row("", "", "Aucune", "", "", "");
         }
         sections.add(book);
-        VoucherService.Section statement = new VoucherService.Section("Lignes du releve non comptabilisees")
-                .columns(List.of("Date", "Releve", "Libelle", "Reference", "Montant", "Anciennete (j)"), List.of(false, false, false, false, true, true));
+        VoucherService.Section statement = new VoucherService.Section("Lignes du relevé non comptabilisées")
+                .columns(List.of("Date", "Relevé", "Libellé", "Référence", "Montant", "Ancienneté (j)"), List.of(false, false, false, false, true, true));
         state.statementOutstanding().forEach(line -> statement.row(line.date(), line.statementNumber(), line.label(), line.reference(),
                 VoucherService.money(line.amount()), ChronoUnit.DAYS.between(line.date(), date)));
         if (state.statementOutstanding().isEmpty()) {
             statement.row("", "", "Aucune", "", "", "");
         }
         sections.add(statement);
-        return vouchers.render("Etat de rapprochement bancaire", issued, sections, null, null, List.of(
-                new VoucherService.Signature("Prepare par", record.getPreparedBy(), VoucherService.date(record.getPreparedAt())),
-                new VoucherService.Signature("Valide par", record.getValidatedBy(), record.getValidatedAt() == null ? null : VoucherService.date(record.getValidatedAt()))));
+        return vouchers.render("État de rapprochement bancaire", issued, sections, null, null, List.of(
+                new VoucherService.Signature("Préparé par", record.getPreparedBy(), VoucherService.date(record.getPreparedAt())),
+                new VoucherService.Signature("Validé par", record.getValidatedBy(), record.getValidatedAt() == null ? null : VoucherService.date(record.getValidatedAt()))));
     }
 
     @Transactional(readOnly = true)

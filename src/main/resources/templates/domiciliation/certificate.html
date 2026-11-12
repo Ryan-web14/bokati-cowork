@@ -18,11 +18,10 @@
         .signature { margin-top: 48px; text-align: right; }
         .footer { margin-top: 24px; font-size: 7.6px; color: #9b8caa; text-align: center; }
     </style>
+    <th:block th:replace="~{fragments/document-brand :: styles}"></th:block>
 </head>
 <body>
-<div class="header">
-    <div class="brand">Bokati Cowork</div>
-</div>
+<div th:replace="~{fragments/document-brand :: letterhead(~{})}"></div>
 
 <div class="title" th:text="${scopeLabel}">Attestation de domiciliation</div>
 <div style="text-align:center">
@@ -30,7 +29,11 @@
           th:text="${scope == 'FISCAL'} ? 'PORTÉE FISCALE' : 'PORTÉE COMMERCIALE'">…</span>
 </div>
 
-<p>Le domiciliataire soussigné atteste que la société <strong th:text="${legalName}">…</strong>
+<p>Le domiciliataire soussigné, <strong th:text="${operator != null ? operator.fullName() : 'ELLE A OSE'}">ELLE A OSE</strong>,
+    immatriculé au RCCM sous le numéro <span th:text="${operator != null and operator.rccm() != null ? operator.rccm() : 'CG-PNR-01-2017-A11-00472'}">…</span>,
+    <span th:if="${operator != null and operator.niu() != null}" th:text="'NIU ' + ${operator.niu()} + ','"></span>
+    dont le siège est situé <span th:text="${operator != null and operator.address() != null ? operator.address() : '84 Boulevard du Général Charles de Gaulle, centre-ville, Pointe-Noire'}">…</span><span th:if="${operator != null and operator.representativeName() != null}" th:text="', représenté par ' + ${operator.representativeName()}"></span>,
+    atteste que la société <strong th:text="${legalName}">…</strong>
     <span th:if="${legalForm != null}" th:text="'(' + ${legalForm} + ')'"></span>,
     <span th:if="${registrationNumber != null}" th:text="'immatriculée sous le numéro ' + ${registrationNumber} + ','"></span>
     <span th:if="${taxNumber != null}" th:text="'NIU ' + ${taxNumber} + ','"></span>
@@ -46,14 +49,15 @@
     sous la référence <strong th:text="${registrationReference}">…</strong>
     <span th:if="${registrationDate != null}" th:text="'le ' + ${registrationDate}"></span>.</p>
 
-<div class="validity" th:text="'Valable jusqu&#39;au ' + ${validUntil}">…</div>
+<div class="validity" th:text="|Valable jusqu’au ${validUntil}|">…</div>
 
 <div class="signature">
-    Fait le <span th:text="${issuedAt}"></span><br/><br/><br/>
-    Le domiciliataire
+    Fait à <span th:text="${operator != null and operator.city() != null ? operator.city() : 'Pointe-Noire'}">Pointe-Noire</span>, le <span th:text="${issuedAt}"></span><br/><br/><br/>
+    Le domiciliataire<br/>
+    <span th:text="${operator != null ? operator.name() : 'ELLE A OSE'}">ELLE A OSE</span>
 </div>
 
-<div class="ref" th:text="'Contrat ' + ${contractNumber} + ' · attestation générée par le système, révocable en cas de changement d&#39;engagement'">…</div>
-<div class="footer">Toute attestation cesse d'être valable avant son terme si le contrat prend fin ou si l'engagement qui la fonde est modifié.</div>
+<div class="ref" th:text="|Contrat ${contractNumber} · attestation générée par le système, révocable en cas de changement d’engagement|">…</div>
+<div th:replace="~{fragments/document-brand :: footer('Toute attestation cesse d’être valable avant son terme si le contrat prend fin ou si l’engagement qui la fonde est modifié.')}"></div>
 </body>
 </html>

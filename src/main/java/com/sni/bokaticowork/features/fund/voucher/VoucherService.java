@@ -2,7 +2,9 @@ package com.sni.bokaticowork.features.fund.voucher;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
-import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import com.sni.bokaticowork.core.identity.OperatorIdentityService;
+import com.sni.bokaticowork.core.utils.BrandLogo;
+import com.sni.bokaticowork.core.utils.pdf.PdfRenderer;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.generator.qrcode.QrCodeRenderer;
 import com.sni.bokaticowork.features.billing.service.support.FrenchAmountWords;
@@ -16,7 +18,6 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import javax.sql.DataSource;
-import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -51,6 +52,19 @@ public class VoucherService {
     private static final String APP_VERIFY_BASE_URL_KEY = "app.verify-base-url";
 
     private PlatformSettings platformSettings;
+    private OperatorIdentityService operatorIdentityService;
+    private BrandLogo brandLogo;
+
+    /** Facultatifs · injectes par mutateur pour ne pas toucher au constructeur des appelants. */
+    @Autowired(required = false)
+    void setOperatorIdentityService(OperatorIdentityService operatorIdentityService) {
+        this.operatorIdentityService = operatorIdentityService;
+    }
+
+    @Autowired(required = false)
+    void setBrandLogo(BrandLogo brandLogo) {
+        this.brandLogo = brandLogo;
+    }
 
     @Autowired(required = false)
     void setPlatformSettings(PlatformSettings platformSettings) {
@@ -66,7 +80,11 @@ public class VoucherService {
     }
 
     private String verifyBaseUrl() {
-        return platformSettings == null ? verifyBaseUrl : platformSettings.text(APP_VERIFY_BASE_URL_KEY, verifyBaseUrl);
+        String value = platformSettings == null ? null : platformSettings.text(APP_VERIFY_BASE_URL_KEY, verifyBaseUrl);
+        if (value == null || value.isBlank()) {
+            value = verifyBaseUrl;
+        }
+        return value == null || value.isBlank() ? "https://api.elleaose.com" : value;
     }
 
     /** Piece enregistree. */
@@ -206,16 +224,32 @@ public class VoucherService {
     }
 
     public byte[] render(String title, Issued issued, List<Section> sections, BigDecimal amount, String commitment, List<Signature> signatures) {
-        String verifyUrl = verifyBaseUrl().replaceAll("/+$", "") + "/verify/voucher/" + issued.number();
+        // Seule une piece enregistree (acc_voucher) se verifie · un brouillon ou un tableau d'emprunt
+        // porte un pseudo-numero que /verify/voucher ne connait pas : son QR menait a une erreur 404.
+        String verifyUrl = isRegistered(issued) ? verifyBaseUrl().replaceAll("/+$", "") + "/verify/voucher/" + issued.number() : null;
         View view = new View(title, issued.number(), issuerName(), issuerDetails(), issued.printCount() > 0,
                 STAMP.format(Instant.now()), issued.cancelledBy(), sections,
                 amount == null ? null : money(amount) + " XAF",
                 amount == null ? null : FrenchAmountWords.withCurrency(amount, "XAF"), commitment, signatures,
                 issued.issuedAt() == null ? "" : STAMP.format(issued.issuedAt()), issued.issuedBy(), STAMP.format(Instant.now()),
-                UUID.randomUUID().toString().substring(0, 8), verifyUrl, qrCodeRenderer.toDataUri(verifyUrl, 160));
+                UUID.randomUUID().toString().substring(0, 8), verifyUrl, verifyUrl == null ? null : qrCodeRenderer.toDataUri(verifyUrl, 160));
         Context context = new Context(Locale.FRENCH);
         context.setVariable("v", view);
+        context.setVariable("operator", operatorIdentityService == null ? null : operatorIdentityService.current());
+        context.setVariable("logo", brandLogo == null ? null : brandLogo.base64());
         return pdf(templateEngine.process("fund/voucher", context));
+    }
+
+    /** Vrai si le numero figure au registre des pieces, donc si /verify/voucher le connait. */
+    private boolean isRegistered(Issued issued) {
+        if (issued == null || issued.number() == null) {
+            return false;
+        }
+        try {
+            return find(issued.number()).isPresent();
+        } catch (RuntimeException ex) {
+            return false;
+        }
     }
 
     public static String money(BigDecimal amount) {
@@ -231,16 +265,8 @@ public class VoucherService {
     }
 
     private static byte[] pdf(String html) {
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            org.jsoup.nodes.Document document = org.jsoup.Jsoup.parse(html);
-            document.outputSettings().syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
-                    .escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml).charset(java.nio.charset.StandardCharsets.UTF_8).prettyPrint(false);
-            PdfRendererBuilder builder = new PdfRendererBuilder();
-            builder.useFastMode();
-            builder.withW3cDocument(new org.jsoup.helper.W3CDom().fromJsoup(document), null);
-            builder.toStream(out);
-            builder.run();
-            return out.toByteArray();
+        try {
+            return PdfRenderer.render(html);
         } catch (Exception exception) {
             throw new BadRequestException("Impossible de produire la piece PDF : " + exception.getMessage(), exception);
         }
