@@ -78,11 +78,12 @@ class MemberSettingsPatchTest {
     @DisplayName("Une chaine vide retire l'adresse de facturation, 0 retire un plafond")
     void blankAndZeroClear() {
         service.updateSettings("MBR-7", UpdateMemberSettingsRequest.builder()
-                .billingPref(new BillingPreferences(null, null, "", null))
+                .billingPref(new BillingPreferences(null, "", "", null))
                 .walletPref(new WalletPreferencesRequest(null, null, null, 0, null, ReceiptPreference.INVOICE_ONLY))
                 .build(), 1L, null);
 
         assertThat(stored.getBillingEmail()).isNull();
+        assertThat(stored.getBillingCompanyName()).isNull();
         assertThat(stored.getWalletSpendingDailyLimit()).isNull();
         assertThat(stored.getWalletReceiptPreference()).isEqualTo(ReceiptPreference.INVOICE_ONLY);
     }
