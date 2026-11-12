@@ -6,8 +6,9 @@ Demande : ajouter en bas des factures une case où l'exploitant signe et appose 
 
 - Modèle `src/main/resources/templates/billing/document.html` (factures, devis, pro forma, factures rectificatives) : le bas de document est un tableau à deux colonnes.
   - **À gauche** : les « Conditions et modalités de règlement » et les « Mentions légales ».
-  - **À droite** : une case fermée (cadre complet) d'environ 5,3 cm de large, avec l'en-tête « Visa ELLE A OSE », une grande case vide d'environ 2,2 cm de haut pour le cachet et la signature, et la légende « Cachet et signature ».
+  - **À droite** : une case fermée (cadre complet) de 6,6 cm de large, avec l'en-tête « Visa ELLE A OSE », une case vide de 6 cm de haut pour le cachet et la signature, et la légende « Cachet et signature ». Les dimensions sont en centimètres : le cachet rond de l'exploitant (5,7 cm de diamètre) y entre entier, avec un peu de marge.
 - Placée à côté des textes et non en dessous, la case n'ajoute presque pas de hauteur : une facture d'une ligne tient sur une seule page, bas de page compris (la première version, posée sous les mentions, faisait passer la facture sur deux pages).
+- Historique : la deuxième version (case de 2,2 cm de haut) était trop petite pour le cachet ; la case est agrandie à 6 cm, et la facture d'une ligne tient toujours sur une page (une hauteur de 6,3 cm la faisait déborder).
 - Le bloc ne se coupe jamais entre deux pages (`page-break-inside: avoid`).
 - L'avoir (`avoir-note-credit.html`) n'est pas modifié.
 - Aucune migration, aucun réglage.
@@ -16,6 +17,7 @@ Demande : ajouter en bas des factures une case où l'exploitant signe et appose 
 
 - `BillingDocumentPdfLinesRenderTest.theInvoiceCarriesTheOperatorVisaBox` : la case est présente, avant le pied de page.
 - `BillingDocumentOnePageTest` : le vrai PDF d'une facture d'une ligne, avec logo, QR, conditions, instructions de règlement et coordonnées bancaires, fait une seule page.
+- `BillingDocumentOnePageTest.theStampCellFitsARoundStampOf57mm` : la case du cachet mesure au moins 5,9 cm de haut et de large.
 
 ## Pour le frontend
 
