@@ -38,4 +38,7 @@ public interface AccEntryRepository extends JpaRepository<com.sni.bokaticowork.f
     List<com.sni.bokaticowork.features.accounting.model.AccEntry> findAcceptedUnbalanced(@Param("statuses") Collection<com.sni.bokaticowork.features.accounting.enums.EntryStatus> statuses);
 
     List<com.sni.bokaticowork.features.accounting.model.AccEntry> findBySourceTypeAndSourceCode(String sourceType, String sourceCode);
+
+    List<com.sni.bokaticowork.features.accounting.model.AccEntry> findByStatusAndPostingEventIdIsNotNullOrderByEntryDateAscIdAsc(
+            com.sni.bokaticowork.features.accounting.enums.EntryStatus status);
 }

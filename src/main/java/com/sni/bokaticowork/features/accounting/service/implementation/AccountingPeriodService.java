@@ -175,6 +175,23 @@ public class AccountingPeriodService {
         return period;
     }
 
+    /**
+     * Premiere periode ouverte qui couvre ce jour ou le suit : une ecriture automatique datee d'une
+     * periode verrouillee ou close passe dans la premiere periode ouverte suivante (lot F2).
+     */
+    public AccPeriod firstOpenOnOrAfter(LocalDate date) {
+        for (AccPeriod period : periodRepository.findAllByOrderByStartDateAsc()) {
+            if (period.getEndDate().isBefore(date) || period.getStatus() != PeriodStatus.OPEN) {
+                continue;
+            }
+            AccFiscalYear year = fiscalYearRepository.findById(period.getFiscalYearId()).orElseThrow();
+            if (year.getStatus() != FiscalYearStatus.CLOSED) {
+                return period;
+            }
+        }
+        throw new BadRequestException("Aucune periode ouverte au " + date + " ou apres : creez l'exercice suivant");
+    }
+
     public AccFiscalYear fiscalYearOf(AccPeriod period) {
         return fiscalYearRepository.findById(period.getFiscalYearId()).orElseThrow();
     }

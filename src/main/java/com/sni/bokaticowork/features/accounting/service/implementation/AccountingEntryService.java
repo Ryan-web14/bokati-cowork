@@ -102,24 +102,72 @@ public class AccountingEntryService {
      */
     public AccEntry post(String journalCode, LocalDate date, String label, EntryOrigin origin, String sourceType, String sourceCode,
                          List<AccountingRequests.EntryLine> lines, String actor) {
-        AccJournal journal = periods.journal(journalCode);
-        AccPeriod period = periods.periodFor(date, origin == EntryOrigin.MANUAL);
+        return post(new AutoPost(journalCode, date, null, label, origin, sourceType, sourceCode, lines, actor, true, null));
+    }
+
+    /**
+     * Piece automatique (moteur d'imputation, lot F2).
+     *
+     * @param originalDate date du fait quand la piece a ete reportee dans une periode ouverte suivante
+     * @param validate     faux : la piece reste en brouillard (journal sans validation automatique, reprise)
+     */
+    public record AutoPost(String journalCode, LocalDate date, LocalDate originalDate, String label, EntryOrigin origin,
+                           String sourceType, String sourceCode, List<AccountingRequests.EntryLine> lines, String actor,
+                           boolean validate, Long postingEventId) {
+    }
+
+    public AccEntry post(AutoPost request) {
+        AccJournal journal = periods.journal(request.journalCode());
+        if (!Boolean.TRUE.equals(journal.getActive())) {
+            throw new BadRequestException("Le journal " + journal.getCode() + " est desactive");
+        }
+        AccPeriod period = periods.periodFor(request.date(), request.origin() == EntryOrigin.MANUAL);
+        String label = request.label() == null ? "" : request.label().length() > 500 ? request.label().substring(0, 500) : request.label();
         AccEntry entry = entryRepository.save(AccEntry.builder()
                 .provisionalNumber(sequenceGenerator.next("acc_provisional_entry"))
                 .journalCode(journal.getCode())
                 .fiscalYearCode(periods.fiscalYearOf(period).getCode())
                 .periodCode(period.getCode())
-                .entryDate(date)
+                .entryDate(request.date())
+                .originalDate(request.originalDate())
                 .label(label)
-                .origin(origin)
-                .sourceType(sourceType)
-                .sourceCode(sourceCode)
+                .origin(request.origin())
+                .sourceType(request.sourceType())
+                .sourceCode(request.sourceCode())
                 .status(EntryStatus.DRAFT)
-                .createdBy(actor)
+                .createdBy(request.actor())
+                .postingEventId(request.postingEventId())
                 .build());
-        writeLines(entry, lines);
-        runValidation(entry, journal, actor, false);
+        writeLines(entry, request.lines());
+        if (request.validate()) {
+            runValidation(entry, journal, request.actor(), false);
+        }
         return entry;
+    }
+
+    /** Derniere date validee d'un journal sur un exercice (ordre chronologique strict). */
+    public java.util.Optional<LocalDate> lastValidatedDate(String journalCode, String fiscalYearCode) {
+        return entryRepository.lastValidatedDate(journalCode, fiscalYearCode, EntryNumbering.NUMBERED);
+    }
+
+    /** Une piece en attente ou en brouillard remplacee par une piece regeneree (lot F2). */
+    public void discardForRegeneration(AccEntry entry, String actor) {
+        if (entry.getStatus() != EntryStatus.PENDING_BALANCE && entry.getStatus() != EntryStatus.DRAFT) {
+            throw new BadRequestException("La piece " + entry.getProvisionalNumber() + " est " + entry.getStatus()
+                    + " : seule une piece en attente ou en brouillard se regenere ; une piece validee se contre-passe");
+        }
+        entry.setStatus(EntryStatus.REJECTED);
+        entry.setRejectedBy(actor);
+        entry.setRejectedAt(Instant.now());
+        entry.setRejectionReason("Regeneree depuis l'evenement comptable");
+        entryRepository.save(entry);
+        pendingRepository.findByEntryIdOrderByCreatedAtDesc(entry.getId()).stream().filter(log -> log.getResolvedAt() == null)
+                .forEach(log -> {
+                    log.setResolvedAt(Instant.now());
+                    log.setResolvedBy(actor);
+                    log.setResolution("REGENERATED");
+                    pendingRepository.save(log);
+                });
     }
 
     public AccountingResponses.Entry update(String reference, AccountingRequests.Entry request) {

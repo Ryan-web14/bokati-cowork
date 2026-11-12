@@ -10,7 +10,11 @@ accounting.night-worker-cron	ACCOUNTING	CRON	RESTART	0 30 2 * * *	Planification 
 accounting.notify-emails	ACCOUNTING	TEXT	LIVE		Destinataires des alertes comptables (comptables, administrateur finance), separes par des virgules
 accounting.numbering.chronology	ACCOUNTING	ENUM	LIVE	STRICT	Ordre des pieces : STRICT (dates croissantes) ou PERIOD
 accounting.numbering.width	ACCOUNTING	INTEGER	LIVE	6	Longueur de la sequence des numeros de piece
+accounting.posting.batch-size	ACCOUNTING	INTEGER	LIVE	50	Nombre d'evenements comptables traites par passage du moteur d'imputation
+accounting.posting.disabled-families	ACCOUNTING	TEXT	LIVE		Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules
+accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	RESTART	30000	Intervalle du moteur d'imputation (millisecondes)
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
+accounting.start-date	ACCOUNTING	TEXT	LIVE	2026-01-01	Date de bascule : les faits anterieurs ne sont comptabilises que par la reprise
 accounting.unbalanced-entry.blocks-period-close	ACCOUNTING	BOOLEAN	LIVE	true	Un ecart non regularise bloque le verrouillage de la periode
 accounting.unbalanced-entry.policy	ACCOUNTING	ENUM	LIVE	HOLD	Piece desequilibree : HOLD (attente), SUSPENSE_ACCOUNT (compte d'attente) ou ACCEPT
 accounting.unbalanced-entry.suspense-account	ACCOUNTING	TEXT	LIVE	4718	Compte d'attente d'equilibrage

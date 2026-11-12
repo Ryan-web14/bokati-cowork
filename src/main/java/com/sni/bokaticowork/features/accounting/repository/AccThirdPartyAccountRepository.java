@@ -16,4 +16,6 @@ public interface AccThirdPartyAccountRepository extends JpaRepository<com.sni.bo
     Optional<com.sni.bokaticowork.features.accounting.model.AccThirdPartyAccount> findByAccountNumberAndPartyCode(String accountNumber, String partyCode);
 
     List<com.sni.bokaticowork.features.accounting.model.AccThirdPartyAccount> findByAccountNumberOrderByPartyCodeAsc(String accountNumber);
+
+    Optional<com.sni.bokaticowork.features.accounting.model.AccThirdPartyAccount> findFirstByPartyCodeOrderByIdAsc(String partyCode);
 }

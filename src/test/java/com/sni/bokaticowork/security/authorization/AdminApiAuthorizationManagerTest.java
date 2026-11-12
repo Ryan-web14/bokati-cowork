@@ -245,6 +245,13 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/journals")).isEqualTo("ACCOUNTING_JOURNAL:CREATE");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/lettering")).isEqualTo("ACCOUNTING_LETTERING:MANUAL");
         assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/lettering/5/unletter")).isEqualTo("ACCOUNTING_LETTERING:UNLETTER");
+        // Lot F2.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/posting/events")).isEqualTo("ACCOUNTING_POSTING:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/posting/preview")).isEqualTo("ACCOUNTING_POSTING:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/posting/rules")).isEqualTo("ACCOUNTING_POSTING:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/posting/rules/4/activate")).isEqualTo("ACCOUNTING_POSTING:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/posting/events/4/regenerate")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/posting/drafts/validate")).isEqualTo("ACCOUNTING_POSTING:REPLAY");
     }
 
     @Test

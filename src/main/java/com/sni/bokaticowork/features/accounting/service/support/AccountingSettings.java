@@ -91,6 +91,36 @@ public class AccountingSettings {
         return Arrays.stream(value.split(",")).map(String::trim).filter(StringUtils::hasText).toList();
     }
 
+    /** Date de bascule : les evenements dates avant ne sont pas comptabilises (sauf reprise). */
+    public java.time.LocalDate startDate() {
+        String value = settings.text("accounting.start-date", "2026-01-01");
+        try {
+            return java.time.LocalDate.parse(value.trim());
+        } catch (RuntimeException exception) {
+            return java.time.LocalDate.of(2026, 1, 1);
+        }
+    }
+
+    /** Famille d'evenements comptabilisee (interrupteur par famille, lot F2). */
+    public boolean familyEnabled(String family) {
+        if (!StringUtils.hasText(family)) {
+            return true;
+        }
+        String disabled = settings.text("accounting.posting.disabled-families", "");
+        if (!StringUtils.hasText(disabled)) {
+            return true;
+        }
+        return Arrays.stream(disabled.split(",")).map(String::trim).noneMatch(value -> value.equalsIgnoreCase(family.trim()));
+    }
+
+    public String disabledFamilies() {
+        return settings.text("accounting.posting.disabled-families", "");
+    }
+
+    public int postingBatchSize() {
+        return (int) Math.max(1, Math.min(500, settings.number("accounting.posting.batch-size", 50)));
+    }
+
     private boolean bool(String key, boolean fallback) {
         String value = settings.text(key, String.valueOf(fallback));
         return "true".equalsIgnoreCase(value == null ? null : value.trim());

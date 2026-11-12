@@ -106,6 +106,14 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
      */
     /** Droits de la comptabilite (plan finance, section 16). */
     private String accountingPermission(String path, String method) {
+        if (path.startsWith("/accounting/posting")) {
+            // Lot F2 : moteur d'imputation.
+            if (HttpMethod.GET.matches(method) || path.equals("/accounting/posting/preview")) {
+                return permission("ACCOUNTING_POSTING", "READ");
+            }
+            if (path.startsWith("/accounting/posting/rules")) return permission("ACCOUNTING_POSTING", "MANAGE");
+            return permission("ACCOUNTING_POSTING", "REPLAY");
+        }
         if (HttpMethod.GET.matches(method)) return permission("ACCOUNTING_REPORT", "READ");
         if (path.equals("/accounting/numbering-checks")) return permission("ACCOUNTING_REPORT", "READ");
         if (path.startsWith("/accounting/accounts")) {

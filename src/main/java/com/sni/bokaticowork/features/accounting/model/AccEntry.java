@@ -137,6 +137,10 @@ public class AccEntry {
     @Column(name = "attachments_json", columnDefinition = "jsonb")
     private String attachmentsJson;
 
+    /** Evenement comptable qui a produit la piece (lot F2). */
+    @Column(name = "posting_event_id")
+    private Long postingEventId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
