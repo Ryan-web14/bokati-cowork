@@ -141,6 +141,12 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             }
             return permission("BANK_RECONCILIATION", "MANAGE");
         }
+        if (path.startsWith("/accounting/vat-returns")) {
+            // Lot F11 : preparer, valider et liquider sont controles finement dans le service.
+            if (HttpMethod.GET.matches(method)) return permission("VAT_RETURN", "READ");
+            if (path.endsWith("/validate") || path.endsWith("/liquidate")) return permission("VAT_RETURN", "VALIDATE");
+            return permission("VAT_RETURN", "PREPARE");
+        }
         if (path.startsWith("/accounting/budget")) {
             // Lot F16 : les droits fins (preparer, consolider, approuver, virer, deroger) sont dans le service.
             if (HttpMethod.GET.matches(method) || path.equals("/accounting/budget/check")) return permission("BUDGET_REPORT", "READ");

@@ -223,6 +223,20 @@ public class SalesAccountingService {
         data.put("letteringReference", creditNote && StringUtils.hasText(document.getOriginalDocumentNumber())
                 ? document.getOriginalDocumentNumber() : document.getDocumentNumber());
         data.put("originalDocumentNumber", document.getOriginalDocumentNumber());
+        // Lot F11 : code de taxe et base sur les lignes de TVA ; un avoir rattache sa TVA a la facture d'origine.
+        data.put("vatCode", vatCode(document, vat));
+        data.put("extraTaxCode", extra.signum() > 0 ? settings.text("accounting.vat.extra-tax-code", "CA") : null);
+        data.put("vatBase", taxable);
+        data.put("vatReference", data.get("letteringReference"));
+        if (paymentRegime()) {
+            // Regime des encaissements : la TVA attend en 4438 jusqu'au reglement. Un avoir reprend
+            // l'attente de sa facture tant qu'elle la couvre, sinon la TVA deja exigible.
+            String pending = settings.text("accounting.vat.pending-account", "4438");
+            if (!creditNote || pendingRemaining((String) data.get("letteringReference")).compareTo(vat.add(extra)) >= 0) {
+                data.put("vatAccount", pending);
+                data.put("extraTaxAccount", pending);
+            }
+        }
         engine.receive(creditNote ? CREDIT_NOTE_ISSUED : INVOICE_ISSUED, number, "SALES", date, json(data), replay(date));
     }
 
@@ -257,6 +271,7 @@ public class SalesAccountingService {
         data.put("treasuryThirdParty", treasury.thirdParty());
         String customer = transaction.getPaymentIntent() == null ? null : transaction.getPaymentIntent().getCustomerCode();
         List<Map<String, Object>> allocations = new ArrayList<>();
+        List<Map<String, Object>> vatTransfers = new ArrayList<>();
         BigDecimal left = foreignAmount;
         BigDecimal amount = BigDecimal.ZERO;
         for (PaymentAllocation allocation : allocationRepository.findAllByPaymentTransactionId(source.getId())) {
@@ -276,6 +291,9 @@ public class SalesAccountingService {
                 item.put("foreignAmount", value);
             }
             allocations.add(item);
+            if (paymentRegime()) {
+                vatTransfers.addAll(vatTransfers(allocation.getBillingDocumentNumber(), value, refund));
+            }
             amount = amount.add(converted);
             left = left.subtract(value);
         }
@@ -285,6 +303,8 @@ public class SalesAccountingService {
         data.put("allocations", allocations);
         data.put("unallocated", unallocated);
         data.put("customerCode", customer);
+        data.put("vatTransfers", vatTransfers);
+        data.put("vatPendingAccount", settings.text("accounting.vat.pending-account", "4438"));
         if (fx.foreign()) {
             data.put("currency", fx.currency());
             data.put("exchangeRate", fx.rate());
@@ -499,6 +519,78 @@ public class SalesAccountingService {
     private long count(String sql) {
         Long value = jdbc.queryForObject(sql, Long.class);
         return value == null ? 0 : value;
+    }
+
+    // ------------------------------------------------------------------ fiscalite (lot F11)
+
+    private boolean paymentRegime() {
+        return "PAYMENT".equalsIgnoreCase(settings.text("accounting.vat.chargeability", "INVOICE"));
+    }
+
+    /** Code de taxe : TVA et son taux (TVA18), EXO pour un client exonere, rien sans TVA. */
+    private String vatCode(BillingDocument document, BigDecimal vat) {
+        if (vat.signum() == 0) {
+            return StringUtils.hasText(document.getCustomerVatExemptionNote()) ? "EXO" : null;
+        }
+        return documentLineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(document).stream()
+                .map(BillingDocumentLine::getVatRate).filter(rate -> rate != null && rate.signum() > 0).findFirst()
+                .map(rate -> "TVA" + (rate.compareTo(BigDecimal.ONE) < 0 ? rate.movePointRight(2) : rate).stripTrailingZeros().toPlainString())
+                .orElse("TVA");
+    }
+
+    /** TVA encore en attente d'exigibilite pour une facture. */
+    private BigDecimal pendingRemaining(String documentNumber) {
+        BigDecimal value = jdbc.queryForObject("SELECT COALESCE(SUM(l.credit - l.debit), 0) FROM acc_entry_line l JOIN acc_entry e ON e.id = l.entry_id "
+                + "WHERE l.account_number = ? AND l.reference = ? AND e.status IN ('VALIDATED', 'REVERSED')", BigDecimal.class,
+                settings.text("accounting.vat.pending-account", "4438"), documentNumber);
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    /**
+     * Part de la TVA en attente d'une facture qui devient exigible avec un reglement (ou qui revient
+     * en attente avec un remboursement), au prorata du montant regle sur le total de la facture ; le
+     * dernier reglement prend le reste.
+     */
+    private List<Map<String, Object>> vatTransfers(String documentNumber, BigDecimal paid, boolean refund) {
+        BillingDocument document = documentRepository.findByDocumentNumber(documentNumber).orElse(null);
+        if (document == null || document.getDocumentType() == BillingDocumentType.CREDIT_NOTE || money(document.getTotalAmount()).signum() == 0) {
+            return List.of();
+        }
+        List<String> status = jdbc.queryForList("SELECT status FROM acc_posting_event WHERE event_type = ? AND reference = ?", String.class,
+                INVOICE_ISSUED, documentNumber);
+        if (status.isEmpty() || !"POSTED".equals(status.get(0))) {
+            throw new IllegalStateException("La facture " + documentNumber + " n'est pas encore comptabilisee : la TVA de l'encaissement attend");
+        }
+        BigDecimal total = money(document.getTotalAmount());
+        String pending = settings.text("accounting.vat.pending-account", "4438");
+        String extraCode = settings.text("accounting.vat.extra-tax-code", "CA");
+        List<Map<String, Object>> result = new ArrayList<>();
+        jdbc.query("SELECT l.tax_code, COALESCE(SUM(CASE WHEN e.source_type = ? THEN l.credit ELSE 0 END), 0) AS total, "
+                + "COALESCE(SUM(CASE WHEN e.source_type = ? THEN l.tax_base ELSE 0 END), 0) AS base, COALESCE(SUM(l.credit - l.debit), 0) AS remaining "
+                + "FROM acc_entry_line l JOIN acc_entry e ON e.id = l.entry_id WHERE l.account_number = ? AND l.reference = ? "
+                + "AND e.status IN ('VALIDATED', 'REVERSED') GROUP BY l.tax_code", rs -> {
+            BigDecimal invoiceTax = rs.getBigDecimal("total");
+            BigDecimal remaining = rs.getBigDecimal("remaining");
+            BigDecimal share = invoiceTax.multiply(paid).divide(total, 0, RoundingMode.HALF_UP);
+            if (refund) {
+                share = share.min(invoiceTax.subtract(remaining));
+            } else if (share.compareTo(remaining) > 0 || remaining.subtract(share).abs().compareTo(BigDecimal.ONE) <= 0) {
+                share = remaining;
+            }
+            if (share.signum() <= 0) {
+                return;
+            }
+            String code = rs.getString("tax_code");
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("documentNumber", documentNumber);
+            item.put("taxCode", code);
+            item.put("vat", money(share));
+            item.put("base", money(rs.getBigDecimal("base").multiply(paid).divide(total, 0, RoundingMode.HALF_UP)));
+            item.put("account", extraCode.equals(code) ? settings.text("accounting.sales.extra-tax-account", "4431")
+                    : settings.text("accounting.sales.vat-account", "4431"));
+            result.add(item);
+        }, INVOICE_ISSUED, INVOICE_ISSUED, pending, documentNumber);
+        return result;
     }
 
     // ------------------------------------------------------------------ outils

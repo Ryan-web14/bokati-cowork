@@ -276,6 +276,12 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/exchange-rates/convert")).isEqualTo("CASH:READ");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/reconciliations/3/pdf")).isEqualTo("ACCOUNTING_REPORT:READ");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/registers/CSR-1/balances")).isEqualTo("CASH:READ");
+        // Lot F11.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/vat-returns/4/pdf")).isEqualTo("VAT_RETURN:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/vat-returns")).isEqualTo("VAT_RETURN:PREPARE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/vat-returns/4/validate")).isEqualTo("VAT_RETURN:VALIDATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/vat-returns/4/liquidate")).isEqualTo("VAT_RETURN:VALIDATE");
+        assertThat(requiredPermissionFor("DELETE", BASE + "/accounting/vat-returns/4")).isEqualTo("VAT_RETURN:PREPARE");
         // Lot F16.
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/budget/reports/follow-up")).isEqualTo("BUDGET_REPORT:READ");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/budget/forecasts")).isEqualTo("BUDGET_FORECAST:MANAGE");
