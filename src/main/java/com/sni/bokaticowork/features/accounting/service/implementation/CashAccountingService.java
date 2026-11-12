@@ -93,6 +93,9 @@ public class CashAccountingService implements PostingOutcomeListener {
     private final CashActorResolver actors;
     private final ObjectMapper objectMapper;
     private final TransactionTemplate newTransaction;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private ExchangeRateService exchangeRates;
 
     public CashAccountingService(CashMovementRepository movementRepository, CashVarianceReviewRepository reviewRepository,
                                  CashRegisterRepository registerRepository, CashSessionRepository sessionRepository,
@@ -183,7 +186,10 @@ public class CashAccountingService implements PostingOutcomeListener {
         RegisterBooks books = ensureBooks(register);
         Map<String, Object> data = new LinkedHashMap<>();
         CashFlowDirection direction = CashFlowRules.direction(movement.getMovementType(), movement.getDirection());
-        BigDecimal amount = money(movement.getAmount());
+        Instant at0 = movement.getApprovedAt() != null ? movement.getApprovedAt() : movement.getCreatedAt();
+        boolean foreign = !ExchangeRateService.BASE.equals(ExchangeRateService.normalize(movement.getCurrency()));
+        // Lot C5 : un mouvement en devise est comptabilise en XAF, au taux du mouvement ou du jour.
+        BigDecimal amount = money(foreign ? exchangeRates.toBase(movement, date(at0)) : movement.getAmount());
         BigDecimal vat = movement.getVatAmount() == null ? BigDecimal.ZERO : money(movement.getVatAmount());
         data.put("movementNumber", movement.getMovementNumber());
         data.put("type", movement.getMovementType().name());
@@ -200,7 +206,10 @@ public class CashAccountingService implements PostingOutcomeListener {
         data.put("sessionNumber", session.getSessionNumber());
         data.put("treasuryAccount", books.treasuryAccount());
         data.put("journalCode", journalFor(movement, register, books));
-        data.put("label", label(movement));
+        data.put("label", foreign ? label(movement) + " : " + movement.getAmount().stripTrailingZeros().toPlainString() + " "
+                + ExchangeRateService.normalize(movement.getCurrency()) : label(movement));
+        data.put("currency", ExchangeRateService.normalize(movement.getCurrency()));
+        data.put("foreignAmount", movement.getAmount());
         data.put("counterpartyCode", movement.getCounterpartyCode());
         data.put("counterpartyName", movement.getCounterpartyName());
         data.put("supplierCode", movement.getSupplierCode());

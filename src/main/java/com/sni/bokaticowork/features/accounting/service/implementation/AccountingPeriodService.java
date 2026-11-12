@@ -50,6 +50,7 @@ public class AccountingPeriodService {
     private final AccountingChartService chart;
     private final AccountingSettings settings;
     private final CashActorResolver actors;
+    private final org.springframework.beans.factory.ObjectProvider<BankService> bankService;
 
     // ------------------------------------------------------------- exercices
 
@@ -94,6 +95,14 @@ public class AccountingPeriodService {
 
     public AccountingResponses.Period lock(String code) {
         AccPeriod period = period(code);
+        // Lot F10 : chaque compte bancaire suivi a son rapprochement valide a la fin de la periode.
+        if (!"false".equalsIgnoreCase(settings.text("accounting.bank.reconciliation-before-lock", "true"))) {
+            BankService banks = bankService.getIfAvailable();
+            List<String> missing = banks == null ? List.of() : banks.missingReconciliations(period.getEndDate());
+            if (!missing.isEmpty()) {
+                throw new BadRequestException("Rapprochement bancaire non valide au " + period.getEndDate() + " pour : " + String.join(", ", missing));
+            }
+        }
         if (period.getStatus() != PeriodStatus.OPEN) {
             throw new BadRequestException("Seule une periode ouverte se verrouille");
         }

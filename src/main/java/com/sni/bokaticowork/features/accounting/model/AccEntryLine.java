@@ -75,4 +75,8 @@ public class AccEntryLine {
     /** Ventilation demandee (lot F9) : {"AXE": "SECTION" ou "KEY:CLE"}. */
     @Column(name = "analytic_json", columnDefinition = "TEXT")
     private String analyticJson;
+
+    /** Code de pointage bancaire (lot F10), distinct du lettrage. */
+    @Column(name = "matching_code", length = 20)
+    private String matchingCode;
 }

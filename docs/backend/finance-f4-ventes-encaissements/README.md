@@ -89,3 +89,4 @@ Toutes les 10 minutes (`accounting.lettering.auto-delay-ms`) et sur demande (`PO
 
 - **Lots F5 et F6** : le lettrage automatique par référence couvre aussi le `421` (avances du personnel, lettrées par numéro de demande de fonds).
 - **Lot F9** : les produits (classe 7) sont ventilés sur l'axe `ACTIVITE` (obligatoire, section par défaut `STRUCTURE`) quand l'analytique est active.
+- **Lot F10** : les comptes `5211`, `5212` et `5213` sont suivis en rapprochement bancaire ; un virement client lu sur un relevé devient un paiement imputé à sa facture ; un chèque rejeté annule son paiement ([finance-f10-banque-rapprochement](../finance-f10-banque-rapprochement/README.md)).

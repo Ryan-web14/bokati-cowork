@@ -5,6 +5,11 @@ accounting.analytic.class9-axis	ACCOUNTING	TEXT	LIVE	ACTIVITE	Axe reflechi en cl
 accounting.analytic.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation d'une section par un administrateur : IMMEDIATE ou AFTER_APPROVAL
 accounting.analytic.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite analytique active (ventilation obligatoire sur les comptes concernes)
 accounting.analytic.reflected-account	ACCOUNTING	TEXT	LIVE	91	Compte des charges et produits reflechis
+accounting.bank.auto-match	ACCOUNTING	BOOLEAN	LIVE	true	Pointage d'office des correspondances sures
+accounting.bank.date-window-days	ACCOUNTING	INTEGER	LIVE	5	Fenetre de dates du pointage automatique (jours)
+accounting.bank.max-combined-lines	ACCOUNTING	INTEGER	LIVE	10	Nombre maximal d'ecritures combinees pour une ligne de releve
+accounting.bank.missing-statement	ACCOUNTING	ENUM	LIVE	ALERT	Releve manquant a l'import : ALERT ou REFUSE
+accounting.bank.reconciliation-before-lock	ACCOUNTING	BOOLEAN	LIVE	true	Rapprochement bancaire valide exige avant de verrouiller une periode
 accounting.cash.default-in-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une entree de caisse sans nature d'operation
 accounting.cash.default-out-account	ACCOUNTING	TEXT	LIVE	471	Compte d'une sortie de caisse sans nature d'operation
 accounting.cash.treasury-parent-account	ACCOUNTING	TEXT	LIVE	571	Compte parent sous lequel chaque caisse recoit son compte

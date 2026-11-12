@@ -265,6 +265,13 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("PATCH", BASE + "/fund-requests/DDF-1/expenses/JUS-1/validate")).isEqualTo("FUND_JUSTIFICATION:VALIDATE");
         assertThat(requiredPermissionFor("GET", BASE + "/fund-requests")).isEqualTo("FUND_REQUEST:READ");
         assertThat(requiredPermissionFor("PATCH", BASE + "/fund-needs/EDB-1/validate")).isEqualTo("FUND_REQUEST:APPROVE_L1");
+        // Lots F10 et C5.
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/bank-accounts/BQ/statements")).isEqualTo("BANK_STATEMENT:IMPORT");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/bank-accounts/BQ/matching")).isEqualTo("BANK_RECONCILIATION:MANAGE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/reconciliations/3/validate")).isEqualTo("BANK_RECONCILIATION:VALIDATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/bank-accounts")).isEqualTo("BANK_ACCOUNT:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/exchange-rates")).isEqualTo("CASH_EXCHANGE_RATE:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/registers/CSR-1/balances")).isEqualTo("CASH:READ");
         // Lot F16.
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/budget/reports/follow-up")).isEqualTo("BUDGET_REPORT:READ");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/budget/forecasts")).isEqualTo("BUDGET_FORECAST:MANAGE");

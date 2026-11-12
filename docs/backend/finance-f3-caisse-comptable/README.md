@@ -105,3 +105,4 @@ Tant que le lot F4 n'est pas actif, les encaissements clients en espèces ne son
 
 - **Lots F5 et F6** : les décaissements de demandes de fonds, compléments et retours de reliquat sont des mouvements de caisse ordinaires (référence `FUND_REQUEST`, nature `AVANCE_A_JUSTIFIER` ou `RETOUR_AVANCE`) : ils sont comptabilisés par ce lot.
 - **Lot F9** : les schémas `CASH_OUT` et `CASH_IN` passent en version 2 : la ligne de nature porte le poste de dépense de la nature (`natureSection`, axe `POSTE`).
+- **Lot C5** (avec F10) : un mouvement de caisse en devise est comptabilisé en XAF au taux du mouvement, sinon au taux du jour ([finance-f10-banque-rapprochement](../finance-f10-banque-rapprochement/README.md)).

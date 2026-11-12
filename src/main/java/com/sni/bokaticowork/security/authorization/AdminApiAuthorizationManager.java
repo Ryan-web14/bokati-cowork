@@ -124,6 +124,23 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
 
     /** Droits de la comptabilite (plan finance, section 16). */
     private String accountingPermission(String path, String method) {
+        if (path.startsWith("/accounting/bank") || path.startsWith("/accounting/reconciliations") || path.startsWith("/accounting/cheques")
+                || path.startsWith("/accounting/deposit-slips") || path.startsWith("/accounting/exchange-rates")
+                || path.matches("/accounting/cash/registers/[^/]+/balances")) {
+            // Lots F10 et C5.
+            if (path.matches("/accounting/cash/registers/[^/]+/balances")) return permission("CASH", "READ");
+            if (path.startsWith("/accounting/exchange-rates")) {
+                return HttpMethod.GET.matches(method) ? permission("CASH", "READ") : permission("CASH_EXCHANGE_RATE", "MANAGE");
+            }
+            if (HttpMethod.GET.matches(method)) return permission("ACCOUNTING_REPORT", "READ");
+            if (path.startsWith("/accounting/bank-accounts") && path.endsWith("/statements")) return permission("BANK_STATEMENT", "IMPORT");
+            if (path.endsWith("/statements/manual")) return permission("BANK_STATEMENT", "IMPORT");
+            if (path.startsWith("/accounting/reconciliations") && path.endsWith("/validate")) return permission("BANK_RECONCILIATION", "VALIDATE");
+            if (path.equals("/accounting/bank-accounts") || path.startsWith("/accounting/bank-import-templates") || path.startsWith("/accounting/bank-assignment-rules")) {
+                return permission("BANK_ACCOUNT", "MANAGE");
+            }
+            return permission("BANK_RECONCILIATION", "MANAGE");
+        }
         if (path.startsWith("/accounting/budget")) {
             // Lot F16 : les droits fins (preparer, consolider, approuver, virer, deroger) sont dans le service.
             if (HttpMethod.GET.matches(method) || path.equals("/accounting/budget/check")) return permission("BUDGET_REPORT", "READ");
