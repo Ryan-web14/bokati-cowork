@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.booking.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.booking.dto.request.BookingAvailabilityRequest;
@@ -38,6 +40,19 @@ public class BookingWaitlistServiceImpl implements BookingWaitlistService {
 
     @Value("${bokati.booking.waitlist.offer-ttl-minutes:30}")
     private int offerTtlMinutes;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String OFFER_TTL_KEY = "bokati.booking.waitlist.offer-ttl-minutes";
+
+    private int offerTtlMinutes() {
+        return platformSettings == null ? offerTtlMinutes : platformSettings.integer(OFFER_TTL_KEY, offerTtlMinutes);
+    }
 
     @Override
     public BookingWaitlistEntryResponse join(JoinBookingWaitlistRequest request) {
@@ -92,7 +107,7 @@ public class BookingWaitlistServiceImpl implements BookingWaitlistService {
             if (!conflict) {
                 entry.setStatus(BookingWaitlistStatus.OFFERED);
                 entry.setOfferedAt(Instant.now());
-                entry.setExpiresAt(entry.getOfferedAt().plus(Math.max(5, offerTtlMinutes), ChronoUnit.MINUTES));
+                entry.setExpiresAt(entry.getOfferedAt().plus(Math.max(5, offerTtlMinutes()), ChronoUnit.MINUTES));
                 waitlistRepository.save(entry);
                 promoted++;
             }

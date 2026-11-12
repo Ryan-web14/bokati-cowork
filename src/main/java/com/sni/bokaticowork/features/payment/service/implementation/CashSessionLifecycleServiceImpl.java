@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ForbiddenException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -131,6 +133,24 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
 
     @Value("${bokati.cash.variance.investigation-days:30}")
     private int investigationDays = 30;
+
+    private static final String FORCED_CLOSE_CONTEST_DAYS_KEY = "bokati.cash.forced-close.contest-days";
+    private static final String VARIANCE_INVESTIGATION_DAYS_KEY = "bokati.cash.variance.investigation-days";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int contestDays() {
+        return platformSettings == null ? contestDays : platformSettings.integer(FORCED_CLOSE_CONTEST_DAYS_KEY, contestDays);
+    }
+
+    private int investigationDays() {
+        return platformSettings == null ? investigationDays : platformSettings.integer(VARIANCE_INVESTIGATION_DAYS_KEY, investigationDays);
+    }
 
     // ------------------------------------------------------------------ ouverture
 
@@ -399,7 +419,7 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
             review = review(session, forced ? CashVarianceKind.FORCED_CLOSE : CashVarianceKind.CLOSING, variance,
                     count.getCountNumber(), reason, CashVarianceStatus.PENDING);
             if (forced) {
-                review.setContestDeadline(now.plus(Duration.ofDays(contestDays)));
+                review.setContestDeadline(now.plus(Duration.ofDays(contestDays())));
                 reviewRepository.save(review);
             }
             notifyReviewers("Ecart de caisse a decider · " + session.getSessionNumber(),
@@ -510,7 +530,7 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
         review.setDecisionNote(request == null ? null : trim(request.note()));
         if (decision == CashVarianceDecision.INVESTIGATION) {
             review.setReviewDueAt(request != null && request.reviewDueAt() != null ? request.reviewDueAt()
-                    : now.plus(Duration.ofDays(investigationDays)));
+                    : now.plus(Duration.ofDays(investigationDays())));
         }
         reviewRepository.save(review);
         List<String> messages = new ArrayList<>();
@@ -615,7 +635,7 @@ public class CashSessionLifecycleServiceImpl implements CashSessionLifecycleServ
                 "Votre session " + session.getSessionNumber() + " a ete close d'office par " + actor + " avec " + witness
                         + " pour temoin. Montant compte : " + plain(session.getCountedClosingAmount()) + " XAF."
                         + (session.getStatus() == CashSessionStatus.CLOSING_REVIEW
-                        ? " Vous pouvez contester ce comptage pendant " + contestDays + " jours." : ""),
+                        ? " Vous pouvez contester ce comptage pendant " + contestDays() + " jours." : ""),
                 session.getSessionNumber(), SESSIONS_PATH + session.getSessionNumber());
         return result;
     }

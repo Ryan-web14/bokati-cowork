@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.document.explorer.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.features.document.documentMaster.model.Document;
@@ -56,8 +58,33 @@ public class GedTextService {
     private final DocumentStorageService storageService;
     private final GedExplorerService explorerService;
     private final TransactionTemplate transactionTemplate;
-    private final GedTextExtractor extractor;
+    private final GedOcrEngine ocrEngine;
+    private final boolean ocrEnabled;
+    private final int maxOcrPages;
+    private final int maxChars;
     private final com.sni.bokaticowork.features.document.explorer.access.GedAccessService access;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String OCR_ENABLED_KEY = "app.ged.text.ocr-enabled";
+    private static final String MAX_OCR_PAGES_KEY = "app.ged.text.max-ocr-pages";
+    private static final String MAX_CHARS_KEY = "app.ged.text.max-chars";
+
+    /** Extracteur construit a chaque lecture, pour suivre les reglages en vigueur. */
+    private GedTextExtractor extractor() {
+        boolean enabled = platformSettings == null ? ocrEnabled : platformSettings.bool(OCR_ENABLED_KEY, ocrEnabled);
+        int pages = platformSettings == null ? maxOcrPages : platformSettings.integer(MAX_OCR_PAGES_KEY, maxOcrPages);
+        int chars = platformSettings == null ? maxChars : platformSettings.integer(MAX_CHARS_KEY, maxChars);
+        GedOcrEngine engine = enabled ? ocrEngine : page -> {
+            throw new GedOcrEngine.OcrUnavailableException("OCR désactivé (app.ged.text.ocr-enabled)", null);
+        };
+        return new GedTextExtractor(engine, pages, chars);
+    }
 
     public GedTextService(GedTextQueries queries,
                           DocumentRepository documentRepository,
@@ -79,10 +106,10 @@ public class GedTextService {
         this.explorerService = explorerService;
         this.transactionTemplate = transactionTemplate;
         this.access = access;
-        GedOcrEngine engine = ocrEnabled ? ocrEngine : page -> {
-            throw new GedOcrEngine.OcrUnavailableException("OCR désactivé (app.ged.text.ocr-enabled)", null);
-        };
-        this.extractor = new GedTextExtractor(engine, maxOcrPages, maxChars);
+        this.ocrEngine = ocrEngine;
+        this.ocrEnabled = ocrEnabled;
+        this.maxOcrPages = maxOcrPages;
+        this.maxChars = maxChars;
     }
 
     // Lecture des fichiers ----------------------------------------------------------------------
@@ -98,7 +125,7 @@ public class GedTextService {
         Extraction extraction;
         try {
             byte[] content = storageService.read(source.provider(), source.path());
-            extraction = extractor.extract(content, source.mimeType(), source.fileName());
+            extraction = extractor().extract(content, source.mimeType(), source.fileName());
         } catch (RuntimeException ex) {
             log.warn("GED · fichier {} illisible dans le stockage : {}", documentId, ex.getMessage());
             extraction = new Extraction(GedTextExtractor.FAILED, null, null, 0, null, false,

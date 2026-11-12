@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.core.communication.mailService.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +24,24 @@ public class GraphApiRateLimiter {
     @Value("${bokati.graph-api.rate-limit.timeout-ms:30000}")
     private long timeoutMs;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String REFRESH_PERIOD_KEY = "bokati.graph-api.rate-limit.limit-refresh-period-ms";
+    private static final String TIMEOUT_KEY = "bokati.graph-api.rate-limit.timeout-ms";
+
+    private long refreshPeriodMs() {
+        return platformSettings == null ? refreshPeriodMs : platformSettings.number(REFRESH_PERIOD_KEY, refreshPeriodMs);
+    }
+
+    private long timeoutMs() {
+        return platformSettings == null ? timeoutMs : platformSettings.number(TIMEOUT_KEY, timeoutMs);
+    }
+
     private Semaphore semaphore;
     private final AtomicLong lastRefresh = new AtomicLong(0);
 
@@ -34,6 +54,7 @@ public class GraphApiRateLimiter {
 
     public void acquirePermission() {
         refreshIfNeeded();
+        long timeoutMs = timeoutMs();
         try {
             if (!semaphore.tryAcquire(timeoutMs, TimeUnit.MILLISECONDS)) {
                 throw new IllegalStateException(
@@ -48,7 +69,7 @@ public class GraphApiRateLimiter {
     private void refreshIfNeeded() {
         long now = System.currentTimeMillis();
         long last = lastRefresh.get();
-        if (now - last >= refreshPeriodMs && lastRefresh.compareAndSet(last, now)) {
+        if (now - last >= refreshPeriodMs() && lastRefresh.compareAndSet(last, now)) {
             int permitsToRelease = limitForPeriod - semaphore.availablePermits();
             if (permitsToRelease > 0) {
                 semaphore.release(permitsToRelease);

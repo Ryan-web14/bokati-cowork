@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.security.service.passwordResetService.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.interfaces.PasswordResetMailService;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.security.admin.user.model.Users;
@@ -38,6 +40,19 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Value("${app.security.password-reset.expiration-ms:900000}")
     private long expiration;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String EXPIRATION_KEY = "app.security.password-reset.expiration-ms";
+
+    private long expiration() {
+        return platformSettings == null ? expiration : platformSettings.number(EXPIRATION_KEY, expiration);
+    }
+
     @Override
     @Transactional
     public void generatePasswordResetToken(Users user) {
@@ -50,6 +65,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         passwordResetTokenRepo.invalidateAllTokensForUser(user.getId());
 
         // The raw token travels only in the email link; only its hash is persisted.
+        long expiration = expiration();
         String rawToken = UUID.randomUUID().toString();
         PasswordResetToken resetToken = PasswordResetToken.builder()
                 .passwordToken(hashToken(rawToken))

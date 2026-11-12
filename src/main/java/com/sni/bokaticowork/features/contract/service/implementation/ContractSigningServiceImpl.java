@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.contract.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
@@ -43,6 +45,26 @@ public class ContractSigningServiceImpl implements ContractSigningService {
 
     @Value("${app.api-base-url:}")
     private String apiBaseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(API_BASE_URL_KEY, apiBaseUrl);
+    }
+
+    private static final String SIGNING_TOKEN_HOURS_KEY = "app.contract.signing-token-hours";
+
+    private int signingTokenHours() {
+        return platformSettings == null ? signingTokenHours
+                : platformSettings.integer(SIGNING_TOKEN_HOURS_KEY, signingTokenHours);
+    }
 
     private record Signer(String name, String email) {
     }
@@ -103,7 +125,7 @@ public class ContractSigningServiceImpl implements ContractSigningService {
                 .contractCode(contract.getContractCode())
                 .signerEmail(signer.email())
                 .signerName(signer.name())
-                .expiresAt(Instant.now().plus(Duration.ofHours(signingTokenHours)))
+                .expiresAt(Instant.now().plus(Duration.ofHours(signingTokenHours())))
                 .build();
         tokenRepository.save(token);
 
@@ -192,6 +214,7 @@ public class ContractSigningServiceImpl implements ContractSigningService {
     }
 
     private String buildSigningUrl(UUID token) {
+        String apiBaseUrl = apiBaseUrl();
         if (apiBaseUrl == null || apiBaseUrl.isBlank()) {
             return "/contracts/sign/" + token;
         }

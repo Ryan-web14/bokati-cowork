@@ -1,5 +1,6 @@
 package com.sni.bokaticowork.features.document.documentMaster.mapper.decorator;
 
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.utils.path.ApiPath;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentResponse;
 import com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentVersionResponse;
@@ -20,6 +21,19 @@ public abstract class DocumentMapperDecorator implements DocumentMapper {
 
     @Value("${app.api-base-url:}")
     private String apiBaseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(API_BASE_URL_KEY, apiBaseUrl);
+    }
 
     @Override
     public DocumentResponse toResponse(Document document) {
@@ -73,6 +87,7 @@ public abstract class DocumentMapperDecorator implements DocumentMapper {
     }
 
     private String apiUrl(String path) {
+        String apiBaseUrl = apiBaseUrl();
         if (!StringUtils.hasText(apiBaseUrl)) {
             return path;
         }

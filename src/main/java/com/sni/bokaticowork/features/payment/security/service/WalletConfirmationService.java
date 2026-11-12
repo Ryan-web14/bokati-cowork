@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.security.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -48,6 +50,19 @@ public class WalletConfirmationService {
     @Value("${bokati.wallet.confirmation.validity-minutes:5}")
     private int validityMinutes;
 
+    private static final String CONFIRMATION_VALIDITY_MINUTES_KEY = "bokati.wallet.confirmation.validity-minutes";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int validityMinutes() {
+        return platformSettings == null ? validityMinutes : platformSettings.integer(CONFIRMATION_VALIDITY_MINUTES_KEY, validityMinutes);
+    }
+
     /** Ce que le titulaire doit confirmer · chaque champ entre dans l'empreinte. */
     public record OperationToConfirm(
             WalletOperationType operationType,
@@ -91,7 +106,7 @@ public class WalletConfirmationService {
                 .challengeType(challenge)
                 .status(WalletConfirmationStatus.PENDING)
                 .payloadHash(fingerprint(wallet, operation))
-                .expiresAt(Instant.now().plus(Duration.ofMinutes(validityMinutes)))
+                .expiresAt(Instant.now().plus(Duration.ofMinutes(validityMinutes())))
                 .ipAddress(ipAddress)
                 .deviceId(deviceId)
                 .build());

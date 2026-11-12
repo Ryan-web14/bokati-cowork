@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.control.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ConflictException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
@@ -64,6 +66,19 @@ public class WalletAdminActionService {
     /** Au-dela, un mouvement d'argent exige un second visa. */
     @Value("${bokati.wallet.admin.four-eyes-threshold:100000}")
     private BigDecimal fourEyesThreshold;
+
+    private static final String ADMIN_FOUR_EYES_THRESHOLD_KEY = "bokati.wallet.admin.four-eyes-threshold";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private BigDecimal fourEyesThreshold() {
+        return platformSettings == null ? fourEyesThreshold : platformSettings.decimal(ADMIN_FOUR_EYES_THRESHOLD_KEY, fourEyesThreshold);
+    }
 
     /**
      * Ce qu'un administrateur demande.
@@ -343,7 +358,7 @@ public class WalletAdminActionService {
         return switch (request.type()) {
             case REVERSE -> true;
             case CLOSE -> wallet.getLedgerBalance() != null && wallet.getLedgerBalance().signum() > 0;
-            case TOPUP, DEBIT, ADJUST -> request.amount().abs().compareTo(fourEyesThreshold) >= 0;
+            case TOPUP, DEBIT, ADJUST -> request.amount().abs().compareTo(fourEyesThreshold()) >= 0;
             default -> false;
         };
     }

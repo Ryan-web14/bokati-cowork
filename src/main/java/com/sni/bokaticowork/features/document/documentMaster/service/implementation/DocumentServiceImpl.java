@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.document.documentMaster.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -97,6 +99,15 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Value("${app.document.default-expiry-years:5}")
     private Integer defaultExpiryYears;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String DEFAULT_EXPIRY_YEARS_KEY = "app.document.default-expiry-years";
 
     @Override
     public DocumentResponse upload(DocumentUploadMetadataRequest metadata, MultipartFile file) {
@@ -605,6 +616,9 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     private int resolvedDefaultExpiryYears() {
+        Integer defaultExpiryYears = platformSettings == null ? this.defaultExpiryYears
+                : Integer.valueOf(platformSettings.integer(DEFAULT_EXPIRY_YEARS_KEY,
+                        this.defaultExpiryYears == null ? 5 : this.defaultExpiryYears));
         return defaultExpiryYears == null || defaultExpiryYears <= 0 ? 5 : defaultExpiryYears;
     }
 

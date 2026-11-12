@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.security.authentication.service.implementation;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.audit.dto.response.UserSessionToken;
 import com.sni.bokaticowork.core.audit.service.interfaces.UserSessionService;
 import com.sni.bokaticowork.core.exception.customs.AccountLockedException;
@@ -73,6 +75,20 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
      */
     @Value("${app.security.jwt.refresh-reuse-grace-seconds:30}")
     private long refreshReuseGraceSeconds;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String REFRESH_REUSE_GRACE_KEY = "app.security.jwt.refresh-reuse-grace-seconds";
+
+    private long refreshReuseGraceSeconds() {
+        return platformSettings == null ? refreshReuseGraceSeconds
+                : platformSettings.number(REFRESH_REUSE_GRACE_KEY, refreshReuseGraceSeconds);
+    }
 
     @Transactional
     public LoginResponse login(LoginRequest request, HttpServletRequest httpReq) throws AuthenticationException{
@@ -164,7 +180,7 @@ public class   AuthenticationServiceImpl implements AuthenticationService {
             return;
         }
         Users user = stored.getUser();
-        if (revokedAt.isAfter(Instant.now().minusSeconds(refreshReuseGraceSeconds))) {
+        if (revokedAt.isAfter(Instant.now().minusSeconds(refreshReuseGraceSeconds()))) {
             log.info("Jeton de rafraichissement presente apres sa rotation pour {} · rafraichissement concurrent, refuse",
                     user.getUserId());
             return;

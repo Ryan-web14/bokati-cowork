@@ -3,7 +3,11 @@ package com.sni.bokaticowork.features.booking.worker;
 import com.sni.bokaticowork.features.booking.service.support.BookingWalletSettlementSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,13 +25,18 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class BookingWalletSettlementWorker {
+public class BookingWalletSettlementWorker implements SchedulingConfigurer {
+
+    private static final String DELAY_KEY = "bokati.booking.wallet.worker-delay-ms";
+    private static final long DEFAULT_DELAY_MS = 15_000L;
+
+    private SettingTriggers triggers;
+    private ObjectProvider<BookingWalletSettlementWorker> self;
 
     private static final int BATCH_SIZE = 100;
 
     private final BookingWalletSettlementSupport settlementSupport;
 
-    @Scheduled(fixedDelayString = "${bokati.booking.wallet.worker-delay-ms:15000}")
     public void settleDueWalletHolds() {
         List<String> due;
         try {
@@ -50,5 +59,21 @@ public class BookingWalletSettlementWorker {
             }
         }
         log.info("Reglement portefeuille : {} blocage(s) sur {} traite(s)", settled, due.size());
+    }
+
+    @Autowired
+    void setSettingTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<BookingWalletSettlementWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement de parametre vaut au passage suivant. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().settleDueWalletHolds(), triggers.fixedDelay(DELAY_KEY, DEFAULT_DELAY_MS));
     }
 }

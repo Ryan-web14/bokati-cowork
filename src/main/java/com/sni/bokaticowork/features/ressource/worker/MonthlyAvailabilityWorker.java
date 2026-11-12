@@ -2,12 +2,19 @@ package com.sni.bokaticowork.features.ressource.worker;
 
 import com.sni.bokaticowork.features.ressource.service.support.MonthlyAvailabilityGenerator;
 import lombok.RequiredArgsConstructor;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -24,7 +31,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MonthlyAvailabilityWorker {
+public class MonthlyAvailabilityWorker implements SchedulingConfigurer {
+
+    private static final String CRON_KEY = "bokati.resource.workers.monthly-availability-cron";
+    private static final String INITIAL_DELAY_MS_KEY = "bokati.resource.workers.monthly-availability-initial-delay-ms";
+    private static final String ENABLED_KEY = "bokati.resource.workers.monthly-availability-enabled";
+    private static final long DEFAULT_INITIAL_DELAY_MS = 120000L;
 
     private final MonthlyAvailabilityGenerator generator;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -32,21 +44,55 @@ public class MonthlyAvailabilityWorker {
     @Value("${bokati.resource.workers.monthly-availability-enabled:true}")
     private boolean enabled;
 
+    /** Fuseau du passage mensuel, lu une fois au demarrage. */
+    @Value("${app.time-zone:Africa/Lagos}")
+    private String timeZone = "Africa/Lagos";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<MonthlyAvailabilityWorker> self;
+    private PlatformSettings platformSettings;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<MonthlyAvailabilityWorker> self) {
+        this.self = self;
+    }
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    /**
+     * Passage au deploiement apres un delai lu une fois, puis passage mensuel dont l'expression
+     * cron est relue a chaque execution : un changement prend effet sans redemarrage.
+     */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        long initialDelay = platformSettings == null ? DEFAULT_INITIAL_DELAY_MS
+                : platformSettings.number(INITIAL_DELAY_MS_KEY, DEFAULT_INITIAL_DELAY_MS);
+        registrar.addOneTimeTask(() -> self.getObject().onStartup(), Duration.ofMillis(Math.max(0, initialDelay)));
+        registrar.addTriggerTask(() -> self.getObject().monthly(),
+                triggers.cron(CRON_KEY, "0 0 3 1 * *", ZoneId.of(timeZone)));
+    }
+
     /** Au deploiement · une seule fois, apres que le reste de l'application a demarre. */
-    @Scheduled(initialDelayString = "${bokati.resource.workers.monthly-availability-initial-delay-ms:120000}")
     public void onStartup() {
         run("deploiement");
     }
 
     /** Le premier de chaque mois. */
-    @Scheduled(cron = "${bokati.resource.workers.monthly-availability-cron:0 0 3 1 * *}",
-            zone = "${app.time-zone:Africa/Lagos}")
     public void monthly() {
         run("mensuel");
     }
 
     void run(String trigger) {
-        if (!enabled || !running.compareAndSet(false, true)) {
+        boolean active = platformSettings == null ? enabled : platformSettings.bool(ENABLED_KEY, enabled);
+        if (!active || !running.compareAndSet(false, true)) {
             return;
         }
         try {

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.booking.service.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.common.BitMatrix;
@@ -47,6 +49,19 @@ public class BookingConfirmationDocumentService {
 
     @Value("${app.api-base-url:https://api.elleaose.com}")
     private String apiBaseUrl;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String API_BASE_URL_KEY = "app.api-base-url";
+
+    private String apiBaseUrl() {
+        return platformSettings == null ? apiBaseUrl : platformSettings.text(API_BASE_URL_KEY, apiBaseUrl);
+    }
 
     public Booking publicBooking(String bookingNumber, String token) {
         if (!StringUtils.hasText(bookingNumber) || !StringUtils.hasText(token)) {
@@ -151,11 +166,11 @@ public class BookingConfirmationDocumentService {
     }
 
     private String scanUrl(Booking booking) {
-        return apiBaseUrl.stripTrailing() + ApiPath.V1 + "/public/bookings/check-in/scan/" + booking.getCheckInToken();
+        return apiBaseUrl().stripTrailing() + ApiPath.V1 + "/public/bookings/check-in/scan/" + booking.getCheckInToken();
     }
 
     private String publicBookingViewUrl(Booking booking) {
-        return apiBaseUrl.stripTrailing()
+        return apiBaseUrl().stripTrailing()
                 + ApiPath.V1
                 + "/public/bookings/"
                 + encode(booking.getBookingNumber())
@@ -164,7 +179,7 @@ public class BookingConfirmationDocumentService {
     }
 
     private String publicBookingPdfUrl(Booking booking) {
-        return apiBaseUrl.stripTrailing()
+        return apiBaseUrl().stripTrailing()
                 + ApiPath.V1
                 + "/public/bookings/"
                 + encode(booking.getBookingNumber())

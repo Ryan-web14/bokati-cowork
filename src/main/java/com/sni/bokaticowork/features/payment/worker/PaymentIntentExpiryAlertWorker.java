@@ -8,7 +8,6 @@ import com.sni.bokaticowork.features.payment.repository.PaymentIntentRepository;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -17,11 +16,37 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PaymentIntentExpiryAlertWorker {
+public class PaymentIntentExpiryAlertWorker implements SchedulingConfigurer {
+
+    private static final String EXPIRY_ALERT_DELAY_MS_KEY = "bokati.payment.workers.expiry-alert-delay-ms";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<PaymentIntentExpiryAlertWorker> self;
+
+    @Autowired
+    void setTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<PaymentIntentExpiryAlertWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement du parametre prend effet sans redemarrage. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().alertExpiringIntents(), triggers.fixedDelay(EXPIRY_ALERT_DELAY_MS_KEY, 1800000L));
+    }
 
     private static final DateTimeFormatter DISPLAY_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.of("Africa/Brazzaville"));
@@ -30,7 +55,6 @@ public class PaymentIntentExpiryAlertWorker {
     private final BillingDocumentRepository billingDocumentRepository;
     private final DefaultEmailSender emailSender;
 
-    @Scheduled(fixedDelayString = "${bokati.payment.workers.expiry-alert-delay-ms:1800000}")
     public void alertExpiringIntents() {
         Instant now = Instant.now();
         Instant threshold = now.plus(2, ChronoUnit.HOURS);

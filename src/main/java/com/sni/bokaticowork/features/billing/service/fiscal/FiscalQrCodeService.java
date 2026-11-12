@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.billing.service.fiscal;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.features.billing.dto.response.BillingDocumentResponse;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentStatus;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,11 +31,24 @@ public class FiscalQrCodeService {
     @Value("${app.verify-base-url:https://api.elleaose.com}")
     private String verifyBaseUrl;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String VERIFY_BASE_URL_KEY = "app.verify-base-url";
+
+    private String verifyBaseUrl() {
+        return platformSettings == null ? verifyBaseUrl : platformSettings.text(VERIFY_BASE_URL_KEY, verifyBaseUrl);
+    }
+
     /**
      * URL de vérification du document. Un document scellé y ajoute le préfixe de signature.
      */
     public String buildContent(BillingDocumentResponse doc) {
-        String url = verifyBaseUrl.stripTrailing() + "/verify/doc/" + doc.documentNumber();
+        String url = verifyBaseUrl().stripTrailing() + "/verify/doc/" + doc.documentNumber();
         if (doc.locked() != null && doc.locked()
                 && StringUtils.hasText(doc.fiscalNumber())
                 && StringUtils.hasText(doc.fiscalSignature())) {

@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.billing.dunning.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.outbox.service.interfaces.OutboxService;
 import com.sni.bokaticowork.core.utils.mail.Recipients;
 import com.sni.bokaticowork.features.billing.dunning.model.DunningNotice;
@@ -66,13 +68,31 @@ public class DunningRunner {
     @Value("${bokati.billing.dunning.batch-size:200}")
     private int batchSize;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String HANDOVER_EMAIL_KEY = "bokati.billing.dunning.handover-email";
+    private static final String BATCH_SIZE_KEY = "bokati.billing.dunning.batch-size";
+
+    private String handoverEmail() {
+        return platformSettings == null ? handoverEmail : platformSettings.text(HANDOVER_EMAIL_KEY, handoverEmail);
+    }
+
+    private int batchSize() {
+        return platformSettings == null ? batchSize : platformSettings.integer(BATCH_SIZE_KEY, batchSize);
+    }
+
     /** Les factures a parcourir · le worker boucle dessus et appelle {@link #execute} palier par palier. */
     @Transactional(readOnly = true)
     public java.util.List<BillingDocument> overdueDocuments() {
         if (!policyRepository.existsByActiveTrue()) {
             return java.util.List.of();
         }
-        return documentRepository.findOverdueWithBalance(batchSize);
+        return documentRepository.findOverdueWithBalance(batchSize());
     }
 
     /** Les paliers atteints et pas encore executes pour cette facture, dans l'ordre. */
@@ -126,7 +146,7 @@ public class DunningRunner {
                     }
                 }
                 case HANDOVER -> {
-                    List<String> recipients = Recipients.split(handoverEmail);
+                    List<String> recipients = Recipients.split(handoverEmail());
                     if (recipients.isEmpty()) {
                         outcome = DunningNotice.Outcome.SKIPPED;
                         detail = "bokati.billing.dunning.handover-email non renseigné";

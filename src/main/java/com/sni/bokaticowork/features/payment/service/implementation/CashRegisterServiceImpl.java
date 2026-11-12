@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.payment.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
 import com.sni.bokaticowork.core.generator.sequenceEngine.service.interfaces.SequenceGeneratorFacade;
@@ -90,6 +92,29 @@ public class CashRegisterServiceImpl implements CashRegisterService {
 
     @Value("${bokati.payment.cash-session.auto-limit:10000000}")
     private BigDecimal autoSessionLimit;
+
+    private static final String VISA_EXPIRY_HOURS_KEY = "bokati.cash.visa.expiry-hours";
+    private static final String REFUND_MAX_CASH_AMOUNT_KEY = "bokati.cash.refund.max-cash-amount";
+    private static final String CASH_SESSION_AUTO_LIMIT_KEY = "bokati.payment.cash-session.auto-limit";
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private int visaExpiryHours() {
+        return platformSettings == null ? visaExpiryHours : platformSettings.integer(VISA_EXPIRY_HOURS_KEY, visaExpiryHours);
+    }
+
+    private BigDecimal refundCashMax() {
+        return platformSettings == null ? refundCashMax : platformSettings.decimal(REFUND_MAX_CASH_AMOUNT_KEY, refundCashMax);
+    }
+
+    private BigDecimal autoSessionLimit() {
+        return platformSettings == null ? autoSessionLimit : platformSettings.decimal(CASH_SESSION_AUTO_LIMIT_KEY, autoSessionLimit);
+    }
 
     @Override
     public CashRegisterResponse createRegister(CreateCashRegisterRequest request) {
@@ -447,9 +472,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
         if (type == CashMovementType.CASH_IN) {
             enforceDetentionCap(session, request.amount());
         }
-        if (type == CashMovementType.REFUND && refundCashMax != null && refundCashMax.signum() > 0
-                && request.amount() != null && request.amount().compareTo(refundCashMax) > 0) {
-            throw new BadRequestException("Au-dela de " + refundCashMax.stripTrailingZeros().toPlainString()
+        if (type == CashMovementType.REFUND && refundCashMax() != null && refundCashMax().signum() > 0
+                && request.amount() != null && request.amount().compareTo(refundCashMax()) > 0) {
+            throw new BadRequestException("Au-dela de " + refundCashMax().stripTrailingZeros().toPlainString()
                     + " XAF, un remboursement se fait par virement ou mobile money, pas en especes");
         }
         com.sni.bokaticowork.features.payment.model.CashOperationNature nature = nature(request.natureCode(), type, request.amount(), request.referenceType());
@@ -639,7 +664,7 @@ public class CashRegisterServiceImpl implements CashRegisterService {
                 || (threshold != null && movement.getAmount().compareTo(threshold) > 0 && (outflow || threshold.signum() == 0));
         if (needsVisa) {
             movement.setStatus(com.sni.bokaticowork.features.payment.enums.CashMovementStatus.PENDING);
-            movement.setExpiresAt(Instant.now().plus(java.time.Duration.ofHours(visaExpiryHours)));
+            movement.setExpiresAt(Instant.now().plus(java.time.Duration.ofHours(visaExpiryHours())));
             movement.setRunningBalance(computeRunningBalance(movement));
             changed = true;
             emailNotifier.notifySupervisor("Operation de caisse a viser · " + movement.getMovementNumber(),
@@ -932,9 +957,9 @@ public class CashRegisterServiceImpl implements CashRegisterService {
     }
 
     private BigDecimal autoLimit() {
-        return autoSessionLimit == null || autoSessionLimit.signum() <= 0
+        return autoSessionLimit() == null || autoSessionLimit().signum() <= 0
                 ? DEFAULT_AUTO_SESSION_LIMIT.setScale(4, RoundingMode.HALF_UP)
-                : money(autoSessionLimit);
+                : money(autoSessionLimit());
     }
 
     /**

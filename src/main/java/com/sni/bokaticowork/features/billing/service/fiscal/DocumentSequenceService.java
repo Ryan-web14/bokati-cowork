@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.billing.service.fiscal;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.DocumentSequence;
 import com.sni.bokaticowork.features.billing.repository.DocumentSequenceRepository;
@@ -28,6 +30,19 @@ public class DocumentSequenceService {
     @Value("${app.company.machine-code:00000}")
     private String machineCode;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String MACHINE_CODE_KEY = "app.company.machine-code";
+
+    private String machineCode() {
+        return platformSettings == null ? machineCode : platformSettings.text(MACHINE_CODE_KEY, machineCode);
+    }
+
     /**
      * Génère le prochain numéro fiscal SEFC.
      * Format : FAC20260617-00001abc-BKTWK
@@ -47,6 +62,7 @@ public class DocumentSequenceService {
         seq.setUpdatedAt(Instant.now());
         sequenceRepository.save(seq);
 
+        String machineCode = machineCode();
         String machine = (machineCode != null && !machineCode.isBlank())
                 ? machineCode.toUpperCase()
                 : "00000";

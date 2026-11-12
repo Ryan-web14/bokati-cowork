@@ -37,6 +37,7 @@ class PlatformSettingsAdminServiceTest {
     private static final String FEE = "bokati.wallet.transfer.fee-rate";
     private static final String RETRY_CRON = "bokati.billing.dunning.cron";
     private static final String DELAY = "bokati.subscription.workers.renewal-delay-ms";
+    private static final String INITIAL_DELAY = "bokati.subscription.workers.lifecycle-initial-delay-ms";
     private static final String SECRET = "app.security.jwt.secret";
 
     private final PlatformSettingRepository repository = mock(PlatformSettingRepository.class);
@@ -148,7 +149,8 @@ class PlatformSettingsAdminServiceTest {
     @Test
     @DisplayName("Un reglage lu au demarrage annonce qu'il attend le redemarrage · pas un reglage immediat")
     void restartIsAnnounced() {
-        assertThat(service.update(DELAY, "600000", null, superAdmin).restartPending()).isTrue();
+        assertThat(service.update(INITIAL_DELAY, "777000", null, superAdmin).restartPending()).isTrue();
+        assertThat(service.update(DELAY, "600000", null, superAdmin).restartPending()).isFalse();
         assertThat(service.update(WINDOW, "45", null, superAdmin).restartPending()).isFalse();
     }
 

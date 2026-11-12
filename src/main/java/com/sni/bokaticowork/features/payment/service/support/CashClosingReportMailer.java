@@ -1,12 +1,14 @@
 package com.sni.bokaticowork.features.payment.service.support;
 
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.features.payment.model.CashRegister;
 import com.sni.bokaticowork.features.payment.model.CashSession;
 import com.sni.bokaticowork.features.payment.repository.CashSessionRepository;
 import com.sni.bokaticowork.features.payment.service.interfaces.CashDocumentPdfService;
 import com.sni.bokaticowork.security.admin.role.repository.RoleUserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -66,10 +68,39 @@ public class CashClosingReportMailer {
         this.adminAccessUrl = adminAccessUrl;
     }
 
+    private static final String CLOSING_REPORT_ENABLED_KEY = "bokati.payment.cash-session.closing-report.enabled";
+    private static final String SUPERVISOR_EMAIL_KEY = "bokati.payment.cash-session.supervisor-email";
+    private static final String MANAGER_EMAIL_KEY = "bokati.support.manager-email";
+    private static final String ADMIN_ACCESS_URL_KEY = "app.admin-access-url";
+
+    private PlatformSettings platformSettings;
+
+    /** Valeurs relues a l'usage ; celles du constructeur servent de repli. */
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private boolean enabled() {
+        return platformSettings == null ? enabled : platformSettings.bool(CLOSING_REPORT_ENABLED_KEY, enabled);
+    }
+
+    private String supervisorEmail() {
+        if (platformSettings == null) {
+            return supervisorEmail;
+        }
+        // repli imbrique : adresse du responsable du support, comme dans le fichier de configuration
+        return platformSettings.text(SUPERVISOR_EMAIL_KEY, platformSettings.text(MANAGER_EMAIL_KEY, supervisorEmail));
+    }
+
+    private String adminAccessUrl() {
+        return platformSettings == null ? adminAccessUrl : platformSettings.text(ADMIN_ACCESS_URL_KEY, adminAccessUrl);
+    }
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public void onFinalized(CashSessionFinalizedEvent event) {
-        if (!enabled) {
+        if (!enabled()) {
             return;
         }
         try {
@@ -104,8 +135,11 @@ public class CashClosingReportMailer {
         String responsible = register == null ? null : register.getManagerEmail();
         if (StringUtils.hasText(responsible)) {
             recipients.add(responsible.trim().toLowerCase(Locale.ROOT));
-        } else if (StringUtils.hasText(supervisorEmail)) {
-            recipients.add(supervisorEmail.trim().toLowerCase(Locale.ROOT));
+        } else {
+            String supervisor = supervisorEmail();
+            if (StringUtils.hasText(supervisor)) {
+                recipients.add(supervisor.trim().toLowerCase(Locale.ROOT));
+            }
         }
         return recipients;
     }
@@ -121,7 +155,7 @@ public class CashClosingReportMailer {
         context.setVariable("recipientName", "équipe");
         context.setVariable("message", message(session, event));
         context.setVariable("reference", session.getSessionNumber());
-        context.setVariable("actionUrl", adminAccessUrl.stripTrailing() + "/payments/cash-registers/sessions/" + session.getSessionNumber());
+        context.setVariable("actionUrl", adminAccessUrl().stripTrailing() + "/payments/cash-registers/sessions/" + session.getSessionNumber());
         return templateEngine.process("email/generic-notification", context);
     }
 

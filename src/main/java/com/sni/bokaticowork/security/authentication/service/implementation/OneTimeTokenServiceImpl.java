@@ -1,6 +1,8 @@
 package com.sni.bokaticowork.security.authentication.service.implementation;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.communication.mailService.interfaces.OttMailService;
 import com.sni.bokaticowork.core.generator.verification.GeneratorOfVerificationCode;
 import com.sni.bokaticowork.security.admin.user.model.Users;
@@ -29,12 +31,26 @@ public class OneTimeTokenServiceImpl implements OneTimeTokenService {
     @Value("${app.security.one-time-token.expiration-ms:900000}")
     private Long expiration;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String EXPIRATION_KEY = "app.security.one-time-token.expiration-ms";
+
+    private Long expiration() {
+        return platformSettings == null ? expiration : Long.valueOf(platformSettings.number(EXPIRATION_KEY, expiration));
+    }
+
 
     @Override
     @Transactional
     public String generateOneTimeToken(Users user) {
         ottRepo.invalidateAllTokensForUser(user.getId());
         String token = GeneratorOfVerificationCode.generateVerificationCode(6);
+        Long expiration = expiration();
         OneTimeToken ott = OneTimeToken.builder()
                 .users(user)
                 .isUsed(false)

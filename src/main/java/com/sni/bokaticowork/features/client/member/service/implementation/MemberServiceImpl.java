@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.client.member.service.implementation;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.baseClasses.model.Address;
 import com.sni.bokaticowork.core.communication.mailService.baseService.DefaultEmailSender;
 import com.sni.bokaticowork.core.utils.format.Normalization;
@@ -90,6 +92,26 @@ public class MemberServiceImpl  implements MemberService {
 
     @Value("${app.portal.kyc-grace-period-days:7}")
     private int defaultKycGracePeriodDays;
+
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String VERIFY_BASE_URL_KEY = "app.verify-base-url";
+
+    private String publicBaseUrl() {
+        return platformSettings == null ? publicBaseUrl : platformSettings.text(VERIFY_BASE_URL_KEY, publicBaseUrl);
+    }
+
+    private static final String KYC_GRACE_KEY = "app.portal.kyc-grace-period-days";
+
+    private int defaultKycGracePeriodDays() {
+        return platformSettings == null ? defaultKycGracePeriodDays
+                : platformSettings.integer(KYC_GRACE_KEY, defaultKycGracePeriodDays);
+    }
 
     @Transactional
     @Override
@@ -250,7 +272,7 @@ public class MemberServiceImpl  implements MemberService {
             if (member.getPortalActivatedAt() == null) {
                 java.time.Instant now = java.time.Instant.now();
                 member.setPortalActivatedAt(now);
-                member.setKycGracePeriodEndAt(now.plus(defaultKycGracePeriodDays, java.time.temporal.ChronoUnit.DAYS));
+                member.setKycGracePeriodEndAt(now.plus(defaultKycGracePeriodDays(), java.time.temporal.ChronoUnit.DAYS));
             }
             Customer cus = member.getCustomer();
             cus.setStatus(CustomerStatus.ACTIVE);
@@ -398,7 +420,7 @@ public class MemberServiceImpl  implements MemberService {
         if (member.getPortalActivatedAt() == null) {
             java.time.Instant now = java.time.Instant.now();
             member.setPortalActivatedAt(now);
-            member.setKycGracePeriodEndAt(now.plus(defaultKycGracePeriodDays, java.time.temporal.ChronoUnit.DAYS));
+            member.setKycGracePeriodEndAt(now.plus(defaultKycGracePeriodDays(), java.time.temporal.ChronoUnit.DAYS));
         }
 
         if(member.getStatus() == MemberStatus.INACTIVE || member.getStatus() == MemberStatus.SUSPENDED){
@@ -510,6 +532,7 @@ public class MemberServiceImpl  implements MemberService {
     }
 
     private String logoUrl() {
+        String publicBaseUrl = publicBaseUrl();
         if (!StringUtils.hasText(publicBaseUrl)) {
             return "/images/logo.png";
         }

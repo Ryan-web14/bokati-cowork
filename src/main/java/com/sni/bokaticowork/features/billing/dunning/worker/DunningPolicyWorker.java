@@ -6,7 +6,11 @@ import com.sni.bokaticowork.features.billing.dunning.service.DunningRunner;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
+import com.sni.bokaticowork.core.settings.platform.SettingTriggers;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,14 +22,19 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DunningPolicyWorker {
+public class DunningPolicyWorker implements SchedulingConfigurer {
+
+    private static final String CRON_KEY = "bokati.billing.dunning.cron";
+    private static final String DEFAULT_CRON = "0 30 8 * * *";
+
+    private SettingTriggers triggers;
+    private ObjectProvider<DunningPolicyWorker> self;
 
     private final DunningRunner runner;
 
     public record Outcome(int documents, int notices, int failed) {
     }
 
-    @Scheduled(cron = "${bokati.billing.dunning.cron:0 30 8 * * *}")
     public void scheduled() {
         try {
             run();
@@ -54,5 +63,21 @@ public class DunningPolicyWorker {
             log.info("Relances · {} facture(s) echue(s), {} relance(s), {} echec(s)", documents, notices, failed);
         }
         return new Outcome(documents, notices, failed);
+    }
+
+    @Autowired
+    void setSettingTriggers(SettingTriggers triggers) {
+        this.triggers = triggers;
+    }
+
+    @Autowired
+    void setSelf(ObjectProvider<DunningPolicyWorker> self) {
+        this.self = self;
+    }
+
+    /** Planification relue a chaque passage : un changement de parametre vaut au passage suivant. */
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar registrar) {
+        registrar.addTriggerTask(() -> self.getObject().scheduled(), triggers.cron(CRON_KEY, DEFAULT_CRON));
     }
 }

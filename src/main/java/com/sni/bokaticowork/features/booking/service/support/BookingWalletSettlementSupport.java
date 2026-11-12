@@ -1,5 +1,7 @@
 package com.sni.bokaticowork.features.booking.service.support;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import com.sni.bokaticowork.core.settings.platform.PlatformSettings;
 import com.sni.bokaticowork.core.exception.customs.BadRequestException;
 import com.sni.bokaticowork.features.billing.enums.BillingDocumentType;
 import com.sni.bokaticowork.features.billing.model.BillingDocument;
@@ -92,6 +94,25 @@ public class BookingWalletSettlementSupport {
     @Value("${bokati.booking.wallet.hold-grace-minutes:60}")
     private int holdGraceMinutes;
 
+    private PlatformSettings platformSettings;
+
+    @Autowired(required = false)
+    void setPlatformSettings(PlatformSettings platformSettings) {
+        this.platformSettings = platformSettings;
+    }
+
+    private static final String SETTLEMENT_DELAY_KEY = "bokati.booking.wallet.settlement-delay-minutes";
+    private static final String HOLD_GRACE_KEY = "bokati.booking.wallet.hold-grace-minutes";
+
+    private int settlementDelayMinutes() {
+        return platformSettings == null ? settlementDelayMinutes
+                : platformSettings.integer(SETTLEMENT_DELAY_KEY, settlementDelayMinutes);
+    }
+
+    private int holdGraceMinutes() {
+        return platformSettings == null ? holdGraceMinutes : platformSettings.integer(HOLD_GRACE_KEY, holdGraceMinutes);
+    }
+
     // -----------------------------------------------------------------------------------------
     // Blocage
     // -----------------------------------------------------------------------------------------
@@ -124,7 +145,7 @@ public class BookingWalletSettlementSupport {
                     amount,
                     HOLD_SOURCE_TYPE,
                     booking.getBookingNumber(),
-                    Instant.now().plus(Duration.ofMinutes((long) settlementDelayMinutes + holdGraceMinutes)),
+                    Instant.now().plus(Duration.ofMinutes((long) settlementDelayMinutes() + holdGraceMinutes())),
                     SYSTEM_ACTOR
             ));
         } catch (BadRequestException ex) {
@@ -174,7 +195,7 @@ public class BookingWalletSettlementSupport {
      */
     @Transactional(readOnly = true)
     public List<String> dueHoldNumbers(int limit) {
-        Instant cutoff = Instant.now().minus(Duration.ofMinutes(settlementDelayMinutes));
+        Instant cutoff = Instant.now().minus(Duration.ofMinutes(settlementDelayMinutes()));
         return walletHoldRepository.findDueForSettlement(HOLD_SOURCE_TYPE, cutoff, limit).stream()
                 .map(WalletHold::getHoldNumber)
                 .toList();
