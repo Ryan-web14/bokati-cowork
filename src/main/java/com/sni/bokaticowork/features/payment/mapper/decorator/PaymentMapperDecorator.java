@@ -71,7 +71,15 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 intent.getPaymentLinkExpiresAt(),
                 intent.getIdempotencyKey(),
                 intent.getExpiresAt(),
-                intent.getMetadataJson()
+                intent.getMetadataJson(),
+                intent.getCancelledAt(),
+                intent.getCancelledBy(),
+                intent.getCancellationReason(),
+                intent.getRelaunchCount() == null ? 0 : intent.getRelaunchCount(),
+                intent.getLastRelaunchedAt(),
+                intent.getLastRelaunchedBy(),
+                com.sni.bokaticowork.features.payment.service.support.PaymentIntentStates.relaunchable(intent, remainingAmount, processingAmount),
+                com.sni.bokaticowork.features.payment.service.support.PaymentIntentStates.cancellable(intent, processingAmount)
         );
     }
 
@@ -95,7 +103,14 @@ public abstract class PaymentMapperDecorator implements PaymentMapper {
                 transaction.getReceivedBy(),
                 transaction.getFailureReason(),
                 transaction.getMetadataJson(),
-                transaction.getChannel()
+                transaction.getChannel(),
+                com.sni.bokaticowork.features.payment.service.support.PaymentMethodLabels.label(transaction.getPaymentMethod(), transaction.getProvider()),
+                transaction.getTenderedAmount(),
+                transaction.getChangeAmount(),
+                transaction.getCashSessionNumber(),
+                transaction.getBankName(),
+                transaction.getPayerName(),
+                transaction.getPayerPhone()
         );
     }
 

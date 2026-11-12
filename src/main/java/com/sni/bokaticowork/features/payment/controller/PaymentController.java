@@ -13,6 +13,11 @@ import com.sni.bokaticowork.features.payment.dto.request.CreatePaymentRecoveryIn
 import com.sni.bokaticowork.features.payment.dto.request.InitiateMobileMoneyDepositRequest;
 import com.sni.bokaticowork.features.payment.dto.request.RefundPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.request.RegisterCashPaymentRequest;
+import com.sni.bokaticowork.features.payment.dto.request.RegisterOfflinePaymentRequest;
+import com.sni.bokaticowork.features.payment.dto.request.CancelPaymentIntentRequest;
+import com.sni.bokaticowork.features.payment.dto.request.RelaunchPaymentIntentRequest;
+import com.sni.bokaticowork.features.payment.dto.response.CashChangeResponse;
+import com.sni.bokaticowork.features.payment.service.interfaces.PaymentIntentLifecycleService;
 import com.sni.bokaticowork.features.payment.dto.request.WalletPaymentRequest;
 import com.sni.bokaticowork.features.payment.dto.response.MobileMoneyDepositResponse;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentIntentResponse;
@@ -38,6 +43,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -47,6 +53,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
     private final PaymentLinkService paymentLinkService;
+    private final PaymentIntentLifecycleService intentLifecycleService;
 
     @PostMapping("/intents")
     public ResponseEntity<PaymentIntentResponse> createIntent(@Valid @RequestBody CreatePaymentIntentRequest request) {
@@ -99,6 +106,43 @@ public class PaymentController {
     public ResponseEntity<PaymentTransactionResponse> registerCashPayment(@PathVariable String intentNumber,
                                                                           @Valid @RequestBody RegisterCashPaymentRequest request) {
         return ResponseEntity.ok(paymentService.registerCashPayment(intentNumber, request));
+    }
+
+    /** Cheque, virement ou mobile money hors plateforme (MTN MoMo Pay, Airtel Money) saisi au guichet. */
+    @PatchMapping("/intents/{intentNumber}/offline")
+    public ResponseEntity<PaymentTransactionResponse> registerOfflinePayment(@PathVariable String intentNumber,
+                                                                             @Valid @RequestBody RegisterOfflinePaymentRequest request) {
+        return ResponseEntity.ok(paymentService.registerOfflinePayment(intentNumber, request));
+    }
+
+    /** Monnaie a rendre pour un montant remis en especes · a appeler pendant la saisie, rien n'est enregistre. */
+    @GetMapping("/intents/{intentNumber}/cash-change")
+    public ResponseEntity<CashChangeResponse> previewIntentCashChange(@PathVariable String intentNumber,
+                                                                      @RequestParam BigDecimal tenderedAmount,
+                                                                      @RequestParam(required = false) BigDecimal amount) {
+        return ResponseEntity.ok(paymentService.previewIntentCashChange(intentNumber, tenderedAmount, amount));
+    }
+
+    /** Meme apercu sur une facture, pour le reglement direct au guichet. */
+    @GetMapping("/billing-documents/{documentNumber}/cash-change")
+    public ResponseEntity<CashChangeResponse> previewDocumentCashChange(@PathVariable String documentNumber,
+                                                                        @RequestParam BigDecimal tenderedAmount,
+                                                                        @RequestParam(required = false) BigDecimal amount) {
+        return ResponseEntity.ok(paymentService.previewDocumentCashChange(documentNumber, tenderedAmount, amount));
+    }
+
+    /** Annule une intention en cours · refuse si un paiement mobile money y est encore en attente. */
+    @PostMapping("/intents/{intentNumber}/cancel")
+    public ResponseEntity<PaymentIntentResponse> cancelIntent(@PathVariable String intentNumber,
+                                                              @Valid @RequestBody(required = false) CancelPaymentIntentRequest request) {
+        return ResponseEntity.ok(intentLifecycleService.cancel(intentNumber, request));
+    }
+
+    /** Rouvre une intention expiree, annulee ou en echec, avec une nouvelle echeance. */
+    @PostMapping("/intents/{intentNumber}/relaunch")
+    public ResponseEntity<PaymentIntentResponse> relaunchIntent(@PathVariable String intentNumber,
+                                                                @RequestBody(required = false) RelaunchPaymentIntentRequest request) {
+        return ResponseEntity.ok(intentLifecycleService.relaunch(intentNumber, request));
     }
 
     @PatchMapping("/intents/{intentNumber}/wallet")

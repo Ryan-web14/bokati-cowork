@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.payment.compliance.repository;
 import com.sni.bokaticowork.features.payment.compliance.model.ComplianceCase;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,12 +23,20 @@ public interface ComplianceCaseRepository extends JpaRepository<ComplianceCase, 
     Optional<ComplianceCase> findFirstBySubjectTypeAndSubjectCodeAndStatusInOrderByCreatedAtDesc(
             String subjectType, String subjectCode, Collection<ComplianceCase.Status> statuses);
 
+    /** Le portefeuille est lu avec le dossier : la vue du dossier le lit hors transaction. */
+    @EntityGraph(attributePaths = {"wallet"})
     Page<ComplianceCase> findByStatusInOrderByPriorityDescDueAtAsc(Collection<ComplianceCase.Status> statuses, Pageable pageable);
 
+    /** Le portefeuille est lu avec le dossier : la vue du dossier le lit hors transaction. */
+    @EntityGraph(attributePaths = {"wallet"})
     Page<ComplianceCase> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
+    /** Le portefeuille est lu avec le dossier : la vue du dossier le lit hors transaction. */
+    @EntityGraph(attributePaths = {"wallet"})
     Page<ComplianceCase> findByAssignedToAndStatusInOrderByDueAtAsc(String assignedTo, Collection<ComplianceCase.Status> statuses, Pageable pageable);
 
+    /** Le portefeuille est lu avec le dossier : la vue du dossier le lit hors transaction. */
+    @EntityGraph(attributePaths = {"wallet"})
     List<ComplianceCase> findBySubjectTypeAndSubjectCodeOrderByCreatedAtDesc(String subjectType, String subjectCode);
 
     long countByStatusIn(Collection<ComplianceCase.Status> statuses);

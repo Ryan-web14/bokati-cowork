@@ -20,7 +20,7 @@ class ClientSupportViewTest {
         Instant now = Instant.now();
         SupportTicketResponse staffView = new SupportTicketResponse(
                 "TCK-1", "Wifi", "Coupe", null, null, null, "MEMBER", "MBR-1", "Joel", "j@x.com", null,
-                42L, null, null, null, null, null, null, null, null, null, null, 1, now, "client difficile",
+                "agent@x.com", null, null, null, null, null, null, null, null, null, null, 1, now, "client difficile",
                 now, now,
                 List.of(new TicketMessageResponse(1L, null, "MBR-1", "Joel", "Le wifi coupe", false, now),
                         new TicketMessageResponse(2L, null, "AG-7", "Agent", "Client deja relance trois fois", true, now)),

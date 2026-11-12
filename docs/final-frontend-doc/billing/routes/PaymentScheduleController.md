@@ -100,14 +100,19 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 
 | Champ | Type | Requis | Contraintes |
 | --- | --- | --- | --- |
-| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` | oui |  |
+| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` | oui |  |
 | `amount` | nombre décimal |  |  |
 | `walletNumber` | texte |  |  |
-| `cashSessionNumber` | texte | oui |  |
+| `cashSessionNumber` | texte |  |  |
 | `providerReference` | texte |  |  |
 | `processedBy` | texte |  |  |
 | `idempotencyKey` | texte |  |  |
 | `metadataJson` | texte |  |  |
+| `tenderedAmount` | nombre décimal |  |  |
+| `bankName` | texte |  |  |
+| `payerName` | texte |  |  |
+| `payerPhone` | texte |  |  |
+| `mobileMoneyOperator` | enum : `MTN_MOMO`, `AIRTEL_MONEY` |  |  |
 
 <a id="m-PaymentScheduleInstallmentResponse"></a>
 #### PaymentScheduleInstallmentResponse

@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-135 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+140 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -86,15 +86,20 @@
 | GET | `/sni/api/v1/payments/mobile-money/operations/summary` | PAYMENT:READ | [MobileMoneyOperationsController](routes/MobileMoneyOperationsController.md#r-get-sni-api-v1-payments-mobile-money-operations-summary) |
 | GET | `/sni/api/v1/payments/mobile-money/operations/{depositId}` | PAYMENT:READ | [MobileMoneyOperationsController](routes/MobileMoneyOperationsController.md#r-get-sni-api-v1-payments-mobile-money-operations-depositid) |
 | POST | `/sni/api/v1/payments/mobile-money/operations/{depositId}/resolve` | PAYMENT:PROCESS | [MobileMoneyOperationsController](routes/MobileMoneyOperationsController.md#r-post-sni-api-v1-payments-mobile-money-operations-depositid-resolve) |
+| GET | `/sni/api/v1/payments/billing-documents/{documentNumber}/cash-change` | PAYMENT:READ | [PaymentController](routes/PaymentController.md#r-get-sni-api-v1-payments-billing-documents-documentnumber-cash-change) |
 | GET | `/sni/api/v1/payments/intents` | PAYMENT:READ | [PaymentController](routes/PaymentController.md#r-get-sni-api-v1-payments-intents) |
 | POST | `/sni/api/v1/payments/intents` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-post-sni-api-v1-payments-intents) |
 | POST | `/sni/api/v1/payments/intents/from-billing-document` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-from-billing-document) |
 | POST | `/sni/api/v1/payments/intents/from-billing-documents` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-from-billing-documents) |
 | POST | `/sni/api/v1/payments/intents/recovery` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-recovery) |
 | GET | `/sni/api/v1/payments/intents/{intentNumber}` | PAYMENT:READ | [PaymentController](routes/PaymentController.md#r-get-sni-api-v1-payments-intents-intentnumber) |
+| POST | `/sni/api/v1/payments/intents/{intentNumber}/cancel` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-intentnumber-cancel) |
 | PATCH | `/sni/api/v1/payments/intents/{intentNumber}/cash` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-patch-sni-api-v1-payments-intents-intentnumber-cash) |
+| GET | `/sni/api/v1/payments/intents/{intentNumber}/cash-change` | PAYMENT:READ | [PaymentController](routes/PaymentController.md#r-get-sni-api-v1-payments-intents-intentnumber-cash-change) |
 | POST | `/sni/api/v1/payments/intents/{intentNumber}/link` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-intentnumber-link) |
 | PATCH | `/sni/api/v1/payments/intents/{intentNumber}/mobile-money` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-patch-sni-api-v1-payments-intents-intentnumber-mobile-money) |
+| PATCH | `/sni/api/v1/payments/intents/{intentNumber}/offline` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-patch-sni-api-v1-payments-intents-intentnumber-offline) |
+| POST | `/sni/api/v1/payments/intents/{intentNumber}/relaunch` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-post-sni-api-v1-payments-intents-intentnumber-relaunch) |
 | GET | `/sni/api/v1/payments/intents/{intentNumber}/transactions` | PAYMENT:READ | [PaymentController](routes/PaymentController.md#r-get-sni-api-v1-payments-intents-intentnumber-transactions) |
 | PATCH | `/sni/api/v1/payments/intents/{intentNumber}/wallet` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-patch-sni-api-v1-payments-intents-intentnumber-wallet) |
 | POST | `/sni/api/v1/payments/mobile-money/deposits` | PAYMENT:PROCESS | [PaymentController](routes/PaymentController.md#r-post-sni-api-v1-payments-mobile-money-deposits) |

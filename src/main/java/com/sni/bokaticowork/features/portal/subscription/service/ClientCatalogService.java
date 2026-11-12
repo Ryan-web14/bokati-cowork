@@ -91,7 +91,11 @@ public class ClientCatalogService {
     /**
      * Le gerant achete un pass au nom de son organisation · elle le detient, elle est facturee, et il
      * ouvre ensuite l'acces a ses collaborateurs. L'organisation est deja verifiee par l'appelant.
+     *
+     * <p>Une seule transaction, comme l'achat pour soi : sans elle, le plan etait lu d'un cote et
+     * le pass cree de l'autre, et un echec en cours de creation laissait une partie enregistree.</p>
      */
+    @Transactional
     public PassResponse purchasePassForCompany(com.sni.bokaticowork.features.client.customer.model.Customer company,
                                                ClientPurchasePassRequest request) {
         return purchasePass(SubscriberType.CUSTOMER, company.getCustomerId(), request);

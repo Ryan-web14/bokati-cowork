@@ -4,6 +4,7 @@ import com.sni.bokaticowork.features.document.documentMaster.model.Document;
 import com.sni.bokaticowork.features.document.kyc.KycDocumentVerificationStatus;
 import com.sni.bokaticowork.features.document.kyc.model.KycCase;
 import com.sni.bokaticowork.features.document.kyc.model.KycDocument;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +16,11 @@ import java.util.Optional;
 
 public interface KycDocumentRepository extends JpaRepository<KycDocument, Long> {
 
+    /**
+     * Le document est charge avec la piece : les validations et rejets groupes d'un dossier
+     * lisent son code hors transaction (une transaction par piece).
+     */
+    @EntityGraph(attributePaths = "document")
     List<KycDocument> findAllByKycCaseOrderByIdAsc(KycCase kycCase);
 
     Optional<KycDocument> findByKycCaseAndDocument(KycCase kycCase, Document document);

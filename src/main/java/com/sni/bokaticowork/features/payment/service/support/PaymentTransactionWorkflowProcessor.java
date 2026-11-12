@@ -61,6 +61,7 @@ public class PaymentTransactionWorkflowProcessor {
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService marketplaceOrderService;
     private final com.sni.bokaticowork.features.payment.repository.PaymentAllocationRepository allocationRepository;
     private final @org.springframework.context.annotation.Lazy com.sni.bokaticowork.features.subscription.subscription.service.support.subscription.SubscriptionBillingLinkService billingLinkService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void process(PaymentTransactionWorkflowEvent event) {
@@ -87,6 +88,9 @@ public class PaymentTransactionWorkflowProcessor {
             }
             // Notifications only after all business logic is complete
             sendPaidBillingDocumentEmails(transaction);
+            // Parrainage : traite apres la validation du paiement, jamais dans sa transaction
+            eventPublisher.publishEvent(new com.sni.bokaticowork.features.subscription.promotion.pricing.referral.event.RefereePaidEvent(
+                    intent.getCustomerType(), intent.getCustomerCode(), transaction.getTransactionNumber()));
             return;
         }
         if (event.status() == PaymentTransactionStatus.REFUNDED || event.status() == PaymentTransactionStatus.REVERSED) {
@@ -218,6 +222,12 @@ public class PaymentTransactionWorkflowProcessor {
             return;
         }
 
+        // Facture d'un lot multi-ressources : chacune des reservations qu'elle regle est confirmee.
+        if (TransactionContextResolver.BOOKINGS_SOURCE.equalsIgnoreCase(source.type())) {
+            bookingNumbers(source.code()).forEach(number -> confirmBookingIfFullyPaid(transaction, number));
+            return;
+        }
+
         if (com.sni.bokaticowork.features.marketplace.service.MarketplaceOrderService.SOURCE_TYPE.equalsIgnoreCase(source.type())) {
             syncMarketplaceOrderAfterCommit(source.code());
         }
@@ -250,6 +260,14 @@ public class PaymentTransactionWorkflowProcessor {
                         sync.run();
                     }
                 });
+    }
+
+    private static java.util.List<String> bookingNumbers(String codes) {
+        return java.util.Arrays.stream(codes.split(","))
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toList();
     }
 
     private void confirmBookingIfFullyPaid(PaymentTransaction transaction, String bookingNumber) {
@@ -300,6 +318,8 @@ public class PaymentTransactionWorkflowProcessor {
                 closeContractIfPresent(pass.getContractCode(), reason);
             }
             case "BOOKING" -> bookingService.systemCancel(source.code(), reason);
+            case TransactionContextResolver.BOOKINGS_SOURCE ->
+                    bookingNumbers(source.code()).forEach(number -> bookingService.systemCancel(number, reason));
             default -> log.debug("No asynchronous refund workflow configured for source {} {}", source.type(), source.code());
         }
     }

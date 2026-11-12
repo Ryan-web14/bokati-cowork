@@ -35,6 +35,16 @@ public record PaymentReceiptResponse(
         String currency,
         Instant paidAt,
         String receivedBy,
-        List<PaymentReceiptAllocationResponse> allocations
+        List<PaymentReceiptAllocationResponse> allocations,
+        /** Le moyen en francais, operateur compris : « Chèque », « Mobile money hors plateforme (MTN MoMo Pay) ». */
+        String paymentMethodLabel,
+        /** Especes : montant tendu par le client. */
+        BigDecimal tenderedAmount,
+        /** Especes : monnaie rendue. */
+        BigDecimal changeAmount,
+        /** Cheque ou virement : banque. */
+        String bankName,
+        /** Tireur, donneur d'ordre ou titulaire du compte mobile money. */
+        String payerName
 ) {
 }

@@ -34,13 +34,34 @@ public class SupportDtos {
             String relatedCode
     ) {}
 
+    /**
+     * Un message sur un ticket. {@code authorId} et {@code authorName} sont acceptes comme
+     * synonymes de {@code senderId} et {@code senderName} (l'ecran du back-office les envoie) ;
+     * {@code sender*} l'emporte s'il est fourni. Tous vides : l'agent connecte signe le message.
+     */
     public record AddTicketMessageRequest(
             TicketSenderType senderType,
             String senderId,
             String senderName,
             @NotBlank String content,
-            Boolean internal
-    ) {}
+            Boolean internal,
+            String authorId,
+            String authorName
+    ) {
+        public AddTicketMessageRequest(TicketSenderType senderType, String senderId, String senderName,
+                                       String content, Boolean internal) {
+            this(senderType, senderId, senderName, content, internal, null, null);
+        }
+
+        /** L'expediteur : {@code senderId}, sinon {@code authorId}. */
+        public String effectiveSenderId() {
+            return senderId != null && !senderId.isBlank() ? senderId : authorId;
+        }
+
+        public String effectiveSenderName() {
+            return senderName != null && !senderName.isBlank() ? senderName : authorName;
+        }
+    }
 
     public record AssignTicketRequest(String assignedTo) {}
 
@@ -114,9 +135,11 @@ public class SupportDtos {
             String contactName,
             String contactEmail,
             String contactPhone,
-            /** En texte · JavaScript arrondirait un long identifiant. L'annotation est celle de Jackson 3, qui sert les reponses : celle de Jackson 2 serait ignoree. */
-            @tools.jackson.databind.annotation.JsonSerialize(using = tools.jackson.databind.ser.std.ToStringSerializer.class)
-            Long assignedTo,
+            /**
+             * L'agent assigne, par son courriel : lisible a l'ecran, et utilisable tel quel pour
+             * filtrer la file ou reassigner. Vide si personne n'est assigne.
+             */
+            String assignedTo,
             String relatedType,
             String relatedCode,
             Instant firstResponseDueAt,

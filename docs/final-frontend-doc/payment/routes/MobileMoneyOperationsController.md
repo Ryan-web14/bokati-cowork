@@ -173,7 +173,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | --- | --- | --- | --- |
 | `transactionNumber` | texte |  |  |
 | `intentNumber` | texte |  |  |
-| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
+| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
 | `provider` | texte |  |  |
 | `providerReference` | texte |  |  |
 | `receiptNumber` | texte |  |  |
@@ -185,6 +185,13 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `failureReason` | texte |  |  |
 | `metadataJson` | texte |  |  |
 | `channel` | enum : `SELF_SERVICE`, `BACK_OFFICE`, `SYSTEM` |  |  |
+| `paymentMethodLabel` | texte |  |  |
+| `tenderedAmount` | nombre décimal |  |  |
+| `changeAmount` | nombre décimal |  |  |
+| `cashSessionNumber` | texte |  |  |
+| `bankName` | texte |  |  |
+| `payerName` | texte |  |  |
+| `payerPhone` | texte |  |  |
 
 <a id="m-MobileMoneyOperationsService-ReconciliationLine"></a>
 #### MobileMoneyOperationsService.ReconciliationLine

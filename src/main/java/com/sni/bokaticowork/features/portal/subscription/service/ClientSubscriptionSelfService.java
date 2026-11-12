@@ -25,6 +25,7 @@ import com.sni.bokaticowork.features.subscription.subscription.model.Subscriptio
 import com.sni.bokaticowork.features.subscription.subscription.service.interfaces.SubscriptionService;
 import com.sni.bokaticowork.features.subscription.subscription.service.support.SubscriptionPlanResolver;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -150,22 +151,24 @@ public class ClientSubscriptionSelfService {
     public SubscriptionTermination requestTermination(Member member, String subscriptionNumber, SubscriptionTermination.ReasonCategory category,
                                                       String reason, LocalDate wanted) {
         own(member, subscriptionNumber);
-        return terminationService.request(subscriptionNumber, new SubscriptionTerminationService.Request(
+        return withExitItems(terminationService.request(subscriptionNumber, new SubscriptionTerminationService.Request(
                 category == null ? SubscriptionTermination.ReasonCategory.OTHER : category, reason, SubscriptionTermination.Channel.PORTAL, wanted, null),
-                member.getMemberId());
+                member.getMemberId()));
     }
 
     @Transactional
     public SubscriptionTermination retractTermination(Member member, String terminationCode, String reason) {
         SubscriptionTermination termination = terminationService.get(terminationCode);
         own(member, termination.getSubscription().getSubscriptionNumber());
-        return terminationService.retract(terminationCode, reason, member.getMemberId());
+        return withExitItems(terminationService.retract(terminationCode, reason, member.getMemberId()));
     }
 
     @Transactional(readOnly = true)
     public List<SubscriptionTermination> terminations(Member member, String subscriptionNumber) {
         own(member, subscriptionNumber);
-        return terminationService.ofSubscription(subscriptionNumber);
+        List<SubscriptionTermination> terminations = terminationService.ofSubscription(subscriptionNumber);
+        terminations.forEach(ClientSubscriptionSelfService::withExitItems);
+        return terminations;
     }
 
     @Transactional(readOnly = true)
@@ -233,6 +236,14 @@ public class ClientSubscriptionSelfService {
     }
 
     // ---- Interne ----------------------------------------------------------------------------------
+
+    /** Les pieces de sortie, chargees ici · la vue du preavis les lit apres la transaction. */
+    static SubscriptionTermination withExitItems(SubscriptionTermination termination) {
+        if (termination != null) {
+            Hibernate.initialize(termination.getExitItems());
+        }
+        return termination;
+    }
 
     /** L'abonnement s'il est au membre · sinon il n'existe pas. */
     Subscription own(Member member, String subscriptionNumber) {

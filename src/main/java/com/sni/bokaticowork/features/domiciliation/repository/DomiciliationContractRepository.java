@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.domiciliation.repository;
 import com.sni.bokaticowork.features.domiciliation.model.DomiciliationContract;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,18 +17,23 @@ import java.util.Optional;
 @Repository
 public interface DomiciliationContractRepository extends JpaRepository<DomiciliationContract, Long> {
 
+    /** Abonnement, service et adresse lus avec le contrat : ContractView les lit hors transaction. */
+    @EntityGraph(attributePaths = {"subscription", "subscriptionService", "assignedAddress"})
     Optional<DomiciliationContract> findByContractNumber(String contractNumber);
 
     Optional<DomiciliationContract> findFirstBySubscription_IdAndStatusNotInOrderByCreatedAtDesc(
             Long subscriptionId, Collection<DomiciliationContract.Status> statuses);
 
+    @EntityGraph(attributePaths = {"subscription", "subscriptionService", "assignedAddress"})
     Page<DomiciliationContract> findByStatusInOrderByCreatedAtDesc(Collection<DomiciliationContract.Status> statuses, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"subscription", "subscriptionService", "assignedAddress"})
     Page<DomiciliationContract> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     List<DomiciliationContract> findBySubscription_Id(Long subscriptionId);
 
     /** Les contrats d'un titulaire · ce que l'espace client montre. */
+    @EntityGraph(attributePaths = {"subscription", "subscriptionService", "assignedAddress"})
     List<DomiciliationContract> findBySubscription_SubscriberTypeAndSubscription_SubscriberCodeOrderByCreatedAtDesc(
             com.sni.bokaticowork.features.subscription.subscription.enums.SubscriberType subscriberType, String subscriberCode);
 

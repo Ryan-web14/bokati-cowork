@@ -2,12 +2,15 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-51 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+54 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
 | GET | `/sni/api/v1/bookings` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings) |
 | POST | `/sni/api/v1/bookings` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings) |
+| GET | `/sni/api/v1/bookings/batches` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-batches) |
+| POST | `/sni/api/v1/bookings/batches` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-batches) |
+| GET | `/sni/api/v1/bookings/batches/{batchNumber}` | BOOKING:READ | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-batches-batchnumber) |
 | GET | `/sni/api/v1/bookings/cancellation-policy` | BOOKING:CANCEL | [BookingController](routes/BookingController.md#r-get-sni-api-v1-bookings-cancellation-policy) |
 | POST | `/sni/api/v1/bookings/check-availability` | BOOKING:CREATE | [BookingController](routes/BookingController.md#r-post-sni-api-v1-bookings-check-availability) |
 | PATCH | `/sni/api/v1/bookings/check-in/qr/{checkInToken}` | BOOKING:CHECKIN | [BookingController](routes/BookingController.md#r-patch-sni-api-v1-bookings-check-in-qr-checkintoken) |

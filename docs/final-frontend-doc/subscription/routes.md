@@ -2,7 +2,7 @@
 
 > Fichier généré par `tools/frontend-doc` depuis le code. Ne pas le modifier à la main : relancer la génération.
 
-170 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
+195 routes. Le fonctionnement et les parcours sont dans [README.md](README.md).
 
 | Verbe | Chemin | Accès | Détail |
 | --- | --- | --- | --- |
@@ -12,11 +12,21 @@
 | POST | `/sni/api/v1/client/cart/preview` | membre | [ClientPricingController](routes/ClientPricingController.md#r-post-sni-api-v1-client-cart-preview) |
 | POST | `/sni/api/v1/client/catalogue/prices` | membre | [ClientPricingController](routes/ClientPricingController.md#r-post-sni-api-v1-client-catalogue-prices) |
 | POST | `/sni/api/v1/client/promotions/available` | membre | [ClientPricingController](routes/ClientPricingController.md#r-post-sni-api-v1-client-promotions-available) |
-| GET | `/sni/api/v1/coupons/available` | ADMIN:ACCESS | [CouponController](routes/CouponController.md#r-get-sni-api-v1-coupons-available) |
-| POST | `/sni/api/v1/coupons/batches` | ADMIN:ACCESS | [CouponController](routes/CouponController.md#r-post-sni-api-v1-coupons-batches) |
-| DELETE | `/sni/api/v1/coupons/reservations` | ADMIN:ACCESS | [CouponController](routes/CouponController.md#r-delete-sni-api-v1-coupons-reservations) |
-| POST | `/sni/api/v1/coupons/{code}/reserve` | ADMIN:ACCESS | [CouponController](routes/CouponController.md#r-post-sni-api-v1-coupons-code-reserve) |
-| POST | `/sni/api/v1/coupons/{code}/revoke` | ADMIN:ACCESS | [CouponController](routes/CouponController.md#r-post-sni-api-v1-coupons-code-revoke) |
+| GET | `/sni/api/v1/client/referrals` | membre | [ClientReferralController](routes/ClientReferralController.md#r-get-sni-api-v1-client-referrals) |
+| GET | `/sni/api/v1/client/referrals/links` | membre | [ClientReferralController](routes/ClientReferralController.md#r-get-sni-api-v1-client-referrals-links) |
+| POST | `/sni/api/v1/client/referrals/links` | membre | [ClientReferralController](routes/ClientReferralController.md#r-post-sni-api-v1-client-referrals-links) |
+| GET | `/sni/api/v1/client/referrals/programs` | membre | [ClientReferralController](routes/ClientReferralController.md#r-get-sni-api-v1-client-referrals-programs) |
+| GET | `/sni/api/v1/coupons/available` | BILLING:READ | [CouponController](routes/CouponController.md#r-get-sni-api-v1-coupons-available) |
+| GET | `/sni/api/v1/coupons/batches` | BILLING:READ | [CouponController](routes/CouponController.md#r-get-sni-api-v1-coupons-batches) |
+| POST | `/sni/api/v1/coupons/batches` | BILLING:CREATE | [CouponController](routes/CouponController.md#r-post-sni-api-v1-coupons-batches) |
+| GET | `/sni/api/v1/coupons/batches/{batchCode}` | BILLING:READ | [CouponController](routes/CouponController.md#r-get-sni-api-v1-coupons-batches-batchcode) |
+| GET | `/sni/api/v1/coupons/batches/{batchCode}/coupons` | BILLING:READ | [CouponController](routes/CouponController.md#r-get-sni-api-v1-coupons-batches-batchcode-coupons) |
+| GET | `/sni/api/v1/coupons/batches/{batchCode}/export` | BILLING:READ | [CouponController](routes/CouponController.md#r-get-sni-api-v1-coupons-batches-batchcode-export) |
+| POST | `/sni/api/v1/coupons/batches/{batchCode}/revoke` | BILLING:CREATE | [CouponController](routes/CouponController.md#r-post-sni-api-v1-coupons-batches-batchcode-revoke) |
+| DELETE | `/sni/api/v1/coupons/reservations` | BILLING:UPDATE | [CouponController](routes/CouponController.md#r-delete-sni-api-v1-coupons-reservations) |
+| GET | `/sni/api/v1/coupons/{code}` | BILLING:READ | [CouponController](routes/CouponController.md#r-get-sni-api-v1-coupons-code) |
+| POST | `/sni/api/v1/coupons/{code}/reserve` | BILLING:CREATE | [CouponController](routes/CouponController.md#r-post-sni-api-v1-coupons-code-reserve) |
+| POST | `/sni/api/v1/coupons/{code}/revoke` | BILLING:CREATE | [CouponController](routes/CouponController.md#r-post-sni-api-v1-coupons-code-revoke) |
 | GET | `/sni/api/v1/entitlements/balances` | ADMIN:ACCESS | [EntitlementController](routes/EntitlementController.md#r-get-sni-api-v1-entitlements-balances) |
 | GET | `/sni/api/v1/entitlements/grants` | ADMIN:ACCESS | [EntitlementController](routes/EntitlementController.md#r-get-sni-api-v1-entitlements-grants) |
 | POST | `/sni/api/v1/internal/entitlements/check` | ADMIN:ACCESS | [EntitlementController](routes/EntitlementController.md#r-post-sni-api-v1-internal-entitlements-check) |
@@ -83,10 +93,25 @@
 | POST | `/sni/api/v1/promotions` | BILLING:CREATE | [PromotionController](routes/PromotionController.md#r-post-sni-api-v1-promotions) |
 | PATCH | `/sni/api/v1/promotions/{code}/activate` | BILLING:UPDATE | [PromotionController](routes/PromotionController.md#r-patch-sni-api-v1-promotions-code-activate) |
 | POST | `/sni/api/v1/promotions/{code}/redeem` | BILLING:CREATE | [PromotionController](routes/PromotionController.md#r-post-sni-api-v1-promotions-code-redeem) |
-| POST | `/sni/api/v1/referrals` | ADMIN:ACCESS | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals) |
-| GET | `/sni/api/v1/referrals/links` | ADMIN:ACCESS | [ReferralController](routes/ReferralController.md#r-get-sni-api-v1-referrals-links) |
-| POST | `/sni/api/v1/referrals/links/{linkCode}/clicks` | ADMIN:ACCESS | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-links-linkcode-clicks) |
-| POST | `/sni/api/v1/referrals/{referralNumber}/reject` | ADMIN:ACCESS | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-referralnumber-reject) |
+| GET | `/sni/api/v1/public/referrals/{code}` | public | [PublicReferralController](routes/PublicReferralController.md#r-get-sni-api-v1-public-referrals-code) |
+| POST | `/sni/api/v1/public/referrals/{code}/clicks` | public | [PublicReferralController](routes/PublicReferralController.md#r-post-sni-api-v1-public-referrals-code-clicks) |
+| GET | `/sni/api/v1/referrals` | BILLING:READ | [ReferralController](routes/ReferralController.md#r-get-sni-api-v1-referrals) |
+| POST | `/sni/api/v1/referrals` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals) |
+| GET | `/sni/api/v1/referrals/links` | BILLING:READ | [ReferralController](routes/ReferralController.md#r-get-sni-api-v1-referrals-links) |
+| POST | `/sni/api/v1/referrals/links` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-links) |
+| POST | `/sni/api/v1/referrals/links/{linkCode}/activate` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-links-linkcode-activate) |
+| POST | `/sni/api/v1/referrals/links/{linkCode}/clicks` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-links-linkcode-clicks) |
+| POST | `/sni/api/v1/referrals/links/{linkCode}/deactivate` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-links-linkcode-deactivate) |
+| GET | `/sni/api/v1/referrals/programs` | BILLING:READ | [ReferralController](routes/ReferralController.md#r-get-sni-api-v1-referrals-programs) |
+| POST | `/sni/api/v1/referrals/programs` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-programs) |
+| GET | `/sni/api/v1/referrals/programs/{code}` | BILLING:READ | [ReferralController](routes/ReferralController.md#r-get-sni-api-v1-referrals-programs-code) |
+| PUT | `/sni/api/v1/referrals/programs/{code}` | BILLING:UPDATE | [ReferralController](routes/ReferralController.md#r-put-sni-api-v1-referrals-programs-code) |
+| POST | `/sni/api/v1/referrals/programs/{code}/activate` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-programs-code-activate) |
+| POST | `/sni/api/v1/referrals/programs/{code}/end` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-programs-code-end) |
+| GET | `/sni/api/v1/referrals/programs/{code}/links` | BILLING:READ | [ReferralController](routes/ReferralController.md#r-get-sni-api-v1-referrals-programs-code-links) |
+| POST | `/sni/api/v1/referrals/programs/{code}/pause` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-programs-code-pause) |
+| GET | `/sni/api/v1/referrals/{referralNumber}` | BILLING:READ | [ReferralController](routes/ReferralController.md#r-get-sni-api-v1-referrals-referralnumber) |
+| POST | `/sni/api/v1/referrals/{referralNumber}/reject` | BILLING:CREATE | [ReferralController](routes/ReferralController.md#r-post-sni-api-v1-referrals-referralnumber-reject) |
 | GET | `/sni/api/v1/subscriptions/addons` | SUBSCRIPTION:READ | [SubscriptionAddonController](routes/SubscriptionAddonController.md#r-get-sni-api-v1-subscriptions-addons) |
 | PATCH | `/sni/api/v1/subscriptions/addons/{addonId}/cancel` | SUBSCRIPTION:CANCEL | [SubscriptionAddonController](routes/SubscriptionAddonController.md#r-patch-sni-api-v1-subscriptions-addons-addonid-cancel) |
 | POST | `/sni/api/v1/subscriptions/{subscriptionNumber}/addons` | SUBSCRIPTION:CREATE | [SubscriptionAddonController](routes/SubscriptionAddonController.md#r-post-sni-api-v1-subscriptions-subscriptionnumber-addons) |

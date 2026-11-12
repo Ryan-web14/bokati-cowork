@@ -132,6 +132,8 @@ public class SubscriptionQuoteService {
             saved = quoteRepository.save(saved);
             log.warn("Devis {} : {}", saved.getQuoteNumber(), mark);
         }
+        // Version lue par son id : son plan reste un proxy, que la vue du devis lit hors transaction
+        org.hibernate.Hibernate.initialize(saved.getPlanVersion().getPlan());
         return saved;
     }
 

@@ -811,7 +811,7 @@
      "in": "query",
      "name": "assignedTo",
      "required": false,
-     "type": "Long"
+     "type": "String"
     },
     {
      "in": "query",
@@ -1570,8 +1570,7 @@
      "type": "string"
     },
     "assignedTo": {
-     "type": "string",
-     "description": "nombre envoyé en texte"
+     "type": "string"
     },
     "relatedType": {
      "type": "string"
@@ -2301,6 +2300,12 @@
     },
     "internal": {
      "type": "boolean"
+    },
+    "authorId": {
+     "type": "string"
+    },
+    "authorName": {
+     "type": "string"
     }
    }
   },

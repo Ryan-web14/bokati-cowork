@@ -72,6 +72,9 @@ class PaymentTransactionWorkflowProcessorTest {
     @Mock
     private com.sni.bokaticowork.features.payment.transfer.service.WalletTopUpService walletTopUpService;
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private PaymentTransactionWorkflowProcessor processor;
 
@@ -79,6 +82,8 @@ class PaymentTransactionWorkflowProcessorTest {
     void shouldActivatePendingSubscriptionAfterSuccessfulFullyPaidInvoiceTransaction() {
         PaymentIntent intent = PaymentIntent.builder()
                 .intentNumber("INT-001")
+                .customerType("MEMBER")
+                .customerCode("MBR-7")
                 .sourceType("BILLING_DOCUMENT")
                 .sourceCode("INV-001")
                 .status(PaymentIntentStatus.SUCCEEDED)
@@ -123,6 +128,9 @@ class PaymentTransactionWorkflowProcessorTest {
                                 && Boolean.FALSE.equals(request.cancelAtPeriodEnd())
                                 && request.reason().contains("TXN-001"))
         );
+        // Le parrainage du payeur se qualifie apres la validation du paiement, hors de sa transaction
+        verify(eventPublisher).publishEvent(new com.sni.bokaticowork.features.subscription.promotion.pricing.referral.event.RefereePaidEvent(
+                "MEMBER", "MBR-7", "TXN-001"));
     }
 
     @Test
@@ -262,5 +270,65 @@ class PaymentTransactionWorkflowProcessorTest {
         processor.process(new PaymentTransactionWorkflowEvent("TXN-004", PaymentTransactionStatus.SUCCEEDED));
 
         verify(bookingService, never()).confirm(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
+    }
+
+    /** La facture d'un lot multi-ressources reglee en entier confirme chacune de ses reservations. */
+    @Test
+    void shouldConfirmEveryBookingOfAPaidBatchInvoice() {
+        PaymentIntent intent = PaymentIntent.builder()
+                .intentNumber("INT-010")
+                .sourceType("BILLING_DOCUMENT")
+                .sourceCode("INV-010")
+                .status(PaymentIntentStatus.SUCCEEDED)
+                .build();
+        PaymentTransaction transaction = PaymentTransaction.builder()
+                .transactionNumber("TXN-010")
+                .paymentIntent(intent)
+                .paymentMethod(PaymentMethod.CASH)
+                .amount(new BigDecimal("60000.0000"))
+                .status(PaymentTransactionStatus.SUCCEEDED)
+                .paidAt(Instant.parse("2026-11-10T12:00:00Z"))
+                .build();
+        BookingResponse pending = org.mockito.Mockito.mock(BookingResponse.class);
+        when(pending.status()).thenReturn(BookingStatus.PENDING_PAYMENT);
+
+        when(transactionRepository.findByTransactionNumber("TXN-010")).thenReturn(Optional.of(transaction));
+        when(contextResolver.resolveSource("BILLING_DOCUMENT", "INV-010"))
+                .thenReturn(new TransactionContextResolver.SourceView(TransactionContextResolver.BOOKINGS_SOURCE,
+                        "BKG-010,BKG-011", "Reservations BKG-010, BKG-011", true));
+        when(bookingService.get(org.mockito.ArgumentMatchers.anyString())).thenReturn(pending);
+
+        processor.process(new PaymentTransactionWorkflowEvent("TXN-010", PaymentTransactionStatus.SUCCEEDED));
+
+        verify(bookingService).confirm(eq("BKG-010"), org.mockito.ArgumentMatchers.any());
+        verify(bookingService).confirm(eq("BKG-011"), org.mockito.ArgumentMatchers.any());
+    }
+
+    /** Un remboursement total de la facture d'un lot annule chacune de ses reservations. */
+    @Test
+    void shouldSystemCancelEveryBookingOfARefundedBatchInvoice() {
+        PaymentIntent intent = PaymentIntent.builder()
+                .intentNumber("INT-011")
+                .sourceType("BILLING_DOCUMENT")
+                .sourceCode("INV-011")
+                .build();
+        PaymentTransaction transaction = PaymentTransaction.builder()
+                .transactionNumber("TXN-011")
+                .paymentIntent(intent)
+                .paymentMethod(PaymentMethod.CASH)
+                .amount(new BigDecimal("60000.0000"))
+                .status(PaymentTransactionStatus.REVERSED)
+                .paidAt(Instant.parse("2026-11-10T12:00:00Z"))
+                .build();
+
+        when(transactionRepository.findByTransactionNumber("TXN-011")).thenReturn(Optional.of(transaction));
+        when(contextResolver.resolveSource("BILLING_DOCUMENT", "INV-011"))
+                .thenReturn(new TransactionContextResolver.SourceView(TransactionContextResolver.BOOKINGS_SOURCE,
+                        "BKG-020,BKG-021", "Reservations BKG-020, BKG-021", true));
+
+        processor.process(new PaymentTransactionWorkflowEvent("TXN-011", PaymentTransactionStatus.REVERSED));
+
+        verify(bookingService).systemCancel(eq("BKG-020"), argThat(reason -> reason.contains("TXN-011")));
+        verify(bookingService).systemCancel(eq("BKG-021"), argThat(reason -> reason.contains("TXN-011")));
     }
 }

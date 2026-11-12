@@ -78,6 +78,7 @@ public class BookingWalletSettlementSupport {
     private final WalletHoldService walletHoldService;
     private final WalletService walletService;
     private final PaymentService paymentService;
+    private final com.sni.bokaticowork.features.subscription.repository.BillableItemRepository billableItemRepository;
     /**
      * Le portefeuille de l'organisation, quand le membre reserve pour elle et y est autorise · vide
      * dans les tests qui ne le fournissent pas, le portefeuille personnel paie alors.
@@ -229,9 +230,14 @@ public class BookingWalletSettlementSupport {
 
         walletHoldService.release(holdNumber, SYSTEM_ACTOR);
 
+        // Facture commune d'un lot : le blocage ne regle que la part de sa reservation, les autres
+        // reservations du lot reglent la leur. Facture seule : tout le solde, comme avant.
+        BigDecimal amount = isGrouped(invoice) && hold.getAmount() != null
+                ? hold.getAmount().min(invoice.getBalanceDue())
+                : null;
         PaymentIntentResponse intent = paymentService.createIntentFromBillingDocument(
                 new CreatePaymentIntentFromBillingDocumentRequest(
-                        invoice.getDocumentNumber(), null, "BOOKING_WALLET:" + booking.getBookingNumber(), null, null));
+                        invoice.getDocumentNumber(), amount, "BOOKING_WALLET:" + booking.getBookingNumber(), null, null));
         WalletResponse wallet = walletService.getOrCreate(
                 booking.getOwnerType().name(), booking.getOwnerCode(), booking.getCurrency());
         paymentService.payWithWallet(intent.intentNumber(),
@@ -267,7 +273,19 @@ public class BookingWalletSettlementSupport {
             return null;
         }
         return billingDocumentRepository.findFirstBySourceAndType(
-                BILLABLE_SOURCE_TYPE, booking.getBillableNumber(), BillingDocumentType.INVOICE.name()).orElse(null);
+                        BILLABLE_SOURCE_TYPE, booking.getBillableNumber(), BillingDocumentType.INVOICE.name())
+                // Facture commune d'un lot multi-ressources : sa source liste plusieurs elements
+                .or(() -> billableItemRepository == null ? java.util.Optional.empty()
+                        : billableItemRepository.findByBillableNumber(booking.getBillableNumber())
+                        .map(com.sni.bokaticowork.features.subscription.subscription.model.BillableItem::getInvoiceId)
+                        .flatMap(billingDocumentRepository::findById)
+                        .filter(document -> document.getDocumentType() == BillingDocumentType.INVOICE))
+                .orElse(null);
+    }
+
+    /** La facture regle plusieurs reservations (lot multi-ressources). */
+    private static boolean isGrouped(BillingDocument invoice) {
+        return invoice.getSourceCode() != null && invoice.getSourceCode().contains(",");
     }
 
     private List<WalletHold> activeHolds(String bookingNumber) {

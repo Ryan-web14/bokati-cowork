@@ -44,6 +44,7 @@ public class BookingController {
     private final BookingMetricsService metricsService;
     private final BookingSuggestionService suggestionService;
     private final BookingRepairService repairService;
+    private final com.sni.bokaticowork.features.booking.service.interfaces.BookingBatchService batchService;
 
     @PostMapping("/check-availability")
     public ResponseEntity<BookingAvailabilityResponse> checkAvailability(@Valid @RequestBody BookingAvailabilityRequest request) {
@@ -78,6 +79,28 @@ public class BookingController {
     @PostMapping("/recurring")
     public ResponseEntity<List<BookingResponse>> createRecurring(@Valid @RequestBody CreateRecurringBookingRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.createRecurring(request));
+    }
+
+    /**
+     * Reservation multi-ressources : plusieurs ressources, un ou plusieurs membres, une facture
+     * par membre. Tout ou rien · un refus liste chaque reservation impossible dans {@code errors}.
+     */
+    @PostMapping("/batches")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse> createBatch(
+            @Valid @RequestBody com.sni.bokaticowork.features.booking.dto.request.CreateBookingBatchRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(batchService.create(request));
+    }
+
+    @GetMapping("/batches")
+    public ResponseEntity<com.sni.bokaticowork.core.templateResponse.PaginatedResponse<com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse.Summary>> listBatches(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(batchService.list(org.springframework.data.domain.PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100))));
+    }
+
+    @GetMapping("/batches/{batchNumber}")
+    public ResponseEntity<com.sni.bokaticowork.features.booking.dto.response.BookingBatchResponse> getBatch(@PathVariable String batchNumber) {
+        return ResponseEntity.ok(batchService.get(batchNumber));
     }
 
     @GetMapping("/{bookingNumber}")

@@ -2,6 +2,7 @@
 import { V1, call, errorOf, login, logout, session } from './api.js';
 import { moduleScreen } from './generic.js';
 import { contractsScreen, hoursScreen, marketplaceAdminScreen, marketplaceClientScreen, renewalScreen, settingsScreen } from './screens.js';
+import { couponsScreen, gedScreen, referralsAdminScreen, referralsClientScreen } from './screens-promo.js';
 import { buildModules } from './spec.js';
 import { clear, h, notice } from './ui.js';
 
@@ -12,6 +13,10 @@ const SCREENS = [
   ['shop', 'Marketplace · portail', marketplaceClientScreen],
   ['contracts', 'Contrats et versions', contractsScreen],
   ['renewal', 'Renouvellement d\'abonnement', renewalScreen],
+  ['coupons', 'Lots de coupons', couponsScreen],
+  ['referrals', 'Parrainage · administration', referralsAdminScreen],
+  ['my-referrals', 'Parrainage · portail', referralsClientScreen],
+  ['ged', 'GED · explorateur', gedScreen],
 ];
 
 const app = document.getElementById('app');

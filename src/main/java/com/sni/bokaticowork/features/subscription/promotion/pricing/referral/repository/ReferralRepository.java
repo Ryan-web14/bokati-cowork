@@ -1,6 +1,9 @@
 package com.sni.bokaticowork.features.subscription.promotion.pricing.referral.repository;
 
 import com.sni.bokaticowork.features.subscription.promotion.pricing.referral.model.Referral;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import com.sni.bokaticowork.features.subscription.promotion.pricing.referral.enums.ReferralStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -63,4 +66,31 @@ public interface ReferralRepository extends JpaRepository<Referral, Long> {
             """)
     List<Referral> findPendingForReferee(@Param("refereeType") String refereeType,
                                          @Param("refereeCode") String refereeCode);
+
+    /** La liste du back-office ; chaque filtre est facultatif. */
+    @Query("""
+            SELECT r FROM Referral r
+            WHERE (:programId IS NULL OR r.program.id = :programId)
+              AND (:status IS NULL OR r.status = :status)
+              AND (:referrerCode IS NULL OR lower(r.referrerCode) = lower(CAST(:referrerCode AS string)))
+            ORDER BY r.registeredAt DESC, r.id DESC
+            """)
+    Page<Referral> search(@Param("programId") Long programId,
+                          @Param("status") ReferralStatus status,
+                          @Param("referrerCode") String referrerCode,
+                          Pageable pageable);
+
+    /** Les parrainages d'un parrain, pour son espace client. */
+    @Query("""
+            SELECT r FROM Referral r
+            WHERE lower(r.referrerType) = lower(:referrerType)
+              AND lower(r.referrerCode) = lower(:referrerCode)
+            ORDER BY r.registeredAt DESC, r.id DESC
+            """)
+    List<Referral> findAllForReferrer(@Param("referrerType") String referrerType,
+                                     @Param("referrerCode") String referrerCode);
+
+    /** Le nombre de parrainages d'un programme, par etat. */
+    @Query("SELECT r.status, COUNT(r) FROM Referral r WHERE r.program.id = :programId GROUP BY r.status")
+    List<Object[]> countByStatus(@Param("programId") Long programId);
 }

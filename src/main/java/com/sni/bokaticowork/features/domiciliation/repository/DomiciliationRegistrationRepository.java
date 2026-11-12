@@ -3,6 +3,7 @@ package com.sni.bokaticowork.features.domiciliation.repository;
 import com.sni.bokaticowork.features.domiciliation.model.DomiciliationRegistration;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +21,7 @@ public interface DomiciliationRegistrationRepository extends JpaRepository<Domic
     Optional<DomiciliationRegistration> findFirstByContract_IdAndStatusInOrderByCreatedAtDesc(
             Long contractId, Collection<DomiciliationRegistration.Status> statuses);
 
-    /** Le tableau de suivi · la ou les dossiers s'enlisent. */
+    /** Le tableau de suivi · la ou les dossiers s'enlisent. Le contrat est lu avec : RegistrationView le lit hors transaction. */
+    @EntityGraph(attributePaths = "contract")
     Page<DomiciliationRegistration> findByStatusInOrderBySubmittedAtAsc(Collection<DomiciliationRegistration.Status> statuses, Pageable pageable);
 }

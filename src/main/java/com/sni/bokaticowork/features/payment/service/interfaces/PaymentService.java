@@ -31,6 +31,18 @@ public interface PaymentService {
     PaginatedResponse<BillingDocumentResponse> listPayableDocuments(BillingDocumentType documentType, String customerType, String customerCode, String lineSourceType, String lineSourceCode, String searchText, Pageable pageable);
     PaymentTransactionResponse registerCashPayment(String intentNumber, RegisterCashPaymentRequest request);
     PaymentTransactionResponse payWithWallet(String intentNumber, WalletPaymentRequest request);
+
+    /** Cheque, virement ou mobile money hors plateforme saisi au guichet sur une intention. */
+    PaymentTransactionResponse registerOfflinePayment(String intentNumber,
+                                                      com.sni.bokaticowork.features.payment.dto.request.RegisterOfflinePaymentRequest request);
+
+    /** Monnaie a rendre pour un montant remis, sur une intention · rien n'est enregistre. */
+    com.sni.bokaticowork.features.payment.dto.response.CashChangeResponse previewIntentCashChange(
+            String intentNumber, java.math.BigDecimal tenderedAmount, java.math.BigDecimal amount);
+
+    /** Monnaie a rendre pour un montant remis, sur une facture · rien n'est enregistre. */
+    com.sni.bokaticowork.features.payment.dto.response.CashChangeResponse previewDocumentCashChange(
+            String documentNumber, java.math.BigDecimal tenderedAmount, java.math.BigDecimal amount);
     MobileMoneyDepositResponse initiateMobileMoneyDeposit(String intentNumber, InitiateMobileMoneyDepositRequest request);
     PayInvoiceResponse payInvoice(String documentNumber, PayInvoiceRequest request);
     PaymentTransactionResponse refund(String transactionNumber, RefundPaymentRequest request);

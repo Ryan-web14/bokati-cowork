@@ -146,7 +146,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `contactName` | texte |  |  |
 | `contactEmail` | texte |  |  |
 | `contactPhone` | texte |  |  |
-| `assignedTo` | texte |  | nombre envoyé en texte |
+| `assignedTo` | texte |  |  |
 | `relatedType` | texte |  |  |
 | `relatedCode` | texte |  |  |
 | `firstResponseDueAt` | date-heure ISO 8601 UTC |  |  |

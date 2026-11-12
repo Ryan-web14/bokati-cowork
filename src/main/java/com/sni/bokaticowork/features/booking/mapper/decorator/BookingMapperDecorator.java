@@ -115,7 +115,8 @@ public abstract class BookingMapperDecorator implements BookingMapper {
                 participants,
                 seats.resourceCapacity(),
                 seats.wholeResource(),
-                seats.label()
+                seats.label(),
+                booking.getBatchNumber()
         );
     }
 

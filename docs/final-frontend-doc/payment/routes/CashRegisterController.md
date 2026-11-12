@@ -339,7 +339,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `active` | booléen |  |  |
 | `cashControlEnabled` | booléen |  |  |
 | `systemManaged` | booléen |  |  |
-| `restrictedToMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
+| `restrictedToMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
 | `maxCashAmount` | nombre décimal |  |  |
 | `managerEmail` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
@@ -596,6 +596,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `openedAt` | date-heure ISO 8601 UTC |  |  |
 | `closingRequestedAt` | date-heure ISO 8601 UTC |  |  |
 | `closedAt` | date-heure ISO 8601 UTC |  |  |
+| `nonCashPayments` | [CashSessionSummaryResponse.NonCashPaymentTotal](#m-CashSessionSummaryResponse-NonCashPaymentTotal)[] |  |  |
 
 <a id="m-CashMovementAttachmentResponse"></a>
 #### CashMovementAttachmentResponse
@@ -609,3 +610,14 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `label` | texte |  |  |
 | `uploadedBy` | texte |  |  |
 | `uploadedAt` | date-heure ISO 8601 UTC |  |  |
+
+<a id="m-CashSessionSummaryResponse-NonCashPaymentTotal"></a>
+#### CashSessionSummaryResponse.NonCashPaymentTotal
+
+| Champ | Type | Requis | Contraintes |
+| --- | --- | --- | --- |
+| `paymentMethod` | enum : `CASH`, `WALLET`, `MOBILE_MONEY`, `MOBILE_MONEY_OFFLINE`, `BANK_TRANSFER`, `CARD`, `CHEQUE`, `MANUAL_ADJUSTMENT`, `CREDIT_NOTE` |  |  |
+| `provider` | texte |  |  |
+| `label` | texte |  |  |
+| `count` | entier int64 ⚠ |  |  |
+| `amount` | nombre décimal |  |  |

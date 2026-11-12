@@ -17,7 +17,7 @@ Module [support](../README.md) · 20 route(s).
 | Paramètre | Où | Type | Requis | Défaut |
 | --- | --- | --- | --- | --- |
 | `status` | requête | `TicketStatus` |  |  |
-| `assignedTo` | requête | `Long` |  |  |
+| `assignedTo` | requête | `String` |  |  |
 | `ownerType` | requête | `String` |  |  |
 | `ownerCode` | requête | `String` |  |  |
 | `category` | requête | `TicketCategory` |  |  |
@@ -284,7 +284,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `contactName` | texte |  |  |
 | `contactEmail` | texte |  |  |
 | `contactPhone` | texte |  |  |
-| `assignedTo` | texte |  | nombre envoyé en texte |
+| `assignedTo` | texte |  |  |
 | `relatedType` | texte |  |  |
 | `relatedCode` | texte |  |  |
 | `firstResponseDueAt` | date-heure ISO 8601 UTC |  |  |
@@ -430,6 +430,8 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `senderName` | texte |  |  |
 | `content` | texte | oui | longueur min `1` |
 | `internal` | booléen |  |  |
+| `authorId` | texte |  |  |
+| `authorName` | texte |  |  |
 
 <a id="m-KnowledgeDtos-KnowledgeArticleResponse"></a>
 #### KnowledgeDtos.KnowledgeArticleResponse

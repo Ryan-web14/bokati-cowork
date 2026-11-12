@@ -3294,6 +3294,36 @@
   },
   {
    "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/files/{code}/lock",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "lock",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "hours",
+     "required": false,
+     "type": "Integer"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem>"
+  },
+  {
+   "methods": [
     "GET"
    ],
    "path": "/sni/api/v1/ged/files/{code}/text",
@@ -3339,6 +3369,30 @@
     }
    ],
    "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFileText>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/files/{code}/unlock",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "unlock",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem>"
   },
   {
    "methods": [
@@ -3418,6 +3472,252 @@
    "methods": [
     "GET"
    ],
+   "path": "/sni/api/v1/ged/folders/{code}/access",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "folderAccess",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess>"
+  },
+  {
+   "methods": [
+    "DELETE"
+   ],
+   "path": "/sni/api/v1/ged/folders/{code}/grants",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "revoke",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "granteeType",
+     "required": true,
+     "type": "String"
+    },
+    {
+     "in": "query",
+     "name": "grantee",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/ged/folders/{code}/grants",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "grant",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrantRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess>"
+  },
+  {
+   "methods": [
+    "PUT"
+   ],
+   "path": "/sni/api/v1/ged/folders/{code}/quota",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "setQuota",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedQuotaRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUsage>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/folders/{code}/restrict",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "restrict",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRestrictRequest",
+    "required": false
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/folders/{code}/unrestrict",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "unrestrict",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/ged/holds",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "holds",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "active",
+     "required": false,
+     "default": "true",
+     "type": "boolean"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHold>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/holds",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "placeHold",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHoldRequest",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHold>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/holds/{code}/release",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "releaseHold",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "code",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHold>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
    "path": "/sni/api/v1/ged/items",
    "package": "features.document.explorer.controller",
    "controller": "GedExplorerController",
@@ -3492,6 +3792,93 @@
    },
    "params": [],
    "response": "ResponseEntity<void>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/retention/destroy",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "destroy",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDocumentsDecision",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPurgeResult>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/ged/retention/due",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "destructionDue",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "limit",
+     "required": false,
+     "default": "200",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDestructionCandidate>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/retention/keep",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "keep",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDocumentsDecision",
+    "required": true
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Integer>>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/retention/run",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "runRetention",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "params": [],
+   "response": "ResponseEntity<Map<String, Integer>>"
   },
   {
    "methods": [
@@ -3678,6 +4065,65 @@
    "methods": [
     "POST"
    ],
+   "path": "/sni/api/v1/ged/trash/empty",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "emptyTrash",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "olderThanDays",
+     "required": false,
+     "default": "0",
+     "type": "int"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPurgeResult>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
+   "path": "/sni/api/v1/ged/trash/{batch}/purge",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "purgeBatch",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "preAuthorize": "hasRole('ADMIN') or hasRole('SUPER_ADMIN')",
+    "kind": "admin",
+    "permission": "DOCUMENT:WRITE"
+   },
+   "body": {
+    "type": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedReasonRequest",
+    "required": true
+   },
+   "params": [
+    {
+     "in": "path",
+     "name": "batch",
+     "required": true,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPurgeResult>"
+  },
+  {
+   "methods": [
+    "POST"
+   ],
    "path": "/sni/api/v1/ged/trash/{batch}/restore",
    "package": "features.document.explorer.controller",
    "controller": "GedExplorerController",
@@ -3714,6 +4160,30 @@
    },
    "params": [],
    "response": "ResponseEntity<List<com.sni.bokaticowork.features.document.documentMaster.dto.response.DocumentFolderTreeNode>>"
+  },
+  {
+   "methods": [
+    "GET"
+   ],
+   "path": "/sni/api/v1/ged/usage",
+   "package": "features.document.explorer.controller",
+   "controller": "GedExplorerController",
+   "source": "src/main/java/com/sni/bokaticowork/features/document/explorer/controller/GedExplorerController.java",
+   "handler": "usage",
+   "declaredIn": "GedExplorerController",
+   "access": {
+    "kind": "admin",
+    "permission": "DOCUMENT:READ"
+   },
+   "params": [
+    {
+     "in": "query",
+     "name": "folderCode",
+     "required": false,
+     "type": "String"
+    }
+   ],
+   "response": "ResponseEntity<com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUsage>"
   },
   {
    "methods": [
@@ -5919,6 +6389,12 @@
     "documentTypeCode": {
      "type": "string"
     },
+    "folderCode": {
+     "type": "string"
+    },
+    "folderName": {
+     "type": "string"
+    },
     "retentionDays": {
      "type": "integer",
      "format": "int32"
@@ -5978,6 +6454,9 @@
      ]
     },
     "documentTypeCode": {
+     "type": "string"
+    },
+    "folderCode": {
      "type": "string"
     },
     "retentionDays": {
@@ -6865,6 +7344,19 @@
     },
     "downloadUrl": {
      "type": "string"
+    },
+    "restricted": {
+     "type": "boolean"
+    },
+    "lock": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedLock"
+    },
+    "held": {
+     "type": "boolean"
+    },
+    "destructionDueAt": {
+     "type": "string",
+     "format": "date-time"
     }
    }
   },
@@ -6963,6 +7455,220 @@
     }
    }
   },
+  "GedDtos.GedFolderAccess": {
+   "type": "object",
+   "properties": {
+    "folderCode": {
+     "type": "string"
+    },
+    "restricted": {
+     "type": "boolean"
+    },
+    "restrictedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "restrictedBy": {
+     "type": "string"
+    },
+    "systemFolder": {
+     "type": "boolean"
+    },
+    "inheritedFrom": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderRef"
+     }
+    },
+    "grants": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrant"
+     }
+    },
+    "myLevel": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "READ",
+      "DOWNLOAD",
+      "EDIT",
+      "DELETE",
+      "ADMIN"
+     ]
+    },
+    "canManage": {
+     "type": "boolean"
+    }
+   }
+  },
+  "GedDtos.GedGrantRequest": {
+   "required": [
+    "grantee",
+    "granteeType",
+    "level"
+   ],
+   "type": "object",
+   "properties": {
+    "granteeType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "grantee": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "level": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "READ",
+      "DOWNLOAD",
+      "EDIT",
+      "DELETE",
+      "ADMIN"
+     ]
+    }
+   }
+  },
+  "GedDtos.GedUsage": {
+   "type": "object",
+   "properties": {
+    "folderCode": {
+     "type": "string"
+    },
+    "folderName": {
+     "type": "string"
+    },
+    "usedBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "files": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "quotaBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "remainingBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "limitingFolderCode": {
+     "type": "string"
+    },
+    "totalUsedBytes": {
+     "type": "integer",
+     "format": "int64"
+    },
+    "totalQuotaBytes": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "GedDtos.GedQuotaRequest": {
+   "type": "object",
+   "properties": {
+    "quotaBytes": {
+     "type": "integer",
+     "format": "int64"
+    }
+   }
+  },
+  "GedDtos.GedRestrictRequest": {
+   "type": "object",
+   "properties": {
+    "grants": {
+     "type": "array",
+     "items": {
+      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrantRequest"
+     }
+    }
+   }
+  },
+  "GedDtos.GedHold": {
+   "type": "object",
+   "properties": {
+    "code": {
+     "type": "string"
+    },
+    "targetType": {
+     "type": "string"
+    },
+    "targetCode": {
+     "type": "string"
+    },
+    "targetName": {
+     "type": "string"
+    },
+    "reason": {
+     "type": "string"
+    },
+    "reference": {
+     "type": "string"
+    },
+    "placedBy": {
+     "type": "string"
+    },
+    "placedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "releasedBy": {
+     "type": "string"
+    },
+    "releasedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "releaseReason": {
+     "type": "string"
+    },
+    "active": {
+     "type": "boolean"
+    }
+   }
+  },
+  "GedDtos.GedHoldRequest": {
+   "required": [
+    "reason",
+    "targetCode",
+    "targetType"
+   ],
+   "type": "object",
+   "properties": {
+    "targetType": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "targetCode": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    },
+    "reference": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedReasonRequest": {
+   "required": [
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
   "GedDtos.GedListing": {
    "type": "object",
    "properties": {
@@ -6983,6 +7689,9 @@
     },
     "page": {
      "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPage"
+    },
+    "access": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedAccessSummary"
     }
    }
   },
@@ -7002,6 +7711,73 @@
      }
     },
     "targetFolderCode": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedPurgeResult": {
+   "type": "object",
+   "properties": {
+    "batches": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "folders": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "documents": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "filesErased": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "heldSkipped": {
+     "type": "integer",
+     "format": "int32"
+    },
+    "failed": {
+     "type": "integer",
+     "format": "int32"
+    }
+   }
+  },
+  "GedDtos.GedDocumentsDecision": {
+   "required": [
+    "documentCodes",
+    "reason"
+   ],
+   "type": "object",
+   "properties": {
+    "documentCodes": {
+     "minItems": 1,
+     "type": "array",
+     "items": {
+      "type": "string"
+     }
+    },
+    "reason": {
+     "minLength": 1,
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedDestructionCandidate": {
+   "type": "object",
+   "properties": {
+    "item": {
+     "$ref": "#/components/schemas/com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedItem"
+    },
+    "policyCode": {
+     "type": "string"
+    },
+    "dueAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "location": {
      "type": "string"
     }
    }
@@ -8116,6 +8892,25 @@
     }
    }
   },
+  "GedDtos.GedLock": {
+   "type": "object",
+   "properties": {
+    "lockedBy": {
+     "type": "string"
+    },
+    "lockedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "expiresAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "mine": {
+     "type": "boolean"
+    }
+   }
+  },
   "GedDtos.GedFolderRef": {
    "type": "object",
    "properties": {
@@ -8126,6 +8921,38 @@
      "type": "string"
     },
     "parentCode": {
+     "type": "string"
+    }
+   }
+  },
+  "GedDtos.GedGrant": {
+   "type": "object",
+   "properties": {
+    "granteeType": {
+     "type": "string"
+    },
+    "grantee": {
+     "type": "string"
+    },
+    "granteeLabel": {
+     "type": "string"
+    },
+    "level": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "READ",
+      "DOWNLOAD",
+      "EDIT",
+      "DELETE",
+      "ADMIN"
+     ]
+    },
+    "grantedAt": {
+     "type": "string",
+     "format": "date-time"
+    },
+    "grantedBy": {
      "type": "string"
     }
    }
@@ -8156,6 +8983,34 @@
     "fileCount": {
      "type": "integer",
      "format": "int64"
+    }
+   }
+  },
+  "GedDtos.GedAccessSummary": {
+   "type": "object",
+   "properties": {
+    "level": {
+     "type": "string",
+     "enum": [
+      "NONE",
+      "READ",
+      "DOWNLOAD",
+      "EDIT",
+      "DELETE",
+      "ADMIN"
+     ]
+    },
+    "canDownload": {
+     "type": "boolean"
+    },
+    "canEdit": {
+     "type": "boolean"
+    },
+    "canDelete": {
+     "type": "boolean"
+    },
+    "canManage": {
+     "type": "boolean"
     }
    }
   },
@@ -8388,8 +9243,19 @@
   "GedDtos.GedFileText": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFileText",
   "GedDtos.GedFilingResult": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFilingResult",
   "GedDtos.GedCreateFolderRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedCreateFolderRequest",
+  "GedDtos.GedFolderAccess": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderAccess",
+  "GedDtos.GedGrantRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrantRequest",
+  "GedDtos.GedUsage": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUsage",
+  "GedDtos.GedQuotaRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedQuotaRequest",
+  "GedDtos.GedRestrictRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedRestrictRequest",
+  "GedDtos.GedHold": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHold",
+  "GedDtos.GedHoldRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedHoldRequest",
+  "GedDtos.GedReasonRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedReasonRequest",
   "GedDtos.GedListing": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedListing",
   "GedDtos.GedMoveRequest": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedMoveRequest",
+  "GedDtos.GedPurgeResult": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPurgeResult",
+  "GedDtos.GedDocumentsDecision": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDocumentsDecision",
+  "GedDtos.GedDestructionCandidate": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedDestructionCandidate",
   "GedDtos.GedSearchResult": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSearchResult",
   "GedDtos.GedTextRunResult": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTextRunResult",
   "GedDtos.GedTextStatus": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedTextStatus",
@@ -8431,8 +9297,11 @@
   "CreateWorkflowRequest.WorkflowStepRequest": "com.sni.bokaticowork.features.document.documentMaster.dto.request.CreateWorkflowRequest.WorkflowStepRequest",
   "WorkflowInstanceResponse.ActionResponse": "com.sni.bokaticowork.features.document.documentMaster.dto.response.WorkflowInstanceResponse.ActionResponse",
   "GedDtos.GedUploadFailure": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedUploadFailure",
+  "GedDtos.GedLock": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedLock",
   "GedDtos.GedFolderRef": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedFolderRef",
+  "GedDtos.GedGrant": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedGrant",
   "GedDtos.GedPage": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedPage",
+  "GedDtos.GedAccessSummary": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedAccessSummary",
   "GedDtos.GedSearchHit": "com.sni.bokaticowork.features.document.explorer.dto.GedDtos.GedSearchHit",
   "KycDashboardResponse.SlaMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.SlaMetrics",
   "KycDashboardResponse.ExpiringSoonMetrics": "com.sni.bokaticowork.features.document.kyc.dto.response.KycDashboardResponse.ExpiringSoonMetrics",

@@ -70,10 +70,11 @@ public class SubscriptionCommitmentService {
      * Sans formule, celle de la politique s'applique.</p>
      */
     @Transactional
-    public SubscriptionCommitment set(Subscription subscription, Spec spec, SubscriptionCommitment.Source source, String actor) {
+    public SubscriptionCommitment set(Subscription detached, Spec spec, SubscriptionCommitment.Source source, String actor) {
         if (spec.commitmentMonths() == null || spec.commitmentMonths() < 1) {
             throw new BadRequestException("Un engagement se compte en mois, au moins un");
         }
+        Subscription subscription = attached(detached);
         SubscriptionPolicy policy = policyService.current();
         LocalDate start = spec.commitmentStart() != null ? spec.commitmentStart()
                 : subscription.getStartDate() != null ? subscription.getStartDate() : LocalDate.now();
@@ -189,6 +190,14 @@ public class SubscriptionCommitmentService {
             months++;
         }
         return (int) Math.max(1, months);
+    }
+
+    /**
+     * L'abonnement recu est lu hors de cette transaction (par le controleur) : relu ici, l'engagement
+     * existant pointe sur lui au lieu d'un proxy que la vue lirait sans session.
+     */
+    private Subscription attached(Subscription subscription) {
+        return subscription.getId() == null ? subscription : subscriptionRepository.findById(subscription.getId()).orElse(subscription);
     }
 
     private Subscription subscription(String number) {

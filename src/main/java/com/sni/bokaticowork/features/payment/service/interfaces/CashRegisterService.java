@@ -54,6 +54,9 @@ public interface CashRegisterService {
     java.util.List<CashRegisterMetricsResponse> registerMetrics(String businessEntityCode, Instant fromDate, Instant toDate);
     void recordPayment(String sessionNumber, BigDecimal amount, String referenceCode, String createdBy);
     void recordAutomaticPayment(PaymentTransaction transaction);
+
+    /** Refuse une session close ou tenue par le systeme · pour rattacher un paiement saisi au guichet. */
+    void assertCounterSessionOpen(String sessionNumber);
     CashMovementResponse addAttachment(String movementNumber, AddCashMovementAttachmentRequest request);
     CashMovementResponse signMovement(String movementNumber, String signedBy);
     CashMovementResponse markMovementPrinted(String movementNumber);

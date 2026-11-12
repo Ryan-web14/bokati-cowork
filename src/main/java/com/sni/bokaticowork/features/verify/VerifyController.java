@@ -5,7 +5,11 @@ import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentP
 import com.sni.bokaticowork.features.billing.service.interfaces.BillingDocumentService;
 import com.sni.bokaticowork.features.payment.dto.response.PaymentReceiptResponse;
 import com.sni.bokaticowork.features.payment.service.interfaces.PaymentReceiptService;
+import com.sni.bokaticowork.core.exception.customs.BadRequestException;
+import com.sni.bokaticowork.core.exception.customs.ResourceNotFoundException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +37,7 @@ import java.util.Locale;
  * encodé dans le QR code du document. Il prouve la détention du document et ne se devine pas : le
  * produire exige la clé HMAC du serveur.
  */
+@Slf4j
 @Controller
 @RequestMapping("/verify")
 @RequiredArgsConstructor
@@ -51,12 +56,14 @@ public class VerifyController {
     @GetMapping("/doc/{documentNumber}")
     public String verifyDocument(@PathVariable String documentNumber,
                                  @RequestParam(name = "k", required = false) String signaturePrefix,
-                                 Model model) {
+                                 Model model, HttpServletResponse response) {
         BillingDocumentResponse document;
         try {
             document = billingDocumentService.get(documentNumber);
-        } catch (Exception ex) {
+        } catch (ResourceNotFoundException ex) {
             return notFound(model, documentNumber, "document");
+        } catch (RuntimeException ex) {
+            return unavailable(model, response, documentNumber, "document", ex);
         }
 
         String label = documentLabel(document);
@@ -81,12 +88,15 @@ public class VerifyController {
     @PostMapping("/doc/{documentNumber}/compare")
     public String compareDocument(@PathVariable String documentNumber,
                                   @RequestParam("file") MultipartFile file,
-                                  Model model) {
+                                  Model model, HttpServletResponse response) {
         BillingDocumentPdfService.PdfComparison comparison;
         try {
             comparison = billingDocumentPdfService.compare(documentNumber, file.getBytes());
-        } catch (IOException | RuntimeException ex) {
+        } catch (ResourceNotFoundException | BadRequestException ex) {
+            // La comparaison signale un document inconnu par une BadRequestException
             return notFound(model, documentNumber, "document");
+        } catch (IOException | RuntimeException ex) {
+            return unavailable(model, response, documentNumber, "document", ex);
         }
 
         model.addAttribute("comparison", comparison);
@@ -98,12 +108,14 @@ public class VerifyController {
     @GetMapping("/receipt/{receiptNumber}")
     public String verifyReceipt(@PathVariable String receiptNumber,
                                 @RequestParam(name = "k", required = false) String signaturePrefix,
-                                Model model) {
+                                Model model, HttpServletResponse response) {
         PaymentReceiptResponse receipt;
         try {
             receipt = paymentReceiptService.getByReceiptNumber(receiptNumber);
-        } catch (Exception ex) {
+        } catch (ResourceNotFoundException ex) {
             return notFound(model, receiptNumber, "reçu");
+        } catch (RuntimeException ex) {
+            return unavailable(model, response, receiptNumber, "reçu", ex);
         }
 
         // Le reçu ne porte pas de signature fiscale · la vérification reste donc minimale, ce qui
@@ -120,6 +132,23 @@ public class VerifyController {
         model.addAttribute("ref", reference);
         model.addAttribute("type", type);
         return "verify/not-found";
+    }
+
+    /**
+     * Une panne de notre cote n'est pas un document introuvable.
+     *
+     * <p>Toute erreur affichait « introuvable » : un client de bonne foi concluait a un faux
+     * document, et la panne restait invisible dans les journaux. Elle est journalisee avec un code
+     * d'incident, que la page affiche pour que le client puisse le citer, et la reponse est un 500.</p>
+     */
+    private String unavailable(Model model, HttpServletResponse response, String reference, String type, Exception ex) {
+        String incident = java.util.UUID.randomUUID().toString().substring(0, 8);
+        log.error("Verification publique en echec · {} {} · incident {}", type, reference, incident, ex);
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        model.addAttribute("ref", reference);
+        model.addAttribute("type", type);
+        model.addAttribute("incident", incident);
+        return "verify/unavailable";
     }
 
     /**

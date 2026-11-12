@@ -54,6 +54,8 @@ public record BookingResponse(
         /** La piece est louee entiere · {@code quantity} compte alors des participants, pas des places. */
         Boolean wholeResourceBooking,
         /** Ce qui est reserve, pret a afficher · « 2 places réservées sur 4 », « Espace entier · 3 participants (12 places) ». */
-        String seatsLabel
+        String seatsLabel,
+        /** Le lot multi-ressources dont la reservation fait partie · {@code null} pour une reservation seule. */
+        String batchNumber
 ) {
 }

@@ -86,6 +86,30 @@ public class PaymentTransaction {
     @Column(name = "channel", length = 30)
     private PaymentChannel channel;
 
+    /** Especes : ce que le client a tendu au guichet. Nul hors especes ou si non saisi. */
+    @Column(name = "tendered_amount", precision = 19, scale = 4)
+    private BigDecimal tenderedAmount;
+
+    /** Especes : la monnaie rendue, montant remis moins montant encaisse. */
+    @Column(name = "change_amount", precision = 19, scale = 4)
+    private BigDecimal changeAmount;
+
+    /** Session de caisse du guichet qui a saisi le paiement, quel qu'en soit le moyen. */
+    @Column(name = "cash_session_number", length = 100)
+    private String cashSessionNumber;
+
+    /** Cheque : banque tiree ; virement : banque d'origine. */
+    @Column(name = "bank_name", length = 180)
+    private String bankName;
+
+    /** Tireur du cheque, donneur d'ordre du virement ou titulaire du compte mobile money. */
+    @Column(name = "payer_name", length = 180)
+    private String payerName;
+
+    /** Numero du payeur pour un mobile money hors plateforme. */
+    @Column(name = "payer_phone", length = 40)
+    private String payerPhone;
+
     @Column(name = "failure_reason", columnDefinition = "text")
     private String failureReason;
 
