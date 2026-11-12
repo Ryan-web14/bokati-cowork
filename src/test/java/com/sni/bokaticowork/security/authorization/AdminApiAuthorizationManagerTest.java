@@ -231,6 +231,23 @@ class AdminApiAuthorizationManagerTest {
     }
 
     @Test
+    void shouldGuardTheAccountingRoutes() {
+        // Lot F1.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/reports/trial-balance")).isEqualTo("ACCOUNTING_REPORT:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/accounts")).isEqualTo("ACCOUNTING_ACCOUNT:CREATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/accounts/6055/deactivate")).isEqualTo("ACCOUNTING_ACCOUNT:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/entries")).isEqualTo("ACCOUNTING_ENTRY:CREATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/entries/BR-1/validate")).isEqualTo("ACCOUNTING_ENTRY:VALIDATE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/entries/OD-2026-000001/reverse")).isEqualTo("ACCOUNTING_ENTRY:REVERSE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/entries/BR-1/reject")).isEqualTo("ACCOUNTING_ENTRY:BALANCE");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/periods/2026-01/lock")).isEqualTo("ACCOUNTING_PERIOD:LOCK");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/periods/2026-01/close")).isEqualTo("ACCOUNTING_PERIOD:CLOSE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/journals")).isEqualTo("ACCOUNTING_JOURNAL:CREATE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/lettering")).isEqualTo("ACCOUNTING_LETTERING:MANUAL");
+        assertThat(requiredPermissionFor("PATCH", BASE + "/accounting/lettering/5/unletter")).isEqualTo("ACCOUNTING_LETTERING:UNLETTER");
+    }
+
+    @Test
     void shouldNotLetACashierWithOnlyTheOldAdjustRightValidateAVariance() {
         List<String> cashier = List.of("ROLE_ADMIN", "CASH_READ", "CASH:READ", "CASH_ADJUST", "CASH:ADJUST",
                 "CASH_SESSION_OPEN", "CASH_SESSION:OPEN", "CASH_SESSION_CLOSE", "CASH_SESSION:CLOSE",

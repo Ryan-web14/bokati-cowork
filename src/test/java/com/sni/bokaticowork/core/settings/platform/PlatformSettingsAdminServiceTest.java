@@ -79,9 +79,9 @@ class PlatformSettingsAdminServiceTest {
     }
 
     @Test
-    @DisplayName("L'ADMIN ne voit que ses domaines, le SUPER_ADMIN les 27")
+    @DisplayName("L'ADMIN ne voit que ses domaines, le SUPER_ADMIN les 28")
     void domainsFollowTheRole() {
-        assertThat(service.domains(superAdmin)).hasSize(27);
+        assertThat(service.domains(superAdmin)).hasSize(28);
         assertThat(service.domains(admin)).hasSize(13).allMatch(view -> view.domain().adminEditable());
         assertThat(service.list(null, admin)).noneMatch(view -> view.key().equals(FEE));
     }

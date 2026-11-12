@@ -1,4 +1,20 @@
 # cle	domaine	type	effet	defaut	libelle
+accounting.account.creation-mode	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creation de compte : IMMEDIATE ou AFTER_APPROVAL
+accounting.analytic.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite analytique active (ventilation obligatoire sur les comptes concernes)
+accounting.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite active (ecritures automatiques de la plateforme)
+accounting.lettering.difference-threshold	ACCOUNTING	INTEGER	LIVE	500	Ecart de reglement maximal au lettrage (XAF)
+accounting.lettering.gain-account	ACCOUNTING	TEXT	LIVE	758	Compte des ecarts de reglement favorables
+accounting.lettering.loss-account	ACCOUNTING	TEXT	LIVE	658	Compte des ecarts de reglement defavorables
+accounting.manual-entry.second-validation-threshold	ACCOUNTING	INTEGER	LIVE	0	Montant au-dela duquel une piece manuelle est validee par un autre comptable (0 : jamais)
+accounting.night-worker-cron	ACCOUNTING	CRON	RESTART	0 30 2 * * *	Planification du controle de continuite et des relances comptables
+accounting.notify-emails	ACCOUNTING	TEXT	LIVE		Destinataires des alertes comptables (comptables, administrateur finance), separes par des virgules
+accounting.numbering.chronology	ACCOUNTING	ENUM	LIVE	STRICT	Ordre des pieces : STRICT (dates croissantes) ou PERIOD
+accounting.numbering.width	ACCOUNTING	INTEGER	LIVE	6	Longueur de la sequence des numeros de piece
+accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
+accounting.unbalanced-entry.blocks-period-close	ACCOUNTING	BOOLEAN	LIVE	true	Un ecart non regularise bloque le verrouillage de la periode
+accounting.unbalanced-entry.policy	ACCOUNTING	ENUM	LIVE	HOLD	Piece desequilibree : HOLD (attente), SUSPENSE_ACCOUNT (compte d'attente) ou ACCEPT
+accounting.unbalanced-entry.suspense-account	ACCOUNTING	TEXT	LIVE	4718	Compte d'attente d'equilibrage
+accounting.unbalanced-entry.suspense-max-difference	ACCOUNTING	INTEGER	LIVE	0	Difference maximale passee en compte d'attente (0 : sans limite)
 app.admin-access-url	ENVIRONMENT	TEXT	RESTART	https://admin.elleaose.com	Adresse de l'administration
 app.api-base-url	ENVIRONMENT	TEXT	RESTART	http://localhost:8080	Adresse de l'API
 app.company.machine-code	ENVIRONMENT	TEXT	RESTART	00000	Code machine de l'exploitant

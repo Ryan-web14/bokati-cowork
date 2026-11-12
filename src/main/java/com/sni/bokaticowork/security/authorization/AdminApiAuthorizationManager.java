@@ -104,6 +104,35 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
      * sans {@code /open}), la creation de caisse, les mouvements et la validation d'un ecart
      * exigeaient le meme droit, que tout caissier avait. Chaque action a desormais le sien.</p>
      */
+    /** Droits de la comptabilite (plan finance, section 16). */
+    private String accountingPermission(String path, String method) {
+        if (HttpMethod.GET.matches(method)) return permission("ACCOUNTING_REPORT", "READ");
+        if (path.equals("/accounting/numbering-checks")) return permission("ACCOUNTING_REPORT", "READ");
+        if (path.startsWith("/accounting/accounts")) {
+            if (path.endsWith("/deactivate") || path.endsWith("/activate") || path.endsWith("/merge")) {
+                return permission("ACCOUNTING_ACCOUNT", "MANAGE");
+            }
+            return permission("ACCOUNTING_ACCOUNT", "CREATE");
+        }
+        if (path.startsWith("/accounting/fiscal-years")) return permission("ACCOUNTING_PERIOD", "CLOSE");
+        if (path.startsWith("/accounting/periods")) {
+            return path.endsWith("/close") ? permission("ACCOUNTING_PERIOD", "CLOSE") : permission("ACCOUNTING_PERIOD", "LOCK");
+        }
+        if (path.startsWith("/accounting/journals")) {
+            return HttpMethod.POST.matches(method) ? permission("ACCOUNTING_JOURNAL", "CREATE") : permission("ACCOUNTING_JOURNAL", "MANAGE");
+        }
+        if (path.startsWith("/accounting/entries")) {
+            if (path.endsWith("/validate")) return permission("ACCOUNTING_ENTRY", "VALIDATE");
+            if (path.endsWith("/reverse")) return permission("ACCOUNTING_ENTRY", "REVERSE");
+            if (path.endsWith("/reject") || path.endsWith("/regularize")) return permission("ACCOUNTING_ENTRY", "BALANCE");
+            return permission("ACCOUNTING_ENTRY", "CREATE");
+        }
+        if (path.startsWith("/accounting/lettering")) {
+            return path.endsWith("/unletter") ? permission("ACCOUNTING_LETTERING", "UNLETTER") : permission("ACCOUNTING_LETTERING", "MANUAL");
+        }
+        return permission("ACCOUNTING_SETTINGS", "MANAGE");
+    }
+
     private String cashPermission(String path, String method) {
         // Position et etats (lot C6) : lecture reservee a l'encadrement.
         if (path.equals("/cash-registers/position") || path.startsWith("/cash-registers/reports/")) {
@@ -223,6 +252,9 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
         if (path.startsWith("/payments")) {
             if (path.contains("refund")) return permission("PAYMENT", "REFUND");
             return permission("PAYMENT", HttpMethod.GET.matches(method) ? "READ" : "PROCESS");
+        }
+        if (path.startsWith("/accounting")) {
+            return accountingPermission(path, method);
         }
         if (path.startsWith("/cash-registers")) {
             return cashPermission(path, method);
