@@ -93,3 +93,7 @@ Rôles : `ADMIN` et `SUPER_ADMIN` tout ; `FINANCE` tout sauf approuver le budget
 ## Tests
 
 `BudgetF16IT` (schéma de production) : budget créé, soumis, consolidé, approuvé ; une demande de 80 000 sur la ligne bloquante Missions (50 000) part avec un troisième niveau que seul `BUDGET:OVERRIDE` valide, puis l'engagement de 80 000 laisse un disponible de -30 000 ; un engagement de 100 000 soldé pour 85 000 libère 15 000 et la ligne redevient verte.
+
+## Évolutions apportées par les lots suivants
+
+- **Lot F13** : la validation d'une commande fournisseur contrôle le budget et engage les montants hors taxe (source `PURCHASE_ORDER`) ; la commande entièrement facturée réalise l'engagement, son annulation le libère ([finance-f13-achats](../finance-f13-achats/README.md)).
