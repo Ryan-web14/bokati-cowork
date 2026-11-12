@@ -57,6 +57,7 @@ Module [subscription](../README.md) · 8 route(s).
 ### POST /sni/api/v1/subscriptions/quotes/{quoteNumber}/accept
 
 - Accès : back-office : rôle d'administration et droit `SUBSCRIPTION:CREATE` ; contrôle supplémentaire sur la méthode : `hasRole('ADMIN') or hasRole('SUPER_ADMIN') or hasRole('STAFF')`
+- Corps (facultatif) : `{ "existingInvoiceNumber": texte, "existingPaymentNumber": texte }` : facture ou paiement déjà faits hors de l'abonnement (voir [parcours-souscription](../parcours-souscription.md#facturation-déjà-faite-hors-de-labonnement))
 - Réponse : `SubscriptionQuoteController.QuoteView`
 - Modèles : [SubscriptionQuoteController.QuoteView](#m-SubscriptionQuoteController-QuoteView)
 - Code : `src/main/java/com/sni/bokaticowork/features/subscription/lifecycle/controller/SubscriptionQuoteController.java`, méthode `accept`
@@ -141,6 +142,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `derivationCode` | texte |  |  |
 | `proposalNumber` | texte |  |  |
 | `createdAt` | date-heure ISO 8601 UTC |  |  |
+| `warnings` | liste de textes |  | Avertissements non bloquants : dérogation administrateur au plancher ou au rabais maximum, prix nul reconduit aux renouvellements |
 
 <a id="m-SubscriptionQuote-Status"></a>
 #### SubscriptionQuote.Status
