@@ -2083,7 +2083,8 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 request.deliveryAddressJson(),
                 request.language(),
                 request.exchangeRate(),
-                request.earlyPaymentDiscount()
+                request.earlyPaymentDiscount(),
+                request.companyCustomerCode()
         );
     }
 
@@ -2131,7 +2132,12 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 request.deliveryAddressJson(),
                 request.language(),
                 request.exchangeRate(),
-                request.earlyPaymentDiscount()
+                request.earlyPaymentDiscount(),
+                // La rectificative reste chez le meme payeur : l'organisation de la facture d'origine,
+                // ou le membre seul si elle n'en avait pas (sans repasser par le mode automatique).
+                firstNonBlank(request.companyCustomerCode(),
+                        StringUtils.hasText(source.getCompanyCustomerCode()) ? source.getCompanyCustomerCode()
+                                : CreateBillingDocumentRequest.NO_COMPANY)
         );
     }
 

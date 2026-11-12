@@ -930,6 +930,7 @@ Les champs JSON de chaque type cité plus haut, et des types qu'ils contiennent.
 | `language` | texte |  |  |
 | `exchangeRate` | nombre décimal |  |  |
 | `earlyPaymentDiscount` | [CreateEarlyPaymentDiscountRequest](#m-CreateEarlyPaymentDiscountRequest) |  |  |
+| `companyCustomerCode` | texte |  | membre facturé pour le compte d'une organisation : vide, selon le mode de son rattachement ; `NONE`, le membre seul ; un code client d'organisation à laquelle il est rattaché. Synonyme accepté : `customerCompanyCode` |
 
 <a id="m-PayInvoiceResponse"></a>
 #### PayInvoiceResponse
