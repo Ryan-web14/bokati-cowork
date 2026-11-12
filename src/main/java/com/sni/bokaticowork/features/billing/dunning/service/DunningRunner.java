@@ -105,9 +105,27 @@ public class DunningRunner {
                 .toList()).orElse(java.util.List.of());
     }
 
+
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.ReceivableRiskQuery> receivableRisk;
+
+    /** Lot F19 : creances a risque ; facultatif, sans comptabilite rien ne change. */
+    @org.springframework.beans.factory.annotation.Autowired
+    void setReceivableRisk(org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.ReceivableRiskQuery> receivableRisk) {
+        this.receivableRisk = receivableRisk;
+    }
+
     /** Execute un palier pour une facture · dans sa propre transaction, l'echec d'une facture n'arrete pas les autres. */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public DunningNotice execute(BillingDocument document, DunningStep step) {
+        com.sni.bokaticowork.core.accounting.ReceivableRiskQuery risk = receivableRisk == null ? null : receivableRisk.getIfAvailable();
+        if (risk != null && risk.disputed(document.getDocumentNumber())) {
+            // Lot F19 : une facture contestee ne se relance pas tant que le litige dure.
+            return noticeRepository.save(DunningNotice.builder()
+                    .documentNumber(document.getDocumentNumber()).step(step).policyCode(step.getPolicy().getPolicyCode()).action(step.getAction())
+                    .customerType(document.getCustomerType()).customerCode(document.getCustomerCode())
+                    .balanceDue(document.getBalanceDue()).outcome(DunningNotice.Outcome.SKIPPED)
+                    .detail("Facture contestee : relance suspendue pendant le litige").executedAt(java.time.Instant.now()).build());
+        }
         Subscription subscription = subscriptionBehind(document).orElse(null);
         DunningNotice.Outcome outcome = DunningNotice.Outcome.SENT;
         String detail = null;

@@ -24,6 +24,7 @@ accounting.commitment.journal	ACCOUNTING	TEXT	LIVE	HB	Journal des engagements ho
 accounting.commitment.received-account	ACCOUNTING	TEXT	LIVE	905	Compte des engagements recus
 accounting.commitment.received-counter-account	ACCOUNTING	TEXT	LIVE	906	Compte de contrepartie des engagements recus
 accounting.currencies	ACCOUNTING	TEXT	LIVE	EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR	Devises suivies (taux recuperes et proposes), separees par des virgules
+accounting.doubtful.customer-policy	ACCOUNTING	ENUM	LIVE	ALERT	Client a creance douteuse : ALERT, PREPAY ou BLOCK (suffixe .member, .customer, .business-entity par segment)
 accounting.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite active (ecritures automatiques de la plateforme)
 accounting.exchange.auto-fetch	ACCOUNTING	BOOLEAN	LIVE	true	Recuperation automatique des taux du jour sur internet
 accounting.exchange.eur-parity	ACCOUNTING	DECIMAL	LIVE	655.957	Parite fixe de l'euro en francs CFA
@@ -79,6 +80,10 @@ accounting.posting.batch-size	ACCOUNTING	INTEGER	LIVE	50	Nombre d'evenements com
 accounting.posting.disabled-families	ACCOUNTING	TEXT	LIVE		Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules
 accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	RESTART	30000	Intervalle du moteur d'imputation (millisecondes)
 accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	LIVE	30000	Intervalle du moteur d'imputation (millisecondes)
+accounting.provision.journal	ACCOUNTING	TEXT	LIVE	OD	Provisions : journal des dotations, reprises et reclassements
+accounting.provision.short-term-account	ACCOUNTING	TEXT	LIVE	4991	Provisions : compte des provisions pour risques a court terme
+accounting.provision.short-term-expense-account	ACCOUNTING	TEXT	LIVE	6591	Provisions : compte de dotation a court terme
+accounting.provision.short-term-reversal-account	ACCOUNTING	TEXT	LIVE	7591	Provisions : compte de reprise a court terme
 accounting.purchase.analytic-axis	ACCOUNTING	TEXT	LIVE		Axe analytique des sections portees par les lignes d'achat (vide : ventilation par defaut des comptes)
 accounting.purchase.default-vat-rate	ACCOUNTING	DECIMAL	LIVE	18	Taux de TVA propose sur une ligne d'achat sans taux (en %)
 accounting.purchase.journal	ACCOUNTING	TEXT	LIVE	AC	Journal des achats (factures et avoirs fournisseurs)
@@ -87,6 +92,26 @@ accounting.purchase.vat-account	ACCOUNTING	TEXT	LIVE	4452	TVA recuperable sur ac
 accounting.purchase.vat-account-fixed-assets	ACCOUNTING	TEXT	LIVE	4451	TVA recuperable sur immobilisations (comptes de classe 2)
 accounting.purchase.vat-account-services	ACCOUNTING	TEXT	LIVE	4454	TVA recuperable sur services exterieurs (comptes 62 et 63)
 accounting.purchase.withholding-account	ACCOUNTING	TEXT	LIVE	447	Compte des retenues a la source operees sur les fournisseurs
+accounting.receivable.adjustment	ACCOUNTING	ENUM	LIVE	MONTHLY	Creances : rythme de l'ajustement des depreciations (MONTHLY ou CLOSING_ONLY)
+accounting.receivable.auto-days	ACCOUNTING	INTEGER	LIVE	365	Creances : retard en jours au-dela duquel le classement en douteux est automatique
+accounting.receivable.contagion	ACCOUNTING	BOOLEAN	LIVE	true	Creances : proposer le classement des autres factures echues du client classe douteux
+accounting.receivable.cron	ACCOUNTING	CRON	LIVE	0 15 4 * * *	Creances a risque : planification du traitement de nuit (propositions, pertes, ajustement, controles)
+accounting.receivable.disputed-account	ACCOUNTING	TEXT	LIVE	4161	Creances : compte des creances litigieuses
+accounting.receivable.disputed-allowance-account	ACCOUNTING	TEXT	LIVE	4911	Creances : compte de depreciation des creances litigieuses
+accounting.receivable.doubtful-account	ACCOUNTING	TEXT	LIVE	4162	Creances : compte des creances douteuses
+accounting.receivable.doubtful-allowance-account	ACCOUNTING	TEXT	LIVE	4912	Creances : compte de depreciation des creances douteuses
+accounting.receivable.expense-account	ACCOUNTING	TEXT	LIVE	6594	Creances : compte de dotation aux depreciations
+accounting.receivable.grid	ACCOUNTING	TEXT	LIVE	91-180:25,181-365:50,366+:100	Creances : grille statistique de depreciation (jours de retard : taux en %)
+accounting.receivable.guarantee-account	ACCOUNTING	TEXT	LIVE	4191	Creances : compte des garanties deduites de la base (portefeuille du client)
+accounting.receivable.individual-threshold	ACCOUNTING	INTEGER	LIVE	500000	Creances : reste du HT au-dela duquel la methode individuelle est attendue (XAF)
+accounting.receivable.journal	ACCOUNTING	TEXT	LIVE	OD	Creances : journal des reclassements, depreciations et pertes
+accounting.receivable.loss-account	ACCOUNTING	TEXT	LIVE	6511	Creances : compte des pertes sur creances clients
+accounting.receivable.recovery-account	ACCOUNTING	TEXT	LIVE	758	Creances : compte de recuperation sur creances passees en perte
+accounting.receivable.release	ACCOUNTING	ENUM	LIVE	IMMEDIATE	Creances : reprise de la depreciation a l'encaissement (IMMEDIATE ou NEXT_ADJUSTMENT)
+accounting.receivable.reversal-account	ACCOUNTING	TEXT	LIVE	7594	Creances : compte de reprise des depreciations
+accounting.receivable.trigger-days	ACCOUNTING	INTEGER	LIVE	90	Creances : retard en jours au-dela duquel le classement en douteux est propose
+accounting.receivable.writeoff-direction-threshold	ACCOUNTING	INTEGER	LIVE	100000	Creances : perte TTC au-dela de laquelle la direction valide (XAF)
+accounting.receivable.writeoff-vat-recovery	ACCOUNTING	BOOLEAN	LIVE	true	Creances : recuperer la TVA collectee sur une creance passee en perte
 accounting.replay-until	ACCOUNTING	TEXT	LIVE		Reprise : les faits dates avant ce jour produisent des brouillards a valider en bloc (vide : pas de reprise)
 accounting.rounding.max-difference	ACCOUNTING	INTEGER	LIVE	1	Ecart d'arrondi maximal accepte sur une ligne explicite (XAF)
 accounting.sales.client-account	ACCOUNTING	TEXT	LIVE	411	Compte collectif des clients

@@ -49,6 +49,14 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class SubscriptionCreationOperator {
 
+    private org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.ReceivableRiskQuery> receivableRisk;
+
+    /** Lot F19 : creances a risque ; facultatif, sans comptabilite rien ne change. */
+    @org.springframework.beans.factory.annotation.Autowired
+    void setReceivableRisk(org.springframework.beans.factory.ObjectProvider<com.sni.bokaticowork.core.accounting.ReceivableRiskQuery> receivableRisk) {
+        this.receivableRisk = receivableRisk;
+    }
+
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
 
     private final SubscriptionRepository subscriptionRepository;
@@ -89,6 +97,14 @@ public class SubscriptionCreationOperator {
         PlanPrice price = planResolver.resolvePrice(planVersion, request.billingCycle());
         SubscriptionOwnerResolver.Owner owner = ownerResolver.resolve(request.subscriberType(), request.subscriberCode());
         SubscriberType subscriberType = owner.typeOr(request.subscriberType());
+        com.sni.bokaticowork.core.accounting.ReceivableRiskQuery risk = receivableRisk == null ? null : receivableRisk.getIfAvailable();
+        if (risk != null) {
+            // Lot F19 : un client bloque pour creance douteuse ne souscrit pas sans derogation.
+            String warning = risk.guardNewSale(String.valueOf(subscriberType), request.subscriberCode(), "la souscription");
+            if (warning != null) {
+                log.warn("Souscription de {} : {}", request.subscriberCode(), warning);
+            }
+        }
         kycGuard.require(planVersion.getPlan() == null ? null : planVersion.getPlan().getRequiredKycLevel(),
                 owner, "plan");
 
