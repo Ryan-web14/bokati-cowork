@@ -64,8 +64,9 @@ public class CompanyAccountController {
     @Audited(module = "COMPANY", action = "UPDATE_BILLING", ressource = "customer")
     @PatchMapping("/{customerId}/billing")
     public ResponseEntity<CompanyDtos.CompanyResponse> updateBilling(@PathVariable String customerId,
-                                                                     @Valid @RequestBody CompanyDtos.UpdateBillingRequest request) {
-        return ResponseEntity.ok(service.updateBilling(customerId, request));
+                                                                     @Valid @RequestBody CompanyDtos.UpdateBillingRequest request,
+                                                                     Authentication authentication) {
+        return ResponseEntity.ok(service.updateBilling(customerId, request, actor(authentication)));
     }
 
     @Audited(module = "COMPANY", action = "UPDATE_CONTACT", ressource = "customer")
