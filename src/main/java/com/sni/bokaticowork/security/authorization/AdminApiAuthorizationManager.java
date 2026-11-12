@@ -141,6 +141,20 @@ public class AdminApiAuthorizationManager implements AuthorizationManager<Reques
             }
             return permission("BANK_RECONCILIATION", "MANAGE");
         }
+        if (path.startsWith("/accounting/loans") || path.startsWith("/accounting/partners") || path.startsWith("/accounting/commitments")
+                || path.startsWith("/accounting/commitment-types")) {
+            // Lot F17 : emprunts, comptes courants d'associes, hors bilan.
+            return HttpMethod.GET.matches(method) ? permission("FINANCING", "READ") : permission("FINANCING", "MANAGE");
+        }
+        if (path.startsWith("/accounting/payroll")) {
+            // Lot F17 : import du journal de paie.
+            if (path.endsWith("/post") || path.endsWith("/pay")) return permission("PAYROLL", "POST");
+            if (!HttpMethod.GET.matches(method) && (path.startsWith("/accounting/payroll/templates") || path.startsWith("/accounting/payroll/rubrics")
+                    || path.startsWith("/accounting/payroll/employees"))) {
+                return permission("PAYROLL_SETTINGS", "MANAGE");
+            }
+            return permission("PAYROLL", "IMPORT");
+        }
         if (path.startsWith("/accounting/vat-returns")) {
             // Lot F11 : preparer, valider et liquider sont controles finement dans le service.
             if (HttpMethod.GET.matches(method)) return permission("VAT_RETURN", "READ");

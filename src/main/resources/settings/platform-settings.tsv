@@ -17,6 +17,12 @@ accounting.cash.exchange-loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes
 accounting.cash.treasury-parent-account	ACCOUNTING	TEXT	LIVE	571	Compte parent sous lequel chaque caisse recoit son compte
 accounting.cash.vat-collected-account	ACCOUNTING	TEXT	LIVE	4431	Compte de TVA collectee sur une entree de caisse
 accounting.cash.vat-recoverable-account	ACCOUNTING	TEXT	LIVE	4452	Compte de TVA recuperable sur une sortie de caisse
+accounting.commitment.alert-days	ACCOUNTING	INTEGER	LIVE	30	Hors bilan : alerte avant echeance, preavis et renouvellement (jours ; aussi a 7 et 1 jour)
+accounting.commitment.given-account	ACCOUNTING	TEXT	LIVE	901	Compte des engagements donnes
+accounting.commitment.given-counter-account	ACCOUNTING	TEXT	LIVE	902	Compte de contrepartie des engagements donnes
+accounting.commitment.journal	ACCOUNTING	TEXT	LIVE	HB	Journal des engagements hors bilan
+accounting.commitment.received-account	ACCOUNTING	TEXT	LIVE	905	Compte des engagements recus
+accounting.commitment.received-counter-account	ACCOUNTING	TEXT	LIVE	906	Compte de contrepartie des engagements recus
 accounting.currencies	ACCOUNTING	TEXT	LIVE	EUR,USD,GBP,CHF,CNY,JPY,CAD,ZAR	Devises suivies (taux recuperes et proposes), separees par des virgules
 accounting.enabled	ACCOUNTING	BOOLEAN	LIVE	false	Comptabilite active (ecritures automatiques de la plateforme)
 accounting.exchange.auto-fetch	ACCOUNTING	BOOLEAN	LIVE	true	Recuperation automatique des taux du jour sur internet
@@ -25,15 +31,25 @@ accounting.exchange.fetch-cron	ACCOUNTING	CRON	RESTART	0 15 7 * * *	Planificatio
 accounting.exchange.gain-account	ACCOUNTING	TEXT	LIVE	776	Compte des gains de change au reglement d'une facture en devise
 accounting.exchange.loss-account	ACCOUNTING	TEXT	LIVE	676	Compte des pertes de change au reglement d'une facture en devise
 accounting.exchange.provider-url	ACCOUNTING	TEXT	LIVE	https://api.frankfurter.dev/v1/latest?from=EUR	Adresse du fournisseur de taux (reponse JSON en base EUR)
+accounting.financing.analytic-axis	ACCOUNTING	TEXT	LIVE		Axe analytique des sections portees par les emprunts et la paie (vide : pas de ventilation)
+accounting.financing.cron	ACCOUNTING	CRON	RESTART	0 45 6 * * *	Tenue quotidienne : echeances d'emprunt, alertes, hors bilan
 accounting.lettering.auto-delay-ms	ACCOUNTING	INTEGER	RESTART	600000	Intervalle du lettrage automatique des comptes clients (millisecondes)
 accounting.lettering.difference-threshold	ACCOUNTING	INTEGER	LIVE	500	Ecart de reglement maximal au lettrage (XAF)
 accounting.lettering.gain-account	ACCOUNTING	TEXT	LIVE	758	Compte des ecarts de reglement favorables
 accounting.lettering.loss-account	ACCOUNTING	TEXT	LIVE	658	Compte des ecarts de reglement defavorables
+accounting.loan.accrual-journal	ACCOUNTING	TEXT	LIVE	OD	Journal des interets courus des emprunts
+accounting.loan.alert-days	ACCOUNTING	INTEGER	LIVE	7	Alerte des comptables avant une echeance d'emprunt (jours)
 accounting.manual-entry.second-validation-threshold	ACCOUNTING	INTEGER	LIVE	0	Montant au-dela duquel une piece manuelle est validee par un autre comptable (0 : jamais)
 accounting.night-worker-cron	ACCOUNTING	CRON	RESTART	0 30 2 * * *	Planification du controle de continuite et des relances comptables
 accounting.notify-emails	ACCOUNTING	TEXT	LIVE		Destinataires des alertes comptables (comptables, administrateur finance), separes par des virgules
 accounting.numbering.chronology	ACCOUNTING	ENUM	LIVE	STRICT	Ordre des pieces : STRICT (dates croissantes) ou PERIOD
 accounting.numbering.width	ACCOUNTING	INTEGER	LIVE	6	Longueur de la sequence des numeros de piece
+accounting.partner.account	ACCOUNTING	TEXT	LIVE	462	Compte des comptes courants d'associes (462, ou divisionnaire de 16 si bloques)
+accounting.partner.dividend-account	ACCOUNTING	TEXT	LIVE	465	Compte des dividendes a payer affectes en compte courant
+accounting.partner.interest-account	ACCOUNTING	TEXT	LIVE	671	Compte de charge des interets des comptes courants
+accounting.partner.journal	ACCOUNTING	TEXT	LIVE	OD	Journal des interets et mouvements sans tresorerie des comptes courants
+accounting.payroll.journal	ACCOUNTING	TEXT	LIVE	PA	Journal de paie
+accounting.payroll.section-required	ACCOUNTING	BOOLEAN	LIVE	false	Paie : refuser un salarie sans section analytique
 accounting.posting.batch-size	ACCOUNTING	INTEGER	LIVE	50	Nombre d'evenements comptables traites par passage du moteur d'imputation
 accounting.posting.disabled-families	ACCOUNTING	TEXT	LIVE		Familles d'evenements non comptabilisees pour l'instant (CASH, SALES, PAYMENT...), separees par des virgules
 accounting.posting.worker-delay-ms	ACCOUNTING	INTEGER	RESTART	30000	Intervalle du moteur d'imputation (millisecondes)

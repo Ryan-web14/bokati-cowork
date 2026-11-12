@@ -141,3 +141,8 @@ Compléments : `accounting.cash.exchange-loss-account` (`676`), `accounting.cash
 - taux récupérés : USD à 655,957 / 1,1 = 596,324545, l'euro à la parité, un taux saisi à la main conservé ; conversion USD vers XAF et EUR vers USD.
 
 `AdminApiAuthorizationManagerTest` couvre les routes.
+
+## Évolutions apportées par les lots suivants
+
+- **Lot F11** : la TVA des encaissements en régime des encaissements passe de `4438` à `4431` dans la pièce d'encaissement ([finance-f11-fiscalite](../finance-f11-fiscalite/README.md)).
+- **Lot F17** : les emprunts sont rattachés à un compte bancaire suivi ; déblocage, échéances et remboursements anticipés sont écrits au journal de ce compte et se pointent comme les autres écritures ([finance-f17-financement-hors-bilan-paie](../finance-f17-financement-hors-bilan-paie/README.md)).

@@ -276,6 +276,17 @@ class AdminApiAuthorizationManagerTest {
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/exchange-rates/convert")).isEqualTo("CASH:READ");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/reconciliations/3/pdf")).isEqualTo("ACCOUNTING_REPORT:READ");
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/cash/registers/CSR-1/balances")).isEqualTo("CASH:READ");
+        // Lot F17.
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/loans/note")).isEqualTo("FINANCING:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/loans/EMP-1/prepay")).isEqualTo("FINANCING:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/partners/CCA-1/movements")).isEqualTo("FINANCING:MANAGE");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/commitments")).isEqualTo("FINANCING:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/commitments/reconciliation")).isEqualTo("FINANCING:READ");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/payroll/imports")).isEqualTo("PAYROLL:IMPORT");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/payroll/imports/5/post")).isEqualTo("PAYROLL:POST");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/payroll/imports/5/pay")).isEqualTo("PAYROLL:POST");
+        assertThat(requiredPermissionFor("POST", BASE + "/accounting/payroll/rubrics")).isEqualTo("PAYROLL_SETTINGS:MANAGE");
+        assertThat(requiredPermissionFor("GET", BASE + "/accounting/payroll/rubrics")).isEqualTo("PAYROLL:IMPORT");
         // Lot F11.
         assertThat(requiredPermissionFor("GET", BASE + "/accounting/vat-returns/4/pdf")).isEqualTo("VAT_RETURN:READ");
         assertThat(requiredPermissionFor("POST", BASE + "/accounting/vat-returns")).isEqualTo("VAT_RETURN:PREPARE");
