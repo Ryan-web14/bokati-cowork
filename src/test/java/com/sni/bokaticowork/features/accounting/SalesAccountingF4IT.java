@@ -109,6 +109,7 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
     @Autowired private AccEntryRepository entries;
     @Autowired private AccEntryLineRepository lines;
     @Autowired private com.sni.bokaticowork.features.billing.repository.BillingDepositRepository depositRepository;
+    @Autowired private com.sni.bokaticowork.features.billing.repository.BillingCustomerChangeRepository changeRepository;
     @Autowired private ExchangeRateService rates;
     @Autowired private com.sni.bokaticowork.features.accounting.repository.CashExchangeRateRepository rateRepository;
     @MockitoBean private AccountingSettings settings;
@@ -338,6 +339,44 @@ class SalesAccountingF4IT extends PostgresIntegrationTestBase {
         BigDecimal receivable = lines.findPosted("411", customer, LocalDate.of(2000, 1, 1), LocalDate.of(2100, 1, 1), List.of(EntryStatus.VALIDATED))
                 .stream().map(line -> line.getDebit().subtract(line.getCredit())).reduce(BigDecimal.ZERO, BigDecimal::add);
         assertThat(receivable).isEqualByComparingTo("500000");
+    }
+
+    @Test
+    @DisplayName("Lot B6 : facture scellee et payee en partie passee de A a B, reglements transferes ; 411 de A solde, 411 de B au reste du")
+    void customerChangeWithTransferredPayments() {
+        String customerA = customer;
+        BillingDocument original = invoice("FAC-A-" + code, BillingDocumentType.INVOICE, "100000", "18000", null);
+        CashSession session = cashSession();
+        PaymentTransaction payment = payment("TXN-B6-" + code, PaymentMethod.CASH, "50000", session.getSessionNumber());
+        allocations.save(PaymentAllocation.builder().paymentTransaction(payment).billingDocumentNumber(original.getDocumentNumber())
+                .allocatedAmount(new BigDecimal("50000")).allocatedAt(Instant.now()).build());
+        BillingDocument unpaidNote = invoice("AV1-B6-" + code, BillingDocumentType.CREDIT_NOTE, "57627.12", "10372.88", original.getDocumentNumber());
+        BillingDocument paidNote = invoice("AV2-B6-" + code, BillingDocumentType.CREDIT_NOTE, "42372.88", "7627.12", original.getDocumentNumber());
+        original.setStatus(BillingDocumentStatus.CANCELLED);
+        original.setCancelledAt(Instant.now());
+        documents.save(original);
+        String customerB = "CUS-F4B-" + code;
+        customer = customerB;
+        BillingDocument replacement = invoice("FAC-B-" + code, BillingDocumentType.INVOICE, "100000", "18000", null);
+        customer = customerA;
+        changeRepository.save(com.sni.bokaticowork.features.billing.model.BillingCustomerChange.builder()
+                .originalDocumentNumber(original.getDocumentNumber()).newDocumentNumber(replacement.getDocumentNumber()).mode("REISSUE")
+                .unpaidCreditNote(unpaidNote.getDocumentNumber()).paidCreditNote(paidNote.getDocumentNumber()).fromType("CUSTOMER")
+                .fromCode(customerA).toType("CUSTOMER").toCode(customerB).paymentsMode("TRANSFER").transferredAmount(new BigDecimal("50000"))
+                .reason("Facturer la maison mere").createdBy("awa").build());
+
+        run();
+
+        assertThat(posted("RECEIVABLE_TRANSFER", replacement.getDocumentNumber())).isTrue();
+        // L'avoir porte la contre-passation : l'annulation de la facture d'origine n'en ajoute pas une seconde.
+        assertThat(events.findByEventTypeAndReference("INVOICE_CANCELLED", original.getDocumentNumber())).isEmpty();
+        assertThat(balance411(customerA)).isEqualByComparingTo("0");
+        assertThat(balance411(customerB)).isEqualByComparingTo("68000");
+    }
+
+    private BigDecimal balance411(String thirdParty) {
+        return lines.findPosted("411", thirdParty, LocalDate.of(2000, 1, 1), LocalDate.of(2100, 1, 1), List.of(EntryStatus.VALIDATED))
+                .stream().map(line -> line.getDebit().subtract(line.getCredit())).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private BillingDocument depositInvoice(String number, String amount, BillingDocument quote) {

@@ -63,6 +63,7 @@ public class BillingDocumentController {
     private final com.sni.bokaticowork.features.billing.service.implementation.InvoiceChangeService invoiceChangeService;
     private final com.sni.bokaticowork.features.billing.service.implementation.DepositService depositService;
     private final com.sni.bokaticowork.features.billing.service.implementation.BillingSendingService sendingService;
+    private final com.sni.bokaticowork.features.billing.service.implementation.CustomerChangeService customerChangeService;
 
     private final BillingDocumentService billingDocumentService;
     private final BillingDocumentPdfService billingDocumentPdfService;
@@ -354,6 +355,17 @@ public class BillingDocumentController {
     public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.DepositResponse> settleDeposit(@PathVariable Long id,
             @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.DepositSettlementRequest request) {
         return ResponseEntity.ok(depositService.settle(id, request));
+    }
+
+    /**
+     * Lot B6 : changement de client. Avant scellement, meme facture dans une nouvelle version ;
+     * sinon, avoirs au client d'origine et nouvelle facture, reglements gardes en avoir ou transferes.
+     */
+    @PostMapping("/invoices/{invoiceNumber}/change-customer")
+    public ResponseEntity<com.sni.bokaticowork.features.billing.dto.response.ChangeCustomerResponse> changeCustomer(
+            @PathVariable String invoiceNumber,
+            @jakarta.validation.Valid @RequestBody com.sni.bokaticowork.features.billing.dto.request.ChangeCustomerRequest request) {
+        return ResponseEntity.ok(customerChangeService.change(invoiceNumber, request));
     }
 
     @PatchMapping("/quotes/{quoteNumber}/mark-viewed")

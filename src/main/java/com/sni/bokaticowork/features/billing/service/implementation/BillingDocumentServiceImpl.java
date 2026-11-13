@@ -1019,6 +1019,86 @@ public class BillingDocumentServiceImpl implements BillingDocumentService {
                 source.getCompanyCustomerCode() == null ? CreateBillingDocumentRequest.NO_COMPANY : source.getCompanyCustomerCode());
     }
 
+    // ------------------------------------------------------------------ lot B6 : changement de client
+
+    /** Meme facture, nouveau client : fiche, conditions, exoneration reprises, recalcul, nouvelle version. */
+    void changeCustomerInPlace(BillingDocument invoice, String customerType, String customerCode, String reason) {
+        BillingCustomerSnapshotResolver.CustomerSnapshot customer = customerSnapshotResolver.resolve(new CreateBillingDocumentRequest(
+                invoice.getDocumentType(), customerType, customerCode, null, null, null, null, null, null, null, null, null,
+                invoice.getCurrency(), null, null, null, List.of(), List.of(), List.of(), null, null, null, null, null, null, null, null,
+                null, null, null, null));
+        var organization = customer.organization();
+        ensureNotBlocked(organization, true);
+        versionService.archive(invoice, lineRepository.findAllByDocumentOrderByLineOrderAscIdAsc(invoice), "CUSTOMER_CHANGE");
+        stampAuthor(invoice, false);
+        invoice.setVersionReason("Changement de client : " + reason);
+        invoice.setVersionOrigin("INTERNAL");
+        invoice.setCustomerType(customer.customerType());
+        invoice.setCustomerCode(customer.customerCode());
+        invoice.setCustomerName(customer.customerName());
+        invoice.setCustomerEmail(customer.customerEmail());
+        invoice.setCustomerPhone(customer.customerPhone());
+        invoice.setBillingAddressJson(customer.billingAddressJson());
+        invoice.setCustomerNiu(organization == null ? null : organization.niu());
+        invoice.setCustomerIdentifiersJson(organization == null ? null : organization.identifiersJson());
+        invoice.setCustomerVatExemptionNote(organization == null ? null : organization.vatExemptionNote());
+        invoice.setCompanyCustomerId(null);
+        invoice.setCompanyCustomerCode(null);
+        invoice.setCompanyName(null);
+        invoice.setCompanyIdentifiersJson(null);
+        invoice.setCompanyLinkSource(null);
+        // Recalcul par le meme calcul que la creation, avec l'exoneration du nouveau client.
+        applyFullEdit(invoice, new UpdateBillingDocumentRequest(null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null));
+        if (organization != null) {
+            ensureWithinCreditLimit(organization, invoice.getTotalAmount());
+        }
+        BillingDocument saved = documentRepository.save(invoice);
+        eventWriter.write(saved, "INVOICE_CUSTOMER_CHANGED", java.util.Map.of("reason", reason, "customerCode", customerCode,
+                "revision", versionService.currentRevision(saved)));
+    }
+
+    /** Copie d'une facture pour un autre client (memes lignes, remises, clauses), liee a l'originale. */
+    CreateBillingDocumentRequest reissueRequest(BillingDocument original, String customerType, String customerCode) {
+        BillingDocumentResponse view = mapper.toResponse(original);
+        return new CreateBillingDocumentRequest(BillingDocumentType.INVOICE, customerType, customerCode, null, null, null, null, "INVOICE",
+                original.getDocumentNumber(), original.getTitle(), original.getDescription(), original.getTerms(), original.getCurrency(),
+                LocalDate.now(), null, original.getMetadataJson(), view.lines().stream().map(this::toCreateLineRequest).toList(),
+                view.discounts().stream().map(this::toCreateDiscountRequest).toList(),
+                view.clauses().stream().map(this::toCreateClauseRequest).toList(), original.getPaymentReference(),
+                original.getPaymentInstructions(), original.getBankDetailsJson(), null, original.getCustomerReference(), original.getPoNumber(),
+                original.getProjectCode(), original.getSalespersonCode(), original.getDeliveryAddressJson(), original.getLanguage(),
+                original.getExchangeRate(), null, null);
+    }
+
+    /**
+     * D6 : les reglements du client d'origine, portes par son avoir, passent sur la nouvelle facture.
+     * L'avoir est consomme (APPLIED) ; le transfert est trace pour la comptabilite (411 de l'un a l'autre).
+     */
+    BigDecimal transferCreditNote(String creditNoteNumber, String targetInvoiceNumber, String payerCode) {
+        BillingDocument creditNote = lockedByNumber(creditNoteNumber);
+        BillingDocument target = serviceByNumber(targetInvoiceNumber);
+        BigDecimal amount = creditNote.getTotalAmount().min(target.getBalanceDue() == null ? creditNote.getTotalAmount() : target.getBalanceDue());
+        if (amount.signum() > 0) {
+            applyPayment(targetInvoiceNumber, amount);
+        }
+        creditNote.setStatus(BillingDocumentStatus.APPLIED);
+        BillingDocument saved = documentRepository.save(creditNote);
+        fiscalAuditService.log(FiscalAuditService.CREDIT_NOTE_APPLIED, "BILLING_DOCUMENT", creditNoteNumber, creditNote.getOriginalDocumentNumber(),
+                "transferred_to=" + targetInvoiceNumber + "|payer=" + payerCode + "|amount=" + amount.toPlainString());
+        eventWriter.write(saved, "CREDIT_NOTE_TRANSFERRED", java.util.Map.of("targetInvoiceNumber", targetInvoiceNumber, "payer", String.valueOf(payerCode),
+                "amount", amount.toPlainString()));
+        return amount;
+    }
+
+    /** Facture d'origine annulee et remplacee (ses avoirs portent la contre-passation). */
+    void cancelReplacedInvoice(String invoiceNumber, String replacementNumber) {
+        BillingDocument cancelled = markCancelledAndArchived(invoiceNumber);
+        cancelled.setReplacedByDocumentNumber(replacementNumber);
+        BillingDocument saved = documentRepository.save(cancelled);
+        eventWriter.write(saved, "BILLING_DOCUMENT_CANCELLED_VIA_CREDIT_NOTE", java.util.Map.of("replacedBy", replacementNumber));
+    }
+
     private long revisionValidityDays() {
         return platformSettings == null ? 30 : platformSettings.number(QUOTE_REVISION_VALIDITY_DAYS_KEY, 30);
     }
